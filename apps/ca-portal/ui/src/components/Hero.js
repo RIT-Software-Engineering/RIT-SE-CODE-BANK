@@ -1,6 +1,6 @@
 function Hero(){
 return (
-        <div>
+        <div class="bg-red-500">
             test
         </div>
     )   
