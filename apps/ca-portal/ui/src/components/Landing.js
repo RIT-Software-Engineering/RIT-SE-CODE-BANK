@@ -12,8 +12,7 @@ export default function Landing() {
           <br />
           Sign in with your RIT Account
         </div>
-
-        <button className="bg-black text-white w-40 rounded-lg p-3 text-lg mt-20 hover:bg-gray-800">Sign In</button>
+        <button className="bg-black text-white w-40 rounded-lg p-3 text-lg mt-10 hover:bg-gray-800">Sign In</button>
       </div>
       <Footer/>
     </div>
