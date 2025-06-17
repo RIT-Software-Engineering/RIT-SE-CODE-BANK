@@ -1,50 +1,25 @@
-import './App.css';
-import Landing from './components/Landing';
-import { Routes, Route, Link } from 'react-router';
-
+import "./App.css";
+import Landing from "./pages/Landing";
+import { Routes, Route, Link } from "react-router";
+import Messaging from "./pages/Messaging";
+import Users from "./pages/Users";
+import Header from "./components/Header";
 
 function App() {
   return (
     <div className="App">
-      <Navigation/>
+      <Header />
       <Routes>
-        <Route path="/" element={<Landing/>} />
-        <Route path="/home" element={<Home/>} />
-        <Route path="/users" element={<Users/>} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/users" element={<Users />} />
+
+        <Route path="/users/:userId/messaging" element={<Messaging />} />
+        <Route path="/messaging" element={<Messaging />} />
+
       </Routes>
     </div>
   );
 }
 
-
-const Home = () => {
-  return (
-    <main style={{ padding: '1rem 0' }}>
-      <h2>Home</h2>
-    </main>
-  );
-};
-
-const Users = () => {
-  return (
-    <main style={{ padding: '1rem 0' }}>
-      <h2>Users</h2>
-    </main>
-  );
-};
-
-const Navigation = () => {
-  return(
-    <nav
-      style={{
-        borderBottom: "solid 1px",
-        paddingBottom: "1rem",
-      }}
-    >
-      <Link to="/home">Home</Link>
-      <Link to="/users">Users</Link>
-    </nav>
-  )
-}
 
 export default App;
