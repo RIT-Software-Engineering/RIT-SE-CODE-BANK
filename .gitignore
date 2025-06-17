@@ -45,3 +45,6 @@ replay_pid*
 *.node_modules
 node_modules/
 .vite
+.nx/installation
+.nx/cache
+.nx/workspace-data

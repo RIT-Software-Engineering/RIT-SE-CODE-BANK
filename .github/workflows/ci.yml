@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  nx-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run lint on affected projects
+        run: npx nx affected:lint --base=origin/main --head=HEAD
+
+      - name: Run tests on affected projects
+        run: npx nx affected:test --base=origin/main --head=HEAD
+
+      - name: Build affected projects
+        run: npx nx affected:build --base=origin/main --head=HEAD

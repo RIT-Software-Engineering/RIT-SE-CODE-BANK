@@ -1,0 +1,30 @@
+{
+  "name": "scoop-portal",
+  "root": "apps/scoop-portal",
+  "sourceRoot": "apps/my-app/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/node:build",
+      "outputs": ["dist/apps/scoop-portal"],
+      "options": {
+        "outputPath": "dist/apps/scoop-portal",
+        "main": "apps/scoop-portal/src/main.js"
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/apps/scoop-portal"],
+      "options": {
+        "jestConfig": "apps/scoop-portal/jest.config.js",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/scoop-portal/**/*.js"]
+      }
+    }
+  }
+}
