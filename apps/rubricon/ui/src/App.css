@@ -1,0 +1,41 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  display: flex; /* Enable flexbox layout */
+  flex-direction: column; /* Stack children vertically */
+}
+
+.App main {
+  flex: 1; /* Allow main content to grow and fill available space */
+}
+
+.App footer {
+  margin-top: 5vh; /* Push the footer to the bottom */
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-main {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  font-size: 12pt;
+  color: black;
+}
+
+.router-link {
+  text-decoration: none;
+  color: var(--text-color);
+}
