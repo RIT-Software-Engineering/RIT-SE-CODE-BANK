@@ -1,0 +1,287 @@
+[
+  {
+    "title": "Old Rubric",
+    "description": "This is an imported rubric.",
+    "criteria": [
+      {
+        "name": "Criterion 1",
+        "description": "Description for criterion 1",
+        "points": 10,
+        "weight": 1,
+        "levels": [
+          {
+            "name": "Excellent",
+            "description": "Description for level 1",
+            "points": 10
+          },
+          {
+            "name": "Good",
+            "description": "Description for level 2",
+            "points": 7.5
+          },
+          {
+            "name": "Needs Improvement",
+            "description": "Description for level 3",
+            "points": 5
+          },
+          {
+            "name": "Unsatisfactory",
+            "description": "Description for level 4",
+            "points": 2.5
+          },
+          {
+            "name": "Not Applicable",
+            "description": "Description for level 5",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "name": "Criterion 2",
+        "description": "Description for criterion 2",
+        "points": 20,
+        "weight": 1,
+        "levels": [
+          {
+            "name": "Excellent",
+            "description": "Description for level 1",
+            "points": 20
+          },
+          {
+            "name": "Needs Improvement",
+            "description": "Description for level 2",
+            "points": 10
+          },
+          {
+            "name": "Not Applicable",
+            "description": "Description for level 3",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "id": "1"
+  },
+  {
+    "title": "Second Rubric",
+    "description": "This rubric is different from the first one.",
+    "criteria": [
+      {
+        "name": "Criterion 1",
+        "description": "Description for criterion 1",
+        "points": 10,
+        "weight": 1,
+        "levels": [
+          {
+            "name": "Excellent",
+            "description": "Description for level 1",
+            "points": 10
+          },
+          {
+            "name": "Good",
+            "description": "Description for level 2",
+            "points": 7.5
+          },
+          {
+            "name": "Needs Improvement",
+            "description": "Description for level 3",
+            "points": 5
+          },
+          {
+            "name": "Unsatisfactory",
+            "description": "Description for level 4",
+            "points": 2.5
+          },
+          {
+            "name": "Not Applicable",
+            "description": "Description for level 5",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "name": "Criterion 2",
+        "description": "Description for criterion 2",
+        "points": 20,
+        "weight": 1,
+        "levels": [
+          {
+            "name": "Excellent",
+            "description": "Description for level 1",
+            "points": 20
+          },
+          {
+            "name": "Needs Improvement",
+            "description": "Description for level 2",
+            "points": 10
+          },
+          {
+            "name": "Not Applicable",
+            "description": "Description for level 3",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "name": "Criterion 3",
+        "description": "Description for criterion ",
+        "points": 20,
+        "weight": 1,
+        "levels": [
+          {
+            "name": "Excellente",
+            "description": "Description for level 1",
+            "points": 20
+          },
+          {
+            "name": "Not Applicable",
+            "description": "Description for level 2",
+            "points": 0
+          }
+        ]
+      }
+    ],
+    "id": "2"
+  },
+  {
+    "id": "3",
+    "userId": "2",
+    "title": "Different User's Rubric",
+    "assignment": "Assignment 1",
+    "description": "This rubric is different from the first one.",
+    "criteria": [
+      {
+        "name": "Criterion 1",
+        "description": "Description for criterion 1",
+        "points": 10,
+        "weight": 1,
+        "levels": [
+          {
+            "name": "Excellent",
+            "description": "Description for level 1",
+            "points": 10
+          },
+          {
+            "name": "Good",
+            "description": "Description for level 2",
+            "points": 7.5
+          },
+          {
+            "name": "Needs Improvement",
+            "description": "Description for level 3",
+            "points": 5
+          },
+          {
+            "name": "Unsatisfactory",
+            "description": "Description for level 4",
+            "points": 2.5
+          },
+          {
+            "name": "Not Applicable",
+            "description": "Description for level 5",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "name": "Criterion 2",
+        "description": "Description for criterion 2",
+        "points": 20,
+        "weight": 1,
+        "levels": [
+          {
+            "name": "Excellent",
+            "description": "Description for level 1",
+            "points": 20
+          },
+          {
+            "name": "Needs Improvement",
+            "description": "Description for level 2",
+            "points": 10
+          },
+          {
+            "name": "Not Applicable",
+            "description": "Description for level 3",
+            "points": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Created Rubric",
+    "description": "",
+    "criteria": [
+      {
+        "name": "Example Criteria",
+        "description": "This is just for reference.",
+        "points": 10,
+        "levels": [
+          {
+            "name": "Example Level 1",
+            "description": "Full credit.",
+            "points": 10
+          },
+          {
+            "name": "Example Level 2",
+            "description": "No credit.",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "name": "Updated this",
+        "description": "",
+        "points": 0,
+        "levels": []
+      }
+    ],
+    "id": "46c6a520-4f8e-44fc-982a-6672c576bbec"
+  },
+  {
+    "title": "Newest",
+    "description": "al;kjdsaflknniuewiurhkjdsds f adsf ",
+    "criteria": [
+      {
+        "name": "Example Criteria",
+        "description": "This is just for reference.",
+        "points": 10,
+        "levels": [
+          {
+            "name": "Example Level 1",
+            "description": "Full credit.",
+            "points": 10
+          },
+          {
+            "name": "Example Level 2",
+            "description": "No credit.",
+            "points": 0
+          }
+        ]
+      },
+      {
+        "name": "",
+        "description": "",
+        "points": 10,
+        "levels": [
+          {
+            "name": "",
+            "description": "",
+            "points": 0
+          },
+          {
+            "name": "",
+            "description": "",
+            "points": 0
+          },
+          {
+            "name": "asdfkahf",
+            "description": "asdfkdsajfaskjfs",
+            "points": 10
+          }
+        ]
+      }
+    ],
+    "id": "58b2e5dd-efee-4687-b9f2-8eb63868725e"
+  }
+]

@@ -1,0 +1,26 @@
+[
+    {
+        "id": "1",
+        "userId": "1",
+        "rubricId": "1",
+        "accessLevel": "Creator"
+    },
+    {
+        "id": "2",
+        "userId": "1",
+        "rubricId": "2",
+        "accessLevel": "Creator"
+    },
+    {
+        "id": "3",
+        "userId": "1",
+        "rubricId": "2",
+        "accessLevel": "Evaluator"
+    },
+    {
+        "id": "4",
+        "userId": "2",
+        "rubricId": "3",
+        "accessLevel": "Creator"
+    }
+]
