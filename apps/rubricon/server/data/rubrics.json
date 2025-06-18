@@ -58,6 +58,18 @@
             "points": 0
           }
         ]
+      },
+      {
+        "name": "New Criteria",
+        "description": "",
+        "points": 20,
+        "levels": [
+          {
+            "name": "Level1",
+            "description": "asdfsadf",
+            "points": 20
+          }
+        ]
       }
     ],
     "id": "1"
