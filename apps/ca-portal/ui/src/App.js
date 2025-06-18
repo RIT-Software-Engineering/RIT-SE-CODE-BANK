@@ -1,5 +1,6 @@
 import './App.css';
 import Landing from './components/Landing';
+import Timecard from './pages/Timecard';
 import { Routes, Route, Link } from 'react-router';
 
 
@@ -11,6 +12,7 @@ function App() {
         <Route path="/" element={<Landing/>} />
         <Route path="/home" element={<Home/>} />
         <Route path="/users" element={<Users/>} />
+        <Route path="/timecard" element={<Timecard/>} />
       </Routes>
     </div>
   );

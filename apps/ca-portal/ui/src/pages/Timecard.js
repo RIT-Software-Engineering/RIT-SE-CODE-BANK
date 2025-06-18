@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import Footer from '../components/Footer';
+import Header from '../components/Header';
 // import { CSVLink } from 'react-csv';         // commented out due to not needing csvs
 
 
@@ -207,7 +209,9 @@ export default function Timecard() {
 
 
     return (
-        <div style={{ padding: '20px', maxWidth: '900px', margin: 'auto' }}>
+        <div class="bg-white">
+        <Header />
+        <div>
         <h2>Weekly Timecard</h2>
         <table style={tableStyle}>
             {/* Table header with column labels */}
@@ -294,6 +298,8 @@ export default function Timecard() {
             Export to CSV
             </CSVLink> */}
         </div>
+        </div>
+        <Footer />
         </div>
     );
 }
