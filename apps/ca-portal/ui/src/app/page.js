@@ -1,3 +1,4 @@
+// src/app/page.js (home page)
 export default function Home() {
   return (
     <>

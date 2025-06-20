@@ -12,7 +12,7 @@ export default function Users() {
         {users.map((username) => (
           <li key={username}>
             <Link
-              href={`/users/${username}/messaging`}
+              href={`/Users/${username}/Messaging`}
               className="text-blue-600 hover:underline"
             >
               {username}
