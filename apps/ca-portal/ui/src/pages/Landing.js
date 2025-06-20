@@ -1,10 +1,9 @@
-import Footer from "./Footer";
-import Header from "./Header";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
 
 export default function Landing() {
   return (
     <div class="bg-white">
-      <Header />
       <div className="bg-rit-light-gray h-screen rounded-lg p-5 m-10 justify-center items-center flex flex-col">
         <div className="text-center text-3xl w-1/2">
           Welcome to the RIT Course Assistant Portal
