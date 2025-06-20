@@ -4,6 +4,7 @@ import { Routes, Route, Link } from "react-router";
 import Messaging from "./pages/Messaging";
 import Users from "./pages/Users";
 import Header from "./components/Header";
+import Timecard from './pages/Timecard';
 
 function App() {
   return (
@@ -12,10 +13,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/users" element={<Users />} />
-
+        <Route path="/timecard" element={<Timecard/>} />
         <Route path="/users/:userId/messaging" element={<Messaging />} />
         <Route path="/messaging" element={<Messaging />} />
-
       </Routes>
     </div>
   );
