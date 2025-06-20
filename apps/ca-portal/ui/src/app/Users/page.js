@@ -1,5 +1,6 @@
-// pages/Users.jsx
-import { Link } from "react-router";
+// src/app/Users/page.js
+
+import Link from "next/link";
 
 const users = ["av1698", "lc2410", "rhs9168","cjd8115"];
 
@@ -11,7 +12,7 @@ export default function Users() {
         {users.map((username) => (
           <li key={username}>
             <Link
-              to={`/users/${username}/messaging`}
+              href={`/users/${username}/messaging`}
               className="text-blue-600 hover:underline"
             >
               {username}

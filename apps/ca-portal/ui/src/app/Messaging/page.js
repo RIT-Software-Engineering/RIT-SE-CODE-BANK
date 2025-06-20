@@ -1,6 +1,6 @@
-import { useParams } from "react-router";
-import { useState } from "react";
-
+// src/app/Messaging/page.js
+'use client'
+import { useParams } from "next/navigation";
 
 export default function Messaging() {
     const { userId } = useParams();

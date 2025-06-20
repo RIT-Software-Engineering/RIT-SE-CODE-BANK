@@ -1,4 +1,4 @@
-// components/UserLayout.jsx
+// src/layouts/UserLayout.js
 import { useParams, Outlet, Link } from "react-router";
 
 export default function UserLayout() {
