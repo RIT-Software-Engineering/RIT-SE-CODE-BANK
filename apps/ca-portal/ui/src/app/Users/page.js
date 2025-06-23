@@ -6,7 +6,7 @@ const users = ["av1698", "lc2410", "rhs9168","cjd8115"];
 
 export default function Users() {
   return (
-    <div className="p-4">
+    <div className="p-4 text-center">
       <h1>Select a User</h1>
       <ul className="space-y-2">
         {users.map((username) => (
