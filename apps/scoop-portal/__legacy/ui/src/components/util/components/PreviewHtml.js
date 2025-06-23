@@ -4,8 +4,8 @@ import {Form, Icon, Input, Modal} from "semantic-ui-react";
 import {formatDateNoOffset, humanFileSize} from "../functions/utils";
 import {ACTION_TARGETS, DEFAULT_UPLOAD_LIMIT} from "../functions/constants";
 import Announcements from "../../Tabs/DashboardTab/TimelinesView/Announcements";
-import { config } from "../../util/functions/constants";
-import { SecureFetch } from "../../util/functions/secureFetch";
+import { config } from "../functions/constants";
+import { SecureFetch } from "../functions/secureFetch";
 import {
     QuestionComponentsMap,
 

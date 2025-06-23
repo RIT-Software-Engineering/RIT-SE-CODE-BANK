@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {useParams} from 'react-router-dom';
 import {Button, Modal, Icon} from "semantic-ui-react";
 import {config} from "../util/functions/constants";
-import ErrorPage from "../pages/ErrorPage";
+import ErrorPage from "./ErrorPage";
 import {SecureFetch} from "../util/functions/secureFetch";
 import {decode} from "html-entities";
 

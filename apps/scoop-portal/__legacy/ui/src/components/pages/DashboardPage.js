@@ -10,7 +10,7 @@ import ActionLogs from "../Tabs/ActionSubmissionsTab/ActionLogs";
 import CoachesTab from "../Tabs/CoachesTab/CoachesTab";
 import AdminView from "../util/components/AdminView";
 import { UserContext } from "../util/functions/UserContext";
-import "./../../css/dashboard.css";
+import "../../css/dashboard.css";
 import UserEditor from "../Tabs/AdminTab/UserEditor/UserEditor";
 import { SecureFetch } from "../util/functions/secureFetch";
 import { config } from "../util/functions/constants";
