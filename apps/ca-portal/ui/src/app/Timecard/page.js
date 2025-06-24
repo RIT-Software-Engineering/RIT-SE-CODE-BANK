@@ -150,6 +150,41 @@ export default function Timecard() {
      */
     const weeklyTotal = timecard.reduce((sum, d) => sum + d.total, 0);
 
+
+    /**
+     * Handles the CSV export by generating a file and triggering a download.
+     */
+    const handleExport = () => {
+        if (!isMounted) return;
+        
+        const headers = [
+            'Day', 'Date', 'Time In 1', 'Time Out 1', 'Time In 2', 'Time Out 2', 'Time In 3', 'Time Out 3', 'Total (hrs)'
+        ];
+
+        const dataRows = timecard.map(d => [
+            d.day,
+            d.date,
+            d.ins[0] || '', d.outs[0] || '',
+            d.ins[1] || '', d.outs[1] || '',
+            d.ins[2] || '', d.outs[2] || '',
+            (d.total || 0).toFixed(2)
+        ].join(','));
+
+        const totalRow = `\nWeek Total,,,,,,,,${weeklyTotal.toFixed(2)}`;
+
+        const csvContent = [headers.join(','), ...dataRows].join('\n').concat(totalRow);
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "timecard.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     // Styling classes
     const tableClasses = "min-w-full divide-y divide-gray-200 text-sm";
     const thClasses = "px-4 py-3 border border-gray-300 p-2 bg-rit-light-gray text-left text-xs font-medium text-gray-800 uppercase tracking-wider whitespace-nowrap";
@@ -248,6 +283,13 @@ export default function Timecard() {
                         className={`${buttonClasses} bg-rit-light-gray text-gray-800 hover:bg-rit-gray focus:ring-rit-gray-400 disabled:bg-rit-gray-300`}
                     >
                         Clear All
+                    </button>
+                    <button
+                        onClick={handleExport}
+                        disabled={!isMounted}
+                        className={`${buttonClasses} bg-rit-light-gray text-gray-800 hover:bg-rit-gray focus:ring-rit-gray-400 disabled:bg-rit-gray-300`}
+                    >
+                        Export to CSV
                     </button>
                 </div>
             </div>
