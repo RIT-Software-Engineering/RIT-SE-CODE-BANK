@@ -1,0 +1,22 @@
+// server/server/routing/db_routes.js
+
+const router = require('express').Router();
+// Import the specific query function from query_db.js
+const { getOpenPositionsWithDetails } = require('../database/query_db');
+
+/**
+ * Route to get all open positions with their associated course and course schedule info.
+ * GET /api/db/open-positions
+ */
+router.get('/open-positions', async (req, res) => {
+  try {
+    const positions = await getOpenPositionsWithDetails();
+    res.status(200).json(positions);
+  } catch (error) {
+    console.error('Error in /open-positions route:', error);
+    res.status(500).json({ error: 'Failed to retrieve open positions.' });
+  }
+});
+
+
+module.exports = router;

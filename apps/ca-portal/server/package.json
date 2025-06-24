@@ -1,0 +1,25 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "main.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "start": "node main.js",
+    "dev": "nodemon main.js",
+    "prisma:migrate": "cd ./server/database/prisma && npx prisma migrate dev",
+    "prisma:generate": "cd ./server/database/prisma && npx prisma generate",
+    "db:setup": "node server/server/database/setup_db.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "prisma": "^6.10.1"
+  }
+}
