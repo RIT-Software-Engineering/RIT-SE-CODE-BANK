@@ -14,6 +14,7 @@ export default function Header() {
         <Link href="/Users">Users</Link>
         <Link href="/Messaging">Messaging</Link>
         <Link href="/Timecard">Timecard</Link>
+        <Link href="/Positions">Positions</Link>
       </nav>
     </div>
   );
