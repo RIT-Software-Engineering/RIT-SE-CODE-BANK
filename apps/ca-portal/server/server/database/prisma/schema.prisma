@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Course {
+  //Fields
+  id  String  @id @db.VarChar(255) // courseCode-sectionNumber
+  name  String @db.Text
+  description String @db.Text
+  sectionNumber Int @db.Int
+  location  String  @db.Text
+
+  //Relationships
+  schedules CourseSchedule[]
+  positions Position[]
+}
+
+
+model CourseSchedule {
+  //Fields
+  id  Int @id @default(autoincrement())
+  courseId  String @db.VarChar(255)
+  dayOfWeek String @db.Text
+  startTime DateTime @db.Time
+  endTime DateTime @db.Time
+
+  //Relationships
+  course Course @relation(fields: [courseId], references: [id]) // references Course.id
+}
+
+model Position {
+  //Fields
+  id  Int @id @default(autoincrement())
+  courseId  String @db.VarChar(255)
+  facultyId Int @db.Int
+  maxCAs  Int  @db.Int
+  isOpen  Boolean  @db.TinyInt
+
+  //Relationships
+  course Course @relation(fields: [courseId], references: [id]) // references Course.id
+  faculty Faculty @relation(fields: [facultyId], references: [id]) // references Faculty.id
+}
+
+model Faculty {
+  //Fields
+  id  Int @id @default(autoincrement())
+  name  String @db.Text
+  department  String @db.Text
+  email String @db.Text
+  isAdmin Boolean @db.TinyInt
+
+  //Relationships
+  positions Position[]
+}
