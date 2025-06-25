@@ -49,11 +49,12 @@ export default function Positions() {
                     <div  className="bg-rit-light-gray h-full rounded-lg p-5  justify-center items-center flex flex-col w-full">
                         <h1 className="text-2xl font-bold mb-5">Positions</h1>
                         {openPositions.map((position, index) => (
+                          console.log(position),
                             <div key={index} className="bg-white p-4 mb-4 rounded shadow w-full">
                                 {/* Uses course common name eg. Project Management */}
                                 <h2 className="text-xl font-semibold">{position.course.name}</h2>
                                 {/* Uses course common code eg. SWEN 261 */}
-                                <p className="text-gray-700">{position.course.code}</p>
+                                <p className="text-gray-700">{position.courseId}</p>
                                 {/*  start and end times */}
                                 <div className="mt-2">
                                 {position.course.schedules.map((slot, i) => (
