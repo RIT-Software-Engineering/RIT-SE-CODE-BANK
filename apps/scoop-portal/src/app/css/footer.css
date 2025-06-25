@@ -1,5 +1,18 @@
+:root {
+    --foreground-footer: white;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --foreground-footer: #ededed;
+    }
+}
+
 footer {
-    padding: 1em 2em;
     background-color: black;
-    color: white;
+    color: var(--foreground-footer);
+    padding: 1em 2em;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
 }
