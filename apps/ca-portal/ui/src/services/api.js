@@ -1,7 +1,7 @@
 // ui/src/services/api.js
 
-const BASE_API_URL = process.env.BASE_API_URL;
-const DATABASE_API_EXTENSION = process.env.DATABASE_API_EXTENSION;
+const BASE_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
+const DATABASE_API_EXTENSION = process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 
 // Basic error handler for API responses
 async function handleApiResponse(response) {

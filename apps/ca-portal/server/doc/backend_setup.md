@@ -3,9 +3,11 @@
 ## Prerequisites
 1.  **MySQL Community Server**
     * Download from: [https://dev.mysql.com/downloads/mysql/](https://dev.mysql.com/downloads/mysql/)
-    * **Note:** Ensure you add the installation PATH to your local machine's environment variables.
 2.  **Node.js**
     * Download from: [https://nodejs.org/en/download](https://nodejs.org/en/download)
+3.  **Docker**
+    * Download from: [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/)
+* **Note:** Ensure you add the installation PATH to your local machine's environment variables for these technologies
 
 ## Setup Steps
 
