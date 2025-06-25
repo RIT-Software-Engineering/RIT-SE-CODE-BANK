@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+//////////////
+// Commands //
+//////////////
+
+// Initialize Prisma: npx prisma init
+// Migrate: npx prisma migrate dev --name init
+// Generate Client: npx prisma generate
+// Format: npx prisma format
+// Introspect: npx prisma db pull
+// Reset Database: npx prisma migrate reset
+// View Database: npx prisma studio
+// For more information on the Prisma CLI, visit: https://pris.ly/d/cli
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// TODO: Remove User when shib auth is implemented
+// User model is a placeholder for authorization testing purposes.
+model User {
+  id    String @id @default(uuid()) @db.Char(36)
+  name  String
+  email String @unique
+}
+
+model Action {
+  id          String     @id @default(uuid()) @db.Char(36)
+  action_type ActionType @default(simple)
+
+  metadata                    Metadata[]
+  reference_endpoints         ReferenceEndpoints[]
+  children                    ActionChildRelationships[]   @relation("ParentOf") // List of child actions
+  parent                      ActionChildRelationships?    @relation("ChildOf") // Only one parent per Action
+  next_action                 ActionChainLinks?            @relation("NextAction") // Next action in a chain
+  previous_action             ActionChainLinks?            @relation("PreviousAction") // Previous action in a chain
+  workflow_attributes         WorkflowAttributes?          @relation("base_action")
+  workflow_action_relationships WorkflowActionRelationships?
+}
+
+enum ActionType {
+  simple
+  workflow
+  complex
+  branching
+}
+
+model Metadata {
+  id            String       @id @default(uuid()) @db.Char(36)
+  key           String
+  value         String
+  metadata_type MetadataType
+  action_id     String       @db.Char(36)
+
+  action Action @relation(fields: [action_id], references: [id], onDelete: Cascade)
+}
+
+enum MetadataType {
+  string
+  number
+  boolean
+}
+
+// CAUTION: This system could be very insecure if not properly managed. 
+// We may need to change to something different all together for security.
+model ReferenceEndpoints {
+  id        String @id @default(uuid()) @db.Char(36)
+  name      String
+  url       String
+  method    String
+  action_id String @db.Char(36)
+
+  action Action @relation(fields: [action_id], references: [id], onDelete: Cascade)
+}
+
+model ActionChildRelationships {
+  id              String @id @default(uuid()) @db.Char(36)
+  action_id       String @db.Char(36)
+  child_action_id String @unique @db.Char(36) // Ensures that each child action can only have one parent action
+
+  action      Action @relation("ParentOf", fields: [action_id], references: [id], onDelete: Cascade)
+  child_action Action @relation("ChildOf", fields: [child_action_id], references: [id], onDelete: Cascade)
+}
+
+model ActionChainLinks {
+  id             String @id @default(uuid()) @db.Char(36)
+  action_id      String @unique @db.Char(36)
+  next_action_id String @unique @db.Char(36)
+
+  action     Action @relation("NextAction", fields: [action_id], references: [id], onDelete: Cascade)
+  next_action Action @relation("PreviousAction", fields: [next_action_id], references: [id], onDelete: Cascade)
+}
+
+model WorkflowAttributes {
+  id             String @id @default(uuid()) @db.Char(36)
+  base_action_id String @unique @db.Char(36) // The action that these attributes are added to
+
+  base_action                 Action                        @relation("base_action", fields: [base_action_id], references: [id], onDelete: Cascade)
+  workflow_action_relationships WorkflowActionRelationships[]
+  tag_workflow_relationships    TagWorkflowRelationships[]
+  permissions                 Permissions[]
+  states                      States[]
+}
+
+model WorkflowActionRelationships {
+  id          String @id @default(uuid()) @db.Char(36)
+  workflow_id String @db.Char(36)
+  action_id   String @unique @db.Char(36)
+  index       Int    @default(0) // The order of the action in the workflow
+
+  action   Action             @relation(fields: [action_id], references: [id], onDelete: Cascade)
+  workflow WorkflowAttributes @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+}
+
+model Tags {
+  id                       String                     @id @default(uuid()) @db.Char(36)
+  name                     String                     @unique
+  tag_workflow_relationships TagWorkflowRelationships[]
+}
+
+model TagWorkflowRelationships {
+  id          String @id @default(uuid()) @db.Char(36)
+  tag_id      String @db.Char(36)
+  workflow_id String @db.Char(36)
+
+  tag      Tags               @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  workflow WorkflowAttributes @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+}
+
+model Permissions {
+  id              String         @id @default(uuid()) @db.Char(36)
+  user_id         String         @db.Char(36)
+  workflow_id     String         @db.Char(36)
+  permission_type PermissionType
+
+  workflow WorkflowAttributes @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+}
+
+enum PermissionType {
+  view
+  edit
+}
+
+model States {
+  id            String @id @default(uuid()) @db.Char(36)
+  user_id       String @db.Char(36)
+  workflow_id   String
+  current_index Int    @default(0)
+
+  workflow WorkflowAttributes @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+}
