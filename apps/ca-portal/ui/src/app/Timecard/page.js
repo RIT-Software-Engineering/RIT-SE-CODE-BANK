@@ -270,13 +270,7 @@ export default function Timecard() {
                 </div>
 
                 <div className="mt-8 flex justify-center space-x-4">
-                    <button
-                        onClick={handleSave}
-                        disabled={!isMounted}
-                        className={`${buttonClasses} bg-rit-orange text-white hover:bg-rit-gray focus:ring-rit-gray-400 disabled:bg-rit-gray-300`}
-                    >
-                        Save
-                    </button>
+                    
                     <button
                         onClick={handleClear}
                         disabled={!isMounted}
@@ -290,6 +284,13 @@ export default function Timecard() {
                         className={`${buttonClasses} bg-rit-light-gray text-gray-800 hover:bg-rit-gray focus:ring-rit-gray-400 disabled:bg-rit-gray-300`}
                     >
                         Export to CSV
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={!isMounted}
+                        className={`${buttonClasses} bg-rit-orange text-white hover:bg-rit-gray focus:ring-rit-gray-400 disabled:bg-rit-gray-300`}
+                    >
+                        Save
                     </button>
                 </div>
             </div>
