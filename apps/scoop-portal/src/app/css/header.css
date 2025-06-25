@@ -1,8 +1,25 @@
-header {
-    padding: 1em 2em;
-    background-color: #f76902;
+:root {
+    --background-header: #f76902;
+    --foreground-header: white;
 }
 
-.header {
-    color: White;
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-header: #e66c14;
+        --foreground-header: #ededed;
+    }
+}
+
+header {
+    padding: 1em;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--background-header);
+    color: var(--foreground-header);
+}
+
+.header > h1 {
+    font-weight: bold;
 }
