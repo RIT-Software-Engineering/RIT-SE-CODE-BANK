@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^7.1.2",
     "@mui/material": "^7.1.2",
+    "@prisma/client": "^6.10.1",
     "express": "^5.1.0",
     "next": "15.3.4",
     "react": "^19.0.0",
@@ -25,6 +26,7 @@
     "eslint-config-next": "15.3.4",
     "jest": "^30.0.2",
     "prettier": "3.6.0",
+    "prisma": "^6.10.1",
     "tailwindcss": "^4"
   }
 }
