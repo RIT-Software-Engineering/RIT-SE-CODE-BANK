@@ -4,18 +4,21 @@ import { Menu, AccountCircle } from "@mui/icons-material";
 function Header() {
     return (
         <header>
-            <div className="ui container">
-                <Menu />
-                <h1 className="ui header">
-                    SCOOP Portal
-                    <div id="subHeader" className="sub header">
-                        Department of Software Engineering, RIT
+            <div className="icon menu">
+                {
+                    // HACK: The styling for changing it to white might cause
+                    // an error to pop up
+                }
+                <Menu style={{ color: "white" }} />
+            </div>
+            <div className="ui header">
+                <h1>SCOOP Portal</h1>
                     </div>
-                </h1>
-                <AccountCircle />
+            <div className="icon accountcircle">
+                <AccountCircle style={{ color: "white" }} />
             </div>
         </header>
-    )
+    );
 }
 
 export default Header;
