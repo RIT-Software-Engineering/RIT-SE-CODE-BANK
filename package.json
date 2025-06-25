@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "@nrwl/jest": "^19.8.4",
+    "@nrwl/linter": "^19.8.4",
+    "@nrwl/next": "^19.8.4"
+  }
+}

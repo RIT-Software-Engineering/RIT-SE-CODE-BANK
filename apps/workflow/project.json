@@ -1,27 +1,27 @@
 {
-  "name": "scoop-portal",
-  "root": "apps/scoop-portal",
-  "sourceRoot": "apps/scoop-portal/src",
+  "name": "workflow",
+  "root": "apps/workflow",
+  "sourceRoot": "apps/workflow/src",
   "projectType": "application",
   "targets": {
     "build": {
       "executor": "@nrwl/next:build",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/scoop-portal"
+        "outputPath": "dist/apps/workflow"
       }
     },
     "serve": {
       "executor": "@nrwl/next:server",
       "options": {
-        "buildTarget": "scoop-portal:build"
+        "buildTarget": "workflow:build"
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/apps/scoop-portal"],
+      "outputs": ["coverage/apps/workflow"],
       "options": {
-        "jestConfig": "apps/scoop-portal/jest.config.js",
+        "jestConfig": "apps/workflow/jest.config.js",
         "passWithNoTests": true
       }
     },
@@ -29,10 +29,10 @@
       "executor": "@nrwl/linter:eslint",
       "options": {
         "lintFilePatterns": [
-          "apps/scoop-portal/**/*.{ts,tsx,js,jsx}"
+          "apps/workflow/**/*.{ts,tsx,js,jsx}"
         ]
       }
     }
   },
-  "tags": ["scope:scoop-portal", "type:app"]
+  "tags": ["scope:workflow", "type:app"]
 }

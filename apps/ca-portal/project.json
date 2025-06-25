@@ -1,27 +1,27 @@
 {
-  "name": "scoop-portal",
-  "root": "apps/scoop-portal",
-  "sourceRoot": "apps/scoop-portal/src",
+  "name": "ca-portal",
+  "root": "apps/ca-portal",
+  "sourceRoot": "apps/ca-portal/src",
   "projectType": "application",
   "targets": {
     "build": {
       "executor": "@nrwl/next:build",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/scoop-portal"
+        "outputPath": "dist/apps/ca-portal"
       }
     },
     "serve": {
       "executor": "@nrwl/next:server",
       "options": {
-        "buildTarget": "scoop-portal:build"
+        "buildTarget": "ca-portal:build"
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/apps/scoop-portal"],
+      "outputs": ["coverage/apps/ca-portal"],
       "options": {
-        "jestConfig": "apps/scoop-portal/jest.config.js",
+        "jestConfig": "apps/ca-portal/jest.config.js",
         "passWithNoTests": true
       }
     },
@@ -29,10 +29,10 @@
       "executor": "@nrwl/linter:eslint",
       "options": {
         "lintFilePatterns": [
-          "apps/scoop-portal/**/*.{ts,tsx,js,jsx}"
+          "apps/ca-portal/**/*.{ts,tsx,js,jsx}"
         ]
       }
     }
   },
-  "tags": ["scope:scoop-portal", "type:app"]
+  "tags": ["scope:ca-portal", "type:app"]
 }

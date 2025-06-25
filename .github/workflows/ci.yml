@@ -1,34 +1,138 @@
-name: CI
+name: Monorepo CI/CD
 
 on:
   push:
     branches:
       - main
+      - dev
+      - '*-dev'
   pull_request:
     branches:
       - main
+      - dev
+      - '*-dev'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  nx-build:
+  setup:
+    name: Setup & Cache Dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      nx-base: ${{ steps.set-base.outputs.base }}
+      nx-head: ${{ steps.set-head.outputs.head }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set base and head commits for Nx
+        id: set-base
+        run: echo "base=origin/main" >> $GITHUB_OUTPUT
+
+      - name: Set head commit
+        id: set-head
+        run: echo "head=HEAD" >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Nx output
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-cache-${{ github.sha }}
+
+  lint:
+    name: Lint Affected Projects
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+
+  test:
+    name: Test Affected Projects
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npx nx affected:test --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }} --code-coverage
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+  build:
+    name: Build Affected Projects
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci
+      - run: npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist/
+
+  deploy:
+    # Placeholder for deployment. Reliant on deployment scripts that don't yet exist.
+    name: Deploy Affected Apps
+    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev'
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      - name: Extract App Name from Branch
+        id: parse
+        run: |
+          BRANCH=${GITHUB_REF##*/}
+          if [[ "$BRANCH" == *-dev ]]; then
+            APP_NAME="${BRANCH%-dev}"
+          elif [[ "$BRANCH" == "dev" || "$BRANCH" == "main" ]]; then
+            APP_NAME="all"  # fallback or global deploy logic
+          else
+            APP_NAME=""
+          fi
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+          echo "::notice ::Branch '$BRANCH' targets app '$APP_NAME'"
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run lint on affected projects
-        run: npx nx affected:lint --base=origin/main --head=HEAD
-
-      - name: Run tests on affected projects
-        run: npx nx affected:test --base=origin/main --head=HEAD
-
-      - name: Build affected projects
-        run: npx nx affected:build --base=origin/main --head=HEAD
+      - name: Deploy script
+        run: |
+          if [ "$APP_NAME" = "all" ]; then
+            echo "Deploying all apps"
+            ./scripts/deploy-all.sh
+          elif [ -f "./scripts/deploy-$APP_NAME.sh" ]; then
+            echo "Deploying $APP_NAME"
+            ./scripts/deploy-$APP_NAME.sh
+          else
+            echo "No deployment script found for $APP_NAME, skipping."
+          fi

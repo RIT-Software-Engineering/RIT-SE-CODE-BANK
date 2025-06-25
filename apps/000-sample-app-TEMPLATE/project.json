@@ -1,27 +1,27 @@
 {
-  "name": "scoop-portal",
-  "root": "apps/scoop-portal",
-  "sourceRoot": "apps/scoop-portal/src",
+  "name": "000-sample-app-TEMPLATE",
+  "root": "apps/000-sample-app-TEMPLATE",
+  "sourceRoot": "apps/000-sample-app-TEMPLATE/src",
   "projectType": "application",
   "targets": {
     "build": {
       "executor": "@nrwl/next:build",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/scoop-portal"
+        "outputPath": "dist/apps/000-sample-app-TEMPLATE"
       }
     },
     "serve": {
       "executor": "@nrwl/next:server",
       "options": {
-        "buildTarget": "scoop-portal:build"
+        "buildTarget": "000-sample-app-TEMPLATE:build"
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/apps/scoop-portal"],
+      "outputs": ["coverage/apps/000-sample-app-TEMPLATE"],
       "options": {
-        "jestConfig": "apps/scoop-portal/jest.config.js",
+        "jestConfig": "apps/000-sample-app-TEMPLATE/jest.config.js",
         "passWithNoTests": true
       }
     },
@@ -29,10 +29,10 @@
       "executor": "@nrwl/linter:eslint",
       "options": {
         "lintFilePatterns": [
-          "apps/scoop-portal/**/*.{ts,tsx,js,jsx}"
+          "apps/000-sample-app-TEMPLATE/**/*.{ts,tsx,js,jsx}"
         ]
       }
     }
   },
-  "tags": ["scope:scoop-portal", "type:app"]
+  "tags": ["scope:000-sample-app-TEMPLATE", "type:app"]
 }

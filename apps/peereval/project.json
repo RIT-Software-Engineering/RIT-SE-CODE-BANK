@@ -1,27 +1,27 @@
 {
-  "name": "scoop-portal",
-  "root": "apps/scoop-portal",
-  "sourceRoot": "apps/scoop-portal/src",
+  "name": "peereval",
+  "root": "apps/peereval",
+  "sourceRoot": "apps/peereval/src",
   "projectType": "application",
   "targets": {
     "build": {
       "executor": "@nrwl/next:build",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/scoop-portal"
+        "outputPath": "dist/apps/peereval"
       }
     },
     "serve": {
       "executor": "@nrwl/next:server",
       "options": {
-        "buildTarget": "scoop-portal:build"
+        "buildTarget": "peereval:build"
       }
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/apps/scoop-portal"],
+      "outputs": ["coverage/apps/peereval"],
       "options": {
-        "jestConfig": "apps/scoop-portal/jest.config.js",
+        "jestConfig": "apps/peereval/jest.config.js",
         "passWithNoTests": true
       }
     },
@@ -29,10 +29,10 @@
       "executor": "@nrwl/linter:eslint",
       "options": {
         "lintFilePatterns": [
-          "apps/scoop-portal/**/*.{ts,tsx,js,jsx}"
+          "apps/peereval/**/*.{ts,tsx,js,jsx}"
         ]
       }
     }
   },
-  "tags": ["scope:scoop-portal", "type:app"]
+  "tags": ["scope:peereval", "type:app"]
 }
