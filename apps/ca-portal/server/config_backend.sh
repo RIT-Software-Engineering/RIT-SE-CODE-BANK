@@ -7,9 +7,9 @@ DB_HOST="127.0.0.1"                                # Host where MariaDB is runni
 DB_PORT="3306"                                     # Port MariaDB is listening on (host port from -p flag, usually 3306)
 
 # Application Environment Variables to add to .env
-APP_BASE_URL="http://localhost:3000"               # Base URL for your application (Frontend to Backend)
+APP_BASE_URL="http://localhost:3300"               # Base URL for your application (Frontend to Backend)
 APP_NODE_ENV="development"                         # Node.js environment (development, production, etc.)
-APP_SERVER_PORT="3000"                             # Port your Node.js Express server will listen on
+APP_SERVER_PORT="3300"                             # Port your Node.js Express server will listen on
 
 ENV_FILE=".env"                                    # Path to your .env file for Prisma
 # --- End Configuration ---

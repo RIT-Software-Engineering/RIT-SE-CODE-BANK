@@ -1,16 +1,23 @@
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config();
 
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
+const cors = require('cors');
 
 const setupDatabase = require('./server/database/setup_db');
 const apiRoutes = require('./server/routing/index');
 
+app.use(cors());
 app.use(express.json()); // Middleware for JSON body parsing
 
 async function initializeDatabase() {
+    console.log(`PORT variable is currently: ${port}`);
+    if (!port) {
+        console.error("FATAL ERROR: PORT is not defined in your .env file. Server cannot start.");
+        process.exit(1); // Exit if no port is specified
+    }
+
     if (process.env.NODE_ENV !== 'production') {
         console.log("Running database setup for development environment.");
         try {
