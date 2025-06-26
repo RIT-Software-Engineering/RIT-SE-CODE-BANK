@@ -7,7 +7,7 @@
     * Download from: [https://nodejs.org/en/download](https://nodejs.org/en/download)
 3.  **Docker**
     * Download from: [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/)
-* **Note:** Ensure you add the installation PATH to your local machine's environment variables for these technologies
+* **Note:** Ensure you add the installation PATH to your local machine's environment variables and possibly within vscode for these technologies
 
 ## Setup Steps
 
@@ -22,7 +22,7 @@
     * For MacOS/Linux, navigate to specifically the `config_backend.sh` file and make the changes neccessary there. After you made the changes, set execute permissions for the script by running `chmod +x config_backend.sh`.
 
 3. Then, execute the script itself. This will create an `.env` file with default permissions suitable for a development server.
-    * For Windows, it's `./config_backend.bat`
+    * For Windows, it's `./config_backend.bat`. If it runs into an error (i.e. 'mysql' is not recognized), try navigating to a powershell terminal outside of vscode and run the script there.
     * For MacOS/Linux, it's `./config_backend.sh`
 
 ### If you need to set up a Prisma instance and/or add new database tables:
