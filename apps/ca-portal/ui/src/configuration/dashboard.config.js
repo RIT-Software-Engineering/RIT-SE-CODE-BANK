@@ -21,26 +21,32 @@ export const DASHBOARD_OPTIONS = [
   {
     category: 'Personal',
     text: 'Kronos',
-    link: '', // Example Link
+    link: '',
     roles: [ROLES.CA]
   },
   {
     category: 'Personal',
     text: 'My Positions',
-    link: '', // Example Link
+    link: '',
     roles: [ROLES.CA]
   },
   {
     category: 'Personal',
     text: 'Send Message',
     link: '/Messaging',
-    roles: [ROLES.STUDENT, ROLES.CA]
+    roles: [ROLES.STUDENT]
   },
   // --- CA-SPECIFIC PERSONAL OPTIONS ---
   {
     category: 'Personal',
     text: 'Timecard',
     link: '/Timecard',
+    roles: [ROLES.CA]
+  },
+    {
+    category: 'Personal',
+    text: 'Send Message',
+    link: '/Users',
     roles: [ROLES.CA]
   },
 
