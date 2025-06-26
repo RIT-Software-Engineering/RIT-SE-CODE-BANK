@@ -24,7 +24,7 @@ CREATE TABLE `CourseSchedule` (
 CREATE TABLE `JobPosition` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `courseId` VARCHAR(255) NOT NULL,
-    `facultyId` INTEGER NOT NULL,
+    `employerId` INTEGER NOT NULL,
     `maxCAs` INTEGER NOT NULL,
     `isOpen` BOOLEAN NOT NULL,
 
@@ -32,7 +32,7 @@ CREATE TABLE `JobPosition` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Faculty` (
+CREATE TABLE `Employer` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` TEXT NOT NULL,
     `department` TEXT NOT NULL,
@@ -49,4 +49,4 @@ ALTER TABLE `CourseSchedule` ADD CONSTRAINT `CourseSchedule_courseId_fkey` FOREI
 ALTER TABLE `JobPosition` ADD CONSTRAINT `JobPosition_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `Course`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `JobPosition` ADD CONSTRAINT `JobPosition_facultyId_fkey` FOREIGN KEY (`facultyId`) REFERENCES `Faculty`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `JobPosition` ADD CONSTRAINT `JobPosition_employerId_fkey` FOREIGN KEY (`employerId`) REFERENCES `Employer`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

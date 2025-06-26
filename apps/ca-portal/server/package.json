@@ -10,6 +10,7 @@
     "dev": "nodemon main.js",
     "prisma:migrate": "cd ./server/database/prisma && npx prisma migrate dev",
     "prisma:generate": "cd ./server/database/prisma && npx prisma generate",
+    "prisma:reset": "cd ./server/database/prisma && npx prisma migrate reset",
     "db:setup": "node server/server/database/setup_db.js"
   },
   "keywords": [],

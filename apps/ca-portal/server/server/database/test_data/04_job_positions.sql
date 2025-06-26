@@ -1,4 +1,4 @@
-INSERT INTO `JobPosition` (`courseId`, `facultyId`, `maxCAs`, `isOpen`) VALUES
+INSERT INTO `JobPosition` (`courseId`, `employerId`, `maxCAs`, `isOpen`) VALUES
 ('SWEN-261-01', 1, 2, 1),
 ('CSCI-261-01', 1, 2, 1),
 ('CSCI-261-02', 2, 1, 1),
