@@ -8,6 +8,7 @@
 const { exec } = require('child_process');
 const util = require('util');
 const path = require('path');
+const os = require('os');
 const fs = require('fs').promises;
 
 const execPromise = util.promisify(exec);
@@ -60,8 +61,16 @@ async function dropDatabase() {
         throw error;
     }
 
-    const dropCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" -e 'DROP DATABASE IF EXISTS \`${dbConfig.dbName}\`;'`;
+    const sqlStatement = `DROP DATABASE IF EXISTS \`${dbConfig.dbName}\`;`;
 
+    let dropCommand;
+
+    if (os.platform() === 'win32') {
+        dropCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" -e "${sqlStatement}"`;
+    } else {
+        const escapedPassword = dbConfig.password.replace(/'/g, "'\\''");
+        dropCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p'${escapedPassword}' -e '${sqlStatement}'`;
+    }
     try {
         const { stdout, stderr } = await execPromise(dropCommand);
         if (stdout) console.log(stdout);
@@ -93,7 +102,16 @@ async function createDatabase() {
         throw error;
     }
 
-    const createCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" -e 'CREATE DATABASE IF NOT EXISTS \`${dbConfig.dbName}\`;'`;
+    const sqlStatement = `CREATE DATABASE IF NOT EXISTS \`${dbConfig.dbName}\`;`;
+
+    let createCommand;
+
+    if (os.platform() === 'win32') {
+        createCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" -e "${sqlStatement}"`;
+    } else {
+        const escapedPassword = dbConfig.password.replace(/'/g, "'\\''");
+        createCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p'${escapedPassword}' -e '${sqlStatement}'`;
+    }
 
     try {
         const { stdout, stderr } = await execPromise(createCommand);

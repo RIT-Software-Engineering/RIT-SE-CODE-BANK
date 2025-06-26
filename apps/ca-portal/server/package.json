@@ -10,6 +10,7 @@
     "dev": "nodemon main.js",
     "prisma:migrate": "cd ./server/database/prisma && npx prisma migrate dev",
     "prisma:generate": "cd ./server/database/prisma && npx prisma generate",
+    "prisma:reset": "cd ./server/database/prisma && npx prisma migrate reset",
     "db:setup": "node server/server/database/setup_db.js"
   },
   "keywords": [],
@@ -18,9 +19,11 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.10.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "nodemon": "^3.1.10",
+    "os": "^0.1.2",
     "prisma": "^6.10.1"
   }
 }

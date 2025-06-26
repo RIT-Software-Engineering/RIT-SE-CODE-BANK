@@ -4,7 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const path = require('path');
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly or required before main.js
 if (!process.env.DATABASE_URL) {
-    require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
+    require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 }
 
 // Initialize Prisma Client
@@ -16,7 +16,7 @@ const prisma = new PrismaClient();
  */
 async function getOpenPositionsWithDetails() {
     try {
-        const openPositions = await prisma.position.findMany({
+        const openPositions = await prisma.jobPosition.findMany({
             where: {
                 isOpen: true, // Filter for positions where 'isOpen' is true (1 in DB)
             },
@@ -24,6 +24,7 @@ async function getOpenPositionsWithDetails() {
                 course: {
                     select: {
                         name: true,
+                        description: true,
                         sectionNumber: true,
                         location: true,
                         schedules: {
