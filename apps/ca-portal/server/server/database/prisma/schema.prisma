@@ -24,7 +24,7 @@ model Course {
 
   //Relationships
   schedules CourseSchedule[]
-  positions Position[]
+  positions JobPosition[]
 }
 
 
@@ -40,7 +40,7 @@ model CourseSchedule {
   course Course @relation(fields: [courseId], references: [id]) // references Course.id
 }
 
-model Position {
+model JobPosition {
   //Fields
   id  Int @id @default(autoincrement())
   courseId  String @db.VarChar(255)
@@ -62,5 +62,5 @@ model Faculty {
   isAdmin Boolean @db.TinyInt
 
   //Relationships
-  positions Position[]
+  positions JobPosition[]
 }

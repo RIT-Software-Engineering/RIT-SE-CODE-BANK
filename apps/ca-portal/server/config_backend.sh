@@ -4,7 +4,7 @@
 DB_ROOT_PASSWORD="newPassword"                     # !! IMPORTANT: Use the actual password you set in your docker run command !!
 DB_NAME="ca_portal"                                # !! IMPORTANT: The name of the database you want to create
 DB_HOST="127.0.0.1"                                # Host where MariaDB is running (usually localhost or 127.0.0.1 for Docker)
-DB_PORT="3306"                                     # Port MariaDB is listening on (host port from -p flag, usually 3306)
+DB_PORT="8000"                                     # Port MariaDB is listening on (host port from -p flag)
 
 # Application Environment Variables to add to .env
 APP_BASE_URL="http://localhost:3300"               # Base URL for your application (Frontend to Backend)

@@ -14,7 +14,7 @@
 1.  Run the following command to install a new Docker image container for a MariaDB instance.
     * **Important:** Remember to change the `project-name-maria-db-instance` and `newPassword` values to your desired settings:
         ```bash
-        docker run --name project-name-maria-db-instance -e MARIADB_ROOT_PASSWORD=newPassword -p 3306:3306 -d mariadb:latest
+        docker run --name project-name-maria-db-instance -e MARIADB_ROOT_PASSWORD=newPassword -p 8000:3306 -d mariadb:latest
         ```
 
 2.  Navigate to the `config_backend.sh` file and update the `DB_ROOT_PASSWORD` variable with the password you set in the previous step (e.g., `newPassword`).
