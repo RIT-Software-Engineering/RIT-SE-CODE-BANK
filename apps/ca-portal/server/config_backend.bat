@@ -5,11 +5,11 @@ REM --- Configuration Variables (MODIFY THESE) ---
 SET "DB_ROOT_PASSWORD=newPassword"
 SET "DB_NAME=ca_portal"
 SET "DB_HOST=127.0.0.1"
-SET "DB_PORT=3306"
+SET "DB_PORT=8000"
 
-SET "APP_BASE_URL=http://localhost:3000"
+SET "APP_BASE_URL=http://localhost:3300"
 SET "APP_NODE_ENV=development"
-SET "APP_SERVER_PORT=3000"
+SET "APP_SERVER_PORT=3300"
 
 SET "ENV_FILE=.env"
 REM --- End Configuration ---

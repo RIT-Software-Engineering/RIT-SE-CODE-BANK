@@ -17,9 +17,13 @@
         docker run --name project-name-maria-db-instance -e MARIADB_ROOT_PASSWORD=newPassword -p 8000:3306 -d mariadb:latest
         ```
 
-2.  Navigate to the `config_backend.sh` file and update the `DB_ROOT_PASSWORD` variable with the password you set in the previous step (e.g., `newPassword`).
+2.  Navigate to the `config_backend` files and update the `DB_ROOT_PASSWORD` variable with the password you set in the previous step (e.g., `newPassword`). You can change some other attributes depending on the situation (e.g. changing port numbers if needed).
+    * For Windows, navigate to specifically the `config_backend.bat` file and make the changes neccessary there. Since it's a `.bat` file you don't need to set permissions.
+    * For MacOS/Linux, navigate to specifically the `config_backend.sh` file and make the changes neccessary there. After you made the changes, set execute permissions for the script by running `chmod +x config_backend.sh`.
 
-3.  Set execute permissions for the script by running `chmod +x config_backend.sh`. Then, execute the script itself using `./config_backend.sh`. This will create an `.env` file with default permissions suitable for a development server.
+3. Then, execute the script itself. This will create an `.env` file with default permissions suitable for a development server.
+    * For Windows, it's `./config_backend.bat`
+    * For MacOS/Linux, it's `./config_backend.sh`
 
 ### If you need to set up a Prisma instance and/or add new database tables:
 
