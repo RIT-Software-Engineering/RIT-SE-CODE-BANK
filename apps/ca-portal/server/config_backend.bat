@@ -11,6 +11,10 @@ SET "APP_BASE_URL=http://localhost:3300"
 SET "APP_NODE_ENV=development"
 SET "APP_SERVER_PORT=3300"
 
+SET "SLACK_CLIENT_ID=8356401273568.9110035154276"
+SET "SLACK_CLIENT_SECRET=03750f2fb26d6cc604010e4d306dafdc"
+SET "SLACK_REDIRECT_URI=https://localhost:3300/slack/oauth_redirect"
+
 SET "ENV_FILE=.env"
 REM --- End Configuration ---
 
@@ -51,6 +55,9 @@ CALL :update_env_var "BASE_URL" "%APP_BASE_URL%"
 CALL :update_env_var "NODE_ENV" "%APP_NODE_ENV%"
 CALL :update_env_var "PORT" "%APP_SERVER_PORT%"
 
+CALL :update_env_var "SLACK_CLIENT_ID" "%SLACK_CLIENT_ID%"
+CALL :update_env_var "SLACK_CLIENT_SECRET" "%SLACK_CLIENT_SECRET%"
+CALL :update_env_var "SLACK_REDIRECT_URI" "%SLACK_REDIRECT_URI%"
 
 ECHO.
 ECHO --- All Environment Variables Setup Complete ---

@@ -37,8 +37,7 @@ async function initializeDatabase() {
     });
 
     // Mount all routes from your routing index
-    // All routes defined in db_routes.js will be available under /api/db/
-    app.use('/api', apiRoutes); // Example: /api/db/open-positions
+    app.use('/api', apiRoutes);
 
     // --- Start Server ---
     app.listen(port, () => {
