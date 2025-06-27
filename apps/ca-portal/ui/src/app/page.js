@@ -1,43 +1,42 @@
 // src/app/page.js (home page)
 "use client";
-import { useState } from "react";
+
+// Note: I'm assuming LandingDashboard is your dynamic dashboard component
 import Login from "@/components/Login";
-import Link from "next/link";
-import SelectionCard from "@/components/SelectionCard";
+import LandingDashboard from "@/components/LandingDashboard"; 
+import { useAuth } from "@/contexts/AuthContext";
+
 
 export default function Home() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { currentUser, setCurrentUser } = useAuth();
+
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+  };
 
   return (
     <>
-      {!isLoggedIn && (
-        <Login isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+      {/* 2. Check for the `currentUser` object to see if user is logged in */}
+      {!currentUser && (
+        <Login onLoginSuccess={handleLoginSuccess} />
       )}
-      {isLoggedIn && (
+
+      {currentUser && (
         <>
-          <div className="bg-white h-screen p-10 pl-10">
-            <div>
-              <h1 className="text-3xl ">Personal</h1>
-              <div className="flex flex-row items-start">
-                <SelectionCard text="View Time Card" link="/Timecard" />
-                <SelectionCard text="Kronos" link="" />
-                <SelectionCard text="My Courses" link="" />
-                <SelectionCard text="Send Message" link="/Messaging" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-3xl">Explore</h1>
-              <div className="flex justify-center">
-                <Link href={"/Positions"} className="w-full flex justify-center">
-                <button
-                  className="bg-white border-2 border-rit-light-gray min-h-44 rounded-xl p-6 m-8 flex flex-col items-center justify-center w-4/5 shadow hover:bg-[#fff4e6] hover:scale-105  transition duration-200 ease-in-out hover:shadow-lg cursor-pointer"
-                >
-                  <span className="text-xl font-semibold text-rit-orange">Find Positions</span>
-                </button>
-                </Link>
-              </div>
-            </div>
-          </div>
+          {/* Optional: A simple logout button for testing */}
+          <button
+            onClick={handleLogout}
+            className="fixed top-20 right-4 bg-red-500 text-white py-2 px-4 rounded-lg shadow-md z-50 hover:bg-red-600"
+          >
+            Logout
+          </button>
+          
+          {/* 3. Pass the role STRING to the dashboard component */}
+          <LandingDashboard userRole={currentUser.role} />
         </>
       )}
     </>
