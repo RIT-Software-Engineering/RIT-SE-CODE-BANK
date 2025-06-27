@@ -1,0 +1,9 @@
+INSERT INTO `JobPosition` (`id`, `courseCode`, `sectionNumber`, `SemesterCode`, `facultyUID`, `maxCAs`, `jobPositionStatus`, `location`) VALUES
+('2241-SWEN-344-1', 'SWEN-344', 1, '2241', 200, 1, 'OPEN', 'ONLINE'),
+('2241-SWEN-344-2', 'SWEN-344', 2, '2241', 250, 2, 'OPEN', 'GOL-1500'),
+('2241-SWEN-344-3', 'SWEN-344', 3, '2241', 200, 1, 'ONHOLD', 'GOL-1520'),
+('2241-MATH-123-1', 'MATH-123', 1, '2241', 300, 1, 'OPEN', 'GOS-2400'),
+('2241-SWEN-261-1', 'SWEN-261', 1, '2241', 200, 1, 'OPEN', 'GOL-1620'),
+('2241-SWEN-261-2', 'SWEN-261', 2, '2241', 250, 1, 'CLOSED', 'GOL-1620'),
+('2241-SWEN-561-1', 'SWEN-561', 1, '2241', 250, 2, 'OPEN', 'GOL-1620'),
+('2241-SWEN-561-2', 'SWEN-561', 2, '2241', 250, 1, 'FILLED', 'GOL-1620');

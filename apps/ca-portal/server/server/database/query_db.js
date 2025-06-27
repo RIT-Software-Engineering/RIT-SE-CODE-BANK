@@ -18,27 +18,24 @@ async function getOpenPositionsWithDetails() {
     try {
         const openPositions = await prisma.jobPosition.findMany({
             where: {
-                isOpen: true, // Filter for positions where 'isOpen' is true (1 in DB)
+                jobPositionStatus: 'OPEN',
             },
             include: {
                 course: {
                     select: {
                         name: true,
                         description: true,
-                        sectionNumber: true,
-                        location: true,
-                        schedules: {
-                            select: {
-                                id: true,
-                                dayOfWeek: true,
-                                startTime: true,
-                                endTime: true,
-                            },
-                        },
+                    },
+                },
+                jobSchedules: {
+                    select: {
+                        dayOfWeek: true,
+                        startTime: true,
+                        endTime: true,
                     },
                 },
             },
-            orderBy: { // Order positions (e.g., by course name)
+            orderBy: {
                 course: {
                     name: 'asc',
                 },
