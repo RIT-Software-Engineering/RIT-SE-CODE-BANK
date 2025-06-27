@@ -2,7 +2,7 @@
 
 const router = require('express').Router();
 // Import the specific query function from query_db.js
-const { getOpenPositionsWithDetails } = require('../database/query_db');
+const { getOpenPositionsWithDetails, getAllUsers } = require('../database/query_db');
 
 /**
  * Route to get all open positions with their associated course and course schedule info.
@@ -15,6 +15,16 @@ router.get('/open-positions', async (req, res) => {
   } catch (error) {
     console.error('Error in /open-positions route:', error);
     res.status(500).json({ error: 'Failed to retrieve open positions.' });
+  }
+});
+
+router.get('/users', async (req, res) => {
+  try {
+    const users = await getAllUsers();
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error in /users route:', error);
+    res.status(500).json({ error: 'Failed to retrieve users.' });
   }
 });
 

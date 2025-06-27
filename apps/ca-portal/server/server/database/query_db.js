@@ -18,27 +18,24 @@ async function getOpenPositionsWithDetails() {
     try {
         const openPositions = await prisma.jobPosition.findMany({
             where: {
-                isOpen: true, // Filter for positions where 'isOpen' is true (1 in DB)
+                jobPositionStatus: 'OPEN',
             },
             include: {
                 course: {
                     select: {
                         name: true,
                         description: true,
-                        sectionNumber: true,
-                        location: true,
-                        schedules: {
-                            select: {
-                                id: true,
-                                dayOfWeek: true,
-                                startTime: true,
-                                endTime: true,
-                            },
-                        },
+                    },
+                },
+                jobSchedules: {
+                    select: {
+                        dayOfWeek: true,
+                        startTime: true,
+                        endTime: true,
                     },
                 },
             },
-            orderBy: { // Order positions (e.g., by course name)
+            orderBy: {
                 course: {
                     name: 'asc',
                 },
@@ -51,9 +48,21 @@ async function getOpenPositionsWithDetails() {
     }
 }
 
+//temporary function to retireve all users stored in the database
+async function getAllUsers() {
+    try {
+        const users = await prisma.user.findMany();
+        return users;
+    } catch (error) {
+        console.error("Error retrieving users:", error);
+        throw error;
+    }
+}
+
 
 module.exports = {
     getOpenPositionsWithDetails,
+    getAllUsers
 };
 
 // Add a process exit handler to disconnect Prisma Client gracefully

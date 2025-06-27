@@ -54,17 +54,17 @@ export default function Positions() {
                                 {/* Uses course common name eg. Project Management */}
                                 <h2 className="text-xl font-semibold">{position.course.name}</h2>
                                 {/* Uses course common code eg. SWEN 261 */}
-                                <p className="text-gray-700">{position.courseId}</p>
+                                <p className="text-gray-700">{position.id}</p>
                                 {/*  start and end times */}
                                 <div className="mt-2">
-                                {position.course.schedules.map((slot, i) => (
+                                {position.jobSchedules.map((slot, i) => (
                                     <p key={i} className="text-gray-700">
                                     <span className="font-medium">{slot.dayOfWeek}:</span> {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                 ))}
                                 </div>
                                 {/* You can add more details here if needed */}
-                                <p className="text-gray-600">Location: {position.course.location}</p>
+                                <p className="text-gray-600">Location: {position.location}</p>
                                 <p className="text-gray-500">{position.course.description}</p>
                                 {/* Add a button to apply for the position */}
                                 <button className="bg-blue-500 text-white p-2 rounded mt-2 hover:bg-blue-600">Apply Now</button>
