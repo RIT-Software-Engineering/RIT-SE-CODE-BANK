@@ -2,14 +2,14 @@
 
 // export const ROLES = {
 //   STUDENT: 'STUDENT',
-//   CA: 'CA'
+//   EMPLOYEE: 'EMPLOYEE'
 // };
 
 export const ROLES = {
   STUDENT: "STUDENT",
-  CA: "CA",
+  EMPLOYEE: "EMPLOYEE",
   ADMIN: "ADMIN",
-  FACULTY: "FACULTY",
+  EMPLOYER: "EMPLOYER",
 }
 
 // Used to map roles options in the Login component
@@ -22,40 +22,44 @@ export const DASHBOARD_OPTIONS = [
     category: 'Personal',
     text: 'Kronos',
     link: '',
-    roles: [ROLES.CA]
+    roles: [ROLES.EMPLOYEE, ROLES.ADMIN]
   },
   {
     category: 'Personal',
     text: 'My Positions',
     link: '',
-    roles: [ROLES.CA]
+    roles: [ROLES.EMPLOYEE, ROLES.ADMIN]
   },
   {
     category: 'Personal',
     text: 'Send Message',
     link: '/Messaging',
-    roles: [ROLES.STUDENT]
+    roles: [ROLES.STUDENT,ROLES.ADMIN]
   },
-  // --- CA-SPECIFIC PERSONAL OPTIONS ---
+  // --- EMPLOYEE-SPECIFIC PERSONAL OPTIONS ---
   {
     category: 'Personal',
     text: 'Timecard',
     link: '/Timecard',
-    roles: [ROLES.CA]
+    roles: [ROLES.EMPLOYEE, ROLES.ADMIN]
   },
     {
     category: 'Personal',
     text: 'Send Message',
     link: '/Users',
-    roles: [ROLES.CA]
+    roles: [ROLES.EMPLOYEE]
   },
-
-  // --- EXPLORE SECTION ---
+  // --- ADMIN-SPECIFIC PERSONAL OPTIONS ---
   {
-    category: 'Explore',
-    text: 'Find Positions',
-    link: '/Positions', 
-    isLarge: true, // Custom flag to render the big button style
-    roles: [ROLES.STUDENT, ROLES.CA]
-  }
+    category: 'Personal',
+    text: 'Manage Users',
+    link: '/Users',
+    roles: [ROLES.ADMIN]
+  },
+  {
+    category: 'Personal',
+    text: 'Manage Positions',
+    link: '/Positions',
+    roles: [ROLES.ADMIN]
+  },
 ];

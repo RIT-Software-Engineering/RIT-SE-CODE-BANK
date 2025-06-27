@@ -2,6 +2,7 @@ import Link from "next/link";
 import SelectionCard from "@/components/SelectionCard";
 import { DASHBOARD_OPTIONS, ROLES } from "@/configuration/dashboard.config";
 
+
 export default function LandingDashboard({ userRole }) {
   // filter options based on user role
   const PersonalOptions = DASHBOARD_OPTIONS.filter(
@@ -11,10 +12,10 @@ export default function LandingDashboard({ userRole }) {
 
   return (
     <>
-      <div className="bg-white h-screen p-10 pl-10">
+      <div className="bg-white h-screen p-10 pl-10 mb-10">
         <div>
           <h1 className="text-3xl ">Personal</h1>
-          <div className="flex flex-row items-start">
+          <div className="grid grid-cols-4">
             {PersonalOptions.map((option, index) => (
                 <SelectionCard text={option.text} link={option.link} key={index}/>
             ))}

@@ -1,20 +1,42 @@
 "use client";
 import { useState } from "react";
-import { ROLES_ARRAY } from "@/configuration/dashboard.config";
+
+const exampleUsers = [
+  {
+    "uid": 100,
+    "name": "Alice Admin",
+    "email": "admin@example.com",
+    "pronouns": "they/them",
+    "role": "ADMIN"
+  },
+  {
+    "uid": 200,
+    "name": "Dr. Bob Brown",
+    "email": "faculty1@example.com",
+    "pronouns": "he/him",
+    "role": "EMPLOYER"
+  },
+  {
+    "uid": 301,
+    "name": "Charlie Coder",
+    "email": "student1@example.com",
+    "pronouns": "he/him",
+    "role": "EMPLOYEE"
+  },
+    {
+    "uid": 303,
+    "name": "Evan Engineer",
+    "email": "student3@example.com",
+    "pronouns": "they/them",
+    "role": "STUDENT"
+  },
+]
+
 
 export default function Login({ onLoginSuccess = () => {} }) {
-  function handleSignIn() {
-    const roleToSend = selectedRole;
-
-    onLoginSuccess(roleToSend);
-
-    setIsLoggedIn(true);
-    console.log(`${selectedRole} signed in`);
-  }
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   // Sets default role to the first in the array 
-  const [selectedRole, setSelectedRole] = useState(ROLES_ARRAY[0]);
+  const [selectedUser, setSelectedUser] = useState(exampleUsers[0]);
+
   return (
     <>
       <div className="bg-white">
@@ -25,30 +47,33 @@ export default function Login({ onLoginSuccess = () => {} }) {
             <br />
             Sign in with your RIT Account
           </div>
-          <fieldset className="flex gap-x-6">
-            {ROLES_ARRAY.map((role) => (
-              <div className="flex items-center" key={role}>
-                <input
-                  type="radio"
-                  id={`role_${role}`}
-                  name="role_selection"
-                  value={role}
-                  checked={selectedRole === role}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="h-4 w-4 text-rit-orange focus:ring-rit-orange border-gray-300"
-                />
-                <label
-                  htmlFor={`role_${role}`}
-                  className="ml-3 block text-sm font-medium text-gray-700"
-                >
-                  {role}
-                </label>
-              </div>
-            ))}
-          </fieldset>
+          <div className="mt-6">
+            <label htmlFor="user_select" className="block text-sm font-medium text-gray-700 mb-2">
+              Select User
+            </label>
+            <select
+              id="user_select"
+              value={selectedUser.uid}
+              onChange={e => {
+                const user = exampleUsers.find(u => u.uid === Number(e.target.value));
+                setSelectedUser(user);
+                console.log(`Selected user: ${user.name} (${user.role})`);
+              }}
+              className="block w-64 rounded-md border-gray-300 shadow-sm focus:border-rit-orange focus:ring focus:ring-rit-orange focus:ring-opacity-50 p-2"
+            >
+              {exampleUsers.map(user => (
+                <option key={user.uid} value={user.uid}>
+                  {user.name} ({user.role})
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             className="bg-black text-white w-40 rounded-lg p-3 text-lg mt-10 hover:bg-gray-800"
-            onClick={handleSignIn}
+            onClick={() => {
+              onLoginSuccess(selectedUser);
+              console.log(`${selectedUser.role} signed in`);
+            }}
           >
             Sign In
           </button>
