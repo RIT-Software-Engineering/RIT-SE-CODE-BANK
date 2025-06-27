@@ -13,54 +13,184 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-model Course {
+model User {
   //Fields
-  id  String  @id @db.VarChar(255) // courseCode-sectionNumber
-  name  String @db.Text
-  description String @db.Text
-  sectionNumber Int @db.Int
-  location  String  @db.Text
+  uid Int @id
+  name String @db.Text
+  email String @db.Text
+  pronouns String @db.Text
+  role Role @default(GUEST)
 
   //Relationships
-  schedules CourseSchedule[]
-  positions JobPosition[]
+  student  Student?
+  employer Employer?
 }
 
-
-model CourseSchedule {
-  //Fields
-  id  Int @id @default(autoincrement())
-  courseId  String @db.VarChar(255)
-  dayOfWeek String @db.Text
-  startTime DateTime @db.Time
-  endTime DateTime @db.Time
-
-  //Relationships
-  course Course @relation(fields: [courseId], references: [id]) // references Course.id
+enum Role {
+  GUEST
+  STUDENT
+  EMPLOYEE
+  EMPLOYER
+  ADMIN
 }
 
-model JobPosition {
+model Student {
   //Fields
-  id  Int @id @default(autoincrement())
-  courseId  String @db.VarChar(255)
-  employerId Int @db.Int
-  maxCAs  Int  @db.Int
-  isOpen  Boolean  @db.TinyInt
+  uid Int @id
+  major String @db.Text
+  graduateStatus GraduateStatus @default(UNDERGRADUATE)
+  wasPriorEmployee Boolean @db.TinyInt
+  resumeURL String? @db.Text
 
   //Relationships
-  course Course @relation(fields: [courseId], references: [id]) // references Course.id
-  employer Employer @relation(fields: [employerId], references: [id]) // references Employer.id
+  user User @relation(fields: [uid], references: [uid])
+  courseHistory CourseHistory[]
+  jobPositionHistory JobPositionHistory[]
+}
+
+enum GraduateStatus{
+  UNDERGRADUATE
+  GRADUATE
 }
 
 model Employer {
   //Fields
-  id  Int @id @default(autoincrement())
-  name  String @db.Text
-  department  String @db.Text
-  email String @db.Text
-  isAdmin Boolean @db.TinyInt
+  uid Int @id
+  department String @db.Text
 
   //Relationships
-  positions JobPosition[]
+  user User @relation(fields: [uid], references: [uid])
+  jobPostions JobPosition[]
+}
+
+model Employee {
+  //Fields
+  id Int @id //employee id that RIT gives to you when you start working under a new position (like a Course Assistant)
+  employeeStatus EmployeeStatus @default(RETIRED)
+
+  //Relationships
+  jobPositionHistory JobPositionHistory[]
+}
+
+enum EmployeeStatus{
+  ACTIVE
+  TERMINATED
+  RETIRED
+}
+
+model JobPositionHistory{
+  //Fields
+  id Int @id @default(autoincrement())
+  studentUID Int
+  jobPositionId String
+  employeeId Int?
+  jobPositionHistoryStatus JobPositionHistoryStatus @default(APPLIED)
+
+  // Relations
+  student          Student          @relation(fields: [studentUID], references: [uid])
+  jobPosition      JobPosition      @relation(fields: [jobPositionId], references: [id])
+  employee         Employee?        @relation(fields: [employeeId], references: [id])
+  timeLogHistory   TimeLogHistory[]
+}
+
+enum JobPositionHistoryStatus{
+  //these roles are for when students are applying to the job positions
+  APPLIED
+  SELECTED
+  ONHOLD
+  REJECTED
+
+  //these roles are for when employees are currently working within a job position
+  HIRED
+  TERMINATED // When the student is fired
+  CLOSED // When the job position is no longer available (e.g., end of semester)
+}
+
+//This table to storing specifically past courses a Student has taken before or has been an employee in the past
+model CourseHistory{
+  //Fields
+  id Int @id @default(autoincrement())
+  studentUID Int
+  courseCode String @db.VarChar(8)
+  grade String @db.VarChar(2) //Letter Grade
+  wasPriorEmployee Boolean @db.TinyInt
+
+  // Relations
+  student Student @relation(fields: [studentUID], references: [uid])
+  course  Course  @relation(fields: [courseCode], references: [courseCode])
+}
+
+//This table is a generic table of all of the course that RIT has to offer
+model Course{
+  //Fields
+  courseCode String @id @db.VarChar(8)
+  name String @db.Text
+  description String @db.Text
+
+  // Relations
+  jobPositions  JobPosition[]
+  courseHistory CourseHistory[]
+}
+
+
+model JobPosition{
+  //Fields
+  id String @id // For for id here is SemesterCode-CourseCode-SectionNumber
+  courseCode String @db.VarChar(8)
+  sectionNumber Int
+  SemesterCode Int
+  facultyUID Int
+  maxCAs  Int
+  jobPositionStatus JobPositionStatus @default(OPEN)
+  location String @db.Text
+
+  // Relations
+  course             Course               @relation(fields: [courseCode], references: [courseCode])
+  faculty            Employer             @relation(fields: [facultyUID], references: [uid])
+  jobSchedules       JobSchedule[]
+  jobPositionHistory JobPositionHistory[]
+}
+
+enum JobPositionStatus{
+  OPEN
+  FILLED
+  ONHOLD
+  CLOSED
+}
+
+model JobSchedule{
+  //Fields
+  id Int @id @default(autoincrement())
+  jobPositionId String
+  dayOfWeek String @db.Text
+  startTime DateTime @db.Time
+  endTime DateTime  @db.Time
+
+  // Relations
+  jobPosition JobPosition @relation(fields: [jobPositionId], references: [id])
+}
+
+model TimeLogHistory{
+  //Fields
+  id Int @id @default(autoincrement())
+  timeLogId String
+  jobPositionHistoryId Int
+
+  // Relations
+  jobPositionHistory JobPositionHistory @relation(fields: [jobPositionHistoryId], references: [id])
+  timeLog            TimeLog            @relation(fields: [timeLogId], references: [id])
+
+  @@unique([jobPositionHistoryId, timeLogId])
+}
+
+model TimeLog{
+  //Fields
+  id String @id //startdatetime-enddatetime-EmployeeId
+  startDateTime DateTime
+  endDateTime DateTime?
+  notes String @db.Text
+  duration Decimal
+
+  // Relations
+  timeLogHistory TimeLogHistory[]
 }
