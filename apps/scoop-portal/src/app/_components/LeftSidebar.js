@@ -8,7 +8,7 @@ import { useState } from "react";
  */
 export default function LeftSidebar() {
     return (
-        <div>
+        <div id="left-sidenav">
             Left Sidebar
             <ul>
                 <li>Home</li>
