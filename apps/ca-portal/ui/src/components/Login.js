@@ -1,42 +1,31 @@
 "use client";
-import { useState } from "react";
-
-const exampleUsers = [
-  {
-    "uid": 100,
-    "name": "Alice Admin",
-    "email": "admin@example.com",
-    "pronouns": "they/them",
-    "role": "ADMIN"
-  },
-  {
-    "uid": 200,
-    "name": "Dr. Bob Brown",
-    "email": "faculty1@example.com",
-    "pronouns": "he/him",
-    "role": "EMPLOYER"
-  },
-  {
-    "uid": 301,
-    "name": "Charlie Coder",
-    "email": "student1@example.com",
-    "pronouns": "he/him",
-    "role": "EMPLOYEE"
-  },
-    {
-    "uid": 303,
-    "name": "Evan Engineer",
-    "email": "student3@example.com",
-    "pronouns": "they/them",
-    "role": "STUDENT"
-  },
-]
-
+import React, { useState, useEffect } from "react";
+import { getAllUsers } from "../services/api"; // Adjust the path as needed
 
 export default function Login({ onLoginSuccess = () => {} }) {
-  // Sets default role to the first in the array 
-  const [selectedUser, setSelectedUser] = useState(exampleUsers[0]);
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
 
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const data = await getAllUsers(); // Call the service function
+        setUsers(data);
+        if (data && data.length > 0) {
+          setSelectedUser(data[0]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch open Users:", err);
+        setError(err.message); // Store the error message
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchUsers();
+  }, []);
   return (
     <>
       <div className="bg-white">
@@ -53,15 +42,15 @@ export default function Login({ onLoginSuccess = () => {} }) {
             </label>
             <select
               id="user_select"
-              value={selectedUser.uid}
+              value={selectedUser ? selectedUser.uid : ""}
               onChange={e => {
-                const user = exampleUsers.find(u => u.uid === Number(e.target.value));
+                const user = users.find(u => u.uid === Number(e.target.value));
                 setSelectedUser(user);
                 console.log(`Selected user: ${user.name} (${user.role})`);
               }}
               className="block w-64 rounded-md border-gray-300 shadow-sm focus:border-rit-orange focus:ring focus:ring-rit-orange focus:ring-opacity-50 p-2"
             >
-              {exampleUsers.map(user => (
+              {users.map(user => (
                 <option key={user.uid} value={user.uid}>
                   {user.name} ({user.role})
                 </option>
