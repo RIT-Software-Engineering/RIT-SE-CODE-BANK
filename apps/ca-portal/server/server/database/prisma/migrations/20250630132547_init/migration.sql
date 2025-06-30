@@ -12,6 +12,7 @@ CREATE TABLE `User` (
 -- CreateTable
 CREATE TABLE `Student` (
     `uid` INTEGER NOT NULL,
+    `year` INTEGER NOT NULL,
     `major` TEXT NOT NULL,
     `graduateStatus` ENUM('UNDERGRADUATE', 'GRADUATE') NOT NULL DEFAULT 'UNDERGRADUATE',
     `wasPriorEmployee` BOOLEAN NOT NULL,
