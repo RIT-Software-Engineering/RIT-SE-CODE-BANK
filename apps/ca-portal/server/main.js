@@ -4,12 +4,19 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT;
 const cors = require('cors');
+const https = require('https');
+const fs = require('fs');  
 
 const setupDatabase = require('./server/database/setup_db');
 const apiRoutes = require('./server/routing/index');
 
 app.use(cors());
 app.use(express.json()); // Middleware for JSON body parsing
+
+const httpsOptions = {
+    key: fs.readFileSync('key.pem'),
+    cert: fs.readFileSync('cert.pem')
+};
 
 async function initializeDatabase() {
     console.log(`PORT variable is currently: ${port}`);
@@ -40,7 +47,7 @@ async function initializeDatabase() {
     app.use('/api', apiRoutes);
 
     // --- Start Server ---
-    app.listen(port, () => {
+    https.createServer(httpsOptions, app).listen(port, () => {
         console.log(`Server listening on ${process.env.BASE_URL}`);
         console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
