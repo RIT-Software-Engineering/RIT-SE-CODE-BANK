@@ -1,36 +1,40 @@
-function Criterion({ criterion, size }) {
+// function Cell({ cell }) {
+
+// }
+
+function Row({ row, size }) {
     return (
-        <tr>
-            <th>
-                <strong>{criterion.name + " (" + criterion.points + " points)"}</strong><br></br>
-                {criterion.description}
+        <tr className="border">
+            <th className="border p-1 bg-primary">
+                <strong>{row.name + (row.points ? " (" + row.points + " points)" : "")}</strong><br></br>
+                {row.description}
             </th>
-            {criterion.levels.map((level, index) => (
-                <td key={index}>
-                    <strong>{level.name + " (" + level.points + " points)"}</strong><br></br>
-                    {level.description}
+            {row.levels.map((cell, index) => (
+                <td className="border p-1" key={index}>
+                    <strong>{cell.name + (cell.points ? " (" + cell.points + " points)" : "")}</strong><br></br>
+                    {cell.description}
                 </td>
             ))}
-            {Array.from({ length: size - criterion.levels.length }, (_, i) => (
-                <td key={i}>&nbsp;</td>
+            {Array.from({ length: size - row.levels.length }, (_, i) => (
+                <td className="border p-1" key={i}>&nbsp;</td>
             ))}
         </tr>
     );
 }
 
-function CriteriaTable({ criteria }) {
-    let maxLevels = 0;
-    criteria.forEach(criterion => {
-        if (criterion.levels.length > maxLevels) {
-            maxLevels = criterion.levels.length;
+function Table({ rows }) {
+    let maxCells = 0;
+    rows.forEach(row => {
+        if (row.levels.length > maxCells) {
+            maxCells = row.levels.length;
         }
     });
 
     return (
-        <table className="criteria-list" style={{ borderCollapse: 'collapse' }}>
+        <table className="border border-collapse">
             <tbody>
-                {criteria.map((criterion, index) => (
-                    <Criterion key={index} criterion={criterion} size={maxLevels} />
+                {rows.map((row, index) => (
+                    <Row key={index} row={row} size={maxCells} />
                 ))}
             </tbody>
         </table>
@@ -39,13 +43,13 @@ function CriteriaTable({ criteria }) {
 
 export default function Rubric({ data }) {
     return (
-        <>
-            <h1>{data.title}</h1>
+        <div className="flex flex-col gap-2 w-4/5 mx-auto mt-4 text-center">
+            <h1 className="text-4xl font-bold">{data.title}</h1>
             <p>{data.description}</p>
-            <h2>Breakdown</h2>
-            <div className="table-container">
-                <CriteriaTable criteria={data.criteria} />
+            <h2 className="text-2xl font-semibold">Breakdown</h2>
+            <div>
+                <Table rows={data.criteria} />
             </div>
-        </>
+        </div>
     )
 }
