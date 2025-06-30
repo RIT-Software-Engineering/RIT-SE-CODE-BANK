@@ -7,4 +7,5 @@ INSERT INTO `User` (`uid`, `name`, `email`, `pronouns`, `role`) VALUES
 (302, 'Denise Designer', 'student2@example.com', 'she/her', 'EMPLOYEE'),
 (303, 'Evan Engineer', 'student3@example.com', 'they/them', 'STUDENT'),
 (304, 'Tyler Tester', 'student4@example.com', 'he/him', 'EMPLOYEE'),
-(305, 'Sally Student', 'student5@example.com', 'they/them', 'STUDENT');
+(305, 'Sally Student', 'student5@example.com', 'they/them', 'STUDENT'),
+(306, 'Liang Chu', 'lc2410@g.rit.edu', 'he/him', 'STUDENT');

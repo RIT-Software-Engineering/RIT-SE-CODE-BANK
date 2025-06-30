@@ -18,8 +18,6 @@ async function handleApiResponse(response) {
  * @returns {Promise<Array>} A promise that resolves to an array of open positions.
  */
 export async function getOpenPositions() {
-  console.log("Base API URL:", BASE_API_URL);
-  console.log("Database API Extension:", DATABASE_API_EXTENSION);
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error("Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file.");
   }

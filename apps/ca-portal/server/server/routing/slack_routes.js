@@ -5,7 +5,7 @@ const router = require('express').Router();
  * Route 1: Get OAuth URL
  * The frontend will call this to get the dynamic Slack authorization URL.
  */
-router.get('/api/oauth-url', (req, res) => {
+router.get('/oauth-url', (req, res) => {
     const clientId = process.env.SLACK_CLIENT_ID;
     const redirectUri = encodeURIComponent(process.env.SLACK_REDIRECT_URI);
     const scope = encodeURIComponent('users:read.email,chat:write,im:write,users:read');
@@ -18,7 +18,7 @@ router.get('/api/oauth-url', (req, res) => {
  * Route 2: Slack OAuth Redirect Handler
  * Slack redirects here after user authorization. It exchanges the code for a token.
  */
-router.get('/slack/oauth_redirect', async (req, res) => {
+router.get('/oauth_redirect', async (req, res) => {
   const code = req.query.code;
   if (!code) {
     return res.status(400).send('Error: Missing authorization code from Slack.');
@@ -57,7 +57,7 @@ router.get('/slack/oauth_redirect', async (req, res) => {
  * Route 3: Send Message Handler
  * The frontend form will submit to this API endpoint.
  */
-router.post('/api/send-message', async (req, res) => {
+router.post('/send-message', async (req, res) => {
   const { token, text, email, teamId } = req.body;
 
   if (!token || !text || !email || !teamId) {
