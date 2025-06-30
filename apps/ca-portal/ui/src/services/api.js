@@ -69,3 +69,48 @@ export async function getAllUsers() {
   const response = await fetch(url);
   return handleApiResponse(response);
 }
+
+export async function getAllCourses() {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file.");
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/courses`;
+  console.log(`Fetching from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+export async function getUserProfile(studentUID) {
+  if (!studentUID) {
+    throw new Error("A studentUID is required to fetch a user profile.");
+  }
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/users/${studentUID}`;
+  console.log(`Fetching user profile from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+// api call to upsert (update or create) student profile
+export async function upsertStudentProfile(studentData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-student-profile`;
+  console.log(`Upserting student profile at: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(studentData),
+  });
+  return handleApiResponse(response);
+}
