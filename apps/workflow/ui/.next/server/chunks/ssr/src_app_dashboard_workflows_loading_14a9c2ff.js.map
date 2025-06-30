@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/alecd/RIT/SCOOP/RIT-SE-CODE-BANK/apps/workflow/ui/src/app/dashboard/workflows/loading.js"],"sourcesContent":["export default function Loading() {\r\n  // Define the Loading UI here\r\n  return <div>Loading...</div>\r\n}"],"names":[],"mappings":";;;;;AAAe,SAAS;IACtB,6BAA6B;IAC7B,qBAAO,8OAAC;kBAAI;;;;;;AACd","debugId":null}}]
+}

@@ -1,0 +1,16 @@
+{
+  "node": {
+    "40c5a8a9180a0172af035ee92fd58a2733a5f832d2": {
+      "workers": {
+        "app/dashboard/action/[id]/page": {
+          "moduleId": "[project]/.next-internal/server/app/dashboard/action/[id]/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/dashboard/action/[id]/page.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/action/[id]/page": "rsc"
+      }
+    }
+  },
+  "edge": {}
+}

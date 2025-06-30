@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/alecd/RIT/SCOOP/RIT-SE-CODE-BANK/apps/workflow/ui/src/components/NavLink.js"],"sourcesContent":["'use client'\r\n\r\nimport Link from \"next/link\";\r\nimport { usePathname } from \"next/navigation\";\r\n\r\nexport default function NavLink({ href, active = \"\", className, children }) {\r\n    const pathname = usePathname(); // Get current pathname\r\n\r\n    const isActive = pathname === href; // Check if link is active\r\n\r\n    let fullClassName = className;\r\n    if (isActive) {\r\n        fullClassName += \" \" + active;\r\n    }\r\n\r\n    return (\r\n        <Link href={href} className={fullClassName}>\r\n            {children}\r\n        </Link>\r\n    );\r\n}"],"names":[],"mappings":";;;;AAEA;AACA;;;AAHA;;;AAKe,SAAS,QAAQ,EAAE,IAAI,EAAE,SAAS,EAAE,EAAE,SAAS,EAAE,QAAQ,EAAE;;IACtE,MAAM,WAAW,CAAA,GAAA,qIAAA,CAAA,cAAW,AAAD,KAAK,uBAAuB;IAEvD,MAAM,WAAW,aAAa,MAAM,0BAA0B;IAE9D,IAAI,gBAAgB;IACpB,IAAI,UAAU;QACV,iBAAiB,MAAM;IAC3B;IAEA,qBACI,6LAAC,+JAAA,CAAA,UAAI;QAAC,MAAM;QAAM,WAAW;kBACxB;;;;;;AAGb;GAfwB;;QACH,qIAAA,CAAA,cAAW;;;KADR","debugId":null}}]
+}
