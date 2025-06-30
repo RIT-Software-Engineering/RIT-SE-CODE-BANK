@@ -1,17 +1,21 @@
-
 "use client";
-import { getOpenPositions } from "../../services/api";
+import SearchBar from "@/components/SearchBar";
+import { searchOpenPositions } from "../../services/api";
 import React, { useEffect } from "react";
+import PositionsCard from "@/components/PositionsCard";
 
 export default function Positions() {
   const [openPositions, setOpenPositions] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const [searchTerm, setSearchTerm] = React.useState("");
 
+  // Get open Positions - Original functionality preserved
   useEffect(() => {
+    // Handles fetching open positions when the component mounts
     async function fetchPositions() {
       try {
-        const data = await getOpenPositions(); // Call the service function
+        const data = await searchOpenPositions(searchTerm); // Call the service function
         setOpenPositions(data);
       } catch (err) {
         console.error("Failed to fetch open positions:", err);
@@ -24,56 +28,87 @@ export default function Positions() {
     fetchPositions();
   }, []);
 
-   if (isLoading) {
-    return <div style={{ textAlign: 'center', padding: '20px' }}>Loading open positions...</div>;
-  }
+  // Search for open positions when search form is submitted
+  const handleSearch = async (e) => {
+    e.preventDefault(); // Prevent default form submission
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await searchOpenPositions(searchTerm);
+      setOpenPositions(data);
+    } catch (err) {
+      console.error("Failed to fetch open positions:", err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  if (error) {
-    return (
-      <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
-        Error: {error}
-        <p>Please ensure your backend server is running and the database is properly seeded.</p>
-      </div>
-    );
-  }
+  // Render content based on loading state, error state, and if positions can be found
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="text-center py-10">
+          <div className="w-8 h-8 border-4 border-dashed rounded-full animate-spin border-gray-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading Positions...</p>
+        </div>
+      );
+    }
 
-  if (openPositions.length === 0) {
-    return <div style={{ textAlign: 'center', padding: '20px' }}>No open positions found.</div>;
-  }
+    if (error) {
+      return (
+        <div className="text-center py-10 px-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-lg font-semibold text-red-700">
+            An Error Occurred
+          </p>
+          <p className="text-gray-600 mt-2">
+            Could not fetch positions. Please ensure the server is running and
+            try again later.
+          </p>
+        </div>
+      );
+    }
 
+    if (openPositions.length === 0) {
+      return (
+        <div className="text-center py-10 px-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <p className="text-lg font-semibold text-gray-800">
+            No Open Positions Found
+          </p>
+          <p className="text-gray-600 mt-2">
+            Try adjusting your search term or check back later.
+          </p>
+        </div>
+      );
+    }
+    // If we have open positions, render them
+    return openPositions.map((position, index) => (
+      <PositionsCard key={index} position={position} index={index} />
+    ));
+  };
 
-    return (
-        <>
-            <div>
-                <div className="bg-rit-gray h-auto p-10">
-                    <div  className="bg-rit-light-gray h-full rounded-lg p-5  justify-center items-center flex flex-col w-full">
-                        <h1 className="text-2xl font-bold mb-5">Positions</h1>
-                        {openPositions.map((position, index) => (
-                          console.log(position),
-                            <div key={index} className="bg-white p-4 mb-4 rounded shadow w-full">
-                                {/* Uses course common name eg. Project Management */}
-                                <h2 className="text-xl font-semibold">{position.course.name}</h2>
-                                {/* Uses course common code eg. SWEN 261 */}
-                                <p className="text-gray-700">{position.id}</p>
-                                {/*  start and end times */}
-                                <div className="mt-2">
-                                {position.jobSchedules.map((slot, i) => (
-                                    <p key={i} className="text-gray-700">
-                                    <span className="font-medium">{slot.dayOfWeek}:</span> {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                ))}
-                                </div>
-                                {/* You can add more details here if needed */}
-                                <p className="text-gray-600">Location: {position.location}</p>
-                                <p className="text-gray-500">{position.course.description}</p>
-                                {/* Add a button to apply for the position */}
-                                <button className="bg-blue-500 text-white p-2 rounded mt-2 hover:bg-blue-600">Apply Now</button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+  return (
+    // Styled Page Layout
+    <div className="bg-gray-50 min-h-screen">
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+              Open Positions
+            </h1>
+            <p className="mt-2 text-lg text-gray-600">
+              Find your next opportunity as a Course Assistant.
+            </p>
+          </div>
+
+          <div id="positions-container" className="w-full max-w-4xl mx-auto">
+            <div className="mb-8">
+              <SearchBar onSearch={handleSearch} onChange={setSearchTerm} />
             </div>
-        
-        </>
-    )
+            {renderContent()}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
