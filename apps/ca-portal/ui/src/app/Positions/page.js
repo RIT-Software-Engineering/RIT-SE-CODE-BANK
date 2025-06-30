@@ -56,7 +56,10 @@ export default function Positions() {
 
 
   // Search for open positions
-
+  const handleSearch = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    setSearchTerm(e.target.value); // Update search term state
+  }
 
 
   return (
@@ -90,14 +93,15 @@ export default function Positions() {
                       />
                     </svg>
                   </div>
+                  <form onSubmit={handleSearch}>
                   <input
                     id="search"
                     name="search"
                     className="block w-full rounded-md border-0 bg-white py-2 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 sm:text-sm sm:leading-6"
                     placeholder="Search"
-                    onChange={(e) => {setSearchTerm(e.target.value)}}
                     type="search"
                   />
+                  </form>
                 </div>
               </div>
               {openPositions.map(
