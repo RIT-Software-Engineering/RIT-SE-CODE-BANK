@@ -37,6 +37,7 @@ enum Role {
 model Student {
   //Fields
   uid Int @id
+  year Int @db.Int
   major String @db.Text
   graduateStatus GraduateStatus @default(UNDERGRADUATE)
   wasPriorEmployee Boolean @db.TinyInt

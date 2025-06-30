@@ -59,10 +59,128 @@ async function getAllUsers() {
     }
 }
 
+//function to retrieve all courses for the onramping feature
+async function getAllCourses(){
+    try {
+        const courses = await prisma.course.findMany({
+            select: {
+                courseCode: true,
+                name: true,
+            },
+        });
+        return courses;
+    } catch (error) {
+        console.error("Error retrieving courses:", error);
+        throw error;
+    }
+}
+
+async function findUniqueUser(studentUID) {
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                uid: studentUID,
+            },
+        });
+        return user;
+    } catch (error) {
+        console.error("Error finding user:", error);
+        throw error;
+    }
+}
+
+
+async function upsertStudentProfile(studentData) {
+    // Transactionally upsert the student profile (first updates User, then Student, then CourseHistory if applicable, otherwise it creates a new User, then Student, then CourseHistory).
+    try {
+        const profile = await prisma.$transaction(async (tx) => {
+            // 1. Upsert the User record.
+            // Prisma will find a user with the given UID. If found, it updates it.
+            // If not found, it creates a new one.
+            await tx.user.upsert({
+                where: { uid: studentData.uid },
+                update: {
+                    name: studentData.name,
+                    email: studentData.email,
+                    pronouns: studentData.pronouns,
+                },
+                create: {
+                    uid: studentData.uid,
+                    name: studentData.name,
+                    email: studentData.email,
+                    pronouns: studentData.pronouns,
+                    role: 'STUDENT', // Set role on creation
+                },
+            });
+
+            // 2. Upsert the associated Student record.
+            await tx.student.upsert({
+                where: { uid: studentData.uid },
+                update: {
+                    year: studentData.year,
+                    major: studentData.major,
+                    graduateStatus: studentData.graduateStatus,
+                    wasPriorEmployee: studentData.wasPriorEmployee,
+                    resumeURL: studentData.resumeURL,
+                },
+                create: {
+                    uid: studentData.uid,
+                    year: studentData.year,
+                    major: studentData.major,
+                    graduateStatus: studentData.graduateStatus,
+                    wasPriorEmployee: studentData.wasPriorEmployee || false,
+                    resumeURL: studentData.resumeURL,
+                },
+            });
+
+            // 3. Handle Course History (if provided).
+            if (studentData.courseHistory) {
+                // First, remove all old course history for this student.
+                await tx.courseHistory.deleteMany({
+                    where: { studentUID: studentData.uid },
+                });
+
+                // If the new history array is not empty, create all new entries.
+                if (studentData.courseHistory.length > 0) {
+                    await tx.courseHistory.createMany({
+                        data: studentData.courseHistory.map(course => ({
+                            studentUID: studentData.uid,
+                            courseCode: course.courseCode,
+                            grade: course.grade,
+                            wasPriorEmployee: course.wasPriorEmployee || false,
+                        })),
+                    });
+                }
+            }
+
+            // 4. Return the complete, final state of the profile.
+            return tx.user.findUnique({
+                where: { uid: studentData.uid },
+                include: {
+                    student: {
+                        include: {
+                            courseHistory: true,
+                        },
+                    },
+                },
+            });
+        });
+
+        return profile;
+    } catch (error) {
+        console.error("Error in upsertStudentProfile:", error);
+        throw error;
+    }
+}
+
+
 
 module.exports = {
     getOpenPositionsWithDetails,
-    getAllUsers
+    getAllUsers,
+    getAllCourses,
+    findUniqueUser,
+    upsertStudentProfile
 };
 
 // Add a process exit handler to disconnect Prisma Client gracefully
