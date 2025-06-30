@@ -12,6 +12,7 @@ CREATE TABLE `User` (
 CREATE TABLE `Action` (
     `id` CHAR(36) NOT NULL,
     `action_type` ENUM('simple', 'workflow', 'complex', 'branching') NOT NULL DEFAULT 'simple',
+    `is_frozen` BOOLEAN NOT NULL DEFAULT false,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -63,19 +64,9 @@ CREATE TABLE `ActionChainLinks` (
 CREATE TABLE `WorkflowAttributes` (
     `id` CHAR(36) NOT NULL,
     `base_action_id` CHAR(36) NOT NULL,
+    `root_action_id` CHAR(36) NULL,
 
     UNIQUE INDEX `WorkflowAttributes_base_action_id_key`(`base_action_id`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `WorkflowActionRelationships` (
-    `id` CHAR(36) NOT NULL,
-    `workflow_id` CHAR(36) NOT NULL,
-    `action_id` CHAR(36) NOT NULL,
-    `index` INTEGER NOT NULL DEFAULT 0,
-
-    UNIQUE INDEX `WorkflowActionRelationships_action_id_key`(`action_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -101,18 +92,27 @@ CREATE TABLE `TagWorkflowRelationships` (
 CREATE TABLE `Permissions` (
     `id` CHAR(36) NOT NULL,
     `user_id` CHAR(36) NOT NULL,
-    `workflow_id` CHAR(36) NOT NULL,
-    `permission_type` ENUM('view', 'edit') NOT NULL,
+    `action_id` CHAR(36) NOT NULL,
+    `permission_type` ENUM('creator', 'sharer', 'editor', 'viewer') NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `States` (
+CREATE TABLE `WorkflowStates` (
     `id` CHAR(36) NOT NULL,
     `user_id` CHAR(36) NOT NULL,
     `workflow_id` VARCHAR(191) NOT NULL,
-    `current_index` INTEGER NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ActionStates` (
+    `id` CHAR(36) NOT NULL,
+    `workflow_state_id` CHAR(36) NOT NULL,
+    `action_id` CHAR(36) NOT NULL,
+    `state_type` ENUM('completed', 'in_progress', 'not_started', 'hidden') NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -139,10 +139,7 @@ ALTER TABLE `ActionChainLinks` ADD CONSTRAINT `ActionChainLinks_next_action_id_f
 ALTER TABLE `WorkflowAttributes` ADD CONSTRAINT `WorkflowAttributes_base_action_id_fkey` FOREIGN KEY (`base_action_id`) REFERENCES `Action`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `WorkflowActionRelationships` ADD CONSTRAINT `WorkflowActionRelationships_action_id_fkey` FOREIGN KEY (`action_id`) REFERENCES `Action`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `WorkflowActionRelationships` ADD CONSTRAINT `WorkflowActionRelationships_workflow_id_fkey` FOREIGN KEY (`workflow_id`) REFERENCES `WorkflowAttributes`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `WorkflowAttributes` ADD CONSTRAINT `WorkflowAttributes_root_action_id_fkey` FOREIGN KEY (`root_action_id`) REFERENCES `Action`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `TagWorkflowRelationships` ADD CONSTRAINT `TagWorkflowRelationships_tag_id_fkey` FOREIGN KEY (`tag_id`) REFERENCES `Tags`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -151,7 +148,10 @@ ALTER TABLE `TagWorkflowRelationships` ADD CONSTRAINT `TagWorkflowRelationships_
 ALTER TABLE `TagWorkflowRelationships` ADD CONSTRAINT `TagWorkflowRelationships_workflow_id_fkey` FOREIGN KEY (`workflow_id`) REFERENCES `WorkflowAttributes`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Permissions` ADD CONSTRAINT `Permissions_workflow_id_fkey` FOREIGN KEY (`workflow_id`) REFERENCES `WorkflowAttributes`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `Permissions` ADD CONSTRAINT `Permissions_action_id_fkey` FOREIGN KEY (`action_id`) REFERENCES `Action`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `States` ADD CONSTRAINT `States_workflow_id_fkey` FOREIGN KEY (`workflow_id`) REFERENCES `WorkflowAttributes`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `WorkflowStates` ADD CONSTRAINT `WorkflowStates_workflow_id_fkey` FOREIGN KEY (`workflow_id`) REFERENCES `WorkflowAttributes`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ActionStates` ADD CONSTRAINT `ActionStates_action_id_fkey` FOREIGN KEY (`action_id`) REFERENCES `Action`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

@@ -1,8 +1,12 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { actionTypes } = require('./consts.js') || [];
+const { actionTypes, permissionTypes } = require('./consts.js') || [];
 
-async function createAction(actionType = actionTypes[0], metadata = {}) {
+////////////////////////////
+// Action CRUD operations //
+////////////////////////////
+
+async function createAction(userId, actionType = actionTypes[0], metadata = {}) {
     const action = await prisma.action.create({
         data: {
             action_type: actionType,
@@ -12,7 +16,15 @@ async function createAction(actionType = actionTypes[0], metadata = {}) {
                     value: value.toString(), // Ensure value is string
                     metadata_type: typeof value // TODO: Figure out how to check this against consts.metadataTypes (if necessary)
                 }))
-            }
+            },
+            permissions: {
+                createMany: {
+                    data: permissionTypes.map(permissionType => ({
+                        user_id: userId,
+                        permission_type: permissionType
+                    }))
+                }
+            },
         }
     });
 
@@ -63,47 +75,119 @@ async function deleteAction(actionId) {
     });
 }
 
-async function copyAction(actionId) {
-    // Get the action to copy
-    const action = await prisma.action.findUnique({
+
+
+///////////////////////////////////////////////////////
+// Operations for putting actions into a linked list //
+///////////////////////////////////////////////////////
+
+async function createActionChainLink(actionId, nextActionId) {
+    // Ensure both actions exist
+    const action = await prisma.action.findUnique({ where: { id: actionId } });
+    const nextAction = await prisma.action.findUnique({ where: { id: nextActionId } });
+
+    if (!action || !nextAction) {
+        throw new Error('One or both actions do not exist.');
+    }
+
+    // Create the link between the two actions
+    const updatedAction = await prisma.action.update({
         where: { id: actionId },
-        include: {
-            metadata: true,
-            reference_endpoints: true,
-            children: true,
-            parent: true,
-            next_action: true,
-            previous_action: true,
-            workflow_attributes: true,
-            workflow_action_relationships: true
+        data: {
+            next_action: {
+                connect: { id: nextActionId }
+            }
         }
     });
 
-    console.log("Action to copy:", action);
-
-    if (!action) {
-        throw new Error(`Action with ID ${actionId} not found.`);
-    }
-
-    // const copy = await prisma.action.create({
-    //     data: {
-
-
-
-    // // Create a new action with the same type and metadata
-    // const newAction = await createAction(action.action_type, action.metadata.reduce((acc, meta) => {
-    //     acc[meta.key] = meta.value;
-    //     return acc;
-    // }, {}));
-
-    // return newAction;
-}
-async function testCopy() {
-    const newAction = await createAction('simple', { name: 'Sample Action', description: 'This is a sample action' })
-    await copyAction(newAction.id);
+    return updatedAction;
 }
 
-testCopy();
+async function getActionChainLinks(queryParams = {}) {
+    const actionChainLink = await prisma.actionChainLinks.findMany({
+        where: queryParams,
+        include: {
+            action: true,
+            next_action: true
+        }
+    });
+
+    return actionChainLink;
+}
+
+// Get all of the actions that are connected by chain links in order
+async function getActionChain(rootActionId) {
+    console.log("rootActionId", rootActionId);
+    const actionChain = [];
+    let currentActionId = rootActionId;
+
+    await prisma.$transaction(async () => {
+        while (currentActionId) {
+            console.log("currentActionId", currentActionId);
+
+            const action = await prisma.action.findUnique({
+                where: { id: currentActionId },
+                include: {
+                    next_action: true
+                }
+            });
+
+            if (!action) {
+                break; // No more actions in the chain
+            }
+
+            actionChain.push(action);
+            currentActionId = null;
+            if (action.next_action) currentActionId = action.next_action.id; // Move to the next action in the chain
+        }
+    });
+
+    return actionChain;
+}
+
+
+
+// async function copyAction(actionId) {
+//     // Get the action to copy
+//     const action = await prisma.action.findUnique({
+//         where: { id: actionId },
+//         include: {
+//             metadata: true,
+//             reference_endpoints: true,
+//             children: true,
+//             parent: true,
+//             next_action: true,
+//             previous_action: true,
+//             workflow_attributes: true,
+//             workflow_action_relationships: true
+//         }
+//     });
+
+//     console.log("Action to copy:", action);
+
+//     if (!action) {
+//         throw new Error(`Action with ID ${actionId} not found.`);
+//     }
+
+//     // const copy = await prisma.action.create({
+//     //     data: {
+
+
+
+//     // // Create a new action with the same type and metadata
+//     // const newAction = await createAction(action.action_type, action.metadata.reduce((acc, meta) => {
+//     //     acc[meta.key] = meta.value;
+//     //     return acc;
+//     // }, {}));
+
+//     // return newAction;
+// }
+// async function testCopy() {
+//     const newAction = await createAction('simple', { name: 'Sample Action', description: 'This is a sample action' })
+//     await copyAction(newAction.id);
+// }
+
+// testCopy();
 
 // async function testActionControllers() {
 //     // Reset the actions table
@@ -163,5 +247,8 @@ module.exports = {
     createAction,
     getActions,
     updateAction,
-    deleteAction
+    deleteAction,
+    createActionChainLink,
+    getActionChainLinks,
+    getActionChain
 };

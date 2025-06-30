@@ -1,40 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-const crypto = require('crypto');
+const { getPermissions, createPermission, updatePermission, deletePermission } = require('./../../controller/permissions.js');
 
 // GET /permissions
 router.get('/', async (req, res) => {
-  const { permissionId, userId, workflowId, permissionType } = req.query;
+  const { permissionId, userId, actionId, permissionType } = req.query;
 
-  if (permissionId) {
-    return res.json(await prisma.permission.findUnique({ where: { id: permissionId } }));
-  }
+  const params = {};
+  if (permissionId) params.id = permissionId;
+  if (userId) params.user_id = userId;
+  if (actionId) params.action_id = actionId;
+  if (permissionType) params.permission_type = permissionType;
 
-  const permissions = await prisma.permission.findMany({
-    where: {
-      userId: userId || undefined,
-      workflowId: workflowId || undefined,
-      permissionType: permissionType || undefined
-    }
-  });
+  const permissions = await getPermissions(params);
 
   res.json(permissions);
 });
 
 // POST /permissions
 router.post('/', async (req, res) => {
-  const { userId, workflowId, permissionType } = req.body;
+  const { userId, actionId, permissionType } = req.body;
 
-  const permission = await prisma.permission.create({
-    data: {
-      id: crypto.randomUUID(),
-      userId,
-      workflowId,
-      permissionType
-    }
-  });
+  const permission = await createPermission(userId, actionId, permissionType);
 
   res.json(permission);
 });
@@ -44,10 +31,7 @@ router.put('/:permissionId', async (req, res) => {
   const { permissionId } = req.params;
   const { userId, workflowId, permissionType } = req.body;
 
-  const updated = await prisma.permission.update({
-    where: { id: permissionId },
-    data: { userId, workflowId, permissionType }
-  });
+  const updated = await updatePermission(permissionId, userId, workflowId, permissionType);
 
   res.json(updated);
 });
@@ -55,8 +39,10 @@ router.put('/:permissionId', async (req, res) => {
 // DELETE /permissions/:permissionId
 router.delete('/:permissionId', async (req, res) => {
   const { permissionId } = req.params;
-  await prisma.permission.delete({ where: { id: permissionId } });
-  res.status(204).send();
+  
+  await deletePermission(permissionId);
+
+  res.json({ message: 'Permission deleted successfully' });
 });
 
 module.exports = router;

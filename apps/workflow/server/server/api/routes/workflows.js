@@ -28,9 +28,9 @@ router.get('/', async (req, res) => {
 
 // POST /workflows
 router.post('/', async (req, res) => {
-    const { userId, tags, metadata } = req.body;
+    const { userId, tags, metadata, rootActionId } = req.body;
 
-    const workflow = await createWorkflow(userId, tags, metadata);
+    const workflow = await createWorkflow(userId, tags, metadata, rootActionId);
 
     // Optionally handle tags using a Tag table, permisions, or Metadata entries
 
@@ -39,10 +39,10 @@ router.post('/', async (req, res) => {
 
 // PUT /workflows/:workflowId
 router.put('/:workflowId', async (req, res) => {
-    const { metadata } = req.body;
+    const { metadata, rootActionId } = req.body;
     const { workflowId } = req.params;
 
-    await updateWorkflow(workflowId, metadata);
+    await updateWorkflow(workflowId, metadata, rootActionId);
 
     res.json({ message: 'Updated' });
 });

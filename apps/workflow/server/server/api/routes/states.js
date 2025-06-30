@@ -3,59 +3,53 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const crypto = require('crypto');
+const { createWorkflowState, getWorkflowStates, updateWorkflowState, deleteWorkflowState, updateActionState } = require('../../controller/states.js');
 
 // GET /state
-router.get('/', async (req, res) => {
-  const { stateId, userId, workflowId, tags } = req.query;
+router.get('/workflow', async (req, res) => {
+  const { stateId, userId, workflowId } = req.query;
 
-  if (stateId) {
-    return res.json(await prisma.state.findUnique({ where: { id: stateId } }));
-  }
+  const where = {};
+  if (stateId) where.id = stateId;
+  if (userId) where.user_id = userId;
+  if (workflowId) where.workflow_id = workflowId;
 
-  const states = await prisma.state.findMany({
-    where: {
-      userId: userId || undefined,
-      workflowId: workflowId || undefined,
-      // Implement tag logic if tags stored in metadata
-    }
-  });
+  const states = await getWorkflowStates(where);
 
   res.json(states);
 });
 
 // POST /state
-router.post('/', async (req, res) => {
-  const { workflowId, positionIndex } = req.body;
+router.post('/workflow', async (req, res) => {
+  const { userId, workflowId } = req.body;
 
-  const state = await prisma.state.create({
-    data: {
-      id: crypto.randomUUID(),
-      workflowId,
-      positionIndex
-    }
-  });
+  console.log("userId:", userId, "workflowId:", workflowId);
 
-  res.json({ stateId: state.id });
+  const state = await createWorkflowState(userId, workflowId);
+  
+  res.json(state)
 });
 
 // PUT /state/:stateId
-router.put('/:stateId', async (req, res) => {
-  const { workflowId, positionIndex } = req.body;
-  const { stateId } = req.params;
+// router.put('/:stateId', async (req, res) => {
+//   const { workflowId, positionIndex } = req.body;
+//   const { stateId } = req.params;
 
-  const updated = await prisma.state.update({
-    where: { id: stateId },
-    data: { workflowId, positionIndex }
-  });
+//   const updated = await prisma.state.update({
+//     where: { id: stateId },
+//     data: { workflowId, positionIndex }
+//   });
 
-  res.json(updated);
-});
+//   res.json(updated);
+// });
 
 // DELETE /state/:stateId
-router.delete('/:stateId', async (req, res) => {
+router.delete('/workflow/:stateId', async (req, res) => {
   const { stateId } = req.params;
-  await prisma.state.delete({ where: { id: stateId } });
-  res.status(204).send();
+  
+  await deleteWorkflowState(stateId);
+
+  res.json({ message: 'Deleted' });
 });
 
 module.exports = router;

@@ -1,27 +1,18 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { actionTypes, permissionTypes } = require('./consts.js') || [];
+const { actionTypes } = require('./consts.js') || [];
 const { createAction, deleteAction } = require('./actions.js');
 
-async function createWorkflow(userId, tags = [], metadata = {}) { // TODO: Add permissions stuff
+async function createWorkflow(userId, tags = [], metadata = {}, rootActionId = null) { // TODO: Add permissions stuff
     let workflow;
 
     await prisma.$transaction(async () => {
-
-        const action = await createAction(actionTypes[1], metadata);
-        const actionId = action.id;
+        const action = await createAction(userId, actionTypes[1], metadata);
 
         workflow = await prisma.workflowAttributes.create({
             data: {
-                base_action_id: actionId,
-                permissions: {
-                    createMany: {
-                        data: permissionTypes.map(permissionType => ({
-                            user_id: userId,
-                            permission_type: permissionType
-                        }))
-                    }
-                },
+                base_action: { connect: { id: action.id } },
+                root_action: { connect: { id: rootActionId } }
             }
         });
 
@@ -48,30 +39,33 @@ async function getWorkflows(queryParams = {}) {
         where: queryParams,
         include: {
             tag_workflow_relationships: {
-                include: {tag: true}
+                include: { tag: true }
             },
-            permissions: true,
             base_action: {
                 include: {
-                    metadata: true
+                    metadata: true,
+                    permissions: true
                 }
-            }
+            },
+            root_action: true
         }
     });
 
     return workflows;
 }
 
-async function updateWorkflow(workflowId, metadata = {}) {
+async function updateWorkflow(workflowId, metadata = {}, rootActionId) {
     // Use a transaction for atomicity and performance
-    let workflow = await prisma.workflowAttributes.findUnique({
-        where: { id: workflowId }
-    });
-    await prisma.$transaction([
-        prisma.metadata.deleteMany({
+    await prisma.$transaction(async () => {
+        let workflow = await prisma.workflowAttributes.findUnique({
+            where: { id: workflowId }
+        });
+
+        // update metadata
+        await prisma.metadata.deleteMany({
             where: { action_id: workflow.base_action_id }
-        }),
-        prisma.metadata.createMany({
+        });
+        await prisma.metadata.createMany({
             data: Object.entries(metadata).map(([key, value]) => ({
                 action_id: workflow.base_action_id,
                 key: key,
@@ -79,8 +73,16 @@ async function updateWorkflow(workflowId, metadata = {}) {
                 metadata_type: typeof value
             })),
             skipDuplicates: true // Optional: skips inserting duplicates if any
+        });
+
+        // update rootActionId
+        await prisma.workflowAttributes.update({
+            where: { id: workflowId },
+            data: {
+                root_action: { connect: { id: rootActionId } }
+            }
         })
-    ]);
+    });
 }
 
 async function deleteWorkflow(workflowId) {

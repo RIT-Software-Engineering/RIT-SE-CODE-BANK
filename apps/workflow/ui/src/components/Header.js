@@ -1,13 +1,19 @@
-import { NavLink } from "react-router-dom"
+import NavLink from "./NavLink"
 
 export default function Header() {
     return (
-        <header className="bg-black text-white">
-            <NavLink to="/" className="hover:text-primary">
-                <h1>Workflows</h1>
+        <header className="flex flex-row justify-stretch bg-black text-white">
+            <NavLink href="/" className="text-3xl font-bold p-4 hover:text-primary">
+                Workflows
             </NavLink>
-            <nav className="active:text-primary ">
-                {/* Put NavLinks for the nav bar here. Might also want to use this area for the Login button */}
+            <div className="grow"></div>
+            <nav className="flex flex-row justify-stretch gap-2 text-lg font-semibold pr-4">
+                <NavLink href="/dashboard" active="text-primary" className="content-center hover:text-primary">
+                    Dashboard
+                </NavLink>
+                <NavLink href="/dashboard/workflows" active="text-primary" className="content-center hover:text-primary">
+                    Workflows
+                </NavLink>
             </nav>
         </header>
     )

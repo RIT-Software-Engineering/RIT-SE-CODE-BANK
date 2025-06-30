@@ -9,7 +9,9 @@ const workflowRoutes = require('./api/routes/workflows');
 const actionRoutes = require('./api/routes/actions');
 const stateRoutes = require('./api/routes/states');
 const permissionRoutes = require('./api/routes/permissions');
-const userRoutes = require('./api/routes/users');
+const metadataRoutes = require('./api/routes/metadata');
+
+const userRoutes = require('./api/routes/users'); // TODO: remove when auth works
 
 const port = process.env.PORT || 3000;
 
@@ -36,7 +38,9 @@ app.use('/workflows', workflowRoutes);
 app.use('/actions', actionRoutes);
 app.use('/states', stateRoutes);  
 app.use('/permissions', permissionRoutes);
-app.use('/users', userRoutes);
+app.use('/metadata', metadataRoutes)
+
+app.use('/users', userRoutes); // TODO: remove when auth works
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);

@@ -13,8 +13,10 @@ const actionTypes = [
 ];
 
 const permissionTypes = [
-    'view',
-    'edit',
+    'creator',
+    'sharer',
+    'editor',
+    'viewer'
 ];
 
 module.exports = {
