@@ -43,7 +43,7 @@ model Headers {
 
 model Titles {
   id          String  @id @default(uuid())
-  title       String?
+  name        String?
   description String?
   points      Float?
   weight      Float?

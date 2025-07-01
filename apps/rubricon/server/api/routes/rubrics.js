@@ -23,8 +23,20 @@ router.get('/:id', async (req, res) => {
   try {
     const id = req.params.id;
     const rubric = await prisma.rubrics.findUnique({
-    where: { id: id }
-  })
+      where: { id: id },
+      include: {
+        headers: {
+          include: {
+            titles: true
+          }
+        },
+        criteria: {
+          include: {
+            levels: true
+          }
+        }
+      }
+    })
 
     res.send(rubric);
   } catch (error) {

@@ -1,43 +1,33 @@
-// function Cell({ cell }) {
+function Cell({ cell }) {
+    return (
+        <>
+            <strong>{(cell.name ? cell.name : "") + (cell.points ? " (" + cell.points + " points)" : "") + (cell.weight ? " (" + cell.weight + ")" : "")}</strong>
+            {(" " + cell.description ? cell.description : "")}
+        </>
+    )
+}
 
-// }
+function Row({ row, size, criteria_column }) {
+    const cells = row.levels;
+    cells.splice(criteria_column - 1, 0, { name: row.name, description: row.description, points: row.points, weight: row.weight })
 
-function Row({ row, size }) {
     return (
         <tr className="border">
-            <th className="border p-1 bg-primary">
-                <strong>{row.name + (row.points ? " (" + row.points + " points)" : "")}</strong><br></br>
-                {row.description}
-            </th>
-            {row.levels.map((cell, index) => (
-                <td className="border p-1" key={index}>
-                    <strong>{cell.name + (cell.points ? " (" + cell.points + " points)" : "")}</strong><br></br>
-                    {cell.description}
-                </td>
+            {cells.map((cell, index) => (
+                (index + 1 === criteria_column) ? (
+                    <th key={index} className="border p-1 bg-primary">
+                        <Cell cell={cell} />
+                    </th>
+                ) : (
+                    <td key={index} className="border p-1">
+                        <Cell cell={cell} />
+                    </td>
+                )
             ))}
-            {Array.from({ length: size - row.levels.length }, (_, i) => (
+            {Array.from({ length: size - cells.length }, (_, i) => (
                 <td className="border p-1" key={i}>&nbsp;</td>
             ))}
         </tr>
-    );
-}
-
-function Table({ rows }) {
-    let maxCells = 0;
-    rows.forEach(row => {
-        if (row.levels.length > maxCells) {
-            maxCells = row.levels.length;
-        }
-    });
-
-    return (
-        <table className="border border-collapse">
-            <tbody>
-                {rows.map((row, index) => (
-                    <Row key={index} row={row} size={maxCells} />
-                ))}
-            </tbody>
-        </table>
     );
 }
 
@@ -47,9 +37,29 @@ export default function Rubric({ data }) {
             <h1 className="text-4xl font-bold">{data.title}</h1>
             <p>{data.description}</p>
             <h2 className="text-2xl font-semibold">Breakdown</h2>
-            <div>
-                <Table rows={data.criteria} />
-            </div>
+            <table className="table-fixed border border-collapse">
+                {data.headers ? (
+                    <thead className="bg-black text-white">
+                        <tr>
+                            {data.headers.titles.map((header, index) => (
+                                <th key={index} className="p-1">
+                                    {(header.name ? header.name : "")
+                                        + (header.points ? " (" + header.points + " points)" : "")
+                                        + (header.weight ? " (" + header.weight + ")" : "")
+                                        + (header.description ? header.description : "")}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                ) : (
+                    <></>
+                )}
+                <tbody>
+                    {data.criteria.map((row, index) => (
+                        <Row key={index} row={row} size={data.columns} criteria_column={data.criteria_column} />
+                    ))}
+                </tbody>
+            </table>
         </div>
     )
 }

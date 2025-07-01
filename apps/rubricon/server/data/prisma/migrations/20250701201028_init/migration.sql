@@ -31,7 +31,7 @@ CREATE TABLE `Headers` (
 -- CreateTable
 CREATE TABLE `Titles` (
     `id` VARCHAR(191) NOT NULL,
-    `title` VARCHAR(191) NULL,
+    `name` VARCHAR(191) NULL,
     `description` VARCHAR(191) NULL,
     `points` DOUBLE NULL,
     `weight` DOUBLE NULL,
