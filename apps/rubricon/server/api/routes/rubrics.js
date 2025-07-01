@@ -9,7 +9,7 @@ router.get('/', (req, res) => {
   const rubrics = prisma.rubrics.findMany()
 
   if (!rubrics) {
-    res.status(404).send('Rubrics not found');
+    res.status(500).send('There was an error fetching rubrics.');
   }
 
   res.send(rubrics);
@@ -26,7 +26,7 @@ router.get('/:id', (req, res) => {
   })
 
   if (!rubric) {
-    res.status(404).send('Rubric not found');
+    res.status(500).send('There was an error fetching the rubric');
   }
   
   res.json(rubric);

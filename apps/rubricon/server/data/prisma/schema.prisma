@@ -14,27 +14,23 @@ datasource db {
 }
 
 model Templates {
-  id           String  @id @default(uuid())
-  title        String
-  description  String
-  rows         String?
-  columns      String?
-  criteria_row Int
+  id        String @id @default(uuid())
+  rubric_id String @unique
 
-  Rubrics Rubrics[]
+  rubric Rubrics @relation(fields: [rubric_id], references: [id])
 }
 
 model Rubrics {
-  id          String @id @default(uuid())
-  title       String
-  description String
-  rows        Int
-  columns     Int
-  template_id String
+  id              String @id @default(uuid())
+  title           String
+  description     String
+  rows            Int
+  columns         Int
+  criteria_column Int
 
-  criteria Criteria[]
-  template Templates  @relation(fields: [template_id], references: [id])
-  Headers  Headers[]
+  criteria  Criteria[]
+  headers   Headers[]
+  templates Templates?
 }
 
 model Headers {
