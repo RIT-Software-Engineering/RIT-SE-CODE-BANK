@@ -3,14 +3,21 @@ import SearchBar from "@/components/SearchBar";
 import { searchOpenPositions } from "../../services/api";
 import React, { useEffect } from "react";
 import PositionsCard from "@/components/PositionsCard";
+import Filter from "@/components/Filter";
+import { positionFilterConfig } from "./filter.config";
 
 export default function Positions() {
   const [openPositions, setOpenPositions] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [appliedFilters, setAppliedFilters] = React.useState({
+    days: [],
+    level: "",
+    location: "",
+  });
 
-  // Get open Positions - Original functionality preserved
+  // Get open Positions
   useEffect(() => {
     // Handles fetching open positions when the component mounts
     async function fetchPositions() {
@@ -87,6 +94,9 @@ export default function Positions() {
     ));
   };
 
+  // Handle filter changes
+
+
   return (
     // Styled Page Layout
     <div className="bg-gray-50 min-h-screen">
@@ -102,8 +112,11 @@ export default function Positions() {
           </div>
 
           <div id="positions-container" className="w-full max-w-4xl mx-auto">
-            <div className="mb-8">
+            <div className="mb-8 flex flex-row">
               <SearchBar onSearch={handleSearch} onChange={setSearchTerm} />
+              <div className="ml-4">
+                <Filter filterConfig={positionFilterConfig}/>
+              </div>
             </div>
             {renderContent()}
           </div>
