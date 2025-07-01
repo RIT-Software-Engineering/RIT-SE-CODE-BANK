@@ -1,0 +1,16 @@
+[
+    {
+        "id": "1",
+        "name": "SWEN-262",
+        "description": "E-Store semester project for SWEN-261",
+        "peers": ["1", "2"],
+        "overseer": ["10"]
+    },
+    {
+        "id": "2",
+        "name": "SWEN-444",
+        "description": "UI/UX project for SWEN-444",
+        "peers": ["1", "2"],
+        "overseer": ["10"]
+    }
+]
