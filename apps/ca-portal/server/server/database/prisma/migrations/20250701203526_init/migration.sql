@@ -14,7 +14,7 @@ CREATE TABLE `Student` (
     `uid` INTEGER NOT NULL,
     `year` INTEGER NOT NULL,
     `major` TEXT NOT NULL,
-    `graduateStatus` ENUM('UNDERGRADUATE', 'GRADUATE') NOT NULL DEFAULT 'UNDERGRADUATE',
+    `graduateStatus` ENUM('UNDERGRADUATE', 'GRADUATE', 'BOTH') NOT NULL DEFAULT 'UNDERGRADUATE',
     `wasPriorEmployee` BOOLEAN NOT NULL,
     `resumeURL` TEXT NULL,
 
@@ -89,6 +89,8 @@ CREATE TABLE `JobPosition` (
     `maxCAs` INTEGER NOT NULL,
     `jobPositionStatus` ENUM('OPEN', 'FILLED', 'ONHOLD', 'CLOSED') NOT NULL DEFAULT 'OPEN',
     `location` TEXT NOT NULL,
+    `locationType` ENUM('INPERSON', 'HYBRID', 'REMOTE') NOT NULL,
+    `graduateStatusRequirement` ENUM('UNDERGRADUATE', 'GRADUATE', 'BOTH') NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -53,6 +53,7 @@ model Student {
 enum GraduateStatus{
   UNDERGRADUATE
   GRADUATE
+  BOTH // This is mainly used for the JobPosition datatable to filter on whether a certain position allows hiring for both undergraduate and graduate students
 }
 
 model Employer {
@@ -161,6 +162,8 @@ model JobPosition{
   maxCAs  Int
   jobPositionStatus JobPositionStatus @default(OPEN)
   location String @db.Text
+  locationType LocationType
+  graduateStatusRequirement GraduateStatus
 
   // Relations
   course             Course               @relation(fields: [courseCode], references: [courseCode])
@@ -168,6 +171,12 @@ model JobPosition{
   jobSchedules       JobSchedule[]
   jobPositionHistory JobPositionHistory[]
   jobPositionApplicationHistory    JobPositionApplicationHistory[]
+}
+
+enum LocationType{
+  INPERSON
+  HYBRID
+  REMOTE
 }
 
 enum JobPositionStatus{
