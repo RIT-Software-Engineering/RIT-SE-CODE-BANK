@@ -49,13 +49,13 @@ router.get('/courses', async (req, res) => {
   }
 });
 
-router.get('/users/:studentUID', async (req, res) => {
-  const studentUID = req.params.studentUID;
+router.get('/users/:UID', async (req, res) => {
+  const UID = req.params.UID;
   try {
-    const user = await findUniqueUser(studentUID);
+    const user = await findUniqueUser(UID);
     res.status(200).json(user);
   } catch (error) {
-    console.error('Error in /users/:studentUID route:', error);
+    console.error('Error in /users/:UID route:', error);
     res.status(500).json({ error: 'Failed to retrieve user.' });
   }
 });
@@ -68,6 +68,17 @@ router.post('/upsert-student-profile', async (req, res) => {
   } catch (error) {
     console.error('Error in /upsert-student-profile route:', error);
     res.status(500).json({ error: 'Failed to upsert student profile.' });
+  }
+});
+
+router.post('/apply-for-job-position', async (req, res) => {
+  const applicationData = req.body;
+  try {
+    const application = await applyForJobPosition(applicationData);
+    res.status(200).json(application);
+  } catch (error) {
+    console.error('Error in /apply-for-job-position route:', error);
+    res.status(500).json({ error: 'Failed to apply for job position.' });
   }
 });
 

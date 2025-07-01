@@ -133,13 +133,36 @@ async function getAllCourses(){
     }
 }
 
-async function findUniqueUser(studentUID) {
+async function findUniqueUser(UID) {
     try {
+      const numericUID = parseInt(UID, 10);
+      if (isNaN(numericUID)) throw new Error(`Invalid UID: ${UID}`);
         const user = await prisma.user.findUnique({
             where: {
-                uid: studentUID,
+                uid: numericUID,
             },
         });
+        // If the user is a student, include their own student info and associated course history
+        if (user && user.role === 'STUDENT') {
+            const studentProfile = await prisma.user.findUnique({
+                where: {
+                    uid: numericUID,
+                },
+                include: {
+                    student: {
+                        include: {
+                            courseHistory: {
+                                include: {
+                                    course: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            return studentProfile;
+          }
+
         return user;
     } catch (error) {
         console.error("Error finding user:", error);
@@ -231,7 +254,52 @@ async function upsertStudentProfile(studentData) {
     }
 }
 
+async function applyForJobPosition(applicationData){
+    try {
+        // Validate required fields
+        if (!applicationData.studentUID || !applicationData.jobPositionId) {
+            throw new Error("Missing required fields: student and/or jobPosition ids.");
+        }
 
+        const { studentUID, jobPositionId } = applicationData;
+
+        // Check if student and job position exist
+        const student = await prisma.student.findUnique({ where: { uid: studentUID } });
+        if (!student) {
+            throw new Error(`Student with UID ${studentUID} not found.`);
+        }
+
+        const jobPosition = await prisma.jobPosition.findUnique({ where: { id: jobPositionId } });
+        if (!jobPosition) {
+            throw new Error(`Job Position with ID ${jobPositionId} not found.`);
+        }
+
+        // Check if the student has already applied for this job position
+        const existingApplication = await prisma.jobPositionHistory.findFirst({
+            where: {
+                studentUID: studentUID,
+                jobPositionId: jobPositionId,
+            }
+        });
+
+        if (existingApplication) {
+            throw new Error(`This student has already applied for this job position.`);
+        }
+
+        // Create a new job application within the JobPositionHistory table
+        const newApplication = await prisma.jobPositionHistory.create({
+            data: {
+                studentUID: studentUID,
+                jobPositionId: jobPositionId,
+            }
+        });
+
+        return newApplication;
+    } catch (error) {
+        console.error("Error in applyForJobPosition:", error);
+        throw error;
+    }
+}
 
 module.exports = {
     getOpenPositionsWithDetails,
@@ -240,6 +308,7 @@ module.exports = {
     findUniqueUser,
     upsertStudentProfile,
     searchOpenPositions,
+    applyForJobPosition
 };
 
 // Add a process exit handler to disconnect Prisma Client gracefully

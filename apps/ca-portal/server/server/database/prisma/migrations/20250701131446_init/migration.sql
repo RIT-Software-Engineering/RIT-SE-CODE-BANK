@@ -73,7 +73,7 @@ CREATE TABLE `JobPosition` (
     `id` VARCHAR(191) NOT NULL,
     `courseCode` VARCHAR(8) NOT NULL,
     `sectionNumber` INTEGER NOT NULL,
-    `SemesterCode` INTEGER NOT NULL,
+    `semesterCode` INTEGER NOT NULL,
     `facultyUID` INTEGER NOT NULL,
     `maxCAs` INTEGER NOT NULL,
     `jobPositionStatus` ENUM('OPEN', 'FILLED', 'ONHOLD', 'CLOSED') NOT NULL DEFAULT 'OPEN',

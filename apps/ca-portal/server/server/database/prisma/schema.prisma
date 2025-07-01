@@ -139,7 +139,7 @@ model JobPosition{
   id String @id // For for id here is SemesterCode-CourseCode-SectionNumber
   courseCode String @db.VarChar(8)
   sectionNumber Int
-  SemesterCode Int
+  semesterCode Int
   facultyUID Int
   maxCAs  Int
   jobPositionStatus JobPositionStatus @default(OPEN)
