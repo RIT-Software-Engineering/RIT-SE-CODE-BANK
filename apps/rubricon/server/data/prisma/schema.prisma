@@ -17,7 +17,7 @@ model Templates {
   id        String @id @default(uuid())
   rubric_id String @unique
 
-  rubric Rubrics @relation(fields: [rubric_id], references: [id])
+  rubric Rubrics @relation(fields: [rubric_id], references: [id], onDelete: Cascade)
 }
 
 model Rubrics {
@@ -29,40 +29,48 @@ model Rubrics {
   criteria_column Int
 
   criteria  Criteria[]
-  headers   Headers[]
+  headers   Headers?
   templates Templates?
 }
 
 model Headers {
-  id          String @id @default(uuid())
-  name        String
-  description String
+  id        String @id @default(uuid())
+  rubric_id String @unique
+
+  rubric Rubrics  @relation(fields: [rubric_id], references: [id], onDelete: Cascade)
+  titles Titles[]
+}
+
+model Titles {
+  id          String  @id @default(uuid())
+  title       String?
+  description String?
   points      Float?
   weight      Float?
-  rubric_id   String
+  header_id   String
 
-  rubric Rubrics @relation(fields: [rubric_id], references: [id])
+  header Headers @relation(fields: [header_id], references: [id], onDelete: Cascade)
 }
 
 model Criteria {
-  id          String @id @default(uuid())
-  name        String
-  description String
+  id          String  @id @default(uuid())
+  name        String?
+  description String?
   points      Float? // Optional
   weight      Float? // Optional
   rubric_id   String
 
-  rubric Rubrics  @relation(fields: [rubric_id], references: [id])
+  rubric Rubrics  @relation(fields: [rubric_id], references: [id], onDelete: Cascade)
   levels Levels[]
 }
 
 model Levels {
-  id           String @id @default(uuid())
-  name         String
-  description  String
+  id           String  @id @default(uuid())
+  name         String?
+  description  String?
   points       Float? // Optional
   weight       Float? // Optional
   criterion_id String
 
-  criterion Criteria @relation(fields: [criterion_id], references: [id])
+  criterion Criteria @relation(fields: [criterion_id], references: [id], onDelete: Cascade)
 }
