@@ -8,7 +8,7 @@ const rubricsRouter = require('./api/routes/rubrics.js');
 const usersRouter = require('./api/routes/users.js');
 const accessRouter = require('./api/routes/access.js');
 
-const port = process.env.PORT; // You can use any port number
+const port = process.env.PORT || "5000"; // You can use any port number
 
 app.use(function (req, res, next) {
   // res.header("Access-Control-Allow-Origin", "*");
