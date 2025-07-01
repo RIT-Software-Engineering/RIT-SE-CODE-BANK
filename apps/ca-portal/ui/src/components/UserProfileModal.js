@@ -8,20 +8,25 @@ import { getAllCourses, getUserProfile } from "@/services/api";
 /**
  * Wrapper component that controls the visibility of the {@link UserProfileForm} modal
  * 
- * @param {Object} passedUser - The passed in user object whose profile to edit (required) 
+ * Handles:
+ * - Fetching authenticated user
+ * - Fetching course list and student profile
+ * - Passing appropriate props to the form for editing or creating a profile
  * @returns A modal containing the {@link UserProfileForm} or null if closed
  */
 export default function UserProfileModal() {
-    const [isOpen, setIsOpen] = useState(true); // defaults the modal to open when called
-    const { currentUser } = useAuth();
-    const [profileData, setProfileData] = useState(null);
-    const [courseOptions, setCourseOptions] = useState([]);
-    const [mode, setMode] = useState("create");
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [isOpen, setIsOpen] = useState(true);                 // Modal is open by default when rendered
+    const { currentUser } = useAuth();                          // Retrieves current authenticated user
+    const [profileData, setProfileData] = useState(null);       // User profile data
+    const [courseOptions, setCourseOptions] = useState([]);     // Available courses for form
+    const [mode, setMode] = useState("create");                 // Mode: "create" for new user, "edit" for existing user
+    const [isLoading, setIsLoading] = useState(true);           // Controls loading state UI
+    const [error, setError] = useState(null);                   // Error tracking
     
+    // Fetch profile and course data when component mounts or currentUser changes
     useEffect(() => {
         if (!currentUser?.uid) {
+            // If no authenticated user ID, stop and display an error
             setError("Authentication error: No user UID provided.");
             setIsLoading(false);
             return;
@@ -31,9 +36,11 @@ export default function UserProfileModal() {
             setIsLoading(true);
             setError(null);
             try {
+                // Fetch both the course list and the student profile in parallel
                 const coursesPromise = getAllCourses();
                 const userProfilePromise = getUserProfile(currentUser.uid)
                 .catch(err => {
+                    // If user profile does not exist (404), treat it as a new profile
                     if (err.status === 404) return null;
                     throw err;
                 });
@@ -43,9 +50,11 @@ export default function UserProfileModal() {
                 setCourseOptions(courses);
                 
                 if (user) {
+                    // If profile exists, populate form with data
                     setProfileData(user);
                     setMode("edit");
                 } else {
+                    // Otherwise, initialize new profile with basic user info
                     setProfileData({ uid: currentUser.uid, email: currentUser.email || '' });
                     setMode("create");
                 }
@@ -60,7 +69,10 @@ export default function UserProfileModal() {
         fetchData();
     }, [currentUser]);
     
+    // If the modal is closed or user isn't authenticated, don't render anything
     if (!isOpen || !currentUser) return null;
+
+    // Simple callback to close the modal
     const close = (() => setIsOpen(false));
     
     return (

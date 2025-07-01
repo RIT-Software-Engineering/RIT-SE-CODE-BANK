@@ -13,6 +13,7 @@ import { upsertStudentProfile } from '@/services/api';
  * @param {Object|null} user - The user object to edit
  * @param {Object|null} mode - The mode of the form - either "edit" or "create"
  * @param {Function} onClose - Callback function to be called when the form is submitted or closed 
+ * @param {Object} courseOptions - The list of courses to be presented to the user
  * @returns A modal dialog with the course history form
  */
 export default function UserProfileForm({ user, mode, onClose, courseOptions }) {
@@ -40,19 +41,19 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
     });
 
     /**
-     * Placeholder course data
-     * This **will** be replaced by a call to the courses database to get information
+     * List of available courses to display to the user
      */
     const courseDB = courseOptions;
 
     // Watch the 'isEmployee' radio button to conditionally show related fields dynamically
     const isEmployeeValue = useWatch({ control, name: 'isEmployee' });
+
+    // Used to conditionally render the "Year Level" select field only for undergraduates
     const graduateStatus = useWatch({ control, name: 'graduateStatus' });
 
-
     /**
-     * Handles form submission asynchronously.
-     * This is where integration with a backend API or database occurs.
+     * Handles form submission asynchronously and sends user profile data to backend.
+     * Converts year level to 6 if the user is a graduate
      * On successful submission, calls onClose to close the modal.
      * @param {Object} data - Form data collected from the user inputs.
      */
@@ -74,9 +75,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                 })),
             };
             
-            console.log("🚀 Sending final data to backend:", finalData); // ADD THIS
-            const res = await upsertStudentProfile(finalData);
-            console.log("✅ Backend response:", res); // ADD THIS
+            await upsertStudentProfile(finalData);
 
             alert("Profile saved!");
             if (onClose) onClose();
@@ -87,7 +86,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
         }
     };
 
-    // --- Reusable Helper for Input Fields ---
+    // Reusable Helper for Input Fields
     const InputField = ({ id, label, placeholder, registerProps, error }) => (
         <div>
             <label htmlFor={id} className={formLabel}>{label} <span className="text-red-500">*</span></label>
@@ -177,19 +176,6 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                             </div>
                             {errors.courses && <p className="text-red-500 text-xs mt-1">{errors.courses.message}</p>}
                         </fieldset>
-
-                        {/* <fieldset>
-                            <legend className={formLegend}>Graduation Status <span className="text-red-500">*</span></legend>
-                            <div className="flex flex-col sm:flex-row sm:space-x-8 mt-2">
-                                {['UNDERGRADUATE', 'GRADUATE'].map(status => (
-                                    <label key={status} className="flex items-center space-x-3 cursor-pointer">
-                                        <input type="radio" {...register('graduateStatus', { required: "Please select a status." })} value={status} className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                        <span className="text-slate-700">{status}</span>
-                                    </label>
-                                ))}
-                            </div>
-                            {errors.gradStatus && <p className="text-red-500 text-xs mt-1">{errors.gradStatus.message}</p>}
-                        </fieldset> */}
 
                         <fieldset>
                             <legend className={formLegend}>Are you currently or have you ever been a Course Assistant? <span className="text-red-500">*</span></legend>
