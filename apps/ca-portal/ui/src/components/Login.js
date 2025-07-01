@@ -53,7 +53,7 @@ export default function Login({ onLoginSuccess = () => {} }) {
   };
 
   if (isLoading) {
-    return <div className="text-center p-10">Loading users...</div>;
+    return <div className="text-center p-10">Loading...</div>;
   }
 
   return (

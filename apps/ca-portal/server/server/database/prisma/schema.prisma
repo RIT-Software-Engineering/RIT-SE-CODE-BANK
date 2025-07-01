@@ -46,7 +46,8 @@ model Student {
   //Relationships
   user User @relation(fields: [uid], references: [uid])
   courseHistory CourseHistory[]
-  jobPositionHistory JobPositionHistory[]
+  employees            Employee[]
+  jobPositionApplicationHistory      JobPositionApplicationHistory[]
 }
 
 enum GraduateStatus{
@@ -67,9 +68,11 @@ model Employer {
 model Employee {
   //Fields
   id Int @id //employee id that RIT gives to you when you start working under a new position (like a Course Assistant)
+  studentUID Int
   employeeStatus EmployeeStatus @default(RETIRED)
 
   //Relationships
+  student          Student          @relation(fields: [studentUID], references: [uid])
   jobPositionHistory JobPositionHistory[]
 }
 
@@ -82,29 +85,43 @@ enum EmployeeStatus{
 model JobPositionHistory{
   //Fields
   id Int @id @default(autoincrement())
-  studentUID Int
   jobPositionId String
-  employeeId Int?
-  jobPositionHistoryStatus JobPositionHistoryStatus @default(APPLIED)
+  employeeId Int
+  jobPositionHistoryStatus JobPositionHistoryStatus @default(HIRED)
 
   // Relations
-  student          Student          @relation(fields: [studentUID], references: [uid])
   jobPosition      JobPosition      @relation(fields: [jobPositionId], references: [id])
   employee         Employee?        @relation(fields: [employeeId], references: [id])
   timeLogHistory   TimeLogHistory[]
 }
 
 enum JobPositionHistoryStatus{
+  //these roles are for when employees are currently working within a job position
+  HIRED
+  TERMINATED // When the student is fired
+  CLOSED // When the job position is no longer available (e.g., end of semester)
+}
+
+model JobPositionApplicationHistory{
+  //Fields
+  id Int @id @default(autoincrement())
+  studentUID Int
+  jobPositionId String
+  jobPositionApplicationHistoryStatus JobPositionApplicationHistoryStatus @default(APPLIED)
+  applicationData String @db.Text
+
+  // Relations
+  student          Student          @relation(fields: [studentUID], references: [uid])
+  jobPosition      JobPosition      @relation(fields: [jobPositionId], references: [id])
+}
+
+enum JobPositionApplicationHistoryStatus{
   //these roles are for when students are applying to the job positions
   APPLIED
   SELECTED
   ONHOLD
   REJECTED
-
-  //these roles are for when employees are currently working within a job position
-  HIRED
-  TERMINATED // When the student is fired
-  CLOSED // When the job position is no longer available (e.g., end of semester)
+  CLOSED
 }
 
 //This table to storing specifically past courses a Student has taken before or has been an employee in the past
@@ -150,6 +167,7 @@ model JobPosition{
   faculty            Employer             @relation(fields: [facultyUID], references: [uid])
   jobSchedules       JobSchedule[]
   jobPositionHistory JobPositionHistory[]
+  jobPositionApplicationHistory    JobPositionApplicationHistory[]
 }
 
 enum JobPositionStatus{

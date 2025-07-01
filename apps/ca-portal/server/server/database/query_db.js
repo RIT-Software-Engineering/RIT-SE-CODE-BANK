@@ -156,6 +156,11 @@ async function findUniqueUser(UID) {
                                     course: true,
                                 },
                             },
+                            jobPositionApplicationHistory: {
+                                include: {
+                                    jobPosition: true,
+                                },
+                            },
                         },
                     },
                 },
@@ -254,14 +259,14 @@ async function upsertStudentProfile(studentData) {
     }
 }
 
-async function applyForJobPosition(applicationData){
+async function applyForJobPosition(jobPositionApplicationData) {
     try {
         // Validate required fields
-        if (!applicationData.studentUID || !applicationData.jobPositionId) {
-            throw new Error("Missing required fields: student and/or jobPosition ids.");
+        if (!jobPositionApplicationData.studentUID || !jobPositionApplicationData.jobPositionId || !jobPositionApplicationData.jobPositionApplicationFormData) {
+            throw new Error("Missing required fields: student and/or jobPosition ids as well as form data to apply.");
         }
 
-        const { studentUID, jobPositionId } = applicationData;
+        const { studentUID, jobPositionId, jobPositionApplicationFormData } = jobPositionApplicationData;
 
         // Check if student and job position exist
         const student = await prisma.student.findUnique({ where: { uid: studentUID } });
@@ -275,10 +280,10 @@ async function applyForJobPosition(applicationData){
         }
 
         // Check if the student has already applied for this job position
-        const existingApplication = await prisma.jobPositionHistory.findFirst({
+        const existingApplication = await prisma.jobPositionApplicationHistory.findFirst({
             where: {
                 studentUID: studentUID,
-                jobPositionId: jobPositionId,
+                jobPositionId: jobPositionId
             }
         });
 
@@ -287,10 +292,11 @@ async function applyForJobPosition(applicationData){
         }
 
         // Create a new job application within the JobPositionHistory table
-        const newApplication = await prisma.jobPositionHistory.create({
+        const newApplication = await prisma.jobPositionApplicationHistory.create({
             data: {
                 studentUID: studentUID,
                 jobPositionId: jobPositionId,
+                applicationData: jobPositionApplicationFormData
             }
         });
 

@@ -32,6 +32,7 @@ CREATE TABLE `Employer` (
 -- CreateTable
 CREATE TABLE `Employee` (
     `id` INTEGER NOT NULL,
+    `studentUID` INTEGER NOT NULL,
     `employeeStatus` ENUM('ACTIVE', 'TERMINATED', 'RETIRED') NOT NULL DEFAULT 'RETIRED',
 
     PRIMARY KEY (`id`)
@@ -40,10 +41,20 @@ CREATE TABLE `Employee` (
 -- CreateTable
 CREATE TABLE `JobPositionHistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `jobPositionId` VARCHAR(191) NOT NULL,
+    `employeeId` INTEGER NOT NULL,
+    `jobPositionHistoryStatus` ENUM('HIRED', 'TERMINATED', 'CLOSED') NOT NULL DEFAULT 'HIRED',
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `JobPositionApplicationHistory` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `studentUID` INTEGER NOT NULL,
     `jobPositionId` VARCHAR(191) NOT NULL,
-    `employeeId` INTEGER NULL,
-    `jobPositionHistoryStatus` ENUM('APPLIED', 'SELECTED', 'ONHOLD', 'REJECTED', 'HIRED', 'TERMINATED', 'CLOSED') NOT NULL DEFAULT 'APPLIED',
+    `jobPositionApplicationHistoryStatus` ENUM('APPLIED', 'SELECTED', 'ONHOLD', 'REJECTED', 'CLOSED') NOT NULL DEFAULT 'APPLIED',
+    `applicationData` TEXT NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -121,13 +132,19 @@ ALTER TABLE `Student` ADD CONSTRAINT `Student_uid_fkey` FOREIGN KEY (`uid`) REFE
 ALTER TABLE `Employer` ADD CONSTRAINT `Employer_uid_fkey` FOREIGN KEY (`uid`) REFERENCES `User`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `JobPositionHistory` ADD CONSTRAINT `JobPositionHistory_studentUID_fkey` FOREIGN KEY (`studentUID`) REFERENCES `Student`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Employee` ADD CONSTRAINT `Employee_studentUID_fkey` FOREIGN KEY (`studentUID`) REFERENCES `Student`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `JobPositionHistory` ADD CONSTRAINT `JobPositionHistory_jobPositionId_fkey` FOREIGN KEY (`jobPositionId`) REFERENCES `JobPosition`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `JobPositionHistory` ADD CONSTRAINT `JobPositionHistory_employeeId_fkey` FOREIGN KEY (`employeeId`) REFERENCES `Employee`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `JobPositionHistory` ADD CONSTRAINT `JobPositionHistory_employeeId_fkey` FOREIGN KEY (`employeeId`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `JobPositionApplicationHistory` ADD CONSTRAINT `JobPositionApplicationHistory_studentUID_fkey` FOREIGN KEY (`studentUID`) REFERENCES `Student`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `JobPositionApplicationHistory` ADD CONSTRAINT `JobPositionApplicationHistory_jobPositionId_fkey` FOREIGN KEY (`jobPositionId`) REFERENCES `JobPosition`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `CourseHistory` ADD CONSTRAINT `CourseHistory_studentUID_fkey` FOREIGN KEY (`studentUID`) REFERENCES `Student`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;

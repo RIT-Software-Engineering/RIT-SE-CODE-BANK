@@ -11,11 +11,18 @@ export default function Home() {
   const { currentUser, setCurrentUser } = useAuth();
 
   const handleLoginSuccess = (user) => {
+    if (user && user.uid) {
+    // This is the line you need to add
+    localStorage.setItem('userUID', user.uid); 
     setCurrentUser(user);
-    console.log("User logged in:", user);
+    console.log("User logged in and session saved:", user);
+  } else {
+    console.error("Login failed: user object is missing or invalid.");
+  }
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('userUID');
     setCurrentUser(null);
   };
 

@@ -116,20 +116,19 @@ export async function upsertStudentProfile(studentData) {
 }
 
 // api call to apply for a job position
-export async function applyForJobPosition(applicationData) {
+export async function applyForJobPosition(jobPositionApplicationData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error("Backend API URL components are not defined. Check your .env.local file.");
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply-for-job-position`;
   console.log(`Applying for job position at: ${url}`);
-
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(applicationData),
+    body: JSON.stringify(jobPositionApplicationData),
   });
   return handleApiResponse(response);
 }

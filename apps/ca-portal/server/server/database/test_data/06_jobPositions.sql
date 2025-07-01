@@ -1,4 +1,4 @@
-INSERT INTO `JobPosition` (`id`, `courseCode`, `sectionNumber`, `SemesterCode`, `facultyUID`, `maxCAs`, `jobPositionStatus`, `location`) VALUES
+INSERT INTO `JobPosition` (`id`, `courseCode`, `sectionNumber`, `semesterCode`, `facultyUID`, `maxCAs`, `jobPositionStatus`, `location`) VALUES
 ('2241-SWEN-344-1', 'SWEN-344', 1, '2241', 200, 1, 'OPEN', 'ONLINE'),
 ('2241-SWEN-344-2', 'SWEN-344', 2, '2241', 250, 2, 'OPEN', 'GOL-1500'),
 ('2241-SWEN-344-3', 'SWEN-344', 3, '2241', 200, 1, 'ONHOLD', 'GOL-1520'),
