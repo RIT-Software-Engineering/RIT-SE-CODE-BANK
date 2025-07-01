@@ -1,35 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const prisma = new (require("@prisma/client")).PrismaClient();
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 /**
  * Get all rubrics
  */
-router.get('/', (req, res) => {
-  const rubrics = prisma.rubrics.findMany()
+router.get('/', async (req, res) => {
+  try {
+    const rubrics = await prisma.rubrics.findMany();
 
-  if (!rubrics) {
+    res.send(rubrics);
+  } catch (error) {
     res.status(500).send('There was an error fetching rubrics.');
   }
-
-  res.send(rubrics);
-})
+});
 
 /**
  * Get a rubric by id
  */
-router.get('/:id', (req, res) => {
-  const id = req.params.id;
-
-  const rubric = prisma.rubrics.findUnique({
+router.get('/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const rubric = await prisma.rubrics.findUnique({
     where: { id: id }
   })
 
-  if (!rubric) {
-    res.status(500).send('There was an error fetching the rubric');
+    res.send(rubric);
+  } catch (error) {
+    res.status(500).send('There was an error fetching rubrics.');
   }
-  
-  res.json(rubric);
 });
 
 module.exports = router;

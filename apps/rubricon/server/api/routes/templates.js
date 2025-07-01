@@ -1,42 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const prisma = new (require("@prisma/client")).PrismaClient();
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 /**
  * Get all templates
  */
-router.get('/', (req, res) => {
-    const templates = prisma.templates.findMany({
-        include: {
-            rubric: true
-        }
-    })
-
-    if (!templates) {
-        res.status(404).send('Templates not found');
-    }
+router.get('/', async (req, res) => {
+  try {
+    const templates = await prisma.templates.findMany();
 
     res.send(templates);
-})
+  } catch (error) {
+    res.status(500).send('There was an error fetching templates.');
+  }
+});
 
 /**
  * Get a template by id
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
+  try {
     const id = req.params.id;
+    const template = await prisma.templates.findUnique({
+    where: { id: id }
+  })
 
-    const template = prisma.templates.findUnique({
-        where: { id: id },
-        include: {
-            rubric: true
-        }
-    })
-
-    if (!template) {
-        res.status(404).send('Template not found');
-    }
-
-    res.json(template);
+    res.send(template);
+  } catch (error) {
+    res.status(500).send('There was an error fetching templates.');
+  }
 });
 
 module.exports = router;
