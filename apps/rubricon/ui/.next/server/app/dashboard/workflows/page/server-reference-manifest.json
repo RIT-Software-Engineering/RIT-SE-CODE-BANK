@@ -1,0 +1,16 @@
+{
+  "node": {
+    "40db8a5fb395449cf2544ac7c635ed0412fd0328f4": {
+      "workers": {
+        "app/dashboard/workflows/page": {
+          "moduleId": "[project]/.next-internal/server/app/dashboard/workflows/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/components/workflows/WorkflowList.js [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/workflows/page": "rsc"
+      }
+    }
+  },
+  "edge": {}
+}
