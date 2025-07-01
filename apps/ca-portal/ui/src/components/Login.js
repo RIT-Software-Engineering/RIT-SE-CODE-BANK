@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getAllUsers } from "../services/api"; // Adjust the path as needed
+import { getAllUsers, getUserProfile } from "../services/api"; // Adjust the path as needed
 
 export default function Login({ onLoginSuccess = () => {} }) {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -26,6 +27,35 @@ export default function Login({ onLoginSuccess = () => {} }) {
 
     fetchUsers();
   }, []);
+
+  // Function to handle sign-in and retrieve user profile info
+  const handleSignIn = async () => {
+    if (!selectedUser) {
+      setError("Please select a user.");
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setError(null);
+
+    try {
+      const fullUserProfile = await getUserProfile(selectedUser.uid);
+
+      onLoginSuccess(fullUserProfile);
+      console.log(`${fullUserProfile.role} signed in`);
+
+    } catch (err) {
+        console.error("Sign in failed:", err);
+        setError("Failed to sign in. Could not retrieve user profile.");
+    } finally {
+        setIsLoggingIn(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-center p-10">Loading users...</div>;
+  }
+
   return (
     <>
       <div className="bg-white">
@@ -57,14 +87,13 @@ export default function Login({ onLoginSuccess = () => {} }) {
               ))}
             </select>
           </div>
+          {error && <p className="text-red-500 mt-4">{error}</p>}
           <button
-            className="bg-black text-white w-40 rounded-lg p-3 text-lg mt-10 hover:bg-gray-800"
-            onClick={() => {
-              onLoginSuccess(selectedUser);
-              console.log(`${selectedUser.role} signed in`);
-            }}
+            className="bg-black text-white w-40 rounded-lg p-3 text-lg mt-10 hover:bg-gray-800 disabled:bg-gray-400"
+            onClick={handleSignIn}
+            disabled={isLoggingIn}
           >
-            Sign In
+            {isLoggingIn ? 'Signing In...' : 'Sign In'}
           </button>
         </div>
       </div>

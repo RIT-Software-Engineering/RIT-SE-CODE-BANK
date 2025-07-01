@@ -26,7 +26,7 @@ export default function Positions() {
     }
 
     fetchPositions();
-  }, []);
+  }, [searchTerm]);
 
   // Search for open positions when search form is submitted
   const handleSearch = async (e) => {

@@ -12,6 +12,7 @@ export default function Home() {
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
+    console.log("User logged in:", user);
   };
 
   const handleLogout = () => {
