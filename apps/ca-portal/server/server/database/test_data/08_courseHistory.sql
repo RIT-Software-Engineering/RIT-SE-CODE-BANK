@@ -4,6 +4,7 @@ INSERT INTO `CourseHistory` (`studentUID`, `courseCode`, `grade`, `wasPriorEmplo
 (302, 'MATH-123', 'A', 1),
 (303, 'SWEN-261', 'A', 0),
 (303, 'SWEN-344', 'C+', 0),
+(303, 'SWEN-561', 'A', 0),
 (304, 'MATH-123', 'A', 0),
 (304, 'SWEN-261', 'B-', 0),
 (305, 'SWEN-561', 'A', 1),

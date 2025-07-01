@@ -12,14 +12,37 @@ export default function PositionsCard({ position, index }) {
       (app) => app.jobPositionId === position.id
     ) || false;
 
-  const isEligibleToApply = () => {
-    if (!currentUser?.student?.courseHistory) return false;
+  const checkEligibility = () => {
+    if (!currentUser?.student?.courseHistory) {
+      // This case is for when the user is not a student, so no button is rendered anyway.
+      // We can return a generic reason.
+      return { eligible: false, reason: 'User is not a student.' };
+    }
+
+    // 1. Graduate Status Check
+    const requiredStatus = position.graduateStatusRequirement; // e.g., 'UNDERGRADUATE', 'GRADUATE', 'BOTH'
+    const studentStatus = currentUser.student.graduateStatus;
+
+    if (requiredStatus && requiredStatus !== 'BOTH' && studentStatus !== requiredStatus) {
+      return { eligible: false, reason: `This position is only open to ${requiredStatus.toLowerCase()} students.` };
+    }
+
+    // 2. Course Taken Check
     const courseInData = currentUser.student.courseHistory.find(
       (historyItem) => historyItem.courseCode === position.courseCode
     );
-    if (!courseInData) return false;
+    if (!courseInData) {
+      return { eligible: false, reason: 'You must have taken this course to apply.' };
+    }
+
+    // 3. Grade Check
     const requiredGrades = ['A', 'A-'];
-    return requiredGrades.includes(courseInData.grade);
+    if (!requiredGrades.includes(courseInData.grade)) {
+      return { eligible: false, reason: `A grade of 'A' or 'A-' is required. Your grade was ${courseInData.grade}.` };
+    }
+
+    // If all checks pass, the student is eligible.
+    return { eligible: true, reason: '' };
   };
 
   const handleApplySuccess = (newApplication) => {
@@ -66,6 +89,8 @@ export default function PositionsCard({ position, index }) {
   );
 
   const renderApplyButton = () => {
+    const eligibility = checkEligibility();
+
     if (hasApplied) {
       return (
         <button
@@ -77,7 +102,7 @@ export default function PositionsCard({ position, index }) {
       );
     }
 
-    if (isEligibleToApply()) {
+    if (eligibility.eligible) {
       return (
         <button
           onClick={() => setIsFormOpen(true)}
@@ -89,7 +114,7 @@ export default function PositionsCard({ position, index }) {
     }
 
     return (
-      <Tooltip text='You do not meet the requirements for this position (must have taken the course with a grade of A or A-).'>
+      <Tooltip text={eligibility.reason}>
         <button
           className='bg-gray-300 text-gray-500 font-bold py-2 px-5 rounded-lg shadow-sm whitespace-nowrap cursor-not-allowed'
           disabled
