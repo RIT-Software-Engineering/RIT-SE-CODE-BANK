@@ -77,9 +77,12 @@ async function getAllCourses(){
 
 async function findUniqueUser(studentUID) {
     try {
+        const numericUID = parseInt(studentUID, 10);
+        if (isNaN(numericUID)) throw new Error(`Invalid UID: ${studentUID}`);
+
         const user = await prisma.user.findUnique({
             where: {
-                uid: studentUID,
+                uid: numericUID,
             },
         });
         return user;
