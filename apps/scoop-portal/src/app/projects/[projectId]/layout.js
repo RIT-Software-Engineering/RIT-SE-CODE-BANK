@@ -1,7 +1,12 @@
+import { Button } from "@mui/material";
+import { ArrowBack } from "@mui/icons-material";
+
 export default function ProjectDetailsLayout({ children }) {
     return (
         <div>
-            <p>The page for a specific project will have a different layout than the main Projects page.</p>
+            <Button href="/projects" startIcon={<ArrowBack />}>
+                Back to Projects
+            </Button>
             {children}
         </div>
     );
