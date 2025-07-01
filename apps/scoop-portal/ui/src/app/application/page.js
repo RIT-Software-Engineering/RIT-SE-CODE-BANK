@@ -6,11 +6,10 @@ import {
   Select,
   Button,
   FormLabel,
+  InputLabel,
   FormControlLabel,
   RadioGroup,
   Radio,
-  CloudUploadIcon,
-  VisuallyHiddenInput,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -19,7 +18,11 @@ import {
   Typography,
   Box,
   Paper,
+  Grid,
 } from "@mui/material";
+import { styled } from "@mui/material/styles";
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
+
 
 const MODAL_STATUS = { SUCCESS: "success", FAIL: "fail", CLOSED: false };
 const APPLICATION_STATUSES = {
@@ -124,6 +127,19 @@ function ApplicationPage() {
     setModalOpen(MODAL_STATUS.CLOSED);
   };
 
+  const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});
+
+
   return (
     <>
       <Dialog open={modalOpen !== MODAL_STATUS.CLOSED} onClose={closeModal}>
@@ -147,15 +163,19 @@ function ApplicationPage() {
         </DialogActions>
       </Dialog>
 
-      <Paper sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 5, py: 3 }}>
+      <Paper component={Grid} sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 5, py: 3 }}>
         <Typography variant="h4" gutterBottom align="center">
-          Submit An Application
+          Apply For SCOOP
         </Typography>
+        
+
         <Box component="form" onSubmit={submitApplication} noValidate>
+        
           <TextField
             required
             fullWidth
             margin="normal"
+            
             label="Full Name"
             name="name"
             value={formData.title || ""}
@@ -163,17 +183,76 @@ function ApplicationPage() {
             error={!!errors.title}
             helperText={errors.title}
           />
-          Is this your first coop?
+      
+          <TextField
+          required
+          fullWidth
+          margin="normal"
+          label="RIT Email"
+          name="email"
+          value={formData.email || ""}
+          onChange={handleChange}
+          error={!!errors.email}
+          helperText={errors.email}
+        />
+          <TextField
+          required
+          fullWidth
+          margin="normal"
+          label="Phone Number"
+          name="phone"
+          value={formData.phone || ""}
+          onChange={handleChange}
+          error={!!errors.phone}
+          helperText={errors.phone}
+        />
+        <FormControl fullWidth margin="normal">
+            {/* <FormLabel>Academic Standing</FormLabel> */}
+            <InputLabel id="academic-standing-label">Academic Standing</InputLabel>
+            <Select
+              required
+              margin="normal"
+              label="academic-standing"
+              onChange={handleChange}
+              error={!!errors.description}
+              helperText={errors.description}
+            >
+              <MenuItem value={1}>2nd Year</MenuItem>
+              <MenuItem value={2}>3rd Year</MenuItem>
+              <MenuItem value={3}>4th Year</MenuItem>
+              <MenuItem value={3}>5th Year</MenuItem>
+            </Select>
+    </FormControl>
+<FormControl fullWidth margin="normal">
+            <InputLabel id="semester-label">Expected graduation date</InputLabel>
+          <Select
+            
+            required
+            label="Semester"
+            name="semester"
+            value={formData.semester || ""}
+            onChange={(e) => handleDropdownChange("semester", e.target.value)}
+            error={!!errors.semester}
+            helperText={errors.semester}
+          >
+            {semesterData.map((semester) => (
+              <MenuItem key={semester.semester_id} value={semester.semester_id}>
+                {semester.name}
+              </MenuItem>
+            ))}
+          </Select>
+          </FormControl>
+
           <FormControl>
-            <FormLabel id="first coop">Is this your first coop?</FormLabel>
+            <FormLabel>Have you completed a coop before?</FormLabel>
             <RadioGroup defaultValue="Yes" name="radio-buttons-group">
               <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
               <FormControlLabel value="No" control={<Radio />} label="No" />
             </RadioGroup>
           </FormControl>
-          <p>How many coop semesters have you completed?</p>
-          <FormControl fullWidth>
-            {/* <InputLabel id="coops-completed"></InputLabel> */}
+          
+          <FormControl fullWidth >
+            <FormLabel>How many coop semesters have you completed?</FormLabel>
             <Select
               required
               margin="normal"
@@ -187,43 +266,15 @@ function ApplicationPage() {
               <MenuItem value={2}>Two</MenuItem>
               <MenuItem value={3}>Three</MenuItem>
             </Select>
-          </FormControl>
-          <TextField
-            select
-            required
-            fullWidth
-            margin="normal"
-            label="Semester"
-            name="semester"
-            value={formData.semester || ""}
-            onChange={(e) => handleDropdownChange("semester", e.target.value)}
-            error={!!errors.semester}
-            helperText={errors.semester}
-          >
-            {semesterData.map((semester) => (
-              <MenuItem key={semester.semester_id} value={semester.semester_id}>
-                {semester.name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            required
-            fullWidth
-            margin="normal"
-            label="Status"
-            name="status"
-            value={formData.status || ""}
-            onChange={(e) => handleDropdownChange("status", e.target.value)}
-            error={!!errors.status}
-            helperText={errors.status}
-          ></TextField>
-          Tell us about your skills and experience:
+    </FormControl>
+          
+          <FormControl fullWidth margin="normal">
+            <FormLabel>Tell us about your skills and experience:</FormLabel>
           <TextField
             required
             fullWidth
             margin="normal"
-            label="skills"
+            // label="skills"
             name="skills"
             value={formData.description || ""}
             multiline
@@ -232,24 +283,35 @@ function ApplicationPage() {
             error={!!errors.description}
             helperText={errors.description}
           />
-          Upload your resume:
+          </FormControl>
+          
           <Button
+          required
             component="label"
             variant="contained"
             tabIndex={-1}
-            // startIcon={<CloudUploadIcon />}
+            startIcon={<FileUploadOutlinedIcon />}
           >
-            
+            Upload Resume
+            <VisuallyHiddenInput
+              type="file"
+              name="resume"
+              accept=".pdf,.doc,.docx"
+              onChange={handleChange}
+            />
 
           </Button>
+
+          <Box mt={2} textAlign="center">
           <Button
             type="submit"
             variant="contained"
             color="primary"
             sx={{ mt: 2 }}
           >
-            Submit App
+            Submit Application
           </Button>
+          </Box>
         </Box>
       </Paper>
     </>

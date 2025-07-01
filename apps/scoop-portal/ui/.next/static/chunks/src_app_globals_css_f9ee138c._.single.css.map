@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/src/app/globals.css"],"sourcesContent":["@import \"tailwindcss\";\r\n\r\n:root {\r\n  --background: #ffffff;\r\n  --foreground: #171717;\r\n}\r\n\r\n@theme inline {\r\n  --color-background: var(--background);\r\n  --color-foreground: var(--foreground);\r\n  --font-sans: var(--font-geist-sans);\r\n  --font-mono: var(--font-geist-mono);\r\n}\r\n\r\n@media (prefers-color-scheme: dark) {\r\n  :root {\r\n    --background: #0a0a0a;\r\n    --foreground: #ededed;\r\n  }\r\n}\r\n\r\nbody {\r\n  background: var(--background);\r\n  color: var(--foreground);\r\n  font-family: Arial, Helvetica, sans-serif;\r\n}\r\n"],"names":[],"mappings":"AAEA;;;;;AAKA;;;;AAOA;EACE;;;;;;AAMF"}}]
+}
