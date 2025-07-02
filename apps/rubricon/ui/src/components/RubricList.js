@@ -16,9 +16,21 @@ export default async function RubricList() {
     return (
         <div className="flex flex-col gap-4 w-4/5 mx-auto border rounded-lg p-4">
             <>
-                {rubrics.map((rubric, index) => (
-                    <RubricListItem key={index} data={rubric} />
-                ))}
+                {
+                    rubrics.length === 0 ? (
+                        <>
+                            No Rubrics Found
+                        </>
+                    ) : (
+                        <>
+                            {
+                                rubrics.map((rubric, index) => (
+                                    <RubricListItem key={index} data={rubric} />
+                                ))
+                            }
+                        </>
+                    )
+                }
             </>
         </div>
     );
