@@ -81,15 +81,15 @@ export async function getAllCourses() {
   return handleApiResponse(response);
 }
 
-export async function getUserProfile(studentUID) {
-  if (!studentUID) {
-    throw new Error("A studentUID is required to fetch a user profile.");
+export async function getUserProfile(UID) {
+  if (!UID) {
+    throw new Error("A UID is required to fetch a user profile.");
   }
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error("Backend API URL components are not defined. Check your .env.local file.");
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/users/${studentUID}`;
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/users/${UID}`;
   console.log(`Fetching user profile from: ${url}`);
 
   const response = await fetch(url);
@@ -111,6 +111,24 @@ export async function upsertStudentProfile(studentData) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(studentData),
+  });
+  return handleApiResponse(response);
+}
+
+// api call to apply for a job position
+export async function applyForJobPosition(jobPositionApplicationData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply-for-job-position`;
+  console.log(`Applying for job position at: ${url}`);
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(jobPositionApplicationData),
   });
   return handleApiResponse(response);
 }
