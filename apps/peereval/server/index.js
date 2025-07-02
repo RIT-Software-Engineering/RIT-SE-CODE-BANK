@@ -1,8 +1,15 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const PORT = 3003;
 
 app.use(express.json()); // Allows parsing JSON bodies
+
+// Allow requests from frontend
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true, // if you send cookies or auth headers
+}));
 
 const projects = require('./data/dummy/projects.json');
 const assessments = require('./data/dummy/assessments.json');
@@ -63,7 +70,7 @@ app.get('/projects/asOverseer/:userId', (req, res) => {
 // ========================================================
 
 // Get projects's assessments
-app.get('/assessments/byProjects/:projectId', (req, res) => {
+app.get('/assessments/byProject/:projectId', (req, res) => {
     const projectId = req.params.projectId;
 
     const projectAssessments = assessments.filter(a => a.ownerProjectId == projectId);

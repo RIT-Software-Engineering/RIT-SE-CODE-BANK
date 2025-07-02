@@ -1,5 +1,7 @@
+'use client';
+
 import Link from "next/link";
-import React, { Fragment } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 
 // Types
 type Assessment = {
@@ -77,8 +79,7 @@ const splitAssessments = (assessments: Assessment[]) => ({
     upcoming: assessments.filter(a => a.status === "upcoming"),
 });
 
-// ...unchanged imports and types...
-
+// Assessment Section
 const Section: React.FC<{
     title: string;
     assessments: Assessment[];
@@ -166,7 +167,6 @@ const Section: React.FC<{
     </section>
 );
 
-// New component for the peers box
 const PeersBox: React.FC<{ count: number }> = ({ count }) => (
     <div className="bg-blue-100 text-blue-800 rounded px-3 py-1 text-xs font-semibold text-center min-w-[48px] cursor-pointer">
         {count} peer submissions
@@ -174,13 +174,21 @@ const PeersBox: React.FC<{ count: number }> = ({ count }) => (
 );
 
 interface ProjectViewProps {
-    params: {
-        id: string
-    }
+    projectId: string
 }
-const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
+const ClientProjectView: React.FC<ProjectViewProps> = ({ projectId }) => {
 
-    const { pastDue, toDo, upcoming } = splitAssessments(dummyAssessments[Number(params.id)]);
+    const [assessments, setAssessments] = useState([]);
+
+    // Getting the project's assessments
+    useEffect(() => {
+        console.log("In useEffect");
+        fetch('http://localhost:3003/assessments/byProject/' + projectId)
+            .then(res => res.json())
+            .then(setAssessments);
+    }, []);
+
+    const { pastDue, toDo, upcoming } = splitAssessments(assessments);
 
     return (
         <div className="max-w-3xl mx-auto py-8 px-4">
@@ -200,8 +208,8 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                 assessments={pastDue}
                 clickable
                 showCompletedByOthers
-                linkedAssessment={`/feedbackForm/${params.id}`}
-                linkedPeersFeedback={`/receivedFeedback/${params.id}`}
+                linkedAssessment={`/feedbackForm/${projectId}`}
+                linkedPeersFeedback={`/receivedFeedback/${projectId}`}
             />
 
             {/* To Do Assessments Section */}
@@ -210,7 +218,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                 assessments={toDo}
                 clickable
                 showCompletedQuestions
-                linkedAssessment={`/feedbackForm/${params.id}`}
+                linkedAssessment={`/feedbackForm/${projectId}`}
             />
 
             {/* Upcoming Assessments Section */}
@@ -223,4 +231,4 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
     );
 };
 
-export default ProjectView;
+export default ClientProjectView;
