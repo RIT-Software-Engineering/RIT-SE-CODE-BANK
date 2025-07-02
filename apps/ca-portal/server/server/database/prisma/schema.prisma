@@ -70,7 +70,7 @@ model Employee {
   //Fields
   id Int @id //employee id that RIT gives to you when you start working under a new position (like a Course Assistant)
   studentUID Int
-  employeeStatus EmployeeStatus @default(RETIRED)
+  employeeStatus EmployeeStatus @default(ACTIVE)
 
   //Relationships
   student          Student          @relation(fields: [studentUID], references: [uid])
@@ -80,7 +80,7 @@ model Employee {
 enum EmployeeStatus{
   ACTIVE
   TERMINATED
-  RETIRED
+  INACTIVE
 }
 
 model JobPositionHistory{
@@ -88,7 +88,7 @@ model JobPositionHistory{
   id Int @id @default(autoincrement())
   jobPositionId String
   employeeId Int
-  jobPositionHistoryStatus JobPositionHistoryStatus @default(HIRED)
+  jobPositionHistoryStatus JobPositionHistoryStatus @default(ACTIVE)
 
   // Relations
   jobPosition      JobPosition      @relation(fields: [jobPositionId], references: [id])
@@ -98,9 +98,9 @@ model JobPositionHistory{
 
 enum JobPositionHistoryStatus{
   //these roles are for when employees are currently working within a job position
-  HIRED
+  ACTIVE
   TERMINATED // When the student is fired
-  CLOSED // When the job position is no longer available (e.g., end of semester)
+  INACTIVE // When the job position is no longer available (e.g., end of semester)
 }
 
 model JobPositionApplicationHistory{
@@ -108,7 +108,7 @@ model JobPositionApplicationHistory{
   id Int @id @default(autoincrement())
   studentUID Int
   jobPositionId String
-  jobPositionApplicationHistoryStatus JobPositionApplicationHistoryStatus @default(APPLIED)
+  jobApplicationStatus JobApplicationStatus @default(APPLIED)
   applicationData String @db.Text
 
   // Relations
@@ -116,13 +116,13 @@ model JobPositionApplicationHistory{
   jobPosition      JobPosition      @relation(fields: [jobPositionId], references: [id])
 }
 
-enum JobPositionApplicationHistoryStatus{
+enum JobApplicationStatus{
   //these roles are for when students are applying to the job positions
   APPLIED
   SELECTED
   ONHOLD
   REJECTED
-  CLOSED
+  INACTIVE
 }
 
 //This table to storing specifically past courses a Student has taken before or has been an employee in the past
@@ -164,6 +164,8 @@ model JobPosition{
   location String @db.Text
   locationType LocationType
   graduateStatusRequirement GraduateStatus
+  startDate DateTime
+  endDate DateTime
 
   // Relations
   course             Course               @relation(fields: [courseCode], references: [courseCode])
@@ -180,10 +182,11 @@ enum LocationType{
 }
 
 enum JobPositionStatus{
+  ACTIVE
   OPEN
   FILLED
   ONHOLD
-  CLOSED
+  INACTIVE
 }
 
 model JobSchedule{

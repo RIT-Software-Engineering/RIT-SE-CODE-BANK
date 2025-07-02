@@ -23,8 +23,15 @@ export default function PositionsCard({ position, index }) {
     const requiredStatus = position.graduateStatusRequirement; // e.g., 'UNDERGRADUATE', 'GRADUATE', 'BOTH'
     const studentStatus = currentUser.student.graduateStatus;
 
-    if (requiredStatus && requiredStatus !== 'BOTH' && studentStatus !== requiredStatus) {
-      return { eligible: false, reason: `This position is only open to ${requiredStatus.toLowerCase()} students.` };
+    if (
+      requiredStatus &&
+      requiredStatus !== 'BOTH' &&
+      studentStatus !== requiredStatus
+    ) {
+      return {
+        eligible: false,
+        reason: `This position is only open to ${requiredStatus.toLowerCase()} students.`,
+      };
     }
 
     // 2. Course Taken Check
@@ -32,13 +39,19 @@ export default function PositionsCard({ position, index }) {
       (historyItem) => historyItem.courseCode === position.courseCode
     );
     if (!courseInData) {
-      return { eligible: false, reason: 'You must have taken this course to apply.' };
+      return {
+        eligible: false,
+        reason: 'You must have taken this course to apply.',
+      };
     }
 
     // 3. Grade Check
     const requiredGrades = ['A', 'A-'];
     if (!requiredGrades.includes(courseInData.grade)) {
-      return { eligible: false, reason: `A grade of 'A' or 'A-' is required. Your grade was ${courseInData.grade}.` };
+      return {
+        eligible: false,
+        reason: `A grade of 'A' or 'A-' is required. Your grade was ${courseInData.grade}.`,
+      };
     }
 
     // If all checks pass, the student is eligible.
@@ -88,6 +101,23 @@ export default function PositionsCard({ position, index }) {
     </svg>
   );
 
+  const CalendarIcon = () => (
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      className='h-5 w-5 mr-1.5 text-gray-500 inline'
+      fill='none'
+      viewBox='0 0 24 24'
+      stroke='currentColor'
+    >
+      <path
+        strokeLinecap='round'
+        strokeLinejoin='round'
+        strokeWidth={2}
+        d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
+      />
+    </svg>
+  );
+
   const renderApplyButton = () => {
     const eligibility = checkEligibility();
 
@@ -125,6 +155,14 @@ export default function PositionsCard({ position, index }) {
     );
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
   return (
     <>
       <div
@@ -139,6 +177,13 @@ export default function PositionsCard({ position, index }) {
             <p className='text-md text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded-md inline-block mt-1'>
               {position.id}
             </p>
+            <div className='flex items-center text-gray-600 mt-2'>
+              <CalendarIcon />
+              <span>
+                {formatDate(position.startDate)} -{' '}
+                {formatDate(position.endDate)}
+              </span>
+            </div>
           </div>
           {currentUser?.role === 'STUDENT' && renderApplyButton()}
         </div>

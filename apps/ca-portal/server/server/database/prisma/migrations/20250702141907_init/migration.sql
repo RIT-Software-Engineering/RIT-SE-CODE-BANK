@@ -33,7 +33,7 @@ CREATE TABLE `Employer` (
 CREATE TABLE `Employee` (
     `id` INTEGER NOT NULL,
     `studentUID` INTEGER NOT NULL,
-    `employeeStatus` ENUM('ACTIVE', 'TERMINATED', 'RETIRED') NOT NULL DEFAULT 'RETIRED',
+    `employeeStatus` ENUM('ACTIVE', 'TERMINATED', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -43,7 +43,7 @@ CREATE TABLE `JobPositionHistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `jobPositionId` VARCHAR(191) NOT NULL,
     `employeeId` INTEGER NOT NULL,
-    `jobPositionHistoryStatus` ENUM('HIRED', 'TERMINATED', 'CLOSED') NOT NULL DEFAULT 'HIRED',
+    `jobPositionHistoryStatus` ENUM('ACTIVE', 'TERMINATED', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -53,7 +53,7 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `studentUID` INTEGER NOT NULL,
     `jobPositionId` VARCHAR(191) NOT NULL,
-    `jobPositionApplicationHistoryStatus` ENUM('APPLIED', 'SELECTED', 'ONHOLD', 'REJECTED', 'CLOSED') NOT NULL DEFAULT 'APPLIED',
+    `jobApplicationStatus` ENUM('APPLIED', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
     `applicationData` TEXT NOT NULL,
 
     PRIMARY KEY (`id`)
@@ -87,10 +87,12 @@ CREATE TABLE `JobPosition` (
     `semesterCode` INTEGER NOT NULL,
     `facultyUID` INTEGER NOT NULL,
     `maxCAs` INTEGER NOT NULL,
-    `jobPositionStatus` ENUM('OPEN', 'FILLED', 'ONHOLD', 'CLOSED') NOT NULL DEFAULT 'OPEN',
+    `jobPositionStatus` ENUM('ACTIVE', 'OPEN', 'FILLED', 'ONHOLD', 'INACTIVE') NOT NULL DEFAULT 'OPEN',
     `location` TEXT NOT NULL,
     `locationType` ENUM('INPERSON', 'HYBRID', 'REMOTE') NOT NULL,
     `graduateStatusRequirement` ENUM('UNDERGRADUATE', 'GRADUATE', 'BOTH') NOT NULL,
+    `startDate` DATETIME(3) NOT NULL,
+    `endDate` DATETIME(3) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
