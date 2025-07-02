@@ -20,7 +20,7 @@ model users {
   id             String @id @default(uuid())
   fname          String
   lname          String
-  email          String @unique
+  email          String
   type           String
   semester_group String
   project        String

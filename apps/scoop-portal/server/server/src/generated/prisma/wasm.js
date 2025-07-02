@@ -120,6 +120,14 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.FruitScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  color: 'color',
+  size: 'size',
+  rating: 'rating'
+};
+
 exports.Prisma.UsersScalarFieldEnum = {
   id: 'id',
   fname: 'fname',
@@ -133,17 +141,17 @@ exports.Prisma.UsersScalarFieldEnum = {
   prev_login: 'prev_login'
 };
 
-exports.Prisma.FruitScalarFieldEnum = {
+exports.Prisma.SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+};
+
+exports.Prisma.fruitOrderByRelevanceFieldEnum = {
   id: 'id',
   name: 'name',
   color: 'color',
   size: 'size',
   rating: 'rating'
-};
-
-exports.Prisma.SortOrder = {
-  asc: 'asc',
-  desc: 'desc'
 };
 
 exports.Prisma.usersOrderByRelevanceFieldEnum = {
@@ -159,18 +167,10 @@ exports.Prisma.usersOrderByRelevanceFieldEnum = {
   prev_login: 'prev_login'
 };
 
-exports.Prisma.fruitOrderByRelevanceFieldEnum = {
-  id: 'id',
-  name: 'name',
-  color: 'color',
-  size: 'size',
-  rating: 'rating'
-};
-
 
 exports.Prisma.ModelName = {
-  users: 'users',
-  fruit: 'fruit'
+  fruit: 'fruit',
+  users: 'users'
 };
 
 /**

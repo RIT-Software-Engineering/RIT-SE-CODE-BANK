@@ -2946,19 +2946,19 @@ export namespace Prisma {
 
   export type usersWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    email?: string
     AND?: usersWhereInput | usersWhereInput[]
     OR?: usersWhereInput[]
     NOT?: usersWhereInput | usersWhereInput[]
     fname?: StringFilter<"users"> | string
     lname?: StringFilter<"users"> | string
+    email?: StringFilter<"users"> | string
     type?: StringFilter<"users"> | string
     semester_group?: StringFilter<"users"> | string
     project?: StringFilter<"users"> | string
     active?: StringFilter<"users"> | string
     last_login?: StringFilter<"users"> | string
     prev_login?: StringFilter<"users"> | string
-  }, "id" | "email">
+  }, "id">
 
   export type usersOrderByWithAggregationInput = {
     id?: SortOrder

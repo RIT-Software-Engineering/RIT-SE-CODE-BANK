@@ -3,39 +3,16 @@ import {sampleUsers} from "./test-data/sample_users.js";
 const prisma = new PrismaClient();
 
 async function main() {
-  //   const alice = await prisma.user.upsert({
-  //     where: { email: 'alice@prisma.io' },
-  //     update: {},
-  //     create: {
-  //       email: 'alice@prisma.io',
-  //       name: 'Alice',
-  //       posts: {
-  //         create: {
-  //           title: 'Check out Prisma with Next.js',
-  //           content: 'https://www.prisma.io/nextjs',
-  //           published: true,
-  //         },
-  //       },
-  //     },
-  //   })
 
-  const apple = {
-    data: {
-      name: "Apple",
-      color: "green",
-      size: "Medium",
-      rating: "5"
-    },
-  };
+  console.log("Clearing data");
+  await prisma.users.deleteMany();
+  await prisma.fruit.deleteMany();
 
-  await prisma.fruit.create(apple);
+  console.log("Seeding data");
   await prisma.users.createMany({
     data: sampleUsers,
   });
-
-  
-  console.log({ apple });
-  // console.log(sampleUsers);
+  console.log("Drop and create finished.");
 }
 main()
   .then(async () => {

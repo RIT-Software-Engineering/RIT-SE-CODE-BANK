@@ -1,19 +1,6 @@
-model users {
-  id             String @id @default(uuid())
-  fname          String
-  lname          String
-  email          String @unique
-  type           String // admin, student, coach, coordinator
-  semester_group String //temp string //@relation(fields: [semester_group_id], references: [id])
-  project        String //temp string //@relation(fields: [project_id], references: [id])
-  active         String //Empty string if active, Datetime of when deactivated if inactive
-  last_login     String //temp string
-  prev_login     String //temp string
-}
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  output   = "../../src/generated/prisma"
 }
 
 datasource db {
@@ -27,4 +14,17 @@ model fruit {
   color  String
   size   String
   rating String @default("0")
+}
+
+model users {
+  id             String @id @default(uuid())
+  fname          String
+  lname          String
+  email          String
+  type           String
+  semester_group String
+  project        String
+  active         String
+  last_login     String
+  prev_login     String
 }
