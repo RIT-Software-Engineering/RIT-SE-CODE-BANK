@@ -65,6 +65,7 @@ const App = () => {
       >
         <NavButton href="/application">Apply</NavButton>
         <NavButton href="/scoopdinator/applications">Scoopdinator</NavButton>
+        <NavButton href="/projects/1">Demo Project</NavButton>
       </nav>
 
       <div style={{ height: '64px' }} />
