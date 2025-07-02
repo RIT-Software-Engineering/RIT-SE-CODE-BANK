@@ -9,6 +9,10 @@ async function main() {
   await prisma.fruit.deleteMany();
 
   console.log("Seeding data");
+  //example data
+  await prisma.fruit.create({
+    data: { name: "Apple", color: "Red", size: "Medium" },
+  }); 
   await prisma.users.createMany({
     data: sampleUsers,
   });
