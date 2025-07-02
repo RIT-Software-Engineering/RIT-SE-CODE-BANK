@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User roles: admin, manager, user
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  managedCommunities Community[] @relation("ManagerCommunities")
+  communities        Community[] @relation("UserCommunities")
+  teams              Team[]      @relation("TeamUsers")
+}
+
+model Community {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  manager   User     @relation("ManagerCommunities", fields: [managerId], references: [id])
+  managerId Int
+  users     User[]   @relation("UserCommunities")
+  teams     Team[]
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  name        String
+  maxSize     Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  community   Community @relation(fields: [communityId], references: [id])
+  communityId Int
+  users       User[]    @relation("TeamUsers")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  USER
+}

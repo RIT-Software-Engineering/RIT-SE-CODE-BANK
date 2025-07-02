@@ -1,0 +1,156 @@
+.button-box {
+  border: 2px solid #333;
+  padding: 10px;
+  border-radius: 8px;
+  display: inline-block;
+  margin: 5px 0;
+  background: #fafafa;
+}
+.manager-root {
+  position: relative;
+  min-height: 100vh;
+}
+
+.manager-class-box {
+  border: 1px solid black;
+  padding: 10px;
+  margin: 10px;
+  position: relative;
+}
+
+.manager-class-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.manager-delete-community-btn {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 12px;
+}
+
+.manager-teams-container {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.manager-team-box {
+  border: 1px solid #888;
+  border-radius: 8px;
+  padding: 8px 16px;
+  min-width: 120px;
+  background: #f8f8f8;
+}
+
+.manager-team-size {
+  font-weight: normal;
+  font-size: 0.95em;
+}
+
+.manager-team-users-list {
+  margin: 8px 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.manager-team-user {
+  font-size: 0.95em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  text-decoration: underline;
+  color: #1976d2;
+}
+
+.manager-team-no-members {
+  font-size: 0.95em;
+  color: #aaa;
+}
+
+.manager-remove-user-btn {
+  margin-left: 8px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.manager-add-user-row {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.manager-add-user-select {
+  min-width: 100px;
+  margin-right: 6px;
+}
+
+.manager-delete-team-btn {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.button-box {
+  margin-top: 10px;
+}
+
+.manager-users-in-community {
+  /* Additional styling if needed */
+}
+
+.manager-multiselect-users {
+  min-width: 150px;
+  min-height: 80px;
+}
+
+.manager-new-team-btn-row {
+  margin-top: 10px;
+}
+
+.manager-new-team-btn {
+  height: 40px;
+  min-width: 120px;
+  font-size: 1em;
+  border-radius: 8px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.test-users-fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 1000;
+  padding: 14px 22px;
+  border-radius: 8px;
+  background: #333;
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.test-users-fab:hover {
+  background: #555;
+}

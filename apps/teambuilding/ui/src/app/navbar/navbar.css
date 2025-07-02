@@ -1,0 +1,37 @@
+.navbar {
+  background: #1976d2;
+  padding: 12px 24px;
+}
+.navbar-list {
+  display: flex;
+  gap: 18px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.navbar-item {
+}
+
+.navbar-link {
+  background: none;
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1em;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.navbar-link:hover {
+  background: #1565c0;
+}
+.navbar-signout {
+  margin-left: auto;
+}
+.navbar-signout-btn {
+  background: #e74c3c;
+  color: #fff;
+}
