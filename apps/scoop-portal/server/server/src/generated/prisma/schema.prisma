@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model fruit {
+  id     String @id @default(uuid())
+  name   String
+  color  String
+  size   String
+  rating String @default("0")
+}
+
+model users {
+  id             String @id @default(uuid())
+  fname          String
+  lname          String
+  email          String
+  type           String
+  semester_group String
+  project        String
+  active         String
+  last_login     String
+  prev_login     String
+}
