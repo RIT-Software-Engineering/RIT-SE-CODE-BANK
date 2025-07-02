@@ -1,36 +1,30 @@
 {
-    "1": [
-        {
-            "assessmentId": "1",
-            "completions": [
-                {
-                    "userId": "2",
-                    "responses": {
+    "1": {
+        "1": {
+            "completions": {
+                "2": {
                 "q1": "Then Minerva said, Father, son of Saturn, king of kings, it served them right, and so it would any one else who does as they did; but Aegisthus is neither here nor there—it is for Ulysses that my heart bleeds, when I think of his sufferings in that lonely sea-girt island, far away, poor man, from all his friends. It is an island covered with forest, in the very middle of the sea, and a goddess lives there, daughter of the magician Atlas, who looks after the bottom of the ocean, and carries the great columns that keep heaven and earth asunder. This daughter of Atlas has got hold of poor unhappy Ulysses, and keeps trying by every kind of blandishment to make him forget his home, so that he is tired of life, and thinks of nothing but how he may once more see the smoke of his own chimneys.",
                 "q2": 4,
                 "q3": [2, 3]
         }
                 }
-            ]
+            
 
             
 
         }
-    ],
-    "2": [
-        {
-            "assessmentId": "1",
-            "completions": [
-                {
-                    "userId": "1",
-                    "responses": {
+    },
+    "2": {
+        "1": {
+            "completions": {
+                "1": {
                                         "q1": "But Ulysses sat as one dumbfounded; and his eyes filled with tears as he heard the things that his father was telling him. He flung his arms about his father and said, ‘I am he, father, about whom you are asking—I have returned after having been away for twenty years. But stay your weeping—we have no time to lose; go, rather, and tell the servants to make ready a meal of the best that there is. I have brought spoil from many places, and there is enough to feast us all.’",
                 "q2": 1,
                 "q3": [1,1]
 
-                    }
+                    
                 }
-            ]
         }
-    ]
+        }
+    }
 }

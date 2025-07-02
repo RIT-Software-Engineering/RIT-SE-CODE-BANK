@@ -15,63 +15,6 @@ type Assessment = {
     status: "pastDue" | "toDo" | "upcoming";
 };
 
-const dummyAssessments: Record<number, Assessment[]> = {
-    1: [
-    {
-        id: "1",
-        name: "Sprint 1 Review",
-        startDate: "2024-06-01",
-        dueDate: "2024-06-10",
-        questionsCount: 3,
-        completedByOthers: 2,
-        status: "pastDue",
-    },
-    {
-        id: "2",
-        name: "Spring 2 Review",
-        startDate: "2024-06-11",
-        dueDate: "2024-06-20",
-        questionsCount: 3,
-        completedQuestions: 1,
-        status: "toDo",
-    },
-    {
-        id: "3",
-        name: "Final Review",
-        startDate: "2024-06-21",
-        dueDate: "2024-06-30",
-        questionsCount: 6,
-        status: "upcoming",
-    },
-], 2: [
-    {
-        id: "4",
-        name: "Sprint 1 Review",
-        startDate: "2024-06-01",
-        dueDate: "2024-06-10",
-        questionsCount: 3,
-        completedByOthers: 2,
-        status: "pastDue",
-    },
-    {
-        id: "5",
-        name: "Sprint 2 Review",
-        startDate: "2024-06-11",
-        dueDate: "2024-06-20",
-        questionsCount: 3,
-        completedQuestions: 1,
-        status: "toDo",
-    },
-    {
-        id: "6",
-        name: "Final Review",
-        startDate: "2024-06-21",
-        dueDate: "2024-06-30",
-        questionsCount: 6,
-        status: "upcoming",
-    },
-]};
-
 // Helper to split assessments by status
 const splitAssessments = (assessments: Assessment[]) => ({
     pastDue: assessments.filter(a => a.status === "pastDue"),
@@ -81,21 +24,19 @@ const splitAssessments = (assessments: Assessment[]) => ({
 
 // Assessment Section
 const Section: React.FC<{
+    projectId: string;
     title: string;
     assessments: Assessment[];
     clickable?: boolean;
     showCompletedByOthers?: boolean;
     showCompletedQuestions?: boolean;
-    linkedAssessment: string;
-    linkedPeersFeedback?: string;
 }> = ({
+    projectId,
     title,
     assessments,
     clickable = false,
     showCompletedByOthers = false,
     showCompletedQuestions = false,
-    linkedAssessment,
-    linkedPeersFeedback,
 }) => (
     <section className="mb-8">
         <h2 className="text-lg font-semibold mb-4">{title}</h2>
@@ -106,7 +47,7 @@ const Section: React.FC<{
             {assessments.map((a) => (
                 <Fragment key={a.id}>
                     {clickable ? (
-                        <Link href={linkedAssessment} key={a.id}>
+                        <Link href={`/projects/${projectId}/assessments/${a.id}`} key={a.id}>
                             <div
                                 key={a.id}
                                 className={`flex items-center justify-between p-4 rounded border ${
@@ -157,7 +98,7 @@ const Section: React.FC<{
                         )
                     }
                     {showCompletedByOthers && (
-                        <Link href={linkedPeersFeedback!!}>
+                        <Link href={""}>
                             <PeersBox count={a.completedByOthers ?? 0} />
                         </Link>
                     )}
@@ -204,28 +145,27 @@ const ClientProjectView: React.FC<ProjectViewProps> = ({ projectId }) => {
 
             {/* Past Due Assessments Section */}
             <Section
+                projectId={projectId}
                 title="Past Due Assessments"
                 assessments={pastDue}
                 clickable
                 showCompletedByOthers
-                linkedAssessment={`/feedbackForm/${projectId}`}
-                linkedPeersFeedback={`/receivedFeedback/${projectId}`}
             />
 
             {/* To Do Assessments Section */}
             <Section
+                projectId={projectId}
                 title="To Do Assessments"
                 assessments={toDo}
                 clickable
                 showCompletedQuestions
-                linkedAssessment={`/feedbackForm/${projectId}`}
             />
 
             {/* Upcoming Assessments Section */}
             <Section
+                projectId={projectId}
                 title="Upcoming Assessments"
                 assessments={upcoming}
-                linkedAssessment=""
             />
         </div>
     );

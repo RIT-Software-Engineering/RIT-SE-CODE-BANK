@@ -4,6 +4,7 @@ const app = express();
 const PORT = 3003;
 
 app.use(express.json()); // Allows parsing JSON bodies
+app.use(express.urlencoded({ extended: true }));
 
 // Allow requests from frontend
 app.use(cors({
@@ -14,6 +15,7 @@ app.use(cors({
 const projects = require('./data/dummy/projects.json');
 const assessments = require('./data/dummy/assessments.json');
 const peerToAssessmentCompletions = require('./data/dummy/peerToAssessmentCompletions.json');
+const users = require('./data/dummy/users.json');
 
 // Sample route
 app.get('/', (req, res) => {
@@ -65,11 +67,48 @@ app.get('/projects/asOverseer/:userId', (req, res) => {
     }));
 })
 
+// Get the peer ID's for a project
+app.get('/projects/getPeers/:id', (req, res) => {
+  const id = req.params.id;
+
+  const proj = projects.filter(p => p.id == id);
+  if (proj.length == 0)
+    res.status(404).send('Project not found');
+
+  res.send(proj[0].peers);
+})
+
+// Get the peer full info for a project
+app.get('/projects/getPeersFull/:id', (req, res) => {
+  const id = req.params.id;
+
+  const proj = projects.filter(p => p.id == id);
+  if (proj.length == 0)
+    res.status(404).send('Project not found');
+
+  const peerIds = proj[0].peers;
+  const peerInfos = []
+  peerIds.forEach(pid => {
+    peerInfos.push(users.find(u => u.id == pid));
+  })
+
+  res.send(peerInfos);
+})
+
 // ========================================================
 // ASSESSMENTS
 // ========================================================
 
-// Get projects's assessments
+// Get assessment by id
+app.get('/assessments/:id', (req, res) => {
+    const projectId = req.params.id;
+
+    const projectAssessments = assessments.filter(a => a.id == projectId);
+
+    res.send(projectAssessments[0]);
+})
+
+// Get project's assessments
 app.get('/assessments/byProject/:projectId', (req, res) => {
     const projectId = req.params.projectId;
 
@@ -83,8 +122,24 @@ app.get('/assessments/responses/:userId/:assessmentId', (req, res) => {
     const userId = req.params.userId;
     const assessmentId = req.params.assessmentId;
 
-    const peerResponse = peerToAssessmentCompletions[userId].filter(c => c.assessmentId == assessmentId);
+    const peerResponse = peerToAssessmentCompletions?.[userId]?.[assessmentId].completions ?? {};
 
-    res.send(peerResponse.length === 0 ? {} : peerResponse[0]);
+    res.send(peerResponse);
 })
 
+// Set peer's assessment response for a specific peer
+app.post('/assessment/:assessmentId/addFeedback/:reviewerId/:revieweeId', (req, res) => {
+  const assessmentId = req.params.assessmentId;
+  const reviewerId = req.params.reviewerId;
+  const revieweeId = req.params.revieweeId;
+  
+  let completions = peerToAssessmentCompletions[userId].completions;
+  const otherCompletions = completions.filter(c => c.userId != revieweeId);
+
+  peerToAssessmentCompletions[userId].completions = [req.body, ...otherCompletions];
+  utils.save(rubrics, './data/peerToAssessmentCompletions.json')
+    .then(() => console.log('Response updated successfully'))
+    .catch(err => console.error('Error saving rubrics:', err));
+  res.status(201);
+
+})

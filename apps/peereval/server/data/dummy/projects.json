@@ -10,7 +10,7 @@
         "id": "2",
         "name": "SWEN-444",
         "description": "UI/UX project for SWEN-444",
-        "peers": ["1", "2"],
+        "peers": ["1", "3", "9"],
         "overseer": ["10"]
     }
 ]
