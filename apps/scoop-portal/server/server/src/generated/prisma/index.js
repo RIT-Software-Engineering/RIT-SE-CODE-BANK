@@ -35,12 +35,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.10.1
- * Query Engine version: 9b628578b3b7cae625e8c927178f15a170e74a9c
+ * Prisma Client JS version: 6.11.0
+ * Query Engine version: 9c30299f5a0ea26a96790e13f796dc6094db3173
  */
 Prisma.prismaVersion = {
-  client: "6.10.1",
-  engine: "9b628578b3b7cae625e8c927178f15a170e74a9c"
+  client: "6.11.0",
+  engine: "9c30299f5a0ea26a96790e13f796dc6094db3173"
 }
 
 Prisma.PrismaClientKnownRequestError = PrismaClientKnownRequestError;
@@ -175,16 +175,15 @@ const config = {
   },
   "relativeEnvPaths": {
     "rootEnvPath": null,
-    "schemaEnvPath": "../../../../../.env"
+    "schemaEnvPath": "../../../../.env"
   },
   "relativePath": "../../../prisma",
-  "clientVersion": "6.10.1",
-  "engineVersion": "9b628578b3b7cae625e8c927178f15a170e74a9c",
+  "clientVersion": "6.11.0",
+  "engineVersion": "9c30299f5a0ea26a96790e13f796dc6094db3173",
   "datasourceNames": [
     "db"
   ],
   "activeProvider": "mysql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -203,8 +202,8 @@ const fs = require('fs')
 config.dirname = __dirname
 if (!fs.existsSync(path.join(__dirname, 'schema.prisma'))) {
   const alternativePaths = [
-    "server/server/src/generated/prisma",
     "server/src/generated/prisma",
+    "src/generated/prisma",
   ]
   
   const alternativePath = alternativePaths.find((altPath) => {
@@ -234,7 +233,7 @@ Object.assign(exports, Prisma)
 
 // file annotations for bundling tools to include these files
 path.join(__dirname, "query_engine-windows.dll.node");
-path.join(process.cwd(), "server/server/src/generated/prisma/query_engine-windows.dll.node")
+path.join(process.cwd(), "server/src/generated/prisma/query_engine-windows.dll.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
-path.join(process.cwd(), "server/server/src/generated/prisma/schema.prisma")
+path.join(process.cwd(), "server/src/generated/prisma/schema.prisma")
