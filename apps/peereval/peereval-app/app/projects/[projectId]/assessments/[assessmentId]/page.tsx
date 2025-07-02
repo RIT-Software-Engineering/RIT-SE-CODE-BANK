@@ -32,37 +32,6 @@ type RubricQuestion = {
 
 type Question = FreeResponseQuestion | RatingQuestion | RubricQuestion;
 
-// --- Example Questions ---
-// const questions: Question[] = [
-//     {
-//         type: "free-response",
-//         id: "q1",
-//         question: "What was this peer's biggest strength?",
-//     },
-//     {
-//         type: "rating",
-//         id: "q2",
-//         question: "How would you rate this peer's communication?",
-//         scale: 5,
-//         labels: ["Poor", "Excellent"],
-//     },
-//     {
-//         type: "rubric",
-//         id: "q3",
-//         question: "Evaluate the following aspects:",
-//         rows: [
-//             {
-//                 label: "Clarity",
-//                 options: ["Poor", "Fair", "Good", "Excellent"],
-//             },
-//             {
-//                 label: "Teamwork",
-//                 options: ["Poor", "Fair", "Good", "Excellent"],
-//             },
-//         ],
-//     },
-// ];
-
 // Metadata of Form
 const formName = "Sprint 2 Peer Assessment";
 
