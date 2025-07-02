@@ -1,3 +1,12 @@
+model Application {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  skills    String
+  resumeUrl String
+  createdAt DateTime @default(now())
+}
+
 generator client {
   provider = "prisma-client-js"
   output   = "../../src/generated/prisma"

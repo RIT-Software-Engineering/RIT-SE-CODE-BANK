@@ -120,6 +120,15 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
+exports.Prisma.ApplicationScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  skills: 'skills',
+  resumeUrl: 'resumeUrl',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.FruitScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -146,6 +155,13 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.ApplicationOrderByRelevanceFieldEnum = {
+  name: 'name',
+  email: 'email',
+  skills: 'skills',
+  resumeUrl: 'resumeUrl'
+};
+
 exports.Prisma.fruitOrderByRelevanceFieldEnum = {
   id: 'id',
   name: 'name',
@@ -169,6 +185,7 @@ exports.Prisma.usersOrderByRelevanceFieldEnum = {
 
 
 exports.Prisma.ModelName = {
+  Application: 'Application',
   fruit: 'fruit',
   users: 'users'
 };
