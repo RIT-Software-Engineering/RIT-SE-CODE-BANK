@@ -16,6 +16,7 @@ datasource db {
 model Templates {
   id        String @id @default(uuid())
   rubric_id String @unique
+  index     Int
 
   rubric Rubrics @relation(fields: [rubric_id], references: [id], onDelete: Cascade)
 }
@@ -23,7 +24,7 @@ model Templates {
 model Rubrics {
   id              String @id @default(uuid())
   title           String
-  description     String
+  description     String @db.VarChar(4000)
   rows            Int
   columns         Int
   criteria_column Int
@@ -48,6 +49,7 @@ model Titles {
   points      Float?
   weight      Float?
   header_id   String
+  index       Int
 
   header Headers @relation(fields: [header_id], references: [id], onDelete: Cascade)
 }
@@ -55,10 +57,11 @@ model Titles {
 model Criteria {
   id          String  @id @default(uuid())
   name        String?
-  description String?
+  description String? // TODO: figure out optimal max chars
   points      Float? // Optional
   weight      Float? // Optional
   rubric_id   String
+  index       Int
 
   rubric Rubrics  @relation(fields: [rubric_id], references: [id], onDelete: Cascade)
   levels Levels[]
@@ -67,10 +70,11 @@ model Criteria {
 model Levels {
   id           String  @id @default(uuid())
   name         String?
-  description  String?
+  description  String? // TODO: figure out optimal max chars
   points       Float? // Optional
   weight       Float? // Optional
   criterion_id String
+  index        Int
 
   criterion Criteria @relation(fields: [criterion_id], references: [id], onDelete: Cascade)
 }

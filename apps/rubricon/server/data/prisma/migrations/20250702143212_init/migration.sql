@@ -2,6 +2,7 @@
 CREATE TABLE `Templates` (
     `id` VARCHAR(191) NOT NULL,
     `rubric_id` VARCHAR(191) NOT NULL,
+    `index` INTEGER NOT NULL,
 
     UNIQUE INDEX `Templates_rubric_id_key`(`rubric_id`),
     PRIMARY KEY (`id`)
@@ -11,7 +12,7 @@ CREATE TABLE `Templates` (
 CREATE TABLE `Rubrics` (
     `id` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(191) NOT NULL,
+    `description` VARCHAR(4000) NOT NULL,
     `rows` INTEGER NOT NULL,
     `columns` INTEGER NOT NULL,
     `criteria_column` INTEGER NOT NULL,
@@ -36,6 +37,7 @@ CREATE TABLE `Titles` (
     `points` DOUBLE NULL,
     `weight` DOUBLE NULL,
     `header_id` VARCHAR(191) NOT NULL,
+    `index` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -48,6 +50,7 @@ CREATE TABLE `Criteria` (
     `points` DOUBLE NULL,
     `weight` DOUBLE NULL,
     `rubric_id` VARCHAR(191) NOT NULL,
+    `index` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -60,6 +63,7 @@ CREATE TABLE `Levels` (
     `points` DOUBLE NULL,
     `weight` DOUBLE NULL,
     `criterion_id` VARCHAR(191) NOT NULL,
+    `index` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

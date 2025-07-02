@@ -27,12 +27,23 @@ router.get('/:id', async (req, res) => {
       include: {
         headers: {
           include: {
-            titles: true
+            titles: {
+              orderBy: {
+                index: 'asc'
+              }
+            }
           }
         },
         criteria: {
+          orderBy: {
+            index: 'asc'
+          },
           include: {
-            levels: true
+            levels: {
+              orderBy: {
+                index: 'asc'
+              }
+            }
           }
         }
       }

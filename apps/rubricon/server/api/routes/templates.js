@@ -11,10 +11,11 @@ router.get('/init', async (req, res) => {
         await prisma.$transaction(async () => {
             await prisma.templates.create({
                 data: {
+                    index: 0,
                     rubric: {
                         create: {
                             title: "Holistic",
-                            description: "Holistic rubrics are general...",
+                            description: "The most general kind of rubric. Lists levels of performance along with a broad description of the characteristics that define what it means to achieve each level. These are typically labelled using letters, numbers, or words.",
                             rows: 6,
                             columns: 2,
                             criteria_column: 1,
@@ -23,9 +24,11 @@ router.get('/init', async (req, res) => {
                                     titles: {
                                         create: [
                                             {
+                                                index: 0,
                                                 name: "Grade"
                                             },
                                             {
+                                                index: 1,
                                                 name: "Description"
                                             }
                                         ]
@@ -35,50 +38,60 @@ router.get('/init', async (req, res) => {
                             criteria: {
                                 create: [
                                     {
+                                        index: 0,
                                         name: "A",
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0,
                                                     description: "Excellent"
                                                 }
                                             ]
                                         }
                                     },
                                     {
+                                        index: 1,
                                         name: "B",
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0,
                                                     description: "Proficient"
                                                 }
                                             ]
                                         }
                                     },
                                     {
+                                        index: 2,
                                         name: "C",
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0,
                                                     description: "Good"
                                                 }
                                             ]
                                         }
                                     },
                                     {
+                                        index: 3,
                                         name: "D",
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0,
                                                     description: "Needs Improvement"
                                                 }
                                             ]
                                         }
                                     },
                                     {
+                                        index: 4,
                                         name: "F",
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0,
                                                     description: "You screwed up"
                                                 }
                                             ]
@@ -92,10 +105,11 @@ router.get('/init', async (req, res) => {
             });
             await prisma.templates.create({
                 data: {
+                    index: 1,
                     rubric: {
                         create: {
                             title: "Analytic",
-                            description: "Analytic rubrics are complex...",
+                            description: "An analytic rubric breaks down the characteristics of an assignment into different dimensions of the rubric. Each of these dimensions has different levels that define the standard of performance expected to be achieved at each level. This allows the scorer to itemize and define exactly what aspects are strong and which ones need improvement.",
                             rows: 4,
                             columns: 5,
                             criteria_column: 1,
@@ -104,18 +118,23 @@ router.get('/init', async (req, res) => {
                                     titles: {
                                         create: [
                                             {
+                                                index: 0,
                                                 name: "Criteria"
                                             },
                                             {
+                                                index: 1,
                                                 points: 10
                                             },
                                             {
+                                                index: 2,
                                                 points: 7
                                             },
                                             {
+                                                index: 3,
                                                 points: 3
                                             },
                                             {
+                                                index: 4,
                                                 points: 0
                                             }
                                         ]
@@ -125,55 +144,68 @@ router.get('/init', async (req, res) => {
                             criteria: {
                                 create: [
                                     {
+                                        index: 0,
                                         name: "Project",
                                         description: "",
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0,
                                                     description: "Project work excelled in A, B, and C."
                                                 },
                                                 {
+                                                    index: 1,
                                                     description: "level 2."
                                                 },
                                                 {
+                                                    index: 2,
                                                     description: "level 3."
                                                 },
                                                 {
+                                                    index: 3,
                                                     description: "level 4."
                                                 }
                                             ]
                                         }
                                     },
                                     {
+                                        index: 1,
                                         name: "Homework",
                                         description: "",
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0,
                                                     description: "Project work excelled in A, B, and C."
                                                 },
                                                 {
+                                                    index: 1,
                                                     description: "level 2."
                                                 },
                                                 {
+                                                    index: 2,
                                                     description: "level 3."
                                                 },
                                                 {
+                                                    index: 3,
                                                     description: "level 4."
                                                 }
                                             ]
                                         }
                                     },
                                     {
+                                        index: 2,
                                         name: "Participation",
                                         points: 5,
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0,
                                                     description: "Student participated at least once during class discussion.",
                                                     points: 5
                                                 },
                                                 {
+                                                    index: 1,
                                                     description: "Student did not participate in class discussion.",
                                                     points: 0
                                                 },
@@ -188,25 +220,29 @@ router.get('/init', async (req, res) => {
             });
             await prisma.templates.create({
                 data: {
+                    index: 2,
                     rubric: {
                         create: {
                             title: "Single-Point",
-                            description: "Single-Point rubrics are simple, but can take longer to grade. However, they make it much easier for people being evaluated to understand where they are doing well, or falling short.",
+                            description: "A single-point rubric also breaks down the components of an assignment into different criteria. The rubric only defines the criteria for proficiency and leaves space for the scorer to note where the submitter fell short or exceeded in their work, without defining how to do so. ",
                             rows: 4,
                             columns: 3,
-                            criteria_column: 1,
+                            criteria_column: 2,
                             headers: {
                                 create: {
                                     titles: {
                                         create: [
                                             {
+                                                index: 0,
                                                 name: "Areas that fell short"
                                             },
                                             {
+                                                index: 1,
                                                 name: "Criteria"
                                             },
                                             {
-                                                name: "Areas of proficiency"
+                                                index: 2,
+                                                name: "Areas of excellence"
                                             }
                                         ]
                                     }
@@ -215,40 +251,49 @@ router.get('/init', async (req, res) => {
                             criteria: {
                                 create: [
                                     {
+                                        index: 0,
                                         name: "Project",
                                         description: "Project work meets requirements A, B, and C.",
                                         points: 10,
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0
                                                 },
                                                 {
+                                                    index: 1
                                                 }
                                             ]
                                         }
                                     },
                                     {
+                                        index: 1,
                                         name: "Homework",
                                         description: "Homework is complete, and submitted on time.",
                                         points: 10,
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0
                                                 },
                                                 {
+                                                    index: 1
                                                 }
                                             ]
                                         }
                                     },
                                     {
+                                        index: 2,
                                         name: "Participation",
                                         description: "Student participated at least once during class discussion.",
                                         points: 5,
                                         levels: {
                                             create: [
                                                 {
+                                                    index: 0
                                                 },
                                                 {
+                                                    index: 1
                                                 }
                                             ]
                                         }
@@ -273,7 +318,19 @@ router.get('/init', async (req, res) => {
  */
 router.get('/', async (req, res) => {
     try {
-        const templates = await prisma.templates.findMany();
+        const templates = await prisma.templates.findMany({
+            orderBy: {
+                index: 'asc'
+            },
+            include: {
+                rubric: {
+                    select: {
+                        title: true,
+                        description: true
+                    }
+                }
+            }
+        });
 
         res.send(templates);
     } catch (error) {
@@ -294,12 +351,23 @@ router.get('/:id', async (req, res) => {
                     include: {
                         headers: {
                             include: {
-                                titles: true
+                                titles: {
+                                    orderBy: {
+                                        index: 'asc'
+                                    }
+                                }
                             }
                         },
                         criteria: {
+                            orderBy: {
+                                index: 'asc'
+                            },
                             include: {
-                                levels: true
+                                levels: {
+                                    orderBy: {
+                                        index: 'asc'
+                                    }
+                                }
                             }
                         }
                     }
