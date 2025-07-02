@@ -40,10 +40,10 @@ const ClientOverseerProjectView: React.FC<{
             {/* Back Arrow */}
             <Link href="/dashboard">
                 <button
-                    className="mb-6 flex items-center text-gray-700 hover:text-black"
+                    className="mb-4 text-blue-600 underline"
                     aria-label="Back"
                 >
-                    Back
+                    &larr; Back
                 </button>
             </Link>
             <section className="mb-8">
