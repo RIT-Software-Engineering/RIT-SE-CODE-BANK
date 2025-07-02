@@ -1,4 +1,4 @@
-import Skeleton from "@/app/_components/Skeleton";
+import Skeleton from "../../_components/Skeleton";
 
 function ProjectDetailsLoading() {
     return (
