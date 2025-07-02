@@ -1,81 +1,61 @@
-const auth = require("../middleware/auth.js");
-const utils = require("../utils"); // Make sure you have a utils.js file with a save function
-const crypto = require("crypto");
-
 const express = require('express');
 const router = express.Router();
-
-const rubrics = require('../../data/rubrics.json'); // TODO: Decide where this data should actually live. Likely replace this with MariaDB.
-
-// TODO: Change id to id.
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 /**
  * Get all rubrics
  */
-router.get('/', (req, res) => {
-    res.send(rubrics); 
-})
+router.get('/', async (req, res) => {
+  try {
+    const rubrics = await prisma.rubrics.findMany();
+
+    res.send(rubrics);
+  } catch (error) {
+    res.status(500).send('There was an error fetching rubrics.');
+  }
+});
 
 /**
  * Get a rubric by id
  */
-router.get('/:id', (req, res) => {
-  const id = req.params.id;
-  const rubric = rubrics.find(r => r.id === id);
-  
-  if (rubric) {
-    res.json(rubric);
-  } else {
-    res.status(404).send('Rubric not found');
-  }
-});
+router.get('/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const rubric = await prisma.rubrics.findUnique({
+      where: { id: id },
+      include: {
+        headers: {
+          include: {
+            titles: {
+              orderBy: {
+                index: 'asc'
+              }
+            }
+          }
+        },
+        criteria: {
+          orderBy: {
+            index: 'asc'
+          },
+          include: {
+            levels: {
+              orderBy: {
+                index: 'asc'
+              }
+            }
+          }
+        }
+      }
+    })
 
-/**
- * Create a new rubric
- */
-router.post('/', express.json(), (req, res) => {
-  const newRubric = req.body;
-  newRubric.id = crypto.randomUUID();
-  rubrics.push(newRubric);
-  utils.save(rubrics, './data/rubrics.json')
-      .then(() => console.log('Rubrics updated successfully'))
-      .catch(err => console.error('Error saving rubrics:', err));
-  res.status(201).send(newRubric);
-});
+    if (!rubric) {
+      return res.status(404).json({ error: "Rubric not found" });
+    }
 
-/**
- * Update a specific rubric
- */
-router.put('/:id', [express.json(), auth.mockUser, auth.authorizeAccessLevel("Creator")], (req, res) => {
-  const id = req.params.id;
-  const index = rubrics.findIndex(r => r.id === id);
-  
-  if (index !== -1) {
-    rubrics[index] = req.body;
-    utils.save(rubrics, './data/rubrics.json')
-    .then(() => console.log('Rubrics updated successfully'))
-    .catch(err => console.error('Error saving rubrics:', err));
-    res.status(200).send(rubrics[index]);
-  } else {
-    res.status(404).send('Rubric not found');
-  }
-});
-
-/**
- * Delete a specific rubric
- */
-router.delete('/:id', (req, res) => {
-  const id = req.params.id;
-  const index = rubrics.findIndex(r => r.id === id);
-  
-  if (index !== -1) {
-    rubrics.splice(index, 1);
-    utils.save(rubrics, './data/rubrics.json')
-      .then(() => console.log('Rubrics updated successfully'))
-      .catch(err => console.error('Error saving rubrics:', err));
-    res.status(204).send();
-  } else {
-    res.status(404).send('Rubric not found');
+    res.send(rubric);
+  } catch (error) {
+    res.status(500).send('There was an error fetching rubrics.');
   }
 });
 
