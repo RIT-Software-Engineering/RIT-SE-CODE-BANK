@@ -4,6 +4,12 @@ import { useUserContext } from "@/context/UserContext";
 import React, { act, useEffect, useState } from "react";
 
 // --- Types ---
+type Peer = {
+    id: string,
+    name: string
+}
+const DUMMY_PEER: Peer = { id: "0", name: "" }
+
 type FreeResponseQuestion = {
     type: "free-response";
     id: string;
@@ -32,9 +38,6 @@ type RubricQuestion = {
 
 type Question = FreeResponseQuestion | RatingQuestion | RubricQuestion;
 
-// Metadata of Form
-const formName = "Sprint 2 Peer Assessment";
-
 // --- Main Component ---
 interface FeedbackFormProps {
     params: {
@@ -43,22 +46,32 @@ interface FeedbackFormProps {
     }
 }
 const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
-    const [activePeer, setActivePeer] = useState<string>("");
+    const [assessmentMetadata, setAssessmentMetadata] = useState<{
+        id: string,
+        ownerProjectId: string,
+        name: string,
+        startDate: string,
+        dueDate: string, 
+    }>();
+    const [activePeer, setActivePeer] = useState<Peer>(DUMMY_PEER);
     const [activeTab, setActiveTab] = useState<number>(0);
     // Just the completions object
     const [responses, setResponses] = useState<Record<string, Record<string, any>>>({});
     const [questions, setQuestions] = useState<Question[]>([]);
-    const [peersToEval, setPeersToEval] = useState([]);
+    const [peersToEval, setPeersToEval] = useState<Peer[]>([]);
     const {userId, setUserId} = useUserContext();
 
     const projectId = params.projectId;
     const assessmentId = params.assessmentId;
 
     useEffect(() => {
-        // Get the assessment questions
+        // Get the assessment metadata questions
         fetch("http://localhost:3003/assessments/" + assessmentId)
             .then(res => res.json())
-            .then(data => setQuestions(data['questions']));
+            .then(data => {
+                setAssessmentMetadata(data);
+                setQuestions(data['questions']);
+            });
 
         // Get the peer's responses
         fetch(`http://localhost:3003/assessments/responses/${userId}/${assessmentId}`)
@@ -66,20 +79,26 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             .then(setResponses);
 
         // Get the peers the user is responding to
-        fetch('http://localhost:3003/projects/getPeers/' + projectId)
-            .then(res => res.json())
+        fetch('http://localhost:3003/projects/getPeersFull/' + projectId)
+            .then(res => res.json() as Promise<{ id: string, name: string }[]>)
             .then(data => {
-                setPeersToEval(data);
-                setActivePeer(data[0]);
+                const peers = data.filter(d => d.id != userId);
+                setPeersToEval(peers);
+                setActivePeer(peers[0]);
             });
     }, []);
 
+    const handleSwitchTab = (idx: number) => {
+        setActiveTab(idx);
+        setActivePeer(peersToEval[idx]);
+    }
+
     const handleFreeResponse = (qid: string, value: string) => {
         setResponses(prev => {
-            const answers = prev[activePeer];
+            const answers = prev[activePeer.id];
             return ({
                 ...prev,
-                [activePeer]: {
+                [activePeer.id]: {
                     ...answers,
                     [qid]: value
                 }
@@ -89,10 +108,10 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
 
     const handleRating = (qid: string, value: number) => {
         setResponses(prev => {
-            const answers = prev[activePeer];
+            const answers = prev[activePeer.id];
             return ({
                 ...prev,
-                [activePeer]: {
+                [activePeer.id]: {
                     ...answers,
                     [qid]: value
                 }
@@ -102,12 +121,12 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
 
     const handleRubric = (qid: string, rowIdx: number, colIdx: number) => {
         setResponses(prev => {
-            const answers = prev[activePeer];
+            const answers = prev[activePeer.id];
             const newAnswer = answers[qid] ?? [];
             newAnswer[rowIdx] = colIdx;
             return ({
                 ...prev,
-                [activePeer]: {
+                [activePeer.id]: {
                     ...answers,
                     [qid]: newAnswer
                 }
@@ -136,7 +155,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                     &larr; Back
                 </button>
                 <div className="flex justify-center mb-6 space-x-2">
-                    {peersToEval.map((name, idx) => (
+                    {peersToEval.map(({ id, name }, idx) => (
                         <button
                             key={name}
                             type="button"
@@ -145,15 +164,15 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                     ? "bg-blue-600 text-white font-bold"
                                     : "bg-gray-200 text-gray-700"
                             }`}
-                            onClick={() => setActiveTab(idx)}
+                            onClick={() => handleSwitchTab(idx)}
                         >
                             {name}
                         </button>
                     ))}
                 </div>
-                <p className="text-xl">{formName} — <span className="font-semibold">{activePeer}</span></p>
+                <p className="text-xl">{assessmentMetadata?.name} — <span className="font-semibold">{activePeer.name}</span></p>
                 {questions.map((q) => {
-                    const tabResponses = responses[activePeer] || {};
+                    const tabResponses = responses[activePeer.id] || {};
                     switch (q.type) {
                         case "free-response":
                             return (

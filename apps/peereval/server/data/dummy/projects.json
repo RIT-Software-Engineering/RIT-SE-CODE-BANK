@@ -3,7 +3,7 @@
         "id": "1",
         "name": "SWEN-262",
         "description": "E-Store semester project for SWEN-261",
-        "peers": ["1", "2"],
+        "peers": ["1", "2", "8"],
         "overseer": ["10"]
     },
     {
