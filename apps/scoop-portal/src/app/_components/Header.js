@@ -1,10 +1,9 @@
-import "../css/header.css";
 import { Menu, AccountCircle } from "@mui/icons-material";
 
 function Header() {
     return (
-        <header>
-            <div className="icon menu">
+        <header className="p-2 w-full flex justify-between items-center bg-[#f76902] text-white">
+            <div id="icon-menu">
                 {
                     // BUG: Using Menu and AccountCircle may lead to the error below
                     //
@@ -16,12 +15,12 @@ function Header() {
                 }
                 <Menu />
             </div>
-            <div className="ui header">
-                <h1>
+            <div id="ui-header">
+                <h1 className="font-bold">
                     <a href="/">SCOOP Portal</a>
                 </h1>
             </div>
-            <div className="icon accountcircle">
+            <div id="icon-accountcircle">
                 <AccountCircle />
             </div>
         </header>
