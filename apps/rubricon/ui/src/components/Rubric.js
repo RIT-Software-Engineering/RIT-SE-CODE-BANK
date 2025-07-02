@@ -1,8 +1,8 @@
 function Cell({ cell }) {
     return (
         <>
-            <strong>{(cell.name ? cell.name : "") + (cell.points ? " (" + cell.points + " points)" : "") + (cell.weight ? " (" + cell.weight + ")" : "")}</strong>
-            {(cell.description ? " " + cell.description : "")}
+            <strong>{(cell.name !== null ? cell.name : "") + (cell.points !== null ? " (" + cell.points + " points)" : "") + (cell.weight !== null ? " (" + cell.weight + ")" : "")}</strong>
+            {(cell.description !== null ? " " + cell.description : "")}
         </>
     )
 }
@@ -43,10 +43,7 @@ export default function Rubric({ data }) {
                         <tr>
                             {data.headers.titles.map((header, index) => (
                                 <th key={index} className="p-1">
-                                    {(header.name ? header.name : "")
-                                        + (header.points ? " (" + header.points + " points)" : "")
-                                        + (header.weight ? " (" + header.weight + ")" : "")
-                                        + (header.description ? header.description : "")}
+                                    <Cell cell={header} />
                                 </th>
                             ))}
                         </tr>
