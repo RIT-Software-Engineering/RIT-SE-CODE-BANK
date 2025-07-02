@@ -176,6 +176,55 @@ async function upsertStudentProfile(studentData) {
     }
 }
 
+async function upsertEmployerProfile(employerData) {
+    // Transactionally upsert the employer profile (first updates User, then Employer otherwise it creates a new User, then Employer).
+    try {
+        const profile = await prisma.$transaction(async (tx) => {
+            // 1. Upsert the User record.
+            // Prisma will find a user with the given UID. If found, it updates it.
+            // If not found, it creates a new one.
+            await tx.user.upsert({
+                where: { uid: employerData.uid },
+                update: {
+                    name: employerData.name,
+                    email: employerData.email,
+                    pronouns: employerData.pronouns,
+                },
+                create: {
+                    uid: employerData.uid,
+                    name: employerData.name,
+                    email: employerData.email,
+                    pronouns: employerData.pronouns,
+                    role: 'EMPLOYER', // Set role on creation
+                },
+            });
+
+            // 2. Upsert the associated Employer record.
+            await tx.employer.upsert({
+                where: { uid: employerData.uid },
+                update: {
+                    department: employerData.department,
+                },
+                create: {
+                    uid: employerData.uid,
+                    department: employerData.department,
+                },
+            });
+
+
+            // 4. Return the complete, final state of the profile.
+            return tx.user.findUnique({
+                where: { uid: employerData.uid },
+            });
+        });
+
+        return profile;
+    } catch (error) {
+        console.error("Error in upsertEmployerProfile:", error);
+        throw error;
+    }
+}
+
 
 
 module.exports = {
@@ -183,7 +232,8 @@ module.exports = {
     getAllUsers,
     getAllCourses,
     findUniqueUser,
-    upsertStudentProfile
+    upsertStudentProfile,
+    upsertEmployerProfile
 };
 
 // Add a process exit handler to disconnect Prisma Client gracefully
