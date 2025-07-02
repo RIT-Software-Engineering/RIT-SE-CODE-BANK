@@ -49,6 +49,10 @@ router.get('/:id', async (req, res) => {
       }
     })
 
+    if (!rubric) {
+      return res.status(404).json({ error: "Rubric not found" });
+    }
+
     res.send(rubric);
   } catch (error) {
     res.status(500).send('There was an error fetching rubrics.');

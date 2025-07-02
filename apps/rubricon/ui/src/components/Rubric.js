@@ -31,7 +31,7 @@ function Row({ row, size, criteria_column }) {
     );
 }
 
-export default function Rubric({ data }) {
+export default function Rubric({data}) {
     return (
         <div className="flex flex-col gap-2 w-4/5 mx-auto mt-4 text-center">
             <h1 className="text-4xl font-bold">{data.title}</h1>
