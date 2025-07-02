@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 
 type Peer = {
@@ -36,6 +37,15 @@ const ClientOverseerProjectView: React.FC<{
 
     return (
         <div className="max-w-3xl mx-auto py-8 px-4">
+            {/* Back Arrow */}
+            <Link href="/dashboard">
+                <button
+                    className="mb-6 flex items-center text-gray-700 hover:text-black"
+                    aria-label="Back"
+                >
+                    Back
+                </button>
+            </Link>
             <section className="mb-8">
                 <h2 className="text-lg font-semibold mb-4">Project Peers</h2>
                 <ul>
