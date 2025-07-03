@@ -1,0 +1,84 @@
+const express = require("express");
+const cors = require("cors");
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json()); // Allows parsing JSON bodies
+app.use(express.urlencoded({ extended: true }));
+
+// Allow requests from frontend
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true, // if you send cookies or auth headers
+  })
+);
+
+app.use(function (req, res, next) {
+  // res.header("Access-Control-Allow-Origin", "*");
+  // res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+
+  // Required for SSO authentication
+  // TODO: This may no longer be needed because of our cors policy lower down "credentials: true".
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  next();
+});
+
+app.use(cookieParser());
+app.use(express.json());
+
+app.use("/users", usersRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+// ========================================================
+// PROJECTS
+// ========================================================
+
+// Get projects by overseer
+app.get("/projects/asOverseer/:userId", (req, res) => {
+  const userId = req.params.userId;
+});
+
+// Get the peer ID's for a project
+app.get("/projects/getPeers/:id", (req, res) => {
+  const id = req.params.id;
+});
+
+// Get the peer full info for a project
+app.get("/projects/getPeersFull/:id", (req, res) => {
+  const id = req.params.id;
+});
+
+// ========================================================
+// ASSESSMENTS
+// ========================================================
+
+// Get assessment by id
+app.get("/assessments/:id", (req, res) => {
+  const projectId = req.params.id;
+});
+
+// Get project's assessments
+app.get("/assessments/byProject/:projectId", (req, res) => {
+  const projectId = req.params.projectId;
+});
+
+// Get peer's assessment responses
+app.get("/assessments/responses/:userId/:assessmentId", (req, res) => {
+  const userId = req.params.userId;
+  const assessmentId = req.params.assessmentId;
+});
+
+// Set peer's assessment response for a specific peer
+app.post(
+  "/assessment/:assessmentId/addFeedback/:reviewerId/:revieweeId",
+  (req, res) => {
+    const assessmentId = req.params.assessmentId;
+    const reviewerId = req.params.reviewerId;
+    const revieweeId = req.params.revieweeId;
+  }
+);
