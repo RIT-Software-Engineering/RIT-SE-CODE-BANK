@@ -21,4 +21,21 @@ router.get("/asPeer/:userId", async (req, res) => {
   res.json(projects[0].projectsAsPeers);
 });
 
+// Get project as peer
+// /projects/asOverseer/:userId
+router.get("/asOverseer/:userId", async (req, res) => {
+  const userId = req.params.userId;
+
+  const projects = await prisma.user.findMany({
+    select: {
+      projectsAsOverseer: {},
+    },
+    where: {
+      id: userId,
+    },
+  });
+
+  res.json(projects[0].projectsAsOverseer);
+});
+
 export default router;

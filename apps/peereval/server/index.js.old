@@ -38,11 +38,6 @@ app.listen(PORT, () => {
 // PROJECTS
 // ========================================================
 
-// Get projects by overseer
-app.get("/projects/asOverseer/:userId", (req, res) => {
-  const userId = req.params.userId;
-});
-
 // Get the peer ID's for a project
 app.get("/projects/getPeers/:id", (req, res) => {
   const id = req.params.id;
