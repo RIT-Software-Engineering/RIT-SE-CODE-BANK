@@ -3,17 +3,27 @@ import ActionState from "@/components/actions/ActionState"
 
 export default async function PreviewPage({ params }) {
     const { id } = await params;
-    const url = process.env.SERVER_URL || "http://localhost:3001";
-    const data = await fetch(url + "/workflows?workflowId=" + id,
-        {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json"
+    const url = "http://localhost:3001";
+
+    console.log("In Preview Page")
+
+    let workflow;
+    try {
+        const data = await fetch(url + "/workflows?workflowId=" + id,
+            {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                cache: "no-store"
             }
-        }
-    )
-    const workflow = (await data.json())[0];
-    console.log(workflow);
+        )
+
+        workflow = (await data.json())[0];
+    } catch (error) {
+        console.error(error);
+    }
+    // console.log(workflow);
 
     return (
         <>
