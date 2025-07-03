@@ -62,7 +62,7 @@ enum ActionType {
 model Metadata {
   id            String       @id @default(uuid()) @db.Char(36)
   key           String
-  value         String
+  value         String       @db.Text
   metadata_type MetadataType
   action_id     String       @db.Char(36)
 
