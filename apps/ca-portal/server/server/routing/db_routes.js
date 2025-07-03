@@ -2,7 +2,7 @@
 
 const router = require('express').Router();
 // Import the specific query function from query_db.js
-const { getOpenPositionsWithDetails, getAllUsers, getAllCourses, findUniqueUser, upsertStudentProfile, searchOpenPositions, applyForJobPosition } = require('../database/query_db');
+const { getOpenPositionsWithDetails, getAllUsers, getAllCourses, findUniqueUser, upsertStudentProfile, searchOpenPositions, applyForJobPosition, upsertEmployerProfile } = require('../database/query_db');
 
 /**
  * Route to get all open positions with their associated course and course schedule info.
@@ -68,6 +68,17 @@ router.post('/upsert-student-profile', async (req, res) => {
   } catch (error) {
     console.error('Error in /upsert-student-profile route:', error);
     res.status(500).json({ error: 'Failed to upsert student profile.' });
+  }
+});
+
+router.post('/upsert-employer-profile', async (req, res) => {
+  const employerData = req.body;
+  try {
+    const profile = await upsertEmployerProfile(employerData);
+    res.status(200).json(profile);
+  } catch (error) {
+    console.error('Error in /upsert-employer-profile route:', error);
+    res.status(500).json({ error: 'Failed to upsert employer profile.' });
   }
 });
 

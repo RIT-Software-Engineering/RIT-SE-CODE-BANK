@@ -132,3 +132,23 @@ export async function applyForJobPosition(jobPositionApplicationData) {
   });
   return handleApiResponse(response);
 }
+
+
+// api call to upsert (update or create) employer profile
+export async function upsertEmployerProfile(employerData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-employer-profile`;
+  console.log(`Upserting employer profile at: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(employerData),
+  });
+  return handleApiResponse(response);
+}
