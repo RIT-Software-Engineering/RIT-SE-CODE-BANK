@@ -38,11 +38,6 @@ app.listen(PORT, () => {
 // PROJECTS
 // ========================================================
 
-// Get the peer ID's for a project
-app.get("/projects/getPeers/:id", (req, res) => {
-  const id = req.params.id;
-});
-
 // Get the peer full info for a project
 app.get("/projects/getPeersFull/:id", (req, res) => {
   const id = req.params.id;

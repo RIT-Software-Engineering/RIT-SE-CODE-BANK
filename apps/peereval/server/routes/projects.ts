@@ -39,3 +39,21 @@ router.get("/asOverseer/:userId", async (req, res) => {
 });
 
 export default router;
+
+// Get peers for a project
+// /projects/getPeers/:id
+router.get("/getPeers/:id", async (req, res) => {
+  const id = req.params.id;
+
+  const peers = await prisma.user.findMany({
+    where: {
+      projectsAsPeers: {
+        some: {
+          id: id,
+        },
+      },
+    },
+  });
+
+  res.json(peers);
+});
