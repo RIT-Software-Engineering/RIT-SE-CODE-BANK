@@ -8,19 +8,19 @@ const HEADER_LINKS = [
   {
     text: "Home",
     href: "/",
-    roles: [ROLES.STUDENT, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
   },
   { text: "Users", href: "/Users", roles: [ROLES.ADMIN] },
   {
     text: "Messaging",
     href: "/Messaging",
-    roles: [ROLES.STUDENT, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
   },
   { text: "Timecard", href: "/Timecard", roles: [ROLES.EMPLOYEE] },
   {
     text: "Positions",
     href: "/Positions",
-    roles: [ROLES.STUDENT, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
   },
 ];
 

@@ -96,21 +96,21 @@ export async function getUserProfile(UID) {
   return handleApiResponse(response);
 }
 
-// api call to upsert (update or create) student profile
-export async function upsertStudentProfile(studentData) {
+// api call to upsert (update or create) candidate profile
+export async function upsertCandidateProfile(candidateData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error("Backend API URL components are not defined. Check your .env.local file.");
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-student-profile`;
-  console.log(`Upserting student profile at: ${url}`);
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-candidate-profile`;
+  console.log(`Upserting candidate profile at: ${url}`);
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(studentData),
+    body: JSON.stringify(candidateData),
   });
   return handleApiResponse(response);
 }

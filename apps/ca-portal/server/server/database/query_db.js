@@ -142,14 +142,14 @@ async function findUniqueUser(UID) {
                 uid: numericUID,
             },
         });
-        // If the user is a student, include their own student info and associated course history
-        if (user && user.role === 'STUDENT') {
-            const studentProfile = await prisma.user.findUnique({
+        // If the user is a candidate, include their own candidate info and associated course history
+        if (user && user.role === 'CANDIDATE') {
+            const candidateProfile = await prisma.user.findUnique({
                 where: {
                     uid: numericUID,
                 },
                 include: {
-                    student: {
+                    candidate: {
                         include: {
                             courseHistory: {
                                 include: {
@@ -165,7 +165,7 @@ async function findUniqueUser(UID) {
                     },
                 },
             });
-            return studentProfile;
+            return candidateProfile;
           }
 
         return user;
@@ -176,61 +176,61 @@ async function findUniqueUser(UID) {
 }
 
 
-async function upsertStudentProfile(studentData) {
-    // Transactionally upsert the student profile (first updates User, then Student, then CourseHistory if applicable, otherwise it creates a new User, then Student, then CourseHistory).
+async function upsertCandidateProfile(candidateData) {
+    // Transactionally upsert the candidate profile (first updates User, then Candidate, then CourseHistory if applicable, otherwise it creates a new User, then Candidate, then CourseHistory).
     try {
         const profile = await prisma.$transaction(async (tx) => {
             // 1. Upsert the User record.
             // Prisma will find a user with the given UID. If found, it updates it.
             // If not found, it creates a new one.
             await tx.user.upsert({
-                where: { uid: studentData.uid },
+                where: { uid: candidateData.uid },
                 update: {
-                    name: studentData.name,
-                    email: studentData.email,
-                    pronouns: studentData.pronouns,
+                    name: candidateData.name,
+                    email: candidateData.email,
+                    pronouns: candidateData.pronouns,
                 },
                 create: {
-                    uid: studentData.uid,
-                    name: studentData.name,
-                    email: studentData.email,
-                    pronouns: studentData.pronouns,
-                    role: 'STUDENT', // Set role on creation
+                    uid: candidateData.uid,
+                    name: candidateData.name,
+                    email: candidateData.email,
+                    pronouns: candidateData.pronouns,
+                    role: 'CANDIDATE', // Set role on creation
                 },
             });
 
-            // 2. Upsert the associated Student record.
-            await tx.student.upsert({
-                where: { uid: studentData.uid },
+            // 2. Upsert the associated Candidate record.
+            await tx.candidate.upsert({
+                where: { uid: candidateData.uid },
                 update: {
-                    year: studentData.year,
-                    major: studentData.major,
-                    graduateStatus: studentData.graduateStatus,
-                    wasPriorEmployee: studentData.wasPriorEmployee,
-                    resumeURL: studentData.resumeURL,
+                    year: candidateData.year,
+                    major: candidateData.major,
+                    graduateStatus: candidateData.graduateStatus,
+                    wasPriorEmployee: candidateData.wasPriorEmployee,
+                    resumeURL: candidateData.resumeURL,
                 },
                 create: {
-                    uid: studentData.uid,
-                    year: studentData.year,
-                    major: studentData.major,
-                    graduateStatus: studentData.graduateStatus,
-                    wasPriorEmployee: studentData.wasPriorEmployee || false,
-                    resumeURL: studentData.resumeURL,
+                    uid: candidateData.uid,
+                    year: candidateData.year,
+                    major: candidateData.major,
+                    graduateStatus: candidateData.graduateStatus,
+                    wasPriorEmployee: candidateData.wasPriorEmployee || false,
+                    resumeURL: candidateData.resumeURL,
                 },
             });
 
             // 3. Handle Course History (if provided).
-            if (studentData.courseHistory) {
-                // First, remove all old course history for this student.
+            if (candidateData.courseHistory) {
+                // First, remove all old course history for this candidate.
                 await tx.courseHistory.deleteMany({
-                    where: { studentUID: studentData.uid },
+                    where: { candidateUID: candidateData.uid },
                 });
 
                 // If the new history array is not empty, create all new entries.
-                if (studentData.courseHistory.length > 0) {
+                if (candidateData.courseHistory.length > 0) {
                     await tx.courseHistory.createMany({
-                        data: studentData.courseHistory.map(course => ({
-                            studentUID: studentData.uid,
+                        data: candidateData.courseHistory.map(course => ({
+                            candidateUID: candidateData.uid,
                             courseCode: course.courseCode,
                             grade: course.grade,
                             wasPriorEmployee: course.wasPriorEmployee || false,
@@ -241,9 +241,9 @@ async function upsertStudentProfile(studentData) {
 
             // 4. Return the complete, final state of the profile.
             return tx.user.findUnique({
-                where: { uid: studentData.uid },
+                where: { uid: candidateData.uid },
                 include: {
-                    student: {
+                    candidate: {
                         include: {
                             courseHistory: true,
                         },
@@ -254,7 +254,7 @@ async function upsertStudentProfile(studentData) {
 
         return profile;
     } catch (error) {
-        console.error("Error in upsertStudentProfile:", error);
+        console.error("Error in upsertCandidateProfile:", error);
         throw error;
     }
 }
@@ -311,16 +311,16 @@ async function upsertEmployerProfile(employerData) {
 async function applyForJobPosition(jobPositionApplicationData) {
     try {
         // Validate required fields
-        if (!jobPositionApplicationData.studentUID || !jobPositionApplicationData.jobPositionId || !jobPositionApplicationData.jobPositionApplicationFormData) {
-            throw new Error("Missing required fields: student and/or jobPosition ids as well as form data to apply.");
+        if (!jobPositionApplicationData.candidateUID || !jobPositionApplicationData.jobPositionId || !jobPositionApplicationData.jobPositionApplicationFormData) {
+            throw new Error("Missing required fields: candidate and/or jobPosition ids as well as form data to apply.");
         }
 
-        const { studentUID, jobPositionId, jobPositionApplicationFormData } = jobPositionApplicationData;
+        const { candidateUID, jobPositionId, jobPositionApplicationFormData } = jobPositionApplicationData;
 
-        // Check if student and job position exist
-        const student = await prisma.student.findUnique({ where: { uid: studentUID } });
-        if (!student) {
-            throw new Error(`Student with UID ${studentUID} not found.`);
+        // Check if candidate and job position exist
+        const candidate = await prisma.candidate.findUnique({ where: { uid: candidateUID } });
+        if (!candidate) {
+            throw new Error(`Candidate with UID ${candidateUID} not found.`);
         }
 
         const jobPosition = await prisma.jobPosition.findUnique({ where: { id: jobPositionId } });
@@ -328,22 +328,22 @@ async function applyForJobPosition(jobPositionApplicationData) {
             throw new Error(`Job Position with ID ${jobPositionId} not found.`);
         }
 
-        // Check if the student has already applied for this job position
+        // Check if the candidate has already applied for this job position
         const existingApplication = await prisma.jobPositionApplicationHistory.findFirst({
             where: {
-                studentUID: studentUID,
+                candidateUID: candidateUID,
                 jobPositionId: jobPositionId
             }
         });
 
         if (existingApplication) {
-            throw new Error(`This student has already applied for this job position.`);
+            throw new Error(`This candidate has already applied for this job position.`);
         }
 
         // Create a new job application within the JobPositionHistory table
         const newApplication = await prisma.jobPositionApplicationHistory.create({
             data: {
-                studentUID: studentUID,
+                candidateUID: candidateUID,
                 jobPositionId: jobPositionId,
                 applicationData: jobPositionApplicationFormData
             }
@@ -361,7 +361,7 @@ module.exports = {
     getAllUsers,
     getAllCourses,
     findUniqueUser,
-    upsertStudentProfile,
+    upsertCandidateProfile,
     upsertEmployerProfile,
     searchOpenPositions,
     applyForJobPosition
