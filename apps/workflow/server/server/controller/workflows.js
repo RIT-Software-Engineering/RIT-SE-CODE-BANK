@@ -12,7 +12,7 @@ async function createWorkflow(userId, tags = [], metadata = {}, rootActionId = n
         workflow = await prisma.workflowAttributes.create({
             data: {
                 base_action: { connect: { id: action.id } },
-                root_action: { connect: { id: rootActionId } }
+                // root_action: { connect: { id: rootActionId } }
             }
         });
 
