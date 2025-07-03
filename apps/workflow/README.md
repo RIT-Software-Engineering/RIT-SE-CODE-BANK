@@ -31,9 +31,31 @@ You will need to complete these steps for all
     - Used by the backend to specify which port to run the server on: `PORT="3001"`
 - Create a `.env` file in apps/workflow/ui
 - Add the following lines to your `.env` file:
-    - - Used by the frontend to reference the server: `SERVER_URL="http://localhost:3001"`
+    - Used by the frontend to reference the server: `SERVER_URL="http://localhost:3001"`
 Warning: At this time, some of the references to the SERVER_URL on the frontend are hardcoded to `http://localhost:3001` at this time.
 
 #### Step 3: Setting up prisma
 
-- navigate to the 
+- Navigate to the apps/workflow/server/server directory
+- Run `npm install`
+- Run `npx prisma migrate dev --name init`
+- Run `npx prisma generate`
+
+#### Step 4: Start the backend server
+
+- Navigate to the apps/workflow/server/server directory
+- Run `npm start`
+
+Note: if the server fails to start because you are missing a package, please run `npm install {package name}`
+
+#### Step 5: Start the frontend server (if you'd like to try our ui)
+
+- Navigate to the apps/workflow/server/server directory
+- Run `npm run dev`
+- Navigate to the local server in your browser
+
+Note: if the server fails to start because you are missing a package, please run `npm install {package name}`
+
+#### Step 6: Interact with the API directly
+
+You can use postman, curl, etc
