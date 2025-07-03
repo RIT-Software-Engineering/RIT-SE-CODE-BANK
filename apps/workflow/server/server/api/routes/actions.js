@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createAction, getActions, updateAction, deleteAction, getActionChain } = require('./../../controller/actions.js');
+const { createAction, getActions, updateAction, deleteAction, getActionChain, createActionChainLink } = require('./../../controller/actions.js');
 const { getWorkflows } = require('./../../controller/workflows.js');
 
 
@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
     const params = {};
     if (actionId) params.id = actionId;
 
-    actions = await getActions(params);
+    const actions = await getActions(params);
 
     if (workflowId) {
         let actionsByWorkflow = [];
@@ -20,11 +20,8 @@ router.get('/', async (req, res) => {
             actionsByWorkflow = await getActionChain(workflows[0].root_action.id);
         }
 
-        console.log("actions", actions);
-        console.log("actionsByWorkflow", actionsByWorkflow);
-
         // find the actions that appear in both lists
-        const intersection = actions.filter(action1 => actionsByWorkflow.some(action2 => action1.id === action2.id));
+        const intersection = actionsByWorkflow.filter(action1 => actions.some(action2 => action1.id === action2.id));
         return res.json(intersection);
     }
 
@@ -59,5 +56,13 @@ router.delete('/:actionId', async (req, res) => {
 
     res.json({ message: 'Deleted' });
 });
+
+router.post('/link', async (req, res) => {
+    const { actionId, nextActionId } = req.body;
+
+    const actionLink = await createActionChainLink(actionId, nextActionId);
+
+    res.json(actionLink);
+})
 
 module.exports = router;

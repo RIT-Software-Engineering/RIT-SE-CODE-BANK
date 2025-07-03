@@ -90,17 +90,18 @@ async function createActionChainLink(actionId, nextActionId) {
         throw new Error('One or both actions do not exist.');
     }
 
-    // Create the link between the two actions
-    const updatedAction = await prisma.action.update({
-        where: { id: actionId },
+    const actionChainLink = await prisma.actionChainLinks.create({
         data: {
+            action: {
+                connect: {id: actionId}
+            },
             next_action: {
-                connect: { id: nextActionId }
+                connect: {id: nextActionId}
             }
         }
-    });
+    })
 
-    return updatedAction;
+    return actionChainLink;
 }
 
 async function getActionChainLinks(queryParams = {}) {
@@ -138,9 +139,11 @@ async function getActionChain(rootActionId) {
 
             actionChain.push(action);
             currentActionId = null;
-            if (action.next_action) currentActionId = action.next_action.id; // Move to the next action in the chain
+            if (action.next_action) currentActionId = action.next_action.next_action_id; // Move to the next action in the chain
         }
     });
+
+    console.log(actionChain);
 
     return actionChain;
 }
