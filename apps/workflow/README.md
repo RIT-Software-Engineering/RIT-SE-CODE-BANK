@@ -17,8 +17,7 @@ You will need to complete these steps for all
 - Open the MariaDB CLI tool and log in as root user if you have not already: If using the path variables the command will be `mysql -u root -p` (enter your root user's password)
 - Create a database for the Workflows data: `CREATE DATABASE {database_name};`
 - Grant necessary privileges to your user:
-    - `GRANT ALL PRIVILEGES ON {database_name}.* TO '{username}'@'localhost';`
-    - `GRANT CREATE, DROP, ALTER, REFERENCES ON {database_name}.* TO '{username}'@'localhost';`
+    - `GRANT CREATE, DROP, ALTER, REFERENCES ON {database_name}.* TO '{username}'@'localhost';` (In practice, this has failed and we are not sure why yet, but if you need to, you can fall back on `GRANT ALL PRIVILEGES ON *.* TO '{username}'@'localhost';`, but this is not a best practice.)
     - Save the changes to privileges: `FLUSH PRIVILEGES;`
     - You can check if this worked by running: `SHOW GRANTS FOR '{username}'@'localhost';`
 - Exit the CLI tool: `Exit;`
