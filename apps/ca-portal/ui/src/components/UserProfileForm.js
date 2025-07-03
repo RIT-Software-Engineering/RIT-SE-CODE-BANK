@@ -2,10 +2,10 @@
 'use client';
 import React, { useEffect } from 'react'; 
 import { useForm, useWatch } from "react-hook-form";
-import { upsertStudentProfile, upsertEmployerProfile } from '@/services/api';
+import { upsertCandidateProfile, upsertEmployerProfile } from '@/services/api';
 
 /**
- * Renders a modal form for creating or updating a student's profile
+ * Renders a modal form for creating or updating a candidate's profile
  * 
  * Includes editable information - name, pronouns, major, courses taken,
  * if the sutdent is/has been employed to be a CA, and if so what courses
@@ -19,21 +19,21 @@ import { upsertStudentProfile, upsertEmployerProfile } from '@/services/api';
 export default function UserProfileForm({ user, mode, onClose, courseOptions }) {
     const isEditMode = mode === "edit";
     const userRole = user?.role?.toUpperCase().trim();
-    const isStudentOrEmployee = userRole === "STUDENT" || userRole === "EMPLOYEE";
+    const isCandidateOrEmployee = userRole === "CANDIDATE" || userRole === "EMPLOYEE";
 
      // Initialize react-hook-form with default values either from the user (edit) or empty for new form
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset } = useForm();
     useEffect(() => {
         if (user) {
-            const defaultValues = isStudentOrEmployee
-            ? { // Defaults for STUDENT or EMPLOYEE
+            const defaultValues = isCandidateOrEmployee
+            ? { // Defaults for CANDIDATE or EMPLOYEE
                 fullName: user.name || '',
                 pronouns: user.pronouns || '',
-                major: user.student?.major || '',
-                gradeLevel: user.student?.year || '',
+                major: user.candidate?.major || '',
+                gradeLevel: user.candidate?.year || '',
                 courses: user.courseHistory?.map(ch => ch.courseCode) || [],
-                graduateStatus: user.student?.graduateStatus || '',
-                isEmployee: user.student?.wasPriorEmployee ? 'yes' : 'no',
+                graduateStatus: user.candidate?.graduateStatus || '',
+                isEmployee: user.candidate?.wasPriorEmployee ? 'yes' : 'no',
                 coursesWorked: user.courseHistory?.filter(ch => ch.wasPriorEmployee).map(ch => ch.courseCode) || []
             }
             : { // Defaults for EMPLOYER or ADMIN
@@ -43,7 +43,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
             };
             reset(defaultValues);
         }
-    }, [user, reset, isStudentOrEmployee]); 
+    }, [user, reset, isCandidateOrEmployee]); 
 
     /**
      * List of available courses to display to the user
@@ -57,12 +57,12 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
     const graduateStatus = useWatch({ control, name: 'graduateStatus' });
 
     /**
-     * Handles form submission asynchronously and sends STUDENT/EMPLOYEE profile data to backend.
+     * Handles form submission asynchronously and sends CANDIDATE/EMPLOYEE profile data to backend.
      * Converts year level to 6 if the user is a graduate
      * On successful submission, calls onClose to close the modal.
      * @param {Object} data - Form data collected from the user inputs.
      */
-    const onSubmitStudent = async (data) => {
+    const onSubmitCandidate = async (data) => {
     try {
         // Determine year correctly:
         let year;
@@ -74,7 +74,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                 throw new Error("Invalid year level selected. Please choose a valid year.");
             }
         } else {
-            throw new Error("Year level is required for undergraduate students.");
+            throw new Error("Year level is required for undergraduate candidates.");
         }
 
         const finalData = {
@@ -92,7 +92,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                 wasPriorEmployee: data.coursesWorked?.includes(courseCode) || false,
             })),
         };
-        await upsertStudentProfile(finalData);
+        await upsertCandidateProfile(finalData);
 
         alert("Profile saved!");
         if (onClose) onClose();
@@ -126,7 +126,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
         }
     };
 
-    const onSubmit = isStudentOrEmployee ? onSubmitStudent : onSubmitStaff;
+    const onSubmit = isCandidateOrEmployee ? onSubmitCandidate : onSubmitStaff;
 
     // Reusable Helper for Input Fields
     const InputField = ({ id, label, placeholder, registerProps, error }) => (
@@ -148,15 +148,12 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                 <div className='p-6 sm:p-8 flex-grow overflow-y-auto'>
                     <div className="flex justify-between items-start mb-2">
                         <h2 className='text-2xl font-bold text-slate-900'>
-                            {isStudentOrEmployee 
-                                ? (isEditMode ? 'Edit Student Profile' : 'Complete Your Profile')
-                                : 'Edit Profile'
-                            }
+                            {(isEditMode ? `Edit ${userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase()} Profile` : 'Complete Your Profile')}
                         </h2>
                         <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-3xl leading-none">&times;</button>
                     </div>
                     <p className='text-slate-500 mb-8'>
-                        {isStudentOrEmployee && !isEditMode
+                        {isCandidateOrEmployee && !isEditMode
                             ? 'Please fill in all required information.'
                             : 'Update your details below.'
                         }
@@ -178,7 +175,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                                     registerProps={register('pronouns', { required: 'Pronouns are required.' })} 
                                     error={errors.pronouns} 
                                 />
-                                {isStudentOrEmployee ? (
+                                {isCandidateOrEmployee ? (
                                     <InputField 
                                         id="major" 
                                         label="Major" 
@@ -198,8 +195,8 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                             </div>
                         </fieldset>
 
-                        {/* Student/Employee specific fields */}
-                        {isStudentOrEmployee && (
+                        {/* Candidate/Employee specific fields */}
+                        {isCandidateOrEmployee && (
                             <>
                                 <fieldset className='space-y-4'>
                                     <div>
@@ -273,7 +270,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                         )}
 
                         <div className="pt-2">
-                            <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 ease-in-out disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center">
+                            <button type="submit" disabled={isSubmitting} className="w-full bg-rit-orange text-white font-bold py-3 px-4 rounded-lg hover:bg-rit-orange focus:outline-none focus:ring-4 focus:ring-rit-light-gray transition-all duration-300 ease-in-out disabled:bg-rit-dark-gray disabled:cursor-not-allowed flex items-center justify-center">
                                 {isSubmitting ? 'Saving...' : 'Save Profile'}
                             </button>
                         </div>

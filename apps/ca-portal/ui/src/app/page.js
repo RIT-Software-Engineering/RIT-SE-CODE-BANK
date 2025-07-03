@@ -5,6 +5,7 @@
 import Login from "@/components/Login";
 import LandingDashboard from "@/components/LandingDashboard"; 
 import { useAuth } from "@/contexts/AuthContext";
+import UserProfileModal from "@/components/UserProfileModal";
 
 
 export default function Home() {

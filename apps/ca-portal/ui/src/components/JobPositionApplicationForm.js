@@ -12,16 +12,16 @@ export default function ApplicationForm({ user, position, onClose, onApplySucces
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
-      major: user?.student?.major || '',
-      year: user?.student?.year || '',
-      resumeURL: user?.student?.resumeURL || '',
+      major: user?.candidate?.major || '',
+      year: user?.candidate?.year || '',
+      resumeURL: user?.candidate?.resumeURL || '',
     },
   });
 
   const onSubmit = async (formData) => {
     try {
       const applicationDetails = {
-        studentUID: user.uid,
+        candidateUID: user.uid,
         jobPositionId: position.id,
         jobPositionApplicationFormData: JSON.stringify(formData),
       };

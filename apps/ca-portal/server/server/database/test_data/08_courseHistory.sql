@@ -1,4 +1,4 @@
-INSERT INTO `CourseHistory` (`studentUID`, `courseCode`, `grade`, `wasPriorEmployee`) VALUES
+INSERT INTO `CourseHistory` (`candidateUID`, `courseCode`, `grade`, `wasPriorEmployee`) VALUES
 (301, 'SWEN-261', 'A', 1),
 (301, 'SWEN-344', 'B+', 0),
 (302, 'MATH-123', 'A', 1),
