@@ -11,7 +11,7 @@ export default function Header() {
                 <NavLink href="/dashboard" active="text-primary" className="content-center hover:text-primary">
                     Dashboard
                 </NavLink>
-                <NavLink href="/dashboard/rubrics" active="text-primary" className="content-center hover:text-primary">
+                <NavLink href="/rubrics" active="text-primary" className="content-center hover:text-primary">
                     Rubrics
                 </NavLink>
             </nav>
