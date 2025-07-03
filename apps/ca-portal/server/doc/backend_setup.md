@@ -7,7 +7,9 @@
     * Download from: [https://nodejs.org/en/download](https://nodejs.org/en/download)
 3.  **Docker**
     * Download from: [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/)
-* **Note:** Ensure you add the installation PATH to your local machine's environment variables and possibly within vscode for these technologies
+* **Note 1:** Ensure you add the installation PATH to your local machine's environment variables and possibly within vscode for these technologies
+
+* **Note 2:** Libraries like express and prisma we're installed in our code base under our package.json file
 
 ## Setup Steps
 
