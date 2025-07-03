@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "prisma"
 }
 
 datasource db {
@@ -71,7 +70,7 @@ model FormResponse {
 model InquiryResponse {
   id      String  @id @default(uuid()) @db.Char(36)
   inquiry Inquiry @relation(fields: [inquiryId], references: [id])
-  answer  String
+  answer  String // Frontend will interpret this based on inquiry type
 
   // Required for relations
   PeerFormResponse   FormResponse? @relation(fields: [peerFormResponseId], references: [id])
