@@ -1,10 +1,10 @@
 // server/server/database/query_db.js
 
-const { PrismaClient } = require('@prisma/client');
-const path = require('path');
+const { PrismaClient } = require("@prisma/client");
+const path = require("path");
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly or required before main.js
 if (!process.env.DATABASE_URL) {
-    require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+  require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 }
 
 // Initialize Prisma Client
@@ -15,48 +15,106 @@ const prisma = new PrismaClient();
  * @returns {Promise<Array>} A promise that resolves to an array of open positions.
  */
 async function getOpenPositionsWithDetails() {
-    try {
-        const openPositions = await prisma.jobPosition.findMany({
-            where: {
-                jobPositionStatus: 'OPEN',
-            },
-            include: {
-                course: {
-                    select: {
-                        name: true,
-                        description: true,
-                    },
-                },
-                jobSchedules: {
-                    select: {
-                        dayOfWeek: true,
-                        startTime: true,
-                        endTime: true,
-                    },
-                },
-            },
-            orderBy: {
-                course: {
-                    name: 'asc',
-                },
-            },
-        });
-        return openPositions;
-    } catch (error) {
-        console.error("Error retrieving open positions with details:", error);
-        throw error;
-    }
+  try {
+    const openPositions = await prisma.jobPosition.findMany({
+      where: {
+        jobPositionStatus: "OPEN",
+      },
+      include: {
+        course: {
+          select: {
+            name: true,
+            description: true,
+          },
+        },
+        jobSchedules: {
+          select: {
+            dayOfWeek: true,
+            startTime: true,
+            endTime: true,
+          },
+        },
+      },
+      orderBy: {
+        course: {
+          name: "asc",
+        },
+      },
+    });
+    return openPositions;
+  } catch (error) {
+    console.error("Error retrieving open positions with details:", error);
+    throw error;
+  }
 }
 
 //temporary function to retireve all users stored in the database
 async function getAllUsers() {
-    try {
-        const users = await prisma.user.findMany();
-        return users;
-    } catch (error) {
-        console.error("Error retrieving users:", error);
-        throw error;
-    }
+  try {
+    const users = await prisma.user.findMany();
+    return users;
+  } catch (error) {
+    console.error("Error retrieving users:", error);
+    throw error;
+  }
+}
+
+async function searchOpenPositions(searchTerm) {
+  if (!searchTerm || !searchTerm.trim()) {
+    return getOpenPositionsWithDetails();
+  }
+
+  const courseWhereClause = {
+    OR: [
+      {
+        name: {
+          contains: searchTerm,
+        },
+      },
+      {
+        courseCode: {
+          contains: searchTerm,
+        },
+      },
+    ],
+  };
+
+  try {
+    const searchResults = await prisma.jobPosition.findMany({
+      where: {
+        jobPositionStatus: "OPEN",
+        course: courseWhereClause,
+      },
+      include: {
+        course: {
+          select: {
+            name: true,
+            description: true,
+            courseCode: true,
+          },
+        },
+        jobSchedules: {
+          select: {
+            dayOfWeek: true,
+            startTime: true,
+            endTime: true,
+          },
+        },
+      },
+      orderBy: {
+        course: {
+          name: "asc",
+        },
+      },
+    });
+    return searchResults;
+  } catch (error) {
+    console.error(
+      `Error searching for open positions with term "${searchTerm}":`,
+      error
+    );
+    throw error;
+  }
 }
 
 //function to retrieve all courses for the onramping feature
@@ -75,16 +133,41 @@ async function getAllCourses(){
     }
 }
 
-async function findUniqueUser(studentUID) {
+async function findUniqueUser(UID) {
     try {
-        const numericUID = parseInt(studentUID, 10);
-        if (isNaN(numericUID)) throw new Error(`Invalid UID: ${studentUID}`);
-
+      const numericUID = parseInt(UID, 10);
+      if (isNaN(numericUID)) throw new Error(`Invalid UID: ${UID}`);
         const user = await prisma.user.findUnique({
             where: {
                 uid: numericUID,
             },
         });
+        // If the user is a student, include their own student info and associated course history
+        if (user && user.role === 'STUDENT') {
+            const studentProfile = await prisma.user.findUnique({
+                where: {
+                    uid: numericUID,
+                },
+                include: {
+                    student: {
+                        include: {
+                            courseHistory: {
+                                include: {
+                                    course: true,
+                                },
+                            },
+                            jobPositionApplicationHistory: {
+                                include: {
+                                    jobPosition: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            return studentProfile;
+          }
+
         return user;
     } catch (error) {
         console.error("Error finding user:", error);
@@ -176,56 +259,53 @@ async function upsertStudentProfile(studentData) {
     }
 }
 
-async function upsertEmployerProfile(employerData) {
-    // Transactionally upsert the employer profile (first updates User, then Employer otherwise it creates a new User, then Employer).
+async function applyForJobPosition(jobPositionApplicationData) {
     try {
-        const profile = await prisma.$transaction(async (tx) => {
-            // 1. Upsert the User record.
-            // Prisma will find a user with the given UID. If found, it updates it.
-            // If not found, it creates a new one.
-            await tx.user.upsert({
-                where: { uid: employerData.uid },
-                update: {
-                    name: employerData.name,
-                    email: employerData.email,
-                    pronouns: employerData.pronouns,
-                },
-                create: {
-                    uid: employerData.uid,
-                    name: employerData.name,
-                    email: employerData.email,
-                    pronouns: employerData.pronouns,
-                    role: 'EMPLOYER', // Set role on creation
-                },
-            });
+        // Validate required fields
+        if (!jobPositionApplicationData.studentUID || !jobPositionApplicationData.jobPositionId || !jobPositionApplicationData.jobPositionApplicationFormData) {
+            throw new Error("Missing required fields: student and/or jobPosition ids as well as form data to apply.");
+        }
 
-            // 2. Upsert the associated Employer record.
-            await tx.employer.upsert({
-                where: { uid: employerData.uid },
-                update: {
-                    department: employerData.department,
-                },
-                create: {
-                    uid: employerData.uid,
-                    department: employerData.department,
-                },
-            });
+        const { studentUID, jobPositionId, jobPositionApplicationFormData } = jobPositionApplicationData;
 
+        // Check if student and job position exist
+        const student = await prisma.student.findUnique({ where: { uid: studentUID } });
+        if (!student) {
+            throw new Error(`Student with UID ${studentUID} not found.`);
+        }
 
-            // 4. Return the complete, final state of the profile.
-            return tx.user.findUnique({
-                where: { uid: employerData.uid },
-            });
+        const jobPosition = await prisma.jobPosition.findUnique({ where: { id: jobPositionId } });
+        if (!jobPosition) {
+            throw new Error(`Job Position with ID ${jobPositionId} not found.`);
+        }
+
+        // Check if the student has already applied for this job position
+        const existingApplication = await prisma.jobPositionApplicationHistory.findFirst({
+            where: {
+                studentUID: studentUID,
+                jobPositionId: jobPositionId
+            }
         });
 
-        return profile;
+        if (existingApplication) {
+            throw new Error(`This student has already applied for this job position.`);
+        }
+
+        // Create a new job application within the JobPositionHistory table
+        const newApplication = await prisma.jobPositionApplicationHistory.create({
+            data: {
+                studentUID: studentUID,
+                jobPositionId: jobPositionId,
+                applicationData: jobPositionApplicationFormData
+            }
+        });
+
+        return newApplication;
     } catch (error) {
-        console.error("Error in upsertEmployerProfile:", error);
+        console.error("Error in applyForJobPosition:", error);
         throw error;
     }
 }
-
-
 
 module.exports = {
     getOpenPositionsWithDetails,
@@ -233,18 +313,20 @@ module.exports = {
     getAllCourses,
     findUniqueUser,
     upsertStudentProfile,
-    upsertEmployerProfile
+    upsertEmployerProfile,
+    searchOpenPositions,
+    applyForJobPosition
 };
 
 // Add a process exit handler to disconnect Prisma Client gracefully
-process.on('beforeExit', async () => {
-    await prisma.$disconnect();
+process.on("beforeExit", async () => {
+  await prisma.$disconnect();
 });
-process.on('SIGINT', async () => {
-    await prisma.$disconnect();
-    process.exit(0);
+process.on("SIGINT", async () => {
+  await prisma.$disconnect();
+  process.exit(0);
 });
-process.on('SIGTERM', async () => {
-    await prisma.$disconnect();
-    process.exit(0);
+process.on("SIGTERM", async () => {
+  await prisma.$disconnect();
+  process.exit(0);
 });
