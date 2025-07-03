@@ -4,7 +4,6 @@
 // Note: I'm assuming LandingDashboard is your dynamic dashboard component
 import Login from "@/components/Login";
 import LandingDashboard from "@/components/LandingDashboard"; 
-import UserProfileModal from "@/components/UserProfileModal";
 import { useAuth } from "@/contexts/AuthContext";
 
 
@@ -44,7 +43,6 @@ export default function Home() {
             Logout
           </button>
           
-          <UserProfileModal></UserProfileModal>
 
           {/* 3. Pass the role STRING to the dashboard component */}
           <LandingDashboard userRole={currentUser.role} />
