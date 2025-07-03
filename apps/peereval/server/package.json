@@ -9,7 +9,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@prisma/extension-accelerate": "^2.0.1",
     "cors": "^2.8.5",
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "prisma": "^6.11.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
   }
 }

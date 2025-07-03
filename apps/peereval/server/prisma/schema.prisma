@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Wraps shib user
+model User {
+  id    String @id @default(uuid()) @db.Char(36)
+  name  String
+  email String @unique
+
+  // Required for relations
+  projectsAsOverseer      Project[]      @relation("overseer")
+  projectsAsPeers         Project[]      @relation("peers")
+  peerResponseAsResponder FormResponse[] @relation("responder")
+  peerResponseAsRespondee FormResponse[] @relation("respondee")
+}
+
+// ---------------------------------------
+// PROJECT
+// ---------------------------------------
+model Project {
+  id          String @id @default(uuid()) @db.Char(36)
+  name        String
+  description String
+  overseer    User   @relation("overseer", fields: [overseerId], references: [id])
+  overseerId  String @db.Char(36)
+  peers       User[] @relation("peers")
+}
+
+// ---------------------------------------
+// ASSESSMENTS
+// ---------------------------------------
+model Assessment {
+  id             String       @id @default(uuid()) @db.Char(36)
+  name           String
+  description    String
+  feedbackForm   FeedbackForm @relation(fields: [feedbackFormId], references: [id])
+  feedbackFormId String       @db.Char(36)
+  startDate      DateTime
+  dueDate        DateTime
+
+  // Required for relations
+  peerResponse FormResponse[]
+}
+
+model FormResponse {
+  id         String            @id @default(uuid()) @db.Char(36)
+  assessment Assessment        @relation(fields: [assessmentId], references: [id])
+  responder  User              @relation("responder", fields: [responderId], references: [id])
+  respondee  User              @relation("respondee", fields: [respondeeId], references: [id])
+  responses  InquiryResponse[]
+
+  // Required for relations
+  assessmentId String @db.Char(36)
+  responderId  String @db.Char(36)
+  respondeeId  String @db.Char(36)
+}
+
+model InquiryResponse {
+  id      String  @id @default(uuid()) @db.Char(36)
+  inquiry Inquiry @relation(fields: [inquiryId], references: [id])
+  answer  String
+
+  // Required for relations
+  PeerFormResponse   FormResponse? @relation(fields: [peerFormResponseId], references: [id])
+  peerFormResponseId String?       @db.Char(36)
+  inquiryId          String        @db.Char(36)
+}
+
+// ---------------------------------------
+// FEEDBACK FORMS
+// ---------------------------------------
+model FeedbackForm {
+  id        String    @id @default(uuid()) @db.Char(36)
+  inquiries Inquiry[]
+
+  // Required for relations
+  Assessment Assessment[]
+}
+
+model Inquiry {
+  id       String      @id @default(uuid()) @db.Char(36)
+  type     InquiryType
+  question String
+  response String
+
+  // Required for relations
+  feedbackForms       FeedbackForm[]
+  PeerInquiryResponse InquiryResponse[]
+}
+
+enum InquiryType {
+  FREE_RESPONSE
+  RATING
+  RUBRIC
+}
