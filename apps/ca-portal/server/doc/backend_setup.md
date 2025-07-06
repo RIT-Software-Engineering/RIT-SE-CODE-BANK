@@ -7,7 +7,9 @@
     * Download from: [https://nodejs.org/en/download](https://nodejs.org/en/download)
 3.  **Docker**
     * Download from: [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/)
-* **Note:** Ensure you add the installation PATH to your local machine's environment variables and possibly within vscode for these technologies
+* **Note 1:** Ensure you add the installation PATH to your local machine's environment variables and possibly within vscode for these technologies
+
+* **Note 2:** Libraries like express and prisma we're installed in our code base under our package.json file
 
 ## Setup Steps
 
@@ -37,6 +39,9 @@
 
 **4a-2. For adding new and/or additional database tables:**
 1.  Define your new models (database tables) within the `prisma/schema.prisma` file.
+
+**Note** If your only adding additional datatables to your existing prisma instance, then we recommand first deleting the migration folder within the prisma folder project, the node_modules, ad the package-lock.json files. From there do `npm i` to reinstall the node_modules and package-lock.json. Then do `npx prisma migrate reset` within the prisma folder project to reset/drop the previous migration
+
 2.  Run `npx prisma migrate dev` to create and apply a new migration for the changes you've defined in `schema.prisma`. You will be prompted to name the migration.
 
 ### If you just need to generate the Prisma Client for an existing Prisma instance:

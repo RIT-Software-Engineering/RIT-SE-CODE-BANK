@@ -1,12 +1,7 @@
 // src/app/dashboard.config.js
 
-// export const ROLES = {
-//   STUDENT: 'STUDENT',
-//   EMPLOYEE: 'EMPLOYEE'
-// };
-
 export const ROLES = {
-  STUDENT: "STUDENT",
+  CANDIDATE: "CANDIDATE",
   EMPLOYEE: "EMPLOYEE",
   ADMIN: "ADMIN",
   EMPLOYER: "EMPLOYER",
@@ -34,7 +29,7 @@ export const DASHBOARD_OPTIONS = [
     category: 'Personal',
     text: 'Send Message',
     link: '/Messaging',
-    roles: [ROLES.STUDENT,ROLES.ADMIN]
+    roles: [ROLES.CANDIDATE,ROLES.ADMIN]
   },
   // --- EMPLOYEE-SPECIFIC PERSONAL OPTIONS ---
   {

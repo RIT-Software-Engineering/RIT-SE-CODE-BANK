@@ -5,16 +5,25 @@
 import Login from "@/components/Login";
 import LandingDashboard from "@/components/LandingDashboard"; 
 import { useAuth } from "@/contexts/AuthContext";
+import UserProfileModal from "@/components/UserProfileModal";
 
 
 export default function Home() {
   const { currentUser, setCurrentUser } = useAuth();
 
   const handleLoginSuccess = (user) => {
+    if (user && user.uid) {
+    // This is the line you need to add
+    localStorage.setItem('userUID', user.uid); 
     setCurrentUser(user);
+    console.log("User logged in and session saved:", user);
+  } else {
+    console.error("Login failed: user object is missing or invalid.");
+  }
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('userUID');
     setCurrentUser(null);
   };
 
@@ -35,6 +44,7 @@ export default function Home() {
             Logout
           </button>
           
+
           {/* 3. Pass the role STRING to the dashboard component */}
           <LandingDashboard userRole={currentUser.role} />
         </>

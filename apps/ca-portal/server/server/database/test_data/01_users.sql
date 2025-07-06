@@ -5,7 +5,7 @@ INSERT INTO `User` (`uid`, `name`, `email`, `pronouns`, `role`) VALUES
 (300, 'Dr. Dave Doe', 'faculty3@example.com', 'he/him', 'EMPLOYER'),
 (301, 'Charlie Coder', 'student1@example.com', 'he/him', 'EMPLOYEE'),
 (302, 'Denise Designer', 'student2@example.com', 'she/her', 'EMPLOYEE'),
-(303, 'Evan Engineer', 'student3@example.com', 'they/them', 'STUDENT'),
+(303, 'Evan Engineer', 'student3@example.com', 'they/them', 'CANDIDATE'),
 (304, 'Tyler Tester', 'student4@example.com', 'he/him', 'EMPLOYEE'),
-(305, 'Sally Student', 'student5@example.com', 'they/them', 'STUDENT'),
-(306, 'Liang Chu', 'lc2410@g.rit.edu', 'he/him', 'STUDENT');
+(305, 'Sally Student', 'student5@example.com', 'they/them', 'CANDIDATE'),
+(306, 'Liang Chu', 'lc2410@g.rit.edu', 'he/him', 'CANDIDATE');
