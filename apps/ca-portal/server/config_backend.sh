@@ -7,14 +7,15 @@ DB_HOST="127.0.0.1"                                # Host where MariaDB is runni
 DB_PORT="8000"                                     # Port MariaDB is listening on (host port from -p flag)
 
 # Application Environment Variables to add to .env
-APP_BASE_URL="http://localhost:3300"               # Base URL for your application (Frontend to Backend)
+APP_BACKEND_URL="http://localhost:3300"               # Backend URL for your Node.js Express server
+APP_FRONTEND_URL="http://localhost:3000"             # Frontend URL for your application
 APP_NODE_ENV="development"                         # Node.js environment (development, production, etc.)
 APP_SERVER_PORT="3300"                             # Port your Node.js Express server will listen on
 
 # Slack Environment Variables to add to .env
 SLACK_CLIENT_ID="8356401273568.9110035154276"
 SLACK_CLIENT_SECRET="03750f2fb26d6cc604010e4d306dafdc"
-SLACK_REDIRECT_URI="https://localhost:3300/slack/oauth_redirect"
+SLACK_REDIRECT_URI="https://localhost:3300/api/slack/oauth_redirect"
 
 ENV_FILE=".env"                                    # Path to your .env file for Prisma
 # --- End Configuration ---
@@ -81,7 +82,8 @@ update_env_var() {
 
 # Call the function for each variable
 update_env_var "DATABASE_URL" "$DATABASE_URL"
-update_env_var "BASE_URL" "$APP_BASE_URL"
+update_env_var "BACKEND_URL" "$APP_BACKEND_URL"
+update_env_var "FRONTEND_URL" "$APP_FRONTEND_URL"
 update_env_var "NODE_ENV" "$APP_NODE_ENV"
 update_env_var "PORT" "$APP_SERVER_PORT" # Using APP_SERVER_PORT for clarity here
 
@@ -94,5 +96,5 @@ echo "--- All Environment Variables Setup Complete ---"
 # Optional: Display the relevant part of the .env file
 echo ""
 echo "--- Current $ENV_FILE (relevant section) ---"
-grep -E '^(DATABASE_URL|BASE_URL|NODE_ENV|PORT)=' "$ENV_FILE" || true
+grep -E '^(DATABASE_URL|BACKEND_URL|NODE_ENV|PORT)=' "$ENV_FILE" || true
 echo "----------------------------------------------"

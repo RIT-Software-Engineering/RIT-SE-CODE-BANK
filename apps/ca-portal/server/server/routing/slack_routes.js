@@ -1,4 +1,4 @@
-
+const axios = require('axios');
 const router = require('express').Router();
 
 /**
@@ -16,12 +16,15 @@ router.get('/oauth-url', (req, res) => {
 
 /**
  * Route 2: Slack OAuth Redirect Handler
- * Slack redirects here after user authorization. It exchanges the code for a token.
+ * Slack redirects here, we exchange the code for a token, then redirect back to the frontend.
  */
 router.get('/oauth_redirect', async (req, res) => {
   const code = req.query.code;
+  const frontendUrl = process.env.FRONTEND_URL;
+
   if (!code) {
-    return res.status(400).send('Error: Missing authorization code from Slack.');
+    // If there's no code, redirect to the frontend with an error
+    return res.redirect(`${frontendUrl}/Messaging?error=` + encodeURIComponent('Authorization denied or failed.'));
   }
 
   try {
@@ -36,19 +39,22 @@ router.get('/oauth_redirect', async (req, res) => {
 
     if (!response.data.ok) {
       console.error('OAuth Error:', response.data.error);
-      return res.redirect('/?error=' + encodeURIComponent('OAuth failed: ' + response.data.error));
+      const errorMessage = 'OAuth failed: ' + response.data.error;
+      // Redirect to the frontend with a specific error message
+      return res.redirect(`${frontendUrl}/Messaging?error=` + encodeURIComponent(errorMessage));
     }
 
     const userToken = response.data.authed_user.access_token;
     const teamId = response.data.team.id;
 
-    // Redirect back to the main page with token and teamId in the query string.
-    // The frontend will grab these and store them.
-    res.redirect(`/?token=${userToken}&teamId=${teamId}`);
+    // --- FIX 2: Redirect back to the frontend Messaging page with token and teamId ---
+    res.redirect(`${frontendUrl}/Messaging?token=${userToken}&teamId=${teamId}`);
 
   } catch (error) {
-    console.error('Error during OAuth:', error);
-    res.redirect('/?error=' + encodeURIComponent('Error during OAuth process.'));
+    console.error('Error during OAuth:', error.message);
+    const errorMessage = 'An internal error occurred during the OAuth process.';
+    // Redirect to the frontend with a generic error message
+    res.redirect(`${frontendUrl}/Messaging?error=` + encodeURIComponent(errorMessage));
   }
 });
 
@@ -99,12 +105,10 @@ router.post('/send-message', async (req, res) => {
         return res.status(500).json({ success: false, message: `Failed to post message: ${postResult.data.error}`});
     }
 
-    // Success! Respond with a success message and the deep link for the frontend to use.
-    const deepLink = `slack://channel?team=${teamId}&id=${channelId}`;
+    // Success! Respond with a success message.
     res.json({
         success: true,
-        message: `Message sent successfully to ${email}!`,
-        deepLink: deepLink
+        message: `Message sent successfully to ${email}!`
     });
 
   } catch (error) {

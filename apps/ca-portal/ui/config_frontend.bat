@@ -7,7 +7,7 @@ REM It intelligently updates existing variables or adds them if missing.
 REM --------------------------------------------------------------------
 
 REM --- Configuration Variables (MODIFY THESE FOR YOUR SETUP) ---
-SET "BASE_API_URL=http://localhost:3300/api"
+SET "BASE_API_URL=https://localhost:3300/api"
 SET "DB_API_EXTENSION=/db"
 SET "SLACK_API_EXTENSION=/slack"
 REM Add any other frontend variables here

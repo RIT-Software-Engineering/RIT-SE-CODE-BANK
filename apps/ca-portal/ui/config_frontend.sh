@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # --- Configuration Variables (MODIFY THESE) ---
-BASE_API_URL="http://localhost:3300/api"
+BASE_API_URL="https://localhost:3300/api"
 DATABASE_API_EXTENSION="/db"
 SLACK_API_EXTENSION="/slack"
 ENV_FILE=".env"

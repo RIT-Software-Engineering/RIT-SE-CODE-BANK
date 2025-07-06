@@ -7,13 +7,14 @@ SET "DB_NAME=ca_portal"
 SET "DB_HOST=127.0.0.1"
 SET "DB_PORT=8000"
 
-SET "APP_BASE_URL=http://localhost:3300"
+SET "APP_BACKEND_URL=http://localhost:3300"
+SET "APP_FRONTEND_URL=http://localhost:3000"
 SET "APP_NODE_ENV=development"
 SET "APP_SERVER_PORT=3300"
 
 SET "SLACK_CLIENT_ID=8356401273568.9110035154276"
 SET "SLACK_CLIENT_SECRET=03750f2fb26d6cc604010e4d306dafdc"
-SET "SLACK_REDIRECT_URI=https://localhost:3300/slack/oauth_redirect"
+SET "SLACK_REDIRECT_URI=https://localhost:3300/api/slack/oauth_redirect"
 
 SET "ENV_FILE=.env"
 REM --- End Configuration ---
@@ -51,7 +52,8 @@ IF NOT EXIST "%ENV_FILE%" (
 
 REM Call the subroutine to update each variable
 CALL :update_env_var "DATABASE_URL" "%DATABASE_URL%"
-CALL :update_env_var "BASE_URL" "%APP_BASE_URL%"
+CALL :update_env_var "BACKEND_URL" "%APP_BACKEND_URL%"
+CALL :update_env_var "FRONTEND_URL" "%APP_FRONTEND_URL%"
 CALL :update_env_var "NODE_ENV" "%APP_NODE_ENV%"
 CALL :update_env_var "PORT" "%APP_SERVER_PORT%"
 
@@ -64,7 +66,7 @@ ECHO --- All Environment Variables Setup Complete ---
 
 ECHO.
 ECHO --- Current %ENV_FILE% (relevant section) ---
-findstr /R /C:"^DATABASE_URL=" /C:"^BASE_URL=" /C:"^NODE_ENV=" /C:"^PORT=" "%ENV_FILE%"
+findstr /R /C:"^DATABASE_URL=" /C:"^BACKEND_URL=" /C:"^NODE_ENV=" /C:"^PORT=" "%ENV_FILE%"
 ECHO ----------------------------------------------
 
 ENDLOCAL
