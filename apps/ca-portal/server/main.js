@@ -6,7 +6,6 @@ const port = process.env.PORT;
 const cors = require('cors');
 const https = require('https');
 const fs = require('fs'); 
-const devcert = require('devcert'); 
 
 const setupDatabase = require('./server/database/setup_db');
 const apiRoutes = require('./server/routing/index');
@@ -15,8 +14,10 @@ app.use(cors());
 app.use(express.json()); // Middleware for JSON body parsing
 
 async function initializeDatabase() {
-    // MOVE THE devcert call HERE
-    const httpsOptions = await devcert.certificateFor('localhost');
+    const httpsOptions = {
+      key: fs.readFileSync('./localhost+2-key.pem'),
+      cert: fs.readFileSync('./localhost+2.pem')
+    };
 
     console.log(`PORT variable is currently: ${port}`);
     if (!port) {
