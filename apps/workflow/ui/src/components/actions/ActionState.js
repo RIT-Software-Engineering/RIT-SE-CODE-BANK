@@ -30,7 +30,7 @@ export default async function ActionState({ actionId }) {
     const form = (await formData.json())[0];
 
     return (
-        <div className="flow flow-col gap-2 border border-solid border-black rounded-md p-2">
+        <div className="flow flow-col gap-2 p-2">
             <div className="grid grid-cols-3 items-center justify-between border-b py-2 mb-4">
                 <div className="flex flex-row gap-2 items-center justify-start h-full pl-4">
                     <button className="border p-2 rounded-sm min-w-24 text-center hover:bg-gray-300">{"< Previous"}</button>
@@ -41,7 +41,9 @@ export default async function ActionState({ actionId }) {
                 </div>
             </div>
             <p>{"Description: " + description.value}</p>
-            {form.value}
+
+            {/* Should really figure out something better than dangerouslySetInnerHTML, or this form stuff */}
+            <div dangerouslySetInnerHTML={{ __html: form.value }} />
         </div>
     )
 }

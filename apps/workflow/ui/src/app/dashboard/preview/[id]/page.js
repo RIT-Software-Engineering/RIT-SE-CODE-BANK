@@ -5,8 +5,6 @@ export default async function PreviewPage({ params }) {
     const { id } = await params;
     const url = "http://localhost:3001";
 
-    console.log("In Preview Page")
-
     let workflow;
     try {
         const data = await fetch(url + "/workflows?workflowId=" + id,
@@ -15,7 +13,6 @@ export default async function PreviewPage({ params }) {
                 headers: {
                     "Content-Type": "application/json"
                 },
-                cache: "no-store"
             }
         )
 
@@ -23,7 +20,8 @@ export default async function PreviewPage({ params }) {
     } catch (error) {
         console.error(error);
     }
-    // console.log(workflow);
+
+    let actionId = workflow.root_action_id
 
     return (
         <>
@@ -36,7 +34,7 @@ export default async function PreviewPage({ params }) {
                 </div>
             </div>
             <div>
-                <ActionState actionId={workflow.root_action_id} />
+                <ActionState actionId={actionId} />
             </div>
         </>
     )
