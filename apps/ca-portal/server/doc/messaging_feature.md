@@ -14,9 +14,11 @@
  
 4. Get Credentials: Navigate to the Basic Information page in the sidebar. Scroll down to the App Credentials section to find your Client ID and Client Secret. You will need these for the backend setup in the `config_backend.bat` or `config_backend.bat.sh` files.
 
+**Note** normally if one member of the team has already setup the first four step here, then the rest just needs to do the following below:
+
 5. After that run one of these configuration scripts depending on the following local machine:
-    * For Windows, it's `./config_backend.bat`. If it runs into an error (i.e. 'mysql' is not recognized), try navigating to a powershell terminal outside of vscode and run the script there.
-    * For MacOS/Linux, it's `./config_backend.sh`. You may need to do set execute permissions for the script by running `chmod +x config_backend.sh` beforehand if it's your first time running the script. 
+    * For Windows, it's `./config_backend.bat` and `./config_frontend.bat`. If it runs into an error (i.e. 'mysql' is not recognized), try navigating to a powershell terminal outside of vscode and run the script there.
+    * For MacOS/Linux, it's `./config_backend.sh` and `./config_frontend.sh`. You may need to do set execute permissions for the script by running `chmod +x config_backend.sh` and/or `chmod +x config_frontend.sh` beforehand if it's your first time running the script. 
 
 ## Running the backend
 When your running the backend for the first time with the messaging feature, you will be prompted to type in your local machine's password. After typing in that password, the cretificates will be normally installed under these locations depending on the OS:
