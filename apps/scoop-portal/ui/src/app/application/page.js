@@ -54,7 +54,7 @@ function ApplicationPage() {
       { semester_id: 1, name: "Fall 2025" },
       { semester_id: 2, name: "Spring 2026" },
       { semester_id: 3, name: "Summer 2026" },
-      { semester_id: 3, name: "Fall 2027" },
+      { semester_id: 4, name: "Fall 2027" },
     ];
     setSemesterData(data);
   }, []);
@@ -78,6 +78,18 @@ function ApplicationPage() {
     });
   };
 
+  async function postFormData(data) {
+    const response = await fetch("/api/application", {
+      method: "POST",
+      body: data, 
+      headers: {
+        "Accept": "application/json",    
+      },
+    })
+    return response;
+  }
+      
+
   const submitApplication = async (e) => {
     e.preventDefault();
 
@@ -90,15 +102,9 @@ function ApplicationPage() {
         body.append("attachments", formFiles[i]);
       }
     }
-
+console.log("Submitting application with data:", formData, formFiles);
     try {
-      const response = await SecureFetch(
-        config.url.API_POST_SUBMIT_APPLICATION,
-        {
-          method: "post",
-          body,
-        },
-      );
+      postFormData(formData);
 
       if (response.status === 200) {
         setModalOpen(MODAL_STATUS.SUCCESS);
@@ -178,10 +184,10 @@ function ApplicationPage() {
             
             label="Full Name"
             name="name"
-            value={formData.title || ""}
+            value={formData.name || ""}
             onChange={handleChange}
-            error={!!errors.title}
-            helperText={errors.title}
+            error={!!errors.name}
+            // helperText={errors.name}
           />
       
           <TextField
@@ -193,7 +199,7 @@ function ApplicationPage() {
           value={formData.email || ""}
           onChange={handleChange}
           error={!!errors.email}
-          helperText={errors.email}
+          // helperText={errors.email}
         />
           <TextField
           required
@@ -204,23 +210,25 @@ function ApplicationPage() {
           value={formData.phone || ""}
           onChange={handleChange}
           error={!!errors.phone}
-          helperText={errors.phone}
+          // helperText={errors.phone}
         />
         <FormControl fullWidth margin="normal">
             {/* <FormLabel>Academic Standing</FormLabel> */}
-            <InputLabel id="academic-standing-label">Academic Standing</InputLabel>
+            <FormLabel id="academic-standing-label">Academic Standing</FormLabel>
             <Select
               required
               margin="normal"
               label="academic-standing"
-              onChange={handleChange}
+              name="academic-standing"
+              value={formData["academic-standing"] || ""}
+              onChange={(e) => handleDropdownChange("academic-standing", e.target.value)}
               error={!!errors.description}
-              helperText={errors.description}
+              
             >
-              <MenuItem value={1}>2nd Year</MenuItem>
-              <MenuItem value={2}>3rd Year</MenuItem>
-              <MenuItem value={3}>4th Year</MenuItem>
-              <MenuItem value={3}>5th Year</MenuItem>
+              <MenuItem value={2}>2nd Year</MenuItem>
+              <MenuItem value={3}>3rd Year</MenuItem>
+              <MenuItem value={4}>4th Year</MenuItem>
+              <MenuItem value={5}>5th Year</MenuItem>
             </Select>
     </FormControl>
 <FormControl fullWidth margin="normal">
@@ -233,7 +241,7 @@ function ApplicationPage() {
             value={formData.semester || ""}
             onChange={(e) => handleDropdownChange("semester", e.target.value)}
             error={!!errors.semester}
-            helperText={errors.semester}
+            // helperText={errors.semester}
           >
             {semesterData.map((semester) => (
               <MenuItem key={semester.semester_id} value={semester.semester_id}>
@@ -257,14 +265,16 @@ function ApplicationPage() {
               required
               margin="normal"
               label="coops-completed"
-              onChange={handleChange}
+              name="coops-completed"
+              value={formData["coops-completed"] || ''}
+              onChange={(e) => handleDropdownChange("coops-completed", e.target.value)}
               error={!!errors.description}
-              helperText={errors.description}
+              // helperText={errors.description}
             >
-              <MenuItem value={0}>None</MenuItem>
-              <MenuItem value={1}>One</MenuItem>
-              <MenuItem value={2}>Two</MenuItem>
-              <MenuItem value={3}>Three</MenuItem>
+              <MenuItem value={1}>None</MenuItem>
+              <MenuItem value={2}>One</MenuItem>
+              <MenuItem value={3}>Two</MenuItem>
+              <MenuItem value={4}>Three</MenuItem>
             </Select>
     </FormControl>
           
@@ -276,12 +286,12 @@ function ApplicationPage() {
             margin="normal"
             // label="skills"
             name="skills"
-            value={formData.description || ""}
+            value={formData.skills || ""}
             multiline
             rows={4}
             onChange={handleChange}
             error={!!errors.description}
-            helperText={errors.description}
+            // helperText={errors.description}
           />
           </FormControl>
           
