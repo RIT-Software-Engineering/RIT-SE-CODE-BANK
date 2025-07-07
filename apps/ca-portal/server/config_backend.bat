@@ -7,7 +7,7 @@ SET "DB_NAME=ca_portal"
 SET "DB_HOST=127.0.0.1"
 SET "DB_PORT=8000"
 
-SET "APP_BACKEND_URL=http://localhost:3300"
+SET "APP_BACKEND_URL=https://localhost:3300"
 SET "APP_FRONTEND_URL=http://localhost:3000"
 SET "APP_NODE_ENV=development"
 SET "APP_SERVER_PORT=3300"

@@ -7,7 +7,7 @@ DB_HOST="127.0.0.1"                                # Host where MariaDB is runni
 DB_PORT="8000"                                     # Port MariaDB is listening on (host port from -p flag)
 
 # Application Environment Variables to add to .env
-APP_BACKEND_URL="http://localhost:3300"               # Backend URL for your Node.js Express server
+APP_BACKEND_URL="https://localhost:3300"               # Backend URL for your Node.js Express server
 APP_FRONTEND_URL="http://localhost:3000"             # Frontend URL for your application
 APP_NODE_ENV="development"                         # Node.js environment (development, production, etc.)
 APP_SERVER_PORT="3300"                             # Port your Node.js Express server will listen on
