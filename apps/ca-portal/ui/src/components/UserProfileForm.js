@@ -1,8 +1,9 @@
-// app/component/UserProfileForm.js
+// app/components/UserProfileForm.js
 'use client';
 import React, { useEffect } from 'react'; 
 import { useForm, useWatch } from "react-hook-form";
 import { upsertStudentProfile, upsertEmployerProfile } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Renders a modal form for creating or updating a student's profile
@@ -16,10 +17,11 @@ import { upsertStudentProfile, upsertEmployerProfile } from '@/services/api';
  * @param {Object} courseOptions - The list of courses to be presented to the user
  * @returns A modal dialog with the course history form
  */
-export default function UserProfileForm({ user, mode, onClose, courseOptions }) {
+export default function UserProfileForm({ user, mode, onClose, courseOptions, onUpdateSuccess }) {
     const isEditMode = mode === "edit";
     const userRole = user?.role?.toUpperCase().trim();
     const isStudentOrEmployee = userRole === "STUDENT" || userRole === "EMPLOYEE";
+    const { refreshUserProfile } = useAuth();
 
      // Initialize react-hook-form with default values either from the user (edit) or empty for new form
     const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset } = useForm();
@@ -93,6 +95,8 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
             })),
         };
         await upsertStudentProfile(finalData);
+        await refreshUserProfile();
+        if (onUpdateSuccess) onUpdateSuccess();
 
         alert("Profile saved!");
         if (onClose) onClose();
@@ -117,6 +121,8 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                 role: user.role,
             };
             await upsertEmployerProfile(finalData);
+            await refreshUserProfile();
+            if (onUpdateSuccess) onUpdateSuccess();
 
             alert("Profile saved!");
             if (onClose) onClose();

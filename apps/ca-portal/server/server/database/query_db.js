@@ -142,8 +142,8 @@ async function findUniqueUser(UID) {
                 uid: numericUID,
             },
         });
-        // If the user is a student, include their own student info and associated course history
-        if (user && user.role === 'STUDENT') {
+        // If the user is a student or employee, include their own student info and associated course history
+        if (user && user.role === 'STUDENT' || user && user.role === 'EMPLOYEE') {
             const studentProfile = await prisma.user.findUnique({
                 where: {
                     uid: numericUID,
@@ -166,6 +166,19 @@ async function findUniqueUser(UID) {
                 },
             });
             return studentProfile;
+          }
+
+        // If the user is a employer or admin, include their own faculty info and associated job positions
+        if (user && user.role === 'EMPLOYER' || user && user.role === 'ADMIN') {
+            const facultyProfile = await prisma.user.findUnique({
+                where: {
+                    uid: numericUID,
+                },
+                include: {
+                    // TODO: Add code to get faculty job positions
+                },
+            });
+            return facultyProfile;
           }
 
         return user;

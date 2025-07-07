@@ -22,6 +22,11 @@ const HEADER_LINKS = [
     href: "/Positions",
     roles: [ROLES.STUDENT, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
   },
+  {
+    text: "Profile",
+    href: "/Profile",
+    roles: [ROLES.STUDENT, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
+  },
 ];
 
 export default function Header() {
