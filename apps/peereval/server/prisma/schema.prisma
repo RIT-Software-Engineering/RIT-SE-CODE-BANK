@@ -36,6 +36,9 @@ model Project {
   overseer    User   @relation("overseer", fields: [overseerId], references: [id])
   overseerId  String @db.Char(36)
   peers       User[] @relation("peers")
+
+  // Required for relations
+  Assessment Assessment[]
 }
 
 // ---------------------------------------
@@ -43,6 +46,7 @@ model Project {
 // ---------------------------------------
 model Assessment {
   id             String       @id @default(uuid()) @db.Char(36)
+  project        Project      @relation(fields: [projectId], references: [id])
   name           String
   description    String
   feedbackForm   FeedbackForm @relation(fields: [feedbackFormId], references: [id])
@@ -52,6 +56,7 @@ model Assessment {
 
   // Required for relations
   peerResponse FormResponse[]
+  projectId    String         @db.Char(36)
 }
 
 model FormResponse {
@@ -65,17 +70,21 @@ model FormResponse {
   assessmentId String @db.Char(36)
   responderId  String @db.Char(36)
   respondeeId  String @db.Char(36)
+
+  @@unique([assessmentId, responderId, respondeeId])
 }
 
 model InquiryResponse {
   id      String  @id @default(uuid()) @db.Char(36)
-  inquiry Inquiry @relation(fields: [inquiryId], references: [id])
-  answer  String // Frontend will interpret this based on inquiry type
+  Inquiry Inquiry @relation(fields: [inquiryId], references: [id])
+  answer  String  @db.LongText // Interpret based on inquiry type
 
   // Required for relations
-  PeerFormResponse   FormResponse? @relation(fields: [peerFormResponseId], references: [id])
-  peerFormResponseId String?       @db.Char(36)
-  inquiryId          String        @db.Char(36)
+  FormResponse   FormResponse @relation(fields: [formResponseId], references: [id])
+  formResponseId String       @db.Char(36)
+  inquiryId      String       @db.Char(36)
+
+  @@unique([formResponseId, inquiryId])
 }
 
 // ---------------------------------------
@@ -93,10 +102,16 @@ model Inquiry {
   id       String      @id @default(uuid()) @db.Char(36)
   type     InquiryType
   question String
-  response String
+
+  // For RATING
+  scale  Int?
+  labels String?
+
+  // For RUBRIC
+  rows RubricRow[]
 
   // Required for relations
-  feedbackForms       FeedbackForm[]
+  FeedbackForms       FeedbackForm[]
   PeerInquiryResponse InquiryResponse[]
 }
 
@@ -104,4 +119,13 @@ enum InquiryType {
   FREE_RESPONSE
   RATING
   RUBRIC
+}
+
+model RubricRow {
+  id      String @id @default(uuid()) @db.Char(36)
+  label   String
+  options String
+
+  // Required for relations
+  Inquiry Inquiry[]
 }

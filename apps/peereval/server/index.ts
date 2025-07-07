@@ -1,7 +1,9 @@
 import express from "express";
 import cors from "cors";
+
 import userRoutes from "./routes/users";
 import projectRoutes from "./routes/projects";
+import assessmentRoutes from "./routes/assessments";
 
 const app = express();
 const PORT = process.env.PORT || 3006;
@@ -20,6 +22,7 @@ app.use(
 // -------------------------------------------------------
 app.use("/users", userRoutes);
 app.use("/projects", projectRoutes);
+app.use("/assessments", assessmentRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

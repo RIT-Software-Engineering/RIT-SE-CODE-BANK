@@ -4,6 +4,18 @@ import { PrismaClient } from "@prisma/client";
 const router = Router();
 const prisma = new PrismaClient();
 
+// Get all projects
+// /projects
+router.get("/", async (req, res) => {
+  const projects = await prisma.project.findMany({
+    orderBy: {
+      name: "asc",
+    },
+  });
+
+  res.json(projects);
+});
+
 // Get project as peer
 // /projects/asPeer/:userId
 router.get("/asPeer/:userId", async (req, res) => {
@@ -18,10 +30,12 @@ router.get("/asPeer/:userId", async (req, res) => {
     },
   });
 
-  res.json(projects[0].projectsAsPeers);
+  if (projects.length == 0) {
+    res.sendStatus(404);
+  } else res.json(projects[0].projectsAsPeers);
 });
 
-// Get project as peer
+// Get project as overseer
 // /projects/asOverseer/:userId
 router.get("/asOverseer/:userId", async (req, res) => {
   const userId = req.params.userId;

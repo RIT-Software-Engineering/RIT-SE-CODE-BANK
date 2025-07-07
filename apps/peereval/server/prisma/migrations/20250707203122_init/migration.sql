@@ -26,6 +26,7 @@ CREATE TABLE `Assessment` (
     `feedbackFormId` CHAR(36) NOT NULL,
     `startDate` DATETIME(3) NOT NULL,
     `dueDate` DATETIME(3) NOT NULL,
+    `projectId` CHAR(36) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -37,16 +38,18 @@ CREATE TABLE `FormResponse` (
     `responderId` CHAR(36) NOT NULL,
     `respondeeId` CHAR(36) NOT NULL,
 
+    UNIQUE INDEX `FormResponse_assessmentId_responderId_respondeeId_key`(`assessmentId`, `responderId`, `respondeeId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `InquiryResponse` (
     `id` CHAR(36) NOT NULL,
-    `answer` VARCHAR(191) NOT NULL,
-    `peerFormResponseId` CHAR(36) NULL,
+    `answer` LONGTEXT NOT NULL,
+    `formResponseId` CHAR(36) NOT NULL,
     `inquiryId` CHAR(36) NOT NULL,
 
+    UNIQUE INDEX `InquiryResponse_formResponseId_inquiryId_key`(`formResponseId`, `inquiryId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -62,7 +65,17 @@ CREATE TABLE `Inquiry` (
     `id` CHAR(36) NOT NULL,
     `type` ENUM('FREE_RESPONSE', 'RATING', 'RUBRIC') NOT NULL,
     `question` VARCHAR(191) NOT NULL,
-    `response` VARCHAR(191) NOT NULL,
+    `scale` INTEGER NULL,
+    `labels` VARCHAR(191) NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `RubricRow` (
+    `id` CHAR(36) NOT NULL,
+    `label` VARCHAR(191) NOT NULL,
+    `options` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -85,8 +98,20 @@ CREATE TABLE `_FeedbackFormToInquiry` (
     INDEX `_FeedbackFormToInquiry_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `_InquiryToRubricRow` (
+    `A` CHAR(36) NOT NULL,
+    `B` CHAR(36) NOT NULL,
+
+    UNIQUE INDEX `_InquiryToRubricRow_AB_unique`(`A`, `B`),
+    INDEX `_InquiryToRubricRow_B_index`(`B`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Project` ADD CONSTRAINT `Project_overseerId_fkey` FOREIGN KEY (`overseerId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Assessment` ADD CONSTRAINT `Assessment_projectId_fkey` FOREIGN KEY (`projectId`) REFERENCES `Project`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Assessment` ADD CONSTRAINT `Assessment_feedbackFormId_fkey` FOREIGN KEY (`feedbackFormId`) REFERENCES `FeedbackForm`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -104,7 +129,7 @@ ALTER TABLE `FormResponse` ADD CONSTRAINT `FormResponse_respondeeId_fkey` FOREIG
 ALTER TABLE `InquiryResponse` ADD CONSTRAINT `InquiryResponse_inquiryId_fkey` FOREIGN KEY (`inquiryId`) REFERENCES `Inquiry`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `InquiryResponse` ADD CONSTRAINT `InquiryResponse_peerFormResponseId_fkey` FOREIGN KEY (`peerFormResponseId`) REFERENCES `FormResponse`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `InquiryResponse` ADD CONSTRAINT `InquiryResponse_formResponseId_fkey` FOREIGN KEY (`formResponseId`) REFERENCES `FormResponse`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_peers` ADD CONSTRAINT `_peers_A_fkey` FOREIGN KEY (`A`) REFERENCES `Project`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -117,3 +142,9 @@ ALTER TABLE `_FeedbackFormToInquiry` ADD CONSTRAINT `_FeedbackFormToInquiry_A_fk
 
 -- AddForeignKey
 ALTER TABLE `_FeedbackFormToInquiry` ADD CONSTRAINT `_FeedbackFormToInquiry_B_fkey` FOREIGN KEY (`B`) REFERENCES `Inquiry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_InquiryToRubricRow` ADD CONSTRAINT `_InquiryToRubricRow_A_fkey` FOREIGN KEY (`A`) REFERENCES `Inquiry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_InquiryToRubricRow` ADD CONSTRAINT `_InquiryToRubricRow_B_fkey` FOREIGN KEY (`B`) REFERENCES `RubricRow`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
