@@ -9,7 +9,7 @@ import { getAllCourses, getUserProfile } from "@/services/api";
  * 
  * Handles:
  * - Fetching authenticated user
- * - Fetching course list and student profile
+ * - Fetching course list and candidate profile
  * - Passing appropriate props to the form for editing or creating a profile
  * @returns A modal containing the {@link UserProfileForm} or null if closed
  */
@@ -35,7 +35,7 @@ export default function UserProfileModal({ onUpdateSuccess }) {
             setIsLoading(true);
             setError(null);
             try {
-                // Fetch both the course list and the student profile in parallel
+                // Fetch both the course list and the candidate profile in parallel
                 const coursesPromise = getAllCourses();
                 const userProfilePromise = getUserProfile(currentUser.uid)
                 .catch(err => {

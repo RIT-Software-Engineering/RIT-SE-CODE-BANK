@@ -22,19 +22,19 @@ model User {
   role Role @default(GUEST)
 
   //Relationships
-  student  Student?
+  candidate  Candidate?
   employer Employer?
 }
 
 enum Role {
   GUEST
-  STUDENT
+  CANDIDATE
   EMPLOYEE
   EMPLOYER
   ADMIN
 }
 
-model Student {
+model Candidate {
   //Fields
   uid Int @id
   year Int @db.Int
@@ -53,7 +53,7 @@ model Student {
 enum GraduateStatus{
   UNDERGRADUATE
   GRADUATE
-  BOTH // This is mainly used for the JobPosition datatable to filter on whether a certain position allows hiring for both undergraduate and graduate students
+  BOTH // This is mainly used for the JobPosition datatable to filter on whether a certain position allows hiring for both undergraduate and graduate candidates
 }
 
 model Employer {
@@ -69,11 +69,11 @@ model Employer {
 model Employee {
   //Fields
   id Int @id //employee id that RIT gives to you when you start working under a new position (like a Course Assistant)
-  studentUID Int
+  candidateUID Int
   employeeStatus EmployeeStatus @default(ACTIVE)
 
   //Relationships
-  student          Student          @relation(fields: [studentUID], references: [uid])
+  candidate          Candidate          @relation(fields: [candidateUID], references: [uid])
   jobPositionHistory JobPositionHistory[]
 }
 
@@ -89,6 +89,7 @@ model JobPositionHistory{
   jobPositionId String
   employeeId Int
   jobPositionHistoryStatus JobPositionHistoryStatus @default(ACTIVE)
+  comments String @db.Text
 
   // Relations
   jobPosition      JobPosition      @relation(fields: [jobPositionId], references: [id])
@@ -99,43 +100,45 @@ model JobPositionHistory{
 enum JobPositionHistoryStatus{
   //these roles are for when employees are currently working within a job position
   ACTIVE
-  TERMINATED // When the student is fired
+  TERMINATED // When the candidate is fired
   INACTIVE // When the job position is no longer available (e.g., end of semester)
 }
 
 model JobPositionApplicationHistory{
   //Fields
   id Int @id @default(autoincrement())
-  studentUID Int
+  candidateUID Int
   jobPositionId String
   jobApplicationStatus JobApplicationStatus @default(APPLIED)
   applicationData String @db.Text
 
   // Relations
-  student          Student          @relation(fields: [studentUID], references: [uid])
+  candidate          Candidate          @relation(fields: [candidateUID], references: [uid])
   jobPosition      JobPosition      @relation(fields: [jobPositionId], references: [id])
 }
 
 enum JobApplicationStatus{
-  //these roles are for when students are applying to the job positions
+  //these roles are for when candidates are applying to the job positions
   APPLIED
+  ACCEPTED
   SELECTED
   ONHOLD
   REJECTED
   INACTIVE
+  //any withdrawal or deletion of a job position will delete the jobposition application altogether
 }
 
-//This table to storing specifically past courses a Student has taken before or has been an employee in the past
+//This table to storing specifically past courses a Candidate has taken before or has been an employee in the past
 model CourseHistory{
   //Fields
   id Int @id @default(autoincrement())
-  studentUID Int
+  candidateUID Int
   courseCode String @db.VarChar(8)
   grade String @db.VarChar(2) //Letter Grade
   wasPriorEmployee Boolean @db.TinyInt
 
   // Relations
-  student Student @relation(fields: [studentUID], references: [uid])
+  candidate Candidate @relation(fields: [candidateUID], references: [uid])
   course  Course  @relation(fields: [courseCode], references: [courseCode])
 }
 

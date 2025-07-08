@@ -33,15 +33,15 @@ export default function AuthProvider({ children }) {
   }, []); // Empty dependency array means this runs only on mount
 
   const addApplicationToCurrentUser = (newApplication) => {
-    if (!currentUser || !currentUser.student) return;
+    if (!currentUser || !currentUser.candidate) return;
 
     setCurrentUser(prevUser => {
       const updatedUser = {
         ...prevUser,
-        student: {
-          ...prevUser.student,
+        candidate: {
+          ...prevUser.candidate,
           // The back-relation from your schema is jobPositionApplicationHistory
-          jobPositionApplicationHistory: [...(prevUser.student.jobPositionApplicationHistory || []), newApplication],
+          jobPositionApplicationHistory: [...(prevUser.candidate.jobPositionApplicationHistory || []), newApplication],
         },
       };
       return updatedUser;
