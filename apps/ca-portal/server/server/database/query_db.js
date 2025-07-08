@@ -175,7 +175,15 @@ async function findUniqueUser(UID) {
                     uid: numericUID,
                 },
                 include: {
-                    // TODO: Add code to get faculty job positions
+                  employer: {
+                    include: {
+                      jobPostions: {
+                        include: {
+                          course: true,
+                        },
+                      },
+                    },
+                  },
                 },
             });
             return facultyProfile;

@@ -279,7 +279,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions, on
                         )}
 
                         <div className="pt-2">
-                            <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 ease-in-out disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center">
+                            <button type="submit" disabled={isSubmitting} className="w-full bg-rit-orange text-white font-bold py-3 px-4 rounded-lg hover:bg-rit-gray focus:outline-none focus:ring-4 focus:ring-rit-light-gray transition-all duration-300 ease-in-out disabled:bg-rit-gray disabled:cursor-not-allowed flex items-center justify-center">
                                 {isSubmitting ? 'Saving...' : 'Save Profile'}
                             </button>
                         </div>
