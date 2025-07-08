@@ -8,34 +8,34 @@ export default function PositionsCard({ position, index }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const hasApplied =
-    currentUser?.student?.jobPositionApplicationHistory?.some(
+    currentUser?.candidate?.jobPositionApplicationHistory?.some(
       (app) => app.jobPositionId === position.id
     ) || false;
 
   const checkEligibility = () => {
-    if (!currentUser?.student?.courseHistory) {
-      // This case is for when the user is not a student, so no button is rendered anyway.
+    if (!currentUser?.candidate?.courseHistory) {
+      // This case is for when the user is not a candidate, so no button is rendered anyway.
       // We can return a generic reason.
-      return { eligible: false, reason: 'User is not a student.' };
+      return { eligible: false, reason: 'User is not a candidate.' };
     }
 
     // 1. Graduate Status Check
     const requiredStatus = position.graduateStatusRequirement; // e.g., 'UNDERGRADUATE', 'GRADUATE', 'BOTH'
-    const studentStatus = currentUser.student.graduateStatus;
+    const candidateStatus = currentUser.candidate.graduateStatus;
 
     if (
       requiredStatus &&
       requiredStatus !== 'BOTH' &&
-      studentStatus !== requiredStatus
+      candidateStatus !== requiredStatus
     ) {
       return {
         eligible: false,
-        reason: `This position is only open to ${requiredStatus.toLowerCase()} students.`,
+        reason: `This position is only open to ${requiredStatus.toLowerCase()} candidates.`,
       };
     }
 
     // 2. Course Taken Check
-    const courseInData = currentUser.student.courseHistory.find(
+    const courseInData = currentUser.candidate.courseHistory.find(
       (historyItem) => historyItem.courseCode === position.courseCode
     );
     if (!courseInData) {
@@ -54,7 +54,7 @@ export default function PositionsCard({ position, index }) {
       };
     }
 
-    // If all checks pass, the student is eligible.
+    // If all checks pass, the candidate is eligible.
     return { eligible: true, reason: '' };
   };
 
@@ -185,7 +185,7 @@ export default function PositionsCard({ position, index }) {
               </span>
             </div>
           </div>
-          {currentUser?.role === 'STUDENT' && renderApplyButton()}
+          {currentUser?.role === 'CANDIDATE' && renderApplyButton()}
         </div>
         <div className='mt-4 pt-4 border-t border-gray-200'>
           <p className='text-gray-700 mb-4'>{position.course.description}</p>

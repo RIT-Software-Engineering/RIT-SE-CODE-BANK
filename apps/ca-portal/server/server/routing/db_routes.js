@@ -7,9 +7,9 @@ const {
   getAllUsers,
   getAllCourses,
   findUniqueUser,
-  upsertStudentProfile,
+  upsertCandidateProfile,
   searchOpenPositions,
-  applyForJobPosition,
+  applyForJobPosition, upsertEmployerProfile,
   getStudentApplications
 } = require("../database/query_db");
 
@@ -95,14 +95,14 @@ router.get("/applications/:employerUid", async (req, res) => {
     }
   });
 
-router.post("/upsert-student-profile", async (req, res) => {
+router.post("/upsert-candidate-profile", async (req, res) => {
   const studentData = req.body;
   try {
     const profile = await upsertStudentProfile(studentData);
     res.status(200).json(profile);
   } catch (error) {
-    console.error("Error in /upsert-student-profile route:", error);
-    res.status(500).json({ error: "Failed to upsert student profile." });
+    console.error('Error in /upsert-employer-profile route:', error);
+    res.status(500).json({ error: 'Failed to upsert employer profile.' });
   }
 });
 

@@ -5,6 +5,7 @@
 import Login from "@/components/Login";
 import LandingDashboard from "@/components/LandingDashboard"; 
 import { useAuth } from "@/contexts/AuthContext";
+import UserProfileModal from "@/components/UserProfileModal";
 
 
 export default function Home() {
@@ -43,6 +44,7 @@ export default function Home() {
             Logout
           </button>
           
+
           {/* 3. Pass the role STRING to the dashboard component */}
           <LandingDashboard userRole={currentUser.role} />
         </>
