@@ -32,23 +32,25 @@ export async function getOpenPositions() {
 }
 
 /**
- * Searches for open positions using the provided search term.
+ * Searches and filters for open positions using the provided search term and applied filters.
  * Constructs the search URL with the search term as a query parameter,
  * sends a GET request to the backend, and returns the API response.
  *
  * @param {string} searchTerm - The term to search for open positions.
+ * @param {Object} appliedFilters - The filters applied to the search.
+ * @param {number} candidateUID - The UID of the candidate.
  * @returns {Promise<any>} The result of the API response handler.
  * @throws {Error} If required API URL components are not defined.
  */
-export async function searchOpenPositions(searchTerm) {
+export async function searchAndFilterOpenPositions(searchTerm, appliedFilters, candidateUID) {
   console.log("Base API URL:", BASE_API_URL);
   console.log("Database API Extension:", DATABASE_API_EXTENSION);
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error("Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file.");
   }
 
-  const params = new URLSearchParams({term: searchTerm});
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/search-open-positions?${params.toString()}`;
+  const params = new URLSearchParams({ searchTerm: searchTerm, filters: JSON.stringify(appliedFilters), candidateUID: candidateUID});
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/search-and-filter-open-positions?${params.toString()}`;
   console.log(`Searching from: ${url}`);
 
   const response = await fetch(url);
@@ -130,6 +132,23 @@ export async function applyForJobPosition(jobPositionApplicationData) {
     },
     body: JSON.stringify(jobPositionApplicationData),
   });
+  return handleApiResponse(response);
+}
+
+// api call to apply for a job position with a new resume
+export async function applyForJobPositionWithNewResume(formData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply-for-job-position-with-new-resume`;
+  console.log(`Applying for job position at: ${url}`);
+  console.log(formData);
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData, 
+  });
+  
   return handleApiResponse(response);
 }
 

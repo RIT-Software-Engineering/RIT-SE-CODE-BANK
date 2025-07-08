@@ -12,6 +12,11 @@ export default function PositionsCard({ position, index }) {
       (app) => app.jobPositionId === position.id
     ) || false;
 
+  const letterToGradeValue = {
+  'A': 10, 'A-': 9, 'B+': 8, 'B': 7, 'B-': 6,
+  'C+': 5, 'C': 4, 'C-': 3, 'D': 2, 'F': 1,
+};
+
   const checkEligibility = () => {
     if (!currentUser?.candidate?.courseHistory) {
       // This case is for when the user is not a candidate, so no button is rendered anyway.
@@ -20,12 +25,12 @@ export default function PositionsCard({ position, index }) {
     }
 
     // 1. Graduate Status Check
-    const requiredStatus = position.graduateStatusRequirement; // e.g., 'UNDERGRADUATE', 'GRADUATE', 'BOTH'
+    const requiredStatus = position.graduateStatusRequirement; // e.g., 'UNDERGRADUATE', 'GRADUATE', or Null
     const candidateStatus = currentUser.candidate.graduateStatus;
 
     if (
       requiredStatus &&
-      requiredStatus !== 'BOTH' &&
+      requiredStatus !== null &&
       candidateStatus !== requiredStatus
     ) {
       return {
@@ -38,7 +43,7 @@ export default function PositionsCard({ position, index }) {
     const courseInData = currentUser.candidate.courseHistory.find(
       (historyItem) => historyItem.courseCode === position.courseCode
     );
-    if (!courseInData) {
+    if (!courseInData && position.courseTakenRequirement) {
       return {
         eligible: false,
         reason: 'You must have taken this course to apply.',
@@ -46,11 +51,11 @@ export default function PositionsCard({ position, index }) {
     }
 
     // 3. Grade Check
-    const requiredGrades = ['A', 'A-'];
-    if (!requiredGrades.includes(courseInData.grade)) {
+    const requiredGrades = letterToGradeValue[position.gradeRequirement];
+    if (requiredGrades && requiredGrades > letterToGradeValue[courseInData.grade]) {
       return {
         eligible: false,
-        reason: `A grade of 'A' or 'A-' is required. Your grade was ${courseInData.grade}.`,
+        reason: `A grade of ${position.gradeRequirement} or higher is required. Your grade was ${courseInData.grade}.`,
       };
     }
 
@@ -58,8 +63,8 @@ export default function PositionsCard({ position, index }) {
     return { eligible: true, reason: '' };
   };
 
-  const handleApplySuccess = (newApplication) => {
-    addApplicationToCurrentUser(newApplication);
+  const handleApplySuccess = (newApplication, newResumeUrl) => {
+    addApplicationToCurrentUser(newApplication, newResumeUrl);
   };
 
   const ClockIcon = () => (

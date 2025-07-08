@@ -65,7 +65,7 @@ export default function Filter({ onFilterChange, filterConfig }) {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rit-light-gray"
+          className="h-10 inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rit-light-gray"
         >
           <FilterIcon />
           Filter
@@ -75,13 +75,16 @@ export default function Filter({ onFilterChange, filterConfig }) {
       {isOpen && (
         <div className="origin-top-left absolute left-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
           <div className="p-4 max-h-96 overflow-y-auto">
-            {/* Dynamically render filters based on the config prop */}
             {filterConfig.map(filter => (
               <div key={filter.id} className="mb-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">{filter.label}</h3>
+                {/* We only render the <h3> title if the filter is NOT a single-option checkbox. */}
+                {!(filter.type === 'checkbox' && filter.options.length === 1) && (
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">{filter.label}</h3>
+                )}
                 
                 {filter.type === 'checkbox' && (
-                  <div className="grid grid-cols-2 gap-2">
+                  // Use a simpler layout for single checkboxes
+                  <div className={filter.options.length > 1 ? "grid grid-cols-2 gap-2" : "flex flex-col"}>
                     {filter.options.map(option => (
                       <label key={option} className="flex items-center space-x-2 text-sm">
                         <input

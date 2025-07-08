@@ -1,12 +1,14 @@
 "use client";
 import SearchBar from "@/components/SearchBar";
-import { searchOpenPositions } from "../../services/api";
-import React, { useEffect } from "react";
+import { searchAndFilterOpenPositions } from "../../services/api";
+import React, { useEffect, useCallback } from "react";
 import PositionsCard from "@/components/PositionsCard";
 import Filter from "@/components/Filter";
 import { positionFilterConfig } from "./filter.config";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Positions() {
+  const { currentUser } = useAuth();
   const [openPositions, setOpenPositions] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -15,33 +17,21 @@ export default function Positions() {
     days: [],
     level: "",
     location: "",
+    eligibility: "",
+    applied: "",
   });
 
-  // Get open Positions
-  useEffect(() => {
-    // Handles fetching open positions when the component mounts
-    async function fetchPositions() {
-      try {
-        const data = await searchOpenPositions(searchTerm); // Call the service function
-        setOpenPositions(data);
-      } catch (err) {
-        console.error("Failed to fetch open positions:", err);
-        setError(err.message); // Store the error message
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  const fetchData = useCallback(async (currentSearch, currentFilters) => {
+    if (!currentUser) return;
 
-    fetchPositions();
-  }, [searchTerm]);
-
-  // Search for open positions when search form is submitted
-  const handleSearch = async (e) => {
-    e.preventDefault(); // Prevent default form submission
     setIsLoading(true);
     setError(null);
     try {
-      const data = await searchOpenPositions(searchTerm);
+      const data = await searchAndFilterOpenPositions(
+        currentSearch,
+        currentFilters,
+        currentUser.uid
+      );
       setOpenPositions(data);
     } catch (err) {
       console.error("Failed to fetch open positions:", err);
@@ -49,9 +39,31 @@ export default function Positions() {
     } finally {
       setIsLoading(false);
     }
+  }, [currentUser]);
+
+  useEffect(() => {
+    fetchData(searchTerm, appliedFilters);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedFilters, currentUser, fetchData]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchData(searchTerm, appliedFilters);
   };
 
-  // Render content based on loading state, error state, and if positions can be found
+  const handleFilterChange = (filters) => {
+    setAppliedFilters(filters);
+  };
+
+  const handleSearchTermChange = (newTerm) => {
+    setSearchTerm(newTerm);
+    if (newTerm === "") {
+      fetchData("", appliedFilters);
+    }
+  };
+
+
+  // This function conditionally decides what to show on the screen.
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -83,7 +95,7 @@ export default function Positions() {
             No Open Positions Found
           </p>
           <p className="text-gray-600 mt-2">
-            Try adjusting your search term or check back later.
+            Try adjusting your search or filters.
           </p>
         </div>
       );
@@ -93,9 +105,6 @@ export default function Positions() {
       <PositionsCard key={index} position={position} index={index} />
     ));
   };
-
-  // Handle filter changes
-
 
   return (
     // Styled Page Layout
@@ -112,13 +121,23 @@ export default function Positions() {
           </div>
 
           <div id="positions-container" className="w-full max-w-4xl mx-auto">
-            <div className="mb-8 flex flex-row">
-              <SearchBar onSearch={handleSearch} onChange={setSearchTerm} />
-              <div className="ml-4">
-                <Filter filterConfig={positionFilterConfig}/>
-              </div>
-            </div>
-            {renderContent()}
+              <form onSubmit={handleSearch} className="mb-8 flex items-center gap-x-2">
+                  <SearchBar value={searchTerm} onChange={handleSearchTermChange} />
+
+                  <Filter
+                      onFilterChange={handleFilterChange}
+                      filterConfig={positionFilterConfig}
+                  />
+
+                  <button
+                      type="submit"
+                      className="h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+                  >
+                      Search
+                  </button>
+              </form>
+
+              {renderContent()}
           </div>
         </div>
       </div>
