@@ -8,13 +8,15 @@ type Project = {
 };
 
 const projects: Project[] = [
-    {id: "1", name: "SWEN-262", description: "E-Store semester project for SWEN-261"},
-    {id: "2", name: "SWEN-444", description: "UI/UX project for SWEN-444"}
-  ]
+    {
+        id: "1",
+        name: "SWEN-262",
+        description: "E-Store semester project for SWEN-261",
+    },
+    { id: "2", name: "SWEN-444", description: "UI/UX project for SWEN-444" },
+];
 
 const Dashboard: React.FC = () => {
-
-
     return (
         <div style={{ padding: "2rem" }} className="prose">
             <h1>Projects</h1>
@@ -34,7 +36,9 @@ const Dashboard: React.FC = () => {
                             tabIndex={0}
                             role="button"
                         >
-                            <h2 style={{ margin: "0 0 0.5rem 0" }}>{project.name}</h2>
+                            <h2 style={{ margin: "0 0 0.5rem 0" }}>
+                                {project.name}
+                            </h2>
                             <p style={{ margin: 0 }}>{project.description}</p>
                         </div>
                     </Link>
