@@ -124,6 +124,10 @@ exports.Prisma.ApplicationScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
+  phone: 'phone',
+  academicStanding: 'academicStanding',
+  semester: 'semester',
+  coopsCompleted: 'coopsCompleted',
   skills: 'skills',
   resumeUrl: 'resumeUrl',
   createdAt: 'createdAt'
@@ -155,9 +159,16 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
 exports.Prisma.ApplicationOrderByRelevanceFieldEnum = {
   name: 'name',
   email: 'email',
+  phone: 'phone',
+  academicStanding: 'academicStanding',
   skills: 'skills',
   resumeUrl: 'resumeUrl'
 };

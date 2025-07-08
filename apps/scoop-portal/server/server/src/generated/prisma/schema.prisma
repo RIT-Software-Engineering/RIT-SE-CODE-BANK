@@ -1,10 +1,14 @@
 model Application {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String
-  skills    String
-  resumeUrl String
-  createdAt DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  name             String
+  email            String
+  phone            String
+  academicStanding String
+  semester         Int
+  coopsCompleted   Int
+  skills           String
+  resumeUrl        String?
+  createdAt        DateTime @default(now())
 }
 
 generator client {
@@ -17,7 +21,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//example data model
 model fruit {
   id     String @id @default(uuid())
   name   String

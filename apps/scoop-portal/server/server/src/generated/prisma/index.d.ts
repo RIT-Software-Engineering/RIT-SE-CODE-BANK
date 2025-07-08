@@ -1041,16 +1041,24 @@ export namespace Prisma {
 
   export type ApplicationAvgAggregateOutputType = {
     id: number | null
+    semester: number | null
+    coopsCompleted: number | null
   }
 
   export type ApplicationSumAggregateOutputType = {
     id: number | null
+    semester: number | null
+    coopsCompleted: number | null
   }
 
   export type ApplicationMinAggregateOutputType = {
     id: number | null
     name: string | null
     email: string | null
+    phone: string | null
+    academicStanding: string | null
+    semester: number | null
+    coopsCompleted: number | null
     skills: string | null
     resumeUrl: string | null
     createdAt: Date | null
@@ -1060,6 +1068,10 @@ export namespace Prisma {
     id: number | null
     name: string | null
     email: string | null
+    phone: string | null
+    academicStanding: string | null
+    semester: number | null
+    coopsCompleted: number | null
     skills: string | null
     resumeUrl: string | null
     createdAt: Date | null
@@ -1069,6 +1081,10 @@ export namespace Prisma {
     id: number
     name: number
     email: number
+    phone: number
+    academicStanding: number
+    semester: number
+    coopsCompleted: number
     skills: number
     resumeUrl: number
     createdAt: number
@@ -1078,16 +1094,24 @@ export namespace Prisma {
 
   export type ApplicationAvgAggregateInputType = {
     id?: true
+    semester?: true
+    coopsCompleted?: true
   }
 
   export type ApplicationSumAggregateInputType = {
     id?: true
+    semester?: true
+    coopsCompleted?: true
   }
 
   export type ApplicationMinAggregateInputType = {
     id?: true
     name?: true
     email?: true
+    phone?: true
+    academicStanding?: true
+    semester?: true
+    coopsCompleted?: true
     skills?: true
     resumeUrl?: true
     createdAt?: true
@@ -1097,6 +1121,10 @@ export namespace Prisma {
     id?: true
     name?: true
     email?: true
+    phone?: true
+    academicStanding?: true
+    semester?: true
+    coopsCompleted?: true
     skills?: true
     resumeUrl?: true
     createdAt?: true
@@ -1106,6 +1134,10 @@ export namespace Prisma {
     id?: true
     name?: true
     email?: true
+    phone?: true
+    academicStanding?: true
+    semester?: true
+    coopsCompleted?: true
     skills?: true
     resumeUrl?: true
     createdAt?: true
@@ -1202,8 +1234,12 @@ export namespace Prisma {
     id: number
     name: string
     email: string
+    phone: string
+    academicStanding: string
+    semester: number
+    coopsCompleted: number
     skills: string
-    resumeUrl: string
+    resumeUrl: string | null
     createdAt: Date
     _count: ApplicationCountAggregateOutputType | null
     _avg: ApplicationAvgAggregateOutputType | null
@@ -1230,6 +1266,10 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     email?: boolean
+    phone?: boolean
+    academicStanding?: boolean
+    semester?: boolean
+    coopsCompleted?: boolean
     skills?: boolean
     resumeUrl?: boolean
     createdAt?: boolean
@@ -1241,12 +1281,16 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     email?: boolean
+    phone?: boolean
+    academicStanding?: boolean
+    semester?: boolean
+    coopsCompleted?: boolean
     skills?: boolean
     resumeUrl?: boolean
     createdAt?: boolean
   }
 
-  export type ApplicationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "skills" | "resumeUrl" | "createdAt", ExtArgs["result"]["application"]>
+  export type ApplicationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "phone" | "academicStanding" | "semester" | "coopsCompleted" | "skills" | "resumeUrl" | "createdAt", ExtArgs["result"]["application"]>
 
   export type $ApplicationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Application"
@@ -1255,8 +1299,12 @@ export namespace Prisma {
       id: number
       name: string
       email: string
+      phone: string
+      academicStanding: string
+      semester: number
+      coopsCompleted: number
       skills: string
-      resumeUrl: string
+      resumeUrl: string | null
       createdAt: Date
     }, ExtArgs["result"]["application"]>
     composites: {}
@@ -1630,6 +1678,10 @@ export namespace Prisma {
     readonly id: FieldRef<"Application", 'Int'>
     readonly name: FieldRef<"Application", 'String'>
     readonly email: FieldRef<"Application", 'String'>
+    readonly phone: FieldRef<"Application", 'String'>
+    readonly academicStanding: FieldRef<"Application", 'String'>
+    readonly semester: FieldRef<"Application", 'Int'>
+    readonly coopsCompleted: FieldRef<"Application", 'Int'>
     readonly skills: FieldRef<"Application", 'String'>
     readonly resumeUrl: FieldRef<"Application", 'String'>
     readonly createdAt: FieldRef<"Application", 'DateTime'>
@@ -3791,6 +3843,10 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     email: 'email',
+    phone: 'phone',
+    academicStanding: 'academicStanding',
+    semester: 'semester',
+    coopsCompleted: 'coopsCompleted',
     skills: 'skills',
     resumeUrl: 'resumeUrl',
     createdAt: 'createdAt'
@@ -3834,9 +3890,19 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
   export const ApplicationOrderByRelevanceFieldEnum: {
     name: 'name',
     email: 'email',
+    phone: 'phone',
+    academicStanding: 'academicStanding',
     skills: 'skills',
     resumeUrl: 'resumeUrl'
   };
@@ -3914,8 +3980,12 @@ export namespace Prisma {
     id?: IntFilter<"Application"> | number
     name?: StringFilter<"Application"> | string
     email?: StringFilter<"Application"> | string
+    phone?: StringFilter<"Application"> | string
+    academicStanding?: StringFilter<"Application"> | string
+    semester?: IntFilter<"Application"> | number
+    coopsCompleted?: IntFilter<"Application"> | number
     skills?: StringFilter<"Application"> | string
-    resumeUrl?: StringFilter<"Application"> | string
+    resumeUrl?: StringNullableFilter<"Application"> | string | null
     createdAt?: DateTimeFilter<"Application"> | Date | string
   }
 
@@ -3923,8 +3993,12 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrder
+    phone?: SortOrder
+    academicStanding?: SortOrder
+    semester?: SortOrder
+    coopsCompleted?: SortOrder
     skills?: SortOrder
-    resumeUrl?: SortOrder
+    resumeUrl?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _relevance?: ApplicationOrderByRelevanceInput
   }
@@ -3936,8 +4010,12 @@ export namespace Prisma {
     NOT?: ApplicationWhereInput | ApplicationWhereInput[]
     name?: StringFilter<"Application"> | string
     email?: StringFilter<"Application"> | string
+    phone?: StringFilter<"Application"> | string
+    academicStanding?: StringFilter<"Application"> | string
+    semester?: IntFilter<"Application"> | number
+    coopsCompleted?: IntFilter<"Application"> | number
     skills?: StringFilter<"Application"> | string
-    resumeUrl?: StringFilter<"Application"> | string
+    resumeUrl?: StringNullableFilter<"Application"> | string | null
     createdAt?: DateTimeFilter<"Application"> | Date | string
   }, "id">
 
@@ -3945,8 +4023,12 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrder
+    phone?: SortOrder
+    academicStanding?: SortOrder
+    semester?: SortOrder
+    coopsCompleted?: SortOrder
     skills?: SortOrder
-    resumeUrl?: SortOrder
+    resumeUrl?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: ApplicationCountOrderByAggregateInput
     _avg?: ApplicationAvgOrderByAggregateInput
@@ -3962,8 +4044,12 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"Application"> | number
     name?: StringWithAggregatesFilter<"Application"> | string
     email?: StringWithAggregatesFilter<"Application"> | string
+    phone?: StringWithAggregatesFilter<"Application"> | string
+    academicStanding?: StringWithAggregatesFilter<"Application"> | string
+    semester?: IntWithAggregatesFilter<"Application"> | number
+    coopsCompleted?: IntWithAggregatesFilter<"Application"> | number
     skills?: StringWithAggregatesFilter<"Application"> | string
-    resumeUrl?: StringWithAggregatesFilter<"Application"> | string
+    resumeUrl?: StringNullableWithAggregatesFilter<"Application"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Application"> | Date | string
   }
 
@@ -4101,8 +4187,12 @@ export namespace Prisma {
   export type ApplicationCreateInput = {
     name: string
     email: string
+    phone: string
+    academicStanding: string
+    semester: number
+    coopsCompleted: number
     skills: string
-    resumeUrl: string
+    resumeUrl?: string | null
     createdAt?: Date | string
   }
 
@@ -4110,16 +4200,24 @@ export namespace Prisma {
     id?: number
     name: string
     email: string
+    phone: string
+    academicStanding: string
+    semester: number
+    coopsCompleted: number
     skills: string
-    resumeUrl: string
+    resumeUrl?: string | null
     createdAt?: Date | string
   }
 
   export type ApplicationUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    academicStanding?: StringFieldUpdateOperationsInput | string
+    semester?: IntFieldUpdateOperationsInput | number
+    coopsCompleted?: IntFieldUpdateOperationsInput | number
     skills?: StringFieldUpdateOperationsInput | string
-    resumeUrl?: StringFieldUpdateOperationsInput | string
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4127,8 +4225,12 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    academicStanding?: StringFieldUpdateOperationsInput | string
+    semester?: IntFieldUpdateOperationsInput | number
+    coopsCompleted?: IntFieldUpdateOperationsInput | number
     skills?: StringFieldUpdateOperationsInput | string
-    resumeUrl?: StringFieldUpdateOperationsInput | string
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4136,16 +4238,24 @@ export namespace Prisma {
     id?: number
     name: string
     email: string
+    phone: string
+    academicStanding: string
+    semester: number
+    coopsCompleted: number
     skills: string
-    resumeUrl: string
+    resumeUrl?: string | null
     createdAt?: Date | string
   }
 
   export type ApplicationUpdateManyMutationInput = {
     name?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    academicStanding?: StringFieldUpdateOperationsInput | string
+    semester?: IntFieldUpdateOperationsInput | number
+    coopsCompleted?: IntFieldUpdateOperationsInput | number
     skills?: StringFieldUpdateOperationsInput | string
-    resumeUrl?: StringFieldUpdateOperationsInput | string
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4153,8 +4263,12 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    academicStanding?: StringFieldUpdateOperationsInput | string
+    semester?: IntFieldUpdateOperationsInput | number
+    coopsCompleted?: IntFieldUpdateOperationsInput | number
     skills?: StringFieldUpdateOperationsInput | string
-    resumeUrl?: StringFieldUpdateOperationsInput | string
+    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4331,6 +4445,21 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    search?: string
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[]
@@ -4340,6 +4469,11 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
   }
 
   export type ApplicationOrderByRelevanceInput = {
@@ -4352,6 +4486,10 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrder
+    phone?: SortOrder
+    academicStanding?: SortOrder
+    semester?: SortOrder
+    coopsCompleted?: SortOrder
     skills?: SortOrder
     resumeUrl?: SortOrder
     createdAt?: SortOrder
@@ -4359,12 +4497,18 @@ export namespace Prisma {
 
   export type ApplicationAvgOrderByAggregateInput = {
     id?: SortOrder
+    semester?: SortOrder
+    coopsCompleted?: SortOrder
   }
 
   export type ApplicationMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrder
+    phone?: SortOrder
+    academicStanding?: SortOrder
+    semester?: SortOrder
+    coopsCompleted?: SortOrder
     skills?: SortOrder
     resumeUrl?: SortOrder
     createdAt?: SortOrder
@@ -4374,6 +4518,10 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrder
+    phone?: SortOrder
+    academicStanding?: SortOrder
+    semester?: SortOrder
+    coopsCompleted?: SortOrder
     skills?: SortOrder
     resumeUrl?: SortOrder
     createdAt?: SortOrder
@@ -4381,6 +4529,8 @@ export namespace Prisma {
 
   export type ApplicationSumOrderByAggregateInput = {
     id?: SortOrder
+    semester?: SortOrder
+    coopsCompleted?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -4415,6 +4565,24 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    search?: string
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -4510,16 +4678,20 @@ export namespace Prisma {
     set?: string
   }
 
-  export type DateTimeFieldUpdateOperationsInput = {
-    set?: Date | string
-  }
-
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -4546,6 +4718,21 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     search?: string
     not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    search?: string
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -4602,6 +4789,35 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | null
+    notIn?: string[] | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    search?: string
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {

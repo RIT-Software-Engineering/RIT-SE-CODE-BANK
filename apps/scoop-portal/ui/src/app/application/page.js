@@ -78,50 +78,52 @@ function ApplicationPage() {
     });
   };
 
-  async function postFormData(data) {
-    const response = await fetch("/api/application", {
+  async function postFormData() {
+    const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/application", {
       method: "POST",
-      body: data, 
-      headers: {
-        "Accept": "application/json",    
-      },
+      body: JSON.stringify(formData), 
+      headers: {"Content-Type": "application/json", },
     })
+console.log("Submitting application with data:", formData, formFiles);
+
     return response;
   }
       
 
-  const submitApplication = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (modalOpen) return;
 
-    const body = new FormData();
-    Object.keys(formData).forEach((key) => body.append(key, formData[key]));
-    if (formFiles) {
-      for (let i = 0; i < formFiles.length; i++) {
-        body.append("attachments", formFiles[i]);
-      }
-    }
-console.log("Submitting application with data:", formData, formFiles);
-    try {
-      postFormData(formData);
+    // const body = new FormData();
+    // Object.keys(formData).forEach((key) => body.append(key, formData[key]));
+    // if (formFiles) {
+    //   for (let i = 0; i < formFiles.length; i++) {
+    //     body.append("attachments", formFiles[i]);
+    //   }
+    // }
 
-      if (response.status === 200) {
-        setModalOpen(MODAL_STATUS.SUCCESS);
-      } else {
-        setModalOpen(MODAL_STATUS.FAIL);
-        const errorData = await response.json();
-        if (errorData?.errors) {
-          const newErrors = {};
-          errorData.errors.forEach((err) => {
-            newErrors[err.param] = err.msg;
-          });
-          setErrors(newErrors);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    
+    // try {
+      const response = await(postFormData());
+      const result = await response.json();
+      console.log("Response from server:", result);
+
+      // if (response.status === 200) {
+      //   setModalOpen(MODAL_STATUS.SUCCESS);
+      // } else {
+      //   setModalOpen(MODAL_STATUS.FAIL);
+      //   const errorData = await response.json();
+      //   if (errorData?.errors) {
+      //     const newErrors = {};
+      //     errorData.errors.forEach((err) => {
+      //       newErrors[err.param] = err.msg;
+      //     });
+      //     setErrors(newErrors);
+      //   }
+      // }
+    // } catch (err) {
+    //   console.error(err);
+    // }
   };
 
   const closeModal = () => {
@@ -175,7 +177,7 @@ console.log("Submitting application with data:", formData, formFiles);
         </Typography>
         
 
-        <Box component="form" onSubmit={submitApplication} noValidate>
+        <Box component="form" onSubmit={handleSubmit} noValidate>
         
           <TextField
             required
@@ -218,17 +220,17 @@ console.log("Submitting application with data:", formData, formFiles);
             <Select
               required
               margin="normal"
-              label="academic-standing"
-              name="academic-standing"
-              value={formData["academic-standing"] || ""}
-              onChange={(e) => handleDropdownChange("academic-standing", e.target.value)}
+              label="academicStanding"
+              name="academicStanding"
+              value={formData["academicStanding"] || ''} 
+              onChange={(e) => handleDropdownChange("academicStanding", e.target.value)}
               error={!!errors.description}
               
             >
-              <MenuItem value={2}>2nd Year</MenuItem>
-              <MenuItem value={3}>3rd Year</MenuItem>
-              <MenuItem value={4}>4th Year</MenuItem>
-              <MenuItem value={5}>5th Year</MenuItem>
+              <MenuItem value={"2nd Year"}>2nd Year</MenuItem>
+              <MenuItem value={"3rd Year"}>3rd Year</MenuItem>
+              <MenuItem value={"4th Year"}>4th Year</MenuItem>
+              <MenuItem value={"5th Year"}>5th Year</MenuItem>
             </Select>
     </FormControl>
 <FormControl fullWidth margin="normal">
@@ -264,10 +266,10 @@ console.log("Submitting application with data:", formData, formFiles);
             <Select
               required
               margin="normal"
-              label="coops-completed"
-              name="coops-completed"
-              value={formData["coops-completed"] || ''}
-              onChange={(e) => handleDropdownChange("coops-completed", e.target.value)}
+              label="coopsCompleted"
+              name="coopsCompleted"
+              value={formData["coopsCompleted"] || ''}
+              onChange={(e) => handleDropdownChange("coopsCompleted", e.target.value)}
               error={!!errors.description}
               // helperText={errors.description}
             >
@@ -296,7 +298,7 @@ console.log("Submitting application with data:", formData, formFiles);
           </FormControl>
           
           <Button
-          required
+          // required
             component="label"
             variant="contained"
             tabIndex={-1}
@@ -305,7 +307,7 @@ console.log("Submitting application with data:", formData, formFiles);
             Upload Resume
             <VisuallyHiddenInput
               type="file"
-              name="resume"
+              name="resumeURL"
               accept=".pdf,.doc,.docx"
               onChange={handleChange}
             />

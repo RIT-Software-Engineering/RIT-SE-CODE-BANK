@@ -2,7 +2,11 @@ model Application {
   id        Int      @id @default(autoincrement())
   name      String
   email     String
+  phone     String
+  academicStanding String
+  semester Int
+  coopsCompleted Int
   skills    String
-  resumeUrl String
+  resumeUrl String?
   createdAt DateTime @default(now())
 }
