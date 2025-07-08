@@ -4,6 +4,10 @@ const router = Router();
 import { PrismaClient as _PrismaClient } from "../../server/src/generated/prisma/index.js";
 const prisma = new _PrismaClient();
 
+/**
+ * Post route to save an application
+ * @param {Object} req - The request object containing application data
+ */
 router.post("/", async (req, res) => {
   const { name, email, phone, skills, academicStanding, semester, coopsCompleted, resumeUrl } = req.body;
   try {
@@ -29,21 +33,3 @@ router.post("/", async (req, res) => {
 })
 
 export default router;
-
-// export async function POST(request) {
-//   const data = await request.json();
-//   console.log("Received data:", data);
-//   const {name} = data;
-//     return NextResponse.json({name});
-//   }
-
-//   export async function GET(request) {
-//   // const {searchParams} = new URL(request.url);
-//   // const name = searchParams.get('name');
-//   const obj = Object.fromEntries(request.nextUrl.searchParams);
-//     return NextResponse.json(obj);
-//   }
-
-// export async function GET() {
-//   return NextResponse.json({"message":"API is working"});
-// }
