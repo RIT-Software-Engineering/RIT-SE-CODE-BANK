@@ -7,6 +7,7 @@ async function main() {
   console.log("Clearing data");
   await prisma.users.deleteMany();
   await prisma.fruit.deleteMany();
+  await prisma.application.deleteMany();
 
   console.log("Seeding data");
   //example data
