@@ -1,14 +1,10 @@
-export default function StudentApplicationCard({}) {
-  const student = {
-    name: "Alex Doe",
-    year: "3rd Year",
-    major: "Computer Science",
-    status: "Applied",
-    resumeUrl: "#", // Replace with actual link
-    courseGrade: "A-",
-    previousCA: true,
-    previousCourses: ["CS 101", "CS 242"],
-  };
+export default function StudentApplicationCard(application) {
+  application = application.application
+  const canidate = application.student;
+  console.log("Canadate is ")
+  console.log(canidate)
+  
+
 
   const getStatusClasses = (status) => {
     switch (status.toLowerCase()) {
@@ -24,8 +20,9 @@ export default function StudentApplicationCard({}) {
         return "bg-gray-100 text-gray-800";
     }
   };
-
-  const statusClasses = getStatusClasses(student.status);
+  console.log("Application is: ")
+  console.log(application)
+  const statusClasses = getStatusClasses(application.jobApplicationStatus);
 
   return (
     <div className="w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-[1.02] mb-8 hover:cursor-pointer">
@@ -36,23 +33,23 @@ export default function StudentApplicationCard({}) {
             {/* A simple avatar placeholder */}
             <div className="w-16 h-16 rounded-full bg-rit-light-gray flex items-center justify-center">
               <span className="text-2xl font-bold text-black">
-                {student.name.charAt(0)}
+                {canidate.user.name.charAt(0)}
               </span>
             </div>
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-bold text-gray-800 truncate">
-              {student.name}
+              {canidate.user.name}
             </h2>
             <p className="text-md text-gray-500">
-              {student.year} | {student.major}
+              {"Year " + canidate.year} | {canidate.major}
             </p>
           </div>
           {/* --- Status Badge --- */}
           <span
             className={`px-3 py-1 text-sm font-semibold rounded-full ${statusClasses}`}
           >
-            {student.status}
+            {application.jobApplicationStatus}
           </span>
         </div>
 
@@ -78,7 +75,7 @@ export default function StudentApplicationCard({}) {
               />
             </svg>
             <a
-              href={student.resumeUrl}
+              href={canidate.resumeUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
@@ -92,7 +89,7 @@ export default function StudentApplicationCard({}) {
               Recent Course Grade
             </p>
             <p className="text-lg font-semibold text-gray-800">
-              {student.courseGrade}
+              {application.gradeInCourse}
             </p>
           </div>
 
@@ -101,8 +98,13 @@ export default function StudentApplicationCard({}) {
               Previous CA Experience
             </p>
             <p className="text-lg font-semibold text-gray-800">
-              {student.previousCA ? "Yes" : "No"}
+              {canidate.wasPriorEmployee ? "Yes" : "No"}
             </p>
+            {canidate.wasPriorEmployee && (
+              <button className="px-4 py-2 bg-rit-gray text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-colors">
+                View Canidate Feedback
+              </button>
+            )}
           </div>
 
           <div>
@@ -110,7 +112,7 @@ export default function StudentApplicationCard({}) {
               Previously TA'd Courses
             </p>
             <p className="text-lg font-semibold text-gray-800">
-              {student.previousCourses.join(", ") || "None"}
+              {application.previouslyTAedCourses.join(", ") || "None"}
             </p>
           </div>
         </div>
