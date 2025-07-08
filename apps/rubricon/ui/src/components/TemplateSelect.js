@@ -25,15 +25,18 @@ export default function TemplateSelector({ selectedTemplateId, selectTemplate })
     }, []);
 
     return (
-        <div className="grid grid-cols-3 w-8/10 gap-4">
-            {templates.map((template, index) => (
-                <Template
-                    key={index}
-                    template={template}
-                    selectedTemplateId={selectedTemplateId}
-                    selectTemplate={selectTemplate}
-                />
-            ))}
+        <div className="flex flex-col gap-4 w-8/10 mx-auto">
+            <h2 className="mx-auto text-2xl">Choose a template</h2>
+            <div className="grid grid-cols-3 gap-4">
+                {templates.map((template, index) => (
+                    <Template
+                        key={index}
+                        template={template}
+                        selectedTemplateId={selectedTemplateId}
+                        selectTemplate={selectTemplate}
+                    />
+                ))}
+            </div>
         </div>
     );
 }

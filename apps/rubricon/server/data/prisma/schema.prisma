@@ -22,9 +22,9 @@ model Templates {
 }
 
 model Rubrics {
-  id              String @id @default(uuid())
+  id              String  @id @default(uuid())
   title           String
-  description     String @db.VarChar(4000)
+  description     String? @db.VarChar(4000)
   rows            Int
   columns         Int
   criteria_column Int

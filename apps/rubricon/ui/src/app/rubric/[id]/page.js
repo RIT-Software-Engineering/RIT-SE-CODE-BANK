@@ -14,6 +14,5 @@ export default async function RubricPage({ params }) {
     }
 
     const data = await res.json();
-    console.log(data);
     return <Rubric data={data} />;
 }

@@ -27,6 +27,8 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(express.json());
+
 app.use("/rubrics", rubricsRouter);
 app.use("/templates", templatesRouter);
 
