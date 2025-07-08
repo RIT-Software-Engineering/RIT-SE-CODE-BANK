@@ -39,6 +39,18 @@ export default function EditPage() {
         }).then(window.location.href = `/rubric/${id}`);
     }
 
+    async function handleDelete() {
+        const confirmed = window.confirm("Are you sure you want to delete this rubric?")
+        if (confirmed) {
+            await fetch(`${server_url}/rubrics/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).then(window.location.href = `/rubrics`);
+        }
+    }
+
     return (
         <>
             <div className="flex flex-col items-center justify-center gap-4">
@@ -46,6 +58,9 @@ export default function EditPage() {
                     <Link href={`/rubric/${id}`} className="text-xl hover:text-black mr-auto">{"Cancel"}</Link>
                     <h1 className="text-4xl mx-auto">Create a Rubric</h1>
                     <button onClick={handleSave} className="text-xl hover:text-black ml-auto">{"Save"}</button>
+                </div>
+                <div className="flex flex-col align-right w-4/5 m-auto">
+                    <button onClick={handleDelete} className="text-xl text-red-600 bg-white hover:text-white hover:bg-red-600 border rounded-md my-2 p-2 ml-auto">Delete</button>
                 </div>
                 {data && <RubricEditor data={data} setData={setData} />}
             </div>
