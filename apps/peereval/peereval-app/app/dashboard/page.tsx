@@ -1,22 +1,28 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-
-type Project = {
-    id: string;
-    name: string;
-    description: string;
-};
-
-const projects: Project[] = [
-    {
-        id: "1",
-        name: "SWEN-262",
-        description: "E-Store semester project for SWEN-261",
-    },
-    { id: "2", name: "SWEN-444", description: "UI/UX project for SWEN-444" },
-];
+import { useAuth } from "@/context/UserContext";
+import { getProjectsByPeer } from "@/services/project";
+import { Project } from "@/types/project";
 
 const Dashboard: React.FC = () => {
+    const { currentUser, setCurrentUser } = useAuth();
+    const [projects, setProjects] = useState<Project[]>([]);
+
+    useEffect(() => {
+        console.log(`currentUser = ${currentUser}`);
+
+        if (!currentUser) return () => {};
+
+        const getPeerProjects = async () => {
+            const ps = await getProjectsByPeer(currentUser.id);
+            setProjects(ps);
+        };
+
+        getPeerProjects();
+    }, [currentUser]);
+
     return (
         <div style={{ padding: "2rem" }} className="prose">
             <h1>Projects</h1>

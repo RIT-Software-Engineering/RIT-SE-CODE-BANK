@@ -7,6 +7,7 @@ import {
     useEffect,
     Dispatch,
     SetStateAction,
+    useContext,
 } from "react";
 
 import { getUserProfile, getUserProfileByEmail } from "@/services/user";
@@ -19,20 +20,6 @@ interface UserContextType {
 }
 
 const UserContext = createContext<UserContextType | null>(null);
-
-// export const UserProvider = ({ children }: { children: ReactNode }) => {
-//   const [userId, setUserId] = useState("1");
-
-//   useEffect(() => {}, []);
-
-//   return (
-//     <UserContext.Provider
-//       value={{ currentUser: userId, setCurrentUser: setUserId }}
-//     >
-//       {children}
-//     </UserContext.Provider>
-//   );
-// };
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
     const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -50,6 +37,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                         storedUID
                     );
                     setCurrentUser(userProfile);
+                } else {
+                    throw new Error("No user UID found in localStorage");
                 }
             } catch (error) {
                 console.error("Session restore failed:", error);
@@ -58,10 +47,10 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                 setCurrentUser(null);
 
                 // For now, just set current user to Alice all the time
-                const userProfile: UserProfile = await getUserProfileByEmail(
+                const aliceProfile: UserProfile = await getUserProfileByEmail(
                     "alice@rit.edu"
                 );
-                setCurrentUser(userProfile);
+                setCurrentUser(aliceProfile);
             } finally {
                 setLoading(false);
             }
@@ -79,5 +68,10 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         <UserContext.Provider value={value}>{children}</UserContext.Provider>
     );
 }
-
-// export const useUserContext = () => useContext(UserContext);
+export function useAuth() {
+    const context = useContext(UserContext);
+    if (!context) {
+        throw new Error("useAuth must be used within a UserProvider");
+    }
+    return context;
+}
