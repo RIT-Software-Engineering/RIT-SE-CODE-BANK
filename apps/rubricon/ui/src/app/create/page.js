@@ -32,10 +32,10 @@ export default function CreatePage() {
     return (
         <>
             <div className="flex flex-col items-center justify-center gap-4">
-                <div className="flex flex-row items-center justify-between p-4 w-full text-white font-bold  bg-primary">
-                    <Link href={"/dashboard"} className="text-xl hover:text-black">{"Cancel"}</Link>
-                    <h1 className="text-4xl">Choose a template</h1>
-                    <button onClick={handleSave} className="text-xl hover:text-black">{"Save"}</button>
+                <div className="grid grid-cols-3 items-center p-4 w-full text-white font-bold bg-primary">
+                    <Link href={"/rubrics"} className="text-xl hover:text-black mr-auto">{"Cancel"}</Link>
+                    <h1 className="text-4xl mx-auto">Choose a template</h1>
+                    <button onClick={handleSave} className="text-xl hover:text-black ml-auto">{"Save"}</button>
                 </div>
                 {!data && <TemplateSelector selectedTemplateId={templateId} selectTemplate={setTemplate} />}
                 {data && <RubricEditor data={data} setData={setData} />}

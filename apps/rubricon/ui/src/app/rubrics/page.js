@@ -1,10 +1,17 @@
 import RubricList from "@/components/RubricList"
+import Link from "next/link"
 
 export default function RubricsPage() {
     return (
         <>
-            <h1 className="text-3xl font-bold text-center my-4">My Rubrics</h1>
-            <RubricList />
+            <div className="flex flex-col items-center justify-center gap-4">
+                <div className="grid grid-cols-3 items-center p-4 w-full text-white font-bold bg-primary">
+                    <div></div>
+                    <h1 className="text-4xl mx-auto">Choose a template</h1>
+                    <Link href="/create" className="text-xl hover:text-black ml-auto">{"Create"}</Link>
+                </div>
+                <RubricList />
+            </div>
         </>
     )
 }
