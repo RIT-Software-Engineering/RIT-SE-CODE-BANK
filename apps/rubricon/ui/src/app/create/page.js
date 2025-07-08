@@ -34,7 +34,7 @@ export default function CreatePage() {
             <div className="flex flex-col items-center justify-center gap-4">
                 <div className="grid grid-cols-3 items-center p-4 w-full text-white font-bold bg-primary">
                     <Link href={"/rubrics"} className="text-xl hover:text-black mr-auto">{"Cancel"}</Link>
-                    <h1 className="text-4xl mx-auto">Choose a template</h1>
+                    <h1 className="text-4xl mx-auto">Create a Rubric</h1>
                     <button onClick={handleSave} className="text-xl hover:text-black ml-auto">{"Save"}</button>
                 </div>
                 {!data && <TemplateSelector selectedTemplateId={templateId} selectTemplate={setTemplate} />}
