@@ -1,23 +1,45 @@
 "use client";
 
-import { useUserContext } from "@/context/UserContext";
+import { useAuth } from "@/context/UserContext";
 import ClientProjectView from "./ClientProjectView";
 import ClientOverseerProjectView from "./ClientOverseerProjectView";
+import { useEffect, useState } from "react";
+import { getProjectOverseers } from "@/services/project";
 
 interface ProjectViewProps {
-  params: {
-    projectId: string;
-  };
+    params: {
+        projectId: string;
+    };
 }
 
 const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
-  const { currentUser: userId, setCurrentUser: setUserId } = useUserContext();
+    const { currentUser, setCurrentUser } = useAuth();
+    const [isOverseer, setIsOverseer] = useState<Boolean>(false);
+    const [loadingView, setLoadingView] = useState<Boolean>(true);
 
-  return userId == "1" ? (
-    <ClientProjectView projectId={params.projectId} />
-  ) : (
-    <ClientOverseerProjectView projectId={params.projectId} />
-  );
+    useEffect(() => {
+        const getIfOverseer = async () => {
+            // Get the overseers for this project
+            const os = await getProjectOverseers(params.projectId);
+            const oIds = os.map((o) => o.id);
+
+            if (oIds.includes(currentUser?.id ?? "")) setIsOverseer(true);
+
+            setLoadingView(false);
+        };
+
+        getIfOverseer();
+    }, [currentUser]);
+
+    if (loadingView) {
+        return <p>Loading...</p>;
+    }
+
+    return isOverseer ? (
+        <ClientOverseerProjectView projectId={params.projectId} />
+    ) : (
+        <ClientProjectView projectId={params.projectId} />
+    );
 };
 
 export default ProjectView;

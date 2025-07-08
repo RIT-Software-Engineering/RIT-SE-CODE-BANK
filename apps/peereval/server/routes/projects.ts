@@ -71,3 +71,21 @@ router.get("/getPeers/:id", async (req, res) => {
 
     res.json(peers);
 });
+
+// Get overseers for a project
+// /projects/:id/overseers
+router.get("/:id/overseers", async (req, res) => {
+    const id = req.params.id;
+
+    const peers = await prisma.user.findMany({
+        where: {
+            projectsAsOverseer: {
+                some: {
+                    id: id,
+                },
+            },
+        },
+    });
+
+    res.json(peers);
+});
