@@ -8,12 +8,12 @@ import { getUserProfile } from '@/services/api';
 /**
  * ProfilePage displays user profile details including:
  * - Basic user info
- * - Courses taken and worked (for students and employees)
+ * - Courses taken and worked (for candidates and employees)
  * - Posted job positions (for employers and admins)
  * - A modal to edit profile information
  *
  * Role-based content:
- * - STUDENT/EMPLOYEE: Sees courses taken and work history
+ * - CANDIDATE/EMPLOYEE: Sees courses taken and work history
  * - EMPLOYER/ADMIN: Sees posted job positions
  * 
  * @returns User profile page with displays of their data
@@ -58,17 +58,17 @@ export default function ProfilePage() {
         setShowModal(false);
     };
 
-    // Check to see if user is either "STUDENT" or "EMPLOYEE" role
-    const isStudentOrEmployee = profileData?.role === 'STUDENT' || profileData?.role === 'EMPLOYEE';
+    // Check to see if user is either "CANDIDATE" or "EMPLOYEE" role
+    const isCandidateOrEmployee = profileData?.role === 'CANDIDATE' || profileData?.role === 'EMPLOYEE';
     
     // Employee previously worked courses
-    const coursesWorked = profileData?.student?.courseHistory
+    const coursesWorked = profileData?.candidate?.courseHistory
         ?.filter(ch => ch.wasPriorEmployee)
         .map(ch => ch.course)
         .filter(Boolean) || [];
     
-    // "STUDENT" or "EMPLOYEE" previous courses taken
-    const coursesTaken = profileData?.student?.courseHistory
+    // "CANDIDATE" or "EMPLOYEE" previous courses taken
+    const coursesTaken = profileData?.candidate?.courseHistory
         .map(ch => ch.course) || [];
 
     // Check to see if user is either "EMPLOYER" or "ADMIN" role
@@ -97,10 +97,10 @@ export default function ProfilePage() {
                         <h2 className="text-2xl font-bold text-gray-900">{profileData.name}</h2>
                         <p className="text-gray-600 mt-1">{profileData.email}</p>
                         <p><span className="font-semibold">Pronouns:</span> {profileData.pronouns || "N/A"}</p>
-                        {isStudentOrEmployee && (
+                        {isCandidateOrEmployee && (
                             <div className="text-gray-800">
-                                <p><span className="font-semibold">Major:</span> {profileData.student?.major || "N/A"}</p>
-                                <p><span className="font-semibold">Year:</span> {profileData.student?.year || "N/A"}</p>
+                                <p><span className="font-semibold">Major:</span> {profileData.candidate?.major || "N/A"}</p>
+                                <p><span className="font-semibold">Year:</span> {profileData.candidate?.year || "N/A"}</p>
                             </div>
                         )}
                         {isEmployerOrAdmin && (
@@ -122,7 +122,7 @@ export default function ProfilePage() {
             </section>
 
             {/* Courses Taken Card */}
-            {isStudentOrEmployee && (
+            {isCandidateOrEmployee && (
                 <section className="bg-white rounded-xl p-4 shadow-lg border border-gray-200">
                     <div className="p-6">
                         <h3 className="text-xl font-semibold text-gray-900 mb-4">Courses Taken</h3>
@@ -173,7 +173,7 @@ export default function ProfilePage() {
             )}
 
             {/* Courses Worked Card */}
-            {isStudentOrEmployee && (
+            {isCandidateOrEmployee && (
                 <section className="bg-white rounded-xl p-4 shadow-lg border border-gray-200">
                     <div className="p-6">
                         <h3 className="text-xl font-semibold text-gray-900 mb-4">Work History</h3>

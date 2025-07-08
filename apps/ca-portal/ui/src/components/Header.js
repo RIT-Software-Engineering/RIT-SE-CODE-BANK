@@ -30,7 +30,7 @@ const HEADER_LINKS = [
   {
     text: "Profile",
     href: "/Profile",
-    roles: [ROLES.STUDENT, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
   },
 ];
 
