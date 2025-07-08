@@ -1,6 +1,5 @@
 import { handleResponse } from "./utils";
 
-// services/api.ts
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
 
 export async function getUserProfile<User>(id: string): Promise<User> {
