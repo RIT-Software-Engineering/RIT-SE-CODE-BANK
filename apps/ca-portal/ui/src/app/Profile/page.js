@@ -10,25 +10,38 @@ export default function ProfilePage() {
     const [profileData, setProfileData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    const fetchData = async () => {
-        if (!currentUser?.uid) return;
-        setIsLoading(true);
-        setError(null);
-        try {
-            const user = await getUserProfile(currentUser.uid);
-            setProfileData(user);
-        } catch (err) {
-            console.error("Error fetching profile data:", err);
-            setError("Could not load profile data. Please try again.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const [profileVersion, setProfileVersion] = useState(0);
 
     useEffect(() => {
+        if (!currentUser?.uid) {
+            setIsLoading(false);
+            return;
+        }
+
+        const fetchData = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                // Fetch only the user profile data for this page.
+                const user = await getUserProfile(currentUser.uid);
+                setProfileData(user);
+            } catch (err) {
+                console.error("Error fetching page data:", err);
+                setError("Could not load profile data. Please try again.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         fetchData();
-    }, [currentUser?.uid]);
+    }, [currentUser, profileVersion]);
+
+      // Callback for the modal to run after a successful update
+    const handleUpdateSuccess = () => {
+        console.log("Update successful, refetching data...");
+        setProfileVersion(currentVersion => currentVersion + 1); // Trigger refetch
+        setShowModal(false); // Close the modal
+    };
 
     const isStudentOrEmployee = profileData?.role === 'STUDENT' || profileData?.role === 'EMPLOYEE';
     const coursesWorked = profileData?.student?.courseHistory
@@ -109,7 +122,7 @@ export default function ProfilePage() {
                     isOpen={showModal} 
                     onClose={() => setShowModal(false)}
                     profileData={profileData}
-                    onUpdateSuccess={fetchData}
+                    onUpdateSuccess={handleUpdateSuccess}
                 />
             )}
         </div>
