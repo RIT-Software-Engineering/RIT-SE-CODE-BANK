@@ -369,7 +369,7 @@ async function applyForJobPosition(jobPositionApplicationData) {
 }
 
 // Returns all applications for any course for a specific faculty
-async function getStudentApplications(facultyUid) {
+async function getCandidateApplications(facultyUid) {
   try {
     const employer = await prisma.employer.findUnique({
       where: { uid: facultyUid },
@@ -389,7 +389,7 @@ async function getStudentApplications(facultyUid) {
         // Include the application history for each position
         jobPositionApplicationHistory: {
           include: {
-            student: {
+            candidate: {
               select: {
                 year: true,
                 major: true,
@@ -420,9 +420,9 @@ async function getStudentApplications(facultyUid) {
     positionsList.forEach((position) => {
       position.jobPositionApplicationHistory.forEach((application) => {
         // Ensure the necessary data exists before trying to access it
-        if (application.student && application.student.courseHistory) {
-          const relevantCourse = application.student.courseHistory.find(
-            // Find the course in the student's history that matches the position's course code
+        if (application.candidate && application.candidate.courseHistory) {
+          const relevantCourse = application.candidate.courseHistory.find(
+            // Find the course in the candidate's history that matches the position's course code
             (course) => course.courseCode === position.courseCode
           );
 
@@ -431,14 +431,14 @@ async function getStudentApplications(facultyUid) {
             ? relevantCourse.grade
             : "N/A";
 
-          // Find all courses where the student was a prior employee (TA)
-          const taCourses = application.student.courseHistory
+          // Find all courses where the candidate was a prior employee (TA)
+          const taCourses = application.candidate.courseHistory
             .filter((course) => course.wasPriorEmployee)
             .map((course) => course.courseCode); // Get an array of just the course codes
 
           // Add a new property for the TA history
           application.previouslyTAedCourses = taCourses;
-          delete application.student.courseHistory;
+          delete application.candidate.courseHistory;
         }
       });
     });
@@ -456,7 +456,7 @@ async function getStudentApplications(facultyUid) {
 
     return groupedByPositionId;
   } catch (error) {
-    console.log("Error in getStudentApplications:", error);
+    console.log("Error in getCandidateApplications:", error);
     throw error;
   }
 }
@@ -470,7 +470,7 @@ module.exports = {
     upsertEmployerProfile,
   searchOpenPositions,
   applyForJobPosition,
-  getStudentApplications,
+  getCandidateApplications,
 };
 
 // Add a process exit handler to disconnect Prisma Client gracefully

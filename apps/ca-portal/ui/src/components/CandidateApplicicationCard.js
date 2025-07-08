@@ -1,7 +1,7 @@
 import Link from "next/link";
-export default function StudentApplicationCard(application) {
+export default function CandidateApplicationCard(application) {
   application = application.application
-  const canidate = application.student;
+  const canidate = application.candidate;
   console.log("Canadate is ")
   console.log(canidate)
   
@@ -28,7 +28,7 @@ export default function StudentApplicationCard(application) {
   return (
     <div className="w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-[1.02] mb-8 hover:cursor-pointer">
       <div className="p-6">
-        {/* --- Card Header: Student Info --- */}
+        {/* --- Card Header: candidate Info --- */}
         <div className="flex items-center space-x-4">
           <div className="flex-shrink-0">
             {/* A simple avatar placeholder */}
@@ -40,7 +40,7 @@ export default function StudentApplicationCard(application) {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-bold text-gray-800 truncate">
-              {canidate.user.name} | <Link href={`Users/${application.studentUID}/Messaging`}><span className="text-rit-gray hover:text-gray-600">{canidate.user.email}</span></Link>
+              {canidate.user.name} | <Link href={`Users/${application.candidateUID}/Messaging`}><span className="text-rit-gray hover:text-gray-600">{canidate.user.email}</span></Link>
             </h2>
             <p className="text-md text-gray-500">
               {"Year " + canidate.year} | {canidate.major}

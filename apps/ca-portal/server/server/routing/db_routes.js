@@ -10,7 +10,7 @@ const {
   upsertCandidateProfile,
   searchOpenPositions,
   applyForJobPosition, upsertEmployerProfile,
-  getStudentApplications
+  getCandidateApplications
 } = require("../database/query_db");
 
 /**
@@ -69,7 +69,7 @@ router.get("/users/:UID", async (req, res) => {
   }
 });
 
-// Router to get students applications given a employeerUID
+// Router to get candidates applications given a employeerUID
 router.get("/applications/:employerUid", async (req, res) => {
     try {
       const employerUid = parseInt(req.params.employerUid, 10);
@@ -80,7 +80,7 @@ router.get("/applications/:employerUid", async (req, res) => {
         return res.status(400).json({ error: "Employer UID must be a valid number." });
       }
 
-      const positions = await getStudentApplications(employerUid);
+      const positions = await getCandidateApplications(employerUid);
       
       // 4. Send the successful response. Corrected from `req.status` to `res.status`.
       // Using res.json() is a shorthand that defaults to a 200 OK status.
@@ -96,9 +96,9 @@ router.get("/applications/:employerUid", async (req, res) => {
   });
 
 router.post("/upsert-candidate-profile", async (req, res) => {
-  const studentData = req.body;
+  const candidateData = req.body;
   try {
-    const profile = await upsertStudentProfile(studentData);
+    const profile = await upsertCandidateProfile(candidateData);
     res.status(200).json(profile);
   } catch (error) {
     console.error('Error in /upsert-employer-profile route:', error);

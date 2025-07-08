@@ -1,4 +1,4 @@
-INSERT INTO `JobPositionApplicationHistory` (`studentUID`, `jobPositionId`, `jobApplicationStatus`, `applicationData`) VALUES
+INSERT INTO `JobPositionApplicationHistory` (`candidateUID`, `jobPositionId`, `jobApplicationStatus`, `applicationData`) VALUES
 -- Student 301 (Undergraduate Software Engineering)
 (301, '2241-SWEN-344-1', 'APPLIED', '{"availability": "Mon/Wed/Fri mornings", "priorExperience": "Prior CA for SWEN-250. Proficient in Java and Python.", "interestStatement": "I am very interested in the remote aspect of this position and have enjoyed the content of SWEN-344."}'),
 (301, '2241-SWEN-261-1', 'SELECTED', '{"availability": "Mon/Wed/Fri mornings", "priorExperience": "Prior CA for SWEN-250. Proficient in Java and Python.", "interestStatement": "I am passionate about introductory programming and helping students succeed."}'),

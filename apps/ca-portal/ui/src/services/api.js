@@ -111,7 +111,7 @@ export async function getUserProfile(UID) {
   return handleApiResponse(response);
 }
 
-export async function getStudentApplications(employeerUID) {
+export async function getCandidateApplications(employeerUID) {
   if (!employeerUID) {
     throw new Error("A UID is required to fetch a user profile.");
   }

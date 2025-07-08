@@ -1,12 +1,12 @@
 "use client";
 import { useAuth } from "@/contexts/AuthContext";
-import StudentApplicationCard from "@/components/StudentApplicicationCard";
+import CandidateApplicationCard from "@/components/CandidateApplicicationCard";
 import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
 import React, { useEffect, useState } from "react";
-import { getStudentApplications } from "../../services/api";
+import { getCandidateApplications } from "../../services/api";
 
 export default function Applications() {
   const { currentUser } = useAuth();
@@ -21,7 +21,7 @@ export default function Applications() {
       async function fetchApplications() {
         try {
           setLoading(true); // Set loading to true before fetch
-          const data = await getStudentApplications(currentUser.uid);
+          const data = await getCandidateApplications(currentUser.uid);
 
           console.log("Fetched data:", data);
 
@@ -83,10 +83,10 @@ export default function Applications() {
                   {position.jobPositionApplicationHistory.length > 0 ? (
                     position.jobPositionApplicationHistory.map(app => (
                       // Pass the specific application data to the card component
-                      <StudentApplicationCard key={app.studentUID} application={app} />
+                      <CandidateApplicationCard key={app.candidateUID} application={app} />
                     ))
                   ) : (
-                    <p>No students have applied for this position yet.</p>
+                    <p>No candidates have applied for this position yet.</p>
                   )}
                 </AccordionDetails>
               </Accordion>
@@ -101,7 +101,7 @@ export default function Applications() {
     <>
       <div className="flex flex-col items-center p-4">
         <h1 className="text-4xl">Applications</h1>
-        <p className="text-sm">See student applications</p>
+        <p className="text-sm">See candidate applications</p>
       </div>
       <div className="flex flex-col items-center bg-gray-300 p-4 mb-10 ml-10 mr-10">
         {currentUser && currentUser.role === "EMPLOYER" ? (
