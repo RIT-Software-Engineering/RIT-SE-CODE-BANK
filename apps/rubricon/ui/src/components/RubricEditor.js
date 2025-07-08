@@ -54,112 +54,112 @@ function Cell({ cell, onChange }) {
 
 // A single row in the rubric table
 function Row({ data, setData, row, rowIndex, size, criteria_column }) {
-  const ensureLevelsLength = (levels) => {
-    const lengthNeeded = size - 1;
-    if (!levels) levels = [];
-    if (levels.length < lengthNeeded) {
-      return [
-        ...levels,
-        ...Array(lengthNeeded - levels.length).fill({ ...BLANK_CELL }),
-      ].map((lvl, i) => ({ ...lvl, index: i }));
-    } else if (levels.length > lengthNeeded) {
-      return levels.slice(0, lengthNeeded).map((lvl, i) => ({ ...lvl, index: i }));
-    }
-    return levels.map((lvl, i) => ({ ...lvl, index: i }));
-  };
+    const ensureLevelsLength = (levels) => {
+        const lengthNeeded = size - 1;
+        if (!levels) levels = [];
+        if (levels.length < lengthNeeded) {
+            return [
+                ...levels,
+                ...Array(lengthNeeded - levels.length).fill({ ...BLANK_CELL }),
+            ].map((lvl, i) => ({ ...lvl, index: i }));
+        } else if (levels.length > lengthNeeded) {
+            return levels.slice(0, lengthNeeded).map((lvl, i) => ({ ...lvl, index: i }));
+        }
+        return levels.map((lvl, i) => ({ ...lvl, index: i }));
+    };
 
-  const levels = ensureLevelsLength(row.levels);
+    const levels = ensureLevelsLength(row.levels);
 
-  // Remove this row by rowIndex
-  const handleRemoveRow = () => {
-    const updatedCriteria = data.criteria
-      .filter((_, i) => i !== rowIndex)
-      .map((criterion, i) => ({
-        ...criterion,
-        index: i,
-        levels: (criterion.levels ?? []).map((level, j) => ({ ...level, index: j })),
-      }));
+    // Remove this row by rowIndex
+    const handleRemoveRow = () => {
+        const updatedCriteria = data.criteria
+            .filter((_, i) => i !== rowIndex)
+            .map((criterion, i) => ({
+                ...criterion,
+                index: i,
+                levels: (criterion.levels ?? []).map((level, j) => ({ ...level, index: j })),
+            }));
 
-    setData({
-      ...data,
-      criteria: updatedCriteria,
-      rows: updatedCriteria.length,
-    });
-  };
+        setData({
+            ...data,
+            criteria: updatedCriteria,
+            rows: updatedCriteria.length,
+        });
+    };
 
-  const handleCellChange = (colIndex, updatedCell) => {
-    const isCriteriaCol = colIndex === criteria_column - 1;
-
-    const updatedCriteria = data.criteria.map((r, i) => {
-      if (i !== rowIndex) return r;
-
-      if (isCriteriaCol) {
-        return {
-          ...updatedCell,
-          index: rowIndex,
-          levels: levels,
-        };
-      } else {
-        const levelIndex = colIndex > criteria_column - 1 ? colIndex - 1 : colIndex;
-        const newLevels = levels.map((lvl, j) =>
-          j === levelIndex ? { ...updatedCell, index: levelIndex } : lvl
-        );
-
-        return {
-          ...r,
-          levels: newLevels,
-          index: rowIndex,
-        };
-      }
-    });
-
-    setData({ ...data, criteria: updatedCriteria });
-  };
-
-  return (
-    <>
-      {Array.from({ length: size }).map((_, colIndex) => {
+    const handleCellChange = (colIndex, updatedCell) => {
         const isCriteriaCol = colIndex === criteria_column - 1;
 
-        if (isCriteriaCol) {
-          const cell = row;
+        const updatedCriteria = data.criteria.map((r, i) => {
+            if (i !== rowIndex) return r;
 
-          return (
-            <td
-              key={colIndex}
-              className="border p-1 align-top bg-primary relative group"
-            >
-              <div className="absolute top-0 right-0 p-1">
-                <button
-                  onClick={handleRemoveRow}
-                  className="text-red-400 hover:text-red-600 text-xs bg-white rounded-sm px-1 opacity-0 group-hover:opacity-100 transition"
-                  title="Remove row"
-                >
-                  🗑
-                </button>
-              </div>
-              <Cell
-                cell={cell}
-                onChange={(newCell) => handleCellChange(colIndex, newCell)}
-              />
-            </td>
-          );
-        } else {
-          const levelIndex = colIndex > criteria_column - 1 ? colIndex - 1 : colIndex;
-          const cell = levels[levelIndex] ?? { ...BLANK_CELL, index: levelIndex };
+            if (isCriteriaCol) {
+                return {
+                    ...updatedCell,
+                    index: rowIndex,
+                    levels: levels,
+                };
+            } else {
+                const levelIndex = colIndex > criteria_column - 1 ? colIndex - 1 : colIndex;
+                const newLevels = levels.map((lvl, j) =>
+                    j === levelIndex ? { ...updatedCell, index: levelIndex } : lvl
+                );
 
-          return (
-            <td key={colIndex} className="border p-1 align-top">
-              <Cell
-                cell={cell}
-                onChange={(updatedCell) => handleCellChange(colIndex, updatedCell)}
-              />
-            </td>
-          );
-        }
-      })}
-    </>
-  );
+                return {
+                    ...r,
+                    levels: newLevels,
+                    index: rowIndex,
+                };
+            }
+        });
+
+        setData({ ...data, criteria: updatedCriteria });
+    };
+
+    return (
+        <>
+            {Array.from({ length: size }).map((_, colIndex) => {
+                const isCriteriaCol = colIndex === criteria_column - 1;
+
+                if (isCriteriaCol) {
+                    const cell = row;
+
+                    return (
+                        <td
+                            key={colIndex}
+                            className="border p-1 align-top bg-primary relative group"
+                        >
+                            <div className="absolute top-0 right-0 p-1">
+                                <button
+                                    onClick={handleRemoveRow}
+                                    className="text-red-400 hover:text-red-600 text-xs bg-white rounded-sm px-1 opacity-0 group-hover:opacity-100 transition"
+                                    title="Remove row"
+                                >
+                                    🗑
+                                </button>
+                            </div>
+                            <Cell
+                                cell={cell}
+                                onChange={(newCell) => handleCellChange(colIndex, newCell)}
+                            />
+                        </td>
+                    );
+                } else {
+                    const levelIndex = colIndex > criteria_column - 1 ? colIndex - 1 : colIndex;
+                    const cell = levels[levelIndex] ?? { ...BLANK_CELL, index: levelIndex };
+
+                    return (
+                        <td key={colIndex} className="border p-1 align-top">
+                            <Cell
+                                cell={cell}
+                                onChange={(updatedCell) => handleCellChange(colIndex, updatedCell)}
+                            />
+                        </td>
+                    );
+                }
+            })}
+        </>
+    );
 }
 
 
@@ -283,17 +283,26 @@ export default function RubricEditor({ data, setData }) {
             <h4 className="text-lg">Dimensions</h4>
 
             <div className="grid grid-cols-3 gap-4 pb-2">
-                <input value={rows} disabled readOnly className="w-full p-2 border rounded-md bg-light-gray" />
-                <input value={columns} disabled readOnly className="w-full p-2 border rounded-md bg-light-gray" />
-                <input
-                    type="number"
-                    value={criteria_column}
-                    min={1}
-                    max={columns}
-                    onChange={(e) => setField("criteria_column", parseInt(e.target.value, 10) || 1)}
-                    onWheel={(e) => e.target.blur()}
-                    className="w-full p-2 border rounded-md"
-                />
+                <div>
+                    <label>Rows:</label><br></br>
+                    <input value={rows} disabled readOnly className="w-full p-2 border rounded-md bg-light-gray" />
+                </div>
+                <div>
+                    <label>Columns:</label><br></br>
+                    <input value={columns} disabled readOnly className="w-full p-2 border rounded-md bg-light-gray" />
+                </div>
+                <div>
+                    <label>Criteria Column:</label><br></br>
+                    <input
+                        type="number"
+                        value={criteria_column}
+                        min={1}
+                        max={columns}
+                        onChange={(e) => setField("criteria_column", parseInt(e.target.value, 10) || 1)}
+                        onWheel={(e) => e.target.blur()}
+                        className="w-full p-2 border rounded-md"
+                    />
+                </div>
             </div>
 
             <div className="flex flex-row gap-2 items-stretch">
