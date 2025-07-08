@@ -1,25 +1,83 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+    createContext,
+    useState,
+    ReactNode,
+    useEffect,
+    Dispatch,
+    SetStateAction,
+} from "react";
+
+import { getUserProfile, getUserProfileByEmail } from "@/services/user";
+import { UserProfile } from "@/types/userProfile";
 
 interface UserContextType {
-  userId: string | null;
-  setUserId: (id: string) => void;
+    currentUser: UserProfile | null;
+    setCurrentUser: Dispatch<SetStateAction<UserProfile | null>>;
+    loading: boolean;
 }
 
-const UserContext = createContext<UserContextType>({
-  userId: "1",
-  setUserId: (id) => {},
-});
+const UserContext = createContext<UserContextType | null>(null);
 
-export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [userId, setUserId] = useState("1");
+// export const UserProvider = ({ children }: { children: ReactNode }) => {
+//   const [userId, setUserId] = useState("1");
 
-  return (
-    <UserContext.Provider value={{ userId, setUserId }}>
-      {children}
-    </UserContext.Provider>
-  );
-};
+//   useEffect(() => {}, []);
 
-export const useUserContext = () => useContext(UserContext);
+//   return (
+//     <UserContext.Provider
+//       value={{ currentUser: userId, setCurrentUser: setUserId }}
+//     >
+//       {children}
+//     </UserContext.Provider>
+//   );
+// };
+
+export default function AuthProvider({ children }: { children: ReactNode }) {
+    const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState<boolean>(true); // Add a loading state
+
+    // This effect runs once when the app loads
+    useEffect(() => {
+        const loadUserData = async () => {
+            setLoading(true);
+            try {
+                const storedUID = localStorage.getItem("userUID");
+                if (storedUID) {
+                    // If a user ID is in storage, fetch their full profile
+                    const userProfile: UserProfile = await getUserProfile(
+                        storedUID
+                    );
+                    setCurrentUser(userProfile);
+                }
+            } catch (error) {
+                console.error("Session restore failed:", error);
+                // Clear out any bad data if the fetch fails
+                localStorage.removeItem("userUID");
+                setCurrentUser(null);
+
+                // For now, just set current user to Alice all the time
+                const userProfile: UserProfile = await getUserProfileByEmail(
+                    "alice@rit.edu"
+                );
+                setCurrentUser(userProfile);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadUserData();
+    }, []);
+
+    const value = {
+        currentUser,
+        setCurrentUser,
+        loading, // Expose loading state
+    };
+
+    return (
+        <UserContext.Provider value={value}>{children}</UserContext.Provider>
+    );
+}
+
+// export const useUserContext = () => useContext(UserContext);
