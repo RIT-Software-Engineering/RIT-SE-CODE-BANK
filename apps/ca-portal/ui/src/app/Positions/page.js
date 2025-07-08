@@ -131,7 +131,7 @@ export default function Positions() {
 
                   <button
                       type="submit"
-                      className="h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+                      className="h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outlin focus-visible:outline-offset-2 focus-visible:outline-orange-600"
                   >
                       Search
                   </button>

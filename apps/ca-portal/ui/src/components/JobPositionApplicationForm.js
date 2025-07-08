@@ -13,9 +13,13 @@ const DisplayField = ({ label, value }) => (
   </div>
 );
 
+const letterToGradeValue = {
+  'A': 10, 'A-': 9, 'B+': 8, 'B': 7, 'B-': 6,
+  'C+': 5, 'C': 4, 'C-': 3, 'D': 2, 'F': 1,
+};
 
 export default function ApplicationForm({ user, position, onClose, onApplySuccess }) {
-  const backendApiUrl = 'http://localhost:3300';
+  const backendApiUrl = 'http://localhost:3300'; // Replace with your backend API URL to https
   const {
     register,
     handleSubmit,
@@ -89,10 +93,41 @@ export default function ApplicationForm({ user, position, onClose, onApplySucces
           <DisplayField label="Year" value={user?.candidate?.year || 'N/A'} />
           
           <div>
-            <label className="block text-sm font-medium text-gray-700">Grade</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Grade for {position.course.courseCode}
+              {!position.gradeRequirement && (
+                <span className="text-gray-500 text-xs ml-1">(Optional)</span>
+              )}
+            </label>
             <input 
               type="text" 
-              {...register("grade", { required: "Your grade for this course is required" })} 
+              {...register("grade", { 
+                required: "Your grade for this course is required",
+                validate: (enteredGrade) => {
+                  // If the position has no grade requirement, validation passes.
+                  console.log("Position grade requirement:", position.gradeRequirement);
+                  if (!position.gradeRequirement) {
+                    return true;
+                  }
+                  
+                  // Get the numeric values for comparison.
+                  const enteredValue = letterToGradeValue[enteredGrade.toUpperCase()];
+                  const requiredValue = letterToGradeValue[position.gradeRequirement];
+
+                  // Check if the user typed a valid grade.
+                  if (!enteredValue) {
+                    return "Please enter a valid grade (e.g., A, B+, C-).";
+                  }
+
+                  // Check if the entered grade is high enough.
+                  if (enteredValue < requiredValue) {
+                    return `A grade of ${position.gradeRequirement} or higher is required.`;
+                  }
+
+                  // If all checks pass, validation is successful.
+                  return true;
+                }
+              })} 
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2" 
             />
             {errors.grade && <p className="text-red-500 text-sm mt-1">{errors.grade.message}</p>}
