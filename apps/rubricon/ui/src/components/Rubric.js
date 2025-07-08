@@ -31,32 +31,38 @@ function Row({ row, size, criteria_column }) {
     );
 }
 
-export default function Rubric({data}) {
+export function RubricTable({ data }) {
+    return (
+        <table className="w-full table-fixed border border-collapse">
+            {data.headers ? (
+                <thead className="bg-black text-white">
+                    <tr>
+                        {data.headers.titles.map((header, index) => (
+                            <th key={index} className="p-1">
+                                <Cell cell={header} />
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+            ) : (
+                <></>
+            )}
+            <tbody>
+                {data.criteria.map((row, index) => (
+                    <Row key={index} row={row} size={data.columns} criteria_column={data.criteria_column} />
+                ))}
+            </tbody>
+        </table>
+    )
+}
+
+export default function Rubric({ data }) {
     return (
         <div className="flex flex-col gap-2 w-4/5 mx-auto mt-4 text-center">
             <h1 className="text-4xl font-bold">{data.title}</h1>
             <p>{data.description}</p>
             <h2 className="text-2xl font-semibold">Breakdown</h2>
-            <table className="w-full table-fixed border border-collapse"> 
-                {data.headers ? (
-                    <thead className="bg-black text-white">
-                        <tr>
-                            {data.headers.titles.map((header, index) => (
-                                <th key={index} className="p-1">
-                                    <Cell cell={header} />
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                ) : (
-                    <></>
-                )}
-                <tbody>
-                    {data.criteria.map((row, index) => (
-                        <Row key={index} row={row} size={data.columns} criteria_column={data.criteria_column} />
-                    ))}
-                </tbody>
-            </table>
+            <RubricTable data={data} />
         </div>
     )
 }
