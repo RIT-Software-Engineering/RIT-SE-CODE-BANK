@@ -2,8 +2,6 @@ import Link from "next/link";
 export default function CandidateApplicationCard(application) {
   application = application.application
   const canidate = application.candidate;
-  console.log("Canadate is ")
-  console.log(canidate)
   
 
 
@@ -21,8 +19,6 @@ export default function CandidateApplicationCard(application) {
         return "bg-gray-100 text-gray-800";
     }
   };
-  console.log("Application is: ")
-  console.log(application)
   const statusClasses = getStatusClasses(application.jobApplicationStatus);
 
   return (
