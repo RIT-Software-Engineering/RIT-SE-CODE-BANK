@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function StudentApplicationCard(application) {
   application = application.application
   const canidate = application.student;
@@ -39,7 +40,7 @@ export default function StudentApplicationCard(application) {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-2xl font-bold text-gray-800 truncate">
-              {canidate.user.name}
+              {canidate.user.name} | <Link href={`Users/${application.studentUID}/Messaging`}><span className="text-rit-gray hover:text-gray-600">{canidate.user.email}</span></Link>
             </h2>
             <p className="text-md text-gray-500">
               {"Year " + canidate.year} | {canidate.major}
