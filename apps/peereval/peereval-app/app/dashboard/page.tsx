@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
                         <div className="flex flex-wrap gap-6">
                             {projectsAsOverseer.map((project) => (
                                 <Link
-                                    href={`/projects/${project.id}`}
+                                    href={`/projects/${project.id}/asOverseer`}
                                     key={project.id}
                                     className="w-full sm:w-64"
                                 >

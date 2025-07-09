@@ -1,11 +1,13 @@
 "use client";
 
+import { useAuth } from "@/context/UserContext";
 import {
     getAssessmentById,
     getAssessmentsByProject,
 } from "@/services/assessment";
 import {
     addProjectPeerByEmail,
+    getProjectOverseers,
     getProjectsPeers,
     removeProjectPeerByEmail,
 } from "@/services/project";
@@ -14,14 +16,36 @@ import { UserProfile } from "@/types/userProfile";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const ClientOverseerProjectView: React.FC<{
-    projectId: string;
-}> = ({ projectId }) => {
+const OverseerProjectView: React.FC<{
+    params: { projectId: string };
+}> = ({ params }) => {
+    const { currentUser } = useAuth();
     const [peers, setPeers] = useState<UserProfile[]>([]);
     const [assessments, setAssessments] = useState<Assessment[]>([]);
     const [showAddPeerModal, setShowAddPeerModal] = useState(false);
     const [addPeerEmail, setAddPeerEmail] = useState("");
     const [modalError, setModalError] = useState("");
+    const [isLoading, setIsLoading] = useState<Boolean>(true);
+    const [isOverseer, setIsOverseer] = useState<Boolean>(false);
+
+    const { projectId } = params;
+
+    useEffect(() => {
+        (async () => {
+            setIsLoading(true);
+
+            // Make sure the user is an overseer for this project
+            const os = await getProjectOverseers(projectId);
+            if (!os.some((o) => o.id == currentUser?.id)) {
+                setIsOverseer(false);
+                setIsLoading(false);
+                return;
+            }
+
+            setIsOverseer(true);
+            setIsLoading(false);
+        })();
+    }, [currentUser]);
 
     useEffect(() => {
         (async () => {
@@ -53,6 +77,23 @@ const ClientOverseerProjectView: React.FC<{
             await removeProjectPeerByEmail(projectId, peer.email);
         }
     };
+
+    if (isLoading) return <p>Loading...</p>;
+    if (!isOverseer)
+        return (
+            <div className="max-w-3xl mx-auto py-8 px-4">
+                {/* Back Arrow */}
+                <Link href="/dashboard">
+                    <button
+                        className="mb-4 text-blue-600 underline"
+                        aria-label="Back"
+                    >
+                        &larr; Back
+                    </button>
+                </Link>
+                <p>You ain't an overseer for this project &gt;:*(</p>
+            </div>
+        );
 
     return (
         <div className="max-w-3xl mx-auto py-8 px-4">
@@ -170,4 +211,4 @@ const ClientOverseerProjectView: React.FC<{
     );
 };
 
-export default ClientOverseerProjectView;
+export default OverseerProjectView;
