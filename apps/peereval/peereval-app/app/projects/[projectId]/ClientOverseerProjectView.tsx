@@ -1,37 +1,31 @@
 "use client";
 
+import {
+    getAssessmentById,
+    getAssessmentsByProject,
+} from "@/services/assessment";
+import { getProjectsPeers } from "@/services/project";
+import { Assessment } from "@/types/assessment";
+import { UserProfile } from "@/types/userProfile";
 import Link from "next/link";
-import { Fragment, useEffect, useState } from "react";
-
-type Peer = {
-    id: string;
-    name: string;
-};
-
-type Assessment = {
-    id: string;
-    name: string;
-    description: string;
-    startDate: string;
-    dueDate: string;
-};
+import { useEffect, useState } from "react";
 
 const ClientOverseerProjectView: React.FC<{
     projectId: string;
 }> = ({ projectId }) => {
-    const [peers, setPeers] = useState<Peer[]>([]);
+    const [peers, setPeers] = useState<UserProfile[]>([]);
     const [assessments, setAssessments] = useState<Assessment[]>([]);
 
     useEffect(() => {
-        // Get the project peers
-        fetch("http://localhost:3003/projects/getPeersFull/" + projectId)
-            .then((res) => res.json())
-            .then(setPeers);
+        (async () => {
+            // Get project peers
+            const ps = await getProjectsPeers(projectId);
+            setPeers(ps);
 
-        // Get the project assessments
-        fetch("http://localhost:3003/assessments/byProject/" + projectId)
-            .then((res) => res.json())
-            .then(setAssessments);
+            // Get project assessments
+            const as = await getAssessmentsByProject(projectId);
+            setAssessments(as);
+        })();
     }, []);
 
     return (
