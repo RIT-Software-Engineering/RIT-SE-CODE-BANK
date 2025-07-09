@@ -8,7 +8,7 @@ import { getProjectsPeers } from "@/services/project";
 import { Assessment } from "@/types/assessment";
 import { UserProfile } from "@/types/userProfile";
 import Link from "next/link";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const ClientOverseerProjectView: React.FC<{
     projectId: string;
@@ -17,16 +17,6 @@ const ClientOverseerProjectView: React.FC<{
     const [assessments, setAssessments] = useState<Assessment[]>([]);
 
     useEffect(() => {
-        // // Get the project peers
-        // fetch("http://localhost:3003/projects/getPeersFull/" + projectId)
-        //     .then((res) => res.json())
-        //     .then(setPeers);
-
-        // // Get the project assessments
-        // fetch("http://localhost:3003/assessments/byProject/" + projectId)
-        //     .then((res) => res.json())
-        //     .then(setAssessments);
-
         (async () => {
             // Get project peers
             const ps = await getProjectsPeers(projectId);
