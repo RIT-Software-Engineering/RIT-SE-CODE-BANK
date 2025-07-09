@@ -130,15 +130,8 @@ router.post(
     async (req, res) => {
         const { assessmentId, responderId, respondeeId } = req.params;
         const { answers } = req.body as {
-            answers: {
-                qId: string;
-                answer: string;
-            }[];
+            answers: Record<string, string>;
         };
-
-        answers.map((a) => {
-            console.log(`${a.qId}: ${a.answer}`);
-        });
 
         // Get the form response
         const formRes = await prisma.formResponse.upsert({
@@ -159,21 +152,21 @@ router.post(
 
         // Upsert answers
         const inqRess = await Promise.all(
-            answers.map((a) =>
+            Object.entries(answers).map(([inquiryId, answer]) =>
                 prisma.inquiryResponse.upsert({
                     where: {
                         formResponseId_inquiryId: {
                             formResponseId: formRes.id,
-                            inquiryId: a.qId,
+                            inquiryId,
                         },
                     },
                     update: {
-                        answer: a.answer,
+                        answer,
                     },
                     create: {
                         formResponseId: formRes.id,
-                        inquiryId: a.qId,
-                        answer: a.answer,
+                        inquiryId,
+                        answer,
                     },
                 })
             )

@@ -50,6 +50,39 @@ export async function getAssessmentPeerResponses(
 
     return handleResponse(
         res,
-        "Couldn't get responses for user " + responderId + " and assessment "
+        "Couldn't get responses for user " +
+            responderId +
+            " and assessment " +
+            assessmentId
+    );
+}
+
+export async function sendAssessmentResponses(
+    assessmentId: string,
+    responderId: string,
+    respondeeId: string,
+    responses: Record<string, string>
+): Promise<PeerFormResponse[]> {
+    console.log(`responderId: ${responderId}`);
+    console.log(`respondeeId: ${respondeeId}`);
+
+    const res = await fetch(
+        `${BASE_URL}/assessments/${assessmentId}/addFeedback/${responderId}/${respondeeId}`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ answers: responses }),
+        }
+    );
+
+    return handleResponse(
+        res,
+        "Couldn't add feedback for responder " +
+            responderId +
+            ", respondee " +
+            respondeeId +
+            ", and assessment " +
+            assessmentId
     );
 }

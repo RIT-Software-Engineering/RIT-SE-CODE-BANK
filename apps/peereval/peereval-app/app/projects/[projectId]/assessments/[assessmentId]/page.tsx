@@ -5,6 +5,7 @@ import {
     getAssessmentById,
     getAssessmentInquiriesById,
     getAssessmentPeerResponses,
+    sendAssessmentResponses,
 } from "@/services/assessment";
 import { getProjectsPeers as getProjectPeers } from "@/services/project";
 import { UserProfile } from "@/types/userProfile";
@@ -14,6 +15,7 @@ import {
     Inquiry,
     InquiryType,
     RatingInquiry,
+    RubricInquiry,
 } from "@/types/assessment";
 import React, { act, useEffect, useState, use } from "react";
 
@@ -71,6 +73,10 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             // Get current peer under review, set the responses
             const peerRs = rs.find((r) => r.respondeeId == activePeer.id);
 
+            console.dir(rs);
+            console.dir(activePeer);
+            console.dir(peerRs);
+
             if (!peerRs) {
                 setResponses({});
             } else
@@ -84,6 +90,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
     }, [activePeer]);
 
     const handleSwitchTab = (idx: number) => {
+        submitForm();
+
         setActiveTab(idx);
         setActivePeer(peersToEval[idx]);
     };
@@ -104,7 +112,12 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
 
     const handleRubric = (qid: string, rowIdx: number, colIdx: number) => {
         setResponses((prev) => {
-            const prevAns: number[] = JSON.parse(prev[qid]);
+            const prevAns: number[] = prev[qid]
+                ? JSON.parse(prev[qid])
+                : Array(
+                      (inquiries.find((inq) => inq.id == qid) as RubricInquiry)
+                          .rows.length
+                  ).fill(-1);
             prevAns[rowIdx] = colIdx;
             return {
                 ...prev,
@@ -116,10 +129,22 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // Submit logic here
-        // alert("Submitted! " + JSON.stringify(responses, null, 2));
+        alert("Submitted! " + JSON.stringify(responses, null, 2));
+
+        submitForm();
+    };
+
+    const submitForm = () => {
+        sendAssessmentResponses(
+            assessmentId,
+            currentUser!.id,
+            activePeer!.id,
+            responses
+        );
     };
 
     const handleBack = () => {
+        submitForm();
         window.history.back();
     };
 
