@@ -36,8 +36,6 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
         return <p>Loading...</p>;
     }
 
-    console.log(`overseer is ${isOverseer}`);
-
     return isOverseer ? (
         <ClientOverseerProjectView projectId={projectId} />
     ) : (
