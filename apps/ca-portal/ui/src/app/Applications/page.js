@@ -1,16 +1,16 @@
 "use client";
 import { useAuth } from "@/contexts/AuthContext";
-import CandidateApplicationCard from "@/components/CandidateApplicicationCard";
+import CandidateApplicationCard from "@/components/jobs/CandidateApplicicationCard";
 import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
-import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
 import React, { useEffect, useState } from "react";
 import { getCandidateApplications } from "../../services/api";
 
 export default function Applications() {
   const { currentUser } = useAuth();
-  // Corrected useState syntax and re-enabled loading/error states
+  // List of current applications gotton from backend
   const [activeApplications, setActiveApplications] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,11 +41,8 @@ export default function Applications() {
     }
   }, [currentUser]); // Re-run the effect if the currentUser changes
 
-  useEffect(() => {
-    console.log("State updated:", activeApplications);
-  }, [activeApplications]);
-
-  const loggedInFacultyPage = () => {
+  // Content to load once a employer is logged in
+  const loggedInEmployeerPage = () => {
     // Handle loading and error states for a better user experience
     if (loading) {
       return <div>Loading applications...</div>;
@@ -68,7 +65,8 @@ export default function Applications() {
           {positionIds.map((positionId) => {
             const position = activeApplications[positionId];
             return (
-              // Use the unique position ID for the key prop
+              // Use the unique position ID for the key prop 
+              // Groups applications visually by position (course codes)
               <Accordion key={position.id} defaultExpanded>
                 <AccordionSummary
                   expandIcon={<KeyboardArrowDownOutlinedIcon />}
@@ -76,14 +74,19 @@ export default function Applications() {
                   id={`${position.id}-header`}
                 >
                   {/* Use the dynamic data from the position object */}
-                  <h2 className="text-3xl">{position.courseCode} - Section {position.sectionNumber}</h2>
+                  <h2 className="text-3xl">
+                    {position.courseCode} - Section {position.sectionNumber}
+                  </h2>
                 </AccordionSummary>
                 <AccordionDetails>
                   {/* Map over the actual applications for this position */}
                   {position.jobPositionApplicationHistory.length > 0 ? (
-                    position.jobPositionApplicationHistory.map(app => (
+                    position.jobPositionApplicationHistory.map((app) => (
                       // Pass the specific application data to the card component
-                      <CandidateApplicationCard key={app.candidateUID} application={app} />
+                      <CandidateApplicationCard
+                        key={app.candidateUID}
+                        application={app}
+                      />
                     ))
                   ) : (
                     <p>No candidates have applied for this position yet.</p>
@@ -97,6 +100,7 @@ export default function Applications() {
     );
   };
 
+  // Main body of application
   return (
     <>
       <div className="flex flex-col items-center p-4">
@@ -106,7 +110,7 @@ export default function Applications() {
       <div className="flex flex-col items-center bg-gray-300 p-4 mb-10 ml-10 mr-10">
         {currentUser && currentUser.role === "EMPLOYER" ? (
           <div className="w-full flex flex-col items-center justify-center">
-            {loggedInFacultyPage()}
+            {loggedInEmployeerPage()}
           </div>
         ) : (
           <div>Please make sure you are logged in as an EMPLOYER.</div>

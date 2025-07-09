@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 // Import BOTH API functions, as we'll need to call one or the other
-import { applyForJobPosition, applyForJobPositionWithNewResume } from '../services/api'; 
+import { applyForJobPosition, applyForJobPositionWithNewResume } from '../../services/api'; 
 
 const DisplayField = ({ label, value }) => (
   <div>
