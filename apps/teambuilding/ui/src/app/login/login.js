@@ -32,7 +32,8 @@ export default function LoginPage() {
     setError("");
     try {
       // Adjusted API path to match your new API location
-      const res = await fetch("http://localhost:3000/api/user-role?username=" + encodeURIComponent(username));
+      console.log(username);
+      const res = await fetch("http://localhost:3000/api/user-role?username=" + username);
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Login failed.");
@@ -52,19 +53,6 @@ export default function LoginPage() {
     }
   };
 
-  // DEV login handler
-  const devLogin = (role) => {
-    setError("");
-    storeUser(username || role, role.toUpperCase());
-    if (role === "manager") {
-      router.push("/manager");
-    } else if (role === "user") {
-      router.push("/user");
-    } else if (role === "admin") {
-      router.push("/admin");
-    }
-  };
-
   return (
     <div className="login-container">
       <h2>Login</h2>
@@ -81,11 +69,6 @@ export default function LoginPage() {
         {error && <div className="login-error">{error}</div>}
         <button type="submit">Login</button>
       </form>
-      <div className="dev-login-buttons">
-        <button type="button" onClick={() => devLogin("admin")}>Dev Login as Admin</button>
-        <button type="button" onClick={() => devLogin("manager")}>Dev Login as Manager</button>
-        <button type="button" onClick={() => devLogin("user")}>Dev Login as User</button>
-      </div>
     </div>
   );
 }

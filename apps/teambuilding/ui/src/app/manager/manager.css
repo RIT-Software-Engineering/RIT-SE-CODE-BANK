@@ -9,19 +9,25 @@
 .manager-root {
   position: relative;
   min-height: 100vh;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 0;
 }
 
 .manager-class-box {
-  border: 1px solid black;
-  padding: 10px;
-  margin: 10px;
-  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 32px;
+  padding: 16px;
+  background: #fafafa;
 }
 
 .manager-class-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 1.2em;
+  margin-bottom: 8px;
 }
 
 .manager-delete-community-btn {
@@ -32,7 +38,20 @@
   padding: 4px 12px;
   cursor: pointer;
   font-weight: bold;
-  margin-left: 12px;
+  margin-left: 8px;
+  font-size: 0.95em;
+}
+
+.manager-update-team-btn {
+  background: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 8px;
+  font-size: 0.95em;
 }
 
 .manager-teams-container {
@@ -42,16 +61,20 @@
 }
 
 .manager-team-box {
-  border: 1px solid #888;
-  border-radius: 8px;
-  padding: 8px 16px;
-  min-width: 120px;
-  background: #f8f8f8;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .manager-team-size {
-  font-weight: normal;
+  color: #888;
   font-size: 0.95em;
+  margin-left: 8px;
 }
 
 .manager-team-users-list {
@@ -105,15 +128,27 @@
   padding: 4px 12px;
   cursor: pointer;
   font-weight: bold;
+  margin-left: 8px;
+  font-size: 0.95em;
 }
 
 .button-box {
-  margin-top: 10px;
+  margin: 12px 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.manager-users-in-community {
-  /* Additional styling if needed */
+.manager-message {
+  margin: 16px 0;
+  color: #b00;
+  font-weight: bold;
 }
+
+.show.classes {
+  margin-top: 32px;
+}
+
 
 .manager-multiselect-users {
   min-width: 150px;
