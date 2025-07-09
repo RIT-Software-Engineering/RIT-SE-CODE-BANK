@@ -3,32 +3,13 @@
 import Link from "next/link";
 
 async function ActionListItem({ action }) {
-
-    // Name and Description should be defined for every action.
-    const nameData = await fetch("http://localhost:3001/metadata?key=Name&actionId=" + action.id, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
-    });
-    const name = (await nameData.json())[0];
-    console.log("name", name);
-    const descriptionData = await fetch("http://localhost:3001/metadata?key=Description&actionId=" + action.id, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
-    });
-    const description = (await descriptionData.json())[0];
-    console.log("description", description);
-
     return (
         <Link
             href={"/dashboard/action/" + action.id}
         >
             <div className="flow flow-col gap-2 border border-solid border-black rounded-md p-2">
-                <h2 className="text-lg font-bold">{"Name: " + name.value}</h2>
-                <p>{"Description: " + description.value}</p>
+                <h2 className="text-lg font-bold">{"Name: " + action.name}</h2>
+                <p>{"Description: " + action.description}</p>
                 <p>{"Type: " + action.action_type}</p>
                 <p>{"Frozen: " + action.is_frozen}</p>
             </div>

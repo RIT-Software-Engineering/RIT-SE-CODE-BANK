@@ -2,14 +2,24 @@ const express = require('express');
 const router = express.Router();
 const { createWorkflow, getWorkflows, updateWorkflow, deleteWorkflow } = require('./../../controller/workflows.js');
 
+/**
+ * Get a specific workflow by id
+ */
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
+
+    const workflows = await getWorkflows({ id: id });
+
+    res.json(workflows[0]);
+})
+
 // GET /workflows
 router.get('/', async (req, res) => {
-    const { workflowId, userId, tags } = req.query;
+    const { userId, tags } = req.query;
 
     const tagsList = tags ? tags.split(',') : [];
 
     const params = {};
-    if (workflowId) params.id = workflowId;
     if (userId) params.userId = userId;
     if (tagsList.length > 0) params.tag_workflow_relationships = { // TODO: fix this so tag filtering only returns workflows with all of the specified tags
         some: {
@@ -28,9 +38,9 @@ router.get('/', async (req, res) => {
 
 // POST /workflows
 router.post('/', async (req, res) => {
-    const { userId, tags, metadata, rootActionId } = req.body;
+    const { userId, name, description, tags, metadata, rootActionId } = req.body;
 
-    const workflow = await createWorkflow(userId, tags, metadata, rootActionId);
+    const workflow = await createWorkflow(userId, name, description, tags, metadata, rootActionId);
 
     // Optionally handle tags using a Tag table, permisions, or Metadata entries
 
@@ -39,10 +49,10 @@ router.post('/', async (req, res) => {
 
 // PUT /workflows/:workflowId
 router.put('/:workflowId', async (req, res) => {
-    const { metadata, rootActionId } = req.body;
+    const { name, description, metadata, rootActionId } = req.body;
     const { workflowId } = req.params;
 
-    await updateWorkflow(workflowId, metadata, rootActionId);
+    await updateWorkflow(workflowId, name, description, metadata, rootActionId);
 
     res.json({ message: 'Updated' });
 });

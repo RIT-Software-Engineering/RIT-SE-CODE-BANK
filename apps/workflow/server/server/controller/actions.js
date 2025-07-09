@@ -6,10 +6,13 @@ const { actionTypes, permissionTypes } = require('./consts.js') || [];
 // Action CRUD operations //
 ////////////////////////////
 
-async function createAction(userId, actionType = actionTypes[0], metadata = {}) {
+async function createAction(userId, name, description = "", form = "", actionType = actionTypes[0], metadata = {}) {
     const action = await prisma.action.create({
         data: {
             action_type: actionType,
+            name: name,
+            description: description,
+            form: form,
             metadata: {
                 create: Object.entries(metadata).map(([key, value]) => ({
                     key: key,
@@ -35,20 +38,27 @@ async function getActions(queryParams = {}) {
     const actions = await prisma.action.findMany({
         where: queryParams,
         include: {
-            metadata: true
+            metadata: true,
+            previous_action: true,
         }
     });
 
     return actions;
 }
 
-async function updateAction(actionId, actionType = undefined, metadata = {}) {
+async function updateAction(actionId, name, description = "", form = "", actionType = undefined, metadata = {}, next_action_id = null) {
     // Use a transaction for atomicity and performance
     await prisma.$transaction(async () => {
         if (actionType) {
             await prisma.action.update({
                 where: { id: actionId },
-                data: { action_type: actionType }
+                data: {
+                    name: name,
+                    description: description,
+                    form: form,
+                    action_type: actionType,
+                    next_action: { connect: { id: next_action_id } }
+                }
             });
         }
 
@@ -93,10 +103,10 @@ async function createActionChainLink(actionId, nextActionId) {
     const actionChainLink = await prisma.actionChainLinks.create({
         data: {
             action: {
-                connect: {id: actionId}
+                connect: { id: actionId }
             },
             next_action: {
-                connect: {id: nextActionId}
+                connect: { id: nextActionId }
             }
         }
     })
@@ -128,9 +138,6 @@ async function getActionChain(rootActionId) {
 
             const action = await prisma.action.findUnique({
                 where: { id: currentActionId },
-                include: {
-                    next_action: true
-                }
             });
 
             if (!action) {
@@ -139,7 +146,7 @@ async function getActionChain(rootActionId) {
 
             actionChain.push(action);
             currentActionId = null;
-            if (action.next_action) currentActionId = action.next_action.next_action_id; // Move to the next action in the chain
+            if (action.next_action_id) currentActionId = action.next_action_id; // Move to the next action in the chain
         }
     });
 

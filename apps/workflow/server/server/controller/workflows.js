@@ -3,11 +3,11 @@ const prisma = new PrismaClient();
 const { actionTypes } = require('./consts.js') || [];
 const { createAction, deleteAction } = require('./actions.js');
 
-async function createWorkflow(userId, tags = [], metadata = {}, rootActionId = null) { // TODO: Add permissions stuff
+async function createWorkflow(userId, name, description="", tags = [], metadata = {}, rootActionId = null) { // TODO: Add permissions stuff
     let workflow;
 
     await prisma.$transaction(async () => {
-        const action = await createAction(userId, actionTypes[1], metadata);
+        const action = await createAction(userId, name, description, "", actionTypes[1], metadata);
 
         workflow = await prisma.workflowAttributes.create({
             data: {
@@ -54,7 +54,7 @@ async function getWorkflows(queryParams = {}) {
     return workflows;
 }
 
-async function updateWorkflow(workflowId, metadata = {}, rootActionId) {
+async function updateWorkflow(workflowId, name, description="", metadata = {}, rootActionId) {
     // Use a transaction for atomicity and performance
     await prisma.$transaction(async () => {
         let workflow = await prisma.workflowAttributes.findUnique({
@@ -79,6 +79,12 @@ async function updateWorkflow(workflowId, metadata = {}, rootActionId) {
         await prisma.workflowAttributes.update({
             where: { id: workflowId },
             data: {
+                base_action: {
+                    update: {
+                        name: name,
+                        description: description,
+                    }
+                },
                 root_action: { connect: { id: rootActionId } }
             }
         })

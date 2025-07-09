@@ -3,13 +3,18 @@ const router = express.Router();
 const { createAction, getActions, updateAction, deleteAction, getActionChain, createActionChainLink } = require('./../../controller/actions.js');
 const { getWorkflows } = require('./../../controller/workflows.js');
 
+router.get('/:id', async (req, res) => {
+    const { id } = req.params;
 
+    const actions = await getActions({ id: id });
+
+    return res.json(actions[0]);
+})
 // GET /actions
 router.get('/', async (req, res) => {
-    const { actionId, workflowId } = req.query;
+    const { workflowId } = req.query;
 
     const params = {};
-    if (actionId) params.id = actionId;
 
     const actions = await getActions(params);
 
@@ -30,20 +35,23 @@ router.get('/', async (req, res) => {
 
 // POST /actions
 router.post('/', async (req, res) => {
-    const { actionType, metadata } = req.body;
+    const { name, description, form, actionType, metadata } = req.body;
     const { userId } = req.body; // TODO: make this work with req.user instead
 
-    const action = await createAction(userId, actionType, metadata);
+    const action = await createAction(userId, name, description, form, actionType, metadata);
 
     res.json(action);
 });
 
 // PUT /actions/:actionId
 router.put('/:actionId', async (req, res) => {
-    const { actionType, metadata } = req.body;
+    console.log("in put");
+    const { name, description, form, actionType, metadata, nextActionId } = req.body;
     const { actionId } = req.params;
 
-    await updateAction(actionId, actionType, metadata);
+    console.log(req.body);
+
+    await updateAction(actionId, name, description, form, actionType, metadata, nextActionId);
 
     res.json({ message: 'Updated' });
 });

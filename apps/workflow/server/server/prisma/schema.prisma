@@ -35,19 +35,22 @@ model User {
 }
 
 model Action {
-  id          String     @id @default(uuid()) @db.Char(36)
-  action_type ActionType @default(simple)
-  is_frozen   Boolean    @default(false) // Indicates if the action is frozen and cannot be modified (only the creator can change this)
+  id             String     @id @default(uuid()) @db.Char(36)
+  name           String
+  description    String?    @db.Text
+  form           String?    @db.Text
+  action_type    ActionType @default(simple)
+  is_frozen      Boolean    @default(false) // Indicates if the action is frozen and cannot be modified (only the creator can change this)
+  next_action_id String?    @unique @db.Char(36)
 
   metadata            Metadata[]
   reference_endpoints ReferenceEndpoints[]
   children            ActionChildRelationships[] @relation("ParentOf") // List of child actions
   parent              ActionChildRelationships?  @relation("ChildOf") // Only one parent per Action
-  next_action         ActionChainLinks?          @relation("NextAction") // Next action in a chain
-  previous_action     ActionChainLinks?          @relation("PreviousAction") // Previous action in a chain
+  next_action         Action?                    @relation("NextAction", fields: [next_action_id], references: [id]) // Next action in a chain
+  previous_action     Action?                    @relation("NextAction")
   base_action_of      WorkflowAttributes?        @relation("base_action")
   root_action_of      WorkflowAttributes[]       @relation("root_action")
-  // workflow_action_relationships WorkflowActionRelationships?
   permissions         Permissions[]
   action_states       ActionStates[]
 }
@@ -94,15 +97,6 @@ model ActionChildRelationships {
 
   action       Action @relation("ParentOf", fields: [action_id], references: [id], onDelete: Cascade)
   child_action Action @relation("ChildOf", fields: [child_action_id], references: [id], onDelete: Cascade)
-}
-
-model ActionChainLinks {
-  id             String @id @default(uuid()) @db.Char(36)
-  action_id      String @unique @db.Char(36)
-  next_action_id String @unique @db.Char(36)
-
-  action      Action @relation("NextAction", fields: [action_id], references: [id], onDelete: Cascade)
-  next_action Action @relation("PreviousAction", fields: [next_action_id], references: [id], onDelete: Cascade)
 }
 
 model WorkflowAttributes {

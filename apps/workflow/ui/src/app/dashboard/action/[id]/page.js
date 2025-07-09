@@ -3,7 +3,7 @@
 export default async function ActionPage({ params }) {
     const { id } = await params;
     const url = process.env.SERVER_URL || ""
-    const data = await fetch(url + "/actions?actionId=" + id,
+    const data = await fetch(url + "/actions/" + id,
         {
             method: "GET",
             headers: {
@@ -11,7 +11,7 @@ export default async function ActionPage({ params }) {
             }
         }
     )
-    const action = (await data.json())[0];
+    const action = await data.json();
 
     return (
         <>
