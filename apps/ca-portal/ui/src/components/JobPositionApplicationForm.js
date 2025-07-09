@@ -102,7 +102,7 @@ export default function ApplicationForm({ user, position, onClose, onApplySucces
             <input 
               type="text" 
               {...register("grade", { 
-                required: "Your grade for this course is required",
+                required: position.gradeRequirement ? "Your grade for this course is required" : false,
                 validate: (enteredGrade) => {
                   // If the position has no grade requirement, validation passes.
                   console.log("Position grade requirement:", position.gradeRequirement);

@@ -33,7 +33,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions, on
                 fullName: user.name || '',
                 pronouns: user.pronouns || '',
                 major: user.candidate?.major || '',
-                gradeLevel: user.candidate?.year || '',
+                yearLevel: user.candidate?.year || '',
                 courses: user.courseHistory?.map(ch => ch.courseCode) || [],
                 graduateStatus: user.candidate?.graduateStatus || '',
                 isEmployee: user.candidate?.wasPriorEmployee ? 'yes' : 'no',
@@ -71,8 +71,8 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions, on
         let year;
         if (data.graduateStatus === "GRADUATE") {
             year = 6;
-        } else if (data.gradeLevel) {
-            year = parseInt(data.gradeLevel, 10);
+        } else if (data.yearLevel) {
+            year = parseInt(data.yearLevel, 10);
             if (isNaN(year)) {
                 throw new Error("Invalid year level selected. Please choose a valid year.");
             }
@@ -220,16 +220,16 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions, on
                                     </div>
                                     {graduateStatus === 'UNDERGRADUATE' && (
                                         <div>
-                                            <label htmlFor="gradeLevel" className={formLabel}>Year Level <span className="text-red-500">*</span></label>
+                                            <label htmlFor="yearLevel" className={formLabel}>Year Level <span className="text-red-500">*</span></label>
                                             <select 
-                                                id="gradeLevel" 
-                                                {...register('gradeLevel', { required: 'Please select your year level.' })} 
-                                                className={`${inputField} ${errors.gradeLevel ? 'border-red-500' : 'border-slate-300'}`}
+                                                id="yearLevel" 
+                                                {...register('yearLevel', { required: 'Please select your year level.' })} 
+                                                className={`${inputField} ${errors.yearLevel ? 'border-red-500' : 'border-slate-300'}`}
                                             >
                                                 <option value="" disabled>Select Year...</option>
                                                 {[2, 3, 4, 5].map(level => <option key={level} value={level}>{level}</option>)}
                                             </select>
-                                            {errors.gradeLevel && <p className="text-red-500 text-xs mt-1">{errors.gradeLevel.message}</p>}
+                                            {errors.yearLevel && <p className="text-red-500 text-xs mt-1">{errors.yearLevel.message}</p>}
                                         </div>
                                     )}
                                 </fieldset>

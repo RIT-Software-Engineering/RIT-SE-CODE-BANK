@@ -147,7 +147,7 @@ export default function PositionsCard({ position, index }) {
               <span>{formatDate(position.startDate)} - {formatDate(position.endDate)}</span>
             </div>
           </div>
-          {currentUser?.role === 'CANDIDATE' && renderApplyButton()}
+          {(currentUser?.role === 'CANDIDATE' || currentUser?.role === 'EMPLOYEE') && renderApplyButton()}
         </div>
         <div className='mt-4 pt-4 border-t border-gray-200'>
           <p className='text-gray-700 mb-4'>{position.course.description}</p>
