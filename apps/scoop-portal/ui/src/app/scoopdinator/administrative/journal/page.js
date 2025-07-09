@@ -53,7 +53,7 @@ export default function Journal() {
             <Typography>
                 Notes:
             </Typography>
-            <Box sx={{ border: '1px solid black', padding: '1em' }}>
+            <Box sx={{ border: '1px solid black', borderRadius: '10px', padding: '1em' }}>
                 {JorunalEntry.notes}
             </Box>
             </Container>
