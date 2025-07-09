@@ -63,22 +63,6 @@ const Section: React.FC<{
                                         ).toLocaleDateString()}
                                     </div>
                                 </div>
-                                {/* <div className="flex items-center gap-6">
-                                    <div className="text-sm">
-                                        <span className="font-semibold">
-                                            {a.questionsCount}
-                                        </span>{" "}
-                                        questions
-                                    </div>
-                                    {showCompletedQuestions && (
-                                        <div className="text-sm text-green-700">
-                                            <span className="font-semibold">
-                                                {a.completedQuestions ?? 0}
-                                            </span>{" "}
-                                            answered
-                                        </div>
-                                    )}
-                                </div> */}
                             </div>
                         </Link>
                     ) : (
@@ -97,21 +81,8 @@ const Section: React.FC<{
                                     {new Date(a.dueDate).toLocaleDateString()}
                                 </div>
                             </div>
-                            {/* <div className="flex items-center gap-6">
-                                <div className="text-sm">
-                                    <span className="font-semibold">
-                                        {a.questionsCount}
-                                    </span>{" "}
-                                    questions
-                                </div>
-                            </div> */}
                         </div>
                     )}
-                    {/* {showCompletedByOthers && (
-                        <Link href={""}>
-                            <PeersBox count={a.completedByOthers ?? 0} />
-                        </Link>
-                    )} */}
                 </Fragment>
             ))}
         </div>
