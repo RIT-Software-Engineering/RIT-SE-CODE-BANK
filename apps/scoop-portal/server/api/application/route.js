@@ -62,4 +62,15 @@ router.post("/", async (req, res) => {
   
 })
 
+// GET all applications
+router.get("/", async (req, res) => {
+  try {
+    const applications = await prisma.application.findMany();
+    res.json(applications);
+  } catch (error) {
+    console.error("Error fetching applications:", error);
+    res.status(500).json({ error: "Failed to fetch applications" });
+  }
+});
+
 export default router;

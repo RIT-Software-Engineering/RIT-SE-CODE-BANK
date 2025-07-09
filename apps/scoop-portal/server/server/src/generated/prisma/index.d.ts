@@ -1068,6 +1068,7 @@ export namespace Prisma {
     remoteAbility: string | null
     additionalComments: string | null
     resumeFile: string | null
+    accepted: boolean | null
     createdAt: Date | null
   }
 
@@ -1090,6 +1091,7 @@ export namespace Prisma {
     remoteAbility: string | null
     additionalComments: string | null
     resumeFile: string | null
+    accepted: boolean | null
     createdAt: Date | null
   }
 
@@ -1112,6 +1114,7 @@ export namespace Prisma {
     remoteAbility: number
     additionalComments: number
     resumeFile: number
+    accepted: number
     createdAt: number
     _all: number
   }
@@ -1146,6 +1149,7 @@ export namespace Prisma {
     remoteAbility?: true
     additionalComments?: true
     resumeFile?: true
+    accepted?: true
     createdAt?: true
   }
 
@@ -1168,6 +1172,7 @@ export namespace Prisma {
     remoteAbility?: true
     additionalComments?: true
     resumeFile?: true
+    accepted?: true
     createdAt?: true
   }
 
@@ -1190,6 +1195,7 @@ export namespace Prisma {
     remoteAbility?: true
     additionalComments?: true
     resumeFile?: true
+    accepted?: true
     createdAt?: true
     _all?: true
   }
@@ -1299,6 +1305,7 @@ export namespace Prisma {
     remoteAbility: string | null
     additionalComments: string | null
     resumeFile: string | null
+    accepted: boolean | null
     createdAt: Date
     _count: ApplicationCountAggregateOutputType | null
     _avg: ApplicationAvgAggregateOutputType | null
@@ -1340,6 +1347,7 @@ export namespace Prisma {
     remoteAbility?: boolean
     additionalComments?: boolean
     resumeFile?: boolean
+    accepted?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["application"]>
 
@@ -1364,10 +1372,11 @@ export namespace Prisma {
     remoteAbility?: boolean
     additionalComments?: boolean
     resumeFile?: boolean
+    accepted?: boolean
     createdAt?: boolean
   }
 
-  export type ApplicationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "lastName" | "firstName" | "ritEmail" | "coopsCompleted" | "startSemester" | "coursesTaken" | "coopSearchStartDate" | "coopSearchPlatforms" | "pendingOffers" | "pendingOffersDetails" | "rejectionLetters" | "rejectionLettersDetails" | "SEcoopInterest" | "SEcoopAvailability" | "remoteAbility" | "additionalComments" | "resumeFile" | "createdAt", ExtArgs["result"]["application"]>
+  export type ApplicationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "lastName" | "firstName" | "ritEmail" | "coopsCompleted" | "startSemester" | "coursesTaken" | "coopSearchStartDate" | "coopSearchPlatforms" | "pendingOffers" | "pendingOffersDetails" | "rejectionLetters" | "rejectionLettersDetails" | "SEcoopInterest" | "SEcoopAvailability" | "remoteAbility" | "additionalComments" | "resumeFile" | "accepted" | "createdAt", ExtArgs["result"]["application"]>
 
   export type $ApplicationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Application"
@@ -1391,6 +1400,7 @@ export namespace Prisma {
       remoteAbility: string | null
       additionalComments: string | null
       resumeFile: string | null
+      accepted: boolean | null
       createdAt: Date
     }, ExtArgs["result"]["application"]>
     composites: {}
@@ -1779,6 +1789,7 @@ export namespace Prisma {
     readonly remoteAbility: FieldRef<"Application", 'String'>
     readonly additionalComments: FieldRef<"Application", 'String'>
     readonly resumeFile: FieldRef<"Application", 'String'>
+    readonly accepted: FieldRef<"Application", 'Boolean'>
     readonly createdAt: FieldRef<"Application", 'DateTime'>
   }
     
@@ -3953,6 +3964,7 @@ export namespace Prisma {
     remoteAbility: 'remoteAbility',
     additionalComments: 'additionalComments',
     resumeFile: 'resumeFile',
+    accepted: 'accepted',
     createdAt: 'createdAt'
   };
 
@@ -4112,6 +4124,7 @@ export namespace Prisma {
     remoteAbility?: StringNullableFilter<"Application"> | string | null
     additionalComments?: StringNullableFilter<"Application"> | string | null
     resumeFile?: StringNullableFilter<"Application"> | string | null
+    accepted?: BoolNullableFilter<"Application"> | boolean | null
     createdAt?: DateTimeFilter<"Application"> | Date | string
   }
 
@@ -4134,6 +4147,7 @@ export namespace Prisma {
     remoteAbility?: SortOrderInput | SortOrder
     additionalComments?: SortOrderInput | SortOrder
     resumeFile?: SortOrderInput | SortOrder
+    accepted?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _relevance?: ApplicationOrderByRelevanceInput
   }
@@ -4160,6 +4174,7 @@ export namespace Prisma {
     remoteAbility?: StringNullableFilter<"Application"> | string | null
     additionalComments?: StringNullableFilter<"Application"> | string | null
     resumeFile?: StringNullableFilter<"Application"> | string | null
+    accepted?: BoolNullableFilter<"Application"> | boolean | null
     createdAt?: DateTimeFilter<"Application"> | Date | string
   }, "id">
 
@@ -4182,6 +4197,7 @@ export namespace Prisma {
     remoteAbility?: SortOrderInput | SortOrder
     additionalComments?: SortOrderInput | SortOrder
     resumeFile?: SortOrderInput | SortOrder
+    accepted?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: ApplicationCountOrderByAggregateInput
     _avg?: ApplicationAvgOrderByAggregateInput
@@ -4212,6 +4228,7 @@ export namespace Prisma {
     remoteAbility?: StringNullableWithAggregatesFilter<"Application"> | string | null
     additionalComments?: StringNullableWithAggregatesFilter<"Application"> | string | null
     resumeFile?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    accepted?: BoolNullableWithAggregatesFilter<"Application"> | boolean | null
     createdAt?: DateTimeWithAggregatesFilter<"Application"> | Date | string
   }
 
@@ -4364,6 +4381,7 @@ export namespace Prisma {
     remoteAbility?: string | null
     additionalComments?: string | null
     resumeFile?: string | null
+    accepted?: boolean | null
     createdAt?: Date | string
   }
 
@@ -4386,6 +4404,7 @@ export namespace Prisma {
     remoteAbility?: string | null
     additionalComments?: string | null
     resumeFile?: string | null
+    accepted?: boolean | null
     createdAt?: Date | string
   }
 
@@ -4407,6 +4426,7 @@ export namespace Prisma {
     remoteAbility?: NullableStringFieldUpdateOperationsInput | string | null
     additionalComments?: NullableStringFieldUpdateOperationsInput | string | null
     resumeFile?: NullableStringFieldUpdateOperationsInput | string | null
+    accepted?: NullableBoolFieldUpdateOperationsInput | boolean | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4429,6 +4449,7 @@ export namespace Prisma {
     remoteAbility?: NullableStringFieldUpdateOperationsInput | string | null
     additionalComments?: NullableStringFieldUpdateOperationsInput | string | null
     resumeFile?: NullableStringFieldUpdateOperationsInput | string | null
+    accepted?: NullableBoolFieldUpdateOperationsInput | boolean | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4451,6 +4472,7 @@ export namespace Prisma {
     remoteAbility?: string | null
     additionalComments?: string | null
     resumeFile?: string | null
+    accepted?: boolean | null
     createdAt?: Date | string
   }
 
@@ -4472,6 +4494,7 @@ export namespace Prisma {
     remoteAbility?: NullableStringFieldUpdateOperationsInput | string | null
     additionalComments?: NullableStringFieldUpdateOperationsInput | string | null
     resumeFile?: NullableStringFieldUpdateOperationsInput | string | null
+    accepted?: NullableBoolFieldUpdateOperationsInput | boolean | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4494,6 +4517,7 @@ export namespace Prisma {
     remoteAbility?: NullableStringFieldUpdateOperationsInput | string | null
     additionalComments?: NullableStringFieldUpdateOperationsInput | string | null
     resumeFile?: NullableStringFieldUpdateOperationsInput | string | null
+    accepted?: NullableBoolFieldUpdateOperationsInput | boolean | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4747,6 +4771,7 @@ export namespace Prisma {
     remoteAbility?: SortOrder
     additionalComments?: SortOrder
     resumeFile?: SortOrder
+    accepted?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -4774,6 +4799,7 @@ export namespace Prisma {
     remoteAbility?: SortOrder
     additionalComments?: SortOrder
     resumeFile?: SortOrder
+    accepted?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -4796,6 +4822,7 @@ export namespace Prisma {
     remoteAbility?: SortOrder
     additionalComments?: SortOrder
     resumeFile?: SortOrder
+    accepted?: SortOrder
     createdAt?: SortOrder
   }
 

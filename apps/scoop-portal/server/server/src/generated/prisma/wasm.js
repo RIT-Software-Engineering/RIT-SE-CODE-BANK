@@ -139,6 +139,7 @@ exports.Prisma.ApplicationScalarFieldEnum = {
   remoteAbility: 'remoteAbility',
   additionalComments: 'additionalComments',
   resumeFile: 'resumeFile',
+  accepted: 'accepted',
   createdAt: 'createdAt'
 };
 

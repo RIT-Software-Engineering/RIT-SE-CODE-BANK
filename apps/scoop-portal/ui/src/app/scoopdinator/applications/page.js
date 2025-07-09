@@ -17,35 +17,12 @@ import {
   MenuItem,
   Paper,
 } from "@mui/material";
+// import { application } from "express";
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
-const mockApplications = [
-  {
-    id: 1,
-    name: "Alice Johnson",
-    email: "alice@rit.edu",
-    status: "unprocessed",
-    hasBeenRead: false,
-    submittedAt: "2025-06-01",
-  },
-  {
-    id: 2,
-    name: "Bob Smith",
-    email: "bob@rit.edu",
-    status: "accepted",
-    hasBeenRead: true,
-    submittedAt: "2025-06-02",
-  },
-  {
-    id: 3,
-    name: "Cynthia Lee",
-    email: "cynthia@rit.edu",
-    status: "rejected",
-    hasBeenRead: true,
-    submittedAt: "2025-06-03",
-  },
-];
+
+
 
 export default function SupervisorApplicationsPage() {
   const [applications, setApplications] = useState([]);
@@ -53,7 +30,17 @@ export default function SupervisorApplicationsPage() {
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    setApplications(mockApplications);
+    const fetchApps = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/application`);
+        const data = await res.json();
+        setApplications(data);
+      } catch (err) {
+        console.error("Failed to fetch applications:", err);
+      }
+    };
+
+      fetchApps();
   }, []);
 
   const handleOpen = (app) => {
@@ -61,6 +48,7 @@ export default function SupervisorApplicationsPage() {
     setApplications((prev) =>
       prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
     );
+    console.log("opening app:", selectedApp.firstName);
   };
 
   const handleClose = () => setSelectedApp(null);
@@ -116,7 +104,8 @@ export default function SupervisorApplicationsPage() {
         <Table>
           <TableHead sx={{ backgroundColor: "#F76902" }}>
             <TableRow>
-              <TableCell sx={{ color: "#fff" }}>Name</TableCell>
+              <TableCell sx={{ color: "#fff" }}>First Name</TableCell>
+              <TableCell sx={{ color: "#fff" }}>Last Name</TableCell>
               <TableCell sx={{ color: "#fff" }}>Email</TableCell>
               <TableCell sx={{ color: "#fff" }}>Submitted</TableCell>
               <TableCell sx={{ color: "#fff" }} align="right">
@@ -136,9 +125,10 @@ export default function SupervisorApplicationsPage() {
                   },
                 }}
               >
-                <TableCell>{app.name}</TableCell>
-                <TableCell>{app.email}</TableCell>
-                <TableCell>{app.submittedAt}</TableCell>
+                <TableCell>{app.firstName}</TableCell>
+                <TableCell>{app.lastName}</TableCell>
+                <TableCell>{app.ritEmail}</TableCell>
+                <TableCell>{app.createdAt}</TableCell>
                 <TableCell align="right">
                   <Button
                     variant="outlined"
@@ -172,21 +162,22 @@ export default function SupervisorApplicationsPage() {
                 fontWeight: 600,
               }}
             >
-              Application: {selectedApp.name}
+              Application: {(selectedApp.firstName, selectedApp.lastName)}
             </DialogTitle>
             <DialogContent dividers>
-              <Typography><strong>Email:</strong> {selectedApp.email}</Typography>
-              <Typography><strong>Submitted:</strong> {selectedApp.submittedAt}</Typography>
+              <Typography><strong>Email:</strong> {selectedApp.ritEmail}</Typography>
+              <Typography><strong>Submitted:</strong> {selectedApp.createdAt}</Typography>
               <Typography mt={2} sx={{ fontStyle: "italic" }}>
-                (Application content placeholder here...)
+                {JSON.stringify(selectedApp)}
               </Typography>
 
               <Box mt={3}>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Current Status:
+                  Current Status: {selectedApp.accepted}
                 </Typography>
                 <Typography variant="h6" sx={{ color: "#7D55C7", fontWeight: 500 }}>
-                  {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)}
+                  {/* {application} */}
+                  {/* {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)} */}
                 </Typography>
               </Box>
             </DialogContent>

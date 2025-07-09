@@ -17,5 +17,6 @@ model Application {
   remoteAbility String?
   additionalComments String?
   resumeFile String?
+  accepted Boolean? @default (false)
   createdAt DateTime @default(now())
 }
