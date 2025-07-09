@@ -71,6 +71,11 @@ const workflows = [
         description: 'Review and manage reports related to co-op experiences.',
         link: '/scoopdinator/administrative/reports',
       },
+      {
+        title: 'Open Communications Journal',
+        description: 'View your past communications with others and leave notes.',
+        link: '/scoopdinator/administrative/journal',
+      },
     ],
   },
 ];
