@@ -1,321 +1,610 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import {
-  TextField,
-  FormControl,
-  Select,
-  Button,
-  FormLabel,
-  InputLabel,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
-  Typography,
-  Box,
-  Paper,
-  Grid,
+    TextField,
+    FormControl,
+    Select,
+    Button,
+    FormLabel,
+    InputLabel,
+    FormControlLabel,
+    FormGroup,
+    helperText,
+    RadioGroup,
+    Radio,
+    Checkbox,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    MenuItem,
+    Typography,
+    Box,
+    Paper,
+    Grid,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
-
+import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 
 const MODAL_STATUS = { SUCCESS: "success", FAIL: "fail", CLOSED: false };
 const APPLICATION_STATUSES = {
-  SUBMITTED: "submitted",
-  PENDING_REVIEW: "pending review",
-  ACCEPTED: "accepted",
-  DENIED: "denied",
+    SUBMITTED: "submitted",
+    PENDING_REVIEW: "pending review",
+    ACCEPTED: "accepted",
+    DENIED: "denied",
 };
 
 function ApplicationPage() {
-  // const history = useHistory();
-  const [formData, setActualFormData] = useState({
-    assignment_of_rights: "full_rights",
-  });
-  const [formFiles, setFormFiles] = useState(null);
-  const [modalOpen, setModalOpen] = useState(MODAL_STATUS.CLOSED);
-  const [errors, setErrors] = useState({});
-  const [semesterData, setSemesterData] = useState([]);
-  // const [semesterData, setSemesterData] = useState([]);
-
-  useEffect(() => {
-    // SecureFetch(config.url.API_GET_SEMESTERS)
-    // .then((res) => res.json())
-    // .then((data) => setSemesterData(data))
-    // .catch((err) => console.error("Failed to fetch semesters:", err));
-
-    // Temporary hardcoded dates:
-    let data = [
-      { semester_id: 1, name: "Fall 2025" },
-      { semester_id: 2, name: "Spring 2026" },
-      { semester_id: 3, name: "Summer 2026" },
-      { semester_id: 3, name: "Fall 2027" },
-    ];
-    setSemesterData(data);
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
-    if (type === "file") {
-      setFormFiles(files);
-    } else {
-      setActualFormData({
-        ...formData,
-        [name]: type === "checkbox" ? checked : value,
-      });
-    }
-  };
-
-  const handleDropdownChange = (name, value) => {
-    setActualFormData({
-      ...formData,
-      [name]: value,
+    // const history = useHistory();
+    const [formValues, setActualformValues] = useState({
+        assignment_of_rights: "full_rights",
     });
-  };
+    // const [completeFormData, setCompleteFormData] = useState({});
+    const [formFiles, setFormFiles] = useState(null);
+    const [modalOpen, setModalOpen] = useState(MODAL_STATUS.CLOSED);
+    const [errors, setErrors] = useState({});
+    const [semesterData, setSemesterData] = useState([]);
+    const [courseData, setCourseData] = useState([]);
 
-  const submitApplication = async (e) => {
-    e.preventDefault();
+    useEffect(() => {
+        // SecureFetch(config.url.API_GET_SEMESTERS)
+        // .then((res) => res.json())
+        // .then((data) => setSemesterData(data))
+        // .catch((err) => console.error("Failed to fetch semesters:", err));
 
-    if (modalOpen) return;
+        // Temporary hardcoded dates:
+        let data = [
+            { semester_id: 1, name: "Fall 2019" },
+            { semester_id: 2, name: "Spring 2019" },
+            { semester_id: 3, name: "Fall 2020" },
+            { semester_id: 4, name: "Spring 2021" },
+            { semester_id: 5, name: "Fall 2021" },
+            { semester_id: 6, name: "Spring 2022" },
+            { semester_id: 7, name: "Fall 2022" },
+            { semester_id: 8, name: "Spring 2023" },
+            { semester_id: 9, name: "Fall 2023" },
+            { semester_id: 10, name: "Spring 2024" },
+            { semester_id: 11, name: "Fall 2024" },
+        ];
+        setSemesterData(data);
+    }, []);
 
-    const body = new FormData();
-    Object.keys(formData).forEach((key) => body.append(key, formData[key]));
-    if (formFiles) {
-      for (let i = 0; i < formFiles.length; i++) {
-        body.append("attachments", formFiles[i]);
-      }
-    }
+    useEffect(() => {
+        // Temporary hardcoded courses:
+        let data = [
+            { course_id: 1, name: "SWEN-261 Intro to SE" },
+            { course_id: 2, name: "SWEN-262 SW Subsystems" },
+            { course_id: 3, name: "SWEN-256 Process & Prj Mgmt" },
+            { course_id: 4, name: "SWEN-331 Secure SW" },
+            { course_id: 5, name: "SWEN-344 Web Eng" },
+            { course_id: 6, name: "SWEN-440 Architectures" },
+            { course_id: 7, name: "SWEN-444 Human-Centered" },
+        ];
+        setCourseData(data);
+    }, []);
 
-    try {
-      const response = await SecureFetch(
-        config.url.API_POST_SUBMIT_APPLICATION,
-        {
-          method: "post",
-          body,
-        },
-      );
+    const handleChange = (e) => {
+        const { name, value, type, checked, files } = e.target;
+        if (type === "file") {
+            setFormFiles(files);
+        } else {
+            //handle boolean if any 
+            let parsedValue =
+                value === "true" ? true : value === "false" ? false : value;
 
-      if (response.status === 200) {
-        setModalOpen(MODAL_STATUS.SUCCESS);
-      } else {
-        setModalOpen(MODAL_STATUS.FAIL);
-        const errorData = await response.json();
-        if (errorData?.errors) {
-          const newErrors = {};
-          errorData.errors.forEach((err) => {
-            newErrors[err.param] = err.msg;
-          });
-          setErrors(newErrors);
+            setActualformValues({
+                ...formValues,
+                [name]: type === "checkbox" ? checked : parsedValue,
+            });
         }
-      }
-    } catch (err) {
-      console.error(err);
+    };
+
+    const handleDropdownChange = (name, value) => {
+        setActualformValues({
+            ...formValues,
+            [name]: value,
+        });
+    };
+
+    async function postFormData(data) {
+        const response = await fetch(
+            process.env.NEXT_PUBLIC_API_URL + "/api/application",
+            {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+        console.log("Submitting application with data:", data, formFiles);
+
+        return response;
     }
-  };
 
-  const closeModal = () => {
-    if (modalOpen === MODAL_STATUS.SUCCESS) {
-      setActualFormData({});
-      setFormFiles(null);
-      setErrors({});
-    }
-    setModalOpen(MODAL_STATUS.CLOSED);
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (modalOpen) return;
 
-  const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1,
-});
+        // const body = new FormData();
+        // Object.keys(formData).forEach((key) => body.append(key, formData[key]));
+        // if (formFiles) {
+        //   for (let i = 0; i < formFiles.length; i++) {
+        //     body.append("attachments", formFiles[i]);
+        //   }
+        // }
 
+        //array to string
+        //  completeFormData = {
+        // ...formValues,
+        // coursesTaken: selectedCourses.join(", "),
 
-  return (
-    <>
-      <Dialog open={modalOpen !== MODAL_STATUS.CLOSED} onClose={closeModal}>
-        <DialogTitle>
-          {modalOpen === MODAL_STATUS.SUCCESS
-            ? "Success"
-            : "There was an issue"}
-        </DialogTitle>
-        <DialogContent>
-          <Typography>
-            {modalOpen === MODAL_STATUS.SUCCESS
-              ? "Your application has been received."
-              : "We were unable to submit your application."}
-          </Typography>
-        </DialogContent>
+        const selectedCourses = courseData
+            .filter((course) => formValues[course.name])
+            .map((course) => course.name)
+            .join(", ");
 
-        <DialogActions>
-          <Button onClick={closeModal} autoFocus>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+        const completeFormData = {
+            ...formValues,
+            coursesTaken: selectedCourses,
+        };
 
-      <Paper component={Grid} sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 5, py: 3 }}>
-        <Typography variant="h4" gutterBottom align="center">
-          Apply For SCOOP
-        </Typography>
-        
+        try {
+            const response = await postFormData(completeFormData);
+            const result = await response.json();
+            console.log("Response from server:", result);
+            console.log("Response status:", response.status);
 
-        <Box component="form" onSubmit={submitApplication} noValidate>
-        
-          <TextField
-            required
-            fullWidth
-            margin="normal"
-            
-            label="Full Name"
-            name="name"
-            value={formData.title || ""}
-            onChange={handleChange}
-            error={!!errors.title}
-            helperText={errors.title}
-          />
-      
-          <TextField
-          required
-          fullWidth
-          margin="normal"
-          label="RIT Email"
-          name="email"
-          value={formData.email || ""}
-          onChange={handleChange}
-          error={!!errors.email}
-          helperText={errors.email}
-        />
-          <TextField
-          required
-          fullWidth
-          margin="normal"
-          label="Phone Number"
-          name="phone"
-          value={formData.phone || ""}
-          onChange={handleChange}
-          error={!!errors.phone}
-          helperText={errors.phone}
-        />
-        <FormControl fullWidth margin="normal">
-            {/* <FormLabel>Academic Standing</FormLabel> */}
-            <InputLabel id="academic-standing-label">Academic Standing</InputLabel>
-            <Select
-              required
-              margin="normal"
-              label="academic-standing"
-              onChange={handleChange}
-              error={!!errors.description}
-              helperText={errors.description}
+            if (response.status === 200) {
+                setModalOpen(MODAL_STATUS.SUCCESS);
+            } else {
+                setModalOpen(MODAL_STATUS.FAIL);
+                const errorData = result;
+                if (errorData?.errors) {
+                    const newErrors = {};
+                    errorData.errors.forEach((err) => {
+                        newErrors[err.param] = err.msg;
+                    });
+                    setErrors(newErrors);
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const closeModal = () => {
+        if (modalOpen === MODAL_STATUS.SUCCESS) {
+            setActualformValues({});
+            setFormFiles(null);
+            setErrors({});
+        }
+        setModalOpen(MODAL_STATUS.CLOSED);
+    };
+
+    const VisuallyHiddenInput = styled("input")({
+        clip: "rect(0 0 0 0)",
+        clipPath: "inset(50%)",
+        height: 1,
+        overflow: "hidden",
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        whiteSpace: "nowrap",
+        width: 1,
+    });
+
+    return (
+        <>
+            <Dialog
+                open={modalOpen !== MODAL_STATUS.CLOSED}
+                onClose={closeModal}
             >
-              <MenuItem value={1}>2nd Year</MenuItem>
-              <MenuItem value={2}>3rd Year</MenuItem>
-              <MenuItem value={3}>4th Year</MenuItem>
-              <MenuItem value={3}>5th Year</MenuItem>
-            </Select>
-    </FormControl>
-<FormControl fullWidth margin="normal">
-            <InputLabel id="semester-label">Expected graduation date</InputLabel>
-          <Select
-            
-            required
-            label="Semester"
-            name="semester"
-            value={formData.semester || ""}
-            onChange={(e) => handleDropdownChange("semester", e.target.value)}
-            error={!!errors.semester}
-            helperText={errors.semester}
-          >
-            {semesterData.map((semester) => (
-              <MenuItem key={semester.semester_id} value={semester.semester_id}>
-                {semester.name}
-              </MenuItem>
-            ))}
-          </Select>
-          </FormControl>
+                <DialogTitle>
+                    {modalOpen === MODAL_STATUS.SUCCESS
+                        ? "Success"
+                        : "There was an issue"}
+                </DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        {modalOpen === MODAL_STATUS.SUCCESS
+                            ? "Your application has been received."
+                            : "We were unable to submit your application."}
+                    </Typography>
+                </DialogContent>
 
-          <FormControl>
-            <FormLabel>Have you completed a coop before?</FormLabel>
-            <RadioGroup defaultValue="Yes" name="radio-buttons-group">
-              <FormControlLabel value="Yes" control={<Radio />} label="Yes" />
-              <FormControlLabel value="No" control={<Radio />} label="No" />
-            </RadioGroup>
-          </FormControl>
-          
-          <FormControl fullWidth >
-            <FormLabel>How many coop semesters have you completed?</FormLabel>
-            <Select
-              required
-              margin="normal"
-              label="coops-completed"
-              onChange={handleChange}
-              error={!!errors.description}
-              helperText={errors.description}
+                <DialogActions>
+                    <Button onClick={closeModal} autoFocus>
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Paper
+                component={Grid}
+                sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 5, py: 3 }}
             >
-              <MenuItem value={0}>None</MenuItem>
-              <MenuItem value={1}>One</MenuItem>
-              <MenuItem value={2}>Two</MenuItem>
-              <MenuItem value={3}>Three</MenuItem>
-            </Select>
-    </FormControl>
-          
-          <FormControl fullWidth margin="normal">
-            <FormLabel>Tell us about your skills and experience:</FormLabel>
-          <TextField
-            required
-            fullWidth
-            margin="normal"
-            // label="skills"
-            name="skills"
-            value={formData.description || ""}
-            multiline
-            rows={4}
-            onChange={handleChange}
-            error={!!errors.description}
-            helperText={errors.description}
-          />
-          </FormControl>
-          
-          <Button
-          required
-            component="label"
-            variant="contained"
-            tabIndex={-1}
-            startIcon={<FileUploadOutlinedIcon />}
-          >
-            Upload Resume
-            <VisuallyHiddenInput
-              type="file"
-              name="resume"
-              accept=".pdf,.doc,.docx"
-              onChange={handleChange}
-            />
+                <Typography variant="h4" gutterBottom align="center">
+                    Application for Unpaid SE Co-op Alternative
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                    This form is meant for use by invitation only and is for SE
+                    students who have been in contact with the SE Department
+                    regarding potential delayed graduation due to unfulfilled
+                    Co-op requirements. We want to learn more about you and your
+                    specific situation to see if we can help. That said, it is
+                    imperative that you keep looking for paid co-op employment.
+                </Typography>
 
-          </Button>
+                <Box component="form" onSubmit={handleSubmit} noValidate>
+                    <TextField
+                        required
+                        fullWidth
+                        margin="normal"
+                        label="Last Name"
+                        name="lastName"
+                        value={formValues.lastName || ""}
+                        onChange={handleChange}
+                        error={!!errors.lastName}
+                        helperText={errors.lastName}
+                    />
+                    <TextField
+                        required
+                        fullWidth
+                        margin="normal"
+                        label="First Name"
+                        name="firstName"
+                        value={formValues.firstName || ""}
+                        onChange={handleChange}
+                        error={!!errors.firstName}
+                        helperText={errors.firstName}
+                    />
 
-          <Box mt={2} textAlign="center">
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            sx={{ mt: 2 }}
-          >
-            Submit Application
-          </Button>
-          </Box>
-        </Box>
-      </Paper>
-    </>
-  );
+                    <TextField
+                        required
+                        fullWidth
+                        margin="normal"
+                        label="RIT Email"
+                        name="ritEmail"
+                        value={formValues.ritEmail || ""}
+                        onChange={handleChange}
+                        error={!!errors.ritEmail}
+                    />
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel>Number of Co-op blocks completed?</FormLabel>
+                        <Select
+                            required
+                            // margin="normal"
+                            label="coopsCompleted"
+                            name="coopsCompleted"
+                            value={formValues["coopsCompleted"] || ""}
+                            onChange={(e) =>
+                                handleDropdownChange(
+                                    "coopsCompleted",
+                                    e.target.value
+                                )
+                            }
+                            error={!!errors.description}
+                            // helperText={errors.description}
+                        >
+                            <MenuItem value={0}>None</MenuItem>
+                            <MenuItem value={1}>1</MenuItem>
+                            <MenuItem value={2}>2</MenuItem>
+                            <MenuItem value={3}>3</MenuItem>
+                            <MenuItem value={4}>4</MenuItem>
+                            <MenuItem value={5}>5</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel id="semester-label">
+                            Which semester did you start at RIT?
+                        </FormLabel>
+                        <Select
+                            required
+                            label="startSemester"
+                            name="startSemester"
+                            value={formValues.startSemester || ""}
+                            onChange={(e) =>
+                                handleDropdownChange(
+                                    "startSemester",
+                                    e.target.value
+                                )
+                            }
+                            error={!!errors.startSemester}
+                            // helperText={errors.semester}
+                        >
+                            {semesterData.map((startSemester) => (
+                                <MenuItem
+                                    key={startSemester.semester_id}
+                                    value={startSemester.name}
+                                >
+                                    {startSemester.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <FormControl
+                        sx={{ m: 3 }}
+                        component="fieldset"
+                        variant="standard"
+                    >
+                        <FormLabel component="legend">
+                            Which courses have you already taken or are about to
+                            complete this term?
+                        </FormLabel>
+
+                        <FormGroup value={formValues.coursesTaken || ""}>
+                            {courseData.map((course) => (
+                                <FormControlLabel
+                                    key={course.course_id}
+                                    control={
+                                        <Checkbox
+                                            name={course.name}
+                                            onChange={handleChange}
+                                            checked={
+                                                formValues[course.name] || false
+                                            }
+                                        />
+                                    }
+                                    label={course.name}
+                                />
+                            ))}
+                        </FormGroup>
+                    </FormControl>
+
+                    <TextField
+                        required
+                        fullWidth
+                        margin="normal"
+                        label="When did you start searching for this co-op?"
+                        name="coopSearchStartDate"
+                        value={formValues.coopSearchStartDate || ""}
+                        onChange={handleChange}
+                        error={!!errors.coopSearchStartDate}
+                    />
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel required id="coopSearchPlatforms-label">
+                            {" "}
+                            What methods/platforms have you used in order to try
+                            and get this co-op? Name as many as you can recall
+                            that you would be able to provide evidence if needed
+                            (e.g. email/RIT Career Connect/Indeed etc.){" "}
+                        </FormLabel>
+                        <TextField
+                            fullWidth
+                            label=""
+                            name="coopSearchPlatforms"
+                            value={formValues.coopSearchPlatforms || ""}
+                            onChange={handleChange}
+                            error={!!errors.coopSearchPlatforms}
+                        />
+                    </FormControl>
+
+                    <FormControl>
+                        <FormLabel required id="pending-offers-label">
+                            Do you have any pending/open employer replies that
+                            you are waiting to hear back from at this time?
+                        </FormLabel>
+                        <RadioGroup
+                            aria-labelledby="pending-offers-buttons-group-label"
+                            name="pendingOffers"
+                            onChange={handleChange}
+                        >
+                            <FormControlLabel
+                                value={true}
+                                control={<Radio />}
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                value={false}
+                                control={<Radio />}
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel id="pending-offers-list-label">
+                            {" "}
+                            If Yes, and these as a result of an interview, name
+                            each employer and your last date of contact for
+                            each. If possible provide Company/position and
+                            location. (e.g. 1.- Microsoft/Intern Seattle, WA
+                            April 2nd 2025, 2.- Paychex/SE co-op Webster,
+                            NY){" "}
+                        </FormLabel>
+                        <TextField
+                            fullWidth
+                            label=""
+                            name="pendingOffersDetails"
+                            value={formValues.pendingOffersDetails || ""}
+                            onChange={handleChange}
+                            error={!!errors.pendingOffersDetails}
+                        />
+                    </FormControl>
+
+                    <FormControl>
+                        <FormLabel required id="rejection-letters-label">
+                            Have you received formal rejection
+                            letters/responses?
+                        </FormLabel>
+                        <RadioGroup
+                            aria-labelledby="rejection-letters-buttons-group-label"
+                            name="rejectionLetters"
+                            onChange={handleChange}
+                        >
+                            <FormControlLabel
+                                value="true"
+                                control={<Radio />}
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                value="false"
+                                control={<Radio />}
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel id="rejection-letters-details-label">
+                            {" "}
+                            If Yes, approximately how many? Name as many as you
+                            can recall that you would be able to provide
+                            evidence if needed. Companies/Employers and
+                            approximate date. (e.g. 1.- Google, January 16th
+                            2025, 2.- Meta, February 18th 2025){" "}
+                        </FormLabel>
+                        <TextField
+                            fullWidth
+                            label=""
+                            name="rejectionLettersDetails"
+                            value={formValues.rejectionLettersDetails || ""}
+                            onChange={handleChange}
+                            error={!!errors.rejectionLettersDetails}
+                        />
+                    </FormControl>
+
+                    <FormControl margin="normal">
+                        <FormLabel required id="SE-coop-interest-label">
+                            SE does not currently have a co-op option for this
+                            summer. However, IF an approved unpaid opportunity
+                            became available, would you be interested in
+                            pursuing it?
+                        </FormLabel>
+                        <RadioGroup
+                            aria-labelledby="SE-coop-interest-buttons-group-label"
+                            name="SEcoopInterest"
+                            onChange={handleChange}
+                        >
+                            <FormControlLabel
+                                value="true"
+                                control={<Radio />}
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                value="false"
+                                control={<Radio />}
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <FormControl margin="normal">
+                        <FormLabel required id="SEcoopAvailability-label">
+                            If an option were to become available, would you be
+                            able to participate in-person at RIT or are your
+                            circumstances such that you would be unable to for
+                            the duration of the co-op?
+                        </FormLabel>
+                        <RadioGroup
+                            aria-labelledby="SEcoopAvailability-buttons-group-label"
+                            name="SEcoopAvailability"
+                            onChange={handleChange}
+                            //SEcoopAvailability
+                        >
+                            <FormControlLabel
+                                value="true"
+                                control={<Radio />}
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                value="false"
+                                control={<Radio />}
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel id="remoteAbility-label">
+                            {" "}
+                            If Unable, please confirm that you can be remote by
+                            stating your capabilities (e.g.
+                            laptop/desktop/webcam/mic specifications and
+                            provider/connection type){" "}
+                        </FormLabel>
+                        <TextField
+                            fullWidth
+                            label=""
+                            name="remoteAbility"
+                            value={formValues.remoteAbility || ""}
+                            onChange={handleChange}
+                            error={!!errors.remoteAbility}
+                        />
+                    </FormControl>
+
+                    {/* <FormControl>
+                        <FormLabel>Have you completed a coop before?</FormLabel>
+                        <RadioGroup
+                            defaultValue="Yes"
+                            name="radio-buttons-group"
+                        >
+                            <FormControlLabel
+                                value="Yes"
+                                control={<Radio />}
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                value="No"
+                                control={<Radio />}
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </FormControl> */}
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel>
+                            Is there anything else you'd like to share with us
+                            about your search efforts or about your summer
+                            availability?
+                        </FormLabel>
+                        <TextField
+                            required
+                            fullWidth
+                            margin="normal"
+                            // label="skills"
+                            name="additionalComments"
+                            value={formValues.additionalComments || ""}
+                            multiline
+                            rows={4}
+                            onChange={handleChange}
+                            error={!!errors.additionalComments}
+                            // helperText={errors.description}
+                        />
+                    </FormControl>
+
+                    <Button
+                        // required
+                        component="label"
+                        variant="contained"
+                        tabIndex={-1}
+                        startIcon={<FileUploadOutlinedIcon />}
+                    >
+                        Upload Resume
+                        <VisuallyHiddenInput
+                            type="file"
+                            name="resumeURL"
+                            accept=".pdf,.doc,.docx"
+                            onChange={handleChange}
+                        />
+                    </Button>
+
+                    <Box mt={2} textAlign="center">
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            sx={{ mt: 2 }}
+                        >
+                            Submit Application
+                        </Button>
+                    </Box>
+                </Box>
+            </Paper>
+        </>
+    );
 }
 
 export default ApplicationPage;

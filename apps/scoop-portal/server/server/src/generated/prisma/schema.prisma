@@ -1,3 +1,26 @@
+model Application {
+  id                      Int      @id @default(autoincrement())
+  lastName                String
+  firstName               String?
+  ritEmail                String
+  coopsCompleted          Int?
+  startSemester           String
+  coursesTaken            String
+  coopSearchStartDate     String?
+  coopSearchPlatforms     String?
+  pendingOffers           Boolean
+  pendingOffersDetails    String?
+  rejectionLetters        Boolean
+  rejectionLettersDetails String?
+  SEcoopInterest          Boolean
+  SEcoopAvailability      Boolean?
+  remoteAbility           String?
+  additionalComments      String?
+  resumeFile              String?
+  accepted                Boolean? @default(false)
+  createdAt               DateTime @default(now())
+}
+
 generator client {
   provider = "prisma-client-js"
   output   = "../../src/generated/prisma"
@@ -8,7 +31,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//example data model
 model fruit {
   id     String @id @default(uuid())
   name   String
