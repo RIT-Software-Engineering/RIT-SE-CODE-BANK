@@ -14,7 +14,7 @@ CREATE TABLE `Candidate` (
     `uid` INTEGER NOT NULL,
     `year` INTEGER NOT NULL,
     `major` TEXT NOT NULL,
-    `graduateStatus` ENUM('UNDERGRADUATE', 'GRADUATE', 'BOTH') NOT NULL DEFAULT 'UNDERGRADUATE',
+    `graduateStatus` ENUM('UNDERGRADUATE', 'GRADUATE') NOT NULL DEFAULT 'UNDERGRADUATE',
     `wasPriorEmployee` BOOLEAN NOT NULL,
     `resumeURL` TEXT NULL,
 
@@ -54,7 +54,7 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `candidateUID` INTEGER NOT NULL,
     `jobPositionId` VARCHAR(191) NOT NULL,
-    `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
+    `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED', 'PENDING_ACCEPTANCE', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
     `applicationData` TEXT NOT NULL,
 
     PRIMARY KEY (`id`)
@@ -65,7 +65,7 @@ CREATE TABLE `CourseHistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `candidateUID` INTEGER NOT NULL,
     `courseCode` VARCHAR(8) NOT NULL,
-    `grade` VARCHAR(2) NOT NULL,
+    `grade` ENUM('A', 'A_MINUS', 'B_PLUS', 'B', 'B_MINUS', 'C_PLUS', 'C', 'C_MINUS', 'D', 'F') NULL,
     `wasPriorEmployee` BOOLEAN NOT NULL,
 
     PRIMARY KEY (`id`)
@@ -91,7 +91,9 @@ CREATE TABLE `JobPosition` (
     `jobPositionStatus` ENUM('ACTIVE', 'OPEN', 'FILLED', 'ONHOLD', 'INACTIVE') NOT NULL DEFAULT 'OPEN',
     `location` TEXT NOT NULL,
     `locationType` ENUM('INPERSON', 'HYBRID', 'REMOTE') NOT NULL,
-    `graduateStatusRequirement` ENUM('UNDERGRADUATE', 'GRADUATE', 'BOTH') NOT NULL,
+    `graduateStatusRequirement` ENUM('UNDERGRADUATE', 'GRADUATE') NULL,
+    `gradeRequirement` ENUM('A', 'A_MINUS', 'B_PLUS', 'B', 'B_MINUS', 'C_PLUS', 'C', 'C_MINUS', 'D', 'F') NULL,
+    `courseTakenRequirement` BOOLEAN NOT NULL,
     `startDate` DATETIME(3) NOT NULL,
     `endDate` DATETIME(3) NOT NULL,
 

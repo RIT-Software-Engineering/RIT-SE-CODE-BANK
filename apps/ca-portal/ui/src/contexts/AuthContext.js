@@ -32,14 +32,14 @@ export default function AuthProvider({ children }) {
     loadUserData();
   }, []); // Empty dependency array means this runs only on mount
 
-  const addApplicationToCurrentUser = (newApplication) => {
+  const addApplicationToCurrentUser = (newApplication, newResumeUrl) => {
     if (!currentUser || !currentUser.candidate) return;
-
     setCurrentUser(prevUser => {
       const updatedUser = {
         ...prevUser,
         candidate: {
           ...prevUser.candidate,
+          resumeURL: newResumeUrl || prevUser.candidate.resumeURL,
           // The back-relation from your schema is jobPositionApplicationHistory
           jobPositionApplicationHistory: [...(prevUser.candidate.jobPositionApplicationHistory || []), newApplication],
         },
@@ -48,11 +48,25 @@ export default function AuthProvider({ children }) {
     });
   };
 
+  const refreshUserProfile = async () => {
+    try {
+      const storedUID = localStorage.getItem('userUID');
+      if (storedUID) {
+        const userProfile = await getUserProfile(parseInt(storedUID, 10));
+        setCurrentUser(userProfile);
+      }
+    } catch (error) {
+      console.error("Failed to refresh user profile:", error);
+    }
+  };
+
+
   const value = {
     currentUser,
     setCurrentUser,
     loading, // Expose loading state
-    addApplicationToCurrentUser
+    addApplicationToCurrentUser,
+    refreshUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

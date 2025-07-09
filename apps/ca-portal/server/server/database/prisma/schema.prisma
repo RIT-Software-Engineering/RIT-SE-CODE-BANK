@@ -53,7 +53,6 @@ model Candidate {
 enum GraduateStatus{
   UNDERGRADUATE
   GRADUATE
-  BOTH // This is mainly used for the JobPosition datatable to filter on whether a certain position allows hiring for both undergraduate and graduate candidates
 }
 
 model Employer {
@@ -121,6 +120,7 @@ enum JobApplicationStatus{
   //these roles are for when candidates are applying to the job positions
   APPLIED
   ACCEPTED
+  PENDING_ACCEPTANCE
   SELECTED
   ONHOLD
   REJECTED
@@ -134,7 +134,7 @@ model CourseHistory{
   id Int @id @default(autoincrement())
   candidateUID Int
   courseCode String @db.VarChar(8)
-  grade String @db.VarChar(2) //Letter Grade
+  grade Grade? //Letter Grade
   wasPriorEmployee Boolean @db.TinyInt
 
   // Relations
@@ -166,7 +166,9 @@ model JobPosition{
   jobPositionStatus JobPositionStatus @default(OPEN)
   location String @db.Text
   locationType LocationType
-  graduateStatusRequirement GraduateStatus
+  graduateStatusRequirement GraduateStatus?
+  gradeRequirement Grade?
+  courseTakenRequirement Boolean @db.TinyInt
   startDate DateTime
   endDate DateTime
 
@@ -177,6 +179,20 @@ model JobPosition{
   jobPositionHistory JobPositionHistory[]
   jobPositionApplicationHistory    JobPositionApplicationHistory[]
 }
+
+enum Grade {
+  A
+  A_MINUS
+  B_PLUS
+  B
+  B_MINUS
+  C_PLUS
+  C
+  C_MINUS
+  D
+  F
+}
+
 
 enum LocationType{
   INPERSON

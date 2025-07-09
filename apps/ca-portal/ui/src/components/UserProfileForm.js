@@ -1,8 +1,10 @@
-// app/component/UserProfileForm.js
+// app/components/UserProfileForm.js
 'use client';
 import React, { useEffect } from 'react'; 
 import { useForm, useWatch } from "react-hook-form";
+import { useAuth } from '@/contexts/AuthContext';
 import { upsertCandidateProfile, upsertEmployerProfile } from '@/services/api';
+
 
 /**
  * Renders a modal form for creating or updating a candidate's profile
@@ -16,9 +18,10 @@ import { upsertCandidateProfile, upsertEmployerProfile } from '@/services/api';
  * @param {Object} courseOptions - The list of courses to be presented to the user
  * @returns A modal dialog with the course history form
  */
-export default function UserProfileForm({ user, mode, onClose, courseOptions }) {
+export default function UserProfileForm({ user, mode, onClose, courseOptions, onUpdateSuccess }) {
     const isEditMode = mode === "edit";
     const userRole = user?.role?.toUpperCase().trim();
+    const { refreshUserProfile } = useAuth();
     const isCandidateOrEmployee = userRole === "CANDIDATE" || userRole === "EMPLOYEE";
 
      // Initialize react-hook-form with default values either from the user (edit) or empty for new form
@@ -30,7 +33,7 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                 fullName: user.name || '',
                 pronouns: user.pronouns || '',
                 major: user.candidate?.major || '',
-                gradeLevel: user.candidate?.year || '',
+                yearLevel: user.candidate?.year || '',
                 courses: user.courseHistory?.map(ch => ch.courseCode) || [],
                 graduateStatus: user.candidate?.graduateStatus || '',
                 isEmployee: user.candidate?.wasPriorEmployee ? 'yes' : 'no',
@@ -68,8 +71,8 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
         let year;
         if (data.graduateStatus === "GRADUATE") {
             year = 6;
-        } else if (data.gradeLevel) {
-            year = parseInt(data.gradeLevel, 10);
+        } else if (data.yearLevel) {
+            year = parseInt(data.yearLevel, 10);
             if (isNaN(year)) {
                 throw new Error("Invalid year level selected. Please choose a valid year.");
             }
@@ -93,6 +96,8 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
             })),
         };
         await upsertCandidateProfile(finalData);
+        await refreshUserProfile();
+        if (onUpdateSuccess) onUpdateSuccess();
 
         alert("Profile saved!");
         if (onClose) onClose();
@@ -117,6 +122,8 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                 role: user.role,
             };
             await upsertEmployerProfile(finalData);
+            await refreshUserProfile();
+            if (onUpdateSuccess) onUpdateSuccess();
 
             alert("Profile saved!");
             if (onClose) onClose();
@@ -213,16 +220,16 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                                     </div>
                                     {graduateStatus === 'UNDERGRADUATE' && (
                                         <div>
-                                            <label htmlFor="gradeLevel" className={formLabel}>Year Level <span className="text-red-500">*</span></label>
+                                            <label htmlFor="yearLevel" className={formLabel}>Year Level <span className="text-red-500">*</span></label>
                                             <select 
-                                                id="gradeLevel" 
-                                                {...register('gradeLevel', { required: 'Please select your year level.' })} 
-                                                className={`${inputField} ${errors.gradeLevel ? 'border-red-500' : 'border-slate-300'}`}
+                                                id="yearLevel" 
+                                                {...register('yearLevel', { required: 'Please select your year level.' })} 
+                                                className={`${inputField} ${errors.yearLevel ? 'border-red-500' : 'border-slate-300'}`}
                                             >
                                                 <option value="" disabled>Select Year...</option>
                                                 {[2, 3, 4, 5].map(level => <option key={level} value={level}>{level}</option>)}
                                             </select>
-                                            {errors.gradeLevel && <p className="text-red-500 text-xs mt-1">{errors.gradeLevel.message}</p>}
+                                            {errors.yearLevel && <p className="text-red-500 text-xs mt-1">{errors.yearLevel.message}</p>}
                                         </div>
                                     )}
                                 </fieldset>
