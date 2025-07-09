@@ -15,6 +15,19 @@ export async function getProjectsByPeer(userId: string): Promise<Project[]> {
     );
 }
 
+export async function getProjectsByOverseer(
+    userId: string
+): Promise<Project[]> {
+    const res = await fetch(`${BASE_URL}/projects/asOverseer/${userId}`, {
+        credentials: "include",
+    });
+
+    return handleResponse(
+        res,
+        "Couldn't get projects for user with ID " + userId
+    );
+}
+
 export async function getProjectOverseers(id: string): Promise<UserProfile[]> {
     const res = await fetch(`${BASE_URL}/projects/${id}/overseers`, {
         credentials: "include",
