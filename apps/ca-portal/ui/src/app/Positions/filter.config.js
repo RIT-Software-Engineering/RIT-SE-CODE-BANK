@@ -18,6 +18,18 @@ export const positionFilterConfig = [
     id: 'location',
     label: 'Location',
     type: 'radio',
-    options: ["Online", "In-Person"]
+    options: ["Online", "Hybrid", "In-Person"]
+  },
+  {
+    id: 'eligibility',
+    label: 'Eligibility',
+    type: 'radio',
+    options: ["Eligible", "Not Eligible", "Any"]
+  },
+  {
+    id: 'applied',
+    label: 'Applied',
+    type: 'radio',
+    options: ["Applied", "Not Applied", "Any"]
   }
 ];

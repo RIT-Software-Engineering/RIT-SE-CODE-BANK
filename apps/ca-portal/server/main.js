@@ -4,12 +4,14 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT;
 const cors = require('cors');
+const path = require('path');
 
 const setupDatabase = require('./server/database/setup_db');
 const apiRoutes = require('./server/routing/index');
 
 app.use(cors());
 app.use(express.json()); // Middleware for JSON body parsing
+app.use('/resources', express.static(path.resolve(__dirname, 'resources')));
 
 async function initializeDatabase() {
     console.log(`PORT variable is currently: ${port}`);
