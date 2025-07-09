@@ -36,9 +36,10 @@ const APPLICATION_STATUSES = {
 
 function ApplicationPage() {
     // const history = useHistory();
-    const [formData, setActualFormData] = useState({
+    const [formValues, setActualformValues] = useState({
         assignment_of_rights: "full_rights",
     });
+    // const [completeFormData, setCompleteFormData] = useState({});
     const [formFiles, setFormFiles] = useState(null);
     const [modalOpen, setModalOpen] = useState(MODAL_STATUS.CLOSED);
     const [errors, setErrors] = useState({});
@@ -87,30 +88,30 @@ function ApplicationPage() {
         if (type === "file") {
             setFormFiles(files);
         } else {
-            setActualFormData({
-                ...formData,
+            setActualformValues({
+                ...formValues,
                 [name]: type === "checkbox" ? checked : value,
             });
         }
     };
 
     const handleDropdownChange = (name, value) => {
-        setActualFormData({
-            ...formData,
+        setActualformValues({
+            ...formValues,
             [name]: value,
         });
     };
 
-    async function postFormData() {
+    async function postFormData(data) {
         const response = await fetch(
             process.env.NEXT_PUBLIC_API_URL + "/api/application",
             {
                 method: "POST",
-                body: JSON.stringify(formData),
+                body: JSON.stringify(data),
                 headers: { "Content-Type": "application/json" },
             }
         );
-        console.log("Submitting application with data:", formData, formFiles);
+        console.log("Submitting application with data:", data, formFiles);
 
         return response;
     }
@@ -126,9 +127,27 @@ function ApplicationPage() {
         //     body.append("attachments", formFiles[i]);
         //   }
         // }
+        
+  //array to string
+  //  completeFormData = {
+  // ...formValues,
+  // coursesTaken: selectedCourses.join(", "), 
+
+  
+    const selectedCourses = courseData
+  .filter((course) => formValues[course.name])
+  .map((course) => course.name)
+  .join(", ");
+
+        const completeFormData = {
+            ...formValues,
+            coursesTaken: selectedCourses,
+        };
+
+
 
         try {
-            const response = await postFormData();
+            const response = await postFormData(completeFormData);
             const result = await response.json();
             console.log("Response from server:", result);
             console.log("Response status:", response.status);
@@ -153,7 +172,7 @@ function ApplicationPage() {
 
     const closeModal = () => {
         if (modalOpen === MODAL_STATUS.SUCCESS) {
-            setActualFormData({});
+            setActualformValues({});
             setFormFiles(null);
             setErrors({});
         }
@@ -221,21 +240,21 @@ function ApplicationPage() {
                         margin="normal"
                         label="Last Name"
                         name="lastName"
-                        value={formData.name || ""}
+                        value={formValues.lastName || ""}
                         onChange={handleChange}
-                        error={!!errors.name}
-                        helperText={errors.name}
+                        error={!!errors.lastName}
+                        helperText={errors.lastName}
                     />
                     <TextField
                         required
                         fullWidth
                         margin="normal"
                         label="First Name"
-                        name="FirstName"
-                        value={formData.name || ""}
+                        name="firstName"
+                        value={formValues.firstName || ""}
                         onChange={handleChange}
-                        error={!!errors.name}
-                        helperText={errors.name}
+                        error={!!errors.firstName}
+                        helperText={errors.firstName}
                     />
 
                     <TextField
@@ -244,9 +263,9 @@ function ApplicationPage() {
                         margin="normal"
                         label="RIT Email"
                         name="ritEmail"
-                        value={formData.email || ""}
+                        value={formValues.ritEmail || ""}
                         onChange={handleChange}
-                        error={!!errors.email}
+                        error={!!errors.ritEmail}
                     />
                     <FormControl fullWidth margin="normal">
                         <FormLabel>Number of Co-op blocks completed?</FormLabel>
@@ -255,7 +274,7 @@ function ApplicationPage() {
                             // margin="normal"
                             label="coopsCompleted"
                             name="coopsCompleted"
-                            value={formData["coopsCompleted"] || ""}
+                            value={formValues["coopsCompleted"] || ""}
                             onChange={(e) =>
                                 handleDropdownChange(
                                     "coopsCompleted",
@@ -280,21 +299,21 @@ function ApplicationPage() {
                         </FormLabel>
                         <Select
                             required
-                            label="Semester"
-                            name="semester"
-                            value={formData.semester || ""}
+                            label="startSemester"
+                            name="startSemester"
+                            value={formValues.startSemester || ""}
                             onChange={(e) =>
-                                handleDropdownChange("semester", e.target.value)
+                                handleDropdownChange("startSemester", e.target.value)
                             }
-                            error={!!errors.semester}
+                            error={!!errors.startSemester}
                             // helperText={errors.semester}
                         >
-                            {semesterData.map((semester) => (
+                            {semesterData.map((startSemester) => (
                                 <MenuItem
-                                    key={semester.semester_id}
-                                    value={semester.semester_id}
+                                    key={startSemester.semester_id}
+                                    value={startSemester.semester_id}
                                 >
-                                    {semester.name}
+                                    {startSemester.name}
                                 </MenuItem>
                             ))}
                         </Select>
@@ -310,7 +329,7 @@ function ApplicationPage() {
                             complete this term?
                         </FormLabel>
 
-                        <FormGroup>
+                        <FormGroup value={formValues.coursesTaken || ""}>
                             {courseData.map((course) => (
                                 <FormControlLabel
                                     key={course.course_id}
@@ -319,7 +338,7 @@ function ApplicationPage() {
                                             name={course.name}
                                             onChange={handleChange}
                                             checked={
-                                                formData[course.name] || false
+                                                formValues[course.name] || false
                                             }
                                         />
                                     }
@@ -335,7 +354,7 @@ function ApplicationPage() {
                         margin="normal"
                         label="When did you start searching for this co-op?"
                         name="coopSearchStartDate"
-                        value={formData.coopSearchStartDate || ""}
+                        value={formValues.coopSearchStartDate || ""}
                         onChange={handleChange}
                         error={!!errors.coopSearchStartDate}
                     />
@@ -352,7 +371,7 @@ function ApplicationPage() {
                             fullWidth
                             label=""
                             name="coopSearchPlatforms"
-                            value={formData.coopSearchPlatforms || ""}
+                            value={formValues.coopSearchPlatforms || ""}
                             onChange={handleChange}
                             error={!!errors.coopSearchPlatforms}
                         />
@@ -394,7 +413,7 @@ function ApplicationPage() {
                             fullWidth
                             label=""
                             name="pendingOffers"
-                            value={formData.pendingOffers || ""}
+                            value={formValues.pendingOffers || ""}
                             onChange={handleChange}
                             error={!!errors.pendingOffers}
                         />
@@ -435,7 +454,7 @@ function ApplicationPage() {
                             fullWidth
                             label=""
                             name="rejectionLetters"
-                            value={formData.rejectionLetters || ""}
+                            value={formValues.rejectionLetters || ""}
                             onChange={handleChange}
                             error={!!errors.rejectionLetters}
                         />
@@ -503,7 +522,7 @@ function ApplicationPage() {
                             fullWidth
                             label=""
                             name="remoteAbility"
-                            value={formData.remoteAbility || ""}
+                            value={formValues.remoteAbility || ""}
                             onChange={handleChange}
                             error={!!errors.remoteAbility}
                         />
@@ -539,7 +558,7 @@ function ApplicationPage() {
                             margin="normal"
                             // label="skills"
                             name="skills"
-                            value={formData.skills || ""}
+                            value={formValues.skills || ""}
                             multiline
                             rows={4}
                             onChange={handleChange}
