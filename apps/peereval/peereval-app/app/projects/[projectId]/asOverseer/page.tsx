@@ -193,19 +193,27 @@ const OverseerProjectView: React.FC<{
                 <h2 className="text-lg font-semibold mb-4">
                     Project Assessments
                 </h2>
-                {assessments.map((a) => (
-                    <div
-                        key={a.id}
-                        className="flex items-center justify-between p-4 rounded border"
-                    >
-                        <div className="flex-1">
-                            <div className="font-medium">{a.name}</div>
-                            <div className="text-xs text-gray-500">
-                                {a.startDate} &ndash; {a.dueDate}
+                {assessments
+                    .toSorted(
+                        (a, b) =>
+                            new Date(a.startDate).getTime() -
+                            new Date(b.startDate).getTime()
+                    )
+                    .map((a) => (
+                        <div
+                            key={a.id}
+                            className="flex items-center justify-between p-4 rounded border"
+                        >
+                            <div className="flex-1">
+                                <div className="font-medium">{a.name}</div>
+                                <div className="text-xs text-gray-500">
+                                    {new Date(a.startDate).toLocaleDateString()}{" "}
+                                    &ndash;{" "}
+                                    {new Date(a.dueDate).toLocaleDateString()}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
             </section>
         </div>
     );
