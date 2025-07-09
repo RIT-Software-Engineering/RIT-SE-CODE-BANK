@@ -25,8 +25,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
             const os = await getProjectOverseers(projectId);
             const oIds = os.map((o) => o.id);
 
-            if (oIds.includes(currentUser?.id ?? "")) setIsOverseer(true);
-
+            setIsOverseer(oIds.includes(currentUser?.id ?? ""));
             setLoadingView(false);
         };
 
@@ -36,6 +35,8 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
     if (loadingView) {
         return <p>Loading...</p>;
     }
+
+    console.log(`overseer is ${isOverseer}`);
 
     return isOverseer ? (
         <ClientOverseerProjectView projectId={projectId} />
