@@ -1,8 +1,17 @@
+import { UserProfile } from "@/types/userProfile";
 import { handleResponse } from "./utils";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
 
-export async function getUserProfile<User>(id: string): Promise<User> {
+export async function getAllUserProfiles(): Promise<UserProfile[]> {
+    const res = await fetch(`${BASE_URL}/users`, {
+        credentials: "include",
+    });
+
+    return handleResponse(res, "Couldn't get user profiles");
+}
+
+export async function getUserProfile(id: string): Promise<UserProfile> {
     const res = await fetch(`${BASE_URL}/users/${id}`, {
         credentials: "include",
     });
@@ -10,25 +19,12 @@ export async function getUserProfile<User>(id: string): Promise<User> {
     return handleResponse(res, "Couldn't get user profile for ID " + id);
 }
 
-export async function getUserProfileByEmail<User>(
+export async function getUserProfileByEmail(
     email: string
-): Promise<User> {
+): Promise<UserProfile> {
     const res = await fetch(`${BASE_URL}/users/byEmail/${email}`, {
         credentials: "include",
     });
 
     return handleResponse(res, "Couldn't get user profile for email " + email);
-}
-
-export async function post<T>(path: string, body: any): Promise<T> {
-    const res = await fetch(`${BASE_URL}${path}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-        throw new Error(`POST ${path} failed: ${res.statusText}`);
-    }
-    return res.json();
 }
