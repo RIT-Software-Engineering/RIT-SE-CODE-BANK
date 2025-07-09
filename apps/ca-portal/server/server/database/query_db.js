@@ -1,12 +1,16 @@
 // server/server/database/query_db.js
 
-const { PrismaClient } = require("@prisma/client");
-const path = require("path");
-const { gradeEnumToLetter, letterToGradeEnum, gradetoNumericValue } = require("../constants/grade");
-const { locationMap } = require("../constants/location");
+const { PrismaClient } = require('@prisma/client');
+const path = require('path');
+const {
+  gradeEnumToLetter,
+  letterToGradeEnum,
+  gradetoNumericValue,
+} = require('../constants/grade');
+const { locationMap } = require('../constants/location');
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly or required before main.js
 if (!process.env.DATABASE_URL) {
-  require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
+  require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 }
 
 // Initialize Prisma Client
@@ -20,8 +24,8 @@ async function getOpenPositionsWithDetails(whereClause = {}) {
   try {
     const openPositions = await prisma.jobPosition.findMany({
       where: {
-        jobPositionStatus: "OPEN",
-        ...whereClause
+        jobPositionStatus: 'OPEN',
+        ...whereClause,
       },
       include: {
         course: {
@@ -41,13 +45,13 @@ async function getOpenPositionsWithDetails(whereClause = {}) {
       },
       orderBy: {
         course: {
-          name: "asc",
+          name: 'asc',
         },
       },
     });
     return openPositions;
   } catch (error) {
-    console.error("Error retrieving open positions with details:", error);
+    console.error('Error retrieving open positions with details:', error);
     throw error;
   }
 }
@@ -56,7 +60,7 @@ async function getOpenPositionsWithDetails(whereClause = {}) {
 function buildSearchClause(searchTerm) {
   // Base clause shows only OPEN positions
   const where = {
-    jobPositionStatus: "OPEN",
+    jobPositionStatus: 'OPEN',
   };
 
   if (!searchTerm || !searchTerm.trim()) {
@@ -73,7 +77,6 @@ function buildSearchClause(searchTerm) {
 
   return where;
 }
-
 
 async function buildFilterClause(filters, candidateUID) {
   const filterWhere = {};
@@ -111,13 +114,13 @@ async function buildFilterClause(filters, candidateUID) {
   }
 
   // Add "Applied" filter
-  if (filters.applied && filters.applied !== "Any" && candidateData) {
+  if (filters.applied && filters.applied !== 'Any' && candidateData) {
     const appliedPositionIds = candidateData.jobPositionApplicationHistory.map(
       (app) => app.jobPositionId
     );
-    if (filters.applied === "Applied") {
+    if (filters.applied === 'Applied') {
       filterWhere.id = { in: appliedPositionIds };
-    } else if (filters.applied === "Not Applied") {
+    } else if (filters.applied === 'Not Applied') {
       filterWhere.id = { notIn: appliedPositionIds };
     }
   }
@@ -125,52 +128,69 @@ async function buildFilterClause(filters, candidateUID) {
   return { filterWhere, candidateData };
 }
 
-async function searchAndFilterOpenJobPositions(searchTerm, filters, candidateUID) {
+async function searchAndFilterOpenJobPositions(
+  searchTerm,
+  filters,
+  candidateUID
+) {
+  // 1. Get the "where" clause from each separate function
+  const searchWhere = buildSearchClause(searchTerm);
+  const { filterWhere, candidateData } = await buildFilterClause(
+    filters,
+    candidateUID
+  );
 
-    // 1. Get the "where" clause from each separate function
-    const searchWhere = buildSearchClause(searchTerm);
-    const { filterWhere, candidateData } = await buildFilterClause(filters, candidateUID);
+  // 2. Merge the two clauses into a single, final "where" object
+  const finalWhere = {
+    ...searchWhere,
+    ...filterWhere,
+    // Manually merge the nested 'course' object to prevent it from being overwritten
+    course: {
+      ...(searchWhere.course || {}),
+      ...(filterWhere.course || {}),
+    },
+  };
 
-    // 2. Merge the two clauses into a single, final "where" object
-    const finalWhere = {
-      ...searchWhere,
-      ...filterWhere,
-      // Manually merge the nested 'course' object to prevent it from being overwritten
-      course: {
-        ...(searchWhere.course || {}),
-        ...(filterWhere.course || {}),
-      },
-    };
+  // 3. Execute the single database query
+  let positions = await getOpenPositionsWithDetails(finalWhere);
 
-    // 3. Execute the single database query
-    let positions = await getOpenPositionsWithDetails(finalWhere);
-
-    // 4. Perform the post-query filter for Eligibility
-    if (filters.eligibility && filters.eligibility !== "Any" && candidateData) {
-        positions = positions.filter(position => {
-            const gradStatusMatch = !position.graduateStatusRequirement || position.graduateStatusRequirement === candidateData.graduateStatus;
-            const courseHistory = candidateData.courseHistory?.find(ch => ch.courseCode === position.courseCode);
-            const courseTakenMatch = !position.courseTakenRequirement || !!courseHistory;
-            const gradeMatch = !position.gradeRequirement || (courseHistory?.grade && gradetoNumericValue[courseHistory.grade] >= gradetoNumericValue[position.gradeRequirement]);
-            const isEligible = gradStatusMatch && courseTakenMatch && gradeMatch;
-            return filters.eligibility === "Eligible" ? isEligible : !isEligible;
-        });
-    }
-
-     const positionsWithLetterGrades = positions.map(position => {
-      // Check if a gradeRequirement exists on this position
-      if (position.gradeRequirement) {
-        return {
-          ...position,
-          // Convert the numeric grade requirement to a letter
-          gradeRequirement: gradeEnumToLetter[position.gradeRequirement] || position.gradeRequirement
-        };
-      }
-      // If there's no grade requirement, return the position as is
-      return position;
+  // 4. Perform the post-query filter for Eligibility
+  if (filters.eligibility && filters.eligibility !== 'Any' && candidateData) {
+    positions = positions.filter((position) => {
+      const gradStatusMatch =
+        !position.graduateStatusRequirement ||
+        position.graduateStatusRequirement === candidateData.graduateStatus;
+      const courseHistory = candidateData.courseHistory?.find(
+        (ch) => ch.courseCode === position.courseCode
+      );
+      const courseTakenMatch =
+        !position.courseTakenRequirement || !!courseHistory;
+      const gradeMatch =
+        !position.gradeRequirement ||
+        (courseHistory?.grade &&
+          gradetoNumericValue[courseHistory.grade] >=
+            gradetoNumericValue[position.gradeRequirement]);
+      const isEligible = gradStatusMatch && courseTakenMatch && gradeMatch;
+      return filters.eligibility === 'Eligible' ? isEligible : !isEligible;
     });
+  }
 
-    return positionsWithLetterGrades;
+  const positionsWithLetterGrades = positions.map((position) => {
+    // Check if a gradeRequirement exists on this position
+    if (position.gradeRequirement) {
+      return {
+        ...position,
+        // Convert the numeric grade requirement to a letter
+        gradeRequirement:
+          gradeEnumToLetter[position.gradeRequirement] ||
+          position.gradeRequirement,
+      };
+    }
+    // If there's no grade requirement, return the position as is
+    return position;
+  });
+
+  return positionsWithLetterGrades;
 }
 
 async function updateUserResumeUrl(candidateUID, resumeURL) {
@@ -180,7 +200,10 @@ async function updateUserResumeUrl(candidateUID, resumeURL) {
       data: { resumeURL: resumeURL },
     });
   } catch (error) {
-    console.error(`Error updating resume URL for candidate ${candidateUID}:`, error);
+    console.error(
+      `Error updating resume URL for candidate ${candidateUID}:`,
+      error
+    );
     throw error;
   }
 }
@@ -191,7 +214,7 @@ async function getAllUsers() {
     const users = await prisma.user.findMany();
     return users;
   } catch (error) {
-    console.error("Error retrieving users:", error);
+    console.error('Error retrieving users:', error);
     throw error;
   }
 }
@@ -207,7 +230,7 @@ async function getAllCourses() {
     });
     return courses;
   } catch (error) {
-    console.error("Error retrieving courses:", error);
+    console.error('Error retrieving courses:', error);
     throw error;
   }
 }
@@ -222,7 +245,10 @@ async function findUniqueUser(UID) {
       },
     });
     // If the user is a candidate, include their own candidate info and associated course history
-    if (user && user.role === "CANDIDATE") {
+    if (
+      (user && user.role === 'CANDIDATE') ||
+      (user && user.role === 'EMPLOYEE')
+    ) {
       const candidateProfile = await prisma.user.findUnique({
         where: {
           uid: numericUID,
@@ -253,20 +279,39 @@ async function findUniqueUser(UID) {
               return {
                 ...historyItem,
                 // Look up the enum in the map and replace it
-                grade:
-                  gradeEnumToLetter[historyItem.grade],
+                grade: gradeEnumToLetter[historyItem.grade],
               };
             }
             return historyItem; // Return the item unchanged if it has no grade
           });
       }
-
       return candidateProfile;
+    }
+
+    // If the user is a employer or admin, include their own faculty info and associated job positions
+    if ((user && user.role === 'EMPLOYER') || (user && user.role === 'ADMIN')) {
+      const facultyProfile = await prisma.user.findUnique({
+        where: {
+          uid: numericUID,
+        },
+        include: {
+          employer: {
+            include: {
+              jobPostions: {
+                include: {
+                  course: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      return facultyProfile;
     }
 
     return user;
   } catch (error) {
-    console.error("Error finding user:", error);
+    console.error('Error finding user:', error);
     throw error;
   }
 }
@@ -290,7 +335,7 @@ async function upsertCandidateProfile(candidateData) {
           name: candidateData.name,
           email: candidateData.email,
           pronouns: candidateData.pronouns,
-          role: "CANDIDATE", // Set role on creation
+          role: 'CANDIDATE', // Set role on creation
         },
       });
 
@@ -349,7 +394,7 @@ async function upsertCandidateProfile(candidateData) {
 
     return profile;
   } catch (error) {
-    console.error("Error in upsertCandidateProfile:", error);
+    console.error('Error in upsertCandidateProfile:', error);
     throw error;
   }
 }
@@ -373,7 +418,7 @@ async function upsertEmployerProfile(employerData) {
           name: employerData.name,
           email: employerData.email,
           pronouns: employerData.pronouns,
-          role: "EMPLOYER", // Set role on creation
+          role: 'EMPLOYER', // Set role on creation
         },
       });
 
@@ -397,7 +442,7 @@ async function upsertEmployerProfile(employerData) {
 
     return profile;
   } catch (error) {
-    console.error("Error in upsertEmployerProfile:", error);
+    console.error('Error in upsertEmployerProfile:', error);
     throw error;
   }
 }
@@ -411,7 +456,7 @@ async function applyForJobPosition(jobPositionApplicationData) {
       !jobPositionApplicationData.jobPositionApplicationFormData
     ) {
       throw new Error(
-        "Missing required fields: candidate and/or jobPosition ids as well as form data to apply."
+        'Missing required fields: candidate and/or jobPosition ids as well as form data to apply.'
       );
     }
 
@@ -459,20 +504,19 @@ async function applyForJobPosition(jobPositionApplicationData) {
 
     // Update the candidate's course history with the new grade
     await prisma.courseHistory.updateMany({
-      where:{
+      where: {
         candidateUID: candidateUID,
-        courseCode: jobPosition.courseCode
+        courseCode: jobPosition.courseCode,
       },
       data: {
-        grade: letterToGradeEnum[jobPositionApplicationFormData.grade]
-      }
-    })
+        grade: letterToGradeEnum[jobPositionApplicationFormData.grade],
+      },
+    });
 
     return newApplication;
   } catch (error) {
-    console.error("Error in applyForJobPosition:", error);
+    console.error('Error in applyForJobPosition:', error);
   }
-
 }
 
 // Returns all applications for any course for a specific faculty
@@ -489,7 +533,7 @@ async function getCandidateApplications(facultyUid) {
       where: {
         facultyUID: facultyUid,
         NOT: {
-          jobPositionStatus: "INACTIVE",
+          jobPositionStatus: 'INACTIVE',
         },
       },
       include: {
@@ -506,7 +550,7 @@ async function getCandidateApplications(facultyUid) {
                   select: {
                     name: true,
                     email: true,
-                    uid: true
+                    uid: true,
                   },
                 },
                 courseHistory: {
@@ -536,7 +580,7 @@ async function getCandidateApplications(facultyUid) {
           // 3. Add a new property 'gradeInCourse' to the application object.
           application.gradeInCourse = relevantCourse
             ? relevantCourse.grade
-            : "N/A";
+            : 'N/A';
 
           // Find all courses where the candidate was a prior employee (TA)
           const taCourses = application.candidate.courseHistory
@@ -563,7 +607,7 @@ async function getCandidateApplications(facultyUid) {
 
     return groupedByPositionId;
   } catch (error) {
-    console.log("Error in getCandidateApplications:", error);
+    console.log('Error in getCandidateApplications:', error);
     throw error;
   }
 }
@@ -582,14 +626,14 @@ module.exports = {
 };
 
 // Add a process exit handler to disconnect Prisma Client gracefully
-process.on("beforeExit", async () => {
+process.on('beforeExit', async () => {
   await prisma.$disconnect();
 });
-process.on("SIGINT", async () => {
+process.on('SIGINT', async () => {
   await prisma.$disconnect();
   process.exit(0);
 });
-process.on("SIGTERM", async () => {
+process.on('SIGTERM', async () => {
   await prisma.$disconnect();
   process.exit(0);
 });

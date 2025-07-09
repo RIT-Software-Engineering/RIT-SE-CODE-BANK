@@ -27,6 +27,11 @@ const HEADER_LINKS = [
     href: "/Applications",
     roles: [ROLES.EMPLOYER],
   },
+  {
+    text: "Profile",
+    href: "/Profile",
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
+  },
 ];
 
 export default function Header() {

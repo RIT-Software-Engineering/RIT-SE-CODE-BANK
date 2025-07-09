@@ -1,4 +1,3 @@
-// app/components/UserProfileModal.js
 'use client';
 import { useState, useEffect } from "react";
 import UserProfileForm from "./UserProfileForm";
@@ -14,7 +13,7 @@ import { getAllCourses, getUserProfile } from "@/services/api";
  * - Passing appropriate props to the form for editing or creating a profile
  * @returns A modal containing the {@link UserProfileForm} or null if closed
  */
-export default function UserProfileModal() {
+export default function UserProfileModal({ onUpdateSuccess }) {
     const [isOpen, setIsOpen] = useState(true);                 // Modal is open by default when rendered
     const { currentUser } = useAuth();                          // Retrieves current authenticated user
     const [profileData, setProfileData] = useState(null);       // User profile data
@@ -82,12 +81,14 @@ export default function UserProfileModal() {
                 {error && <div className='p-8 text-center'><p className="text-red-500 font-semibold">{error}</p><button onClick={close} className="mt-4 px-4 py-2 bg-slate-200 rounded-lg">Close</button></div>}
                 {!isLoading && !error && profileData && (
                     <UserProfileForm
-                    user={profileData}
-                    mode={mode}
-                    onClose={close}
-                    courseOptions={courseOptions}
+                        user={profileData}
+                        mode={mode}
+                        onClose={close}
+                        courseOptions={courseOptions}
+                        onUpdateSuccess={onUpdateSuccess}
                     />
                 )}
             </div>
         </div>
-    );}
+    );
+}

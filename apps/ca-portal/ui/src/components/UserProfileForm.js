@@ -1,8 +1,10 @@
-// app/component/UserProfileForm.js
+// app/components/UserProfileForm.js
 'use client';
 import React, { useEffect } from 'react'; 
 import { useForm, useWatch } from "react-hook-form";
+import { useAuth } from '@/contexts/AuthContext';
 import { upsertCandidateProfile, upsertEmployerProfile } from '@/services/api';
+
 
 /**
  * Renders a modal form for creating or updating a candidate's profile
@@ -16,9 +18,10 @@ import { upsertCandidateProfile, upsertEmployerProfile } from '@/services/api';
  * @param {Object} courseOptions - The list of courses to be presented to the user
  * @returns A modal dialog with the course history form
  */
-export default function UserProfileForm({ user, mode, onClose, courseOptions }) {
+export default function UserProfileForm({ user, mode, onClose, courseOptions, onUpdateSuccess }) {
     const isEditMode = mode === "edit";
     const userRole = user?.role?.toUpperCase().trim();
+    const { refreshUserProfile } = useAuth();
     const isCandidateOrEmployee = userRole === "CANDIDATE" || userRole === "EMPLOYEE";
 
      // Initialize react-hook-form with default values either from the user (edit) or empty for new form
@@ -93,6 +96,8 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
             })),
         };
         await upsertCandidateProfile(finalData);
+        await refreshUserProfile();
+        if (onUpdateSuccess) onUpdateSuccess();
 
         alert("Profile saved!");
         if (onClose) onClose();
@@ -117,6 +122,8 @@ export default function UserProfileForm({ user, mode, onClose, courseOptions }) 
                 role: user.role,
             };
             await upsertEmployerProfile(finalData);
+            await refreshUserProfile();
+            if (onUpdateSuccess) onUpdateSuccess();
 
             alert("Profile saved!");
             if (onClose) onClose();
