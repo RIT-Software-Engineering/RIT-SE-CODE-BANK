@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/context/UserContext";
+import { useAuth } from "@/context/AuthContext";
 import { getProjectsByOverseer, getProjectsByPeer } from "@/services/project";
 import { Project } from "@/types/project";
 

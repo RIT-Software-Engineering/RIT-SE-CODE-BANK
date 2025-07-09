@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/context/UserContext";
+import { useAuth } from "@/context/AuthContext";
 import { getAssessmentsByProject } from "@/services/assessment";
 import { getProjectsPeers } from "@/services/project";
 import { Assessment } from "@/types/assessment";

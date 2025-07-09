@@ -5,25 +5,29 @@ import {
     useState,
     ReactNode,
     useEffect,
-    Dispatch,
-    SetStateAction,
     useContext,
 } from "react";
 
 import { getUserProfile, getUserProfileByEmail } from "@/services/user";
 import { UserProfile } from "@/types/userProfile";
 
-interface UserContextType {
+interface AuthContextType {
     currentUser: UserProfile | null;
-    setCurrentUser: Dispatch<SetStateAction<UserProfile | null>>;
+    setCurrentUser: (user: UserProfile | null) => void;
     loading: boolean;
 }
 
-const UserContext = createContext<UserContextType | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
-    const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+    const [currentUser, _setCurrentUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState<boolean>(true); // Add a loading state
+
+    const setCurrentUser = (user: UserProfile | null) => {
+        _setCurrentUser(user);
+        if (user) localStorage.setItem("userUID", user.id);
+        else localStorage.removeItem("useruID");
+    };
 
     // This effect runs once when the app loads
     useEffect(() => {
@@ -38,11 +42,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                     );
                     setCurrentUser(userProfile);
                 } else {
-                    // Clear out any bad data if the fetch fails
-                    localStorage.removeItem("userUID");
-                    setCurrentUser(null);
+                    // // Clear out any bad data if the fetch fails
+                    // localStorage.removeItem("userUID");
+                    // setCurrentUser(null);
 
-                    // For now, just set current user to Alice all the time
+                    // For now, just set current user to Alice all the time if no user
                     const aliceProfile: UserProfile =
                         await getUserProfileByEmail("alice@rit.edu");
                     setCurrentUser(aliceProfile);
@@ -63,11 +67,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <UserContext.Provider value={value}>{children}</UserContext.Provider>
+        <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
     );
 }
 export function useAuth() {
-    const context = useContext(UserContext);
+    const context = useContext(AuthContext);
     if (!context) {
         throw new Error("useAuth must be used within a UserProvider");
     }

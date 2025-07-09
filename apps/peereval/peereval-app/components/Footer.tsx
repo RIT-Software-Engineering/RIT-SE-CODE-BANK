@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/context/UserContext";
+import { useAuth } from "@/context/AuthContext";
 import { getAllUserProfiles } from "@/services/user";
 import { UserProfile } from "@/types/userProfile";
 import { useEffect, useState } from "react";
