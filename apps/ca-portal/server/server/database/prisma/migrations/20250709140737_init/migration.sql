@@ -54,7 +54,7 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `candidateUID` INTEGER NOT NULL,
     `jobPositionId` VARCHAR(191) NOT NULL,
-    `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
+    `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED', 'PENDING_ACCEPTANCE', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
     `applicationData` TEXT NOT NULL,
 
     PRIMARY KEY (`id`)

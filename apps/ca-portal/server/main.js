@@ -4,6 +4,8 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT;
 const cors = require('cors');
+const https = require('https');
+const fs = require('fs'); 
 const path = require('path');
 
 const setupDatabase = require('./server/database/setup_db');
@@ -14,12 +16,17 @@ app.use(express.json()); // Middleware for JSON body parsing
 app.use('/resources', express.static(path.resolve(__dirname, 'resources')));
 
 async function initializeDatabase() {
+    const httpsOptions = {
+      key: fs.readFileSync('./localhost+2-key.pem'),
+      cert: fs.readFileSync('./localhost+2.pem')
+    };
+
     console.log(`PORT variable is currently: ${port}`);
     if (!port) {
         console.error("FATAL ERROR: PORT is not defined in your .env file. Server cannot start.");
-        process.exit(1); // Exit if no port is specified
+        process.exit(1);
     }
-
+    // ... rest of the function is the same
     if (process.env.NODE_ENV !== 'production') {
         console.log("Running database setup for development environment.");
         try {
@@ -33,18 +40,13 @@ async function initializeDatabase() {
         console.log("Running in production environment. Skipping database setup.");
     }
     
-    // --- API Routes ---
     app.get('/', (req, res) => {
         res.send('Welcome to the RIT CA Portal Backend!');
     });
+    app.use('/api', apiRoutes);
 
-    // Mount all routes from your routing index
-    // All routes defined in db_routes.js will be available under /api/db/
-    app.use('/api', apiRoutes); // Example: /api/db/open-positions
-
-    // --- Start Server ---
-    app.listen(port, () => {
-        console.log(`Server listening on ${process.env.BASE_URL}`);
+    https.createServer(httpsOptions, app).listen(port, () => {
+        console.log(`Server listening on ${process.env.BACKEND_URL}`);
         console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
 }

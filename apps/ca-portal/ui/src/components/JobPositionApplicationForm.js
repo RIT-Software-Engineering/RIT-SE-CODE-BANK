@@ -19,7 +19,7 @@ const letterToGradeValue = {
 };
 
 export default function ApplicationForm({ user, position, onClose, onApplySuccess }) {
-  const backendApiUrl = 'http://localhost:3300'; // Replace with your backend API URL to https
+  const backendApiUrl = process.env.NEXT_PUBLIC_RESUME_API_URL;
   const {
     register,
     handleSubmit,

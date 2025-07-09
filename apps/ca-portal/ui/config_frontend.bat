@@ -7,8 +7,10 @@ REM It intelligently updates existing variables or adds them if missing.
 REM --------------------------------------------------------------------
 
 REM --- Configuration Variables (MODIFY THESE FOR YOUR SETUP) ---
-SET "BASE_API_URL=http://localhost:3300/api"
+SET "BASE_API_URL=https://localhost:3300/api"
+SET "RESUME_API_URL=https://localhost:3300"
 SET "DB_API_EXTENSION=/db"
+SET "SLACK_API_EXTENSION=/slack"
 REM Add any other frontend variables here
 
 SET "ENV_FILE=.env"
@@ -20,7 +22,9 @@ ECHO --- Updating Frontend %ENV_FILE% ---
 
 REM Call the subroutine to update each variable
 CALL :update_env_var "NEXT_PUBLIC_BASE_API_URL" "%BASE_API_URL%"
+CALL :update_env_var "NEXT_PUBLIC_RESUME_API_URL" "%RESUME_API_URL%"
 CALL :update_env_var "NEXT_PUBLIC_DATABASE_API_EXTENSION" "%DB_API_EXTENSION%"
+call :update_env_var "NEXT_PUBLIC_SLACK_API_EXTENSION" "%DB_SLACK_EXTENSION%"
 REM Add calls for other variables here
 
 
