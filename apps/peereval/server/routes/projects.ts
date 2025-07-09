@@ -89,3 +89,108 @@ router.get("/:id/overseers", async (req, res) => {
 
     res.json(peers);
 });
+
+// Add peer to project
+// /projects/:id/addPeer/:peerEmail
+router.post("/:id/addPeer/:peerEmail", async (req, res) => {
+    const id = req.params.id;
+    const peerEmail = req.params.peerEmail;
+
+    try {
+        // Make sure peer exists
+        await prisma.user.findFirstOrThrow({
+            where: { email: peerEmail },
+        });
+    } catch (err) {
+        res.status(404).json({
+            message: "Couldn't find peer with email " + peerEmail,
+        });
+        return;
+    }
+    try {
+        // Make sure project exists as well
+        await prisma.project.findFirstOrThrow({
+            where: { id },
+        });
+
+        await prisma.project.update({
+            where: { id },
+            data: {
+                peers: {
+                    connect: { email: peerEmail },
+                },
+            },
+        });
+
+        res.status(201).json({
+            message: "Peer added to project successfully.",
+        });
+    } catch (err) {
+        res.status(404).json({
+            message: "Coudln't find project with id " + id,
+        });
+    }
+});
+
+// Remove peer from project
+// /projects/:id/removePeer/:peerEmail
+router.delete("/:id/removePeer/:peerEmail", async (req, res) => {
+    const id = req.params.id;
+    const peerEmail = req.params.peerEmail;
+
+    try {
+        // Make sure peer exists
+        await prisma.user.findFirstOrThrow({
+            where: { email: peerEmail },
+        });
+    } catch (err) {
+        res.status(404).json({
+            message: "Couldn't find peer with email " + peerEmail,
+        });
+        return;
+    }
+    try {
+        // Make sure project exists as well
+        await prisma.project.findFirstOrThrow({
+            where: { id },
+        });
+    } catch (err) {
+        res.status(404).json({
+            message: "Coudln't find project with id " + id,
+        });
+        return;
+    }
+
+    try {
+        // Make sure the peer is in the project
+        await prisma.user.findFirstOrThrow({
+            where: {
+                projectsAsPeers: {
+                    some: { id },
+                },
+            },
+        });
+    } catch (err) {
+        res.status(404).json({
+            message:
+                "Coudln't find peer with email " +
+                peerEmail +
+                " in project " +
+                id,
+        });
+        return;
+    }
+
+    await prisma.project.update({
+        where: { id },
+        data: {
+            peers: {
+                disconnect: { email: peerEmail },
+            },
+        },
+    });
+
+    res.status(201).json({
+        message: "Peer removed from project successfully.",
+    });
+});
