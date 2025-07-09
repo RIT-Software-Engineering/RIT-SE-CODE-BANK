@@ -1041,52 +1041,77 @@ export namespace Prisma {
 
   export type ApplicationAvgAggregateOutputType = {
     id: number | null
-    semester: number | null
     coopsCompleted: number | null
   }
 
   export type ApplicationSumAggregateOutputType = {
     id: number | null
-    semester: number | null
     coopsCompleted: number | null
   }
 
   export type ApplicationMinAggregateOutputType = {
     id: number | null
-    name: string | null
-    email: string | null
-    phone: string | null
-    academicStanding: string | null
-    semester: number | null
+    lastName: string | null
+    firstName: string | null
+    ritEmail: string | null
     coopsCompleted: number | null
-    skills: string | null
-    resumeUrl: string | null
+    startSemester: string | null
+    coursesTaken: string | null
+    coopSearchStartDate: string | null
+    coopSearchPlatforms: string | null
+    pendingOffers: boolean | null
+    pendingOffersDetails: string | null
+    rejectionLetters: boolean | null
+    rejectionLettersDetails: string | null
+    SEcoopInterest: boolean | null
+    SEcoopAvailability: boolean | null
+    remoteAbility: string | null
+    additionalComments: string | null
+    resumeFile: string | null
     createdAt: Date | null
   }
 
   export type ApplicationMaxAggregateOutputType = {
     id: number | null
-    name: string | null
-    email: string | null
-    phone: string | null
-    academicStanding: string | null
-    semester: number | null
+    lastName: string | null
+    firstName: string | null
+    ritEmail: string | null
     coopsCompleted: number | null
-    skills: string | null
-    resumeUrl: string | null
+    startSemester: string | null
+    coursesTaken: string | null
+    coopSearchStartDate: string | null
+    coopSearchPlatforms: string | null
+    pendingOffers: boolean | null
+    pendingOffersDetails: string | null
+    rejectionLetters: boolean | null
+    rejectionLettersDetails: string | null
+    SEcoopInterest: boolean | null
+    SEcoopAvailability: boolean | null
+    remoteAbility: string | null
+    additionalComments: string | null
+    resumeFile: string | null
     createdAt: Date | null
   }
 
   export type ApplicationCountAggregateOutputType = {
     id: number
-    name: number
-    email: number
-    phone: number
-    academicStanding: number
-    semester: number
+    lastName: number
+    firstName: number
+    ritEmail: number
     coopsCompleted: number
-    skills: number
-    resumeUrl: number
+    startSemester: number
+    coursesTaken: number
+    coopSearchStartDate: number
+    coopSearchPlatforms: number
+    pendingOffers: number
+    pendingOffersDetails: number
+    rejectionLetters: number
+    rejectionLettersDetails: number
+    SEcoopInterest: number
+    SEcoopAvailability: number
+    remoteAbility: number
+    additionalComments: number
+    resumeFile: number
     createdAt: number
     _all: number
   }
@@ -1094,52 +1119,77 @@ export namespace Prisma {
 
   export type ApplicationAvgAggregateInputType = {
     id?: true
-    semester?: true
     coopsCompleted?: true
   }
 
   export type ApplicationSumAggregateInputType = {
     id?: true
-    semester?: true
     coopsCompleted?: true
   }
 
   export type ApplicationMinAggregateInputType = {
     id?: true
-    name?: true
-    email?: true
-    phone?: true
-    academicStanding?: true
-    semester?: true
+    lastName?: true
+    firstName?: true
+    ritEmail?: true
     coopsCompleted?: true
-    skills?: true
-    resumeUrl?: true
+    startSemester?: true
+    coursesTaken?: true
+    coopSearchStartDate?: true
+    coopSearchPlatforms?: true
+    pendingOffers?: true
+    pendingOffersDetails?: true
+    rejectionLetters?: true
+    rejectionLettersDetails?: true
+    SEcoopInterest?: true
+    SEcoopAvailability?: true
+    remoteAbility?: true
+    additionalComments?: true
+    resumeFile?: true
     createdAt?: true
   }
 
   export type ApplicationMaxAggregateInputType = {
     id?: true
-    name?: true
-    email?: true
-    phone?: true
-    academicStanding?: true
-    semester?: true
+    lastName?: true
+    firstName?: true
+    ritEmail?: true
     coopsCompleted?: true
-    skills?: true
-    resumeUrl?: true
+    startSemester?: true
+    coursesTaken?: true
+    coopSearchStartDate?: true
+    coopSearchPlatforms?: true
+    pendingOffers?: true
+    pendingOffersDetails?: true
+    rejectionLetters?: true
+    rejectionLettersDetails?: true
+    SEcoopInterest?: true
+    SEcoopAvailability?: true
+    remoteAbility?: true
+    additionalComments?: true
+    resumeFile?: true
     createdAt?: true
   }
 
   export type ApplicationCountAggregateInputType = {
     id?: true
-    name?: true
-    email?: true
-    phone?: true
-    academicStanding?: true
-    semester?: true
+    lastName?: true
+    firstName?: true
+    ritEmail?: true
     coopsCompleted?: true
-    skills?: true
-    resumeUrl?: true
+    startSemester?: true
+    coursesTaken?: true
+    coopSearchStartDate?: true
+    coopSearchPlatforms?: true
+    pendingOffers?: true
+    pendingOffersDetails?: true
+    rejectionLetters?: true
+    rejectionLettersDetails?: true
+    SEcoopInterest?: true
+    SEcoopAvailability?: true
+    remoteAbility?: true
+    additionalComments?: true
+    resumeFile?: true
     createdAt?: true
     _all?: true
   }
@@ -1232,14 +1282,23 @@ export namespace Prisma {
 
   export type ApplicationGroupByOutputType = {
     id: number
-    name: string
-    email: string
-    phone: string
-    academicStanding: string
-    semester: number
-    coopsCompleted: number
-    skills: string
-    resumeUrl: string | null
+    lastName: string
+    firstName: string | null
+    ritEmail: string
+    coopsCompleted: number | null
+    startSemester: string
+    coursesTaken: string
+    coopSearchStartDate: string | null
+    coopSearchPlatforms: string | null
+    pendingOffers: boolean
+    pendingOffersDetails: string | null
+    rejectionLetters: boolean
+    rejectionLettersDetails: string | null
+    SEcoopInterest: boolean
+    SEcoopAvailability: boolean | null
+    remoteAbility: string | null
+    additionalComments: string | null
+    resumeFile: string | null
     createdAt: Date
     _count: ApplicationCountAggregateOutputType | null
     _avg: ApplicationAvgAggregateOutputType | null
@@ -1264,14 +1323,23 @@ export namespace Prisma {
 
   export type ApplicationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    name?: boolean
-    email?: boolean
-    phone?: boolean
-    academicStanding?: boolean
-    semester?: boolean
+    lastName?: boolean
+    firstName?: boolean
+    ritEmail?: boolean
     coopsCompleted?: boolean
-    skills?: boolean
-    resumeUrl?: boolean
+    startSemester?: boolean
+    coursesTaken?: boolean
+    coopSearchStartDate?: boolean
+    coopSearchPlatforms?: boolean
+    pendingOffers?: boolean
+    pendingOffersDetails?: boolean
+    rejectionLetters?: boolean
+    rejectionLettersDetails?: boolean
+    SEcoopInterest?: boolean
+    SEcoopAvailability?: boolean
+    remoteAbility?: boolean
+    additionalComments?: boolean
+    resumeFile?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["application"]>
 
@@ -1279,32 +1347,50 @@ export namespace Prisma {
 
   export type ApplicationSelectScalar = {
     id?: boolean
-    name?: boolean
-    email?: boolean
-    phone?: boolean
-    academicStanding?: boolean
-    semester?: boolean
+    lastName?: boolean
+    firstName?: boolean
+    ritEmail?: boolean
     coopsCompleted?: boolean
-    skills?: boolean
-    resumeUrl?: boolean
+    startSemester?: boolean
+    coursesTaken?: boolean
+    coopSearchStartDate?: boolean
+    coopSearchPlatforms?: boolean
+    pendingOffers?: boolean
+    pendingOffersDetails?: boolean
+    rejectionLetters?: boolean
+    rejectionLettersDetails?: boolean
+    SEcoopInterest?: boolean
+    SEcoopAvailability?: boolean
+    remoteAbility?: boolean
+    additionalComments?: boolean
+    resumeFile?: boolean
     createdAt?: boolean
   }
 
-  export type ApplicationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "phone" | "academicStanding" | "semester" | "coopsCompleted" | "skills" | "resumeUrl" | "createdAt", ExtArgs["result"]["application"]>
+  export type ApplicationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "lastName" | "firstName" | "ritEmail" | "coopsCompleted" | "startSemester" | "coursesTaken" | "coopSearchStartDate" | "coopSearchPlatforms" | "pendingOffers" | "pendingOffersDetails" | "rejectionLetters" | "rejectionLettersDetails" | "SEcoopInterest" | "SEcoopAvailability" | "remoteAbility" | "additionalComments" | "resumeFile" | "createdAt", ExtArgs["result"]["application"]>
 
   export type $ApplicationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Application"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
       id: number
-      name: string
-      email: string
-      phone: string
-      academicStanding: string
-      semester: number
-      coopsCompleted: number
-      skills: string
-      resumeUrl: string | null
+      lastName: string
+      firstName: string | null
+      ritEmail: string
+      coopsCompleted: number | null
+      startSemester: string
+      coursesTaken: string
+      coopSearchStartDate: string | null
+      coopSearchPlatforms: string | null
+      pendingOffers: boolean
+      pendingOffersDetails: string | null
+      rejectionLetters: boolean
+      rejectionLettersDetails: string | null
+      SEcoopInterest: boolean
+      SEcoopAvailability: boolean | null
+      remoteAbility: string | null
+      additionalComments: string | null
+      resumeFile: string | null
       createdAt: Date
     }, ExtArgs["result"]["application"]>
     composites: {}
@@ -1676,14 +1762,23 @@ export namespace Prisma {
    */
   interface ApplicationFieldRefs {
     readonly id: FieldRef<"Application", 'Int'>
-    readonly name: FieldRef<"Application", 'String'>
-    readonly email: FieldRef<"Application", 'String'>
-    readonly phone: FieldRef<"Application", 'String'>
-    readonly academicStanding: FieldRef<"Application", 'String'>
-    readonly semester: FieldRef<"Application", 'Int'>
+    readonly lastName: FieldRef<"Application", 'String'>
+    readonly firstName: FieldRef<"Application", 'String'>
+    readonly ritEmail: FieldRef<"Application", 'String'>
     readonly coopsCompleted: FieldRef<"Application", 'Int'>
-    readonly skills: FieldRef<"Application", 'String'>
-    readonly resumeUrl: FieldRef<"Application", 'String'>
+    readonly startSemester: FieldRef<"Application", 'String'>
+    readonly coursesTaken: FieldRef<"Application", 'String'>
+    readonly coopSearchStartDate: FieldRef<"Application", 'String'>
+    readonly coopSearchPlatforms: FieldRef<"Application", 'String'>
+    readonly pendingOffers: FieldRef<"Application", 'Boolean'>
+    readonly pendingOffersDetails: FieldRef<"Application", 'String'>
+    readonly rejectionLetters: FieldRef<"Application", 'Boolean'>
+    readonly rejectionLettersDetails: FieldRef<"Application", 'String'>
+    readonly SEcoopInterest: FieldRef<"Application", 'Boolean'>
+    readonly SEcoopAvailability: FieldRef<"Application", 'Boolean'>
+    readonly remoteAbility: FieldRef<"Application", 'String'>
+    readonly additionalComments: FieldRef<"Application", 'String'>
+    readonly resumeFile: FieldRef<"Application", 'String'>
     readonly createdAt: FieldRef<"Application", 'DateTime'>
   }
     
@@ -3841,14 +3936,23 @@ export namespace Prisma {
 
   export const ApplicationScalarFieldEnum: {
     id: 'id',
-    name: 'name',
-    email: 'email',
-    phone: 'phone',
-    academicStanding: 'academicStanding',
-    semester: 'semester',
+    lastName: 'lastName',
+    firstName: 'firstName',
+    ritEmail: 'ritEmail',
     coopsCompleted: 'coopsCompleted',
-    skills: 'skills',
-    resumeUrl: 'resumeUrl',
+    startSemester: 'startSemester',
+    coursesTaken: 'coursesTaken',
+    coopSearchStartDate: 'coopSearchStartDate',
+    coopSearchPlatforms: 'coopSearchPlatforms',
+    pendingOffers: 'pendingOffers',
+    pendingOffersDetails: 'pendingOffersDetails',
+    rejectionLetters: 'rejectionLetters',
+    rejectionLettersDetails: 'rejectionLettersDetails',
+    SEcoopInterest: 'SEcoopInterest',
+    SEcoopAvailability: 'SEcoopAvailability',
+    remoteAbility: 'remoteAbility',
+    additionalComments: 'additionalComments',
+    resumeFile: 'resumeFile',
     createdAt: 'createdAt'
   };
 
@@ -3899,12 +4003,18 @@ export namespace Prisma {
 
 
   export const ApplicationOrderByRelevanceFieldEnum: {
-    name: 'name',
-    email: 'email',
-    phone: 'phone',
-    academicStanding: 'academicStanding',
-    skills: 'skills',
-    resumeUrl: 'resumeUrl'
+    lastName: 'lastName',
+    firstName: 'firstName',
+    ritEmail: 'ritEmail',
+    startSemester: 'startSemester',
+    coursesTaken: 'coursesTaken',
+    coopSearchStartDate: 'coopSearchStartDate',
+    coopSearchPlatforms: 'coopSearchPlatforms',
+    pendingOffersDetails: 'pendingOffersDetails',
+    rejectionLettersDetails: 'rejectionLettersDetails',
+    remoteAbility: 'remoteAbility',
+    additionalComments: 'additionalComments',
+    resumeFile: 'resumeFile'
   };
 
   export type ApplicationOrderByRelevanceFieldEnum = (typeof ApplicationOrderByRelevanceFieldEnum)[keyof typeof ApplicationOrderByRelevanceFieldEnum]
@@ -3957,6 +4067,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'DateTime'
    */
   export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -3978,27 +4095,45 @@ export namespace Prisma {
     OR?: ApplicationWhereInput[]
     NOT?: ApplicationWhereInput | ApplicationWhereInput[]
     id?: IntFilter<"Application"> | number
-    name?: StringFilter<"Application"> | string
-    email?: StringFilter<"Application"> | string
-    phone?: StringFilter<"Application"> | string
-    academicStanding?: StringFilter<"Application"> | string
-    semester?: IntFilter<"Application"> | number
-    coopsCompleted?: IntFilter<"Application"> | number
-    skills?: StringFilter<"Application"> | string
-    resumeUrl?: StringNullableFilter<"Application"> | string | null
+    lastName?: StringFilter<"Application"> | string
+    firstName?: StringNullableFilter<"Application"> | string | null
+    ritEmail?: StringFilter<"Application"> | string
+    coopsCompleted?: IntNullableFilter<"Application"> | number | null
+    startSemester?: StringFilter<"Application"> | string
+    coursesTaken?: StringFilter<"Application"> | string
+    coopSearchStartDate?: StringNullableFilter<"Application"> | string | null
+    coopSearchPlatforms?: StringNullableFilter<"Application"> | string | null
+    pendingOffers?: BoolFilter<"Application"> | boolean
+    pendingOffersDetails?: StringNullableFilter<"Application"> | string | null
+    rejectionLetters?: BoolFilter<"Application"> | boolean
+    rejectionLettersDetails?: StringNullableFilter<"Application"> | string | null
+    SEcoopInterest?: BoolFilter<"Application"> | boolean
+    SEcoopAvailability?: BoolNullableFilter<"Application"> | boolean | null
+    remoteAbility?: StringNullableFilter<"Application"> | string | null
+    additionalComments?: StringNullableFilter<"Application"> | string | null
+    resumeFile?: StringNullableFilter<"Application"> | string | null
     createdAt?: DateTimeFilter<"Application"> | Date | string
   }
 
   export type ApplicationOrderByWithRelationInput = {
     id?: SortOrder
-    name?: SortOrder
-    email?: SortOrder
-    phone?: SortOrder
-    academicStanding?: SortOrder
-    semester?: SortOrder
-    coopsCompleted?: SortOrder
-    skills?: SortOrder
-    resumeUrl?: SortOrderInput | SortOrder
+    lastName?: SortOrder
+    firstName?: SortOrderInput | SortOrder
+    ritEmail?: SortOrder
+    coopsCompleted?: SortOrderInput | SortOrder
+    startSemester?: SortOrder
+    coursesTaken?: SortOrder
+    coopSearchStartDate?: SortOrderInput | SortOrder
+    coopSearchPlatforms?: SortOrderInput | SortOrder
+    pendingOffers?: SortOrder
+    pendingOffersDetails?: SortOrderInput | SortOrder
+    rejectionLetters?: SortOrder
+    rejectionLettersDetails?: SortOrderInput | SortOrder
+    SEcoopInterest?: SortOrder
+    SEcoopAvailability?: SortOrderInput | SortOrder
+    remoteAbility?: SortOrderInput | SortOrder
+    additionalComments?: SortOrderInput | SortOrder
+    resumeFile?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _relevance?: ApplicationOrderByRelevanceInput
   }
@@ -4008,27 +4143,45 @@ export namespace Prisma {
     AND?: ApplicationWhereInput | ApplicationWhereInput[]
     OR?: ApplicationWhereInput[]
     NOT?: ApplicationWhereInput | ApplicationWhereInput[]
-    name?: StringFilter<"Application"> | string
-    email?: StringFilter<"Application"> | string
-    phone?: StringFilter<"Application"> | string
-    academicStanding?: StringFilter<"Application"> | string
-    semester?: IntFilter<"Application"> | number
-    coopsCompleted?: IntFilter<"Application"> | number
-    skills?: StringFilter<"Application"> | string
-    resumeUrl?: StringNullableFilter<"Application"> | string | null
+    lastName?: StringFilter<"Application"> | string
+    firstName?: StringNullableFilter<"Application"> | string | null
+    ritEmail?: StringFilter<"Application"> | string
+    coopsCompleted?: IntNullableFilter<"Application"> | number | null
+    startSemester?: StringFilter<"Application"> | string
+    coursesTaken?: StringFilter<"Application"> | string
+    coopSearchStartDate?: StringNullableFilter<"Application"> | string | null
+    coopSearchPlatforms?: StringNullableFilter<"Application"> | string | null
+    pendingOffers?: BoolFilter<"Application"> | boolean
+    pendingOffersDetails?: StringNullableFilter<"Application"> | string | null
+    rejectionLetters?: BoolFilter<"Application"> | boolean
+    rejectionLettersDetails?: StringNullableFilter<"Application"> | string | null
+    SEcoopInterest?: BoolFilter<"Application"> | boolean
+    SEcoopAvailability?: BoolNullableFilter<"Application"> | boolean | null
+    remoteAbility?: StringNullableFilter<"Application"> | string | null
+    additionalComments?: StringNullableFilter<"Application"> | string | null
+    resumeFile?: StringNullableFilter<"Application"> | string | null
     createdAt?: DateTimeFilter<"Application"> | Date | string
   }, "id">
 
   export type ApplicationOrderByWithAggregationInput = {
     id?: SortOrder
-    name?: SortOrder
-    email?: SortOrder
-    phone?: SortOrder
-    academicStanding?: SortOrder
-    semester?: SortOrder
-    coopsCompleted?: SortOrder
-    skills?: SortOrder
-    resumeUrl?: SortOrderInput | SortOrder
+    lastName?: SortOrder
+    firstName?: SortOrderInput | SortOrder
+    ritEmail?: SortOrder
+    coopsCompleted?: SortOrderInput | SortOrder
+    startSemester?: SortOrder
+    coursesTaken?: SortOrder
+    coopSearchStartDate?: SortOrderInput | SortOrder
+    coopSearchPlatforms?: SortOrderInput | SortOrder
+    pendingOffers?: SortOrder
+    pendingOffersDetails?: SortOrderInput | SortOrder
+    rejectionLetters?: SortOrder
+    rejectionLettersDetails?: SortOrderInput | SortOrder
+    SEcoopInterest?: SortOrder
+    SEcoopAvailability?: SortOrderInput | SortOrder
+    remoteAbility?: SortOrderInput | SortOrder
+    additionalComments?: SortOrderInput | SortOrder
+    resumeFile?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: ApplicationCountOrderByAggregateInput
     _avg?: ApplicationAvgOrderByAggregateInput
@@ -4042,14 +4195,23 @@ export namespace Prisma {
     OR?: ApplicationScalarWhereWithAggregatesInput[]
     NOT?: ApplicationScalarWhereWithAggregatesInput | ApplicationScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Application"> | number
-    name?: StringWithAggregatesFilter<"Application"> | string
-    email?: StringWithAggregatesFilter<"Application"> | string
-    phone?: StringWithAggregatesFilter<"Application"> | string
-    academicStanding?: StringWithAggregatesFilter<"Application"> | string
-    semester?: IntWithAggregatesFilter<"Application"> | number
-    coopsCompleted?: IntWithAggregatesFilter<"Application"> | number
-    skills?: StringWithAggregatesFilter<"Application"> | string
-    resumeUrl?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    lastName?: StringWithAggregatesFilter<"Application"> | string
+    firstName?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    ritEmail?: StringWithAggregatesFilter<"Application"> | string
+    coopsCompleted?: IntNullableWithAggregatesFilter<"Application"> | number | null
+    startSemester?: StringWithAggregatesFilter<"Application"> | string
+    coursesTaken?: StringWithAggregatesFilter<"Application"> | string
+    coopSearchStartDate?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    coopSearchPlatforms?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    pendingOffers?: BoolWithAggregatesFilter<"Application"> | boolean
+    pendingOffersDetails?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    rejectionLetters?: BoolWithAggregatesFilter<"Application"> | boolean
+    rejectionLettersDetails?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    SEcoopInterest?: BoolWithAggregatesFilter<"Application"> | boolean
+    SEcoopAvailability?: BoolNullableWithAggregatesFilter<"Application"> | boolean | null
+    remoteAbility?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    additionalComments?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    resumeFile?: StringNullableWithAggregatesFilter<"Application"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Application"> | Date | string
   }
 
@@ -4185,90 +4347,153 @@ export namespace Prisma {
   }
 
   export type ApplicationCreateInput = {
-    name: string
-    email: string
-    phone: string
-    academicStanding: string
-    semester: number
-    coopsCompleted: number
-    skills: string
-    resumeUrl?: string | null
+    lastName: string
+    firstName?: string | null
+    ritEmail: string
+    coopsCompleted?: number | null
+    startSemester: string
+    coursesTaken: string
+    coopSearchStartDate?: string | null
+    coopSearchPlatforms?: string | null
+    pendingOffers: boolean
+    pendingOffersDetails?: string | null
+    rejectionLetters: boolean
+    rejectionLettersDetails?: string | null
+    SEcoopInterest: boolean
+    SEcoopAvailability?: boolean | null
+    remoteAbility?: string | null
+    additionalComments?: string | null
+    resumeFile?: string | null
     createdAt?: Date | string
   }
 
   export type ApplicationUncheckedCreateInput = {
     id?: number
-    name: string
-    email: string
-    phone: string
-    academicStanding: string
-    semester: number
-    coopsCompleted: number
-    skills: string
-    resumeUrl?: string | null
+    lastName: string
+    firstName?: string | null
+    ritEmail: string
+    coopsCompleted?: number | null
+    startSemester: string
+    coursesTaken: string
+    coopSearchStartDate?: string | null
+    coopSearchPlatforms?: string | null
+    pendingOffers: boolean
+    pendingOffersDetails?: string | null
+    rejectionLetters: boolean
+    rejectionLettersDetails?: string | null
+    SEcoopInterest: boolean
+    SEcoopAvailability?: boolean | null
+    remoteAbility?: string | null
+    additionalComments?: string | null
+    resumeFile?: string | null
     createdAt?: Date | string
   }
 
   export type ApplicationUpdateInput = {
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    phone?: StringFieldUpdateOperationsInput | string
-    academicStanding?: StringFieldUpdateOperationsInput | string
-    semester?: IntFieldUpdateOperationsInput | number
-    coopsCompleted?: IntFieldUpdateOperationsInput | number
-    skills?: StringFieldUpdateOperationsInput | string
-    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    ritEmail?: StringFieldUpdateOperationsInput | string
+    coopsCompleted?: NullableIntFieldUpdateOperationsInput | number | null
+    startSemester?: StringFieldUpdateOperationsInput | string
+    coursesTaken?: StringFieldUpdateOperationsInput | string
+    coopSearchStartDate?: NullableStringFieldUpdateOperationsInput | string | null
+    coopSearchPlatforms?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingOffers?: BoolFieldUpdateOperationsInput | boolean
+    pendingOffersDetails?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectionLetters?: BoolFieldUpdateOperationsInput | boolean
+    rejectionLettersDetails?: NullableStringFieldUpdateOperationsInput | string | null
+    SEcoopInterest?: BoolFieldUpdateOperationsInput | boolean
+    SEcoopAvailability?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    remoteAbility?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalComments?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeFile?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ApplicationUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    phone?: StringFieldUpdateOperationsInput | string
-    academicStanding?: StringFieldUpdateOperationsInput | string
-    semester?: IntFieldUpdateOperationsInput | number
-    coopsCompleted?: IntFieldUpdateOperationsInput | number
-    skills?: StringFieldUpdateOperationsInput | string
-    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    ritEmail?: StringFieldUpdateOperationsInput | string
+    coopsCompleted?: NullableIntFieldUpdateOperationsInput | number | null
+    startSemester?: StringFieldUpdateOperationsInput | string
+    coursesTaken?: StringFieldUpdateOperationsInput | string
+    coopSearchStartDate?: NullableStringFieldUpdateOperationsInput | string | null
+    coopSearchPlatforms?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingOffers?: BoolFieldUpdateOperationsInput | boolean
+    pendingOffersDetails?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectionLetters?: BoolFieldUpdateOperationsInput | boolean
+    rejectionLettersDetails?: NullableStringFieldUpdateOperationsInput | string | null
+    SEcoopInterest?: BoolFieldUpdateOperationsInput | boolean
+    SEcoopAvailability?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    remoteAbility?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalComments?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeFile?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ApplicationCreateManyInput = {
     id?: number
-    name: string
-    email: string
-    phone: string
-    academicStanding: string
-    semester: number
-    coopsCompleted: number
-    skills: string
-    resumeUrl?: string | null
+    lastName: string
+    firstName?: string | null
+    ritEmail: string
+    coopsCompleted?: number | null
+    startSemester: string
+    coursesTaken: string
+    coopSearchStartDate?: string | null
+    coopSearchPlatforms?: string | null
+    pendingOffers: boolean
+    pendingOffersDetails?: string | null
+    rejectionLetters: boolean
+    rejectionLettersDetails?: string | null
+    SEcoopInterest: boolean
+    SEcoopAvailability?: boolean | null
+    remoteAbility?: string | null
+    additionalComments?: string | null
+    resumeFile?: string | null
     createdAt?: Date | string
   }
 
   export type ApplicationUpdateManyMutationInput = {
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    phone?: StringFieldUpdateOperationsInput | string
-    academicStanding?: StringFieldUpdateOperationsInput | string
-    semester?: IntFieldUpdateOperationsInput | number
-    coopsCompleted?: IntFieldUpdateOperationsInput | number
-    skills?: StringFieldUpdateOperationsInput | string
-    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    ritEmail?: StringFieldUpdateOperationsInput | string
+    coopsCompleted?: NullableIntFieldUpdateOperationsInput | number | null
+    startSemester?: StringFieldUpdateOperationsInput | string
+    coursesTaken?: StringFieldUpdateOperationsInput | string
+    coopSearchStartDate?: NullableStringFieldUpdateOperationsInput | string | null
+    coopSearchPlatforms?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingOffers?: BoolFieldUpdateOperationsInput | boolean
+    pendingOffersDetails?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectionLetters?: BoolFieldUpdateOperationsInput | boolean
+    rejectionLettersDetails?: NullableStringFieldUpdateOperationsInput | string | null
+    SEcoopInterest?: BoolFieldUpdateOperationsInput | boolean
+    SEcoopAvailability?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    remoteAbility?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalComments?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeFile?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ApplicationUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    phone?: StringFieldUpdateOperationsInput | string
-    academicStanding?: StringFieldUpdateOperationsInput | string
-    semester?: IntFieldUpdateOperationsInput | number
-    coopsCompleted?: IntFieldUpdateOperationsInput | number
-    skills?: StringFieldUpdateOperationsInput | string
-    resumeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    ritEmail?: StringFieldUpdateOperationsInput | string
+    coopsCompleted?: NullableIntFieldUpdateOperationsInput | number | null
+    startSemester?: StringFieldUpdateOperationsInput | string
+    coursesTaken?: StringFieldUpdateOperationsInput | string
+    coopSearchStartDate?: NullableStringFieldUpdateOperationsInput | string | null
+    coopSearchPlatforms?: NullableStringFieldUpdateOperationsInput | string | null
+    pendingOffers?: BoolFieldUpdateOperationsInput | boolean
+    pendingOffersDetails?: NullableStringFieldUpdateOperationsInput | string | null
+    rejectionLetters?: BoolFieldUpdateOperationsInput | boolean
+    rejectionLettersDetails?: NullableStringFieldUpdateOperationsInput | string | null
+    SEcoopInterest?: BoolFieldUpdateOperationsInput | boolean
+    SEcoopAvailability?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    remoteAbility?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalComments?: NullableStringFieldUpdateOperationsInput | string | null
+    resumeFile?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4460,6 +4685,27 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type BoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[]
@@ -4484,52 +4730,77 @@ export namespace Prisma {
 
   export type ApplicationCountOrderByAggregateInput = {
     id?: SortOrder
-    name?: SortOrder
-    email?: SortOrder
-    phone?: SortOrder
-    academicStanding?: SortOrder
-    semester?: SortOrder
+    lastName?: SortOrder
+    firstName?: SortOrder
+    ritEmail?: SortOrder
     coopsCompleted?: SortOrder
-    skills?: SortOrder
-    resumeUrl?: SortOrder
+    startSemester?: SortOrder
+    coursesTaken?: SortOrder
+    coopSearchStartDate?: SortOrder
+    coopSearchPlatforms?: SortOrder
+    pendingOffers?: SortOrder
+    pendingOffersDetails?: SortOrder
+    rejectionLetters?: SortOrder
+    rejectionLettersDetails?: SortOrder
+    SEcoopInterest?: SortOrder
+    SEcoopAvailability?: SortOrder
+    remoteAbility?: SortOrder
+    additionalComments?: SortOrder
+    resumeFile?: SortOrder
     createdAt?: SortOrder
   }
 
   export type ApplicationAvgOrderByAggregateInput = {
     id?: SortOrder
-    semester?: SortOrder
     coopsCompleted?: SortOrder
   }
 
   export type ApplicationMaxOrderByAggregateInput = {
     id?: SortOrder
-    name?: SortOrder
-    email?: SortOrder
-    phone?: SortOrder
-    academicStanding?: SortOrder
-    semester?: SortOrder
+    lastName?: SortOrder
+    firstName?: SortOrder
+    ritEmail?: SortOrder
     coopsCompleted?: SortOrder
-    skills?: SortOrder
-    resumeUrl?: SortOrder
+    startSemester?: SortOrder
+    coursesTaken?: SortOrder
+    coopSearchStartDate?: SortOrder
+    coopSearchPlatforms?: SortOrder
+    pendingOffers?: SortOrder
+    pendingOffersDetails?: SortOrder
+    rejectionLetters?: SortOrder
+    rejectionLettersDetails?: SortOrder
+    SEcoopInterest?: SortOrder
+    SEcoopAvailability?: SortOrder
+    remoteAbility?: SortOrder
+    additionalComments?: SortOrder
+    resumeFile?: SortOrder
     createdAt?: SortOrder
   }
 
   export type ApplicationMinOrderByAggregateInput = {
     id?: SortOrder
-    name?: SortOrder
-    email?: SortOrder
-    phone?: SortOrder
-    academicStanding?: SortOrder
-    semester?: SortOrder
+    lastName?: SortOrder
+    firstName?: SortOrder
+    ritEmail?: SortOrder
     coopsCompleted?: SortOrder
-    skills?: SortOrder
-    resumeUrl?: SortOrder
+    startSemester?: SortOrder
+    coursesTaken?: SortOrder
+    coopSearchStartDate?: SortOrder
+    coopSearchPlatforms?: SortOrder
+    pendingOffers?: SortOrder
+    pendingOffersDetails?: SortOrder
+    rejectionLetters?: SortOrder
+    rejectionLettersDetails?: SortOrder
+    SEcoopInterest?: SortOrder
+    SEcoopAvailability?: SortOrder
+    remoteAbility?: SortOrder
+    additionalComments?: SortOrder
+    resumeFile?: SortOrder
     createdAt?: SortOrder
   }
 
   export type ApplicationSumOrderByAggregateInput = {
     id?: SortOrder
-    semester?: SortOrder
     coopsCompleted?: SortOrder
   }
 
@@ -4583,6 +4854,38 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -4678,20 +4981,36 @@ export namespace Prisma {
     set?: string
   }
 
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
     increment?: number
     decrement?: number
     multiply?: number
     divide?: number
   }
 
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type NullableBoolFieldUpdateOperationsInput = {
+    set?: boolean | null
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -4733,6 +5052,27 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     search?: string
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolNullableFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -4809,7 +5149,7 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel> | null
     in?: number[] | null
     notIn?: number[] | null
@@ -4817,7 +5157,39 @@ export namespace Prisma {
     lte?: number | IntFieldRefInput<$PrismaModel>
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedBoolNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
+    not?: NestedBoolNullableWithAggregatesFilter<$PrismaModel> | boolean | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedBoolNullableFilter<$PrismaModel>
+    _max?: NestedBoolNullableFilter<$PrismaModel>
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {

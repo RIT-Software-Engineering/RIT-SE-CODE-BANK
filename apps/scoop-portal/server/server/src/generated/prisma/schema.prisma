@@ -1,14 +1,23 @@
 model Application {
-  id               Int      @id @default(autoincrement())
-  name             String
-  email            String
-  phone            String
-  academicStanding String
-  semester         Int
-  coopsCompleted   Int
-  skills           String
-  resumeUrl        String?
-  createdAt        DateTime @default(now())
+  id                      Int      @id @default(autoincrement())
+  lastName                String
+  firstName               String?
+  ritEmail                String
+  coopsCompleted          Int?
+  startSemester           String
+  coursesTaken            String
+  coopSearchStartDate     String?
+  coopSearchPlatforms     String?
+  pendingOffers           Boolean
+  pendingOffersDetails    String?
+  rejectionLetters        Boolean
+  rejectionLettersDetails String?
+  SEcoopInterest          Boolean
+  SEcoopAvailability      Boolean?
+  remoteAbility           String?
+  additionalComments      String?
+  resumeFile              String?
+  createdAt               DateTime @default(now())
 }
 
 generator client {

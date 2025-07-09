@@ -8,8 +8,11 @@ import {
     FormLabel,
     InputLabel,
     FormControlLabel,
+    FormGroup,
+    helperText,
     RadioGroup,
     Radio,
+    Checkbox,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -40,7 +43,7 @@ function ApplicationPage() {
     const [modalOpen, setModalOpen] = useState(MODAL_STATUS.CLOSED);
     const [errors, setErrors] = useState({});
     const [semesterData, setSemesterData] = useState([]);
-    // const [semesterData, setSemesterData] = useState([]);
+    const [courseData, setCourseData] = useState([]);
 
     useEffect(() => {
         // SecureFetch(config.url.API_GET_SEMESTERS)
@@ -50,12 +53,33 @@ function ApplicationPage() {
 
         // Temporary hardcoded dates:
         let data = [
-            { semester_id: 1, name: "Fall 2025" },
-            { semester_id: 2, name: "Spring 2026" },
-            { semester_id: 3, name: "Summer 2026" },
-            { semester_id: 4, name: "Fall 2027" },
+            { semester_id: 1, name: "Fall 2019" },
+            { semester_id: 2, name: "Spring 2019" },
+            { semester_id: 3, name: "Fall 2020" },
+            { semester_id: 4, name: "Spring 2021" },
+            { semester_id: 5, name: "Fall 2021" },
+            { semester_id: 6, name: "Spring 2022" },
+            { semester_id: 7, name: "Fall 2022" },
+            { semester_id: 8, name: "Spring 2023" },
+            { semester_id: 9, name: "Fall 2023" },
+            { semester_id: 10, name: "Spring 2024" },
+            { semester_id: 11, name: "Fall 2024" },
         ];
         setSemesterData(data);
+    }, []);
+
+    useEffect(() => {
+        // Temporary hardcoded courses:
+        let data = [
+            { course_id: 1, name: "SWEN-261 Intro to SE" },
+            { course_id: 2, name: "SWEN-262 SW Subsystems" },
+            { course_id: 3, name: "SWEN-256 Process & Prj Mgmt" },
+            { course_id: 4, name: "SWEN-331 Secure SW" },
+            { course_id: 5, name: "SWEN-344 Web Eng" },
+            { course_id: 6, name: "SWEN-440 Architectures" },
+            { course_id: 7, name: "SWEN-444 Human-Centered" },
+        ];
+        setCourseData(data);
     }, []);
 
     const handleChange = (e) => {
@@ -104,26 +128,26 @@ function ApplicationPage() {
         // }
 
         try {
-        const response = await postFormData();
-        const result = await response.json();
-        console.log("Response from server:", result);
-        console.log("Response status:", response.status);
+            const response = await postFormData();
+            const result = await response.json();
+            console.log("Response from server:", result);
+            console.log("Response status:", response.status);
 
-        if (response.status === 200) {
-          setModalOpen(MODAL_STATUS.SUCCESS);
-        } else {
-          setModalOpen(MODAL_STATUS.FAIL);
-          const errorData = result
-          if (errorData?.errors) {
-            const newErrors = {};
-            errorData.errors.forEach((err) => {
-              newErrors[err.param] = err.msg;
-            });
-            setErrors(newErrors);
-          }
-        }
+            if (response.status === 200) {
+                setModalOpen(MODAL_STATUS.SUCCESS);
+            } else {
+                setModalOpen(MODAL_STATUS.FAIL);
+                const errorData = result;
+                if (errorData?.errors) {
+                    const newErrors = {};
+                    errorData.errors.forEach((err) => {
+                        newErrors[err.param] = err.msg;
+                    });
+                    setErrors(newErrors);
+                }
+            }
         } catch (err) {
-          console.error(err);
+            console.error(err);
         }
     };
 
@@ -179,7 +203,15 @@ function ApplicationPage() {
                 sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 5, py: 3 }}
             >
                 <Typography variant="h4" gutterBottom align="center">
-                    Apply For SCOOP
+                    Application for Unpaid SE Co-op Alternative
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                    This form is meant for use by invitation only and is for SE
+                    students who have been in contact with the SE Department
+                    regarding potential delayed graduation due to unfulfilled
+                    Co-op requirements. We want to learn more about you and your
+                    specific situation to see if we can help. That said, it is
+                    imperative that you keep looking for paid co-op employment.
                 </Typography>
 
                 <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -187,11 +219,23 @@ function ApplicationPage() {
                         required
                         fullWidth
                         margin="normal"
-                        label="Full Name"
-                        name="name"
+                        label="Last Name"
+                        name="lastName"
                         value={formData.name || ""}
                         onChange={handleChange}
                         error={!!errors.name}
+                        helperText={errors.name}
+                    />
+                    <TextField
+                        required
+                        fullWidth
+                        margin="normal"
+                        label="First Name"
+                        name="FirstName"
+                        value={formData.name || ""}
+                        onChange={handleChange}
+                        error={!!errors.name}
+                        helperText={errors.name}
                     />
 
                     <TextField
@@ -199,49 +243,41 @@ function ApplicationPage() {
                         fullWidth
                         margin="normal"
                         label="RIT Email"
-                        name="email"
+                        name="ritEmail"
                         value={formData.email || ""}
                         onChange={handleChange}
                         error={!!errors.email}
                     />
-                    <TextField
-                        required
-                        fullWidth
-                        margin="normal"
-                        label="Phone Number"
-                        name="phone"
-                        value={formData.phone || ""}
-                        onChange={handleChange}
-                        error={!!errors.phone}
-                    />
                     <FormControl fullWidth margin="normal">
-                        <FormLabel id="academic-standing-label">
-                            Academic Standing
-                        </FormLabel>
+                        <FormLabel>Number of Co-op blocks completed?</FormLabel>
                         <Select
                             required
-                            margin="normal"
-                            label="academicStanding"
-                            name="academicStanding"
-                            value={formData["academicStanding"] || ""}
+                            // margin="normal"
+                            label="coopsCompleted"
+                            name="coopsCompleted"
+                            value={formData["coopsCompleted"] || ""}
                             onChange={(e) =>
                                 handleDropdownChange(
-                                    "academicStanding",
+                                    "coopsCompleted",
                                     e.target.value
                                 )
                             }
                             error={!!errors.description}
+                            // helperText={errors.description}
                         >
-                            <MenuItem value={"2nd Year"}>2nd Year</MenuItem>
-                            <MenuItem value={"3rd Year"}>3rd Year</MenuItem>
-                            <MenuItem value={"4th Year"}>4th Year</MenuItem>
-                            <MenuItem value={"5th Year"}>5th Year</MenuItem>
+                            <MenuItem value={0}>None</MenuItem>
+                            <MenuItem value={1}>1</MenuItem>
+                            <MenuItem value={2}>2</MenuItem>
+                            <MenuItem value={3}>3</MenuItem>
+                            <MenuItem value={4}>4</MenuItem>
+                            <MenuItem value={5}>5</MenuItem>
                         </Select>
                     </FormControl>
+
                     <FormControl fullWidth margin="normal">
-                        <InputLabel id="semester-label">
-                            Expected graduation date
-                        </InputLabel>
+                        <FormLabel id="semester-label">
+                            Which semester did you start at RIT?
+                        </FormLabel>
                         <Select
                             required
                             label="Semester"
@@ -264,7 +300,216 @@ function ApplicationPage() {
                         </Select>
                     </FormControl>
 
+                    <FormControl
+                        sx={{ m: 3 }}
+                        component="fieldset"
+                        variant="standard"
+                    >
+                        <FormLabel component="legend">
+                            Which courses have you already taken or are about to
+                            complete this term?
+                        </FormLabel>
+
+                        <FormGroup>
+                            {courseData.map((course) => (
+                                <FormControlLabel
+                                    key={course.course_id}
+                                    control={
+                                        <Checkbox
+                                            name={course.name}
+                                            onChange={handleChange}
+                                            checked={
+                                                formData[course.name] || false
+                                            }
+                                        />
+                                    }
+                                    label={course.name}
+                                />
+                            ))}
+                        </FormGroup>
+                    </FormControl>
+
+                    <TextField
+                        required
+                        fullWidth
+                        margin="normal"
+                        label="When did you start searching for this co-op?"
+                        name="coopSearchStartDate"
+                        value={formData.coopSearchStartDate || ""}
+                        onChange={handleChange}
+                        error={!!errors.coopSearchStartDate}
+                    />
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel required id="coopSearchPlatforms-label">
+                            {" "}
+                            What methods/platforms have you used in order to try
+                            and get this co-op? Name as many as you can recall
+                            that you would be able to provide evidence if needed
+                            (e.g. email/RIT Career Connect/Indeed etc.){" "}
+                        </FormLabel>
+                        <TextField
+                            fullWidth
+                            label=""
+                            name="coopSearchPlatforms"
+                            value={formData.coopSearchPlatforms || ""}
+                            onChange={handleChange}
+                            error={!!errors.coopSearchPlatforms}
+                        />
+                    </FormControl>
+
                     <FormControl>
+                        <FormLabel required id="pending-offers-label">
+                            Do you have any pending/open employer replies that
+                            you are waiting to hear back from at this time?
+                        </FormLabel>
+                        <RadioGroup
+                            aria-labelledby="pending-offers-buttons-group-label"
+                            name="pending-offers-group"
+                        >
+                            <FormControlLabel
+                                value="yes"
+                                control={<Radio />}
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                value="no"
+                                control={<Radio />}
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel id="pending-offers-list-label">
+                            {" "}
+                            If Yes, and these as a result of an interview, name
+                            each employer and your last date of contact for
+                            each. If possible provide Company/position and
+                            location. (e.g. 1.- Microsoft/Intern Seattle, WA
+                            April 2nd 2025, 2.- Paychex/SE co-op Webster,
+                            NY){" "}
+                        </FormLabel>
+                        <TextField
+                            fullWidth
+                            label=""
+                            name="pendingOffers"
+                            value={formData.pendingOffers || ""}
+                            onChange={handleChange}
+                            error={!!errors.pendingOffers}
+                        />
+                    </FormControl>
+
+                    <FormControl>
+                        <FormLabel required id="rejection-letters-label">
+                            Have you received formal rejection
+                            letters/responses?
+                        </FormLabel>
+                        <RadioGroup
+                            aria-labelledby="rejection-letters-buttons-group-label"
+                            name="rejection-letters-group"
+                        >
+                            <FormControlLabel
+                                value="yes"
+                                control={<Radio />}
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                value="no"
+                                control={<Radio />}
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel id="rejection-letters-list-label">
+                            {" "}
+                            If Yes, approximately how many? Name as many as you
+                            can recall that you would be able to provide
+                            evidence if needed. Companies/Employers and
+                            approximate date. (e.g. 1.- Google, January 16th
+                            2025, 2.- Meta, February 18th 2025){" "}
+                        </FormLabel>
+                        <TextField
+                            fullWidth
+                            label=""
+                            name="rejectionLetters"
+                            value={formData.rejectionLetters || ""}
+                            onChange={handleChange}
+                            error={!!errors.rejectionLetters}
+                        />
+                    </FormControl>
+
+                    <FormControl margin="normal">
+                        <FormLabel required  id="SE-coop-interest-label">
+                            SE does not currently have a co-op option for this
+                            summer. However, IF an approved unpaid opportunity
+                            became available, would you be interested in
+                            pursuing it?
+                        </FormLabel>
+                        <RadioGroup
+                            aria-labelledby="SE-coop-interest-buttons-group-label"
+                            name="SE-coop-interest-group"
+                            //SEcoopInterest
+                        >
+                            <FormControlLabel
+                                value="yes"
+                                control={<Radio />}
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                value="no"
+                                control={<Radio />}
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <FormControl margin="normal">
+                        <FormLabel required id="SEcoopAvailability-label">
+                            If an option were to become available, would you be
+                            able to participate in-person at RIT or are your
+                            circumstances such that you would be unable to for
+                            the duration of the co-op?
+                        </FormLabel>
+                        <RadioGroup
+                            aria-labelledby="SEcoopAvailability-buttons-group-label"
+                            name="SEcoopAvailability-group"
+                            //SEcoopAvailability
+                        >
+                            <FormControlLabel
+                                value="yes"
+                                control={<Radio />}
+                                label="Yes"
+                            />
+                            <FormControlLabel
+                                value="no"
+                                control={<Radio />}
+                                label="No"
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel id="remoteAbility-label">
+                            {" "}
+                            If Unable, please confirm that you can be remote by
+                            stating your capabilities (e.g.
+                            laptop/desktop/webcam/mic specifications and
+                            provider/connection type){" "}
+                        </FormLabel>
+                        <TextField
+                            fullWidth
+                            label=""
+                            name="remoteAbility"
+                            value={formData.remoteAbility || ""}
+                            onChange={handleChange}
+                            error={!!errors.remoteAbility}
+                        />
+                    </FormControl>
+
+                    {/* <FormControl>
                         <FormLabel>Have you completed a coop before?</FormLabel>
                         <RadioGroup
                             defaultValue="Yes"
@@ -281,37 +526,12 @@ function ApplicationPage() {
                                 label="No"
                             />
                         </RadioGroup>
-                    </FormControl>
-
-                    <FormControl fullWidth>
-                        <FormLabel>
-                            How many coop semesters have you completed?
-                        </FormLabel>
-                        <Select
-                            required
-                            margin="normal"
-                            label="coopsCompleted"
-                            name="coopsCompleted"
-                            value={formData["coopsCompleted"] || ""}
-                            onChange={(e) =>
-                                handleDropdownChange(
-                                    "coopsCompleted",
-                                    e.target.value
-                                )
-                            }
-                            error={!!errors.description}
-                            // helperText={errors.description}
-                        >
-                            <MenuItem value={1}>None</MenuItem>
-                            <MenuItem value={2}>One</MenuItem>
-                            <MenuItem value={3}>Two</MenuItem>
-                            <MenuItem value={4}>Three</MenuItem>
-                        </Select>
-                    </FormControl>
+                    </FormControl> */}
 
                     <FormControl fullWidth margin="normal">
                         <FormLabel>
-                            Tell us about your skills and experience:
+                            Is there anything else you'd like to share with us about your search efforts or about your summer availability?
+
                         </FormLabel>
                         <TextField
                             required

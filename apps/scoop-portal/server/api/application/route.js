@@ -9,18 +9,44 @@ const prisma = new _PrismaClient();
  * @param {Object} req - The request object containing application data
  */
 router.post("/", async (req, res) => {
-  const { name, email, phone, skills, academicStanding, semester, coopsCompleted, resumeUrl } = req.body;
+  const {
+     lastName,
+     firstName,
+     ritEmail,
+     coopsCompleted,
+     startSemester,
+     coursesTaken,
+     coopSearchStartDate,
+     coopSearchPlatforms,
+     pendingOffers,
+     rejectionLetters,
+     SEcoopInterest,
+     SEcoopAvailability,
+     remoteAbility,
+     additionalComments,
+     resumeFile,
+     createdAt
+  } = req.body;
+
   try {
     const saved = await prisma.application.create({
       data: {
-        name,
-        email,
-        phone,
-        skills,
-        academicStanding,
-        semester,
-        coopsCompleted,
-        resumeUrl
+        lastName,
+     firstName,
+     ritEmail,
+     coopsCompleted,
+     startSemester,
+     coursesTaken,
+     coopSearchStartDate,
+     coopSearchPlatforms,
+     pendingOffers,
+     rejectionLetters,
+     SEcoopInterest,
+     SEcoopAvailability,
+     remoteAbility,
+     additionalComments,
+     resumeFile,
+     createdAt
       }
     });
     res.status(200).json({ message: "Application saved", application: saved });

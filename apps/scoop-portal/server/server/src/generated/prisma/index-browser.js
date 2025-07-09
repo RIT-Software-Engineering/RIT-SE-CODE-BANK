@@ -122,14 +122,23 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.ApplicationScalarFieldEnum = {
   id: 'id',
-  name: 'name',
-  email: 'email',
-  phone: 'phone',
-  academicStanding: 'academicStanding',
-  semester: 'semester',
+  lastName: 'lastName',
+  firstName: 'firstName',
+  ritEmail: 'ritEmail',
   coopsCompleted: 'coopsCompleted',
-  skills: 'skills',
-  resumeUrl: 'resumeUrl',
+  startSemester: 'startSemester',
+  coursesTaken: 'coursesTaken',
+  coopSearchStartDate: 'coopSearchStartDate',
+  coopSearchPlatforms: 'coopSearchPlatforms',
+  pendingOffers: 'pendingOffers',
+  pendingOffersDetails: 'pendingOffersDetails',
+  rejectionLetters: 'rejectionLetters',
+  rejectionLettersDetails: 'rejectionLettersDetails',
+  SEcoopInterest: 'SEcoopInterest',
+  SEcoopAvailability: 'SEcoopAvailability',
+  remoteAbility: 'remoteAbility',
+  additionalComments: 'additionalComments',
+  resumeFile: 'resumeFile',
   createdAt: 'createdAt'
 };
 
@@ -165,12 +174,18 @@ exports.Prisma.NullsOrder = {
 };
 
 exports.Prisma.ApplicationOrderByRelevanceFieldEnum = {
-  name: 'name',
-  email: 'email',
-  phone: 'phone',
-  academicStanding: 'academicStanding',
-  skills: 'skills',
-  resumeUrl: 'resumeUrl'
+  lastName: 'lastName',
+  firstName: 'firstName',
+  ritEmail: 'ritEmail',
+  startSemester: 'startSemester',
+  coursesTaken: 'coursesTaken',
+  coopSearchStartDate: 'coopSearchStartDate',
+  coopSearchPlatforms: 'coopSearchPlatforms',
+  pendingOffersDetails: 'pendingOffersDetails',
+  rejectionLettersDetails: 'rejectionLettersDetails',
+  remoteAbility: 'remoteAbility',
+  additionalComments: 'additionalComments',
+  resumeFile: 'resumeFile'
 };
 
 exports.Prisma.fruitOrderByRelevanceFieldEnum = {
