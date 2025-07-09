@@ -88,9 +88,13 @@ function ApplicationPage() {
         if (type === "file") {
             setFormFiles(files);
         } else {
+            //handle boolean if any 
+            let parsedValue =
+                value === "true" ? true : value === "false" ? false : value;
+
             setActualformValues({
                 ...formValues,
-                [name]: type === "checkbox" ? checked : value,
+                [name]: type === "checkbox" ? checked : parsedValue,
             });
         }
     };
@@ -127,24 +131,21 @@ function ApplicationPage() {
         //     body.append("attachments", formFiles[i]);
         //   }
         // }
-        
-  //array to string
-  //  completeFormData = {
-  // ...formValues,
-  // coursesTaken: selectedCourses.join(", "), 
 
-  
-    const selectedCourses = courseData
-  .filter((course) => formValues[course.name])
-  .map((course) => course.name)
-  .join(", ");
+        //array to string
+        //  completeFormData = {
+        // ...formValues,
+        // coursesTaken: selectedCourses.join(", "),
+
+        const selectedCourses = courseData
+            .filter((course) => formValues[course.name])
+            .map((course) => course.name)
+            .join(", ");
 
         const completeFormData = {
             ...formValues,
             coursesTaken: selectedCourses,
         };
-
-
 
         try {
             const response = await postFormData(completeFormData);
@@ -303,7 +304,10 @@ function ApplicationPage() {
                             name="startSemester"
                             value={formValues.startSemester || ""}
                             onChange={(e) =>
-                                handleDropdownChange("startSemester", e.target.value)
+                                handleDropdownChange(
+                                    "startSemester",
+                                    e.target.value
+                                )
                             }
                             error={!!errors.startSemester}
                             // helperText={errors.semester}
@@ -311,7 +315,7 @@ function ApplicationPage() {
                             {semesterData.map((startSemester) => (
                                 <MenuItem
                                     key={startSemester.semester_id}
-                                    value={startSemester.semester_id}
+                                    value={startSemester.name}
                                 >
                                     {startSemester.name}
                                 </MenuItem>
@@ -384,15 +388,16 @@ function ApplicationPage() {
                         </FormLabel>
                         <RadioGroup
                             aria-labelledby="pending-offers-buttons-group-label"
-                            name="pending-offers-group"
+                            name="pendingOffers"
+                            onChange={handleChange}
                         >
                             <FormControlLabel
-                                value="yes"
+                                value={true}
                                 control={<Radio />}
                                 label="Yes"
                             />
                             <FormControlLabel
-                                value="no"
+                                value={false}
                                 control={<Radio />}
                                 label="No"
                             />
@@ -412,10 +417,10 @@ function ApplicationPage() {
                         <TextField
                             fullWidth
                             label=""
-                            name="pendingOffers"
-                            value={formValues.pendingOffers || ""}
+                            name="pendingOffersDetails"
+                            value={formValues.pendingOffersDetails || ""}
                             onChange={handleChange}
-                            error={!!errors.pendingOffers}
+                            error={!!errors.pendingOffersDetails}
                         />
                     </FormControl>
 
@@ -426,15 +431,16 @@ function ApplicationPage() {
                         </FormLabel>
                         <RadioGroup
                             aria-labelledby="rejection-letters-buttons-group-label"
-                            name="rejection-letters-group"
+                            name="rejectionLetters"
+                            onChange={handleChange}
                         >
                             <FormControlLabel
-                                value="yes"
+                                value="true"
                                 control={<Radio />}
                                 label="Yes"
                             />
                             <FormControlLabel
-                                value="no"
+                                value="false"
                                 control={<Radio />}
                                 label="No"
                             />
@@ -442,7 +448,7 @@ function ApplicationPage() {
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel id="rejection-letters-list-label">
+                        <FormLabel id="rejection-letters-details-label">
                             {" "}
                             If Yes, approximately how many? Name as many as you
                             can recall that you would be able to provide
@@ -453,15 +459,15 @@ function ApplicationPage() {
                         <TextField
                             fullWidth
                             label=""
-                            name="rejectionLetters"
-                            value={formValues.rejectionLetters || ""}
+                            name="rejectionLettersDetails"
+                            value={formValues.rejectionLettersDetails || ""}
                             onChange={handleChange}
-                            error={!!errors.rejectionLetters}
+                            error={!!errors.rejectionLettersDetails}
                         />
                     </FormControl>
 
                     <FormControl margin="normal">
-                        <FormLabel required  id="SE-coop-interest-label">
+                        <FormLabel required id="SE-coop-interest-label">
                             SE does not currently have a co-op option for this
                             summer. However, IF an approved unpaid opportunity
                             became available, would you be interested in
@@ -469,16 +475,16 @@ function ApplicationPage() {
                         </FormLabel>
                         <RadioGroup
                             aria-labelledby="SE-coop-interest-buttons-group-label"
-                            name="SE-coop-interest-group"
-                            //SEcoopInterest
+                            name="SEcoopInterest"
+                            onChange={handleChange}
                         >
                             <FormControlLabel
-                                value="yes"
+                                value="true"
                                 control={<Radio />}
                                 label="Yes"
                             />
                             <FormControlLabel
-                                value="no"
+                                value="false"
                                 control={<Radio />}
                                 label="No"
                             />
@@ -494,16 +500,17 @@ function ApplicationPage() {
                         </FormLabel>
                         <RadioGroup
                             aria-labelledby="SEcoopAvailability-buttons-group-label"
-                            name="SEcoopAvailability-group"
+                            name="SEcoopAvailability"
+                            onChange={handleChange}
                             //SEcoopAvailability
                         >
                             <FormControlLabel
-                                value="yes"
+                                value="true"
                                 control={<Radio />}
                                 label="Yes"
                             />
                             <FormControlLabel
-                                value="no"
+                                value="false"
                                 control={<Radio />}
                                 label="No"
                             />
@@ -549,20 +556,21 @@ function ApplicationPage() {
 
                     <FormControl fullWidth margin="normal">
                         <FormLabel>
-                            Is there anything else you'd like to share with us about your search efforts or about your summer availability?
-
+                            Is there anything else you'd like to share with us
+                            about your search efforts or about your summer
+                            availability?
                         </FormLabel>
                         <TextField
                             required
                             fullWidth
                             margin="normal"
                             // label="skills"
-                            name="skills"
-                            value={formValues.skills || ""}
+                            name="additionalComments"
+                            value={formValues.additionalComments || ""}
                             multiline
                             rows={4}
                             onChange={handleChange}
-                            error={!!errors.description}
+                            error={!!errors.additionalComments}
                             // helperText={errors.description}
                         />
                     </FormControl>
