@@ -30,3 +30,27 @@ export async function getProjectsPeers(id: string): Promise<UserProfile[]> {
 
     return handleResponse(res, "Couldn't get projects for user with ID " + id);
 }
+
+export async function addProjectPeerByEmail(
+    id: string,
+    email: string
+): Promise<UserProfile> {
+    const res = await fetch(`${BASE_URL}/projects/${id}/addPeer/${email}`, {
+        method: "POST",
+        credentials: "include",
+    });
+
+    return handleResponse(res, "Add peer error");
+}
+
+export async function removeProjectPeerByEmail(
+    id: string,
+    email: string
+): Promise<UserProfile> {
+    const res = await fetch(`${BASE_URL}/projects/${id}/removePeer/${email}`, {
+        method: "DELETE",
+        credentials: "include",
+    });
+
+    return handleResponse(res, "Remove peer error");
+}
