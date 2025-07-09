@@ -47,8 +47,11 @@ const ClientOverseerProjectView: React.FC<{
         setAddPeerEmail("");
     };
 
-    const handleRemovePeer = async (email: string) => {
-        await removeProjectPeerByEmail(projectId, email);
+    const handleRemovePeer = async (peer: UserProfile) => {
+        if (confirm(`Remove ${peer.name} from project?`)) {
+            setPeers((prev) => prev.filter((p) => p.id !== peer.id));
+            await removeProjectPeerByEmail(projectId, peer.email);
+        }
     };
 
     return (
@@ -73,37 +76,14 @@ const ClientOverseerProjectView: React.FC<{
                             <span
                                 className="underline group-hover:text-blue-700"
                                 title="Remove peer"
-                                onClick={() => {
-                                    if (
-                                        confirm(
-                                            `Remove ${peer.name} from project?`
-                                        )
-                                    ) {
-                                        // Remove peer logic
-                                        setPeers((prev) =>
-                                            prev.filter((p) => p.id !== peer.id)
-                                        );
-                                        handleRemovePeer(peer.email);
-                                    }
-                                }}
+                                onClick={() => handleRemovePeer(peer)}
                             >
                                 {peer.name}
                             </span>
                             <button
                                 className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
                                 title="Remove peer"
-                                onClick={() => {
-                                    if (
-                                        confirm(
-                                            `Remove ${peer.name} from project?`
-                                        )
-                                    ) {
-                                        setPeers((prev) =>
-                                            prev.filter((p) => p.id !== peer.id)
-                                        );
-                                        handleRemovePeer(peer.email);
-                                    }
-                                }}
+                                onClick={() => handleRemovePeer(peer)}
                             >
                                 ×
                             </button>
