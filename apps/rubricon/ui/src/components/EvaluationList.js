@@ -10,7 +10,7 @@ function EvaluationListItem({ data }) {
 }
 
 export default async function EvaluationList() {
-    const response = await fetch("http://localhost:5000/evaluations"); // TODO: Change this to use the evaluations endpoint
+    const response = await fetch("http://localhost:5000/evaluations");
     const evaluations = await response.json();
 
     return (

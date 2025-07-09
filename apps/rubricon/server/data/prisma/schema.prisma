@@ -29,9 +29,10 @@ model Rubrics {
   columns         Int
   criteria_column Int
 
-  criteria  Criteria[]
-  headers   Headers?
-  templates Templates?
+  criteria    Criteria[]
+  headers     Headers?
+  templates   Templates?
+  evaluations Evaluations[]
 }
 
 model Headers {
@@ -84,4 +85,7 @@ model Evaluations {
   title        String?
   message      String? @db.VarChar(4000) // TODO: figure out optimal max chars
   evaluatee_id String? @db.VarChar(36)
+  rubric_id    String @db.VarChar(36)
+
+  rubric Rubrics @relation(fields: [rubric_id], references: [id], onDelete: Cascade)
 }
