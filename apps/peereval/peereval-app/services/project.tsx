@@ -22,3 +22,11 @@ export async function getProjectOverseers(id: string): Promise<UserProfile[]> {
 
     return handleResponse(res, "Couldn't find project with ID " + id);
 }
+
+export async function getProjectsPeers(id: string): Promise<UserProfile[]> {
+    const res = await fetch(`${BASE_URL}/projects/getPeers/${id}`, {
+        credentials: "include",
+    });
+
+    return handleResponse(res, "Couldn't get projects for user with ID " + id);
+}

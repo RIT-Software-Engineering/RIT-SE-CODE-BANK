@@ -114,6 +114,13 @@ async function main() {
     });
 
     // Then Assessments
+    function daysFromToday(days: number): Date {
+        const today = new Date();
+        today.setHours(0, 0, 0);
+        today.setDate(today.getDate() + days);
+        return today;
+    }
+
     const assessmentData = [
         {
             project: {
@@ -122,8 +129,8 @@ async function main() {
             name: "Sprint 1 Review",
             description:
                 "A beginning-of-the-semester peer evaluation to assess teamwork, communication, and individual contributions during the first half of the spring term.",
-            startDate: new Date("2024-06-01"),
-            dueDate: new Date("2024-06-08"),
+            startDate: daysFromToday(-9),
+            dueDate: daysFromToday(-2),
             feedbackForm: {
                 connect: { id: feedbackForm.id },
             },
@@ -135,8 +142,8 @@ async function main() {
             name: "Sprint 2 Review",
             description:
                 "A mid-semester peer evaluation to assess teamwork, communication, and individual contributions during the second half of the spring term.",
-            startDate: new Date("2024-06-11"),
-            dueDate: new Date("2024-06-18"),
+            startDate: daysFromToday(-1),
+            dueDate: daysFromToday(6),
             feedbackForm: {
                 connect: { id: feedbackForm.id },
             },
@@ -148,8 +155,8 @@ async function main() {
             name: "Final Review",
             description:
                 "A final peer evaluation to assess teamwork, communication, and individual contributions during the end of the spring term.",
-            startDate: new Date("2024-06-21"),
-            dueDate: new Date("2024-06-28"),
+            startDate: daysFromToday(7),
+            dueDate: daysFromToday(14),
             feedbackForm: {
                 connect: { id: feedbackForm.id },
             },
@@ -161,8 +168,8 @@ async function main() {
             name: "Sprint 1 Review",
             description:
                 "A beginning-of-the-semester peer evaluation to assess teamwork, communication, and individual contributions during the first half of the spring term.",
-            startDate: new Date("2024-06-01"),
-            dueDate: new Date("2024-06-08"),
+            startDate: daysFromToday(-9),
+            dueDate: daysFromToday(-2),
             feedbackForm: {
                 connect: { id: feedbackForm.id },
             },
@@ -174,8 +181,8 @@ async function main() {
             name: "Sprint 2 Review",
             description:
                 "A mid-semester peer evaluation to assess teamwork, communication, and individual contributions during the second half of the spring term.",
-            startDate: new Date("2024-06-11"),
-            dueDate: new Date("2024-06-18"),
+            startDate: daysFromToday(-1),
+            dueDate: daysFromToday(6),
             feedbackForm: {
                 connect: { id: feedbackForm.id },
             },
@@ -187,8 +194,8 @@ async function main() {
             name: "Final Review",
             description:
                 "A final peer evaluation to assess teamwork, communication, and individual contributions during the end of the spring term.",
-            startDate: new Date("2024-06-21"),
-            dueDate: new Date("2024-06-28"),
+            startDate: daysFromToday(7),
+            dueDate: daysFromToday(14),
             feedbackForm: {
                 connect: { id: feedbackForm.id },
             },

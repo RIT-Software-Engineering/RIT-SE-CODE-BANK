@@ -3,7 +3,7 @@
 import { useAuth } from "@/context/UserContext";
 import ClientProjectView from "./ClientProjectView";
 import ClientOverseerProjectView from "./ClientOverseerProjectView";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { getProjectOverseers } from "@/services/project";
 
 interface ProjectViewProps {
@@ -17,10 +17,12 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
     const [isOverseer, setIsOverseer] = useState<Boolean>(false);
     const [loadingView, setLoadingView] = useState<Boolean>(true);
 
+    const { projectId } = params;
+
     useEffect(() => {
         const getIfOverseer = async () => {
             // Get the overseers for this project
-            const os = await getProjectOverseers(params.projectId);
+            const os = await getProjectOverseers(projectId);
             const oIds = os.map((o) => o.id);
 
             if (oIds.includes(currentUser?.id ?? "")) setIsOverseer(true);
@@ -36,9 +38,9 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
     }
 
     return isOverseer ? (
-        <ClientOverseerProjectView projectId={params.projectId} />
+        <ClientOverseerProjectView projectId={projectId} />
     ) : (
-        <ClientProjectView projectId={params.projectId} />
+        <ClientProjectView projectId={projectId} />
     );
 };
 
