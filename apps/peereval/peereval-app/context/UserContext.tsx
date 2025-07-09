@@ -38,19 +38,17 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
                     );
                     setCurrentUser(userProfile);
                 } else {
-                    throw new Error("No user UID found in localStorage");
+                    // Clear out any bad data if the fetch fails
+                    localStorage.removeItem("userUID");
+                    setCurrentUser(null);
+
+                    // For now, just set current user to Alice all the time
+                    const aliceProfile: UserProfile =
+                        await getUserProfileByEmail("alice@rit.edu");
+                    setCurrentUser(aliceProfile);
                 }
             } catch (error) {
                 console.error("Session restore failed:", error);
-                // Clear out any bad data if the fetch fails
-                localStorage.removeItem("userUID");
-                setCurrentUser(null);
-
-                // For now, just set current user to Alice all the time
-                const aliceProfile: UserProfile = await getUserProfileByEmail(
-                    "alice@rit.edu"
-                );
-                setCurrentUser(aliceProfile);
             } finally {
                 setLoading(false);
             }

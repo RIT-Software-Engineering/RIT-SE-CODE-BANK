@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { $Enums, PrismaClient } from "@prisma/client";
 import { connect } from "http2";
 
 const router = Router();
@@ -23,17 +23,67 @@ router.get("/:id", async (req, res) => {
     const id = req.params.id;
 
     const a = await prisma.assessment.findFirst({
+        where: { id },
+    });
+
+    res.json(a);
+});
+
+type ReturnedInquiry = {
+    id: string;
+    type: $Enums.InquiryType;
+    question: string;
+    scale?: number;
+    labels?: string[];
+    rows?: {
+        id: string;
+        label: string;
+        options: string[];
+    }[];
+};
+
+// Get assessment inquiries by id
+// /assessments/:id/inquiries
+router.get("/:id/inquiries", async (req, res) => {
+    const id = req.params.id;
+
+    const a = await prisma.assessment.findFirst({
         where: { id: id },
         include: {
             feedbackForm: {
                 include: {
-                    inquiries: {},
+                    inquiries: {
+                        include: {
+                            rows: {},
+                        },
+                    },
                 },
             },
         },
     });
 
-    res.json(a);
+    if (!a) {
+        res.status(404).json({
+            message: "Could not find assessment with ID " + id,
+        });
+        return;
+    }
+
+    const inqs = a.feedbackForm.inquiries!;
+
+    res.json(
+        inqs.map(
+            (i) =>
+                ({
+                    ...i,
+                    labels: i.labels?.split(";") ?? [],
+                    rows: i.rows.map((row) => ({
+                        ...row,
+                        options: row.options.split(";"),
+                    })),
+                } as ReturnedInquiry)
+        )
+    );
 });
 
 export default router;
@@ -55,11 +105,15 @@ router.get("/byProject/:id", async (req, res) => {
 });
 
 // Get peer's assessment responses
-// /assessments/resposnes/:userId/:assessmentId
-router.get("/responses/:userId/:assessmentId", async (req, res) => {
-    const { userId, assessmentId } = req.params;
+// /assessments/resposnes/:responderId/:assessmentId
+router.get("/responses/:responderId/:assessmentId", async (req, res) => {
+    const { responderId, assessmentId } = req.params;
 
     const rs = await prisma.formResponse.findMany({
+        where: {
+            assessmentId,
+            responderId,
+        },
         include: {
             responses: {},
         },
