@@ -1,7 +1,7 @@
 -- CreateTable
 CREATE TABLE `Templates` (
-    `id` VARCHAR(191) NOT NULL,
-    `rubric_id` VARCHAR(191) NOT NULL,
+    `id` VARCHAR(36) NOT NULL,
+    `rubric_id` VARCHAR(36) NOT NULL,
     `index` INTEGER NOT NULL,
 
     UNIQUE INDEX `Templates_rubric_id_key`(`rubric_id`),
@@ -10,9 +10,9 @@ CREATE TABLE `Templates` (
 
 -- CreateTable
 CREATE TABLE `Rubrics` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` VARCHAR(36) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(4000) NOT NULL,
+    `description` VARCHAR(4000) NULL,
     `rows` INTEGER NOT NULL,
     `columns` INTEGER NOT NULL,
     `criteria_column` INTEGER NOT NULL,
@@ -22,8 +22,8 @@ CREATE TABLE `Rubrics` (
 
 -- CreateTable
 CREATE TABLE `Headers` (
-    `id` VARCHAR(191) NOT NULL,
-    `rubric_id` VARCHAR(191) NOT NULL,
+    `id` VARCHAR(36) NOT NULL,
+    `rubric_id` VARCHAR(36) NOT NULL,
 
     UNIQUE INDEX `Headers_rubric_id_key`(`rubric_id`),
     PRIMARY KEY (`id`)
@@ -31,12 +31,12 @@ CREATE TABLE `Headers` (
 
 -- CreateTable
 CREATE TABLE `Titles` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` VARCHAR(36) NOT NULL,
     `name` VARCHAR(191) NULL,
-    `description` VARCHAR(191) NULL,
+    `description` VARCHAR(4000) NULL,
     `points` DOUBLE NULL,
     `weight` DOUBLE NULL,
-    `header_id` VARCHAR(191) NOT NULL,
+    `header_id` VARCHAR(36) NOT NULL,
     `index` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
@@ -44,12 +44,12 @@ CREATE TABLE `Titles` (
 
 -- CreateTable
 CREATE TABLE `Criteria` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` VARCHAR(36) NOT NULL,
     `name` VARCHAR(191) NULL,
-    `description` VARCHAR(191) NULL,
+    `description` VARCHAR(4000) NULL,
     `points` DOUBLE NULL,
     `weight` DOUBLE NULL,
-    `rubric_id` VARCHAR(191) NOT NULL,
+    `rubric_id` VARCHAR(36) NOT NULL,
     `index` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
@@ -57,13 +57,23 @@ CREATE TABLE `Criteria` (
 
 -- CreateTable
 CREATE TABLE `Levels` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` VARCHAR(36) NOT NULL,
     `name` VARCHAR(191) NULL,
-    `description` VARCHAR(191) NULL,
+    `description` VARCHAR(4000) NULL,
     `points` DOUBLE NULL,
     `weight` DOUBLE NULL,
-    `criterion_id` VARCHAR(191) NOT NULL,
+    `criterion_id` VARCHAR(36) NOT NULL,
     `index` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Evaluations` (
+    `id` VARCHAR(36) NOT NULL,
+    `title` VARCHAR(191) NULL,
+    `message` VARCHAR(4000) NULL,
+    `evaluatee_id` VARCHAR(36) NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

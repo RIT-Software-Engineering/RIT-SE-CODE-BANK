@@ -14,15 +14,15 @@ datasource db {
 }
 
 model Templates {
-  id        String @id @default(uuid())
-  rubric_id String @unique
+  id        String @id @default(uuid()) @db.VarChar(36)
+  rubric_id String @unique @db.VarChar(36)
   index     Int
 
   rubric Rubrics @relation(fields: [rubric_id], references: [id], onDelete: Cascade)
 }
 
 model Rubrics {
-  id              String  @id @default(uuid())
+  id              String  @id @default(uuid()) @db.VarChar(36)
   title           String
   description     String? @db.VarChar(4000)
   rows            Int
@@ -35,32 +35,32 @@ model Rubrics {
 }
 
 model Headers {
-  id        String @id @default(uuid())
-  rubric_id String @unique
+  id        String @id @default(uuid()) @db.VarChar(36)
+  rubric_id String @unique @db.VarChar(36)
 
   rubric Rubrics  @relation(fields: [rubric_id], references: [id], onDelete: Cascade)
   titles Titles[]
 }
 
 model Titles {
-  id          String  @id @default(uuid())
+  id          String  @id @default(uuid()) @db.VarChar(36)
   name        String?
-  description String?
+  description String? @db.VarChar(4000) // TODO: figure out optimal max chars
   points      Float?
   weight      Float?
-  header_id   String
+  header_id   String  @db.VarChar(36)
   index       Int
 
   header Headers @relation(fields: [header_id], references: [id], onDelete: Cascade)
 }
 
 model Criteria {
-  id          String  @id @default(uuid())
+  id          String  @id @default(uuid()) @db.VarChar(36)
   name        String?
-  description String? // TODO: figure out optimal max chars
-  points      Float? // Optional
-  weight      Float? // Optional
-  rubric_id   String
+  description String? @db.VarChar(4000) // TODO: figure out optimal max chars
+  points      Float?
+  weight      Float?
+  rubric_id   String  @db.VarChar(36)
   index       Int
 
   rubric Rubrics  @relation(fields: [rubric_id], references: [id], onDelete: Cascade)
@@ -68,13 +68,20 @@ model Criteria {
 }
 
 model Levels {
-  id           String  @id @default(uuid())
+  id           String  @id @default(uuid()) @db.VarChar(36)
   name         String?
-  description  String? // TODO: figure out optimal max chars
-  points       Float? // Optional
-  weight       Float? // Optional
-  criterion_id String
+  description  String? @db.VarChar(4000) // TODO: figure out optimal max chars
+  points       Float?
+  weight       Float?
+  criterion_id String  @db.VarChar(36)
   index        Int
 
   criterion Criteria @relation(fields: [criterion_id], references: [id], onDelete: Cascade)
+}
+
+model Evaluations {
+  id           String  @id @default(uuid()) @db.VarChar(36)
+  title        String?
+  message      String? @db.VarChar(4000) // TODO: figure out optimal max chars
+  evaluatee_id String? @db.VarChar(36)
 }

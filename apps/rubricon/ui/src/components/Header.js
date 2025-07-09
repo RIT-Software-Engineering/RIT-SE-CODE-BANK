@@ -14,6 +14,9 @@ export default function Header() {
                 <NavLink href="/rubrics" active="text-primary" className="content-center hover:text-primary">
                     Rubrics
                 </NavLink>
+                <NavLink href="/evaluations" active="text-primary" className="content-center hover:text-primary">
+                    Evaluations
+                </NavLink>
             </nav>
         </header>
     )

@@ -6,6 +6,8 @@ const cors = require('cors');
 const cookieParser = require("cookie-parser");
 const rubricsRouter = require('./api/routes/rubrics.js');
 const templatesRouter = require('./api/routes/templates.js');
+const evaluationsRouter = require('./api/routes/evaluations.js');
+
 
 const port = process.env.PORT || "5000"; // You can use any port number
 
@@ -31,6 +33,7 @@ app.use(express.json());
 
 app.use("/rubrics", rubricsRouter);
 app.use("/templates", templatesRouter);
+app.use("/evaluations", evaluationsRouter);
 
 app.get('/', (req, res) => {
   res.send('Server is running');
