@@ -192,8 +192,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel fruit {\n  id     String @id @default(uuid())\n  name   String\n  color  String\n  size   String\n  rating String @default(\"0\")\n}\n\nmodel users {\n  id             String @id @default(uuid())\n  fname          String\n  lname          String\n  email          String\n  type           String\n  semester_group String\n  project        String\n  active         String\n  last_login     String\n  prev_login     String\n}\n",
-  "inlineSchemaHash": "595c207a5b374dacff711dc1504f9c0ed8f075b4dcf2238d71ecb7d3f36ad06c",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../../src/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\n//example data model\nmodel fruit {\n  id     String @id @default(uuid())\n  name   String\n  color  String\n  size   String\n  rating String @default(\"0\")\n}\n\nmodel users {\n  id             String @id @default(uuid())\n  fname          String\n  lname          String\n  email          String\n  type           String\n  semester_group String\n  project        String\n  active         String\n  last_login     String\n  prev_login     String\n}\n",
+  "inlineSchemaHash": "d908568b51afc0ae6c7bb4f54f723bf831c4cffda61b46193a26d749472ee337",
   "copyEngine": true
 }
 config.dirname = '/'
