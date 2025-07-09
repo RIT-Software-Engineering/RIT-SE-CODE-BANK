@@ -57,4 +57,11 @@ export const DASHBOARD_OPTIONS = [
     link: '/Positions',
     roles: [ROLES.ADMIN]
   },
+  // --- FACULTY SPECIFIC OPTIONS ---
+  {
+    category: 'Personal',
+    text: 'View Applications',
+    link: '/Applications',
+    roles: [ROLES.EMPLOYER]
+  }
 ];

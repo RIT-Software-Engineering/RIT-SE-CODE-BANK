@@ -6,8 +6,13 @@ const DATABASE_API_EXTENSION = process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 // Basic error handler for API responses
 async function handleApiResponse(response) {
   if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({ message: 'Unknown error' }));
-    const errorMessage = errorBody.error || errorBody.message || `HTTP error! status: ${response.status}`;
+    const errorBody = await response
+      .json()
+      .catch(() => ({ message: "Unknown error" }));
+    const errorMessage =
+      errorBody.error ||
+      errorBody.message ||
+      `HTTP error! status: ${response.status}`;
     throw new Error(errorMessage);
   }
   return response.json();
@@ -21,12 +26,14 @@ export async function getOpenPositions() {
   console.log("Base API URL:", BASE_API_URL);
   console.log("Database API Extension:", DATABASE_API_EXTENSION);
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error("Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
+    );
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/open-positions`;
   console.log(`Fetching from: ${url}`); // For debugging
-  
+
   const response = await fetch(url);
   return handleApiResponse(response);
 }
@@ -46,7 +53,9 @@ export async function searchAndFilterOpenPositions(searchTerm, appliedFilters, c
   console.log("Base API URL:", BASE_API_URL);
   console.log("Database API Extension:", DATABASE_API_EXTENSION);
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error("Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
+    );
   }
 
   const params = new URLSearchParams({ searchTerm: searchTerm, filters: JSON.stringify(appliedFilters), candidateUID: candidateUID});
@@ -63,7 +72,9 @@ export async function searchAndFilterOpenPositions(searchTerm, appliedFilters, c
  */
 export async function getAllUsers() {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error("Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
+    );
   }
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/users`;
   console.log(`Fetching from: ${url}`);
@@ -74,7 +85,9 @@ export async function getAllUsers() {
 
 export async function getAllCourses() {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error("Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
+    );
   }
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/courses`;
   console.log(`Fetching from: ${url}`);
@@ -88,7 +101,9 @@ export async function getUserProfile(UID) {
     throw new Error("A UID is required to fetch a user profile.");
   }
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/users/${UID}`;
@@ -98,19 +113,36 @@ export async function getUserProfile(UID) {
   return handleApiResponse(response);
 }
 
+export async function getCandidateApplications(employeerUID) {
+  if (!employeerUID) {
+    throw new Error("A UID is required to fetch a user profile.");
+  }
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/${employeerUID}`;
+  console.log(`Fetching user profile from: ${url}`);
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
 // api call to upsert (update or create) candidate profile
 export async function upsertCandidateProfile(candidateData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-candidate-profile`;
   console.log(`Upserting candidate profile at: ${url}`);
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(candidateData),
   });
@@ -120,15 +152,17 @@ export async function upsertCandidateProfile(candidateData) {
 // api call to apply for a job position
 export async function applyForJobPosition(jobPositionApplicationData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply-for-job-position`;
   console.log(`Applying for job position at: ${url}`);
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(jobPositionApplicationData),
   });
