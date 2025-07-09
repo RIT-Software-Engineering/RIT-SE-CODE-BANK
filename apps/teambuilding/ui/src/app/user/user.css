@@ -2,14 +2,15 @@
     display: flex;
     flex-wrap: wrap;
     gap: 32px;
+    margin-top: 24px;
 }
 
 .user-community-box {
-    border: 3px solid #1976d2;
-    border-radius: 14px;
-    padding: 18px;
-    min-width: 260px;
-    background: #eaf3fb;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #fafafa;
     box-shadow: 0 2px 12px rgba(25,118,210,0.08);
 }
 
@@ -19,12 +20,11 @@
 }
 
 .user-team-box {
-    border: 2px solid #888;
-    border-radius: 10px;
-    padding: 12px;
-    min-width: 180px;
-    background: #f8f8f8;
-    margin-bottom: 14px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    margin: 8px 0;
+    padding: 8px 12px;
+    background: #f5f5f5;
     box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
@@ -34,23 +34,27 @@
 
 .user-team-teammates-label {
     font-weight: bold;
+    margin-right: 8px;
 }
 
 .user-team-teammates-list {
-    margin: 8px 0 0 0;
-    padding: 0;
+    display: inline;
     list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .user-teammate {
+    display: inline-block;
+    margin-right: 10px;
     cursor: pointer;
     text-decoration: underline;
     color: #222;
 }
 
 .user-teammate-self {
-    color: #1976d2;
     font-weight: bold;
+    color: #1976d2;
 }
 
 .user-tempuser-btn {
@@ -71,10 +75,10 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    right: 0;
+    bottom: 0;
     background: rgba(0,0,0,0.3);
-    z-index: 2000;
+    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -82,18 +86,18 @@
 
 .user-popup-content {
     background: #fff;
-    border-radius: 12px;
-    padding: 32px 40px;
+    border-radius: 8px;
+    padding: 32px 24px;
     min-width: 320px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
     position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
 }
 
 .user-popup-close {
     position: absolute;
-    top: 12px;
-    right: 16px;
-    background: transparent;
+    top: 8px;
+    right: 12px;
+    background: none;
     border: none;
     font-size: 1.5em;
     cursor: pointer;
@@ -101,26 +105,19 @@
 
 .user-header-row {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
+    margin-bottom: 24px;
 }
 
 .user-edit-contact-btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: none;
     background: #1976d2;
     color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 18px;
     font-weight: bold;
-    font-size: 1em;
     cursor: pointer;
-    margin-left: 24px;
-    margin-top: 4px;
-    transition: background 0.2s;
-}
-.user-edit-contact-btn:hover {
-    background: #1251a3;
 }
 
 .user-edit-contact-form {
@@ -131,6 +128,8 @@
 }
 
 .user-edit-contact-form label {
+    display: block;
+    margin-bottom: 12px;
     font-weight: bold;
     display: flex;
     flex-direction: column;
@@ -149,14 +148,7 @@
     color: #fff;
     border: none;
     border-radius: 6px;
-    padding: 10px 18px;
+    padding: 6px 16px;
     font-weight: bold;
-    font-size: 1em;
     cursor: pointer;
-    margin-top: 8px;
-    align-self: flex-end;
-    transition: background 0.2s;
-}
-.user-edit-contact-save:hover {
-    background: #1251a3;
 }

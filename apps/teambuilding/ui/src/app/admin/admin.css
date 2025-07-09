@@ -1,0 +1,55 @@
+.admin-page-root {
+    max-width: 500px;
+    margin: 40px auto;
+    padding: 32px;
+    background: #f8f8f8;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.admin-create-user-form {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.admin-input,
+.admin-select {
+    margin-left: 8px;
+    margin-right: 16px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+    font-size: 1em;
+}
+
+.admin-create-btn {
+    background: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+    margin-top: 8px;
+    align-self: flex-start;
+    transition: background 0.2s;
+}
+.admin-create-btn:hover {
+    background: #1251a3;
+}
+
+.admin-message {
+    margin-top: 1rem;
+    font-weight: bold;
+}
+
+.admin-message-success {
+    color: green;
+}
+
+.admin-message-error {
+    color: red;
+}
