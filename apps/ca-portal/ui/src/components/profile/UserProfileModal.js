@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import UserProfileForm from "./UserProfileForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAllCourses } from "@/services/api";
+import { getAllCourses, getUserProfile } from "@/services/db-apis";
 
 /**
  * Wrapper component that controls the visibility of the UserProfileForm modal.

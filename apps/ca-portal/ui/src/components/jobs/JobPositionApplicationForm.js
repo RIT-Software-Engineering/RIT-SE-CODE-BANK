@@ -2,8 +2,8 @@
 
 import { useForm } from 'react-hook-form';
 // Import BOTH API functions, as we'll need to call one or the other
-import { applyForJobPosition, applyForJobPositionWithNewResume } from '../../services/api'; 
-
+import { applyForJobPosition, applyForJobPositionWithNewResume } from '../../services/db-apis'; 
+import { letterToGradeValue } from '@/constants/gradeConstants';
 const DisplayField = ({ label, value }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700">{label}</label>
@@ -13,10 +13,6 @@ const DisplayField = ({ label, value }) => (
   </div>
 );
 
-const letterToGradeValue = {
-  'A': 10, 'A-': 9, 'B+': 8, 'B': 7, 'B-': 6,
-  'C+': 5, 'C': 4, 'C-': 3, 'D': 2, 'F': 1,
-};
 
 export default function ApplicationForm({ user, position, onClose, onApplySuccess }) {
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
