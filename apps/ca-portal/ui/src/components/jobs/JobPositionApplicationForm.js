@@ -65,7 +65,7 @@ export default function ApplicationForm({ user, position, onClose, onApplySucces
       
 
       const submittedResumeUrl = JSON.parse(newApplication.applicationData).resumeURL;
-      onApplySuccess(newApplication, submittedResumeUrl);
+      onApplySuccess();
       onClose();
 
     } catch (err) {
