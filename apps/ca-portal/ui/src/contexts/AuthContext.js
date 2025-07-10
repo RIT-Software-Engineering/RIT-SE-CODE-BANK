@@ -6,40 +6,30 @@ const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Add a loading state
 
-  // --- NEW: Reusable function to fetch and set user data ---
-  // This function contains the core logic that was previously duplicated.
-  const fetchAndSetUser = async (uid) => {
-    try {
-      const numericUID = parseInt(uid, 10);
-      // Validate that the UID is a number before making an API call.
-      if (isNaN(numericUID)) {
-        throw new Error(`Invalid UID provided: ${uid}`);
-      }
-      const userProfile = await getUserProfile(numericUID);
-      setCurrentUser(userProfile);
-    } catch (error) {
-      console.error("Failed to fetch or set user profile:", error);
-      // If fetching fails, ensure the user is logged out.
-      localStorage.removeItem('userUID');
-      setCurrentUser(null);
-    }
-  };
-
-  // This effect runs once when the app loads to restore the session.
+  // This effect runs once when the app loads
   useEffect(() => {
-    const loadInitialUserData = async () => {
+    const loadUserData = async () => {
       setLoading(true);
-      const storedUID = localStorage.getItem('userUID');
-      if (storedUID) {
-        // Call the reusable function to load the user.
-        await fetchAndSetUser(storedUID);
+      try {
+        const storedUID = localStorage.getItem('userUID');
+        if (storedUID) {
+          // If a user ID is in storage, fetch their full profile
+          const userProfile = await getUserProfile(parseInt(storedUID, 10));
+          setCurrentUser(userProfile);
+        }
+      } catch (error) {
+        console.error("Session restore failed:", error);
+        // Clear out any bad data if the fetch fails
+        localStorage.removeItem('userUID');
+        setCurrentUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    loadInitialUserData();
+    loadUserData();
   }, []); // Empty dependency array means this runs only on mount
 
   const addApplicationToCurrentUser = (newApplication, newResumeUrl) => {
@@ -50,6 +40,7 @@ export default function AuthProvider({ children }) {
         candidate: {
           ...prevUser.candidate,
           resumeURL: newResumeUrl || prevUser.candidate.resumeURL,
+          // The back-relation from your schema is jobPositionApplicationHistory
           jobPositionApplicationHistory: [...(prevUser.candidate.jobPositionApplicationHistory || []), newApplication],
         },
       };
@@ -57,21 +48,23 @@ export default function AuthProvider({ children }) {
     });
   };
 
-  // The refresh function is now much simpler.
   const refreshUserProfile = async () => {
-    if (currentUser?.uid) {
-      setLoading(true);
-      // It just calls the same reusable function.
-      await fetchAndSetUser(currentUser.uid);
-      setLoading(false);
+    try {
+      const storedUID = localStorage.getItem('userUID');
+      if (storedUID) {
+        const userProfile = await getUserProfile(parseInt(storedUID, 10));
+        setCurrentUser(userProfile);
+      }
+    } catch (error) {
+      console.error("Failed to refresh user profile:", error);
     }
   };
 
 
   const value = {
     currentUser,
-    setCurrentUser, // Note: You might want to replace this with explicit login/logout functions
-    loading,
+    setCurrentUser,
+    loading, // Expose loading state
     addApplicationToCurrentUser,
     refreshUserProfile,
   };
