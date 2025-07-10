@@ -100,10 +100,16 @@ router.get('/search-and-filter-open-positions', async (req, res) => {
   try {
     // Parse the filters string from the query into a JavaScript object.
     const filters = filtersString ? JSON.parse(filtersString) : {};
+    const numericCandidateUID = parseInt(candidateUID, 10);
+    // Check if the candidateUID is a valid number.
+    if (isNaN(numericCandidateUID)) {
+        return res.status(400).json({ error: "Candidate UID must be a valid number." });
+    }
+
     const positions = await searchAndFilterOpenJobPositions(
       searchTerm,
       filters,
-      parseInt(candidateUID, 10)
+      numericCandidateUID
     );
     res.status(200).json(positions);
   } catch (error) {
@@ -148,6 +154,10 @@ router.post('/apply-for-job-position-with-new-resume', upload.single('resumeFile
 
     const { candidateUID, jobPositionId, jobPositionApplicationFormData } = req.body;
     const numericCandidateUID = parseInt(candidateUID, 10);
+     // Check if the candidateUID is a valid number.
+    if (isNaN(numericCandidateUID)) {
+        return res.status(400).json({ error: "Candidate UID must be a valid number." });
+    }
 
     // 1. Find the candidate to get their old resume URL for later deletion.
     const candidate = await findUniqueUser(numericCandidateUID);
