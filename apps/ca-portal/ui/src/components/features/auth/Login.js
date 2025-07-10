@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from "react";
 // Import API utility functions. Using a path alias like `@/services/api` is recommended for robustness.
-import { getAllUsers, getUserProfile } from "../../../services/api";
+import { getAllUsers, getUserProfile } from "../../../services/db-apis";
 
 /**
  * A component that renders a login interface.

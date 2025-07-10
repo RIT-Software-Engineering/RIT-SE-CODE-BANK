@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useState, useContext, useEffect } from "react";
-import { getUserProfile } from "@/services/api"; 
+import { getUserProfile } from "@/services/db-apis"; 
 
 const AuthContext = createContext(null);
 
@@ -14,20 +14,9 @@ export default function AuthProvider({ children }) {
       try {
         const storedUID = localStorage.getItem('userUID');
         if (storedUID) {
-          // 1. Parse the string from localStorage to a base-10 integer.
-          const numericUID = parseInt(storedUID, 10);
-          // 2. Add a check to ensure the parsed UID is a valid number (not NaN).
-          // This prevents errors if the localStorage value is corrupted or not a number.
-          if (!isNaN(numericUID)) {
-            // 3. If valid, fetch the user's full profile.
-            const userProfile = await getUserProfile(numericUID);
-            setCurrentUser(userProfile);
-          } else {
-            // Handle the case where the stored UID is invalid.
-            console.error("Invalid UID found in localStorage:", storedUID);
-            localStorage.removeItem('userUID'); // Clean up the bad data.
-            setCurrentUser(null);
-          }
+          // If a user ID is in storage, fetch their full profile
+          const userProfile = await getUserProfile(parseInt(storedUID, 10));
+          setCurrentUser(userProfile);
         }
       } catch (error) {
         console.error("Session restore failed:", error);
@@ -42,33 +31,13 @@ export default function AuthProvider({ children }) {
     loadUserData();
   }, []); // Empty dependency array means this runs only on mount
 
-  const addApplicationToCurrentUser = (newApplication, newResumeUrl) => {
-    if (!currentUser || !currentUser.candidate) return;
-    setCurrentUser(prevUser => {
-      const updatedUser = {
-        ...prevUser,
-        candidate: {
-          ...prevUser.candidate,
-          resumeURL: newResumeUrl || prevUser.candidate.resumeURL,
-          // The back-relation from your schema is jobPositionApplicationHistory
-          jobPositionApplicationHistory: [...(prevUser.candidate.jobPositionApplicationHistory || []), newApplication],
-        },
-      };
-      return updatedUser;
-    });
-  };
 
   const refreshUserProfile = async () => {
     try {
       const storedUID = localStorage.getItem('userUID');
       if (storedUID) {
-        const numericUID = parseInt(storedUID, 10);
-        if (!isNaN(numericUID)) {
-          const userProfile = await getUserProfile(numericUID);
-          setCurrentUser(userProfile);
-        } else {
-           console.error("Attempted to refresh with invalid UID:", storedUID);
-        }
+        const userProfile = await getUserProfile(parseInt(storedUID, 10));
+        setCurrentUser(userProfile);
       }
     } catch (error) {
       console.error("Failed to refresh user profile:", error);
@@ -80,7 +49,6 @@ export default function AuthProvider({ children }) {
     currentUser,
     setCurrentUser,
     loading, // Expose loading state
-    addApplicationToCurrentUser,
     refreshUserProfile,
   };
 

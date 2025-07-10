@@ -2,90 +2,74 @@
 import { useState, useEffect } from "react";
 import UserProfileForm from "./UserProfileForm";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAllCourses, getUserProfile } from "@/services/api";
-
+import { getAllCourses } from "@/services/db-apis";
 /**
- * Wrapper component that controls the visibility of the {@link UserProfileForm} modal
- * 
- * Handles:
- * - Fetching authenticated user
- * - Fetching course list and candidate profile
- * - Passing appropriate props to the form for editing or creating a profile
- * @returns A modal containing the {@link UserProfileForm} or null if closed
+ * Wrapper component for the UserProfileForm modal.
+ * @param {object} props - The component props.
+ * @param {boolean} props.isOpen - Controls if the modal is visible.
+ * @param {function} props.onClose - Function to call to close the modal.
+ * @param {object} props.profileData - The detailed profile data from the parent page.
+ * @param {function} props.onUpdateSuccess - Callback for successful profile updates.
  */
-export default function UserProfileModal({ onUpdateSuccess }) {
-    const [isOpen, setIsOpen] = useState(true);                 // Modal is open by default when rendered
-    const { currentUser } = useAuth();                          // Retrieves current authenticated user
-    const [profileData, setProfileData] = useState(null);       // User profile data
-    const [courseOptions, setCourseOptions] = useState([]);     // Available courses for form
-    const [mode, setMode] = useState("create");                 // Mode: "create" for new user, "edit" for existing user
-    const [isLoading, setIsLoading] = useState(true);           // Controls loading state UI
-    const [error, setError] = useState(null);                   // Error tracking
+export default function UserProfileModal({ isOpen, onClose, onUpdateSuccess, profileData }) {
+    const [courseOptions, setCourseOptions] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     
-    // Fetch profile and course data when component mounts or currentUser changes
+    // This effect fetches data that is only needed by the form itself.
     useEffect(() => {
-        if (!currentUser?.uid) {
-            // If no authenticated user ID, stop and display an error
-            setError("Authentication error: No user UID provided.");
-            setIsLoading(false);
-            return;
-        }
-        
-        const fetchData = async () => {
+        const fetchCourseData = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                // Fetch both the course list and the candidate profile in parallel
-                const coursesPromise = getAllCourses();
-                const userProfilePromise = getUserProfile(currentUser.uid)
-                .catch(err => {
-                    // If user profile does not exist (404), treat it as a new profile
-                    if (err.status === 404) return null;
-                    throw err;
-                });
-                
-                const [courses, user] = await Promise.all([coursesPromise, userProfilePromise]);
-                
+                const courses = await getAllCourses();
                 setCourseOptions(courses);
-                
-                if (user) {
-                    // If profile exists, populate form with data
-                    setProfileData(user);
-                    setMode("edit");
-                } else {
-                    // Otherwise, initialize new profile with basic user info
-                    setProfileData({ uid: currentUser.uid, email: currentUser.email || '' });
-                    setMode("create");
-                }
             } catch (err) {
-                console.error("Error fetching data for profile form:", err);
-                setError("Could not load profile data. Please try again.");
+                console.error("Error fetching courses for profile form:", err);
+                setError("Could not load course data. Please try again.");
             } finally {
                 setIsLoading(false);
             }
         };
         
-        fetchData();
-    }, [currentUser]);
+        fetchCourseData();
+    }, []); // Only needs to run once when the modal is mounted.
     
-    // If the modal is closed or user isn't authenticated, don't render anything
-    if (!isOpen || !currentUser) return null;
+    if (!isOpen) return null;
 
-    // Simple callback to close the modal
-    const close = (() => setIsOpen(false));
+    // Determine the form's mode based on the detailed profile data passed from the page.
+    const mode = profileData?.name ? "edit" : "create";
+    
+    /**
+     * This handler receives the full updated profile from the form
+     * and passes it up to the page's onUpdateSuccess function.
+     * @param {object} updatedProfile - The full user profile object.
+     */
+    const handleFormSuccess = (updatedProfile) => {
+        if (onUpdateSuccess) {
+            onUpdateSuccess(updatedProfile);
+        }
+    };
     
     return (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4'>
             <div className='bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-3xl max-h-[90vh] flex flex-col'>
-                {isLoading && <div className='p-8 text-center'>Loading Profile...</div>}
-                {error && <div className='p-8 text-center'><p className="text-red-500 font-semibold">{error}</p><button onClick={close} className="mt-4 px-4 py-2 bg-slate-200 rounded-lg">Close</button></div>}
+                {isLoading && <div className='p-8 text-center'>Loading Form...</div>}
+                
+                {error && (
+                    <div className='p-8 text-center'>
+                        <p className="text-red-500 font-semibold">{error}</p>
+                        <button onClick={onClose} className="mt-4 px-4 py-2 bg-slate-200 rounded-lg">Close</button>
+                    </div>
+                )}
+
                 {!isLoading && !error && profileData && (
                     <UserProfileForm
-                        user={profileData}
+                        user={profileData} // Pass the detailed data to the form.
                         mode={mode}
-                        onClose={close}
+                        onClose={onClose}
                         courseOptions={courseOptions}
-                        onUpdateSuccess={onUpdateSuccess}
+                        onUpdateSuccess={handleFormSuccess} // Pass the new handler.
                     />
                 )}
             </div>
