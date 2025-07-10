@@ -1,9 +1,9 @@
 "use client";
-import SearchBar from "@/components/SearchBar";
+import SearchBar from "@/components/jobs/SearchBar";
 import { searchAndFilterOpenPositions } from "../../services/api";
 import React, { useEffect, useCallback } from "react";
-import PositionsCard from "@/components/PositionsCard";
-import Filter from "@/components/Filter";
+import PositionsCard from "@/components/jobs/PositionsCard";
+import Filter from "@/components/jobs/Filter";
 import { positionFilterConfig } from "./filter.config";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -21,29 +21,32 @@ export default function Positions() {
     applied: "",
   });
 
-  const fetchData = useCallback(async (currentSearch, currentFilters) => {
-    if (!currentUser) return;
+  const fetchData = useCallback(
+    async (currentSearch, currentFilters) => {
+      if (!currentUser) return;
 
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await searchAndFilterOpenPositions(
-        currentSearch,
-        currentFilters,
-        currentUser.uid
-      );
-      setOpenPositions(data);
-    } catch (err) {
-      console.error("Failed to fetch open positions:", err);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentUser]);
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await searchAndFilterOpenPositions(
+          currentSearch,
+          currentFilters,
+          currentUser.uid
+        );
+        setOpenPositions(data);
+      } catch (err) {
+        console.error("Failed to fetch open positions:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [currentUser]
+  );
 
   useEffect(() => {
     fetchData(searchTerm, appliedFilters);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedFilters, currentUser, fetchData]);
 
   const handleSearch = (e) => {
@@ -61,7 +64,6 @@ export default function Positions() {
       fetchData("", appliedFilters);
     }
   };
-
 
   // This function conditionally decides what to show on the screen.
   const renderContent = () => {
@@ -107,7 +109,6 @@ export default function Positions() {
   };
 
   return (
-    // Styled Page Layout
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 w-full">
@@ -121,23 +122,26 @@ export default function Positions() {
           </div>
 
           <div id="positions-container" className="w-full max-w-4xl mx-auto">
-              <form onSubmit={handleSearch} className="mb-8 flex items-center gap-x-2">
-                  <SearchBar value={searchTerm} onChange={handleSearchTermChange} />
+            <form
+              onSubmit={handleSearch}
+              className="mb-8 flex items-center gap-x-2"
+            >
+              <SearchBar value={searchTerm} onChange={handleSearchTermChange} />
 
-                  <Filter
-                      onFilterChange={handleFilterChange}
-                      filterConfig={positionFilterConfig}
-                  />
+              <Filter
+                onFilterChange={handleFilterChange}
+                filterConfig={positionFilterConfig}
+              />
 
-                  <button
-                      type="submit"
-                      className="h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outlin focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-                  >
-                      Search
-                  </button>
-              </form>
+              <button
+                type="submit"
+                className="h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outlin focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+              >
+                Search
+              </button>
+            </form>
 
-              {renderContent()}
+            {renderContent()}
           </div>
         </div>
       </div>

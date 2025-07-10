@@ -2,10 +2,9 @@
 "use client";
 
 // Note: I'm assuming LandingDashboard is your dynamic dashboard component
-import Login from "@/components/Login";
-import LandingDashboard from "@/components/LandingDashboard"; 
+import Login from "@/components/features/auth/Login";
+import LandingDashboard from "@/components/features/dashboard/LandingDashboard";
 import { useAuth } from "@/contexts/AuthContext";
-import UserProfileModal from "@/components/UserProfileModal";
 
 
 export default function Home() {

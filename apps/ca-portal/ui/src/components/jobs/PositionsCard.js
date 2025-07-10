@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import Tooltip from './ToolTip';
+import Tooltip from '../ui/ToolTip';
 import ApplicationForm from './JobPositionApplicationForm';
 import { useState, useMemo } from 'react';
 

@@ -86,18 +86,31 @@ export default function Filter({ onFilterChange, filterConfig }) {
       {isOpen && (
         <div className="origin-top-left absolute left-0 mt-2 w-72 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
           <div className="p-4 max-h-96 overflow-y-auto">
-            {filterConfig.map(filter => (
+            {filterConfig.map((filter) => (
               <div key={filter.id} className="mb-4">
                 {/* We only render the <h3> title if the filter is NOT a single-option checkbox. */}
-                {!(filter.type === 'checkbox' && filter.options.length === 1) && (
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">{filter.label}</h3>
+                {!(
+                  filter.type === "checkbox" && filter.options.length === 1
+                ) && (
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                    {filter.label}
+                  </h3>
                 )}
-                
-                {filter.type === 'checkbox' && (
+
+                {filter.type === "checkbox" && (
                   // Use a simpler layout for single checkboxes
-                  <div className={filter.options.length > 1 ? "grid grid-cols-2 gap-2" : "flex flex-col"}>
-                    {filter.options.map(option => (
-                      <label key={option} className="flex items-center space-x-2 text-sm">
+                  <div
+                    className={
+                      filter.options.length > 1
+                        ? "grid grid-cols-2 gap-2"
+                        : "flex flex-col"
+                    }
+                  >
+                    {filter.options.map((option) => (
+                      <label
+                        key={option}
+                        className="flex items-center space-x-2 text-sm"
+                      >
                         <input
                           type="checkbox"
                           className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
