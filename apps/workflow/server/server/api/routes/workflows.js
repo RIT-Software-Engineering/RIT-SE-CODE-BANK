@@ -15,23 +15,13 @@ router.get('/:id', async (req, res) => {
 
 // GET /workflows
 router.get('/', async (req, res) => {
-    const { userId, tags } = req.query;
+    const { userId, tags } = req.query; 
 
-    const tagsList = tags ? tags.split(',') : [];
+    const where = {}
+    if (userId) {}; // TODO: Add handling for userId
+    if (tags) {}; // TODO: Add handling for tags
 
-    const params = {};
-    if (userId) params.userId = userId;
-    if (tagsList.length > 0) params.tag_workflow_relationships = { // TODO: fix this so tag filtering only returns workflows with all of the specified tags
-        some: {
-            tag: {
-                name: {
-                    in: tagsList
-                }
-            }
-        }
-    };
-    
-    const workflows = await getWorkflows(params);
+    const workflows = await getWorkflows(where);
 
     res.json(workflows);
 });
@@ -43,6 +33,7 @@ router.post('/', async (req, res) => {
     const workflow = await createWorkflow(userId, name, description, tags, metadata, rootActionId);
 
     // Optionally handle tags using a Tag table, permisions, or Metadata entries
+    console.log(workflow);
 
     res.json(workflow);
 });

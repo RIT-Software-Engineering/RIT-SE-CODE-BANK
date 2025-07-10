@@ -17,30 +17,26 @@ async function createWorkflow(userId, name, description="", tags = [], metadata 
         });
 
         tags.forEach(tag => {
-            const newTag = prisma.tags.upsert({
+            prisma.tags.upsert({
                 where: { name: tag },
-                create: { name: tag },
-                update: {}
-            })
-            prisma.tagWorkflowRelationships.create({
-                data: {
-                    workflow_id: workflow.id,
-                    tag_id: newTag.id
+                create: { 
+                    name: tag,
+                    workflows: {
+                        connect: {id: workflow.id}
+                    }
                 }
-            });
+            })
         });
     });
 
     return workflow;
 }
 
-async function getWorkflows(queryParams = {}) {
+async function getWorkflows(where = {}) {
     const workflows = await prisma.workflowAttributes.findMany({
-        where: queryParams,
+        where: where,
         include: {
-            tag_workflow_relationships: {
-                include: { tag: true }
-            },
+            tags: true,
             base_action: {
                 include: {
                     metadata: true,
