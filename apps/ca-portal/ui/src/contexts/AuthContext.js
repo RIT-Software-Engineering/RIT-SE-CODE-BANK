@@ -6,41 +6,40 @@ const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Add a loading state
+  const [loading, setLoading] = useState(true);
 
-  // This effect runs once when the app loads
-  useEffect(() => {
-    const loadUserData = async () => {
-      setLoading(true);
-      try {
-        const storedUID = localStorage.getItem('userUID');
-        if (storedUID) {
-          // 1. Parse the string from localStorage to a base-10 integer.
-          const numericUID = parseInt(storedUID, 10);
-          // 2. Add a check to ensure the parsed UID is a valid number (not NaN).
-          // This prevents errors if the localStorage value is corrupted or not a number.
-          if (!isNaN(numericUID)) {
-            // 3. If valid, fetch the user's full profile.
-            const userProfile = await getUserProfile(numericUID);
-            setCurrentUser(userProfile);
-          } else {
-            // Handle the case where the stored UID is invalid.
-            console.error("Invalid UID found in localStorage:", storedUID);
-            localStorage.removeItem('userUID'); // Clean up the bad data.
-            setCurrentUser(null);
-          }
-        }
-      } catch (error) {
-        console.error("Session restore failed:", error);
-        // Clear out any bad data if the fetch fails
-        localStorage.removeItem('userUID');
-        setCurrentUser(null);
-      } finally {
-        setLoading(false);
+  // --- NEW: Reusable function to fetch and set user data ---
+  // This function contains the core logic that was previously duplicated.
+  const fetchAndSetUser = async (uid) => {
+    try {
+      const numericUID = parseInt(uid, 10);
+      // Validate that the UID is a number before making an API call.
+      if (isNaN(numericUID)) {
+        throw new Error(`Invalid UID provided: ${uid}`);
       }
+      const userProfile = await getUserProfile(numericUID);
+      setCurrentUser(userProfile);
+    } catch (error) {
+      console.error("Failed to fetch or set user profile:", error);
+      // If fetching fails, ensure the user is logged out.
+      localStorage.removeItem('userUID');
+      setCurrentUser(null);
+    }
+  };
+
+  // This effect runs once when the app loads to restore the session.
+  useEffect(() => {
+    const loadInitialUserData = async () => {
+      setLoading(true);
+      const storedUID = localStorage.getItem('userUID');
+      if (storedUID) {
+        // Call the reusable function to load the user.
+        await fetchAndSetUser(storedUID);
+      }
+      setLoading(false);
     };
 
-    loadUserData();
+    loadInitialUserData();
   }, []); // Empty dependency array means this runs only on mount
 
   const addApplicationToCurrentUser = (newApplication, newResumeUrl) => {
@@ -51,7 +50,6 @@ export default function AuthProvider({ children }) {
         candidate: {
           ...prevUser.candidate,
           resumeURL: newResumeUrl || prevUser.candidate.resumeURL,
-          // The back-relation from your schema is jobPositionApplicationHistory
           jobPositionApplicationHistory: [...(prevUser.candidate.jobPositionApplicationHistory || []), newApplication],
         },
       };
@@ -59,28 +57,21 @@ export default function AuthProvider({ children }) {
     });
   };
 
+  // The refresh function is now much simpler.
   const refreshUserProfile = async () => {
-    try {
-      const storedUID = localStorage.getItem('userUID');
-      if (storedUID) {
-        const numericUID = parseInt(storedUID, 10);
-        if (!isNaN(numericUID)) {
-          const userProfile = await getUserProfile(numericUID);
-          setCurrentUser(userProfile);
-        } else {
-           console.error("Attempted to refresh with invalid UID:", storedUID);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to refresh user profile:", error);
+    if (currentUser?.uid) {
+      setLoading(true);
+      // It just calls the same reusable function.
+      await fetchAndSetUser(currentUser.uid);
+      setLoading(false);
     }
   };
 
 
   const value = {
     currentUser,
-    setCurrentUser,
-    loading, // Expose loading state
+    setCurrentUser, // Note: You might want to replace this with explicit login/logout functions
+    loading,
     addApplicationToCurrentUser,
     refreshUserProfile,
   };
