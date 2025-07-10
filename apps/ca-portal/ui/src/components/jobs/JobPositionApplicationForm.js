@@ -19,7 +19,7 @@ const letterToGradeValue = {
 };
 
 export default function ApplicationForm({ user, position, onClose, onApplySuccess }) {
-  const backendApiUrl = process.env.NEXT_PUBLIC_RESUME_API_URL;
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
   const {
     register,
     handleSubmit,
@@ -155,7 +155,7 @@ export default function ApplicationForm({ user, position, onClose, onApplySucces
                 <p className="text-xs text-gray-500 mt-1">
                     Current resume on file: 
                     <a 
-                      href={`${backendApiUrl}${user.candidate.resumeURL}`}  // You will need to prepend the backend URL here
+                      href={`${backendURL}${user.candidate.resumeURL}`}  // You will need to prepend the backend URL here
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="text-blue-600 hover:underline ml-1"

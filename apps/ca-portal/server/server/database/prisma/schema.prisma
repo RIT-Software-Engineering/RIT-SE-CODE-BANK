@@ -13,18 +13,179 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//////////////////////////////////////////////////
+/// MODEL TABLES
+//////////////////////////////////////////////////
+
 model User {
   //Fields
-  uid Int @id
-  name String @db.Text
-  email String @db.Text
+  uid      Int    @id
+  name     String @db.Text
+  email    String @db.Text
   pronouns String @db.Text
-  role Role @default(GUEST)
+  role     Role   @default(GUEST)
 
   //Relationships
-  candidate  Candidate?
-  employer Employer?
+  candidate Candidate?
+  employer  Employer?
 }
+
+model Candidate {
+  //Fields
+  uid                Int            @id
+  year               Int            @db.Int
+  major              String         @db.Text
+  graduateStatus     GraduateStatus @default(UNDERGRADUATE)
+  wasPriorEmployee   Boolean        @db.TinyInt
+  resumeURL          String?        @db.Text
+
+  //Relationships
+  user                              User                              @relation(fields: [uid], references: [uid])
+  courseHistory                     CourseHistory[]
+  employees                         Employee[]
+  jobPositionApplicationHistory     JobPositionApplicationHistory[]
+}
+
+model Employer {
+  //Fields
+  uid        Int    @id
+  department String @db.Text
+
+  //Relationships
+  user        User          @relation(fields: [uid], references: [uid])
+  jobPostions JobPosition[]
+}
+
+model Employee {
+  //Fields
+  id             Int            @id //employee id that RIT gives to you when you start working under a new position (like a Course Assistant)
+  candidateUID   Int
+  employeeStatus EmployeeStatus @default(ACTIVE)
+
+  //Relationships
+  candidate          Candidate            @relation(fields: [candidateUID], references: [uid])
+  jobPositionHistory JobPositionHistory[]
+}
+
+model JobPositionHistory {
+  //Fields
+  id                       Int                      @id @default(autoincrement())
+  jobPositionId            String
+  employeeId               Int
+  jobPositionHistoryStatus JobPositionHistoryStatus @default(ACTIVE)
+  comments                 String                   @db.Text
+
+  // Relations
+  jobPosition    JobPosition      @relation(fields: [jobPositionId], references: [id])
+  employee       Employee?        @relation(fields: [employeeId], references: [id])
+  timeLogHistory TimeLogHistory[]
+}
+
+model JobPositionApplicationHistory {
+  //Fields
+  id                   Int                  @id @default(autoincrement())
+  candidateUID         Int
+  jobPositionId        String
+  jobApplicationStatus JobApplicationStatus @default(APPLIED)
+  applicationData      String?               
+
+  // Relations
+  candidate   Candidate   @relation(fields: [candidateUID], references: [uid])
+  jobPosition JobPosition @relation(fields: [jobPositionId], references: [id])
+}
+
+//This table to storing specifically past courses a Candidate has taken before or has been an employee in the past
+model CourseHistory {
+  //Fields
+  id               Int      @id @default(autoincrement())
+  candidateUID     Int
+  courseCode       String   @db.VarChar(8)
+  grade            Grade? //Letter Grade
+  wasPriorEmployee Boolean  @db.TinyInt
+
+  // Relations
+  candidate Candidate @relation(fields: [candidateUID], references: [uid])
+  course    Course    @relation(fields: [courseCode], references: [courseCode])
+}
+
+//This table is a generic table of all of the course that RIT has to offer
+model Course {
+  //Fields
+  courseCode  String @id @db.VarChar(8)
+  name        String @db.Text
+  description String @db.Text
+
+  // Relations
+  jobPositions  JobPosition[]
+  courseHistory CourseHistory[]
+}
+
+model JobPosition {
+  //Fields
+  id                          String          @id // For for id here is SemesterCode-CourseCode-SectionNumber
+  courseCode                  String          @db.VarChar(8)
+  sectionNumber               Int
+  semesterCode                Int
+  facultyUID                  Int
+  maxCAs                      Int
+  jobPositionStatus           JobPositionStatus @default(OPEN)
+  location                    String          @db.Text
+  locationType                LocationType
+  graduateStatusRequirement   GraduateStatus?
+  gradeRequirement            Grade?
+  courseTakenRequirement      Boolean         @db.TinyInt
+  startDate                   DateTime
+  endDate                     DateTime
+
+  // Relations
+  course                          Course                            @relation(fields: [courseCode], references: [courseCode])
+  faculty                         Employer                          @relation(fields: [facultyUID], references: [uid])
+  jobSchedules                    JobSchedule[]
+  jobPositionHistory              JobPositionHistory[]
+  jobPositionApplicationHistory   JobPositionApplicationHistory[]
+}
+
+model JobSchedule {
+  //Fields
+  id            Int      @id @default(autoincrement())
+  jobPositionId String
+  dayOfWeek     String   @db.Text
+  startTime     DateTime @db.Time
+  endTime       DateTime @db.Time
+
+  // Relations
+  jobPosition JobPosition @relation(fields: [jobPositionId], references: [id])
+}
+
+model TimeLogHistory {
+  //Fields
+  id                   Int @id @default(autoincrement())
+  timeLogId            String
+  jobPositionHistoryId Int
+
+  // Relations
+  jobPositionHistory JobPositionHistory @relation(fields: [jobPositionHistoryId], references: [id])
+  timeLog            TimeLog            @relation(fields: [timeLogId], references: [id])
+
+  @@unique([jobPositionHistoryId, timeLogId])
+}
+
+model TimeLog {
+  //Fields
+  id            String   @id //startdatetime-enddatetime-EmployeeId
+  startDateTime DateTime
+  endDateTime   DateTime?
+  notes         String   @db.Text
+  duration      Decimal
+
+  // Relations
+  timeLogHistory TimeLogHistory[]
+}
+
+
+//////////////////////////////////////////////////
+/// ENUM MAPS
+//////////////////////////////////////////////////
 
 enum Role {
   GUEST
@@ -34,89 +195,25 @@ enum Role {
   ADMIN
 }
 
-model Candidate {
-  //Fields
-  uid Int @id
-  year Int @db.Int
-  major String @db.Text
-  graduateStatus GraduateStatus @default(UNDERGRADUATE)
-  wasPriorEmployee Boolean @db.TinyInt
-  resumeURL String? @db.Text
-
-  //Relationships
-  user User @relation(fields: [uid], references: [uid])
-  courseHistory CourseHistory[]
-  employees            Employee[]
-  jobPositionApplicationHistory      JobPositionApplicationHistory[]
-}
-
-enum GraduateStatus{
+enum GraduateStatus {
   UNDERGRADUATE
   GRADUATE
 }
 
-model Employer {
-  //Fields
-  uid Int @id
-  department String @db.Text
-
-  //Relationships
-  user User @relation(fields: [uid], references: [uid])
-  jobPostions JobPosition[]
-}
-
-model Employee {
-  //Fields
-  id Int @id //employee id that RIT gives to you when you start working under a new position (like a Course Assistant)
-  candidateUID Int
-  employeeStatus EmployeeStatus @default(ACTIVE)
-
-  //Relationships
-  candidate          Candidate          @relation(fields: [candidateUID], references: [uid])
-  jobPositionHistory JobPositionHistory[]
-}
-
-enum EmployeeStatus{
+enum EmployeeStatus {
   ACTIVE
   TERMINATED
   INACTIVE
 }
 
-model JobPositionHistory{
-  //Fields
-  id Int @id @default(autoincrement())
-  jobPositionId String
-  employeeId Int
-  jobPositionHistoryStatus JobPositionHistoryStatus @default(ACTIVE)
-  comments String @db.Text
-
-  // Relations
-  jobPosition      JobPosition      @relation(fields: [jobPositionId], references: [id])
-  employee         Employee?        @relation(fields: [employeeId], references: [id])
-  timeLogHistory   TimeLogHistory[]
-}
-
-enum JobPositionHistoryStatus{
+enum JobPositionHistoryStatus {
   //these roles are for when employees are currently working within a job position
   ACTIVE
   TERMINATED // When the candidate is fired
   INACTIVE // When the job position is no longer available (e.g., end of semester)
 }
 
-model JobPositionApplicationHistory{
-  //Fields
-  id Int @id @default(autoincrement())
-  candidateUID Int
-  jobPositionId String
-  jobApplicationStatus JobApplicationStatus @default(APPLIED)
-  applicationData String @db.Text
-
-  // Relations
-  candidate          Candidate          @relation(fields: [candidateUID], references: [uid])
-  jobPosition      JobPosition      @relation(fields: [jobPositionId], references: [id])
-}
-
-enum JobApplicationStatus{
+enum JobApplicationStatus {
   //these roles are for when candidates are applying to the job positions
   APPLIED
   ACCEPTED
@@ -126,58 +223,6 @@ enum JobApplicationStatus{
   REJECTED
   INACTIVE
   //any withdrawal or deletion of a job position will delete the jobposition application altogether
-}
-
-//This table to storing specifically past courses a Candidate has taken before or has been an employee in the past
-model CourseHistory{
-  //Fields
-  id Int @id @default(autoincrement())
-  candidateUID Int
-  courseCode String @db.VarChar(8)
-  grade Grade? //Letter Grade
-  wasPriorEmployee Boolean @db.TinyInt
-
-  // Relations
-  candidate Candidate @relation(fields: [candidateUID], references: [uid])
-  course  Course  @relation(fields: [courseCode], references: [courseCode])
-}
-
-//This table is a generic table of all of the course that RIT has to offer
-model Course{
-  //Fields
-  courseCode String @id @db.VarChar(8)
-  name String @db.Text
-  description String @db.Text
-
-  // Relations
-  jobPositions  JobPosition[]
-  courseHistory CourseHistory[]
-}
-
-
-model JobPosition{
-  //Fields
-  id String @id // For for id here is SemesterCode-CourseCode-SectionNumber
-  courseCode String @db.VarChar(8)
-  sectionNumber Int
-  semesterCode Int
-  facultyUID Int
-  maxCAs  Int
-  jobPositionStatus JobPositionStatus @default(OPEN)
-  location String @db.Text
-  locationType LocationType
-  graduateStatusRequirement GraduateStatus?
-  gradeRequirement Grade?
-  courseTakenRequirement Boolean @db.TinyInt
-  startDate DateTime
-  endDate DateTime
-
-  // Relations
-  course             Course               @relation(fields: [courseCode], references: [courseCode])
-  faculty            Employer             @relation(fields: [facultyUID], references: [uid])
-  jobSchedules       JobSchedule[]
-  jobPositionHistory JobPositionHistory[]
-  jobPositionApplicationHistory    JobPositionApplicationHistory[]
 }
 
 enum Grade {
@@ -193,54 +238,16 @@ enum Grade {
   F
 }
 
-
-enum LocationType{
+enum LocationType {
   INPERSON
   HYBRID
   REMOTE
 }
 
-enum JobPositionStatus{
+enum JobPositionStatus {
   ACTIVE
   OPEN
   FILLED
   ONHOLD
   INACTIVE
-}
-
-model JobSchedule{
-  //Fields
-  id Int @id @default(autoincrement())
-  jobPositionId String
-  dayOfWeek String @db.Text
-  startTime DateTime @db.Time
-  endTime DateTime  @db.Time
-
-  // Relations
-  jobPosition JobPosition @relation(fields: [jobPositionId], references: [id])
-}
-
-model TimeLogHistory{
-  //Fields
-  id Int @id @default(autoincrement())
-  timeLogId String
-  jobPositionHistoryId Int
-
-  // Relations
-  jobPositionHistory JobPositionHistory @relation(fields: [jobPositionHistoryId], references: [id])
-  timeLog            TimeLog            @relation(fields: [timeLogId], references: [id])
-
-  @@unique([jobPositionHistoryId, timeLogId])
-}
-
-model TimeLog{
-  //Fields
-  id String @id //startdatetime-enddatetime-EmployeeId
-  startDateTime DateTime
-  endDateTime DateTime?
-  notes String @db.Text
-  duration Decimal
-
-  // Relations
-  timeLogHistory TimeLogHistory[]
 }

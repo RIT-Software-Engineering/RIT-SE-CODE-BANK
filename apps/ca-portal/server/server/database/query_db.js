@@ -1,5 +1,9 @@
 // server/server/database/query_db.js
 
+// =============================================================================
+// SETUP & INITIALIZATION
+// =============================================================================
+
 const { PrismaClient } = require('@prisma/client');
 const path = require('path');
 const {
@@ -8,66 +12,38 @@ const {
   gradetoNumericValue,
 } = require('../constants/grade');
 const { locationMap } = require('../constants/location');
-// Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly or required before main.js
+
+// Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {
   require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 }
 
-// Initialize Prisma Client
+// Initialize Prisma Client for database interaction.
 const prisma = new PrismaClient();
 
-/**
- * Retrieves all open positions along with their associated course and course schedule info.
- * @returns {Promise<Array>} A promise that resolves to an array of open positions.
- */
-async function getOpenPositionsWithDetails(whereClause = {}) {
-  try {
-    const openPositions = await prisma.jobPosition.findMany({
-      where: {
-        jobPositionStatus: 'OPEN',
-        ...whereClause,
-      },
-      include: {
-        course: {
-          select: {
-            name: true,
-            description: true,
-            courseCode: true,
-          },
-        },
-        jobSchedules: {
-          select: {
-            dayOfWeek: true,
-            startTime: true,
-            endTime: true,
-          },
-        },
-      },
-      orderBy: {
-        course: {
-          name: 'asc',
-        },
-      },
-    });
-    return openPositions;
-  } catch (error) {
-    console.error('Error retrieving open positions with details:', error);
-    throw error;
-  }
-}
+// =============================================================================
+// JOB POSITION & APPLICATION QUERIES
+// =============================================================================
 
-// Function to build the search clause
+// --- Private Helper Functions for Job Search ---
+
+/**
+ * Constructs a Prisma `where` clause for text-based searching on course name or code.
+ * @param {string} searchTerm - The search term entered by the user.
+ * @returns {object} A Prisma `where` clause for the search functionality.
+ */
 function buildSearchClause(searchTerm) {
-  // Base clause shows only OPEN positions
+  // Base clause shows only OPEN positions by default.
   const where = {
     jobPositionStatus: 'OPEN',
   };
 
+  // If there's no search term, return the base clause.
   if (!searchTerm || !searchTerm.trim()) {
-    return where; // Return base clause if no search term
+    return where;
   }
 
-  // Add the search logic to the "course" property
+  // Add search logic to filter by course name or course code.
   where.course = {
     OR: [
       { name: { contains: searchTerm } },
@@ -78,11 +54,17 @@ function buildSearchClause(searchTerm) {
   return where;
 }
 
+/**
+ * Constructs a Prisma `where` clause from various filter options.
+ * @param {object} filters - An object containing filter criteria (e.g., days, level, location, applied).
+ * @param {number} candidateUID - The UID of the candidate to check "applied" status against.
+ * @returns {Promise<object>} A promise that resolves to an object containing the filter `where` clause and fetched candidate data.
+ */
 async function buildFilterClause(filters, candidateUID) {
   const filterWhere = {};
   let candidateData = null;
 
-  // Fetch user data if a user is specified, as it"s needed for "applied" and "eligibility"
+  // Fetch candidate data if needed for "applied" or "eligibility" filters.
   if (candidateUID) {
     candidateData = await prisma.candidate.findUnique({
       where: { uid: candidateUID },
@@ -93,14 +75,14 @@ async function buildFilterClause(filters, candidateUID) {
     });
   }
 
-  // Add Day of the Week filter
+  // Add "Day of the Week" filter.
   if (filters.days && filters.days.length > 0) {
     filterWhere.jobSchedules = {
       some: { dayOfWeek: { in: filters.days } },
     };
   }
 
-  // Add Course Level filter
+  // Add "Course Level" filter (e.g., "100", "200").
   if (filters.level) {
     filterWhere.course = {
       ...filterWhere.course,
@@ -108,12 +90,12 @@ async function buildFilterClause(filters, candidateUID) {
     };
   }
 
-  // Add Location filter
+  // Add "Location" filter.
   if (filters.location && locationMap[filters.location]) {
     filterWhere.locationType = locationMap[filters.location];
   }
 
-  // Add "Applied" filter
+  // Add "Applied" status filter.
   if (filters.applied && filters.applied !== 'Any' && candidateData) {
     const appliedPositionIds = candidateData.jobPositionApplicationHistory.map(
       (app) => app.jobPositionId
@@ -128,33 +110,74 @@ async function buildFilterClause(filters, candidateUID) {
   return { filterWhere, candidateData };
 }
 
+/**
+ * Retrieves job positions from the database based on a given `where` clause.
+ * @param {object} whereClause - The Prisma `where` clause to filter positions. Defaults to an empty object.
+ * @returns {Promise<Array>} A promise that resolves to an array of open positions with their course and schedule details.
+ */
+async function getOpenPositionsWithDetails(whereClause = {}) {
+  try {
+    return await prisma.jobPosition.findMany({
+      where: {
+        jobPositionStatus: 'OPEN',
+        ...whereClause,
+      },
+      include: {
+        course: {
+          select: { name: true, description: true, courseCode: true },
+        },
+        jobSchedules: {
+          select: { dayOfWeek: true, startTime: true, endTime: true },
+        },
+      },
+      orderBy: {
+        course: {
+          name: 'asc',
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Error retrieving open positions with details:', error);
+    throw error;
+  }
+}
+
+// --- Public Functions for Job Search & Retrieval ---
+
+/**
+ * Searches and filters open job positions based on a search term and a set of filters.
+ * @param {string} searchTerm - The text to search for in course names and codes.
+ * @param {object} filters - The filter criteria (eligibility, days, level, location, applied).
+ * @param {number} candidateUID - The UID of the viewing candidate, used for "applied" and "eligibility" checks.
+ * @returns {Promise<Array>} A promise that resolves to an array of filtered and processed job positions.
+ */
 async function searchAndFilterOpenJobPositions(
   searchTerm,
   filters,
   candidateUID
 ) {
-  // 1. Get the "where" clause from each separate function
+  // 1. Build the search and filter clauses separately.
   const searchWhere = buildSearchClause(searchTerm);
   const { filterWhere, candidateData } = await buildFilterClause(
     filters,
     candidateUID
   );
 
-  // 2. Merge the two clauses into a single, final "where" object
+  // 2. Merge the clauses into a single `where` object for one database query.
   const finalWhere = {
     ...searchWhere,
     ...filterWhere,
-    // Manually merge the nested 'course' object to prevent it from being overwritten
+    // Manually merge the nested 'course' object to prevent it from being overwritten.
     course: {
       ...(searchWhere.course || {}),
       ...(filterWhere.course || {}),
     },
   };
 
-  // 3. Execute the single database query
+  // 3. Execute the single database query to get a preliminary list of positions.
   let positions = await getOpenPositionsWithDetails(finalWhere);
 
-  // 4. Perform the post-query filter for Eligibility
+  // 4. Perform post-query filtering for "Eligibility" as it requires complex logic on fetched data.
   if (filters.eligibility && filters.eligibility !== 'Any' && candidateData) {
     positions = positions.filter((position) => {
       const gradStatusMatch =
@@ -175,140 +198,195 @@ async function searchAndFilterOpenJobPositions(
     });
   }
 
-  const positionsWithLetterGrades = positions.map((position) => {
-    // Check if a gradeRequirement exists on this position
+  // 5. Convert grade requirement enums to human-readable letter grades for the frontend.
+  return positions.map((position) => {
     if (position.gradeRequirement) {
       return {
         ...position,
-        // Convert the numeric grade requirement to a letter
         gradeRequirement:
           gradeEnumToLetter[position.gradeRequirement] ||
           position.gradeRequirement,
       };
     }
-    // If there's no grade requirement, return the position as is
     return position;
   });
-
-  return positionsWithLetterGrades;
 }
 
-async function updateUserResumeUrl(candidateUID, resumeURL) {
+/**
+ * Creates a new job application record for a candidate.
+ * @param {object} jobPositionApplicationData - The application data.
+ * @param {number} jobPositionApplicationData.candidateUID - The UID of the applicant.
+ * @param {string} jobPositionApplicationData.jobPositionId - The ID of the job position.
+ * @param {object} jobPositionApplicationData.jobPositionApplicationFormData - The form data submitted by the candidate.
+ * @returns {Promise<object>} A promise that resolves to the newly created application record.
+ */
+async function applyForJobPosition(jobPositionApplicationData) {
   try {
-    return await prisma.candidate.update({
-      where: { uid: candidateUID },
-      data: { resumeURL: resumeURL },
+    const { candidateUID, jobPositionId, jobPositionApplicationFormData } =
+      jobPositionApplicationData;
+
+    // 1. Validate required fields.
+    if (!candidateUID || !jobPositionId || !jobPositionApplicationFormData) {
+      throw new Error(
+        'Missing required fields: candidate UID, job position ID, or form data.'
+      );
+    }
+
+    // 2. Verify that the candidate and job position exist.
+    const [candidate, jobPosition] = await Promise.all([
+      prisma.candidate.findUnique({ where: { uid: candidateUID } }),
+      prisma.jobPosition.findUnique({ where: { id: jobPositionId } }),
+    ]);
+    if (!candidate) throw new Error(`Candidate with UID ${candidateUID} not found.`);
+    if (!jobPosition) throw new Error(`Job Position with ID ${jobPositionId} not found.`);
+
+    // 3. Check if the candidate has already applied.
+    const existingApplication = await prisma.jobPositionApplicationHistory.findFirst({
+      where: { candidateUID, jobPositionId },
     });
-  } catch (error) {
-    console.error(
-      `Error updating resume URL for candidate ${candidateUID}:`,
-      error
-    );
-    throw error;
-  }
-}
+    if (existingApplication) {
+      throw new Error('This candidate has already applied for this job position.');
+    }
 
-//temporary function to retireve all users stored in the database
-async function getAllUsers() {
-  try {
-    const users = await prisma.user.findMany();
-    return users;
-  } catch (error) {
-    console.error('Error retrieving users:', error);
-    throw error;
-  }
-}
-
-//function to retrieve all courses for the onramping feature
-async function getAllCourses() {
-  try {
-    const courses = await prisma.course.findMany({
-      select: {
-        courseCode: true,
-        name: true,
+    // 4. Create the new application record.
+    const newApplication = await prisma.jobPositionApplicationHistory.create({
+      data: {
+        candidateUID,
+        jobPositionId,
+        applicationData: jobPositionApplicationFormData,
       },
     });
-    return courses;
+
+    // 5. Update the candidate's course history with the self-reported grade from the application.
+    await prisma.courseHistory.updateMany({
+      where: { candidateUID, courseCode: jobPosition.courseCode },
+      data: { grade: letterToGradeEnum[jobPositionApplicationFormData.grade] },
+    });
+
+    return newApplication;
   } catch (error) {
-    console.error('Error retrieving courses:', error);
+    console.error('Error in applyForJobPosition:', error);
     throw error;
   }
 }
 
-async function findUniqueUser(UID) {
+/**
+ * Retrieves all candidate applications for all job positions managed by a specific faculty member.
+ * @param {number} facultyUid - The UID of the faculty member (employer).
+ * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
+ */
+async function getCandidateApplications(facultyUid) {
   try {
-    const numericUID = parseInt(UID, 10);
-    if (isNaN(numericUID)) throw new Error(`Invalid UID: ${UID}`);
-    const user = await prisma.user.findUnique({
-      where: {
-        uid: numericUID,
-      },
-    });
-    // If the user is a candidate, include their own candidate info and associated course history
-    if (
-      (user && user.role === 'CANDIDATE') ||
-      (user && user.role === 'EMPLOYEE')
-    ) {
-      const candidateProfile = await prisma.user.findUnique({
-        where: {
-          uid: numericUID,
-        },
-        include: {
-          candidate: {
-            include: {
-              courseHistory: {
-                include: {
-                  course: true,
-                },
-              },
-              jobPositionApplicationHistory: {
-                include: {
-                  jobPosition: true,
+    // 1. Find all active job positions for the given faculty member.
+    const positionsList = await prisma.JobPosition.findMany({
+      where: { facultyUID: facultyUid, NOT: { jobPositionStatus: 'INACTIVE' } },
+      include: {
+        // Include all applications for each position.
+        jobPositionApplicationHistory: {
+          include: {
+            // For each application, include detailed candidate information.
+            candidate: {
+              select: {
+                year: true,
+                major: true,
+                graduateStatus: true,
+                wasPriorEmployee: true,
+                user: { select: { name: true, email: true, uid: true } },
+                courseHistory: {
+                  select: { courseCode: true, grade: true, wasPriorEmployee: true },
                 },
               },
             },
           },
         },
+      },
+    });
+
+    // 2. Process the results to enrich application data.
+    positionsList.forEach((position) => {
+      position.jobPositionApplicationHistory.forEach((application) => {
+        if (application.candidate?.courseHistory) {
+          // Find the candidate's grade for the specific course they are applying to.
+          const relevantCourse = application.candidate.courseHistory.find(
+            (course) => course.courseCode === position.courseCode
+          );
+          application.gradeInCourse = relevantCourse ? gradeEnumToLetter[relevantCourse.grade] : 'N/A';
+
+          // List all courses the candidate has previously been a TA for.
+          application.previouslyTAedCourses = application.candidate.courseHistory
+            .filter((course) => course.wasPriorEmployee)
+            .map((course) => course.courseCode);
+          
+          // Clean up the object by removing the full course history.
+          delete application.candidate.courseHistory;
+        }
       });
-      // Translate grades from enum to letter using the provided mapping
+    });
+
+    // 3. Group the processed list of positions by their ID for easy lookup on the frontend.
+    return positionsList.reduce((accumulator, currentPosition) => {
+      accumulator[currentPosition.id] = currentPosition;
+      return accumulator;
+    }, {});
+
+  } catch (error) {
+    console.log('Error in getCandidateApplications:', error);
+    throw error;
+  }
+}
+
+// =============================================================================
+// USER & PROFILE MANAGEMENT
+// =============================================================================
+
+/**
+ * Retrieves a unique user's profile, including role-specific details (e.g., candidate or employer info).
+ * @param {string|number} UID - The unique identifier of the user.
+ * @returns {Promise<object|null>} A promise that resolves to the user's complete profile, or null if not found.
+ */
+async function findUniqueUser(UID) {
+  try {
+    const user = await prisma.user.findUnique({ where: { uid: UID } });
+
+    // If no user is found, return null.
+    if (!user) return null;
+
+    // If the user is a Candidate or Employee, fetch their detailed candidate profile.
+    if (user.role === 'CANDIDATE' || user.role === 'EMPLOYEE') {
+      const candidateProfile = await prisma.user.findUnique({
+        where: { uid: UID },
+        include: {
+          candidate: {
+            include: {
+              courseHistory: { include: { course: true } },
+              jobPositionApplicationHistory: { include: { jobPosition: true } },
+            },
+          },
+        },
+      });
+      // Convert grade enums to letter grades for display.
       if (candidateProfile?.candidate?.courseHistory) {
-        candidateProfile.candidate.courseHistory =
-          candidateProfile.candidate.courseHistory.map((historyItem) => {
-            // Check if a grade exists on the item
-            if (historyItem.grade) {
-              return {
-                ...historyItem,
-                // Look up the enum in the map and replace it
-                grade: gradeEnumToLetter[historyItem.grade],
-              };
-            }
-            return historyItem; // Return the item unchanged if it has no grade
-          });
+        candidateProfile.candidate.courseHistory = candidateProfile.candidate.courseHistory.map((history) => ({
+          ...history,
+          grade: history.grade ? gradeEnumToLetter[history.grade] : history.grade,
+        }));
       }
       return candidateProfile;
     }
 
-    // If the user is a employer or admin, include their own faculty info and associated job positions
-    if ((user && user.role === 'EMPLOYER') || (user && user.role === 'ADMIN')) {
-      const facultyProfile = await prisma.user.findUnique({
-        where: {
-          uid: numericUID,
-        },
+    // If the user is an Employer or Admin, fetch their detailed faculty profile.
+    if (user.role === 'EMPLOYER' || user.role === 'ADMIN') {
+      return prisma.user.findUnique({
+        where: { uid: UID },
         include: {
           employer: {
-            include: {
-              jobPostions: {
-                include: {
-                  course: true,
-                },
-              },
-            },
+            include: { jobPostions: { include: { course: true } } },
           },
         },
       });
-      return facultyProfile;
     }
 
+    // Return the basic user object if they have a different role.
     return user;
   } catch (error) {
     console.error('Error finding user:', error);
@@ -316,13 +394,16 @@ async function findUniqueUser(UID) {
   }
 }
 
+/**
+ * Creates or updates a candidate's entire profile in a single, atomic transaction.
+ * @param {object} candidateData - The complete data for the candidate profile.
+ * @returns {Promise<object>} A promise that resolves to the final, updated candidate profile.
+ */
 async function upsertCandidateProfile(candidateData) {
-  // Transactionally upsert the candidate profile (first updates User, then Candidate, then CourseHistory if applicable, otherwise it creates a new User, then Candidate, then CourseHistory).
   try {
-    const profile = await prisma.$transaction(async (tx) => {
-      // 1. Upsert the User record.
-      // Prisma will find a user with the given UID. If found, it updates it.
-      // If not found, it creates a new one.
+    // Use a transaction to ensure all or no database operations are completed.
+    return await prisma.$transaction(async (tx) => {
+      // 1. Upsert the base User record.
       await tx.user.upsert({
         where: { uid: candidateData.uid },
         update: {
@@ -335,7 +416,7 @@ async function upsertCandidateProfile(candidateData) {
           name: candidateData.name,
           email: candidateData.email,
           pronouns: candidateData.pronouns,
-          role: 'CANDIDATE', // Set role on creation
+          role: 'CANDIDATE',
         },
       });
 
@@ -361,12 +442,10 @@ async function upsertCandidateProfile(candidateData) {
 
       // 3. Handle Course History (if provided).
       if (candidateData.courseHistory) {
-        // First, remove all old course history for this candidate.
-        await tx.courseHistory.deleteMany({
-          where: { candidateUID: candidateData.uid },
-        });
+        // First, remove all existing course history for this candidate to prevent duplicates.
+        await tx.courseHistory.deleteMany({ where: { candidateUID: candidateData.uid } });
 
-        // If the new history array is not empty, create all new entries.
+        // If new history is provided, create all new entries.
         if (candidateData.courseHistory.length > 0) {
           await tx.courseHistory.createMany({
             data: candidateData.courseHistory.map((course) => ({
@@ -383,29 +462,26 @@ async function upsertCandidateProfile(candidateData) {
       return tx.user.findUnique({
         where: { uid: candidateData.uid },
         include: {
-          candidate: {
-            include: {
-              courseHistory: true,
-            },
-          },
+          candidate: { include: { courseHistory: true } },
         },
       });
     });
-
-    return profile;
   } catch (error) {
     console.error('Error in upsertCandidateProfile:', error);
     throw error;
   }
 }
 
+/**
+ * Creates or updates an employer's profile in a single, atomic transaction.
+ * @param {object} employerData - The complete data for the employer profile.
+ * @returns {Promise<object>} A promise that resolves to the final, updated employer profile.
+ */
 async function upsertEmployerProfile(employerData) {
-  // Transactionally upsert the employer profile (first updates User, then Employer otherwise it creates a new User, then Employer).
   try {
-    const profile = await prisma.$transaction(async (tx) => {
-      // 1. Upsert the User record.
-      // Prisma will find a user with the given UID. If found, it updates it.
-      // If not found, it creates a new one.
+    // Use a transaction for atomicity.
+    return await prisma.$transaction(async (tx) => {
+      // 1. Upsert the base User record.
       await tx.user.upsert({
         where: { uid: employerData.uid },
         update: {
@@ -418,217 +494,97 @@ async function upsertEmployerProfile(employerData) {
           name: employerData.name,
           email: employerData.email,
           pronouns: employerData.pronouns,
-          role: 'EMPLOYER', // Set role on creation
+          role: 'EMPLOYER',
         },
       });
 
       // 2. Upsert the associated Employer record.
       await tx.employer.upsert({
         where: { uid: employerData.uid },
-        update: {
-          department: employerData.department,
-        },
-        create: {
-          uid: employerData.uid,
-          department: employerData.department,
-        },
+        update: { department: employerData.department },
+        create: { uid: employerData.uid, department: employerData.department },
       });
 
-      // 4. Return the complete, final state of the profile.
-      return tx.user.findUnique({
-        where: { uid: employerData.uid },
-      });
+      // 3. Return the complete, final state of the profile.
+      return tx.user.findUnique({ where: { uid: employerData.uid } });
     });
-
-    return profile;
   } catch (error) {
     console.error('Error in upsertEmployerProfile:', error);
     throw error;
   }
 }
 
-async function applyForJobPosition(jobPositionApplicationData) {
+/**
+ * Updates the resume URL for a specific candidate.
+ * @param {number} candidateUID - The UID of the candidate to update.
+ * @param {string} resumeURL - The new URL for the candidate's resume.
+ * @returns {Promise<object>} A promise that resolves to the updated candidate record.
+ */
+async function updateUserResumeUrl(candidateUID, resumeURL) {
   try {
-    // Validate required fields
-    if (
-      !jobPositionApplicationData.candidateUID ||
-      !jobPositionApplicationData.jobPositionId ||
-      !jobPositionApplicationData.jobPositionApplicationFormData
-    ) {
-      throw new Error(
-        'Missing required fields: candidate and/or jobPosition ids as well as form data to apply.'
-      );
-    }
-
-    const { candidateUID, jobPositionId, jobPositionApplicationFormData } =
-      jobPositionApplicationData;
-
-    // Check if candidate and job position exist
-    const candidate = await prisma.candidate.findUnique({
+    return await prisma.candidate.update({
       where: { uid: candidateUID },
+      data: { resumeURL: resumeURL },
     });
-    if (!candidate) {
-      throw new Error(`Candidate with UID ${candidateUID} not found.`);
-    }
-
-    const jobPosition = await prisma.jobPosition.findUnique({
-      where: { id: jobPositionId },
-    });
-    if (!jobPosition) {
-      throw new Error(`Job Position with ID ${jobPositionId} not found.`);
-    }
-
-    // Check if the candidate has already applied for this job position
-    const existingApplication =
-      await prisma.jobPositionApplicationHistory.findFirst({
-        where: {
-          candidateUID: candidateUID,
-          jobPositionId: jobPositionId,
-        },
-      });
-
-    if (existingApplication) {
-      throw new Error(
-        `This candidate has already applied for this job position.`
-      );
-    }
-
-    // Create a new job application within the JobPositionHistory table
-    const newApplication = await prisma.jobPositionApplicationHistory.create({
-      data: {
-        candidateUID: candidateUID,
-        jobPositionId: jobPositionId,
-        applicationData: jobPositionApplicationFormData,
-      },
-    });
-
-    // Update the candidate's course history with the new grade
-    await prisma.courseHistory.updateMany({
-      where: {
-        candidateUID: candidateUID,
-        courseCode: jobPosition.courseCode,
-      },
-      data: {
-        grade: letterToGradeEnum[jobPositionApplicationFormData.grade],
-      },
-    });
-
-    return newApplication;
   } catch (error) {
-    console.error('Error in applyForJobPosition:', error);
-  }
-}
-
-// Returns all applications for any course for a specific faculty
-async function getCandidateApplications(facultyUid) {
-  try {
-    const employer = await prisma.employer.findUnique({
-      where: { uid: facultyUid },
-    });
-    if (!employer) {
-      throw new Error(`Employeer with UID ${facultyUid} not found`);
-    }
-
-    const positionsList = await prisma.JobPosition.findMany({
-      where: {
-        facultyUID: facultyUid,
-        NOT: {
-          jobPositionStatus: 'INACTIVE',
-        },
-      },
-      include: {
-        // Include the application history for each position
-        jobPositionApplicationHistory: {
-          include: {
-            candidate: {
-              select: {
-                year: true,
-                major: true,
-                graduateStatus: true,
-                wasPriorEmployee: true,
-                user: {
-                  select: {
-                    name: true,
-                    email: true,
-                    uid: true,
-                  },
-                },
-                courseHistory: {
-                  select: {
-                    courseCode: true,
-                    grade: true,
-                    wasPriorEmployee: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    // Process the results to be able to find the course grade of the position they are applying for
-    positionsList.forEach((position) => {
-      position.jobPositionApplicationHistory.forEach((application) => {
-        // Ensure the necessary data exists before trying to access it
-        if (application.candidate && application.candidate.courseHistory) {
-          const relevantCourse = application.candidate.courseHistory.find(
-            // Find the course in the candidate's history that matches the position's course code
-            (course) => course.courseCode === position.courseCode
-          );
-
-          // 3. Add a new property 'gradeInCourse' to the application object.
-          application.gradeInCourse = relevantCourse
-            ? relevantCourse.grade
-            : 'N/A';
-
-          // Find all courses where the candidate was a prior employee (TA)
-          const taCourses = application.candidate.courseHistory
-            .filter((course) => course.wasPriorEmployee)
-            .map((course) => course.courseCode); // Get an array of just the course codes
-
-          // Add a new property for the TA history
-          application.previouslyTAedCourses = taCourses;
-          delete application.candidate.courseHistory;
-        }
-      });
-    });
-
-    // Create an object containing all of the applications by the positionID
-    const groupedByPositionId = positionsList.reduce(
-      (accumulator, currentPosition) => {
-        // Set the key of the accumulator object to the current position's ID,
-        // and the value to the position object itself.
-        accumulator[currentPosition.id] = currentPosition;
-        return accumulator;
-      },
-      {}
-    );
-
-    return groupedByPositionId;
-  } catch (error) {
-    console.log('Error in getCandidateApplications:', error);
+    console.error(`Error updating resume URL for candidate ${candidateUID}:`, error);
     throw error;
   }
 }
 
+// =============================================================================
+// GENERAL & UTILITY QUERIES
+// =============================================================================
+
+/**
+ * Retrieves all users from the database.
+ * @returns {Promise<Array>} A promise that resolves to an array of all user objects.
+ */
+async function getAllUsers() {
+  try {
+    return await prisma.user.findMany();
+  } catch (error) {
+    console.error('Error retrieving users:', error);
+    throw error;
+  }
+}
+
+/**
+ * Retrieves all courses from the database, selecting only the course code and name.
+ * @returns {Promise<Array>} A promise that resolves to an array of all course objects.
+ */
+async function getAllCourses() {
+  try {
+    return await prisma.course.findMany({
+      select: {
+        courseCode: true,
+        name: true,
+      },
+    });
+  } catch (error) {
+    console.error('Error retrieving courses:', error);
+    throw error;
+  }
+}
+
+// =============================================================================
+// EXPORTS & PROCESS HANDLING
+// =============================================================================
+
 module.exports = {
-  getOpenPositionsWithDetails,
-  getAllUsers,
-  getAllCourses,
+  searchAndFilterOpenJobPositions,
+  getCandidateApplications,
+  applyForJobPosition,
   findUniqueUser,
   upsertCandidateProfile,
   upsertEmployerProfile,
-  searchAndFilterOpenJobPositions,
-  applyForJobPosition,
   updateUserResumeUrl,
-  getCandidateApplications,
+  getAllUsers,
+  getAllCourses,
 };
 
-// Add a process exit handler to disconnect Prisma Client gracefully
-process.on('beforeExit', async () => {
-  await prisma.$disconnect();
-});
+// Add process exit handlers to disconnect Prisma Client gracefully.
+process.on('beforeExit', () => prisma.$disconnect());
 process.on('SIGINT', async () => {
   await prisma.$disconnect();
   process.exit(0);

@@ -1,6 +1,6 @@
 // ui/src/services/api.js
 
-const BASE_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
+const BASE_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
 const DATABASE_API_EXTENSION = process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 
 // Basic error handler for API responses
@@ -175,7 +175,6 @@ export async function applyForJobPositionWithNewResume(formData) {
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply-for-job-position-with-new-resume`;
   console.log(`Applying for job position at: ${url}`);
-  console.log(formData);
   const response = await fetch(url, {
     method: 'POST',
     body: formData, 

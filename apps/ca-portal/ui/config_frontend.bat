@@ -7,8 +7,8 @@ REM It intelligently updates existing variables or adds them if missing.
 REM --------------------------------------------------------------------
 
 REM --- Configuration Variables (MODIFY THESE FOR YOUR SETUP) ---
-SET "BASE_API_URL=https://localhost:3300/api"
-SET "RESUME_API_URL=https://localhost:3300"
+SET "BACKEND_URL=https://localhost:3300"
+SET "API_EXTENSION=/api"
 SET "DB_API_EXTENSION=/db"
 SET "SLACK_API_EXTENSION=/slack"
 REM Add any other frontend variables here
@@ -21,8 +21,8 @@ ECHO.
 ECHO --- Updating Frontend %ENV_FILE% ---
 
 REM Call the subroutine to update each variable
-CALL :update_env_var "NEXT_PUBLIC_BASE_API_URL" "%BASE_API_URL%"
-CALL :update_env_var "NEXT_PUBLIC_RESUME_API_URL" "%RESUME_API_URL%"
+CALL :update_env_var "NEXT_PUBLIC_BACKEND_URL" "%BACKEND_URL%"
+CALL :update_env_var "NEXT_PUBLIC_API_EXTENSION" "%API_EXTENSION%"
 CALL :update_env_var "NEXT_PUBLIC_DATABASE_API_EXTENSION" "%DB_API_EXTENSION%"
 call :update_env_var "NEXT_PUBLIC_SLACK_API_EXTENSION" "%DB_SLACK_EXTENSION%"
 REM Add calls for other variables here
@@ -33,7 +33,7 @@ ECHO --- Frontend Environment Variables Setup Complete ---
 
 ECHO.
 ECHO --- Current %ENV_FILE% (relevant section) ---
-findstr /R /C:"^NEXT_PUBLIC_BASE_API_URL=" /C:"^NEXT_PUBLIC_DATABASE_API_EXTENSION=" "%ENV_FILE%"
+findstr /R /C:"^NEXT_PUBLIC_BACKEND_URL=" /C:"^NEXT_PUBLIC_API_EXTENSION=" /C:"^NEXT_PUBLIC_DATABASE_API_EXTENSION=" /C:"^NEXT_PUBLIC_SLACK_API_EXTENSION=" "%ENV_FILE%"
 ECHO --------------------------------------------------
 
 ENDLOCAL

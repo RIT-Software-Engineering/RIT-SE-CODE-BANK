@@ -1,9 +1,28 @@
+// server/server/database/setup_db.js
+
 /**
- * !! FOR DEV USE ONLY !!
+ * =============================================================================
+ * !! FOR DEVELOPMENT USE ONLY !!
  *
- * Contains functions useful for rapidly resetting database schema and inserting dummy info during development.
- * Separates database drop, database creation, schema creation via Prisma, and data seeding.
+ * This script provides a set of functions to completely reset and redeploy the
+ * development database. It is designed to be run from the command line to
+ * ensure a clean slate.
+ *
+ * The process is as follows:
+ * 1. Drops the existing database.
+ * 2. Creates a new, empty database.
+ * 3. Applies the database schema using Prisma migrations.
+ * 4. Populates the database with test data from .sql files.
+ *
+ * Prerequisites:
+ * - A `.env` file with a valid `DATABASE_URL` must be present.
+ * - The `mysql` command-line client must be installed and accessible in the system's PATH.
+ * =============================================================================
  */
+
+// =============================================================================
+// IMPORTS & CONFIGURATION
+// =============================================================================
 
 const { exec } = require('child_process');
 const util = require('util');
@@ -11,27 +30,33 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs').promises;
 
+// Promisify the `exec` function to use it with async/await.
 const execPromise = util.promisify(exec);
 
+// Define the absolute path to the .env file.
 const path_to_env = path.resolve(__dirname, '../../.env');
+
+// Load environment variables from the .env file if they aren't already loaded.
 if (!process.env.DATABASE_URL) {
     try {
         require('dotenv').config({ path: path_to_env });
     } catch (e) {
-        console.error("[DB Redeploy] ERROR: dotenv failed to load from setup_db.js:", e.message);
+        console.error("[DB Redeploy] ERROR: dotenv failed to load:", e.message);
     }
 }
 
-// Path to your dummy data SQL files
+// Define the directory where test data SQL files are stored.
 const DUMMY_DATA_DIR = path.join(__dirname, 'test_data');
 
-// --- Helper Functions for Database Operations ---
+// =============================================================================
+// DATABASE HELPER FUNCTIONS
+// =============================================================================
 
 /**
- * Parses the DATABASE_URL to extract connection details.
- * Assumes format: mysql://user:password@host:port/database_name
- * @param {string} dbUrl The database URL from .env
- * @returns {object} { user, password, host, port, dbName }
+ * @desc    Parses the DATABASE_URL environment variable to extract connection details.
+ * @param   {string} dbUrl - The database URL from the .env file.
+ * @returns {object} An object containing { user, password, host, port, dbName }.
+ * @throws  Will throw an error if the URL does not match the expected format.
  */
 function parseDatabaseUrl(dbUrl) {
     const matches = dbUrl.match(/mysql:\/\/(.*?):(.*?)@(.*?):(\d+)\/(.*)/);
@@ -43,75 +68,53 @@ function parseDatabaseUrl(dbUrl) {
 }
 
 /**
- * Drops the specified database.
- * Uses the `mysql` command-line client.
+ * @desc    Drops the database specified in the DATABASE_URL.
+ * @throws  Will throw an error if the operation fails or DATABASE_URL is not set.
  */
 async function dropDatabase() {
     console.log("[DB Redeploy] Dropping database...");
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) {
-        throw new Error("DATABASE_URL not found in environment variables. Cannot drop database.");
+        throw new Error("DATABASE_URL not found in environment variables.");
     }
 
-    let dbConfig;
-    try {
-        dbConfig = parseDatabaseUrl(dbUrl);
-    } catch (error) {
-        console.error("[DB Redeploy] ERROR: Invalid DATABASE_URL format for dropping database.");
-        throw error;
-    }
-
+    const dbConfig = parseDatabaseUrl(dbUrl);
     const sqlStatement = `DROP DATABASE IF EXISTS \`${dbConfig.dbName}\`;`;
 
-    let dropCommand;
+    // Construct the command differently based on the operating system to handle password quoting.
+    const dropCommand = os.platform() === 'win32'
+        ? `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" -e "${sqlStatement}"`
+        : `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p'${dbConfig.password.replace(/'/g, "'\\''")}' -e '${sqlStatement}'`;
 
-    if (os.platform() === 'win32') {
-        dropCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" -e "${sqlStatement}"`;
-    } else {
-        const escapedPassword = dbConfig.password.replace(/'/g, "'\\''");
-        dropCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p'${escapedPassword}' -e '${sqlStatement}'`;
-    }
     try {
         const { stdout, stderr } = await execPromise(dropCommand);
         if (stdout) console.log(stdout);
         if (stderr) console.error(stderr);
         console.log(`[DB Redeploy] Database '${dbConfig.dbName}' dropped successfully (if it existed).`);
     } catch (error) {
-        console.error("[DB Redeploy] ERROR: Failed to drop database.");
-        console.error(error.message);
+        console.error("[DB Redeploy] ERROR: Failed to drop database.", error.message);
         throw new Error("Database drop failed.");
     }
 }
 
 /**
- * Creates the specified database.
- * Uses the `mysql` command-line client.
+ * @desc    Creates the database specified in the DATABASE_URL.
+ * @throws  Will throw an error if the operation fails or DATABASE_URL is not set.
  */
 async function createDatabase() {
     console.log("[DB Redeploy] Creating database...");
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) {
-        throw new Error("DATABASE_URL not found in environment variables. Cannot create database.");
+        throw new Error("DATABASE_URL not found in environment variables.");
     }
 
-    let dbConfig;
-    try {
-        dbConfig = parseDatabaseUrl(dbUrl);
-    } catch (error) {
-        console.error("[DB Redeploy] ERROR: Invalid DATABASE_URL format for creating database.");
-        throw error;
-    }
-
+    const dbConfig = parseDatabaseUrl(dbUrl);
     const sqlStatement = `CREATE DATABASE IF NOT EXISTS \`${dbConfig.dbName}\`;`;
 
-    let createCommand;
-
-    if (os.platform() === 'win32') {
-        createCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" -e "${sqlStatement}"`;
-    } else {
-        const escapedPassword = dbConfig.password.replace(/'/g, "'\\''");
-        createCommand = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p'${escapedPassword}' -e '${sqlStatement}'`;
-    }
+    // Construct the command differently based on the operating system.
+    const createCommand = os.platform() === 'win32'
+        ? `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" -e "${sqlStatement}"`
+        : `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p'${dbConfig.password.replace(/'/g, "'\\''")}' -e '${sqlStatement}'`;
 
     try {
         const { stdout, stderr } = await execPromise(createCommand);
@@ -119,17 +122,15 @@ async function createDatabase() {
         if (stderr) console.error(stderr);
         console.log(`[DB Redeploy] Database '${dbConfig.dbName}' created successfully.`);
     } catch (error) {
-        console.error("[DB Redeploy] ERROR: Failed to create database.");
-        console.error(error.message);
+        console.error("[DB Redeploy] ERROR: Failed to create database.", error.message);
         throw new Error("Database creation failed.");
     }
 }
 
-
-
 /**
- * Applies all pending Prisma migrations to create the schema.
- * This assumes migrations have already been generated by `prisma migrate dev`.
+ * @desc    Applies the database schema by running `prisma migrate deploy`.
+ * This command executes all generated migration files to build the tables.
+ * @throws  Will throw an error if the Prisma migration fails.
  */
 async function createSchemaFromMigrations() {
     console.log("[DB Redeploy] Applying schema migrations using 'npx prisma migrate deploy'...");
@@ -140,94 +141,95 @@ async function createSchemaFromMigrations() {
         if (stderr) console.error(stderr);
         console.log("[DB Redeploy] Database schema applied successfully from migrations.");
     } catch (error) {
-        console.error("[DB Redeploy] ERROR: Failed to apply schema migrations.");
-        console.error(error.message);
+        console.error("[DB Redeploy] ERROR: Failed to apply schema migrations.", error.message);
         throw new Error("Prisma migrate deploy failed.");
     }
 }
 
 /**
- * Populates dummy data by executing SQL files found in DUMMY_DATA_DIR.
- * Requires the `mysql` client to be available in the environment's PATH.
+ * @desc    Populates the database with test data by executing all .sql files
+ * found in the DUMMY_DATA_DIR.
+ * @throws  Will throw an error if any SQL file execution fails.
  */
 async function populateDummyData() {
-  console.log("[DB Redeploy] Populating dummy data from SQL files...");
+    console.log("[DB Redeploy] Populating test data from SQL files...");
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) {
-        throw new Error("DATABASE_URL not found in environment variables. Cannot connect to database for seeding.");
+        throw new Error("DATABASE_URL not found in environment variables.");
     }
 
-    let dbConfig;
-    try {
-        dbConfig = parseDatabaseUrl(dbUrl);
-    } catch (error) {
-        console.error("[DB Redeploy] ERROR: Invalid DATABASE_URL format.");
-        throw error;
-    }
+    const dbConfig = parseDatabaseUrl(dbUrl);
 
     try {
+        // Read all files from the test data directory.
         const files = await fs.readdir(DUMMY_DATA_DIR);
-        const sqlFiles = files.filter(file => file.endsWith('.sql') && file !== 'fill_test_data.sql');
+        // Filter for files that end with .sql.
+        const sqlFiles = files.filter(file => file.endsWith('.sql'));
 
         if (sqlFiles.length === 0) {
-            console.warn("[DB Redeploy] No SQL dummy data files found in", DUMMY_DATA_DIR);
+            console.warn("[DB Redeploy] No SQL test data files found in", DUMMY_DATA_DIR);
             return;
         }
 
-        for (const file of sqlFiles) { // Loop sequentially
+        // Execute each SQL file sequentially.
+        for (const file of sqlFiles) {
             const filePath = path.join(DUMMY_DATA_DIR, file);
-
+            // The command pipes the content of the SQL file into the mysql client.
             const command = `mysql -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p"${dbConfig.password}" ${dbConfig.dbName} < "${filePath}"`;
 
-            console.log(`[DB Redeploy] Executing dummy data file: ${file} by piping...`);
+            console.log(`[DB Redeploy] Executing test data file: ${file}...`);
             
             try {
                 const { stdout, stderr } = await execPromise(command);
                 if (stdout) console.log(stdout);
                 if (stderr) console.error(stderr);
             } catch (execError) {
-                console.error(`[DB Redeploy] ERROR: Failed to execute SQL from ${file}.`);
-                console.error(execError.message);
-                console.error("Problematic command:", command);
+                console.error(`[DB Redeploy] ERROR: Failed to execute SQL from ${file}.`, execError.message);
                 throw execError;
             }
         }
-        console.log("[DB Redeploy] Dummy data population complete.");
+        console.log("[DB Redeploy] Test data population complete.");
     } catch (error) {
-        console.error("[DB Redeploy] ERROR: Failed to populate dummy data from SQL files.");
-        console.error(error.message);
-        throw new Error("Dummy data population failed.");
+        console.error("[DB Redeploy] ERROR: Failed to populate test data.", error.message);
+        throw new Error("Test data population failed.");
     }
 }
 
-// --- Main Redeploy Function ---
+// =============================================================================
+// MAIN REDEPLOY FUNCTION
+// =============================================================================
+
+/**
+ * @desc    Executes the full database redeployment sequence. This is the main
+ * function intended to be called by a script. It includes a safety
+- * check to prevent it from running in a production environment.
+ */
 async function redeployDatabase() {
+  // CRITICAL: Safety check to prevent running this in production.
   if (process.env.NODE_ENV === "production") {
-    console.error("[DB Redeploy] ERROR: Attempted to reset database on production server. Aborting.");
+    console.error("[DB Redeploy] ERROR: Attempted to reset database in a production environment. Aborting.");
     process.exit(1);
   }
 
   try {
     console.log("--- Starting Database Redeploy ---");
 
-    // Drop the database
+    // Execute each step in the required order.
     await dropDatabase();
-    
-    // Create the empty database
     await createDatabase();
-
-    // Apply schema using Prisma's migrations
     await createSchemaFromMigrations();
-
-    // Populate dummy data
     await populateDummyData();
 
     console.log("--- Database Redeploy Complete ---");
   } catch (error) {
-    console.error("[DB Redeploy] Database redeploy failed:", error);
+    // If any step fails, the script will stop and log the error.
+    console.error("[DB Redeploy] A critical error occurred during the redeploy process. Aborting.", error);
     process.exit(1);
   }
 }
 
-// Export the function
+// =============================================================================
+// EXPORTS
+// =============================================================================
+
 module.exports = redeployDatabase;
