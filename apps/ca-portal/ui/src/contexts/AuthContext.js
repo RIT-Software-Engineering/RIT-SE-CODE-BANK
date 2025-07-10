@@ -32,21 +32,6 @@ export default function AuthProvider({ children }) {
     loadUserData();
   }, []); // Empty dependency array means this runs only on mount
 
-  const addApplicationToCurrentUser = (newApplication, newResumeUrl) => {
-    if (!currentUser || !currentUser.candidate) return;
-    setCurrentUser(prevUser => {
-      const updatedUser = {
-        ...prevUser,
-        candidate: {
-          ...prevUser.candidate,
-          resumeURL: newResumeUrl || prevUser.candidate.resumeURL,
-          // The back-relation from your schema is jobPositionApplicationHistory
-          jobPositionApplicationHistory: [...(prevUser.candidate.jobPositionApplicationHistory || []), newApplication],
-        },
-      };
-      return updatedUser;
-    });
-  };
 
   const refreshUserProfile = async () => {
     try {
@@ -65,7 +50,6 @@ export default function AuthProvider({ children }) {
     currentUser,
     setCurrentUser,
     loading, // Expose loading state
-    addApplicationToCurrentUser,
     refreshUserProfile,
   };
 
