@@ -2,53 +2,95 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/context/UserContext";
-import { getProjectsByPeer } from "@/services/project";
+import { useAuth } from "@/context/AuthContext";
+import { getProjectsByOverseer, getProjectsByPeer } from "@/services/project";
 import { Project } from "@/types/project";
 
 const Dashboard: React.FC = () => {
-    const { currentUser, setCurrentUser } = useAuth();
-    const [projects, setProjects] = useState<Project[]>([]);
+    const { currentUser } = useAuth();
+    const [projectsAsPeer, setProjectsAsPeer] = useState<Project[]>([]);
+    const [projectsAsOverseer, setProjectsAsOverseer] = useState<Project[]>([]);
 
     useEffect(() => {
-        console.log(`currentUser = ${currentUser}`);
-
         if (!currentUser) return () => {};
 
-        const getPeerProjects = async () => {
-            const ps = await getProjectsByPeer(currentUser.id);
-            setProjects(ps);
-        };
-
-        getPeerProjects();
+        (async () => {
+            // Get user's projects
+            setProjectsAsPeer(await getProjectsByPeer(currentUser.id));
+            setProjectsAsOverseer(await getProjectsByOverseer(currentUser.id));
+        })();
     }, [currentUser]);
 
     return (
-        <div style={{ padding: "2rem" }} className="prose">
-            <h1>Projects</h1>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem" }}>
-                {projects.map((project) => (
-                    <Link href={`/projects/${project.id}`} key={project.id}>
-                        <div
-                            style={{
-                                border: "1px solid #ddd",
-                                borderRadius: "8px",
-                                padding: "1rem",
-                                width: "250px",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-                                cursor: "pointer",
-                                transition: "box-shadow 0.2s",
-                            }}
-                            tabIndex={0}
-                            role="button"
-                        >
-                            <h2 style={{ margin: "0 0 0.5rem 0" }}>
-                                {project.name}
-                            </h2>
-                            <p style={{ margin: 0 }}>{project.description}</p>
+        <div className="px-8 py-10 max-w-5xl mx-auto">
+            <h1 className="text-3xl font-bold mb-8">Projects</h1>
+            <div className="space-y-12">
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4">
+                        Projects as Peer
+                    </h2>
+                    {projectsAsPeer.length === 0 ? (
+                        <p className="text-gray-500">
+                            You are not a peer in any projects.
+                        </p>
+                    ) : (
+                        <div className="flex flex-wrap gap-6">
+                            {projectsAsPeer.map((project) => (
+                                <Link
+                                    href={`/projects/${project.id}/`}
+                                    key={project.id}
+                                    className="w-full sm:w-64"
+                                >
+                                    <div
+                                        className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        tabIndex={0}
+                                        role="button"
+                                    >
+                                        <h3 className="text-xl font-semibold mb-2">
+                                            {project.name}
+                                        </h3>
+                                        <p className="text-gray-600 text-sm">
+                                            {project.description}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
                         </div>
-                    </Link>
-                ))}
+                    )}
+                </section>
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4">
+                        Projects as Overseer
+                    </h2>
+                    {projectsAsOverseer.length === 0 ? (
+                        <p className="text-gray-500">
+                            You are not an overseer in any projects.
+                        </p>
+                    ) : (
+                        <div className="flex flex-wrap gap-6">
+                            {projectsAsOverseer.map((project) => (
+                                <Link
+                                    href={`/projects/${project.id}/asOverseer`}
+                                    key={project.id}
+                                    className="w-full sm:w-64"
+                                >
+                                    <div
+                                        className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        tabIndex={0}
+                                        role="button"
+                                    >
+                                        <h3 className="text-xl font-semibold mb-2">
+                                            {project.name}
+                                        </h3>
+                                        <p className="text-gray-600 text-sm">
+                                            {project.description}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </section>
             </div>
         </div>
     );

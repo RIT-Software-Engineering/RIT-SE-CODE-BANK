@@ -1,11 +1,13 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
 import {
     getAssessmentById,
     getAssessmentsByProject,
 } from "@/services/assessment";
 import {
     addProjectPeerByEmail,
+    getProjectOverseers,
     getProjectsPeers,
     removeProjectPeerByEmail,
 } from "@/services/project";
@@ -14,14 +16,36 @@ import { UserProfile } from "@/types/userProfile";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-const ClientOverseerProjectView: React.FC<{
-    projectId: string;
-}> = ({ projectId }) => {
+const OverseerProjectView: React.FC<{
+    params: { projectId: string };
+}> = ({ params }) => {
+    const { currentUser } = useAuth();
     const [peers, setPeers] = useState<UserProfile[]>([]);
     const [assessments, setAssessments] = useState<Assessment[]>([]);
     const [showAddPeerModal, setShowAddPeerModal] = useState(false);
     const [addPeerEmail, setAddPeerEmail] = useState("");
     const [modalError, setModalError] = useState("");
+    const [isLoading, setIsLoading] = useState<Boolean>(true);
+    const [isOverseer, setIsOverseer] = useState<Boolean>(false);
+
+    const { projectId } = params;
+
+    useEffect(() => {
+        (async () => {
+            setIsLoading(true);
+
+            // Make sure the user is an overseer for this project
+            const os = await getProjectOverseers(projectId);
+            if (!os.some((o) => o.id == currentUser?.id)) {
+                setIsOverseer(false);
+                setIsLoading(false);
+                return;
+            }
+
+            setIsOverseer(true);
+            setIsLoading(false);
+        })();
+    }, [currentUser]);
 
     useEffect(() => {
         (async () => {
@@ -53,6 +77,23 @@ const ClientOverseerProjectView: React.FC<{
             await removeProjectPeerByEmail(projectId, peer.email);
         }
     };
+
+    if (isLoading) return <p>Loading...</p>;
+    if (!isOverseer)
+        return (
+            <div className="max-w-3xl mx-auto py-8 px-4">
+                {/* Back Arrow */}
+                <Link href="/dashboard">
+                    <button
+                        className="mb-4 text-blue-600 underline"
+                        aria-label="Back"
+                    >
+                        &larr; Back
+                    </button>
+                </Link>
+                <p>You ain't an overseer for this project &gt;:*(</p>
+            </div>
+        );
 
     return (
         <div className="max-w-3xl mx-auto py-8 px-4">
@@ -152,22 +193,30 @@ const ClientOverseerProjectView: React.FC<{
                 <h2 className="text-lg font-semibold mb-4">
                     Project Assessments
                 </h2>
-                {assessments.map((a) => (
-                    <div
-                        key={a.id}
-                        className="flex items-center justify-between p-4 rounded border"
-                    >
-                        <div className="flex-1">
-                            <div className="font-medium">{a.name}</div>
-                            <div className="text-xs text-gray-500">
-                                {a.startDate} &ndash; {a.dueDate}
+                {assessments
+                    .toSorted(
+                        (a, b) =>
+                            new Date(a.startDate).getTime() -
+                            new Date(b.startDate).getTime()
+                    )
+                    .map((a) => (
+                        <div
+                            key={a.id}
+                            className="flex items-center justify-between p-4 rounded border"
+                        >
+                            <div className="flex-1">
+                                <div className="font-medium">{a.name}</div>
+                                <div className="text-xs text-gray-500">
+                                    {new Date(a.startDate).toLocaleDateString()}{" "}
+                                    &ndash;{" "}
+                                    {new Date(a.dueDate).toLocaleDateString()}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
             </section>
         </div>
     );
 };
 
-export default ClientOverseerProjectView;
+export default OverseerProjectView;

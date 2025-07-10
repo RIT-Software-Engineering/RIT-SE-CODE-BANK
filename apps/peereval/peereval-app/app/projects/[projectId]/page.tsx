@@ -1,45 +1,186 @@
 "use client";
 
-import { useAuth } from "@/context/UserContext";
-import ClientProjectView from "./ClientProjectView";
-import ClientOverseerProjectView from "./ClientOverseerProjectView";
-import { useEffect, useState, use } from "react";
-import { getProjectOverseers } from "@/services/project";
+import { useAuth } from "@/context/AuthContext";
+import { getAssessmentsByProject } from "@/services/assessment";
+import { getProjectsPeers } from "@/services/project";
+import { Assessment } from "@/types/assessment";
+import Link from "next/link";
+import React, { Fragment, useEffect, useState } from "react";
+
+// Helper to split assessments by status
+const splitAssessments = (assessments: Assessment[]) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return {
+        pastDue: assessments.filter((a) => new Date(a.dueDate) < today),
+        toDo: assessments.filter(
+            (a) =>
+                new Date(a.startDate) <= today && today <= new Date(a.dueDate)
+        ),
+        upcoming: assessments.filter((a) => new Date(a.startDate) > today),
+    };
+};
+
+// Assessment Section
+const Section: React.FC<{
+    projectId: string;
+    title: string;
+    assessments: Assessment[];
+    clickable?: boolean;
+    showCompletedByOthers?: boolean;
+    showCompletedQuestions?: boolean;
+}> = ({ projectId, title, assessments, clickable = false }) => (
+    <section className="mb-8">
+        <h2 className="text-lg font-semibold mb-4">{title}</h2>
+        <div className="space-y-2">
+            {assessments.length === 0 && (
+                <div className="text-gray-500 text-sm">No assessments.</div>
+            )}
+            {assessments.map((a) => (
+                <Fragment key={a.id}>
+                    {clickable ? (
+                        <Link
+                            href={`/projects/${projectId}/assessments/${a.id}`}
+                            key={a.id}
+                        >
+                            <div
+                                key={a.id}
+                                className={`flex items-center justify-between p-4 rounded border ${
+                                    clickable
+                                        ? "cursor-pointer hover:bg-gray-50 transition"
+                                        : "bg-gray-100"
+                                }`}
+                            >
+                                <div className="flex-1">
+                                    <div className="font-medium">{a.name}</div>
+                                    <div className="text-xs text-gray-500">
+                                        {new Date(
+                                            a.startDate
+                                        ).toLocaleDateString()}{" "}
+                                        &ndash;{" "}
+                                        {new Date(
+                                            a.dueDate
+                                        ).toLocaleDateString()}
+                                    </div>
+                                </div>
+                            </div>
+                        </Link>
+                    ) : (
+                        <div
+                            className={`flex items-center justify-between p-4 rounded border ${
+                                clickable
+                                    ? "cursor-pointer hover:bg-gray-50 transition"
+                                    : "bg-gray-100"
+                            }`}
+                        >
+                            <div className="flex-1">
+                                <div className="font-medium">{a.name}</div>
+                                <div className="text-xs text-gray-500">
+                                    {new Date(a.startDate).toLocaleDateString()}{" "}
+                                    &ndash;{" "}
+                                    {new Date(a.dueDate).toLocaleDateString()}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </Fragment>
+            ))}
+        </div>
+    </section>
+);
+
+const PeersBox: React.FC<{ count: number }> = ({ count }) => (
+    <div className="bg-blue-100 text-blue-800 rounded px-3 py-1 text-xs font-semibold text-center min-w-[48px] cursor-pointer">
+        {count} peer submissions
+    </div>
+);
 
 interface ProjectViewProps {
-    params: {
-        projectId: string;
-    };
+    params: { projectId: string };
 }
-
 const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
-    const { currentUser, setCurrentUser } = useAuth();
-    const [isOverseer, setIsOverseer] = useState<Boolean>(false);
-    const [loadingView, setLoadingView] = useState<Boolean>(true);
+    const { currentUser } = useAuth();
+    const [assessments, setAssessments] = useState<Assessment[]>([]);
+    const [isLoading, setIsLoading] = useState<Boolean>(true);
+    const [isInProject, setIsInProject] = useState<Boolean>(false);
 
     const { projectId } = params;
 
     useEffect(() => {
-        const getIfOverseer = async () => {
-            // Get the overseers for this project
-            const os = await getProjectOverseers(projectId);
-            const oIds = os.map((o) => o.id);
+        (async () => {
+            // Make sure user is in this project as a peer
+            const ps = await getProjectsPeers(projectId);
+            if (!ps.some((p) => p.id == currentUser?.id)) {
+                setIsInProject(false);
+                setIsLoading(false);
+                return;
+            }
 
-            setIsOverseer(oIds.includes(currentUser?.id ?? ""));
-            setLoadingView(false);
-        };
+            setIsInProject(true);
 
-        getIfOverseer();
+            // Getting the project's assessments
+            const as = await getAssessmentsByProject(projectId);
+            setAssessments(as);
+            setIsLoading(false);
+        })();
     }, [currentUser]);
 
-    if (loadingView) {
-        return <p>Loading...</p>;
-    }
+    if (isLoading) return <p>Loading...</p>;
+    if (!isInProject)
+        return (
+            <div className="max-w-3xl mx-auto py-8 px-4">
+                <Link href="/dashboard">
+                    <button
+                        className="mb-4 text-blue-600 underline"
+                        aria-label="Back"
+                    >
+                        &larr; Back
+                    </button>
+                </Link>
+                <p>You ain't in this project as a peer &gt;:(</p>
+            </div>
+        );
 
-    return isOverseer ? (
-        <ClientOverseerProjectView projectId={projectId} />
-    ) : (
-        <ClientProjectView projectId={projectId} />
+    const { pastDue, toDo, upcoming } = splitAssessments(assessments);
+
+    return (
+        <div className="max-w-3xl mx-auto py-8 px-4">
+            {/* Back Arrow */}
+            <Link href="/dashboard">
+                <button
+                    className="mb-4 text-blue-600 underline"
+                    aria-label="Back"
+                >
+                    &larr; Back
+                </button>
+            </Link>
+
+            {/* Past Due Assessments Section */}
+            <Section
+                projectId={projectId}
+                title="Past Due Assessments"
+                assessments={pastDue}
+                clickable
+                showCompletedByOthers
+            />
+
+            {/* To Do Assessments Section */}
+            <Section
+                projectId={projectId}
+                title="To Do Assessments"
+                assessments={toDo}
+                clickable
+                showCompletedQuestions
+            />
+
+            {/* Upcoming Assessments Section */}
+            <Section
+                projectId={projectId}
+                title="Upcoming Assessments"
+                assessments={upcoming}
+            />
+        </div>
     );
 };
 
