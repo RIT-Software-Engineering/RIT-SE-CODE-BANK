@@ -3,6 +3,8 @@ const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// Filler while we await Shib auth
+
 // Routes
 router.get('/users', async (req, res) => {
   const users = await prisma.user.findMany();

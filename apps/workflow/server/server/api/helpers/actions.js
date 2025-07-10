@@ -1,0 +1,29 @@
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function getActionChain(rootActionId) {
+    const actions = [];
+    let currentActionId = rootActionId;
+
+    await prisma.$transaction(async () => {
+        while (currentActionId) {
+            const action = await prisma.action.findUnique({
+                where: { id: currentActionId },
+            });
+
+            if (!action) {
+                break; // No more actions in the chain
+            }
+
+            actions.push(action);
+            currentActionId = null;
+            if (action.next_action_id) currentActionId = action.next_action_id; // Move to the next action in the chain
+        }
+    });
+
+    return actions;
+}
+
+module.exports = {
+    getActionChain
+}

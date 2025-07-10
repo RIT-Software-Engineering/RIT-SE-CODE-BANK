@@ -1,11 +1,12 @@
 'use server'
 
 import ActionList from "@/components/actions/ActionList";
+import Link from "next/link";
 
 export default async function WorkflowPage({ params }) {
     const { id } = await params;
     const url = process.env.SERVER_URL || ""
-    const data = await fetch(url + "/workflows?workflowId=" + id,
+    const data = await fetch(url + "/workflows/" + id,
         {
             method: "GET",
             headers: {
@@ -13,12 +14,28 @@ export default async function WorkflowPage({ params }) {
             }
         }
     )
-    const workflow = (await data.json())[0];
+    const workflow = await data.json();
 
     return (
         <>
-            <h1 className="text-5xl font-bold w-fit mt-4 mx-auto">Workflow</h1>
+            <div className="grid grid-cols-3 items-center justify-between border-b py-2 mb-4">
+                <div className="flex flex-row gap-2 items-center justify-start h-full pl-4">
+                    {/* <Link href={"/"} className="border p-2 rounded-sm min-w-24 text-center">Other</Link> */}
+                </div>
+                <h1 className="text-5xl font-bold w-fit mx-auto text-center">Workflow</h1>
+                <div className="flex flex-row gap-2 items-center justify-end h-full pr-4">
+                    <Link href={"/dashboard/preview/" + id} className="border p-2 rounded-sm min-w-24 text-center">Preview</Link>
+                </div>
+            </div>
             <div className="flex flex-col gap-4 my-4 w-4/5 m-auto border rounded-xl p-4">
+                <div>
+                    <h2 className="text-2xl">
+                        {workflow.base_action.name}
+                    </h2>
+                    <p>
+                        {workflow.base_action.description}
+                    </p>
+                </div>
                 <div>
                     <h2 className="text-2xl font-bold">Metadata</h2>
                     <div className="flex flex-col gap-2 border border-solid border-black rounded-xl p-2">
