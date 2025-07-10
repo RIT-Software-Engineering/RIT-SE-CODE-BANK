@@ -50,7 +50,7 @@ const letterToGradeValue = {
 };
 
 export default function PositionsCard({ position, index }) {
-  const { currentUser, addApplicationToCurrentUser } = useAuth();
+  const { currentUser, refreshUserProfile } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const hasApplied =
@@ -96,9 +96,6 @@ export default function PositionsCard({ position, index }) {
     return { details: requirements, isOverallEligible, reason };
   }, [currentUser, position]);
 
-  const handleApplySuccess = (newApplication, newResumeUrl) => {
-    addApplicationToCurrentUser(newApplication, newResumeUrl);
-  };
 
 
   const renderApplyButton = () => {
@@ -187,7 +184,7 @@ export default function PositionsCard({ position, index }) {
           user={currentUser}
           position={position}
           onClose={() => setIsFormOpen(false)}
-          onApplySuccess={handleApplySuccess}
+          onApplySuccess={refreshUserProfile}
         />
       )}
     </>

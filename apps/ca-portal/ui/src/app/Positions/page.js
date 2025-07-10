@@ -1,6 +1,6 @@
 "use client";
 import SearchBar from "@/components/jobs/SearchBar";
-import { searchAndFilterOpenPositions } from "../../services/api";
+import { searchAndFilterOpenPositions } from "../../services/db-apis";
 import React, { useEffect, useCallback } from "react";
 import PositionsCard from "@/components/jobs/PositionsCard";
 import Filter from "@/components/jobs/Filter";
