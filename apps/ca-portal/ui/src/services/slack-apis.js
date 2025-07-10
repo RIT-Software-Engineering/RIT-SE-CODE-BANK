@@ -1,6 +1,6 @@
 // ui/src/services/slack-apis.js
 
-const BASE_API_URL = process.env.NEXT_PUBLIC_BASE_API_URL;
+const BASE_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
 const SLACK_API_EXTENSION = process.env.NEXT_PUBLIC_SLACK_API_EXTENSION;
 
 // Basic error handler for API responses

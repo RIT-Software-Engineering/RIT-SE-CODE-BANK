@@ -55,7 +55,7 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `candidateUID` INTEGER NOT NULL,
     `jobPositionId` VARCHAR(191) NOT NULL,
     `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED', 'PENDING_ACCEPTANCE', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
-    `applicationData` TEXT NOT NULL,
+    `applicationData` VARCHAR(191) NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

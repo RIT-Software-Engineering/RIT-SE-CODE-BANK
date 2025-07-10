@@ -169,7 +169,7 @@ export default function PositionsCard({ position, index }) {
               </div>
             </div>
           </div>
-          {currentUser?.role === 'CANDIDATE' && eligibilityDetails.details.length > 0 && (
+          {(currentUser?.role === 'CANDIDATE' || currentUser?.role === 'EMPLOYEE') && eligibilityDetails.details.length > 0 && (
             <div className="mb-4 p-4 bg-gray-50 rounded-lg">
               <h4 className="text-md font-semibold text-gray-800 mb-2">Job Requirements</h4>
               <ul className="space-y-1">

@@ -1,7 +1,7 @@
 const locationMap = {
   "In-Person": "INPERSON",
-  Hybrid: "HYBRID",
-  Online: "REMOTE",
+  "Hybrid": "HYBRID",
+  "Online": "REMOTE",
 };
 
 module.exports = {

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # --- Configuration Variables (MODIFY THESE) ---
-BASE_API_URL="https://localhost:3300/api"
-RESUME_API_URL="https://localhost:3300"
+BACKEND_URL="https://localhost:3300"
+API_EXTENSION="/api"
 DATABASE_API_EXTENSION="/db"
 SLACK_API_EXTENSION="/slack"
 ENV_FILE=".env"
@@ -39,8 +39,8 @@ update_env_var() {
 }
 
 # call the function for each variable
-update_env_var "NEXT_PUBLIC_BASE_API_URL" "$BASE_API_URL"
-update_env_var "NEXT_PUBLIC_RESUME_API_URL" "$RESUME_API_URL"
+update_env_var "NEXT_PUBLIC_BACKEND_URL" "$BACKEND_URL"
+update_env_var "NEXT_PUBLIC_API_EXTENSION" "$API_EXTENSION"
 update_env_var "NEXT_PUBLIC_DATABASE_API_EXTENSION" "$DATABASE_API_EXTENSION"
 update_env_var "NEXT_PUBLIC_SLACK_API_EXTENSION" "$SLACK_API_EXTENSION"
 
