@@ -10,7 +10,6 @@ const HEADER_LINKS = [
     href: "/",
     roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
   },
-  { text: "Users", href: "/Users", roles: [ROLES.ADMIN] },
   {
     text: "Messaging",
     href: "/Messaging",

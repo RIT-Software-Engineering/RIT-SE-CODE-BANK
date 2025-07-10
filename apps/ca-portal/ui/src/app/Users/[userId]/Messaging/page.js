@@ -42,20 +42,23 @@ export default function Messaging() {
         setLoading(false);
       }
     };
-    fetchRecipientData()
-  },[userId]);
+    fetchRecipientData();
+  }, [userId]);
 
-      const renderHeadingContent = () => {
-        if (loading) {
-            return "Loading recipient information...";
-        }
-        if (error) {
-            // Display a user-friendly error message.
-            return `Error: Could not load user data.`;
-        }
-        // If we have an email, display it. Otherwise, fall back to the userId.
-        return `Sending a message to ${recipientEmail || userId}:`;
-    };
+  const renderHeadingContent = () => {
+    if (loading) {
+      return "Loading recipient information...";
+    }
+    if (error) {
+      // Display a user-friendly error message.\
+      console.log(userId)
+      console.log(error)
+      return `Error: Could not load user data.`;
+
+    }
+    // If we have an email, display it. Otherwise, fall back to the userId.
+    return `Sending a message to ${recipientEmail || userId}:`;
+  };
   return (
     <>
       <div className="h-auto bg-rit-gray p-20 w-2/3 m-auto mt-20">
