@@ -271,11 +271,35 @@ async function applyForJobPosition(jobPositionApplicationData) {
 }
 
 /**
+ * Retrieves all candidate applications for a specific candidate.
+ * @param {number} candidateUid - The UID of the candidate.
+ * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
+ */
+async function getCandidateApplicationsForCandidate(candidateUid) {
+  const applications = await prisma.jobPositionApplicationHistory.findMany({
+    where: { candidateUID: candidateUid },
+    include: { jobPosition: {
+      include: {
+        course: {
+          select: { name: true, description: true },
+        },
+        jobSchedules: {
+          select: { dayOfWeek: true, startTime: true, endTime: true },
+        },
+      }
+    }
+     },
+  });
+  return applications;
+}
+
+
+/**
  * Retrieves all candidate applications for all job positions managed by a specific faculty member.
  * @param {number} facultyUid - The UID of the faculty member (employer).
  * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
  */
-async function getCandidateApplications(facultyUid) {
+async function getCandidateApplicationsForFaculty(facultyUid) {
   try {
     // 1. Find all active job positions for the given faculty member.
     const positionsList = await prisma.JobPosition.findMany({
@@ -573,7 +597,8 @@ async function getAllCourses() {
 
 module.exports = {
   searchAndFilterOpenJobPositions,
-  getCandidateApplications,
+  getCandidateApplicationsForCandidate,
+  getCandidateApplicationsForFaculty,
   applyForJobPosition,
   findUniqueUser,
   upsertCandidateProfile,

@@ -61,7 +61,14 @@ export const DASHBOARD_OPTIONS = [
   {
     category: 'Personal',
     text: 'View Applications',
-    link: '/Applications',
-    roles: [ROLES.EMPLOYER]
-  }
+    link: '/Applications/Employer/[uid]',
+    roles: [ROLES.EMPLOYER],
+  },
+  {
+    category: 'Personal',
+    text: 'My Applications',
+
+    link: '/Applications/Candidate/[uid]',
+    roles: [ROLES.CANDIDATE],
+  },
 ];

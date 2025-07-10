@@ -3,8 +3,9 @@ import { DASHBOARD_OPTIONS } from "@/configuration/dashboard.config";
 import Link from "next/link";
 
 
-export default function LandingDashboard({ userRole }) {
+export default function LandingDashboard({ user }) {
   // filter options based on user role
+  const userRole = user?.role;
   const PersonalOptions = DASHBOARD_OPTIONS.filter(
     (option) =>
       option.roles.includes(userRole) && option.category === "Personal"
@@ -16,9 +17,20 @@ export default function LandingDashboard({ userRole }) {
         <div>
           <h1 className="text-3xl ">Personal</h1>
           <div className="grid grid-cols-4">
-            {PersonalOptions.map((option, index) => (
-                <SelectionCard text={option.text} link={option.link} key={index}/>
-            ))}
+            {PersonalOptions.map((option, index) => {
+              const finalLink =
+                option.link.includes("[uid]") && user
+                  ? option.link.replace("[uid]", user.uid)
+                  : option.link;
+
+              return (
+                <SelectionCard
+                  text={option.text}
+                  link={finalLink}
+                  key={index}
+                />
+              );
+            })}
           </div>
         </div>
         <div>

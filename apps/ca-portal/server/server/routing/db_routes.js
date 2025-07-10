@@ -20,7 +20,8 @@ const {
   searchAndFilterOpenJobPositions,
   applyForJobPosition,
   updateUserResumeUrl,
-  getCandidateApplications,
+  getCandidateApplicationsForCandidate,
+  getCandidateApplicationsForFaculty,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -202,12 +203,33 @@ router.post('/apply-for-job-position-with-new-resume', upload.single('resumeFile
 });
 
 /**
- * @route   GET /api/db/applications/:employerUid
+ * @route   GET /api/db/applications/candidate/:candidateUID
+ * @desc    Retrieves all applications for a specific candidate.
+ * @access  Public
+ * @param   {string} candidateUID - The UID of the candidate.
+ */ 
+router.get("/applications/candidate/:candidateUID", async (req, res) => {
+    const candidateUID = parseInt(req.params.candidateUID, 10);
+    try {
+      if (isNaN(candidateUID)) {
+        return res.status(400).json({ error: "Candidate UID must be a valid number." });
+      }
+      const applications = await getCandidateApplicationsForCandidate(candidateUID);
+      res.status(200).json(applications);
+    } catch (error) {
+      console.error(`Error in /applications/${req.params.candidateUID} route:`, error.message);
+      res.status(500).json({ error: "An error occurred while retrieving applications." });
+    }
+})
+
+
+/**
+ * @route   GET /api/db/applications/employer/:employerUid
  * @desc    Retrieves all applications for job positions managed by a specific employer.
  * @access  Public
  * @param   {string} employerUid - The UID of the employer.
  */
-router.get("/applications/:employerUid", async (req, res) => {
+router.get("/applications/employer/:employerUid", async (req, res) => {
     try {
       const employerUid = parseInt(req.params.employerUid, 10);
 
@@ -216,7 +238,7 @@ router.get("/applications/:employerUid", async (req, res) => {
         return res.status(400).json({ error: "Employer UID must be a valid number." });
       }
 
-      const positions = await getCandidateApplications(employerUid);
+      const positions = await getCandidateApplicationsForFaculty(employerUid);
       res.status(200).json(positions);
 
     } catch (error) {
