@@ -2,7 +2,7 @@
 "use client";
 import { useParams } from "next/navigation";
 
-import { getUserProfile } from "@/services/api";
+import { getUserProfile } from "@/services/db-apis";
 import { useEffect } from "react";
 import { useState } from "react";
 

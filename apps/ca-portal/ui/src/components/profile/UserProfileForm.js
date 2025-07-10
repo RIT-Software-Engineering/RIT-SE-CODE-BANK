@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react'; 
 import { useForm, useWatch } from "react-hook-form";
 import { useAuth } from '@/contexts/AuthContext';
-import { upsertCandidateProfile, upsertEmployerProfile } from '@/services/api';
+import { upsertCandidateProfile, upsertEmployerProfile } from '@/services/db-apis';
 
 
 /**

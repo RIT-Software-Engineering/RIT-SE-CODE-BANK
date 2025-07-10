@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import UserProfileModal from "@/components/profile/UserProfileModal";
-import { getUserProfile } from "@/services/api";
+import { getUserProfile } from "@/services/db-apis";
 
 import ProfileInfoCard from "@/components/profile/ProfileInfoCard";
 import CoursesTakenCard from "@/components/profile/CoursesTakenCard";
