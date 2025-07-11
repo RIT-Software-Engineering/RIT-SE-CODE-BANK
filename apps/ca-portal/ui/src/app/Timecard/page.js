@@ -1,148 +1,142 @@
 // src/app/Timecard/page.js
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { defaultTimecard } from "@/constants/timecardConstants";
+import {
+  tableClasses,
+  thClasses,
+  tdClasses,
+  inputClasses,
+  totalTdClasses,
+  buttonClasses,
+} from "@/constants/timecardConstants";
+// Import the new ConfirmModal component.
+import ConfirmModal from "@/components/timecard/ConfirmModal";
+import AlertModal from "@/components/timecard/AlertModal";
+import ActionButtons from "@/components/timecard/ActionButtons";
 
 export default function Timecard() {
-    /**
-     * Default structure for each day in the timecard (Friday -> Thursday)
-     * Each entry holds:
-     * - day: Name of day
-     * - date: Selected date string (YYYY-MM-DD)
-     * - ins: Array of three "Time In" strings (HH:mm)
-     * - outs: Array of three "Time Out" strings (HH:mm)
-     * - total: Computed total hours for the day
-     */
-    const defaultTimecard = [
-        { day: 'Friday', date: '', ins: ['', '', ''], outs: ['', '', ''], total: 0 },
-        { day: 'Saturday', date: '', ins: ['', '', ''], outs: ['', '', ''], total: 0 },
-        { day: 'Sunday', date: '', ins: ['', '', ''], outs: ['', '', ''], total: 0 },
-        { day: 'Monday', date: '', ins: ['', '', ''], outs: ['', '', ''], total: 0 },
-        { day: 'Tuesday', date: '', ins: ['', '', ''], outs: ['', '', ''], total: 0 },
-        { day: 'Wednesday', date: '', ins: ['', '', ''], outs: ['', '', ''], total: 0 },
-        { day: 'Thursday', date: '', ins: ['', '', ''], outs: ['', '', ''], total: 0 },
-    ];
+  /**
+   * Timecard state: Initialized with default, then loaded from localStorage on client.
+   * `isMounted` tracks if the component has mounted on the client to safely access `localStorage`.
+   */
+  const [timecard, setTimecard] = useState(defaultTimecard);
+  const [isMounted, setIsMounted] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  // This state will hold the function to execute when the user confirms the action.
+  const [confirmAction, setConfirmAction] = useState(null);
 
-    /**
-     * Timecard state: Initialized with default, then loaded from localStorage on client.
-     * `isMounted` tracks if the component has mounted on the client to safely access `localStorage`.
-     */
-    const [timecard, setTimecard] = useState(defaultTimecard);
-    const [isMounted, setIsMounted] = useState(false);
-    const [showAlert, setShowAlert] = useState(false);
-    const [alertMessage, setAlertMessage] = useState('');
-    const [showConfirm, setShowConfirm] = useState(false);
-    const [confirmAction, setConfirmAction] = useState(null); // Function to execute on confirm
+  /**
+   * Effect to load from localStorage only on the client side after mount.
+   */
+  useEffect(() => {
+    setIsMounted(true); // Mark as mounted
+    const saved = localStorage.getItem("timecard");
+    if (saved) {
+      setTimecard(JSON.parse(saved));
+    }
+  }, []); // Empty dependency array means this runs once after the initial render on the client
 
-    /**
-     * Effect to load from localStorage only on the client side after mount.
-     */
-    useEffect(() => {
-        setIsMounted(true); // Mark as mounted
-        const saved = localStorage.getItem('timecard');
-        if (saved) {
-            setTimecard(JSON.parse(saved));
-        }
-    }, []); // Empty dependency array means this runs once after the initial render on the client
+  /**
+   * Sync effect - whenever timecard changes, persist to localStorage.
+   */
+  useEffect(() => {
+    if (isMounted) {
+      // Only save to localStorage if the component has truly mounted on the client
+      localStorage.setItem("timecard", JSON.stringify(timecard));
+    }
+  }, [timecard, isMounted]);
 
-    /**
-     * Sync effect - whenever timecard changes, persist to localStorage.
-     * This effect runs AFTER the initial hydration, so localStorage is safe here.
-     */
-    useEffect(() => {
-        if (isMounted) { // Only save to localStorage if the component has truly mounted on the client
-            localStorage.setItem('timecard', JSON.stringify(timecard));
-        }
-    }, [timecard, isMounted]);
+  /**
+   * Calculate the difference in hours between two time string ("HH:mm")
+   */
+  const hoursDiff = (startStr, endStr) => {
+    if (!startStr || !endStr) return 0;
 
-    /**
-     * Calculate the difference in hours between two time string ("HH:mm")
-     * @param {string} startStr - Start time in "HH:mm" format
-     * @param {string} endStr - End time in "HH:mm" format
-     * @returns {number} Difference in hours (fractional)
-     */
-    const hoursDiff = (startStr, endStr) => {
-        if (!startStr || !endStr) return 0;
+    const [sh, sm] = startStr.split(":").map(Number);
+    const [eh, em] = endStr.split(":").map(Number);
 
-        const [sh, sm] = startStr.split(':').map(Number);
-        const [eh, em] = endStr.split(':').map(Number);
+    let start = new Date();
+    let end = new Date();
+    start.setHours(sh, sm, 0, 0);
+    end.setHours(eh, em, 0, 0);
 
-        let start = new Date();
-        let end = new Date();
-        start.setHours(sh, sm, 0, 0);
-        end.setHours(eh, em, 0, 0);
+    if (end < start) end.setDate(end.getDate() + 1);
 
-        if (end < start) end.setDate(end.getDate() + 1);
+    return (end - start) / 3600000;
+  };
 
-        return (end - start) / 3600000;
-    };
+  /**
+   * Update a single time input and recalculate that day's total hours
+   */
+  const handleTimeChange = (dayIdx, pairIdx, type, value) => {
+    setTimecard((prev) => {
+      const newTS = [...prev];
+      newTS[dayIdx] = { ...newTS[dayIdx] };
 
-    /**
-     * Update a single time input and recalculate that day's total hours
-     * @param {number} dayIdx - Index of day in timecard
-     * @param {number} pairIdx - Which in/out pair (0-2)
-     * @param {'in'|'out'} type - Field type (either "in" or "out")
-     * @param {string} value  - New time value HH:mm
-     */
-    const handleTimeChange = (dayIdx, pairIdx, type, value) => {
-        setTimecard(prev => {
-            const newTS = [...prev];
-            newTS[dayIdx] = { ...newTS[dayIdx] };
+      if (type === "in") {
+        newTS[dayIdx].ins[pairIdx] = value;
+      } else {
+        newTS[dayIdx].outs[pairIdx] = value;
+      }
 
-            if (type === 'in') {
-                newTS[dayIdx].ins[pairIdx] = value;
-            } else {
-                newTS[dayIdx].outs[pairIdx] = value;
-            }
+      let dayTotal = 0;
+      for (let i = 0; i < 3; i++) {
+        dayTotal += hoursDiff(newTS[dayIdx].ins[i], newTS[dayIdx].outs[i]);
+      }
 
-            let dayTotal = 0;
-            for (let i = 0; i < 3; i++) {
-                dayTotal += hoursDiff(newTS[dayIdx].ins[i], newTS[dayIdx].outs[i]);
-            }
+      newTS[dayIdx].total = dayTotal;
+      return newTS;
+    });
+  };
 
-            newTS[dayIdx].total = dayTotal;
-            return newTS;
-        });
-    };
+  /**
+   * Update the selected date for a specific day
+   */
+  const handleDateChange = (dayIdx, value) => {
+    setTimecard((prev) => {
+      const newTS = [...prev];
+      newTS[dayIdx] = { ...newTS[dayIdx], date: value };
+      return newTS;
+    });
+  };
 
-    /**
-     * Update the selected date for a specific day
-     * @param {number} dayIdx - Index of day
-     * @param {string} value - New date string (YYYY-MM-DD)
-     */
-    const handleDateChange = (dayIdx, value) => {
-        setTimecard(prev => {
-            const newTS = [...prev];
-            newTS[dayIdx] = { ...newTS[dayIdx], date: value };
-            return newTS;
-        });
-    };
+  /**
+   * Save current timecard state to localStorage with a simple alert.
+   */
+  const handleSave = () => {
+    if (isMounted) {
+      localStorage.setItem("timecard", JSON.stringify(timecard));
+      setAlertMessage("Timecard saved locally!");
+      setShowAlert(true);
+    }
+  };
 
-    /**
-     * Save current timecard state to localStorage with confirmation (via custom modal)
-     */
-    const handleSave = () => {
-        if (isMounted) {
-            localStorage.setItem('timecard', JSON.stringify(timecard));
-            setAlertMessage('Timecard saved locally!');
-            setShowAlert(true);
-        }
-    };
+  /**
+   * Sets up the confirmation modal for clearing all entries.
+   */
+  const handleClear = () => {
+    if (isMounted) {
+      // Set the confirmation message for the modal.
+      setAlertMessage("Are you sure you want to clear all entries?");
 
-    /**
-     * Clear all entries, reset to default, and remove from localStorage (via custom modal)
-     */
-    const handleClear = () => {
-        if (isMounted) {
-            setAlertMessage('Are you sure you want to clear all entries?');
-            setConfirmAction(() => () => { // Set a function to be called on confirm
-                setTimecard(defaultTimecard);
-                localStorage.removeItem('timecard');
-                setShowConfirm(false); // Close confirm modal
-            });
-            setShowConfirm(true); // Show confirm modal
-        }
-    };
+      // Define the action to be performed on confirmation.
+      const clearAction = () => {
+        // **FIXED**: Use a deep copy of the default timecard to ensure a clean state reset.
+        setTimecard(JSON.parse(JSON.stringify(defaultTimecard)));
+        localStorage.removeItem("timecard");
+      };
+
+      // Store the action in state.
+      setConfirmAction(() => clearAction);
+
+      // Show the confirmation modal.
+      setShowConfirm(true);
+    }
+  };
 
     /**
      * Total hours worked over the entire week
