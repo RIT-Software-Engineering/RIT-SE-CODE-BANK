@@ -1,16 +1,15 @@
 'use client';
 import { useAuth } from '@/contexts/AuthContext';
-import ApplicationCard from '@/components/jobs/ApplicationCard';
+import ApplicationCard from '@/components/jobs/EmployerAndAdmin/ApplicationCard';
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
 import React, { useEffect, useState } from 'react';
-import { getCandidateApplicationsForFaculty } from '@/services/api';
+import { getCandidateApplicationsForFaculty } from '@/services/db-apis';
 
 export default function Applications() {
   const { currentUser } = useAuth();
-  // List of current applications gotton from backend
   const [activeApplications, setActiveApplications] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,7 +43,7 @@ export default function Applications() {
   }, [currentUser]); // Re-run the effect if the currentUser changes
 
   // Content to load once a employer is logged in
-  const loggedInEmployeerPage = () => {
+  const renderContent = () => {
     // Handle loading and error states for a better user experience
     if (loading) {
       return <div>Loading applications...</div>;
@@ -87,7 +86,6 @@ export default function Applications() {
                       <ApplicationCard
                         key={app.id}
                         application={app}
-                        viewAs='EMPLOYER'
                       />
                     ))
                   ) : (
@@ -112,7 +110,7 @@ export default function Applications() {
       <div className='flex flex-col items-center bg-gray-300 p-4 mb-10 ml-10 mr-10'>
         {currentUser && currentUser.role === 'EMPLOYER' ? (
           <div className='w-full flex flex-col items-center justify-center'>
-            {loggedInEmployeerPage()}
+            {renderContent()}
           </div>
         ) : (
           <div>Please make sure you are logged in as an EMPLOYER.</div>

@@ -1,17 +1,88 @@
 'use client';
 
-import CandidateAndEmployeeApplicationsView from '@/components/jobs/CandidateAndEmployeeApplicationsView';
-// Assuming you have a different API function for employees
-import { getCandidateApplicationsForCandidate } from '@/services/db-apis'; 
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
+import ApplicationCard from '@/components/jobs/CandidateAndEmployee/ApplicationCard';
+import { getCandidateApplications } from '@/services/db-apis';
 
 export default function EmployeeApplicationsPage() {
+  const { currentUser } = useAuth();
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const pageTitle = 'My Applications';
+  const pageSubtitle = "Track the status of all positions you've applied for.";
+
+  useEffect(() => {
+    // Fetch data specifically for the logged-in employee
+    if (currentUser?.uid && currentUser.role === 'EMPLOYEE') {
+      async function fetchData() {
+        try {
+          setLoading(true);
+          const data = await getCandidateApplications(currentUser.uid);
+          setApplications(data);
+          setError(null);
+        } catch (err) {
+          console.error('Error fetching employee applications:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      }
+      fetchData();
+    } else {
+      // If there's no user, we're not loading anything.
+      setLoading(false);
+    }
+  }, [currentUser]);
+
+  // Renders the main content of the page based on the current state
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className='text-center text-gray-500'>Loading applications...</div>
+      );
+    }
+    if (error) {
+      return <div className='text-red-500 text-center'>Error: {error}</div>;
+    }
+    if (!currentUser) {
+      return (
+        <div className='text-center text-gray-500'>
+          Please log in to view your applications.
+        </div>
+      );
+    }
+    if (applications.length === 0) {
+      return (
+        <div className='text-center text-gray-500'>
+          You have no applications to display.
+        </div>
+      );
+    }
+    return (
+      <div className='w-full max-w-4xl'>
+        {applications.map((app) => (
+          <ApplicationCard
+            key={app.id}
+            currentUser={currentUser}
+            application={app}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <CandidateAndEmployeeApplicationsView
-      pageTitle="My Applications"
-      pageSubtitle="Track the status of positions you've applied for."
-      userRole="EMPLOYEE"
-      fetchFunction={getCandidateApplicationsForCandidate}
-      cardViewAs="EMPLOYEE"
-    />
+    <main>
+      <div className='flex flex-col items-center p-6 bg-white shadow-sm'>
+        <h1 className='text-4xl font-bold text-gray-800'>{pageTitle}</h1>
+        <p className='text-md text-gray-600 mt-2'>{pageSubtitle}</p>
+      </div>
+      <div className='flex flex-col items-center bg-gray-50 p-4 md:p-8 min-h-screen'>
+        {renderContent()}
+      </div>
+    </main>
   );
 }

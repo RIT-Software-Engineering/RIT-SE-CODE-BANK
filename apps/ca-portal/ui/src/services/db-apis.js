@@ -111,8 +111,8 @@ export async function getUserProfile(UID) {
   return handleApiResponse(response);
 }
 
-export async function getCandidateApplicationsForCandidate(candidateUID) {
-  if (!candidateUID) {
+export async function getCandidateApplications(UID) {
+  if (!UID) {
     throw new Error("A UID is required to fetch a user profile.");
   }
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
@@ -120,7 +120,7 @@ export async function getCandidateApplicationsForCandidate(candidateUID) {
       "Backend API URL components are not defined. Check your .env.local file."
     );
   }
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/candidate/${candidateUID}`;
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/${UID}`;
   console.log(`Fetching user profile from: ${url}`);
   const response = await fetch(url);
   return handleApiResponse(response);

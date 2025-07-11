@@ -271,13 +271,13 @@ async function applyForJobPosition(jobPositionApplicationData) {
 }
 
 /**
- * Retrieves all candidate applications for a specific candidate.
- * @param {number} candidateUid - The UID of the candidate.
+ * Retrieves all candidate applications for a specific candidate/employee.
+ * @param {number} UID - The UID of the candidate/employee.
  * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
  */
-async function getCandidateApplicationsForCandidate(candidateUid) {
+async function getCandidateApplications(UID) {
   const applications = await prisma.jobPositionApplicationHistory.findMany({
-    where: { candidateUID: candidateUid },
+    where: { candidateUID: UID },
     include: { jobPosition: {
       include: {
         course: {
@@ -597,7 +597,7 @@ async function getAllCourses() {
 
 module.exports = {
   searchAndFilterOpenJobPositions,
-  getCandidateApplicationsForCandidate,
+  getCandidateApplications,
   getCandidateApplicationsForFaculty,
   applyForJobPosition,
   findUniqueUser,

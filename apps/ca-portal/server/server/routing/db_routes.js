@@ -20,7 +20,7 @@ const {
   searchAndFilterOpenJobPositions,
   applyForJobPosition,
   updateUserResumeUrl,
-  getCandidateApplicationsForCandidate,
+  getCandidateApplications,
   getCandidateApplicationsForFaculty,
 } = require('../database/query_db');
 
@@ -160,28 +160,13 @@ router.post('/apply-for-job-position-with-new-resume', upload.single('resumeFile
         return res.status(400).json({ error: "Candidate UID must be a valid number." });
     }
 
-    // 1. Find the candidate to get their old resume URL for later deletion.
-    const candidate = await findUniqueUser(numericCandidateUID);
-    const oldResumeUrl = candidate?.candidate?.resumeURL;
-
-    // 2. Construct the public-facing URL for the newly uploaded resume.
+    // 1. Construct the public-facing URL for the newly uploaded resume.
     const newResumeUrl = `/resources/resumes/${candidateUID}/${req.file.filename}`;
     
-    // 3. Update the candidate's record in the database with the new resume URL.
+    // 2. Update the candidate's record in the database with the new resume URL. (not deleting the old resumes as the applications still need them)
     await updateUserResumeUrl(numericCandidateUID, newResumeUrl);
 
-    // 4. If an old resume existed, delete it from the file system to save space.
-    if (oldResumeUrl) {
-      const oldFilePath = path.join(__dirname, '../../', oldResumeUrl);
-      try {
-        fs.unlinkSync(oldFilePath);
-        console.log(`Successfully deleted old resume: ${oldFilePath}`);
-      } catch (unlinkErr) {
-        console.error(`Failed to delete old resume file, it may not exist: ${oldFilePath}`, unlinkErr.message);
-      }
-    }
-
-    // 5. Proceed with creating the application record, ensuring the new resume URL is included.
+    // 3. Proceed with creating the application record, ensuring the new resume URL is included.
     const parsedFormData = JSON.parse(jobPositionApplicationFormData);
     parsedFormData.resumeURL = newResumeUrl;
     
@@ -203,21 +188,21 @@ router.post('/apply-for-job-position-with-new-resume', upload.single('resumeFile
 });
 
 /**
- * @route   GET /api/db/applications/candidate/:candidateUID
- * @desc    Retrieves all applications for a specific candidate.
+ * @route   GET /api/db/applications/:UID
+ * @desc    Retrieves all applications for a specific candidate/employee.
  * @access  Public
- * @param   {string} candidateUID - The UID of the candidate.
+ * @param   {string} UID - The UID of the candidate/employee.
  */ 
-router.get("/applications/candidate/:candidateUID", async (req, res) => {
-    const candidateUID = parseInt(req.params.candidateUID, 10);
+router.get("/applications/:UID", async (req, res) => {
+    const numericUID = parseInt(req.params.UID, 10);
     try {
-      if (isNaN(candidateUID)) {
-        return res.status(400).json({ error: "Candidate UID must be a valid number." });
+      if (isNaN(numericUID)) {
+        return res.status(400).json({ error: "UID must be a valid number." });
       }
-      const applications = await getCandidateApplicationsForCandidate(candidateUID);
+      const applications = await getCandidateApplications(numericUID);
       res.status(200).json(applications);
     } catch (error) {
-      console.error(`Error in /applications/${req.params.candidateUID} route:`, error.message);
+      console.error(`Error in /applications/${req.params.UID} route:`, error.message);
       res.status(500).json({ error: "An error occurred while retrieving applications." });
     }
 })

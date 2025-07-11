@@ -18,7 +18,7 @@ export const positionFilterConfig = [
     id: 'location',
     label: 'Location',
     type: 'radio',
-    options: ["Online", "Hybrid", "In-Person"]
+    options: ["Remote", "Hybrid", "In-Person"]
   },
   {
     id: 'eligibility',
