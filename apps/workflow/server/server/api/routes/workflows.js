@@ -34,13 +34,17 @@ router.get("/", async (req, res) => {
     const { userId, tags } = req.query;
 
     const where = {};
+
     if (userId) {
     } // TODO: Add handling for userId
     if (tags) {
-    } // TODO: Add handling for tags
+        where.AND = tags.split(",").map((name) => ({
+            tags: { some: { name } },
+        }));
+    }
 
     const workflows = await prisma.workflowAttributes.findMany({
-        where: where,
+        where,
         include: {
             tags: true,
             base_action: {
@@ -65,7 +69,6 @@ router.post("/", async (req, res) => {
     if (rootActionId) {
         workflow_data.root_action = { connect: { id: rootActionId } };
     }
-    // TODO: add tags
 
     const base_action_data = {};
     if (name) {
@@ -80,33 +83,51 @@ router.post("/", async (req, res) => {
         };
     }
 
-    const workflow = await prisma.workflowAttributes.create({
-        data: {
-            ...workflow_data,
-            base_action: {
-                create: {
-                    ...base_action_data,
-                    permissions: {
-                        // Default the creator to have all permissionTypes
-                        createMany: {
-                            data: permissionTypes.map((permissionType) => ({
-                                user_id: userId,
-                                permission_type: permissionType,
-                            })),
+    await prisma.$transaction(async () => {
+        const workflow = await prisma.workflowAttributes.create({
+            data: {
+                ...workflow_data,
+                base_action: {
+                    create: {
+                        ...base_action_data,
+                        permissions: {
+                            // Default the creator to have all permissionTypes
+                            createMany: {
+                                data: permissionTypes.map((permissionType) => ({
+                                    user_id: userId,
+                                    permission_type: permissionType,
+                                })),
+                            },
                         },
                     },
                 },
             },
-        },
-    });
+        });
 
-    // No export because it doesn't include metadata
-    res.json(workflow);
+        // Tag time
+        tags.map(
+            async (name) =>
+                await prisma.tags.upsert({
+                    where: { name },
+                    update: {
+                        workflow_attributes: { connect: { id: workflow.id } },
+                    },
+                    create: {
+                        name,
+                        workflow_attributes: { connect: { id: workflow.id } },
+                    },
+                })
+        );
+
+        // No export because it doesn't include metadata
+        // As of now, tags are not included
+        res.json(workflow);
+    });
 });
 
 // PUT /workflows/:id
 router.put("/:id", async (req, res) => {
-    const { name, description, metadata, rootActionId } = req.body;
+    const { name, description, metadata, tags, rootActionId } = req.body;
     const { id } = req.params;
 
     const workflow_data = {};
@@ -120,6 +141,18 @@ router.put("/:id", async (req, res) => {
     }
     if (description) {
         base_action_data.description = description;
+    }
+    if (tags) {
+        workflow_data.tags = {
+            // Clear existing connections
+            set: [],
+
+            // Add/re-add them
+            connectOrCreate: tags.map((name) => ({
+                where: { name },
+                create: { name },
+            })),
+        };
     }
     if (metadata) {
         // Delete old metadata
