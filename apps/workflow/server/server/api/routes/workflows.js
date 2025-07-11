@@ -34,21 +34,13 @@ router.get("/", async (req, res) => {
     const { userId, tags } = req.query;
 
     const where = {};
-    const orderBy = {};
+
     if (userId) {
     } // TODO: Add handling for userId
     if (tags) {
-        where.tags = {
-            every: {
-                name: {
-                    in: tags.split(","),
-                },
-            },
-        };
-
-        orderBy.tags = {
-            _count: "desc",
-        };
+        where.AND = tags.split(",").map((name) => ({
+            tags: { some: { name } },
+        }));
     }
 
     const workflows = await prisma.workflowAttributes.findMany({
@@ -63,7 +55,6 @@ router.get("/", async (req, res) => {
             },
             root_action: true,
         },
-        orderBy,
     });
 
     res.json(workflows.map((w) => exportWorkflow(w)));
