@@ -1,7 +1,9 @@
 import EvaluationList from "@/components/EvaluationList"
 import Link from "next/link"
 
-export default function EvaluationsPage() {
+export default async function RubricEvaluationsPage({params}) {
+    const { id } = await params;
+
     return (
         <>
             <div className="flex flex-col items-center justify-center gap-4">

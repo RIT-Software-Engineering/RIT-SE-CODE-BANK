@@ -2,7 +2,7 @@ import Link from "next/link";
 
 function RubricListItem({ data }) {
     return (
-        <Link href={"/rubric/" + data.id} className="border rounded-md p-2">
+        <Link href={"/rubrics/" + data.id} className="border rounded-md p-2">
             <h3 className="font-bold">{data.title}</h3>
             <p>{data.description}</p>
         </Link>
