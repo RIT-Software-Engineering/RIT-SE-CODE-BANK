@@ -37,7 +37,14 @@ router.get("/", async (req, res) => {
     if (userId) {
     } // TODO: Add handling for userId
     if (tags) {
-    } // TODO: Add handling for tags
+        where.tags = {
+            every: {
+                name: {
+                    in: tags.split(","),
+                },
+            },
+        };
+    }
 
     const workflows = await prisma.workflowAttributes.findMany({
         where: where,
