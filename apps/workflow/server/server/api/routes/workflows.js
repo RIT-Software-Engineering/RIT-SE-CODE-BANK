@@ -123,7 +123,7 @@ router.post("/", async (req, res) => {
 
 // PUT /workflows/:id
 router.put("/:id", async (req, res) => {
-    const { name, description, metadata, rootActionId } = req.body;
+    const { name, description, metadata, tags, rootActionId } = req.body;
     const { id } = req.params;
 
     const workflow_data = {};
@@ -137,6 +137,18 @@ router.put("/:id", async (req, res) => {
     }
     if (description) {
         base_action_data.description = description;
+    }
+    if (tags) {
+        workflow_data.tags = {
+            // Clear existing connections
+            set: [],
+
+            // Add/re-add them
+            connectOrCreate: tags.map((name) => ({
+                where: { name },
+                create: { name },
+            })),
+        };
     }
     if (metadata) {
         // Delete old metadata
