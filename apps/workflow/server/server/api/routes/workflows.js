@@ -65,7 +65,6 @@ router.post("/", async (req, res) => {
     if (rootActionId) {
         workflow_data.root_action = { connect: { id: rootActionId } };
     }
-    // TODO: add tags
 
     const base_action_data = {};
     if (name) {
@@ -80,28 +79,46 @@ router.post("/", async (req, res) => {
         };
     }
 
-    const workflow = await prisma.workflowAttributes.create({
-        data: {
-            ...workflow_data,
-            base_action: {
-                create: {
-                    ...base_action_data,
-                    permissions: {
-                        // Default the creator to have all permissionTypes
-                        createMany: {
-                            data: permissionTypes.map((permissionType) => ({
-                                user_id: userId,
-                                permission_type: permissionType,
-                            })),
+    await prisma.$transaction(async () => {
+        const workflow = await prisma.workflowAttributes.create({
+            data: {
+                ...workflow_data,
+                base_action: {
+                    create: {
+                        ...base_action_data,
+                        permissions: {
+                            // Default the creator to have all permissionTypes
+                            createMany: {
+                                data: permissionTypes.map((permissionType) => ({
+                                    user_id: userId,
+                                    permission_type: permissionType,
+                                })),
+                            },
                         },
                     },
                 },
             },
-        },
-    });
+        });
 
-    // No export because it doesn't include metadata
-    res.json(workflow);
+        // Tag time
+        tags.map(
+            async (name) =>
+                await prisma.tags.upsert({
+                    where: { name },
+                    update: {
+                        workflow_attributes: { connect: { id: workflow.id } },
+                    },
+                    create: {
+                        name,
+                        workflow_attributes: { connect: { id: workflow.id } },
+                    },
+                })
+        );
+
+        // No export because it doesn't include metadata
+        // As of now, tags are not included
+        res.json(workflow);
+    });
 });
 
 // PUT /workflows/:id
