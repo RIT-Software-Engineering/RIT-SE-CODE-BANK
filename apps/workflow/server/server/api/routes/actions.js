@@ -15,6 +15,7 @@ router.get("/:id", async (req, res) => {
         include: {
             metadata: true,
             previous_action: true,
+            child_actions: true,
         },
     });
 
@@ -72,7 +73,8 @@ router.get("/", async (req, res) => {
 
 // POST /actions
 router.post("/", async (req, res) => {
-    const { name, description, form, actionType, metadata } = req.body;
+    const { name, description, form, actionType, metadata, parentActionId } =
+        req.body;
     const { userId } = req.body; // TODO: make this work with req.user instead
 
     const data = {};
@@ -87,6 +89,9 @@ router.post("/", async (req, res) => {
     }
     if (actionType) {
         data.action_type = actionType;
+    }
+    if (parentActionId) {
+        data.parent_action = { connect: { id: parentActionId } };
     }
 
     const action = await prisma.action.create({
@@ -112,8 +117,15 @@ router.post("/", async (req, res) => {
 
 // PUT /actions/:id
 router.put("/:id", async (req, res) => {
-    const { name, description, form, actionType, metadata, nextActionId } =
-        req.body;
+    const {
+        name,
+        description,
+        form,
+        actionType,
+        metadata,
+        nextActionId,
+        parentActionId,
+    } = req.body;
     const { id } = req.params;
 
     const data = {};
@@ -131,6 +143,9 @@ router.put("/:id", async (req, res) => {
     }
     if (nextActionId) {
         data.next_action = { connect: { id: nextActionId } };
+    }
+    if (parentActionId) {
+        data.parent_action = { connect: { id: parentActionId } };
     }
     if (metadata) {
         // Delete old metadata
