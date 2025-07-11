@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function getActionChain(rootActionId) {
@@ -24,6 +24,15 @@ async function getActionChain(rootActionId) {
     return actions;
 }
 
+const exportAction = (action) => ({
+    ...action,
+    metadata: action.metadata.reduce(
+        (acc, m) => ({ ...acc, [m.key]: m.value }),
+        {}
+    ),
+});
+
 module.exports = {
-    getActionChain
-}
+    getActionChain,
+    exportAction,
+};
