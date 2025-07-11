@@ -1,16 +1,17 @@
 'use client';
 
 import CandidateAndEmployeeApplicationsView from '@/components/jobs/CandidateAndEmployeeApplicationsView';
-import { getCandidateApplicationsForCandidate } from '@/services/db-apis';
+// Assuming you have a different API function for employees
+import { getCandidateApplicationsForCandidate } from '@/services/db-apis'; 
 
-export default function CandidateApplicationsPage() {
+export default function EmployeeApplicationsPage() {
   return (
     <CandidateAndEmployeeApplicationsView
       pageTitle="My Applications"
       pageSubtitle="Track the status of positions you've applied for."
-      userRole="CANDIDATE"
+      userRole="EMPLOYEE"
       fetchFunction={getCandidateApplicationsForCandidate}
-      cardViewAs="CANDIDATE"
+      cardViewAs="EMPLOYEE"
     />
   );
 }

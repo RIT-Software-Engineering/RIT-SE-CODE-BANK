@@ -44,6 +44,12 @@ export const DASHBOARD_OPTIONS = [
     link: '/Users',
     roles: [ROLES.EMPLOYEE]
   },
+  {
+    category: 'Personal',
+    text: 'My Applications',
+    link: '/Applications/Employee/[uid]',
+    roles: [ROLES.EMPLOYEE]
+  },
   // --- ADMIN-SPECIFIC PERSONAL OPTIONS ---
   {
     category: 'Personal',
@@ -64,10 +70,10 @@ export const DASHBOARD_OPTIONS = [
     link: '/Applications/Employer/[uid]',
     roles: [ROLES.EMPLOYER],
   },
+  // --- CANDIDATE-SPECIFIC OPTIONS ---
   {
     category: 'Personal',
     text: 'My Applications',
-
     link: '/Applications/Candidate/[uid]',
     roles: [ROLES.CANDIDATE],
   },

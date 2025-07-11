@@ -32,6 +32,11 @@ const HEADER_LINKS = [
     roles: [ROLES.EMPLOYER],
   },
   {
+    text: "Applications",
+    href: "/Applications/Employee/[uid]",
+    roles: [ROLES.EMPLOYEE],
+  },
+  {
     text: "Profile",
     href: "/Profile",
     roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],

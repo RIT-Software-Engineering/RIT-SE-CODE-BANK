@@ -86,8 +86,8 @@ export default function ApplicationCard({ application, viewAs }) {
     </>
   );
 
-  // --- Candidate-Specific View Components ---
-  const CandidateHeader = () => {
+  // --- Candidate and Employee-Specific View Components ---
+  const CandidateAndEmployeeHeader = () => {
     // Guard against missing data
     if (!jobPosition?.course) return null;
     return (
@@ -102,7 +102,7 @@ export default function ApplicationCard({ application, viewAs }) {
     );
   };
 
-  const CandidateActions = () => (
+  const CandidateAndEmployeeActions = () => (
     <>
         {jobApplicationStatus.toLowerCase() === 'applied' && (
             <button className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700">Withdraw</button>
@@ -117,7 +117,7 @@ export default function ApplicationCard({ application, viewAs }) {
       <div className="p-6">
         {/* --- Header Section --- */}
         <div className="flex justify-between items-start flex-wrap gap-4">
-            {viewAs === 'EMPLOYER' ? <EmployerHeader /> : <CandidateHeader />}
+            {viewAs === 'EMPLOYER' ? <EmployerHeader /> : <CandidateAndEmployeeHeader />}
             <div className='text-right'>
                 <span className={`px-4 py-2 text-md font-bold rounded-full ${statusClasses}`}>
                     {jobApplicationStatus}
@@ -152,8 +152,8 @@ export default function ApplicationCard({ application, viewAs }) {
           </>
         )}
         
-        {/* Candidate's View of Details */}
-        {viewAs === 'CANDIDATE' && jobPosition && (
+        {/* Candidate's and Employee's View of Details */}
+        {(viewAs === 'CANDIDATE' || viewAs === 'EMPLOYEE') && jobPosition && (
             <div className='mt-4 pt-4 border-t border-gray-200'>
                 <p className='text-gray-700 mb-4'>{jobPosition.course.description}</p>
                 <div className='flex flex-col sm:flex-row sm:space-x-8 space-y-3 sm:space-y-0 text-gray-600'>
@@ -178,7 +178,7 @@ export default function ApplicationCard({ application, viewAs }) {
 
         {/* --- Action Buttons Footer --- */}
         <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-            {viewAs === 'EMPLOYER' ? <EmployerActions /> : <CandidateActions />}
+            {viewAs === 'EMPLOYER' ? <EmployerActions /> : <CandidateAndEmployeeActions />}
         </div>
       </div>
     </div>
