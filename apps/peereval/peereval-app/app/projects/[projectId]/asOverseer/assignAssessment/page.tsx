@@ -149,31 +149,6 @@ export default function AssignAssessmentPage() {
         })();
     }, []);
 
-    // Dummy data for demonstration; replace with real data as needed
-    // const forms: FeedbackForm[] = [
-    //     {
-    //         id: "1",
-    //         name: "Sample Assessment",
-    //         questions: [
-    //             { type: "freeResponse", prompt: "Describe your experience." },
-    //             {
-    //                 type: "rating",
-    //                 prompt: "Rate your teamwork.",
-    //                 scaleMin: 1,
-    //                 scaleMax: 5,
-    //             },
-    //             {
-    //                 type: "rubric",
-    //                 prompt: "Evaluate the following criteria:",
-    //                 criteria: [
-    //                     { label: "Quality", description: "Work quality" },
-    //                     { label: "Timeliness", description: "Met deadlines" },
-    //                 ],
-    //             },
-    //         ],
-    //     },
-    // ];
-
     const handleCreateNew = () => {
         router.push("./createAssessment");
     };
