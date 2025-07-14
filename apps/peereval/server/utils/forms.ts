@@ -1,8 +1,8 @@
-import { FeedbackForm, InquiryType, RubricRow } from "@prisma/client";
+import { InquiryType, RubricRow } from "@prisma/client";
 
 export const exportForm = (f: any): any => {
     // There's gotta be a better way to do this...
-    const inqs = f.inquiries as any;
+    const inqs = f.inquiries;
 
     for (let i = 0; i < inqs.length; i++) {
         if (inqs[i].type == InquiryType.RATING) {
