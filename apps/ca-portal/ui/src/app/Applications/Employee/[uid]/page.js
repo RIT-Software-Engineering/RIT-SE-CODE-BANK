@@ -14,7 +14,6 @@ export default function EmployeeApplicationsPage() {
   const pageTitle = 'My Applications';
   const pageSubtitle = "Track the status of all positions you've applied for.";
 
-  // might need to change
   const handleWithdrawSuccess = (withdrawnApplicationId) => {
     // Filter out the withdrawn application from the state
     setApplications(currentApplications =>
