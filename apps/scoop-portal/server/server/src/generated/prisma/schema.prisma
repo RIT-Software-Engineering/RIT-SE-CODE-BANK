@@ -21,6 +21,20 @@ model Application {
   createdAt               DateTime @default(now())
 }
 
+model Journal_Entry {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  contactee String
+  notes     String?  @db.VarChar(500)
+}
+
+model Project {
+  id           Int    @id
+  title        String
+  display_name String
+  description  String @db.VarChar(255)
+}
+
 generator client {
   provider = "prisma-client-js"
   output   = "../../src/generated/prisma"
@@ -39,7 +53,7 @@ model fruit {
   rating String @default("0")
 }
 
-model users {
+model User {
   id             String @id @default(uuid())
   fname          String
   lname          String
