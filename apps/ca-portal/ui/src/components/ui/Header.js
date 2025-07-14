@@ -23,8 +23,18 @@ const HEADER_LINKS = [
   },
   {
     text: "Applications",
-    href: "/Applications",
+    href: "/Applications/Candidate/[uid]",
+    roles: [ROLES.CANDIDATE],
+  },
+  {
+    text: "Applications",
+    href: "/Applications/Employer/[uid]",
     roles: [ROLES.EMPLOYER],
+  },
+  {
+    text: "Applications",
+    href: "/Applications/Employee/[uid]",
+    roles: [ROLES.EMPLOYEE],
   },
   {
     text: "Profile",
@@ -34,7 +44,7 @@ const HEADER_LINKS = [
 ];
 
 export default function Header() {
-  const { currentUser, setCurrentUser } = useAuth();
+  const { currentUser } = useAuth();
   const userRole = currentUser ? currentUser.role : null;
 
   const availableLinks = HEADER_LINKS.filter((link) =>
@@ -48,11 +58,17 @@ export default function Header() {
         <h3>Department of Software Engineering, RIT </h3>
       </div>
       <nav className="pb-2 mt-2 text-white text-lg text-right flex-grow space-x-4 pr-10">
-        {availableLinks.map((link) => (
-          <Link key={link.href} href={link.href}>
-            {link.text}
-          </Link>
-        ))}
+         {availableLinks.map((link) => {
+          const finalHref = link.href.includes("[uid]") && currentUser
+              ? link.href.replace("[uid]", currentUser.uid)
+              : link.href;
+
+          return (
+            <Link key={finalHref} href={finalHref}>
+              {link.text}
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );

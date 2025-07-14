@@ -16,9 +16,19 @@ CREATE TABLE `Candidate` (
     `major` TEXT NOT NULL,
     `graduateStatus` ENUM('UNDERGRADUATE', 'GRADUATE') NOT NULL DEFAULT 'UNDERGRADUATE',
     `wasPriorEmployee` BOOLEAN NOT NULL,
-    `resumeURL` TEXT NULL,
 
     PRIMARY KEY (`uid`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Resume` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` TEXT NOT NULL,
+    `candidateUID` INTEGER NOT NULL,
+    `isPrimary` BOOLEAN NOT NULL,
+    `resumeURL` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -54,8 +64,9 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `candidateUID` INTEGER NOT NULL,
     `jobPositionId` VARCHAR(191) NOT NULL,
+    `resumeId` INTEGER NOT NULL,
     `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED', 'PENDING_ACCEPTANCE', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
-    `applicationData` VARCHAR(191) NULL,
+    `applicationData` TEXT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -136,6 +147,9 @@ CREATE TABLE `TimeLog` (
 ALTER TABLE `Candidate` ADD CONSTRAINT `Candidate_uid_fkey` FOREIGN KEY (`uid`) REFERENCES `User`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Resume` ADD CONSTRAINT `Resume_candidateUID_fkey` FOREIGN KEY (`candidateUID`) REFERENCES `Candidate`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Employer` ADD CONSTRAINT `Employer_uid_fkey` FOREIGN KEY (`uid`) REFERENCES `User`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -149,6 +163,9 @@ ALTER TABLE `JobPositionHistory` ADD CONSTRAINT `JobPositionHistory_employeeId_f
 
 -- AddForeignKey
 ALTER TABLE `JobPositionApplicationHistory` ADD CONSTRAINT `JobPositionApplicationHistory_candidateUID_fkey` FOREIGN KEY (`candidateUID`) REFERENCES `Candidate`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `JobPositionApplicationHistory` ADD CONSTRAINT `JobPositionApplicationHistory_resumeId_fkey` FOREIGN KEY (`resumeId`) REFERENCES `Resume`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `JobPositionApplicationHistory` ADD CONSTRAINT `JobPositionApplicationHistory_jobPositionId_fkey` FOREIGN KEY (`jobPositionId`) REFERENCES `JobPosition`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
