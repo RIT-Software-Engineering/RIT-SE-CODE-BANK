@@ -206,6 +206,19 @@ async function main() {
     const assessments = await Promise.all(
         assessmentData.map((a) => prisma.assessment.create({ data: a }))
     );
+
+    // Adds one more super simple form
+    await prisma.feedbackForm.create({
+        data: {
+            name: "Super Simple Form",
+            inquiries: {
+                create: {
+                    type: InquiryType.FREE_RESPONSE,
+                    question: "What'd you think?",
+                },
+            },
+        },
+    });
 }
 
 main()
