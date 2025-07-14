@@ -16,6 +16,56 @@ router.get("/", async (req, res) => {
     res.json(projects);
 });
 
+// Create project
+// /projects
+router.post("/", async (req, res) => {
+    const { name, description, peerEmails } = req.body as {
+        name: string;
+        description: string;
+        peerEmails: string[];
+    };
+    const uid = req.header("x-user-id");
+
+    // First check if the peers exist wth the emails
+    if (peerEmails) {
+        const peers = await prisma.user.findMany({
+            where: {
+                email: {
+                    in: peerEmails,
+                },
+            },
+        });
+
+        if (peers.length != peerEmails.length) {
+            res.status(404).json({
+                message: `One or more users not found: ${peerEmails.filter(
+                    (e) => peers.map((p) => e != p.email)
+                )}`,
+            });
+            return;
+        }
+    }
+
+    const project = await prisma.project.create({
+        data: {
+            name,
+            description,
+            overseer: {
+                connect: {
+                    id: uid,
+                },
+            },
+            peers: {
+                connect: peerEmails.map((e) => ({
+                    email: e,
+                })),
+            },
+        },
+    });
+
+    res.status(201).json(project);
+});
+
 // Get project as peer
 // /projects/asPeer/:userId
 router.get("/asPeer/:userId", async (req, res) => {
@@ -51,8 +101,6 @@ router.get("/asOverseer/:userId", async (req, res) => {
 
     res.json(projects[0].projectsAsOverseer);
 });
-
-export default router;
 
 // Get peers for a project
 // /projects/getPeers/:id
@@ -194,3 +242,5 @@ router.delete("/:id/removePeer/:peerEmail", async (req, res) => {
         message: "Peer removed from project successfully.",
     });
 });
+
+export default router;
