@@ -1,14 +1,13 @@
 "use client";
+import { useAuth } from "@/context/AuthContext";
+import { createProject } from "@/services/project";
 import React, { useState } from "react";
 
-interface Peer {
-    email: string;
-}
-
 export default function CreateProjectPage() {
+    const { currentUser } = useAuth();
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [peers, setPeers] = useState<Peer[]>([]);
+    const [peerEmails, setPeerEmails] = useState<string[]>([]);
     const [peerEmail, setPeerEmail] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
@@ -19,17 +18,17 @@ export default function CreateProjectPage() {
             setError("Invalid email address");
             return;
         }
-        if (peers.some((p) => p.email === peerEmail)) {
+        if (peerEmails.some((p) => p === peerEmail)) {
             setError("Email already added");
             return;
         }
-        setPeers([...peers, { email: peerEmail }]);
+        setPeerEmails([...peerEmails, peerEmail]);
         setPeerEmail("");
         setError(null);
     };
 
     const handleRemovePeer = (email: string) => {
-        setPeers(peers.filter((p) => p.email !== email));
+        setPeerEmails(peerEmails.filter((p) => p !== email));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -42,21 +41,22 @@ export default function CreateProjectPage() {
             return;
         }
 
-        // Replace with your actual API call
         try {
-            // Example payload
-            const payload = {
-                name,
-                description,
-                peers: peers.map((p) => p.email),
-            };
-            // await fetch('/api/projects', { method: 'POST', body: JSON.stringify(payload) });
+            await createProject(
+                {
+                    name,
+                    description,
+                    peerEmails,
+                },
+                currentUser!.id
+            );
+
             setSuccess("Project created successfully!");
             setName("");
             setDescription("");
-            setPeers([]);
+            setPeerEmails([]);
         } catch (err) {
-            setError("Failed to create project.");
+            setError("Failed to create project: " + err);
         }
     };
 
@@ -107,20 +107,18 @@ export default function CreateProjectPage() {
                             Add
                         </button>
                     </div>
-                    {peers.length > 0 && (
+                    {peerEmails.length > 0 && (
                         <ul className="mt-2">
-                            {peers.map((peer, idx) => (
+                            {peerEmails.map((email, idx) => (
                                 <li
-                                    key={peer.email}
+                                    key={email}
                                     className="flex items-center gap-2"
                                 >
-                                    <span>{peer.email}</span>
+                                    <span>{email}</span>
                                     <button
                                         type="button"
                                         className="text-red-500 text-sm"
-                                        onClick={() =>
-                                            handleRemovePeer(peer.email)
-                                        }
+                                        onClick={() => handleRemovePeer(email)}
                                     >
                                         Remove
                                     </button>

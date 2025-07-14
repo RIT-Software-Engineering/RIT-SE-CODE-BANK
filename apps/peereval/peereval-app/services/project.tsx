@@ -4,6 +4,24 @@ import { UserProfile } from "@/types/userProfile";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
 
+export async function createProject(
+    project: {
+        name: string;
+        description: string;
+        peerEmails: string[];
+    },
+    uid: string
+): Promise<Project> {
+    const res = await fetch(`${BASE_URL}/projects/`, {
+        method: "POST",
+        headers: { "x-user-id": uid, "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(project),
+    });
+
+    return handleResponse(res, "Couldn't create project");
+}
+
 export async function getProjectsByPeer(userId: string): Promise<Project[]> {
     const res = await fetch(`${BASE_URL}/projects/asPeer/${userId}`, {
         credentials: "include",
