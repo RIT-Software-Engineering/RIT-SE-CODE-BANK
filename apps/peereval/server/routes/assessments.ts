@@ -86,8 +86,6 @@ router.get("/:id/inquiries", async (req, res) => {
     );
 });
 
-export default router;
-
 // Get project's assessments
 // /assessments/byProject/:id
 router.get("/byProject/:id", async (req, res) => {
@@ -175,3 +173,5 @@ router.post(
         res.status(201).json(inqRess);
     }
 );
+
+export default router;
