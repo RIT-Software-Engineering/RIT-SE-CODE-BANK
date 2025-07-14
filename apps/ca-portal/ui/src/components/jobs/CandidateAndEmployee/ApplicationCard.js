@@ -1,15 +1,43 @@
 'use client';
 
 import { useState } from "react";
+import { deleteApplication } from "@/services/db-apis"; 
 import ViewableApplicationForm from "../ViewableApplicationForm";
+import ConfirmationModal from "../../ui/ConfirmationModal";
 import { formatDate, formatTime, getStatusClasses } from "@/utils/applicationUtils";
 import { CalendarIcon, ClockIcon, LocationIcon } from "@/assets/icons";
 
-export default function CandidateApplicationCard({ currentUser, application }) {
+export default function CandidateApplicationCard({ currentUser, application, refreshUserProfile, onWithdrawSuccess }) {
   const [isViewingApplication, setIsViewingApplication] = useState(false);
+  const [isConfirmingWithdrawal, setIsConfirmingWithdrawal] = useState(false);
+  const [isProcessingWithdrawal, setIsProcessingWithdrawal] = useState(false);
   
   const { jobPosition, jobApplicationStatus } = application;
   const statusClasses = getStatusClasses(jobApplicationStatus);
+
+  // This function will now ONLY open the confirmation modal
+  const handleWithdrawClick = () => {
+    setIsConfirmingWithdrawal(true);
+  };
+
+  // This new function contains the logic to execute the withdrawal
+  const executeWithdrawal = async () => {
+    setIsProcessingWithdrawal(true);
+    try {
+      await deleteApplication(currentUser.uid, application.jobPositionId);
+      await refreshUserProfile();
+      alert("Application successfully withdrawn.");
+      if (onWithdrawSuccess) {
+        onWithdrawSuccess(application.id);
+      }
+    } catch (error) {
+      console.error("Failed to withdraw application:", error);
+      alert(`Error: ${error.message}`);
+    } finally {
+      setIsProcessingWithdrawal(false);
+      setIsConfirmingWithdrawal(false);
+    }
+  };
 
   const CandidateAndEmployeeHeader = () => (
     <div className="flex-1 min-w-0">
@@ -24,8 +52,14 @@ export default function CandidateApplicationCard({ currentUser, application }) {
 
   const CandidateAndEmployeeActions = () => (
     <>
-      {jobApplicationStatus.toLowerCase() === 'applied' && (
-        <button className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700">Withdraw</button>
+      {jobApplicationStatus.toLowerCase() !== 'accepted' && (
+        <button
+          onClick={handleWithdrawClick} // Use the new handler
+          disabled={isProcessingWithdrawal}
+          className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 disabled:bg-gray-400"
+        >
+          Withdraw
+        </button>
       )}
       <button 
         onClick={() => setIsViewingApplication(true)}
@@ -76,14 +110,22 @@ export default function CandidateApplicationCard({ currentUser, application }) {
         </div>
       </div>
 
+      <ConfirmationModal
+        isOpen={isConfirmingWithdrawal}
+        onClose={() => setIsConfirmingWithdrawal(false)}
+        onConfirm={executeWithdrawal}
+        title="Confirm Withdrawal"
+        isConfirming={isProcessingWithdrawal}
+      >
+        Are you sure you want to withdraw your application for <strong>{jobPosition.course.name}</strong>? This action cannot be undone.
+      </ConfirmationModal>
+
       {isViewingApplication && (
         <ViewableApplicationForm
           user={currentUser}
           position={jobPosition}
           application={application}
           onClose={() => setIsViewingApplication(false)}
-          onApplySuccess={() => {}} // No action needed on success when just viewing
-          viewOnly={true}
         />
       )}
     </>

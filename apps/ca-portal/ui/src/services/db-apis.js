@@ -183,7 +183,7 @@ export async function applyForJobPosition(jobPositionApplicationData) {
 }
 
 // api call to apply for a job position with a new resume
-export async function applyForJobPositionWithNewResume(formData) {
+export async function applyForJobPositionWithNewResume(jobPositionApplicationData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error("Backend API URL components are not defined.");
   }
@@ -192,9 +192,39 @@ export async function applyForJobPositionWithNewResume(formData) {
   console.log(`Applying for job position at: ${url}`);
   const response = await fetch(url, {
     method: 'POST',
-    body: formData, 
+    body: jobPositionApplicationData, 
   });
   
+  return handleApiResponse(response);
+}
+
+/**
+ * Deletes a candidate's application for a specific job position.
+ * @param {number} candidateUID - The UID of the candidate withdrawing the application.
+ * @param {string} jobPositionId - The ID of the job position to withdraw from.
+ * @returns {Promise<object>} A promise that resolves to the data of the deleted application record.
+ */
+export async function deleteApplication(candidateUID, jobPositionId) {
+  // 1. Validate the inputs
+  if (!candidateUID || !jobPositionId) {
+    throw new Error("Candidate UID and Job Position ID are required to delete an application.");
+  }
+  
+  // 2. Check for environment variables
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  // 3. Construct the correct URL with path and query parameters
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/${candidateUID}?jobPositionId=${jobPositionId}`;
+  console.log(`Deleting application at: ${url}`); // For debugging
+
+  // 4. Make the DELETE request using fetch
+  const response = await fetch(url, {
+    method: 'DELETE',
+  });
+
+  // 5. Process the response
   return handleApiResponse(response);
 }
 

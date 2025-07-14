@@ -12,16 +12,19 @@ const DisplayField = ({ label, value }) => (
 
 export default function ViewableApplicationForm({ user, position, application, onClose }) {
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
-    console.log(position);
-  // Prepare the display values directly from the submitted application data.
+
+  // The application's form data (like grade) is still stored in applicationData.
   const submittedData = JSON.parse(application.applicationData);
+
+  // The definitive resume URL now comes directly from the included resume object.
+  const submittedResume = application.resume;
+
   const displayValues = {
     name: submittedData.name || user?.name || '',
     email: submittedData.email || user?.email || '',
     major: submittedData.major || '',
     year: submittedData.year || '',
     grade: submittedData.grade || '',
-    resumeURL: submittedData.resumeURL || '',
   };
 
   return (
@@ -40,17 +43,19 @@ export default function ViewableApplicationForm({ user, position, application, o
           <DisplayField label="Major" value={displayValues.major} />
           <DisplayField label="Year" value={displayValues.year} />
           <DisplayField label={`Grade for ${position.courseCode}`} value={displayValues.grade} />
-          {displayValues.resumeURL && (
+          
+          {/* Use the reliable resume URL from the application's relation */}
+          {submittedResume?.resumeURL && (
             <div>
               <label className="block text-sm font-medium text-gray-700">Submitted Resume</label>
               <p className="text-sm text-gray-600 mt-1">
-                <a 
-                  href={`${backendURL}${displayValues.resumeURL}`}
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={`${backendURL}${submittedResume.resumeURL}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-blue-600 hover:underline"
                 >
-                  View Submitted Resume
+                  {submittedResume.name || 'View Submitted Resume'}
                 </a>
               </p>
             </div>

@@ -5,6 +5,7 @@ import Tooltip from '../ui/ToolTip';
 import EditableApplicationForm from '../jobs/EditableApplicationForm';
 import { useState, useMemo } from 'react';
 import { CheckIcon, XIcon, CalendarIcon, ClockIcon, LocationIcon } from '@/assets/icons';
+import { formatDate, formatTime } from '@/utils/applicationUtils';
 import { letterToGradeValue } from '@/constants/gradeConstants';
 
 const Requirement = ({ text, met }) => (
@@ -89,14 +90,6 @@ export default function PositionsCard({ position, index }) {
     );
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
   return (
     <>
       <div key={index} className='bg-white p-6 mb-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 w-full'>
@@ -124,8 +117,7 @@ export default function PositionsCard({ position, index }) {
                 {position.jobSchedules.map((slot, i) => (
                   <span key={i} className='block'>
                     <span className='font-semibold'>{slot.dayOfWeek}:</span>{' '}
-                    {new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
-                    {new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
                   </span>
                 ))}
               </div>

@@ -6,13 +6,21 @@ import ApplicationCard from '@/components/jobs/CandidateAndEmployee/ApplicationC
 import { getCandidateApplications } from '@/services/db-apis';
 
 export default function CandidateApplicationsPage() {
-  const { currentUser } = useAuth();
+  const { currentUser, refreshUserProfile } = useAuth();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const pageTitle = "My Applications";
   const pageSubtitle = "Track the status of all positions you've applied for.";
+
+  // might need to change
+  const handleWithdrawSuccess = (withdrawnApplicationId) => {
+    // Filter out the withdrawn application from the state
+    setApplications(currentApplications =>
+      currentApplications.filter(app => app.id !== withdrawnApplicationId)
+    );
+  };
 
   useEffect(() => {
     // Fetch data specifically for the logged-in candidate
@@ -58,6 +66,8 @@ export default function CandidateApplicationsPage() {
             key={app.id}
             currentUser={currentUser}
             application={app}
+            onWithdrawSuccess={handleWithdrawSuccess}
+            refreshUserProfile={refreshUserProfile}
           />
         ))}
       </div>
