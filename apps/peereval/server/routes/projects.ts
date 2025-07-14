@@ -26,7 +26,7 @@ router.post("/", async (req, res) => {
     };
     const uid = req.header("x-user-id");
 
-    // First check if the peers exist wth the emails
+    // First check if the peers exist wth the emails if provided
     if (peerEmails) {
         const peers = await prisma.user.findMany({
             where: {
