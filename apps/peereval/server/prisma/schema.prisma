@@ -32,7 +32,7 @@ model User {
 model Project {
   id          String @id @default(uuid()) @db.Char(36)
   name        String
-  description String
+  description String @db.LongText
   overseer    User   @relation("overseer", fields: [overseerId], references: [id])
   overseerId  String @db.Char(36)
   peers       User[] @relation("peers")
@@ -48,7 +48,7 @@ model Assessment {
   id             String       @id @default(uuid()) @db.Char(36)
   project        Project      @relation(fields: [projectId], references: [id])
   name           String
-  description    String
+  description    String       @db.LongText
   feedbackForm   FeedbackForm @relation(fields: [feedbackFormId], references: [id])
   feedbackFormId String       @db.Char(36)
   startDate      DateTime

@@ -62,34 +62,46 @@ const Dashboard: React.FC = () => {
                     <h2 className="text-2xl font-semibold mb-4">
                         Projects as Overseer
                     </h2>
-                    {projectsAsOverseer.length === 0 ? (
-                        <p className="text-gray-500">
-                            You are not an overseer in any projects.
-                        </p>
-                    ) : (
-                        <div className="flex flex-wrap gap-6">
-                            {projectsAsOverseer.map((project) => (
-                                <Link
-                                    href={`/projects/${project.id}/asOverseer`}
-                                    key={project.id}
-                                    className="w-full sm:w-64"
+                    <div className="flex flex-wrap gap-6">
+                        {projectsAsOverseer.map((project) => (
+                            <Link
+                                href={`/projects/${project.id}/asOverseer`}
+                                key={project.id}
+                                className="w-full sm:w-64"
+                            >
+                                <div
+                                    className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    tabIndex={0}
+                                    role="button"
                                 >
-                                    <div
-                                        className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        tabIndex={0}
-                                        role="button"
-                                    >
-                                        <h3 className="text-xl font-semibold mb-2">
-                                            {project.name}
-                                        </h3>
-                                        <p className="text-gray-600 text-sm">
-                                            {project.description}
-                                        </p>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
+                                    <h3 className="text-xl font-semibold mb-2">
+                                        {project.name}
+                                    </h3>
+                                    <p className="text-gray-600 text-sm">
+                                        {project.description}
+                                    </p>
+                                </div>
+                            </Link>
+                        ))}
+                        <Link
+                            href="/projects/create"
+                            className="w-full sm:w-64"
+                        >
+                            <div
+                                className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col items-center justify-center min-h-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                tabIndex={0}
+                                role="button"
+                                aria-label="Create new project"
+                            >
+                                <span className="text-5xl text-gray-400 mb-2">
+                                    +
+                                </span>
+                                <span className="text-gray-600 font-medium">
+                                    Create New Project
+                                </span>
+                            </div>
+                        </Link>
+                    </div>
                 </section>
             </div>
         </div>
