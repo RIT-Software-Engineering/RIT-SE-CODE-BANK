@@ -4,6 +4,7 @@ import cors from "cors";
 import userRoutes from "./routes/users";
 import projectRoutes from "./routes/projects";
 import assessmentRoutes from "./routes/assessments";
+import formRoutes from "./routes/forms";
 
 const app = express();
 const PORT = process.env.PORT || 3006;
@@ -11,10 +12,10 @@ const PORT = process.env.PORT || 3006;
 app.use(express.json());
 // Allow requests from frontend
 app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true, // if you send cookies or auth headers
-  })
+    cors({
+        origin: "http://localhost:3000",
+        credentials: true, // if you send cookies or auth headers
+    })
 );
 
 // -------------------------------------------------------
@@ -23,7 +24,8 @@ app.use(
 app.use("/users", userRoutes);
 app.use("/projects", projectRoutes);
 app.use("/assessments", assessmentRoutes);
+app.use("/forms", formRoutes);
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });

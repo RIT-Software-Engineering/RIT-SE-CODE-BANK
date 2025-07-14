@@ -103,6 +103,7 @@ async function main() {
     // Then Feedback Form
     const feedbackForm = await prisma.feedbackForm.create({
         data: {
+            name: "Basic Form",
             inquiries: {
                 connect: [
                     { id: inquiries[0].id },

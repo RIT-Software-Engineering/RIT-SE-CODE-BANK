@@ -10,6 +10,7 @@ export type Assessment = {
 
 export type FeedbackForm = {
     id: string;
+    name: string;
     inquiries: Inquiry[];
 };
 
