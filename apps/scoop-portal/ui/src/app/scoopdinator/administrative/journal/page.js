@@ -84,88 +84,91 @@ export default function Journal() {
                     Journal
                 </Typography>
                 <>
-                    {journalEntries.map((entry) => (
-                        <Container
-                            key={entry.id}
-                            sx={{
-                                fontFamily:
-                                    '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
-                                backgroundColor: "#212121",
-                                paddingBlock: "1em",
-                            }}
-                        >
-                            <Box
+                    {journalEntries
+                        .slice()
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))
+                        .map((entry) => (
+                            <Container
+                                key={entry.id}
                                 sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
+                                    fontFamily:
+                                        '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+                                    backgroundColor: "#212121",
+                                    paddingBlock: "1em",
                                 }}
                             >
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                    }}
+                                >
+                                    <Typography
+                                        variant="h2"
+                                        sx={{
+                                            fontSize: "1.5rem",
+                                            lineHeight: "2rem",
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        {entry.date
+                                            ? new Date(
+                                                  entry.date
+                                              ).toLocaleDateString("en-US", {
+                                                  year: "numeric",
+                                                  month: "long",
+                                                  day: "numeric",
+                                                  hour: "numeric",
+                                                  minute: "numeric",
+                                              })
+                                            : ""}
+                                    </Typography>
+                                    <Button
+                                        variant="contained"
+                                        sx={{
+                                            backgroundColor: "#F76902",
+                                            "&:hover": {
+                                                backgroundColor: "#000000",
+                                            },
+                                            borderRadius: "0px",
+                                        }}
+                                        onClick={() => handleEditClick(entry)}
+                                    >
+                                        <EditNoteIcon />
+                                        Edit Notes
+                                    </Button>
+                                </Box>
                                 <Typography
-                                    variant="h2"
+                                    variant="h3"
                                     sx={{
-                                        fontSize: "1.5rem",
-                                        lineHeight: "2rem",
-                                        fontWeight: 500,
+                                        fontSize: "1.25rem",
+                                        lineHeight: "1.75rem",
+                                        fontWeight: 300,
                                     }}
                                 >
-                                    {entry.date
-                                        ? new Date(
-                                              entry.date
-                                          ).toLocaleDateString("en-US", {
-                                              year: "numeric",
-                                              month: "long",
-                                              day: "numeric",
-                                              hour: "numeric",
-                                              minute: "numeric",
-                                          })
-                                        : ""}
+                                    {entry.contactee}
                                 </Typography>
-                                <Button
-                                    variant="contained"
+                                <Typography variant="body1">Notes:</Typography>
+                                <Box
                                     sx={{
-                                        backgroundColor: "#F76902",
-                                        "&:hover": {
-                                            backgroundColor: "#000000",
-                                        },
-                                        borderRadius: "0px",
-                                    }}
-                                    onClick={() => handleEditClick(entry)}
-                                >
-                                    <EditNoteIcon />
-                                    Edit Notes
-                                </Button>
-                            </Box>
-                            <Typography
-                                variant="h3"
-                                sx={{
-                                    fontSize: "1.25rem",
-                                    lineHeight: "1.75rem",
-                                    fontWeight: 300,
-                                }}
-                            >
-                                {entry.contactee}
-                            </Typography>
-                            <Typography variant="body1">Notes:</Typography>
-                            <Box
-                                sx={{
-                                    border: "1px solid black",
-                                    padding: "1em",
-                                    marginTop: "1em",
-                                }}
-                            >
-                                <pre
-                                    style={{
-                                        margin: 0,
-                                        fontFamily: "inherit",
-                                        background: "none",
-                                        border: "none",
+                                        border: "1px solid black",
+                                        padding: "1em",
+                                        marginTop: "1em",
                                     }}
                                 >
-                                    {entry.notes}
-                                </pre>
-                            </Box>
-                        </Container>
-                    ))}
+                                    <pre
+                                        style={{
+                                            margin: 0,
+                                            fontFamily: "inherit",
+                                            background: "none",
+                                            border: "none",
+                                        }}
+                                    >
+                                        {entry.notes}
+                                    </pre>
+                                </Box>
+                            </Container>
+                        ))}
                 </>
             </Container>
             <Dialog
