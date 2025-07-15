@@ -12,7 +12,7 @@ CREATE TABLE `User` (
 CREATE TABLE `Project` (
     `id` CHAR(36) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(191) NOT NULL,
+    `description` LONGTEXT NOT NULL,
     `overseerId` CHAR(36) NOT NULL,
 
     PRIMARY KEY (`id`)
@@ -22,7 +22,7 @@ CREATE TABLE `Project` (
 CREATE TABLE `Assessment` (
     `id` CHAR(36) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(191) NOT NULL,
+    `description` LONGTEXT NOT NULL,
     `feedbackFormId` CHAR(36) NOT NULL,
     `startDate` DATETIME(3) NOT NULL,
     `dueDate` DATETIME(3) NOT NULL,
@@ -56,6 +56,7 @@ CREATE TABLE `InquiryResponse` (
 -- CreateTable
 CREATE TABLE `FeedbackForm` (
     `id` CHAR(36) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

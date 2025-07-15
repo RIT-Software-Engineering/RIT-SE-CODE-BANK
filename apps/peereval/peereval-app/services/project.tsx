@@ -1,6 +1,7 @@
 import { Project } from "@/types/project";
 import { handleResponse } from "./utils";
 import { UserProfile } from "@/types/userProfile";
+import { Assessment } from "@/types/assessment";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
 
@@ -84,4 +85,31 @@ export async function removeProjectPeerByEmail(
     });
 
     return handleResponse(res, "Remove peer error");
+}
+
+export async function assignAssessmentToProject(
+    projectId: string,
+    assessment: {
+        formId: string;
+        name: string;
+        description: string;
+        startDate: string;
+        dueDate: string;
+    }
+): Promise<Assessment> {
+    const res = await fetch(
+        `${BASE_URL}/projects/${projectId}/assignAssessment`,
+        {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                ...assessment,
+                startDate: new Date(assessment.startDate),
+                dueDate: new Date(assessment.dueDate),
+            }),
+        }
+    );
+
+    return handleResponse(res, "Failed to assign assessment");
 }
