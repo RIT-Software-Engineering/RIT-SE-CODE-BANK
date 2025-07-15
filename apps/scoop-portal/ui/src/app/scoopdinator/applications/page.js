@@ -23,11 +23,13 @@ import {
 
 import Header from "@components/Header";
 import { Block } from "@mui/icons-material";
+import { ST } from "next/dist/shared/lib/utils";
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
 export default function SupervisorApplicationsPage() {
     const [applications, setApplications] = useState([]);
+    const [status, setStatus] = useState("");
     const [selectedApp, setSelectedApp] = useState(null);
     const [filter, setFilter] = useState("all");
     const [notification, setNotification] = useState({
@@ -43,7 +45,17 @@ export default function SupervisorApplicationsPage() {
                     `${process.env.NEXT_PUBLIC_API_URL}/api/application`
                 );
                 const data = await res.json();
-                setApplications(data);
+                const processed = data.map((app) => ({
+                    ...app,
+                    status:
+                        app.accepted === true
+                            ? STATUSES[1] // "accepted"
+                            : app.accepted === false
+                              ? STATUSES[2] // "rejected"
+                              : STATUSES[3], // "unprocessed"
+                }));
+
+                setApplications(processed);
             } catch (err) {
                 console.error("Failed to fetch applications:", err);
             }
@@ -75,7 +87,7 @@ export default function SupervisorApplicationsPage() {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    accepted: newStatus === "accepted",
+                    accepted: newStatus === STATUSES[1], // "accepted"
                 }),
             }
         );
@@ -104,12 +116,13 @@ export default function SupervisorApplicationsPage() {
                     ? { ...prev, accepted: status === "accepted", status }
                     : prev
             );
-            console.log(selectedApp.firstName, "has been", status);
+            // console.log(selectedApp.firstName, "has been", status);
+            setStatus(status);
 
             setNotification({
                 open: true,
                 message: `Application for ${selectedApp.firstName} has been ${status}.`,
-                severity: status === "accepted" ? "success" : "error",
+                severity: status === STATUSES[1] ? "success" : "error",
             });
         } catch (err) {
             setNotification({
@@ -118,6 +131,7 @@ export default function SupervisorApplicationsPage() {
                 severity: "error",
             });
         }
+        console.log("app status", selectedApp.status);
     };
 
     const handleNotificationClose = (event, reason) => {
@@ -240,33 +254,40 @@ export default function SupervisorApplicationsPage() {
                                 {selectedApp.lastName}
                             </DialogTitle>
                             <DialogContent dividers>
-                                <Typography variant="body2" >
-                                    Submitted at: {" "}
-                                    {selectedApp.createdAt} 
+                                <Typography variant="body2">
+                                    Submitted at: {selectedApp.createdAt}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Email:</strong>{" "}
-                                    <br />
+                                    <strong>Email:</strong> <br />
                                     {selectedApp.ritEmail}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Number of Co-op blocks completed?</strong>
+                                    <strong>
+                                        Number of Co-op blocks completed?
+                                    </strong>
                                     <br />
                                     {selectedApp.coopsCompleted}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Which semester did you start at RIT?</strong>{" "}
+                                    <strong>
+                                        Which semester did you start at RIT?
+                                    </strong>{" "}
                                     <br />
                                     {selectedApp.startSemester}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Which courses have you already taken or are about to
-                            complete this term?</strong>{" "}
+                                    <strong>
+                                        Which courses have you already taken or
+                                        are about to complete this term?
+                                    </strong>{" "}
                                     <br />
                                     {selectedApp.coursesTaken}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>When did you start searching for this co-op?</strong>{" "}
+                                    <strong>
+                                        When did you start searching for this
+                                        co-op?
+                                    </strong>{" "}
                                     <br />
                                     {selectedApp.coopSearchStartDate}
                                 </Typography>
@@ -276,88 +297,112 @@ export default function SupervisorApplicationsPage() {
                                     {selectedApp.startSemester}
                                 </Typography> */}
                                 <Typography margin={2}>
-                                    <strong>What methods/platforms have you used in order to try
-                            and get this co-op? Name as many as you can recall
-                            that you would be able to provide evidence if needed
-                            (e.g. email/RIT Career Connect/Indeed etc.)</strong>{" "}
+                                    <strong>
+                                        What methods/platforms have you used in
+                                        order to try and get this co-op? Name as
+                                        many as you can recall that you would be
+                                        able to provide evidence if needed (e.g.
+                                        email/RIT Career Connect/Indeed etc.)
+                                    </strong>{" "}
                                     <br />
                                     {selectedApp.coopSearchPlatforms}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Do you have any pending/open employer replies that
-                            you are waiting to hear back from at this time?</strong>{" "}
+                                    <strong>
+                                        Do you have any pending/open employer
+                                        replies that you are waiting to hear
+                                        back from at this time?
+                                    </strong>{" "}
                                     <br />
                                     {String(selectedApp.pendingOffers)}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>If Yes, and these as a result of an interview, name
-                            each employer and your last date of contact for
-                            each. If possible provide Company/position and
-                            location. (e.g. 1.- Microsoft/Intern Seattle, WA
-                            April 2nd 2025, 2.- Paychex/SE co-op Webster,
-                            NY)</strong>{" "}
+                                    <strong>
+                                        If Yes, and these as a result of an
+                                        interview, name each employer and your
+                                        last date of contact for each. If
+                                        possible provide Company/position and
+                                        location. (e.g. 1.- Microsoft/Intern
+                                        Seattle, WA April 2nd 2025, 2.-
+                                        Paychex/SE co-op Webster, NY)
+                                    </strong>{" "}
                                     <br />
                                     {selectedApp.pendingOffersDetails}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Have you received formal rejection
-                            letters/responses?</strong>{" "}
+                                    <strong>
+                                        Have you received formal rejection
+                                        letters/responses?
+                                    </strong>{" "}
                                     <br />
                                     {selectedApp.rejectionLetters}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>If Yes, approximately how many? Name as many as you
-                            can recall that you would be able to provide
-                            evidence if needed. Companies/Employers and
-                            approximate date. (e.g. 1.- Google, January 16th
-                            2025, 2.- Meta, February 18th 2025)</strong>{" "}
+                                    <strong>
+                                        If Yes, approximately how many? Name as
+                                        many as you can recall that you would be
+                                        able to provide evidence if needed.
+                                        Companies/Employers and approximate
+                                        date. (e.g. 1.- Google, January 16th
+                                        2025, 2.- Meta, February 18th 2025)
+                                    </strong>{" "}
                                     <br />
                                     {selectedApp.rejectionLettersDetails}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>SE does not currently have a co-op option for this
-                            summer. However, IF an approved unpaid opportunity
-                            became available, would you be interested in
-                            pursuing it?</strong>{" "}
+                                    <strong>
+                                        SE does not currently have a co-op
+                                        option for this summer. However, IF an
+                                        approved unpaid opportunity became
+                                        available, would you be interested in
+                                        pursuing it?
+                                    </strong>{" "}
                                     <br />
                                     {String(selectedApp.SEcoopInterest)}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>If an option were to become available, would you be
-                            able to participate in-person at RIT or are your
-                            circumstances such that you would be unable to for
-                            the duration of the co-op?</strong>{" "}
+                                    <strong>
+                                        If an option were to become available,
+                                        would you be able to participate
+                                        in-person at RIT or are your
+                                        circumstances such that you would be
+                                        unable to for the duration of the co-op?
+                                    </strong>{" "}
                                     <br />
                                     {String(selectedApp.SEcoopAvailability)}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>If Unable, please confirm that you can be remote by
-                            stating your capabilities (e.g.
-                            laptop/desktop/webcam/mic specifications and
-                            provider/connection type)</strong>{" "}
+                                    <strong>
+                                        If Unable, please confirm that you can
+                                        be remote by stating your capabilities
+                                        (e.g. laptop/desktop/webcam/mic
+                                        specifications and provider/connection
+                                        type)
+                                    </strong>{" "}
                                     <br />
                                     {selectedApp.remoteAbility}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Is there anything else you'd like to share with us
-                            about your search efforts or about your summer
-                            availability?</strong>{" "}
+                                    <strong>
+                                        Is there anything else you'd like to
+                                        share with us about your search efforts
+                                        or about your summer availability?
+                                    </strong>{" "}
                                     <br />
                                     {selectedApp.additionalComments}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>resumeFile:</strong>{" "}
-                                    <br />
+                                    <strong>resumeFile:</strong> <br />
                                     {selectedApp.resumeFile}
                                 </Typography>
-                                
 
                                 <Box mt={3}>
                                     <Typography
                                         variant="subtitle2"
                                         color="text.secondary"
                                     >
-                                        Current Status: {selectedApp.accepted}
+                                        Current Status:{" "}
+                                        {String(selectedApp.status)}
                                     </Typography>
                                     <Typography
                                         variant="h6"
@@ -374,8 +419,8 @@ export default function SupervisorApplicationsPage() {
                             <DialogActions sx={{ px: 3, py: 2 }}>
                                 <Button
                                     variant="contained"
-                                    onClick={() =>
-                                        handleStatusUpdate("accepted")
+                                    onClick={
+                                        () => handleStatusUpdate(STATUSES[1]) // "accepted"
                                     }
                                     sx={{
                                         bgcolor: "#84BD00",
@@ -386,8 +431,8 @@ export default function SupervisorApplicationsPage() {
                                 </Button>
                                 <Button
                                     variant="contained"
-                                    onClick={() =>
-                                        handleStatusUpdate("rejected")
+                                    onClick={
+                                        () => handleStatusUpdate(STATUSES[2]) // "rejected"
                                     }
                                     sx={{
                                         bgcolor: "#DA291C",
