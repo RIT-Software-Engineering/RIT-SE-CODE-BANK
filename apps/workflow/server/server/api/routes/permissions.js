@@ -43,7 +43,9 @@ router.get('/', async (req, res) => {
 
 // POST /permissions
 router.post('/', async (req, res) => {
-  const { actingUserId, newUserId, actionId, permissionType} = req.body;
+  //acting user is the person making the request
+  //newUser is the person that you are makingthe permission for
+  const { actingUserId, newUserId, actionId, permissionType} = req.body; 
   if (!await authorizeAccessLevel(actingUserId, actionId, 'creator')) {
     return res.status(403).json({ message: 'Forbidden' });
   }
@@ -89,8 +91,13 @@ router.put('/:id', async (req, res) => {
 // DELETE /permissions/:id
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
-  const { userId, actionId } = req.body;
-
+  const { userId } = req.body;
+  const actionId = (await prisma.permissions.findUnique({
+    where: { id: id },
+    select: { action_id: true }
+  })).action_id;
+  console.log('Action ID:', actionId);
+  console.log(id)
   if (!await authorizeAccessLevel(userId, actionId, 'creator')) {
     return res.status(403).json({ message: 'Forbidden' });
   }
