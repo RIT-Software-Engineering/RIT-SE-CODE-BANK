@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
 // POST /permissions
 router.post('/', async (req, res) => {
   //acting user is the person making the request
-  //newUser is the person that you are makingthe permission for
+  //newUser is the person that you are making the permission for
   const { actingUserId, newUserId, actionId, permissionType} = req.body; 
   if (!await authorizeAccessLevel(actingUserId, actionId, 'creator')) {
     return res.status(403).json({ message: 'Forbidden' });
@@ -96,8 +96,7 @@ router.delete('/:id', async (req, res) => {
     where: { id: id },
     select: { action_id: true }
   })).action_id;
-  console.log('Action ID:', actionId);
-  console.log(id)
+
   if (!await authorizeAccessLevel(userId, actionId, 'creator')) {
     return res.status(403).json({ message: 'Forbidden' });
   }
