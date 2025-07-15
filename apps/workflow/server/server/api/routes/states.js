@@ -4,8 +4,6 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { getActionChain } = require("../helpers/actions.js");
 
-// Note: These endpoints are untested and incomplete (we will need to fix these up later).
-
 // GET /states/:id
 router.get('/workflow/:id', async (req, res) => {
   const { id } = req.params;
@@ -13,7 +11,11 @@ router.get('/workflow/:id', async (req, res) => {
   const state = await prisma.workflowStates.findUnique({
     where: { id: id },
     include: {
-      action_states: true
+      action_states: {
+        orderBy: {
+          index: 'asc'
+        }
+      }
     }
   });
 
@@ -22,20 +24,22 @@ router.get('/workflow/:id', async (req, res) => {
 
 // GET /states/workflow
 router.get('/workflow', async (req, res) => {
-  const { id, userId, workflowId } = req.query;
+  const { userId, workflowId } = req.query;
 
   const where = {};
-  if (id) where.id = id;
   if (userId) where.user_id = userId;
   if (workflowId) where.workflow_id = workflowId;
 
   const states = await prisma.workflowStates.findMany({
     where: where,
     include: {
-      action_states: true
+      action_states: {
+        orderBy: {
+          index: 'asc'
+        }
+      }
     }
   });
-
 
   res.json(states);
 });
@@ -43,7 +47,6 @@ router.get('/workflow', async (req, res) => {
 // POST /states/workflow
 router.post('/workflow', async (req, res) => {
   const { userId, workflowId } = req.body;
-
 
   let state;
 
@@ -72,38 +75,73 @@ router.post('/workflow', async (req, res) => {
     });
 
     const actions = await getActionChain(workflow.root_action.id);
-    for (const action of actions) {
+    for (let i = 0; i < actions.length; i++) {
       await prisma.actionStates.create({
         data: {
           state_type: 'not_started',
           workflow_state: { connect: { id: state.id } },
-          action: { connect: { id: action.id } }
+          action: { connect: { id: actions[i].id } },
+          index: i
         }
       });
     }
-
   });
 
   res.json(state)
 });
 
-// TODO: Figure out this implementation
-// PUT /states/workflow/:id
-// router.put('workflow/:id', async (req, res) => {
-//   const { workflowId, positionIndex } = req.body;
-//   const { id } = req.params;
+/**
+ * PUT /states/workflow/:id
+ * 
+ * The primary function of this is updating the action_states based on changes to actions within a workflow.
+ */
+router.put('workflow/:id', async (req, res) => {
+  const { id } = req.params;
 
-// remove action states that are no longer in the workflow
-// reorder action states if the order has changed
-// add new action states if the workflow has changed
+  await prisma.$transaction(async () => {
+    // Get the workflowState by id to get the workflow and actionStates
+    const workflowState = await prisma.workflowStates.findUnique({
+      where: { id: id },
+      include: {
+        workflow: true,
+        action_states: true,
+      }
+    });
 
-//   const updated = await prisma.state.update({
-//     where: { id: id },
-//     data: { workflowId, positionIndex }
-//   });
+    // Get all of the actions from the workflow, in order.
+    const actions = await getActionChain(workflowState.workflow.root_action_id);
 
-//   res.json(updated);
-// });
+    // Delete actionStates for actions that have been removed from the workflow
+    for (const actionState in workflowState.action_states) {
+      if (!actions.includes((action) => { action.id === actionState.action_id })) {
+        await prisma.actionStates.delete({
+          where: { id: actionState.id }
+        });
+      }
+    }
+
+    // Upsert actions that are still in or have been added to the workflow
+    for (let i = 0; i < actions.length; i++) {
+      await prisma.actionStates.upsert({
+        where: {
+          workflow_state_id: id,
+          action_id: actions[i].id
+        },
+        create: {
+          workflow_state_id: id,
+          action_id: actions[i].id,
+          state_type: 'not_started',
+          index: i
+        },
+        update: {
+          index: i
+        }
+      });
+    }
+  });
+
+  res.json(updated);
+});
 
 // DELETE /states/workflow/:id
 router.delete('/workflow/:id', async (req, res) => {
@@ -112,6 +150,43 @@ router.delete('/workflow/:id', async (req, res) => {
   await prisma.workflowStates.delete({ where: { id: id } });
 
   res.json({ message: 'Deleted' });
+});
+
+// GET /states/action/:id
+router.get('/action/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const state = await prisma.workflowStates.findUnique({
+    where: { id: id },
+    include: {
+      action: true
+    }
+  });
+
+  res.json(state);
+})
+
+// GET /states/action
+router.get('/action', async (req, res) => {
+  const { userId, workflowStateId, actionId, stateType } = req.query;
+
+  const where = {};
+  if (userId) where.user_id = userId;
+  if (workflowStateId) where.workflow_state_id = workflowStateId;
+  if (actionId) where.action_id = actionId;
+  if (stateType) where.state_type = stateType;
+
+  const states = await prisma.actionStates.findMany({
+    where: where,
+    include: {
+      action: true
+    },
+    orderBy: {
+      index: 'asc'
+    }
+  });
+
+  res.json(states);
 });
 
 // PUT /states/action/:id
@@ -130,6 +205,50 @@ router.put('/action/:id', async (req, res) => {
   res.json({ message: 'Updated' });
 })
 
-// TODO: Add endpoints for /state/action to have read, create, and delete if necessary
+// TODO: Add endpoints for /state/action to delete if necessary
+
+router.get('/workflow/findStep', async (req, res) => {
+  const { userId, workflowStateId } = req.query;
+
+  const where = {};
+  if (userId) where.user_id = userId;
+  if (workflowStateId) where.workflow_state_id = workflowStateId;
+
+  // TODO: ActionStates aren't ordered, and aren't a linked list like Actions, so how do we know which one is first. (right now it's randomized...)
+  const states = await prisma.actionStates.findFirst({
+    where: {
+      ...where,
+      state_type: 'not_started',
+    },
+    include: {
+      action: true
+    },
+    orderBy: {
+      index: 'asc'
+    }
+  });
+
+  res.json(states);
+})
+
+router.post('/handleSubmit', async (req, res) => {
+  const { actionStateId } = req.body;
+
+  const validated = true; // TODO: Check to make sure the data is valid and has been transferred back to the client app.
+
+  // If the data was transferred and validated properly, mark the action as complete.
+  if (validated) {
+    await prisma.actionStates.update({
+      where: { id: actionStateId },
+      data: {
+        state_type: "completed"
+      }
+    });
+
+    res.status(200).json({ message: "Completed" });
+  }
+
+  res.status(500).json({ message: "Something failed" }); // TODO: Provided a better error message.
+})
 
 module.exports = router;
