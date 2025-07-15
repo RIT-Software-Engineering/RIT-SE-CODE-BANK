@@ -254,67 +254,93 @@ export default function SupervisorApplicationsPage() {
                                     {selectedApp.coopsCompleted}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Semester Started:</strong>{" "}
+                                    <strong>Which semester did you start at RIT?</strong>{" "}
                                     <br />
                                     {selectedApp.startSemester}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Courses Taken:</strong>{" "}
+                                    <strong>Which courses have you already taken or are about to
+                            complete this term?</strong>{" "}
                                     <br />
                                     {selectedApp.coursesTaken}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>Coop Search Started:</strong>{" "}
+                                    <strong>When did you start searching for this co-op?</strong>{" "}
                                     <br />
                                     {selectedApp.coopSearchStartDate}
                                 </Typography>
-                                <Typography margin={2}>
+                                {/* <Typography margin={2}>
                                     <strong>Semester Started:</strong>{" "}
                                     <br />
                                     {selectedApp.startSemester}
-                                </Typography>
+                                </Typography> */}
                                 <Typography margin={2}>
-                                    <strong>coopSearchPlatforms:</strong>{" "}
+                                    <strong>What methods/platforms have you used in order to try
+                            and get this co-op? Name as many as you can recall
+                            that you would be able to provide evidence if needed
+                            (e.g. email/RIT Career Connect/Indeed etc.)</strong>{" "}
                                     <br />
                                     {selectedApp.coopSearchPlatforms}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>pendingOffers:</strong>{" "}
+                                    <strong>Do you have any pending/open employer replies that
+                            you are waiting to hear back from at this time?</strong>{" "}
                                     <br />
                                     {String(selectedApp.pendingOffers)}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>pendingOffersDetails:</strong>{" "}
+                                    <strong>If Yes, and these as a result of an interview, name
+                            each employer and your last date of contact for
+                            each. If possible provide Company/position and
+                            location. (e.g. 1.- Microsoft/Intern Seattle, WA
+                            April 2nd 2025, 2.- Paychex/SE co-op Webster,
+                            NY)</strong>{" "}
                                     <br />
                                     {selectedApp.pendingOffersDetails}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>rejectionLetters:</strong>{" "}
+                                    <strong>Have you received formal rejection
+                            letters/responses?</strong>{" "}
                                     <br />
                                     {selectedApp.rejectionLetters}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>rejectionLettersDetails:</strong>{" "}
+                                    <strong>If Yes, approximately how many? Name as many as you
+                            can recall that you would be able to provide
+                            evidence if needed. Companies/Employers and
+                            approximate date. (e.g. 1.- Google, January 16th
+                            2025, 2.- Meta, February 18th 2025)</strong>{" "}
                                     <br />
                                     {selectedApp.rejectionLettersDetails}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>SEcoopInterest:</strong>{" "}
+                                    <strong>SE does not currently have a co-op option for this
+                            summer. However, IF an approved unpaid opportunity
+                            became available, would you be interested in
+                            pursuing it?</strong>{" "}
                                     <br />
                                     {String(selectedApp.SEcoopInterest)}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>SEcoopAvailability:</strong>{" "}
+                                    <strong>If an option were to become available, would you be
+                            able to participate in-person at RIT or are your
+                            circumstances such that you would be unable to for
+                            the duration of the co-op?</strong>{" "}
                                     <br />
                                     {String(selectedApp.SEcoopAvailability)}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>remoteAbility:</strong>{" "}
+                                    <strong>If Unable, please confirm that you can be remote by
+                            stating your capabilities (e.g.
+                            laptop/desktop/webcam/mic specifications and
+                            provider/connection type)</strong>{" "}
                                     <br />
                                     {selectedApp.remoteAbility}
                                 </Typography>
                                 <Typography margin={2}>
-                                    <strong>additionalComments:</strong>{" "}
+                                    <strong>Is there anything else you'd like to share with us
+                            about your search efforts or about your summer
+                            availability?</strong>{" "}
                                     <br />
                                     {selectedApp.additionalComments}
                                 </Typography>
@@ -323,14 +349,7 @@ export default function SupervisorApplicationsPage() {
                                     <br />
                                     {selectedApp.resumeFile}
                                 </Typography>
-                                <Typography margin={2}>
-                                    <strong>accepted:</strong>{" "}
-                                    {String(selectedApp.accepted)}
-                                </Typography>
-
-                                {/* <Typography mt={2} sx={{ fontStyle: "italic" }}>
-                                    {JSON.stringify(selectedApp)}
-                                </Typography> */}
+                                
 
                                 <Box mt={3}>
                                     <Typography
