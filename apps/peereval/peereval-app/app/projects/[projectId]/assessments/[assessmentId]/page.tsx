@@ -368,7 +368,6 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                         >
                             Submit
                         </button>
-
                         <Snackbar
                             open={showSnack}
                             autoHideDuration={6000}
@@ -386,7 +385,16 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                         disabled
                         className="w-full bg-gray-400 text-white py-2 rounded font-semibold"
                     >
-                        Read Only
+                        {new Date() < new Date(assessmentMetadata.startDate)
+                            ? "Starts " +
+                              new Date(
+                                  assessmentMetadata.startDate
+                              ).toLocaleDateString("en-US", {
+                                  weekday: "long",
+                                  day: "numeric",
+                                  month: "long",
+                              })
+                            : "Past Due"}
                     </button>
                 )}
             </form>
