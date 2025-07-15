@@ -68,14 +68,14 @@ export default function SupervisorApplicationsPage() {
 
     const handleClose = () => setSelectedApp(null);
 
-    async function putApplicationStatus() {
+    async function putApplicationStatus(newStatus) {
         const res = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/api/application/${selectedApp.id}`,
             {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    accepted: selectedApp.status === "accepted",
+                    accepted: newStatus === "accepted",
                 }),
             }
         );
@@ -84,11 +84,12 @@ export default function SupervisorApplicationsPage() {
     }
 
     const handleStatusUpdate = (status) => {
+        console.log("Updating status to:", status);
         if (!selectedApp) return;
 
         try {
             //update in database
-            putApplicationStatus();
+            putApplicationStatus(status);
 
             //update local state
             setApplications((prev) =>
