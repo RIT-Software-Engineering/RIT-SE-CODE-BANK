@@ -213,7 +213,6 @@ export default function Journal() {
                     </>
                 )}
             </Dialog>
-
             <Toaster
                 position="top-center"
                 reverseOrder={false}
@@ -233,6 +232,7 @@ export default function Journal() {
                     },
                 }}
             />
+            {/* TODO: Add footer? */}
         </>
     );
 }
