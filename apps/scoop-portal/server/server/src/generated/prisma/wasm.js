@@ -20,12 +20,12 @@ exports.Prisma = Prisma
 exports.$Enums = {}
 
 /**
- * Prisma Client JS version: 6.11.0
- * Query Engine version: 9c30299f5a0ea26a96790e13f796dc6094db3173
+ * Prisma Client JS version: 6.11.1
+ * Query Engine version: f40f79ec31188888a2e33acda0ecc8fd10a853a9
  */
 Prisma.prismaVersion = {
-  client: "6.11.0",
-  engine: "9c30299f5a0ea26a96790e13f796dc6094db3173"
+  client: "6.11.1",
+  engine: "f40f79ec31188888a2e33acda0ecc8fd10a853a9"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -143,6 +143,20 @@ exports.Prisma.ApplicationScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.Journal_EntryScalarFieldEnum = {
+  id: 'id',
+  date: 'date',
+  contactee: 'contactee',
+  notes: 'notes'
+};
+
+exports.Prisma.ProjectScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  display_name: 'display_name',
+  description: 'description'
+};
+
 exports.Prisma.FruitScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -151,7 +165,7 @@ exports.Prisma.FruitScalarFieldEnum = {
   rating: 'rating'
 };
 
-exports.Prisma.UsersScalarFieldEnum = {
+exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   fname: 'fname',
   lname: 'lname',
@@ -189,6 +203,17 @@ exports.Prisma.ApplicationOrderByRelevanceFieldEnum = {
   resumeFile: 'resumeFile'
 };
 
+exports.Prisma.Journal_EntryOrderByRelevanceFieldEnum = {
+  contactee: 'contactee',
+  notes: 'notes'
+};
+
+exports.Prisma.ProjectOrderByRelevanceFieldEnum = {
+  title: 'title',
+  display_name: 'display_name',
+  description: 'description'
+};
+
 exports.Prisma.fruitOrderByRelevanceFieldEnum = {
   id: 'id',
   name: 'name',
@@ -197,7 +222,7 @@ exports.Prisma.fruitOrderByRelevanceFieldEnum = {
   rating: 'rating'
 };
 
-exports.Prisma.usersOrderByRelevanceFieldEnum = {
+exports.Prisma.UserOrderByRelevanceFieldEnum = {
   id: 'id',
   fname: 'fname',
   lname: 'lname',
@@ -213,8 +238,10 @@ exports.Prisma.usersOrderByRelevanceFieldEnum = {
 
 exports.Prisma.ModelName = {
   Application: 'Application',
+  Journal_Entry: 'Journal_Entry',
+  Project: 'Project',
   fruit: 'fruit',
-  users: 'users'
+  User: 'User'
 };
 
 /**
