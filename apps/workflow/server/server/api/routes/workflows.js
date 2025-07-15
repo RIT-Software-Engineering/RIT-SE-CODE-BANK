@@ -90,6 +90,7 @@ router.post("/", async (req, res) => {
                 base_action: {
                     create: {
                         ...base_action_data,
+                        action_type: 'workflow',
                         permissions: {
                             // Default the creator to have all permissionTypes
                             createMany: {
