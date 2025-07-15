@@ -150,9 +150,15 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
 
     const { FREE_RESPONSE, RUBRIC, RATING } = InquiryType;
 
-    return !activePeer || !assessmentMetadata ? (
-        <p>Loading...</p>
-    ) : (
+    if (!activePeer && !assessmentMetadata) {
+        return <p>Loading...</p>;
+    }
+
+    if (!activePeer) {
+        return <p>You are alone in this project :(</p>;
+    }
+
+    return (
         <>
             <form
                 onSubmit={handleSubmit}
