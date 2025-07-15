@@ -11,19 +11,12 @@ import { getProjectsPeers as getProjectPeers } from "@/services/project";
 import { UserProfile } from "@/types/userProfile";
 import {
     Assessment,
-    BaseInquiry,
     Inquiry,
     InquiryType,
-    RatingInquiry,
     RubricInquiry,
 } from "@/types/assessment";
-import React, { act, useEffect, useState, use } from "react";
-import {
-    Button,
-    IconButton,
-    Snackbar,
-    SnackbarCloseReason,
-} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { IconButton, Snackbar, SnackbarCloseReason } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 // --- Main Component ---
