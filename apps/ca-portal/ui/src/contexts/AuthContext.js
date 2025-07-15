@@ -7,7 +7,6 @@ const AuthContext = createContext(null);
 export default function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true); // Add a loading state
-
   // This effect runs once when the app loads
   useEffect(() => {
     const loadUserData = async () => {

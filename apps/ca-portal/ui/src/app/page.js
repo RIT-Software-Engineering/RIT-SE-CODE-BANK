@@ -44,7 +44,7 @@ export default function Home() {
           </button>
 
           {/* 3. Pass the role STRING to the dashboard component */}
-          <LandingDashboard userRole={currentUser.role} />
+          <LandingDashboard user={currentUser} />
         </>
       )}
     </>

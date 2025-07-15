@@ -37,13 +37,26 @@ model Candidate {
   major              String         @db.Text
   graduateStatus     GraduateStatus @default(UNDERGRADUATE)
   wasPriorEmployee   Boolean        @db.TinyInt
-  resumeURL          String?        @db.Text
 
   //Relationships
   user                              User                              @relation(fields: [uid], references: [uid])
+  resumes                           Resume[]
   courseHistory                     CourseHistory[]
   employees                         Employee[]
   jobPositionApplicationHistory     JobPositionApplicationHistory[]
+}
+
+model Resume {
+  //Fields
+  id                  Int           @id @default(autoincrement())
+  name                String        @db.Text
+  candidateUID        Int
+  isPrimary           Boolean       @db.TinyInt
+  resumeURL           String
+
+  //Relationships
+  candidate          Candidate      @relation(fields: [candidateUID], references: [uid])
+  jobPositionApplicationHistory     JobPositionApplicationHistory[]
 }
 
 model Employer {
@@ -86,11 +99,13 @@ model JobPositionApplicationHistory {
   id                   Int                  @id @default(autoincrement())
   candidateUID         Int
   jobPositionId        String
+  resumeId             Int
   jobApplicationStatus JobApplicationStatus @default(APPLIED)
-  applicationData      String?               
+  applicationData      String?              @db.Text    
 
   // Relations
   candidate   Candidate   @relation(fields: [candidateUID], references: [uid])
+  resume      Resume      @relation(fields: [resumeId], references: [id])
   jobPosition JobPosition @relation(fields: [jobPositionId], references: [id])
 }
 

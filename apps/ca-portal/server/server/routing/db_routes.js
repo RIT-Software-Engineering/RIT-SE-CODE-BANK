@@ -19,10 +19,15 @@ const {
   upsertEmployerProfile,
   searchAndFilterOpenJobPositions,
   applyForJobPosition,
-  updateUserResumeUrl,
+  addNewCandidateResume,
+  updatePrimaryResume,
+  resetResumesToNonPrimary,
+  deleteResume,
   getCandidateApplications,
   modifyPosition,
-} = require("../database/query_db");
+  getCandidateApplicationsForFaculty,
+  deleteCandidateApplication,
+} = require('../database/query_db');
 
 // =============================================================================
 // MIDDLEWARE & FILE STORAGE CONFIGURATION
@@ -99,21 +104,14 @@ router.get("/open-positions", async (req, res) => {
 router.get("/search-and-filter-open-positions", async (req, res) => {
   const { searchTerm, filters: filtersString, candidateUID } = req.query;
   try {
-    // Parse the filters string from the query into a JavaScript object.
     const filters = filtersString ? JSON.parse(filtersString) : {};
     const numericCandidateUID = parseInt(candidateUID, 10);
-    // Check if the candidateUID is a valid number.
     if (isNaN(numericCandidateUID)) {
       return res
         .status(400)
         .json({ error: "Candidate UID must be a valid number." });
     }
-
-    const positions = await searchAndFilterOpenJobPositions(
-      searchTerm,
-      filters,
-      numericCandidateUID
-    );
+    const positions = await searchAndFilterOpenJobPositions(searchTerm, filters, numericCandidateUID);
     res.status(200).json(positions);
   } catch (error) {
     console.error("Error in /search-and-filter-open-positions route:", error);
@@ -125,15 +123,20 @@ router.get("/search-and-filter-open-positions", async (req, res) => {
 
 /**
  * @route   POST /api/db/apply-for-job-position
- * @desc    Creates a new job application record for a candidate.
+ * @desc    Creates a new job application record for a candidate using an existing resume.
  * @access  Public
  * @body    {object} jobPositionApplicationData - The application details.
  */
 router.post("/apply-for-job-position", async (req, res) => {
-  const jobPositionApplicationData = req.body;
   try {
-    const application = await applyForJobPosition(jobPositionApplicationData);
-    // Respond with 201 Created status for successful resource creation.
+    const applicationDetails = req.body;
+
+    // Validate that the required resumeId is present.
+    if (!applicationDetails.resumeId) {
+      return res.status(400).json({ error: 'A resumeId is required to apply with an existing resume.' });
+    }
+
+    const application = await applyForJobPosition(applicationDetails);
     res.status(201).json(application);
   } catch (error) {
     console.error("Error in /apply-for-job-position route:", error);
@@ -241,38 +244,76 @@ router.post(
       res
         .status(500)
         .json({ error: "Failed to process application with resume." });
+    }});
+  
+/**
+ * @route   GET /api/db/applications/:UID
+ * @desc    Retrieves all applications for a specific candidate/employee.
+ * @access  Public
+ * @param   {string} UID - The UID of the candidate/employee.
+ */ 
+router.get("/applications/:UID", async (req, res) => {
+    try {
+    const numericUID = parseInt(req.params.UID, 10);
+      if (isNaN(numericUID)) {
+        return res.status(400).json({ error: "UID must be a valid number." });
+      }
+      const applications = await getCandidateApplications(numericUID);
+      res.status(200).json(applications);
+    } catch (error) {
+      console.error(`Error in /applications/${req.params.UID} route:`, error.message);
+      res.status(500).json({ error: "An error occurred while retrieving applications." });
     }
-  }
-);
+});
 
 /**
- * @route   GET /api/db/applications/:employerUid
+ * @route   DELETE /api/db/applications/:uid
+ * @desc    Deletes a job application record for a candidate.
+ * @access  Public
+ * @param   {string} uid - The UID of the candidate.
+ */
+router.delete("/applications/:uid", async (req, res) => {
+  try {
+    const candidateUID = parseInt(req.params.uid, 10);
+    if (isNaN(candidateUID)) {
+      return res.status(400).json({ message: "A valid numeric candidate UID is required." });
+    }
+
+    const { jobPositionId } = req.query;
+    if (!jobPositionId) {
+      return res.status(400).json({ message: "The jobPositionId query parameter is required." });
+    }
+
+    const deletedApplication = await deleteCandidateApplication(candidateUID, jobPositionId);
+    res.status(200).json(deletedApplication);
+
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      return res.status(404).json({ message: "Application not found." });
+    }
+    console.error('API Error deleting application:', error);
+    res.status(500).json({ message: "An error occurred while deleting the application." });
+  }
+});
+
+/**
+ * @route   GET /api/db/applications/employer/:employerUid
  * @desc    Retrieves all applications for job positions managed by a specific employer.
  * @access  Public
  * @param   {string} employerUid - The UID of the employer.
  */
-router.get("/applications/:employerUid", async (req, res) => {
-  try {
-    const employerUid = parseInt(req.params.employerUid, 10);
-
-    // Validate that the parsed UID is a valid number.
-    if (isNaN(employerUid)) {
-      return res
-        .status(400)
-        .json({ error: "Employer UID must be a valid number." });
+router.get("/applications/employer/:employerUid", async (req, res) => {
+    try {
+      const employerUid = parseInt(req.params.employerUid, 10);
+      if (isNaN(employerUid)) {
+        return res.status(400).json({ error: "Employer UID must be a valid number." });
+      }
+      const positions = await getCandidateApplicationsForFaculty(employerUid);
+      res.status(200).json(positions);
+    } catch (error) {
+      console.error(`Error in /applications/${req.params.employerUid} route:`, error.message);
+      res.status(500).json({ error: "An error occurred while retrieving applications." });
     }
-
-    const positions = await getCandidateApplications(employerUid);
-    res.status(200).json(positions);
-  } catch (error) {
-    console.error(
-      `Error in /applications/${req.params.employerUid} route:`,
-      error.message
-    );
-    res
-      .status(500)
-      .json({ error: "An error occurred while retrieving applications." });
-  }
 });
 
 // =============================================================================
@@ -282,7 +323,7 @@ router.get("/applications/:employerUid", async (req, res) => {
 /**
  * @route   GET /api/db/users
  * @desc    Retrieves a list of all users.
- * @access  Public (should be restricted in a real application)
+ * @access  Public
  */
 router.get("/users", async (req, res) => {
   try {
@@ -304,7 +345,6 @@ router.get("/users/:UID", async (req, res) => {
   const { UID } = req.params;
   try {
     const numericUID = parseInt(UID, 10);
-    // Validate that the UID is a number.
     if (isNaN(numericUID)) {
       return res
         .status(400)
