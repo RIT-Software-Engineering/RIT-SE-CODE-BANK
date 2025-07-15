@@ -13,6 +13,8 @@ import {
     Typography,
 } from "@mui/material";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import toast, { Toaster } from "react-hot-toast";
+import theme from "@styles/theme";
 
 export default function Journal() {
     const [journalEntries, setJournalEntries] = useState([]);
@@ -45,7 +47,7 @@ export default function Journal() {
         setEditingEntry(null);
     };
 
-    const handleSave = async (entry) => {
+    const saveEntryNotes = async (entry) => {
         try {
             const res = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/journal/${entry.id}`,
@@ -63,9 +65,17 @@ export default function Journal() {
                 )
             );
         } catch (error) {
-            console.error("Failed to save entry:", error);
+            console.error("Failed to save entry notes:", error);
         }
         setEditingEntry(null);
+    };
+
+    const handleSave = (entry) => {
+        toast.promise(saveEntryNotes(entry), {
+            loading: "Saving...",
+            success: "Notes saved!",
+            error: "Failed to save notes.",
+        });
     };
 
     return (
@@ -203,6 +213,25 @@ export default function Journal() {
                     </>
                 )}
             </Dialog>
+
+            <Toaster
+                position="top-center"
+                reverseOrder={false}
+                toastOptions={{
+                    success: {
+                        style: {
+                            backgroundColor: theme.palette.success.main,
+                            color: theme.palette.success.contrastText,
+                        },
+                    },
+                    error: {
+                        style: {
+                            backgroundColor: theme.palette.error.main,
+                            color: theme.palette.error.contrastText,
+                        },
+                    },
+                }}
+            />
         </>
     );
 }
