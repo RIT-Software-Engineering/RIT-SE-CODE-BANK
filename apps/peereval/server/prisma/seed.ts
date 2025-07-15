@@ -1,5 +1,6 @@
 // prisma/seed.ts
 import { PrismaClient, InquiryType } from "@prisma/client";
+import { connect } from "http2";
 
 const prisma = new PrismaClient();
 
@@ -22,9 +23,19 @@ async function main() {
         { name: "Zebra", email: "zebra@rit.edu" },
     ];
 
-    const users = await Promise.all(
-        userData.map((u) => prisma.user.create({ data: u }))
-    );
+    const [
+        alice,
+        bob,
+        charlie,
+        diana,
+        ethan,
+        fiona,
+        george,
+        hannah,
+        ivan,
+        julia,
+        zebra,
+    ] = await Promise.all(userData.map((u) => prisma.user.create({ data: u })));
 
     // ----------------------------------------------------
     // PROJECTS
@@ -36,15 +47,11 @@ async function main() {
             description: "NutriApp semester project for SWEN-261",
             overseer: {
                 connect: {
-                    id: users[10].id,
+                    id: zebra.id,
                 },
             },
             peers: {
-                connect: [
-                    { id: users[0].id },
-                    { id: users[1].id },
-                    { id: users[7].id },
-                ],
+                connect: [{ id: alice.id }, { id: bob.id }, { id: hannah.id }],
             },
         },
     });
@@ -55,14 +62,14 @@ async function main() {
             description: "UI/UX semester project for SWEN-444",
             overseer: {
                 connect: {
-                    id: users[userData.length - 1].id,
+                    id: zebra.id,
                 },
             },
             peers: {
                 connect: [
-                    { id: users[0].id },
-                    { id: users[2].id },
-                    { id: users[8].id },
+                    { id: alice.id },
+                    { id: charlie.id },
+                    { id: ivan.id },
                 ],
             },
         },
@@ -219,6 +226,92 @@ async function main() {
             },
         },
     });
+
+    // ----------------------------------------------------
+    // Lets add two assessment responses too
+    // ----------------------------------------------------
+    const s1review = await prisma.assessment.findFirst({
+        where: {
+            project: {
+                id: project262.id,
+            },
+            name: "Sprint 1 Review",
+        },
+    });
+
+    // First create form responses
+    const bobFormRes = await prisma.formResponse.create({
+        data: {
+            assessment: {
+                connect: { id: s1review!.id },
+            },
+            responder: {
+                connect: { id: alice.id },
+            },
+            respondee: {
+                connect: { id: bob.id },
+            },
+        },
+    });
+
+    const hannahFormRes = await prisma.formResponse.create({
+        data: {
+            assessment: {
+                connect: { id: s1review!.id },
+            },
+            responder: {
+                connect: { id: alice.id },
+            },
+            respondee: {
+                connect: { id: hannah.id },
+            },
+        },
+    });
+
+    // Then create + attach the inquiry responses
+    const bobAns: Record<string, string> = {
+        [inquiries[0].id]: "Bob, you're bob-ish",
+        [inquiries[1].id]: "2",
+        [inquiries[2].id]: "[3,3]",
+    };
+
+    await Promise.all(
+        Object.entries(bobAns).map(([inqId, answer]) =>
+            prisma.inquiryResponse.create({
+                data: {
+                    FormResponse: {
+                        connect: { id: bobFormRes.id },
+                    },
+                    Inquiry: {
+                        connect: { id: inqId },
+                    },
+                    answer,
+                },
+            })
+        )
+    );
+
+    const hannahAns: Record<string, string> = {
+        [inquiries[0].id]: "Hannah the bobana",
+        [inquiries[1].id]: "1",
+        [inquiries[2].id]: "[1,1]",
+    };
+
+    await Promise.all(
+        Object.entries(hannahAns).map(([inqId, answer]) =>
+            prisma.inquiryResponse.create({
+                data: {
+                    FormResponse: {
+                        connect: { id: hannahFormRes.id },
+                    },
+                    Inquiry: {
+                        connect: { id: inqId },
+                    },
+                    answer,
+                },
+            })
+        )
+    );
 }
 
 main()
