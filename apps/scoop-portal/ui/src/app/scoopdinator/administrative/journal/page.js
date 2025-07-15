@@ -218,6 +218,7 @@ export default function Journal() {
                 position="top-center"
                 reverseOrder={false}
                 toastOptions={{
+                    style: { borderRadius: "0px" },
                     success: {
                         style: {
                             backgroundColor: theme.palette.success.main,
