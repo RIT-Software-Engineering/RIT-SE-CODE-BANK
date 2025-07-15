@@ -11,13 +11,13 @@ import { getProjectsPeers as getProjectPeers } from "@/services/project";
 import { UserProfile } from "@/types/userProfile";
 import {
     Assessment,
-    BaseInquiry,
     Inquiry,
     InquiryType,
-    RatingInquiry,
     RubricInquiry,
 } from "@/types/assessment";
-import React, { act, useEffect, useState, use } from "react";
+import React, { useEffect, useState } from "react";
+import { IconButton, Snackbar, SnackbarCloseReason } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
 // --- Main Component ---
 interface FeedbackFormProps {
@@ -27,6 +27,7 @@ interface FeedbackFormProps {
     };
 }
 const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
+    const [editable, setEditable] = useState(false);
     const [assessmentMetadata, setAssessmentMetadata] =
         useState<Assessment | null>(null);
     const [activePeer, setActivePeer] = useState<UserProfile | null>(null);
@@ -34,6 +35,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
     const [responses, setResponses] = useState<Record<string, string>>({});
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
     const [peersToEval, setPeersToEval] = useState<UserProfile[]>([]);
+    const [showSnack, setShowSnack] = useState(false);
     const { currentUser } = useAuth();
 
     const { projectId, assessmentId } = params;
@@ -45,6 +47,12 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             // Get assessment metadata
             const a = await getAssessmentById(assessmentId);
             setAssessmentMetadata(a);
+
+            // See if the peer should be able to edit the form
+            setEditable(
+                new Date() >= new Date(a.startDate) &&
+                    new Date() <= new Date(a.dueDate)
+            );
 
             // Get assessment inquiries
             const inqs = await getAssessmentInquiriesById(assessmentId);
@@ -72,10 +80,6 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             // We only do one peer at a time
             // Get current peer under review, set the responses
             const peerRs = rs.find((r) => r.respondeeId == activePeer.id);
-
-            console.dir(rs);
-            console.dir(activePeer);
-            console.dir(peerRs);
 
             if (!peerRs) {
                 setResponses({});
@@ -128,10 +132,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Submit logic here
-        alert("Submitted! " + JSON.stringify(responses, null, 2));
 
         submitForm();
+        setShowSnack(true);
     };
 
     const submitForm = () => {
@@ -147,6 +150,28 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         submitForm();
         window.history.back();
     };
+
+    const handleClose = (
+        event: React.SyntheticEvent | Event,
+        reason?: SnackbarCloseReason
+    ) => {
+        if (reason === "clickaway") {
+            return;
+        }
+
+        setShowSnack(false);
+    };
+
+    const snackAction = (
+        <IconButton
+            size="small"
+            aria-label="close"
+            color="inherit"
+            onClick={handleClose}
+        >
+            <CloseIcon fontSize="small" />
+        </IconButton>
+    );
 
     const { FREE_RESPONSE, RUBRIC, RATING } = InquiryType;
 
@@ -213,6 +238,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                             )
                                         }
                                         rows={4}
+                                        disabled={!editable}
                                     />
                                 </div>
                             );
@@ -243,6 +269,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                                             i + 1
                                                         )
                                                     }
+                                                    disabled={!editable}
                                                 />
                                                 <span>{i + 1}</span>
                                             </label>
@@ -316,6 +343,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                                                             colIdx
                                                                         )
                                                                     }
+                                                                    disabled={
+                                                                        !editable
+                                                                    }
                                                                 />
                                                             </td>
                                                         )
@@ -330,12 +360,43 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                             return <p>There shouldn't be a question here.</p>;
                     }
                 })}
-                <button
-                    type="submit"
-                    className="w-full bg-blue-600 text-white py-2 rounded font-semibold"
-                >
-                    Submit
-                </button>
+                {editable ? (
+                    <>
+                        <button
+                            type="submit"
+                            className="w-full bg-blue-600 text-white py-2 rounded font-semibold cursor-pointer"
+                        >
+                            Submit
+                        </button>
+                        <Snackbar
+                            open={showSnack}
+                            autoHideDuration={6000}
+                            message="Response submitted"
+                            onClose={handleClose}
+                            action={snackAction}
+                            anchorOrigin={{
+                                vertical: "bottom",
+                                horizontal: "center",
+                            }}
+                        />
+                    </>
+                ) : (
+                    <button
+                        disabled
+                        className="w-full bg-gray-400 text-white py-2 rounded font-semibold"
+                    >
+                        {new Date() < new Date(assessmentMetadata.startDate)
+                            ? "Starts " +
+                              new Date(
+                                  assessmentMetadata.startDate
+                              ).toLocaleDateString("en-US", {
+                                  weekday: "long",
+                                  day: "numeric",
+                                  month: "long",
+                              })
+                            : "Past Due"}
+                    </button>
+                )}
             </form>
         </>
     );

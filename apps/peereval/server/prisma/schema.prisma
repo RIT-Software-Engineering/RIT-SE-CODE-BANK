@@ -75,14 +75,14 @@ model FormResponse {
 }
 
 model InquiryResponse {
-  id      String  @id @default(uuid()) @db.Char(36)
-  Inquiry Inquiry @relation(fields: [inquiryId], references: [id])
-  answer  String  @db.LongText // Interpret based on inquiry type
+  id           String       @id @default(uuid()) @db.Char(36)
+  Inquiry      Inquiry      @relation(fields: [inquiryId], references: [id])
+  answer       String       @db.LongText // Interpret based on inquiry type
+  FormResponse FormResponse @relation(fields: [formResponseId], references: [id])
 
   // Required for relations
-  FormResponse   FormResponse @relation(fields: [formResponseId], references: [id])
-  formResponseId String       @db.Char(36)
-  inquiryId      String       @db.Char(36)
+  formResponseId String @db.Char(36)
+  inquiryId      String @db.Char(36)
 
   @@unique([formResponseId, inquiryId])
 }

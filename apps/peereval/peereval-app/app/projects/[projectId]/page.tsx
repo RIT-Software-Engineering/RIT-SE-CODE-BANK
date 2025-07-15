@@ -27,10 +27,7 @@ const Section: React.FC<{
     projectId: string;
     title: string;
     assessments: Assessment[];
-    clickable?: boolean;
-    showCompletedByOthers?: boolean;
-    showCompletedQuestions?: boolean;
-}> = ({ projectId, title, assessments, clickable = false }) => (
+}> = ({ projectId, title, assessments }) => (
     <section className="mb-8">
         <h2 className="text-lg font-semibold mb-4">{title}</h2>
         <div className="space-y-2">
@@ -39,40 +36,15 @@ const Section: React.FC<{
             )}
             {assessments.map((a) => (
                 <Fragment key={a.id}>
-                    {clickable ? (
-                        <Link
-                            href={`/projects/${projectId}/assessments/${a.id}`}
-                            key={a.id}
-                        >
-                            <div
-                                key={a.id}
-                                className={`flex items-center justify-between p-4 rounded border ${
-                                    clickable
-                                        ? "cursor-pointer hover:bg-gray-50 transition"
-                                        : "bg-gray-100"
-                                }`}
-                            >
-                                <div className="flex-1">
-                                    <div className="font-medium">{a.name}</div>
-                                    <div className="text-xs text-gray-500">
-                                        {new Date(
-                                            a.startDate
-                                        ).toLocaleDateString()}{" "}
-                                        &ndash;{" "}
-                                        {new Date(
-                                            a.dueDate
-                                        ).toLocaleDateString()}
-                                    </div>
-                                </div>
-                            </div>
-                        </Link>
-                    ) : (
+                    <Link
+                        href={`/projects/${projectId}/assessments/${a.id}`}
+                        key={a.id}
+                    >
                         <div
-                            className={`flex items-center justify-between p-4 rounded border ${
-                                clickable
-                                    ? "cursor-pointer hover:bg-gray-50 transition"
-                                    : "bg-gray-100"
-                            }`}
+                            key={a.id}
+                            className={
+                                "flex items-center justify-between p-4 rounded border cursor-pointer hover:bg-gray-50 transition"
+                            }
                         >
                             <div className="flex-1">
                                 <div className="font-medium">{a.name}</div>
@@ -83,7 +55,7 @@ const Section: React.FC<{
                                 </div>
                             </div>
                         </div>
-                    )}
+                    </Link>
                 </Fragment>
             ))}
         </div>
@@ -161,8 +133,6 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                 projectId={projectId}
                 title="Past Due Assessments"
                 assessments={pastDue}
-                clickable
-                showCompletedByOthers
             />
 
             {/* To Do Assessments Section */}
@@ -170,8 +140,6 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                 projectId={projectId}
                 title="To Do Assessments"
                 assessments={toDo}
-                clickable
-                showCompletedQuestions
             />
 
             {/* Upcoming Assessments Section */}
