@@ -1,6 +1,7 @@
 // ui/src/services/api.js
 
-const BASE_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
+const BASE_API_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
 const DATABASE_API_EXTENSION = process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 
 // Basic error handler for API responses
@@ -47,7 +48,11 @@ export async function getOpenPositions() {
  * @returns {Promise<any>} The result of the API response handler.
  * @throws {Error} If required API URL components are not defined.
  */
-export async function searchAndFilterOpenPositions(searchTerm, appliedFilters, candidateUID) {
+export async function searchAndFilterOpenPositions(
+  searchTerm,
+  appliedFilters,
+  candidateUID
+) {
   console.log("Base API URL:", BASE_API_URL);
   console.log("Database API Extension:", DATABASE_API_EXTENSION);
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
@@ -56,12 +61,44 @@ export async function searchAndFilterOpenPositions(searchTerm, appliedFilters, c
     );
   }
 
-  const params = new URLSearchParams({ searchTerm: searchTerm, filters: JSON.stringify(appliedFilters), candidateUID: candidateUID});
+  const params = new URLSearchParams({
+    searchTerm: searchTerm,
+    filters: JSON.stringify(appliedFilters),
+    candidateUID: candidateUID,
+  });
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/search-and-filter-open-positions?${params.toString()}`;
   console.log(`Searching from: ${url}`);
 
   const response = await fetch(url);
   return handleApiResponse(response);
+}
+
+export async function modifyPosition(jobID, positionData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+ 
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/modify-position/${jobID}`;
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // Pass the positionData to be stringified
+    body: JSON.stringify(positionData),
+  });
+
+  // Check if the request was successful
+  if (!response.ok) {
+    // Throw an error to be caught by the calling function
+    throw new Error(`API call failed with status: ${response.status}`);
+  }
+
+  // Parse the JSON from the response and return it
+  return response.json();
 }
 
 /**
@@ -176,27 +213,28 @@ export async function applyForJobPositionWithNewResume(formData) {
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply-for-job-position-with-new-resume`;
   console.log(`Applying for job position at: ${url}`);
   const response = await fetch(url, {
-    method: 'POST',
-    body: formData, 
+    method: "POST",
+    body: formData,
   });
-  
+
   return handleApiResponse(response);
 }
-
 
 // api call to upsert (update or create) employer profile
 export async function upsertEmployerProfile(employerData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-employer-profile`;
   console.log(`Upserting employer profile at: ${url}`);
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(employerData),
   });
