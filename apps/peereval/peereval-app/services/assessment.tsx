@@ -1,4 +1,9 @@
-import { Assessment, Inquiry, PeerFormResponse } from "@/types/assessment";
+import {
+    Assessment,
+    FeedbackForm,
+    Inquiry,
+    PeerFormResponse,
+} from "@/types/assessment";
 import { handleResponse } from "./utils";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";

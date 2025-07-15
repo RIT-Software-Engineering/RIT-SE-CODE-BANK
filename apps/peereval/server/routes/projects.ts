@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
+import { createReadStream } from "fs";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -241,6 +242,48 @@ router.delete("/:id/removePeer/:peerEmail", async (req, res) => {
     res.status(201).json({
         message: "Peer removed from project successfully.",
     });
+});
+
+router.post("/:id/assignAssessment", async (req, res) => {
+    const { id } = req.params;
+    const { formId, name, description, startDate, dueDate } = req.body as {
+        formId: string;
+        name: string;
+        description: string;
+        startDate: string;
+        dueDate: string;
+    };
+
+    const a = await prisma.$transaction(async (tx) => {
+        const createdAssessment = await tx.assessment.create({
+            data: {
+                project: {
+                    connect: { id },
+                },
+                name,
+                description,
+                feedbackForm: {
+                    connect: { id: formId },
+                },
+                startDate,
+                dueDate,
+            },
+        });
+
+        await tx.project.update({
+            where: { id },
+            data: {
+                Assessment: {
+                    connect: {
+                        id: createdAssessment.id,
+                    },
+                },
+            },
+        });
+        return createdAssessment;
+    });
+
+    res.status(201).json(a);
 });
 
 export default router;
