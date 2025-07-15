@@ -72,15 +72,7 @@ export default function Journal() {
         <>
             <Header />
             <Container maxWidth="lg" sx={{ paddingBlock: "1em" }}>
-                <Typography
-                    variant="h1"
-                    sx={{
-                        fontSize: "2rem",
-                        fontWeight: 900,
-                        color: "#fff",
-                        mb: 4,
-                    }}
-                >
+                <Typography variant="h1" sx={{ mb: 4 }}>
                     Journal
                 </Typography>
                 <>
@@ -103,14 +95,7 @@ export default function Journal() {
                                         justifyContent: "space-between",
                                     }}
                                 >
-                                    <Typography
-                                        variant="h2"
-                                        sx={{
-                                            fontSize: "1.5rem",
-                                            lineHeight: "2rem",
-                                            fontWeight: 500,
-                                        }}
-                                    >
+                                    <Typography variant="h2">
                                         {entry.date
                                             ? new Date(
                                                   entry.date
@@ -124,28 +109,14 @@ export default function Journal() {
                                             : ""}
                                     </Typography>
                                     <Button
-                                        variant="contained"
-                                        sx={{
-                                            backgroundColor: "#F76902",
-                                            "&:hover": {
-                                                backgroundColor: "#000000",
-                                            },
-                                            borderRadius: "0px",
-                                        }}
+                                        variant="solid-orange"
                                         onClick={() => handleEditClick(entry)}
                                     >
                                         <EditNoteIcon />
                                         Edit Notes
                                     </Button>
                                 </Box>
-                                <Typography
-                                    variant="h3"
-                                    sx={{
-                                        fontSize: "1.25rem",
-                                        lineHeight: "1.75rem",
-                                        fontWeight: 300,
-                                    }}
-                                >
+                                <Typography variant="h3">
                                     {entry.contactee}
                                 </Typography>
                                 <Typography variant="body1">Notes:</Typography>
@@ -217,32 +188,14 @@ export default function Journal() {
                         </DialogContent>
                         <DialogActions>
                             <Button
+                                variant="outline-orange"
                                 onClick={handleCancel}
-                                sx={{
-                                    border: "1px solid #F76902",
-                                    color: "#F76902",
-                                    backgroundColor: "#FFFFFF",
-                                    "&:hover": {
-                                        backgroundColor: "#F76902",
-                                        color: "#FFFFFF",
-                                    },
-                                    borderRadius: "0px",
-                                }}
                             >
                                 Cancel
                             </Button>
                             <Button
+                                variant="outline-orange"
                                 onClick={() => handleSave(editingEntry)}
-                                sx={{
-                                    border: "1px solid #F76902",
-                                    color: "#F76902",
-                                    backgroundColor: "#FFFFFF",
-                                    "&:hover": {
-                                        backgroundColor: "#F76902",
-                                        color: "#FFFFFF",
-                                    },
-                                    borderRadius: "0px",
-                                }}
                             >
                                 Save
                             </Button>
