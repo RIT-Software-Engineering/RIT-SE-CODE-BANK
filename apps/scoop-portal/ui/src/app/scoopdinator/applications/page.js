@@ -22,6 +22,7 @@ import {
 // import { application } from "express";
 
 import Header from "@components/Header";
+import { Block } from "@mui/icons-material";
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
@@ -51,28 +52,71 @@ export default function SupervisorApplicationsPage() {
         fetchApps();
     }, []);
 
+    //For testing. Runs when setSelectApp and handleOpen are called
+    useEffect(() => {
+        if (selectedApp) {
+            console.log("opening app:", selectedApp.firstName);
+        }
+    }, [selectedApp]);
+
     const handleOpen = (app) => {
-        setSelectedApp({ ...app, hasBeenRead: true });
+        setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
         setApplications((prev) =>
             prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
         );
-        console.log("opening app:", selectedApp.firstName);
     };
 
     const handleClose = () => setSelectedApp(null);
 
+    async function putApplicationStatus() {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/application/${selectedApp.id}`,
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    accepted: selectedApp.status === "accepted",
+                }),
+            }
+        );
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to update");
+    }
+
     const handleStatusUpdate = (status) => {
         if (!selectedApp) return;
-        setApplications((prev) =>
-            prev.map((a) => (a.id === selectedApp.id ? { ...a, status } : a))
-        );
-        setSelectedApp(null);
 
-        setNotification({
-            open: true,
-            message: `Application for ${selectedApp.name} has been ${status}.`,
-            severity: status === "accepted" ? "success" : "error",
-        });
+        try {
+            //update in database
+            putApplicationStatus();
+
+            //update local state
+            setApplications((prev) =>
+                prev.map((a) =>
+                    a.id === selectedApp.id ? { ...a, status } : a
+                )
+            );
+
+            //
+            setSelectedApp((prev) =>
+                prev
+                    ? { ...prev, accepted: status === "accepted", status }
+                    : prev
+            );
+            console.log(selectedApp.firstName, "has been", status);
+
+            setNotification({
+                open: true,
+                message: `Application for ${selectedApp.firstName} has been ${status}.`,
+                severity: status === "accepted" ? "success" : "error",
+            });
+        } catch (err) {
+            setNotification({
+                open: true,
+                message: `Failed to update status: ${err.message}`,
+                severity: "error",
+            });
+        }
     };
 
     const handleNotificationClose = (event, reason) => {
@@ -191,21 +235,102 @@ export default function SupervisorApplicationsPage() {
                                     fontWeight: 600,
                                 }}
                             >
-                                Application:{" "}
-                                {(selectedApp.firstName, selectedApp.lastName)}
+                                Application: {selectedApp.firstName}{" "}
+                                {selectedApp.lastName}
                             </DialogTitle>
                             <DialogContent dividers>
-                                <Typography>
+                                <Typography variant="body2" >
+                                    Submitted at: {" "}
+                                    {selectedApp.createdAt} 
+                                </Typography>
+                                <Typography margin={2}>
                                     <strong>Email:</strong>{" "}
+                                    <br />
                                     {selectedApp.ritEmail}
                                 </Typography>
-                                <Typography>
-                                    <strong>Submitted:</strong>{" "}
-                                    {selectedApp.createdAt}
+                                <Typography margin={2}>
+                                    <strong>Number of Co-op blocks completed?</strong>
+                                    <br />
+                                    {selectedApp.coopsCompleted}
                                 </Typography>
-                                <Typography mt={2} sx={{ fontStyle: "italic" }}>
+                                <Typography margin={2}>
+                                    <strong>Semester Started:</strong>{" "}
+                                    <br />
+                                    {selectedApp.startSemester}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>Courses Taken:</strong>{" "}
+                                    <br />
+                                    {selectedApp.coursesTaken}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>Coop Search Started:</strong>{" "}
+                                    <br />
+                                    {selectedApp.coopSearchStartDate}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>Semester Started:</strong>{" "}
+                                    <br />
+                                    {selectedApp.startSemester}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>coopSearchPlatforms:</strong>{" "}
+                                    <br />
+                                    {selectedApp.coopSearchPlatforms}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>pendingOffers:</strong>{" "}
+                                    <br />
+                                    {String(selectedApp.pendingOffers)}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>pendingOffersDetails:</strong>{" "}
+                                    <br />
+                                    {selectedApp.pendingOffersDetails}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>rejectionLetters:</strong>{" "}
+                                    <br />
+                                    {selectedApp.rejectionLetters}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>rejectionLettersDetails:</strong>{" "}
+                                    <br />
+                                    {selectedApp.rejectionLettersDetails}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>SEcoopInterest:</strong>{" "}
+                                    <br />
+                                    {String(selectedApp.SEcoopInterest)}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>SEcoopAvailability:</strong>{" "}
+                                    <br />
+                                    {String(selectedApp.SEcoopAvailability)}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>remoteAbility:</strong>{" "}
+                                    <br />
+                                    {selectedApp.remoteAbility}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>additionalComments:</strong>{" "}
+                                    <br />
+                                    {selectedApp.additionalComments}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>resumeFile:</strong>{" "}
+                                    <br />
+                                    {selectedApp.resumeFile}
+                                </Typography>
+                                <Typography margin={2}>
+                                    <strong>accepted:</strong>{" "}
+                                    {String(selectedApp.accepted)}
+                                </Typography>
+
+                                {/* <Typography mt={2} sx={{ fontStyle: "italic" }}>
                                     {JSON.stringify(selectedApp)}
-                                </Typography>
+                                </Typography> */}
 
                                 <Box mt={3}>
                                     <Typography
