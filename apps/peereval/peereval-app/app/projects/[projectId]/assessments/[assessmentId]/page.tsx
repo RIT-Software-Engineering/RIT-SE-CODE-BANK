@@ -154,6 +154,10 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         return <p>Loading...</p>;
     }
 
+    if (!assessmentMetadata) {
+        return <p>Man something happened idk</p>;
+    }
+
     if (!activePeer) {
         return <p>You are alone in this project :(</p>;
     }
