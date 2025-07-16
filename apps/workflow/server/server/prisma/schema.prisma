@@ -134,6 +134,7 @@ model ActionStates {
   workflow_state_id String    @db.Char(36) // The state of the workflow that this action belongs to
   action_id         String    @db.Char(36)
   state_type        StateType
+  index             Int
 
   workflow_state WorkflowStates @relation(fields: [workflow_state_id], references: [id], onDelete: Cascade)
   action         Action         @relation(fields: [action_id], references: [id], onDelete: Cascade)
