@@ -17,7 +17,7 @@ export default function ProfileInfoCard({
   isEmployerOrAdmin,
   isCandidateOrEmployee,
   handleOpenModal,
-  onProfileRefresh,
+  //onProfileRefresh,
 }) {
   if (!profileData) {
     return (
@@ -30,8 +30,8 @@ export default function ProfileInfoCard({
   }
 
   return (
-    <section className='bg-white rounded-xl p-4 shadow-lg border border-gray-200'>
-      <div className='p-6'>
+    // <section className='bg-white rounded-xl p-4 shadow-lg border border-gray-200'>
+    //   <div className='p-6'>
         <div className='flex justify-between items-start'>
           {/* Profile Details */}
           <div>
@@ -84,18 +84,18 @@ export default function ProfileInfoCard({
           </button>
         </div>
 
-        {/* Conditionally render the ResumeManager component */}
-        {isCandidateOrEmployee && (
-          <>
-            <hr className='my-6 border-gray-200' />
-            <ResumeManager
-              resumes={profileData.candidate?.resumes || []}
-              candidateUID={profileData.uid}
-              onProfileRefresh={onProfileRefresh}
-            />
-          </>
-        )}
-      </div>
-    </section>
+    //     {/* Conditionally render the ResumeManager component */}
+    //     {isCandidateOrEmployee && (
+    //       <>
+    //         <hr className='my-6 border-gray-200' />
+    //         <ResumeManager
+    //           resumes={profileData.candidate?.resumes || []}
+    //           candidateUID={profileData.uid}
+    //           onProfileRefresh={onProfileRefresh}
+    //         />
+    //       </>
+    //     )}
+    //   </div>
+    // </section>
   );
 }

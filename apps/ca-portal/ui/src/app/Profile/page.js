@@ -9,6 +9,7 @@ import ProfileInfoCard from "@/components/profile/ProfileInfoCard";
 import CoursesTakenCard from "@/components/profile/CoursesTakenCard";
 import JobPositionsCard from "@/components/profile/JobPositionsCard";
 import CoursesWorkedCard from "@/components/profile/CoursesWorkedCard";
+import ResumeManager from "@/components/profile/ResumeManager";
 
 export default function ProfilePage() {
   const [showModal, setShowModal] = useState(false);
@@ -128,14 +129,29 @@ export default function ProfilePage() {
   // --- Main Render ---
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
-      <ProfileInfoCard
-        profileData={profileData}
-        isEmployerOrAdmin={isEmployerOrAdmin}
-        isCandidateOrEmployee={isCandidateOrEmployee}
-        handleOpenModal={handleOpenModal}
-        onProfileRefresh={handleProfileRefresh}
-      />
+      <section className="bg-white rounded-xl shadow-lg border border-gray-200">
+        <div className="p-6">
+          <ProfileInfoCard
+            profileData={profileData}
+            isEmployerOrAdmin={isEmployerOrAdmin}
+            isCandidateOrEmployee={isCandidateOrEmployee}
+            handleOpenModal={handleOpenModal}
+          />
 
+          {/* 3. Conditionally render the ResumeManager directly inside the section */}
+          {isCandidateOrEmployee && (
+            <>
+              <hr className="my-6 border-gray-200" />
+              <ResumeManager
+                resumes={profileData.candidate?.resumes || []}
+                candidateUID={profileData.uid}
+                onProfileRefresh={handleProfileRefresh}
+              />
+            </>
+          )}
+        </div>
+      </section>
+      
       {isCandidateOrEmployee && (
         <CoursesTakenCard
           profileData={profileData}
