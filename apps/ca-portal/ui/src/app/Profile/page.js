@@ -1,6 +1,6 @@
 // app/Profile/page.js
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import UserProfileModal from "@/components/profile/UserProfileModal";
 import { getUserProfile, getAllCourses } from "@/services/db-apis";
@@ -18,6 +18,20 @@ export default function ProfilePage() {
   const [courseOptions, setCourseOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // This function fetches the user's profile and updates the state.
+  const handleProfileRefresh = useCallback(async () => {
+    if (!currentUser?.uid) return;
+
+    try {
+      const user = await getUserProfile(currentUser.uid);
+      setProfileData(user); // Update state with fresh data
+      refreshUserProfile(); // Optionally refresh global context
+    } catch (err) {
+      console.error("Error refreshing profile data:", err);
+      setError("Could not refresh profile data. Please try again.");
+    }
+  }, [currentUser, refreshUserProfile]);
 
   // This effect now fetches both the user's profile and the master course list.
   useEffect(() => {
@@ -119,6 +133,7 @@ export default function ProfilePage() {
         isEmployerOrAdmin={isEmployerOrAdmin}
         isCandidateOrEmployee={isCandidateOrEmployee}
         handleOpenModal={handleOpenModal}
+        onProfileRefresh={handleProfileRefresh}
       />
 
       {isCandidateOrEmployee && (

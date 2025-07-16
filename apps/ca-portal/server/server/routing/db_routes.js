@@ -23,6 +23,8 @@ const {
   updatePrimaryResume,
   resetResumesToNonPrimary,
   deleteResume,
+  getCandidateResumes,
+  updateResumeName,
   getCandidateApplications,
   getCandidateApplicationsForFaculty,
   deleteCandidateApplication,
@@ -56,7 +58,7 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const uniquePrefix = Date.now();
     cb(null, `${uniquePrefix}-${file.originalname}`);
-  }
+  },
 });
 
 // Initialize multer with the configured storage, file size limits, and file type filter.
@@ -70,7 +72,7 @@ const upload = multer({
     } else {
       cb(new Error('Only .pdf files are allowed!'), false);
     }
-  }
+  },
 });
 
 // =============================================================================
@@ -82,13 +84,13 @@ const upload = multer({
  * @desc    Retrieves all job positions currently marked as "OPEN".
  * @access  Public
  */
-router.get("/open-positions", async (req, res) => {
+router.get('/open-positions', async (req, res) => {
   try {
     const positions = await getOpenPositionsWithDetails();
     res.status(200).json(positions);
   } catch (error) {
-    console.error("Error in /open-positions route:", error);
-    res.status(500).json({ error: "Failed to retrieve open positions." });
+    console.error('Error in /open-positions route:', error);
+    res.status(500).json({ error: 'Failed to retrieve open positions.' });
   }
 });
 
@@ -106,13 +108,21 @@ router.get('/search-and-filter-open-positions', async (req, res) => {
     const filters = filtersString ? JSON.parse(filtersString) : {};
     const numericCandidateUID = parseInt(candidateUID, 10);
     if (isNaN(numericCandidateUID)) {
-        return res.status(400).json({ error: "Candidate UID must be a valid number." });
+      return res
+        .status(400)
+        .json({ error: 'Candidate UID must be a valid number.' });
     }
-    const positions = await searchAndFilterOpenJobPositions(searchTerm, filters, numericCandidateUID);
+    const positions = await searchAndFilterOpenJobPositions(
+      searchTerm,
+      filters,
+      numericCandidateUID
+    );
     res.status(200).json(positions);
   } catch (error) {
-    console.error("Error in /search-and-filter-open-positions route:", error);
-    res.status(500).json({ error: "Failed to search or filter open positions." });
+    console.error('Error in /search-and-filter-open-positions route:', error);
+    res
+      .status(500)
+      .json({ error: 'Failed to search or filter open positions.' });
   }
 });
 
@@ -122,20 +132,24 @@ router.get('/search-and-filter-open-positions', async (req, res) => {
  * @access  Public
  * @body    {object} jobPositionApplicationData - The application details.
  */
-router.post("/apply-for-job-position", async (req, res) => {
+router.post('/apply-for-job-position', async (req, res) => {
   try {
     const applicationDetails = req.body;
 
     // Validate that the required resumeId is present.
     if (!applicationDetails.resumeId) {
-      return res.status(400).json({ error: 'A resumeId is required to apply with an existing resume.' });
+      return res
+        .status(400)
+        .json({
+          error: 'A resumeId is required to apply with an existing resume.',
+        });
     }
 
     const application = await applyForJobPosition(applicationDetails);
     res.status(201).json(application);
   } catch (error) {
-    console.error("Error in /apply-for-job-position route:", error);
-    res.status(500).json({ error: "Failed to apply for job position." });
+    console.error('Error in /apply-for-job-position route:', error);
+    res.status(500).json({ error: 'Failed to apply for job position.' });
   }
 });
 
@@ -148,63 +162,92 @@ router.post("/apply-for-job-position", async (req, res) => {
  * @body    {string} jobPositionId - The ID of the job position.
  * @body    {string} jobPositionApplicationFormData - JSON string of the form data.
  */
-router.post('/apply-for-job-position-with-new-resume', upload.single('resumeFile'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Resume file is required.' });
+router.post(
+  '/apply-for-job-position-with-new-resume',
+  upload.single('resumeFile'),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Resume file is required.' });
+      }
+
+      const {
+        candidateUID,
+        jobPositionId,
+        jobPositionApplicationFormData,
+        resumeName,
+      } = req.body;
+      if (!resumeName) {
+        return res.status(400).json({ error: 'Resume file name is required.' });
+      }
+      const numericCandidateUID = parseInt(candidateUID, 10);
+      if (isNaN(numericCandidateUID)) {
+        return res
+          .status(400)
+          .json({ error: 'Candidate UID must be a valid number.' });
+      }
+
+      // Construct the public-facing URL for the newly uploaded resume.
+      const newResumeUrl = `/resources/resumes/${candidateUID}/${req.file.filename}`;
+
+      // check if the candidate already has a resume as otherwise we will set the new resume as primary
+      const existingResumes = await getCandidateResumes(numericCandidateUID);
+      const isPrimary = existingResumes.length === 0;
+
+      // Add a new resume for the candidate.
+      const newResume = await addNewCandidateResume(
+        numericCandidateUID,
+        isPrimary,
+        newResumeUrl,
+        resumeName
+      );
+
+      // 4. Construct the final application details for the database.
+      const applicationDetails = {
+        candidateUID: numericCandidateUID,
+        jobPositionId: jobPositionId,
+        resumeId: newResume.id,
+        jobPositionApplicationFormData: jobPositionApplicationFormData,
+      };
+
+      const application = await applyForJobPosition(applicationDetails);
+
+      res.status(201).json(application);
+    } catch (error) {
+      console.error(
+        'Error in /apply-for-job-position-with-new-resume route:',
+        error
+      );
+      res
+        .status(500)
+        .json({ error: 'Failed to process application with resume.' });
     }
-
-    const { candidateUID, jobPositionId, jobPositionApplicationFormData, resumeName } = req.body;
-    if (!resumeName){
-      return res.status(400).json({ error: 'Resume file name is required.' });
-    }
-    const numericCandidateUID = parseInt(candidateUID, 10);
-    if (isNaN(numericCandidateUID)) {
-        return res.status(400).json({ error: "Candidate UID must be a valid number." });
-    }
-
-    // 1. Construct the public-facing URL for the newly uploaded resume.
-    const newResumeUrl = `/resources/resumes/${candidateUID}/${req.file.filename}`;
-
-    // 3. Add a new resume for the candidate.
-    const newResume = await addNewCandidateResume(numericCandidateUID, false, newResumeUrl, resumeName);
-
-    // 4. Construct the final application details for the database.
-    const applicationDetails = {
-      candidateUID: numericCandidateUID,
-      jobPositionId: jobPositionId,
-      resumeId: newResume.id,
-      jobPositionApplicationFormData: jobPositionApplicationFormData,
-    };
-
-    const application = await applyForJobPosition(applicationDetails);
-    
-    res.status(201).json(application);
-
-  } catch (error) {
-    console.error('Error in /apply-for-job-position-with-new-resume route:', error);
-    res.status(500).json({ error: 'Failed to process application with resume.' });
   }
-});
+);
 
 /**
  * @route   GET /api/db/applications/:UID
  * @desc    Retrieves all applications for a specific candidate/employee.
  * @access  Public
  * @param   {string} UID - The UID of the candidate/employee.
- */ 
-router.get("/applications/:UID", async (req, res) => {
-    try {
+ */
+router.get('/applications/:UID', async (req, res) => {
+  try {
     const numericUID = parseInt(req.params.UID, 10);
-      if (isNaN(numericUID)) {
-        return res.status(400).json({ error: "UID must be a valid number." });
-      }
-      const applications = await getCandidateApplications(numericUID);
-      res.status(200).json(applications);
-    } catch (error) {
-      console.error(`Error in /applications/${req.params.UID} route:`, error.message);
-      res.status(500).json({ error: "An error occurred while retrieving applications." });
+    if (isNaN(numericUID)) {
+      return res.status(400).json({ error: 'UID must be a valid number.' });
     }
+    const applications = await getCandidateApplications(numericUID);
+    res.status(200).json(applications);
+  } catch (error) {
+    console.error(
+      `Error in /applications/${req.params.UID} route:`,
+      error.message
+    );
+    res
+      .status(500)
+      .json({ error: 'An error occurred while retrieving applications.' });
+  }
 });
 
 /**
@@ -213,27 +256,38 @@ router.get("/applications/:UID", async (req, res) => {
  * @access  Public
  * @param   {string} uid - The UID of the candidate.
  */
-router.delete("/applications/:uid", async (req, res) => {
+router.delete('/applications/:uid', async (req, res) => {
   try {
     const candidateUID = parseInt(req.params.uid, 10);
     if (isNaN(candidateUID)) {
-      return res.status(400).json({ message: "A valid numeric candidate UID is required." });
+      return res
+        .status(400)
+        .json({ message: 'A valid numeric candidate UID is required.' });
     }
 
     const { jobPositionId } = req.query;
     if (!jobPositionId) {
-      return res.status(400).json({ message: "The jobPositionId query parameter is required." });
+      return res
+        .status(400)
+        .json({ message: 'The jobPositionId query parameter is required.' });
     }
 
-    const deletedApplication = await deleteCandidateApplication(candidateUID, jobPositionId);
+    const deletedApplication = await deleteCandidateApplication(
+      candidateUID,
+      jobPositionId
+    );
     res.status(200).json(deletedApplication);
-
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-      return res.status(404).json({ message: "Application not found." });
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2025'
+    ) {
+      return res.status(404).json({ message: 'Application not found.' });
     }
     console.error('API Error deleting application:', error);
-    res.status(500).json({ message: "An error occurred while deleting the application." });
+    res
+      .status(500)
+      .json({ message: 'An error occurred while deleting the application.' });
   }
 });
 
@@ -243,18 +297,25 @@ router.delete("/applications/:uid", async (req, res) => {
  * @access  Public
  * @param   {string} employerUid - The UID of the employer.
  */
-router.get("/applications/employer/:employerUid", async (req, res) => {
-    try {
-      const employerUid = parseInt(req.params.employerUid, 10);
-      if (isNaN(employerUid)) {
-        return res.status(400).json({ error: "Employer UID must be a valid number." });
-      }
-      const positions = await getCandidateApplicationsForFaculty(employerUid);
-      res.status(200).json(positions);
-    } catch (error) {
-      console.error(`Error in /applications/${req.params.employerUid} route:`, error.message);
-      res.status(500).json({ error: "An error occurred while retrieving applications." });
+router.get('/applications/employer/:employerUid', async (req, res) => {
+  try {
+    const employerUid = parseInt(req.params.employerUid, 10);
+    if (isNaN(employerUid)) {
+      return res
+        .status(400)
+        .json({ error: 'Employer UID must be a valid number.' });
     }
+    const positions = await getCandidateApplicationsForFaculty(employerUid);
+    res.status(200).json(positions);
+  } catch (error) {
+    console.error(
+      `Error in /applications/${req.params.employerUid} route:`,
+      error.message
+    );
+    res
+      .status(500)
+      .json({ error: 'An error occurred while retrieving applications.' });
+  }
 });
 
 // =============================================================================
@@ -266,13 +327,13 @@ router.get("/applications/employer/:employerUid", async (req, res) => {
  * @desc    Retrieves a list of all users.
  * @access  Public
  */
-router.get("/users", async (req, res) => {
+router.get('/users', async (req, res) => {
   try {
     const users = await getAllUsers();
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error in /users route:", error);
-    res.status(500).json({ error: "Failed to retrieve users." });
+    console.error('Error in /users route:', error);
+    res.status(500).json({ error: 'Failed to retrieve users.' });
   }
 });
 
@@ -282,18 +343,20 @@ router.get("/users", async (req, res) => {
  * @access  Public
  * @param   {string} UID - The user's unique identifier.
  */
-router.get("/users/:UID", async (req, res) => {
+router.get('/users/:UID', async (req, res) => {
   const { UID } = req.params;
   try {
     const numericUID = parseInt(UID, 10);
     if (isNaN(numericUID)) {
-      return res.status(400).json({ error: "User UID must be a valid number." });
+      return res
+        .status(400)
+        .json({ error: 'User UID must be a valid number.' });
     }
     const user = await findUniqueUser(numericUID);
     res.status(200).json(user);
   } catch (error) {
     console.error(`Error in /users/${UID} route:`, error);
-    res.status(500).json({ error: "Failed to retrieve user." });
+    res.status(500).json({ error: 'Failed to retrieve user.' });
   }
 });
 
@@ -303,12 +366,12 @@ router.get("/users/:UID", async (req, res) => {
  * @access  Public
  * @body    {object} candidateData - The full profile data for the candidate.
  */
-router.post("/upsert-candidate-profile", async (req, res) => {
+router.post('/upsert-candidate-profile', async (req, res) => {
   const candidateData = req.body;
   try {
     const profile = await upsertCandidateProfile(candidateData);
     res.status(200).json(profile);
-   } catch (error) {
+  } catch (error) {
     console.error('Error in /upsert-candidate-profile route:', error);
     res.status(500).json({ error: 'Failed to upsert candidate profile.' });
   }
@@ -332,6 +395,143 @@ router.post('/upsert-employer-profile', async (req, res) => {
 });
 
 // =============================================================================
+// RESUME ROUTES
+// =============================================================================
+
+/**
+ * @route   POST /api/db/add-new-candidate-resume
+ * @desc    Adds a new resume for a candidate.
+ * @access  Public
+ *
+ */
+router.post('/add-new-candidate-resume', upload.single('resumeFile'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Resume file is required.' });
+      }
+
+      const { candidateUID, name } = req.body;
+      if (!candidateUID || !name) {
+        fs.unlinkSync(req.file.path);
+        return res
+          .status(400)
+          .json({ error: 'Candidate UID and resume name are required.' });
+      }
+
+      const numericCandidateUID = parseInt(candidateUID, 10);
+      const resumeURL = `/resources/resumes/${candidateUID}/${req.file.filename}`;
+
+      const existingResumes = await getCandidateResumes(numericCandidateUID);
+      const isPrimary = existingResumes.length === 0;
+
+      const newResume = await addNewCandidateResume(numericCandidateUID, isPrimary, resumeURL, name);
+
+      res.status(201).json(newResume);
+    } catch (error) {
+      console.error('Error in /add-new-candidate-resume route:', error);
+      res.status(500).json({ error: 'Failed to upload and save resume.' });
+    }
+  }
+);
+
+/**
+ * @route   Update /api/db/update-primary-resume/:candidateUID/:resumeId
+ * @desc    Updates the primary resume by its ID.
+ * @access  Public
+ */
+router.put('/update-primary-resume/:candidateUID/:resumeId', async (req, res) => {
+    try {
+      const resumeId = parseInt(req.params.resumeId, 10);
+      const candidateUID = parseInt(req.params.candidateUID, 10);
+      const updatedResume = await updatePrimaryResume(candidateUID, resumeId);
+      res.status(200).json(updatedResume);
+    } catch (error) {
+      console.error('Error in /update-primary-resume route:', error);
+      res.status(500).json({ error: 'Failed to update primary resume.' });
+    }
+  }
+);
+
+/**
+ * @route Update /api/db/update-resume-name/:resumeId
+ * @desc Updates the name of a resume by its ID.
+ * @access Public
+ */
+router.put('/update-resume-name/:resumeId', async (req, res) => {
+  try{
+    const resumeId = parseInt(req.params.resumeId, 10);
+    const name = req.body.name;
+    const updatedResume = await updateResumeName(resumeId, name);
+    res.status(200).json(updatedResume);
+  } catch (error) {
+    console.error('Error in /update-resume-name route:', error);
+    res.status(500).json({ error: 'Failed to update resume name.' });
+  }
+})
+
+/**
+ * @route   DELETE /api/db/delete-resume/:resumeId
+ * @desc    Deletes a resume by its ID and its associated file.
+ * @access  Public
+ */
+router.delete('/delete-resume/:resumeId', async (req, res) => {
+  try {
+    const resumeId = parseInt(req.params.resumeId, 10);
+    if (isNaN(resumeId)) {
+      // 1. Send response and stop execution for invalid input
+      return res.status(400).json({ error: 'Invalid Resume ID.' });
+    }
+
+    const deletedResume = await deleteResume(resumeId);
+
+    // --- File Cleanup Step ---
+    // (Assuming the property is `resumeURL` as used in your path creation)
+    if (deletedResume.resumeURL) {
+        const serverRootPath = path.join(__dirname, '..', '..');
+        const filePath = path.join(serverRootPath, deletedResume.resumeURL);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          //Success: DB entry and file were deleted. Send response and stop.
+          return res.status(200).json({ 
+            message: 'Resume and associated file deleted successfully.', 
+            deletedResume 
+          });
+        } else {
+          // Partial Success: DB entry deleted, file was missing. This is still a success.
+          // Send a descriptive message and stop execution.
+          return res.status(200).json({ 
+            message: 'Resume deleted from database, but its associated file was not found on the server.', 
+            deletedResume 
+          });
+        }
+    } else {
+      // Success: DB entry deleted, no file to remove. Send response and stop.
+      return res.status(200).json({ 
+        message: 'Resume deleted successfully. There was no associated file to remove.', 
+        deletedResume 
+      });
+    }
+
+  } catch (error) {
+    console.error('Error in /delete-resume route:', error.message);
+
+    // Handle specific errors from the DB function
+    if (error.message === 'DELETE_FAILED_ASSOCIATED') {
+      return res.status(409).json({ 
+        error: 'This resume cannot be deleted because it is associated with a job application.' 
+      });
+    }
+
+    if (error.message === 'Resume not found.') {
+        return res.status(404).json({ error: 'Resume not found.' });
+    }
+    
+    // Fallback for any other unexpected errors
+    return res.status(500).json({ error: 'An unexpected server error occurred.' });
+  }
+});
+
+// =============================================================================
 // GENERAL & UTILITY ROUTES
 // =============================================================================
 
@@ -340,13 +540,13 @@ router.post('/upsert-employer-profile', async (req, res) => {
  * @desc    Retrieves a list of all available courses.
  * @access  Public
  */
-router.get("/courses", async (req, res) => {
+router.get('/courses', async (req, res) => {
   try {
     const courses = await getAllCourses();
     res.status(200).json(courses);
   } catch (error) {
-    console.error("Error in /courses route:", error);
-    res.status(500).json({ error: "Failed to retrieve courses." });
+    console.error('Error in /courses route:', error);
+    res.status(500).json({ error: 'Failed to retrieve courses.' });
   }
 });
 

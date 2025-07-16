@@ -223,11 +223,20 @@ async function searchAndFilterOpenJobPositions(
  */
 async function applyForJobPosition(applicationDetails) {
   try {
-    const { candidateUID, jobPositionId, resumeId, jobPositionApplicationFormData } =
-      applicationDetails;
+    const {
+      candidateUID,
+      jobPositionId,
+      resumeId,
+      jobPositionApplicationFormData,
+    } = applicationDetails;
 
     // 1. Validate required fields.
-    if (!candidateUID || !jobPositionId || !resumeId || !jobPositionApplicationFormData) {
+    if (
+      !candidateUID ||
+      !jobPositionId ||
+      !resumeId ||
+      !jobPositionApplicationFormData
+    ) {
       throw new Error(
         'Missing required fields: candidate UID, job position ID, resume ID, or form data.'
       );
@@ -237,18 +246,28 @@ async function applyForJobPosition(applicationDetails) {
     const [candidate, jobPosition, resume] = await Promise.all([
       prisma.candidate.findUnique({ where: { uid: candidateUID } }),
       prisma.jobPosition.findUnique({ where: { id: jobPositionId } }),
-      prisma.resume.findFirst({ where: { id: resumeId, candidateUID: candidateUID } }),
+      prisma.resume.findFirst({
+        where: { id: resumeId, candidateUID: candidateUID },
+      }),
     ]);
-    if (!candidate) throw new Error(`Candidate with UID ${candidateUID} not found.`);
-    if (!jobPosition) throw new Error(`Job Position with ID ${jobPositionId} not found.`);
-    if (!resume) throw new Error(`Resume with ID ${resumeId} not found for this candidate.`);
+    if (!candidate)
+      throw new Error(`Candidate with UID ${candidateUID} not found.`);
+    if (!jobPosition)
+      throw new Error(`Job Position with ID ${jobPositionId} not found.`);
+    if (!resume)
+      throw new Error(
+        `Resume with ID ${resumeId} not found for this candidate.`
+      );
 
     // 3. Check if the candidate has already applied.
-    const existingApplication = await prisma.jobPositionApplicationHistory.findFirst({
-      where: { candidateUID, jobPositionId },
-    });
+    const existingApplication =
+      await prisma.jobPositionApplicationHistory.findFirst({
+        where: { candidateUID, jobPositionId },
+      });
     if (existingApplication) {
-      throw new Error('This candidate has already applied for this job position.');
+      throw new Error(
+        'This candidate has already applied for this job position.'
+      );
     }
 
     // 4. Create the new application record.
@@ -264,10 +283,10 @@ async function applyForJobPosition(applicationDetails) {
     // 5. Update the candidate's course history with the self-reported grade.
     const parsedFormData = JSON.parse(jobPositionApplicationFormData);
     if (parsedFormData.grade) {
-        await prisma.courseHistory.updateMany({
-            where: { candidateUID, courseCode: jobPosition.courseCode },
-            data: { grade: letterToGradeEnum[parsedFormData.grade] },
-        });
+      await prisma.courseHistory.updateMany({
+        where: { candidateUID, courseCode: jobPosition.courseCode },
+        data: { grade: letterToGradeEnum[parsedFormData.grade] },
+      });
     }
 
     return newApplication;
@@ -286,15 +305,18 @@ async function applyForJobPosition(applicationDetails) {
  */
 async function deleteCandidateApplication(candidateUID, jobPositionId) {
   try {
-    const applicationToDelete = await prisma.jobPositionApplicationHistory.findFirst({
-      where: {
-        candidateUID: candidateUID,
-        jobPositionId: jobPositionId,
-      },
-    });
+    const applicationToDelete =
+      await prisma.jobPositionApplicationHistory.findFirst({
+        where: {
+          candidateUID: candidateUID,
+          jobPositionId: jobPositionId,
+        },
+      });
 
     if (!applicationToDelete) {
-      throw new Error("Application not found for the specified candidate and job position.");
+      throw new Error(
+        'Application not found for the specified candidate and job position.'
+      );
     }
 
     return await prisma.jobPositionApplicationHistory.delete({
@@ -314,7 +336,7 @@ async function deleteCandidateApplication(candidateUID, jobPositionId) {
  * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
  */
 async function getCandidateApplications(UID) {
-  try{
+  try {
     const applications = await prisma.jobPositionApplicationHistory.findMany({
       where: { candidateUID: UID },
       include: {
@@ -340,7 +362,6 @@ async function getCandidateApplications(UID) {
   }
 }
 
-
 /**
  * Retrieves all candidate applications for all job positions managed by a specific faculty member.
  * @param {number} facultyUid - The UID of the faculty member (employer).
@@ -364,7 +385,11 @@ async function getCandidateApplicationsForFaculty(facultyUid) {
                 wasPriorEmployee: true,
                 user: { select: { name: true, email: true, uid: true } },
                 courseHistory: {
-                  select: { courseCode: true, grade: true, wasPriorEmployee: true },
+                  select: {
+                    courseCode: true,
+                    grade: true,
+                    wasPriorEmployee: true,
+                  },
                 },
               },
             },
@@ -381,13 +406,16 @@ async function getCandidateApplicationsForFaculty(facultyUid) {
           const relevantCourse = application.candidate.courseHistory.find(
             (course) => course.courseCode === position.courseCode
           );
-          application.gradeInCourse = relevantCourse ? gradeEnumToLetter[relevantCourse.grade] : 'N/A';
+          application.gradeInCourse = relevantCourse
+            ? gradeEnumToLetter[relevantCourse.grade]
+            : 'N/A';
 
           // List all courses the candidate has previously been a TA for.
-          application.previouslyTAedCourses = application.candidate.courseHistory
-            .filter((course) => course.wasPriorEmployee)
-            .map((course) => course.courseCode);
-          
+          application.previouslyTAedCourses =
+            application.candidate.courseHistory
+              .filter((course) => course.wasPriorEmployee)
+              .map((course) => course.courseCode);
+
           // Clean up the object by removing the full course history.
           delete application.candidate.courseHistory;
         }
@@ -399,7 +427,6 @@ async function getCandidateApplicationsForFaculty(facultyUid) {
       accumulator[currentPosition.id] = currentPosition;
       return accumulator;
     }, {});
-
   } catch (error) {
     console.log('Error in getCandidateApplications:', error);
     throw error;
@@ -438,10 +465,13 @@ async function findUniqueUser(UID) {
       });
       // Convert grade enums to letter grades for display.
       if (candidateProfile?.candidate?.courseHistory) {
-        candidateProfile.candidate.courseHistory = candidateProfile.candidate.courseHistory.map((history) => ({
-          ...history,
-          grade: history.grade ? gradeEnumToLetter[history.grade] : history.grade,
-        }));
+        candidateProfile.candidate.courseHistory =
+          candidateProfile.candidate.courseHistory.map((history) => ({
+            ...history,
+            grade: history.grade
+              ? gradeEnumToLetter[history.grade]
+              : history.grade,
+          }));
       }
       return candidateProfile;
     }
@@ -513,7 +543,9 @@ async function upsertCandidateProfile(candidateData) {
       // 3. Handle Course History (if provided).
       if (candidateData.courseHistory) {
         // First, remove all existing course history for this candidate to prevent duplicates.
-        await tx.courseHistory.deleteMany({ where: { candidateUID: candidateData.uid } });
+        await tx.courseHistory.deleteMany({
+          where: { candidateUID: candidateData.uid },
+        });
 
         // If new history is provided, create all new entries.
         if (candidateData.courseHistory.length > 0) {
@@ -605,9 +637,32 @@ async function addNewCandidateResume(candidateUID, isPrimary, resumeURL, name) {
         resumeURL: resumeURL,
         name: name,
       },
-    })
+    });
   } catch (error) {
     console.error('Error adding new resume:', error);
+    throw error;
+  }
+}
+
+/**
+ * Updates a specific resume for a candidate.
+ * @param {number} resumeId - The unique identifier of the resume to update.
+ * @param {string} name - The name of the resume.
+ * @returns {Promise<object>} A promise that resolves to the updated resume record.
+ */
+
+async function updateResumeName(resumeId, name) {
+  try {
+    return await prisma.resume.update({
+      where: {
+        id: resumeId,
+      },
+      data: {
+        name: name,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating resume:', error);
     throw error;
   }
 }
@@ -623,14 +678,7 @@ async function updatePrimaryResume(candidateUID, resumeId) {
     // Use a transaction to ensure both operations succeed or fail together
     return await prisma.$transaction(async (tx) => {
       // Step 1: Set all of the candidate's resumes to non-primary
-      await tx.resume.updateMany({
-        where: {
-          candidateUID: candidateUID,
-        },
-        data: {
-          isPrimary: false,
-        },
-      });
+      resetResumesToNonPrimary(candidateUID);
 
       // Step 2: Set the specified resume to primary
       const updatedResume = await tx.resume.update({
@@ -646,6 +694,24 @@ async function updatePrimaryResume(candidateUID, resumeId) {
     });
   } catch (error) {
     console.error('Error updating primary resume:', error);
+    throw error;
+  }
+}
+
+/**
+ * Gets all resumes for a candidate.
+ * @param {number} candidateUID - The unique identifier of the candidate.
+ * @returns {Promise<object>} A promise that resolves to an array of resume records.
+ */
+async function getCandidateResumes(candidateUID) {
+  try {
+    return await prisma.resume.findMany({
+      where: {
+        candidateUID: candidateUID,
+      },
+    });
+  } catch (error) {
+    console.error('Error retrieving resumes:', error);
     throw error;
   }
 }
@@ -673,16 +739,58 @@ async function resetResumesToNonPrimary(candidateUID) {
 }
 
 /**
- * Deletes a resume for a candidate.
- * @param {number} resumeId - The unique identifier of the resume to delete.
- * @returns {Promise<object>} A promise that resolves to the deleted resume record.
+ * Deletes a resume by its ID.
+ * If the deleted resume was primary, it promotes another resume to primary.
+ * @param {number} resumeId The ID of the resume to delete.
+ * @returns {Promise<object>} The deleted resume object.
  */
 async function deleteResume(resumeId) {
   try {
-    return await prisma.resume.delete({
-      where: {
-        id: resumeId,
-      },
+    return prisma.$transaction(async (tx) => {
+      // Find if the resume is associated with a job application.
+      const associatedApplication =
+        await tx.jobPositionApplicationHistory.findFirst({
+          where: { resumeId: resumeId },
+        });
+
+      // If an application uses this resume, throw a specific error
+      if (associatedApplication) {
+        throw new Error('DELETE_FAILED_ASSOCIATED');
+      }
+
+      // Find the resume to be deleted.
+      const resumeToDelete = await tx.resume.findUnique({
+        where: { id: resumeId },
+      });
+
+      if (!resumeToDelete) {
+        throw new Error('Resume not found.');
+      }
+
+      // If the resume was primary, find and promote a new one.
+      if (resumeToDelete.isPrimary) {
+        const otherResumes = await tx.resume.findMany({
+          where: {
+            candidateUID: resumeToDelete.candidateUID,
+            id: { not: resumeId }, // Find all OTHER resumes for this user
+          },
+        });
+
+        // If other resumes exist, make the first one primary.
+        if (otherResumes.length > 0) {
+          await tx.resume.update({
+            where: { id: otherResumes[0].id },
+            data: { isPrimary: true },
+          });
+        }
+      }
+
+      // Delete the actual resume record.
+      const deletedResume = await tx.resume.delete({
+        where: { id: resumeId },
+      });
+
+      return deletedResume;
     });
   } catch (error) {
     console.error('Error deleting resume:', error);
@@ -742,6 +850,8 @@ module.exports = {
   updatePrimaryResume,
   resetResumesToNonPrimary,
   deleteResume,
+  updateResumeName,
+  getCandidateResumes,
   getAllUsers,
   getAllCourses,
 };
