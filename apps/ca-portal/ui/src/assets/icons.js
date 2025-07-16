@@ -1,4 +1,55 @@
 // --- Reusable Icon Components ---
+export const SuccessIcon = () => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    className='h-6 w-6'
+    fill='none'
+    viewBox='0 0 24 24'
+    stroke='currentColor'
+  >
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth={2}
+      d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+    />
+  </svg>
+);
+
+export const WarningIcon = () => {
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    className='h-6 w-6'
+    fill='none'
+    viewBox='0 0 24 24'
+    stroke='currentColor'
+  >
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth={2}
+      d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
+    />
+  </svg>;
+};
+
+export const ErrorIcon = () => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    className='h-6 w-6'
+    fill='none'
+    viewBox='0 0 24 24'
+    stroke='currentColor'
+  >
+    <path
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth={2}
+      d='M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'
+    />
+  </svg>
+);
+
 export const ClockIcon = () => (
   <svg
     xmlns='http://www.w3.org/2000/svg'
@@ -102,15 +153,15 @@ export const XIcon = () => (
 
 export const FilterIcon = () => (
   <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-5 w-5 mr-2"
-    viewBox="0 0 20 20"
-    fill="currentColor"
+    xmlns='http://www.w3.org/2000/svg'
+    className='h-5 w-5 mr-2'
+    viewBox='0 0 20 20'
+    fill='currentColor'
   >
     <path
-      fillRule="evenodd"
-      d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
-      clipRule="evenodd"
+      fillRule='evenodd'
+      d='M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z'
+      clipRule='evenodd'
     />
   </svg>
 );

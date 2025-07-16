@@ -247,3 +247,69 @@ export async function upsertEmployerProfile(employerData) {
   });
   return handleApiResponse(response);
 }
+
+// api call to add new candidate resume
+export async function uploadNewCandidateResume(formData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/add-new-candidate-resume`;
+  console.log(`Uploading new candidate resume with file to: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
+  });
+  return handleApiResponse(response);
+}
+
+export async function updateResumeName(resumeId, name) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/update-resume-name/${resumeId}`;
+  console.log(`Updating resume name at: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name: name }),
+  });
+
+  return handleApiResponse(response);
+}
+
+// api call to update the primary resume for a candidate
+export async function updatePrimaryResume(candidateUID, resumeId) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/update-primary-resume/${candidateUID}/${resumeId}`;
+  console.log(`Updating primary resume at: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'PUT',
+  });
+  return handleApiResponse(response);
+}
+
+// api to delete a resume for a candidate
+export async function deleteResume(resumeId) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/delete-resume/${resumeId}`;
+  console.log(`Deleting resume at: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'DELETE',
+  });
+  return handleApiResponse(response);
+
+}
