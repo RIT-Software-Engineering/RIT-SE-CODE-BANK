@@ -776,10 +776,10 @@ async function deleteResume(resumeId) {
           },
         });
 
-        // If other resumes exist, make the first one primary.
+        // If other resumes exist, make the your most recent one primary.
         if (otherResumes.length > 0) {
           await tx.resume.update({
-            where: { id: otherResumes[0].id },
+            where: { id: otherResumes[otherResumes.length - 1].id },
             data: { isPrimary: true },
           });
         }
