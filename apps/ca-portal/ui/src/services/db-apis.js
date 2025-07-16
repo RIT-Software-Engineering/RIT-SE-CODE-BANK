@@ -202,3 +202,28 @@ export async function upsertEmployerProfile(employerData) {
   });
   return handleApiResponse(response);
 }
+
+/**
+ * Submits a weekly timecard for an employee.
+ * @param {object} timecardData - The payload containing jobPositionHistoryId and time entries.
+ * @returns {Promise<object>} A promise that resolves to the server's response.
+ */
+export async function upsertTimecard(timecardData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-timecard`;
+  console.log(`Submitting timecard to: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(timecardData),
+  });
+  return handleApiResponse(response);
+}

@@ -301,6 +301,31 @@ router.post('/upsert-employer-profile', async (req, res) => {
 });
 
 // =============================================================================
+// TIMECARD ROUTES
+// =============================================================================
+
+/**
+ * @route   POST /api/db/upsert-timecard
+ * @desc    Creates or updates an employee's weekly timecard.
+ * @access  Public (should be restricted to Employees/Admins)
+ * @body    {object} timecardData - The timecard data including jobPositionHistoryId and entries.
+ */
+router.post("/upsert-timecard", async (req, res) => {
+  try {
+    const timecardData = req.body;
+    // Basic validation to ensure the required data is present.
+    if (!timecardData || !timecardData.jobPositionHistoryId || !timecardData.entries) {
+      return res.status(400).json({ error: "Invalid or incomplete timecard data provided." });
+    }
+    const result = await upsertTimecard(timecardData);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error in /upsert-timecard route:", error);
+    res.status(500).json({ error: "Failed to save the timecard." });
+  }
+});
+
+// =============================================================================
 // GENERAL & UTILITY ROUTES
 // =============================================================================
 
