@@ -19,5 +19,8 @@
     "express": "^5.1.0",
     "nodemon": "^3.1.10",
     "prisma": "^6.10.1"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }

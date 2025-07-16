@@ -95,12 +95,12 @@ router.post('/workflow', async (req, res) => {
  * 
  * The primary function of this is updating the action_states based on changes to actions within a workflow.
  */
-router.put('workflow/:id', async (req, res) => {
+router.put('/workflow/:id', async (req, res) => {
   const { id } = req.params;
 
-  await prisma.$transaction(async () => {
+  await prisma.$transaction(async (tx) => {
     // Get the workflowState by id to get the workflow and actionStates
-    const workflowState = await prisma.workflowStates.findUnique({
+    const workflowState = await tx.workflowStates.findUnique({
       where: { id: id },
       include: {
         workflow: true,
@@ -108,13 +108,21 @@ router.put('workflow/:id', async (req, res) => {
       }
     });
 
+    if (!workflowState) {
+      throw new Error('Workflow state not found');
+    }
+
     // Get all of the actions from the workflow, in order.
     const actions = await getActionChain(workflowState.workflow.root_action_id);
 
+    // Build maps for easier lookup
+    const actionIdSet = new Set(actions.map(a => a.id));
+    const actionStateMap = new Map(workflowState.action_states.map(as => [as.action_id, as]));
+
     // Delete actionStates for actions that have been removed from the workflow
-    for (const actionState in workflowState.action_states) {
-      if (!actions.includes((action) => { action.id === actionState.action_id })) {
-        await prisma.actionStates.delete({
+    for (const actionState of workflowState.action_states) {
+      if (!actionIdSet.has(actionState.action_id)) {
+        await tx.actionStates.delete({
           where: { id: actionState.id }
         });
       }
@@ -122,25 +130,40 @@ router.put('workflow/:id', async (req, res) => {
 
     // Upsert actions that are still in or have been added to the workflow
     for (let i = 0; i < actions.length; i++) {
-      await prisma.actionStates.upsert({
-        where: {
-          workflow_state_id: id,
-          action_id: actions[i].id
-        },
-        create: {
-          workflow_state_id: id,
-          action_id: actions[i].id,
-          state_type: 'not_started',
-          index: i
-        },
-        update: {
-          index: i
-        }
-      });
+      const action = actions[i];
+      const existingActionState = actionStateMap.get(action.id);
+
+      if (existingActionState) {
+        // Update index if needed, preserve state_type and other fields
+        await tx.actionStates.update({
+          where: { id: existingActionState.id },
+          data: { index: i }
+        });
+      } else {
+        // Create new actionState for new action
+        await tx.actionStates.create({
+          data: {
+            workflow_state_id: id,
+            action_id: action.id,
+            state_type: 'not_started',
+            index: i
+          }
+        });
+      }
     }
+
+    // Fetch the updated workflowState with action_states in order
+    updatedState = await tx.workflowStates.findUnique({
+      where: { id: id },
+      include: {
+        action_states: {
+          orderBy: { index: 'asc' }
+        }
+      }
+    });
   });
 
-  res.json(updated);
+  res.json({ message: 'Updated' });
 });
 
 // DELETE /states/workflow/:id
@@ -156,7 +179,7 @@ router.delete('/workflow/:id', async (req, res) => {
 router.get('/action/:id', async (req, res) => {
   const { id } = req.params;
 
-  const state = await prisma.workflowStates.findUnique({
+  const state = await prisma.actionStates.findUnique({
     where: { id: id },
     include: {
       action: true
@@ -207,17 +230,15 @@ router.put('/action/:id', async (req, res) => {
 
 // TODO: Add endpoints for /state/action to delete if necessary
 
-router.get('/workflow/findStep', async (req, res) => {
-  const { userId, workflowStateId } = req.query;
-
-  const where = {};
-  if (userId) where.user_id = userId;
-  if (workflowStateId) where.workflow_state_id = workflowStateId;
+router.get('/workflow/:workflowStateId/findStep', async (req, res) => {
+  const { workflowStateId} = req.params;
+  const { userId } = req.query;
 
   // TODO: ActionStates aren't ordered, and aren't a linked list like Actions, so how do we know which one is first. (right now it's randomized...)
   const states = await prisma.actionStates.findFirst({
     where: {
-      ...where,
+      user_id: userId,
+      workflow_state_id: workflowStateId,
       state_type: 'not_started',
     },
     include: {
