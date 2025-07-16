@@ -11,15 +11,26 @@ import CloseIcon from '@mui/icons-material/Close';
 const navItems = [
   {
     label: 'Dashboard',
-    submenu: ['Scooployees', 'Projects', 'Administration'],
+    submenu: [
+      {label: 'Scooployee', path: '/scooployee/dashboard'},
+      {label: 'Scoopervisor', path: '/scoopervisor/dashboard'},
+      {label: 'Scoopdinator', path: '/scoopdinator/dashboard'},
+    ],
   },
   {
     label: 'Projects',
-    submenu: ['View Projects', 'Manage Projects', 'Project Archive'],
+    submenu: [
+      {label: 'Project Home', path: '/projects'},
+      {label: 'Demo Project 1', path: '/projects/1'},
+      {label: 'Assign Team', path: '/projects/assign/team'},
+    ],
   },
   {
     label: 'Contacts',
-    submenu: ['Scooployees', 'Scoopervisors', 'Academic Advisors', 'Co-op Coordinators'],
+    submenu: [
+      {label: 'Academic Advisors', path: '/scoopdinator/administrative/contact/advisors'},
+      {label: 'CO-OP Coordinators', path: '/scoopdinator/administrative/contact/coordinators'},
+    ],
   },
 ];
 
@@ -62,7 +73,7 @@ export default function Header() {
       <AppBar position="fixed" sx={{ bgcolor: '#fff', color: '#212121', height: '64px', boxShadow: 2 }}>
         <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, md: 3 } }}>
           <Box display="flex" alignItems="center">
-            <Link href="/" passHref legacyBehavior>
+            <Link href="/" passHref>
               <Box component="a" sx={{ display: 'inline-flex', alignItems: 'center', mr: 2 }}>
                 <Box
                   component="img"
@@ -92,8 +103,12 @@ export default function Header() {
                   onClose={() => handleMenuClose(label)}
                 >
                   {submenu.map((item) => (
-                    <MenuItem key={item} onClick={() => handleMenuClose(label)}>
-                      {item}
+                    <MenuItem 
+                      key={item.path}
+                      component={Link}
+                      href={item.path}
+                      onClick={() => handleMenuClose(label)}>
+                      {item.label}
                     </MenuItem>
                   ))}
                 </Menu>
@@ -149,7 +164,7 @@ export default function Header() {
                   }}
                 >
                   {filteredResults.map((page) => (
-                    <Link key={page.label} href={page.path} passHref legacyBehavior>
+                    <Link key={page.label} href={page.path} passHref>
                       <MenuItem onClick={() => {
                         setSearchOpen(false);
                         setQuery('');
