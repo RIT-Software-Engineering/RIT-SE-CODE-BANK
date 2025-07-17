@@ -157,29 +157,41 @@ model JobSchedule {
   jobPosition JobPosition @relation(fields: [jobPositionId], references: [id])
 }
 
-model TimeLogHistory {
-  //Fields
-  id                   Int @id @default(autoincrement())
-  timeLogId            String
+// =============================================================================
+// TIMECARD TABLES
+// =============================================================================
+
+model TimecardWeeklyHistory {
+  // Fields
+  id                   Int     @id @default(autoincrement())
   jobPositionHistoryId Int
+  isCurrentWeek        Boolean
 
   // Relations
   jobPositionHistory JobPositionHistory @relation(fields: [jobPositionHistoryId], references: [id])
-  timeLog            TimeLog            @relation(fields: [timeLogId], references: [id])
+  dailyEntries       TimecardDay[]
 
-  @@unique([jobPositionHistoryId, timeLogId])
+  @@index([jobPositionHistoryId])
 }
 
-model TimeLog {
-  //Fields
-  id            String   @id //startdatetime-enddatetime-EmployeeId
-  startDateTime DateTime
-  endDateTime   DateTime?
-  notes         String   @db.Text
-  duration      Decimal
+model TimecardDay {
+  // Fields
+  id                      String    @id // Composite Key: employeeID-day
+  day                     DateTime  @db.Date
+  timecardWeeklyHistoryId Int
+  notes                   String?   @db.Text
+  duration                Decimal   @db.Decimal(10, 2)
+  timeIn1                 DateTime? @db.Time
+  timeOut1                DateTime? @db.Time
+  timeIn2                 DateTime? @db.Time
+  timeOut2                DateTime? @db.Time
+  timeIn3                 DateTime? @db.Time
+  timeOut3                DateTime? @db.Time
 
   // Relations
-  timeLogHistory TimeLogHistory[]
+  timecardWeeklyHistory TimecardWeeklyHistory @relation(fields: [timecardWeeklyHistoryId], references: [id])
+
+  @@index([timecardWeeklyHistoryId])
 }
 
 
