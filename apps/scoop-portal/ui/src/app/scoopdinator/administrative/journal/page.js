@@ -87,7 +87,6 @@ export default function Journal() {
                 </Typography>
                 <>
                     {journalEntries
-                        .slice()
                         .sort((a, b) => new Date(b.date) - new Date(a.date))
                         .map((entry) => (
                             <Container
