@@ -1,6 +1,19 @@
 model Project {
-    id           Int    @id
-    title        String
-    display_name String
-    description  String @db.VarChar(255)
+    id                      Int      @id
+    submission_date         DateTime @default(now())
+    status                  String   @db.VarChar(50)
+    title                   String
+    display_name            String
+    description             String   @db.VarChar(255)
+    project_challenges      String   @db.VarChar(255)
+    constraints_assumptions String   @db.VarChar(255)
+    project_search_keywords String   @db.VarChar(255)
+    team_name               String   @db.VarChar(100)
+    poster                  String   @db.VarChar(255)
+    video                   String   @db.VarChar(255)
+    website                 String   @db.VarChar(255)
+    synopsis                String   @db.VarChar(255)
+    semester                Int
+    created_at              DateTime @default(now())
+    updated_at              DateTime @default(now()) @updatedAt
 }
