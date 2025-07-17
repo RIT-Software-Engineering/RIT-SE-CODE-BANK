@@ -377,6 +377,9 @@ async function getCandidateApplicationsForFaculty(facultyUid) {
         jobPositionApplicationHistory: {
           include: {
             // For each application, include detailed candidate information.
+            resume: {
+              select: { name: true, resumeURL: true },
+            },
             candidate: {
               select: {
                 year: true,
