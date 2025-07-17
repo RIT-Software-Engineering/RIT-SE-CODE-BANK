@@ -163,9 +163,9 @@ model JobSchedule {
 
 model TimecardWeeklyHistory {
   // Fields
-  id                   Int     @id @default(autoincrement())
+  id                   Int      @id @default(autoincrement())
   jobPositionHistoryId Int
-  isCurrentWeek        Boolean
+  isCurrentWeek        Boolean  @db.TinyInt
 
   // Relations
   jobPositionHistory JobPositionHistory @relation(fields: [jobPositionHistoryId], references: [id])
