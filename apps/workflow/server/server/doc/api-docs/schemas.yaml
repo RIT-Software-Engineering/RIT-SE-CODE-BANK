@@ -1,18 +1,5 @@
 components:
   schemas:
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-      required: [id, name, email]
-
     Action:
       type: object
       properties:

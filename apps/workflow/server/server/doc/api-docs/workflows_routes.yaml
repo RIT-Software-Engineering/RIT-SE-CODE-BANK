@@ -1,21 +1,3 @@
-openapi: 3.0.3
-info:
-  title: Workflow API
-  version: 1.0.0
-  description: |
-    API for managing workflows. Includes functionality for creating workflows, managing metadata, 
-    setting permissions, assigning tags, and tracking action states.
-  contact:
-    name: Workflow API Team
-    email: support@example.com
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-
-externalDocs:
-  description: Prisma model reference
-  url: https://pris.ly/d/prisma-schema
-
 tags:
   - name: Workflows
     description: Endpoints for creating and managing workflow definitions
@@ -25,6 +7,7 @@ paths:
     get:
       tags: [Workflows]
       summary: Get all workflows
+      description: Returns all of the workflows that match the filters specified in the query parameters.
       operationId: getAllWorkflows
       parameters:
         - in: query
@@ -50,6 +33,7 @@ paths:
     post:
       tags: [Workflows]
       summary: Create a new workflow
+      description: Creates a new workflow using the data specified in the body.
       operationId: createWorkflow
       requestBody:
         required: true
@@ -70,9 +54,7 @@ paths:
                   items:
                     type: string
                 metadata:
-                  type: array
-                  items:
-                    $ref: './schemas.yaml#/components/schemas/Metadata'
+                  type: object
                 rootActionId:
                   type: string
                   format: uuid

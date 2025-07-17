@@ -273,42 +273,44 @@ paths:
 components:
   schemas:
     WorkflowState:
-      type: object
-      properties:
-        id:
-          type: string
-        user_id:
-          type: string
-        workflow_id:
-          type: string
-        action_states:
-          type: array
-          items:
-            $ref: '#/components/schemas/ActionState'
-      required:
-        - id
-        - user_id
-        - workflow_id
-        - action_states
+      $ref: './schemas.yaml#/components/schemas/WorkflowState'
+      # type: object
+      # properties:
+      #   id:
+      #     type: string
+      #   user_id:
+      #     type: string
+      #   workflow_id:
+      #     type: string
+      #   action_states:
+      #     type: array
+      #     items:
+      #       $ref: '#/components/schemas/ActionState'
+      # required:
+      #   - id
+      #   - user_id
+      #   - workflow_id
+      #   - action_states
 
     ActionState:
-      type: object
-      properties:
-        id:
-          type: string
-        workflow_state_id:
-          type: string
-        action_id:
-          type: string
-        state_type:
-          type: string
-        index:
-          type: integer
-        action:
-          type: object
-      required:
-        - id
-        - workflow_state_id
-        - action_id
-        - state_type
-        - index
+      $ref: './schemas.yaml#/components/schemas/ActionState'
+      # type: object
+      # properties:
+      #   id:
+      #     type: string
+      #   workflow_state_id:
+      #     type: string
+      #   action_id:
+      #     type: string
+      #   state_type:
+      #     type: string
+      #   index:
+      #     type: integer
+      #   action:
+      #     type: object
+      # required:
+      #   - id
+      #   - workflow_state_id
+      #   - action_id
+      #   - state_type
+      #   - index

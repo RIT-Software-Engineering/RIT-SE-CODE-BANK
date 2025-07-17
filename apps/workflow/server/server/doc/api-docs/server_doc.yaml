@@ -35,3 +35,7 @@ paths:
     $ref: './states_routes.yaml#/paths/~1states~1workflow~1{workflowStateId}~1findStep'
   /states/handleSubmit:
     $ref: './states_routes.yaml#/paths/~1states~1handleSubmit'
+
+components:
+  schemas:
+    $ref: './schemas.yaml#/components/schemas'
