@@ -1,0 +1,37 @@
+openapi: 3.0.3
+info:
+  title: Workflows API Documentation
+  version: 1.0.0
+
+paths:
+  # Workflows
+  /workflows:
+    $ref: './workflows_routes.yaml#/paths/~1workflows'
+  /workflows/{id}:
+    $ref: './workflows_routes.yaml#/paths/~1workflows~1{id}'
+
+  # Actions
+  /actions:
+    $ref: './actions_routes.yaml#/paths/~1actions'
+  /actions/{id}:
+    $ref: './actions_routes.yaml#/paths/~1actions~1{id}'
+
+  # Permissions
+  /permissions:
+    $ref: './permissions_routes.yaml#/paths/~1permissions'
+  /permissions/{id}:
+    $ref: './permissions_routes.yaml#/paths/~1permissions~1{id}'
+
+  # States
+  /states/workflow:
+    $ref: './states_routes.yaml#/paths/~1states~1workflow'
+  /states/workflow/{id}:
+    $ref: './states_routes.yaml#/paths/~1states~1workflow~1{id}'
+  /states/action:
+    $ref: './states_routes.yaml#/paths/~1states~1action'
+  /states/action/{id}:
+    $ref: './states_routes.yaml#/paths/~1states~1action~1{id}'
+  /states/workflow/{workflowStateId}/findStep:
+    $ref: './states_routes.yaml#/paths/~1states~1workflow~1{workflowStateId}~1findStep'
+  /states/handleSubmit:
+    $ref: './states_routes.yaml#/paths/~1states~1handleSubmit'

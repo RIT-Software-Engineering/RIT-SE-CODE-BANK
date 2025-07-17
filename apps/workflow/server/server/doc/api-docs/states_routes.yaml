@@ -1,0 +1,314 @@
+openapi: 3.0.3
+info:
+  title: States API
+  version: 1.0.0
+
+paths:
+  /states/workflow/{id}:
+    get:
+      summary: Get a workflow state by ID
+      tags: 
+        - States
+          - Workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workflow state object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowState'
+
+    put:
+      summary: Update a workflow state by ID (update action_states)
+      tags: 
+        - States
+          - Workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Workflow state update payload
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Update confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+    delete:
+      summary: Delete a workflow state by ID
+      tags: 
+        - States
+          - Workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Delete confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /states/workflow:
+    get:
+      summary: Get multiple workflow states filtered by userId and/or workflowId
+      tags: 
+        - States
+          - Workflow
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: workflowId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Array of workflow states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkflowState'
+
+    post:
+      summary: Create a new workflow state
+      tags: 
+        - States
+          - Workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                workflowId:
+                  type: string
+              required:
+                - userId
+                - workflowId
+      responses:
+        '200':
+          description: Created workflow state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowState'
+
+  /states/action/{id}:
+    get:
+      summary: Get an action state by ID
+      tags: 
+        - States
+          - Action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Action state object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionState'
+
+    put:
+      summary: Update an action state by ID (e.g. update stateType)
+      tags: 
+        - States
+          - Action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Action state update payload
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stateType:
+                  type: string
+      responses:
+        '200':
+          description: Update confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /states/action:
+    get:
+      summary: Get multiple action states filtered by query parameters
+      tags: 
+        - States
+          - Action
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: workflowStateId
+          in: query
+          schema:
+            type: string
+        - name: actionId
+          in: query
+          schema:
+            type: string
+        - name: stateType
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Array of action states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActionState'
+
+  /states/workflow/{workflowStateId}/findStep:
+    get:
+      summary: Find next step (not_started) action state for user in a workflow state
+      tags: 
+        - States
+          - Workflow
+      parameters:
+        - name: workflowStateId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Action state object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionState'
+
+  /states/handleSubmit:
+    post:
+      summary: Handle submission of an action state (mark complete)
+      tags: 
+        - States
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actionStateId:
+                  type: string
+              required:
+                - actionStateId
+      responses:
+        '200':
+          description: Completion confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Failure response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+components:
+  schemas:
+    WorkflowState:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        workflow_id:
+          type: string
+        action_states:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionState'
+      required:
+        - id
+        - user_id
+        - workflow_id
+        - action_states
+
+    ActionState:
+      type: object
+      properties:
+        id:
+          type: string
+        workflow_state_id:
+          type: string
+        action_id:
+          type: string
+        state_type:
+          type: string
+        index:
+          type: integer
+        action:
+          type: object
+      required:
+        - id
+        - workflow_state_id
+        - action_id
+        - state_type
+        - index

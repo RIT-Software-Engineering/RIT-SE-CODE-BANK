@@ -1,0 +1,176 @@
+openapi: 3.0.3
+info:
+  title: Workflow API
+  version: 1.0.0
+  description: |
+    API for managing workflows. Includes functionality for creating workflows, managing metadata, 
+    setting permissions, assigning tags, and tracking action states.
+  contact:
+    name: Workflow API Team
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+externalDocs:
+  description: Prisma model reference
+  url: https://pris.ly/d/prisma-schema
+
+tags:
+  - name: Workflows
+    description: Endpoints for creating and managing workflow definitions
+
+paths:
+  /workflows:
+    get:
+      tags: [Workflows]
+      summary: Get all workflows
+      operationId: getAllWorkflows
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: tags
+          schema:
+            type: string
+            description: Comma-separated list of tag names to filter by
+      responses:
+        '200':
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './schemas.yaml#/components/schemas/WorkflowAttributes'
+
+    post:
+      tags: [Workflows]
+      summary: Create a new workflow
+      operationId: createWorkflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                description:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                metadata:
+                  type: array
+                  items:
+                    $ref: './schemas.yaml#/components/schemas/Metadata'
+                rootActionId:
+                  type: string
+                  format: uuid
+              required: [userId]
+      responses:
+        '200':
+          description: Created workflow
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/WorkflowAttributes'
+
+  /workflows/{id}:
+    get:
+      tags: [Workflows]
+      summary: Get a specific workflow
+      operationId: getWorkflowById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workflow found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/components/schemas/WorkflowAttributes'
+        '404':
+          description: Workflow not found
+
+    put:
+      tags: [Workflows]
+      summary: Update a workflow
+      operationId: updateWorkflow
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                metadata:
+                  type: array
+                  items:
+                    $ref: './schemas.yaml#/components/schemas/Metadata'
+                rootActionId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Workflow updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Updated
+
+    delete:
+      tags: [Workflows]
+      summary: Delete a workflow
+      operationId: deleteWorkflow
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workflow deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Deleted

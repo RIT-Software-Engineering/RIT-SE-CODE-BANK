@@ -1,0 +1,200 @@
+openapi: 3.0.3
+info:
+  title: Permissions API
+  version: 1.0.0
+
+paths:
+  /permissions/{id}:
+    get:
+      summary: Get a permission by ID
+      tags:
+        - Permissions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+
+    put:
+      summary: Update a permission by ID
+      tags:
+        - Permissions
+      description: |
+        Requires actingUserId with 'creator' access level for the action.
+        Validates permissionType if provided.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Fields to update permission
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actingUserId:
+                  type: string
+                permissionType:
+                  type: string
+                  description: Must be one of the valid permission types.
+      responses:
+        '200':
+          description: Updated permission object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '403':
+          description: Forbidden (authorization failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete a permission by ID
+      tags:
+        - Permissions
+      description: Requires actingUserId with 'creator' access level for the action.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Acting user ID for authorization
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actingUserId:
+                  type: string
+      responses:
+        '200':
+          description: Permission deletion confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '403':
+          description: Forbidden (authorization failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /permissions:
+    get:
+      summary: Get permissions filtered by userId, actionId, and/or permissionType
+      tags:
+        - Permissions
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: actionId
+          in: query
+          schema:
+            type: string
+        - name: permissionType
+          in: query
+          schema:
+            type: string
+            description: Must be a valid permission type
+      responses:
+        '200':
+          description: Array of permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Permission'
+
+    post:
+      summary: Create a new permission
+      tags:
+        - Permissions
+      description: |
+        Requires actingUserId with 'creator' access level for the action.
+        Validates permissionType.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actingUserId:
+                  type: string
+                newUserId:
+                  type: string
+                actionId:
+                  type: string
+                permissionType:
+                  type: string
+                  description: Must be one of the valid permission types.
+              required:
+                - actingUserId
+                - newUserId
+                - actionId
+                - permissionType
+      responses:
+        '200':
+          description: Created permission object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+        '403':
+          description: Forbidden (authorization failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        action_id:
+          type: string
+        permission_type:
+          type: string
+      required:
+        - id
+        - user_id
+        - action_id
+        - permission_type
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
