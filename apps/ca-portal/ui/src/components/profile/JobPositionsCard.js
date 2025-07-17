@@ -3,7 +3,8 @@ import DeleteIcon from "../icons/DeleteIcon";
 import EditIcon from "../icons/EditIcon";
 import EditPositionModal from "./EditPositionModal";
 import { useEffect, useState } from "react";
-import { formatDateForInput } from "./EditPositionModal";
+import { formatTime } from "@/utils/applicationUtils";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 
 export default function JobPositionsCard({ profileData }) {
   // "EMPLOYER" or "ADMIN" job positions
@@ -34,34 +35,28 @@ export default function JobPositionsCard({ profileData }) {
     setJobPositions((currentJobs) =>
       currentJobs.map((job) => (job.id === updatedJob.id ? updatedJob : job))
     );
+    console.log("Job updated:", updatedJob);
   };
 
   const handleDelete = (job) => {
     deleteJobPosition(job);
   };
 
-  function formatTimeFromISO(isoString) {
-    if (!isoString) return "N/A";
-
-    const date = new Date(isoString);
-
-    const options = {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true, // Use AM/PM
-    };
-
-    // 'en-US' can be replaced or omitted to use the browser's default locale
-    return date.toLocaleTimeString("en-US", options);
-  }
-
-  console.log(FormData  );
-
   return (
     <>
       <section className="bg-white rounded-xl p-4 shadow-lg border border-gray-200">
         <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Posted Job Positions</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold mb-4">Posted Job Positions</h3>
+            <button
+              onClick={() => handleOpenModal({})} // Open modal with empty job for new position
+            >
+              <AddOutlinedIcon
+                fontSize="large"
+                className="hover:cursor-pointer"
+              />
+            </button>
+          </div>
           {jobPositions.length === 0 ? (
             <p className="text-gray-500">No posted job positions found.</p>
           ) : (
@@ -84,9 +79,10 @@ export default function JobPositionsCard({ profileData }) {
                     <div>
                       {job.jobSchedules?.map((day) => (
                         <span key={day.id} className="mr-3">
-                          {day.dayOfWeek} <br/>
-                          {formatTimeFromISO(day.startTime)} - {formatTimeFromISO(day.endTime)}
-                          <br/>
+                          {day.dayOfWeek} <br />
+                          {formatTime(day.startTime)} -{" "}
+                          {formatTime(day.endTime)}
+                          <br />
                         </span>
                       ))}
                     </div>

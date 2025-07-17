@@ -1,71 +1,83 @@
 import { useState, useEffect } from "react";
 
+// A reusable icon for a clean UI
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-red-500">
+    <path d="M3 6h18" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
+/**
+ * Formats a date-time string for a time input's value, consistently using UTC.
+ * @param {string} timeString - The full ISO date string from the database or a "HH:mm" string.
+ * @returns {string} The time formatted as "HH:mm".
+ */
+const formatTimeToInputValue = (timeString) => {
+  if (!timeString) return "";
+
+  // If the value is already "HH:mm" (from a user edit), return it directly.
+  if (typeof timeString === 'string' && timeString.match(/^\d{2}:\d{2}$/)) {
+    return timeString;
+  }
+  
+  // Otherwise, parse the full date string and get its UTC time components.
+  try {
+    const date = new Date(timeString);
+    // Use getUTCHours() and getUTCMinutes() to ignore the local timezone.
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } catch (error) {
+    console.error("Error formatting time:", error);
+    return "";
+  }
+};
+
+
 export default function ScheduleEditor({
   initialSchedules = [],
   onSchedulesChange,
 }) {
-  const [schedules, setSchedules] = useState(initialSchedules);
+  const [schedules, setSchedules] = useState([]);
   const [newSchedule, setNewSchedule] = useState({
-    dayOfWeek: "MONDAY",
+    dayOfWeek: "Monday",
     startTime: "",
     endTime: "",
   });
-  console.log(initialSchedules)
 
-  // This function now correctly formats the time based on the user's local timezone.
-  const formatTimeToInputValue = (timeString) => {
-    if (!timeString || typeof timeString !== "string") {
-      return "";
-    }
+  useEffect(() => {
+    // Format the incoming schedules using the UTC helper before setting state.
+    const formattedSchedules = initialSchedules.map(sch => ({
+      ...sch,
+      startTime: formatTimeToInputValue(sch.startTime),
+      endTime: formatTimeToInputValue(sch.endTime),
+    }));
+    setSchedules(formattedSchedules);
+  }, [initialSchedules]);
 
-    // If the value is already in "HH:mm" format (from an edit), return it directly.
-    if (timeString.match(/^\d{2}:\d{2}$/)) {
-      return timeString;
-    }
-
-    try {
-      // Otherwise, parse the full ISO string from the database.
-      const date = new Date(timeString);
-
-      // Get hours and minutes in the local timezone.
-      const hours = date.getHours().toString().padStart(2, "0");
-      const minutes = date.getMinutes().toString().padStart(2, "0");
-
-      // Return the time in the "HH:mm" format required by the input.
-      return `${hours}:${minutes}`;
-    } catch (error) {
-      console.error("Error formatting time:", error);
-      return "";
+  const triggerParentUpdate = (updatedSchedules) => {
+    setSchedules(updatedSchedules);
+    if (onSchedulesChange) {
+      onSchedulesChange(updatedSchedules);
     }
   };
 
-  useEffect(() => {
-    setSchedules(initialSchedules);
-  }, [initialSchedules]);
-
-  // This function is the core of the unified form.
-  // It updates the state directly when you type in an input.
   const handleTimeChange = (index, field, value) => {
     const updatedSchedules = schedules.map((schedule, i) => {
       if (i === index) {
-        // Return a new object with the updated time
         return { ...schedule, [field]: value };
       }
       return schedule;
     });
-    setSchedules(updatedSchedules);
-    // Notify the parent component of the change
-    if (onSchedulesChange) {
-      onSchedulesChange(updatedSchedules);
-    }
+    triggerParentUpdate(updatedSchedules);
   };
 
   const handleRemoveSchedule = (index) => {
     const updatedSchedules = schedules.filter((_, i) => i !== index);
-    setSchedules(updatedSchedules);
-    if (onSchedulesChange) {
-      onSchedulesChange(updatedSchedules);
-    }
+    triggerParentUpdate(updatedSchedules);
   };
 
   const handleNewScheduleInputChange = (e) => {
@@ -79,11 +91,8 @@ export default function ScheduleEditor({
       return;
     }
     const updatedSchedules = [...schedules, newSchedule];
-    setSchedules(updatedSchedules);
-    if (onSchedulesChange) {
-      onSchedulesChange(updatedSchedules);
-    }
-    setNewSchedule({ dayOfWeek: "MONDAY", startTime: "", endTime: "" });
+    triggerParentUpdate(updatedSchedules);
+    setNewSchedule({ dayOfWeek: "Monday", startTime: "", endTime: "" });
   };
 
   return (
@@ -91,35 +100,26 @@ export default function ScheduleEditor({
       <h3 className="text-lg font-semibold text-gray-800">
         Edit Weekly Schedule
       </h3>
-
-      {/* This section maps over the existing schedules and renders them as editable inputs */}
       <div className="space-y-3">
         {schedules.map((schedule, index) => (
           <div
-            key={index}
+            key={schedule.id || index}
             className="grid grid-cols-[1fr_auto_auto_auto] gap-3 items-center p-2 rounded-md bg-white border"
           >
-            {/* The day is displayed as text, but could also be a disabled input */}
             <span className="font-medium text-gray-700 capitalize">
               {schedule.dayOfWeek.toLowerCase()}
             </span>
-
-            {/* The time inputs are directly editable */}
             <input
               type="time"
-              value={formatTimeToInputValue(schedule.startTime)}
-              onChange={(e) =>
-                handleTimeChange(index, "startTime", e.target.value)
-              }
-              className="w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              value={schedule.startTime}
+              onChange={(e) => handleTimeChange(index, "startTime", e.target.value)}
+              className="w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm"
             />
             <input
               type="time"
-              value={formatTimeToInputValue(schedule.endTime)}
-              onChange={(e) =>
-                handleTimeChange(index, "endTime", e.target.value)
-              }
-              className="w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              value={schedule.endTime}
+              onChange={(e) => handleTimeChange(index, "endTime", e.target.value)}
+              className="w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm"
             />
             <button
               type="button"
@@ -127,10 +127,48 @@ export default function ScheduleEditor({
               className="p-1"
               aria-label="Remove schedule"
             >
-              {/* <TrashIcon /> */}
+              <TrashIcon />
             </button>
           </div>
         ))}
+      </div>
+       <div className="pt-4 border-t">
+         <h4 className="text-md font-semibold text-gray-700 mb-2">Add a New Day</h4>
+         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 items-end">
+            <select
+              name="dayOfWeek"
+              value={newSchedule.dayOfWeek}
+              onChange={handleNewScheduleInputChange}
+              className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm"
+            >
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+            </select>
+            <input
+              type="time"
+              name="startTime"
+              value={newSchedule.startTime}
+              onChange={handleNewScheduleInputChange}
+              className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+            <input
+              type="time"
+              name="endTime"
+              value={newSchedule.endTime}
+              onChange={handleNewScheduleInputChange}
+              className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm"
+            />
+            <button
+              type="button"
+              onClick={handleAddSchedule}
+              className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700"
+            >
+              Add
+            </button>
+         </div>
       </div>
     </div>
   );
