@@ -174,4 +174,22 @@ router.post(
     }
 );
 
+// Get responses that are targeted at a certain peer
+// /assessments/:assessmentId/responses/in/:respondeeId
+router.get("/:assessmentId/responses/in/:respondeeId", async (req, res) => {
+    const { respondeeId, assessmentId } = req.params;
+
+    const rs = await prisma.formResponse.findMany({
+        where: {
+            assessmentId,
+            respondeeId,
+        },
+        include: {
+            responses: true,
+        },
+    });
+
+    res.json(rs);
+});
+
 export default router;
