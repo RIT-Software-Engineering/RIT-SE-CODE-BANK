@@ -56,15 +56,22 @@ const Section: React.FC<{
                             </div>
                         </div>
                     </Link>
+                    {new Date() > new Date(a.dueDate) && (
+                        <Link
+                            href={`/projects/${projectId}/assessments/${a.id}/received`}
+                        >
+                            <PeersBox />
+                        </Link>
+                    )}
                 </Fragment>
             ))}
         </div>
     </section>
 );
 
-const PeersBox: React.FC<{ count: number }> = ({ count }) => (
+const PeersBox: React.FC = () => (
     <div className="bg-blue-100 text-blue-800 rounded px-3 py-1 text-xs font-semibold text-center min-w-[48px] cursor-pointer">
-        {count} peer submissions
+        View Peer Submissions
     </div>
 );
 

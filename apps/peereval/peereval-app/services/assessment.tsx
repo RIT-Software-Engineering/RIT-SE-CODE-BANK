@@ -91,3 +91,23 @@ export async function sendAssessmentResponses(
             assessmentId
     );
 }
+
+export async function getReceivedAssessmentResponses(
+    assessmentId: string,
+    respondeeId: string
+): Promise<PeerFormResponse[]> {
+    const res = await fetch(
+        `${BASE_URL}/assessments/${assessmentId}/responses/in/${respondeeId}`,
+        {
+            credentials: "include",
+        }
+    );
+
+    return handleResponse(
+        res,
+        "Couldn't get responses for user " +
+            respondeeId +
+            " and assessment " +
+            assessmentId
+    );
+}

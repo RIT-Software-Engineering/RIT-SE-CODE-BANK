@@ -4,20 +4,12 @@ import { useAuth } from "@/context/AuthContext";
 import {
     getAssessmentById,
     getAssessmentInquiriesById,
-    getAssessmentPeerResponses,
-    sendAssessmentResponses,
+    getReceivedAssessmentResponses,
 } from "@/services/assessment";
 import { getProjectsPeers as getProjectPeers } from "@/services/project";
 import { UserProfile } from "@/types/userProfile";
-import {
-    Assessment,
-    Inquiry,
-    InquiryType,
-    RubricInquiry,
-} from "@/types/assessment";
+import { Assessment, Inquiry, InquiryType } from "@/types/assessment";
 import React, { useEffect, useState } from "react";
-import { IconButton, Snackbar, SnackbarCloseReason } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 
 // --- Main Component ---
 interface FeedbackFormProps {
@@ -27,15 +19,15 @@ interface FeedbackFormProps {
     };
 }
 const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
-    const [editable, setEditable] = useState(false);
     const [assessmentMetadata, setAssessmentMetadata] =
         useState<Assessment | null>(null);
     const [activePeer, setActivePeer] = useState<UserProfile | null>(null);
     const [activeTab, setActiveTab] = useState<number>(0);
-    const [responses, setResponses] = useState<Record<string, string>>({});
+    const [responses, setResponses] = useState<
+        Record<string, Record<string, string>>
+    >({});
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-    const [peersToEval, setPeersToEval] = useState<UserProfile[]>([]);
-    const [showSnack, setShowSnack] = useState(false);
+    const [peers, setPeers] = useState<UserProfile[]>([]);
     const { currentUser } = useAuth();
 
     const { projectId, assessmentId } = params;
@@ -48,18 +40,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             const a = await getAssessmentById(assessmentId);
             setAssessmentMetadata(a);
 
-            // See if the peer should be able to edit the form
-            setEditable(new Date() >= new Date(a.startDate));
-
             // Get assessment inquiries
             const inqs = await getAssessmentInquiriesById(assessmentId);
             setInquiries(inqs);
-            console.dir(inqs);
 
-            // Get the peers to respond to
+            // Get the relevant peers
             let ps = await getProjectPeers(projectId);
             ps = ps.filter((p) => p.id != currentUser.id);
-            setPeersToEval(ps);
+            setPeers(ps);
             setActivePeer(ps[0]);
         })();
     }, [currentUser]);
@@ -69,106 +57,38 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
 
         (async () => {
             // Get assessment responses
-            const rs = await getAssessmentPeerResponses(
+            const rs = await getReceivedAssessmentResponses(
                 assessmentId,
                 currentUser.id
             );
 
-            // We only do one peer at a time
-            // Get current peer under review, set the responses
-            const peerRs = rs.find((r) => r.respondeeId == activePeer.id);
-
-            if (!peerRs) {
-                setResponses({});
-            } else
-                setResponses(
-                    peerRs.responses.reduce((acc, r) => {
-                        acc[r.inquiryId] = r.answer;
-                        return acc;
-                    }, {} as Record<string, string>)
-                );
+            // We're gonna do all peers at the same time
+            setResponses(
+                rs.reduce(
+                    (acc1, r) => ({
+                        ...acc1,
+                        [r.responderId]: r.responses.reduce(
+                            (acc2, res) => ({
+                                ...acc2,
+                                [res.inquiryId]: res.answer,
+                            }),
+                            {}
+                        ),
+                    }),
+                    {}
+                )
+            );
         })();
     }, [activePeer]);
 
     const handleSwitchTab = (idx: number) => {
-        submitForm();
-
         setActiveTab(idx);
-        setActivePeer(peersToEval[idx]);
-    };
-
-    const handleFreeResponse = (qid: string, answer: string) => {
-        setResponses((prev) => ({
-            ...prev,
-            [qid]: answer,
-        }));
-    };
-
-    const handleRating = (qid: string, answer: number) => {
-        setResponses((prev) => ({
-            ...prev,
-            [qid]: `${answer}`,
-        }));
-    };
-
-    const handleRubric = (qid: string, rowIdx: number, colIdx: number) => {
-        setResponses((prev) => {
-            const prevAns: number[] = prev[qid]
-                ? JSON.parse(prev[qid])
-                : Array(
-                      (inquiries.find((inq) => inq.id == qid) as RubricInquiry)
-                          .rows.length
-                  ).fill(-1);
-            prevAns[rowIdx] = colIdx;
-            return {
-                ...prev,
-                [qid]: JSON.stringify(prevAns),
-            };
-        });
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        submitForm();
-        setShowSnack(true);
-    };
-
-    const submitForm = () => {
-        sendAssessmentResponses(
-            assessmentId,
-            currentUser!.id,
-            activePeer!.id,
-            responses
-        );
+        setActivePeer(peers[idx]);
     };
 
     const handleBack = () => {
-        submitForm();
         window.history.back();
     };
-
-    const handleClose = (
-        event: React.SyntheticEvent | Event,
-        reason?: SnackbarCloseReason
-    ) => {
-        if (reason === "clickaway") {
-            return;
-        }
-
-        setShowSnack(false);
-    };
-
-    const snackAction = (
-        <IconButton
-            size="small"
-            aria-label="close"
-            color="inherit"
-            onClick={handleClose}
-        >
-            <CloseIcon fontSize="small" />
-        </IconButton>
-    );
 
     const { FREE_RESPONSE, RUBRIC, RATING } = InquiryType;
 
@@ -186,10 +106,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
 
     return (
         <>
-            <form
-                onSubmit={handleSubmit}
-                className="max-w-xl mx-auto p-4 space-y-8"
-            >
+            <form className="max-w-xl mx-auto p-4 space-y-8">
                 <button
                     type="button"
                     onClick={handleBack}
@@ -198,7 +115,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                     &larr; Back
                 </button>
                 <div className="flex justify-center mb-6 space-x-2">
-                    {peersToEval.map(({ id, name }, idx) => (
+                    {peers.map(({ id, name }, idx) => (
                         <button
                             key={name}
                             type="button"
@@ -215,7 +132,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                 </div>
                 <p className="text-xl">
                     {assessmentMetadata.name} —{" "}
-                    <span className="font-semibold">{activePeer.name}</span>
+                    <span className="font-semibold">
+                        {activePeer.name} [RECEIVED]
+                    </span>
                 </p>
                 {inquiries.map((q) => {
                     switch (q.type) {
@@ -227,15 +146,12 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                     </label>
                                     <textarea
                                         className="w-full border rounded p-2"
-                                        value={responses[q.id] || ""}
-                                        onChange={(e) =>
-                                            handleFreeResponse(
-                                                q.id,
-                                                e.target.value
-                                            )
+                                        value={
+                                            responses[activePeer.id]?.[q.id] ||
+                                            ""
                                         }
                                         rows={4}
-                                        disabled={!editable}
+                                        disabled
                                     />
                                 </div>
                             );
@@ -257,16 +173,11 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                                     name={`${q.id}-${activePeer}`}
                                                     value={i + 1}
                                                     checked={
-                                                        responses[q.id] ==
-                                                        `${i + 1}`
+                                                        responses[
+                                                            activePeer.id
+                                                        ]?.[q.id] == `${i + 1}`
                                                     }
-                                                    onChange={() =>
-                                                        handleRating(
-                                                            q.id,
-                                                            i + 1
-                                                        )
-                                                    }
-                                                    disabled={!editable}
+                                                    disabled
                                                 />
                                                 <span>{i + 1}</span>
                                             </label>
@@ -314,6 +225,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                                                     name={`${q.id}-row-${rowIdx}-${activePeer}`}
                                                                     checked={
                                                                         (!responses[
+                                                                            activePeer
+                                                                                .id
+                                                                        ]?.[
                                                                             q.id
                                                                         ]
                                                                             ? Array(
@@ -325,6 +239,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                                                               )
                                                                             : (JSON.parse(
                                                                                   responses[
+                                                                                      activePeer
+                                                                                          .id
+                                                                                  ][
                                                                                       q
                                                                                           .id
                                                                                   ]
@@ -333,16 +250,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                                                         ] ===
                                                                         colIdx
                                                                     }
-                                                                    onChange={() =>
-                                                                        handleRubric(
-                                                                            q.id,
-                                                                            rowIdx,
-                                                                            colIdx
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        !editable
-                                                                    }
+                                                                    disabled
                                                                 />
                                                             </td>
                                                         )
@@ -357,43 +265,13 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                             return <p>There shouldn't be a question here.</p>;
                     }
                 })}
-                {editable ? (
-                    <>
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 text-white py-2 rounded font-semibold cursor-pointer"
-                        >
-                            Submit
-                        </button>
-                        <Snackbar
-                            open={showSnack}
-                            autoHideDuration={6000}
-                            message="Response submitted"
-                            onClose={handleClose}
-                            action={snackAction}
-                            anchorOrigin={{
-                                vertical: "bottom",
-                                horizontal: "center",
-                            }}
-                        />
-                    </>
-                ) : (
-                    <button
-                        disabled
-                        className="w-full bg-gray-400 text-white py-2 rounded font-semibold"
-                    >
-                        {new Date() < new Date(assessmentMetadata.startDate)
-                            ? "Starts " +
-                              new Date(
-                                  assessmentMetadata.startDate
-                              ).toLocaleDateString("en-US", {
-                                  weekday: "long",
-                                  day: "numeric",
-                                  month: "long",
-                              })
-                            : "Past Due"}
-                    </button>
-                )}
+
+                <button
+                    disabled
+                    className="w-full bg-gray-400 text-white py-2 rounded font-semibold"
+                >
+                    Read Only
+                </button>
             </form>
         </>
     );
