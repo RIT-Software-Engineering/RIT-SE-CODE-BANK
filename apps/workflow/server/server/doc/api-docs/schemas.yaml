@@ -106,10 +106,6 @@ components:
           type: string
           format: uuid
           nullable: true
-        tags:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tag'
       required: [id, base_action_id]
 
     Tag:

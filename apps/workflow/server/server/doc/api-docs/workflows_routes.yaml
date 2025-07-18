@@ -21,14 +21,14 @@ paths:
             type: string
             description: Comma-separated list of tag names to filter by
       responses:
-        '200':
+        "200":
           description: List of workflows
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: './schemas.yaml#/components/schemas/WorkflowAttributes'
+                  $ref: "#/components/responses/WorkflowAttributes"
 
     post:
       tags: [Workflows]
@@ -60,12 +60,12 @@ paths:
                   format: uuid
               required: [userId]
       responses:
-        '200':
+        "200":
           description: Created workflow
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/WorkflowAttributes'
+                $ref: "./schemas.yaml#/components/schemas/WorkflowAttributes"
 
   /workflows/{id}:
     get:
@@ -81,13 +81,13 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Workflow found
           content:
             application/json:
               schema:
-                $ref: './schemas.yaml#/components/schemas/WorkflowAttributes'
-        '404':
+                $ref: "#/components/responses/WorkflowAttributes"
+        "404":
           description: Workflow not found
 
     put:
@@ -118,14 +118,12 @@ paths:
                   items:
                     type: string
                 metadata:
-                  type: array
-                  items:
-                    $ref: './schemas.yaml#/components/schemas/Metadata'
+                  type: object
                 rootActionId:
                   type: string
                   format: uuid
       responses:
-        '200':
+        "200":
           description: Workflow updated
           content:
             application/json:
@@ -149,7 +147,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Workflow deleted
           content:
             application/json:
@@ -159,3 +157,75 @@ paths:
                   message:
                     type: string
                     example: Deleted
+
+components:
+  responses:
+    WorkflowAttributes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        base_action_id:
+          type: string
+          format: uuid
+        root_action_id:
+          type: string
+          format: uuid
+          nullable: true
+        tags:
+          type: array
+          items:
+            $ref: "./schemas.yaml#/components/schemas/Tag"
+        base_action:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            description:
+              type: string
+            form:
+              type: string
+            action_type: 
+              $ref: "./schemas.yaml#/components/schemas/ActionType"
+            is_frozen:
+              type: boolean
+            next_action_id:
+              type: string
+              format: uuid
+            parent_action_id:
+              type: string
+              format: uuid
+            metadata: 
+              type: object
+            permissions: 
+              type: array
+              items:
+                $ref: "./schemas.yaml#/components/schemas/Permission"
+        root_action:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            description:
+              type: string
+            form:
+              type: string
+            action_type: 
+              $ref: "./schemas.yaml#/components/schemas/ActionType"
+            is_frozen:
+              type: boolean
+            next_action_id:
+              type: string
+              format: uuid
+            parent_action_id:
+              type: string
+              format: uuid
+
+      required: [id, base_action_id]
