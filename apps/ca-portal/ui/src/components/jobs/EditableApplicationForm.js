@@ -3,6 +3,7 @@
 import { useForm, useWatch } from 'react-hook-form';
 import { applyForJobPosition, applyForJobPositionWithNewResume } from '../../services/db-apis';
 import { letterToGradeValue } from '@/constants/gradeConstants';
+import { useNotification } from '@/contexts/NotificationContext';
 
 // A display field for showing non-editable user info.
 const DisplayField = ({ label, value }) => (
@@ -16,6 +17,7 @@ const DisplayField = ({ label, value }) => (
 
 export default function EditableApplicationForm({ user, position, onClose, onApplySuccess }) {
     // Get the list of resumes and find the primary one to pre-select.
+    const { showNotification } = useNotification();
     const existingResumes = user?.candidate?.resumes || [];
     const primaryResume = existingResumes.find(r => r.isPrimary) || existingResumes[0];
 
@@ -83,10 +85,11 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
             }
 
             onApplySuccess();
+            showNotification('Application submitted successfully.', 'success');
             onClose();
         } catch (err) {
             console.error("Submission failed:", err);
-            alert(err.message || 'An unknown error occurred during submission.');
+            showNotification(err.message || 'Failed to submit application.', 'error');
         }
     };
 
