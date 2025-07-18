@@ -14,15 +14,15 @@ components:
         form:
           type: string
           nullable: true
-        actionType:
+        action_type:
           $ref: '#/components/schemas/ActionType'
-        isFrozen:
+        is_frozen:
           type: boolean
-        nextActionId:
+        next_action_id:
           type: string
           format: uuid
           nullable: true
-        parentActionId:
+        parent_action_id:
           type: string
           format: uuid
           nullable: true
@@ -30,23 +30,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Metadata'
-        referenceEndpoints:
-          type: array
-          items:
-            $ref: '#/components/schemas/ReferenceEndpoint'
-        childActions:
+        child_actions:
           type: array
           items:
             $ref: '#/components/schemas/Action'
-        parentAction:
+        parent_action:
           $ref: '#/components/schemas/Action'
-        nextAction:
+        next_action:
           $ref: '#/components/schemas/Action'
-        previousAction:
+        previous_action:
           $ref: '#/components/schemas/Action'
-        baseActionOf:
+        base_action_of:
           $ref: '#/components/schemas/WorkflowAttributes'
-        rootActionOf:
+        root_action_of:
           type: array
           items:
             $ref: '#/components/schemas/WorkflowAttributes'
@@ -54,11 +50,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Permission'
-        actionStates:
+        action_states:
           type: array
           items:
             $ref: '#/components/schemas/ActionState'
-      required: [id, name, actionType, isFrozen]
+      required: [id, name, action_type, is_frozen]
 
     ActionType:
       type: string
@@ -74,10 +70,10 @@ components:
           type: string
         value:
           type: string
-        actionId:
+        action_id:
           type: string
           format: uuid
-      required: [id, key, value, actionId]
+      required: [id, key, value, action_id]
 
     ReferenceEndpoint:
       type: object
@@ -92,10 +88,10 @@ components:
           format: uri
         method:
           type: string
-        actionId:
+        action_id:
           type: string
           format: uuid
-      required: [id, name, url, method, actionId]
+      required: [id, name, url, method, action_id]
 
     WorkflowAttributes:
       type: object
@@ -103,10 +99,10 @@ components:
         id:
           type: string
           format: uuid
-        baseActionId:
+        base_action_id:
           type: string
           format: uuid
-        rootActionId:
+        root_action_id:
           type: string
           format: uuid
           nullable: true
@@ -114,11 +110,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tag'
-        workflowStates:
-          type: array
-          items:
-            $ref: '#/components/schemas/WorkflowState'
-      required: [id, baseActionId]
+      required: [id, base_action_id]
 
     Tag:
       type: object
@@ -136,15 +128,15 @@ components:
         id:
           type: string
           format: uuid
-        userId:
+        user_id:
           type: string
           format: uuid
-        actionId:
+        action_id:
           type: string
           format: uuid
-        permissionType:
+        permission_type:
           $ref: '#/components/schemas/PermissionType'
-      required: [id, userId, actionId, permissionType]
+      required: [id, user_id, action_id, permission_type]
 
     PermissionType:
       type: string
@@ -156,17 +148,17 @@ components:
         id:
           type: string
           format: uuid
-        userId:
+        user_id:
           type: string
           format: uuid
-        workflowId:
+        workflow_id:
           type: string
           format: uuid
-        actionStates:
+        action_states:
           type: array
           items:
             $ref: '#/components/schemas/ActionState'
-      required: [id, userId, workflowId]
+      required: [id, user_id, workflow_id]
 
     ActionState:
       type: object
@@ -174,17 +166,17 @@ components:
         id:
           type: string
           format: uuid
-        workflowStateId:
+        workflow_state_id:
           type: string
           format: uuid
-        actionId:
+        action_id:
           type: string
           format: uuid
-        stateType:
+        state_type:
           $ref: '#/components/schemas/StateType'
         index:
           type: integer
-      required: [id, workflowStateId, actionId, stateType, index]
+      required: [id, workflow_state_id, action_id, state_type, index]
 
     StateType:
       type: string

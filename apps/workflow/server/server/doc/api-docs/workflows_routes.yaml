@@ -71,6 +71,7 @@ paths:
     get:
       tags: [Workflows]
       summary: Get a specific workflow
+      description: Returns the workflow with the specified ID
       operationId: getWorkflowById
       parameters:
         - in: path
@@ -92,6 +93,7 @@ paths:
     put:
       tags: [Workflows]
       summary: Update a workflow
+      description: Updates the workflow with the specified ID using the data provided in the body
       operationId: updateWorkflow
       parameters:
         - in: path
@@ -137,6 +139,7 @@ paths:
     delete:
       tags: [Workflows]
       summary: Delete a workflow
+      description: Deletes the workflow with the sepcified ID along with everything uniquely associated with it
       operationId: deleteWorkflow
       parameters:
         - in: path

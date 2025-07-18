@@ -1,14 +1,20 @@
 openapi: 3.0.3
+
 info:
   title: Actions API
   version: 1.0.0
+
+tags:
+  - name: Actions
+    description: Endpoints related to user actions
 
 paths:
   /actions/{id}:
     get:
       summary: Get a specific action by id
-      tags:
-        - Actions
+      description: Returns the action with the specified ID
+      operationId: getActionById
+      tags: [Actions]
       parameters:
         - name: id
           in: path
@@ -18,17 +24,18 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: The action
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Action'
+                $ref: "#/components/schemas/Action"
 
     put:
       summary: Update an action by id
-      tags:
-        - Actions
+      description: Updates the action with the specified ID using the data provided in the body
+      operationId: updateAction
+      tags: [Actions]
       parameters:
         - name: id
           in: path
@@ -52,11 +59,11 @@ paths:
                 form:
                   type: string
                 actionType:
-                  $ref: '#/components/schemas/ActionType'
+                  $ref: "#/components/schemas/ActionType"
                 metadata:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                 nextActionId:
                   type: string
                   format: uuid
@@ -64,7 +71,7 @@ paths:
                   type: string
                   format: uuid
       responses:
-        '200':
+        "200":
           description: Update confirmation
           content:
             application/json:
@@ -73,11 +80,13 @@ paths:
                 properties:
                   message:
                     type: string
+                    example: "Updated"
 
     delete:
       summary: Delete an action by id
-      tags:
-        - Actions
+      description: Deletes the action with the specified ID
+      operationId: deleteAction
+      tags: [Actions]
       parameters:
         - name: id
           in: path
@@ -87,7 +96,7 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: Delete confirmation
           content:
             application/json:
@@ -96,12 +105,14 @@ paths:
                 properties:
                   message:
                     type: string
+                    example: "Deleted"
 
   /actions:
     get:
-      summary: Get actions (optionally filtered by workflowId)
-      tags:
-        - Actions
+      summary: Get actions
+      description: Returns a list of actions, optionally filtered by workflow ID
+      operationId: getActions
+      tags: [Actions]
       parameters:
         - name: workflowId
           in: query
@@ -111,19 +122,20 @@ paths:
             type: string
             format: uuid
       responses:
-        '200':
+        "200":
           description: List of actions
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Action'
+                  $ref: "#/components/schemas/Action"
 
     post:
       summary: Create a new action
-      tags:
-        - Actions
+      description: Creates a new action using the data specified in the body
+      operationId: createAction
+      tags: [Actions]
       requestBody:
         description: Action to create
         required: true
@@ -143,28 +155,28 @@ paths:
                 form:
                   type: string
                 actionType:
-                  $ref: '#/components/schemas/ActionType'
+                  $ref: "#/components/schemas/ActionType"
                 metadata:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Metadata'
+                    $ref: "#/components/schemas/Metadata"
                 parentActionId:
                   type: string
                   format: uuid
       responses:
-        '200':
+        "200":
           description: Created action
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Action'
+                $ref: "#/components/schemas/Action"
 
 components:
   schemas:
     # Assuming the components schemas are reused from schemas.yaml
     Action:
-      $ref: './schemas.yaml#/components/schemas/Action'
+      $ref: "./schemas.yaml#/components/schemas/Action"
     ActionType:
-      $ref: './schemas.yaml#/components/schemas/ActionType'
+      $ref: "./schemas.yaml#/components/schemas/ActionType"
     Metadata:
-      $ref: './schemas.yaml#/components/schemas/Metadata'
+      $ref: "./schemas.yaml#/components/schemas/Metadata"

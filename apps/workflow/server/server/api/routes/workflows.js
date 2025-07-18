@@ -71,9 +71,6 @@ router.post("/", async (req, res) => {
     }
 
     const base_action_data = {};
-    if (name) {
-        base_action_data.name = name;
-    }
     if (description) {
         base_action_data.description = description;
     }
@@ -90,6 +87,7 @@ router.post("/", async (req, res) => {
                 base_action: {
                     create: {
                         ...base_action_data,
+                        name: name || "New Workflow",
                         action_type: 'workflow',
                         permissions: {
                             // Default the creator to have all permissionTypes
@@ -106,19 +104,21 @@ router.post("/", async (req, res) => {
         });
 
         // Tag time
-        tags.map(
-            async (name) =>
-                await prisma.tags.upsert({
-                    where: { name },
-                    update: {
-                        workflow_attributes: { connect: { id: workflow.id } },
-                    },
-                    create: {
-                        name,
-                        workflow_attributes: { connect: { id: workflow.id } },
-                    },
-                })
-        );
+        if (tags) {
+            tags.map(
+                async (name) =>
+                    await prisma.tags.upsert({
+                        where: { name },
+                        update: {
+                            workflow_attributes: { connect: { id: workflow.id } },
+                        },
+                        create: {
+                            name,
+                            workflow_attributes: { connect: { id: workflow.id } },
+                        },
+                    })
+            );
+        }
 
         // No export because it doesn't include metadata
         // As of now, tags are not included

@@ -1,14 +1,20 @@
 openapi: 3.0.3
+
 info:
   title: Permissions API
   version: 1.0.0
+
+tags: 
+  - name: Permissions
+    description: Endpoints associated with permissions
 
 paths:
   /permissions/{id}:
     get:
       summary: Get a permission by ID
-      tags:
-        - Permissions
+      description: Returns the permission with the specified ID
+      operationId: getPermissionById
+      tags: [Permissions]
       parameters:
         - name: id
           in: path
@@ -25,11 +31,9 @@ paths:
 
     put:
       summary: Update a permission by ID
-      tags:
-        - Permissions
-      description: |
-        Requires actingUserId with 'creator' access level for the action.
-        Validates permissionType if provided.
+      description: Updates the permission with the specified ID using the data provided in the body
+      operationId: updatePermission
+      tags: [Permissions]
       parameters:
         - name: id
           in: path
@@ -65,9 +69,9 @@ paths:
 
     delete:
       summary: Delete a permission by ID
-      tags:
-        - Permissions
-      description: Requires actingUserId with 'creator' access level for the action.
+      description: Deletes the permission with the specified ID
+      operationId: deletePermission
+      tags: [Permissions]
       parameters:
         - name: id
           in: path
@@ -94,6 +98,7 @@ paths:
                 properties:
                   message:
                     type: string
+                    example: "Deleted"
         '403':
           description: Forbidden (authorization failed)
           content:
@@ -104,8 +109,9 @@ paths:
   /permissions:
     get:
       summary: Get permissions filtered by userId, actionId, and/or permissionType
-      tags:
-        - Permissions
+      description: Returns all permissions based on the filters specified in the query parameters
+      operationId: getPermissions
+      tags: [Permissions]
       parameters:
         - name: userId
           in: query
@@ -132,11 +138,9 @@ paths:
 
     post:
       summary: Create a new permission
-      tags:
-        - Permissions
-      description: |
-        Requires actingUserId with 'creator' access level for the action.
-        Validates permissionType.
+      description: Creates a new permission using the data passed in the body
+      operationId: createPermission
+      tags: [Permissions]
       requestBody:
         required: true
         content:
