@@ -27,7 +27,8 @@ const Section: React.FC<{
     projectId: string;
     title: string;
     assessments: Assessment[];
-}> = ({ projectId, title, assessments }) => (
+    received?: boolean;
+}> = ({ projectId, title, assessments, received = false }) => (
     <section className="mb-8">
         <h2 className="text-lg font-semibold mb-4">{title}</h2>
         <div className="space-y-2">
@@ -35,35 +36,28 @@ const Section: React.FC<{
                 <div className="text-gray-500 text-sm">No assessments.</div>
             )}
             {assessments.map((a) => (
-                <Fragment key={a.id}>
-                    <Link
-                        href={`/projects/${projectId}/assessments/${a.id}`}
+                <Link
+                    href={`/projects/${projectId}/assessments/${a.id}${
+                        received ? "/received" : ""
+                    }`}
+                    key={a.id}
+                >
+                    <div
                         key={a.id}
+                        className={
+                            "flex items-center justify-between p-4 rounded border cursor-pointer hover:bg-gray-50 transition mb-1"
+                        }
                     >
-                        <div
-                            key={a.id}
-                            className={
-                                "flex items-center justify-between p-4 rounded border cursor-pointer hover:bg-gray-50 transition"
-                            }
-                        >
-                            <div className="flex-1">
-                                <div className="font-medium">{a.name}</div>
-                                <div className="text-xs text-gray-500">
-                                    {new Date(a.startDate).toLocaleDateString()}{" "}
-                                    &ndash;{" "}
-                                    {new Date(a.dueDate).toLocaleDateString()}
-                                </div>
+                        <div className="flex-1">
+                            <div className="font-medium">{a.name}</div>
+                            <div className="text-xs text-gray-500">
+                                {new Date(a.startDate).toLocaleDateString()}{" "}
+                                &ndash;{" "}
+                                {new Date(a.dueDate).toLocaleDateString()}
                             </div>
                         </div>
-                    </Link>
-                    {new Date() > new Date(a.dueDate) && (
-                        <Link
-                            href={`/projects/${projectId}/assessments/${a.id}/received`}
-                        >
-                            <PeersBox />
-                        </Link>
-                    )}
-                </Fragment>
+                    </div>
+                </Link>
             ))}
         </div>
     </section>
@@ -81,6 +75,9 @@ interface ProjectViewProps {
 const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
     const { currentUser } = useAuth();
     const [assessments, setAssessments] = useState<Assessment[]>([]);
+    const [receivedAssessments, setReceivedAssessments] = useState<
+        Assessment[]
+    >([]);
     const [isLoading, setIsLoading] = useState<Boolean>(true);
     const [isInProject, setIsInProject] = useState<Boolean>(false);
 
@@ -98,12 +95,21 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
 
             setIsInProject(true);
 
-            // Getting the peer's assessments to responde to
+            // Getting the peer's assessments to respond to
             const as = await getAssessmentsByProject(projectId, {
                 responder: currentUser?.id,
             });
             setAssessments(as);
             setIsLoading(false);
+
+            // Getting the peer's received assessment responses
+            const ras = await getAssessmentsByProject(projectId, {
+                receiver: currentUser?.id,
+            });
+            // Only show if after due date
+            setReceivedAssessments(
+                ras.filter((ra) => new Date() > new Date(ra.dueDate))
+            );
         })();
     }, [currentUser]);
 
@@ -156,6 +162,13 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                 projectId={projectId}
                 title="Upcoming Assessments"
                 assessments={upcoming}
+            />
+            <hr className="mb-4" />
+            <Section
+                projectId={projectId}
+                title="Your Received Feedback"
+                assessments={receivedAssessments}
+                received
             />
         </div>
     );
