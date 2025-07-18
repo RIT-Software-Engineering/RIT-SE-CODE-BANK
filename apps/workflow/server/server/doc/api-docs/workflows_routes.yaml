@@ -164,7 +164,7 @@ components:
       allOf: 
         - $ref: "./schemas.yaml#/components/schemas/WorkflowAttributes"
         - type: object
-        - properties:
+          properties:
             tags:
               type: array
               items:
