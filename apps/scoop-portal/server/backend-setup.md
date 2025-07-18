@@ -97,4 +97,4 @@ Run the Node Express server: `node server.js`
 Start the Next development server: `npm run dev`
 
 ## API Endpoints
-<!--  -->
+API endpoints can be found under `api/` in the server directory.
