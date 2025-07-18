@@ -56,7 +56,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             const inqs = await getAssessmentInquiriesById(assessmentId);
             setInquiries(inqs);
 
-            // Get the responders
+            // Get the receivers
             const ps = await getAssessmentPeers(assessmentId);
             const rs = ps.receivers.filter((r) => r.id != currentUser.id);
             setPeersToEval(rs);
