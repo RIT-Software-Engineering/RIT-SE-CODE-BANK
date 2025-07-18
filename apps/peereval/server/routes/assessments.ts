@@ -87,15 +87,32 @@ router.get("/:id/inquiries", async (req, res) => {
 });
 
 // Get project's assessments
+// Can query by responder and receiver
 // /assessments/byProject/:id
 router.get("/byProject/:id", async (req, res) => {
     const id = req.params.id;
+    const { responder, receiver } = req.query as {
+        responder?: string;
+        receiver?: string;
+    };
 
     const as = await prisma.assessment.findMany({
         where: {
-            project: {
-                id: id,
-            },
+            projectId: id,
+            ...(responder && {
+                responders: {
+                    some: {
+                        id: responder,
+                    },
+                },
+            }),
+            ...(receiver && {
+                receivers: {
+                    some: {
+                        id: receiver,
+                    },
+                },
+            }),
         },
     });
 
@@ -190,6 +207,22 @@ router.get("/:assessmentId/responses/in/:respondeeId", async (req, res) => {
     });
 
     res.json(rs);
+});
+
+// Get peers assigned to an assessment
+// /assessments/:id/peers
+router.get("/:id/peers", async (req, res) => {
+    const { id } = req.params;
+
+    const peers = await prisma.assessment.findUnique({
+        where: { id },
+        select: {
+            receivers: true,
+            responders: true,
+        },
+    });
+
+    res.json(peers);
 });
 
 export default router;

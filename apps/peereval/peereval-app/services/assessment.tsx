@@ -5,15 +5,30 @@ import {
     PeerFormResponse,
 } from "@/types/assessment";
 import { handleResponse } from "./utils";
+import { UserProfile } from "@/types/userProfile";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
 
 export async function getAssessmentsByProject(
-    projectId: string
+    projectId: string,
+    query?: { responder?: string; receiver?: string }
 ): Promise<Assessment[]> {
-    const res = await fetch(`${BASE_URL}/assessments/byProject/${projectId}`, {
-        credentials: "include",
-    });
+    const queryParams = [];
+    if (query?.responder) {
+        queryParams.push("responder=" + query?.responder);
+    }
+    if (query?.receiver) {
+        queryParams.push("receiver=" + query?.receiver);
+    }
+
+    const res = await fetch(
+        `${BASE_URL}/assessments/byProject/${projectId}${
+            queryParams.length > 0 ? "?" + queryParams.join("&") : ""
+        }`,
+        {
+            credentials: "include",
+        }
+    );
 
     return handleResponse(
         res,
@@ -109,5 +124,18 @@ export async function getReceivedAssessmentResponses(
             respondeeId +
             " and assessment " +
             assessmentId
+    );
+}
+
+export async function getAssessmentPeers(
+    id: string
+): Promise<{ responders: UserProfile[]; receivers: UserProfile[] }> {
+    const res = await fetch(`${BASE_URL}/assessments/${id}/peers`, {
+        credentials: "include",
+    });
+
+    return handleResponse(
+        res,
+        "Couldn't get peers assigned to assessment " + id
     );
 }

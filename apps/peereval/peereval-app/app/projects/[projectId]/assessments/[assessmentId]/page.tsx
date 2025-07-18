@@ -5,6 +5,7 @@ import {
     getAssessmentById,
     getAssessmentInquiriesById,
     getAssessmentPeerResponses,
+    getAssessmentPeers,
     sendAssessmentResponses,
 } from "@/services/assessment";
 import { getProjectsPeers as getProjectPeers } from "@/services/project";
@@ -54,13 +55,12 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             // Get assessment inquiries
             const inqs = await getAssessmentInquiriesById(assessmentId);
             setInquiries(inqs);
-            console.dir(inqs);
 
-            // Get the peers to respond to
-            let ps = await getProjectPeers(projectId);
-            ps = ps.filter((p) => p.id != currentUser.id);
-            setPeersToEval(ps);
-            setActivePeer(ps[0]);
+            // Get the receivers
+            const ps = await getAssessmentPeers(assessmentId);
+            const rs = ps.receivers.filter((r) => r.id != currentUser.id);
+            setPeersToEval(rs);
+            setActivePeer(rs[0]);
         })();
     }, [currentUser]);
 

@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
     getAssessmentById,
     getAssessmentInquiriesById,
+    getAssessmentPeers,
     getReceivedAssessmentResponses,
 } from "@/services/assessment";
 import { getProjectsPeers as getProjectPeers } from "@/services/project";
@@ -44,11 +45,11 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             const inqs = await getAssessmentInquiriesById(assessmentId);
             setInquiries(inqs);
 
-            // Get the relevant peers
-            let ps = await getProjectPeers(projectId);
-            ps = ps.filter((p) => p.id != currentUser.id);
-            setPeers(ps);
-            setActivePeer(ps[0]);
+            // Get the responders
+            const ps = await getAssessmentPeers(assessmentId);
+            const rs = ps.responders.filter((r) => r.id != currentUser.id);
+            setPeers(rs);
+            setActivePeer(rs[0]);
         })();
     }, [currentUser]);
 

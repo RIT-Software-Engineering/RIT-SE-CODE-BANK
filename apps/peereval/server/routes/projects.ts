@@ -244,12 +244,24 @@ router.delete("/:id/removePeer/:peerEmail", async (req, res) => {
     });
 });
 
+// Assign assessment to peers
+// /projects/:id/assignAssessment
 router.post("/:id/assignAssessment", async (req, res) => {
     const { id } = req.params;
-    const { formId, name, description, startDate, dueDate } = req.body as {
+    const {
+        formId,
+        name,
+        description,
+        receivers,
+        responders,
+        startDate,
+        dueDate,
+    } = req.body as {
         formId: string;
         name: string;
         description: string;
+        receivers: string[];
+        responders: string[];
         startDate: string;
         dueDate: string;
     };
@@ -262,6 +274,12 @@ router.post("/:id/assignAssessment", async (req, res) => {
                 },
                 name,
                 description,
+                receivers: {
+                    connect: receivers.map((email) => ({ email })),
+                },
+                responders: {
+                    connect: responders.map((email) => ({ email })),
+                },
                 feedbackForm: {
                     connect: { id: formId },
                 },

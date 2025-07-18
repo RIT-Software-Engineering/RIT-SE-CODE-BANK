@@ -95,7 +95,10 @@ export async function assignAssessmentToProject(
         description: string;
         startDate: string;
         dueDate: string;
-    }
+    },
+    peers?: string[],
+    responders?: string[],
+    receivers?: string[]
 ): Promise<Assessment> {
     const res = await fetch(
         `${BASE_URL}/projects/${projectId}/assignAssessment`,
@@ -107,6 +110,15 @@ export async function assignAssessmentToProject(
                 ...assessment,
                 startDate: new Date(assessment.startDate),
                 dueDate: new Date(assessment.dueDate),
+                ...(peers?.length && {
+                    responders: peers,
+                    receivers: peers,
+                }),
+                ...(responders &&
+                    receivers && {
+                        responders,
+                        receivers,
+                    }),
             }),
         }
     );
