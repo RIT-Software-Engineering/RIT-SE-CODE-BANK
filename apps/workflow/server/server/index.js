@@ -4,14 +4,11 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const cookieParser = require("cookie-parser");
-// const YAML = require('yamljs');
-// const swaggerDocument = YAML.load('./doc/api-docs/server_doc.yaml');
 
 const workflowRoutes = require('./api/routes/workflows');
 const actionRoutes = require('./api/routes/actions');
 const stateRoutes = require('./api/routes/states');
 const permissionRoutes = require('./api/routes/permissions');
-const metadataRoutes = require('./api/routes/metadata');
 
 const userRoutes = require('./api/routes/users'); // TODO: remove when auth works
 
@@ -29,20 +26,21 @@ app.use(function (req, res, next) {
 });
 app.use(
   cors({
-    origin: process.env.BASE_URL || "http://localhost:3000",
+    origin: [
+      process.env.BASE_URL || "http://localhost:3001", 
+      "https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RIT-Software-Engineering/RIT-SE-CODE-BANK/refs/heads/workflow-dev-prep-draft/apps/workflow/server/server/doc/api-docs/server_doc.yaml"
+    ],
     credentials: true,
   }),
 );
+// app.use(cors()); // For testin purposes
 app.use(cookieParser());
 app.use(express.json());
-
-// app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/workflows', workflowRoutes);
 app.use('/actions', actionRoutes);
 app.use('/states', stateRoutes);  
 app.use('/permissions', permissionRoutes);
-app.use('/metadata', metadataRoutes)
 
 app.use('/users', userRoutes); // TODO: remove when auth works
 

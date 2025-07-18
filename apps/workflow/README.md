@@ -1,5 +1,8 @@
 # Workflows
 
+## API Documentation
+[Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RIT-Software-Engineering/RIT-SE-CODE-BANK/refs/heads/workflow-dev/apps/workflow/server/server/doc/api-docs/server_doc.yaml)
+
 ## Getting Started with Workflows
 
 ### Developer Guide:
