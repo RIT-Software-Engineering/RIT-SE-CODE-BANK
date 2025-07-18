@@ -26,34 +26,6 @@ components:
           type: string
           format: uuid
           nullable: true
-        metadata:
-          type: array
-          items:
-            $ref: '#/components/schemas/Metadata'
-        child_actions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Action'
-        parent_action:
-          $ref: '#/components/schemas/Action'
-        next_action:
-          $ref: '#/components/schemas/Action'
-        previous_action:
-          $ref: '#/components/schemas/Action'
-        base_action_of:
-          $ref: '#/components/schemas/WorkflowAttributes'
-        root_action_of:
-          type: array
-          items:
-            $ref: '#/components/schemas/WorkflowAttributes'
-        permissions:
-          type: array
-          items:
-            $ref: '#/components/schemas/Permission'
-        action_states:
-          type: array
-          items:
-            $ref: '#/components/schemas/ActionState'
       required: [id, name, action_type, is_frozen]
 
     ActionType:

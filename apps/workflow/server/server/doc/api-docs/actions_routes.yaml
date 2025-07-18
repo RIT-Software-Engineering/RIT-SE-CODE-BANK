@@ -169,7 +169,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Action"
+                $ref: "#/components/responses/Action"
 
 components:
   schemas:
@@ -180,3 +180,12 @@ components:
       $ref: "./schemas.yaml#/components/schemas/ActionType"
     Metadata:
       $ref: "./schemas.yaml#/components/schemas/Metadata"
+
+  responses:
+    Action: 
+      allOf: 
+        - $ref: "./schemas.yaml#/components/schemas/Action"
+        - type: object
+          properties: 
+            somethingElse:
+              type: string
