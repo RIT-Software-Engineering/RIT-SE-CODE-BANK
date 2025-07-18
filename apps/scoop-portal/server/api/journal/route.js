@@ -25,12 +25,12 @@ router.get("/", async (req, res) => {
  * @param {Object} res - The response object to send back the created entry or an error
  */
 router.post("/", async (req, res) => {
-    const { date, notes } = req.body;
+    const { date, contactee, notes } = req.body;
     try {
         const newEntry = await prisma.journal_Entry.create({
-            data: { date, notes },
+            data: { date, contactee, notes },
         });
-        res.status(201).json(newEntry);
+        res.status(200).json(newEntry);
     } catch (error) {
         console.error("Error creating journal entry:", error);
         res.status(500).json({ message: "Error creating journal entry" });
