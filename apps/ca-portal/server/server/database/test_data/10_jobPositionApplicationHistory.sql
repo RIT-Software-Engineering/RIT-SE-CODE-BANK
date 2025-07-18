@@ -10,7 +10,7 @@ INSERT INTO `JobPositionApplicationHistory` (`candidateUID`, `jobPositionId`, `r
 
 -- Student 304 (Tyler Tester) Application
 (304, '2241-SWEN-561-2', 3, 'SELECTED', '{"name":"Tyler Tester","email":"student4@example.com","major":"Mathematics","year":6,"grade":null,"wasPriorEmployeeForThisCourse":false,"wasPriorEmployeeForAnyOtherJobPosition":true,"priorEmployeeHistory":["MATH-123"]}'),
-
+(304, '2237-SWEN-344-1', 3, 'APPLIED', '{"name":"Tyler Tester","email":"student4@example.com","major":"Mathematics","year":6,"grade":null,"wasPriorEmployeeForThisCourse":false,"wasPriorEmployeeForAnyOtherJobPosition":true,"priorEmployeeHistory":["MATH-123"]}'),
 -- Student 305 (Sally Student) Applications
 (305, '2241-SWEN-344-1', 4, 'REJECTED', '{"name":"Sally Student","email":"student5@example.com","major":"Computer Engineering","year":3,"grade":"A-","wasPriorEmployeeForThisCourse":false,"wasPriorEmployeeForAnyOtherJobPosition":false,"priorEmployeeHistory":[]}'),
 (305, '2241-SWEN-261-1', 4, 'APPLIED', '{"name":"Sally Student","email":"student5@example.com","major":"Computer Engineering","year":3,"grade":null,"wasPriorEmployeeForThisCourse":false,"wasPriorEmployeeForAnyOtherJobPosition":false,"priorEmployeeHistory":[]}');

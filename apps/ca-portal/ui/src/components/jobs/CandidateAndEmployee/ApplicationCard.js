@@ -31,7 +31,7 @@ export default function CandidateApplicationCard({
   const [isConfirmingWithdrawal, setIsConfirmingWithdrawal] = useState(false);
   const [isProcessingWithdrawal, setIsProcessingWithdrawal] = useState(false);
   const [isViewingComments, setIsViewingComments] = useState(false);
-  console.log('application:', id);
+
   const [modalState, setModalState] = useState({
     isOpen: false,
     status: null,
