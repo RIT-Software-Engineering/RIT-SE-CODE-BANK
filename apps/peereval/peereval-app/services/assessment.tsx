@@ -5,6 +5,7 @@ import {
     PeerFormResponse,
 } from "@/types/assessment";
 import { handleResponse } from "./utils";
+import { UserProfile } from "@/types/userProfile";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
 
@@ -123,5 +124,18 @@ export async function getReceivedAssessmentResponses(
             respondeeId +
             " and assessment " +
             assessmentId
+    );
+}
+
+export async function getAssessmentPeers(
+    id: string
+): Promise<{ responders: UserProfile[]; receivers: UserProfile[] }> {
+    const res = await fetch(`${BASE_URL}/assessments/${id}/peers`, {
+        credentials: "include",
+    });
+
+    return handleResponse(
+        res,
+        "Couldn't get peers assigned to assessment " + id
     );
 }
