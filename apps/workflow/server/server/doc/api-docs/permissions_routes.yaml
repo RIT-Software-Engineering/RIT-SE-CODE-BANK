@@ -27,7 +27,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Permission'
+                $ref: "./schemas.yaml#/components/schemas/Permission"
 
     put:
       summary: Update a permission by ID
@@ -59,13 +59,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Permission'
+                $ref: "./schemas.yaml#/components/schemas/Permission"
         '403':
           description: Forbidden (authorization failed)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Forbidden"
 
     delete:
       summary: Delete a permission by ID
@@ -104,7 +108,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Forbidden"
 
   /permissions:
     get:
@@ -134,7 +142,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Permission'
+                  $ref: "./schemas.yaml#/components/schemas/Permission"
 
     post:
       summary: Create a new permission
@@ -168,37 +176,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Permission'
+                $ref: "./schemas.yaml#/components/schemas/Permission"
         '403':
           description: Forbidden (authorization failed)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
-components:
-  schemas:
-    Permission:
-      type: object
-      properties:
-        id:
-          type: string
-        user_id:
-          type: string
-        action_id:
-          type: string
-        permission_type:
-          type: string
-      required:
-        - id
-        - user_id
-        - action_id
-        - permission_type
-
-    Error:
-      type: object
-      properties:
-        message:
-          type: string
-      required:
-        - message
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Forbidden"
