@@ -47,24 +47,6 @@ components:
           format: uuid
       required: [id, key, value, action_id]
 
-    ReferenceEndpoint:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        url:
-          type: string
-          format: uri
-        method:
-          type: string
-        action_id:
-          type: string
-          format: uuid
-      required: [id, name, url, method, action_id]
-
     WorkflowAttributes:
       type: object
       properties:
@@ -122,10 +104,6 @@ components:
         workflow_id:
           type: string
           format: uuid
-        action_states:
-          type: array
-          items:
-            $ref: '#/components/schemas/ActionState'
       required: [id, user_id, workflow_id]
 
     ActionState:
