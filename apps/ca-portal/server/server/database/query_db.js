@@ -369,8 +369,8 @@ async function getCandidateApplications(UID) {
  */
 async function getCandidateApplicationsForFaculty(facultyUid) {
   try {
-    // 1. Find all active job positions for the given faculty member.
-    const positionsList = await prisma.JobPosition.findMany({
+    // Find all active job positions for the given faculty member.
+    const positionsList = await prisma.jobPosition.findMany({
       where: { facultyUID: facultyUid, NOT: { jobPositionStatus: 'INACTIVE' } },
       include: {
         // Include all applications for each position.
@@ -380,56 +380,15 @@ async function getCandidateApplicationsForFaculty(facultyUid) {
             resume: {
               select: { name: true, resumeURL: true },
             },
-            candidate: {
-              select: {
-                year: true,
-                major: true,
-                graduateStatus: true,
-                wasPriorEmployee: true,
-                user: { select: { name: true, email: true, uid: true } },
-                courseHistory: {
-                  select: {
-                    courseCode: true,
-                    grade: true,
-                    wasPriorEmployee: true,
-                  },
-                },
-              },
-            },
           },
         },
+        course: {
+          select: { name: true}, 
+        }
       },
     });
 
-    // 2. Process the results to enrich application data.
-    positionsList.forEach((position) => {
-      position.jobPositionApplicationHistory.forEach((application) => {
-        if (application.candidate?.courseHistory) {
-          // Find the candidate's grade for the specific course they are applying to.
-          const relevantCourse = application.candidate.courseHistory.find(
-            (course) => course.courseCode === position.courseCode
-          );
-          application.gradeInCourse = relevantCourse
-            ? gradeEnumToLetter[relevantCourse.grade]
-            : 'N/A';
-
-          // List all courses the candidate has previously been a TA for.
-          application.previouslyTAedCourses =
-            application.candidate.courseHistory
-              .filter((course) => course.wasPriorEmployee)
-              .map((course) => course.courseCode);
-
-          // Clean up the object by removing the full course history.
-          delete application.candidate.courseHistory;
-        }
-      });
-    });
-
-    // 3. Group the processed list of positions by their ID for easy lookup on the frontend.
-    return positionsList.reduce((accumulator, currentPosition) => {
-      accumulator[currentPosition.id] = currentPosition;
-      return accumulator;
-    }, {});
+    return positionsList;
   } catch (error) {
     console.log('Error in getCandidateApplications:', error);
     throw error;

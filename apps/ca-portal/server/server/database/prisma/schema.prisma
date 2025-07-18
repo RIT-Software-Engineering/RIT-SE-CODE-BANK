@@ -86,7 +86,6 @@ model JobPositionHistory {
   jobPositionId            String
   employeeId               Int
   jobPositionHistoryStatus JobPositionHistoryStatus @default(ACTIVE)
-  comments                 String                   @db.Text
 
   // Relations
   jobPosition    JobPosition      @relation(fields: [jobPositionId], references: [id])
@@ -101,7 +100,8 @@ model JobPositionApplicationHistory {
   jobPositionId        String
   resumeId             Int
   jobApplicationStatus JobApplicationStatus @default(APPLIED)
-  applicationData      String?              @db.Text    
+  applicationData      String?              @db.Text
+  commentHistory       String?              @db.Text  // this keeps track of the history of the Application status with corresponding comments and timestamp
 
   // Relations
   candidate   Candidate   @relation(fields: [candidateUID], references: [uid])

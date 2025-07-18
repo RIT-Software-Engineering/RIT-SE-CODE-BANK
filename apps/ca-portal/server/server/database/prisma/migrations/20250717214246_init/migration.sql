@@ -54,7 +54,6 @@ CREATE TABLE `JobPositionHistory` (
     `jobPositionId` VARCHAR(191) NOT NULL,
     `employeeId` INTEGER NOT NULL,
     `jobPositionHistoryStatus` ENUM('ACTIVE', 'TERMINATED', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
-    `comments` TEXT NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -67,6 +66,7 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `resumeId` INTEGER NOT NULL,
     `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED', 'PENDING_ACCEPTANCE', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
     `applicationData` TEXT NULL,
+    `commentHistory` TEXT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

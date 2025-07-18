@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from "react";
-import { deleteApplication } from "@/services/db-apis"; 
+import { useState, useRef, useEffect } from "react";
+import { deleteApplication } from "@/services/db-apis";
 import ViewableApplicationForm from "../ViewableApplicationForm";
 import ConfirmationModal from "../../ui/ConfirmationModal";
 import { formatDate, formatTime, getStatusClasses } from "@/utils/applicationUtils";
-import { CalendarIcon, ClockIcon, LocationIcon } from "@/assets/icons";
+import { CalendarIcon, ClockIcon, EllipsisVerticalIcon, LocationIcon } from "@/assets/icons";
 
 export default function CandidateApplicationCard({ currentUser, application, refreshUserProfile, onWithdrawSuccess }) {
   const [isViewingApplication, setIsViewingApplication] = useState(false);
@@ -19,8 +19,7 @@ export default function CandidateApplicationCard({ currentUser, application, ref
   const handleWithdrawClick = () => {
     setIsConfirmingWithdrawal(true);
   };
-
-  // This new function contains the logic to execute the withdrawal
+  
   const executeWithdrawal = async () => {
     setIsProcessingWithdrawal(true);
     try {
@@ -49,37 +48,68 @@ export default function CandidateApplicationCard({ currentUser, application, ref
       </div>
     </div>
   );
+  
+  const ActionsMenu = () => {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef(null);
 
-  const CandidateAndEmployeeActions = () => (
-    <>
-      {jobApplicationStatus.toLowerCase() !== 'accepted' && (
-        <button
-          onClick={handleWithdrawClick} // Use the new handler
-          disabled={isProcessingWithdrawal}
-          className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 disabled:bg-gray-400"
-        >
-          Withdraw
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (menuRef.current && !menuRef.current.contains(event.target)) {
+          setIsOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const handleMenuToggle = (e) => {
+      e.stopPropagation();
+      setIsOpen(!isOpen);
+    };
+
+    return (
+      <div className="relative" ref={menuRef}>
+        <button onClick={handleMenuToggle} className="p-2 rounded-full hover:bg-gray-100">
+          <EllipsisVerticalIcon />
         </button>
-      )}
-      <button 
-        onClick={() => setIsViewingApplication(true)}
-        className="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300"
-      >
-        View Application Submission
-      </button>
-    </>
-  );
+        {isOpen && (
+          <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20">
+            <ul className="py-1">
+              <li>
+                <button
+                  onClick={() => { setIsViewingApplication(true); setIsOpen(false); }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  View Application Submission
+                </button>
+              </li>
+              {jobApplicationStatus.toLowerCase() !== 'accepted' && (
+                <li>
+                  <button
+                    onClick={() => { handleWithdrawClick(); setIsOpen(false); }}
+                    disabled={isProcessingWithdrawal}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 disabled:text-gray-400"
+                  >
+                    Withdraw
+                  </button>
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
-      <div className="w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-[1.01] mb-8">
+      <div className="w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden mb-8">
         <div className="p-6">
           <div className="flex justify-between items-start flex-wrap gap-4">
             <CandidateAndEmployeeHeader />
             <div className='text-right'>
-              <span className={`px-4 py-2 text-md font-bold rounded-full ${statusClasses}`}>
-                  {jobApplicationStatus}
-              </span>
+              <ActionsMenu />
             </div>
           </div>
 
@@ -104,8 +134,10 @@ export default function CandidateApplicationCard({ currentUser, application, ref
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-            <CandidateAndEmployeeActions />
+          <div className="mt-6 pt-4 border-t border-gray-200 flex justify-end">
+            <span className={`px-4 py-2 text-md font-bold rounded-full ${statusClasses}`}>
+              {jobApplicationStatus}
+            </span>
           </div>
         </div>
       </div>
@@ -122,7 +154,6 @@ export default function CandidateApplicationCard({ currentUser, application, ref
 
       {isViewingApplication && (
         <ViewableApplicationForm
-          user={currentUser}
           position={jobPosition}
           application={application}
           onClose={() => setIsViewingApplication(false)}
