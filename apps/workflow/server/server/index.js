@@ -20,17 +20,14 @@ app.use(function (req, res, next) {
 
   // Required for SSO authentication
   // TODO: This may no longer be needed because of our cors policy lower down "credentials: true".
-  res.header("Access-Control-Allow-Credentials", "true");
+  // res.header("Access-Control-Allow-Credentials", "true");
 
   next();
 });
 app.use(
   cors({
-    origin: [
-      process.env.BASE_URL || "http://localhost:3001", 
-      "https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RIT-Software-Engineering/RIT-SE-CODE-BANK/refs/heads/workflow-dev-prep-draft/apps/workflow/server/server/doc/api-docs/server_doc.yaml"
-    ],
-    credentials: true,
+    origin: process.env.BASE_URL || "http://localhost:3001",
+    // credentials: true,
   }),
 );
 // app.use(cors()); // For testin purposes

@@ -1,7 +1,11 @@
 # Workflows
 
 ## API Documentation
-[Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RIT-Software-Engineering/RIT-SE-CODE-BANK/refs/heads/workflow-dev/apps/workflow/server/server/doc/api-docs/server_doc.yaml)
+To view our documentation regarding Workflows API you can visit [Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RIT-Software-Engineering/RIT-SE-CODE-BANK/refs/heads/workflow-dev/apps/workflow/server/server/doc/api-docs/server_doc.yaml).
+
+Alternatively, you can use the [OpenAPI VS Code extension](https://marketplace.visualstudio.com/items?itemName=42Crunch.vscode-openapi) and run a preview on the `server_doc.yaml` file in `/server/server/api/doc/api-docs/`.
+
+Note: You can comment out the credentials settings in our cors policies to execute the endpoint commands in the preview. However, DON'T LEAVE THE API UNPROTECTED GOING FORWARD!
 
 ## Getting Started with Workflows
 
