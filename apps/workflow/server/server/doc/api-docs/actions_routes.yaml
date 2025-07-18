@@ -1,0 +1,190 @@
+openapi: 3.0.3
+
+info:
+  title: Actions API
+  version: 1.0.0
+
+tags:
+  - name: Actions
+    description: Endpoints related to user actions
+
+paths:
+  /actions/{id}:
+    get:
+      summary: Get a specific action by id
+      description: Returns the action with the specified ID
+      operationId: getActionById
+      tags: [Actions]
+      parameters:
+        - name: id
+          in: path
+          description: Action ID
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The action
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "./schemas.yaml#/components/schemas/Action"
+                  - type: object
+                    properties:
+                      metadata:
+                        type: object
+                      previous:
+                        $ref: "./schemas.yaml#/components/schemas/Action"
+                      child_actions:
+                        type: array
+                        items:
+                          $ref: "./schemas.yaml#/components/schemas/Action"
+
+    put:
+      summary: Update an action by id
+      description: Updates the action with the specified ID using the data provided in the body
+      operationId: updateAction
+      tags: [Actions]
+      parameters:
+        - name: id
+          in: path
+          description: Action ID
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Action update data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                form:
+                  type: string
+                actionType:
+                  $ref: "./schemas.yaml#/components/schemas/ActionType"
+                metadata:
+                  type: array
+                  items:
+                    $ref: "./schemas.yaml#/components/schemas/Metadata"
+                nextActionId:
+                  type: string
+                  format: uuid
+                parentActionId:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Update confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Updated"
+
+    delete:
+      summary: Delete an action by id
+      description: Deletes the action with the specified ID
+      operationId: deleteAction
+      tags: [Actions]
+      parameters:
+        - name: id
+          in: path
+          description: Action ID
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Delete confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Deleted"
+
+  /actions:
+    get:
+      summary: Get actions
+      description: Returns a list of actions, optionally filtered by workflow ID
+      operationId: getActions
+      tags: [Actions]
+      parameters:
+        - name: workflowId
+          in: query
+          description: Filter actions by workflow ID
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of actions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "./schemas.yaml#/components/schemas/Action"
+                    - type: object
+                      properties:
+                        metadata:
+                          type: object
+                        previous:
+                          $ref: "./schemas.yaml#/components/schemas/Action"
+
+    post:
+      summary: Create a new action
+      description: Creates a new action using the data specified in the body
+      operationId: createAction
+      tags: [Actions]
+      requestBody:
+        description: Action to create
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                description:
+                  type: string
+                form:
+                  type: string
+                actionType:
+                  $ref: "./schemas.yaml#/components/schemas/ActionType"
+                metadata:
+                  type: array
+                  items:
+                    $ref: "./schemas.yaml#/components/schemas/Metadata"
+                parentActionId:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Created action
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas.yaml#/components/schemas/Action"

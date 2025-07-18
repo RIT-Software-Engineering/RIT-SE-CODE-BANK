@@ -4,6 +4,8 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const cookieParser = require("cookie-parser");
+// const YAML = require('yamljs');
+// const swaggerDocument = YAML.load('./doc/api-docs/server_doc.yaml');
 
 const workflowRoutes = require('./api/routes/workflows');
 const actionRoutes = require('./api/routes/actions');
@@ -33,6 +35,8 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.json());
+
+// app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use('/workflows', workflowRoutes);
 app.use('/actions', actionRoutes);

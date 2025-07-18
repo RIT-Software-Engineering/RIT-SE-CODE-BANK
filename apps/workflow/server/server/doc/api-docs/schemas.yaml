@@ -1,0 +1,129 @@
+components:
+  schemas:
+    Action:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        form:
+          type: string
+          nullable: true
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        is_frozen:
+          type: boolean
+        next_action_id:
+          type: string
+          format: uuid
+          nullable: true
+        parent_action_id:
+          type: string
+          format: uuid
+          nullable: true
+      required: [id, name, action_type, is_frozen]
+
+    ActionType:
+      type: string
+      enum: [simple, workflow, complex, branching]
+
+    Metadata:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        value:
+          type: string
+        action_id:
+          type: string
+          format: uuid
+      required: [id, key, value, action_id]
+
+    WorkflowAttributes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        base_action_id:
+          type: string
+          format: uuid
+        root_action_id:
+          type: string
+          format: uuid
+          nullable: true
+      required: [id, base_action_id]
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required: [id, name]
+
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          format: uuid
+        permission_type:
+          $ref: '#/components/schemas/PermissionType'
+      required: [id, user_id, action_id, permission_type]
+
+    PermissionType:
+      type: string
+      enum: [creator, sharer, editor, viewer]
+
+    WorkflowState:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        workflow_id:
+          type: string
+          format: uuid
+      required: [id, user_id, workflow_id]
+
+    ActionState:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflow_state_id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          format: uuid
+        state_type:
+          $ref: '#/components/schemas/StateType'
+        index:
+          type: integer
+      required: [id, workflow_state_id, action_id, state_type, index]
+
+    StateType:
+      type: string
+      enum: [completed, in_progress, not_started, hidden]

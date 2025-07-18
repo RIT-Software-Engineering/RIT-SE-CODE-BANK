@@ -232,12 +232,10 @@ router.put('/action/:id', async (req, res) => {
 
 router.get('/workflow/:workflowStateId/findStep', async (req, res) => {
   const { workflowStateId} = req.params;
-  const { userId } = req.query;
 
   // TODO: ActionStates aren't ordered, and aren't a linked list like Actions, so how do we know which one is first. (right now it's randomized...)
   const states = await prisma.actionStates.findFirst({
     where: {
-      user_id: userId,
       workflow_state_id: workflowStateId,
       state_type: 'not_started',
     },
