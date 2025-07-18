@@ -1,7 +1,9 @@
 import "../css/footer.css";
 
+// TODO: Documentation for Footer component
+// TODO: Redo footer
 /**
- * TODO: Documentation for Footer component
+ *
  *
  * @returns {JSX.Element}
  */
