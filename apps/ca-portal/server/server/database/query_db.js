@@ -360,6 +360,11 @@ async function findUniqueUser(UID) {
             include: {
               courseHistory: { include: { course: true } },
               jobPositionApplicationHistory: { include: { jobPosition: true } },
+              employees: {
+                include: {
+                  jobPositionHistory: true,
+                },
+              },
             },
           },
         },
@@ -568,6 +573,111 @@ async function getAllCourses() {
 }
 
 // =============================================================================
+// TIMECARD MANAGEMENT
+// =============================================================================
+
+/**
+ * Retrieves the current weekly timecard for a specific job.
+ * @param {number} jobPositionHistoryId - The ID of the employee's specific job history record.
+ * @returns {Promise<object|null>} The weekly timecard object with its daily entries, or null if not found.
+ */
+async function getEmployeeTimecard(jobPositionHistoryId) {
+    try {
+      return await prisma.timecardWeeklyHistory.findFirst({
+        where: {
+          jobPositionHistoryId: jobPositionHistoryId,
+          isCurrentWeek: true,
+        },
+        include: {
+          dailyEntries: {
+            orderBy: {
+              day: 'asc',
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error(`Error fetching timecard for jobPositionHistoryId ${jobPositionHistoryId}:`, error);
+      throw error;
+    }
+  }
+
+/**
+ * Creates or updates an employee's weekly timecard.
+ * @param {object} timecardData - The data submitted from the frontend.
+ * @param {number} timecardData.jobPositionHistoryId - The ID of the specific job this timecard is for.
+ * @param {Array<object>} timecardData.dailyEntries - An array of objects, each representing a day's work.
+ */
+async function upsertTimecard(timecardData) {
+  const { jobPositionHistoryId, dailyEntries } = timecardData;
+
+  // Use a transaction to ensure all operations succeed or fail together.
+  return prisma.$transaction(async (tx) => {
+    // 1. Find the employeeId from the jobPositionHistory record.
+    const jobHistory = await tx.jobPositionHistory.findUnique({
+      where: { id: jobPositionHistoryId },
+      select: { employeeId: true },
+    });
+    if (!jobHistory) {
+      throw new Error(`JobPositionHistory with ID ${jobPositionHistoryId} not found.`);
+    }
+    const { employeeId } = jobHistory;
+
+    // 2. Find or create the weekly container for this timecard.
+    let weeklyHistory = await tx.timecardWeeklyHistory.findFirst({
+      where: {
+        jobPositionHistoryId: jobPositionHistoryId,
+        isCurrentWeek: true, 
+      },
+    });
+
+    if (!weeklyHistory) {
+      weeklyHistory = await tx.timecardWeeklyHistory.create({
+        data: {
+          jobPositionHistoryId: jobPositionHistoryId,
+          isCurrentWeek: true,
+        },
+      });
+    }
+
+    // 3. Delete all existing daily entries for this weekly timecard to prevent duplicates.
+    await tx.timecardDay.deleteMany({
+      where: {
+        timecardWeeklyHistoryId: weeklyHistory.id,
+      },
+    });
+
+    // 4. Prepare the new daily entries to be created.
+    const newDailyEntries = dailyEntries.map(entry => {
+      const createDate = (date, time) => time ? new Date(`${date}T${time}:00`) : null;
+
+      return {
+        id: `${employeeId}-${entry.date}`, // Composite key
+        day: new Date(entry.date),
+        timecardWeeklyHistoryId: weeklyHistory.id,
+        notes: entry.notes,
+        duration: entry.duration,
+        timeIn1: createDate(entry.date, entry.timeIn1),
+        timeOut1: createDate(entry.date, entry.timeOut1),
+        timeIn2: createDate(entry.date, entry.timeIn2),
+        timeOut2: createDate(entry.date, entry.timeOut2),
+        timeIn3: createDate(entry.date, entry.timeIn3),
+        timeOut3: createDate(entry.date, entry.timeOut3),
+      };
+    });
+
+    // 5. Create all the new daily entries in the database.
+    if (newDailyEntries.length > 0) {
+      await tx.timecardDay.createMany({
+        data: newDailyEntries,
+      });
+    }
+
+    return { success: true, message: 'Timecard saved successfully.' };
+  });
+}
+
+// =============================================================================
 // EXPORTS & PROCESS HANDLING
 // =============================================================================
 
@@ -581,6 +691,8 @@ module.exports = {
   updateUserResumeUrl,
   getAllUsers,
   getAllCourses,
+  getEmployeeTimecard,
+  upsertTimecard,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.

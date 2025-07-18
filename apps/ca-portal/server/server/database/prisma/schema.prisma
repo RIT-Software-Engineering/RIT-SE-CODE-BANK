@@ -76,9 +76,9 @@ model JobPositionHistory {
   comments                 String                   @db.Text
 
   // Relations
-  jobPosition    JobPosition      @relation(fields: [jobPositionId], references: [id])
-  employee       Employee?        @relation(fields: [employeeId], references: [id])
-  timeLogHistory TimeLogHistory[]
+  jobPosition           JobPosition      @relation(fields: [jobPositionId], references: [id])
+  employee              Employee?        @relation(fields: [employeeId], references: [id])
+  timecardWeeklyHistory TimecardWeeklyHistory[]
 }
 
 model JobPositionApplicationHistory {

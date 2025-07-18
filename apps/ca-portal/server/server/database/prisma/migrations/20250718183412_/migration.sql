@@ -112,23 +112,30 @@ CREATE TABLE `JobSchedule` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `TimeLogHistory` (
+CREATE TABLE `TimecardWeeklyHistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `timeLogId` VARCHAR(191) NOT NULL,
     `jobPositionHistoryId` INTEGER NOT NULL,
+    `isCurrentWeek` BOOLEAN NOT NULL,
 
-    UNIQUE INDEX `TimeLogHistory_jobPositionHistoryId_timeLogId_key`(`jobPositionHistoryId`, `timeLogId`),
+    INDEX `TimecardWeeklyHistory_jobPositionHistoryId_idx`(`jobPositionHistoryId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `TimeLog` (
+CREATE TABLE `TimecardDay` (
     `id` VARCHAR(191) NOT NULL,
-    `startDateTime` DATETIME(3) NOT NULL,
-    `endDateTime` DATETIME(3) NULL,
-    `notes` TEXT NOT NULL,
-    `duration` DECIMAL(65, 30) NOT NULL,
+    `day` DATE NOT NULL,
+    `timecardWeeklyHistoryId` INTEGER NOT NULL,
+    `notes` TEXT NULL,
+    `duration` DECIMAL(10, 2) NOT NULL,
+    `timeIn1` TIME NULL,
+    `timeOut1` TIME NULL,
+    `timeIn2` TIME NULL,
+    `timeOut2` TIME NULL,
+    `timeIn3` TIME NULL,
+    `timeOut3` TIME NULL,
 
+    INDEX `TimecardDay_timecardWeeklyHistoryId_idx`(`timecardWeeklyHistoryId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -169,7 +176,7 @@ ALTER TABLE `JobPosition` ADD CONSTRAINT `JobPosition_facultyUID_fkey` FOREIGN K
 ALTER TABLE `JobSchedule` ADD CONSTRAINT `JobSchedule_jobPositionId_fkey` FOREIGN KEY (`jobPositionId`) REFERENCES `JobPosition`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `TimeLogHistory` ADD CONSTRAINT `TimeLogHistory_jobPositionHistoryId_fkey` FOREIGN KEY (`jobPositionHistoryId`) REFERENCES `JobPositionHistory`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `TimecardWeeklyHistory` ADD CONSTRAINT `TimecardWeeklyHistory_jobPositionHistoryId_fkey` FOREIGN KEY (`jobPositionHistoryId`) REFERENCES `JobPositionHistory`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `TimeLogHistory` ADD CONSTRAINT `TimeLogHistory_timeLogId_fkey` FOREIGN KEY (`timeLogId`) REFERENCES `TimeLog`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `TimecardDay` ADD CONSTRAINT `TimecardDay_timecardWeeklyHistoryId_fkey` FOREIGN KEY (`timecardWeeklyHistoryId`) REFERENCES `TimecardWeeklyHistory`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

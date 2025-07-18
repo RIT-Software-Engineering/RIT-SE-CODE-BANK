@@ -204,6 +204,23 @@ export async function upsertEmployerProfile(employerData) {
 }
 
 /**
+ * Fetches the current weekly timecard for a given job.
+ * @param {number} jobPositionHistoryId - The ID of the job history record.
+ * @returns {Promise<object>} A promise that resolves to the timecard data.
+ */
+export async function getEmployeeTimecard(jobPositionHistoryId) {
+    if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+      throw new Error("Backend API URL components are not defined.");
+    }
+  
+    const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/${jobPositionHistoryId}`;
+    console.log(`Fetching timecard from: ${url}`);
+  
+    const response = await fetch(url);
+    return handleApiResponse(response);
+  }
+
+/**
  * Submits a weekly timecard for an employee.
  * @param {object} timecardData - The payload containing jobPositionHistoryId and time entries.
  * @returns {Promise<object>} A promise that resolves to the server's response.

@@ -21,6 +21,7 @@ const {
   applyForJobPosition,
   updateUserResumeUrl,
   getCandidateApplications,
+  getEmployeeTimecard,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -305,9 +306,36 @@ router.post('/upsert-employer-profile', async (req, res) => {
 // =============================================================================
 
 /**
+ * @route   GET /api/db/timecard/:jobPositionHistoryId
+ * @desc    Retrieves the current weekly timecard for a specific job.
+ * @access  Public (should be restricted)
+ * @param   {string} jobPositionHistoryId - The ID of the job history record.
+ */
+router.get("/timecard/:jobPositionHistoryId", async (req, res) => {
+    try {
+      const jobPositionHistoryId = parseInt(req.params.jobPositionHistoryId, 10);
+      if (isNaN(jobPositionHistoryId)) {
+        return res.status(400).json({ error: "Invalid Job Position History ID." });
+      }
+      const timecard = await getEmployeeTimecard(jobPositionHistoryId);
+      if (!timecard) {
+        return res.status(404).json({ message: "No timecard found for the current week." });
+      }
+      res.status(200).json(timecard);
+    } catch (error) {
+      // **FIX**: This now sends the detailed database error back to the client in development mode.
+      console.error(`Error in /timecard/${req.params.jobPositionHistoryId} route:`, error);
+      const errorMessage = process.env.NODE_ENV === 'development' 
+        ? error.message 
+        : "An error occurred while retrieving the timecard.";
+      res.status(500).json({ error: errorMessage });
+    }
+  });
+
+/**
  * @route   POST /api/db/upsert-timecard
  * @desc    Creates or updates an employee's weekly timecard.
- * @access  Public (should be restricted to Employees/Admins)
+ * @access  Public
  * @body    {object} timecardData - The timecard data including jobPositionHistoryId and entries.
  */
 router.post("/upsert-timecard", async (req, res) => {
