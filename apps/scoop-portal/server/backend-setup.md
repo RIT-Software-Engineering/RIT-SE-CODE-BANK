@@ -6,7 +6,33 @@ Ensure the following are installed:
 - [Node.js](https://nodejs.org/) (v18+ recommended)
 - [npm](https://www.npmjs.com/)
 - [MariaDB](https://mariadb.org/)
-- [Prisma CLI](https://www.prisma.io/docs/reference/api-reference/command-reference) (`npm install prisma -g` optional for global use)
+- [Prisma CLI](https://www.prisma.io/docs/reference/api-reference/command-reference)
+
+## MariaDB Local Setup
+Download and install MariaDB. In the setup wizard, choose a password for the root user 
+(Since this is only for local development "password" is ok. This is not recommended for a production environment). **This
+password will be used in the .env file.** Ensure the TCP port is set to 3306. Continue the install. 
+
+In a terminal, navigate to the MariaDB installation directory (On Windows this is at C:\ Program Files\mariadb 11.8\bin). Login to the mysql shell and enter your password when prompted: 
+```
+mysql -u root -p
+```
+To create a database:
+```
+create database [your-db-name];
+```
+This database name will be used to connect to Prisma.
+
+### Useful MySQL Shell Commands
+
+`show databases` shows all databases  
+`use [database]` switch to the specified database  
+`show tables` show all tables in a database  
+`select * in [table]` show all records in the specified table  
+
+**NOTE**   
+After creating the database, most table and schema creation and manipulation will be done through Prisma.
+Manipulating the database or schema directly will cause incongruencies between your database and the Prisma schema. 
 
 ## Environment Variables
 In the `server/` directory:
@@ -34,10 +60,9 @@ npm install @prisma/client
 
 In the `ui/` directory, run: `npm install`.
 
-
 ## Prisma Setup
 
-To generate a Prisma client:
+To generate a Prisma client:  
 Navigate to the `/server` directory.
 Run `npx prisma generate`
 
@@ -45,16 +70,19 @@ Run `npx prisma generate`
 For setup and after any changes to the Prisma schema, push the schema to the database:
 `npx prisma db push`
 
-The database can be seeded with:
+The database can be seeded with:  
 `npx prisma db seed`
 
-You can use Prisma Studio as a GUI to see data held in the Prisma Schema: 
+You can use Prisma Studio as a GUI to see data held in the Prisma Schema:   
 `npx prisma studio`
 
-Reset database (drops all tables)
+Generate the Prisma schema from the current database schema:  
+`npx prisma db pull`
+
+Reset database (drops all tables)  
 `npx prisma migrate reset`
 
-If modifying or adding Prisma models, delete schema.prisma inside `src/generated/prisma` (NOT schema.prisma inside `prisma/models/`), the generate the Prisma client with:
+If modifying or adding Prisma models, delete schema.prisma inside `src/generated/prisma` (NOT schema.prisma inside `prisma/models/`), the generate the Prisma client with:  
 `npx prisma generate`
 This will generate a new schema.prisma inside the `src/generated/prisma` and update the schema.
 
