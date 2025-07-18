@@ -46,6 +46,16 @@ model Candidate {
   jobPositionApplicationHistory     JobPositionApplicationHistory[]
 }
 
+model Comment {
+  //Fields
+  id                Int             @id @default(autoincrement())
+  foreignTableName  String          @db.Text
+  foreignKey        String          @db.Text                      //this is the id of a specific entry within one of the foreign tables
+  status            String          @db.Text
+  comment           String          @db.Text
+  timestamp         DateTime
+}
+
 model Resume {
   //Fields
   id                  Int           @id @default(autoincrement())
@@ -101,7 +111,6 @@ model JobPositionApplicationHistory {
   resumeId             Int
   jobApplicationStatus JobApplicationStatus @default(APPLIED)
   applicationData      String?              @db.Text
-  commentHistory       String?              @db.Text  // this keeps track of the history of the Application status with corresponding comments and timestamp
 
   // Relations
   candidate   Candidate   @relation(fields: [candidateUID], references: [uid])

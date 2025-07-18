@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ApplicationCard from '@/components/jobs/CandidateAndEmployee/ApplicationCard';
 import { getCandidateApplications } from '@/services/db-apis';
 
@@ -14,35 +14,33 @@ export default function CandidateApplicationsPage() {
   const pageTitle = "My Applications";
   const pageSubtitle = "Track the status of all positions you've applied for.";
 
-  const handleWithdrawSuccess = (withdrawnApplicationId) => {
-    // Filter out the withdrawn application from the state
-    setApplications(currentApplications =>
-      currentApplications.filter(app => app.id !== withdrawnApplicationId)
-    );
-  };
-
-  useEffect(() => {
-    // Fetch data specifically for the logged-in candidate
+  // Wrap data fetching logic in useCallback so its identity is stable
+  const fetchApplications = useCallback(async () => {
     if (currentUser?.uid && currentUser.role === "CANDIDATE") {
-      async function fetchData() {
-        try {
-          setLoading(true);
-          const data = await getCandidateApplications(currentUser.uid);
-          setApplications(data);
-          setError(null);
-        } catch (err) {
-          console.error("Error fetching candidate applications:", err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
+      try {
+        setLoading(true);
+        const data = await getCandidateApplications(currentUser.uid);
+        setApplications(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching candidate applications:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-      fetchData();
     } else {
-      // If there's no user, we're not loading anything.
       setLoading(false);
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]); // useEffect now depends on the stable fetchApplications function
+
+  // Update handler simply calls the fetch function again.
+  const handleStatusChange = () => {
+    fetchApplications();
+  };
 
   // Renders the main content of the page based on the current state
   const renderContent = () => {
@@ -65,7 +63,7 @@ export default function CandidateApplicationsPage() {
             key={app.id}
             currentUser={currentUser}
             application={app}
-            onWithdrawSuccess={handleWithdrawSuccess}
+            onStatusChange={handleStatusChange}
             refreshUserProfile={refreshUserProfile}
           />
         ))}

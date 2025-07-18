@@ -5,7 +5,7 @@ import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getCandidateApplicationsForFaculty } from '@/services/db-apis';
 
 export default function Applications() {
@@ -14,33 +14,33 @@ export default function Applications() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    // We only want to fetch if we have a current user who is also an employer
+  // Wrap data fetching logic in useCallback so its identity is stable
+  const fetchApplications = useCallback(async () => {
     if (currentUser?.uid && currentUser.role === 'EMPLOYER') {
-      async function fetchApplications() {
-        try {
-          setLoading(true); // Set loading to true before fetch
-          const data = await getCandidateApplicationsForFaculty(
-            currentUser.uid
-          );
-
-          console.log('Fetched data:', data);
-
-          setActiveApplications(data);
-          setError(null); // Clear any previous errors
-        } catch (err) {
-          console.error('Error fetching applications:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false); // Set loading to false after fetch completes
-        }
+      try {
+        setLoading(true);
+        const data = await getCandidateApplicationsForFaculty(currentUser.uid);
+        setActiveApplications(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching applications:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-      fetchApplications();
     } else {
-      // If there's no user or the user is not an employer, don't attempt to load.
       setLoading(false);
     }
-  }, [currentUser]); // Re-run the effect if the currentUser changes
+  }, [currentUser]); // Dependency is currentUser
+
+  useEffect(() => {
+    fetchApplications();
+  }, [fetchApplications]); // useEffect now depends on the stable fetchApplications function
+
+  // Update handler simply calls the fetch function again.
+  const handleStatusChange = () => {
+    fetchApplications();
+  };
 
   // Content to load once a employer is logged in
   const renderContent = () => {
@@ -87,6 +87,7 @@ export default function Applications() {
                         key={app.id}
                         jobPosition={position}
                         application={app}
+                        onStatusChange={handleStatusChange}
                       />
                     ))
                   ) : (
