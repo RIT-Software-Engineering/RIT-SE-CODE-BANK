@@ -9,11 +9,25 @@ import { handleResponse } from "./utils";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
 
 export async function getAssessmentsByProject(
-    projectId: string
+    projectId: string,
+    query?: { responder?: string; receiver?: string }
 ): Promise<Assessment[]> {
-    const res = await fetch(`${BASE_URL}/assessments/byProject/${projectId}`, {
-        credentials: "include",
-    });
+    const queryParams = [];
+    if (query?.responder) {
+        queryParams.push("responder=" + query?.responder);
+    }
+    if (query?.receiver) {
+        queryParams.push("receiver=" + query?.receiver);
+    }
+
+    const res = await fetch(
+        `${BASE_URL}/assessments/byProject/${projectId}${
+            queryParams.length > 0 ? "?" + queryParams.join("&") : ""
+        }`,
+        {
+            credentials: "include",
+        }
+    );
 
     return handleResponse(
         res,

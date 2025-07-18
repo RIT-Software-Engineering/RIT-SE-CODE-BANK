@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FeedbackForm, Inquiry, InquiryType } from "@/types/assessment";
 import { getAllForms } from "@/services/form";
-import { assignAssessmentToProject } from "@/services/project";
+import {
+    assignAssessmentToProject,
+    getProjectsPeers,
+} from "@/services/project";
+import { IconButton, InputAdornment, TextField } from "@mui/material";
+import { Add } from "@mui/icons-material";
+import { UserProfile } from "@/types/userProfile";
 
 type AssessmentModalProps = {
     assessments: FeedbackForm[];
@@ -149,6 +155,198 @@ export function AssessmentModal({
     );
 }
 
+type PeerSelectModalProps = {
+    isOpen: boolean;
+    onClose: () => void;
+    peers: UserProfile[]; // list of peer emails or names
+    selected: UserProfile[];
+    setSelected: (peers: UserProfile[]) => void;
+    splitPeers: boolean;
+    setSplitPeers: (split: boolean) => void;
+    responders: UserProfile[];
+    setResponders: (peers: UserProfile[]) => void;
+    receivers: UserProfile[];
+    setReceivers: (peers: UserProfile[]) => void;
+};
+
+export function PeerSelectModal({
+    isOpen,
+    onClose,
+    peers,
+    selected,
+    setSelected,
+    splitPeers,
+    setSplitPeers,
+    responders,
+    setResponders,
+    receivers,
+    setReceivers,
+}: PeerSelectModalProps) {
+    if (!isOpen) return null;
+
+    // Helper functions for select/deselect all
+    const handleSelectAll = () => {
+        if (splitPeers) {
+            setResponders(peers);
+            setReceivers(peers);
+        } else {
+            setSelected(peers);
+        }
+    };
+    const handleDeselectAll = () => {
+        if (splitPeers) {
+            setResponders([]);
+            setReceivers([]);
+        } else {
+            setSelected([]);
+        }
+    };
+
+    // Toggle peer selection
+    const togglePeer = (
+        peer: UserProfile,
+        group: "all" | "responders" | "receivers"
+    ) => {
+        if (splitPeers) {
+            if (group === "responders") {
+                setResponders(
+                    responders.includes(peer)
+                        ? responders.filter((p) => p !== peer)
+                        : [...responders, peer]
+                );
+            } else if (group === "receivers") {
+                setReceivers(
+                    receivers.includes(peer)
+                        ? receivers.filter((p) => p !== peer)
+                        : [...receivers, peer]
+                );
+            }
+        } else {
+            setSelected(
+                selected.includes(peer)
+                    ? selected.filter((p) => p !== peer)
+                    : [...selected, peer]
+            );
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+                <button
+                    className="absolute top-4 right-6 text-gray-500 hover:text-gray-700 cursor-pointer"
+                    onClick={onClose}
+                    type="button"
+                >
+                    ×
+                </button>
+                <h2 className="text-2xl font-bold mb-4">Select Peers</h2>
+                <div className="mb-4 flex items-center gap-4">
+                    <label className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={splitPeers}
+                            onChange={(e) => setSplitPeers(e.target.checked)}
+                        />
+                        <span>Split into responders and receivers</span>
+                    </label>
+                </div>
+                <div className="mb-4 flex gap-2">
+                    <button
+                        className="px-3 py-1 rounded border hover:bg-gray-100 cursor-pointer"
+                        onClick={handleSelectAll}
+                        type="button"
+                    >
+                        Select All
+                    </button>
+                    <button
+                        className="px-3 py-1 rounded border hover:bg-gray-100 cursor-pointer"
+                        onClick={handleDeselectAll}
+                        type="button"
+                    >
+                        Deselect All
+                    </button>
+                </div>
+                {splitPeers ? (
+                    <div className="flex gap-6">
+                        <div className="flex-1">
+                            <h3 className="font-semibold mb-2">Responders</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {peers.map((peer) => (
+                                    <button
+                                        key={peer.id}
+                                        type="button"
+                                        className={`px-2 py-1 rounded border ${
+                                            responders.includes(peer)
+                                                ? "bg-blue-600 text-white"
+                                                : "bg-gray-100 text-gray-800"
+                                        }`}
+                                        onClick={() =>
+                                            togglePeer(peer, "responders")
+                                        }
+                                    >
+                                        {peer.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold mb-2">Receivers</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {peers.map((peer) => (
+                                    <button
+                                        key={peer.id}
+                                        type="button"
+                                        className={`px-2 py-1 rounded border ${
+                                            receivers.includes(peer)
+                                                ? "bg-blue-600 text-white"
+                                                : "bg-gray-100 text-gray-800"
+                                        }`}
+                                        onClick={() =>
+                                            togglePeer(peer, "receivers")
+                                        }
+                                    >
+                                        {peer.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div>
+                        <h3 className="font-semibold mb-2">Peers</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {peers.map((peer) => (
+                                <button
+                                    key={peer.id}
+                                    type="button"
+                                    className={`px-2 py-1 rounded border ${
+                                        selected.includes(peer)
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-gray-100 text-gray-800"
+                                    }`}
+                                    onClick={() => togglePeer(peer, "all")}
+                                >
+                                    {peer.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                <div className="mt-6 flex justify-end">
+                    <button
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        onClick={onClose}
+                        type="button"
+                    >
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 type AssignAssessmentPageProps = {
     params: { projectId: string };
 };
@@ -162,6 +360,7 @@ export default function AssignAssessmentPage({
     const [selectedForm, setSelectedForm] = useState<FeedbackForm | undefined>(
         undefined
     );
+    const [projectPeers, setProjectPeers] = useState<UserProfile[]>([]);
 
     const today = new Date().toISOString().split("T")[0];
     const inAWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -172,6 +371,11 @@ export default function AssignAssessmentPage({
     const [formDesc, setFormDesc] = useState<string>("");
     const [formStartDate, setStartDate] = useState<string>(today);
     const [formDueDate, setDueDate] = useState<string>(inAWeek);
+    const [selected, setSelected] = useState<UserProfile[]>([]);
+    const [responders, setResponders] = useState<UserProfile[]>([]);
+    const [receivers, setReceivers] = useState<UserProfile[]>([]);
+    const [splitPeers, setSplitPeers] = useState(false);
+    const [isPeerModalOpen, setIsPeerModalOpen] = useState(false);
     const [error, setError] = useState<string>("");
 
     const { projectId } = params;
@@ -179,6 +383,10 @@ export default function AssignAssessmentPage({
     useEffect(() => {
         (async () => {
             setForms(await getAllForms());
+
+            const allPeers = await getProjectsPeers(projectId);
+            setProjectPeers(allPeers);
+            setSelected(allPeers);
         })();
     }, []);
 
@@ -203,13 +411,27 @@ export default function AssignAssessmentPage({
         }
 
         try {
-            await assignAssessmentToProject(projectId, {
+            const assessment = {
                 formId: selectedForm!.id,
                 name: formName,
                 description: formDesc,
                 startDate: formStartDate,
                 dueDate: formDueDate,
-            });
+            };
+
+            splitPeers
+                ? await assignAssessmentToProject(
+                      projectId,
+                      assessment,
+                      undefined,
+                      responders.map((p) => p.email),
+                      receivers.map((p) => p.email)
+                  )
+                : await assignAssessmentToProject(
+                      projectId,
+                      assessment,
+                      selected.map((p) => p.email)
+                  );
 
             setError("");
             alert("Assigned assessment");
@@ -344,6 +566,26 @@ export default function AssignAssessmentPage({
                                 onChange={(e) => setDueDate(e.target.value)}
                             />
                         </label>
+                        <button
+                            className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                            onClick={() => setIsPeerModalOpen(true)}
+                            type="button"
+                        >
+                            Select Peers
+                        </button>
+                        <PeerSelectModal
+                            isOpen={isPeerModalOpen}
+                            onClose={() => setIsPeerModalOpen(false)}
+                            peers={projectPeers}
+                            splitPeers={splitPeers}
+                            setSplitPeers={setSplitPeers}
+                            responders={responders}
+                            setResponders={setResponders}
+                            receivers={receivers}
+                            setReceivers={setReceivers}
+                            selected={selected}
+                            setSelected={setSelected}
+                        />
                         <button
                             type="submit"
                             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"

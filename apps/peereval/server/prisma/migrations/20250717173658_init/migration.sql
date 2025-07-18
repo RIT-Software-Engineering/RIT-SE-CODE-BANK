@@ -91,6 +91,24 @@ CREATE TABLE `_peers` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `_receiversInAssessment` (
+    `A` CHAR(36) NOT NULL,
+    `B` CHAR(36) NOT NULL,
+
+    UNIQUE INDEX `_receiversInAssessment_AB_unique`(`A`, `B`),
+    INDEX `_receiversInAssessment_B_index`(`B`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `_responderInAssessment` (
+    `A` CHAR(36) NOT NULL,
+    `B` CHAR(36) NOT NULL,
+
+    UNIQUE INDEX `_responderInAssessment_AB_unique`(`A`, `B`),
+    INDEX `_responderInAssessment_B_index`(`B`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `_FeedbackFormToInquiry` (
     `A` CHAR(36) NOT NULL,
     `B` CHAR(36) NOT NULL,
@@ -137,6 +155,18 @@ ALTER TABLE `_peers` ADD CONSTRAINT `_peers_A_fkey` FOREIGN KEY (`A`) REFERENCES
 
 -- AddForeignKey
 ALTER TABLE `_peers` ADD CONSTRAINT `_peers_B_fkey` FOREIGN KEY (`B`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_receiversInAssessment` ADD CONSTRAINT `_receiversInAssessment_A_fkey` FOREIGN KEY (`A`) REFERENCES `Assessment`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_receiversInAssessment` ADD CONSTRAINT `_receiversInAssessment_B_fkey` FOREIGN KEY (`B`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_responderInAssessment` ADD CONSTRAINT `_responderInAssessment_A_fkey` FOREIGN KEY (`A`) REFERENCES `Assessment`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_responderInAssessment` ADD CONSTRAINT `_responderInAssessment_B_fkey` FOREIGN KEY (`B`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_FeedbackFormToInquiry` ADD CONSTRAINT `_FeedbackFormToInquiry_A_fkey` FOREIGN KEY (`A`) REFERENCES `FeedbackForm`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

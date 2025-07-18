@@ -137,6 +137,16 @@ async function main() {
             name: "Sprint 1 Review",
             description:
                 "A beginning-of-the-semester peer evaluation to assess teamwork, communication, and individual contributions during the first half of the spring term.",
+            receivers: {
+                connect: [alice, bob, hannah].map((u) => ({
+                    id: u.id,
+                })),
+            },
+            responders: {
+                connect: [alice, bob, hannah].map((u) => ({
+                    id: u.id,
+                })),
+            },
             startDate: daysFromToday(-9),
             dueDate: daysFromToday(-2),
             feedbackForm: {
@@ -150,6 +160,16 @@ async function main() {
             name: "Sprint 2 Review",
             description:
                 "A mid-semester peer evaluation to assess teamwork, communication, and individual contributions during the second half of the spring term.",
+            receivers: {
+                connect: [alice, bob, hannah].map((u) => ({
+                    id: u.id,
+                })),
+            },
+            responders: {
+                connect: [alice, bob, hannah].map((u) => ({
+                    id: u.id,
+                })),
+            },
             startDate: daysFromToday(-1),
             dueDate: daysFromToday(6),
             feedbackForm: {
@@ -163,6 +183,16 @@ async function main() {
             name: "Final Review",
             description:
                 "A final peer evaluation to assess teamwork, communication, and individual contributions during the end of the spring term.",
+            receivers: {
+                connect: [alice, bob, hannah].map((u) => ({
+                    id: u.id,
+                })),
+            },
+            responders: {
+                connect: [alice, bob, hannah].map((u) => ({
+                    id: u.id,
+                })),
+            },
             startDate: daysFromToday(7),
             dueDate: daysFromToday(14),
             feedbackForm: {
@@ -176,6 +206,16 @@ async function main() {
             name: "Sprint 1 Review",
             description:
                 "A beginning-of-the-semester peer evaluation to assess teamwork, communication, and individual contributions during the first half of the spring term.",
+            receivers: {
+                connect: [alice, charlie, ivan].map((u) => ({
+                    id: u.id,
+                })),
+            },
+            responders: {
+                connect: [alice, charlie, ivan].map((u) => ({
+                    id: u.id,
+                })),
+            },
             startDate: daysFromToday(-9),
             dueDate: daysFromToday(-2),
             feedbackForm: {
@@ -189,6 +229,16 @@ async function main() {
             name: "Sprint 2 Review",
             description:
                 "A mid-semester peer evaluation to assess teamwork, communication, and individual contributions during the second half of the spring term.",
+            receivers: {
+                connect: [alice, charlie, ivan].map((u) => ({
+                    id: u.id,
+                })),
+            },
+            responders: {
+                connect: [alice, charlie, ivan].map((u) => ({
+                    id: u.id,
+                })),
+            },
             startDate: daysFromToday(-1),
             dueDate: daysFromToday(6),
             feedbackForm: {
@@ -202,6 +252,16 @@ async function main() {
             name: "Final Review",
             description:
                 "A final peer evaluation to assess teamwork, communication, and individual contributions during the end of the spring term.",
+            receivers: {
+                connect: [alice, charlie, ivan].map((u) => ({
+                    id: u.id,
+                })),
+            },
+            responders: {
+                connect: [alice, charlie, ivan].map((u) => ({
+                    id: u.id,
+                })),
+            },
             startDate: daysFromToday(7),
             dueDate: daysFromToday(14),
             feedbackForm: {

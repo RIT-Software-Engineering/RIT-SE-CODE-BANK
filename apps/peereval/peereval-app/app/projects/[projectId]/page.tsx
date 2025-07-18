@@ -98,8 +98,10 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
 
             setIsInProject(true);
 
-            // Getting the project's assessments
-            const as = await getAssessmentsByProject(projectId);
+            // Getting the peer's assessments to responde to
+            const as = await getAssessmentsByProject(projectId, {
+                responder: currentUser?.id,
+            });
             setAssessments(as);
             setIsLoading(false);
         })();
