@@ -5,9 +5,10 @@ const router = Router();
 const prisma = new PrismaClient();
 
 /**
- * Get all journal entries
+ * GET all journal entries
+ *
  * @param {Object} req - The request object
- * @param {Object} res - The response object
+ * @param {Object} res - The response object to send all jurnal entries or an error
  */
 router.get("/", async (req, res) => {
     try {
@@ -20,7 +21,8 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * Create a new journal entry
+ * POST (create) a new journal entry
+ *
  * @param {Object} req - The request object containing the journal entry data
  * @param {Object} res - The response object to send back the created entry or an error
  */
@@ -33,12 +35,18 @@ router.post("/", async (req, res) => {
         res.status(200).json(newEntry);
     } catch (error) {
         console.error("Error creating journal entry:", error);
-        res.status(500).json({ message: "Error creating journal entry" });
+        res.status(500).json({
+            message: "Error creating journal entry",
+            error: error.message,
+        });
     }
 });
 
 /**
- * Update an existing journal entry
+ * PUT (update) an existing journal entry
+ *
+ * @param {Object} req - The request object containing the journal entry id and notes data
+ * @param {Object} res - The response object to send back the updated journal entry or an error
  */
 router.put("/:id", async (req, res) => {
     const { id } = req.params;
@@ -51,7 +59,10 @@ router.put("/:id", async (req, res) => {
         res.status(200).json(updatedEntry);
     } catch (error) {
         console.error("Error updating journal entry:", error);
-        res.status(500).json({ message: "Error updating journal entry" });
+        res.status(500).json({
+            message: "Error updating journal entry",
+            error: error.message,
+        });
     }
 });
 
