@@ -1,24 +1,97 @@
-import Header from "@components/Header";
-import { Typography } from "@mui/material";
+"use client";
 
-async function Projects() {
-    // await new Promise((resolve) => setTimeout(resolve, 1000));
+import React, { useEffect, useState } from "react";
+import Header from "@components/Header";
+import { Box, Button, Container, Typography } from "@mui/material";
+import theme from "@styles/theme";
+
+export default function Projects() {
+    const [projects, setProjects] = useState([]);
+
+    useEffect(() => {
+        console.log("API URL: ", process.env.NEXT_PUBLIC_API_URL);
+        const fetchProjects = async () => {
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/project`
+                );
+                const data = await res.json();
+                setProjects(data);
+            } catch (err) {
+                console.error("Failed to fetch projects: ", err);
+            }
+        };
+
+        fetchProjects();
+    }, []);
+
+    const handleViewClick = () => {};
 
     return (
         <>
             <Header />
-            <div>
-                <Typography variant="h1">Projects</Typography>
-                <main>
-                    <ul className="list-disc">
-                        <li>
-                            <a href="/projects/1">Demo Project</a>
-                        </li>
-                    </ul>
-                </main>
-            </div>
+            <Container>
+                <Typography variant="h1" sx={{ mb: 4 }}>
+                    Projects
+                </Typography>
+                <>
+                    {projects.map((project) => (
+                        <Container
+                            key={project.id}
+                            sx={{
+                                backgroundColor: "#212121",
+                                paddingBlock: "1em",
+                            }}
+                        >
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                }}
+                            >
+                                <Typography variant="h2">
+                                    {project.display_name ||
+                                        project.title ||
+                                        "Unknown Project"}
+                                </Typography>
+                                <Button
+                                    variant="solid-orange"
+                                    href={`/projects/${project.id}`}
+                                >
+                                    View
+                                </Button>
+                            </Box>
+                            <Box
+                                sx={{
+                                    padding: "0.5em 1em",
+                                    display: "inline-block",
+                                    backgroundColor:
+                                        project.status === "active"
+                                            ? "rgba(0, 156, 189, 0.2)"
+                                            : project.status === "in progress"
+                                              ? "rgba(246, 190, 0, 0.2)"
+                                              : project.status === "completed"
+                                                ? "rgba(132, 189, 0, 0.2)"
+                                                : "rgba(124, 135, 142, 0.2)",
+                                    color:
+                                        project.status === "active"
+                                            ? theme.palette.info.main
+                                            : project.status === "in progress"
+                                              ? theme.palette.warning.main
+                                              : project.status === "completed"
+                                                ? theme.palette.success.main
+                                                : "rgb(124, 135, 142)",
+                                }}
+                            >
+                                <Typography sx={{ margin: "0" }}>
+                                    {project.status.toUpperCase()}
+                                </Typography>
+                            </Box>
+                            <Typography>{project.description}</Typography>
+                        </Container>
+                    ))}
+                </>
+            </Container>
         </>
     );
 }
-
-export default Projects;
