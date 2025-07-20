@@ -1,14 +1,18 @@
 import express from "express";
 import cors from "cors";
+import semesterGroupRoutes from "./api/semestergroup/route.js";
 import applicationRoutes from "./api/application/route.js";
 import journalRoutes from "./api/journal/route.js";
+import projectRoutes from "./api/project/route.js";
 
 const app = express();
 const PORT = process.env.PORT;
 app.use(cors());
 app.use(express.json());
+app.use("/api/semestergroup", semesterGroupRoutes);
 app.use("/api/application", applicationRoutes);
 app.use("/api/journal", journalRoutes);
+app.use("/api/project", projectRoutes);
 
 app.listen(PORT, () => {
     //load data?
