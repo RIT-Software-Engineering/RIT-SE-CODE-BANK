@@ -1,3 +1,10 @@
+import Header from "@components/Header";
+
 export default function ProjectDetailsLayout({ children }) {
-    return <div>{children}</div>;
+    return (
+        <div>
+            <Header />
+            {children}
+        </div>
+    );
 }

@@ -1,87 +1,88 @@
-import Header from "@components/Header";
-import { Button, Typography } from "@mui/material";
-import { ArrowBack, Edit } from "@mui/icons-material";
-import {} from "@mui/icons-material";
+"use client";
 
-// The current border styles are NOT intended for the final product.
-// They are just to show how the divs are organized.
+import { Box, Button, Container, Typography } from "@mui/material";
+import { ArrowBack, Edit, Height } from "@mui/icons-material";
+import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
+import React, { Suspense, useEffect, useState } from "react";
+import ProjectDetailsLoading from "./loading";
 
-// This is hardcoded and under the assumption that the user viewing the page is an Admin
+export default function ProjectDetails({ params }) {
+    const { projectId } = React.use(params);
+    const [isLoading, setIsLoading] = useState(true);
+    const [project, setProject] = useState([]);
 
-async function ProjectDetails() {
-    // Use to compare the loading skeleton to the page's content
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    useEffect(() => {
+        console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
+        const fetchProject = async () => {
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/project/${projectId}`
+                );
+                const data = await res.json();
+                setProject(data);
+            } catch (err) {
+                console.error("Failed to fetch project: ", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (projectId) fetchProject();
+    }, [projectId]);
+
+    if (isLoading) {
+        return <ProjectDetailsLoading />;
+    }
 
     return (
         <>
-            <Header />
-            <main>
-                <Button href="/projects" startIcon={<ArrowBack />}>
+            <Container>
+                <Button
+                    href="/projects"
+                    startIcon={<ArrowBackOutlinedIcon />}
+                    variant="outline-orange"
+                >
                     Back to Projects
                 </Button>
-                <div
-                    id="project-header"
-                    className="flex justify-between mb-4"
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: "1rem",
-                    }}
-                >
-                    <Typography variant="h1" component={"h1"}>
-                        Demo Project
+                <Container sx={{ marginTop: "1rem" }}>
+                    <Typography variant="h1">
+                        {project.display_name || project.title}
                     </Typography>
-                    <Button startIcon={<Edit />}>Edit Project</Button>
-                </div>
-                <div
-                    id="description-box"
-                    className="border-2 border-dashed mb-6"
-                    style={{
-                        border: "2px dashed #ccc",
-                        marginBottom: "1.5rem",
-                    }}
-                >
-                    [ Project description ]
-                </div>
-                <div
-                    id="other-details"
-                    className="flex justify-between"
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                    <div
-                        id="participants"
-                        className="w-1/3 border-2 border-dashed"
-                        stylwe={{ width: "33.33%", border: "2px dashed #ccc" }}
+                    <Typography>{project.status}</Typography>
+                    <Typography>{project.description}</Typography>
+                    <Container
+                        sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                        }}
                     >
-                        <div id="employer" title="Employer">
-                            Employer
-                        </div>
-                        <div id="employee-list" title="Employees">
-                            <ul>
-                                <li>Employee 1</li>
-                                <li>Employee 2</li>
-                                <li>Employee 3</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div
-                        id="actions"
-                        className="w-2/3 border-2 border-dashed"
-                        style={{ width: "66.67%", border: "2px dashed #ccc" }}
-                    >
-                        <Typography variant="h2" component="h2">
-                            Actions
-                        </Typography>
-                        <ul className="list-disc list-inside">
-                            <li>Action 1</li>
-                            <li>Action 2</li>
-                            <li>Action 3</li>
-                        </ul>
-                    </div>
-                </div>
-            </main>
+                        <Box
+                            sx={{
+                                width: "50%",
+                                padding: "0.25rem 1rem",
+                            }}
+                        >
+                            <Typography variant="h3">Challenges:</Typography>
+                            <Typography>
+                                {project.project_challenges}
+                            </Typography>
+                        </Box>
+                        <Box
+                            sx={{
+                                width: "50%",
+                                padding: "0.25rem 1rem",
+                            }}
+                        >
+                            <Typography variant="h3">
+                                Constraints & Assumptions:
+                            </Typography>
+                            <Typography>
+                                {project.constraints_assumptions}
+                            </Typography>
+                        </Box>
+                    </Container>
+                </Container>
+            </Container>
         </>
     );
 }
-
-export default ProjectDetails;
