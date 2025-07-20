@@ -26,4 +26,30 @@ export const sampleProjects = [
         team_name: "Team Beta",
         semesterId: 1,
     },
+    {
+        id: 3,
+        status: "in progress",
+        title: "AI Chatbot for Student Services",
+        display_name: "AI Chatbot for Student Services",
+        description:
+            "Development of an AI chatbot to answer common student questions",
+        project_challenges:
+            "Natural language processing, Integration with student services database",
+        constraints_assumptions: "Must maintain privacy of student data",
+        project_search_keywords: "ai, chatbot, nlp",
+        team_name: "Team Gamma",
+        semesterId: 1,
+    },
+    {
+        id: 4,
+        status: "completed",
+        title: "Virtual Reality Lab Tour",
+        display_name: "Virtual Reality Lab Tour",
+        description: "Development of a VR tour of the SE labs",
+        project_challenges: "VR development, 3D modeling",
+        constraints_assumptions: "Must be accessible on common VR platforms",
+        project_search_keywords: "vr, 3d, tour",
+        team_name: "Team Delta",
+        semesterId: 1,
+    },
 ];
