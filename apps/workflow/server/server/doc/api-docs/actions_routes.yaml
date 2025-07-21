@@ -108,7 +108,7 @@ paths:
                         type: object
                       previous:
                         $ref: "./schemas.yaml#/components/schemas/Action"
-                      child_actions:
+                      childActions:
                         type: array
                         items:
                           $ref: "./schemas.yaml#/components/schemas/Action"
