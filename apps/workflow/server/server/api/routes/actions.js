@@ -14,8 +14,8 @@ router.get("/:id", async (req, res) => {
         where: { id: id },
         include: {
             metadata: true,
-            previous_action: true,
-            child_actions: true,
+            previousAction: true,
+            childActions: true,
         },
     });
 
@@ -33,16 +33,13 @@ router.get("/", async (req, res) => {
         let actionsByWorkflow = [];
         const workflow = await prisma.workflowAttributes.findUnique({
             where: { id: workflowId },
-            include: {
-                root_action: true,
-            },
         });
 
         // The intersection later on is used, because if we use the where clause here, then later actions in
         // the workflow that do not match the where clause, would cause this loop not to check actions in
         // the workflow beyond the first one that failed.
-        if (workflow?.root_action) {
-            actionsByWorkflow = await getActionChain(workflow.root_action.id);
+        if (workflow?.rootActionId) {
+            actionsByWorkflow = await getActionChain(workflow.rootActionId);
         }
 
         // // find the actions that appear in both lists (filtered by workflows, and filtered by where clause)
@@ -54,7 +51,7 @@ router.get("/", async (req, res) => {
             where: { ...where, id: { in: actionsByWorkflow.map((a) => a.id) } },
             include: {
                 metadata: true,
-                previous_action: true,
+                previousAction: true,
             },
         });
 
@@ -65,7 +62,7 @@ router.get("/", async (req, res) => {
         where,
         include: {
             metadata: true,
-            previous_action: true,
+            previousAction: true,
         },
     });
     return res.json(actions.map((a) => exportAction(a)));
@@ -88,10 +85,10 @@ router.post("/", async (req, res) => {
         data.form = form;
     }
     if (actionType) {
-        data.action_type = actionType;
+        data.actionType = actionType;
     }
     if (parentActionId) {
-        data.parent_action = { connect: { id: parentActionId } };
+        data.parentAction = { connect: { id: parentActionId } };
     }
 
     const action = await prisma.action.create({
@@ -101,8 +98,8 @@ router.post("/", async (req, res) => {
                 // Default the creator to have all permissionTypes
                 createMany: {
                     data: permissionTypes.map((permissionType) => ({
-                        user_id: userId,
-                        permission_type: permissionType,
+                        userId: userId,
+                        permissionType: permissionType,
                     })),
                 },
             },
@@ -139,13 +136,13 @@ router.put("/:id", async (req, res) => {
         data.form = form;
     }
     if (actionType) {
-        data.action_type = actionType;
+        data.actionType = actionType;
     }
     if (nextActionId) {
-        data.next_action = { connect: { id: nextActionId } };
+        data.nextAction = { connect: { id: nextActionId } };
     }
     if (parentActionId) {
-        data.parent_action = { connect: { id: parentActionId } };
+        data.parentAction = { connect: { id: parentActionId } };
     }
     if (metadata) {
         // Delete old metadata
@@ -165,7 +162,7 @@ router.put("/:id", async (req, res) => {
 
     const action = await prisma.action.update({
         where: { id: id },
-        data: data, // Note: I believe this approach only overwrites fields of a record if the data is defined in the data object.
+        data: data, // Only overwrites fields of a record if the data is defined in the data object.
     });
 
     res.json(action);
