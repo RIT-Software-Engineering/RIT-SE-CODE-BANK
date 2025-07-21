@@ -163,12 +163,12 @@ router.put("/:id", async (req, res) => {
         data.metadata = { create: importMetadata(metadata) };
     }
 
-    await prisma.action.update({
+    const action = await prisma.action.update({
         where: { id: id },
         data: data, // Note: I believe this approach only overwrites fields of a record if the data is defined in the data object.
     });
 
-    res.json({ message: "Updated" });
+    res.json(action);
 });
 
 // DELETE /actions/:id

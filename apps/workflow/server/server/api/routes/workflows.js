@@ -171,7 +171,7 @@ router.put("/:id", async (req, res) => {
         base_action_data.metadata = { create: importMetadata(metadata) };
     }
 
-    await prisma.workflowAttributes.update({
+    const workflow = await prisma.workflowAttributes.update({
         where: { id: id },
         data: {
             ...workflow_data,
@@ -183,7 +183,7 @@ router.put("/:id", async (req, res) => {
         },
     });
 
-    res.json({ message: "Updated" });
+    res.json(workflow);
 });
 
 // DELETE /workflows/:id

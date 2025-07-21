@@ -163,7 +163,7 @@ router.put('/workflow/:id', async (req, res) => {
     });
   });
 
-  res.json({ message: 'Updated' });
+  res.json(updatedState);
 });
 
 // DELETE /states/workflow/:id
@@ -220,12 +220,12 @@ router.put('/action/:id', async (req, res) => {
   const data = {};
   if (stateType) { data.state_type = stateType };
 
-  await prisma.actionStates.update({
+  const actionState = await prisma.actionStates.update({
     where: { id: id },
     data: data
   });
 
-  res.json({ message: 'Updated' });
+  res.json(actionState);
 })
 
 // TODO: Add endpoints for /state/action to delete if necessary
