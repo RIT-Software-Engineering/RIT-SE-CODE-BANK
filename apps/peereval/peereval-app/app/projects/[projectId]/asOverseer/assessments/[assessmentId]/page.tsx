@@ -24,14 +24,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
     const [activePair, setActivePair] = useState<
         [UserProfile, UserProfile] | null
     >(null);
-    const [activeTab, setActiveTab] = useState<number>(0);
     const [responses, setResponses] = useState<
         Record<string, Record<string, string>>
     >({});
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-    const [peerPairs, setPeerPairs] = useState<[UserProfile, UserProfile][]>(
-        []
-    );
+    const [allResponders, setAllResponders] = useState<UserProfile[]>([]);
+    const [allReceivers, setAllReceivers] = useState<UserProfile[]>([]);
+    const [responders, setResponders] = useState<UserProfile[]>([]);
+    const [receivers, setReceivers] = useState<UserProfile[]>([]);
     const { currentUser } = useAuth();
 
     const { projectId, assessmentId } = params;
@@ -48,19 +48,20 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             const inqs = await getAssessmentInquiriesById(assessmentId);
             setInquiries(inqs);
 
-            // Get the responders
+            // Get the assessment peers
             const ps = await getAssessmentPeers(assessmentId);
 
-            const pairs: [UserProfile, UserProfile][] = [];
-            ps.responders.forEach((responder) =>
-                ps.receivers.forEach(
-                    (receiver) =>
-                        responder.id != receiver.id &&
-                        pairs.push([responder, receiver])
-                )
+            setResponders(ps.responders);
+            setAllResponders(ps.responders);
+            setReceivers(
+                ps.receivers.filter((r) => r.id != ps.responders[0].id)
             );
-            setPeerPairs(pairs);
-            setActivePair(pairs[0]);
+            setAllReceivers(ps.receivers);
+
+            setActivePair([
+                ps.responders[0],
+                ps.receivers.filter((r) => r.id != ps.responders[0].id)[0],
+            ]);
 
             // Get assessment responses
             const rs = await getAssessmentResponses(assessmentId);
@@ -85,15 +86,31 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         })();
     }, [currentUser]);
 
-    const getActivePairId = () => `${activePair![0].id}>${activePair![1].id}`;
+    if (!activePair) return;
 
-    const handleSwitchTab = (idx: number) => {
-        setActiveTab(idx);
-        setActivePair(peerPairs[idx]);
-    };
+    const getActivePairId = () => `${activePair[0].id}>${activePair[1].id}`;
 
     const handleBack = () => {
         window.history.back();
+    };
+
+    const handleResponderSelect = (peerId: string) => {
+        const resp = responders.find((r) => r.id == peerId)!;
+        const rece =
+            activePair[1].id == resp.id
+                ? allReceivers.find((r) => r.id != resp.id)!
+                : activePair[1];
+
+        setActivePair([resp, rece]);
+
+        setReceivers(allReceivers.filter((r) => r.id != peerId));
+    };
+
+    const handleReceiverSelect = (peerId: string) => {
+        setActivePair((prev) => [
+            prev![0],
+            receivers.find((r) => r.id == peerId)!,
+        ]);
     };
 
     const { FREE_RESPONSE, RUBRIC, RATING } = InquiryType;
@@ -121,32 +138,42 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                     &larr; Back
                 </button>
                 <div className="mb-6">
-                    {/* Outer wrapper to control layout */}
-                    <div className="relative">
-                        {/* Scroll container */}
-                        <div
-                            className="overflow-x-auto"
-                            style={{ paddingBottom: "12px" }} // space for scrollbar
+                    <div className="mb-6 flex justify-center items-center space-x-2">
+                        {/* First dropdown */}
+                        <select
+                            className="px-4 py-2 rounded bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={activePair[0].id}
+                            onChange={(e) =>
+                                handleResponderSelect(e.target.value)
+                            }
                         >
-                            {/* Tab buttons */}
-                            <div className="flex w-max space-x-2 px-2">
-                                {peerPairs.map((pair, idx) => (
-                                    <button
-                                        key={`${pair[0].id}>${pair[1].id}`}
-                                        type="button"
-                                        className={`px-4 py-2 whitespace-nowrap rounded-t ${
-                                            activeTab === idx
-                                                ? "bg-blue-600 text-white font-bold"
-                                                : "bg-gray-200 text-gray-700"
-                                        }`}
-                                        onClick={() => handleSwitchTab(idx)}
-                                    >
-                                        {pair[0].name} → {pair[1].name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                            {responders.map((peer) => (
+                                <option key={peer.id} value={peer.id}>
+                                    {peer.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        {/* Arrow */}
+                        <span className="text-lg font-semibold text-gray-600">
+                            →
+                        </span>
+
+                        {/* Second dropdown */}
+                        <select
+                            className="px-4 py-2 rounded bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={activePair[1].id}
+                            onChange={(e) =>
+                                handleReceiverSelect(e.target.value)
+                            }
+                        >
+                            {receivers.map((peer) => (
+                                <option key={peer.id} value={peer.id}>
+                                    {peer.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>{" "}
                 </div>{" "}
                 <p className="text-xl">
                     {assessmentMetadata.name} —{" "}
