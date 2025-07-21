@@ -54,8 +54,10 @@ router.get("/", async (req, res) => {
                 previousAction: true,
             },
         });
+        const intersectionIds = intersection.map(action => action.id);
+        const toReturn = actionsByWorkflow.filter(action => intersectionIds.includes(action.id));
 
-        return res.json(intersection.map((action) => exportAction(action)));
+        return res.json(toReturn.map((action) => exportAction(action)));
     }
 
     const actions = await prisma.action.findMany({

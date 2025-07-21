@@ -9,6 +9,10 @@ async function getActionChain(rootActionId) {
         while (currentActionId) {
             const action = await prisma.action.findUnique({
                 where: { id: currentActionId },
+                include: { 
+                    metadata: true,
+                    previousAction: true, 
+                }
             });
 
             if (!action) {
