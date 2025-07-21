@@ -9,6 +9,80 @@ tags:
     description: Endpoints associated with permissions
 
 paths:
+  /permissions:
+    get:
+      summary: Get permissions filtered by userId, actionId, and/or permissionType
+      description: Returns all permissions based on the filters specified in the query parameters
+      operationId: getPermissions
+      tags: [Permissions]
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: actionId
+          in: query
+          schema:
+            type: string
+        - name: permissionType
+          in: query
+          schema:
+            type: string
+            description: Must be a valid permission type
+      responses:
+        '200':
+          description: Array of permissions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "./schemas.yaml#/components/schemas/Permission"
+
+    post:
+      summary: Create a new permission
+      description: Creates a new permission using the data passed in the body
+      operationId: createPermission
+      tags: [Permissions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actingUserId:
+                  type: string
+                newUserId:
+                  type: string
+                actionId:
+                  type: string
+                permissionType:
+                  type: string
+                  description: Must be one of the valid permission types.
+              required:
+                - actingUserId
+                - newUserId
+                - actionId
+                - permissionType
+      responses:
+        '200':
+          description: Created permission object
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas.yaml#/components/schemas/Permission"
+        '403':
+          description: Forbidden (authorization failed)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Forbidden"
+
   /permissions/{id}:
     get:
       summary: Get a permission by ID
@@ -103,80 +177,6 @@ paths:
                   message:
                     type: string
                     example: "Deleted"
-        '403':
-          description: Forbidden (authorization failed)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Forbidden"
-
-  /permissions:
-    get:
-      summary: Get permissions filtered by userId, actionId, and/or permissionType
-      description: Returns all permissions based on the filters specified in the query parameters
-      operationId: getPermissions
-      tags: [Permissions]
-      parameters:
-        - name: userId
-          in: query
-          schema:
-            type: string
-        - name: actionId
-          in: query
-          schema:
-            type: string
-        - name: permissionType
-          in: query
-          schema:
-            type: string
-            description: Must be a valid permission type
-      responses:
-        '200':
-          description: Array of permissions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "./schemas.yaml#/components/schemas/Permission"
-
-    post:
-      summary: Create a new permission
-      description: Creates a new permission using the data passed in the body
-      operationId: createPermission
-      tags: [Permissions]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                actingUserId:
-                  type: string
-                newUserId:
-                  type: string
-                actionId:
-                  type: string
-                permissionType:
-                  type: string
-                  description: Must be one of the valid permission types.
-              required:
-                - actingUserId
-                - newUserId
-                - actionId
-                - permissionType
-      responses:
-        '200':
-          description: Created permission object
-          content:
-            application/json:
-              schema:
-                $ref: "./schemas.yaml#/components/schemas/Permission"
         '403':
           description: Forbidden (authorization failed)
           content:

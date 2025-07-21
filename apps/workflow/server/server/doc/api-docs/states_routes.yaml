@@ -33,7 +33,7 @@ paths:
                     - $ref: "./schemas.yaml#/components/schemas/WorkflowState"
                     - type: object
                       properties:
-                        action_states:
+                        actionStates:
                           type: array
                           items:
                             $ref: "./schemas.yaml#/components/schemas/ActionState"
@@ -91,14 +91,14 @@ paths:
                   - $ref: "./schemas.yaml#/components/schemas/WorkflowState"
                   - type: object
                     properties:
-                      action_states:
+                      actionStates:
                         type: array
                         items:
                           $ref: "./schemas.yaml#/components/schemas/ActionState"
 
     put:
-      summary: Update a workflow state by ID (update action_states)
-      description: Updates the workflow state specified by its ID with the data passed in the body. This tells the workflow state to make sure it's entries in action_states match the actions in the workflow that it represents.
+      summary: Update a workflow state by ID (update actionStates)
+      description: Updates the workflow state specified by its ID with the data passed in the body. This tells the workflow state to make sure it's entries in actionStates match the actions in the workflow that it represents.
       operationId: updateWorkflowState
       tags:
         - States
@@ -115,11 +115,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Updated"
+                $ref: "./schemas.yaml#/components/schemas/WorkflowState"
 
     delete:
       summary: Delete a workflow state by ID
@@ -232,11 +228,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Updated"
+                $ref: "./schemas.yaml#/components/schemas/ActionState"
 
   /states/workflow/{workflowStateId}/findStep:
     get:

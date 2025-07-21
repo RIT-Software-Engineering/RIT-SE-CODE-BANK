@@ -14,19 +14,19 @@ components:
         form:
           type: string
           nullable: true
-        action_type:
+        actionType:
           $ref: '#/components/schemas/ActionType'
-        is_frozen:
+        isFrozen:
           type: boolean
-        next_action_id:
+        nextActionId:
           type: string
           format: uuid
           nullable: true
-        parent_action_id:
+        parentActionId:
           type: string
           format: uuid
           nullable: true
-      required: [id, name, action_type, is_frozen]
+      required: [id, name, actionType, isFrozen]
 
     ActionType:
       type: string
@@ -42,10 +42,10 @@ components:
           type: string
         value:
           type: string
-        action_id:
+        actionId:
           type: string
           format: uuid
-      required: [id, key, value, action_id]
+      required: [id, key, value, actionId]
 
     WorkflowAttributes:
       type: object
@@ -53,14 +53,14 @@ components:
         id:
           type: string
           format: uuid
-        base_action_id:
+        baseActionId:
           type: string
           format: uuid
-        root_action_id:
+        rootActionId:
           type: string
           format: uuid
           nullable: true
-      required: [id, base_action_id]
+      required: [id, baseActionId]
 
     Tag:
       type: object
@@ -78,15 +78,15 @@ components:
         id:
           type: string
           format: uuid
-        user_id:
+        userId:
           type: string
           format: uuid
-        action_id:
+        actionId:
           type: string
           format: uuid
-        permission_type:
+        permissionType:
           $ref: '#/components/schemas/PermissionType'
-      required: [id, user_id, action_id, permission_type]
+      required: [id, userId, actionId, permissionType]
 
     PermissionType:
       type: string
@@ -98,13 +98,13 @@ components:
         id:
           type: string
           format: uuid
-        user_id:
+        userId:
           type: string
           format: uuid
-        workflow_id:
+        workflowId:
           type: string
           format: uuid
-      required: [id, user_id, workflow_id]
+      required: [id, userId, workflowId]
 
     ActionState:
       type: object
@@ -112,18 +112,18 @@ components:
         id:
           type: string
           format: uuid
-        workflow_state_id:
+        workflowStateId:
           type: string
           format: uuid
-        action_id:
+        actionId:
           type: string
           format: uuid
-        state_type:
+        stateType:
           $ref: '#/components/schemas/StateType'
         index:
           type: integer
-      required: [id, workflow_state_id, action_id, state_type, index]
+      required: [id, workflowStateId, actionId, stateType, index]
 
     StateType:
       type: string
-      enum: [completed, in_progress, not_started, hidden]
+      enum: [completed, inProgress, notStarted, hidden]

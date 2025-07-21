@@ -15,7 +15,7 @@ function validatePermissionType(permissionType) {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
 
-  const permissions = await prisma.permissions.findUnique({
+  const permissions = await prisma.permission.findUnique({
     where: {id: id},
   });
 
@@ -27,14 +27,14 @@ router.get('/', async (req, res) => {
   const { userId, actionId, permissionType } = req.query;
 
   const where = {};
-  if (userId) { where.user_id = userId; }
-  if (actionId) { where.action_id = actionId; }
+  if (userId) { where.userId = userId; }
+  if (actionId) { where.actionId = actionId; }
   if (permissionType) {
     validatePermissionType(permissionType);
-    where.permission_type = permissionType;
+    where.permissionType = permissionType;
   };
 
-  const permissions = await prisma.permissions.findMany({
+  const permissions = await prisma.permission.findMany({
     where: where,
   });
 
@@ -51,14 +51,14 @@ router.post('/', async (req, res) => {
   }
 
   const data = {};
-  if (newUserId) { data.user_id = newUserId; }
-  if (actionId) { data.action_id = actionId; }
+  if (newUserId) { data.userId = newUserId; }
+  if (actionId) { data.actionId = actionId; }
   if (permissionType) {
     validatePermissionType(permissionType);
-    data.permission_type = permissionType;
+    data.permissionType = permissionType;
   };
 
-  const permission = await prisma.permissions.create({
+  const permission = await prisma.permission.create({
     data: data
   });
 
@@ -69,10 +69,10 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { actingUserId, permissionType } = req.body;
-  const actionId = (await prisma.permissions.findUnique({
+  const actionId = (await prisma.permission.findUnique({
     where: { id: id },
-    select: { action_id: true }
-  })).action_id;
+    select: { actionId: true }
+  })).actionId;
   if (!await authorizeAccessLevel(actingUserId, actionId, 'creator')) {
     return res.status(403).json({ message: 'Forbidden' });
   }
@@ -80,10 +80,10 @@ router.put('/:id', async (req, res) => {
   const data = {};
   if (permissionType) {
     validatePermissionType(permissionType);
-    data.permission_type = permissionType;
+    data.permissionType = permissionType;
   };
 
-  const updated = await prisma.permissions.update({
+  const updated = await prisma.permission.update({
     where: { id: id },
     data: data
   });
@@ -95,16 +95,16 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   const { actingUserId } = req.body;
-  const actionId = (await prisma.permissions.findUnique({
+  const actionId = (await prisma.permission.findUnique({
     where: { id: id },
-    select: { action_id: true }
-  })).action_id;
+    select: { actionId: true }
+  })).actionId;
 
   if (!await authorizeAccessLevel(actingUserId, actionId, 'creator')) {
     return res.status(403).json({ message: 'Forbidden' });
   }
 
-  await prisma.permissions.delete({ where: { id: id } });
+  await prisma.permission.delete({ where: { id: id } });
 
   res.json({ message: 'Permission deleted successfully' });
 });

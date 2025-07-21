@@ -1,7 +1,16 @@
 openapi: 3.0.3
+
 info:
   title: Workflows API Documentation
   version: 1.0.0
+
+servers:
+  - url: http://localhost:{PORT}
+    description: Local host development server
+    variables: 
+      PORT: 
+        default: "3001"
+
 
 paths:
   # Workflows

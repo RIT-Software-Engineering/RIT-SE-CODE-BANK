@@ -10,204 +10,203 @@ const { permissionTypes } = require("../consts.js") || [];
  * Get a specific workflow by id
  */
 router.get("/:id", async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const workflow = await prisma.workflowAttributes.findUnique({
-        where: { id: id },
+  const workflow = await prisma.workflowAttributes.findUnique({
+    where: { id: id },
+    include: {
+      tags: true,
+      baseAction: {
         include: {
-            tags: true,
-            base_action: {
-                include: {
-                    metadata: true,
-                    permissions: true,
-                },
-            },
-            root_action: true,
+          metadata: true,
+          permissions: true,
         },
-    });
+      },
+      rootAction: true,
+    },
+  });
 
-    res.json(exportWorkflow(workflow));
+  res.json(exportWorkflow(workflow));
 });
 
 // GET /workflows
 router.get("/", async (req, res) => {
-    const { userId, tags } = req.query;
+  const { userId, tags } = req.query;
 
-    const where = {};
+  const where = {};
 
-    if (userId) {
-    } // TODO: Add handling for userId
-    if (tags) {
-        where.AND = tags.split(",").map((name) => ({
-            tags: { some: { name } },
-        }));
-    }
+  if (userId) {
+  } // TODO: Add handling for userId
+  if (tags) {
+    where.AND = tags.split(",").map((name) => ({
+      tags: { some: { name } },
+    }));
+  }
 
-    const workflows = await prisma.workflowAttributes.findMany({
-        where,
+  const workflows = await prisma.workflowAttributes.findMany({
+    where,
+    include: {
+      tags: true,
+      baseAction: {
         include: {
-            tags: true,
-            base_action: {
-                include: {
-                    metadata: true,
-                    permissions: true,
-                },
-            },
-            root_action: true,
+          metadata: true,
+          permissions: true,
         },
-    });
+      },
+      rootAction: true,
+    },
+  });
 
-    res.json(workflows.map((w) => exportWorkflow(w)));
+  res.json(workflows.map((w) => exportWorkflow(w)));
 });
 
 // POST /workflows
 router.post("/", async (req, res) => {
-    const { userId, name, description, tags, metadata, rootActionId } =
-        req.body;
+  const { userId, name, description, tags, metadata, rootActionId } = req.body;
 
-    const workflow_data = {};
-    if (rootActionId) {
-        workflow_data.root_action = { connect: { id: rootActionId } };
-    }
+  const workflowData = {};
+  if (rootActionId) {
+    workflowData.rootAction = { connect: { id: rootActionId } };
+  }
 
-    const base_action_data = {};
-    if (description) {
-        base_action_data.description = description;
-    }
-    if (metadata) {
-        base_action_data.metadata = {
-            create: importMetadata(metadata),
-        };
-    }
+  const baseActionData = {};
+  if (description) {
+    baseActionData.description = description;
+  }
+  if (metadata) {
+    baseActionData.metadata = {
+      create: importMetadata(metadata),
+    };
+  }
 
-    await prisma.$transaction(async () => {
-        const workflow = await prisma.workflowAttributes.create({
-            data: {
-                ...workflow_data,
-                base_action: {
-                    create: {
-                        ...base_action_data,
-                        name: name || "New Workflow",
-                        action_type: 'workflow',
-                        permissions: {
-                            // Default the creator to have all permissionTypes
-                            createMany: {
-                                data: permissionTypes.map((permissionType) => ({
-                                    user_id: userId,
-                                    permission_type: permissionType,
-                                })),
-                            },
-                        },
-                    },
-                },
+  await prisma.$transaction(async () => {
+    const workflow = await prisma.workflowAttributes.create({
+      data: {
+        ...workflowData,
+        baseAction: {
+          create: {
+            ...baseActionData,
+            name: name || "New Workflow",
+            actionType: "workflow",
+            permissions: {
+              // Default the creator to have all permissionTypes
+              createMany: {
+                data: permissionTypes.map((permissionType) => ({
+                  userId: userId,
+                  permissionType: permissionType,
+                })),
+              },
             },
-        });
-
-        // Tag time
-        if (tags) {
-            tags.map(
-                async (name) =>
-                    await prisma.tags.upsert({
-                        where: { name },
-                        update: {
-                            workflow_attributes: { connect: { id: workflow.id } },
-                        },
-                        create: {
-                            name,
-                            workflow_attributes: { connect: { id: workflow.id } },
-                        },
-                    })
-            );
-        }
-
-        // No export because it doesn't include metadata
-        // As of now, tags are not included
-        res.json(workflow);
+          },
+        },
+      },
     });
+
+    // Tag time
+    if (tags) {
+      tags.map(
+        async (name) =>
+          await prisma.tag.upsert({
+            where: { name },
+            update: {
+              workflowAttributes: { connect: { id: workflow.id } },
+            },
+            create: {
+              name,
+              workflowAttributes: { connect: { id: workflow.id } },
+            },
+          })
+      );
+    }
+
+    // No export because it doesn't include metadata
+    // As of now, tags are not included
+    res.json(workflow);
+  });
 });
 
 // PUT /workflows/:id
 router.put("/:id", async (req, res) => {
-    const { name, description, metadata, tags, rootActionId } = req.body;
-    const { id } = req.params;
+  const { name, description, metadata, tags, rootActionId } = req.body;
+  const { id } = req.params;
 
-    const workflow_data = {};
-    if (rootActionId) {
-        workflow_data.root_action = { connect: { id: rootActionId } };
-    }
+  const workflowData = {};
+  if (rootActionId) {
+    workflowData.rootAction = { connect: { id: rootActionId } };
+  }
 
-    const base_action_data = {};
-    if (name) {
-        base_action_data.name = name;
-    }
-    if (description) {
-        base_action_data.description = description;
-    }
-    if (tags) {
-        workflow_data.tags = {
-            // Clear existing connections
-            set: [],
+  const baseActionData = {};
+  if (name) {
+    baseActionData.name = name;
+  }
+  if (description) {
+    baseActionData.description = description;
+  }
+  if (tags) {
+    baseActionData.tags = {
+      // Clear existing connections
+      set: [],
 
-            // Add/re-add them
-            connectOrCreate: tags.map((name) => ({
-                where: { name },
-                create: { name },
-            })),
-        };
-    }
+      // Add/re-add them
+      connectOrCreate: tags.map((name) => ({
+        where: { name },
+        create: { name },
+      })),
+    };
+  }
+
+  await prisma.$transaction(async () => {
     if (metadata) {
-        // Delete old metadata
-        const actionMd = (
-            await prisma.workflowAttributes.findUnique({
-                where: { id },
-                select: { base_action: { select: { metadata: true } } },
-            })
-        ).base_action.metadata;
-        await prisma.metadata.deleteMany({
-            where: { id: { in: actionMd.map((m) => m.id) } },
-        });
+      // Delete old metadata
+      const actionMd = (
+        await prisma.workflowAttributes.findUnique({
+          where: { id },
+          select: { baseAction: { select: { metadata: true } } },
+        })
+      ).baseAction.metadata;
+      await prisma.metadata.deleteMany({
+        where: { id: { in: actionMd.map((m) => m.id) } },
+      });
 
-        // Update with new metadata
-        base_action_data.metadata = { create: importMetadata(metadata) };
+      // Update with new metadata
+      baseActionData.metadata = { create: importMetadata(metadata) };
     }
 
-    await prisma.workflowAttributes.update({
-        where: { id: id },
-        data: {
-            ...workflow_data,
-            base_action: {
-                update: {
-                    ...base_action_data,
-                },
-            },
+    const workflow = await prisma.workflowAttributes.update({
+      where: { id: id },
+      data: {
+        ...workflowData,
+        baseAction: {
+          update: {
+            ...baseActionData,
+          },
         },
+      },
     });
 
-    res.json({ message: "Updated" });
+    return res.json(workflow);
+  });
 });
 
 // DELETE /workflows/:id
 router.delete("/:id", async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    // Delete the workflow and all related entities
-    await prisma.$transaction(async () => {
-        const workflow = await prisma.workflowAttributes.findUnique({
-            where: { id: id },
-        });
-
-        if (!workflow) throw new Error("Workflow not found");
-
-        await prisma.action.delete({
-            where: { id: workflow.base_action_id },
-        });
-
-        await prisma.workflowAttributes.delete({
-            where: { id },
-        });
+  // Delete the workflow and all related entities
+  await prisma.$transaction(async () => {
+    const workflow = await prisma.workflowAttributes.findUnique({
+      where: { id: id },
     });
 
-    res.json({ message: "Deleted" });
+    if (!workflow) throw new Error("Workflow not found");
+
+    // Delete the base action for this workflow. Also cascades and deletes the WorkflowAttributes.
+    await prisma.action.delete({
+      where: { id: workflow.baseActionId },
+    });
+  });
+
+  res.json({ message: "Deleted" });
 });
 
 module.exports = router;
