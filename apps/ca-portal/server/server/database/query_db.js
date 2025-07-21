@@ -12,6 +12,7 @@ const {
   gradetoNumericValue,
 } = require("../constants/grade");
 const { locationMap } = require("../constants/location");
+const { create } = require("domain");
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {
@@ -142,69 +143,68 @@ async function getOpenPositionsWithDetails(whereClause = {}) {
   }
 }
 
-async function modifyPosition(jobID, positionData) {
-  try {
-    // Destructure only the valid, editable fields from the incoming data
-    const {
-      maxCAs,
-      jobPositionStatus,
-      location,
-      locationType,
-      graduateStatusRequirement,
-      gradeRequirement,
-      courseTakenRequirement,
-      startDate,
-      endDate,
-      jobSchedule
-    } = positionData;
+async function modifyPosition(jobId, positionData) {
+  // Separate the schedules array from the rest of the job data
+  const { jobSchedules, ...jobData } = positionData;
 
-    return await prisma.$transaction(async (tx) => {
-      // Update the job position
-      const updatedPosition = await tx.jobPosition.update({
-        where: {
-          id: jobID, // Use the ID to find the correct position
-        },
+  try {
+    // Use a transaction to ensure all operations succeed or none do
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Update the direct fields of the JobPosition model
+      await tx.jobPosition.update({
+        where: { id: jobId },
         data: {
-          // Only include the fields that belong to the JobPosition model
-          maxCAs,
-          jobPositionStatus,
-          location,
-          locationType,
-          graduateStatusRequirement,
-          gradeRequirement,
-          courseTakenRequirement,
-          startDate,
-          endDate,
-        },
-        include: {
-          course: true,
-          jobSchedules: true
+          location: jobData.location,
+          locationType: jobData.locationType,
+          maxCAs: jobData.maxCAs,
+          startDate: jobData.startDate,
+          endDate: jobData.endDate,
+          jobPositionStatus: jobData.jobPositionStatus,
+          graduateStatusRequirement: jobData.graduateStatusRequirement,
+          gradeRequirement: jobData.gradeRequirement,
+          courseTakenRequirement: jobData.courseTakenRequirement,
         },
       });
 
-      // Update job schedules if provided
-      if (positionData.jobSchedule && Array.isArray(positionData.jobSchedule)) {
-        for (const schedule of positionData.jobSchedule) {
-          await tx.jobSchedule.update({
-            where: {
-              jobPositionId: jobID
-            },
-            data: {
-              startTime: schedule.startTime,
-              endTime: schedule.endTime,
-              dayOfWeek: schedule.dayOfWeek,
-            },
-          });
-        }
+      // 2. Delete all existing schedules for this job
+      await tx.jobSchedule.deleteMany({
+        where: { jobPositionId: jobId },
+      });
+
+      // 3. Create the new schedules from the data sent by the frontend
+      if (jobSchedules && jobSchedules.length > 0) {
+        const schedulesToCreate = jobSchedules.map((sch) => ({
+          jobPositionId: jobId,
+          dayOfWeek: sch.dayOfWeek,
+          // FIX: Pass the ISO string directly to Prisma without creating a new Date object.
+          // This prevents the server's timezone from altering the UTC time.
+          startTime: sch.startTime,
+          endTime: sch.endTime,
+        }));
+
+        await tx.jobSchedule.createMany({
+          data: schedulesToCreate,
+        });
       }
-      return updatedPosition;
+
+      // 4. Fetch and return the fully updated job with all its relations
+      const finalJob = await tx.jobPosition.findUnique({
+        where: { id: jobId },
+        include: {
+          course: true,
+          jobSchedules: true,
+        },
+      });
+
+      return finalJob;
     });
+
+    return result;
   } catch (error) {
-    console.error("Error modifying position:", error);
-    throw error;
+    console.error(`Failed to modify position ${jobId}:`, error);
+    throw new Error(`Could not modify job position ${jobId}.`);
   }
 }
-
 // // NOTE TO DEV: Not sure in what databases we should be deleting it in
 
 // /**
@@ -250,6 +250,64 @@ async function modifyPosition(jobID, positionData) {
 //   }
 // }
 // --- Public Functions for Job Search & Retrieval ---
+
+/**
+ * Creates a new JobPosition and its related schedules.
+ * @param {object} positionData The data for the new position from the form.
+ * @returns {Promise<object>} The newly created JobPosition object with all relations.
+ */
+async function createPosition(positionData, facultyUID) {
+  const { jobSchedules, ...jobData } = positionData;
+  //Check if positionID already exists
+  // The unique ID is a combination of semester, course, and section.
+  const newJobId = `${jobData.semesterCode}-${jobData.courseCode}-${jobData.sectionNumber}`;
+  console.log("Created for faculty: ", facultyUID);
+
+  try {
+    console.log("backend called for faculty: ", facultyUID);
+    const newPosition = await prisma.jobPosition.create({
+      data: {
+        id: newJobId,
+        sectionNumber: parseInt(jobData.sectionNumber, 10),
+        semesterCode: parseInt(jobData.semesterCode, 10),
+        gradeRequirement: jobData.gradeRequirement,
+        graduateStatusRequirement: jobData.graduateStatusRequirement,
+        courseTakenRequirement: jobData.courseTakenRequirement,
+        course: {
+          connect: { courseCode: jobData.courseCode },
+        },
+        faculty: {
+          connect: { uid: facultyUID }
+        },        maxCAs: jobData.maxCAs,
+        location: jobData.location,
+        locationType: jobData.locationType,
+        startDate: jobData.startDate,
+        endDate: jobData.endDate,
+        // Create the related schedules at the same time
+        jobSchedules: {
+          create: (jobSchedules || []).map((sch) => ({
+            dayOfWeek: sch.dayOfWeek,
+            startTime: sch.startTime,
+            endTime: sch.endTime,
+          })),
+        },
+      },
+      include: {
+        course: true,
+        jobSchedules: true,
+      },
+    });
+
+    return newPosition;
+  } catch (error) {
+    // Handle potential unique constraint violation if the ID already exists
+    if (error.code === "P2002") {
+      throw new Error(`A job position with ID ${newJobId} already exists.`);
+    }
+    console.error(`Failed to create position:`, error);
+    throw new Error(`Could not create job position.`);
+  }
+}
 
 /**
  * Searches and filters open job positions based on a search term and a set of filters.
@@ -330,13 +388,22 @@ async function searchAndFilterOpenJobPositions(
  */
 async function applyForJobPosition(applicationDetails) {
   try {
-    const { candidateUID, jobPositionId, resumeId, jobPositionApplicationFormData } =
-      applicationDetails;
+    const {
+      candidateUID,
+      jobPositionId,
+      resumeId,
+      jobPositionApplicationFormData,
+    } = applicationDetails;
 
     // 1. Validate required fields.
-    if (!candidateUID || !jobPositionId || !resumeId || !jobPositionApplicationFormData) {
+    if (
+      !candidateUID ||
+      !jobPositionId ||
+      !resumeId ||
+      !jobPositionApplicationFormData
+    ) {
       throw new Error(
-        'Missing required fields: candidate UID, job position ID, resume ID, or form data.'
+        "Missing required fields: candidate UID, job position ID, resume ID, or form data."
       );
     }
 
@@ -344,11 +411,18 @@ async function applyForJobPosition(applicationDetails) {
     const [candidate, jobPosition, resume] = await Promise.all([
       prisma.candidate.findUnique({ where: { uid: candidateUID } }),
       prisma.jobPosition.findUnique({ where: { id: jobPositionId } }),
-      prisma.resume.findFirst({ where: { id: resumeId, candidateUID: candidateUID } }),
+      prisma.resume.findFirst({
+        where: { id: resumeId, candidateUID: candidateUID },
+      }),
     ]);
-    if (!candidate) throw new Error(`Candidate with UID ${candidateUID} not found.`);
-    if (!jobPosition) throw new Error(`Job Position with ID ${jobPositionId} not found.`);
-    if (!resume) throw new Error(`Resume with ID ${resumeId} not found for this candidate.`);
+    if (!candidate)
+      throw new Error(`Candidate with UID ${candidateUID} not found.`);
+    if (!jobPosition)
+      throw new Error(`Job Position with ID ${jobPositionId} not found.`);
+    if (!resume)
+      throw new Error(
+        `Resume with ID ${resumeId} not found for this candidate.`
+      );
 
     // 3. Check if the candidate has already applied.
     const existingApplication =
@@ -374,10 +448,10 @@ async function applyForJobPosition(applicationDetails) {
     // 5. Update the candidate's course history with the self-reported grade.
     const parsedFormData = JSON.parse(jobPositionApplicationFormData);
     if (parsedFormData.grade) {
-        await prisma.courseHistory.updateMany({
-            where: { candidateUID, courseCode: jobPosition.courseCode },
-            data: { grade: letterToGradeEnum[parsedFormData.grade] },
-        });
+      await prisma.courseHistory.updateMany({
+        where: { candidateUID, courseCode: jobPosition.courseCode },
+        data: { grade: letterToGradeEnum[parsedFormData.grade] },
+      });
     }
 
     return newApplication;
@@ -396,15 +470,18 @@ async function applyForJobPosition(applicationDetails) {
  */
 async function deleteCandidateApplication(candidateUID, jobPositionId) {
   try {
-    const applicationToDelete = await prisma.jobPositionApplicationHistory.findFirst({
-      where: {
-        candidateUID: candidateUID,
-        jobPositionId: jobPositionId,
-      },
-    });
+    const applicationToDelete =
+      await prisma.jobPositionApplicationHistory.findFirst({
+        where: {
+          candidateUID: candidateUID,
+          jobPositionId: jobPositionId,
+        },
+      });
 
     if (!applicationToDelete) {
-      throw new Error("Application not found for the specified candidate and job position.");
+      throw new Error(
+        "Application not found for the specified candidate and job position."
+      );
     }
 
     return await prisma.jobPositionApplicationHistory.delete({
@@ -413,7 +490,7 @@ async function deleteCandidateApplication(candidateUID, jobPositionId) {
       },
     });
   } catch (error) {
-    console.error('Error in deleteCandidateApplication:', error);
+    console.error("Error in deleteCandidateApplication:", error);
     throw error;
   }
 }
@@ -424,7 +501,7 @@ async function deleteCandidateApplication(candidateUID, jobPositionId) {
  * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
  */
 async function getCandidateApplications(UID) {
-  try{
+  try {
     const applications = await prisma.jobPositionApplicationHistory.findMany({
       where: { candidateUID: UID },
       include: {
@@ -445,11 +522,10 @@ async function getCandidateApplications(UID) {
     });
     return applications;
   } catch (error) {
-    console.error('Error in getCandidateApplications:', error);
+    console.error("Error in getCandidateApplications:", error);
     throw error;
   }
 }
-
 
 /**
  * Retrieves all candidate applications for all job positions managed by a specific faculty member.
@@ -571,7 +647,9 @@ async function findUniqueUser(UID) {
         where: { uid: UID },
         include: {
           employer: {
-            include: { jobPostions: { include: { course: true, jobSchedules: true } } },
+            include: {
+              jobPostions: { include: { course: true, jobSchedules: true } },
+            },
           },
         },
       });
@@ -726,9 +804,9 @@ async function addNewCandidateResume(candidateUID, isPrimary, resumeURL, name) {
         resumeURL: resumeURL,
         name: name,
       },
-    })
+    });
   } catch (error) {
-    console.error('Error adding new resume:', error);
+    console.error("Error adding new resume:", error);
     throw error;
   }
 }
@@ -766,7 +844,7 @@ async function updatePrimaryResume(candidateUID, resumeId) {
       return updatedResume;
     });
   } catch (error) {
-    console.error('Error updating primary resume:', error);
+    console.error("Error updating primary resume:", error);
     throw error;
   }
 }
@@ -788,7 +866,7 @@ async function resetResumesToNonPrimary(candidateUID) {
       },
     });
   } catch (error) {
-    console.error('Error resetting resumes to non-primary:', error);
+    console.error("Error resetting resumes to non-primary:", error);
     throw error;
   }
 }
@@ -806,7 +884,7 @@ async function deleteResume(resumeId) {
       },
     });
   } catch (error) {
-    console.error('Error deleting resume:', error);
+    console.error("Error deleting resume:", error);
     throw error;
   }
 }
@@ -846,6 +924,22 @@ async function getAllCourses() {
   }
 }
 
+async function createCourse(courseData) {
+  const { courseCode, name, description } = courseData;
+  try {
+    return await prisma.course.create({
+      data: {
+        courseCode: courseCode,
+        name: name,
+        description: description,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating course:", error);
+    throw error;
+  }
+}
+
 // =============================================================================
 // EXPORTS & PROCESS HANDLING
 // =============================================================================
@@ -866,6 +960,8 @@ module.exports = {
   getAllUsers,
   getAllCourses,
   modifyPosition,
+  createPosition,
+  createCourse,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.

@@ -14,6 +14,7 @@ const {
   getOpenPositionsWithDetails,
   getAllUsers,
   getAllCourses,
+  createCourse,
   findUniqueUser,
   upsertCandidateProfile,
   upsertEmployerProfile,
@@ -27,6 +28,7 @@ const {
   modifyPosition,
   getCandidateApplicationsForFaculty,
   deleteCandidateApplication,
+  createPosition
 } = require('../database/query_db');
 
 // =============================================================================
@@ -168,6 +170,20 @@ router.put("/modify-position/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to update position" });
   }
 });
+
+router.post("/create-position", async (req, res) => {
+  try{
+    const positionData = req.body;
+    console.log("Created position:", positionData);
+
+    const position = await createPosition(positionData,positionData.facultyUID);
+    console.log("Route call with faculty: ", positionData.facultyUID);
+    res.status(201).json(position);
+  } catch (error) {
+    console.error("Error in /create-position route:", error);
+    res.status(500).json({ error: "Failed to create position." });
+  }
+})
 
 /**
  * @route   POST /api/db/apply-for-job-position-with-new-resume
@@ -408,6 +424,17 @@ router.get("/courses", async (req, res) => {
   } catch (error) {
     console.error("Error in /courses route:", error);
     res.status(500).json({ error: "Failed to retrieve courses." });
+  }
+});
+
+router.post("/create-course", async (req, res) => {
+  try {
+    const courseData = req.body;
+    const newCourse = await createCourse(courseData);
+    res.status(201).json(newCourse);
+  } catch (error) {
+    console.error("Error in /create-course route:", error);
+    res.status(500).json({ error: "Failed to create course." });
   }
 });
 

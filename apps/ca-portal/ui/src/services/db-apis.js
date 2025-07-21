@@ -101,6 +101,33 @@ export async function modifyPosition(jobID, positionData) {
   return response.json();
 }
 
+export async function createPosition(positionData, facultyUID) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/create-position`;
+  console.log(`Creating position at: ${url}`);
+  const payload = { ...positionData, facultyUID };
+  console.log("Payload for createPosition:", payload);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API call failed with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+
 /**
  * Fetches all users from the backend API. (temporary function until Shibb auth is implemented)
  * @returns {Promise<Array>} A promise that resolves to an array of users.
@@ -129,6 +156,31 @@ export async function getAllCourses() {
 
   const response = await fetch(url);
   return handleApiResponse(response);
+}
+
+export async function createCourse(courseData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/create-course`;
+  console.log(`Creating course at: ${url}`);
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(courseData),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API call failed with status: ${response.status}`);
+  }
+
+  return response.json();
 }
 
 export async function getUserProfile(UID) {

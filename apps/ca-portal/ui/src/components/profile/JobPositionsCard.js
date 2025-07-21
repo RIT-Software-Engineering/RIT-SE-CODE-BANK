@@ -17,6 +17,7 @@ export default function JobPositionsCard({ profileData }) {
   useEffect(() => {
     const jobs = profileData?.employer?.jobPostions || [];
     setJobPositions(jobs);
+    console.log("Current Faculty:", profileData?.uid);
 
     // const schedule =
   }, [profileData]); // This runs when profileData changes
@@ -31,11 +32,19 @@ export default function JobPositionsCard({ profileData }) {
     setSelectedJob(null);
   };
 
-  const handleSaveJob = (updatedJob) => {
-    setJobPositions((currentJobs) =>
-      currentJobs.map((job) => (job.id === updatedJob.id ? updatedJob : job))
-    );
-    console.log("Job updated:", updatedJob);
+  const handleSaveJob = (savedJob) => {
+    // Check if the job already exists in our list
+    const jobExists = jobPositions.some((job) => job.id === savedJob.id);
+
+    if (jobExists) {
+      // If it exists, update it (this is your existing logic)
+      setJobPositions((currentJobs) =>
+        currentJobs.map((job) => (job.id === savedJob.id ? savedJob : job))
+      );
+    } else {
+      // If it's a new job, add it to the end of the list
+      setJobPositions((currentJobs) => [...currentJobs, savedJob]);
+    }
   };
 
   const handleDelete = (job) => {
@@ -102,6 +111,7 @@ export default function JobPositionsCard({ profileData }) {
           job={selectedJob}
           onClose={handleCloseModal}
           onSave={handleSaveJob}
+          facultyUID={profileData?.uid}
         />
       )}
     </>
