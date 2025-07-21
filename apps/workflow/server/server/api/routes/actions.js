@@ -146,6 +146,13 @@ router.put("/:id", async (req, res) => {
     if (parentActionId) {
         data.parentAction = { connect: { id: parentActionId } };
     }
+
+    // If the update to this action would create a loop, don't accept the update and return an error message.
+    const actionChainIds = (await getActionChain(nextActionId)).map((a) => (a.id));
+    if (actionChainIds.includes(id)){
+        return res.status(500).json({message: "You can not link actions in such a way that it would create a loop."});
+    }
+
     if (metadata) {
         // Delete old metadata
         const actionMd = (
@@ -167,7 +174,7 @@ router.put("/:id", async (req, res) => {
         data: data, // Only overwrites fields of a record if the data is defined in the data object.
     });
 
-    res.json(action);
+    return res.json(action);
 });
 
 // DELETE /actions/:id
