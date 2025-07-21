@@ -17,7 +17,7 @@ async function getActionChain(rootActionId) {
 
             actions.push(action);
             currentActionId = null;
-            if (action.next_action_id) currentActionId = action.next_action_id; // Move to the next action in the chain
+            if (action.nextActionId) currentActionId = action.nextActionId; // Move to the next action in the chain
         }
     });
 

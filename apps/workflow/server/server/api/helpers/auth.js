@@ -3,13 +3,13 @@ const prisma = new PrismaClient();
 
 
 async function getAccessLevels(userId, actionId) {
-  return await prisma.permissions.findMany({
+  return await prisma.permission.findMany({
     where: {
-      user_id: userId,
-      action_id: actionId
+      userId: userId,
+      actionId: actionId
     },
     select: {
-      permission_type: true
+      permissionType: true
     }
   });
 }
@@ -23,7 +23,7 @@ async function authorizeAccessLevel(userId, actionId, ...allowedAccessLevels) {
     }
 
     // Extract permission types from the response
-    const userPermissionTypes = userPermissions.map(permission => permission.permission_type);
+    const userPermissionTypes = userPermissions.map(permission => permission.permissionType);
   
     // Check if user has any of the allowed access levels
     return allowedAccessLevels.some(allowedLevel => 
