@@ -1,4 +1,3 @@
-import { Schedule } from "@mui/icons-material";
 import DeleteIcon from "../icons/DeleteIcon";
 import EditIcon from "../icons/EditIcon";
 import EditPositionModal from "./EditPositionModal";

@@ -1,9 +1,7 @@
 import FormStepOne from "./form-components/multi-stage-steps/FormStepOne";
 import FormStepTwo from "./form-components/multi-stage-steps/FormStepTwo";
-import GradeSelector from "./form-components/GradeSelector";
 import DisplayField from "../ui/DisplayField";
 import { useState } from "react";
-import { useForm, control } from "react-hook-form";
 import FormStepThree from "./form-components/multi-stage-steps/FormStepThree";
 export default function MultiStepForm({
   onSubmit,
@@ -11,7 +9,6 @@ export default function MultiStepForm({
   isEditMode,
   job,
   formMethods,
-  facultyUID, // Pass the faculty UID for API calls
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const {

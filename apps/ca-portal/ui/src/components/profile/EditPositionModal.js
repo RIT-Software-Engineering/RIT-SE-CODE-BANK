@@ -1,4 +1,4 @@
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { modifyPosition, createPosition } from "@/services/db-apis";
 import MultiStepForm from "./MultiStepForm"; // Import the new form component
 import { getAllCourses } from "@/services/db-apis";
