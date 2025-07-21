@@ -1,4 +1,4 @@
-model users {
+model User {
   id             String @id @default(uuid())
   fname          String
   lname          String
