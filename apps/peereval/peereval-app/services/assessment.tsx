@@ -57,6 +57,19 @@ export async function getAssessmentInquiriesById(
     );
 }
 
+export async function getAssessmentResponses(
+    id: string
+): Promise<PeerFormResponse[]> {
+    const res = await fetch(`${BASE_URL}/assessments/${id}/responses`, {
+        credentials: "include",
+    });
+
+    return handleResponse(
+        res,
+        "Couldn't get responses for assessment with ID " + id
+    );
+}
+
 export async function getAssessmentPeerResponses(
     assessmentId: string,
     responderId: string

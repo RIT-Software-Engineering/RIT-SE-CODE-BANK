@@ -119,6 +119,19 @@ router.get("/byProject/:id", async (req, res) => {
     res.json(as);
 });
 
+// Get all assessment's responses
+// /assessments/:id/responses
+router.get("/:id/responses", async (req, res) => {
+    const { id: assessmentId } = req.params;
+
+    const rs = await prisma.formResponse.findMany({
+        where: { assessmentId },
+        include: { responses: true },
+    });
+
+    res.json(rs);
+});
+
 // Get peer's assessment responses
 // /assessments/resposnes/:responderId/:assessmentId
 router.get("/responses/:responderId/:assessmentId", async (req, res) => {
