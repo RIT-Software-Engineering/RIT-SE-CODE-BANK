@@ -1,10 +1,10 @@
 "use client";
 
 import { Box, Button, Container, Typography } from "@mui/material";
-import { ArrowBack, Edit, Height } from "@mui/icons-material";
 import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import ProjectDetailsLoading from "./loading";
+import theme from "@styles/theme";
 
 export default function ProjectDetails({ params }) {
     const { projectId } = React.use(params);
@@ -48,7 +48,33 @@ export default function ProjectDetails({ params }) {
                     <Typography variant="h1">
                         {project.display_name || project.title}
                     </Typography>
-                    <Typography>{project.status}</Typography>
+                    <Box
+                        sx={{
+                            marginBlock: "1rem",
+                            padding: "0.5em 1em",
+                            display: "inline-block",
+                            backgroundColor:
+                                project.status === "active"
+                                    ? "rgba(0, 156, 189, 0.2)"
+                                    : project.status === "in progress"
+                                      ? "rgba(246, 190, 0, 0.2)"
+                                      : project.status === "completed"
+                                        ? "rgba(132, 189, 0, 0.2)"
+                                        : "rgba(124, 135, 142, 0.2)",
+                            color:
+                                project.status === "active"
+                                    ? theme.palette.info.main
+                                    : project.status === "in progress"
+                                      ? theme.palette.warning.main
+                                      : project.status === "completed"
+                                        ? theme.palette.success.main
+                                        : "rgb(124, 135, 142)",
+                        }}
+                    >
+                        <Typography sx={{ margin: "0" }}>
+                            {project.status.toUpperCase()}
+                        </Typography>
+                    </Box>
                     <Typography>{project.description}</Typography>
                     <Container
                         sx={{
