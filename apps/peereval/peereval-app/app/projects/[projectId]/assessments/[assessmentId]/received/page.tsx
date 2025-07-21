@@ -47,7 +47,10 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
 
             // Get the responders
             const ps = await getAssessmentPeers(assessmentId);
-            const rs = ps.responders.filter((r) => r.id != currentUser.id);
+            const rs = ps.responders
+                .filter((r) => r.id != currentUser.id)
+                .map((u, i) => ({ ...u, name: `P${i + 1}` })); // For anonymity
+
             setPeers(rs);
             setActivePeer(rs[0]);
         })();
