@@ -141,6 +141,28 @@ export async function getCandidateApplicationsForFaculty(employeerUID) {
   return handleApiResponse(response);
 }
 
+export async function updateCandidateApplicationStatus(applicationId, status, comments) {
+  if (!applicationId) {
+    throw new Error("An application ID is required to update an application status.");
+  }
+  
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/${applicationId}`;
+  console.log(`Updating application status at: ${url}`);
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status: status, comments: comments }),
+  });
+  return handleApiResponse(response);
+}
+
 // api call to upsert (update or create) candidate profile
 export async function upsertCandidateProfile(candidateData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
@@ -312,4 +334,21 @@ export async function deleteResume(resumeId) {
   });
   return handleApiResponse(response);
 
+}
+
+// api call to get comments
+export async function getComments(tableName, foreignKey) {
+  if (!tableName || !foreignKey) {
+    throw new Error("Table name and foreign key are required to fetch comments.");
+  }
+
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/comments?tableName=${tableName}&foreignKey=${foreignKey}`;
+  console.log(`Fetching comments at: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
 }

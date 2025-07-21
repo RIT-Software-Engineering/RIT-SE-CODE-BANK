@@ -28,6 +28,8 @@ const {
   getCandidateApplications,
   getCandidateApplicationsForFaculty,
   deleteCandidateApplication,
+  changeCandidateApplicationStatus,
+  getComments,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -250,11 +252,12 @@ router.get('/applications/:UID', async (req, res) => {
   }
 });
 
-/**
+/** TODO:
  * @route   DELETE /api/db/applications/:uid
  * @desc    Deletes a job application record for a candidate.
  * @access  Public
  * @param   {string} uid - The UID of the candidate.
+ * @param   {string} jobPositionId - The ID of the job position.
  */
 router.delete('/applications/:uid', async (req, res) => {
   try {
@@ -288,6 +291,56 @@ router.delete('/applications/:uid', async (req, res) => {
     res
       .status(500)
       .json({ message: 'An error occurred while deleting the application.' });
+  }
+});
+
+/**
+ * @route   PUT /api/db/applications/:id
+ * @desc    Updates a job application record's status for a candidate.
+ * @access  Public
+ * @param   {string} id - The id of the application.
+ * @body    {string} status - The new status of the application.
+ * @body    {string} comments - The comments associated with the update.
+ */
+router.put('/applications/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, comments } = req.body;
+
+    // 1. Validate the input from the request.
+    if (!status || !id) {
+      return res.status(400).json({ error: 'Status and the application id are a required fields.' });
+    }
+    
+    const numericApplicationId = parseInt(id, 10);
+    if (isNaN(numericApplicationId)) {
+      return res.status(400).json({ error: 'Invalid application id.' });
+    }
+
+    // Comments can be optional, so we'll provide a default if not present.
+    const commentText = comments || 'The status has been updated for this application.';
+
+    // 2. Call the backend function with the validated data.
+    const updatedApplication = await changeCandidateApplicationStatus(
+      numericApplicationId,
+      status,
+      commentText
+    );
+
+    // 3. Send a success response with the updated data.
+    res.status(200).json(updatedApplication);
+
+  } catch (error) {
+    // 4. Handle errors gracefully.
+    console.error(`Error updating application status for ID ${req.params.id}:`, error);
+
+    // Check for a specific "not found" error message from the service function.
+    if (error.message.includes('not found')) {
+      return res.status(404).json({ error: error.message });
+    }
+
+    // For all other errors, send a generic server error response.
+    res.status(500).json({ error: 'An error occurred while updating the application status.' });
   }
 });
 
@@ -547,6 +600,23 @@ router.get('/courses', async (req, res) => {
   } catch (error) {
     console.error('Error in /courses route:', error);
     res.status(500).json({ error: 'Failed to retrieve courses.' });
+  }
+});
+
+/**
+ * @route   GET /api/db/comments
+ * @desc    Retrieves comments for a specific table and foreign key.
+ * @access  Public
+ */
+router.get('/comments', async (req, res) => {
+  try {
+    const tableName = req.query.tableName;
+    const foreignKey = req.query.foreignKey;
+    const comments = await getComments(tableName, foreignKey);
+    res.status(200).json(comments);
+  } catch (error) {
+    console.error('Error in /comments route:', error);
+    res.status(500).json({ error: 'Failed to retrieve comments.' });
   }
 });
 

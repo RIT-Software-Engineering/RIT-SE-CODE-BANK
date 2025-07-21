@@ -3,19 +3,21 @@
 import { useForm, useWatch } from 'react-hook-form';
 import { applyForJobPosition, applyForJobPositionWithNewResume } from '../../services/db-apis';
 import { letterToGradeValue } from '@/constants/gradeConstants';
+import { useNotification } from '@/contexts/NotificationContext';
 
 // A display field for showing non-editable user info.
 const DisplayField = ({ label, value }) => (
     <div>
         <label className="block text-sm font-medium text-gray-700">{label}</label>
         <p className="mt-1 block w-full rounded-md border-gray-200 bg-gray-100 shadow-sm p-2 text-gray-600">
-            {value || 'Not Provided'}
+            {value || 'None'}
         </p>
     </div>
 );
 
 export default function EditableApplicationForm({ user, position, onClose, onApplySuccess }) {
     // Get the list of resumes and find the primary one to pre-select.
+    const { showNotification } = useNotification();
     const existingResumes = user?.candidate?.resumes || [];
     const primaryResume = existingResumes.find(r => r.isPrimary) || existingResumes[0];
 
@@ -25,6 +27,11 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
         major: user?.candidate?.major || '',
         year: user?.candidate?.year || '',
         grade: user?.candidate?.courseHistory?.find(ch => ch.courseCode === position.courseCode)?.grade || '',
+        wasPriorEmployeeForThisCourse: user?.candidate?.courseHistory?.find(ch => ch.courseCode === position.courseCode)?.wasPriorEmployee || false,
+        wasPriorEmployeeForAnyOtherJobPosition: user?.candidate?.courseHistory?.some(ch => ch.courseCode !== position.courseCode && ch.wasPriorEmployee) || false,
+        priorEmployeeHistory: user?.candidate?.courseHistory?.filter(ch => ch.wasPriorEmployee)?.map(ch => ({
+            courseCode: ch.courseCode
+        })),
         // Set the default dropdown value to the primary resume's ID, or 'new' if none exist.
         resumeId: primaryResume ? String(primaryResume.id) : 'new',
         // This is for the new resume input field.
@@ -78,10 +85,11 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
             }
 
             onApplySuccess();
+            showNotification('Application submitted successfully.', 'success');
             onClose();
         } catch (err) {
             console.error("Submission failed:", err);
-            alert(err.message || 'An unknown error occurred during submission.');
+            showNotification(err.message || 'Failed to submit application.', 'error');
         }
     };
 
@@ -100,6 +108,9 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                     <DisplayField label="Email" value={initialValues.email} />
                     <DisplayField label="Major" value={initialValues.major} />
                     <DisplayField label="Year" value={initialValues.year} />
+                    <DisplayField label={`Prior Employment For ${position.course.courseCode}`} value={initialValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
+                    <DisplayField label="Prior Employment For Any Other Course" value={initialValues.wasPriorEmployeeForAnyOtherJobPosition ? "Yes" : "No"} />
+                    <DisplayField label="Prior Employment History" value={initialValues.priorEmployeeHistory.map(item => item.courseCode).join(', ')}  />
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700">

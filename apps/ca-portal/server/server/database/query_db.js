@@ -280,7 +280,18 @@ async function applyForJobPosition(applicationDetails) {
       },
     });
 
-    // 5. Update the candidate's course history with the self-reported grade.
+    // 5. Create a comment record for the new application.
+    await prisma.comment.create({
+        data: {
+          foreignTableName: 'JobPositionApplicationHistory',
+          foreignKey: String(newApplication.id), // Use the ID from the just-created application
+          status: 'APPLIED',                 // The initial status
+          comment: 'Candidate submitted application.', // A system-generated comment
+          timestamp: new Date(),
+        },
+      });
+
+    // 6. Update the candidate's course history with the self-reported grade.
     const parsedFormData = JSON.parse(jobPositionApplicationFormData);
     if (parsedFormData.grade) {
       await prisma.courseHistory.updateMany({
@@ -297,7 +308,7 @@ async function applyForJobPosition(applicationDetails) {
 }
 
 /**
- * Deletes a candidate's application for a specific job position.
+ * Deletes a candidate's application and its entire comment history.
  * The combination of candidateUID and jobPositionId must be unique.
  * @param {number} candidateUID - The UID of the candidate.
  * @param {string} jobPositionId - The ID of the job position.
@@ -305,12 +316,15 @@ async function applyForJobPosition(applicationDetails) {
  */
 async function deleteCandidateApplication(candidateUID, jobPositionId) {
   try {
+    // Find the application to get its unique ID. This is done outside the
+    // transaction because we need the ID to identify which comments to delete.
     const applicationToDelete =
       await prisma.jobPositionApplicationHistory.findFirst({
         where: {
           candidateUID: candidateUID,
           jobPositionId: jobPositionId,
         },
+        select: { id: true }, // We only need the primary key.
       });
 
     if (!applicationToDelete) {
@@ -319,12 +333,31 @@ async function deleteCandidateApplication(candidateUID, jobPositionId) {
       );
     }
 
-    return await prisma.jobPositionApplicationHistory.delete({
-      where: {
-        id: applicationToDelete.id,
-      },
+    const applicationId = applicationToDelete.id;
+
+    // Use a transaction to ensure both deletions succeed or fail together.
+    const result = await prisma.$transaction(async (tx) => {
+      // First, delete all comments associated with this application.
+      await tx.comment.deleteMany({
+        where: {
+          foreignTableName: 'JobPositionApplicationHistory',
+          foreignKey: String(applicationId),
+        },
+      });
+
+      // Second, delete the application record itself.
+      const deletedApplication = await tx.jobPositionApplicationHistory.delete({
+        where: {
+          id: applicationId,
+        },
+      });
+
+      return deletedApplication;
     });
-  } catch (error) {
+
+    return result;
+    
+  } catch (error){
     console.error('Error in deleteCandidateApplication:', error);
     throw error;
   }
@@ -369,73 +402,94 @@ async function getCandidateApplications(UID) {
  */
 async function getCandidateApplicationsForFaculty(facultyUid) {
   try {
-    // 1. Find all active job positions for the given faculty member.
-    const positionsList = await prisma.JobPosition.findMany({
+    // Find all active job positions for the given faculty member.
+    const positionsList = await prisma.jobPosition.findMany({
       where: { facultyUID: facultyUid, NOT: { jobPositionStatus: 'INACTIVE' } },
       include: {
         // Include all applications for each position.
         jobPositionApplicationHistory: {
           include: {
             // For each application, include detailed candidate information.
-            candidate: {
-              select: {
-                year: true,
-                major: true,
-                graduateStatus: true,
-                wasPriorEmployee: true,
-                user: { select: { name: true, email: true, uid: true } },
-                courseHistory: {
-                  select: {
-                    courseCode: true,
-                    grade: true,
-                    wasPriorEmployee: true,
-                  },
-                },
-              },
+            resume: {
+              select: { name: true, resumeURL: true },
             },
           },
         },
+        course: {
+          select: { name: true}, 
+        }
       },
     });
 
-    // 2. Process the results to enrich application data.
-    positionsList.forEach((position) => {
-      position.jobPositionApplicationHistory.forEach((application) => {
-        if (application.candidate?.courseHistory) {
-          // Find the candidate's grade for the specific course they are applying to.
-          const relevantCourse = application.candidate.courseHistory.find(
-            (course) => course.courseCode === position.courseCode
-          );
-          application.gradeInCourse = relevantCourse
-            ? gradeEnumToLetter[relevantCourse.grade]
-            : 'N/A';
-
-          // List all courses the candidate has previously been a TA for.
-          application.previouslyTAedCourses =
-            application.candidate.courseHistory
-              .filter((course) => course.wasPriorEmployee)
-              .map((course) => course.courseCode);
-
-          // Clean up the object by removing the full course history.
-          delete application.candidate.courseHistory;
-        }
-      });
-    });
-
-    // 3. Group the processed list of positions by their ID for easy lookup on the frontend.
-    return positionsList.reduce((accumulator, currentPosition) => {
-      accumulator[currentPosition.id] = currentPosition;
-      return accumulator;
-    }, {});
+    return positionsList;
   } catch (error) {
     console.log('Error in getCandidateApplications:', error);
     throw error;
   }
 }
 
+/**
+ * Updates an application's status and creates a new comment record in a transaction.
+ * @param {string} applicationId - The ID of the JobPositionApplicationHistory record.
+ * @param {string} status - The new status for the application (e.g., 'Rejected', 'Accepted').
+ * @param {string} comments - The text for the new comment record.
+ * @returns {Promise<object>} The updated application record.
+ */
+async function changeCandidateApplicationStatus(applicationId, status, comments) {
+  try {
+    // Use a transaction to ensure both the update and create operations succeed or fail together.
+    const updatedApplication = await prisma.$transaction(async (tx) => {
+      // 1. Update the status on the main application record.
+      const applicationUpdate = await tx.jobPositionApplicationHistory.update({
+        where: { id: applicationId },
+        data: { jobApplicationStatus: status },
+      });
+
+      // It's good practice to ensure the record existed before proceeding.
+      if (!applicationUpdate) {
+        throw new Error(`Application with ID ${applicationId} not found.`);
+      }
+
+      // 2. Create a new, separate record in the Comment table to log the change.
+      await tx.comment.create({
+        data: {
+          foreignTableName: 'JobPositionApplicationHistory', // The table this comment relates to
+          foreignKey: String(applicationId),              // The specific record ID
+          status: status,                                 // The new status being set
+          comment: comments,                              // The comment text
+          timestamp: new Date(),                          // The current timestamp
+        },
+      });
+
+      // Return the updated application record from the transaction.
+      return applicationUpdate;
+    });
+
+    return updatedApplication;
+
+  } catch (error) {
+    console.error('Error in changeCandidateApplicationStatus:', error);
+    // Re-throw the error so the calling function can handle it (e.g., show an error to the user).
+    throw error;
+  }
+}
+
+
 // =============================================================================
 // USER & PROFILE MANAGEMENT
 // =============================================================================
+/**
+ * Retrieves all users from the database.
+ * @returns {Promise<Array>} A promise that resolves to an array of all user objects.
+ */
+async function getAllUsers() {
+  try {
+    return await prisma.user.findMany();
+  } catch (error) {
+    console.error('Error retrieving users:', error);
+    throw error;
+  }
+}
 
 /**
  * Retrieves a unique user's profile, including role-specific details (e.g., candidate or employer info).
@@ -803,19 +857,6 @@ async function deleteResume(resumeId) {
 // =============================================================================
 
 /**
- * Retrieves all users from the database.
- * @returns {Promise<Array>} A promise that resolves to an array of all user objects.
- */
-async function getAllUsers() {
-  try {
-    return await prisma.user.findMany();
-  } catch (error) {
-    console.error('Error retrieving users:', error);
-    throw error;
-  }
-}
-
-/**
  * Retrieves all courses from the database, selecting only the course code and name.
  * @returns {Promise<Array>} A promise that resolves to an array of all course objects.
  */
@@ -833,6 +874,24 @@ async function getAllCourses() {
   }
 }
 
+/**
+ * Retrieves all comments for a specific record.
+ * @param {string} tableName - The name of the table the comments are associated with.
+ * @param {string|number} foreignKey - The ID of the record the comments are associated with.
+ * @returns {Promise<object>} A promise that resolves to an array of comment objects.
+ */
+async function getComments(tableName, foreignKey) {
+  try {
+    const comments = await prisma.comment.findMany({
+      where: { foreignTableName: tableName, foreignKey: foreignKey },
+    });
+    return comments;
+  } catch (error) {
+    console.error('Error in getComments:', error);
+    throw error;
+  }
+}
+
 // =============================================================================
 // EXPORTS & PROCESS HANDLING
 // =============================================================================
@@ -843,6 +902,7 @@ module.exports = {
   getCandidateApplications,
   getCandidateApplicationsForFaculty,
   applyForJobPosition,
+  changeCandidateApplicationStatus,
   findUniqueUser,
   upsertCandidateProfile,
   upsertEmployerProfile,
@@ -854,6 +914,7 @@ module.exports = {
   getCandidateResumes,
   getAllUsers,
   getAllCourses,
+  getComments,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.
