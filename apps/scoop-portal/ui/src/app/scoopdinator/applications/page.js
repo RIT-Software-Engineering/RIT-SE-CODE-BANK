@@ -52,7 +52,7 @@ export default function SupervisorApplicationsPage() {
                             ? STATUSES[1] // "accepted"
                             : app.accepted === false
                               ? STATUSES[2] // "rejected"
-                              : STATUSES[3], // "unprocessed"
+                              : STATUSES[3] // "unprocessed"
                 }));
 
                 setApplications(processed);
