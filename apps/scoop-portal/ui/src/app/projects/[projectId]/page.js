@@ -1,10 +1,11 @@
 "use client";
 
-import { Box, Button, Container, Typography } from "@mui/material";
+import { Box, Button, Container, Typography, Paper } from "@mui/material";
 import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
 import React, { useEffect, useState } from "react";
 import ProjectDetailsLoading from "./loading";
-import theme from "@styles/theme";
+import Header from "@components/Header";
+import baseTheme from "@styles/theme";
 
 export default function ProjectDetails({ params }) {
     const { projectId } = React.use(params);
@@ -36,6 +37,8 @@ export default function ProjectDetails({ params }) {
 
     return (
         <>
+            <Header />
+
             <Container>
                 <Button
                     href="/projects"
@@ -44,7 +47,12 @@ export default function ProjectDetails({ params }) {
                 >
                     Back to Projects
                 </Button>
-                <Container sx={{ marginTop: "1rem" }}>
+                <Paper
+                    sx={{
+                        marginTop: "1rem",
+                        paddingBlock: "1rem",
+                    }}
+                >
                     <Typography variant="h1">
                         {project.display_name || project.title}
                     </Typography>
@@ -63,11 +71,11 @@ export default function ProjectDetails({ params }) {
                                         : "rgba(124, 135, 142, 0.2)",
                             color:
                                 project.status === "active"
-                                    ? theme.palette.info.main
+                                    ? baseTheme.palette.info.main
                                     : project.status === "in progress"
-                                      ? theme.palette.warning.main
+                                      ? baseTheme.palette.warning.main
                                       : project.status === "completed"
-                                        ? theme.palette.success.main
+                                        ? baseTheme.palette.success.main
                                         : "rgb(124, 135, 142)",
                         }}
                     >
@@ -107,7 +115,7 @@ export default function ProjectDetails({ params }) {
                             </Typography>
                         </Box>
                     </Container>
-                </Container>
+                </Paper>
             </Container>
         </>
     );
