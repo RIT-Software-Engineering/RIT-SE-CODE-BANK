@@ -1,7 +1,16 @@
 "use client";
 
-import { Box, Button, Container, Typography, Paper } from "@mui/material";
+import {
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Container,
+    Typography,
+    Paper,
+} from "@mui/material";
 import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
+import { EditOutlined } from "@mui/icons-material";
 import React, { useEffect, useState } from "react";
 import ProjectDetailsLoading from "./loading";
 import Header from "@components/Header";
@@ -50,12 +59,30 @@ export default function ProjectDetails({ params }) {
                 <Paper
                     sx={{
                         marginTop: "1rem",
-                        paddingBlock: "1rem",
+                        padding: "1rem",
                     }}
                 >
-                    <Typography variant="h1">
-                        {project.display_name || project.title}
-                    </Typography>
+                    <Container
+                        disableGutters
+                        sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            px: "0",
+                        }}
+                    >
+                        <Typography variant="h1">
+                            {project.display_name || project.title}
+                        </Typography>
+                        <Button
+                            startIcon={<EditOutlined />}
+                            variant="solid-orange"
+                            onClick={() => {
+                                alert("Edit functionality not implemented yet");
+                            }}
+                        >
+                            Edit Details
+                        </Button>
+                    </Container>
                     <Box
                         sx={{
                             marginBlock: "1rem",
@@ -85,36 +112,79 @@ export default function ProjectDetails({ params }) {
                     </Box>
                     <Typography>{project.description}</Typography>
                     <Container
+                        disableGutters
                         sx={{
                             display: "flex",
                             justifyContent: "space-between",
+                            px: "0",
                         }}
                     >
-                        <Box
+                        <Card
+                            variant="outlined"
                             sx={{
-                                width: "50%",
+                                width: "45%",
                                 padding: "0.25rem 1rem",
                             }}
                         >
-                            <Typography variant="h3">Challenges:</Typography>
-                            <Typography>
-                                {project.project_challenges}
-                            </Typography>
-                        </Box>
-                        <Box
+                            <CardContent>
+                                <Typography variant="h3">
+                                    Challenges:
+                                </Typography>
+                                <Typography>
+                                    {project.project_challenges}
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                        <Card
+                            variant="outlined"
                             sx={{
-                                width: "50%",
+                                width: "45%",
                                 padding: "0.25rem 1rem",
                             }}
                         >
-                            <Typography variant="h3">
-                                Constraints & Assumptions:
-                            </Typography>
-                            <Typography>
-                                {project.constraints_assumptions}
-                            </Typography>
-                        </Box>
+                            <CardContent>
+                                <Typography variant="h3">
+                                    Constraints & Assumptions:
+                                </Typography>
+                                <Typography>
+                                    {project.constraints_assumptions}
+                                </Typography>
+                            </CardContent>
+                        </Card>
                     </Container>
+                    <Typography variant="body1" sx={{ marginTop: "1rem" }}>
+                        Project Team: {project.team_name}
+                    </Typography>
+                    <Typography>
+                        Created:{" "}
+                        {project.created_at
+                            ? new Date(project.created_at).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                      hour: "numeric",
+                                      minute: "numeric",
+                                  }
+                              )
+                            : "Unknown Date"}
+                    </Typography>
+                    <Typography>
+                        Last updated:{" "}
+                        {project.updated_at
+                            ? new Date(project.updated_at).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                      hour: "numeric",
+                                      minute: "numeric",
+                                  }
+                              )
+                            : "Unknown Date"}
+                    </Typography>
                 </Paper>
             </Container>
         </>
