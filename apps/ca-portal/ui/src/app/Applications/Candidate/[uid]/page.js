@@ -1,95 +1,149 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
 import { useCallback, useEffect, useState } from 'react';
+import { getCandidateApplicationsAsCandidate } from '@/services/db-apis';
+import { useAuth } from '@/contexts/AuthContext';
+
 import ApplicationCard from '@/components/jobs/CandidateAndEmployee/ApplicationCard';
-import { getCandidateApplications } from '@/services/db-apis';
+import SearchBar from '@/components/jobs/SearchBar';
+import Filter from '@/components/jobs/Filter';
+import { generateApplicationsFilterConfig } from './filter.config';
+
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import Typography from '@mui/material/Typography';
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+import Box from '@mui/material/Box';
 
 export default function CandidateApplicationsPage() {
   const { currentUser, refreshUserProfile } = useAuth();
-  const [groupedApplications, setGroupedApplications] = useState({});
+
+  const [displayData, setDisplayData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filterConfig, setFilterConfig] = useState([]);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: [],
+    level: '',
+    semester: '',
+  });
 
   const pageTitle = "My Applications";
   const pageSubtitle = "Track the status of all positions you've applied for.";
 
-  // Wrap data fetching logic in useCallback so its identity is stable
-  const fetchApplications = useCallback(async () => {
-    if (currentUser?.uid && currentUser.role === "CANDIDATE") {
-      try {
-        setLoading(true);
-        const data = await getCandidateApplications(currentUser.uid);
-        
-        const groupedData = data.reduce((acc, application) => {
-          const semesterCode = application.jobPositionId.split('-')[0] || 'Uncategorized';
-          if (!acc[semesterCode]) {
-            acc[semesterCode] = [];
-          }
-          acc[semesterCode].push(application);
-          return acc;
-        }, {});
+ // Fetch semester options on load to build the filter component's configuration
+  useEffect(() => {
+    if (currentUser?.uid) {
+      const fetchSemesterOptions = async () => {
+        try {
+          // Use the search/filter function with default params to get all applications
+          const allApps = await getCandidateApplicationsAsCandidate(
+            '', // No search term
+            { status: [], level: '', semester: '' }, // Default filters
+            currentUser.uid
+          );
+          
+          const semesterCodes = [...new Set(allApps.map(app => app.jobPositionId.split('-')[0]))]
+            .sort((a,b) => b.localeCompare(a));
+          
+          const newConfig = generateApplicationsFilterConfig(semesterCodes);
+          setFilterConfig(newConfig);
+        } catch (err) {
+          console.error('Failed to load filter configuration:', err);
+          setFilterConfig(generateApplicationsFilterConfig([]));
+        }
+      };
+      fetchSemesterOptions();
+    }
+  }, [currentUser]);
 
-        setGroupedApplications(groupedData);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching candidate applications:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    } else {
+  // Central function to fetch and display applications based on search/filters
+  const updateApplicationsView = useCallback(async (search, filters) => {
+    if (!currentUser?.uid) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const applications = await getCandidateApplicationsAsCandidate(
+        search,
+        filters,
+        currentUser.uid
+      );
+
+      const groupedBySemester = applications.reduce((acc, app) => {
+        const semesterCode = app.jobPositionId.split('-')[0] || 'Uncategorized';
+        if (!acc[semesterCode]) acc[semesterCode] = [];
+        acc[semesterCode].push(app);
+        return acc;
+      }, {});
+
+      setDisplayData(groupedBySemester);
+    } catch (err) {
+      console.error('Error updating applications view:', err);
+      setError(err.message);
+    } finally {
       setLoading(false);
     }
   }, [currentUser]);
 
+  // Fetch initial data on component mount
   useEffect(() => {
-    fetchApplications();
-  }, [fetchApplications]); // useEffect now depends on the stable fetchApplications function
+    if (currentUser) {
+      updateApplicationsView(searchTerm, appliedFilters);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
 
-  // Update handler simply calls the fetch function again.
+  // --- Event Handlers ---
   const handleStatusChange = () => {
-    fetchApplications();
+    updateApplicationsView(searchTerm, appliedFilters);
   };
 
-  // Renders the main content of the page based on the current state
+  // Called when "Apply Filters" or "Clear All" is clicked in the Filter component
+  const handleFilterChange = (filters) => {
+    setAppliedFilters(filters);
+    updateApplicationsView(searchTerm, filters);
+  };
+  
+  
+  // Updates search term state as the user types.
+  const handleSearchTermChange = (newValue) => {
+    setSearchTerm(newValue);
+    if (newValue === '') {
+      updateApplicationsView('', appliedFilters);
+    }
+  };
+  
+  // Called when the search form is submitted
+  const handleSearch = (e) => {
+    e.preventDefault();
+    updateApplicationsView(searchTerm, appliedFilters);
+  };
+
+  // --- Render Logic ---
   const renderContent = () => {
-    if (loading) {
-      return <div className="text-center text-gray-500">Loading applications...</div>;
-    }
-    if (error) {
-      return <div className='text-red-500 text-center'>Error: {error}</div>;
-    }
-    if (!currentUser) {
-        return <div className="text-center text-gray-500">Please log in to view your applications.</div>;
-    }
+    if (loading) return <div className="text-center text-gray-500 py-8">Loading applications...</div>;
+    if (error) return <div className='text-red-500 text-center py-8'>Error: {error}</div>;
     
-    const semesterCodes = Object.keys(groupedApplications).sort((a, b) => b.localeCompare(a));
+    const semesterCodes = Object.keys(displayData).sort((a, b) => b.localeCompare(a));
 
     if (semesterCodes.length === 0) {
-      return <div className="text-center text-gray-500">You have no applications to display.</div>;
+      return <div className="text-center text-gray-500 py-8">No applications match your criteria.</div>;
     }
 
     return (
       <div className='w-full max-w-4xl'>
         {semesterCodes.map((semester) => (
           <Accordion key={semester} defaultExpanded>
-            <AccordionSummary
-              expandIcon={<KeyboardArrowDownOutlinedIcon />}
-              aria-controls={`${semester}-content`}
-              id={`${semester}-header`}
-              sx={{ borderBottom: 1, borderColor: 'divider' }}
-            >
+            <AccordionSummary expandIcon={<KeyboardArrowDownOutlinedIcon />} sx={{ borderBottom: 1, borderColor: 'divider' }}>
               <Typography variant="h5">{`Semester ${semester}`}</Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ padding: '16px', backgroundColor: '#f9f9f9' }}>
               <div className="space-y-4">
-                {groupedApplications[semester].map((app) => (
+                {displayData[semester].map((app) => (
                   <ApplicationCard
                     key={app.id}
                     currentUser={currentUser}
@@ -112,6 +166,31 @@ export default function CandidateApplicationsPage() {
         <h1 className='text-4xl font-bold text-gray-800'>{pageTitle}</h1>
         <p className='text-md text-gray-600 mt-2'>{pageSubtitle}</p>
       </div>
+
+      <Box component="form" onSubmit={handleSearch} className='flex justify-center p-4 bg-gray-100 border-b border-gray-200 sticky top-0 z-10'>
+        <Box className='w-full max-w-4xl flex flex-col md:flex-row gap-4 items-center'>
+            <SearchBar
+                value={searchTerm}
+                onChange={handleSearchTermChange}
+                placeholder="Search by Course Name or Code..."
+            />
+            {filterConfig.length > 0 ? (
+                <Filter
+                  onFilterChange={handleFilterChange}
+                  filterConfig={filterConfig}
+                />
+            ) : (
+                <Box className='w-24 h-10 animate-pulse bg-gray-300 rounded-md' />
+            )}
+            <button
+              type='submit'
+              className='h-10 shrink-0 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-orange-600'
+            >
+              Search
+            </button>
+        </Box>
+      </Box>
+
       <div className='flex justify-center bg-gray-50 p-4 md:p-8 min-h-screen'>
         {renderContent()}
       </div>

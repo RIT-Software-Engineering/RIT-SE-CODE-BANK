@@ -16,16 +16,15 @@ const {
   findUniqueUser,
   upsertCandidateProfile,
   upsertEmployerProfile,
-  searchAndFilterOpenJobPositions,
-  searchAndFilterCandidateApplicationsAsEmployer,
+  getOpenJobPositions,
+  getCandidateApplicationsAsEmployer,
+  getCandidateApplications,
   applyForJobPosition,
   addNewCandidateResume,
   updatePrimaryResume,
   deleteResume,
   getCandidateResumes,
   updateResumeName,
-  getCandidateApplications,
-  getCandidateApplicationsForEmployer,
   getSemesterCodesForEmployer,
   deleteCandidateApplication,
   changeCandidateApplicationStatus,
@@ -82,14 +81,14 @@ const upload = multer({
 // =============================================================================
 
 /**
- * @route   GET /api/db/search-and-filter-open-positions
- * @desc    Searches and filters open job positions based on query parameters.
+ * @route   GET /api/db/open-positions
+ * @desc    Retrieves and searches and filters open job positions based on query parameters.
  * @access  Public
  * @query   {string} [searchTerm] - Text to search in course names/codes.
  * @query   {string} [filters] - A JSON string of filter criteria.
  * @query   {string} [candidateUID] - The UID of the candidate for eligibility checks.
  */
-router.get('/search-and-filter-open-positions', async (req, res) => {
+router.get('/open-positions', async (req, res) => {
   const { searchTerm, filters: filtersString, candidateUID } = req.query;
   try {
     const filters = filtersString ? JSON.parse(filtersString) : {};
@@ -99,14 +98,14 @@ router.get('/search-and-filter-open-positions', async (req, res) => {
         .status(400)
         .json({ error: 'Candidate UID must be a valid number.' });
     }
-    const positions = await searchAndFilterOpenJobPositions(
+    const positions = await getOpenJobPositions(
       searchTerm,
       filters,
       numericCandidateUID
     );
     res.status(200).json(positions);
   } catch (error) {
-    console.error('Error in /search-and-filter-open-positions route:', error);
+    console.error('Error in /open-positions route:', error);
     res
       .status(500)
       .json({ error: 'Failed to search or filter open positions.' });
@@ -213,31 +212,6 @@ router.post(
 );
 
 /**
- * @route   GET /api/db/applications/:UID
- * @desc    Retrieves all applications for a specific candidate/employee.
- * @access  Public
- * @param   {string} UID - The UID of the candidate/employee.
- */
-router.get('/applications/:UID', async (req, res) => {
-  try {
-    const numericUID = parseInt(req.params.UID, 10);
-    if (isNaN(numericUID)) {
-      return res.status(400).json({ error: 'UID must be a valid number.' });
-    }
-    const applications = await getCandidateApplications(numericUID);
-    res.status(200).json(applications);
-  } catch (error) {
-    console.error(
-      `Error in /applications/${req.params.UID} route:`,
-      error.message
-    );
-    res
-      .status(500)
-      .json({ error: 'An error occurred while retrieving applications.' });
-  }
-});
-
-/** TODO:
  * @route   DELETE /api/db/applications/:uid
  * @desc    Deletes a job application record for a candidate.
  * @access  Public
@@ -330,41 +304,44 @@ router.put('/applications/:id', async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/applications/employer/:employerUid
- * @desc    Retrieves all applications for job positions managed by a specific employer.
+ * @route   GET /api/db/applications/candidate
+ * @desc    Retrieves and searches and filters job applications based on query parameters.
  * @access  Public
- * @param   {string} employerUid - The UID of the employer.
+ * @query   {string} [searchTerm] - Text to search in course names/codes.
+ * @query   {string} [filters] - A JSON string of filter criteria.
+ * @query   {string} [candidateUID] - The UID of the candidate for eligibility checks.
  */
-router.get('/applications/employer/:employerUid', async (req, res) => {
+router.get('/applications/candidate', async (req, res) => {
   try {
-    const employerUid = parseInt(req.params.employerUid, 10);
-    if (isNaN(employerUid)) {
+    const { searchTerm, filters: filtersString, candidateUID } = req.query;
+    const filters = filtersString ? JSON.parse(filtersString) : {};
+    const numericCandidateUID = parseInt(candidateUID, 10);
+    if (isNaN(numericCandidateUID)) {
       return res
         .status(400)
-        .json({ error: 'Employer UID must be a valid number.' });
+        .json({ error: 'Candidate UID must be a valid number.' });
     }
-    const positions = await getCandidateApplicationsForEmployer(employerUid);
-    res.status(200).json(positions);
-  } catch (error) {
-    console.error(
-      `Error in /applications/${req.params.employerUid} route:`,
-      error.message
+    const applications = await getCandidateApplications(
+      searchTerm,
+      filters,
+      numericCandidateUID
     );
-    res
-      .status(500)
-      .json({ error: 'An error occurred while retrieving applications.' });
+    res.status(200).json(applications);
+  } catch (error) {
+    console.error('Error in /applications route:', error.message, error.stack);
+    res.status(500).json({ error: 'An error occurred while searching and filtering applications.' });
   }
-});
+})
 
 /**
- * @route   GET /api/db/search-and-filter-applications/employer
- * @desc    Searches and filters job applications based on query parameters.
+ * @route   GET /api/db/applications/employer
+ * @desc    Retrieves and searches and filters job applications based on query parameters.
  * @access  Public
  * @query   {string} [searchTerm] - Text to search in course names/codes.
  * @query   {string} [filters] - A JSON string of filter criteria.
  * @query   {string} [employerUID] - The UID of the employer for eligibility checks.
  */
-router.get('/search-and-filter-applications/employer', async (req, res) => {
+router.get('/applications/employer', async (req, res) => {
   try {
     const { searchTerm, searchBy, filters: filtersString, employerUID } = req.query;
     const filters = filtersString ? JSON.parse(filtersString) : {};
@@ -375,7 +352,7 @@ router.get('/search-and-filter-applications/employer', async (req, res) => {
       return res.status(400).json({ error: 'Employer UID must be a valid number.' });
     }
 
-    const applications = await searchAndFilterCandidateApplicationsAsEmployer(
+    const applications = await getCandidateApplicationsAsEmployer(
       searchTerm,
       searchBy,
       filters,
@@ -383,7 +360,7 @@ router.get('/search-and-filter-applications/employer', async (req, res) => {
     );
     res.status(200).json(applications);
   } catch (error) {
-    console.error('Error in /search-and-filter-applications/employer route:', error.message, error.stack);
+    console.error('Error in /applications/employer route:', error.message, error.stack);
     res.status(500).json({ error: 'An error occurred while searching and filtering applications.' });
   }
 });
