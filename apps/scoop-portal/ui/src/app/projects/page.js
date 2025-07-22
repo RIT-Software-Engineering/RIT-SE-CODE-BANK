@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import Header from "@components/Header";
-import { Box, Button, Container, Typography } from "@mui/material";
-import theme from "@styles/theme";
+import { Box, Button, Card, Container, Typography } from "@mui/material";
+import baseTheme from "@styles/theme";
 
 export default function Projects() {
     const [projects, setProjects] = useState([]);
@@ -36,11 +36,12 @@ export default function Projects() {
                 </Typography>
                 <>
                     {projects.map((project) => (
-                        <Container
+                        <Card
+                            square
                             key={project.id}
                             sx={{
-                                backgroundColor: "#212121",
-                                paddingBlock: "1em",
+                                padding: "1em",
+                                margin: "0.5rem",
                             }}
                         >
                             <Box
@@ -75,11 +76,11 @@ export default function Projects() {
                                                 : "rgba(124, 135, 142, 0.2)",
                                     color:
                                         project.status === "active"
-                                            ? theme.palette.info.main
+                                            ? baseTheme.palette.info.main
                                             : project.status === "in progress"
-                                              ? theme.palette.warning.main
+                                              ? baseTheme.palette.warning.main
                                               : project.status === "completed"
-                                                ? theme.palette.success.main
+                                                ? baseTheme.palette.success.main
                                                 : "rgb(124, 135, 142)",
                                 }}
                             >
@@ -88,7 +89,7 @@ export default function Projects() {
                                 </Typography>
                             </Box>
                             <Typography>{project.description}</Typography>
-                        </Container>
+                        </Card>
                     ))}
                 </>
             </Container>
