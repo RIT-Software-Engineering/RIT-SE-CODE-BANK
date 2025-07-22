@@ -153,6 +153,7 @@ export default function SupervisorApplicationsPage() {
                 p: 4,
             }}
         >
+            <Header />
             <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
                 Review Applications
             </Typography>
