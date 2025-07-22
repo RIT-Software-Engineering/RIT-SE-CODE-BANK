@@ -17,7 +17,7 @@ export default function Footer() {
     }, []);
 
     return (
-        <footer className="mt-4 p-4 bg-black text-white text-center">
+        <footer className="mt-4 p-4 bg-black text-white text-center z-[1301]">
             <p>© 2025 Peer Eval. All rights reserved.</p>
             <div className="flex items-center justify-center mt-2">
                 <span className="mr-2">Current user:</span>
