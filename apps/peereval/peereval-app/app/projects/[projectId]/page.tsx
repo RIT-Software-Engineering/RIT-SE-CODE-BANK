@@ -198,6 +198,8 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                     assessments={upcoming}
                 />
                 <hr className="mb-4" />
+
+                {/* Received Feedback Section */}
                 <Section
                     projectId={projectId}
                     title="Your Received Feedback"
