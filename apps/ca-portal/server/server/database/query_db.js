@@ -112,37 +112,7 @@ async function buildPositionFilterClause(filters, candidateUID) {
   return { filterWhere, candidateData };
 }
 
-/**
- * Retrieves job positions from the database based on a given `where` clause.
- * @param {object} whereClause - The Prisma `where` clause to filter positions. Defaults to an empty object.
- * @returns {Promise<Array>} A promise that resolves to an array of open positions with their course and schedule details.
- */
-async function getOpenPositionsWithDetails(whereClause = {}) {
-  try {
-    return await prisma.jobPosition.findMany({
-      where: {
-        jobPositionStatus: "OPEN",
-        ...whereClause,
-      },
-      include: {
-        course: {
-          select: { name: true, description: true, courseCode: true },
-        },
-        jobSchedules: {
-          select: { dayOfWeek: true, startTime: true, endTime: true },
-        },
-      },
-      orderBy: {
-        course: {
-          name: "asc",
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Error retrieving open positions with details:", error);
-    throw error;
-  }
-}
+
 
 async function modifyPosition(jobId, positionData) {
   // Separate the schedules array from the rest of the job data
