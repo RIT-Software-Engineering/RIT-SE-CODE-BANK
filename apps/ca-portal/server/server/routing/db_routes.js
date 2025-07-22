@@ -11,22 +11,22 @@ const multer = require('multer');
 
 // Import all necessary database query functions.
 const {
-  getOpenPositionsWithDetails,
   getAllUsers,
   getAllCourses,
   findUniqueUser,
   upsertCandidateProfile,
   upsertEmployerProfile,
   searchAndFilterOpenJobPositions,
+  searchAndFilterCandidateApplicationsAsEmployer,
   applyForJobPosition,
   addNewCandidateResume,
   updatePrimaryResume,
-  resetResumesToNonPrimary,
   deleteResume,
   getCandidateResumes,
   updateResumeName,
   getCandidateApplications,
-  getCandidateApplicationsForFaculty,
+  getCandidateApplicationsForEmployer,
+  getSemesterCodesForEmployer,
   deleteCandidateApplication,
   changeCandidateApplicationStatus,
   getComments,
@@ -80,21 +80,6 @@ const upload = multer({
 // =============================================================================
 // JOB POSITION & APPLICATION ROUTES
 // =============================================================================
-
-/**
- * @route   GET /api/db/open-positions
- * @desc    Retrieves all job positions currently marked as "OPEN".
- * @access  Public
- */
-router.get('/open-positions', async (req, res) => {
-  try {
-    const positions = await getOpenPositionsWithDetails();
-    res.status(200).json(positions);
-  } catch (error) {
-    console.error('Error in /open-positions route:', error);
-    res.status(500).json({ error: 'Failed to retrieve open positions.' });
-  }
-});
 
 /**
  * @route   GET /api/db/search-and-filter-open-positions
@@ -358,7 +343,7 @@ router.get('/applications/employer/:employerUid', async (req, res) => {
         .status(400)
         .json({ error: 'Employer UID must be a valid number.' });
     }
-    const positions = await getCandidateApplicationsForFaculty(employerUid);
+    const positions = await getCandidateApplicationsForEmployer(employerUid);
     res.status(200).json(positions);
   } catch (error) {
     console.error(
@@ -370,6 +355,62 @@ router.get('/applications/employer/:employerUid', async (req, res) => {
       .json({ error: 'An error occurred while retrieving applications.' });
   }
 });
+
+/**
+ * @route   GET /api/db/search-and-filter-applications/employer
+ * @desc    Searches and filters job applications based on query parameters.
+ * @access  Public
+ * @query   {string} [searchTerm] - Text to search in course names/codes.
+ * @query   {string} [filters] - A JSON string of filter criteria.
+ * @query   {string} [employerUID] - The UID of the employer for eligibility checks.
+ */
+router.get('/search-and-filter-applications/employer', async (req, res) => {
+  try {
+    const { searchTerm, searchBy, filters: filtersString, employerUID } = req.query;
+    const filters = filtersString ? JSON.parse(filtersString) : {};
+    
+    // Ensure employerUID is a number before proceeding
+    const numericEmployerUID = parseInt(employerUID, 10);
+    if (isNaN(numericEmployerUID)) {
+      return res.status(400).json({ error: 'Employer UID must be a valid number.' });
+    }
+
+    const applications = await searchAndFilterCandidateApplicationsAsEmployer(
+      searchTerm,
+      searchBy,
+      filters,
+      numericEmployerUID
+    );
+    res.status(200).json(applications);
+  } catch (error) {
+    console.error('Error in /search-and-filter-applications/employer route:', error.message, error.stack);
+    res.status(500).json({ error: 'An error occurred while searching and filtering applications.' });
+  }
+});
+
+
+/**
+ * @route   GET /api/db/semester-codes
+ * @desc    Retrieves all applications for job positions managed by a specific employer.
+ * @access  Public
+ * @param   {string} employerUid - The UID of the employer.
+ * @returns {Array} An array of unique semester codes.
+ */ 
+router.get('/semester-codes/:employerUID', async (req, res) => {
+  try {
+    const employerUid = parseInt(req.params.employerUID, 10);
+    if (isNaN(employerUid)) {
+      return res
+        .status(400)
+        .json({ error: 'Employer UID must be a valid number.' });
+    }
+    const applications = await getSemesterCodesForEmployer(employerUid);
+    res.status(200).json(applications);
+  } catch (error) {
+    console.error('Error in /semester-codes route:', error.message, error.stack);
+    res.status(500).json({ error: 'An error occurred while searching and filtering applications.' });
+  }
+})
 
 // =============================================================================
 // USER & PROFILE ROUTES

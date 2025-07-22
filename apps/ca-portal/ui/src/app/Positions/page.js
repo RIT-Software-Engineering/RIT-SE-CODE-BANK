@@ -1,7 +1,7 @@
 "use client";
 import SearchBar from "@/components/jobs/SearchBar";
 import { searchAndFilterOpenPositions } from "../../services/db-apis";
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import PositionsCard from "@/components/jobs/PositionsCard";
 import Filter from "@/components/jobs/Filter";
 import { positionFilterConfig } from "./filter.config";
@@ -9,11 +9,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function Positions() {
   const { currentUser } = useAuth();
-  const [openPositions, setOpenPositions] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [appliedFilters, setAppliedFilters] = React.useState({
+  const [openPositions, setOpenPositions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState({
     days: [],
     level: "",
     location: "",
@@ -79,13 +79,8 @@ export default function Positions() {
     if (error) {
       return (
         <div className="text-center py-10 px-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-lg font-semibold text-red-700">
-            An Error Occurred
-          </p>
-          <p className="text-gray-600 mt-2">
-            Could not fetch positions. Please ensure the server is running and
-            try again later.
-          </p>
+          <p className="text-lg font-semibold text-red-700">An Error Occurred</p>
+          <p className="text-gray-600 mt-2">{error}</p>
         </div>
       );
     }
@@ -93,15 +88,12 @@ export default function Positions() {
     if (openPositions.length === 0) {
       return (
         <div className="text-center py-10 px-4 bg-gray-50 border border-gray-200 rounded-lg">
-          <p className="text-lg font-semibold text-gray-800">
-            No Open Positions Found
-          </p>
-          <p className="text-gray-600 mt-2">
-            Try adjusting your search or filters.
-          </p>
+          <p className="text-lg font-semibold text-gray-800">No Open Positions Found</p>
+          <p className="text-gray-600 mt-2">Try adjusting your search or filters.</p>
         </div>
       );
     }
+    
     // If we have open positions, render them
     return openPositions.map((position, index) => (
       <PositionsCard key={index} position={position} index={index} />
@@ -113,34 +105,21 @@ export default function Positions() {
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 w-full">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
-              Open Positions
-            </h1>
-            <p className="mt-2 text-lg text-gray-600">
-              Find your next opportunity as a Course Assistant.
-            </p>
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Open Positions</h1>
+            <p className="mt-2 text-lg text-gray-600">Find your next opportunity as a Course Assistant.</p>
           </div>
 
           <div id="positions-container" className="w-full max-w-4xl mx-auto">
-            <form
-              onSubmit={handleSearch}
-              className="mb-8 flex items-center gap-x-2"
-            >
-              <SearchBar value={searchTerm} onChange={handleSearchTermChange} />
-
-              <Filter
-                onFilterChange={handleFilterChange}
-                filterConfig={positionFilterConfig}
-              />
-
+            <form onSubmit={handleSearch} className="mb-8 flex items-center gap-x-2">
+              <SearchBar value={searchTerm} onChange={handleSearchTermChange} placeholder="Search by course name or code..." />
+              <Filter onFilterChange={handleFilterChange} filterConfig={positionFilterConfig} />
               <button
                 type="submit"
-                className="h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outlin focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+                className="h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-orange-600"
               >
                 Search
               </button>
             </form>
-
             {renderContent()}
           </div>
         </div>

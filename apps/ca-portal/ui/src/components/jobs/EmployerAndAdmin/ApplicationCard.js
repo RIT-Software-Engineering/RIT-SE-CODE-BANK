@@ -26,9 +26,8 @@ export default function ApplicationCard({
   });
   const [isProcessingUpdate, setIsProcessingUpdate] = useState(false);
 
-  const { id, jobApplicationStatus, applicationData, resume } = application;
+  const { id, jobApplicationStatus, resume } = application;
 
-  const applicationDetails = JSON.parse(applicationData);
   const statusClasses = getStatusClasses(jobApplicationStatus);
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -74,24 +73,25 @@ export default function ApplicationCard({
       <div className='flex-shrink-0'>
         <div className='w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center'>
           <span className='text-2xl font-bold text-black'>
-            {applicationDetails.name.charAt(0)}
+            {application.candidateName.charAt(0)}
           </span>
         </div>
       </div>
       <div className='flex-1 min-w-0'>
         <h2 className='text-2xl font-bold text-gray-800 truncate'>
-          {applicationDetails.name} |
+          {application.candidateName}
+          {' | '}
           <Link
             href={`/Users/${application.candidateUID}/Messaging`}
             onClick={(e) => e.stopPropagation()}
           >
             <span className='text-gray-600 hover:text-gray-800'>
-              {applicationDetails.email}
+               {application.candidateEmail}
             </span>
           </Link>
         </h2>
         <p className='text-md text-gray-500'>
-          {'Year ' + applicationDetails.year} | {applicationDetails.major}
+          {'Year ' + application.candidateYear} | {application.candidateMajor}
         </p>
       </div>
     </div>
@@ -237,7 +237,7 @@ export default function ApplicationCard({
                 Recent Course Grade
               </p>
               <p className='text-lg font-semibold text-gray-800'>
-                {applicationDetails.grade || 'N/A'}
+                {application.candidateGrade || 'N/A'}
               </p>
             </div>
             <div>
@@ -245,7 +245,7 @@ export default function ApplicationCard({
                 Previous CA Experience For This Course
               </p>
               <p className='text-lg font-semibold text-gray-800'>
-                {applicationDetails.wasPriorEmployeeForThisCourse
+                {application.wasPriorEmployeeForThisCourse
                   ? 'Yes'
                   : 'No'}
               </p>
@@ -255,7 +255,7 @@ export default function ApplicationCard({
                 Previously CA&apos;d Courses
               </p>
               <p className='text-lg font-semibold text-gray-800'>
-                {applicationDetails.priorEmployeeHistory?.join(', ') || 'None'}
+                {application.priorEmploymentHistory || 'None'}
               </p>
             </div>
           </div>

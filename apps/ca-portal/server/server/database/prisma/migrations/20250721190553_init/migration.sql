@@ -77,7 +77,14 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `jobPositionId` VARCHAR(191) NOT NULL,
     `resumeId` INTEGER NOT NULL,
     `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED', 'PENDING_ACCEPTANCE', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
-    `applicationData` TEXT NULL,
+    `candidateName` TEXT NOT NULL,
+    `candidateEmail` TEXT NOT NULL,
+    `candidateMajor` TEXT NOT NULL,
+    `candidateYear` INTEGER NOT NULL,
+    `candidateGrade` ENUM('A', 'A_MINUS', 'B_PLUS', 'B', 'B_MINUS', 'C_PLUS', 'C', 'C_MINUS', 'D', 'F') NULL,
+    `wasPriorEmployeeForThisCourse` BOOLEAN NOT NULL,
+    `wasPriorEmployeeForOtherCourses` BOOLEAN NOT NULL,
+    `priorEmploymentHistory` TEXT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -108,7 +115,7 @@ CREATE TABLE `JobPosition` (
     `courseCode` VARCHAR(8) NOT NULL,
     `sectionNumber` INTEGER NOT NULL,
     `semesterCode` INTEGER NOT NULL,
-    `facultyUID` INTEGER NOT NULL,
+    `employerUID` INTEGER NOT NULL,
     `maxCAs` INTEGER NOT NULL,
     `jobPositionStatus` ENUM('ACTIVE', 'OPEN', 'FILLED', 'ONHOLD', 'INACTIVE') NOT NULL DEFAULT 'OPEN',
     `location` TEXT NOT NULL,
@@ -191,7 +198,7 @@ ALTER TABLE `CourseHistory` ADD CONSTRAINT `CourseHistory_courseCode_fkey` FOREI
 ALTER TABLE `JobPosition` ADD CONSTRAINT `JobPosition_courseCode_fkey` FOREIGN KEY (`courseCode`) REFERENCES `Course`(`courseCode`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `JobPosition` ADD CONSTRAINT `JobPosition_facultyUID_fkey` FOREIGN KEY (`facultyUID`) REFERENCES `Employer`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `JobPosition` ADD CONSTRAINT `JobPosition_employerUID_fkey` FOREIGN KEY (`employerUID`) REFERENCES `Employer`(`uid`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `JobSchedule` ADD CONSTRAINT `JobSchedule_jobPositionId_fkey` FOREIGN KEY (`jobPositionId`) REFERENCES `JobPosition`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
