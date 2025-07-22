@@ -4,6 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { getAssessmentsByProject } from "@/services/assessment";
 import { getProjectsPeers } from "@/services/project";
 import { Assessment } from "@/types/assessment";
+import { UserProfile } from "@/types/userProfile";
+import { Drawer } from "@mui/material";
 import Link from "next/link";
 import React, { Fragment, useEffect, useState } from "react";
 
@@ -63,11 +65,42 @@ const Section: React.FC<{
     </section>
 );
 
-const PeersBox: React.FC = () => (
-    <div className="bg-blue-100 text-blue-800 rounded px-3 py-1 text-xs font-semibold text-center min-w-[48px] cursor-pointer">
-        View Peer Submissions
-    </div>
-);
+const ProjectPeersList: React.FC<{ projectId: string }> = ({ projectId }) => {
+    const [peers, setPeers] = useState<UserProfile[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        (async () => {
+            setLoading(true);
+            try {
+                const data = await getProjectsPeers(projectId);
+                setPeers(data);
+            } catch (e) {
+                setPeers([]);
+            }
+            setLoading(false);
+        })();
+    }, [projectId]);
+
+    if (loading) return <div className="text-sm text-gray-500">Loading...</div>;
+    if (peers.length === 0)
+        return <div className="text-sm text-gray-500">No peers found.</div>;
+
+    return (
+        <ul className="space-y-1">
+            {peers
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((peer) => (
+                    <li key={peer.id} className="text-md text-gray-800">
+                        {peer.name}{" "}
+                        <span className="text-sm text-gray-600">
+                            ({peer.email})
+                        </span>
+                    </li>
+                ))}
+        </ul>
+    );
+};
 
 interface ProjectViewProps {
     params: { projectId: string };
@@ -132,45 +165,53 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
     const { pastDue, toDo, upcoming } = splitAssessments(assessments);
 
     return (
-        <div className="max-w-3xl mx-auto py-8 px-4">
-            {/* Back Arrow */}
-            <Link href="/dashboard">
-                <button
-                    className="mb-4 text-blue-600 underline"
-                    aria-label="Back"
-                >
-                    &larr; Back
-                </button>
-            </Link>
+        <>
+            <div className="max-w-3xl mx-auto py-8 px-4">
+                {/* Back Arrow */}
+                <Link href="/dashboard">
+                    <button
+                        className="mb-4 text-blue-600 underline"
+                        aria-label="Back"
+                    >
+                        &larr; Back
+                    </button>
+                </Link>
 
-            {/* Past Due Assessments Section */}
-            <Section
-                projectId={projectId}
-                title="Past Due Assessments"
-                assessments={pastDue}
-            />
+                {/* Past Due Assessments Section */}
+                <Section
+                    projectId={projectId}
+                    title="Past Due Assessments"
+                    assessments={pastDue}
+                />
 
-            {/* To Do Assessments Section */}
-            <Section
-                projectId={projectId}
-                title="To Do Assessments"
-                assessments={toDo}
-            />
+                {/* To Do Assessments Section */}
+                <Section
+                    projectId={projectId}
+                    title="To Do Assessments"
+                    assessments={toDo}
+                />
 
-            {/* Upcoming Assessments Section */}
-            <Section
-                projectId={projectId}
-                title="Upcoming Assessments"
-                assessments={upcoming}
-            />
-            <hr className="mb-4" />
-            <Section
-                projectId={projectId}
-                title="Your Received Feedback"
-                assessments={receivedAssessments}
-                received
-            />
-        </div>
+                {/* Upcoming Assessments Section */}
+                <Section
+                    projectId={projectId}
+                    title="Upcoming Assessments"
+                    assessments={upcoming}
+                />
+                <hr className="mb-4" />
+                <Section
+                    projectId={projectId}
+                    title="Your Received Feedback"
+                    assessments={receivedAssessments}
+                    received
+                />
+            </div>
+            <Drawer variant="permanent" anchor="right">
+                <div className="w-64 p-4">
+                    <h3 className="text-xl font-semibold mb-2">Your Peers</h3>
+                    <ProjectPeersList projectId={projectId} />
+                </div>
+            </Drawer>
+        </>
     );
 };
 
