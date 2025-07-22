@@ -41,22 +41,12 @@ export default function ScheduleEditor({
   initialSchedules = [],
   onSchedulesChange,
 }) {
-  const [schedules, setSchedules] = useState([]);
+  const [schedules, setSchedules] = useState(initialSchedules);
   const [newSchedule, setNewSchedule] = useState({
     dayOfWeek: "Monday",
     startTime: "",
     endTime: "",
   });
-
-  useEffect(() => {
-    // Format the incoming schedules using the UTC helper before setting state.
-    const formattedSchedules = initialSchedules.map(sch => ({
-      ...sch,
-      startTime: formatTimeToInputValue(sch.startTime),
-      endTime: formatTimeToInputValue(sch.endTime),
-    }));
-    setSchedules(formattedSchedules);
-  }, [initialSchedules]);
 
   const triggerParentUpdate = (updatedSchedules) => {
     setSchedules(updatedSchedules);
@@ -95,6 +85,8 @@ export default function ScheduleEditor({
     setNewSchedule({ dayOfWeek: "Monday", startTime: "", endTime: "" });
   };
 
+
+  console.log("Current schedules:", schedules);
   return (
     <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
       <h3 className="text-lg font-semibold text-gray-800">

@@ -127,6 +127,20 @@ export async function createPosition(positionData, facultyUID) {
   return response.json();
 }
 
+export async function getAllPositions() {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/positions`;
+  console.log(`Fetching all positions from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
 
 /**
  * Fetches all users from the backend API. (temporary function until Shibb auth is implemented)

@@ -26,6 +26,7 @@ const {
   deleteResume,
   getCandidateApplications,
   modifyPosition,
+  getAllPositions,
   getCandidateApplicationsForFaculty,
   deleteCandidateApplication,
   createPosition
@@ -184,6 +185,16 @@ router.post("/create-position", async (req, res) => {
     res.status(500).json({ error: "Failed to create position." });
   }
 })
+
+router.get("/positions", async (req, res) => {
+  try {
+    const positions = await getAllPositions();
+    res.status(200).json(positions);
+  } catch (error) {
+    console.error("Error in /positions route:", error);
+    res.status(500).json({ error: "Failed to retrieve positions." });
+  }
+});
 
 /**
  * @route   POST /api/db/apply-for-job-position-with-new-resume

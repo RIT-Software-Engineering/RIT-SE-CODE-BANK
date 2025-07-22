@@ -1,18 +1,20 @@
 import { Controller } from "react-hook-form";
 import GradeSelector from "../../form-components/GradeSelector";
+import PrerequisiteCheckboxes from "../PrerequisiteCheckboxes";
 
 export default function FormStepTwo({ register, control }) {
   return (
     <div>
+      <PrerequisiteCheckboxes register={register} control={control} />
       <Controller
-        name="minimumGrade"
+        name="gradeRequirement"
         control={control}
         render={({ field }) => (
           <GradeSelector
-            id="minimumGrade"
-            label="Minimum Grade"
+            id="gradeRequirement"
+            label="Minimum Grade Required (Optional)"
+            value={field.value}
             onChange={field.onChange}
-            value={field.value || "A"} // Default to "A" if no value
           />
         )}
       />

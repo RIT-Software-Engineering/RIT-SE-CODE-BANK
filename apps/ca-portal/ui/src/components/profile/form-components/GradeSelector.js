@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Controller } from 'react-hook-form';
 
 // The predefined list of possible grades.
 // The `value` is what will be stored and sent to the backend.

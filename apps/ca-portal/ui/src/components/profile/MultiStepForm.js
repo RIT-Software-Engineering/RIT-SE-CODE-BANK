@@ -1,7 +1,7 @@
 import FormStepOne from "./form-components/multi-stage-steps/FormStepOne";
 import FormStepTwo from "./form-components/multi-stage-steps/FormStepTwo";
 import DisplayField from "../ui/DisplayField";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FormStepThree from "./form-components/multi-stage-steps/FormStepThree";
 export default function MultiStepForm({
   onSubmit,
@@ -47,12 +47,26 @@ export default function MultiStepForm({
   const handleBack = () => {
     setCurrentStep((prev) => prev - 1);
   };
+  // Automatically skip to step 2 in edit mode
+  useEffect(() => {
+    if (isEditMode) {
+      setCurrentStep(2);
+    }
+  }, [isEditMode]);
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {isEditMode && <DisplayField label={"Position ID"} value={job.id} />}
       {/* Inputs for creating a new course */}
-      {currentStep === 1 && (
-        <FormStepOne getValues={getValues} setValue={setValue} register={register} errors={errors} control={control} />
+      {currentStep === 1 && !isEditMode && (
+        <FormStepOne
+          getValues={getValues}
+          setValue={setValue}
+          register={register}
+          errors={errors}
+          control={control}
+          isEditMode={isEditMode}
+        />
       )}
       {currentStep === 2 && (
         <FormStepTwo register={register} control={control} errors={errors} />
@@ -63,7 +77,7 @@ export default function MultiStepForm({
 
       <div className="flex justify-between pt-6 border-t mt-8">
         <div>
-          {currentStep > 1 ? (
+          {(currentStep > 1 && !isEditMode || currentStep == 3) ? (
             <button
               type="button"
               onClick={handleBack}

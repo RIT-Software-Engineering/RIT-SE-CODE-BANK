@@ -13,6 +13,7 @@ const {
 } = require("../constants/grade");
 const { locationMap } = require("../constants/location");
 const { create } = require("domain");
+const { get } = require("http");
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {
@@ -205,6 +206,21 @@ async function modifyPosition(jobId, positionData) {
     throw new Error(`Could not modify job position ${jobId}.`);
   }
 }
+
+async function getAllPositions() {
+  try {
+    return await prisma.jobPosition.findMany({
+      include: {
+        course: true,
+        jobSchedules: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error retrieving all job positions:", error);
+    throw error;
+  }
+}
+
 // // NOTE TO DEV: Not sure in what databases we should be deleting it in
 
 // /**
@@ -961,6 +977,7 @@ module.exports = {
   getAllCourses,
   modifyPosition,
   createPosition,
+  getAllPositions,
   createCourse,
 };
 

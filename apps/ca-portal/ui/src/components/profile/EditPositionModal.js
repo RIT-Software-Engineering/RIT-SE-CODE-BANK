@@ -2,6 +2,8 @@ import { useForm } from "react-hook-form";
 import { modifyPosition, createPosition } from "@/services/db-apis";
 import MultiStepForm from "./MultiStepForm"; // Import the new form component
 import { getAllCourses } from "@/services/db-apis";
+import { formatDate, formatTime } from "@/utils/applicationUtils";
+import { convertDisplayTimeToInputValue } from "@/utils/applicationUtils";
 
 // Helper functions can live outside the component
 const formatDateToInputValue = (dateString) => {
@@ -13,6 +15,7 @@ const formatDateToInputValue = (dateString) => {
     return "";
   }
 };
+
 
 const newJobTemplate = {
   location: "",
@@ -28,31 +31,47 @@ const newJobTemplate = {
   courseTakenRequirement: false,
 };
 
-export default function EditPositionModal({ job, onClose, onSave, facultyUID }) {
+export default function EditPositionModal({
+  job,
+  onClose,
+  onSave,
+  facultyUID,
+}) {
   const isEditMode = !!job.id; // Use !!job for a clear boolean
-  console.log("Editing?",isEditMode, "Job data:", job);
+  console.log("Editing?", isEditMode, "Job data:", job);
   console.log("Faculty UID in modal:", facultyUID);
 
   // 1. All form logic and state management stays in the container
   const formMethods = useForm({
     defaultValues: isEditMode
-      ? { ...job, 
+      ? {
+          ...job,
           startDate: formatDateToInputValue(job.startDate),
           endDate: formatDateToInputValue(job.endDate),
+          jobSchedules: (job.jobSchedules || []).map((sch) => ({
+            ...sch,
+            startTime: convertDisplayTimeToInputValue(formatTime(sch.startTime)),
+            endTime: convertDisplayTimeToInputValue(formatTime(sch.endTime)),
+          })),
         }
       : newJobTemplate,
   });
 
+  console.log("Form default values:", formMethods.getValues());
+
   // 2. The submission logic stays here as it deals with APIs and parent state
   const onSubmit = async (data) => {
     console.log("Submitting for Faculty: ", facultyUID);
+    console.log("Form data:", data);
     try {
       const payload = { ...data, facultyUID };
       payload.maxCAs = parseInt(data.maxCAs, 10) || 0;
       console.log("Submitting job data:", payload);
 
-      if (payload.startDate) payload.startDate = new Date(`${payload.startDate}T00:00:00.000Z`);
-      if (payload.endDate) payload.endDate = new Date(`${payload.endDate}T00:00:00.000Z`);
+      if (payload.startDate)
+        payload.startDate = new Date(`${payload.startDate}T00:00:00.000Z`);
+      if (payload.endDate)
+        payload.endDate = new Date(`${payload.endDate}T00:00:00.000Z`);
       if (payload.jobSchedules) {
         payload.jobSchedules = payload.jobSchedules.map((schedule) => ({
           ...schedule,
@@ -62,20 +81,19 @@ export default function EditPositionModal({ job, onClose, onSave, facultyUID }) 
       }
 
       let savedJob;
-      if(isEditMode){
+      if (isEditMode) {
         savedJob = await modifyPosition(job.id, payload);
-      }
-      else {
+      } else {
         const allCourses = await getAllCourses();
-        const course = allCourses.find(c => c.courseCode === data.courseCode);
+        const course = allCourses.find((c) => c.courseCode === data.courseCode);
 
         if (!course) {
           throw new Error(`Course with code ${data.courseCode} not found`);
         }
 
-        payload.course = course
+        payload.course = course;
 
-        savedJob = await createPosition(payload,facultyUID);
+        savedJob = await createPosition(payload, facultyUID);
       }
       onSave(savedJob);
     } catch (error) {
@@ -90,7 +108,7 @@ export default function EditPositionModal({ job, onClose, onSave, facultyUID }) 
         <h2 className="text-2xl font-bold mb-6">
           {isEditMode ? "Edit Job Position" : "Create New Job Position"}
         </h2>
-        
+
         {/* 3. Render the form component, passing down all necessary data and functions */}
         <MultiStepForm
           onSubmit={onSubmit}

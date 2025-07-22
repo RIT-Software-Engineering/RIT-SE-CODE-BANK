@@ -1,6 +1,6 @@
 import { Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { getAllCourses, createCourse } from "@/services/db-apis"; // Assuming these API functions exist
+import { getAllCourses, getAllPositions } from "@/services/db-apis"; // Assuming these API functions exist
 import CreateCourseModal from "./CreateCourseModal"; // Import the modal component
 
 // =============================================================================
@@ -41,30 +41,48 @@ const CourseAutocomplete = ({
   </div>
 );
 
-// =============================================================================
-// Corrected FormStepOne Component
-// =============================================================================
 export default function FormStepOne({
   register,
   control,
   errors,
   getValues,
   setValue,
+  isEditMode,
 }) {
   const [availableCourses, setAvailableCourses] = useState([]);
+  const [availablePositions, setAvailablePositions] = useState([]);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchInitialData = async () => {
       try {
-        const courses = await getAllCourses();
+        const [courses, positions] = await Promise.all([
+          getAllCourses(),
+          getAllPositions() // Assuming this function fetches all job positions
+        ]);
+        
         setAvailableCourses(courses);
+        setAvailablePositions(positions);
       } catch (error) {
-        console.error("Failed to fetch available courses:", error);
+        console.error("Failed to fetch initial form data:", error);
       }
     };
-    fetchCourses();
-  }, []);
+
+    if (!isEditMode) { // Only fetch positions if we are in "create" mode
+        fetchInitialData();
+    } else {
+        // In edit mode, we only need the courses for the autocomplete
+        const fetchCourses = async () => {
+            try {
+                const courses = await getAllCourses();
+                setAvailableCourses(courses);
+            } catch (error) {
+                console.error("Failed to fetch courses:", error);
+            }
+        };
+        fetchCourses();
+    }
+  }, [isEditMode]);
 
   const handleCourseCreated = (newCourse) => {
     // Add the new course to our list so it's available for autocomplete
@@ -73,6 +91,8 @@ export default function FormStepOne({
     setValue("courseCode", newCourse.courseCode, { shouldValidate: true });
     // Note: The modal is closed by the `onClose` call inside its own `handleCreate` function
   };
+
+
 
   return (
     <div className="space-y-6">
@@ -157,6 +177,19 @@ export default function FormStepOne({
             id="sectionNumber"
             {...register("sectionNumber", {
               required: "Section Number is required.",
+              // Check to ensure the position is not already taken
+              validate: (value) => {
+                // Only run this validation in "create" mode
+                if (isEditMode) return true;
+
+                const { courseCode, semesterCode } = getValues();
+                if (!value || !courseCode || !semesterCode) return true;
+
+                const newPositionId = `${semesterCode}-${courseCode}-${value}`;
+                const alreadyExists = availablePositions.some(pos => pos.id === newPositionId);
+                
+                return !alreadyExists || "This job position already exists.";
+              }
             })}
             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm ${
               errors.sectionNumber ? "border-red-500" : "border-gray-300"
