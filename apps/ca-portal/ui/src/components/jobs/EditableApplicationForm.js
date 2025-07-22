@@ -28,8 +28,8 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
         year: user?.candidate?.year || '',
         grade: user?.candidate?.courseHistory?.find(ch => ch.courseCode === position.courseCode)?.grade || '',
         wasPriorEmployeeForThisCourse: user?.candidate?.courseHistory?.find(ch => ch.courseCode === position.courseCode)?.wasPriorEmployee || false,
-        wasPriorEmployeeForAnyOtherJobPosition: user?.candidate?.courseHistory?.some(ch => ch.courseCode !== position.courseCode && ch.wasPriorEmployee) || false,
-        priorEmployeeHistory: user?.candidate?.courseHistory?.filter(ch => ch.wasPriorEmployee)?.map(ch => ({
+        wasPriorEmployeeForOtherCourses: user?.candidate?.courseHistory?.some(ch => ch.courseCode !== position.courseCode && ch.wasPriorEmployee) || false,
+        priorEmploymentHistory: user?.candidate?.courseHistory?.filter(ch => ch.wasPriorEmployee)?.map(ch => ({
             courseCode: ch.courseCode
         })),
         // Set the default dropdown value to the primary resume's ID, or 'new' if none exist.
@@ -109,8 +109,8 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                     <DisplayField label="Major" value={initialValues.major} />
                     <DisplayField label="Year" value={initialValues.year} />
                     <DisplayField label={`Prior Employment For ${position.course.courseCode}`} value={initialValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
-                    <DisplayField label="Prior Employment For Any Other Course" value={initialValues.wasPriorEmployeeForAnyOtherJobPosition ? "Yes" : "No"} />
-                    <DisplayField label="Prior Employment History" value={initialValues.priorEmployeeHistory.map(item => item.courseCode).join(', ')}  />
+                    <DisplayField label="Prior Employment For Any Other Course" value={initialValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
+                    <DisplayField label="Prior Employment History" value={initialValues.priorEmploymentHistory.map(item => item.courseCode).join(', ')}  />
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700">

@@ -1,4 +1,4 @@
-export default function SearchBar({ value, onChange }) {
+export default function SearchBar({ value, onChange, placeholder }) {
   return (
     <div className="relative flex-grow">
       <label htmlFor="search" className="sr-only">
@@ -23,7 +23,7 @@ export default function SearchBar({ value, onChange }) {
         id="search"
         name="search"
         className="h-10 block w-full rounded-md border-0 bg-white py-2 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-rit-orange sm:text-sm sm:leading-6"
-        placeholder="Search by course name or code..."
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         type="search"

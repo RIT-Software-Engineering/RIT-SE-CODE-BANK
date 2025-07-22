@@ -105,12 +105,19 @@ model JobPositionHistory {
 
 model JobPositionApplicationHistory {
   //Fields
-  id                   Int                  @id @default(autoincrement())
-  candidateUID         Int
-  jobPositionId        String
-  resumeId             Int
-  jobApplicationStatus JobApplicationStatus @default(APPLIED)
-  applicationData      String?              @db.Text
+  id                            Int                  @id @default(autoincrement())
+  candidateUID                  Int
+  jobPositionId                 String
+  resumeId                      Int
+  jobApplicationStatus          JobApplicationStatus @default(APPLIED)
+  candidateName                 String               @db.Text
+  candidateEmail                String               @db.Text
+  candidateMajor                String               @db.Text
+  candidateYear                 Int
+  candidateGrade                Grade?
+  wasPriorEmployeeForThisCourse      Boolean              @db.TinyInt
+  wasPriorEmployeeForOtherCourses    Boolean              @db.TinyInt
+  priorEmploymentHistory        String?              @db.Text
 
   // Relations
   candidate   Candidate   @relation(fields: [candidateUID], references: [uid])
@@ -150,7 +157,7 @@ model JobPosition {
   courseCode                  String          @db.VarChar(8)
   sectionNumber               Int
   semesterCode                Int
-  facultyUID                  Int
+  employerUID                 Int
   maxCAs                      Int
   jobPositionStatus           JobPositionStatus @default(OPEN)
   location                    String          @db.Text
@@ -163,7 +170,7 @@ model JobPosition {
 
   // Relations
   course                          Course                            @relation(fields: [courseCode], references: [courseCode])
-  faculty                         Employer                          @relation(fields: [facultyUID], references: [uid])
+  employer                         Employer                         @relation(fields: [employerUID], references: [uid])
   jobSchedules                    JobSchedule[]
   jobPositionHistory              JobPositionHistory[]
   jobPositionApplicationHistory   JobPositionApplicationHistory[]

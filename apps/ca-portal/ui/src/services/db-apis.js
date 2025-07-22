@@ -19,24 +19,6 @@ async function handleApiResponse(response) {
 }
 
 /**
- * Fetches all open positions with associated course and schedule details.
- * @returns {Promise<Array>} A promise that resolves to an array of open positions.
- */
-export async function getOpenPositions() {
-  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error(
-      "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
-    );
-  }
-
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/open-positions`;
-  console.log(`Fetching from: ${url}`); // For debugging
-
-  const response = await fetch(url);
-  return handleApiResponse(response);
-}
-
-/**
  * Searches and filters for open positions using the provided search term and applied filters.
  * Constructs the search URL with the search term as a query parameter,
  * sends a GET request to the backend, and returns the API response.
@@ -48,14 +30,12 @@ export async function getOpenPositions() {
  * @throws {Error} If required API URL components are not defined.
  */
 export async function searchAndFilterOpenPositions(searchTerm, appliedFilters, candidateUID) {
-  console.log("Base API URL:", BASE_API_URL);
-  console.log("Database API Extension:", DATABASE_API_EXTENSION);
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error(
       "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
     );
   }
-
+  console.log(`searchTerm: ${searchTerm}, appliedFilters: ${appliedFilters}, candidateUID: ${candidateUID}`);
   const params = new URLSearchParams({ searchTerm: searchTerm, filters: JSON.stringify(appliedFilters), candidateUID: candidateUID});
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/search-and-filter-open-positions?${params.toString()}`;
   console.log(`Searching from: ${url}`);
@@ -126,7 +106,7 @@ export async function getCandidateApplications(UID) {
   return handleApiResponse(response);
 }
 
-export async function getCandidateApplicationsForFaculty(employeerUID) {
+export async function getCandidateApplicationsForEmployer(employeerUID) {
   if (!employeerUID) {
     throw new Error("A UID is required to fetch a user profile.");
   }
@@ -137,6 +117,36 @@ export async function getCandidateApplicationsForFaculty(employeerUID) {
   }
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/employer/${employeerUID}`;
   console.log(`Fetching user profile from: ${url}`);
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+// api call to search and filter candidate applications
+export async function searchAndFilterCandidateApplicationsAsEmployer(searchTerm, searchBy, appliedFilters, employerUID) {
+  if (!employerUID) {
+    throw new Error("A UID is required to fetch a user profile.");
+  }
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+  const params = new URLSearchParams({ searchTerm: searchTerm, searchBy: searchBy, filters: JSON.stringify(appliedFilters), employerUID: employerUID});
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/search-and-filter-applications/employer?${params.toString()}`;
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+export async function getSemesterCodesForEmployer(employerUID) {
+  if (!employerUID) {
+    throw new Error("A UID is required to fetch a user profile.");
+  }
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/semester-codes/${employerUID}`;
   const response = await fetch(url);
   return handleApiResponse(response);
 }
