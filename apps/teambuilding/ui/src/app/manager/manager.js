@@ -9,7 +9,6 @@ export default function ManagerPage() {
   const [communityUsers, setCommunityUsers] = useState({}); // { [communityId]: [user, ...] }
   const [newUser, setNewUser] = useState("");
   const [newCommunity, setNewCommunity] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [teamInputs, setTeamInputs] = useState({});
   const [teamAlgoInputs, setTeamAlgoInputs] = useState({});
@@ -17,11 +16,12 @@ export default function ManagerPage() {
   const [addTeamUserInputs, setAddTeamUserInputs] = useState({}); // { [teamId]: userId }
   const [selectedUsersToAdd, setSelectedUsersToAdd] = useState({}); // { [communityId]: [userId, ...] }
   const [teamMembers, setTeamMembers] = useState({}); // { [teamId]: [user, ...] }
+  const [csvImportStates, setCsvImportStates] = useState({}); // { [teamId]: { file: File|null, importing: boolean } }
+  const [draggedUser, setDraggedUser] = useState(null); // { user, fromTeamId }
 
   useEffect(() => {
     const username = typeof window !== "undefined" ? localStorage.getItem("username") : null;
     if (!username) {
-      setMessage("No manager logged in.");
       setLoading(false);
       return;
     }
@@ -29,14 +29,12 @@ export default function ManagerPage() {
       .then(res => res.json())
       .then(async data => {
         if (data.role !== "MANAGER") {
-          setMessage("You must be a manager to access this page.");
           setLoading(false);
           return;
         }
         const userRes = await fetch(`http://localhost:3000/api/user?username=${encodeURIComponent(username)}`);
         const userData = await userRes.json();
         if (!userData || !userData.id) {
-          setMessage("Manager user not found.");
           setLoading(false);
           return;
         }
@@ -96,14 +94,13 @@ export default function ManagerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to create user.");
+        console.log("Failed to create user:", data.error);
       } else {
-        setMessage(`User "${newUser}" created.`);
         setUsers([...users, data.user]);
         setNewUser("");
       }
     } catch {
-      setMessage("Server error.");
+      console.log("Server error creating user");
     }
   };
 
@@ -117,14 +114,13 @@ export default function ManagerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to create community.");
+        console.log("Failed to create community:", data.error);
       } else {
-        setMessage(`Community "${newCommunity}" created.`);
         setCommunities([...communities, data.community]);
         setNewCommunity("");
       }
     } catch {
-      setMessage("Server error.");
+      console.log("Server error creating community");
     }
   };
 
@@ -135,13 +131,12 @@ export default function ManagerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to delete community.");
+        console.log("Failed to delete community:", data.error);
       } else {
-        setMessage("Community deleted.");
         setCommunities(communities.filter(c => c.id !== communityId));
       }
     } catch {
-      setMessage("Server error.");
+      console.log("Server error deleting community");
     }
   };
 
@@ -158,10 +153,10 @@ export default function ManagerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to add user to community.");
+        console.log("Failed to add user to community:", data.error);
       } else {
-        setMessage("User added to community.");
         setAddUserInputs(prev => ({ ...prev, [communityId]: "" }));
+        console.log("User added to community successfully");
         // Optimistically update UI
         if (userObj) {
           setCommunityUsers(prev => ({
@@ -175,7 +170,7 @@ export default function ManagerPage() {
           .then(data => setCommunityUsers(prev => ({ ...prev, [communityId]: data.users || [] })));
       }
     } catch {
-      setMessage("Server error.");
+      console.log("Server error adding user to community");
     }
   };
 
@@ -191,14 +186,13 @@ export default function ManagerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to add user to team.");
+        console.log("Failed to add user to team:", data.error);
       } else {
-        setMessage("User added to team.");
         setAddTeamUserInputs(prev => ({ ...prev, [teamId]: "" }));
         reloadCommunities();
       }
     } catch {
-      setMessage("Server error.");
+      console.log("Server error adding user to team");
     }
   };
 
@@ -217,17 +211,17 @@ export default function ManagerPage() {
     const algo = teamAlgoInputs[communityId]?.algo || "manual";
     const teamSize = Number(teamAlgoInputs[communityId]?.teamSize);
     if (!teamSize || teamSize <= 0) {
-      setMessage("Please provide a valid team size.");
+      console.log("Invalid team size provided");
       return;
     }
     if (algo === "manual") {
-      setMessage("Use the manual team creation inputs below.");
+      console.log("Manual team creation selected");
       return;
     }
 
     const usersInCommunity = communityUsers[communityId] || [];
     if (usersInCommunity.length === 0) {
-      setMessage("No users in this community to split.");
+      console.log("No users in community to split into teams");
       return;
     }
 
@@ -255,7 +249,7 @@ export default function ManagerPage() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setMessage(data.error || `Failed to create ${teamName}.`);
+          console.log("Failed to create team:", teamName, data.error);
           return;
         }
         const teamId = data.team.id;
@@ -268,11 +262,11 @@ export default function ManagerPage() {
           });
         }
       }
-      setMessage("Random teams created.");
+      console.log("Random teams created successfully");
       reloadCommunities();
       setTeamAlgoInputs(prev => ({ ...prev, [communityId]: { algo: "manual", teamSize: "" } }));
     } catch {
-      setMessage("Server error.");
+      console.log("Server error creating random teams");
     }
   };
 
@@ -289,14 +283,14 @@ export default function ManagerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to create team.");
+        console.log("Failed to create team:", data.error);
       } else {
-        setMessage(`Team "${name}" created.`);
+        console.log("Team created successfully:", name);
         reloadCommunities();
         setTeamInputs(prev => ({ ...prev, [communityId]: {} }));
       }
     } catch {
-      setMessage("Server error.");
+      console.log("Server error creating team");
     }
   };
 
@@ -320,13 +314,13 @@ export default function ManagerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to update team.");
+        console.log("Failed to update team:", data.error);
       } else {
-        setMessage("Team updated.");
+        console.log("Team updated successfully");
         reloadCommunities();
       }
     } catch {
-      setMessage("Server error.");
+      console.log("Server error updating team");
     }
   };
 
@@ -337,13 +331,13 @@ export default function ManagerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to delete team.");
+        console.log("Failed to delete team:", data.error);
       } else {
-        setMessage("Team deleted.");
+        console.log("Team deleted successfully");
         reloadCommunities();
       }
     } catch {
-      setMessage("Server error.");
+      console.log("Server error deleting team");
     }
   };
 
@@ -369,15 +363,214 @@ export default function ManagerPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setMessage(data.error || "Failed to add users to community.");
+        console.log("Failed to add users to community:", data.error);
       } else {
-        setMessage("Users added to community.");
+        console.log("Users added to community successfully");
         setSelectedUsersToAdd(prev => ({ ...prev, [communityId]: [] }));
         reloadCommunities();
       }
     } catch {
-      setMessage("Server error.");
+      console.log("Server error adding users to community");
     }
+  };
+
+  // CSV Import functionality
+  const handleCsvFileChange = (teamId, file) => {
+    if (!file) return;
+    
+    // Immediately start import process when file is selected
+    setCsvImportStates(prev => ({
+      ...prev,
+      [teamId]: { file, importing: true }
+    }));
+
+    importCsvUsers(teamId, file);
+  };
+
+  const parseCsvFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const csv = e.target.result;
+          const lines = csv.split('\n');
+          const usernames = [];
+          
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line) {
+              // Handle both single column and CSV with commas
+              const values = line.split(',').map(v => v.trim());
+              usernames.push(...values.filter(v => v));
+            }
+          }
+          
+          resolve(usernames);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
+  };
+
+  const importCsvUsers = async (teamId, file) => {
+    try {
+      const usernames = await parseCsvFile(file);
+      
+      if (usernames.length === 0) {
+        console.log("No usernames found in CSV file");
+        setCsvImportStates(prev => ({
+          ...prev,
+          [teamId]: { file: null, importing: false }
+        }));
+        return;
+      }
+
+      const res = await fetch(`http://localhost:3000/api/team/${teamId}/import-csv`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usernames }),
+      });
+
+      const data = await res.json();
+      
+      if (!res.ok) {
+        console.log("Failed to import CSV users:", data.error);
+      } else {
+        const { results } = data;
+        console.log("CSV Import completed!", {
+          created: results.usersCreated,
+          added: results.usersAdded,
+          alreadyInTeam: results.usersAlreadyInTeam,
+          errors: results.errors
+        });
+        
+        if (results.errors > 0) {
+          console.log("Import errors:", results.details.errors);
+        }
+        
+        reloadCommunities();
+        
+        // Clear the file input
+        setCsvImportStates(prev => ({
+          ...prev,
+          [teamId]: { file: null, importing: false }
+        }));
+      }
+    } catch (error) {
+      console.log("Error reading CSV file:", error.message);
+      setCsvImportStates(prev => ({
+        ...prev,
+        [teamId]: { ...prev[teamId], importing: false }
+      }));
+    }
+  };
+
+  const triggerFileInput = (teamId) => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv,.txt';
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handleCsvFileChange(teamId, file);
+      }
+    };
+    fileInput.click();
+  };
+
+  // Drag and drop functionality
+  const handleDragStart = (e, user, fromTeamId) => {
+    setDraggedUser({ user, fromTeamId });
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.classList.add('manager-team-member-dragging');
+  };
+
+  const handleDragEnd = (e) => {
+    e.target.classList.remove('manager-team-member-dragging');
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDragEnter = (e, teamId) => {
+    e.preventDefault();
+    if (draggedUser && draggedUser.fromTeamId !== teamId) {
+      e.currentTarget.classList.add('drag-over');
+    }
+  };
+
+  const handleDragLeave = (e, teamId) => {
+    e.preventDefault();
+    if (draggedUser && draggedUser.fromTeamId !== teamId) {
+      e.currentTarget.classList.remove('drag-over');
+    }
+  };
+
+  const handleDrop = async (e, toTeamId) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    
+    if (!draggedUser || draggedUser.fromTeamId === toTeamId) {
+      setDraggedUser(null);
+      return;
+    }
+
+    const { user, fromTeamId } = draggedUser;
+    
+    try {
+      // Remove user from current team
+      const removeRes = await fetch(`http://localhost:3000/api/team/${fromTeamId}/remove-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (!removeRes.ok) {
+        const removeData = await removeRes.json();
+        console.log("Failed to remove user from team:", removeData.error);
+        setDraggedUser(null);
+        return;
+      }
+
+      // Add user to new team
+      const addRes = await fetch(`http://localhost:3000/api/team/${toTeamId}/add-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (!addRes.ok) {
+        const addData = await addRes.json();
+        console.log("Failed to add user to new team:", addData.error);
+        // If adding fails, try to add back to original team
+        await fetch(`http://localhost:3000/api/team/${fromTeamId}/add-user`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id }),
+        });
+        setDraggedUser(null);
+        return;
+      }
+
+      console.log(`Moved ${user.username} to new team successfully`);
+      
+      // Update local state immediately without page refresh
+      setTeamMembers(prev => ({
+        ...prev,
+        [fromTeamId]: (prev[fromTeamId] || []).filter(u => u.id !== user.id),
+        [toTeamId]: [...(prev[toTeamId] || []), user]
+      }));
+      
+    } catch (error) {
+      console.log("Error during team transfer:", error);
+    }
+    
+    setDraggedUser(null);
   };
 
   if (loading) return <div>Loading...</div>;
@@ -409,7 +602,6 @@ export default function ManagerPage() {
           <button onClick={createCommunity}>Create Community</button>
         </div>
       </div>
-      {message && <div className="manager-message">{message}</div>}
       <div className="show classes">
         <h2>Communities</h2>
         {communities.length > 0 ? (
@@ -457,33 +649,69 @@ export default function ManagerPage() {
                 <h3>Teams</h3>
                 {community.teams && community.teams.length > 0 ? (
                   community.teams.map((team) => (
-                    <div key={team.id} className="manager-team-box">
-                      <strong>
-                        {team.name} <span className="manager-team-size">(max {team.maxSize})</span>
-                      </strong>
-                      <button
-                        className="manager-delete-team-btn"
-                        onClick={() => deleteTeam(team.id)}
-                        title="Delete this team"
-                      >
-                        Delete Team
-                      </button>
-                      <button
-                        className="manager-update-team-btn"
-                        onClick={() => {
-                          const newName = prompt("Enter new team name:", team.name);
-                          if (newName && newName !== team.name) updateTeam(team.id, newName);
-                        }}
-                        title="Rename this team"
-                      >
-                        Rename Team
-                      </button>
+                    <div 
+                      key={team.id} 
+                      className="manager-team-box manager-team-box-drop-zone"
+                      onDragOver={handleDragOver}
+                      onDragEnter={(e) => handleDragEnter(e, team.id)}
+                      onDragLeave={(e) => handleDragLeave(e, team.id)}
+                      onDrop={(e) => handleDrop(e, team.id)}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <strong>
+                          {team.name} <span className="manager-team-size">(max {team.maxSize})</span>
+                        </strong>
+                        <div style={{ display: 'flex', gap: '4px' }}>
+                          <button
+                            onClick={() => triggerFileInput(team.id)}
+                            disabled={csvImportStates[team.id]?.importing}
+                            style={{
+                              fontSize: '12px',
+                              padding: '4px 8px',
+                              backgroundColor: csvImportStates[team.id]?.importing ? '#ccc' : '#28a745',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '3px',
+                              cursor: csvImportStates[team.id]?.importing ? 'not-allowed' : 'pointer'
+                            }}
+                            title="Import users from CSV file"
+                          >
+                            {csvImportStates[team.id]?.importing ? 'Importing...' : 'Import Users'}
+                          </button>
+                          <button
+                            className="manager-update-team-btn"
+                            onClick={() => {
+                              const newName = prompt("Enter new team name:", team.name);
+                              if (newName && newName !== team.name) updateTeam(team.id, newName);
+                            }}
+                            title="Rename this team"
+                          >
+                            Rename Team
+                          </button>
+                          <button
+                            className="manager-delete-team-btn"
+                            onClick={() => deleteTeam(team.id)}
+                            title="Delete this team"
+                          >
+                            Delete Team
+                          </button>
+                        </div>
+                      </div>
                       <div>
                         <strong>Members:</strong>
                         <ul style={{ margin: "4px 0 0 0", paddingLeft: 18 }}>
                           {(teamMembers[team.id] || []).length > 0 ? (
                             teamMembers[team.id].map(user => (
-                              <li key={user.id}>{user.username}</li>
+                              <li 
+                                key={user.id}
+                                className="manager-team-member-draggable"
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, user, team.id)}
+                                onDragEnd={handleDragEnd}
+                                title="Drag to move to another team"
+                              >
+                                {user.username}
+                              </li>
                             ))
                           ) : (
                             <li style={{ color: "#888" }}>No members</li>
