@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { userRoutes, communityRoutes, teamRoutes } from './routes';
+import { userRoutes, communityRoutes, teamRoutes } from "./routes/routes";
 
 const app = express();
 app.use(cors()); // Allow all origins by default
