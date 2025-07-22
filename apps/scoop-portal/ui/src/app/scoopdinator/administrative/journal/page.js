@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import toast, { Toaster } from "react-hot-toast";
-import theme from "@styles/theme";
+import baseTheme from "@styles/theme";
 
 export default function Journal() {
     const [journalEntries, setJournalEntries] = useState([]);
@@ -219,14 +219,14 @@ export default function Journal() {
                     style: { borderRadius: "0px" },
                     success: {
                         style: {
-                            backgroundColor: theme.palette.success.main,
-                            color: theme.palette.success.contrastText,
+                            backgroundColor: baseTheme.palette.success.main,
+                            color: baseTheme.palette.success.contrastText,
                         },
                     },
                     error: {
                         style: {
-                            backgroundColor: theme.palette.error.main,
-                            color: theme.palette.error.contrastText,
+                            backgroundColor: baseTheme.palette.error.main,
+                            color: baseTheme.palette.error.contrastText,
                         },
                     },
                 }}

@@ -1,7 +1,11 @@
 "use client";
 import { ThemeProvider } from "@mui/material";
-import theme from "@styles/theme";
+import baseTheme from "@styles/theme";
 
 export default function ThemeRegistry({ children }) {
-    return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+    return (
+        <ThemeProvider theme={baseTheme} defaultMode="system">
+            {children}
+        </ThemeProvider>
+    );
 }
