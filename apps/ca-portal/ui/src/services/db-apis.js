@@ -1,6 +1,7 @@
 // ui/src/services/api.js
 
-const BASE_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
+const BASE_API_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
 const DATABASE_API_EXTENSION = process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 
 // Basic error handler for API responses
@@ -43,6 +44,75 @@ export async function getOpenPositions(searchTerm, appliedFilters, candidateUID)
   return handleApiResponse(response);
 }
 
+export async function modifyPosition(jobID, positionData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+ 
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/modify-position/${jobID}`;
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // Pass the positionData to be stringified
+    body: JSON.stringify(positionData),
+  });
+
+  // Check if the request was successful
+  if (!response.ok) {
+    // Throw an error to be caught by the calling function
+    throw new Error(`API call failed with status: ${response.status}`);
+  }
+
+  // Parse the JSON from the response and return it
+  return response.json();
+}
+
+export async function createPosition(positionData, EmployerUID) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/create-position`;
+  console.log(`Creating position at: ${url}`);
+  const payload = { ...positionData, EmployerUID };
+  console.log("Payload for createPosition:", payload);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API call failed with status: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getAllPositions() {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/positions`;
+  console.log(`Fetching all positions from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+
 /**
  * Fetches all users from the backend API. (temporary function until Shibb auth is implemented)
  * @returns {Promise<Array>} A promise that resolves to an array of users.
@@ -71,6 +141,31 @@ export async function getAllCourses() {
 
   const response = await fetch(url);
   return handleApiResponse(response);
+}
+
+export async function createCourse(courseData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/create-course`;
+  console.log(`Creating course at: ${url}`);
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(courseData),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API call failed with status: ${response.status}`);
+  }
+
+  return response.json();
 }
 
 export async function getUserProfile(UID) {
@@ -211,7 +306,7 @@ export async function applyForJobPositionWithNewResume(jobPositionApplicationDat
     method: 'POST',
     body: jobPositionApplicationData, 
   });
-  
+
   return handleApiResponse(response);
 }
 
@@ -249,16 +344,18 @@ export async function deleteApplication(candidateUID, jobPositionId) {
 // api call to upsert (update or create) employer profile
 export async function upsertEmployerProfile(employerData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
-    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-employer-profile`;
   console.log(`Upserting employer profile at: ${url}`);
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(employerData),
   });

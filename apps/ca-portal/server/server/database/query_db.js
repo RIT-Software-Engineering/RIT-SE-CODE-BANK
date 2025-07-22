@@ -4,19 +4,21 @@
 // SETUP & INITIALIZATION
 // =============================================================================
 
-const { PrismaClient } = require('@prisma/client');
-const path = require('path');
+const { PrismaClient } = require("@prisma/client");
+const path = require("path");
 const {
   gradeEnumToLetter,
   letterToGradeEnum,
   gradetoNumericValue,
-} = require('../constants/grade');
-const { locationMap } = require('../constants/location');
+} = require("../constants/grade");
+const { locationMap } = require("../constants/location");
+const { create } = require("domain");
+const { get } = require("http");
 const { applicationStatusStringToEnum } = require('../constants/status');
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {
-  require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+  require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 }
 
 // Initialize Prisma Client for database interaction.
@@ -36,7 +38,7 @@ const prisma = new PrismaClient();
 function buildPositionSearchClause(searchTerm) {
   // Base clause shows only OPEN positions by default.
   const where = {
-    jobPositionStatus: 'OPEN',
+    jobPositionStatus: "OPEN",
   };
 
   // If there's no search term, return the base clause.
@@ -96,13 +98,13 @@ async function buildPositionFilterClause(filters, candidateUID) {
   }
 
   // Add "Applied" status filter.
-  if (filters.applied && filters.applied !== 'Any' && candidateData) {
+  if (filters.applied && filters.applied !== "Any" && candidateData) {
     const appliedPositionIds = candidateData.jobPositionApplicationHistory.map(
       (app) => app.jobPositionId
     );
-    if (filters.applied === 'Applied') {
+    if (filters.applied === "Applied") {
       filterWhere.id = { in: appliedPositionIds };
-    } else if (filters.applied === 'Not Applied') {
+    } else if (filters.applied === "Not Applied") {
       filterWhere.id = { notIn: appliedPositionIds };
     }
   }
@@ -110,7 +112,188 @@ async function buildPositionFilterClause(filters, candidateUID) {
   return { filterWhere, candidateData };
 }
 
+
+
+async function modifyPosition(jobId, positionData) {
+  // Separate the schedules array from the rest of the job data
+  const { jobSchedules, ...jobData } = positionData;
+
+  try {
+    // Use a transaction to ensure all operations succeed or none do
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Update the direct fields of the JobPosition model
+      await tx.jobPosition.update({
+        where: { id: jobId },
+        data: {
+          location: jobData.location,
+          locationType: jobData.locationType,
+          maxCAs: jobData.maxCAs,
+          startDate: jobData.startDate,
+          endDate: jobData.endDate,
+          jobPositionStatus: jobData.jobPositionStatus,
+          graduateStatusRequirement: jobData.graduateStatusRequirement,
+          gradeRequirement: jobData.gradeRequirement,
+          courseTakenRequirement: jobData.courseTakenRequirement,
+        },
+      });
+
+      // 2. Delete all existing schedules for this job
+      await tx.jobSchedule.deleteMany({
+        where: { jobPositionId: jobId },
+      });
+
+      // 3. Create the new schedules from the data sent by the frontend
+      if (jobSchedules && jobSchedules.length > 0) {
+        const schedulesToCreate = jobSchedules.map((sch) => ({
+          jobPositionId: jobId,
+          dayOfWeek: sch.dayOfWeek,
+          // FIX: Pass the ISO string directly to Prisma without creating a new Date object.
+          // This prevents the server's timezone from altering the UTC time.
+          startTime: sch.startTime,
+          endTime: sch.endTime,
+        }));
+
+        await tx.jobSchedule.createMany({
+          data: schedulesToCreate,
+        });
+      }
+
+      // 4. Fetch and return the fully updated job with all its relations
+      const finalJob = await tx.jobPosition.findUnique({
+        where: { id: jobId },
+        include: {
+          course: true,
+          jobSchedules: true,
+        },
+      });
+
+      return finalJob;
+    });
+
+    return result;
+  } catch (error) {
+    console.error(`Failed to modify position ${jobId}:`, error);
+    throw new Error(`Could not modify job position ${jobId}.`);
+  }
+}
+
+async function getAllPositions() {
+  try {
+    return await prisma.jobPosition.findMany({
+      include: {
+        course: true,
+        jobSchedules: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error retrieving all job positions:", error);
+    throw error;
+  }
+}
+
+// // NOTE TO DEV: Not sure in what databases we should be deleting it in
+
+// /**
+//  * Deletes a JobPosition and all its related records from the database.
+//  * @param {string} jobId The ID of the job position to delete.
+//  * @returns {Promise<object>} The deleted JobPosition object.
+//  */
+// export async function deleteJobPosition(jobId) {
+//   try {
+//     // A transaction ensures all these operations succeed or none do.
+//     const result = await prisma.$transaction([
+//       // 1. Delete all related job schedules
+//       prisma.jobSchedule.deleteMany({
+//         where: { jobPositionId: jobId },
+//       }),
+
+//       // 3. Delete all related job position histories
+//       // Note: This also implies TimeLogHistory records linked to these will be an issue
+//       // if not handled by cascading deletes in the schema. For simplicity, we assume
+//       // deleting the history is sufficient or cascades are in place.
+//       prisma.jobPositionHistory.deleteMany({
+//         where: { jobPositionId: jobId },
+//       }),
+
+//       // 4. Finally, delete the actual JobPosition
+//       prisma.jobPosition.delete({
+//         where: { id: jobId },
+//       }),
+//     ]);
+
+//     // The result of a transaction is an array of the results of each operation.
+//     // We return the last one, which is the deleted JobPosition object.
+//     const deletedJobPosition = result[result.length - 1];
+
+//     console.log(
+//       `Successfully deleted JobPosition ${jobId} and its related records.`
+//     );
+//     return deletedJobPosition;
+//   } catch (error) {
+//     console.error(`Failed to delete JobPosition ${jobId}:`, error);
+//     // Re-throw the error so the calling function in your API route can handle it
+//     throw new Error(`Could not delete job position ${jobId}.`);
+//   }
+// }
 // --- Public Functions for Job Search & Retrieval ---
+
+/**
+ * Creates a new JobPosition and its related schedules.
+ * @param {object} positionData The data for the new position from the form.
+ * @returns {Promise<object>} The newly created JobPosition object with all relations.
+ */
+async function createPosition(positionData, EmployerUID) {
+  const { jobSchedules, ...jobData } = positionData;
+  //Check if positionID already exists
+  // The unique ID is a combination of semester, course, and section.
+  const newJobId = `${jobData.semesterCode}-${jobData.courseCode}-${jobData.sectionNumber}`;
+  console.log("Created for employer: ", EmployerUID);
+
+  try {
+    console.log("backend called for employer: ", EmployerUID);
+    const newPosition = await prisma.jobPosition.create({
+      data: {
+        id: newJobId,
+        sectionNumber: parseInt(jobData.sectionNumber, 10),
+        semesterCode: parseInt(jobData.semesterCode, 10),
+        gradeRequirement: jobData.gradeRequirement,
+        graduateStatusRequirement: jobData.graduateStatusRequirement,
+        courseTakenRequirement: jobData.courseTakenRequirement,
+        course: {
+          connect: { courseCode: jobData.courseCode },
+        },
+        employer: {
+          connect: { uid: EmployerUID }
+        },        maxCAs: jobData.maxCAs,
+        location: jobData.location,
+        locationType: jobData.locationType,
+        startDate: jobData.startDate,
+        endDate: jobData.endDate,
+        // Create the related schedules at the same time
+        jobSchedules: {
+          create: (jobSchedules || []).map((sch) => ({
+            dayOfWeek: sch.dayOfWeek,
+            startTime: sch.startTime,
+            endTime: sch.endTime,
+          })),
+        },
+      },
+      include: {
+        course: true,
+        jobSchedules: true,
+      },
+    });
+
+    return newPosition;
+  } catch (error) {
+    // Handle potential unique constraint violation if the ID already exists
+    if (error.code === "P2002") {
+      throw new Error(`A job position with ID ${newJobId} already exists.`);
+    }
+    console.error(`Failed to create position:`, error);
+    throw new Error(`Could not create job position.`);
+  }
+}
 
 /**
  * Searches and filters open job positions based on a search term and a set of filters.
@@ -223,13 +406,18 @@ async function applyForJobPosition(applicationDetails) {
 
     // 1. Validate required fields.
     if (
+      
       !candidateUID ||
+     
       !jobPositionId ||
+     
       !resumeId ||
+     
       !jobPositionApplicationFormData
+    
     ) {
       throw new Error(
-        'Missing required fields: candidate UID, job position ID, resume ID, or form data.'
+        "Missing required fields: candidate UID, job position ID, resume ID, or form data."
       );
     }
 
@@ -303,7 +491,7 @@ async function applyForJobPosition(applicationDetails) {
 
     return newApplication;
   } catch (error) {
-    console.error('Error in applyForJobPosition:', error);
+    console.error("Error in applyForJobPosition:", error);
     throw error;
   }
 }
@@ -363,6 +551,14 @@ async function deleteCandidateApplication(candidateUID, jobPositionId) {
     throw error;
   }
 }
+
+/**
+ * Retrieves all candidate applications for a specific candidate/employee.
+ * @param {number} UID - The UID of the candidate/employee.
+ * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
+ */
+
+
 
 /**
  * Updates an application's status and creates a new comment record in a transaction.
@@ -450,7 +646,7 @@ function buildJobPositionForApplicationFilterClause(filters) {
     where.semesterCode = parseInt(filters.semester, 10);
   }
 
-  // Filter if a faculty member has applications for a position (yes/no/any)
+  // Filter if a employer member has applications for a position (yes/no/any)
   if (filters.hasApplications) {
     if (filters.hasApplications.toLowerCase() === 'yes') {
       where.jobPositionApplicationHistory = { some: {} };
@@ -641,7 +837,7 @@ async function findUniqueUser(UID) {
     if (!user) return null;
 
     // If the user is a Candidate or Employee, fetch their detailed candidate profile.
-    if (user.role === 'CANDIDATE' || user.role === 'EMPLOYEE') {
+    if (user.role === "CANDIDATE" || user.role === "EMPLOYEE") {
       const candidateProfile = await prisma.user.findUnique({
         where: { uid: UID },
         include: {
@@ -663,17 +859,26 @@ async function findUniqueUser(UID) {
               ? gradeEnumToLetter[history.grade]
               : history.grade,
           }));
+        candidateProfile.candidate.courseHistory =
+          candidateProfile.candidate.courseHistory.map((history) => ({
+            ...history,
+            grade: history.grade
+              ? gradeEnumToLetter[history.grade]
+              : history.grade,
+          }));
       }
       return candidateProfile;
     }
 
-    // If the user is an Employer or Admin, fetch their detailed faculty/employer profile.
-    if (user.role === 'EMPLOYER' || user.role === 'ADMIN') {
+    // If the user is an Employer or Admin, fetch their detailed employer/employer profile.
+    if (user.role === "EMPLOYER" || user.role === "ADMIN") {
       return prisma.user.findUnique({
         where: { uid: UID },
         include: {
           employer: {
-            include: { jobPostions: { include: { course: true } } },
+            include: {
+              jobPostions: { include: { course: true, jobSchedules: true } },
+            },
           },
         },
       });
@@ -682,7 +887,7 @@ async function findUniqueUser(UID) {
     // Return the basic user object if they have a different role.
     return user;
   } catch (error) {
-    console.error('Error finding user:', error);
+    console.error("Error finding user:", error);
     throw error;
   }
 }
@@ -709,7 +914,7 @@ async function upsertCandidateProfile(candidateData) {
           name: candidateData.name,
           email: candidateData.email,
           pronouns: candidateData.pronouns,
-          role: 'CANDIDATE',
+          role: "CANDIDATE",
         },
       });
 
@@ -737,6 +942,9 @@ async function upsertCandidateProfile(candidateData) {
         await tx.courseHistory.deleteMany({
           where: { candidateUID: candidateData.uid },
         });
+        await tx.courseHistory.deleteMany({
+          where: { candidateUID: candidateData.uid },
+        });
 
         // If new history is provided, create all new entries.
         if (candidateData.courseHistory.length > 0) {
@@ -760,7 +968,7 @@ async function upsertCandidateProfile(candidateData) {
       });
     });
   } catch (error) {
-    console.error('Error in upsertCandidateProfile:', error);
+    console.error("Error in upsertCandidateProfile:", error);
     throw error;
   }
 }
@@ -787,7 +995,7 @@ async function upsertEmployerProfile(employerData) {
           name: employerData.name,
           email: employerData.email,
           pronouns: employerData.pronouns,
-          role: 'EMPLOYER',
+          role: "EMPLOYER",
         },
       });
 
@@ -802,7 +1010,7 @@ async function upsertEmployerProfile(employerData) {
       return tx.user.findUnique({ where: { uid: employerData.uid } });
     });
   } catch (error) {
-    console.error('Error in upsertEmployerProfile:', error);
+    console.error("Error in upsertEmployerProfile:", error);
     throw error;
   }
 }
@@ -830,7 +1038,30 @@ async function addNewCandidateResume(candidateUID, isPrimary, resumeURL, name) {
       },
     });
   } catch (error) {
-    console.error('Error adding new resume:', error);
+    console.error("Error adding new resume:", error);
+    throw error;
+  }
+}
+
+/**
+ * Updates a specific resume for a candidate.
+ * @param {number} resumeId - The unique identifier of the resume to update.
+ * @param {string} name - The name of the resume.
+ * @returns {Promise<object>} A promise that resolves to the updated resume record.
+ */
+
+async function updateResumeName(resumeId, name) {
+  try {
+    return await prisma.resume.update({
+      where: {
+        id: resumeId,
+      },
+      data: {
+        name: name,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating resume:', error);
     throw error;
   }
 }
@@ -884,7 +1115,25 @@ async function updatePrimaryResume(candidateUID, resumeId) {
       return updatedResume;
     });
   } catch (error) {
-    console.error('Error updating primary resume:', error);
+    console.error("Error updating primary resume:", error);
+    throw error;
+  }
+}
+
+/**
+ * Gets all resumes for a candidate.
+ * @param {number} candidateUID - The unique identifier of the candidate.
+ * @returns {Promise<object>} A promise that resolves to an array of resume records.
+ */
+async function getCandidateResumes(candidateUID) {
+  try {
+    return await prisma.resume.findMany({
+      where: {
+        candidateUID: candidateUID,
+      },
+    });
+  } catch (error) {
+    console.error('Error retrieving resumes:', error);
     throw error;
   }
 }
@@ -924,7 +1173,7 @@ async function resetResumesToNonPrimary(candidateUID) {
       },
     });
   } catch (error) {
-    console.error('Error resetting resumes to non-primary:', error);
+    console.error("Error resetting resumes to non-primary:", error);
     throw error;
   }
 }
@@ -984,7 +1233,7 @@ async function deleteResume(resumeId) {
       return deletedResume;
     });
   } catch (error) {
-    console.error('Error deleting resume:', error);
+    console.error("Error deleting resume:", error);
     throw error;
   }
 }
@@ -992,6 +1241,19 @@ async function deleteResume(resumeId) {
 // =============================================================================
 // GENERAL & UTILITY QUERIES
 // =============================================================================
+
+/**
+ * Retrieves all users from the database.
+ * @returns {Promise<Array>} A promise that resolves to an array of all user objects.
+ */
+async function getAllUsers() {
+  try {
+    return await prisma.user.findMany();
+  } catch (error) {
+    console.error("Error retrieving users:", error);
+    throw error;
+  }
+}
 
 /**
  * Retrieves all courses from the database, selecting only the course code and name.
@@ -1006,7 +1268,41 @@ async function getAllCourses() {
       },
     });
   } catch (error) {
-    console.error('Error retrieving courses:', error);
+    console.error("Error retrieving courses:", error);
+    throw error;
+  }
+}
+
+async function createCourse(courseData) {
+  const { courseCode, name, description } = courseData;
+  try {
+    return await prisma.course.create({
+      data: {
+        courseCode: courseCode,
+        name: name,
+        description: description,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating course:", error);
+    throw error;
+  }
+}
+
+/**
+ * Retrieves all comments for a specific record.
+ * @param {string} tableName - The name of the table the comments are associated with.
+ * @param {string|number} foreignKey - The ID of the record the comments are associated with.
+ * @returns {Promise<object>} A promise that resolves to an array of comment objects.
+ */
+async function getComments(tableName, foreignKey) {
+  try {
+    const comments = await prisma.comment.findMany({
+      where: { foreignTableName: tableName, foreignKey: foreignKey },
+    });
+    return comments;
+  } catch (error) {
+    console.error('Error in getComments:', error);
     throw error;
   }
 }
@@ -1051,16 +1347,20 @@ module.exports = {
   getCandidateResumes,
   getAllUsers,
   getAllCourses,
+  modifyPosition,
+  createPosition,
+  getAllPositions,
+  createCourse,
   getComments,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.
-process.on('beforeExit', () => prisma.$disconnect());
-process.on('SIGINT', async () => {
+process.on("beforeExit", () => prisma.$disconnect());
+process.on("SIGINT", async () => {
   await prisma.$disconnect();
   process.exit(0);
 });
-process.on('SIGTERM', async () => {
+process.on("SIGTERM", async () => {
   await prisma.$disconnect();
   process.exit(0);
 });

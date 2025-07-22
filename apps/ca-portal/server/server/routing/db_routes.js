@@ -4,31 +4,35 @@
 // SETUP & IMPORTS
 // =============================================================================
 
-const router = require('express').Router();
-const path = require('path');
-const fs = require('fs');
-const multer = require('multer');
+const router = require("express").Router();
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
 
 // Import all necessary database query functions.
 const {
   getAllUsers,
   getAllCourses,
+  createCourse,
   findUniqueUser,
   upsertCandidateProfile,
   upsertEmployerProfile,
   getOpenJobPositions,
   getCandidateApplicationsAsEmployer,
-  getCandidateApplications,
   applyForJobPosition,
   addNewCandidateResume,
   updatePrimaryResume,
   deleteResume,
   getCandidateResumes,
   updateResumeName,
+  getCandidateApplications,
+  modifyPosition,
+  getAllPositions,
   getSemesterCodesForEmployer,
   deleteCandidateApplication,
   changeCandidateApplicationStatus,
   getComments,
+  createPosition
 } = require('../database/query_db');
 
 // =============================================================================
@@ -36,7 +40,7 @@ const {
 // =============================================================================
 
 // Define the absolute path for storing resumes.
-const resumeStoragePath = path.resolve(__dirname, '../../resources/resumes');
+const resumeStoragePath = path.resolve(__dirname, "../../resources/resumes");
 
 // Ensure the base directory for resumes exists, creating it if necessary.
 fs.mkdirSync(resumeStoragePath, { recursive: true });
@@ -59,7 +63,7 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const uniquePrefix = Date.now();
     cb(null, `${uniquePrefix}-${file.originalname}`);
-  },
+  }
 });
 
 // Initialize multer with the configured storage, file size limits, and file type filter.
@@ -68,10 +72,10 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit.
   fileFilter: (req, file, cb) => {
     // Only allow PDF files to be uploaded.
-    if (file.mimetype === 'application/pdf') {
+    if (file.mimetype === "application/pdf") {
       cb(null, true);
     } else {
-      cb(new Error('Only .pdf files are allowed!'), false);
+      cb(new Error("Only .pdf files are allowed!"), false);
     }
   },
 });
@@ -139,6 +143,104 @@ router.post('/apply-for-job-position', async (req, res) => {
   }
 });
 
+router.put("/modify-position/:id", async (req, res) => {
+  try {
+    // This is the critical step.
+    // It pulls the 'id' property out into its own variable.
+    // Everything else goes into the 'positionData' object.
+    const { id, ...positionData } = req.body;
+
+    // Check if the ID was actually in the request body.
+    if (!id) {
+      return res.status(400).json({ error: "Job position ID is required in the request body." });
+    }
+
+    // Now, call your database function with the correct arguments:
+    // 1. The ID string
+    // 2. The object with the rest of the data
+    const position = await modifyPosition(id, positionData);
+    
+    res.status(200).json(position);
+
+  } catch (error) {
+    console.error("Error in /modify-position route: ", error);
+    res.status(500).json({ error: "Failed to update position" });
+  }
+});
+
+router.post("/create-position", async (req, res) => {
+  try{
+    const positionData = req.body;
+    console.log("Created position:", positionData);
+
+    const position = await createPosition(positionData,positionData.EmployerUID);
+    console.log("Route call with employer: ", positionData.EmployerUID);
+    res.status(201).json(position);
+  } catch (error) {
+    console.error("Error in /create-position route:", error);
+    res.status(500).json({ error: "Failed to create position." });
+  }
+})
+
+router.get("/positions", async (req, res) => {
+  try {
+    const positions = await getAllPositions();
+    res.status(200).json(positions);
+  } catch (error) {
+    console.error("Error in /positions route:", error);
+    res.status(500).json({ error: "Failed to retrieve positions." });
+  }
+});
+
+router.put("/modify-position/:id", async (req, res) => {
+  try {
+    // This is the critical step.
+    // It pulls the 'id' property out into its own variable.
+    // Everything else goes into the 'positionData' object.
+    const { id, ...positionData } = req.body;
+
+    // Check if the ID was actually in the request body.
+    if (!id) {
+      return res.status(400).json({ error: "Job position ID is required in the request body." });
+    }
+
+    // Now, call your database function with the correct arguments:
+    // 1. The ID string
+    // 2. The object with the rest of the data
+    const position = await modifyPosition(id, positionData);
+    
+    res.status(200).json(position);
+
+  } catch (error) {
+    console.error("Error in /modify-position route: ", error);
+    res.status(500).json({ error: "Failed to update position" });
+  }
+});
+
+router.post("/create-position", async (req, res) => {
+  try{
+    const positionData = req.body;
+    console.log("Created position:", positionData);
+
+    const position = await createPosition(positionData,positionData.EmployerUID);
+    console.log("Route call with employer: ", positionData.EmployerUID);
+    res.status(201).json(position);
+  } catch (error) {
+    console.error("Error in /create-position route:", error);
+    res.status(500).json({ error: "Failed to create position." });
+  }
+})
+
+router.get("/positions", async (req, res) => {
+  try {
+    const positions = await getAllPositions();
+    res.status(200).json(positions);
+  } catch (error) {
+    console.error("Error in /positions route:", error);
+    res.status(500).json({ error: "Failed to retrieve positions." });
+  }
+});
+
 /**
  * @route   POST /api/db/apply-for-job-position-with-new-resume
  * @desc    Handles a job application that includes a new resume upload.
@@ -149,12 +251,13 @@ router.post('/apply-for-job-position', async (req, res) => {
  * @body    {string} jobPositionApplicationFormData - JSON string of the form data.
  */
 router.post(
-  '/apply-for-job-position-with-new-resume',
-  upload.single('resumeFile'),
+  "/apply-for-job-position-with-new-resume",
+  upload.single("resumeFile"),
   async (req, res) => {
     try {
+      // Ensure a file was actually uploaded.
       if (!req.file) {
-        return res.status(400).json({ error: 'Resume file is required.' });
+        return res.status(400).json({ error: "Resume file is required." });
       }
 
       const {
@@ -173,7 +276,11 @@ router.post(
           .json({ error: 'Candidate UID must be a valid number.' });
       }
 
-      // Construct the public-facing URL for the newly uploaded resume.
+      // 1. Find the candidate to get their old resume URL for later deletion.
+      const candidate = await findUniqueUser(numericCandidateUID);
+      const oldResumeUrl = candidate?.candidate?.resumeURL;
+
+      // 2. Construct the public-facing URL for the newly uploaded resume.
       const newResumeUrl = `/resources/resumes/${candidateUID}/${req.file.filename}`;
 
       // check if the candidate already has a resume as otherwise we will set the new resume as primary
@@ -198,19 +305,18 @@ router.post(
 
       const application = await applyForJobPosition(applicationDetails);
 
+      // Respond with 201 Created status.
       res.status(201).json(application);
     } catch (error) {
       console.error(
-        'Error in /apply-for-job-position-with-new-resume route:',
+        "Error in /apply-for-job-position-with-new-resume route:",
         error
       );
       res
         .status(500)
-        .json({ error: 'Failed to process application with resume.' });
-    }
-  }
-);
-
+        .json({ error: "Failed to process application with resume." });
+    }});
+  
 /**
  * @route   DELETE /api/db/applications/:uid
  * @desc    Deletes a job application record for a candidate.
@@ -421,7 +527,7 @@ router.get('/users/:UID', async (req, res) => {
     if (isNaN(numericUID)) {
       return res
         .status(400)
-        .json({ error: 'User UID must be a valid number.' });
+        .json({ error: "User UID must be a valid number." });
     }
     const user = await findUniqueUser(numericUID);
     res.status(200).json(user);
@@ -443,8 +549,8 @@ router.post('/upsert-candidate-profile', async (req, res) => {
     const profile = await upsertCandidateProfile(candidateData);
     res.status(200).json(profile);
   } catch (error) {
-    console.error('Error in /upsert-candidate-profile route:', error);
-    res.status(500).json({ error: 'Failed to upsert candidate profile.' });
+    console.error("Error in /upsert-candidate-profile route:", error);
+    res.status(500).json({ error: "Failed to upsert candidate profile." });
   }
 });
 
@@ -454,14 +560,14 @@ router.post('/upsert-candidate-profile', async (req, res) => {
  * @access  Public
  * @body    {object} employerData - The full profile data for the employer.
  */
-router.post('/upsert-employer-profile', async (req, res) => {
+router.post("/upsert-employer-profile", async (req, res) => {
   const employerData = req.body;
   try {
     const profile = await upsertEmployerProfile(employerData);
     res.status(200).json(profile);
   } catch (error) {
-    console.error('Error in /upsert-employer-profile route:', error);
-    res.status(500).json({ error: 'Failed to upsert employer profile.' });
+    console.error("Error in /upsert-employer-profile route:", error);
+    res.status(500).json({ error: "Failed to upsert employer profile." });
   }
 });
 
@@ -635,6 +741,17 @@ router.get('/comments', async (req, res) => {
   } catch (error) {
     console.error('Error in /comments route:', error);
     res.status(500).json({ error: 'Failed to retrieve comments.' });
+  }
+});
+
+router.post("/create-course", async (req, res) => {
+  try {
+    const courseData = req.body;
+    const newCourse = await createCourse(courseData);
+    res.status(201).json(newCourse);
+  } catch (error) {
+    console.error("Error in /create-course route:", error);
+    res.status(500).json({ error: "Failed to create course." });
   }
 });
 
