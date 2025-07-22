@@ -1,6 +1,6 @@
 "use client";
 import SearchBar from "@/components/jobs/SearchBar";
-import { searchAndFilterOpenPositions } from "../../services/db-apis";
+import { getOpenPositions } from "../../services/db-apis";
 import React, { useEffect, useCallback, useState } from "react";
 import PositionsCard from "@/components/jobs/PositionsCard";
 import Filter from "@/components/jobs/Filter";
@@ -28,7 +28,7 @@ export default function Positions() {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await searchAndFilterOpenPositions(
+        const data = await getOpenPositions(
           currentSearch,
           currentFilters,
           currentUser.uid

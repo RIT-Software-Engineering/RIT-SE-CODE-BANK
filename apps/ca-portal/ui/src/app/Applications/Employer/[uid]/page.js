@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   getSemesterCodesForEmployer,
-  searchAndFilterCandidateApplicationsAsEmployer,
+  getCandidateApplicationsAsEmployer,
 } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -67,7 +67,7 @@ export default function Applications() {
 
       try {
         // The API now returns an array of JobPosition objects, with applications nested inside.
-        const positions = await searchAndFilterCandidateApplicationsAsEmployer(
+        const positions = await getCandidateApplicationsAsEmployer(
           search,
           searchType,
           filters,
