@@ -332,7 +332,7 @@ async function createPosition(positionData, EmployerUID) {
  * @param {number} candidateUID - The UID of the viewing candidate, used for "applied" and "eligibility" checks.
  * @returns {Promise<Array>} A promise that resolves to an array of filtered and processed job positions.
  */
-async function searchAndFilterOpenJobPositions(
+async function getOpenJobPositions(
   searchTerm,
   filters,
   candidateUID
@@ -349,15 +349,33 @@ async function searchAndFilterOpenJobPositions(
     const finalWhere = {
       ...searchWhere,
       ...filterWhere,
+      
       // Manually merge the nested 'course' object to prevent it from being overwritten.
       course: {
         ...(searchWhere.course || {}),
         ...(filterWhere.course || {}),
       },
     };
+    // Add a default job position status filter to show only OPEN positions.
+    finalWhere.jobPositionStatus = 'OPEN';
 
     // 3. Execute the single database query to get a preliminary list of positions.
-    let positions = await getOpenPositionsWithDetails(finalWhere);
+    let positions = await prisma.jobPosition.findMany({
+      where: finalWhere,
+      include: {
+        course: {
+          select: { name: true, description: true, courseCode: true },
+        },
+        jobSchedules: {
+          select: { dayOfWeek: true, startTime: true, endTime: true },
+        },
+      },
+      orderBy: {
+        course: {
+          name: 'asc',
+        },
+      },
+    });
 
     // 4. Perform post-query filtering for "Eligibility" as it requires complex logic on fetched data.
     if (filters.eligibility && filters.eligibility !== 'Any' && candidateData) {
@@ -393,7 +411,7 @@ async function searchAndFilterOpenJobPositions(
       return position;
     });
   } catch (error) {
-    console.error('Error in searchAndFilterOpenJobPositions:', error);
+    console.error('Error in getOpenJobPositions:', error);
     throw error;
   }
 }
@@ -569,80 +587,8 @@ async function deleteCandidateApplication(candidateUID, jobPositionId) {
  * @param {number} UID - The UID of the candidate/employee.
  * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
  */
-async function getCandidateApplications(UID) {
-  try {
-    const applications = await prisma.jobPositionApplicationHistory.findMany({
-      where: { candidateUID: UID },
-      include: {
-        jobPosition: {
-          include: {
-            course: {
-              select: { name: true, description: true },
-            },
-            jobSchedules: {
-              select: { dayOfWeek: true, startTime: true, endTime: true },
-            },
-          },
-        },
-        resume: {
-          select: { name: true, resumeURL: true },
-        },
-      },
-    });
 
-    // Convert grade enum values to letter values
-    const processedApplications = applications.map((application) => ({
-      ...application,
-      candidateGrade: gradeEnumToLetter[application.candidateGrade],
-    }));
 
-    return processedApplications;
-  } catch (error) {
-    console.error("Error in getCandidateApplications:", error);
-    throw error;
-  }
-}
-
-/**
- * Retrieves all candidate applications for all job positions managed by a specific employer member/employer.
- * @param {number} employerUid - The UID of the employer member (employer).
- * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
- */
-async function getCandidateApplicationsForEmployer(employerUid) {
-  try {
-    // Find all active job positions for the given employer member/employer.
-    const positionsList = await prisma.jobPosition.findMany({
-      where: { employerUID: employerUid },
-      include: {
-        // Include all applications for each position.
-        jobPositionApplicationHistory: {
-          include: {
-            // For each application, include detailed candidate information.
-            resume: {
-              select: { name: true, resumeURL: true },
-            },
-          },
-        },
-        course: {
-          select: { name: true }, 
-        },
-      },
-    });
-    // Process the applications to include the candidate's grade as a letter grade.
-    const processedPositions = positionsList.map(position => ({
-      ...position,
-      jobPositionApplicationHistory: position.jobPositionApplicationHistory.map(app => ({
-        ...app,
-        candidateGrade: gradeEnumToLetter[app.candidateGrade],
-      })),
-    }));
-
-    return processedPositions;
-  } catch (error) {
-    console.log('Error in getCandidateApplications:', error);
-    throw error;
-  }
-}
 
 /**
  * Updates an application's status and creates a new comment record in a transaction.
@@ -690,15 +636,29 @@ async function changeCandidateApplicationStatus(applicationId, status, comments)
   }
 }
 
+/**
+ * Get all of the semester codes that exist in the database for a given employer and their job positions.
+ * @param {number} employerUID - The UID of the employer.
+ * @returns {Promise<Array>} A promise that resolves to an array of unique semester codes.
+ */
+async function getSemesterCodesForEmployer(employerUID) {
+  const positions = await prisma.jobPosition.findMany({
+    where: { employerUID },
+    select: { semesterCode: true },
+    distinct: ['semesterCode'],
+  });
+  return positions.map(position => position.semesterCode);
+}
+
 // -- Private Helper Functions for Application Search --
 
 /**
- * Builds the WHERE clause for the main JobApplication query based on user-selected filters.
- * This function handles filters that apply directly to the JobApplication model itself.
+ * Builds the WHERE clause for the main JobPosition query based on user-selected filters.
+ * This function handles filters that apply directly to the JobPosition model itself.
  * @param {object} filters - The filter criteria from the client (e.g., level, semester, hasApplications).
  * @returns {object} A Prisma WHERE clause object for the JobPosition model.
  */
-function buildApplicationFilterClause(filters) {
+function buildJobPositionForApplicationFilterClause(filters) {
   const where = {};
   if (!filters) {
     return where;
@@ -734,7 +694,7 @@ function buildApplicationFilterClause(filters) {
  * @param {object} filters - The filter criteria from the client (e.g., status).
  * @returns {object} A Prisma WHERE clause for the JobPositionApplicationHistory model.
  */
-function buildNestedApplicationFilterClause(filters) {
+function buildApplicationFilterClause(filters) {
   const where = { AND: [] };
 
   // Filter by application status
@@ -749,20 +709,77 @@ function buildNestedApplicationFilterClause(filters) {
 }
 
 
+// -- Public Functions for Application Search --
+
 /**
- * Searches and filters job positions and their applications for a specific employer.
+ * Queries the database to retrieve job positions and their applications for a specific candidate/employee based on search and filter criteria.
+ * @param {string} searchTerm - The text to search for.
+ * @param {object} filters - The filter criteria (status, level, semester).
+ * @param {*} candidateUID = The unique identifier of the candidate.
+ * @returns A promise that resolves to an array of Application objects.
+ */
+async function getCandidateApplications(searchTerm, filters, candidateUID) {
+  const jobPositionFilter = buildJobPositionForApplicationFilterClause(filters);
+
+  if (searchTerm && searchTerm.trim()) {
+    jobPositionFilter.OR = [
+      { course: { name: { contains: searchTerm } } },
+      { courseCode: { contains: searchTerm } }
+    ];
+  }
+  
+  const applicationFilter = buildApplicationFilterClause(filters);
+
+  const finalWhereClause = {
+    ...applicationFilter,
+    candidateUID: candidateUID,
+    jobPosition: jobPositionFilter,
+  };
+  
+  const applications = await prisma.jobPositionApplicationHistory.findMany({
+    where: finalWhereClause,
+    include: {
+      jobPosition: {
+        include: {
+          course: {
+            select: { name: true, description: true },
+          },
+          jobSchedules: {
+            select: { dayOfWeek: true, startTime: true, endTime: true },
+          },
+        },
+      },
+      resume: {
+        select: { name: true, resumeURL: true },
+      },
+    },
+  });
+
+  const filteredApplications = applications.filter(app => app.jobPosition);
+
+  const processedApplications = filteredApplications.map((application) => ({
+    ...application,
+    candidateGrade: gradeEnumToLetter[application.candidateGrade],
+  }));
+
+  return processedApplications;
+}
+
+
+/**
+ * Retrieves and Searches and filters job positions and their applications for a specific employer.
  * The primary query is on the JobPosition model to allow for viewing all positions.
  * @param {string} searchTerm - The text to search for.
  * @param {string} searchBy - The context of the search ('course' or 'student').
  * @param {object} filters - The filter criteria (status, level, semester, hasApplications).
  * @param {number} employerUID - The UID of the currently logged-in employer.
- * @returns {Promise<Array>} A promise that resolves to an array of JobPosition objects.
+ * @returns {Promise<Array>} A promise that resolves to an array of Application objects under the jobPositions of the employer.
  */
-async function searchAndFilterCandidateApplicationsAsEmployer(searchTerm, searchBy, filters, employerUID) {
-  const positionWhereClause = buildApplicationFilterClause(filters);
+async function getCandidateApplicationsAsEmployer(searchTerm, searchBy, filters, employerUID) {
+  const positionWhereClause = buildJobPositionForApplicationFilterClause(filters);
   positionWhereClause.employerUID = employerUID;
 
-  const nestedApplicationWhereClause = buildNestedApplicationFilterClause(filters);
+  const nestedApplicationWhereClause = buildApplicationFilterClause(filters);
 
   // Conditionally apply the search term based on the 'searchBy' parameter.
   if (searchTerm && searchTerm.trim()) {
@@ -810,23 +827,16 @@ async function searchAndFilterCandidateApplicationsAsEmployer(searchTerm, search
     }
   });
 
-  return positions;
+  const processedPositions = positions.map(position => ({
+      ...position,
+      jobPositionApplicationHistory: position.jobPositionApplicationHistory.map(app => ({
+        ...app,
+        candidateGrade: gradeEnumToLetter[app.candidateGrade],
+      })),
+    }));
+    
+  return processedPositions;
 }
-
-/**
- * Get all of the semester codes that exist in the database for a given employer and their job positions.
- * @param {number} employerUID - The UID of the employer.
- * @returns {Promise<Array>} A promise that resolves to an array of unique semester codes.
- */
-async function getSemesterCodesForEmployer(employerUID) {
-  const positions = await prisma.jobPosition.findMany({
-    where: { employerUID },
-    select: { semesterCode: true },
-    distinct: ['semesterCode'],
-  });
-  return positions.map(position => position.semesterCode);
-}
-
 
 // =============================================================================
 // USER & PROFILE MANAGEMENT
@@ -1350,11 +1360,10 @@ async function getComments(tableName, foreignKey) {
 // =============================================================================
 
 module.exports = {
-  searchAndFilterOpenJobPositions,
-  searchAndFilterCandidateApplicationsAsEmployer,
-  deleteCandidateApplication,
+  getOpenJobPositions,
+  getCandidateApplicationsAsEmployer,
   getCandidateApplications,
-  getCandidateApplicationsForEmployer,
+  deleteCandidateApplication,
   getSemesterCodesForEmployer,
   applyForJobPosition,
   changeCandidateApplicationStatus,

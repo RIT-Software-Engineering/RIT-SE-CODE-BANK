@@ -1,4 +1,4 @@
-// app/applications/Employer/[uid]/filter.config.js
+// app/applications/Candidate/[uid]/filter.config.js
 
 export const generateApplicationsFilterConfig = (semesterOptions = []) => [
   {
@@ -22,11 +22,5 @@ export const generateApplicationsFilterConfig = (semesterOptions = []) => [
     placeholder: 'Any Semester',
     options: semesterOptions,
     optionLabel: (semester) => `Semester ${semester}`,
-  },
-  {
-    id: 'hasApplications',
-    label: 'Has Applications',
-    type: 'radio',
-    options: ["Yes", "No", "Any"],
   }
 ];
