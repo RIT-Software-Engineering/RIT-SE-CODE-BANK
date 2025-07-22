@@ -110,7 +110,7 @@ export default function JobPositionsCard({ profileData }) {
           job={selectedJob}
           onClose={handleCloseModal}
           onSave={handleSaveJob}
-          facultyUID={profileData?.uid}
+          EmployerUID={profileData?.uid}
         />
       )}
     </>

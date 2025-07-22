@@ -12,4 +12,5 @@ INSERT INTO `JobSchedule` (`jobPositionId`, `dayOfWeek`, `startTime`, `endTime`)
 ('2241-SWEN-561-1', 'Wednesday', '18:00:00', '20:00:00'),
 ('2241-SWEN-561-2', 'Thursday', '16:00:00', '18:00:00'),
 ('2241-SWEN-383-1', 'Tuesday', '17:00:00', '18:00:00'),
-('2241-SWEN-383-1', 'Thursday', '17:00:00', '18:00:00');
+('2241-SWEN-383-1', 'Thursday', '17:00:00', '18:00:00'),
+('2237-SWEN-344-1', 'Tuesday', '15:00:00', '17:00:00');

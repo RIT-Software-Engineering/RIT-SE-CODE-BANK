@@ -35,11 +35,11 @@ export default function EditPositionModal({
   job,
   onClose,
   onSave,
-  facultyUID,
+  EmployerUID,
 }) {
   const isEditMode = !!job.id; // Use !!job for a clear boolean
   console.log("Editing?", isEditMode, "Job data:", job);
-  console.log("Faculty UID in modal:", facultyUID);
+  console.log("Faculty UID in modal:", EmployerUID);
 
   // 1. All form logic and state management stays in the container
   const formMethods = useForm({
@@ -61,10 +61,10 @@ export default function EditPositionModal({
 
   // 2. The submission logic stays here as it deals with APIs and parent state
   const onSubmit = async (data) => {
-    console.log("Submitting for Faculty: ", facultyUID);
+    console.log("Submitting for Faculty: ", EmployerUID);
     console.log("Form data:", data);
     try {
-      const payload = { ...data, facultyUID };
+      const payload = { ...data, EmployerUID };
       payload.maxCAs = parseInt(data.maxCAs, 10) || 0;
       console.log("Submitting job data:", payload);
 
@@ -93,7 +93,7 @@ export default function EditPositionModal({
 
         payload.course = course;
 
-        savedJob = await createPosition(payload, facultyUID);
+        savedJob = await createPosition(payload, EmployerUID);
       }
       onSave(savedJob);
     } catch (error) {
@@ -116,7 +116,7 @@ export default function EditPositionModal({
           isEditMode={isEditMode}
           job={job}
           formMethods={formMethods} // Pass the entire form instance
-          facultyUID={facultyUID} // Pass the faculty UID for API calls
+          EmployerUID={EmployerUID} // Pass the employer UID for API calls
         />
       </div>
     </div>

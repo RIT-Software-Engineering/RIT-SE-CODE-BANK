@@ -1,4 +1,5 @@
-// In your Positions.js file
+// src/app/Positions/filter.config.js
+
 export const positionFilterConfig = [
   {
     id: 'days',

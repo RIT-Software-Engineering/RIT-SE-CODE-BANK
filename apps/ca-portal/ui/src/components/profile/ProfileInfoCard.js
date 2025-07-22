@@ -1,3 +1,5 @@
+// src/components/Profile/ProfileInfoCard.js
+
 import React from 'react';
 import EditIcon from '../icons/EditIcon';
 
@@ -15,11 +17,10 @@ export default function ProfileInfoCard({
   isCandidateOrEmployee,
   handleOpenModal,
 }) {
-  // If there's no profile data yet, render a loading state or nothing to prevent errors.
   if (!profileData) {
     return (
-      <section className="bg-white rounded-xl p-4 shadow-lg border border-gray-200">
-        <div className="p-6">
+      <section className='bg-white rounded-xl p-4 shadow-lg border border-gray-200'>
+        <div className='p-6'>
           <p>Loading profile...</p>
         </div>
       </section>

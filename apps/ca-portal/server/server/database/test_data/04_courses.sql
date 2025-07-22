@@ -34,4 +34,4 @@ INSERT INTO `Course` (`courseCode`, `name`, `description`) VALUES
 ('SWEN-781', 'Continuation of Capstone', 'A continuation of the capstone project, allowing students to further develop their research or project from the previous semester.'),
 ('SWEN-790', 'Thesis', 'Independent research work on a topic in software engineering, culminating in the writing of a master''s thesis.'),
 ('SWEN-791', 'Continuation of Thesis', 'A continuation of thesis research for students who require additional time to complete their work.'),
-('SWEN-799', 'Independent Study', 'An opportunity for students to pursue an individual course of study on a topic of special interest under the guidance of a faculty member.');
+('SWEN-799', 'Independent Study', 'An opportunity for students to pursue an individual course of study on a topic of special interest under the guidance of a employer member.');

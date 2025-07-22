@@ -5,26 +5,26 @@ const DisplayField = ({ label, value }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700">{label}</label>
     <p className="mt-1 block w-full rounded-md border-gray-200 bg-gray-100 shadow-sm p-2 text-gray-600">
-      {value || 'Not Provided'}
+      {value || 'None'}
     </p>
   </div>
 );
 
-export default function ViewableApplicationForm({ user, position, application, onClose }) {
+export default function ViewableApplicationForm({position, application, onClose }) {
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-  // The application's form data (like grade) is still stored in applicationData.
-  const submittedData = JSON.parse(application.applicationData);
 
   // The definitive resume URL now comes directly from the included resume object.
   const submittedResume = application.resume;
 
   const displayValues = {
-    name: submittedData.name || user?.name || '',
-    email: submittedData.email || user?.email || '',
-    major: submittedData.major || '',
-    year: submittedData.year || '',
-    grade: submittedData.grade || '',
+    name: application.candidateName || '',
+    email: application.candidateEmail || '',
+    major: application.candidateMajor || '',
+    year: application.candidateYear || '',
+    grade: application.candidateGrade || '',
+    wasPriorEmployeeForThisCourse: application.wasPriorEmployeeForThisCourse || false,
+    wasPriorEmployeeForOtherCourses: application.wasPriorEmployeeForOtherCourses || false,
+    priorEmploymentHistory: application.priorEmploymentHistory || [],
   };
 
   return (
@@ -43,6 +43,9 @@ export default function ViewableApplicationForm({ user, position, application, o
           <DisplayField label="Major" value={displayValues.major} />
           <DisplayField label="Year" value={displayValues.year} />
           <DisplayField label={`Grade for ${position.courseCode}`} value={displayValues.grade} />
+          <DisplayField label={`Prior Employment For ${position.courseCode}`} value={displayValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
+          <DisplayField label="Prior Employment For Any Other Courses" value={displayValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
+          <DisplayField label="Prior Employment History" value={displayValues.priorEmploymentHistory}  />
           
           {/* Use the reliable resume URL from the application's relation */}
           {submittedResume?.resumeURL && (
