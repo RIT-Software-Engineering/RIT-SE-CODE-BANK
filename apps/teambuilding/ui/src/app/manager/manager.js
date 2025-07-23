@@ -17,6 +17,8 @@ export default function ManagerPage() {
   const [selectedUsersToAdd, setSelectedUsersToAdd] = useState({}); // { [communityId]: [userId, ...] }
   const [teamMembers, setTeamMembers] = useState({}); // { [teamId]: [user, ...] }
   const [csvImportStates, setCsvImportStates] = useState({}); // { [teamId]: { file: File|null, importing: boolean } }
+  const [communityImportStates, setCommunityImportStates] = useState({}); // { [communityId]: { importing: boolean } }
+  const [bulkImportState, setBulkImportState] = useState({ importing: false }); // For bulk community creation
   const [draggedUser, setDraggedUser] = useState(null); // { user, fromTeamId }
 
   useEffect(() => {
@@ -481,6 +483,216 @@ export default function ManagerPage() {
     fileInput.click();
   };
 
+  // Community CSV Import functionality
+  const handleCommunityFileChange = (communityId, file) => {
+    if (!file) return;
+    
+    // Immediately start import process when file is selected
+    setCommunityImportStates(prev => ({
+      ...prev,
+      [communityId]: { importing: true }
+    }));
+
+    importCommunityUsers(communityId, file);
+  };
+
+  const importCommunityUsers = async (communityId, file) => {
+    try {
+      const usernames = await parseCsvFile(file);
+      
+      if (usernames.length === 0) {
+        console.log("No usernames found in CSV file for community import");
+        setCommunityImportStates(prev => ({
+          ...prev,
+          [communityId]: { importing: false }
+        }));
+        return;
+      }
+
+      // Create users that don't exist and add all to community
+      const results = {
+        created: [],
+        added: [],
+        alreadyInCommunity: [],
+        errors: []
+      };
+
+      for (const username of usernames) {
+        try {
+          const trimmedUsername = username.trim();
+          if (!trimmedUsername) continue;
+
+          // Check if user already exists
+          let userRes = await fetch(`http://localhost:3000/api/user?username=${encodeURIComponent(trimmedUsername)}`);
+          let user;
+          
+          if (userRes.ok) {
+            user = await userRes.json();
+          } else {
+            // Create user if they don't exist
+            const createRes = await fetch("http://localhost:3000/api/create-user", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ username: trimmedUsername, role: "USER" }),
+            });
+            
+            if (createRes.ok) {
+              const createData = await createRes.json();
+              user = createData.user;
+              results.created.push(trimmedUsername);
+              // Update users list
+              setUsers(prev => [...prev, user]);
+            } else {
+              results.errors.push(`Failed to create user: ${trimmedUsername}`);
+              continue;
+            }
+          }
+
+          // Check if user is already in the community
+          const currentCommunityUsers = communityUsers[communityId] || [];
+          const isAlreadyInCommunity = currentCommunityUsers.some(cu => cu.id === user.id);
+          
+          if (isAlreadyInCommunity) {
+            results.alreadyInCommunity.push(trimmedUsername);
+          } else {
+            // Add user to community
+            const addRes = await fetch(`http://localhost:3000/api/community/${communityId}/add-user`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: user.id }),
+            });
+
+            if (addRes.ok) {
+              results.added.push(trimmedUsername);
+              // Update community users state immediately
+              setCommunityUsers(prev => ({
+                ...prev,
+                [communityId]: [...(prev[communityId] || []), user]
+              }));
+            } else {
+              results.errors.push(`Failed to add ${trimmedUsername} to community`);
+            }
+          }
+
+        } catch (userError) {
+          results.errors.push(`Error processing "${username}": ${userError.message}`);
+        }
+      }
+
+      console.log("Community CSV Import completed!", {
+        created: results.created.length,
+        added: results.added.length,
+        alreadyInCommunity: results.alreadyInCommunity.length,
+        errors: results.errors.length
+      });
+      
+      if (results.errors.length > 0) {
+        console.log("Community import errors:", results.errors);
+      }
+      
+      // Clear the import state
+      setCommunityImportStates(prev => ({
+        ...prev,
+        [communityId]: { importing: false }
+      }));
+
+    } catch (error) {
+      console.log("Error reading CSV file for community import:", error.message);
+      setCommunityImportStates(prev => ({
+        ...prev,
+        [communityId]: { importing: false }
+      }));
+    }
+  };
+
+  const triggerCommunityFileInput = (communityId) => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv,.txt';
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handleCommunityFileChange(communityId, file);
+      }
+    };
+    fileInput.click();
+  };
+
+  // Bulk community import functionality
+  const handleBulkImportFileChange = (file) => {
+    if (!file) return;
+    
+    setBulkImportState({ importing: true });
+    importBulkCommunities(file);
+  };
+
+  const parseBulkJsonFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const jsonData = JSON.parse(e.target.result);
+          resolve(jsonData);
+        } catch (error) {
+          reject(new Error('Invalid JSON file format'));
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
+  };
+
+  const importBulkCommunities = async (file) => {
+    try {
+      const jsonData = await parseBulkJsonFile(file);
+      
+      if (!jsonData || typeof jsonData !== 'object') {
+        console.log("Invalid JSON structure");
+        setBulkImportState({ importing: false });
+        return;
+      }
+
+      const res = await fetch('http://localhost:3000/api/community/bulk-create', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          managerId: managerId,
+          data: jsonData 
+        }),
+      });
+
+      const responseData = await res.json();
+      
+      if (!res.ok) {
+        console.log("Failed to import bulk communities:", responseData.error);
+      } else {
+        console.log("Bulk community import completed successfully!");
+        
+        // Reload communities to show the newly created ones
+        reloadCommunities();
+      }
+      
+      setBulkImportState({ importing: false });
+
+    } catch (error) {
+      console.log("Error during bulk import:", error.message);
+      setBulkImportState({ importing: false });
+    }
+  };
+
+  const triggerBulkImportFileInput = () => {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handleBulkImportFileChange(file);
+      }
+    };
+    fileInput.click();
+  };
+
   // Drag and drop functionality
   const handleDragStart = (e, user, fromTeamId) => {
     setDraggedUser({ user, fromTeamId });
@@ -600,6 +812,22 @@ export default function ManagerPage() {
             onChange={e => setNewCommunity(e.target.value)}
           />
           <button onClick={createCommunity}>Create Community</button>
+          <button
+            onClick={triggerBulkImportFileInput}
+            disabled={bulkImportState.importing}
+            style={{
+              backgroundColor: bulkImportState.importing ? '#ccc' : '#17a2b8',
+              color: 'white',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              cursor: bulkImportState.importing ? 'not-allowed' : 'pointer',
+              marginLeft: '8px'
+            }}
+            title="Import communities from JSON file with structure: {communityName: {teamName: [users]}}"
+          >
+            {bulkImportState.importing ? 'Importing...' : 'Import Communities'}
+          </button>
         </div>
       </div>
       <div className="show classes">
@@ -609,13 +837,31 @@ export default function ManagerPage() {
             <div key={community.id} className="manager-class-box">
               <p className="manager-class-header">
                 <strong>{community.name}</strong>
-                <button
-                  className="manager-delete-community-btn"
-                  onClick={() => deleteCommunity(community.id)}
-                  title="Delete this community"
-                >
-                  Delete Community
-                </button>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    onClick={() => triggerCommunityFileInput(community.id)}
+                    disabled={communityImportStates[community.id]?.importing}
+                    style={{
+                      fontSize: '12px',
+                      padding: '4px 8px',
+                      backgroundColor: communityImportStates[community.id]?.importing ? '#ccc' : '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '3px',
+                      cursor: communityImportStates[community.id]?.importing ? 'not-allowed' : 'pointer'
+                    }}
+                    title="Import users from CSV file to this community"
+                  >
+                    {communityImportStates[community.id]?.importing ? 'Importing...' : 'Import Users'}
+                  </button>
+                  <button
+                    className="manager-delete-community-btn"
+                    onClick={() => deleteCommunity(community.id)}
+                    title="Delete this community"
+                  >
+                    Delete Community
+                  </button>
+                </div>
               </p>
               <div>
                 <h3>Users in this Community</h3>
