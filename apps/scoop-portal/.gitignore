@@ -40,6 +40,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+<<<<<<< HEAD
 */generated/prisma
+=======
+# Ignore generated Prisma client files
+**/generated/prisma/
+
+>>>>>>> scoop-portal-dev
 
 .next
