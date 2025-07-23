@@ -1,80 +1,81 @@
-'use client';
-import React from 'react';
-import {
-  Box, Typography, Container, Button, Grid, Paper,
-} from '@mui/material';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+"use client";
+import React from "react";
+import { Box, Typography, Container, Button, Grid, Paper } from "@mui/material";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
-import Header from '../../_components/Header';
+import Header from "../../_components/Header";
 
 const workflows = [
   {
-    title: 'Scooployees',
+    title: "Scooployees",
     steps: [
       {
-        title: 'Review Applications',
-        description: 'Approve or reject scooployee applications.',
-        link: '/scoopdinator/applications', // Update with different version or extract applications to non-scoopdinator folder for permissions?
+        title: "Review Applications",
+        description: "Approve or reject scooployee applications.",
+        link: "/scoopdinator/applications", // Update with different version or extract applications to non-scoopdinator folder for permissions?
       },
       {
-        title: 'View Available Employees',
-        description: 'Review available scooployees for team assignment.',
-        link: '/scoopdinator/scooployees/view', // Same question as above, but slightly different page mirroring.
+        title: "View Available Employees",
+        description: "Review available scooployees for team assignment.",
+        link: "/scoopdinator/scooployees/view", // Same question as above, but slightly different page mirroring.
       },
       {
-        title: 'View My Employees',
-        description: 'View your hired scooployees.',
-        link: '/scoopdinator/scooployees/assign', // Question above ++
+        title: "View My Employees",
+        description: "View your hired scooployees.",
+        link: "/scoopdinator/scooployees/assign", // Question above ++
       },
     ],
   },
   {
-    title: 'Teams',
+    title: "Teams",
     steps: [
       {
-        title: 'Create New Team',
-        description: 'Create a new team from available scooployees and projects.',
-        link: '/scoopervisor/teams/manage/create',
+        title: "Create New Team",
+        description:
+          "Create a new team from available scooployees and projects.",
+        link: "/scoopervisor/teams/manage/create",
       },
       {
-        title: 'Manage Teams',
-        description: 'Create, edit, and archive project teams',
-        link: '/scoopervisor/teams/manage',
+        title: "Manage Teams",
+        description: "Create, edit, and archive project teams",
+        link: "/scoopervisor/teams/manage",
       },
       {
-        title: 'Team Reports',
-        description: 'Review and respond to team communications.',
-        link: '/scoopervisor/teams/communication/reports',
+        title: "Team Reports",
+        description: "Review and respond to team communications.",
+        link: "/scoopervisor/teams/communication/reports",
       },
       {
-        title: 'Provide Feedback',
-        description: 'Submit team-wide feedback to project teams.',
-        link: '/scoopervisor/teams/communication/feedback',
+        title: "Provide Feedback",
+        description: "Submit team-wide feedback to project teams.",
+        link: "/scoopervisor/teams/communication/feedback",
       },
     ],
   },
   {
-    title: 'Administration',
+    title: "Administration",
     steps: [
       {
-        title: 'Contact Advisors',
-        description: 'Get in touch with academic advisors for student support.',
-        link: '/scoopervisor/administrative/contact/advisors',
+        title: "Contact Advisors",
+        description: "Get in touch with academic advisors for student support.",
+        link: "/scoopervisor/administrative/contact/advisors",
       },
       {
-        title: 'Contact Co-op Coordinators',
-        description: 'Communicate with coordinators for co-op management and advertising.',
-        link: '/scoopervisor/administrative/contact/coordinators',
+        title: "Contact Co-op Coordinators",
+        description:
+          "Communicate with coordinators for co-op management and advertising.",
+        link: "/scoopervisor/administrative/contact/coordinators",
       },
       {
-        title: 'Manage Co-op Reports',
-        description: 'Review and manage reports related to co-op experiences.',
-        link: '/scoopervisor/administrative/reports',
+        title: "Manage Co-op Reports",
+        description: "Review and manage reports related to co-op experiences.",
+        link: "/scoopervisor/administrative/reports",
       },
       {
-        title: 'Open Communications Journal',
-        description: 'View your past communications with others and leave notes.',
-        link: '/scoopervisor/administrative/journal',
+        title: "Open Communications Journal",
+        description:
+          "View your past communications with others and leave notes.",
+        link: "/scoopervisor/administrative/journal",
       },
     ],
   },
@@ -82,10 +83,18 @@ const workflows = [
 
 export default function WorkflowDashboard() {
   return (
-    <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        color: "#212121",
+      }}
+    >
       <Header />
-      <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
-        <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, mb: 5, color: '#fff' }}>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+        <Typography
+          variant="h1"
+          sx={{ fontSize: "2rem", fontWeight: 900, mb: 5, color: "#fff" }}
+        >
           Scoopervisor Dashboard
         </Typography>
 
@@ -96,12 +105,12 @@ export default function WorkflowDashboard() {
                 <Typography
                   variant="h2"
                   sx={{
-                    fontSize: '1.5rem',
+                    fontSize: "1.5rem",
                     fontWeight: 700,
                     mb: 3,
-                    borderBottom: '2px solid #F76902',
+                    borderBottom: "2px solid #F76902",
                     pb: 1,
-                    maxWidth: 'max-content',
+                    maxWidth: "max-content",
                   }}
                 >
                   {workflow.title}
@@ -112,27 +121,27 @@ export default function WorkflowDashboard() {
                     <Box
                       key={step.title}
                       sx={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
                         mb: index !== workflow.steps.length - 1 ? 3 : 0,
-                        flexWrap: 'nowrap',
+                        flexWrap: "nowrap",
                       }}
                     >
                       <Box
                         sx={{
                           minWidth: 32,
                           minHeight: 32,
-                          borderRadius: '50%',
-                          bgcolor: '#F76902',
-                          color: '#fff',
+                          borderRadius: "50%",
+                          bgcolor: "#F76902",
+                          color: "#fff",
                           fontWeight: 700,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           mr: 2,
-                          userSelect: 'none',
-                          fontSize: '1rem',
+                          userSelect: "none",
+                          fontSize: "1rem",
                           flexShrink: 0,
                         }}
                       >
@@ -143,12 +152,12 @@ export default function WorkflowDashboard() {
                         <Typography
                           variant="h3"
                           sx={{
-                            fontSize: '1.25rem',
+                            fontSize: "1.25rem",
                             fontWeight: 300,
                             mb: 0.5,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                           title={step.title}
                         >
@@ -156,10 +165,10 @@ export default function WorkflowDashboard() {
                         </Typography>
                         <Typography
                           sx={{
-                            fontSize: '1rem',
+                            fontSize: "1rem",
                             lineHeight: 1.5,
-                            color: '#555',
-                            whiteSpace: 'normal',
+                            color: "#555",
+                            whiteSpace: "normal",
                           }}
                         >
                           {step.description}
@@ -168,13 +177,11 @@ export default function WorkflowDashboard() {
 
                       <Button
                         href={step.link}
-                        variant="contained"
+                        variant="solid-orange"
                         sx={{
-                          backgroundColor: '#F76902',
-                          textTransform: 'none',
+                          textTransform: "none",
                           ml: 2,
                           flexShrink: 0,
-                          '&:hover': { backgroundColor: '#d65a00' },
                         }}
                         endIcon={<ArrowForwardIosIcon fontSize="small" />}
                       >
@@ -192,12 +199,12 @@ export default function WorkflowDashboard() {
       <Box
         component="footer"
         sx={{
-          height: '80px',
-          bgcolor: '#212121',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          height: "80px",
+          bgcolor: "#212121",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           px: { xs: 2, md: 3 },
           mt: 8,
         }}
