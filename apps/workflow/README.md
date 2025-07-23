@@ -8,7 +8,7 @@ For recommendations about how to use Workflows API see our [User Guide](https://
 ### OpenAPI Documentation
 To view our documentation regarding Workflows API you can visit [Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/RIT-Software-Engineering/RIT-SE-CODE-BANK/refs/heads/workflow-dev/apps/workflow/server/doc/api-docs/server_doc.yaml).
 
-Alternatively, you can use the [OpenAPI VS Code extension](https://marketplace.visualstudio.com/items?itemName=42Crunch.vscode-openapi) and run a preview on the `server_doc.yaml` file in `/server/api/doc/api-docs/`.
+Alternatively, you can use the [OpenAPI VS Code extension](https://marketplace.visualstudio.com/items?itemName=42Crunch.vscode-openapi) and run a preview on the `server_doc.yaml` file in `/server/doc/api-docs/`.
 
 Note: You can comment out the credentials settings in our cors policies to execute the endpoint commands in the preview. However, DON'T LEAVE THE API UNPROTECTED GOING FORWARD!
 
@@ -19,7 +19,7 @@ Note: You can comment out the credentials settings in our cors policies to execu
 #### Step 1: Setting up MariaDB for prisma:
 
 Many of you may have already done the following if you are working with MariaDB and Prisma
-- Install MariaDB locally following their guide: [https://mariadb.com/docs/server-management/install-and-upgrade-mariadb/installing-mariadb]
+- Install MariaDB locally following their guide: [https://mariadb.com/docs/server/server-management/install-and-upgrade-mariadb/installing-mariadb]
 - You may either set the environment variable for the MariaDB and MySQL paths to their bin directories, or use the MariaDB terminal
 - Open the MariaDB CLI tool and log in as root user: If using the path variables the command will be `mysql -u root -p` (enter your root user's password)
 - Create user on your local MariaDB server (remember their username and password): `CREATE USER '{username}'@'localhost' IDENTIFIED BY '{password}';`
