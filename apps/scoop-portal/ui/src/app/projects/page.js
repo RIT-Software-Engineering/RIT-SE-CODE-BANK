@@ -25,8 +25,6 @@ export default function Projects() {
         fetchProjects();
     }, []);
 
-    const handleViewClick = () => {};
-
     return (
         <>
             <Header />
@@ -64,7 +62,7 @@ export default function Projects() {
                             </Box>
                             <Box
                                 sx={{
-                                    padding: "0.5em 1em",
+                                    padding: "0.25em 0.75em",
                                     display: "inline-block",
                                     backgroundColor:
                                         project.status === "active"
