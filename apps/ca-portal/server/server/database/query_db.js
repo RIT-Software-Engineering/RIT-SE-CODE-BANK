@@ -603,6 +603,49 @@ async function getEmployeeTimecard(jobPositionHistoryId) {
   }
 
 /**
+ * Retrieves the most recent weekly timecard marked as the current week for a specific job position history ID.
+ * 
+ * @param {number} jobPositionHistoryId - The ID of the employee's job position history record.
+ * @returns {Promise<Object|null>} A Promise that resolves to the timecardWeeklyHistory record
+ */
+async function getMostRecentTimecard(jobPositionHistoryId) {
+  const current = await prisma.timecardWeeklyHistory.findFirst({
+    where: {
+      jobPositionHistoryId: jobPositionHistoryId,
+      isCurrentWeek: true
+    },
+    include: {
+      dailyEntries: {
+        orderBy: {
+          day: 'asc',
+        },
+      },
+      jobPositionHistory: true,
+    },
+  });
+
+  return current;
+}
+
+/**
+ * Updates a single day entry in a timecard, typically for notes.
+ * @param {string} dayId - The composite ID of the timecard day entry.
+ * @param {object} data - The data to update, e.g., { notes: "new note" }.
+ * @returns {Promise<object>} The updated timecard day record.
+ */
+async function updateTimecardDay(dayId, data) {
+    try {
+        return await prisma.timecardDay.update({
+            where: { id: dayId },
+            data: data,
+        });
+    } catch (error) {
+        console.error(`Error updating timecard day ${dayId}:`, error);
+        throw error;
+    }
+}
+
+/**
  * Creates or updates an employee's weekly timecard.
  * @param {object} timecardData - The data submitted from the frontend.
  * @param {number} timecardData.jobPositionHistoryId - The ID of the specific job this timecard is for.
@@ -692,6 +735,8 @@ module.exports = {
   getAllUsers,
   getAllCourses,
   getEmployeeTimecard,
+  getMostRecentTimecard,
+  updateTimecardDay,
   upsertTimecard,
 };
 

@@ -166,6 +166,7 @@ model TimecardWeeklyHistory {
   id                   Int      @id @default(autoincrement())
   jobPositionHistoryId Int
   isCurrentWeek        Boolean  @db.TinyInt
+  weekStartDate        DateTime @db.Date
 
   // Relations
   jobPositionHistory JobPositionHistory @relation(fields: [jobPositionHistoryId], references: [id])

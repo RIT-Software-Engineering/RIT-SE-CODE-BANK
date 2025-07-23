@@ -221,6 +221,44 @@ export async function getEmployeeTimecard(jobPositionHistoryId) {
   }
 
 /**
+ * Fetches the most recent timecard for a given job position history ID.
+ * @param {number} jobPositionHistoryId - The ID of the job history record.
+ * @returns {Promise<object>} A promise that resolves to the timecard data.
+ */
+export async function getMostRecentTimecard(jobPositionHistoryId) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined.");
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/most-recent/${jobPositionHistoryId}`;
+  console.log(`Fetching most recent timecard from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+/**
+ * Sends a PATCH request to update a specific TimecardDay record.
+ * @param {string} dayId - The unique ID of the TimecardDay to update (e.g., "1-2025-07-14").
+ * @param {object} data - An object containing the fields to update (e.g., { notes: "New notes" }).
+ * @returns {Promise<object>} Resolves with the parsed API response if successful.
+ */
+export async function patchTimecardDay(dayId, data) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+      throw new Error("Backend API URL components are not defined.");
+    }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/day/${dayId}`;
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return handleApiResponse(response);
+}
+
+/**
  * Submits a weekly timecard for an employee.
  * @param {object} timecardData - The payload containing jobPositionHistoryId and time entries.
  * @returns {Promise<object>} A promise that resolves to the server's response.
