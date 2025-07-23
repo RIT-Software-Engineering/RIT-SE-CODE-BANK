@@ -1,4 +1,5 @@
-import Header from '@components/Header';
+import Header from "@components/Header";
+import { Typography } from "@mui/material";
 
 async function Projects() {
     // await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -7,7 +8,7 @@ async function Projects() {
         <>
             <Header />
             <div>
-                <h1 className="text-2xl align-middle">Projects</h1>
+                <Typography variant="h1">Projects</Typography>
                 <main>
                     <ul className="list-disc">
                         <li>

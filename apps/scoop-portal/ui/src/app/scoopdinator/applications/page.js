@@ -116,152 +116,152 @@ export default function SupervisorApplicationsPage() {
                     ))}
                 </Select>
 
-                <Paper elevation={1}>
-                    <Table>
-                        <TableHead sx={{ backgroundColor: "#F76902" }}>
-                            <TableRow>
-                                <TableCell sx={{ color: "#fff" }}>
-                                    First Name
-                                </TableCell>
-                                <TableCell sx={{ color: "#fff" }}>
-                                    Last Name
-                                </TableCell>
+            <Paper elevation={1}>
+                <Table>
+                    <TableHead sx={{ backgroundColor: "#F76902" }}>
+                        <TableRow>
+                            <TableCell sx={{ color: "#fff" }}>
+                                First Name
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff" }}>
+                                Last Name
+                            </TableCell>
                                 <TableCell sx={{ color: "#fff" }}>
                                     Email
                                 </TableCell>
-                                <TableCell sx={{ color: "#fff" }}>
-                                    Submitted
-                                </TableCell>
-                                <TableCell sx={{ color: "#fff" }} align="right">
-                                    Actions
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {filteredApps.map((app) => (
-                                <TableRow
-                                    key={app.id}
-                                    sx={{
-                                        opacity: app.hasBeenRead ? 0.6 : 1,
-                                        transition: "opacity 0.3s",
-                                        "&:hover": {
-                                            backgroundColor: "#fafafa",
-                                        },
-                                    }}
-                                >
-                                    <TableCell>{app.firstName}</TableCell>
-                                    <TableCell>{app.lastName}</TableCell>
-                                    <TableCell>{app.ritEmail}</TableCell>
-                                    <TableCell>{app.createdAt}</TableCell>
-                                    <TableCell align="right">
-                                        <Button
-                                            variant="outlined"
-                                            onClick={() => handleOpen(app)}
-                                            sx={{
-                                                borderColor: "#F76902",
-                                                color: "#F76902",
-                                                "&:hover": {
-                                                    backgroundColor: "#F76902",
-                                                    color: "#fff",
-                                                },
-                                            }}
-                                        >
-                                            View
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Paper>
-
-                {/* Modal */}
-                <Dialog
-                    open={!!selectedApp}
-                    onClose={handleClose}
-                    maxWidth="sm"
-                    fullWidth
-                >
-                    {selectedApp && (
-                        <>
-                            <DialogTitle
+                            <TableCell sx={{ color: "#fff" }}>
+                                Submitted
+                            </TableCell>
+                            <TableCell sx={{ color: "#fff" }} align="right">
+                                Actions
+                            </TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {filteredApps.map((app) => (
+                            <TableRow
+                                key={app.id}
                                 sx={{
-                                    bgcolor: "#F76902",
-                                    color: "#fff",
-                                    fontWeight: 600,
+                                    opacity: app.hasBeenRead ? 0.6 : 1,
+                                    transition: "opacity 0.3s",
+                                    "&:hover": {
+                                        backgroundColor: "#fafafa",
+                                    },
                                 }}
                             >
-                                Application:{" "}
-                                {(selectedApp.firstName, selectedApp.lastName)}
-                            </DialogTitle>
-                            <DialogContent dividers>
-                                <Typography>
+                                <TableCell>{app.firstName}</TableCell>
+                                <TableCell>{app.lastName}</TableCell>
+                                <TableCell>{app.ritEmail}</TableCell>
+                                <TableCell>{app.createdAt}</TableCell>
+                                <TableCell align="right">
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => handleOpen(app)}
+                                        sx={{
+                                            borderColor: "#F76902",
+                                            color: "#F76902",
+                                            "&:hover": {
+                                                backgroundColor: "#F76902",
+                                                color: "#fff",
+                                            },
+                                        }}
+                                    >
+                                        View
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </Paper>
+
+            {/* Modal */}
+            <Dialog
+                open={!!selectedApp}
+                onClose={handleClose}
+                maxWidth="sm"
+                fullWidth
+            >
+                {selectedApp && (
+                    <>
+                        <DialogTitle
+                            sx={{
+                                bgcolor: "#F76902",
+                                color: "#fff",
+                                fontWeight: 600,
+                            }}
+                        >
+                            Application:{" "}
+                            {(selectedApp.firstName, selectedApp.lastName)}
+                        </DialogTitle>
+                        <DialogContent dividers>
+                            <Typography>
                                     <strong>Email:</strong>{" "}
                                     {selectedApp.ritEmail}
-                                </Typography>
-                                <Typography>
-                                    <strong>Submitted:</strong>{" "}
-                                    {selectedApp.createdAt}
-                                </Typography>
-                                <Typography mt={2} sx={{ fontStyle: "italic" }}>
-                                    {JSON.stringify(selectedApp)}
-                                </Typography>
+                            </Typography>
+                            <Typography>
+                                <strong>Submitted:</strong>{" "}
+                                {selectedApp.createdAt}
+                            </Typography>
+                            <Typography mt={2} sx={{ fontStyle: "italic" }}>
+                                {JSON.stringify(selectedApp)}
+                            </Typography>
 
-                                <Box mt={3}>
-                                    <Typography
-                                        variant="subtitle2"
-                                        color="text.secondary"
-                                    >
-                                        Current Status: {selectedApp.accepted}
-                                    </Typography>
-                                    <Typography
-                                        variant="h6"
+                            <Box mt={3}>
+                                <Typography
+                                    variant="subtitle2"
+                                    color="text.secondary"
+                                >
+                                    Current Status: {selectedApp.accepted}
+                                </Typography>
+                                <Typography
+                                    variant="h6"
                                         sx={{
                                             color: "#7D55C7",
                                             fontWeight: 500,
                                         }}
-                                    >
-                                        {/* {application} */}
-                                        {/* {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)} */}
-                                    </Typography>
-                                </Box>
-                            </DialogContent>
-                            <DialogActions sx={{ px: 3, py: 2 }}>
-                                <Button
-                                    variant="contained"
+                                >
+                                    {/* {application} */}
+                                    {/* {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)} */}
+                                </Typography>
+                            </Box>
+                        </DialogContent>
+                        <DialogActions sx={{ px: 3, py: 2 }}>
+                            <Button
+                                variant="contained"
                                     onClick={() =>
                                         handleStatusUpdate("accepted")
                                     }
-                                    sx={{
-                                        bgcolor: "#84BD00",
-                                        "&:hover": { bgcolor: "#6da400" },
-                                    }}
-                                >
-                                    Accept
-                                </Button>
-                                <Button
-                                    variant="contained"
+                                sx={{
+                                    bgcolor: "#84BD00",
+                                    "&:hover": { bgcolor: "#6da400" },
+                                }}
+                            >
+                                Accept
+                            </Button>
+                            <Button
+                                variant="contained"
                                     onClick={() =>
                                         handleStatusUpdate("rejected")
                                     }
-                                    sx={{
-                                        bgcolor: "#DA291C",
-                                        "&:hover": { bgcolor: "#b82018" },
-                                    }}
-                                >
-                                    Reject
-                                </Button>
-                                <Button
-                                    onClick={handleClose}
-                                    variant="outlined"
-                                    color="inherit"
-                                >
-                                    Close
-                                </Button>
-                            </DialogActions>
-                        </>
-                    )}
-                </Dialog>
+                                sx={{
+                                    bgcolor: "#DA291C",
+                                    "&:hover": { bgcolor: "#b82018" },
+                                }}
+                            >
+                                Reject
+                            </Button>
+                            <Button
+                                onClick={handleClose}
+                                variant="outlined"
+                                color="inherit"
+                            >
+                                Close
+                            </Button>
+                        </DialogActions>
+                    </>
+                )}
+            </Dialog>
             </Box>
 
             <Snackbar

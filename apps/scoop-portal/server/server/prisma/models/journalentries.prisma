@@ -1,0 +1,6 @@
+model Journal_Entry {
+    id        Int      @id @default(autoincrement())
+    date      DateTime
+    contactee String
+    notes     String?  @db.VarChar(500)
+}

@@ -1,22 +1,22 @@
 model Application {
-  id        Int      @id @default(autoincrement())
-  lastName  String
-  firstName  String?
-  ritEmail   String
-  coopsCompleted Int?
-  startSemester String
-  coursesTaken String
-  coopSearchStartDate String?
-  coopSearchPlatforms String?
-  pendingOffers Boolean
-  pendingOffersDetails String?
-  rejectionLetters Boolean
+  id                      Int      @id @default(autoincrement())
+  lastName                String
+  firstName               String?
+  ritEmail                String
+  coopsCompleted          Int?
+  startSemester           String
+  coursesTaken            String
+  coopSearchStartDate     String?
+  coopSearchPlatforms     String?
+  pendingOffers           Boolean
+  pendingOffersDetails    String?
+  rejectionLetters        Boolean
   rejectionLettersDetails String?
-  SEcoopInterest Boolean
-  SEcoopAvailability Boolean?
-  remoteAbility String?
-  additionalComments String?
-  resumeFile String?
-  accepted Boolean? @default (false)
-  createdAt DateTime @default(now())
+  SEcoopInterest          Boolean
+  SEcoopAvailability      Boolean?
+  remoteAbility           String?
+  additionalComments      String?
+  resumeFile              String?
+  accepted                Boolean? @default(false)
+  createdAt               DateTime @default(now())
 }
