@@ -18,7 +18,7 @@ export default function NotesModal({ dayEntry, isOpen, onClose, onSave }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
         <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">
             <h2 className="text-xl font-semibold mb-4">
-            Edit Notes for {dayEntry.day}
+            Edit Notes for {dayEntry.day} ({dayEntry.date})
             </h2>
             <textarea
             className="w-full border rounded-md p-2 mb-4"
@@ -35,11 +35,7 @@ export default function NotesModal({ dayEntry, isOpen, onClose, onSave }) {
             </button>
             <button
                 onClick={async () => {
-                if (!dayEntry.id) {
-                    console.error("❌ Missing dayEntry.id");
-                    return;
-                }
-                await onSave(dayEntry.id, noteInput);
+                await onSave(dayEntry.date, noteInput);
                 onClose();
                 }}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"

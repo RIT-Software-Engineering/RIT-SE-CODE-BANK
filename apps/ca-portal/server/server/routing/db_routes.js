@@ -22,7 +22,8 @@ const {
   updateUserResumeUrl,
   getCandidateApplications,
   getMostRecentTimecard,
-  updateTimecardDay,
+  upsertTimecardDay,
+  upsertTimecard,
   getEmployeeTimecard,
 } = require('../database/query_db');
 
@@ -391,22 +392,17 @@ router.get('/timecard/most-recent/:jobPositionHistoryId', async (req, res) => {
   }
 });
 
-/**
- * @route   PATCH /timecard/day/:id
- * @desc    Updates the notes field for a specific TimecardDay entry identified by its ID.
- * @access  Public
- * @param   {string} id - The composite ID of the TimecardDay record (e.g., "employeeId-date").
- */
-router.patch('/timecard/day/:id', async (req, res) => {
-    const { id } = req.params;
-    const { notes } = req.body;
-  
+router.post('/timecard/day/notes', async (req, res) => {
     try {
-      const updated = await updateTimecardDay(id, { notes });
-      res.json(updated);
+        const { jobPositionHistoryId, date, notes } = req.body;
+        if (!jobPositionHistoryId || !date) {
+            return res.status(400).json({ error: "Missing required data for saving notes." });
+        }
+        const result = await upsertTimecardDay({ jobPositionHistoryId, date, notes });
+        res.status(200).json(result);
     } catch (error) {
-      console.error('Failed to update notes:', error);
-      res.status(500).json({ message: 'Failed to update notes.' });
+        console.error('Failed to save notes:', error);
+        res.status(500).json({ message: 'Failed to save notes.' });
     }
 });
 

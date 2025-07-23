@@ -16,7 +16,7 @@ import NotesModal from "@/components/timecard/NotesModal";
 import { 
     upsertTimecard, 
     getMostRecentTimecard,
-    patchTimecardDay,
+    upsertTimecardDay,
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -239,7 +239,7 @@ export default function Timecard() {
 
         return {
             jobPositionHistoryId,
-            dailyEntries,
+            entries: dailyEntries,
             weekStartDate: weekStart,
             isCurrentWeek: true,
         };
@@ -291,15 +291,20 @@ export default function Timecard() {
      * @param {string} newNotes - The updated notes text.
      * @returns {Promise<void>}
      */
-    const handleSaveNotes = async (dayId, newNotes) => {
+    const handleSaveNotes = async (dayDate, newNotes) => {
         try {
-            await patchTimecardDay(dayId, { notes: newNotes });
-            setTimecard(prev => prev.map(day => day.id === dayId ? { ...day, notes: newNotes } : day));
+            const payload = {
+                jobPositionHistoryId,
+                date: dayDate,
+                notes: newNotes,
+            };
+            const updatedDay = await upsertTimecardDay(payload);
+            setTimecard(prev => prev.map(day => day.date === dayDate ? { ...day, notes: newNotes, id: updatedDay.id } : day));
             setAlertMessage("Notes saved successfully!");
             setShowAlert(true);
         } catch (err) {
             console.error("Failed to update notes:", err);
-            setAlertMessage("Failed to save notes. Please save the timecard first.");
+            setAlertMessage("Failed to save notes.");
             setShowAlert(true);
         }
     };
@@ -455,7 +460,3 @@ export default function Timecard() {
         </div>
         );
 }
-
-
-
-
