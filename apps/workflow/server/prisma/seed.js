@@ -1,13 +1,25 @@
-const { permissionTypes } = require('../api/consts');
-const { PrismaClient } = require('@prisma/client');
+const { permissionTypes } = require("../api/consts");
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
-
     ///////////
     // Users //
     ///////////
 
+    // const userData = [
+    //     { name: "Alice", email: "alice@rit.edu" },
+    //     { name: "Bob", email: "bob@rit.edu" },
+    //     { name: "Charlie", email: "charlie@rit.edu" },
+    //     { name: "Diana", email: "diana@rit.edu" },
+    //     { name: "Ethan", email: "ethan@rit.edu" },
+    //     { name: "Fiona", email: "fiona@rit.edu" },
+    //     { name: "George", email: "george@rit.edu" },
+    //     { name: "Hannah", email: "hannah@rit.edu" },
+    //     { name: "Ivan", email: "ivan@rit.edu" },
+    //     { name: "Julia", email: "julia@rit.edu" },
+    //     { name: "Zebra", email: "zebra@rit.edu" },
+    // ];
     // const userData = [
     //     { name: "Alice", email: "alice@rit.edu" },
     //     { name: "Bob", email: "bob@rit.edu" },
@@ -41,44 +53,49 @@ async function main() {
             name: "Workflow 1",
             description: "This is the first workflow in the seed data.",
             metadata: [],
-            userId: users[0].id
+            userId: users[0].id,
         },
         {
             name: "Workflow 2",
             description: "This is the second workflow in the seed data.",
             metadata: [],
-            userId: users[0].id
+            userId: users[0].id,
         },
         {
             name: "Bob's Workflow",
-            description: "This workflow was created to show the difference between workflows being owned by different people",
+            description:
+                "This workflow was created to show the difference between workflows being owned by different people",
             metadata: [],
-            userId: users[1].id
-        }
-    ]
+            userId: users[1].id,
+        },
+    ];
 
     const workflows = await Promise.all(
-        workflowData.map((w) => prisma.workflowAttributes.create({
-            data: {
-                base_action: {
-                    create: {
-                        name: w.name,
-                        description: w.description,
-                        metadata: {
-                            create: w.metadata,
+        workflowData.map((w) =>
+            prisma.workflowAttributes.create({
+                data: {
+                    baseAction: {
+                        create: {
+                            name: w.name,
+                            description: w.description,
+                            metadata: {
+                                create: w.metadata,
+                            },
+                            permissions: {
+                                createMany: {
+                                    data: permissionTypes.map(
+                                        (permissionType) => ({
+                                            userId: w.userId,
+                                            permissionType: permissionType,
+                                        })
+                                    ),
+                                },
+                            },
                         },
-                        permissions: {
-                            createMany: {
-                                data: permissionTypes.map((permissionType) => ({
-                                    user_id: w.userId,
-                                    permission_type: permissionType
-                                }))
-                            }
-                        }
-                    }
+                    },
                 },
-            },
-        }))
+            })
+        )
     );
 
     /////////////
@@ -103,52 +120,54 @@ async function main() {
             description: "This is the third action in Workflow 1.",
             metadata: [],
             userId: users[0].id,
-        }
-    ]
+        },
+    ];
 
     const actions = await Promise.all(
-        actionData.map((a) => prisma.action.create({
-            data: {
-                name: a.name,
-                description: a.description,
-                metadata: {
-                    create: a.metadata,
+        actionData.map((a) =>
+            prisma.action.create({
+                data: {
+                    name: a.name,
+                    description: a.description,
+                    metadata: {
+                        create: a.metadata,
+                    },
+                    permissions: {
+                        createMany: {
+                            data: permissionTypes.map((permissionType) => ({
+                                userId: a.userId,
+                                permissionType: permissionType,
+                            })),
+                        },
+                    },
                 },
-                permissions: {
-                    createMany: {
-                        data: permissionTypes.map((permissionType) => ({
-                            user_id: a.userId,
-                            permission_type: permissionType
-                        }))
-                    }
-                }
-            }
-        }))
-    )
+            })
+        )
+    );
 
     ///////////////////
     // Relationships //
     ///////////////////
     await prisma.workflowAttributes.update({
-        where: {id: workflows[0].id},
+        where: { id: workflows[0].id },
         data: {
-            root_action: {connect: {id: actions[0].id}}
-        }
-    })
+            rootAction: { connect: { id: actions[0].id } },
+        },
+    });
 
     await prisma.action.update({
-        where: {id: actions[0].id},
+        where: { id: actions[0].id },
         data: {
-            next_action: {connect: {id: actions[1].id}}
-        }
-    })
+            nextAction: { connect: { id: actions[1].id } },
+        },
+    });
 
     await prisma.action.update({
-        where: {id: actions[1].id},
+        where: { id: actions[1].id },
         data: {
-            next_action: {connect: {id: actions[2].id}}
-        }
-    })
+            nextAction: { connect: { id: actions[2].id } },
+        },
+    });
 
     // // Add workflow state
     // const workflowState = await prisma.workflowStates.create({
@@ -168,7 +187,7 @@ async function main() {
     //     },
     // });
 
-    console.log('🌱 Seed data created successfully!');
+    console.log("🌱 Seed data created successfully!");
 }
 
 main()
