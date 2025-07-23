@@ -8,27 +8,29 @@ async function main() {
     // Users //
     ///////////
 
-    const userData = [
-        { name: "Alice", email: "alice@rit.edu" },
-        { name: "Bob", email: "bob@rit.edu" },
-        { name: "Charlie", email: "charlie@rit.edu" },
-        { name: "Diana", email: "diana@rit.edu" },
-        { name: "Ethan", email: "ethan@rit.edu" },
-        { name: "Fiona", email: "fiona@rit.edu" },
-        { name: "George", email: "george@rit.edu" },
-        { name: "Hannah", email: "hannah@rit.edu" },
-        { name: "Ivan", email: "ivan@rit.edu" },
-        { name: "Julia", email: "julia@rit.edu" },
-        { name: "Zebra", email: "zebra@rit.edu" },
-    ];
+    // const userData = [
+    //     { name: "Alice", email: "alice@rit.edu" },
+    //     { name: "Bob", email: "bob@rit.edu" },
+    //     { name: "Charlie", email: "charlie@rit.edu" },
+    //     { name: "Diana", email: "diana@rit.edu" },
+    //     { name: "Ethan", email: "ethan@rit.edu" },
+    //     { name: "Fiona", email: "fiona@rit.edu" },
+    //     { name: "George", email: "george@rit.edu" },
+    //     { name: "Hannah", email: "hannah@rit.edu" },
+    //     { name: "Ivan", email: "ivan@rit.edu" },
+    //     { name: "Julia", email: "julia@rit.edu" },
+    //     { name: "Zebra", email: "zebra@rit.edu" },
+    // ];
 
-    const users = await Promise.all(
-        userData.map((u) => prisma.user.upsert({
-            where: { ...u },
-            create: { ...u },
-            update: { ...u}
-        }))
-    );
+    // const users = await Promise.all(
+    //     userData.map((u) => prisma.user.upsert({
+    //         where: { ...u },
+    //         create: { ...u },
+    //         update: { ...u}
+    //     }))
+    // );
+
+    const users = Array.from({ length: 10 }, (_, i) => ({ id: (i + 1).toString() }));
 
     ///////////////
     // Workflows //
