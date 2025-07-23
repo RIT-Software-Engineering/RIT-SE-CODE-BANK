@@ -30,7 +30,7 @@ export default function SelectUserPage() {
 
   return (
     <Box p={4}>
-      <Typography variant="h5">Select a user to continue</Typography>
+      <Typography variant="h5">Select user</Typography>
       <Select
         value={selectedUserId}
         onChange={(e) => setSelectedUserId(e.target.value)}

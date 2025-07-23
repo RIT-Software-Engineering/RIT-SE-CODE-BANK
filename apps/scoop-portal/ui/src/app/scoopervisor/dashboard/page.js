@@ -4,6 +4,8 @@ import {
   Box, Typography, Container, Button, Grid, Paper,
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { useUser } from "../../user-context/page";
+import UnauthorizedPage from '../../unauthorized/page';
 
 import Header from '../../_components/Header';
 
@@ -81,6 +83,10 @@ const workflows = [
 ];
 
 export default function WorkflowDashboard() {
+  const { user } = useUser();
+  if (!user || user.type !== "coach" && user.type !== "admin") {
+      return <UnauthorizedPage />;
+    }
   return (
     <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
       <Header />
