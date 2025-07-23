@@ -47,7 +47,6 @@ paths:
 
 components:
   schemas:
-    $ref: './schemas.yaml#/components/schemas'
     Action:
       $ref: './schemas.yaml#/components/schemas/Action'
     ActionType:
