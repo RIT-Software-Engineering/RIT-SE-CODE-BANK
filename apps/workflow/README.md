@@ -59,14 +59,6 @@ Warning: At this time, some of the references to the SERVER_URL on the frontend 
 
 Note: if the server fails to start because you are missing a package, please run `npm install {package name}`
 
-#### Step 5: Start the frontend server (if you'd like to try our ui)
-
-- Navigate to the apps/workflow/server directory
-- Run `npm run dev`
-- Navigate to the local server in your browser
-
-Note: if the server fails to start because you are missing a package, please run `npm install {package name}`
-
-#### Step 6: Interact with the API directly
+#### Step 5: Interact with the API directly
 
 You can use postman, curl, etc
