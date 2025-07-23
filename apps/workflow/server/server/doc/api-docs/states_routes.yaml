@@ -232,8 +232,8 @@ paths:
 
   /states/workflow/{workflowStateId}/findStep:
     get:
-      summary: Find next step (not_started) action state for user in a workflow state
-      description: Finds the first action state in a workflow state for the specified user where the action state is not_started allowing the user to pick up where they left off.
+      summary: Find next step (notStarted) action state for user in a workflow state
+      description: Finds the first action state in a workflow state for the specified user where the action state is notStarted allowing the user to pick up where they left off.
       operationId: findStep
       tags:
         - States
