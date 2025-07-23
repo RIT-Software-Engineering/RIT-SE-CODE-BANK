@@ -12,7 +12,7 @@ export default function JobPositionsCard({ profileData }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
 
-  // ✅ 2. Use useEffect to set the initial jobs from props
+  // Use useEffect to set the initial jobs from props
   useEffect(() => {
     const jobs = profileData?.employer?.jobPostions || [];
     setJobPositions(jobs);

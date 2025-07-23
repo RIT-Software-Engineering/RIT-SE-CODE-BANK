@@ -192,55 +192,6 @@ router.get("/positions", async (req, res) => {
   }
 });
 
-router.put("/modify-position/:id", async (req, res) => {
-  try {
-    // This is the critical step.
-    // It pulls the 'id' property out into its own variable.
-    // Everything else goes into the 'positionData' object.
-    const { id, ...positionData } = req.body;
-
-    // Check if the ID was actually in the request body.
-    if (!id) {
-      return res.status(400).json({ error: "Job position ID is required in the request body." });
-    }
-
-    // Now, call your database function with the correct arguments:
-    // 1. The ID string
-    // 2. The object with the rest of the data
-    const position = await modifyPosition(id, positionData);
-    
-    res.status(200).json(position);
-
-  } catch (error) {
-    console.error("Error in /modify-position route: ", error);
-    res.status(500).json({ error: "Failed to update position" });
-  }
-});
-
-router.post("/create-position", async (req, res) => {
-  try{
-    const positionData = req.body;
-    console.log("Created position:", positionData);
-
-    const position = await createPosition(positionData,positionData.EmployerUID);
-    console.log("Route call with employer: ", positionData.EmployerUID);
-    res.status(201).json(position);
-  } catch (error) {
-    console.error("Error in /create-position route:", error);
-    res.status(500).json({ error: "Failed to create position." });
-  }
-})
-
-router.get("/positions", async (req, res) => {
-  try {
-    const positions = await getAllPositions();
-    res.status(200).json(positions);
-  } catch (error) {
-    console.error("Error in /positions route:", error);
-    res.status(500).json({ error: "Failed to retrieve positions." });
-  }
-});
-
 /**
  * @route   POST /api/db/apply-for-job-position-with-new-resume
  * @desc    Handles a job application that includes a new resume upload.
@@ -276,11 +227,8 @@ router.post(
           .json({ error: 'Candidate UID must be a valid number.' });
       }
 
-      // 1. Find the candidate to get their old resume URL for later deletion.
-      const candidate = await findUniqueUser(numericCandidateUID);
-      const oldResumeUrl = candidate?.candidate?.resumeURL;
 
-      // 2. Construct the public-facing URL for the newly uploaded resume.
+      // Construct the public-facing URL for the newly uploaded resume.
       const newResumeUrl = `/resources/resumes/${candidateUID}/${req.file.filename}`;
 
       // check if the candidate already has a resume as otherwise we will set the new resume as primary
@@ -295,7 +243,7 @@ router.post(
         resumeName
       );
 
-      // 4. Construct the final application details for the database.
+      // Construct the final application details for the database.
       const applicationDetails = {
         candidateUID: numericCandidateUID,
         jobPositionId: jobPositionId,

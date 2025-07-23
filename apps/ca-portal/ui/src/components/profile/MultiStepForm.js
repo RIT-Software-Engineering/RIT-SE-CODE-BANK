@@ -22,25 +22,33 @@ export default function MultiStepForm({
   } = formMethods;
 
   const handleNext = async (event) => {
-    event.preventDefault(); // Prevent default form submission
-    // Define which fields belong to each step for targeted validation
+    event.preventDefault(); 
+    // This maps validation fields to the step they appear on.
     const fieldsByStep = {
       1: [
         "courseCode",
         "sectionNumber",
         "semesterCode",
-        "location",
+      ],
+      2: ["location",
         "locationType",
         "maxCAs",
+        "gradeRequirement", 
+        "courseTakenRequirement"
       ],
-      2: ["startDate", "endDate", "jobSchedules"],
     };
 
     const fieldsToValidate = fieldsByStep[currentStep];
-    const isValid = await trigger(fieldsToValidate);
-
-    if (isValid) {
-    setCurrentStep((prev) => prev + 1);
+    
+    // Only validate if fields are defined for the current step.
+    if (fieldsToValidate) {
+        const isValid = await trigger(fieldsToValidate);
+        if (isValid) {
+          setCurrentStep((prev) => prev + 1);
+        }
+    } else {
+        // If no validation needed for this step, just proceed.
+        setCurrentStep((prev) => prev + 1);
     }
   };
 
