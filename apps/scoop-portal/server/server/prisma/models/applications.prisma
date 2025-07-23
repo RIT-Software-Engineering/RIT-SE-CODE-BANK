@@ -1,16 +1,16 @@
 model Application {
-  id        Int      @id @default(autoincrement())
-  lastName  String
-  firstName  String?
-  ritEmail   String
-  coopsCompleted Int?
-  startSemester String
-  coursesTaken String
-  coopSearchStartDate String?
-  coopSearchPlatforms String?
-  pendingOffers Boolean
-  pendingOffersDetails String?
-  rejectionLetters Boolean
+  id                      Int      @id @default(autoincrement())
+  lastName                String
+  firstName               String?
+  ritEmail                String
+  coopsCompleted          Int?
+  startSemester           String
+  coursesTaken            String
+  coopSearchStartDate     String?
+  coopSearchPlatforms     String?
+  pendingOffers           Boolean
+  pendingOffersDetails    String?
+  rejectionLetters        Boolean
   rejectionLettersDetails String?
   SEcoopInterest Boolean
   SEcoopAvailability Boolean?
@@ -19,4 +19,4 @@ model Application {
   resumeFile String?
   accepted Boolean?
   createdAt DateTime @default(now())
-}
+
