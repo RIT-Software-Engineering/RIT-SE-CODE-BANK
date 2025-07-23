@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '@components/Header';
 import { Container, Typography, Paper, Table, TableHead, 
     TableCell, TableRow, TableBody, Button, Dialog, DialogTitle, DialogContent, Box,
-    DialogActions } from '@mui/material';
+    DialogActions, Select, MenuItem } from '@mui/material';
 
 
 
@@ -11,6 +11,7 @@ export default function ViewScooployees() {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [filter, setFilter] = useState("all"); 
+  const OPTIONS = ["all", "active", "inactive"];
 
   useEffect(() => {
           const fetchEmployees = async () => {
@@ -34,24 +35,49 @@ export default function ViewScooployees() {
             prev.map((e) => (e.id === emp.id ? { ...e, hasBeenRead: true } : e))
         );
 
-        console.log("opening employee:", selectedEmployee.firstName); //needs useEffect outside of function
+        console.log("opening employee:", selectedEmployee.fname); //needs useEffect outside of function
     };
 
     const handleClose = () => setSelectedEmployee(null);
 
+    // Set Active if assigned a project
+    const setStatus = (employee) =>{
+        let status;
+        employee.project === "null"? status = OPTIONS[2] : status = OPTIONS[1];
+        return status;
+    }
 
-  const filteredEmployees =
+  const filteredEmployees = 
         filter === "all"
             ? employees
-            : employees.filter((employee) => employee.status === filter);
+            : employees.filter((employee) => setStatus(employee) === filter);
 
 
             
   return (
     <>
+    <Header />
     <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
                     View Scooployees
                 </Typography>
+
+<Select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    sx={{
+                        bgcolor: "#fff",
+                        borderRadius: 2,
+                        minWidth: 200,
+                        boxShadow: 1,
+                    }}
+                >
+                    {OPTIONS.map((option) => (
+                        <MenuItem key={option} value={option}>
+                            {option.charAt(0).toUpperCase() + option.slice(1)}
+                        </MenuItem>
+                    ))}
+                </Select>
+
       <Paper elevation={1}>
                           <Table>
                               <TableHead sx={{ backgroundColor: "#F76902" }}>
