@@ -22,10 +22,14 @@ import {
 // import { application } from "express";
 
 import Header from "@components/Header";
+import UnauthorizedPage from "../../unauthorized/page.js";
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
 export default function SupervisorApplicationsPage() {
+const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
     const [applications, setApplications] = useState([]);
     const [selectedApp, setSelectedApp] = useState(null);
     const [filter, setFilter] = useState("all");
@@ -235,7 +239,7 @@ export default function SupervisorApplicationsPage() {
                     </>
                 )}
             </Dialog>
-            </Box>
+            
 
             <Snackbar
                 open={notification.open}
