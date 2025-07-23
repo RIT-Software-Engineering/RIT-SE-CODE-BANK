@@ -47,4 +47,23 @@ paths:
 
 components:
   schemas:
-    $ref: './schemas.yaml#/components/schemas'
+    Action:
+      $ref: './schemas.yaml#/components/schemas/Action'
+    ActionType:
+      $ref: './schemas.yaml#/components/schemas/ActionType'
+    Metadata:
+      $ref: './schemas.yaml#/components/schemas/Metadata'
+    WorkflowAttributes:
+      $ref: './schemas.yaml#/components/schemas/WorkflowAttributes'
+    Tag:
+      $ref: './schemas.yaml#/components/schemas/Tag'
+    Permission:
+      $ref: './schemas.yaml#/components/schemas/Permission'
+    PermissionType:
+      $ref: './schemas.yaml#/components/schemas/PermissionType'
+    WorkflowState:
+      $ref: './schemas.yaml#/components/schemas/WorkflowState'
+    ActionState:
+      $ref: './schemas.yaml#/components/schemas/ActionState'
+    StateType:
+      $ref: './schemas.yaml#/components/schemas/StateType'
