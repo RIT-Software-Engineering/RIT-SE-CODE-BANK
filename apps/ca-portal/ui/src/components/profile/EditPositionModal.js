@@ -72,12 +72,15 @@ export default function EditPositionModal({
         payload.startDate = new Date(`${payload.startDate}T00:00:00.000Z`);
       if (payload.endDate)
         payload.endDate = new Date(`${payload.endDate}T00:00:00.000Z`);
-      if (payload.jobSchedules) {
+      if (Array.isArray(payload.jobSchedules)) {
         payload.jobSchedules = payload.jobSchedules.map((schedule) => ({
-          ...schedule,
+          ...schedule, // Keep other potential fields like id
           startTime: `1970-01-01T${schedule.startTime}:00.000Z`,
           endTime: `1970-01-01T${schedule.endTime}:00.000Z`,
         }));
+      } else {
+        // If jobSchedules isn't an array (e.g., undefined), ensure it's an empty array for the payload.
+        payload.jobSchedules = [];
       }
 
       let savedJob;

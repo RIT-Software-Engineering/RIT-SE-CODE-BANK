@@ -112,6 +112,98 @@ async function buildPositionFilterClause(filters, candidateUID) {
   return { filterWhere, candidateData };
 }
 
+// --- Public Functions for Job Search ---
+/**
+ * Searches and filters open job positions based on a search term and a set of filters.
+ * @param {string} searchTerm - The text to search for in course names and codes.
+ * @param {object} filters - The filter criteria (eligibility, days, level, location, applied).
+ * @param {number} candidateUID - The UID of the viewing candidate, used for "applied" and "eligibility" checks.
+ * @returns {Promise<Array>} A promise that resolves to an array of filtered and processed job positions.
+ */
+async function getOpenJobPositions(
+  searchTerm,
+  filters,
+  candidateUID
+) {
+  try {
+    // 1. Build the search and filter clauses separately.
+    const searchWhere = buildPositionSearchClause(searchTerm);
+    const { filterWhere, candidateData } = await buildPositionFilterClause(
+      filters,
+      candidateUID
+    );
+
+    // 2. Merge the clauses into a single `where` object for one database query.
+    const finalWhere = {
+      ...searchWhere,
+      ...filterWhere,
+      
+      // Manually merge the nested 'course' object to prevent it from being overwritten.
+      course: {
+        ...(searchWhere.course || {}),
+        ...(filterWhere.course || {}),
+      },
+    };
+    // Add a default job position status filter to show only OPEN positions.
+    finalWhere.jobPositionStatus = 'OPEN';
+
+    // 3. Execute the single database query to get a preliminary list of positions.
+    let positions = await prisma.jobPosition.findMany({
+      where: finalWhere,
+      include: {
+        course: {
+          select: { name: true, description: true, courseCode: true },
+        },
+        jobSchedules: {
+          select: { dayOfWeek: true, startTime: true, endTime: true },
+        },
+      },
+      orderBy: {
+        course: {
+          name: 'asc',
+        },
+      },
+    });
+
+    // 4. Perform post-query filtering for "Eligibility" as it requires complex logic on fetched data.
+    if (filters.eligibility && filters.eligibility !== 'Any' && candidateData) {
+      positions = positions.filter((position) => {
+        const gradStatusMatch =
+          !position.graduateStatusRequirement ||
+          position.graduateStatusRequirement === candidateData.graduateStatus;
+        const courseHistory = candidateData.courseHistory?.find(
+          (ch) => ch.courseCode === position.courseCode
+        );
+        const courseTakenMatch =
+          !position.courseTakenRequirement || !!courseHistory;
+        const gradeMatch =
+          !position.gradeRequirement ||
+          (courseHistory?.grade &&
+            gradetoNumericValue[courseHistory.grade] >=
+              gradetoNumericValue[position.gradeRequirement]);
+        const isEligible = gradStatusMatch && courseTakenMatch && gradeMatch;
+        return filters.eligibility === 'Eligible' ? isEligible : !isEligible;
+      });
+    }
+
+    // 5. Convert grade requirement enums to human-readable letter grades for the frontend.
+    return positions.map((position) => {
+      if (position.gradeRequirement) {
+        return {
+          ...position,
+          gradeRequirement:
+            gradeEnumToLetter[position.gradeRequirement] ||
+            position.gradeRequirement,
+        };
+      }
+      return position;
+    });
+  } catch (error) {
+    console.error('Error in getOpenJobPositions:', error);
+    throw error;
+  }
+}
+
 
 
 async function modifyPosition(jobId, positionData) {
@@ -296,97 +388,6 @@ async function createPosition(positionData, EmployerUID) {
 }
 
 /**
- * Searches and filters open job positions based on a search term and a set of filters.
- * @param {string} searchTerm - The text to search for in course names and codes.
- * @param {object} filters - The filter criteria (eligibility, days, level, location, applied).
- * @param {number} candidateUID - The UID of the viewing candidate, used for "applied" and "eligibility" checks.
- * @returns {Promise<Array>} A promise that resolves to an array of filtered and processed job positions.
- */
-async function getOpenJobPositions(
-  searchTerm,
-  filters,
-  candidateUID
-) {
-  try {
-    // 1. Build the search and filter clauses separately.
-    const searchWhere = buildPositionSearchClause(searchTerm);
-    const { filterWhere, candidateData } = await buildPositionFilterClause(
-      filters,
-      candidateUID
-    );
-
-    // 2. Merge the clauses into a single `where` object for one database query.
-    const finalWhere = {
-      ...searchWhere,
-      ...filterWhere,
-      
-      // Manually merge the nested 'course' object to prevent it from being overwritten.
-      course: {
-        ...(searchWhere.course || {}),
-        ...(filterWhere.course || {}),
-      },
-    };
-    // Add a default job position status filter to show only OPEN positions.
-    finalWhere.jobPositionStatus = 'OPEN';
-
-    // 3. Execute the single database query to get a preliminary list of positions.
-    let positions = await prisma.jobPosition.findMany({
-      where: finalWhere,
-      include: {
-        course: {
-          select: { name: true, description: true, courseCode: true },
-        },
-        jobSchedules: {
-          select: { dayOfWeek: true, startTime: true, endTime: true },
-        },
-      },
-      orderBy: {
-        course: {
-          name: 'asc',
-        },
-      },
-    });
-
-    // 4. Perform post-query filtering for "Eligibility" as it requires complex logic on fetched data.
-    if (filters.eligibility && filters.eligibility !== 'Any' && candidateData) {
-      positions = positions.filter((position) => {
-        const gradStatusMatch =
-          !position.graduateStatusRequirement ||
-          position.graduateStatusRequirement === candidateData.graduateStatus;
-        const courseHistory = candidateData.courseHistory?.find(
-          (ch) => ch.courseCode === position.courseCode
-        );
-        const courseTakenMatch =
-          !position.courseTakenRequirement || !!courseHistory;
-        const gradeMatch =
-          !position.gradeRequirement ||
-          (courseHistory?.grade &&
-            gradetoNumericValue[courseHistory.grade] >=
-              gradetoNumericValue[position.gradeRequirement]);
-        const isEligible = gradStatusMatch && courseTakenMatch && gradeMatch;
-        return filters.eligibility === 'Eligible' ? isEligible : !isEligible;
-      });
-    }
-
-    // 5. Convert grade requirement enums to human-readable letter grades for the frontend.
-    return positions.map((position) => {
-      if (position.gradeRequirement) {
-        return {
-          ...position,
-          gradeRequirement:
-            gradeEnumToLetter[position.gradeRequirement] ||
-            position.gradeRequirement,
-        };
-      }
-      return position;
-    });
-  } catch (error) {
-    console.error('Error in getOpenJobPositions:', error);
-    throw error;
-  }
-}
-
-/**
  * Creates a new job application record for a candidate.
  * @param {object} applicationDetails - The application data.
  * @param {number} applicationDetails.candidateUID - The UID of the applicant.
@@ -406,13 +407,9 @@ async function applyForJobPosition(applicationDetails) {
 
     // 1. Validate required fields.
     if (
-      
       !candidateUID ||
-     
       !jobPositionId ||
-     
       !resumeId ||
-     
       !jobPositionApplicationFormData
     
     ) {
@@ -551,13 +548,6 @@ async function deleteCandidateApplication(candidateUID, jobPositionId) {
     throw error;
   }
 }
-
-/**
- * Retrieves all candidate applications for a specific candidate/employee.
- * @param {number} UID - The UID of the candidate/employee.
- * @returns {Promise<object>} A promise that resolves to an object of applications, grouped by job position ID.
- */
-
 
 
 /**
@@ -859,13 +849,6 @@ async function findUniqueUser(UID) {
               ? gradeEnumToLetter[history.grade]
               : history.grade,
           }));
-        candidateProfile.candidate.courseHistory =
-          candidateProfile.candidate.courseHistory.map((history) => ({
-            ...history,
-            grade: history.grade
-              ? gradeEnumToLetter[history.grade]
-              : history.grade,
-          }));
       }
       return candidateProfile;
     }
@@ -939,9 +922,6 @@ async function upsertCandidateProfile(candidateData) {
       // 3. Handle Course History (if provided).
       if (candidateData.courseHistory) {
         // First, remove all existing course history for this candidate to prevent duplicates.
-        await tx.courseHistory.deleteMany({
-          where: { candidateUID: candidateData.uid },
-        });
         await tx.courseHistory.deleteMany({
           where: { candidateUID: candidateData.uid },
         });
@@ -1049,30 +1029,6 @@ async function addNewCandidateResume(candidateUID, isPrimary, resumeURL, name) {
  * @param {string} name - The name of the resume.
  * @returns {Promise<object>} A promise that resolves to the updated resume record.
  */
-
-async function updateResumeName(resumeId, name) {
-  try {
-    return await prisma.resume.update({
-      where: {
-        id: resumeId,
-      },
-      data: {
-        name: name,
-      },
-    });
-  } catch (error) {
-    console.error('Error updating resume:', error);
-    throw error;
-  }
-}
-
-/**
- * Updates a specific resume for a candidate.
- * @param {number} resumeId - The unique identifier of the resume to update.
- * @param {string} name - The name of the resume.
- * @returns {Promise<object>} A promise that resolves to the updated resume record.
- */
-
 async function updateResumeName(resumeId, name) {
   try {
     return await prisma.resume.update({
@@ -1100,7 +1056,7 @@ async function updatePrimaryResume(candidateUID, resumeId) {
     // Use a transaction to ensure both operations succeed or fail together
     return await prisma.$transaction(async (tx) => {
       // Step 1: Set all of the candidate's resumes to non-primary
-      resetResumesToNonPrimary(candidateUID);
+      await resetResumesToNonPrimary(candidateUID);
 
       // Step 2: Set the specified resume to primary
       const updatedResume = await tx.resume.update({
@@ -1116,24 +1072,6 @@ async function updatePrimaryResume(candidateUID, resumeId) {
     });
   } catch (error) {
     console.error("Error updating primary resume:", error);
-    throw error;
-  }
-}
-
-/**
- * Gets all resumes for a candidate.
- * @param {number} candidateUID - The unique identifier of the candidate.
- * @returns {Promise<object>} A promise that resolves to an array of resume records.
- */
-async function getCandidateResumes(candidateUID) {
-  try {
-    return await prisma.resume.findMany({
-      where: {
-        candidateUID: candidateUID,
-      },
-    });
-  } catch (error) {
-    console.error('Error retrieving resumes:', error);
     throw error;
   }
 }
@@ -1243,19 +1181,6 @@ async function deleteResume(resumeId) {
 // =============================================================================
 
 /**
- * Retrieves all users from the database.
- * @returns {Promise<Array>} A promise that resolves to an array of all user objects.
- */
-async function getAllUsers() {
-  try {
-    return await prisma.user.findMany();
-  } catch (error) {
-    console.error("Error retrieving users:", error);
-    throw error;
-  }
-}
-
-/**
  * Retrieves all courses from the database, selecting only the course code and name.
  * @returns {Promise<Array>} A promise that resolves to an array of all course objects.
  */
@@ -1273,6 +1198,11 @@ async function getAllCourses() {
   }
 }
 
+/**
+ * Creates a new course in the database.
+ * @param {object} courseData - An object containing the course code, name, and description.
+ * @returns {Promise<object>} A promise that resolves to the created course object.
+ */ 
 async function createCourse(courseData) {
   const { courseCode, name, description } = courseData;
   try {
@@ -1285,24 +1215,6 @@ async function createCourse(courseData) {
     });
   } catch (error) {
     console.error("Error creating course:", error);
-    throw error;
-  }
-}
-
-/**
- * Retrieves all comments for a specific record.
- * @param {string} tableName - The name of the table the comments are associated with.
- * @param {string|number} foreignKey - The ID of the record the comments are associated with.
- * @returns {Promise<object>} A promise that resolves to an array of comment objects.
- */
-async function getComments(tableName, foreignKey) {
-  try {
-    const comments = await prisma.comment.findMany({
-      where: { foreignTableName: tableName, foreignKey: foreignKey },
-    });
-    return comments;
-  } catch (error) {
-    console.error('Error in getComments:', error);
     throw error;
   }
 }
