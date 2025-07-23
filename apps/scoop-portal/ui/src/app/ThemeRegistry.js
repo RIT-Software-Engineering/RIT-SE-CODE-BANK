@@ -1,11 +1,27 @@
 "use client";
-import { ThemeProvider } from "@mui/material";
-import baseTheme from "@styles/theme";
+
+import React, { createContext, useState, useMemo } from "react";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import { lightTheme, darkTheme } from "@styles/theme";
+
+export const ThemeContext = createContext({ toggleTheme: () => {} });
 
 export default function ThemeRegistry({ children }) {
+    const [mode, setMode] = useState("light");
+
+    const toggleTheme = () => {
+        setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
+    };
+
+    const theme = useMemo(
+        () => (mode === "light" ? lightTheme : darkTheme),
+        [mode]
+    );
+
     return (
-        <ThemeProvider theme={baseTheme} defaultMode="system">
-            {children}
-        </ThemeProvider>
+        <ThemeContext.Provider value={{ toggleTheme }}>
+            <CssBaseline />
+            <ThemeProvider theme={theme}>{children}</ThemeProvider>
+        </ThemeContext.Provider>
     );
 }
