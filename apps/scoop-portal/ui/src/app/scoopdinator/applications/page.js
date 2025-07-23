@@ -86,35 +86,8 @@ export default function SupervisorApplicationsPage() {
             : applications.filter((app) => app.status === filter);
 
     return (
-        <Box
-            sx={{
-                fontFamily: `"Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif"`,
-                bgcolor: "#f5f5f5",
-                minHeight: "100vh",
-                p: 4,
-            }}
-        >
-            <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
-                Review Applications
-            </Typography>
-
-            <Box mb={3}>
-                <Select
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    sx={{
-                        bgcolor: "#fff",
-                        borderRadius: 2,
-                        minWidth: 200,
-                        boxShadow: 1,
-                    }}
-                >
-                    {STATUSES.map((status) => (
-                        <MenuItem key={status} value={status}>
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </MenuItem>
-                    ))}
-                </Select>
+        <>
+            <Header />
 
             <Paper elevation={1}>
                 <Table>
@@ -279,6 +252,6 @@ export default function SupervisorApplicationsPage() {
                     {notification.message}
                 </Alert>
             </Snackbar>
-        </Box>
+        </>
     );
 }
