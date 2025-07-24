@@ -23,9 +23,9 @@ export default function Journal() {
           Journal
         </Typography>
         <>
-          {mockJournalEntries.map((JorunalEntry) => (
+          {mockJournalEntries.map((JournalEntry) => (
             <Container
-              key={JorunalEntry.id}
+              key={JournalEntry.id}
               sx={{
                 fontFamily:
                   '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
@@ -38,12 +38,12 @@ export default function Journal() {
                   justifyContent: "space-between",
                 }}
               >
-                <Typography variant="h2">{JorunalEntry.date}</Typography>
+                <Typography variant="h2">{JournalEntry.date}</Typography>
                 <Button startIcon={<EditNoteIcon />} variant="solid-orange">
                   Edit Notes
                 </Button>
               </Box>
-              <Typography>{JorunalEntry.contact}</Typography>
+              <Typography>{JournalEntry.contact}</Typography>
               <Typography>Notes:</Typography>
               <Box
                 sx={{
