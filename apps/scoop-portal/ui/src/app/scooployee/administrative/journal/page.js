@@ -1,6 +1,15 @@
+"use client";
+
 import React from "react";
 import Header from "@components/Header";
-import { Box, Button, Container, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Card,
+  Container,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 
 const mockJournalEntries = [
@@ -14,25 +23,24 @@ const mockJournalEntries = [
 
 export default function Journal() {
   //   const editNotes
+  const theme = useTheme();
 
   return (
     <>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography
-          variant="h1"
-          sx={{ fontSize: "2rem", fontWeight: 900, color: "#fff", mb: 4 }}
-        >
+        <Typography variant="h1" sx={{ mb: 4 }}>
           Journal
         </Typography>
         <>
-          {mockJournalEntries.map((JorunalEntry) => (
-            <Container
-              key={JorunalEntry.id}
+          {mockJournalEntries.map((JournalEntry) => (
+            <Card
+              key={JournalEntry.id}
               sx={{
                 fontFamily:
                   '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
-                backgroundColor: "#212121",
+                padding: "1rem",
+                backgroundColor: theme.palette.background.paper,
               }}
             >
               <Box
@@ -41,32 +49,23 @@ export default function Journal() {
                   justifyContent: "space-between",
                 }}
               >
-                <Typography
-                  variant="h2"
-                  sx={{
-                    fontSize: "1.5rem",
-                    lineHeight: "2rem",
-                    fontWeight: 500,
-                  }}
-                >
-                  {JorunalEntry.date}
-                </Typography>
+                <Typography variant="h2">{JournalEntry.date}</Typography>
                 <Button startIcon={<EditNoteIcon />} variant="solid-orange">
                   Edit Notes
                 </Button>
               </Box>
-              <Typography>{JorunalEntry.contact}</Typography>
+              <Typography variant="h3">{JournalEntry.contact}</Typography>
               <Typography>Notes:</Typography>
               <Box
                 sx={{
                   border: "1px solid black",
-                  borderRadius: "10px",
-                  padding: "1em",
+                  borderRadius: "1rem",
+                  padding: "1rem",
                 }}
               >
-                {JorunalEntry.notes}
+                {JournalEntry.notes}
               </Box>
-            </Container>
+            </Card>
           ))}
         </>
       </Container>
