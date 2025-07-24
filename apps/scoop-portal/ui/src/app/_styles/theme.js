@@ -1,9 +1,11 @@
-import { createTheme } from "@mui/material";
+import { createTheme } from "@mui/material/styles";
 
+/**
+ * This is the foundation of the theme.
+ */
 const baseTheme = createTheme({
-  colorSchemes: {
-    dark: true,
-  },
+  // If you need to use the RIT brand colors for anything specific,
+  // you can use the variables in ritColors
   ritColors: {
     orange: "#F76902",
     white: "#FFFFFF",
@@ -51,6 +53,13 @@ const baseTheme = createTheme({
     },
   },
   typography: {
+    fontFamily: [
+      '"Helvetica Neue"',
+      "Helvetica",
+      "Roboto",
+      "Arial",
+      "sans-serif",
+    ].join(","),
     h1: {
       fontSize: "2rem",
       lineHeight: "2.5rem",
@@ -80,43 +89,43 @@ const baseTheme = createTheme({
   },
   components: {
     MuiButton: {
+      variants: [
+        {
+          props: { variant: "solid-orange" },
+          style: {
+            backgroundColor: "#F76902",
+            color: "#FFFFFF",
+            "&:hover": {
+              backgroundColor: "#000000",
+            },
+          },
+        },
+        {
+          props: { variant: "solid-gray" },
+          style: {
+            backgroundColor: "#D0D3D4",
+            color: "#000000",
+            "&:hover": {
+              backgroundColor: "#A2AAAD",
+            },
+          },
+        },
+        {
+          props: { variant: "outline-orange" },
+          style: {
+            border: "1px solid #F76902",
+            color: "#F76902",
+            "&:hover": {
+              backgroundColor: "#F76902",
+              color: "#FFFFFF",
+            },
+          },
+        },
+      ],
       styleOverrides: {
         root: {
           textTransform: "none",
           borderRadius: "0px",
-          variants: [
-            {
-              props: { variant: "solid-orange" },
-              style: {
-                backgroundColor: "#F76902",
-                color: "#FFFFFF",
-                "&:hover": {
-                  backgroundColor: "#000000",
-                },
-              },
-            },
-            {
-              props: { variant: "solid-gray" },
-              style: {
-                backgroundColor: "#D0D3D4",
-                color: "#000000",
-                "&:hover": {
-                  backgroundColor: "#A2AAAD",
-                },
-              },
-            },
-            {
-              props: { variant: "outline-orange" },
-              style: {
-                border: "1px solid #F76902",
-                color: "#F76902",
-                "&:hover": {
-                  backgroundColor: "#F76902",
-                  color: "#FFFFFF",
-                },
-              },
-            },
-          ],
         },
       },
     },
@@ -128,7 +137,6 @@ export const lightTheme = createTheme({
   ...baseTheme,
   palette: {
     mode: "light",
-    primary: { main: "#F76902" },
     background: {
       default: "#FFFFFF",
       paper: "#D7D2CB",
@@ -143,11 +151,9 @@ export const darkTheme = createTheme({
   ...baseTheme,
   palette: {
     mode: "dark",
-    primary: { main: "#F76902" },
     background: {
       default: "#000000",
-      paper: "#121212",
-      card: "#424242",
+      paper: "#101010",
     },
     text: { primary: "#FFFFFF" },
   },
