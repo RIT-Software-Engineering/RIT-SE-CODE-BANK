@@ -93,15 +93,11 @@ export default function WorkflowDashboard() {
     <Box
       sx={{
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
-        color: "#212121",
       }}
     >
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
-        <Typography
-          variant="h1"
-          sx={{ fontSize: "2rem", fontWeight: 900, mb: 5, color: "#fff" }}
-        >
+        <Typography variant="h1" sx={{ mb: 5 }}>
           Scooployee Dashboard
         </Typography>
 
@@ -112,7 +108,6 @@ export default function WorkflowDashboard() {
                 <Typography
                   variant="h2"
                   sx={{
-                    fontSize: "1.5rem",
                     fontWeight: 700,
                     mb: 3,
                     borderBottom: "2px solid #F76902",
@@ -155,12 +150,15 @@ export default function WorkflowDashboard() {
                         {index + 1}
                       </Box>
 
-                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                      <Box
+                        sx={{
+                          flexGrow: 1,
+                          minWidth: 0,
+                        }}
+                      >
                         <Typography
                           variant="h3"
                           sx={{
-                            fontSize: "1.25rem",
-                            fontWeight: 300,
                             mb: 0.5,
                             whiteSpace: "nowrap",
                             overflow: "hidden",
@@ -171,9 +169,8 @@ export default function WorkflowDashboard() {
                           {step.title}
                         </Typography>
                         <Typography
+                          variant="body1"
                           sx={{
-                            fontSize: "1rem",
-                            lineHeight: 1.5,
                             color: "#555",
                             whiteSpace: "normal",
                           }}
