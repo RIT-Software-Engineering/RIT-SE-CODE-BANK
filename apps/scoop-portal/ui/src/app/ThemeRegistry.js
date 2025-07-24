@@ -1,13 +1,19 @@
 "use client";
 
-import React, { createContext, useState, useMemo } from "react";
-import { ThemeProvider, CssBaseline } from "@mui/material";
+import React, { createContext, useState, useMemo, useEffect } from "react";
+import { CssBaseline, useMediaQuery } from "@mui/material";
+import { ThemeProvider } from "@mui/material/styles";
 import { lightTheme, darkTheme } from "@styles/theme";
 
 export const ThemeContext = createContext({ toggleTheme: () => {} });
 
 export default function ThemeRegistry({ children }) {
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [mode, setMode] = useState("light");
+
+  useEffect(() => {
+    setMode(prefersDarkMode ? "dark" : "light");
+  }, [prefersDarkMode]);
 
   const toggleTheme = () => {
     setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
