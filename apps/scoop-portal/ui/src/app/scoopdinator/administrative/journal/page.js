@@ -5,18 +5,20 @@ import Header from "@components/Header";
 import {
   Box,
   Button,
+  Card,
   Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Typography,
+  useTheme,
 } from "@mui/material";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import toast, { Toaster } from "react-hot-toast";
-import baseTheme from "@styles/theme";
 
 export default function Journal() {
+  const theme = useTheme();
   const [journalEntries, setJournalEntries] = useState([]);
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
@@ -79,7 +81,7 @@ export default function Journal() {
   return (
     <>
       <Header />
-      <Container maxWidth="lg" sx={{ paddingBlock: "1em" }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ mb: 4 }}>
           Journal
         </Typography>
@@ -87,13 +89,13 @@ export default function Journal() {
           {journalEntries
             .sort((a, b) => new Date(b.date) - new Date(a.date))
             .map((entry) => (
-              <Container
+              <Card
                 key={entry.id}
+                square
                 sx={{
                   fontFamily:
                     '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
-                  backgroundColor: "#212121",
-                  paddingBlock: "1em",
+                  padding: "1rem",
                 }}
               >
                 <Box
@@ -126,8 +128,8 @@ export default function Journal() {
                 <Box
                   sx={{
                     border: "1px solid black",
-                    padding: "1em",
-                    marginTop: "1em",
+                    padding: "1rem",
+                    marginTop: "1rem",
                   }}
                 >
                   <pre
@@ -141,7 +143,7 @@ export default function Journal() {
                     {entry.notes}
                   </pre>
                 </Box>
-              </Container>
+              </Card>
             ))}
         </>
       </Container>
@@ -205,14 +207,14 @@ export default function Journal() {
           style: { borderRadius: "0px" },
           success: {
             style: {
-              backgroundColor: baseTheme.palette.success.main,
-              color: baseTheme.palette.success.contrastText,
+              backgroundColor: theme.palette.success.main,
+              color: theme.palette.success.contrastText,
             },
           },
           error: {
             style: {
-              backgroundColor: baseTheme.palette.error.main,
-              color: baseTheme.palette.error.contrastText,
+              backgroundColor: theme.palette.error.main,
+              color: theme.palette.error.contrastText,
             },
           },
         }}
