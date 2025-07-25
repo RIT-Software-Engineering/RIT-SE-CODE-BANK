@@ -139,8 +139,7 @@ export const lightTheme = createTheme({
     mode: "light",
     background: {
       default: "#FFFFFF",
-      paper: "#D7D2CB",
-      card: "#e0e0e0",
+      paper: baseTheme.ritColors.warm_gray_1,
     },
     text: { primary: "#000000" },
   },
