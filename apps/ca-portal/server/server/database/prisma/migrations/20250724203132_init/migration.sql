@@ -95,6 +95,7 @@ CREATE TABLE `CourseHistory` (
     `candidateUID` INTEGER NOT NULL,
     `courseCode` VARCHAR(8) NOT NULL,
     `grade` ENUM('A', 'A_MINUS', 'B_PLUS', 'B', 'B_MINUS', 'C_PLUS', 'C', 'C_MINUS', 'D', 'F') NULL,
+    `hasTaken` BOOLEAN NOT NULL,
     `wasPriorEmployee` BOOLEAN NOT NULL,
 
     PRIMARY KEY (`id`)
