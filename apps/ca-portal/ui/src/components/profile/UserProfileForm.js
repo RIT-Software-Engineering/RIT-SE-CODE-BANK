@@ -8,10 +8,10 @@ import {
 import { useNotification } from '@/contexts/NotificationContext';
 
 // Import the step components
-import Step1 from './form-steps/CandidateAndEmployee/Step1';
-import Step2 from './form-steps/CandidateAndEmployee/Step2';
-import Step3 from './form-steps/CandidateAndEmployee/Step3';
-import Form from './form-steps/EmployerAndAdmin/Form';
+import Step1CandidateAndEmployee from './form-steps/CandidateAndEmployee/Step1';
+import Step2CandidateAndEmployee from './form-steps/CandidateAndEmployee/Step2';
+import Step3CandidateAndEmployee from './form-steps/CandidateAndEmployee/Step3';
+import Step1EmployerAndAdmin from './form-steps/EmployerAndAdmin/Step1';
 
 
 /**
@@ -235,7 +235,7 @@ export default function UserProfileForm({
       switch (editingSection) {
         case 'info':
           return (
-            <Step1
+            <Step1CandidateAndEmployee
               user={user}
               register={register}
               errors={errors}
@@ -244,7 +244,7 @@ export default function UserProfileForm({
           );
         case 'coursesTaken':
           return (
-            <Step2
+            <Step2CandidateAndEmployee
               coursesTaken={coursesTaken}
               takenSearch={takenSearch}
               setTakenSearch={setTakenSearch}
@@ -256,7 +256,7 @@ export default function UserProfileForm({
           );
         case 'coursesWorked':
           return (
-            <Step3
+            <Step3CandidateAndEmployee
               coursesWorked={coursesWorked}
               workedSearch={workedSearch}
               setWorkedSearch={setWorkedSearch}
@@ -274,7 +274,7 @@ export default function UserProfileForm({
       switch (currentStep) {
         case 1:
           return (
-            <Step1
+            <Step1CandidateAndEmployee
               user={user}
               register={register}
               errors={errors}
@@ -283,7 +283,7 @@ export default function UserProfileForm({
           );
         case 2:
           return (
-            <Step2
+            <Step2CandidateAndEmployee
               coursesTaken={coursesTaken}
               takenSearch={takenSearch}
               setTakenSearch={setTakenSearch}
@@ -295,7 +295,7 @@ export default function UserProfileForm({
           );
         case 3:
           return (
-            <Step3
+            <Step3CandidateAndEmployee
               coursesWorked={coursesWorked}
               workedSearch={workedSearch}
               setWorkedSearch={setWorkedSearch}
@@ -309,7 +309,7 @@ export default function UserProfileForm({
       }
     }
     // Employer/Admin form
-    return <Form user={user} register={register} errors={errors} />;
+    return <Step1EmployerAndAdmin user={user} register={register} errors={errors} />;
   };
 
   return (

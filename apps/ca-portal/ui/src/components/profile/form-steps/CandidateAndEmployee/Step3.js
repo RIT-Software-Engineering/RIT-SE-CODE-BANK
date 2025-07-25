@@ -14,7 +14,7 @@ import SearchBar from "../../../jobs/SearchBar";
  * @param {function} props.removeCourseWorked - The function to remove a course from the user's worked courses
  * @returns {JSX.Element} The rendered Step3 component
  */
-export default function Step3({
+export default function Step3CandidateAndEmployee({
   coursesWorked,
   workedSearch,
   setWorkedSearch,

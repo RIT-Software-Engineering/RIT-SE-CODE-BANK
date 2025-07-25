@@ -13,7 +13,7 @@ import SelectField from "../../form-components/SelectField";
  * @param {object} props.watchedStatus - The form watched status object.
  * @returns {JSX.Element} The rendered Step1 component.
  */
-export default function Step1({ user, register, errors, watchedStatus }) {
+export default function Step1CandidateAndEmployee({ user, register, errors, watchedStatus }) {
   return (
     <fieldset className="space-y-4 animate-fade-in">
       {/* --- NON-EDITABLE UID AND EMAIL FIELDS --- */}

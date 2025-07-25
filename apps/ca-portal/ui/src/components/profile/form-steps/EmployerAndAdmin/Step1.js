@@ -3,8 +3,15 @@
 import React from "react";
 import InputField from "../../form-components/InputField";
 
-
-export default function Form({ user, register, errors }) {
+/** 
+ * Component for the first step (and currently only step) of the form for employers and admins
+ * @param {object} props - The component props.
+ * @param {object} props.user - The user's profile data object.
+ * @param {function} props.register - The form register function.
+ * @param {object} props.errors - The form errors object.
+ * @returns {JSX.Element} The rendered Step1 component.
+*/
+export default function Step1EmployerAndAdmin({ user, register, errors }) {
   return (
     <fieldset className="space-y-4 animate-fade-in">
       {/* --- NON-EDITABLE UID AND EMAIL FIELDS --- */}

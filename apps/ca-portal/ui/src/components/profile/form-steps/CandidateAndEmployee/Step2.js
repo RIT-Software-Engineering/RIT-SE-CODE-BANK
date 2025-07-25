@@ -30,7 +30,7 @@ const GradeSelector = ({ value, onChange }) => {
  * @param {function} props.removeCourseTaken - The function to remove a course from the user's taken courses.
  * @returns {JSX.Element} The rendered Step2 component.
  */
-export default function Step2({
+export default function Step2CandidateAndEmployee({
   coursesTaken,
   takenSearch,
   setTakenSearch,
