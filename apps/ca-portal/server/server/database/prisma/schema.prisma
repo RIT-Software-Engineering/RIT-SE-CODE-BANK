@@ -132,6 +132,7 @@ model CourseHistory {
   candidateUID     Int
   courseCode       String   @db.VarChar(8)
   grade            Grade? //Letter Grade
+  hasTaken         Boolean  @db.TinyInt
   wasPriorEmployee Boolean  @db.TinyInt
 
   // Relations
