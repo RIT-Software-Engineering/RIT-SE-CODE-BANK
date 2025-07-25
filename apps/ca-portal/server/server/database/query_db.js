@@ -12,8 +12,6 @@ const {
   gradetoNumericValue,
 } = require("../constants/grade");
 const { locationMap } = require("../constants/location");
-const { create } = require("domain");
-const { get } = require("http");
 const { applicationStatusStringToEnum } = require('../constants/status');
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
@@ -897,7 +895,7 @@ async function upsertCandidateProfile(candidateData) {
           name: candidateData.name,
           email: candidateData.email,
           pronouns: candidateData.pronouns,
-          role: "CANDIDATE",
+          role: candidateData.role,
         },
       });
 
@@ -932,7 +930,8 @@ async function upsertCandidateProfile(candidateData) {
             data: candidateData.courseHistory.map((course) => ({
               candidateUID: candidateData.uid,
               courseCode: course.courseCode,
-              grade: course.grade,
+              grade: letterToGradeEnum[course.grade],
+              hasTaken: course.hasTaken || false,
               wasPriorEmployee: course.wasPriorEmployee || false,
             })),
           });
@@ -975,7 +974,7 @@ async function upsertEmployerProfile(employerData) {
           name: employerData.name,
           email: employerData.email,
           pronouns: employerData.pronouns,
-          role: "EMPLOYER",
+          role: employerData.role,
         },
       });
 

@@ -12,7 +12,7 @@ import CoursesWorkedCard from "@/components/profile/CoursesWorkedCard";
 import ResumeManager from "@/components/profile/ResumeManager";
 
 export default function ProfilePage() {
-  const [showModal, setShowModal] = useState(false);
+  const [editingSection, setEditingSection] = useState(null); 
   const { currentUser, refreshUserProfile } = useAuth();
   const [profileData, setProfileData] = useState(null);
   // State to hold the master list of all available courses.
@@ -23,29 +23,26 @@ export default function ProfilePage() {
   // This function fetches the user's profile and updates the state.
   const handleProfileRefresh = useCallback(async () => {
     if (!currentUser?.uid) return;
-
     try {
       const user = await getUserProfile(currentUser.uid);
-      setProfileData(user); // Update state with fresh data
-      refreshUserProfile(); // Optionally refresh global context
+      setProfileData(user);
+      refreshUserProfile();
     } catch (err) {
       console.error("Error refreshing profile data:", err);
       setError("Could not refresh profile data. Please try again.");
     }
   }, [currentUser, refreshUserProfile]);
 
-  // This effect now fetches both the user's profile and the master course list.
+  // This effect fetches both the user's profile and the master course list.
   useEffect(() => {
     if (!currentUser?.uid) {
       setIsLoading(false);
       return;
     }
-
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Fetch both data sets in parallel for efficiency.
         const [user, courses] = await Promise.all([
           getUserProfile(currentUser.uid),
           getAllCourses(),
@@ -59,105 +56,74 @@ export default function ProfilePage() {
         setIsLoading(false);
       }
     };
-
     fetchData();
-  }, [currentUser]); // Runs when the base user from the context changes.
+  }, [currentUser]);
 
+  // This function is called when a profile update is successful.
   const handleUpdateSuccess = (updatedProfile) => {
-    setProfileData(updatedProfile); // Update local state directly with the correct data.
-    refreshUserProfile(); // Also, tell the context to refresh to ensure consistency across the app.
-    setShowModal(false);
+    setProfileData(updatedProfile);
+    refreshUserProfile();
+    setEditingSection(null); // Close the modal on success
   };
 
-  const handleOpenModal = () => {
-    setShowModal(false);
-    setTimeout(() => setShowModal(true), 0);
+  // This function is called when a user requests to edit a specific section.
+  const handleEditRequest = (section) => {
+    setEditingSection(section);
   };
 
-  // --- DERIVED DATA FIX ---
-  // `useMemo` creates a stable, correctly formatted list of courses taken.
+  // Calculate the courses taken by the user
   const coursesTaken = useMemo(() => {
-    // Get the raw course history from the current profile data.
     const history = profileData?.candidate?.courseHistory || [];
-    if (!history.length || !courseOptions.length) {
-      return [];
-    }
-
-    // Map over the history and ensure each item has the full course details.
+    if (!history.length || !courseOptions.length) return [];
     return history.map((historyItem) => {
-      // Handle both nested `{course: {courseCode: ...}}` and flat `{courseCode: ...}` structures.
-      const courseCode =
-        historyItem.course?.courseCode || historyItem.courseCode;
-      // Find the full course details from the master list.
-      const courseDetails = courseOptions.find(
-        (c) => c.courseCode === courseCode
-      );
-
-      // Return a consistent object structure that CoursesTakenCard can always rely on.
+      const courseCode = historyItem.course?.courseCode || historyItem.courseCode;
+      const courseDetails = courseOptions.find((c) => c.courseCode === courseCode);
       return {
         courseCode: courseCode,
         name: courseDetails?.name || "Unknown Course",
-        // FIX: Check for the description in the nested object first, then fall back to the master list.
-        description:
-          historyItem.course?.description ||
-          courseDetails?.description ||
-          "No description available",
-        // You can add other properties from historyItem if needed, like 'grade'.
+        description: historyItem.course?.description || courseDetails?.description || "No description available",
         grade: historyItem.grade,
+        hasTaken: historyItem.hasTaken,
+        wasPriorEmployee: historyItem.wasPriorEmployee,
       };
     });
-  }, [profileData, courseOptions]); // This will only re-calculate when profileData or courseOptions changes.
+  }, [profileData, courseOptions]);
 
-  const isCandidateOrEmployee =
-    profileData?.role === "CANDIDATE" || profileData?.role === "EMPLOYEE";
-  const isEmployerOrAdmin =
-    profileData?.role === "EMPLOYER" || profileData?.role === "ADMIN";
+  const isCandidateOrEmployee = profileData?.role === "CANDIDATE" || profileData?.role === "EMPLOYEE";
+  const isEmployerOrAdmin = profileData?.role === "EMPLOYER" || profileData?.role === "ADMIN";
 
-  // --- Conditional Rendering ---
-  if (isLoading)
-    return (
-      <div className="p-8 text-center text-gray-500">Loading profile...</div>
-    );
+  if (isLoading) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
-  if (!profileData)
-    return (
-      <div className="p-8 text-center text-gray-500">
-        No profile data available. Please log in.
-      </div>
-    );
+  if (!profileData) return <div className="p-8 text-center text-gray-500">No profile data available. Please log in.</div>;
 
   // --- Main Render ---
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
-      <section className="bg-white rounded-xl shadow-lg border border-gray-200">
-        <div className="p-6">
-          <ProfileInfoCard
-            profileData={profileData}
-            isEmployerOrAdmin={isEmployerOrAdmin}
-            isCandidateOrEmployee={isCandidateOrEmployee}
-            handleOpenModal={handleOpenModal}
+      <ProfileInfoCard
+        profileData={profileData}
+        isEmployerOrAdmin={isEmployerOrAdmin}
+        isCandidateOrEmployee={isCandidateOrEmployee}
+        onEdit={() => handleEditRequest('info')}
+      />
+      
+      {isCandidateOrEmployee && (
+        <>
+          <CoursesTakenCard
+            coursesTaken={coursesTaken}
+            onEdit={() => handleEditRequest('coursesTaken')}
           />
-
-          {/* 3. Conditionally render the ResumeManager directly inside the section */}
-          {isCandidateOrEmployee && (
-            <>
-              <hr className="my-6 border-gray-200" />
-              <ResumeManager
+          <CoursesWorkedCard
+            coursesTaken={coursesTaken}
+            onEdit={() => handleEditRequest('coursesWorked')}
+          />
+          <section className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+             <ResumeManager
                 resumes={profileData.candidate?.resumes || []}
                 candidateUID={profileData.uid}
                 onProfileRefresh={handleProfileRefresh}
               />
-            </>
-          )}
-        </div>
-      </section>
-      
-      {isCandidateOrEmployee && (
-        <CoursesTakenCard
-          profileData={profileData}
-          // Pass the new, consistently formatted coursesTaken array.
-          coursesTaken={coursesTaken}
-        />
+          </section>
+        </>
       )}
 
       {isEmployerOrAdmin && (
@@ -167,14 +133,15 @@ export default function ProfilePage() {
         />
       )}
 
-      {isCandidateOrEmployee && <CoursesWorkedCard profileData={profileData} />}
-
-      {showModal && (
+      {editingSection && (
         <UserProfileModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
+          isOpen={!!editingSection}
+          onClose={() => setEditingSection(null)}
           profileData={profileData}
+          mode="edit"
           onUpdateSuccess={handleUpdateSuccess}
+          editingSection={editingSection}
+          courseOptions={courseOptions}
         />
       )}
     </div>
