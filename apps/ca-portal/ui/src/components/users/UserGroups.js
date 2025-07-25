@@ -3,7 +3,7 @@ import { useState } from "react";
 import UserCard from "./UserCard";
 
 export default function UserGroup({ title, users, onEditUser }) {
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(true);
 
     return (
         <div className="bg-white rounded-lg shadow-md mb-6">

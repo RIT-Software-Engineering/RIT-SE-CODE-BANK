@@ -10,7 +10,7 @@ export default function UserCard({ user, onEdit }) {
         </div>
         <button
             onClick={() => onEdit(user.uid)}
-            className="px-4 py-2 bg-rit-orange text-white rounded-lg hover:bg-black focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+            className="px-4 py-2 bg-rit-orange text-white rounded-lg hover:bg-black focus:outline-none focus:ring-2 focus:ring-rit-orange focus:ring-opacity-50"
         >
             Edit
         </button>
