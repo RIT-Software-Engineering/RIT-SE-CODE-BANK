@@ -613,7 +613,7 @@ async function getSemesterCodesForEmployer(employerUID) {
 // -- Private Helper Functions for Application Search --
 
 /**
- * Builds the WHERE clause for the main JobPosition query based on user-selected filters.
+ * Builds the WHERE clause for the main JobPosition query based on user-Interview filters.
  * This function handles filters that apply directly to the JobPosition model itself.
  * @param {object} filters - The filter criteria from the client (e.g., level, semester, hasApplications).
  * @returns {object} A Prisma WHERE clause object for the JobPosition model.

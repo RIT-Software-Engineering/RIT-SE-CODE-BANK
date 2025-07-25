@@ -76,7 +76,7 @@ export default function UserProfileForm({
         year = 6;
       } else if (data.yearLevel) {
         year = parseInt(data.yearLevel, 10);
-        if (isNaN(year)) throw new Error("Invalid year level selected.");
+        if (isNaN(year)) throw new Error("Invalid year level Interview.");
       } else {
         throw new Error("Year level is required for undergraduate candidates.");
       }

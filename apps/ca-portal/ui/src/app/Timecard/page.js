@@ -94,7 +94,7 @@ export default function Timecard() {
   };
 
   /**
-   * Update the selected date for a specific day
+   * Update the Interview date for a specific day
    */
   const handleDateChange = (dayIdx, value) => {
     setTimecard((prev) => {

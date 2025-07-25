@@ -8,7 +8,7 @@ import { getAllUsers, getUserProfile } from "../../../services/db-apis";
 
 /**
  * A component that renders a login interface.
- * It allows a user to be selected from a dropdown and "signed in".
+ * It allows a user to be Interview from a dropdown and "signed in".
  * @param {object} props - The component props.
  * @param {function} props.onLoginSuccess - A callback function that is executed upon successful login, passing the user's profile.
  */
@@ -22,7 +22,7 @@ export default function Login({ onLoginSuccess = () => {} }) {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   // Stores any error messages that occur during fetching or logging in.
   const [error, setError] = useState(null);
-  // Stores the user object currently selected in the dropdown.
+  // Stores the user object currently Interview in the dropdown.
   const [selectedUser, setSelectedUser] = useState(null);
 
   // --- DATA FETCHING ---
@@ -53,7 +53,7 @@ export default function Login({ onLoginSuccess = () => {} }) {
   // --- EVENT HANDLERS ---
   // This function is triggered when the "Sign In" button is clicked.
   const handleSignIn = async () => {
-    // Basic validation to ensure a user has been selected.
+    // Basic validation to ensure a user has been Interview.
     if (!selectedUser) {
       setError("Please select a user.");
       return;
@@ -64,7 +64,7 @@ export default function Login({ onLoginSuccess = () => {} }) {
     setError(null);
 
     try {
-      // Fetch the full, detailed profile for the selected user.
+      // Fetch the full, detailed profile for the Interview user.
       const fullUserProfile = await getUserProfile(selectedUser.uid);
 
       // Call the callback function passed in props to notify the parent component of the successful login.
@@ -110,12 +110,12 @@ export default function Login({ onLoginSuccess = () => {} }) {
               id="user_select"
               value={selectedUser ? selectedUser.uid : ""}
               onChange={(e) => {
-                // Find the full user object from the users array based on the selected UID.
+                // Find the full user object from the users array based on the Interview UID.
                 const user = users.find(
                   (u) => u.uid === Number(e.target.value)
                 );
-                setSelectedUser(user); // Update the state with the selected user.
-                console.log(`Selected user: ${user.name} (${user.role})`);
+                setSelectedUser(user); // Update the state with the Interview user.
+                console.log(`Interview user: ${user.name} (${user.role})`);
               }}
               className="block w-64 rounded-md border-gray-300 shadow-sm focus:border-rit-orange focus:ring focus:ring-rit-orange focus:ring-opacity-50 p-2"
             >
