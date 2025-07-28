@@ -111,6 +111,7 @@ model JobPositionApplicationHistory {
   resumeId                      Int
   jobApplicationStatus          JobApplicationStatus @default(APPLIED)
   candidateName                 String               @db.Text
+  candidatePronouns             String               @db.Text
   candidateEmail                String               @db.Text
   candidateMajor                String               @db.Text
   candidateYear                 Int
@@ -248,6 +249,7 @@ enum JobPositionHistoryStatus {
 enum JobApplicationStatus {
   //these roles are for when candidates are applying to the job positions
   APPLIED
+  HIRED
   ACCEPTED_OFFER
   PENDING_OFFER
   INTERVIEW
