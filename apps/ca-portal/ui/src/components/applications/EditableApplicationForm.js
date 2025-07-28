@@ -74,7 +74,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                 const applicationDetails = {
                     candidateUID: user.uid,
                     jobPositionId: position.id,
-                    resumeId: parseInt(formData.resumeId, 10),
+                    resumeId: parseInt(formData.resumeId, 10), // Pass the Interview resume's ID
                     jobPositionApplicationFormData: JSON.stringify(restOfFormData),
                 };
                 await applyForJobPosition(applicationDetails);

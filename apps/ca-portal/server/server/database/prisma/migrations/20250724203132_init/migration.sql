@@ -76,7 +76,7 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `candidateUID` INTEGER NOT NULL,
     `jobPositionId` VARCHAR(191) NOT NULL,
     `resumeId` INTEGER NOT NULL,
-    `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED', 'PENDING_ACCEPTANCE', 'SELECTED', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
+    `jobApplicationStatus` ENUM('APPLIED', 'ACCEPTED_OFFER', 'PENDING_OFFER', 'INTERVIEW', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
     `candidateName` TEXT NOT NULL,
     `candidateEmail` TEXT NOT NULL,
     `candidateMajor` TEXT NOT NULL,

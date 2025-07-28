@@ -4,6 +4,7 @@ import EditPositionModal from "./EditPositionModal";
 import { useEffect, useState } from "react";
 import { formatTime } from "@/utils/applicationUtils";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import ApplicationProgressTracker from "./ApplicationProgressTracker";
 
 export default function JobPositionsCard({ profileData }) {
   // "EMPLOYER" or "ADMIN" job positions

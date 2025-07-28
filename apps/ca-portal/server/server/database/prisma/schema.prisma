@@ -248,9 +248,9 @@ enum JobPositionHistoryStatus {
 enum JobApplicationStatus {
   //these roles are for when candidates are applying to the job positions
   APPLIED
-  ACCEPTED
-  PENDING_ACCEPTANCE
-  SELECTED
+  ACCEPTED_OFFER
+  PENDING_OFFER
+  INTERVIEW
   ONHOLD
   REJECTED
   INACTIVE
