@@ -16,6 +16,14 @@ import React, { useEffect, useState } from "react";
 import ProjectDetailsLoading from "./loading";
 import Header from "@components/Header";
 
+/**
+ * This component fetches the details of a project based on the provided project ID and displays it on the Project Details page.
+ *
+ * @param {*} params - The parameters passed to the component.
+ * @returns {JSX.Element} The elements that make up the Project Details page.
+ * @throws {Error} If the project ID is not provided or if there is an error fetching the project data, it will log an error to the console.
+ *
+ */
 export default function ProjectDetails({ params }) {
   const theme = useTheme();
   const { projectId } = React.use(params);

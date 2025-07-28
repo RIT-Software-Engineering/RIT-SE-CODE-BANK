@@ -7,6 +7,13 @@ import { lightTheme, darkTheme } from "@styles/theme";
 
 export const ThemeContext = createContext({ toggleTheme: () => {} });
 
+/**
+ * The component that provides the theme context and applies the theme to its children.
+ * In addition, it handles the user's preferred color scheme and allows toggling between light and dark themes.
+ *
+ * @param {*} children - The compoenents to be wrapped by the theme provider (should be the whole app).
+ * @returns {JSX.Element} The ThemeRegistry component that provides the theme context and applies the theme.
+ */
 export default function ThemeRegistry({ children }) {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const [mode, setMode] = useState("light");
