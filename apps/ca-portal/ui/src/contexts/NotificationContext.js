@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useState, useContext, useCallback } from 'react';
-import Notification from '@/components/ui/NotificationModel';
+import Notification from '@/components/common/models/NotificationModel';
 
 // Create the context
 const NotificationContext = createContext(null);

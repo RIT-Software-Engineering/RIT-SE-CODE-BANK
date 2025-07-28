@@ -6,18 +6,20 @@ import {
   getCandidateApplicationsAsEmployer,
 } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
+import { gradeEnumToStringValue } from '@/constants/gradeConstants';
 
-import ApplicationCard from '@/components/jobs/EmployerAndAdmin/ApplicationCard';
-import SearchBar from '@/components/jobs/SearchBar';
-import Filter from '@/components/jobs/Filter';
+import ApplicationCard from '@/components/applications/EmployerAndAdmin/ApplicationCard';
+import SearchBar from '@/components/common/searchAndFilter/SearchBar';
+import Filter from '@/components/common/searchAndFilter/Filter';
 import { generateApplicationsFilterConfig } from './filter.config';
 
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
-import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+
 
 export default function Applications() {
   const { currentUser } = useAuth();
@@ -67,12 +69,32 @@ export default function Applications() {
 
       try {
         // The API now returns an array of JobPosition objects, with applications nested inside.
-        const positions = await getCandidateApplicationsAsEmployer(
+        const data = await getCandidateApplicationsAsEmployer(
           search,
           searchType,
           filters,
           currentUser.uid
         );
+
+        // Convert gradeRequirement from enum to string
+        const positions = data.map(position => {
+          // Map over the applications within this position
+          const applicationsHistory = position.jobPositionApplicationHistory.map(app => {
+            // Check if the grade exists and can be converted
+            if (app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]) {
+              return {
+                ...app,
+                candidateGrade: gradeEnumToStringValue[app.candidateGrade]
+              };
+            }
+            return app; // Return the app unmodified if no conversion is needed
+          });
+          // Return a new position object with the transformed applications
+          return {
+            ...position,
+            jobPositionApplicationHistory: applicationsHistory
+          };
+        });
 
         // Group the returned positions by their semester code for the accordion UI.
         const groupedBySemester = positions.reduce((acc, position) => {

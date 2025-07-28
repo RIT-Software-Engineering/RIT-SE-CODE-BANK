@@ -6,7 +6,7 @@ INSERT INTO `JobPositionApplicationHistory` (`candidateUID`, `jobPositionId`, `r
 
 -- Student 302 (Denise Designer) Applications
 (302, '2241-MATH-123-1', 2, 'SELECTED', 'Denise Designer', 'student2@example.com', 'Mathematics', 5, 'A', 1, 1, 'MATH-123'),
-(302, '2241-SWEN-561-1', 2, 'REJECTED', 'Denise Designer', 'student2@example.com', 'Mathematics', 5, NULL, 0, 1, 'MATH-123'),
+(302, '2241-SWEN-561-1', 2, 'REJECTED', 'Denise Designer', 'student2@example.com', 'Mathematics', 5, 'B_MINUS', 0, 1, 'MATH-123'),
 
 -- Student 304 (Tyler Tester) Application
 (304, '2241-SWEN-561-2', 3, 'SELECTED', 'Tyler Tester', 'student4@example.com', 'Mathematics', 6, NULL, 0, 1, 'MATH-123'),

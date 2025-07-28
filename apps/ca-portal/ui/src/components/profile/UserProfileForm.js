@@ -8,10 +8,10 @@ import {
 import { useNotification } from '@/contexts/NotificationContext';
 
 // Import the step components
-import Step1CandidateAndEmployee from './form-steps/CandidateAndEmployee/Step1';
-import Step2CandidateAndEmployee from './form-steps/CandidateAndEmployee/Step2';
-import Step3CandidateAndEmployee from './form-steps/CandidateAndEmployee/Step3';
-import Step1EmployerAndAdmin from './form-steps/EmployerAndAdmin/Step1';
+import Step1CandidateAndEmployee from './CandidateAndEmployee/form-steps/Step1';
+import Step2CandidateAndEmployee from './CandidateAndEmployee/form-steps/Step2';
+import Step3CandidateAndEmployee from './CandidateAndEmployee/form-steps/Step3';
+import Step1EmployerAndAdmin from './EmployerAndAdmin/form-steps/Step1';
 
 
 /**
