@@ -3,18 +3,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getCandidateApplicationsAsCandidate } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
+import { gradeEnumToStringValue } from '@/constants/gradeConstants';
 
-import ApplicationCard from '@/components/jobs/CandidateAndEmployee/ApplicationCard';
-import SearchBar from '@/components/jobs/SearchBar';
-import Filter from '@/components/jobs/Filter';
+import ApplicationCard from '@/components/applications/CandidateAndEmployee/ApplicationCard';
+import SearchBar from '@/components/common/searchAndFilter/SearchBar';
+import Filter from '@/components/common/searchAndFilter/Filter';
 import { generateApplicationsFilterConfig } from './filter.config';
 
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
+import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
-import Box from '@mui/material/Box';
 
 export default function CandidateApplicationsPage() {
   const { currentUser, refreshUserProfile } = useAuth();
@@ -67,11 +68,22 @@ export default function CandidateApplicationsPage() {
     setError(null);
 
     try {
-      const applications = await getCandidateApplicationsAsCandidate(
+      const data = await getCandidateApplicationsAsCandidate(
         search,
         filters,
         currentUser.uid
       );
+
+      // convert grade enum to string
+      const applications = data.map(application => {
+        if (application.candidateGrade && gradeEnumToStringValue[application.candidateGrade]) {
+          return {
+            ...application,
+            candidateGrade: gradeEnumToStringValue[application.candidateGrade]
+          };
+        }
+        return application;
+      })
 
       const groupedBySemester = applications.reduce((acc, app) => {
         const semesterCode = app.jobPositionId.split('-')[0] || 'Uncategorized';

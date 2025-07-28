@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import Header from "../components/ui/Header";
-import Footer from "../components/ui/Footer";
+import Header from "../layouts/Header";
+import Footer from "../layouts/Footer";
 import "./globals.css";
 import AuthProvider from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";

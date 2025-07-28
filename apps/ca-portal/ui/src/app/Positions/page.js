@@ -1,11 +1,14 @@
 "use client";
-import SearchBar from "@/components/jobs/SearchBar";
-import { getOpenPositions } from "../../services/db-apis";
+
 import React, { useEffect, useCallback, useState } from "react";
-import PositionsCard from "@/components/jobs/PositionsCard";
-import Filter from "@/components/jobs/Filter";
-import { positionFilterConfig } from "./filter.config";
+import { getOpenPositions } from "../../services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
+import { gradeEnumToStringValue } from "@/constants/gradeConstants";
+
+import PositionsCard from "@/components/positions/PositionsCard";
+import Filter from "@/components/common/searchAndFilter/Filter";
+import SearchBar from "@/components/common/searchAndFilter/SearchBar";
+import { positionFilterConfig } from "./filter.config";
 
 export default function Positions() {
   const { currentUser } = useAuth();
@@ -33,7 +36,18 @@ export default function Positions() {
           currentFilters,
           currentUser.uid
         );
-        setOpenPositions(data);
+        // Convert gradeRequirement from enum to string
+        const positions = data.map(position => {
+          if (position.gradeRequirement && gradeEnumToStringValue[position.gradeRequirement]) {
+            return {
+              ...position,
+              gradeRequirement: gradeEnumToStringValue[position.gradeRequirement]
+            };
+          }
+          return position;
+        });
+        
+        setOpenPositions(positions);
       } catch (err) {
         console.error("Failed to fetch open positions:", err);
         setError(err.message);

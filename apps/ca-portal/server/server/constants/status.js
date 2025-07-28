@@ -1,8 +1,8 @@
 const applicationStatusStringToEnum = {
     "Applied": 'APPLIED',
-    "Accepted": 'ACCEPTED',
-    "Pending Acceptance": 'PENDING_ACCEPTANCE',
-    "Selected": 'SELECTED',
+    "Accepted Offer": 'ACCEPTED_OFFER',
+    "Pending Offer": 'PENDING_OFFER',
+    "Interview": 'INTERVIEW',
     "Onhold": 'ONHOLD',
     "Rejected": 'REJECTED',
     "Inactive": 'INACTIVE'
@@ -10,9 +10,9 @@ const applicationStatusStringToEnum = {
 
 const applicationStatusEnumToString = {
     APPLIED: "Applied",
-    ACCEPTED: "Accepted",
-    PENDING_ACCEPTANCE: "Pending Acceptance",
-    SELECTED: "Selected",
+    ACCEPTED_OFFER: "Accepted Offer",
+    PENDING_OFFER: "Pending Offer",
+    INTERVIEW: "Interview",
     ONHOLD: "Onhold",
     REJECTED: "Rejected",
     INACTIVE: "Inactive"

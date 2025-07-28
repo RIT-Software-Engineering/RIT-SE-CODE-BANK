@@ -7,8 +7,6 @@
 const { PrismaClient } = require("@prisma/client");
 const path = require("path");
 const {
-  gradeEnumToLetter,
-  letterToGradeEnum,
   gradetoNumericValue,
 } = require("../constants/grade");
 const { locationMap } = require("../constants/location");
@@ -184,18 +182,8 @@ async function getOpenJobPositions(
       });
     }
 
-    // 5. Convert grade requirement enums to human-readable letter grades for the frontend.
-    return positions.map((position) => {
-      if (position.gradeRequirement) {
-        return {
-          ...position,
-          gradeRequirement:
-            gradeEnumToLetter[position.gradeRequirement] ||
-            position.gradeRequirement,
-        };
-      }
-      return position;
-    });
+    // 5. return the filtered and processed positions
+    return positions;
   } catch (error) {
     console.error('Error in getOpenJobPositions:', error);
     throw error;
@@ -452,10 +440,11 @@ async function applyForJobPosition(applicationDetails) {
         jobPositionId,
         resumeId: resumeId,
         candidateName: applicationFormData.name,
+        candidatePronouns: applicationFormData.pronouns,
         candidateEmail: applicationFormData.email,
         candidateMajor: applicationFormData.major,
         candidateYear: parseInt(applicationFormData.year, 10),
-        candidateGrade: letterToGradeEnum[applicationFormData.grade],
+        candidateGrade: applicationFormData.grade,
         wasPriorEmployeeForThisCourse: applicationFormData.wasPriorEmployeeForThisCourse,
         wasPriorEmployeeForOtherCourses: applicationFormData.wasPriorEmployeeForOtherCourses,
         priorEmploymentHistory: applicationFormData.priorEmploymentHistory
@@ -480,7 +469,7 @@ async function applyForJobPosition(applicationDetails) {
     if (parsedFormData.grade) {
       await prisma.courseHistory.updateMany({
         where: { candidateUID, courseCode: jobPosition.courseCode },
-        data: { grade: letterToGradeEnum[parsedFormData.grade] },
+        data: { grade: parsedFormData.grade },
       });
     }
 
@@ -611,7 +600,7 @@ async function getSemesterCodesForEmployer(employerUID) {
 // -- Private Helper Functions for Application Search --
 
 /**
- * Builds the WHERE clause for the main JobPosition query based on user-selected filters.
+ * Builds the WHERE clause for the main JobPosition query based on user-Interview filters.
  * This function handles filters that apply directly to the JobPosition model itself.
  * @param {object} filters - The filter criteria from the client (e.g., level, semester, hasApplications).
  * @returns {object} A Prisma WHERE clause object for the JobPosition model.
@@ -715,12 +704,7 @@ async function getCandidateApplications(searchTerm, filters, candidateUID) {
 
   const filteredApplications = applications.filter(app => app.jobPosition);
 
-  const processedApplications = filteredApplications.map((application) => ({
-    ...application,
-    candidateGrade: gradeEnumToLetter[application.candidateGrade],
-  }));
-
-  return processedApplications;
+  return filteredApplications;
 }
 
 
@@ -784,16 +768,8 @@ async function getCandidateApplicationsAsEmployer(searchTerm, searchBy, filters,
       },
     }
   });
-
-  const processedPositions = positions.map(position => ({
-      ...position,
-      jobPositionApplicationHistory: position.jobPositionApplicationHistory.map(app => ({
-        ...app,
-        candidateGrade: gradeEnumToLetter[app.candidateGrade],
-      })),
-    }));
     
-  return processedPositions;
+  return positions;
 }
 
 // =============================================================================
@@ -817,7 +793,7 @@ async function getAllUsers() {
  * @param {string|number} UID - The unique identifier of the user.
  * @returns {Promise<object|null>} A promise that resolves to the user's complete profile, or null if not found.
  */
-async function findUniqueUser(UID) {
+async function getUserProfile(UID) {
   try {
     const user = await prisma.user.findUnique({ where: { uid: UID } });
 
@@ -838,16 +814,6 @@ async function findUniqueUser(UID) {
           },
         },
       });
-      // Convert grade enums to letter grades for display.
-      if (candidateProfile?.candidate?.courseHistory) {
-        candidateProfile.candidate.courseHistory =
-          candidateProfile.candidate.courseHistory.map((history) => ({
-            ...history,
-            grade: history.grade
-              ? gradeEnumToLetter[history.grade]
-              : history.grade,
-          }));
-      }
       return candidateProfile;
     }
 
@@ -930,7 +896,7 @@ async function upsertCandidateProfile(candidateData) {
             data: candidateData.courseHistory.map((course) => ({
               candidateUID: candidateData.uid,
               courseCode: course.courseCode,
-              grade: letterToGradeEnum[course.grade],
+              grade: course.grade,
               hasTaken: course.hasTaken || false,
               wasPriorEmployee: course.wasPriorEmployee || false,
             })),
@@ -1248,7 +1214,7 @@ module.exports = {
   getSemesterCodesForEmployer,
   applyForJobPosition,
   changeCandidateApplicationStatus,
-  findUniqueUser,
+  getUserProfile,
   upsertCandidateProfile,
   upsertEmployerProfile,
   addNewCandidateResume,

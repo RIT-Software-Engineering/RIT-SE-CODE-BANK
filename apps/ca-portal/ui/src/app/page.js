@@ -2,8 +2,8 @@
 'use client';
 
 import { useState } from "react";
-import Login from "@/components/features/auth/Login";
-import LandingDashboard from "@/components/features/dashboard/LandingDashboard";
+import Login from "@/components/auth/Login";
+import LandingDashboard from "@/components/dashboard/LandingDashboard";
 import { useAuth } from "@/contexts/AuthContext";
 // Import the modal component you'll be using
 import UserProfileModal from "@/components/profile/UserProfileModal";
