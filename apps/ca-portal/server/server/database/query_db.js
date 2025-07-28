@@ -81,11 +81,20 @@ async function buildPositionFilterClause(filters, candidateUID) {
     };
   }
 
-  // Add "Course Level" filter (e.g., "100", "200").
-  if (filters.level) {
-    filterWhere.courseCode = {
-      contains: `-${filters.level.charAt(0)}`,
-    };
+  // Add "Course Level" filter (e.g., "100-level", "200-level").
+  if (filters.level && Array.isArray(filters.level) && filters.level.length > 0) {
+    const levelConditions = filters.level.map(levelString => {
+      // Extracts the first digit from strings like "100-level" -> "1"
+      const levelDigit = levelString.replace('-level', '').charAt(0);
+      return {
+        courseCode: {
+          contains: `-${levelDigit}`,
+        },
+      };
+    });
+
+    // Add the OR conditions to the main filter clause.
+    filterWhere.OR = levelConditions;
   }
 
   // Add "Location" filter.
@@ -611,11 +620,20 @@ function buildJobPositionForApplicationFilterClause(filters) {
     return where;
   }
 
-  // Filter by level
-  if (filters.level) {
-    where.courseCode = {
-      contains: `-${filters.level.charAt(0)}`,
-    };
+  // Add "Course Level" filter (e.g., "100-level", "200-level").
+  if (filters.level && Array.isArray(filters.level) && filters.level.length > 0) {
+    const levelConditions = filters.level.map(levelString => {
+      // Extracts the first digit from strings like "100-level" -> "1"
+      const levelDigit = levelString.replace('-level', '').charAt(0);
+      return {
+        courseCode: {
+          contains: `-${levelDigit}`,
+        },
+      };
+    });
+
+    // Add the OR conditions to the main filter clause.
+    where.OR = levelConditions;
   }
 
   // Filter by semester code
