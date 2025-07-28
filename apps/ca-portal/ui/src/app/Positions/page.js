@@ -1,24 +1,27 @@
+// src/app/Positions/page.js
 "use client";
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState, useRef } from "react";
 import { getOpenPositions } from "../../services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
 
 import PositionsCard from "@/components/positions/PositionsCard";
-import Filter from "@/components/common/searchAndFilter/Filter";
+import { Filter } from "@/components/common/searchAndFilter/Filter";
 import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { positionFilterConfig } from "./filter.config";
 
 export default function Positions() {
   const { currentUser } = useAuth();
+  const filterRef = useRef();
+  
   const [openPositions, setOpenPositions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [appliedFilters, setAppliedFilters] = useState({
     days: [],
-    level: "",
+    level: [],
     location: "",
     eligibility: "",
     applied: "",
@@ -65,7 +68,12 @@ export default function Positions() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchData(searchTerm, appliedFilters);
+    // Get the most up-to-date filters directly from the Filter component
+    const latestFilters = filterRef.current.getFilters();
+    // Update the parent's state so the UI is consistent
+    setAppliedFilters(latestFilters);
+    // Fetch data with the latest filters and search term
+    fetchData(searchTerm, latestFilters);
   };
 
   const handleFilterChange = (filters) => {
@@ -126,7 +134,11 @@ export default function Positions() {
           <div id="positions-container" className="w-full max-w-4xl mx-auto">
             <form onSubmit={handleSearch} className="mb-8 flex items-center gap-x-2">
               <SearchBar value={searchTerm} onChange={handleSearchTermChange} placeholder="Search by course name or code..." />
-              <Filter onFilterChange={handleFilterChange} filterConfig={positionFilterConfig} />
+              <Filter 
+                ref={filterRef} 
+                onFilterChange={handleFilterChange} 
+                filterConfig={positionFilterConfig} 
+              />
               <button
                 type="submit"
                 className="h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-orange-600"
@@ -134,6 +146,13 @@ export default function Positions() {
                 Search
               </button>
             </form>
+            {!isLoading && !error && (
+              <div className="mb-4 text-sm text-gray-600">
+                <strong>
+                  {openPositions.length} {openPositions.length === 1 ? "result" : "results"}
+                </strong>
+              </div>
+            )}
             {renderContent()}
           </div>
         </div>

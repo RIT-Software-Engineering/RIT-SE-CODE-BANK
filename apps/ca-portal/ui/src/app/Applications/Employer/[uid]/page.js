@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getSemesterCodesForEmployer,
   getCandidateApplicationsAsEmployer,
@@ -10,7 +10,7 @@ import { gradeEnumToStringValue } from '@/constants/gradeConstants';
 
 import ApplicationCard from '@/components/applications/EmployerAndAdmin/ApplicationCard';
 import SearchBar from '@/components/common/searchAndFilter/SearchBar';
-import Filter from '@/components/common/searchAndFilter/Filter';
+import { Filter }from '@/components/common/searchAndFilter/Filter';
 import { generateApplicationsFilterConfig } from './filter.config';
 
 import Accordion from '@mui/material/Accordion';
@@ -23,6 +23,7 @@ import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDown
 
 export default function Applications() {
   const { currentUser } = useAuth();
+  const filterRef = useRef();
 
   // displayData is now an object where keys are semester codes and values are arrays of positions
   const [displayData, setDisplayData] = useState({});
@@ -33,7 +34,7 @@ export default function Applications() {
   const [filterConfig, setFilterConfig] = useState([]);
   const [appliedFilters, setAppliedFilters] = useState({
     status: [],
-    level: '',
+    level: [],
     semester: '',
     hasApplications: '',
   });
@@ -145,7 +146,12 @@ export default function Applications() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    updateApplicationsView(searchTerm, searchBy, appliedFilters);
+    // Get the most up-to-date filters directly from the Filter component
+    const latestFilters = filterRef.current.getFilters();
+    // Update the parent's state so the UI is consistent
+    setAppliedFilters(latestFilters);
+    // Fetch data with the latest filters and search term
+    updateApplicationsView(searchTerm, searchBy, latestFilters);
   };
 
   // --- Render Logic ---
@@ -214,12 +220,11 @@ export default function Applications() {
       return <div className='text-center p-8'>Loading applications...</div>;
     if (error)
       return <div className='text-red-500 text-center p-8'>Error: {error}</div>;
-    return (
-      <div id='section-container' className='w-full max-w-5xl p-2'>
-        {renderGroupedView()}
-      </div>
-    );
+    return renderGroupedView();
   };
+  
+  // Calculate the total number of applications
+  const totalApplications = Object.values(displayData).flat().reduce((acc, position) => acc + position.jobPositionApplicationHistory.length, 0);
 
   // Main body of application
   return (
@@ -257,6 +262,7 @@ export default function Applications() {
                   }
                 />
                 <Filter
+                  ref={filterRef}
                   onFilterChange={handleFilterChange}
                   filterConfig={filterConfig}
                 />
@@ -272,7 +278,16 @@ export default function Applications() {
               <div className='w-full mb-6 h-[88px] animate-pulse bg-gray-200 rounded-lg p-4'></div>
             )}
 
-            {renderContent()}
+            <div id='section-container' className='w-full max-w-5xl p-2'>
+              {!loading && !error && (
+                <div className="mb-4 text-sm text-gray-600">
+                  <strong>
+                    {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
+                  </strong>
+                </div>
+              )}
+              {renderContent()}
+            </div>
           </div>
         ) : (
           <div>Please make sure you are logged in as an EMPLOYER.</div>
