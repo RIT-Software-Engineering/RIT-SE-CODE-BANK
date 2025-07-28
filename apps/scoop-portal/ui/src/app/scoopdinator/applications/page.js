@@ -99,7 +99,9 @@ export default function SupervisorApplicationsPage() {
                             <TableCell sx={{ color: "#fff" }}>
                                 Last Name
                             </TableCell>
-                            <TableCell sx={{ color: "#fff" }}>Email</TableCell>
+                                <TableCell sx={{ color: "#fff" }}>
+                                    Email
+                                </TableCell>
                             <TableCell sx={{ color: "#fff" }}>
                                 Submitted
                             </TableCell>
@@ -167,7 +169,8 @@ export default function SupervisorApplicationsPage() {
                         </DialogTitle>
                         <DialogContent dividers>
                             <Typography>
-                                <strong>Email:</strong> {selectedApp.ritEmail}
+                                    <strong>Email:</strong>{" "}
+                                    {selectedApp.ritEmail}
                             </Typography>
                             <Typography>
                                 <strong>Submitted:</strong>{" "}
@@ -186,7 +189,10 @@ export default function SupervisorApplicationsPage() {
                                 </Typography>
                                 <Typography
                                     variant="h6"
-                                    sx={{ color: "#7D55C7", fontWeight: 500 }}
+                                        sx={{
+                                            color: "#7D55C7",
+                                            fontWeight: 500,
+                                        }}
                                 >
                                     {/* {application} */}
                                     {/* {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)} */}
@@ -196,7 +202,9 @@ export default function SupervisorApplicationsPage() {
                         <DialogActions sx={{ px: 3, py: 2 }}>
                             <Button
                                 variant="contained"
-                                onClick={() => handleStatusUpdate("accepted")}
+                                    onClick={() =>
+                                        handleStatusUpdate("accepted")
+                                    }
                                 sx={{
                                     bgcolor: "#84BD00",
                                     "&:hover": { bgcolor: "#6da400" },
@@ -206,60 +214,9 @@ export default function SupervisorApplicationsPage() {
                             </Button>
                             <Button
                                 variant="contained"
-                                onClick={() => handleStatusUpdate("rejected")}
-                                sx={{
-                                    bgcolor: "#F76902",
-                                    color: "#fff",
-                                    fontWeight: 600,
-                                }}
-                            >
-                                Application: {selectedApp.name}
-                            </Button>
-                        </DialogActions>
-                        <DialogContent dividers>
-                            <Typography>
-                                <strong>Email:</strong> {selectedApp.email}
-                            </Typography>
-                            <Typography>
-                                <strong>Submitted:</strong>{" "}
-                                {selectedApp.submittedAt}
-                            </Typography>
-                            <Typography mt={2} sx={{ fontStyle: "italic" }}>
-                                (Application content placeholder here...)
-                            </Typography>
-
-                            <Box mt={3}>
-                                <Typography
-                                    variant="subtitle2"
-                                    color="text.secondary"
-                                >
-                                    Current Status:
-                                </Typography>
-                                <Typography
-                                    variant="h6"
-                                    sx={{ color: "#7D55C7", fontWeight: 500 }}
-                                >
-                                    {selectedApp.status
-                                        .charAt(0)
-                                        .toUpperCase() +
-                                        selectedApp.status.slice(1)}
-                                </Typography>
-                            </Box>
-                        </DialogContent>
-                        <DialogActions sx={{ px: 3, py: 2 }}>
-                            <Button
-                                variant="contained"
-                                onClick={() => handleStatusUpdate("accepted")}
-                                sx={{
-                                    bgcolor: "#84BD00",
-                                    "&:hover": { bgcolor: "#6da400" },
-                                }}
-                            >
-                                Accept
-                            </Button>
-                            <Button
-                                variant="contained"
-                                onClick={() => handleStatusUpdate("rejected")}
+                                    onClick={() =>
+                                        handleStatusUpdate("rejected")
+                                    }
                                 sx={{
                                     bgcolor: "#DA291C",
                                     "&:hover": { bgcolor: "#b82018" },
@@ -278,6 +235,7 @@ export default function SupervisorApplicationsPage() {
                     </>
                 )}
             </Dialog>
+            </Box>
 
             <Snackbar
                 open={notification.open}
