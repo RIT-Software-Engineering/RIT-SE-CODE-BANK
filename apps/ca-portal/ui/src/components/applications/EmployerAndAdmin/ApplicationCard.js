@@ -9,7 +9,7 @@ import ViewCommentForm from "../../comments/ViewableCommentForm";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
 import { updateCandidateApplicationStatus } from "@/services/db-apis";
 import { useNotification } from "@/contexts/NotificationContext";
-import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
+import ApplicationTracker from "../ApplicationProgressTracker";
 
 export default function ApplicationCard({
   jobPosition,
@@ -267,7 +267,7 @@ export default function ApplicationCard({
 
           <div className="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
             <div className="w-2/3 mt-6">
-              <ApplicationProgressTracker currentStep={jobApplicationStatus} />
+              <ApplicationTracker currentStep={jobApplicationStatus} />
             </div>
             <span
               className={`px-4 py-2 text-md font-bold rounded-full ${statusClasses}`}
