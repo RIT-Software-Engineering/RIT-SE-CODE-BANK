@@ -9,11 +9,11 @@ const actionRoutes = require('./api/routes/actions');
 const stateRoutes = require('./api/routes/states');
 const permissionRoutes = require('./api/routes/permissions');
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 app.use(
   cors({
-    origin: process.env.BASE_URL || "http://localhost:3001",
+    origin: process.env.BASE_URL || "http://localhost:3000",
     credentials: true,
   }),
 );

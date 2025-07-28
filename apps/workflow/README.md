@@ -36,14 +36,14 @@ You will need to complete these steps for all
 
 #### Step 2: Setting up the environment
 
+For a head start, you can copy the .env.sample file in the same location, change the name to .env and just modify the lines that relate to the instructions below.
 - Create a `.env` file in apps/workflow/server
 - Add the following lines to your `.env` file:
-    - A reference to your local database for prisma and the user that has permissions to it: `DATABASE_URL="mysql://{username}:{password}@localhost:3306/{database_name}"`
-    - Used by the backend to specify which port to run the server on: `PORT="3001"`
-- Create a `.env` file in apps/workflow/ui
-- Add the following lines to your `.env` file:
-    - Used by the frontend to reference the server: `SERVER_URL="http://localhost:3001"`
-Warning: At this time, some of the references to the SERVER_URL on the frontend are hardcoded to `http://localhost:3001` at this time.
+    - A reference to your local database for prisma and the user that has permissions to it: `DATABASE_URL=mysql://{username}:{password}@localhost:3306/{database_name}`
+        - Note: `3306` is the default port that MariaDB uses. If you used a different one, you should change it to that.
+    - Used by the backend to specify which port to run the server on: `PORT=3001`
+    - Used by the API's cors policy to specify where the API expects to receive requests from: `BASE_URL={your_app_url}`
+    - Used to specify what stage (e.g., development, production) this app is running on: `NODE_ENV=development`
 
 #### Step 3: Setting up prisma
 
