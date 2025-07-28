@@ -158,8 +158,8 @@ export default function ApplicationCard({
               <div className="my-1 border-t border-gray-100"></div>
 
               {(jobApplicationStatus.toLowerCase() === "applied" ||
-                jobApplicationStatus.toLowerCase() === "PENDING_OFFER" ||
-                jobApplicationStatus.toLowerCase() === "Interview") && (
+                jobApplicationStatus.toLowerCase() === "pending_offer" ||
+                jobApplicationStatus.toLowerCase() === "interview") && (
                 <li>
                   <button
                     onClick={() => {

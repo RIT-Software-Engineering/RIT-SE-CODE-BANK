@@ -5,11 +5,11 @@ import React from 'react';
 // =============================================================================
 
 const progressStages = [
-  { status: 'APPLIED', label: 'Applied', tooltip: 'Your application has been successfully submitted.' },
-  { status: 'INTERVIEW', label: 'Interview', tooltip: 'You have been selected for an interview.' },
-  { status: 'PENDING_OFFER', label: 'Offer', tooltip: 'An offer is being prepared or is pending your review.' },
-  { status: 'ACCEPTED_OFFER', label: 'Accepted', tooltip: 'You have accepted the job offer.' },
-  { status: 'HIRED', label: 'Hired', tooltip: 'Welcome aboard! You are now hired for this position.' },
+  { status: 'APPLIED', label: 'Applied', tooltip: 'The student\'s application has been successfully submitted.' },
+  { status: 'INTERVIEW', label: 'Interview', tooltip: 'The student has been selected for an interview.' },
+  { status: 'PENDING_OFFER', label: 'Offer', tooltip: 'An offer is being prepared or is pending a review by the student.' },
+  { status: 'ACCEPTED_OFFER', label: 'Accepted', tooltip: 'Offer has been accepted by the student and is awaiting final review by the administration.' },
+  { status: 'HIRED', label: 'Hired', tooltip: 'Welcome aboard! The student is now hired for this position.' },
 ];
 
 const otherStates = {

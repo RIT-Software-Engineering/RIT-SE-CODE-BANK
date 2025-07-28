@@ -59,7 +59,7 @@ export default function Step2CandidateAndEmployee({
         {coursesTaken.map(({ courseCode, grade }) => (
           <div key={courseCode} className="flex items-center justify-between bg-slate-100 p-2 rounded-md">
             <span>{courseCode}</span>
-            <div className="flex items-center">
+            <div className="flex items-center space-x-2">
               <GradeSelector
                   id={`grade-${courseCode}`}
                   label=""
@@ -70,7 +70,7 @@ export default function Step2CandidateAndEmployee({
               <button
                 type="button"
                 onClick={() => removeCourseTaken(courseCode)}
-                className="ml-4 text-red-500 hover:text-red-700 font-bold"
+                className="text-slate-500 hover:text-red-600 font-bold p-1 rounded-full flex items-center justify-center h-6 w-6" // Styled the remove button
               >
                 &times;
               </button>
