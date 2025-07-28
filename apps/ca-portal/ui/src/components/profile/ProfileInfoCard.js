@@ -20,6 +20,8 @@ export default function ProfileInfoCard({
 }) {
   if (!profileData) return null;
 
+  const yearLevel = profileData.candidate?.graduateStatus === "GRADUATE" ? "Graduate" : profileData.candidate?.year;
+
   return (
     <section className='bg-white rounded-xl shadow-lg border border-gray-200'>
       <div className='p-6 flex justify-between items-start'>
@@ -47,7 +49,7 @@ export default function ProfileInfoCard({
               </p>
               <p>
                 <span className='font-semibold'>Year:</span>{' '}
-                {profileData.candidate?.year || 'N/A'}
+                {yearLevel || 'N/A'}
               </p>
             </div>
           )}
