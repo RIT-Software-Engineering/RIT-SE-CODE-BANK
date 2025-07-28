@@ -4,6 +4,8 @@ import semesterGroupRoutes from "./api/semestergroup/route.js";
 import applicationRoutes from "./api/application/route.js";
 import journalRoutes from "./api/journal/route.js";
 import projectRoutes from "./api/project/route.js";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT;
@@ -15,6 +17,6 @@ app.use("/api/journal", journalRoutes);
 app.use("/api/project", projectRoutes);
 
 app.listen(PORT, () => {
-    //load data?
-    console.log(`Express server is running on port ${PORT}`);
+  //load data?
+  console.log(`Express server is running on port ${PORT}`);
 });
