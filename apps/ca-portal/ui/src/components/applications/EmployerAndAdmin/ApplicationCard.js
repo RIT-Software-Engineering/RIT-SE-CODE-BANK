@@ -9,7 +9,7 @@ import ViewCommentForm from "../../comments/ViewableCommentForm";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
 import { updateCandidateApplicationStatus } from "@/services/db-apis";
 import { useNotification } from "@/contexts/NotificationContext";
-import ApplicationProgressTracker from "@/components/profile/ApplicationProgressTracker";
+import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
 export default function ApplicationCard({
   jobPosition,

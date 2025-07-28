@@ -18,7 +18,7 @@ import {
 import { useNotification } from "@/contexts/NotificationContext";
 import ViewCommentForm from "../../comments/ViewableCommentForm";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
-import ApplicationProgressTracker from "@/components/profile/ApplicationProgressTracker";
+import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
 
 export default function CandidateApplicationCard({
