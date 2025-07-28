@@ -10,12 +10,14 @@ import EditableCommentForm from "@/components/comments/EditableCommentForm";
 import { updateCandidateApplicationStatus } from "@/services/db-apis";
 import { useNotification } from "@/contexts/NotificationContext";
 import ApplicationTracker from "../ApplicationProgressTracker";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ApplicationCard({
   jobPosition,
   application,
   onStatusChange,
 }) {
+  const { currentUser } = useAuth();
   const { showNotification } = useNotification();
   const [isViewingApplication, setIsViewingApplication] = useState(false);
   const [isViewingComments, setIsViewingComments] = useState(false);
@@ -84,6 +86,10 @@ export default function ApplicationCard({
       <div className="flex-1 min-w-0">
         <h2 className="text-2xl font-bold text-gray-800 truncate">
           {application.candidateName}
+          {" "}
+          ({currentUser.role === 'EMPLOYER' && (
+            <span className="user-pronouns">{application.candidatePronouns}</span>
+          )})
           {" | "}
           <Link
             href={`/Users/${application.candidateUID}/Messaging`}
@@ -94,6 +100,9 @@ export default function ApplicationCard({
             </span>
           </Link>
         </h2>
+        <p className="text-md text-gray-500">
+          {"UID: " + application.candidateUID}
+        </p>
         <p className="text-md text-gray-500">
           {"Year " + application.candidateYear} | {application.candidateMajor}
         </p>

@@ -10,7 +10,9 @@ export default function ViewableApplicationForm({position, application, onClose 
   const submittedResume = application.resume;
 
   const displayValues = {
+    uid: application.candidateUID || 0,
     name: application.candidateName || '',
+    pronouns: application.candidatePronouns || '',
     email: application.candidateEmail || '',
     major: application.candidateMajor || '',
     year: application.candidateYear || '',
@@ -31,7 +33,9 @@ export default function ViewableApplicationForm({position, application, onClose 
         </div>
 
         <div className="space-y-4">
+          <DisplayField label="UID" value={displayValues.uid} />
           <DisplayField label="Full Name" value={displayValues.name} />
+          <DisplayField label="Pronouns" value={displayValues.pronouns} />
           <DisplayField label="Email" value={displayValues.email} />
           <DisplayField label="Major" value={displayValues.major} />
           <DisplayField label="Year" value={displayValues.year} />

@@ -13,7 +13,7 @@ export default function GradeSelector({ value, onChange, id, label, isOptional =
   };
 
   // Define the TailwindCSS classes for styling the <select> element.
-  const selectClasses = `mt-1 block w-full rounded-md bg-gray-50 shadow-sm py-2 pl-3 pr-10 text-base focus:outline-none sm:text-sm ${
+  const selectClasses = `mt-1 block w-full rounded-md border shadow-sm py-2 pl-3 pr-10 text-base focus:outline-none sm:text-sm ${
     error 
       ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
       : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'

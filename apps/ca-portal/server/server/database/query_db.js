@@ -440,6 +440,7 @@ async function applyForJobPosition(applicationDetails) {
         jobPositionId,
         resumeId: resumeId,
         candidateName: applicationFormData.name,
+        candidatePronouns: applicationFormData.pronouns,
         candidateEmail: applicationFormData.email,
         candidateMajor: applicationFormData.major,
         candidateYear: parseInt(applicationFormData.year, 10),
