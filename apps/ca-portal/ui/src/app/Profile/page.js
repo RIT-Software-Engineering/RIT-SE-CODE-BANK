@@ -6,10 +6,10 @@ import UserProfileModal from "@/components/profile/UserProfileModal";
 import { getUserProfile, getAllCourses } from "@/services/db-apis";
 
 import ProfileInfoCard from "@/components/profile/ProfileInfoCard";
-import CoursesTakenCard from "@/components/profile/CoursesTakenCard";
-import JobPositionsCard from "@/components/profile/JobPositionsCard";
-import CoursesWorkedCard from "@/components/profile/CoursesWorkedCard";
-import ResumeManager from "@/components/profile/ResumeManager";
+import CoursesTakenCard from "@/components/profile/CandidateAndEmployee/CoursesTakenCard";
+import CoursesWorkedCard from "@/components/profile/CandidateAndEmployee/CoursesWorkedCard";
+import ResumeManager from "@/components/profile/CandidateAndEmployee/ResumeManager";
+import JobPositionsCard from "@/components/positions/EmployerAndAdmin/JobPositionsCard";
 
 export default function ProfilePage() {
   const [editingSection, setEditingSection] = useState(null); 

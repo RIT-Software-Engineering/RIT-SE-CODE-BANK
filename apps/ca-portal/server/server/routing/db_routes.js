@@ -14,7 +14,7 @@ const {
   getAllUsers,
   getAllCourses,
   createCourse,
-  findUniqueUser,
+  getUserProfile,
   upsertCandidateProfile,
   upsertEmployerProfile,
   getOpenJobPositions,
@@ -477,7 +477,7 @@ router.get('/users/:UID', async (req, res) => {
         .status(400)
         .json({ error: "User UID must be a valid number." });
     }
-    const user = await findUniqueUser(numericUID);
+    const user = await getUserProfile(numericUID);
     res.status(200).json(user);
   } catch (error) {
     console.error(`Error in /users/${UID} route:`, error);

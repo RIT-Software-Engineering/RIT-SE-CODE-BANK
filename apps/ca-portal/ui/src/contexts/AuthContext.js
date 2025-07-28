@@ -16,6 +16,7 @@ export default function AuthProvider({ children }) {
         if (storedUID) {
           // If a user ID is in storage, fetch their full profile
           const userProfile = await getUserProfile(parseInt(storedUID, 10));
+          console.log("Session restored:", userProfile);
           setCurrentUser(userProfile);
         }
       } catch (error) {

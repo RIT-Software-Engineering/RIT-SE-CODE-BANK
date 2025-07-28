@@ -12,7 +12,7 @@ export const positionFilterConfig = [
     label: 'Course Level',
     type: 'select',
     placeholder: 'Any Level',
-    options: ["100", "200", "300", "400", "500", "600"],
+    options: ["100", "200", "300", "400", "500", "600", "700"],
     optionLabel: (level) => `${level}-level` // Custom label for the options
   },
   {

@@ -1,10 +1,10 @@
 // components/Profile/ProfileInfoCard.js
 
 import React from 'react';
-import EditIcon from '../icons/EditIcon';
+import EditButton from '../common/buttons/EditButton';
 
 /**
- * A card component to display user profile information.
+ * A card component to display user profile information for candidates, employees, employers, and admins.
  * @param {object} props - The component props.
  * @param {object} props.profileData - The user's profile data object.
  * @param {boolean} props.isEmployerOrAdmin - Flag to show employer/admin specific fields.
@@ -58,7 +58,7 @@ export default function ProfileInfoCard({
             </p>
           )}
         </div>
-        <EditIcon handleOpenModal={onEdit} />
+        <EditButton handleOpenModal={onEdit} />
       </div>
     </section>
   );
