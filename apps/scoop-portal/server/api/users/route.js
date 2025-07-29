@@ -4,7 +4,22 @@ import { PrismaClient as _PrismaClient } from "../../server/src/generated/prisma
 const prisma = new _PrismaClient();
 
 router.post("/", async (req, res) => {
-    const {
+  const {
+    lastName,
+    firstName,
+    email,
+    type,
+    semester_group,
+    project,
+    active,
+    last_login,
+    prev_login,
+    createdAt,
+  } = req.body;
+
+  try {
+    const saved = await prisma.users.create({
+      data: {
         lastName,
         firstName,
         email,
@@ -15,30 +30,15 @@ router.post("/", async (req, res) => {
         last_login,
         prev_login,
         createdAt,
-    } = req.body;
-
-    try {
-        const saved = await prisma.users.create({
-            data: {
-                lastName,
-                firstName,
-                email,
-                type,
-                semester_group,
-                project,
-                active,
-                last_login,
-                prev_login,
-                createdAt,
-            },
-        });
-        res.status(200).json({ message: "User saved", user: saved });
-    } catch (error) {
-        console.error("Error saving user:", error);
-        return res
-            .status(500)
-            .json({ message: "Error saving user", error: error.message });
-    }
+      },
+    });
+    res.status(200).json({ message: "User saved", user: saved });
+  } catch (error) {
+    console.error("Error saving user:", error);
+    return res
+      .status(500)
+      .json({ message: "Error saving user", error: error.message });
+  }
 });
 
 // GET all users
@@ -52,19 +52,41 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET all employees 
+// GET all employees
 router.get("/employees", async (req, res) => {
-    try {
-        const employees = await prisma.users.findMany({ 
-            where: {
-                type: "student", //(temp using "students" type from old code)
-            },
-        });
-        res.json(employees);
-    } catch (error) {
-        console.error("Error fetching employees:", error);
-        res.status(500).json({ error: "Failed to fetch employees" });
+  try {
+    const employees = await prisma.users.findMany({
+      where: {
+        type: "student", //(temp using "students" type from old code)
+      },
+    });
+    res.json(employees);
+  } catch (error) {
+    console.error("Error fetching employees:", error);
+    res.status(500).json({ error: "Failed to fetch employees" });
+  }
+});
+
+// GET user by ID
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id: id },
+    });
+    if (!user) {
+      console.error("User not found:", id);
+      return res.status(404).json({ message: "User not found" });
     }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error fetching user: ", error);
+    res.status(500).json({
+      message: "Failed to fetch user",
+      error: error.message,
+    });
+  }
 });
 
 export default router;
