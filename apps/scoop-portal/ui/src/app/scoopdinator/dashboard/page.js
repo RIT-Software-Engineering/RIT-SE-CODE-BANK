@@ -6,7 +6,7 @@ import {
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 // import { useUser } from "../../user-context/page";
 // import UnauthorizedPage from '../../unauthorized/page';
-import ProtectedRoute from "../../utils/ProtectedRoute";
+// import ProtectedRoute from "../../utils/ProtectedRoute";
 
 
 import Header from '../../_components/Header';
@@ -92,7 +92,7 @@ export default function WorkflowDashboard() {
 //   }
   
   return (
-    <ProtectedRoute requiredRole="admin">
+    // <ProtectedRoute requiredRole="admin">
     <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
@@ -218,6 +218,6 @@ export default function WorkflowDashboard() {
         </Typography>
       </Box>
     </Box>
-    </ProtectedRoute>
+    // </ProtectedRoute>
   );
 }
