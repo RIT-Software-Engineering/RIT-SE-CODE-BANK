@@ -191,7 +191,7 @@ export default function CandidateApplicationCard({
                   </button>
                 </li>
               )}
-              {console.log("Job Application Status:", jobApplicationStatus)}
+
               {jobApplicationStatus.toLowerCase() === "pending_offer" && (
                 <li>
                   <button

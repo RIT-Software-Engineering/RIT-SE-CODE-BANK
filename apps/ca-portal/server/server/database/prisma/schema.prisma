@@ -105,20 +105,22 @@ model JobPositionHistory {
 
 model JobPositionApplicationHistory {
   //Fields
-  id                            Int                  @id @default(autoincrement())
-  candidateUID                  Int
-  jobPositionId                 String
-  resumeId                      Int
-  jobApplicationStatus          JobApplicationStatus @default(APPLIED)
-  candidateName                 String               @db.Text
-  candidatePronouns             String               @db.Text
-  candidateEmail                String               @db.Text
-  candidateMajor                String               @db.Text
-  candidateYear                 Int
-  candidateGrade                Grade?
+  id                                 Int                  @id @default(autoincrement())
+  candidateUID                       Int
+  jobPositionId                      String
+  resumeId                           Int
+  jobApplicationStatus               JobApplicationStatus @default(APPLIED)
+  candidateName                      String               @db.Text
+  candidatePronouns                  String               @db.Text
+  candidateEmail                     String               @db.Text
+  candidateMajor                     String               @db.Text
+  candidateYear                      Int
+  candidateGrade                     Grade?
   wasPriorEmployeeForThisCourse      Boolean              @db.TinyInt
   wasPriorEmployeeForOtherCourses    Boolean              @db.TinyInt
-  priorEmploymentHistory        String?              @db.Text
+  priorEmploymentHistory             String?              @db.Text
+  coverLetterName                    String?              @db.Text
+  coverLetterURL                     String?
 
   // Relations
   candidate   Candidate   @relation(fields: [candidateUID], references: [uid])
