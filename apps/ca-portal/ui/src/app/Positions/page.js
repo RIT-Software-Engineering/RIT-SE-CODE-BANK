@@ -156,7 +156,6 @@ export default function Positions() {
               onChange={handleSearchTermChange}
               placeholder="Search by course name or code..."
             />
-            {/* **FIXED**: The `ref` has been removed as it's no longer needed. */}
             <Filter
               ref={filterRef}
               onFilterChange={handleFilterChange}
