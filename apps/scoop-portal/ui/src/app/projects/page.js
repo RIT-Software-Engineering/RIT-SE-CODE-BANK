@@ -43,9 +43,11 @@ export default function Projects() {
     fetchProjects();
   }, []);
 
-  return loading ? (
-    <ProjectsLoading />
-  ) : (
+  if (loading) {
+    return <ProjectsLoading />;
+  }
+
+  return (
     <>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -53,68 +55,63 @@ export default function Projects() {
           Projects
         </Typography>
 
-        <>
-          {projects.length === 0 ? (
-            <Typography variant="body1">
-              No projects found. Please check back later.
-            </Typography>
-          ) : (
-            projects.map((project) => (
-              <Card
-                square
-                key={project.id}
+        {projects.length === 0 ? (
+          <Typography variant="body1">
+            No projects found. Please check back later.
+          </Typography>
+        ) : (
+          projects.map((project) => (
+            <Card
+              square
+              key={project.id}
+              sx={{
+                padding: "1em",
+                margin: "0.5rem",
+              }}
+            >
+              <Box
                 sx={{
-                  padding: "1em",
-                  margin: "0.5rem",
+                  display: "flex",
+                  justifyContent: "space-between",
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Typography variant="h2">
-                    {project.display_name || project.title || "Unknown Project"}
-                  </Typography>
-                  <Button
-                    variant="solid-orange"
-                    href={`/projects/${project.id}`}
-                  >
-                    View
-                  </Button>
-                </Box>
-                <Box
-                  sx={{
-                    padding: "0.25em 0.75em",
-                    display: "inline-block",
-                    backgroundColor:
-                      project.status === "active"
-                        ? "rgba(0, 156, 189, 0.2)"
-                        : project.status === "in progress"
-                          ? "rgba(246, 190, 0, 0.2)"
-                          : project.status === "completed"
-                            ? "rgba(132, 189, 0, 0.2)"
-                            : "rgba(124, 135, 142, 0.2)",
-                    color:
-                      project.status === "active"
-                        ? theme.palette.info.main
-                        : project.status === "in progress"
-                          ? theme.palette.warning.main
-                          : project.status === "completed"
-                            ? theme.palette.success.main
-                            : "rgb(124, 135, 142)",
-                  }}
-                >
-                  <Typography sx={{ margin: "0" }}>
-                    {project.status.toUpperCase()}
-                  </Typography>
-                </Box>
-                <Typography>{project.description}</Typography>
-              </Card>
-            ))
-          )}
-        </>
+                <Typography variant="h2">
+                  {project.display_name || project.title || "Unknown Project"}
+                </Typography>
+                <Button variant="solid-orange" href={`/projects/${project.id}`}>
+                  View
+                </Button>
+              </Box>
+              <Box
+                sx={{
+                  padding: "0.25em 0.75em",
+                  display: "inline-block",
+                  backgroundColor:
+                    project.status === "active"
+                      ? "rgba(0, 156, 189, 0.2)"
+                      : project.status === "in progress"
+                        ? "rgba(246, 190, 0, 0.2)"
+                        : project.status === "completed"
+                          ? "rgba(132, 189, 0, 0.2)"
+                          : "rgba(124, 135, 142, 0.2)",
+                  color:
+                    project.status === "active"
+                      ? theme.palette.info.main
+                      : project.status === "in progress"
+                        ? theme.palette.warning.main
+                        : project.status === "completed"
+                          ? theme.palette.success.main
+                          : "rgb(124, 135, 142)",
+                }}
+              >
+                <Typography sx={{ margin: "0" }}>
+                  {project.status.toUpperCase()}
+                </Typography>
+              </Box>
+              <Typography>{project.description}</Typography>
+            </Card>
+          ))
+        )}
       </Container>
     </>
   );
