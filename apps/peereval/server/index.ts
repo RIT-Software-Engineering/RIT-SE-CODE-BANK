@@ -5,6 +5,7 @@ import userRoutes from "./routes/users";
 import projectRoutes from "./routes/projects";
 import assessmentRoutes from "./routes/assessments";
 import formRoutes from "./routes/forms";
+import journalRoutes from "./routes/journals";
 
 const app = express();
 const PORT = process.env.PORT || 3006;
@@ -25,6 +26,7 @@ app.use("/users", userRoutes);
 app.use("/projects", projectRoutes);
 app.use("/assessments", assessmentRoutes);
 app.use("/forms", formRoutes);
+app.use("/journals", journalRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

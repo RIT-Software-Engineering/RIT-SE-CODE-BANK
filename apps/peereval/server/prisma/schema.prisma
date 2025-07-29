@@ -26,6 +26,7 @@ model User {
   peerResponseAsRespondee FormResponse[] @relation("respondeeInFormResponse")
   inAssessments           Assessment[]   @relation("receiversInAssessment")
   outAssessments          Assessment[]   @relation("responderInAssessment")
+  Journal                 Journal[]
 }
 
 // ---------------------------------------
@@ -133,4 +134,42 @@ model RubricRow {
 
   // Required for relations
   Inquiry Inquiry[]
+}
+
+// ---------------------------------------
+// JOURNAL
+// ---------------------------------------
+model Journal {
+  id   String @id @default(uuid()) @db.Char(36)
+  user User   @relation(fields: [userId], references: [id])
+
+  // Required for relations
+  entries JournalEntry[]
+  userId  String         @db.Char(36)
+
+  @@unique([userId])
+}
+
+model JournalEntry {
+  id          String            @id @default(uuid()) @db.Char(36)
+  journal     Journal           @relation(fields: [journalId], references: [id])
+  tags        JournalEntryTag[]
+  re          String
+  content     String            @db.LongText
+  date        DateTime          @default(now())
+  lastUpdated DateTime          @default(now())
+
+  // Required for relations
+  journalId String @db.Char(36)
+}
+
+model JournalEntryTag {
+  id   String @id @default(uuid()) @db.Char(36)
+  name String
+
+  // Required for relations
+  JournalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  journalEntryId String?       @db.Char(36)
+
+  @@unique([name])
 }

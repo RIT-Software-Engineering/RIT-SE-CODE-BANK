@@ -212,6 +212,12 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                     <h3 className="text-xl font-semibold mb-2">Your Peers</h3>
                     <ProjectPeersList projectId={projectId} />
                 </div>
+                <Link
+                    href="/journal"
+                    className="bg-blue-600 text-white py-2 mx-2 rounded font-semibold cursor-pointer text-center"
+                >
+                    <button className="cursor-pointer">Your Journal</button>
+                </Link>
             </Drawer>
         </>
     );

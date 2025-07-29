@@ -23,6 +23,15 @@ async function main() {
         { name: "Zebra", email: "zebra@rit.edu" },
     ];
 
+    const users = await Promise.all(
+        userData.map((u) => prisma.user.create({ data: u }))
+    );
+
+    // Give 'em all journals
+    await Promise.all(
+        users.map(({ id }) => prisma.journal.create({ data: { userId: id } }))
+    );
+
     const [
         alice,
         bob,
@@ -35,7 +44,7 @@ async function main() {
         ivan,
         julia,
         zebra,
-    ] = await Promise.all(userData.map((u) => prisma.user.create({ data: u })));
+    ] = users;
 
     // ----------------------------------------------------
     // PROJECTS
