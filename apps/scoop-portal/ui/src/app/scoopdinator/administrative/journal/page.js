@@ -18,6 +18,8 @@ import EditNoteIcon from "@mui/icons-material/EditNote";
 import toast, { Toaster } from "react-hot-toast";
 import JournalLoading from "./loading";
 
+// BUG: There's dark mode flicker on this page
+// TODO: Doc comment for Journal()
 export default function Journal() {
   const theme = useTheme();
   const [journalEntries, setJournalEntries] = useState([]);
