@@ -1,25 +1,25 @@
+// src/app/Positions/page.js
 "use client";
 
-import React, { useEffect, useCallback, useState, use } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { getOpenPositions } from "../../services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
 
 import PositionsCard from "@/components/positions/PositionsCard";
-import Filter from "@/components/common/searchAndFilter/Filter";
+import { Filter } from "@/components/common/searchAndFilter/Filter";
 import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { positionFilterConfig } from "./filter.config";
 import JobPositionsCard from "@/components/positions/EmployerAndAdmin/JobPositionsCard";
 
-const PositionsContainer = (
-  {handleSearch,
+const PositionsContainer = ({
+  handleSearch,
   searchTerm,
   handleSearchTermChange,
   handleFilterChange,
   positionFilterConfig,
-  renderContent} = {
-}
-) => {
+  renderContent,
+} = {}) => {
   return (
     <div id="positions-container" className="w-full mx-auto">
       <form onSubmit={handleSearch} className="mb-8 flex items-center gap-x-2">
@@ -39,6 +39,14 @@ const PositionsContainer = (
           Search
         </button>
       </form>
+      {!isLoading && !error && (
+        <div className="mb-4 text-sm text-gray-600">
+          <strong>
+            {openPositions.length}{" "}
+            {openPositions.length === 1 ? "result" : "results"}
+          </strong>
+        </div>
+      )}
       {renderContent()}
     </div>
   );
@@ -46,6 +54,8 @@ const PositionsContainer = (
 
 export default function Positions() {
   const { currentUser } = useAuth();
+  const filterRef = useRef();
+
   const [openPositions, setOpenPositions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,7 +63,7 @@ export default function Positions() {
 
   const [appliedFilters, setAppliedFilters] = useState({
     days: [],
-    level: "",
+    level: [],
     location: "",
     eligibility: "",
     applied: "",
@@ -104,7 +114,12 @@ export default function Positions() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchData(searchTerm, appliedFilters);
+    // Get the most up-to-date filters directly from the Filter component
+    const latestFilters = filterRef.current.getFilters();
+    // Update the parent's state so the UI is consistent
+    setAppliedFilters(latestFilters);
+    // Fetch data with the latest filters and search term
+    fetchData(searchTerm, latestFilters);
   };
 
   const handleFilterChange = (filters) => {
@@ -170,7 +185,7 @@ export default function Positions() {
           handleSearchTermChange={handleSearchTermChange}
           handleFilterChange={handleFilterChange}
           positionFilterConfig={positionFilterConfig}
-          renderContent= {renderContent}
+          renderContent={renderContent}
         />
       ),
       description: "Browse and apply for open positions.",
@@ -193,36 +208,39 @@ export default function Positions() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        {currentUser?.role === "EMPLOYER" || currentUser?.role === "ADMIN" && (
-        <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-          {/* 4. Map over the tabs array to render the buttons */}
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setActiveTabTitle(tab.label);
-                setActiveTabDescription(tab.description);
-              }}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200
+        {currentUser?.role === "EMPLOYER" ||
+          (currentUser?.role === "ADMIN" && (
+            <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+              {/* 4. Map over the tabs array to render the buttons */}
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setActiveTabTitle(tab.label);
+                    setActiveTabDescription(tab.description);
+                  }}
+                  className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200
                 ${
                   activeTab === tab.id
                     ? "border-orange-500 text-orange-600" // Active tab styles
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" // Inactive tab styles
                 }
               `}
-            >
-              {tab.label}
-            </button>
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
           ))}
-        </nav>
-        )}
         <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 w-full">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
               {activeTabTitle}
             </h1>
-            <p className="mt-2 text-lg text-gray-600 mb-5">{activeTabDescription}</p>
+            <p className="mt-2 text-lg text-gray-600 mb-5">
+              {activeTabDescription}
+            </p>
             <div className="w-3/4 m-auto text-left">
               {tabs.find((tab) => tab.id === activeTab).content}
             </div>

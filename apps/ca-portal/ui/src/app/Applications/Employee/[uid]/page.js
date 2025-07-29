@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCandidateApplicationsAsCandidate } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
 import { gradeEnumToStringValue } from '@/constants/gradeConstants';
@@ -19,6 +19,7 @@ import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDown
 
 export default function CandidateApplicationsPage() {
   const { currentUser, refreshUserProfile } = useAuth();
+  const filterRef = useRef();
 
   const [displayData, setDisplayData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -28,7 +29,7 @@ export default function CandidateApplicationsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [appliedFilters, setAppliedFilters] = useState({
     status: [],
-    level: '',
+    level: [],
     semester: '',
   });
 
@@ -132,7 +133,12 @@ export default function CandidateApplicationsPage() {
   // Called when the search form is submitted
   const handleSearch = (e) => {
     e.preventDefault();
-    updateApplicationsView(searchTerm, appliedFilters);
+    // Get the most up-to-date filters directly from the Filter component
+    const latestFilters = filterRef.current.getFilters();
+    // Update the parent's state so the UI is consistent
+    setAppliedFilters(latestFilters);
+    // Fetch data with the latest filters and search term
+    updateApplicationsView(searchTerm, latestFilters);
   };
 
   // --- Render Logic ---
@@ -172,6 +178,8 @@ export default function CandidateApplicationsPage() {
     );
   };
 
+  const totalApplications = Object.values(displayData).reduce((acc, apps) => acc + apps.length, 0);
+
   return (
     <main>
       <div className='flex flex-col items-center p-6 bg-white shadow-sm'>
@@ -188,6 +196,7 @@ export default function CandidateApplicationsPage() {
             />
             {filterConfig.length > 0 ? (
                 <Filter
+                  ref={filterRef}
                   onFilterChange={handleFilterChange}
                   filterConfig={filterConfig}
                 />
@@ -204,7 +213,16 @@ export default function CandidateApplicationsPage() {
       </Box>
 
       <div className='flex justify-center bg-gray-50 p-4 md:p-8 min-h-screen'>
-        {renderContent()}
+        <div className='w-full max-w-4xl'>
+          {!loading && !error && (
+            <div className="mb-4 text-sm text-gray-600">
+              <strong>
+                {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
+              </strong>
+            </div>
+          )}
+          {renderContent()}
+        </div>
       </div>
     </main>
   );

@@ -10,10 +10,8 @@ export const generateApplicationsFilterConfig = (semesterOptions = []) => [
   {
     id: 'level',
     label: 'Course Level',
-    type: 'select',
-    placeholder: 'Any Level',
-    options: ["100", "200", "300", "400", "500", "600", "700"],
-    optionLabel: (level) => `${level}-level`,
+    type: 'checkbox',
+    options: ["100-level", "200-level", "300-level", "400-level", "500-level", "600-level", "700-level"]
   },
   {
     id: 'semester',

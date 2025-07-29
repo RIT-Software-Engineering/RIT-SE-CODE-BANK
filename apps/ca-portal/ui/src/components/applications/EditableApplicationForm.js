@@ -15,7 +15,9 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
     const primaryResume = existingResumes.find(r => r.isPrimary) || existingResumes[0];
 
     const initialValues = {
+        uid: user?.uid || 0,
         name: user?.name || '',
+        pronouns: user?.pronouns || '',
         email: user?.email || '',
         major: user?.candidate?.major || '',
         year: user?.candidate?.year || '',
@@ -100,7 +102,9 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <DisplayField label="UID" value={initialValues.uid} />
                     <DisplayField label="Full Name" value={initialValues.name} />
+                    <DisplayField label="Pronouns" value={initialValues.pronouns} />
                     <DisplayField label="Email" value={initialValues.email} />
                     <DisplayField label="Major" value={initialValues.major} />
                     <DisplayField label="Year" value={initialValues.year} />
@@ -169,7 +173,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                                     {...register("resumeName", {
                                         required: selectedResumeId === 'new' ? "Resume name is required." : false,
                                     })}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
+                                    className="mt-1 block w-full rounded-md border-gray-400 shadow-sm p-2"
                                     placeholder="e.g., General Purpose Resume"
                                 />
                                 {errors.resumeName && <p className="text-red-500 text-sm mt-1">{errors.resumeName.message}</p>}

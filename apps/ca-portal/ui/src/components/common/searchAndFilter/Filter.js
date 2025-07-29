@@ -1,5 +1,7 @@
+// src/components/common/searchAndFilter/Filter.js
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+// 1. IMPORT forwardRef and useImperativeHandle
+import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import { FilterIcon } from "../../../assets/icons";
 
 // Helper function to create the initial state from the configuration
@@ -11,13 +13,22 @@ const createInitialState = (config) => {
   return initialState;
 };
 
-export default function Filter({ onFilterChange, filterConfig }) {
+// 2. WRAP the component in forwardRef and accept 'ref' as the second argument
+export const Filter = forwardRef(function FilterComponent({ onFilterChange, filterConfig }, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState(
     createInitialState(filterConfig)
   );
 
   const wrapperRef = useRef(null);
+  
+  // 3. ADD useImperativeHandle to expose a function to the parent
+  useImperativeHandle(ref, () => ({
+    getFilters: () => {
+      // This function returns the component's current internal state
+      return selectedFilters;
+    }
+  }));
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -73,7 +84,6 @@ export default function Filter({ onFilterChange, filterConfig }) {
           <div className="p-4 max-h-96 overflow-y-auto">
             {filterConfig.map((filter) => (
               <div key={filter.id} className="mb-4">
-                {/* We only render the <h3> title if the filter is NOT a single-option checkbox. */}
                 {!(
                   filter.type === "checkbox" && filter.options.length === 1
                 ) && (
@@ -83,7 +93,6 @@ export default function Filter({ onFilterChange, filterConfig }) {
                 )}
 
                 {filter.type === "checkbox" && (
-                  // Use a simpler layout for single checkboxes
                   <div
                     className={
                       filter.options.length > 1
@@ -160,7 +169,6 @@ export default function Filter({ onFilterChange, filterConfig }) {
               </div>
             ))}
 
-            {/* Action Buttons */}
             <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
               <button
                 onClick={handleClearFilters}
@@ -180,4 +188,4 @@ export default function Filter({ onFilterChange, filterConfig }) {
       )}
     </div>
   );
-}
+});
