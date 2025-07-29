@@ -1,7 +1,7 @@
 // src/app/Positions/page.js
 "use client";
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState, useRef } from "react";
 import { getOpenPositions } from "../../services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
@@ -19,10 +19,13 @@ const PositionsContainer = ({
   handleFilterChange,
   positionFilterConfig,
   renderContent,
+  isLoading,
+  error,
+  openPositions
 } = {}) => {
   return (
     <div id="positions-container" className="w-full mx-auto">
-      <form onSubmit={handleSearch} className="mb-8 flex items-center gap-x-2">
+      <form onSubmit={handleSearch} className="mb-2 flex items-center gap-x-2">
         <SearchBar
           value={searchTerm}
           onChange={handleSearchTermChange}
@@ -186,6 +189,9 @@ export default function Positions() {
           handleFilterChange={handleFilterChange}
           positionFilterConfig={positionFilterConfig}
           renderContent={renderContent}
+          isLoading={isLoading}
+          error={error}
+          openPositions={openPositions}
         />
       ),
       description: "Browse and apply for open positions.",
