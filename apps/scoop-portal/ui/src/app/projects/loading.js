@@ -30,7 +30,7 @@ function ProjectCardLoading() {
           <Typography variant="h2">Project Title</Typography>
         </Skeleton>
         <Skeleton variant="rectangular">
-          <Button variant="solid-orange">View</Button>
+          <Button>View</Button>
         </Skeleton>
       </Box>
       <Skeleton
