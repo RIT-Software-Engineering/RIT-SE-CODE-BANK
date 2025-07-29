@@ -16,24 +16,51 @@ import {
 } from "@mui/material";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import toast, { Toaster } from "react-hot-toast";
+import JournalLoading from "./loading";
 
 export default function Journal() {
   const theme = useTheme();
   const [journalEntries, setJournalEntries] = useState([]);
+  const [contactees, setContactees] = useState({});
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
+  const [loading, setLoading] = useState([]);
 
   useEffect(() => {
     console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
     const fetchEntries = async () => {
+      setLoading(true);
+
+      // Fetch all journal entries
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/journal`
         );
         const data = await res.json();
         setJournalEntries(data);
+
+        // Fetch contactee info for all unique contacteeIds
+        const uniqueIds = [...new Set(data.map((e) => e.contacteeId))];
+        const contacteeMap = {};
+        await Promise.all(
+          uniqueIds.map(async (id) => {
+            // Adjust endpoint as needed for API
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`
+            );
+            if (res.ok) {
+              const user = await res.json();
+              contacteeMap[id] = `${user.fname} ${user.lname}`;
+            } else {
+              contacteeMap[i] = "Unknown";
+            }
+          })
+        );
+        setContactees(contacteeMap);
       } catch (err) {
-        console.error("Failed to fetch journal entries:", err);
+        console.error("Failed to fetch journal entries or contactees:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -78,6 +105,10 @@ export default function Journal() {
     });
   };
 
+  if (loading) {
+    return <JournalLoading />;
+  }
+
   return (
     <>
       <Header />
@@ -85,8 +116,13 @@ export default function Journal() {
         <Typography variant="h1" sx={{ mb: 4 }}>
           Journal
         </Typography>
-        <>
-          {journalEntries
+
+        {journalEntries.length === 0 ? (
+          <Typography variant="body1">
+            No journal entries found. Please check back later.
+          </Typography>
+        ) : (
+          journalEntries
             .sort((a, b) => new Date(b.date) - new Date(a.date))
             .map((entry) => (
               <Card
@@ -123,7 +159,9 @@ export default function Journal() {
                     Edit Notes
                   </Button>
                 </Box>
-                <Typography variant="h3">{entry.contactee}</Typography>
+                <Typography variant="h3">
+                  with {contactees[entry.contacteeId] || entry.contacteeId}
+                </Typography>
                 <Typography variant="body1">Notes:</Typography>
                 <Box
                   sx={{
@@ -144,8 +182,8 @@ export default function Journal() {
                   </pre>
                 </Box>
               </Card>
-            ))}
-        </>
+            ))
+        )}
       </Container>
       <Dialog
         open={!!editingEntry}
@@ -165,7 +203,8 @@ export default function Journal() {
                 minute: "numeric",
               })}
               <br />
-              with {editingEntry.contactee}
+              with{" "}
+              {contactees[editingEntry.contacteeId] || editingEntry.contacteeId}
             </DialogTitle>
             <DialogContent>
               <Box>
