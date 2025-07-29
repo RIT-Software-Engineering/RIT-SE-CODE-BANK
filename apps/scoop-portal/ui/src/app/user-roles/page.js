@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "../user-context/page";
+import { useUser } from "../utils/user-context/page";
 import { Select, MenuItem, Button, Typography, Box } from "@mui/material";
 
 export default function SelectUserPage() {

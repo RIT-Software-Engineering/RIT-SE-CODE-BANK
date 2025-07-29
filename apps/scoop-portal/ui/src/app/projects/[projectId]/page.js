@@ -3,7 +3,7 @@ import Header from "@components/Header";
 import { Button, Typography } from "@mui/material";
 import { ArrowBack, Edit } from "@mui/icons-material";
 import {} from "@mui/icons-material";
-import { useUser } from "../../user-context/page";
+import { useUser } from "../../utils/user-context/page";
 import UnauthorizedPage from '../../unauthorized/page';
 
 // The current border styles are NOT intended for the final product.

@@ -4,7 +4,7 @@ import {
   Box, Typography, Container, Button, Grid, Paper,
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { useUser } from "../../user-context/page";
+import { useUser } from "../../utils/user-context/page";
 import UnauthorizedPage from '../../unauthorized/page';
 
 import Header from '../../_components/Header';

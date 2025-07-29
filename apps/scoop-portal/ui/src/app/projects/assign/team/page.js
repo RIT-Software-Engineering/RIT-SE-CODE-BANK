@@ -2,7 +2,7 @@
 import React from 'react';
 import Header from '@components/Header';
 import { Container, Typography } from '@mui/material';
-import { useUser } from "../../../user-context/page";
+import { useUser } from "../../../utils/user-context/page";
 import UnauthorizedPage from '../../../unauthorized/page';
 
 export default function AssignProjectTeams() {
