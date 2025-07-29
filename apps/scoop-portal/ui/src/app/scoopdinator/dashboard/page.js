@@ -84,6 +84,7 @@ const workflows = [
 
 export default function WorkflowDashboard() {
     const { user } = useUser();
+    console.log("current user: ", user, user ? user.type : 'no user');
 if (!user || user.type !== "admin") {
     return <UnauthorizedPage />;
   }

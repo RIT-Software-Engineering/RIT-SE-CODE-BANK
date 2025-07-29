@@ -24,10 +24,19 @@ import {
 import Header from "@components/Header";
 import { Block } from "@mui/icons-material";
 import { ST } from "next/dist/shared/lib/utils";
+import { useUser } from "../../user-context/page";
+import UnauthorizedPage from '../../unauthorized/page';
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
 export default function SupervisorApplicationsPage() {
+ const { user } = useUser();
+ console.log("current user: ", user, user ? user.type : 'no user');
+if (!user || user.type !== "admin") {
+    return <UnauthorizedPage />;
+  }
+
+
     const [applications, setApplications] = useState([]);
     const [status, setStatus] = useState("");
     const [selectedApp, setSelectedApp] = useState(null);
