@@ -1,7 +1,7 @@
 // src/app/Positions/page.js
 "use client";
 
-import React, { useEffect, useCallback, useState } from "react";
+import React, { useEffect, useCallback, useState,useRef } from "react";
 import { getOpenPositions } from "../../services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
@@ -13,7 +13,9 @@ import { positionFilterConfig } from "./filter.config";
 import JobPositionsCard from "@/components/positions/EmployerAndAdmin/JobPositionsCard";
 
 export default function Positions() {
+  const filterRef = useRef();
   const { currentUser } = useAuth();
+
 
   const [openPositions, setOpenPositions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -73,20 +75,23 @@ export default function Positions() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchData(searchTerm, appliedFilters);
+    // Get the most up-to-date filters directly from the Filter component
+    const latestFilters = filterRef.current.getFilters();
+    // Update the parent's state so the UI is consistent
+    setAppliedFilters(latestFilters);
+    // Fetch data with the latest filters and search term
+    fetchData(searchTerm, latestFilters);
   };
+
 
   const handleFilterChange = (newFilters) => {
     setAppliedFilters(newFilters);
-    // Fetch data immediately when a filter is changed with the current search term.
-    fetchData(searchTerm, newFilters);
   };
 
   const handleSearchTermChange = (newTerm) => {
     setSearchTerm(newTerm);
     // If search is cleared, fetch immediately with current filters.
     if (newTerm === "") {
-      // **FIXED**: We use the `appliedFilters` state here as well.
       fetchData("", appliedFilters);
     }
   };
@@ -153,6 +158,7 @@ export default function Positions() {
             />
             {/* **FIXED**: The `ref` has been removed as it's no longer needed. */}
             <Filter
+              ref={filterRef}
               onFilterChange={handleFilterChange}
               filterConfig={positionFilterConfig}
             />
