@@ -108,14 +108,37 @@ export default function JournalPage() {
         await fetchJournal();
     };
 
+    const handleBack = () => {
+        window.history.back();
+    };
+
     return (
         <div className="max-w-2xl mx-auto p-6">
+            <button
+                type="button"
+                onClick={handleBack}
+                className="mb-4 text-blue-600 underline"
+            >
+                &larr; Back
+            </button>
             <h1 className="text-3xl font-bold mb-2">Your Journal</h1>
-            <div className="flex items-center mb-4">
-                <span className="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded mr-2">
-                    Viewing
-                </span>
-                <span className="text-sm font-medium text-blue-600">{tag}</span>
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded">
+                        Viewing
+                    </span>
+                    <span className="text-sm font-medium text-blue-600">
+                        {tag}
+                    </span>
+                </div>
+                <button
+                    className="bg-blue-600 text-white py-1 px-4 rounded hover:bg-blue-700 transition cursor-pointer"
+                    onClick={() => {
+                        setShowAddEntry(true);
+                    }}
+                >
+                    Add Journal Entry
+                </button>
             </div>
             <hr className="mb-6" />
             <ul className="space-y-4">
@@ -130,30 +153,34 @@ export default function JournalPage() {
                         className="border rounded p-4 bg-white shadow"
                     >
                         <div className="flex justify-between items-center mb-1">
-                            <h2 className="text-lg font-semibold">
-                                {entry.re || "Entry"}
-                            </h2>
+                            {entry.re ? (
+                                <h2 className="text-lg font-semibold">
+                                    {entry.re}
+                                </h2>
+                            ) : (
+                                <h2 className="text-gray-500 font-semibold italic">
+                                    Unnamed Entry
+                                </h2>
+                            )}
                             <span className="text-xs text-gray-500">
-                                {entry.date}
+                                {new Date(entry.date).toLocaleString("en-US", {
+                                    year: "numeric",
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: true,
+                                })}
                             </span>
                         </div>
                         <p className="text-gray-700">{entry.content}</p>
                     </li>
                 ))}
             </ul>
-            <button
-                className="mt-8 w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
-                onClick={() => {
-                    setShowAddEntry(true);
-                }}
-            >
-                Add Journal Entry
-            </button>
             <AddJournalEntryModal
                 open={showAddEntry}
                 onClose={() => setShowAddEntry(false)}
                 onSubmit={(subject, content) => {
-                    // You can add logic to handle the new entry here
                     setShowAddEntry(false);
                     submitEntryHandler(subject, content);
                 }}

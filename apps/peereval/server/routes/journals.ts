@@ -19,7 +19,11 @@ router.get("/:userId", async (req, res) => {
 
     const j = await prisma.journal.findUnique({
         where: { userId },
-        include: { entries: true },
+        include: {
+            entries: {
+                orderBy: { date: "desc" },
+            },
+        },
     });
 
     res.json(j);
