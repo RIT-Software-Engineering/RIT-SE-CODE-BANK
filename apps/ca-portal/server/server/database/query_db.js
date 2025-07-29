@@ -398,6 +398,8 @@ async function applyForJobPosition(applicationDetails) {
       jobPositionId,
       resumeId,
       jobPositionApplicationFormData,
+      coverLetterURL,
+      coverLetterName,
     } = applicationDetails;
 
     // 1. Validate required fields.
@@ -459,6 +461,8 @@ async function applyForJobPosition(applicationDetails) {
         priorEmploymentHistory: applicationFormData.priorEmploymentHistory
         ?.map(item => item.courseCode)
         .join(', '),
+        coverLetterName: coverLetterName,
+        coverLetterURL: coverLetterURL,
       },
     });
 
@@ -489,6 +493,25 @@ async function applyForJobPosition(applicationDetails) {
   }
 }
 
+// Helper function to get the application (current used for deletion)
+async function getCandidateApplication(candidateUID, jobPositionId) {
+  const application =
+    await prisma.jobPositionApplicationHistory.findFirst({
+      where: {
+        candidateUID: candidateUID,
+        jobPositionId: jobPositionId,
+      },
+    });
+
+  if (!application) {
+    throw new Error(
+      'Application not found for the specified candidate and job position.'
+    );
+  }
+
+  return application;
+}
+
 /**
  * Deletes a candidate's application and its entire comment history.
  * The combination of candidateUID and jobPositionId must be unique.
@@ -496,48 +519,25 @@ async function applyForJobPosition(applicationDetails) {
  * @param {string} jobPositionId - The ID of the job position.
  * @returns {Promise<object>} A promise that resolves to the deleted application record.
  */
-async function deleteCandidateApplication(candidateUID, jobPositionId) {
+async function deleteCandidateApplication(applicationId) {
   try {
-    // Find the application to get its unique ID. This is done outside the
-    // transaction because we need the ID to identify which comments to delete.
-    const applicationToDelete =
-      await prisma.jobPositionApplicationHistory.findFirst({
-        where: {
-          candidateUID: candidateUID,
-          jobPositionId: jobPositionId,
-        },
-        select: { id: true }, // We only need the primary key.
-      });
 
-    if (!applicationToDelete) {
-      throw new Error(
-        'Application not found for the specified candidate and job position.'
-      );
-    }
-
-    const applicationId = applicationToDelete.id;
-
-    // Use a transaction to ensure both deletions succeed or fail together.
-    const result = await prisma.$transaction(async (tx) => {
-      // First, delete all comments associated with this application.
-      await tx.comment.deleteMany({
-        where: {
-          foreignTableName: 'JobPositionApplicationHistory',
-          foreignKey: String(applicationId),
-        },
-      });
-
-      // Second, delete the application record itself.
-      const deletedApplication = await tx.jobPositionApplicationHistory.delete({
-        where: {
-          id: applicationId,
-        },
-      });
-
-      return deletedApplication;
+    // Delete all comments associated with this application.
+    await prisma.comment.deleteMany({
+      where: {
+        foreignTableName: 'JobPositionApplicationHistory',
+        foreignKey: String(applicationId),
+      },
     });
 
-    return result;
+    // Finally, delete the application record itself using its unique ID.
+    const deletedApplication = await prisma.jobPositionApplicationHistory.delete({
+      where: {
+        id: applicationId,
+      },
+    });
+
+    return deletedApplication;
     
   } catch (error){
     console.error('Error in deleteCandidateApplication:', error);
@@ -1229,6 +1229,7 @@ module.exports = {
   getCandidateApplicationsAsEmployer,
   getCandidateApplications,
   deleteCandidateApplication,
+  getCandidateApplication,
   getSemesterCodesForEmployer,
   applyForJobPosition,
   changeCandidateApplicationStatus,

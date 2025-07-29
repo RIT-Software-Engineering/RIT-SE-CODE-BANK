@@ -20,6 +20,8 @@ export default function ViewableApplicationForm({position, application, onClose 
     wasPriorEmployeeForThisCourse: application.wasPriorEmployeeForThisCourse || false,
     wasPriorEmployeeForOtherCourses: application.wasPriorEmployeeForOtherCourses || false,
     priorEmploymentHistory: application.priorEmploymentHistory || [],
+    coverLetterName: application.coverLetterName || '',
+    coverLetterURL: application.coverLetterURL || '',
   };
 
   return (
@@ -43,8 +45,8 @@ export default function ViewableApplicationForm({position, application, onClose 
           <DisplayField label={`Prior Employment For ${position.courseCode}`} value={displayValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
           <DisplayField label="Prior Employment For Any Other Courses" value={displayValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
           <DisplayField label="Prior Employment History" value={displayValues.priorEmploymentHistory}  />
-          
-          {/* Use the reliable resume URL from the application's relation */}
+
+          {/* Resume */}
           {submittedResume?.resumeURL && (
             <div>
               <label className="block text-sm font-medium text-gray-700">Submitted Resume</label>
@@ -56,6 +58,23 @@ export default function ViewableApplicationForm({position, application, onClose 
                   className="text-blue-600 hover:underline"
                 >
                   {submittedResume.name || 'View Submitted Resume'}
+                </a>
+              </p>
+            </div>
+          )}
+
+          {/* Cover Letter */}
+          {displayValues.coverLetterURL && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Submitted Cover Letter</label>
+              <p className="text-sm text-gray-600 mt-1">
+                <a
+                  href={`${backendURL}${displayValues.coverLetterURL}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  {displayValues.coverLetterName || 'View Submitted Cover Letter'}
                 </a>
               </p>
             </div>

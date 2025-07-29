@@ -282,7 +282,7 @@ export async function applyForJobPosition(jobPositionApplicationData) {
     );
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply-for-job-position`;
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply`;
   console.log(`Applying for job position at: ${url}`);
   const response = await fetch(url, {
     method: "POST",
@@ -294,13 +294,13 @@ export async function applyForJobPosition(jobPositionApplicationData) {
   return handleApiResponse(response);
 }
 
-// api call to apply for a job position with a new resume
-export async function applyForJobPositionWithNewResume(jobPositionApplicationData) {
+// api call to apply for a job position with new uploads
+export async function applyForJobPositionWithNewUploads(jobPositionApplicationData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error("Backend API URL components are not defined.");
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply-for-job-position-with-new-resume`;
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/apply-with-uploads`;
   console.log(`Applying for job position at: ${url}`);
   const response = await fetch(url, {
     method: 'POST',
@@ -368,7 +368,7 @@ export async function uploadNewCandidateResume(formData) {
     throw new Error("Backend API URL components are not defined.");
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/add-new-candidate-resume`;
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/resume`;
   console.log(`Uploading new candidate resume with file to: ${url}`);
 
   const response = await fetch(url, {
@@ -383,7 +383,7 @@ export async function updateResumeName(resumeId, name) {
     throw new Error("Backend API URL components are not defined. Check your .env.local file.");
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/update-resume-name/${resumeId}`;
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/resume-name/${resumeId}`;
   console.log(`Updating resume name at: ${url}`);
 
   const response = await fetch(url, {
@@ -403,7 +403,7 @@ export async function updatePrimaryResume(candidateUID, resumeId) {
     throw new Error("Backend API URL components are not defined. Check your .env.local file.");
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/update-primary-resume/${candidateUID}/${resumeId}`;
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/primary-resume/${candidateUID}/${resumeId}`;
   console.log(`Updating primary resume at: ${url}`);
 
   const response = await fetch(url, {
@@ -418,7 +418,7 @@ export async function deleteResume(resumeId) {
     throw new Error("Backend API URL components are not defined. Check your .env.local file.");
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/delete-resume/${resumeId}`;
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/resume/${resumeId}`;
   console.log(`Deleting resume at: ${url}`);
 
   const response = await fetch(url, {
