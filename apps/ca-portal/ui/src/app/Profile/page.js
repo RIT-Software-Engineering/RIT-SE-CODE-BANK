@@ -129,7 +129,6 @@ export default function ProfilePage() {
       {isEmployerOrAdmin && (
         <JobPositionsCard
           profileData={profileData}
-          coursesTaken={coursesTaken}
         />
       )}
 
