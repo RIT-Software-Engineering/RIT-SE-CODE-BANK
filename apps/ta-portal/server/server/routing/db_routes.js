@@ -39,6 +39,7 @@ const {
   upsertTimecardDay,
   getMostRecentTimecard,
   getEmployeeTimecard,
+  getAllTimecardsForJob,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -851,6 +852,24 @@ router.post('/timecard/day/notes', async (req, res) => {
     } catch (error) {
         console.error('Failed to save notes:', error);
         res.status(500).json({ message: 'Failed to save notes.' });
+    }
+});
+
+router.get('/timecard/all/:jobPositionHistoryId', async (req, res) => {
+    try {
+        const { jobPositionHistoryId } = req.params;
+        if (!jobPositionHistoryId) {
+            return res.status(400).json({ error: "Job Position History ID is required." });
+        }
+
+        // The ID from params is a string, so parse it to an integer
+        const id = parseInt(jobPositionHistoryId, 10);
+        const timecards = await getAllTimecardsForJob(id);
+        
+        res.status(200).json(timecards);
+    } catch (error) {
+        console.error('Failed to fetch all timecards:', error);
+        res.status(500).json({ message: 'Failed to retrieve timecard history.' });
     }
 });
 

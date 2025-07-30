@@ -828,7 +828,11 @@ async function getUserProfile(UID) {
               resumes: true,
               courseHistory: { include: { course: true } },
               jobPositionApplicationHistory: { include: { jobPosition: true } },
-              employees: true,
+              employees: {
+                include: {
+                  jobPositionHistory: true,
+                }
+              }
             },
           },
         },
@@ -1486,6 +1490,34 @@ async function upsertTimecard(timecardData) {
   });
 }
 
+/**
+ * Retrieves all weekly timecards for a specific job.
+ * @param {number} jobPositionHistoryId - The ID of the employee's specific job history record.
+ * @returns {Promise<Array>} A promise that resolves to an array of all timecard objects.
+ */
+async function getAllTimecardsForJob(jobPositionHistoryId) {
+  try {
+    return await prisma.timecardWeeklyHistory.findMany({
+      where: {
+        jobPositionHistoryId: jobPositionHistoryId,
+      },
+      include: {
+        dailyEntries: {
+          orderBy: {
+            day: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        weekStartDate: 'desc',
+      },
+    });
+  } catch (error) {
+    console.error(`Error fetching all timecards for job ${jobPositionHistoryId}:`, error);
+    throw error;
+  }
+}
+
 // =============================================================================
 // EXPORTS & PROCESS HANDLING
 // =============================================================================
@@ -1519,6 +1551,7 @@ module.exports = {
   upsertTimecardDay,
   getMostRecentTimecard,
   getEmployeeTimecard,
+  getAllTimecardsForJob,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.

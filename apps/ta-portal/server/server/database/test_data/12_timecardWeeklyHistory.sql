@@ -1,5 +1,5 @@
--- For Charlie Coder (JobPositionHistoryId: 1)
 INSERT INTO `TimecardWeeklyHistory` (`id`, `jobPositionHistoryId`, `weekStartDate`, `isCurrentWeek`) VALUES
+-- For Charlie Coder (JobPositionHistoryId: 1)
 (1, 1, '2025-07-04', 0),  -- Past week
 (2, 1, '2025-07-11', 0),  -- Another past week
 (4, 1, '2025-07-18', 1),  -- The new CURRENT week

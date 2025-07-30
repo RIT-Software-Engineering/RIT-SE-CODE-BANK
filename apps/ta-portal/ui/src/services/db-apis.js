@@ -546,3 +546,27 @@ export async function upsertTimecard(timecardData) {
   });
   return handleApiResponse(response);
 }
+
+/**
+ * Retrieves all weekly timecards for a given job from the backend API.
+ * @param {number} jobPositionHistoryId - The ID of the employee's job.
+ * @returns {Promise<Array>} A promise that resolves to an array of timecard objects.
+ */
+export async function getAllTimecardsForJob(jobPositionHistoryId) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/all/${jobPositionHistoryId}`;
+  console.log(`Fetching all timecards from: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return handleApiResponse(response);
+}
