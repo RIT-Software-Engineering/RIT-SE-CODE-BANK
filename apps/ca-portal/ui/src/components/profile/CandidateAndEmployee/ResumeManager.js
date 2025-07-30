@@ -8,6 +8,7 @@ import {
   updateResumeName,
 } from '@/services/db-apis';
 import { useNotification } from '@/contexts/NotificationContext';
+import ConfirmationModal from '@/components/common/models/ConfirmationModal';
 
 /**
  * A component to manage a candidate's resumes (list, upload, rename, delete).
@@ -27,6 +28,13 @@ export default function ResumeManager({ resumes, candidateUID, onProfileRefresh 
   // State for editing an existing resume's name
   const [editingResumeId, setEditingResumeId] = useState(null);
   const [editingResumeName, setEditingResumeName] = useState('');
+
+  // State to manage the confirmation model
+  const [deleteModalState, setDeleteModalState] = useState({
+    isOpen: false,
+    resumeId: null,
+    isProcessing: false,
+  });
 
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -69,16 +77,30 @@ export default function ResumeManager({ resumes, candidateUID, onProfileRefresh 
     }
   };
 
-  const handleDelete = async (resumeId) => {
-    if (window.confirm('Are you sure you want to delete this resume?')) {
-      try {
-        await deleteResume(resumeId);
-        onProfileRefresh();
-        showNotification('Resume deleted successfully.', 'success');
-      } catch (err) {
-        console.error('Failed to delete resume:', err);
-        showNotification(err.message || 'Failed to delete resume.', 'error');
-      }
+  // Function to open the confirmation modal
+  const handleOpenDeleteModal = (resumeId) => {
+    setDeleteModalState({ isOpen: true, resumeId, isProcessing: false });
+  };
+
+  // Function to close the confirmation modal
+  const handleCloseDeleteModal = () => {
+    setDeleteModalState({ isOpen: false, resumeId: null, isProcessing: false });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteModalState.resumeId) return;
+
+    setDeleteModalState(prev => ({ ...prev, isProcessing: true }));
+
+    try {
+      await deleteResume(deleteModalState.resumeId);
+      onProfileRefresh();
+      showNotification('Resume deleted successfully.', 'success');
+    } catch (err) {
+      console.error('Failed to delete resume:', err);
+      showNotification(err.message || 'Failed to delete resume.', 'error');
+    } finally {
+      handleCloseDeleteModal(); // Close modal regardless of outcome
     }
   };
 
@@ -141,7 +163,7 @@ export default function ResumeManager({ resumes, candidateUID, onProfileRefresh 
                   <div className="flex items-center space-x-2">
                     <button onClick={() => handleStartEditing(resume)} className="text-sm font-medium text-blue-600 hover:text-rit-dark-gray">Rename</button>
                     <button onClick={() => handleSetPrimary(resume.id)} disabled={resume.isPrimary} className="text-sm font-medium text-blue-600 hover:text-rit-dark-gray disabled:text-gray-400 disabled:cursor-not-allowed">Set Primary</button>
-                    <button onClick={() => handleDelete(resume.id)} className="text-sm font-medium text-red-600 hover:text-red-800">Delete</button>
+                    <button onClick={() => handleOpenDeleteModal(resume.id)} className="text-sm font-medium text-red-600 hover:text-red-800">Delete</button>
                   </div>
                 </>
               )}
@@ -167,6 +189,17 @@ export default function ResumeManager({ resumes, candidateUID, onProfileRefresh 
           {isUploading ? 'Uploading...' : 'Upload Resume'}
         </button>
       </form>
+
+      {/* Delete confirmation modal */}
+      <ConfirmationModal
+        isOpen={deleteModalState.isOpen}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        title="Delete Resume"
+        isConfirming={deleteModalState.isProcessing}
+      >
+        Are you sure you want to delete this resume? This action cannot be undone.
+      </ConfirmationModal>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { applyForJobPosition, applyForJobPositionWithNewResume } from '../../services/db-apis';
+import { applyForJobPosition, applyForJobPositionWithNewUploads } from '../../services/db-apis';
 import { gradeEnumToStringValue, letterToGradeValue } from '@/constants/gradeConstants';
 import { useNotification } from '@/contexts/NotificationContext';
 import DisplayField from '../common/fields/DisplayField';
@@ -31,6 +31,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
         resumeId: primaryResume ? String(primaryResume.id) : 'new',
         // This is for the new resume input field.
         resumeName: '',
+        coverLetterName: '',
     };
 
     const {
@@ -38,6 +39,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
         handleSubmit,
         control,
         formState: { errors, isSubmitting },
+        getValues,
     } = useForm({
         defaultValues: initialValues,
     });
@@ -51,32 +53,47 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
      */
     const onSubmit = async (formData) => {
         try {
-            // Convert grade string to enum value
-            console.log("Submission data:", formData);
+            const isUploadingNewResume = formData.resumeId === 'new';
+            const isUploadingCoverLetter = formData.coverLetterFile && formData.coverLetterFile.length > 0;
 
-            const isUploadingNewResume = selectedResumeId === 'new';
-
-            if (isUploadingNewResume) {
-                if (!formData.resumeFile || formData.resumeFile.length === 0) {
+            // If uploading a new resume OR a new cover letter, we must use FormData.
+            if (isUploadingNewResume || isUploadingCoverLetter) {
+                // Validate that a resume file is provided if 'new' is selected
+                if (isUploadingNewResume && (!formData.resumeFile || formData.resumeFile.length === 0)) {
                     alert("Please select a resume file to upload.");
                     return;
                 }
+
                 const data = new FormData();
                 data.append('candidateUID', user.uid);
                 data.append('jobPositionId', position.id);
-                data.append('resumeFile', formData.resumeFile[0]);
-                data.append('resumeName', formData.resumeName);
-                // Use the new formData object here
-                const { resumeFile, resumeId, resumeName, ...restOfFormData } = formData;
+
+                if (isUploadingNewResume) {
+                    data.append('resumeFile', formData.resumeFile[0]);
+                    data.append('resumeName', formData.resumeName);
+                } else {
+                    // Use the existing resume's ID
+                    data.append('resumeId', parseInt(formData.resumeId, 10));
+                }
+
+                if (isUploadingCoverLetter) {
+                    data.append('coverLetterFile', formData.coverLetterFile[0]);
+                    data.append('coverLetterName', formData.coverLetterName);
+                }
+                
+                const { resumeFile, resumeId, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 data.append('jobPositionApplicationFormData', JSON.stringify(restOfFormData));
-                await applyForJobPositionWithNewResume(data);
+                
+                // This API call now handles all file uploads
+                await applyForJobPositionWithNewUploads(data);
+
             } else {
-                // Use the new formData object here as well
-                const { resumeFile, resumeName, ...restOfFormData } = formData;
+                // No new files being uploaded, so the simpler JSON API call is used.
+                const { resumeFile, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 const applicationDetails = {
                     candidateUID: user.uid,
                     jobPositionId: position.id,
-                    resumeId: parseInt(formData.resumeId, 10), // Pass the Interview resume's ID
+                    resumeId: parseInt(formData.resumeId, 10),
                     jobPositionApplicationFormData: JSON.stringify(restOfFormData),
                 };
                 await applyForJobPosition(applicationDetails);
@@ -196,6 +213,50 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                         </>
                     )}
 
+                    <div className="pt-2">
+                        <label htmlFor="coverLetterName" className="block text-sm font-medium text-gray-700">
+                            Cover Letter Name (Optional)
+                        </label>
+                        <input
+                            type="text"
+                            id="coverLetterName"
+                            {...register("coverLetterName", {
+                                validate: (value) => {
+                                    const file = getValues("coverLetterFile");
+                                    // If a file is uploaded, a name is required.
+                                    if (file && file.length > 0 && !value) {
+                                        return "Name is required when a cover letter file is uploaded.";
+                                    }
+                                    return true;
+                                }
+                            })}
+                            className="mt-1 block w-full rounded-md border-gray-400 shadow-sm p-2"
+                            placeholder="e.g., Application for SWEN-261"
+                        />
+                        {errors.coverLetterName && <p className="text-red-500 text-sm mt-1">{errors.coverLetterName.message}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                            Upload Cover Letter (Optional, PDF)
+                        </label>
+                        <input
+                            type="file"
+                            {...register("coverLetterFile", {
+                                validate: (value) => {
+                                    const name = getValues("coverLetterName");
+                                    // If a name is entered, a file is required.
+                                    if (name && (!value || value.length === 0)) {
+                                        return "File is required when a cover letter name is provided.";
+                                    }
+                                    return true;
+                                }
+                            })}
+                            accept=".pdf"
+                            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-rit-orange file:text-white hover:file:bg-orange-600"
+                        />
+                        {errors.coverLetterFile && <p className="text-red-500 text-sm mt-1">{errors.coverLetterFile.message}</p>}
+                    </div>
                     <div className="flex justify-end space-x-4 pt-4">
                         <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300">
                             Cancel

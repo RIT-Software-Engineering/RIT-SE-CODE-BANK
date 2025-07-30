@@ -30,6 +30,7 @@ const {
   getAllPositions,
   getSemesterCodesForEmployer,
   deleteCandidateApplication,
+  getCandidateApplication,
   changeCandidateApplicationStatus,
   getComments,
   createPosition
@@ -45,6 +46,12 @@ const resumeStoragePath = path.resolve(__dirname, "../../resources/resumes");
 // Ensure the base directory for resumes exists, creating it if necessary.
 fs.mkdirSync(resumeStoragePath, { recursive: true });
 
+// Define the absolute path for storing cover letters.
+const coverLetterStoragePath = path.resolve(__dirname, "../../resources/cover-letters");
+
+// Ensure the base directory for cover letters exists, creating it if necessary.
+fs.mkdirSync(coverLetterStoragePath, { recursive: true });
+
 // Configure multer's disk storage engine.
 const storage = multer.diskStorage({
   /**
@@ -52,7 +59,20 @@ const storage = multer.diskStorage({
    * Creates a user-specific subfolder using their UID to organize resumes.
    */
   destination: function (req, file, cb) {
-    const userFolderPath = path.join(resumeStoragePath, req.body.candidateUID);
+    let basePath;
+
+    // Check the fieldname to determine the correct storage path.
+    if (file.fieldname === "resumeFile") {
+      basePath = resumeStoragePath;
+    } else if (file.fieldname === "coverLetterFile") {
+      basePath = coverLetterStoragePath;
+    } else {
+      // If the fieldname is unexpected, return an error.
+      return cb(new Error("Invalid file field name"), null);
+    }
+    
+    // Create the user-specific folder inside the correct base path.
+    const userFolderPath = path.join(basePath, req.body.candidateUID);
     fs.mkdirSync(userFolderPath, { recursive: true }); // Ensure the user's folder exists.
     cb(null, userFolderPath);
   },
@@ -116,33 +136,6 @@ router.get('/open-positions', async (req, res) => {
   }
 });
 
-/**
- * @route   POST /api/db/apply-for-job-position
- * @desc    Creates a new job application record for a candidate using an existing resume.
- * @access  Public
- * @body    {object} jobPositionApplicationData - The application details.
- */
-router.post('/apply-for-job-position', async (req, res) => {
-  try {
-    const applicationDetails = req.body;
-
-    // Validate that the required resumeId is present.
-    if (!applicationDetails.resumeId) {
-      return res
-        .status(400)
-        .json({
-          error: 'A resumeId is required to apply with an existing resume.',
-        });
-    }
-
-    const application = await applyForJobPosition(applicationDetails);
-    res.status(201).json(application);
-  } catch (error) {
-    console.error('Error in /apply-for-job-position route:', error);
-    res.status(500).json({ error: 'Failed to apply for job position.' });
-  }
-});
-
 router.put("/modify-position/:id", async (req, res) => {
   try {
     // This is the critical step.
@@ -193,33 +186,55 @@ router.get("/positions", async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/apply-for-job-position-with-new-resume
- * @desc    Handles a job application that includes a new resume upload.
+ * @route   POST /api/db/apply
+ * @desc    Creates a new job application record for a candidate using an existing resume.
  * @access  Public
- * @body    {File} resumeFile - The PDF resume file.
- * @body    {string} candidateUID - The UID of the applicant.
- * @body    {string} jobPositionId - The ID of the job position.
- * @body    {string} jobPositionApplicationFormData - JSON string of the form data.
+ * @body    {object} jobPositionApplicationData - The application details.
+ */
+router.post('/apply', async (req, res) => {
+  try {
+    const applicationDetails = req.body;
+
+    // Validate that the required resumeId is present.
+    if (!applicationDetails.resumeId) {
+      return res
+        .status(400)
+        .json({
+          error: 'A resumeId is required to apply with an existing resume.',
+        });
+    }
+
+    const application = await applyForJobPosition(applicationDetails);
+    res.status(201).json(application);
+  } catch (error) {
+    console.error('Error in /apply route:', error);
+    res.status(500).json({ error: 'Failed to apply for job position.' });
+  }
+});
+
+/**
+ * @route   POST /api/db/apply-with-uploads
+ * @desc    Handles a job application that may include a new resume and/or a cover letter.
+ * @access  Public
  */
 router.post(
-  "/apply-for-job-position-with-new-resume",
-  upload.single("resumeFile"),
+  "/apply-with-uploads", 
+  upload.fields([
+    { name: "resumeFile", maxCount: 1 },
+    { name: "coverLetterFile", maxCount: 1 },
+  ]),
   async (req, res) => {
     try {
-      // Ensure a file was actually uploaded.
-      if (!req.file) {
-        return res.status(400).json({ error: "Resume file is required." });
-      }
-
       const {
         candidateUID,
         jobPositionId,
         jobPositionApplicationFormData,
         resumeName,
+        resumeId, // Will be present if using an existing resume instead of uploading a new one (only present here for when a user uploads a new cover letter)
+        coverLetterName,
       } = req.body;
-      if (!resumeName) {
-        return res.status(400).json({ error: 'Resume file name is required.' });
-      }
+
+      // --- Prepare Application Details ---
       const numericCandidateUID = parseInt(candidateUID, 10);
       if (isNaN(numericCandidateUID)) {
         return res
@@ -227,43 +242,50 @@ router.post(
           .json({ error: 'Candidate UID must be a valid number.' });
       }
 
-
-      // Construct the public-facing URL for the newly uploaded resume.
-      const newResumeUrl = `/resources/resumes/${candidateUID}/${req.file.filename}`;
-
-      // check if the candidate already has a resume as otherwise we will set the new resume as primary
-      const existingResumes = await getCandidateResumes(numericCandidateUID);
-      const isPrimary = existingResumes.length === 0;
-
-      // Add a new resume for the candidate.
-      const newResume = await addNewCandidateResume(
-        numericCandidateUID,
-        isPrimary,
-        newResumeUrl,
-        resumeName
-      );
-
-      // Construct the final application details for the database.
       const applicationDetails = {
         candidateUID: numericCandidateUID,
         jobPositionId: jobPositionId,
-        resumeId: newResume.id,
         jobPositionApplicationFormData: jobPositionApplicationFormData,
       };
 
-      const application = await applyForJobPosition(applicationDetails);
+      // --- Handle Resume ---
+      // Check if a new resume file was uploaded
+      if (req.files && req.files.resumeFile) {
+        if (!resumeName) {
+          return res.status(400).json({ error: 'New resume name is required.' });
+        }
+        const resumeFile = req.files.resumeFile[0];
+        const newResumeUrl = `/resources/resumes/${candidateUID}/${resumeFile.filename}`;
+        
+        const existingResumes = await getCandidateResumes(numericCandidateUID);
+        const isPrimary = existingResumes.length === 0;
 
-      // Respond with 201 Created status.
+        const newResume = await addNewCandidateResume(numericCandidateUID, isPrimary, newResumeUrl, resumeName);
+        applicationDetails.resumeId = newResume.id;
+      } else if (resumeId) {
+        // If no new resume, use the provided resumeId
+        applicationDetails.resumeId = parseInt(resumeId, 10);
+      } else {
+        return res.status(400).json({ error: "A resume must be selected or uploaded." });
+      }
+
+      // --- Handle Cover Letter (if uploaded) ---
+      if (req.files && req.files.coverLetterFile) {
+        const coverLetterFile = req.files.coverLetterFile[0];
+        applicationDetails.coverLetterURL = `/resources/cover-letters/${candidateUID}/${coverLetterFile.filename}`;
+        applicationDetails.coverLetterName = coverLetterName || 'Cover Letter'; // Use provided name or a default
+      }
+
+      // --- Create the Application ---
+      const application = await applyForJobPosition(applicationDetails);
       res.status(201).json(application);
+
     } catch (error) {
-      console.error(
-        "Error in /apply-for-job-position-with-new-resume route:",
-        error
-      );
-      res
-        .status(500)
-        .json({ error: "Failed to process application with resume." });
-    }});
+      console.error("Error in file upload application route:", error);
+      res.status(500).json({ error: "Failed to process application with files." });
+    }
+  }
+);
   
 /**
  * @route   DELETE /api/db/applications/:uid
@@ -276,22 +298,37 @@ router.delete('/applications/:uid', async (req, res) => {
   try {
     const candidateUID = parseInt(req.params.uid, 10);
     if (isNaN(candidateUID)) {
-      return res
-        .status(400)
-        .json({ message: 'A valid numeric candidate UID is required.' });
+      return res.status(400).json({ message: 'A valid numeric candidate UID is required.' });
     }
 
     const { jobPositionId } = req.query;
     if (!jobPositionId) {
-      return res
-        .status(400)
-        .json({ message: 'The jobPositionId query parameter is required.' });
+      return res.status(400).json({ message: 'The jobPositionId query parameter is required.' });
     }
 
-    const deletedApplication = await deleteCandidateApplication(
-      candidateUID,
-      jobPositionId
-    );
+    // Get the application details
+    const application = await getCandidateApplication(candidateUID, jobPositionId);
+
+    // Delete the cover letter file if it exists
+    if (application.coverLetterURL) {
+      try {
+        const serverRootPath = path.join(__dirname, '..', '..');
+        const filePath = path.join(serverRootPath, application.coverLetterURL);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          console.log(`Successfully deleted cover letter: ${filePath}`);
+        }
+        else{
+          console.log(`Cover letter file not found: ${filePath}`);
+        }
+      } catch (err) {
+        console.error(`Failed to delete cover letter file for application ${application.id}:`, err);
+      }
+    }
+
+    // Call the service to delete the database records, using the unique ID
+    const deletedApplication = await deleteCandidateApplication(application.id);
+
     res.status(200).json(deletedApplication);
   } catch (error) {
     if (
@@ -524,12 +561,12 @@ router.post("/upsert-employer-profile", async (req, res) => {
 // =============================================================================
 
 /**
- * @route   POST /api/db/add-new-candidate-resume
+ * @route   POST /api/db/resume
  * @desc    Adds a new resume for a candidate.
  * @access  Public
  *
  */
-router.post('/add-new-candidate-resume', upload.single('resumeFile'), async (req, res) => {
+router.post('/resume', upload.single('resumeFile'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'Resume file is required.' });
@@ -560,11 +597,11 @@ router.post('/add-new-candidate-resume', upload.single('resumeFile'), async (req
 );
 
 /**
- * @route   Update /api/db/update-primary-resume/:candidateUID/:resumeId
+ * @route   Update /api/db/primary-resume/:candidateUID/:resumeId
  * @desc    Updates the primary resume by its ID.
  * @access  Public
  */
-router.put('/update-primary-resume/:candidateUID/:resumeId', async (req, res) => {
+router.put('/primary-resume/:candidateUID/:resumeId', async (req, res) => {
     try {
       const resumeId = parseInt(req.params.resumeId, 10);
       const candidateUID = parseInt(req.params.candidateUID, 10);
@@ -578,11 +615,11 @@ router.put('/update-primary-resume/:candidateUID/:resumeId', async (req, res) =>
 );
 
 /**
- * @route Update /api/db/update-resume-name/:resumeId
+ * @route Update /api/db/resume-name/:resumeId
  * @desc Updates the name of a resume by its ID.
  * @access Public
  */
-router.put('/update-resume-name/:resumeId', async (req, res) => {
+router.put('/resume-name/:resumeId', async (req, res) => {
   try{
     const resumeId = parseInt(req.params.resumeId, 10);
     const name = req.body.name;
@@ -595,11 +632,11 @@ router.put('/update-resume-name/:resumeId', async (req, res) => {
 })
 
 /**
- * @route   DELETE /api/db/delete-resume/:resumeId
+ * @route   DELETE /api/db/resume/:resumeId
  * @desc    Deletes a resume by its ID and its associated file.
  * @access  Public
  */
-router.delete('/delete-resume/:resumeId', async (req, res) => {
+router.delete('/resume/:resumeId', async (req, res) => {
   try {
     const resumeId = parseInt(req.params.resumeId, 10);
     if (isNaN(resumeId)) {

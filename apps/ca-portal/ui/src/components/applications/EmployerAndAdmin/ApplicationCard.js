@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { getStatusClasses } from "@/utils/applicationUtils";
-import { ResumeIcon, EllipsisVerticalIcon } from "@/assets/icons";
+import { DocumentIcon, EllipsisVerticalIcon } from "@/assets/icons";
 import ViewableApplicationForm from "../ViewableApplicationForm";
 import ViewCommentForm from "../../comments/ViewableCommentForm";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
@@ -237,7 +237,7 @@ export default function ApplicationCard({
             <div>
               <div className="flex items-center space-x-2">
                 <p className="text-sm font-medium text-gray-500">Resume</p>
-                <ResumeIcon />
+                <DocumentIcon />
               </div>
               <a
                 href={`${backendURL}${resume.resumeURL}`}
@@ -248,6 +248,23 @@ export default function ApplicationCard({
                 {resume.name}
               </a>
             </div>
+            {application.coverLetterURL && (
+            <div>
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium text-gray-500">Cover Letter</p>
+                {/* Re-using ResumeIcon, but you could add a specific one */}
+                <DocumentIcon />
+              </div>
+              <a
+                href={`${backendURL}${application.coverLetterURL}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-600 hover:text-indigo-800 font-medium"
+              >
+                {application.coverLetterName || 'View Cover Letter'}
+              </a>
+            </div>
+            )}
             <div>
               <p className="text-sm font-medium text-gray-500">
                 Recent Course Grade
