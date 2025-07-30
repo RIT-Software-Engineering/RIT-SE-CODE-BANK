@@ -198,33 +198,33 @@ async function main() {
         }
 
         // Create all of the state for the workflow
-        if (w.workflowStates?.length > 0) {
-          await Promise.all(
-            w.workflowStates.map(async (ws) => {
-              // Create workflow state
-              const workflowState = await prisma.workflowState.create({
-                data: {
-                  workflowId: workflow.id,
-                  userId: ws.userId,
-                },
-              });
+        // if (w.workflowStates?.length > 0) {
+        //   await Promise.all(
+        //     w.workflowStates.map(async (ws) => {
+        //       // Create workflow state
+        //       const workflowState = await prisma.workflowState.create({
+        //         data: {
+        //           workflowId: workflow.id,
+        //           userId: ws.userId,
+        //         },
+        //       });
 
-              // Create all action states for this workflow state
-              for (let i = 0; i < ws.actionStates.length; i++) {
-                const as = ws.actionStates[i];
+        //       // Create all action states for this workflow state
+        //       for (let i = 0; i < ws.actionStates.length; i++) {
+        //         const as = ws.actionStates[i];
 
-                await prisma.actionState.create({
-                  data: {
-                    workflowState: { connect: { id: workflowState.id } },
-                    action: { connect: { id: actionIds[i] } },
-                    stateType: as.stateType,
-                    index: i,
-                  },
-                });
-              }
-            })
-          );
-        }
+        //         await prisma.actionState.create({
+        //           data: {
+        //             workflowState: { connect: { id: workflowState.id } },
+        //             action: { connect: { id: actionIds[i] } },
+        //             stateType: as.stateType,
+        //             index: i,
+        //           },
+        //         });
+        //       }
+        //     })
+        //   );
+        // }
       }
     })
   );
