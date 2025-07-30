@@ -128,7 +128,7 @@ export default function Positions() {
         <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 w-full">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Open Positions</h1>
-            <p className="mt-2 text-lg text-gray-600">Find your next opportunity as a Course Assistant.</p>
+            <p className="mt-2 text-lg text-gray-600">Find your next opportunity as a Teaching Assistant.</p>
           </div>
 
           <div id="positions-container" className="w-full max-w-4xl mx-auto">

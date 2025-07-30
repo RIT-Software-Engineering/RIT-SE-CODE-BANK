@@ -54,7 +54,7 @@ export default function Header() {
   return (
     <div className="bg-rit-orange p-4 flex flex-row">
       <div id="Logo" className="text-left pl-10">
-        <h1 className="text-4xl font-bold">Course Assistant Portal</h1>
+        <h1 className="text-4xl font-bold">Teaching Assistant Portal</h1>
         <h3>Department of Software Engineering, RIT </h3>
       </div>
       <nav className="pb-2 mt-2 text-white text-lg text-right flex-grow space-x-4 pr-10">

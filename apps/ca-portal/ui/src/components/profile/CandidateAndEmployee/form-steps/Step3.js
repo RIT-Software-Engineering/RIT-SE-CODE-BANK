@@ -28,8 +28,8 @@ export default function Step3CandidateAndEmployee({
 
   return (
     <fieldset className="space-y-2 animate-fade-in">
-      <label className="block text-sm font-medium text-slate-700">Prior CA/Grader Experience</label>
-      <p className="text-sm text-slate-500">Add any courses for which you have previously worked as a Course Assistant or Grader.</p>
+      <label className="block text-sm font-medium text-slate-700">Prior TA/Grader Experience</label>
+      <p className="text-sm text-slate-500">Add any courses for which you have previously worked as a Teaching Assistant or Grader.</p>
       <SearchBar
         value={workedSearch}
         onChange={setWorkedSearch}

@@ -258,7 +258,7 @@ export default function ApplicationCard({
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">
-                Previous CA Experience For This Course
+                Previous TA Experience For This Course
               </p>
               <p className="text-lg font-semibold text-gray-800">
                 {application.wasPriorEmployeeForThisCourse ? "Yes" : "No"}
@@ -266,7 +266,7 @@ export default function ApplicationCard({
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">
-                Previously CA&apos;d Courses
+                Previously TA&apos;d Courses
               </p>
               <p className="text-lg font-semibold text-gray-800">
                 {application.priorEmploymentHistory || "None"}
