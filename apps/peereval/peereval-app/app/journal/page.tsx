@@ -193,22 +193,6 @@ export default function JournalPage() {
                         key={entry.id}
                         className="border rounded p-4 bg-white shadow relative"
                     >
-                        {/* Delete (X) button in the top-right corner */}
-                        <button
-                            className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
-                            title="Delete entry"
-                            onClick={() => {
-                                if (
-                                    window.confirm(
-                                        "Are you sure you want to delete this entry?"
-                                    )
-                                ) {
-                                    deleteEntryHandler(entry.id);
-                                }
-                            }}
-                        >
-                            &times;
-                        </button>
                         <div className="flex justify-between items-center mb-1">
                             {entry.re ? (
                                 <h2 className="text-lg font-semibold">
@@ -235,7 +219,7 @@ export default function JournalPage() {
                                 </span>
                                 {/* Edit button */}
                                 <button
-                                    className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200"
+                                    className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 flex items-center"
                                     title="Edit entry"
                                     onClick={() => {
                                         setEditingEntry(true);
@@ -243,7 +227,53 @@ export default function JournalPage() {
                                         setShowAddEntry(true);
                                     }}
                                 >
-                                    Edit
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        className="inline-block"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M16.862 3.487a2.25 2.25 0 1 1 3.182 3.182l-11.25 11.25a2 2 0 0 1-.878.513l-4 1a.5.5 0 0 1-.606-.606l1-4a2 2 0 0 1 .513-.878l11.25-11.25z"
+                                        />
+                                    </svg>
+                                </button>{" "}
+                                {/* Delete (X) button in the top-right corner */}
+                                <button
+                                    className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded hover:bg-red-200 flex items-center"
+                                    title="Delete entry"
+                                    onClick={() => {
+                                        if (
+                                            window.confirm(
+                                                "Are you sure you want to delete this entry?"
+                                            )
+                                        ) {
+                                            deleteEntryHandler(entry.id);
+                                        }
+                                    }}
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        className="inline-block"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
                                 </button>
                             </div>
                         </div>
