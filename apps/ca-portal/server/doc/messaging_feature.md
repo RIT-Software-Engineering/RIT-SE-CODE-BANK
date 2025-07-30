@@ -1,4 +1,4 @@
-# CA-Portal Messaging Feature through Slack
+# TA-Portal Messaging Feature through Slack
 
 ## Prerequisites 
 Same as the backend_setup.md file. However, for this feature, you will need to also install mkcert as well for local development.
@@ -103,9 +103,9 @@ If it prints a version number, the installation was successful and you're ready 
 
 ## Configuring mkcert to generate the certificate files
 
-### Step 1: Install the Local Certificate Authority (CA)
+### Step 1: Install the Local Certificate Authority (TA)
 
-This is a one-time setup command for your computer. It creates your own personal CA and configures your system and browsers to trust it automatically.
+This is a one-time setup command for your computer. It creates your own personal TA and configures your system and browsers to trust it automatically.
 
 1. Open a new Terminal or PowerShell window.
 2. Run the following command:
@@ -114,7 +114,7 @@ This is a one-time setup command for your computer. It creates your own personal
 mkcert -install
 ```
 
-You may see a security prompt from your operating system asking for your password or permission to make changes. This is required to add the CA to your system's trust store. Approve it.
+You may see a security prompt from your operating system asking for your password or permission to make changes. This is required to add the TA to your system's trust store. Approve it.
 
 ---
 
@@ -122,7 +122,7 @@ You may see a security prompt from your operating system asking for your passwor
 
 Now, you can create the actual certificate files for your local server.
 
-1. Navigate in your terminal to the directory where you want your certificate files to be saved (usually the root of your server project, e.g., `.../ca-portal/server/`).
+1. Navigate in your terminal to the directory where you want your certificate files to be saved (usually the root of your server project, e.g., `.../ta-portal/server/`).
 2. Run the following command to generate certificates for `localhost`:
 
 ```bash
@@ -138,7 +138,7 @@ This will create two files in your current directory:
 ## Setup of Slack App
 **Note:** Normally, if the slack app hasn't been made yet for this feature yet, then only one member of the team needs to look at the first four step here, then the rest of the team just needs to start at step 5 and below.
 
-1. Create the App: Go to the Slack API website and click "Create New App". Choose "From scratch," name it (e.g., "CA Portal"), and select the workspace you want to install it on.
+1. Create the App: Go to the Slack API website and click "Create New App". Choose "From scratch," name it (e.g., "TA Portal"), and select the workspace you want to install it on.
 
 2. Add Permissions (Scopes): In the sidebar, navigate to OAuth & Permissions. Scroll down to the User Token Scopes section and add the following scopes:
 

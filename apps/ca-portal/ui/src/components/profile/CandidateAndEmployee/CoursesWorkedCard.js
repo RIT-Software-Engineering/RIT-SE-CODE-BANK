@@ -3,7 +3,7 @@ import React from 'react';
 import EditButton from '../../common/buttons/EditButton';
 
 /**
- * A card component to display user course assistant information (candidate or employee).
+ * A card component to display user Teaching Assistant information (candidate or employee).
  * @param {object} props - The component props.
  * @param {object[]} props.coursesTaken - The user's course data array.
  * @param {function} props.onEdit - The function to call when the edit icon is clicked.

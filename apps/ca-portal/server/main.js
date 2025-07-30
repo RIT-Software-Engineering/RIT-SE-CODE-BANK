@@ -90,7 +90,7 @@ async function initializeApp() {
     
     // Define a simple root route to confirm the server is running.
     app.get('/', (req, res) => {
-        res.send('Welcome to the RIT CA Portal Backend!');
+        res.send('Welcome to the RIT TA Portal Backend!');
     });
 
     // Mount the main API router. All requests to '/api' will be handled by this router.

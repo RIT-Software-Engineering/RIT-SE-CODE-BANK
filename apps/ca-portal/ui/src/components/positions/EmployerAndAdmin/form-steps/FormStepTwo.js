@@ -57,7 +57,7 @@ export default function FormStepTwo({ register, control }) {
           htmlFor="maxCAs"
           className="block text-sm font-medium text-gray-700"
         >
-          Max CA&apos;s
+          Max TA&apos;s
         </label>
         <input
           type="number"
