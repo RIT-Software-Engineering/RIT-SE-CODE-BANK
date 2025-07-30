@@ -810,6 +810,7 @@ async function getUserProfile(UID) {
               resumes: true,
               courseHistory: { include: { course: true } },
               jobPositionApplicationHistory: { include: { jobPosition: true } },
+              employees: true,
             },
           },
         },
@@ -934,6 +935,7 @@ async function upsertEmployerProfile(employerData) {
           name: employerData.name,
           email: employerData.email,
           pronouns: employerData.pronouns,
+          role: employerData.role,
         },
         create: {
           uid: employerData.uid,
@@ -956,6 +958,69 @@ async function upsertEmployerProfile(employerData) {
     });
   } catch (error) {
     console.error("Error in upsertEmployerProfile:", error);
+    throw error;
+  }
+}
+
+/**
+ * Terminates all current job positions and marks the employee as TERMINATED.
+ * @param {number} employeeId - The UID of the employee to terminate.
+ * @returns {Promise<object>} The updated user profile after termination.
+ */
+async function terminateEmployee(employeeId) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Find employee by candidate UID to get internal employee ID
+      const employeeRecord = await tx.employee.findFirst({
+        where: {
+          candidateUID: employeeId,
+        },
+      });
+
+      if (!employeeRecord) {
+        throw new Error(`No employee record found for UID ${employeeId}`);
+      }
+
+      const employeeDbId = employeeRecord.id;
+
+      // 2. Update all ACTIVE or INACTIVE JobPositionHistory entries to TERMINATED
+      await tx.jobPositionHistory.updateMany({
+        where: {
+          employeeId: employeeDbId,
+          jobPositionHistoryStatus: {
+            in: ['ACTIVE', 'INACTIVE']
+          }
+        },
+        data: {
+          jobPositionHistoryStatus: 'TERMINATED',
+        },
+      });
+
+      // 3. Update the employee's status in the Employee table
+      await tx.employee.update({
+        where: {
+          id: employeeDbId,
+        },
+        data: {
+          employeeStatus: 'TERMINATED',
+        },
+      });
+
+      // 4. Return updated user profile
+      return tx.user.findUnique({
+        where: { uid: employeeId },
+        include: {
+          candidate: {
+            include: {
+              employees: true,
+              courseHistory: true,
+            },
+          },
+        },
+      });
+    });
+  } catch (error) {
+    console.error("Error in terminateEmployee:", error);
     throw error;
   }
 }
@@ -1229,6 +1294,7 @@ module.exports = {
   getAllPositions,
   createCourse,
   getComments,
+  terminateEmployee,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.

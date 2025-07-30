@@ -362,6 +362,30 @@ export async function upsertEmployerProfile(employerData) {
   return handleApiResponse(response);
 }
 
+/**
+ * Terminates an employee by UID, updating all their job history to 'TERMINATED'.
+ * @param {number} uid - The UID of the employee to terminate.
+ * @returns {Promise<object>} The updated user profile after termination.
+ */
+export async function terminateEmployee(uid) {
+  if (!uid) {
+    throw new Error("A UID is required to terminate an employee.");
+  }
+
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/terminate-employee/${uid}`;
+  console.log(`Terminating employee at: ${url}`);
+
+  const response = await fetch(url, {
+    method: "PUT",
+  });
+
+  return handleApiResponse(response);
+}
+
 // api call to add new candidate resume
 export async function uploadNewCandidateResume(formData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {

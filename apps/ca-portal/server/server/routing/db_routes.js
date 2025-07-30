@@ -32,7 +32,8 @@ const {
   deleteCandidateApplication,
   changeCandidateApplicationStatus,
   getComments,
-  createPosition
+  createPosition,
+  terminateEmployee
 } = require('../database/query_db');
 
 // =============================================================================
@@ -516,6 +517,33 @@ router.post("/upsert-employer-profile", async (req, res) => {
   } catch (error) {
     console.error("Error in /upsert-employer-profile route:", error);
     res.status(500).json({ error: "Failed to upsert employer profile." });
+  }
+});
+
+/**
+ * @route   PUT /api/db/terminate-employee/:uid
+ * @desc    Terminates an employee by updating their job history to 'TERMINATED'.
+ * @access  Public
+ * @param   {number} uid - The employee's UID.
+ */
+router.put('/terminate-employee/:uid', async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const numericUID = parseInt(uid, 10);
+
+    if (isNaN(numericUID)) {
+      return res.status(400).json({ error: 'UID must be a valid number.' });
+    }
+
+    const result = await terminateEmployee(numericUID); // <- Your new query function
+
+    res.status(200).json({
+      message: `Employee ${numericUID} terminated successfully.`,
+      user: result,
+    });
+  } catch (error) {
+    console.error(`Error in /terminate-employee/${req.params.uid}:`, error);
+    res.status(500).json({ error: 'Failed to terminate employee.' });
   }
 });
 
