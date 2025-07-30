@@ -141,7 +141,7 @@ export default function JournalPage() {
                 </button>
             </div>
             <hr className="mb-6" />
-            <ul className="space-y-4">
+            <ul className="space-y-4 overflow-scroll max-h-110">
                 {journal.entries.length === 0 && (
                     <li className="text-center text-gray-500 py-8">
                         You have no journal entries yet. Try and create one!
@@ -177,6 +177,7 @@ export default function JournalPage() {
                     </li>
                 ))}
             </ul>
+            <hr className="mt-6" />
             <AddJournalEntryModal
                 open={showAddEntry}
                 onClose={() => setShowAddEntry(false)}
