@@ -2,8 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Journal } from "@/types/journal";
-import { createJournalEntry, getJournalByUser } from "@/services/journal";
+import { Journal, JournalEntry } from "@/types/journal";
+import {
+    createJournalEntry,
+    deleteJournalEntry,
+    editJournalEntry,
+    getJournalByUser,
+} from "@/services/journal";
 import { useAuth } from "@/context/AuthContext";
 import {
     Dialog,
@@ -18,13 +23,20 @@ function AddJournalEntryModal({
     open,
     onClose,
     onSubmit,
+    baseEntry,
 }: {
     open: boolean;
     onClose: () => void;
     onSubmit: (subject: string, content: string) => void;
+    baseEntry?: JournalEntry;
 }) {
-    const [subject, setSubject] = useState("");
-    const [content, setContent] = useState("");
+    const [subject, setSubject] = useState(baseEntry?.re ?? "");
+    const [content, setContent] = useState(baseEntry?.content ?? "");
+
+    useEffect(() => {
+        setSubject(baseEntry?.re ?? "");
+        setContent(baseEntry?.content ?? "");
+    }, [baseEntry]);
 
     const handleSubmit = () => {
         onSubmit(subject, content);
@@ -66,7 +78,7 @@ function AddJournalEntryModal({
                     variant="contained"
                     disabled={!content}
                 >
-                    Add
+                    Submit
                 </Button>
             </DialogActions>
         </Dialog>
@@ -79,6 +91,10 @@ export default function JournalPage() {
 
     const [journal, setJournal] = useState<Journal>();
     const [showAddEntry, setShowAddEntry] = useState(false);
+    const [editingEntry, setEditingEntry] = useState(false);
+    const [entryUnderEdit, setEntryUnderEdit] = useState<
+        JournalEntry | undefined
+    >(undefined);
     const { currentUser } = useAuth();
 
     const fetchJournal = async () => {
@@ -104,6 +120,31 @@ export default function JournalPage() {
             content,
             tags: [],
         });
+
+        await fetchJournal();
+    };
+
+    const editEntryHandler = async (
+        id: string,
+        re: string,
+        content: string
+    ) => {
+        if (!currentUser) return;
+
+        await editJournalEntry(id, {
+            userId: currentUser.id,
+            re,
+            content,
+            tags: [],
+        });
+
+        await fetchJournal();
+    };
+
+    const deleteEntryHandler = async (id: string) => {
+        if (!currentUser) return;
+
+        await deleteJournalEntry(id);
 
         await fetchJournal();
     };
@@ -150,8 +191,24 @@ export default function JournalPage() {
                 {journal.entries.map((entry) => (
                     <li
                         key={entry.id}
-                        className="border rounded p-4 bg-white shadow"
+                        className="border rounded p-4 bg-white shadow relative"
                     >
+                        {/* Delete (X) button in the top-right corner */}
+                        <button
+                            className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                            title="Delete entry"
+                            onClick={() => {
+                                if (
+                                    window.confirm(
+                                        "Are you sure you want to delete this entry?"
+                                    )
+                                ) {
+                                    deleteEntryHandler(entry.id);
+                                }
+                            }}
+                        >
+                            &times;
+                        </button>
                         <div className="flex justify-between items-center mb-1">
                             {entry.re ? (
                                 <h2 className="text-lg font-semibold">
@@ -162,16 +219,33 @@ export default function JournalPage() {
                                     Unnamed Entry
                                 </h2>
                             )}
-                            <span className="text-xs text-gray-500">
-                                {new Date(entry.date).toLocaleString("en-US", {
-                                    year: "numeric",
-                                    month: "2-digit",
-                                    day: "2-digit",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                })}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500">
+                                    {new Date(entry.date).toLocaleString(
+                                        "en-US",
+                                        {
+                                            year: "numeric",
+                                            month: "2-digit",
+                                            day: "2-digit",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            hour12: true,
+                                        }
+                                    )}
+                                </span>
+                                {/* Edit button */}
+                                <button
+                                    className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200"
+                                    title="Edit entry"
+                                    onClick={() => {
+                                        setEditingEntry(true);
+                                        setEntryUnderEdit(entry);
+                                        setShowAddEntry(true);
+                                    }}
+                                >
+                                    Edit
+                                </button>
+                            </div>
                         </div>
                         <p className="text-gray-700">{entry.content}</p>
                     </li>
@@ -180,11 +254,24 @@ export default function JournalPage() {
             <hr className="mt-6" />
             <AddJournalEntryModal
                 open={showAddEntry}
-                onClose={() => setShowAddEntry(false)}
+                onClose={() => {
+                    setShowAddEntry(false);
+                    setEditingEntry(false);
+                    setEntryUnderEdit(undefined);
+                }}
                 onSubmit={(subject, content) => {
                     setShowAddEntry(false);
-                    submitEntryHandler(subject, content);
+                    if (editingEntry) {
+                        editEntryHandler(
+                            entryUnderEdit?.id ?? "",
+                            subject,
+                            content
+                        );
+                        setEditingEntry(false);
+                        setEntryUnderEdit(undefined);
+                    } else submitEntryHandler(subject, content);
                 }}
+                baseEntry={entryUnderEdit}
             />
         </div>
     );

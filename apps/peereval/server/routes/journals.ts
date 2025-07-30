@@ -74,7 +74,7 @@ router.put("/:id", async (req, res) => {
         tags: string[];
     };
 
-    const entry = prisma.journalEntry.update({
+    const entry = await prisma.journalEntry.update({
         where: { id },
         data: {
             re,
@@ -88,6 +88,18 @@ router.put("/:id", async (req, res) => {
             lastUpdated: new Date(),
         },
     });
+
+    res.status(201).json(entry);
+});
+
+router.delete("/:id", async (req, res) => {
+    const { id } = req.params;
+
+    await prisma.journalEntry.delete({
+        where: { id },
+    });
+
+    res.status(204).send();
 });
 
 export default router;
