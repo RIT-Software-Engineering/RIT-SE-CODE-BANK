@@ -1,8 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-// import Header from "@components/Header";
-import LandingHeader from "@components/LandingHeader";
+import Header from "@components/Header";
 
 const NavButton = ({ href, children }) => {
   const baseStyle = {
@@ -39,7 +38,7 @@ const NavButton = ({ href, children }) => {
   );
 };
 
-const LandingPage = () => {
+const Home = () => {
   return (
     <div
       style={{
@@ -51,8 +50,25 @@ const LandingPage = () => {
         flexDirection: "column",
       }}
     >
-      <LandingHeader />
-      
+      <Header />
+      <nav
+        style={{
+          position: "fixed",
+          top: "64px",
+          left: 0,
+          right: 0,
+          backgroundColor: "#333333",
+          padding: "16px 24px",
+          display: "flex",
+          gap: "16px",
+          alignItems: "center",
+          zIndex: 50,
+        }}
+      >
+        <NavButton href="/application">Apply</NavButton>
+        <NavButton href="/scoopdinator/dashboard">Scoopdinator</NavButton>
+        <NavButton href="/projects">Projects</NavButton>
+      </nav>
 
       <div style={{ height: "64px" }} />
       <div style={{ height: "64px" }} />
@@ -75,4 +91,4 @@ const LandingPage = () => {
   );
 };
 
-export default LandingPage;
+export default Home;
