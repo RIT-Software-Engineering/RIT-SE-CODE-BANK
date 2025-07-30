@@ -191,7 +191,7 @@ router.post('/team/:teamId/import-csv', async (req: Request, res: Response) => {
         }
 
         // Check if user is already in the team
-        const isAlreadyInTeam = team.users.some(teamUser => teamUser.id === user.id);
+        const isAlreadyInTeam = team.users.some((teamUser: { id: any; }) => teamUser.id === user.id);
         
         if (isAlreadyInTeam) {
           results.alreadyInTeam.push(trimmedUsername);

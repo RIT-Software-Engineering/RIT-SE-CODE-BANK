@@ -21,6 +21,9 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  firstName String?
+  lastName  String?
+  email     String?  
 
   // Relations
   managedCommunities Community[] @relation("ManagerCommunities")
