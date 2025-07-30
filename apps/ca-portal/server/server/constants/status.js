@@ -1,4 +1,4 @@
-export const applicationStatusStringToEnum = {
+const applicationStatusStringToEnum = {
     "Applied": 'APPLIED',
     "Accepted Offer": 'ACCEPTED_OFFER',
     "Pending Offer": 'PENDING_OFFER',
@@ -8,7 +8,7 @@ export const applicationStatusStringToEnum = {
     "Inactive": 'INACTIVE'
 }
 
-export const applicationStatusEnumToString = {
+const applicationStatusEnumToString = {
     APPLIED: "Applied",
     ACCEPTED_OFFER: "Accepted Offer",
     PENDING_OFFER: "Pending Offer",
