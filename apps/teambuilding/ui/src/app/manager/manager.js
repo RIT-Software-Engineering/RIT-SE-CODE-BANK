@@ -20,6 +20,7 @@ export default function ManagerPage() {
   const [communityImportStates, setCommunityImportStates] = useState({}); // { [communityId]: { importing: boolean } }
   const [bulkImportState, setBulkImportState] = useState({ importing: false }); // For bulk community creation
   const [draggedUser, setDraggedUser] = useState(null); // { user, fromTeamId }
+  const [userDisplayFormat, setUserDisplayFormat] = useState("username"); // "username", "email", "firstName lastName", "lastName firstName"
 
   useEffect(() => {
     const username = typeof window !== "undefined" ? localStorage.getItem("username") : null;
@@ -58,6 +59,24 @@ export default function ManagerPage() {
           .then(userList => setUsers(userList.users || []));
       });
   }, []);
+
+  // Function to format user display name based on selected format
+  const formatUserDisplay = (user) => {
+    switch (userDisplayFormat) {
+      case "email":
+        return user.email || user.username;
+      case "firstName lastName":
+        return user.firstName && user.lastName 
+          ? `${user.firstName} ${user.lastName}` 
+          : user.username;
+      case "lastName firstName":
+        return user.firstName && user.lastName 
+          ? `${user.lastName}, ${user.firstName}` 
+          : user.username;
+      default:
+        return user.username;
+    }
+  };
 
   // Fetch team members when communities load or change
   useEffect(() => {
@@ -831,7 +850,27 @@ export default function ManagerPage() {
         </div>
       </div>
       <div className="show classes">
-        <h2>Communities</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2>Communities</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px' }}>Display users as:</label>
+            <select
+              value={userDisplayFormat}
+              onChange={e => setUserDisplayFormat(e.target.value)}
+              style={{
+                padding: '4px 8px',
+                fontSize: '14px',
+                border: '1px solid #ccc',
+                borderRadius: '4px'
+              }}
+            >
+              <option value="username">Username</option>
+              <option value="email">Email</option>
+              <option value="firstName lastName">First Last</option>
+              <option value="lastName firstName">Last, First</option>
+            </select>
+          </div>
+        </div>
         {communities.length > 0 ? (
           communities.map((community) => (
             <div key={community.id} className="manager-class-box">
@@ -867,7 +906,7 @@ export default function ManagerPage() {
                 <h3>Users in this Community</h3>
                 <ul>
                   {(communityUsers[community.id] || []).map(user => (
-                    <li key={user.id}>{user.username}</li>
+                    <li key={user.id}>{formatUserDisplay(user)}</li>
                   ))}
                 </ul>
                 <div>
@@ -881,7 +920,7 @@ export default function ManagerPage() {
                     {users
                       .filter(u => u.role === "USER" && !(communityUsers[community.id] || []).some(cu => cu.id === u.id))
                       .map(u => (
-                        <option key={u.id} value={u.id}>{u.username}</option>
+                        <option key={u.id} value={u.id}>{formatUserDisplay(u)}</option>
                       ))}
                   </select>
                   <button
@@ -956,7 +995,7 @@ export default function ManagerPage() {
                                 onDragEnd={handleDragEnd}
                                 title="Drag to move to another team"
                               >
-                                {user.username}
+                                {formatUserDisplay(user)}
                               </li>
                             ))
                           ) : (
@@ -975,7 +1014,7 @@ export default function ManagerPage() {
                               !(team.users || []).some(tm => tm.id === u.id)
                             )
                             .map(u => (
-                              <option key={u.id} value={u.id}>{u.username}</option>
+                              <option key={u.id} value={u.id}>{formatUserDisplay(u)}</option>
                             ))}
                         </select>
                         <button onClick={() => addUserToTeam(team.id, community.id)}>

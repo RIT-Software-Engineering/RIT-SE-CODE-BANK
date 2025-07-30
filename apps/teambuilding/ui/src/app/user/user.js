@@ -7,7 +7,7 @@ export default function UserPage() {
     const [userTeams, setUserTeams] = useState([]);
     const [popupUser, setPopupUser] = useState(null);
     const [editPopup, setEditPopup] = useState(false);
-    const [contactInfo, setContactInfo] = useState({ email: "", phone: "" });
+    const [userInfo, setUserInfo] = useState({ firstName: "", lastName: "", email: "" });
 
     useEffect(() => {
         const storedUsername =
@@ -17,6 +17,21 @@ export default function UserPage() {
         setUsername(storedUsername || "");
 
         if (storedUsername) {
+            // Fetch user details for contact info
+            fetch(`http://localhost:3000/api/user/${encodeURIComponent(storedUsername)}/details`)
+                .then(res => res.json())
+                .then(userData => {
+                    if (userData) {
+                        setUserInfo({
+                            firstName: userData.firstName || "",
+                            lastName: userData.lastName || "",
+                            email: userData.email || ""
+                        });
+                    }
+                })
+                .catch(error => console.log("Error fetching user details:", error));
+
+            // Fetch user teams
             fetch(`http://localhost:3000/api/user?username=${encodeURIComponent(storedUsername)}`)
                 .then(res => res.json())
                 .then(userData => {
@@ -43,12 +58,45 @@ export default function UserPage() {
     }, {});
 
     const EditContactPopup = ({ user, info, onClose, onSave }) => {
+        const [firstName, setFirstName] = useState(info.firstName || "");
+        const [lastName, setLastName] = useState(info.lastName || "");
         const [email, setEmail] = useState(info.email || "");
-        const [phone, setPhone] = useState(info.phone || "");
+        const [saving, setSaving] = useState(false);
+        const [error, setError] = useState("");
 
-        const handleSave = () => {
-            onSave({ email, phone });
-            onClose();
+        const handleSave = async () => {
+            setSaving(true);
+            setError("");
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/user/${encodeURIComponent(user)}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        firstName: firstName.trim() || null,
+                        lastName: lastName.trim() || null,
+                        email: email.trim() || null
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setError(data.error || 'Failed to update user information');
+                    setSaving(false);
+                    return;
+                }
+
+                console.log('User updated successfully:', data.message);
+                onSave({ firstName, lastName, email });
+                onClose();
+            } catch (error) {
+                console.error('Error updating user:', error);
+                setError('Server error. Please try again.');
+                setSaving(false);
+            }
         };
 
         return (
@@ -61,26 +109,42 @@ export default function UserPage() {
                     >
                         ×
                     </button>
-                    <h2>Edit Contact Information</h2>
+                    <h2>Edit Personal Information</h2>
+                    {error && <div className="user-error-message">{error}</div>}
                     <div className="user-edit-contact-form">
+                        <label>
+                            First Name:
+                            <input
+                                type="text"
+                                value={firstName}
+                                onChange={e => setFirstName(e.target.value)}
+                                disabled={saving}
+                            />
+                        </label>
+                        <label>
+                            Last Name:
+                            <input
+                                type="text"
+                                value={lastName}
+                                onChange={e => setLastName(e.target.value)}
+                                disabled={saving}
+                            />
+                        </label>
                         <label>
                             Email:
                             <input
                                 type="email"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
+                                disabled={saving}
                             />
                         </label>
-                        <label>
-                            Phone:
-                            <input
-                                type="text"
-                                value={phone}
-                                onChange={e => setPhone(e.target.value)}
-                            />
-                        </label>
-                        <button className="user-edit-contact-save" onClick={handleSave}>
-                            Save
+                        <button 
+                            className="user-edit-contact-save" 
+                            onClick={handleSave}
+                            disabled={saving}
+                        >
+                            {saving ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>
@@ -89,7 +153,28 @@ export default function UserPage() {
     };
 
     const ContactPopup = ({ user, onClose }) => {
-        const contact = { email: "unknown", phone: "unknown" };
+        const [contact, setContact] = useState({ firstName: "", lastName: "", email: "" });
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+            fetch(`http://localhost:3000/api/user/${encodeURIComponent(user)}/details`)
+                .then(res => res.json())
+                .then(userData => {
+                    if (userData) {
+                        setContact({
+                            firstName: userData.firstName || "Not provided",
+                            lastName: userData.lastName || "Not provided",
+                            email: userData.email || "Not provided"
+                        });
+                    }
+                    setLoading(false);
+                })
+                .catch(error => {
+                    console.log("Error fetching contact info:", error);
+                    setLoading(false);
+                });
+        }, [user]);
+
         return (
             <div className="user-popup-overlay" onClick={onClose}>
                 <div className="user-popup-content" onClick={e => e.stopPropagation()}>
@@ -101,12 +186,21 @@ export default function UserPage() {
                         ×
                     </button>
                     <h2>{user}</h2>
-                    <div>
-                        <strong>Email:</strong> {contact.email}
-                    </div>
-                    <div>
-                        <strong>Phone:</strong> {contact.phone}
-                    </div>
+                    {loading ? (
+                        <div>Loading...</div>
+                    ) : (
+                        <div>
+                            <div>
+                                <strong>First Name:</strong> {contact.firstName}
+                            </div>
+                            <div>
+                                <strong>Last Name:</strong> {contact.lastName}
+                            </div>
+                            <div>
+                                <strong>Email:</strong> {contact.email}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -120,7 +214,7 @@ export default function UserPage() {
                     className="user-edit-contact-btn"
                     onClick={() => setEditPopup(true)}
                 >
-                    Edit Contact Information
+                    Edit Personal Information
                 </button>
             </div>
             <h2>Teams for {username}</h2>
@@ -160,9 +254,9 @@ export default function UserPage() {
             {editPopup && (
                 <EditContactPopup
                     user={username}
-                    info={contactInfo}
+                    info={userInfo}
                     onClose={() => setEditPopup(false)}
-                    onSave={newInfo => setContactInfo(newInfo)}
+                    onSave={newInfo => setUserInfo(newInfo)}
                 />
             )}
         </div>

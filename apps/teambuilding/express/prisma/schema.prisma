@@ -18,6 +18,9 @@ datasource db {
 model User {
   id        Int      @id @default(autoincrement())
   username  String   @unique
+  firstName String?
+  lastName  String?
+  email     String?  @unique
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
