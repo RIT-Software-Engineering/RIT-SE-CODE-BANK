@@ -149,6 +149,7 @@ CREATE TABLE `TimecardWeeklyHistory` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `jobPositionHistoryId` INTEGER NOT NULL,
     `isCurrentWeek` BOOLEAN NOT NULL,
+    `weekStartDate` DATE NOT NULL,
 
     INDEX `TimecardWeeklyHistory_jobPositionHistoryId_idx`(`jobPositionHistoryId`),
     PRIMARY KEY (`id`)

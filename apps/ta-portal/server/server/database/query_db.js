@@ -1286,6 +1286,207 @@ async function getComments(tableName, foreignKey) {
 }
 
 // =============================================================================
+// TIMECARD MANAGEMENT
+// =============================================================================
+
+/**
+ * Retrieves the current weekly timecard for a specific job.
+ * @param {number} jobPositionHistoryId - The ID of the employee's specific job history record.
+ * @returns {Promise<object|null>} The weekly timecard object with its daily entries, or null if not found.
+ */
+async function getEmployeeTimecard(jobPositionHistoryId) {
+    try {
+      return await prisma.timecardWeeklyHistory.findFirst({
+        where: {
+          jobPositionHistoryId: jobPositionHistoryId,
+          isCurrentWeek: true,
+        },
+        include: {
+          dailyEntries: {
+            orderBy: {
+              day: 'asc',
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error(`Error fetching timecard for jobPositionHistoryId ${jobPositionHistoryId}:`, error);
+      throw error;
+    }
+  }
+
+/**
+ * Retrieves the most recent weekly timecard marked as the current week for a specific job position history ID.
+ * 
+ * @param {number} jobPositionHistoryId - The ID of the employee's job position history record.
+ * @returns {Promise<Object|null>} A Promise that resolves to the timecardWeeklyHistory record
+ */
+async function getMostRecentTimecard(jobPositionHistoryId) {
+  const current = await prisma.timecardWeeklyHistory.findFirst({
+    where: {
+      jobPositionHistoryId: jobPositionHistoryId,
+      isCurrentWeek: true
+    },
+    include: {
+      dailyEntries: {
+        orderBy: {
+          day: 'asc',
+        },
+      },
+      jobPositionHistory: true,
+    },
+  });
+
+  return current;
+}
+
+/**
+ * Creates or updates a single day entry in a timecard, typically for notes.
+ * If the weekly record doesn't exist, it will be created.
+ * @param {object} dayData - The data for the day entry.
+ * @param {number} dayData.jobPositionHistoryId - The ID of the job.
+ * @param {string} dayData.date - The date of the entry (YYYY-MM-DD).
+ * @param {string} dayData.notes - The notes to save.
+ * @param {Date} dayData.weekStartDate - The calculated start date of the week.
+ * @returns {Promise<object>} The created or updated timecard day record.
+ */
+async function upsertTimecardDay(dayData) {
+    const { jobPositionHistoryId, date, notes, weekStartDate } = dayData;
+
+    return prisma.$transaction(async (tx) => {
+        const jobHistory = await tx.jobPositionHistory.findUnique({
+            where: { id: jobPositionHistoryId },
+            select: { employeeId: true },
+        });
+        if (!jobHistory) {
+            throw new Error(`JobPositionHistory with ID ${jobPositionHistoryId} not found.`);
+        }
+        const { employeeId } = jobHistory;
+
+        const dayId = `${employeeId}-${date}`;
+
+        // Ensure the weekly container exists
+        let weeklyHistory = await tx.timecardWeeklyHistory.findFirst({
+            where: {
+                jobPositionHistoryId: jobPositionHistoryId,
+                weekStartDate: weekStartDate,
+            }
+        });
+
+        if (!weeklyHistory) {
+            weeklyHistory = await tx.timecardWeeklyHistory.create({
+                data: {
+                    jobPositionHistoryId: jobPositionHistoryId,
+                    weekStartDate: weekStartDate,
+                    isCurrentWeek: false,
+                }
+            });
+        }
+
+        // Upsert the daily entry
+        return await tx.timecardDay.upsert({
+            where: { id: dayId },
+            update: { notes: notes },
+            create: {
+                id: dayId,
+                day: new Date(date),
+                timecardWeeklyHistoryId: weeklyHistory.id,
+                notes: notes,
+                duration: 0,
+            },
+        });
+    });
+}
+
+/**
+ * Creates or updates an employee's weekly timecard.
+ * @param {object} timecardData - The data submitted from the frontend.
+ */
+async function upsertTimecard(timecardData) {
+  const { jobPositionHistoryId, dailyEntries, weekStartDate, isCurrentWeek } = timecardData;
+
+  return prisma.$transaction(async (tx) => {
+    const jobHistory = await tx.jobPositionHistory.findUnique({
+      where: { id: jobPositionHistoryId },
+      select: { employeeId: true },
+    });
+    if (!jobHistory) {
+      throw new Error(`JobPositionHistory with ID ${jobPositionHistoryId} not found.`);
+    }
+    const { employeeId } = jobHistory;
+
+    // If this is being set as the current week, ensure no other week is marked as current.
+    if (isCurrentWeek) {
+        await tx.timecardWeeklyHistory.updateMany({
+            where: {
+                jobPositionHistoryId: jobPositionHistoryId,
+                isCurrentWeek: true,
+            },
+            data: {
+                isCurrentWeek: false,
+            },
+        });
+    }
+
+    // **FIX**: Replaced the failing `upsert` with a more robust find/update/create pattern.
+    let weeklyHistory = await tx.timecardWeeklyHistory.findFirst({
+        where: {
+            jobPositionHistoryId: jobPositionHistoryId,
+            weekStartDate: weekStartDate,
+        }
+    });
+
+    if (weeklyHistory) {
+        weeklyHistory = await tx.timecardWeeklyHistory.update({
+            where: { id: weeklyHistory.id },
+            data: { isCurrentWeek: isCurrentWeek },
+        });
+    } else {
+        weeklyHistory = await tx.timecardWeeklyHistory.create({
+            data: {
+                jobPositionHistoryId: jobPositionHistoryId,
+                weekStartDate: weekStartDate,
+                isCurrentWeek: isCurrentWeek,
+            },
+        });
+    }
+
+    // Delete old daily entries for this week to replace them.
+    await tx.timecardDay.deleteMany({
+      where: {
+        timecardWeeklyHistoryId: weeklyHistory.id,
+      },
+    });
+
+    // Prepare and create new daily entries if any were provided.
+    if (dailyEntries && dailyEntries.length > 0) {
+        const newDailyEntries = dailyEntries.map(entry => {
+            const createDate = (date, time) => time ? new Date(`${date}T${time}:00Z`) : null;
+            return {
+                id: `${employeeId}-${entry.date}`,
+                day: new Date(entry.date),
+                timecardWeeklyHistoryId: weeklyHistory.id,
+                notes: entry.notes,
+                duration: entry.duration,
+                timeIn1: createDate(entry.date, entry.timeIn1),
+                timeOut1: createDate(entry.date, entry.timeOut1),
+                timeIn2: createDate(entry.date, entry.timeIn2),
+                timeOut2: createDate(entry.date, entry.timeOut2),
+                timeIn3: createDate(entry.date, entry.timeIn3),
+                timeOut3: createDate(entry.date, entry.timeOut3),
+            };
+        });
+
+        await tx.timecardDay.createMany({
+            data: newDailyEntries,
+        });
+    }
+
+    return { success: true, message: 'Timecard saved successfully.' };
+  });
+}
+
+// =============================================================================
 // EXPORTS & PROCESS HANDLING
 // =============================================================================
 
@@ -1314,6 +1515,10 @@ module.exports = {
   createCourse,
   getComments,
   terminateEmployee,
+  upsertTimecard,
+  upsertTimecardDay,
+  getMostRecentTimecard,
+  getEmployeeTimecard,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.

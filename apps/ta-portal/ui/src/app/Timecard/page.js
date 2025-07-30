@@ -237,7 +237,6 @@ export default function Timecard() {
                 timeOut3: day.outs[2] || null,
             }));
 
-<<<<<<< HEAD:apps/ca-portal/ui/src/app/Timecard/page.js
         return {
             jobPositionHistoryId,
             entries: dailyEntries,
@@ -245,18 +244,6 @@ export default function Timecard() {
             isCurrentWeek: true,
         };
     };
-=======
-  /**
-   * Update the Interview date for a specific day
-   */
-  const handleDateChange = (dayIdx, value) => {
-    setTimecard((prev) => {
-      const newTS = [...prev];
-      newTS[dayIdx] = { ...newTS[dayIdx], date: value };
-      return newTS;
-    });
-  };
->>>>>>> ta-portal-dev:apps/ta-portal/ui/src/app/Timecard/page.js
 
     /**
      * Handles submitting the current timecard by calling the upsert API,
