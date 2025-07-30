@@ -26,7 +26,7 @@ model User {
   peerResponseAsRespondee FormResponse[] @relation("respondeeInFormResponse")
   inAssessments           Assessment[]   @relation("receiversInAssessment")
   outAssessments          Assessment[]   @relation("responderInAssessment")
-  Journal                 Journal[]
+  journal                 Journal[]
 }
 
 // ---------------------------------------
@@ -41,7 +41,7 @@ model Project {
   peers       User[] @relation("peers")
 
   // Required for relations
-  Assessment Assessment[]
+  assessments Assessment[]
 }
 
 // ---------------------------------------
@@ -60,8 +60,8 @@ model Assessment {
   dueDate        DateTime
 
   // Required for relations
-  peerResponse FormResponse[]
-  projectId    String         @db.Char(36)
+  peerResponses FormResponse[]
+  projectId     String         @db.Char(36)
 }
 
 model FormResponse {
@@ -83,7 +83,7 @@ model InquiryResponse {
   id           String       @id @default(uuid()) @db.Char(36)
   Inquiry      Inquiry      @relation(fields: [inquiryId], references: [id])
   answer       String       @db.LongText // Interpret based on inquiry type
-  FormResponse FormResponse @relation(fields: [formResponseId], references: [id])
+  formResponse FormResponse @relation(fields: [formResponseId], references: [id])
 
   // Required for relations
   formResponseId String @db.Char(36)
@@ -101,7 +101,7 @@ model FeedbackForm {
   inquiries Inquiry[]
 
   // Required for relations
-  Assessment Assessment[]
+  assessments Assessment[]
 }
 
 model Inquiry {
@@ -117,8 +117,8 @@ model Inquiry {
   rows RubricRow[]
 
   // Required for relations
-  FeedbackForms       FeedbackForm[]
-  PeerInquiryResponse InquiryResponse[]
+  feedbackForms        FeedbackForm[]
+  peerInquiryResponses InquiryResponse[]
 }
 
 enum InquiryType {
@@ -133,7 +133,7 @@ model RubricRow {
   options String
 
   // Required for relations
-  Inquiry Inquiry[]
+  inquiries Inquiry[]
 }
 
 // ---------------------------------------
@@ -168,7 +168,7 @@ model JournalEntryTag {
   name String
 
   // Required for relations
-  JournalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
+  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
   journalEntryId String?       @db.Char(36)
 
   @@unique([name])
