@@ -73,4 +73,20 @@ router.get("/", async (req, res) => {
   }
 });
 
+// PUT route to update application accepted status
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { accepted} = req.body;
+
+  try { 
+    const updated = await prisma.application.update({
+      where: { id: Number(id) },
+      data: { accepted },
+    });
+    res.status(200).json({ message: "Application updated", application: updated });
+  } catch (error) {
+    console.error("Error updating application:", error);
+    return res.status(500).json({ message: "Error updating application", error: error.message });
+  } 
+});
 export default router;

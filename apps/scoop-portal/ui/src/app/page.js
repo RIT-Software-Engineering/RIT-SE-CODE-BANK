@@ -86,10 +86,10 @@ const LandingPage = () => {
                     students with real-world software development experiences,
                     interdisciplinary teams, and mentorship from faculty.
                 </p>
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                    <NavButton href="/application">Apply Now</NavButton>
+                <Box gap={2} sx={{ display: "flex", justifyContent: "center"}}>
+                    <NavButton href="/application" >Apply Now</NavButton>
                     <NavButton href="/interest-form">Interest Form</NavButton>
-                </div>
+                </Box>
         <Box 
         sx={{
           backgroundImage: 'url("/RIT_rgb_vert_w.png")',

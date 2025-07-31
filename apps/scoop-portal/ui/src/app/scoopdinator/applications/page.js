@@ -140,7 +140,7 @@ export default function SupervisorApplicationsPage() {
                 severity: "error",
             });
         }
-        console.log("app status", selectedApp.status);
+        // console.log("app status", selectedApp.status);
     };
 
     const handleNotificationClose = (event, reason) => {
