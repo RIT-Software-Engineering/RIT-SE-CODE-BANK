@@ -80,7 +80,7 @@ router.get("/admin", async (req, res) => {
 
   // Develop whereClause for fitlering
   const whereClause = { journal_owner_type: "admin" };
-  if (semester_group) {
+  if (semester_groupId) {
     whereClause.semester_groupId = semester_groupId;
   }
 
