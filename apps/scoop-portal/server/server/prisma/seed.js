@@ -3,36 +3,54 @@ import { sampleUsers } from "./test-data/sample_users.js";
 import { sampleJournalEntries } from "./test-data/sample_journal_entries.js";
 import { sampleSemesterGroups } from "./test-data/sample_semester_groups.js";
 import { sampleProjects } from "./test-data/sample_projects.js";
+
 const prisma = new PrismaClient();
 // Use prisma.<model> to interact with your database
 
+const models = [
+  "semester_Group",
+  "users",
+  "project",
+  "journal_Entry",
+  "fruit",
+  "application",
+];
+
+const sampleDataFiles = {
+  semester_Group: sampleSemesterGroups,
+  users: sampleUsers,
+  project: sampleProjects,
+  journal_Entry: sampleJournalEntries,
+  fruit: [{ name: "Apple", color: "Red", size: "Medium" }],
+};
+
 async function main() {
   console.log("Clearing data");
-  await prisma.project.deleteMany();
-  await prisma.semester_Group.deleteMany();
-  await prisma.journal_Entry.deleteMany();
-  await prisma.users.deleteMany();
-  await prisma.fruit.deleteMany();
-  await prisma.application.deleteMany();
+  for (const model of models) {
+    try {
+      if (prisma[model]) {
+        await prisma[model].deleteMany();
+      }
+    } catch (error) {
+      console.error(`Error clearing ${model}: `, error.message);
+    }
+  }
 
   console.log("Seeding data");
 
   //example data
-  await prisma.fruit.create({
-    data: { name: "Apple", color: "Red", size: "Medium" },
-  });
-  await prisma.semester_Group.createMany({
-    data: sampleSemesterGroups,
-  });
-  await prisma.project.createMany({
-    data: sampleProjects,
-  });
-  await prisma.users.createMany({
-    data: sampleUsers,
-  });
-  await prisma.journal_Entry.createMany({
-    data: sampleJournalEntries,
-  });
+  for (const model of models) {
+    try {
+      const data = sampleDataFiles[model];
+      if (data && data.length > 0) {
+        await prisma[model].createMany({ data: data });
+      } else {
+        console.log(`No data to seed for ${model}`);
+      }
+    } catch (error) {
+      console.error(`Error seeding ${model}:`, error.message);
+    }
+  }
 
   console.log("Drop and create finished.");
 }
