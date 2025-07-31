@@ -25,6 +25,7 @@ const newJobTemplate = {
   endDate: "",
   jobSchedules: [],
   courseCode: "",
+  jobPositionStatus: 'PENDING_APPROVAL',
   sectionNumber: "",
   semesterCode: "2241", // Default semester
   gradeRequirement: null,

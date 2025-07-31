@@ -19,6 +19,9 @@ export default function PositionsCard({ position, index }) {
   const { currentUser, refreshUserProfile } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
 
+  const isPendingApproval = position.jobPositionStatus == "PENDING_APPROAL" ? true:false
+
+
   const hasApplied =
     currentUser?.candidate?.jobPositionApplicationHistory?.some(
       (app) => app.jobPositionId === position.id

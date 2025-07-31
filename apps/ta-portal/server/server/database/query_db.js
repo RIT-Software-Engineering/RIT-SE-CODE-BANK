@@ -6,11 +6,9 @@
 
 const { PrismaClient } = require("@prisma/client");
 const path = require("path");
-const {
-  gradetoNumericValue,
-} = require("../constants/grade");
+const { gradetoNumericValue } = require("../constants/grade");
 const { locationMap } = require("../constants/location");
-const { applicationStatusStringToEnum } = require('../constants/status');
+const { applicationStatusStringToEnum } = require("../constants/status");
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {
@@ -82,10 +80,14 @@ async function buildPositionFilterClause(filters, candidateUID) {
   }
 
   // Add "Course Level" filter (e.g., "100-level", "200-level").
-  if (filters.level && Array.isArray(filters.level) && filters.level.length > 0) {
-    const levelConditions = filters.level.map(levelString => {
+  if (
+    filters.level &&
+    Array.isArray(filters.level) &&
+    filters.level.length > 0
+  ) {
+    const levelConditions = filters.level.map((levelString) => {
       // Extracts the first digit from strings like "100-level" -> "1"
-      const levelDigit = levelString.replace('-level', '').charAt(0);
+      const levelDigit = levelString.replace("-level", "").charAt(0);
       return {
         courseCode: {
           contains: `-${levelDigit}`,
@@ -125,11 +127,7 @@ async function buildPositionFilterClause(filters, candidateUID) {
  * @param {number} candidateUID - The UID of the viewing candidate, used for "applied" and "eligibility" checks.
  * @returns {Promise<Array>} A promise that resolves to an array of filtered and processed job positions.
  */
-async function getOpenJobPositions(
-  searchTerm,
-  filters,
-  candidateUID
-) {
+async function getOpenJobPositions(searchTerm, filters, candidateUID) {
   try {
     // 1. Build the search and filter clauses separately.
     const searchWhere = buildPositionSearchClause(searchTerm);
@@ -142,7 +140,7 @@ async function getOpenJobPositions(
     const finalWhere = {
       ...searchWhere,
       ...filterWhere,
-      
+
       // Manually merge the nested 'course' object to prevent it from being overwritten.
       course: {
         ...(searchWhere.course || {}),
@@ -150,7 +148,7 @@ async function getOpenJobPositions(
       },
     };
     // Add a default job position status filter to show only OPEN positions.
-    finalWhere.jobPositionStatus = 'OPEN';
+    finalWhere.jobPositionStatus = "OPEN";
 
     // 3. Execute the single database query to get a preliminary list of positions.
     let positions = await prisma.jobPosition.findMany({
@@ -165,13 +163,13 @@ async function getOpenJobPositions(
       },
       orderBy: {
         course: {
-          name: 'asc',
+          name: "asc",
         },
       },
     });
 
     // 4. Perform post-query filtering for "Eligibility" as it requires complex logic on fetched data.
-    if (filters.eligibility && filters.eligibility !== 'Any' && candidateData) {
+    if (filters.eligibility && filters.eligibility !== "Any" && candidateData) {
       positions = positions.filter((position) => {
         const gradStatusMatch =
           !position.graduateStatusRequirement ||
@@ -187,19 +185,42 @@ async function getOpenJobPositions(
             gradetoNumericValue[courseHistory.grade] >=
               gradetoNumericValue[position.gradeRequirement]);
         const isEligible = gradStatusMatch && courseTakenMatch && gradeMatch;
-        return filters.eligibility === 'Eligible' ? isEligible : !isEligible;
+        return filters.eligibility === "Eligible" ? isEligible : !isEligible;
       });
     }
 
     // 5. return the filtered and processed positions
     return positions;
   } catch (error) {
-    console.error('Error in getOpenJobPositions:', error);
+    console.error("Error in getOpenJobPositions:", error);
     throw error;
   }
 }
 
-
+async function getPendingJobPositions() {
+  try {
+    console.log("getting query");
+    return await prisma.jobPosition.findMany({
+      where: {
+        jobPositionStatus: "PENDING_APPROVAL",
+      },
+      include: {
+        course: {
+          select: { name: true, description: true, courseCode: true },
+        },
+        jobSchedules: {
+          select: { dayOfWeek: true, startTime: true, endTime: true },
+        },
+      },
+      orderBy: {
+        id: "asc", // Or any other order you prefer
+      },
+    });
+  } catch (error) {
+    console.error("Error retrieving pending job positions:", error);
+    throw error;
+  }
+}
 
 async function modifyPosition(jobId, positionData) {
   // Separate the schedules array from the rest of the job data
@@ -350,8 +371,9 @@ async function createPosition(positionData, EmployerUID) {
           connect: { courseCode: jobData.courseCode },
         },
         employer: {
-          connect: { uid: EmployerUID }
-        },        maxCAs: jobData.maxCAs,
+          connect: { uid: EmployerUID },
+        },
+        maxCAs: jobData.maxCAs,
         location: jobData.location,
         locationType: jobData.locationType,
         startDate: jobData.startDate,
@@ -408,7 +430,6 @@ async function applyForJobPosition(applicationDetails) {
       !jobPositionId ||
       !resumeId ||
       !jobPositionApplicationFormData
-    
     ) {
       throw new Error(
         "Missing required fields: candidate UID, job position ID, resume ID, or form data."
@@ -439,7 +460,7 @@ async function applyForJobPosition(applicationDetails) {
       });
     if (existingApplication) {
       throw new Error(
-        'This candidate has already applied for this job position.'
+        "This candidate has already applied for this job position."
       );
     }
     const applicationFormData = JSON.parse(jobPositionApplicationFormData);
@@ -456,11 +477,13 @@ async function applyForJobPosition(applicationDetails) {
         candidateMajor: applicationFormData.major,
         candidateYear: parseInt(applicationFormData.year, 10),
         candidateGrade: applicationFormData.grade,
-        wasPriorEmployeeForThisCourse: applicationFormData.wasPriorEmployeeForThisCourse,
-        wasPriorEmployeeForOtherCourses: applicationFormData.wasPriorEmployeeForOtherCourses,
+        wasPriorEmployeeForThisCourse:
+          applicationFormData.wasPriorEmployeeForThisCourse,
+        wasPriorEmployeeForOtherCourses:
+          applicationFormData.wasPriorEmployeeForOtherCourses,
         priorEmploymentHistory: applicationFormData.priorEmploymentHistory
-        ?.map(item => item.courseCode)
-        .join(', '),
+          ?.map((item) => item.courseCode)
+          .join(", "),
         coverLetterName: coverLetterName,
         coverLetterURL: coverLetterURL,
       },
@@ -468,14 +491,14 @@ async function applyForJobPosition(applicationDetails) {
 
     // 5. Create a comment record for the new application.
     await prisma.comment.create({
-        data: {
-          foreignTableName: 'JobPositionApplicationHistory',
-          foreignKey: String(newApplication.id), // Use the ID from the just-created application
-          status: 'APPLIED',                 // The initial status
-          comment: 'Candidate submitted application.', // A system-generated comment
-          timestamp: new Date(),
-        },
-      });
+      data: {
+        foreignTableName: "JobPositionApplicationHistory",
+        foreignKey: String(newApplication.id), // Use the ID from the just-created application
+        status: "APPLIED", // The initial status
+        comment: "Candidate submitted application.", // A system-generated comment
+        timestamp: new Date(),
+      },
+    });
 
     // 6. Update the candidate's course history with the self-reported grade.
     const parsedFormData = JSON.parse(jobPositionApplicationFormData);
@@ -495,17 +518,16 @@ async function applyForJobPosition(applicationDetails) {
 
 // Helper function to get the application (current used for deletion)
 async function getCandidateApplication(candidateUID, jobPositionId) {
-  const application =
-    await prisma.jobPositionApplicationHistory.findFirst({
-      where: {
-        candidateUID: candidateUID,
-        jobPositionId: jobPositionId,
-      },
-    });
+  const application = await prisma.jobPositionApplicationHistory.findFirst({
+    where: {
+      candidateUID: candidateUID,
+      jobPositionId: jobPositionId,
+    },
+  });
 
   if (!application) {
     throw new Error(
-      'Application not found for the specified candidate and job position.'
+      "Application not found for the specified candidate and job position."
     );
   }
 
@@ -521,30 +543,28 @@ async function getCandidateApplication(candidateUID, jobPositionId) {
  */
 async function deleteCandidateApplication(applicationId) {
   try {
-
     // Delete all comments associated with this application.
     await prisma.comment.deleteMany({
       where: {
-        foreignTableName: 'JobPositionApplicationHistory',
+        foreignTableName: "JobPositionApplicationHistory",
         foreignKey: String(applicationId),
       },
     });
 
     // Finally, delete the application record itself using its unique ID.
-    const deletedApplication = await prisma.jobPositionApplicationHistory.delete({
-      where: {
-        id: applicationId,
-      },
-    });
+    const deletedApplication =
+      await prisma.jobPositionApplicationHistory.delete({
+        where: {
+          id: applicationId,
+        },
+      });
 
     return deletedApplication;
-    
-  } catch (error){
-    console.error('Error in deleteCandidateApplication:', error);
+  } catch (error) {
+    console.error("Error in deleteCandidateApplication:", error);
     throw error;
   }
 }
-
 
 /**
  * Updates an application's status and creates a new comment record in a transaction.
@@ -553,7 +573,11 @@ async function deleteCandidateApplication(applicationId) {
  * @param {string} comments - The text for the new comment record.
  * @returns {Promise<object>} The updated application record.
  */
-async function changeCandidateApplicationStatus(applicationId, status, comments) {
+async function changeCandidateApplicationStatus(
+  applicationId,
+  status,
+  comments
+) {
   try {
     // Use a transaction to ensure both the update and create operations succeed or fail together.
     const updatedApplication = await prisma.$transaction(async (tx) => {
@@ -571,11 +595,11 @@ async function changeCandidateApplicationStatus(applicationId, status, comments)
       // 2. Create a new, separate record in the Comment table to log the change.
       await tx.comment.create({
         data: {
-          foreignTableName: 'JobPositionApplicationHistory', // The table this comment relates to
-          foreignKey: String(applicationId),              // The specific record ID
-          status: status,                                 // The new status being set
-          comment: comments,                              // The comment text
-          timestamp: new Date(),                          // The current timestamp
+          foreignTableName: "JobPositionApplicationHistory", // The table this comment relates to
+          foreignKey: String(applicationId), // The specific record ID
+          status: status, // The new status being set
+          comment: comments, // The comment text
+          timestamp: new Date(), // The current timestamp
         },
       });
 
@@ -584,9 +608,8 @@ async function changeCandidateApplicationStatus(applicationId, status, comments)
     });
 
     return updatedApplication;
-
   } catch (error) {
-    console.error('Error in changeCandidateApplicationStatus:', error);
+    console.error("Error in changeCandidateApplicationStatus:", error);
     // Re-throw the error so the calling function can handle it (e.g., show an error to the user).
     throw error;
   }
@@ -601,9 +624,9 @@ async function getSemesterCodesForEmployer(employerUID) {
   const positions = await prisma.jobPosition.findMany({
     where: { employerUID },
     select: { semesterCode: true },
-    distinct: ['semesterCode'],
+    distinct: ["semesterCode"],
   });
-  return positions.map(position => position.semesterCode);
+  return positions.map((position) => position.semesterCode);
 }
 
 // -- Private Helper Functions for Application Search --
@@ -621,10 +644,14 @@ function buildJobPositionForApplicationFilterClause(filters) {
   }
 
   // Add "Course Level" filter (e.g., "100-level", "200-level").
-  if (filters.level && Array.isArray(filters.level) && filters.level.length > 0) {
-    const levelConditions = filters.level.map(levelString => {
+  if (
+    filters.level &&
+    Array.isArray(filters.level) &&
+    filters.level.length > 0
+  ) {
+    const levelConditions = filters.level.map((levelString) => {
       // Extracts the first digit from strings like "100-level" -> "1"
-      const levelDigit = levelString.replace('-level', '').charAt(0);
+      const levelDigit = levelString.replace("-level", "").charAt(0);
       return {
         courseCode: {
           contains: `-${levelDigit}`,
@@ -643,9 +670,9 @@ function buildJobPositionForApplicationFilterClause(filters) {
 
   // Filter if a employer member has applications for a position (yes/no/any)
   if (filters.hasApplications) {
-    if (filters.hasApplications.toLowerCase() === 'yes') {
+    if (filters.hasApplications.toLowerCase() === "yes") {
       where.jobPositionApplicationHistory = { some: {} };
-    } else if (filters.hasApplications.toLowerCase() === 'no') {
+    } else if (filters.hasApplications.toLowerCase() === "no") {
       where.jobPositionApplicationHistory = { none: {} };
     }
   }
@@ -663,16 +690,21 @@ function buildApplicationFilterClause(filters) {
   const where = { AND: [] };
 
   // Filter by application status
-  if (filters?.status && Array.isArray(filters.status) && filters.status.length > 0) {
-    const statusEnums = filters.status.map(s => applicationStatusStringToEnum[s]).filter(Boolean);
+  if (
+    filters?.status &&
+    Array.isArray(filters.status) &&
+    filters.status.length > 0
+  ) {
+    const statusEnums = filters.status
+      .map((s) => applicationStatusStringToEnum[s])
+      .filter(Boolean);
     if (statusEnums.length > 0) {
       where.AND.push({ jobApplicationStatus: { in: statusEnums } });
     }
   }
-  
+
   return where.AND.length > 0 ? where : {};
 }
-
 
 // -- Public Functions for Application Search --
 
@@ -689,10 +721,10 @@ async function getCandidateApplications(searchTerm, filters, candidateUID) {
   if (searchTerm && searchTerm.trim()) {
     jobPositionFilter.OR = [
       { course: { name: { contains: searchTerm } } },
-      { courseCode: { contains: searchTerm } }
+      { courseCode: { contains: searchTerm } },
     ];
   }
-  
+
   const applicationFilter = buildApplicationFilterClause(filters);
 
   const finalWhereClause = {
@@ -700,7 +732,7 @@ async function getCandidateApplications(searchTerm, filters, candidateUID) {
     candidateUID: candidateUID,
     jobPosition: jobPositionFilter,
   };
-  
+
   const applications = await prisma.jobPositionApplicationHistory.findMany({
     where: finalWhereClause,
     include: {
@@ -720,11 +752,10 @@ async function getCandidateApplications(searchTerm, filters, candidateUID) {
     },
   });
 
-  const filteredApplications = applications.filter(app => app.jobPosition);
+  const filteredApplications = applications.filter((app) => app.jobPosition);
 
   return filteredApplications;
 }
-
 
 /**
  * Retrieves and Searches and filters job positions and their applications for a specific employer.
@@ -735,8 +766,14 @@ async function getCandidateApplications(searchTerm, filters, candidateUID) {
  * @param {number} employerUID - The UID of the currently logged-in employer.
  * @returns {Promise<Array>} A promise that resolves to an array of Application objects under the jobPositions of the employer.
  */
-async function getCandidateApplicationsAsEmployer(searchTerm, searchBy, filters, employerUID) {
-  const positionWhereClause = buildJobPositionForApplicationFilterClause(filters);
+async function getCandidateApplicationsAsEmployer(
+  searchTerm,
+  searchBy,
+  filters,
+  employerUID
+) {
+  const positionWhereClause =
+    buildJobPositionForApplicationFilterClause(filters);
   positionWhereClause.employerUID = employerUID;
 
   const nestedApplicationWhereClause = buildApplicationFilterClause(filters);
@@ -745,19 +782,19 @@ async function getCandidateApplicationsAsEmployer(searchTerm, searchBy, filters,
   if (searchTerm && searchTerm.trim()) {
     const trimmedSearchTerm = searchTerm.trim();
 
-    if (searchBy === 'course') {
+    if (searchBy === "course") {
       // If searching by course, add the OR condition to the main position query.
       positionWhereClause.OR = [
-          { course: { name: { contains: trimmedSearchTerm } } },
-          { course: { courseCode: { contains: trimmedSearchTerm } } },
+        { course: { name: { contains: trimmedSearchTerm } } },
+        { course: { courseCode: { contains: trimmedSearchTerm } } },
       ];
-    } else if (searchBy === 'student') {
+    } else if (searchBy === "student") {
       // If searching by student, we filter in two places:
       // Filter the top-level positions to only those that have an application from the student.
       positionWhereClause.jobPositionApplicationHistory = {
         some: {
           candidateName: { contains: trimmedSearchTerm },
-        }
+        },
       };
       // Filter the included applications to only show the ones from that student.
       if (!nestedApplicationWhereClause.AND) {
@@ -784,9 +821,9 @@ async function getCandidateApplicationsAsEmployer(searchTerm, searchBy, filters,
           },
         },
       },
-    }
+    },
   });
-    
+
   return positions;
 }
 
@@ -801,7 +838,7 @@ async function getAllUsers() {
   try {
     return await prisma.user.findMany();
   } catch (error) {
-    console.error('Error retrieving users:', error);
+    console.error("Error retrieving users:", error);
     throw error;
   }
 }
@@ -1006,11 +1043,11 @@ async function terminateEmployee(employeeId) {
         where: {
           employeeId: employeeDbId,
           jobPositionHistoryStatus: {
-            in: ['ACTIVE', 'INACTIVE']
-          }
+            in: ["ACTIVE", "INACTIVE"],
+          },
         },
         data: {
-          jobPositionHistoryStatus: 'TERMINATED',
+          jobPositionHistoryStatus: "TERMINATED",
         },
       });
 
@@ -1020,7 +1057,7 @@ async function terminateEmployee(employeeId) {
           id: employeeDbId,
         },
         data: {
-          employeeStatus: 'TERMINATED',
+          employeeStatus: "TERMINATED",
         },
       });
 
@@ -1088,7 +1125,7 @@ async function updateResumeName(resumeId, name) {
       },
     });
   } catch (error) {
-    console.error('Error updating resume:', error);
+    console.error("Error updating resume:", error);
     throw error;
   }
 }
@@ -1137,7 +1174,7 @@ async function getCandidateResumes(candidateUID) {
       },
     });
   } catch (error) {
-    console.error('Error retrieving resumes:', error);
+    console.error("Error retrieving resumes:", error);
     throw error;
   }
 }
@@ -1181,7 +1218,7 @@ async function deleteResume(resumeId) {
 
       // If an application uses this resume, throw a specific error
       if (associatedApplication) {
-        throw new Error('DELETE_FAILED_ASSOCIATED');
+        throw new Error("DELETE_FAILED_ASSOCIATED");
       }
 
       // Find the resume to be deleted.
@@ -1190,7 +1227,7 @@ async function deleteResume(resumeId) {
       });
 
       if (!resumeToDelete) {
-        throw new Error('Resume not found.');
+        throw new Error("Resume not found.");
       }
 
       // If the resume was primary, find and promote a new one.
@@ -1250,7 +1287,7 @@ async function getAllCourses() {
  * Creates a new course in the database.
  * @param {object} courseData - An object containing the course code, name, and description.
  * @returns {Promise<object>} A promise that resolves to the created course object.
- */ 
+ */
 async function createCourse(courseData) {
   const { courseCode, name, description } = courseData;
   try {
@@ -1280,7 +1317,7 @@ async function getComments(tableName, foreignKey) {
     });
     return comments;
   } catch (error) {
-    console.error('Error in getComments:', error);
+    console.error("Error in getComments:", error);
     throw error;
   }
 }
@@ -1291,6 +1328,7 @@ async function getComments(tableName, foreignKey) {
 
 module.exports = {
   getOpenJobPositions,
+  getPendingJobPositions,
   getCandidateApplicationsAsEmployer,
   getCandidateApplications,
   deleteCandidateApplication,

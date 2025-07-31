@@ -1,7 +1,7 @@
 // src/app/Positions/page.js
 "use client";
 
-import React, { useEffect, useCallback, useState,useRef } from "react";
+import React, { useEffect, useCallback, useState,useRef, useMemo } from "react";
 import { getOpenPositions } from "../../services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
@@ -11,6 +11,7 @@ import { Filter } from "@/components/common/searchAndFilter/Filter";
 import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { positionFilterConfig } from "./filter.config";
 import JobPositionsCard from "@/components/positions/EmployerAndAdmin/JobPositionsCard";
+import PendingPositions from "@/components/positions/EmployerAndAdmin/PendingPositions";
 
 export default function Positions() {
   const filterRef = useRef();
@@ -185,10 +186,27 @@ export default function Positions() {
       label: "My Positions",
       description: "View and manage your positions.",
       content: <JobPositionsCard profileData={currentUser} />,
+      roles: ["EMPLOYER","ADMIN"]
     },
+    {
+      id:"pending-approval",
+      label:"Pending Admin Approval",
+      description:"Approve positions to be publically posted",
+      content: <PendingPositions/>,
+      roles: ["ADMIN"]
+    }
+
   ];
 
-  const activeTabData = tabs.find((tab) => tab.id === activeTab);
+  const visibleTabs = useMemo(() =>{
+    if (!currentUser) return []
+
+    return tabs.filter(tab=>{
+      return !tab.roles || tab.roles.includes(currentUser.role)
+    })
+  })
+
+  const activeTabData = visibleTabs.find((tab) => tab.id === activeTab);
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -197,7 +215,7 @@ export default function Positions() {
             currentUser?.role === "ADMIN") && (
             <div className="border-b border-gray-200 px-6 sm:px-8">
               <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                {tabs.map((tab) => (
+                {visibleTabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}

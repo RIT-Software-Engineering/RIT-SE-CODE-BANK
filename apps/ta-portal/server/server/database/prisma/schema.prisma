@@ -163,7 +163,7 @@ model JobPosition {
   semesterCode                Int
   employerUID                 Int
   maxCAs                      Int
-  jobPositionStatus           JobPositionStatus @default(OPEN)
+  jobPositionStatus           JobPositionStatus @default(PENDING_APPROVAL)
   location                    String          @db.Text
   locationType                LocationType
   graduateStatusRequirement   GraduateStatus?
@@ -286,4 +286,5 @@ enum JobPositionStatus {
   FILLED
   ONHOLD
   INACTIVE
+  PENDING_APPROVAL
 }
