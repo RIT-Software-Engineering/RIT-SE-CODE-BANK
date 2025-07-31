@@ -9,8 +9,8 @@ async function main() {
     await prisma.fruit.deleteMany();
     await prisma.journalEntry.deleteMany();
     await prisma.users.deleteMany();
-    await prisma.project.deleteMany();
     await prisma.teams.deleteMany();
+    await prisma.project.deleteMany();
     await prisma.application.deleteMany();
 
     console.log("Seeding data");
@@ -43,6 +43,21 @@ async function main() {
                     {id: vicki.id},
                     {id: jimmy.id},
                     {id: dudeBro.id}
+                ]
+            }
+        }
+    })
+
+    const galgirl = await prisma.users.findUnique({where: {email: "klm123@rit.edu"}});
+    const edison = await prisma.users.findUnique({where: {email: "emh123@rit.edu"}});
+    await prisma.teams.create({
+        data: {
+            name: "Omega",
+            projectId: 2,
+            members: {
+                connect: [
+                    {id: galgirl.id},
+                    {id: edison.id},
                 ]
             }
         }
