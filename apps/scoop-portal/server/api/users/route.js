@@ -57,14 +57,19 @@ router.get("/employees", async (req, res) => {
   const search = req.query.search || "";
 
   try {
-    const employees = await prisma.users.findMany({
-      where: {
-        type: "student",
+    const whereCondition = {
+      type: "student",
+      ...(search.trim() !== "" && {
         OR: [
-          { fname: { contains: search, }, },
-          { lname: { contains: search, }, },
-        ],
-      },
+            { fname: { contains: search, }, },
+            { lname: { contains: search, }, },
+          ],
+      }),
+    };
+
+    const employees = await prisma.users.findMany({
+      where: 
+      whereCondition,
       include: {
         teams: true,
       },

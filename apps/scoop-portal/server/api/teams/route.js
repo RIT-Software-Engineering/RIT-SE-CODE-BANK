@@ -11,10 +11,10 @@ router.post("/", async (req, res) => {
         const team = await prisma.teams.create({
             data: {
                 name,
-                projectId,
-                members: {
-                    connect: memberIds.map((id) => ({ id })),
-                },
+                ...(projectId ? { projectId: Number(projectId) } : {}),
+                ...(memberIds.length > 0
+                  ? { members: { connect: memberIds.map(id => ({ id })) } }
+                  : {}),
             },
             include: {
                 members: true,
