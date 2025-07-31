@@ -74,7 +74,7 @@ export default function Journal() {
     setEditValue(entry.notes);
   };
 
-  const handleCancel = () => {
+  const handleCancelEdit = () => {
     setEditingEntry(null);
   };
 
@@ -99,7 +99,7 @@ export default function Journal() {
     setEditingEntry(null);
   };
 
-  const handleSave = (entry) => {
+  const handleSaveEdit = (entry) => {
     toast.promise(saveEntryNotes(entry), {
       loading: "Saving...",
       success: "Notes saved!",
@@ -136,12 +136,7 @@ export default function Journal() {
                   padding: "1rem",
                 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
+              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                   <Typography variant="h2">
                     {entry.date
                       ? new Date(entry.date).toLocaleDateString("en-US", {
@@ -189,7 +184,7 @@ export default function Journal() {
       </Container>
       <Dialog
         open={!!editingEntry}
-        onClose={handleSave}
+        onClose={handleSaveEdit}
         maxWidth="sm"
         fullWidth
       >
@@ -228,12 +223,12 @@ export default function Journal() {
               </Box>
             </DialogContent>
             <DialogActions>
-              <Button variant="outline-orange" onClick={handleCancel}>
+              <Button variant="outline-orange" onClick={handleCancelEdit}>
                 Cancel
               </Button>
               <Button
                 variant="outline-orange"
-                onClick={() => handleSave(editingEntry)}
+                onClick={() => handleSaveEdit(editingEntry)}
               >
                 Save
               </Button>
@@ -241,6 +236,7 @@ export default function Journal() {
           </>
         )}
       </Dialog>
+
       <Toaster
         position="top-center"
         reverseOrder={false}
