@@ -92,8 +92,6 @@ export default function WorkflowDashboard() {
         <Typography
           variant="h1"
           sx={{
-            fontSize: "2rem",
-            fontWeight: 900,
             mb: 5,
           }}
         >
