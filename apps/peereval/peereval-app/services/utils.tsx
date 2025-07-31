@@ -1,6 +1,7 @@
 export async function handleResponse(
     res: Response,
-    errString: string | null = null
+    errString: string | null = null,
+    parseJSON: boolean = true
 ): Promise<any> {
     if (!res.ok) {
         throw new Error(
@@ -8,12 +9,14 @@ export async function handleResponse(
         );
     }
 
-    let data;
-    try {
-        data = res.json();
-    } catch (err) {
-        throw new Error("Failed to parse response JSON");
-    }
+    if (parseJSON) {
+        let data;
+        try {
+            data = res.json();
+        } catch (err) {
+            throw new Error("Failed to parse response JSON");
+        }
 
-    return data;
+        return data;
+    } else return;
 }

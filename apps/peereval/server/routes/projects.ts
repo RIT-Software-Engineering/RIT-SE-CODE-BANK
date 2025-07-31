@@ -291,7 +291,7 @@ router.post("/:id/assignAssessment", async (req, res) => {
         await tx.project.update({
             where: { id },
             data: {
-                Assessment: {
+                assessments: {
                     connect: {
                         id: createdAssessment.id,
                     },

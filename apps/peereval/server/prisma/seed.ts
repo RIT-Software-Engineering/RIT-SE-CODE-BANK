@@ -348,7 +348,7 @@ async function main() {
         Object.entries(bobAns).map(([inqId, answer]) =>
             prisma.inquiryResponse.create({
                 data: {
-                    FormResponse: {
+                    formResponse: {
                         connect: { id: bobFormRes.id },
                     },
                     Inquiry: {
@@ -370,7 +370,7 @@ async function main() {
         Object.entries(hannahAns).map(([inqId, answer]) =>
             prisma.inquiryResponse.create({
                 data: {
-                    FormResponse: {
+                    formResponse: {
                         connect: { id: hannahFormRes.id },
                     },
                     Inquiry: {
