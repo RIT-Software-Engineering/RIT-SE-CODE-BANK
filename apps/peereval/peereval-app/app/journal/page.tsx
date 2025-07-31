@@ -53,12 +53,7 @@ function AddJournalEntryModal({
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
             <DialogTitle>Add Journal Entry</DialogTitle>
-            <DialogContent
-                sx={{
-                    maxHeight: "60vh", // limit vertical height
-                    overflowY: "auto",
-                }}
-            >
+            <DialogContent>
                 <TextField
                     label="Subject"
                     value={subject}
