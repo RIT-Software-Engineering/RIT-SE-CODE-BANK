@@ -13,7 +13,7 @@ model Project {
     video                   String?        @db.VarChar(255)
     website                 String?        @db.VarChar(255)
     synopsis                String?        @db.VarChar(255)
-    semester                Semester_Group @relation(fields: [semesterId], references: [id])
+    semester                Semester_Group @relation(fields: [semesterId], references: [id], onDelete: Cascade)
     semesterId              Int
     created_at              DateTime       @default(now())
     updated_at              DateTime       @default(now()) @updatedAt
