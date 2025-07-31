@@ -27,4 +27,11 @@ export const sampleSemesterGroups = [
     start_date: new Date("2024-01-13"),
     end_date: new Date("2024-08-07"),
   },
+  {
+    id: 5,
+    name: "2025 Summer",
+    dept: "SE",
+    start_date: new Date("2025-05-10"),
+    end_date: new Date("2025-8-13"),
+  },
 ];
