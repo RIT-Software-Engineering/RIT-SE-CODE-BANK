@@ -110,4 +110,32 @@ router.delete("/:teamId/members/:memberId", async (req, res) => {
   }
 });
 
+// REMOVE a team
+router.delete("/:teamId", async (req, res) => {
+  const { teamId } = req.params;
+
+  if (isNaN(teamId)) {
+    return res.status(400).json({ message: "Invalid teamId" });
+  }
+
+  try {
+    const deletedTeam = await prisma.teams.delete({
+      where: { id: parseInt(teamId) },
+      include: {
+        members: true,
+        project: true,
+      },
+    });
+
+    res.status(200).json({ message: "Team removed", team: deletedTeam });
+  } catch (error) {
+    console.error("Error removing team:", error);
+    if (error.code === 'P2025') {
+      res.status(404).json({ message: "Team not found" });
+    } else {
+      res.status(500).json({ message: "Failed to remove team", error: error.message });
+    }
+  }
+});
+
 export default router;
