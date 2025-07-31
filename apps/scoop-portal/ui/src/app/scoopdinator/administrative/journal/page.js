@@ -124,9 +124,7 @@ export default function Journal() {
             No journal entries found. Please check back later.
           </Typography>
         ) : (
-          journalEntries
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .map((entry) => (
+          journalEntries.map((entry) => (
               <Card
                 key={entry.id}
                 square
