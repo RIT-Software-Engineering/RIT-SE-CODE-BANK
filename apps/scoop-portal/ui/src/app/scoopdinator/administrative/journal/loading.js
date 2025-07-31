@@ -7,6 +7,7 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 
 function JournalCardLoading() {
@@ -54,7 +55,7 @@ function JournalCardLoading() {
             border: "none",
           }}
         >
-          <Typography>
+          <Typography sx={{ mb: 0 }}>
             <Skeleton variant="rectangular" sx={{ mb: "0.25rem" }} />
             <Skeleton variant="rectangular" width="30%" />
           </Typography>
@@ -69,11 +70,14 @@ function JournalLoading() {
     <>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, "& > *:last-child": { mb: "0" } }}>
-        <Skeleton variant="reactangular">
-          <Typography variant="h1" sx={{ mb: 4 }}>
-            Journal
-          </Typography>
-        </Skeleton>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
+          <Skeleton variant="reactangular">
+            <Typography variant="h1">Journal</Typography>
+          </Skeleton>
+          <Skeleton variant="rectangular">
+            <Button startIcon={<FilterAltOutlinedIcon />}>Filter</Button>
+          </Skeleton>
+        </Box>
         <JournalCardLoading />
         <JournalCardLoading />
         <JournalCardLoading />
