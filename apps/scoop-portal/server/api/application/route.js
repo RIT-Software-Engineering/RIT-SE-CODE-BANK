@@ -73,6 +73,19 @@ router.get("/", async (req, res) => {
   }
 });
 
+//Get all accepted applications
+router.get("/accepted", async (req, res) => {
+  try {
+    const applications = await prisma.application.findMany({
+      where: { accepted: true },
+    });
+    res.json(applications);
+  } catch (error) { 
+    console.error("Error fetching accepted applications:", error);
+    res.status(500).json({ error: "Failed to fetch accepted applications" });
+  }
+});
+
 // PUT route to update application accepted status
 router.put("/:id", async (req, res) => {
   const { id } = req.params;

@@ -25,7 +25,8 @@ import Header from "@components/Header";
 import { Block } from "@mui/icons-material";
 import { ST } from "next/dist/shared/lib/utils";
 import { useUser } from "../../utils/user-context/page";
-import UnauthorizedPage from '../../unauthorized/page';
+import UnauthorizedPage from "../../unauthorized/page";
+import ApplicationPage from "application/page";
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
@@ -39,7 +40,6 @@ export default function SupervisorApplicationsPage() {
         message: "",
         severity: "success",
     });
-
 
     useEffect(() => {
         const fetchApps = async () => {
@@ -55,7 +55,7 @@ export default function SupervisorApplicationsPage() {
                             ? STATUSES[1] // "accepted"
                             : app.accepted === false
                               ? STATUSES[2] // "rejected"
-                              : STATUSES[3] // "unprocessed"
+                              : STATUSES[3], // "unprocessed"
                 }));
 
                 setApplications(processed);
@@ -74,11 +74,11 @@ export default function SupervisorApplicationsPage() {
         }
     }, [selectedApp]);
 
-//     const { user } = useUser();
-//  console.log("current user: ", user, user ? user.type : 'no user');
-// if (!user || user.type !== "admin") {
-//     return <UnauthorizedPage />;
-//   }
+    //     const { user } = useUser();
+    //  console.log("current user: ", user, user ? user.type : 'no user');
+    // if (!user || user.type !== "admin") {
+    //     return <UnauthorizedPage />;
+    //   }
 
     const handleOpen = (app) => {
         setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
@@ -148,6 +148,57 @@ export default function SupervisorApplicationsPage() {
         setNotification({ ...notification, open: false });
     };
 
+async function postNewUsers(data) {
+        const response = await fetch(
+            process.env.NEXT_PUBLIC_API_URL + "/api/users",
+            {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+        console.log("Submitting users with data:", data);
+
+        return response;
+    }
+
+    //temporary data for user creation
+    const tempData = {
+        semester_group: "default",
+        project: "default",
+        active: "default",
+        last_login: "default",
+        prev_login: "default",
+    }
+    const createUserFromApp = (app) => {
+        return {
+            fname: app.firstName,
+            lname: app.lastName,
+            email: app.ritEmail,
+            type: "student", //change to scooployee
+            semester_group: tempData.semester_group,
+            project: tempData.project,
+            active : tempData.active,
+            last_login: tempData.last_login,
+            prev_login: tempData.prev_login,
+        }
+    }
+
+    //for each application where accepted=true, format data into user and then do users post like how u do application post
+    const handleSubmit = () => {
+    //   let data ;
+    //   
+        const acceptedApps = applications.filter((app) => app.accepted === true);
+        // console.log(acceptedApps)
+        for (let app of acceptedApps){
+            // console.log(app)
+           let newUser= createUserFromApp(app) 
+           console.log("Submitting user:", newUser);
+            postNewUsers(newUser);
+        }
+       
+    }
+
     const filteredApps =
         filter === "all"
             ? applications
@@ -184,6 +235,20 @@ export default function SupervisorApplicationsPage() {
                         </MenuItem>
                     ))}
                 </Select>
+
+                <Button
+                onClick={() => handleSubmit()}
+                    sx={{
+                        bgcolor: "#F76902",
+                        color: "white",
+                        "&:hover": {
+                            bgcolor: "#d95e00",
+                        },
+                        m: 1,
+                    }}
+                >
+                    Submit Accepted
+                </Button>
 
                 <Paper elevation={1}>
                     <Table>
