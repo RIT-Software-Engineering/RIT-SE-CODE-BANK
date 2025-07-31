@@ -5,8 +5,8 @@ const prisma = new PrismaClient();
 
 router.post("/", async (req, res) => {
     const {
-        lastName,
-        firstName,
+        lname,
+        fname,
         email,
         type,
         semester_group,
@@ -20,8 +20,8 @@ router.post("/", async (req, res) => {
     try {
         const saved = await prisma.users.create({
             data: {
-                lastName,
-                firstName,
+                lname,
+                fname,
                 email,
                 type,
                 semester_group,
@@ -65,7 +65,10 @@ router.get("/employees", async (req, res) => {
           { lname: { contains: search, }, },
         ],
       },
-      take: 20,
+      include: {
+        teams: true,
+      },
+      take: 30, // Limiting to 30 for demo purposes, in case we mass populate db.
     });
 
     res.json(employees);

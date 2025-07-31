@@ -17,14 +17,9 @@ const workflows = [
         link: '/scoopdinator/applications',
       },
       {
-        title: 'View Employees',
+        title: 'Manage Employees',
         description: 'Review current scooployee details and statuses.',
-        link: '/scoopdinator/scooployees/view',
-      },
-      {
-        title: 'Assign Scooployees to Teams',
-        description: 'Assign scooployees to appropriate teams for projects.',
-        link: '/scoopdinator/scooployees/assign',
+        link: '/scoopdinator/scooployees',
       },
     ],
   },
