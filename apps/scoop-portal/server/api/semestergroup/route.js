@@ -10,13 +10,13 @@ const prisma = new PrismaClient();
  * @param {Object} res - The response object
  */
 router.get("/", async (req, res) => {
-    try {
-        const semesters = await prisma.semester_Group.findMany();
-        res.status(200).json(semesters);
-    } catch (error) {
-        console.error("Error fetching semester groups: ", error);
-        res.status(500).json({ message: "Error fetching semester groups." });
-    }
+  try {
+    const semesters = await prisma.semester_Group.findMany();
+    res.status(200).json(semesters);
+  } catch (error) {
+    console.error("Error fetching semester groups: ", error);
+    res.status(500).json({ message: "Error fetching semester groups." });
+  }
 });
 
 /**
@@ -25,19 +25,40 @@ router.get("/", async (req, res) => {
  * @param {Object} res - The response object
  */
 router.post("/", async (req, res) => {
-    const { name, dept, start_date, end_date } = req.body;
-    try {
-        const newSemester = await prisma.semester_Group.create({
-            data: { name, dept, start_date, end_date },
-        });
-        res.status(200).json({
-            message: "New semester group created.",
-            semesterGroup: newSemester,
-        });
-    } catch (error) {
-        console.error("Error creating semsester group: ", error);
-        res.status(500).json({ message: "Error creating semester group" });
-    }
+  const { name, dept, start_date, end_date } = req.body;
+  try {
+    const newSemester = await prisma.semester_Group.create({
+      data: { name, dept, start_date, end_date },
+    });
+    res.status(200).json({
+      message: "New semester group created.",
+      semesterGroup: newSemester,
+    });
+  } catch (error) {
+    console.error("Error creating semsester group: ", error);
+    res
+      .status(500)
+      .json({ message: "Error creating semester group", error: error.message });
+  }
+});
+
+/**
+ * GET a specific semester group
+ */
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const semester = await prisma.semester_Group.findUnique({
+      where: { id: Number(id) },
+    });
+    res.status(200).json(semester);
+  } catch (error) {
+    console.error("Error getting specified semester group: ", error);
+    res.status(500).json({
+      message: "Error getting specified semester group",
+      error: error.message,
+    });
+  }
 });
 
 // TODO: put method for semester group
