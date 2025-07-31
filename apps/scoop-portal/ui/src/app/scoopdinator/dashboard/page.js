@@ -47,9 +47,9 @@ const workflows = [
         link: '/projects/assign/team',
       },
       {
-        title: 'Assign Supervisors',
-        description: 'Assign supervisors to oversee projects and teams.',
-        link: '/projects/assign/scoopervisor',
+        title: 'View Teams',
+        description: 'View and modify existing scoop teams.',
+        link: '/scoopdinator/teams',
       },
     ],
   },

@@ -1,7 +1,7 @@
 import { Router } from "express";
 const router = Router();
-import { PrismaClient as _PrismaClient } from "../../server/src/generated/prisma/index.js";
-const prisma = new _PrismaClient();
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 router.post("/", async (req, res) => {
     const {
@@ -52,19 +52,27 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET all employees 
+// GET employees with optional search by firstName or lastName
 router.get("/employees", async (req, res) => {
-    try {
-        const employees = await prisma.users.findMany({ 
-            where: {
-                type: "student", //(temp using "students" type from old code)
-            },
-        });
-        res.json(employees);
-    } catch (error) {
-        console.error("Error fetching employees:", error);
-        res.status(500).json({ error: "Failed to fetch employees" });
-    }
+  const search = req.query.search || "";
+
+  try {
+    const employees = await prisma.users.findMany({
+      where: {
+        type: "student",
+        OR: [
+          { fname: { contains: search, }, },
+          { lname: { contains: search, }, },
+        ],
+      },
+      take: 20,
+    });
+
+    res.json(employees);
+  } catch (error) {
+    console.error("Error fetching employees:", error);
+    res.status(500).json({ error: "Failed to fetch employees" });
+  }
 });
 
 export default router;

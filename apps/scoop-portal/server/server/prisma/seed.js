@@ -1,4 +1,4 @@
-import { PrismaClient } from "../src/generated/prisma/index.js";
+import { PrismaClient } from "./src/generated/prisma/index.js";
 import { sampleUsers } from "./test-data/sample_users.js";
 import { sampleJournalEntries } from "./test-data/sample_journal_entries.js";
 const prisma = new PrismaClient();
@@ -6,9 +6,11 @@ const prisma = new PrismaClient();
 
 async function main() {
     console.log("Clearing data");
-    await prisma.journal_Entry.deleteMany();
-    await prisma.user.deleteMany();
     await prisma.fruit.deleteMany();
+    await prisma.journalEntry.deleteMany();
+    await prisma.users.deleteMany();
+    await prisma.project.deleteMany();
+    await prisma.teams.deleteMany();
     await prisma.application.deleteMany();
 
     console.log("Seeding data");
@@ -16,12 +18,35 @@ async function main() {
     await prisma.fruit.create({
         data: { name: "Apple", color: "Red", size: "Medium" },
     });
-    await prisma.journal_Entry.createMany({
+    await prisma.journalEntry.createMany({
         data: sampleJournalEntries,
     });
-    await prisma.user.createMany({
+    await prisma.users.createMany({
         data: sampleUsers,
     });
+    await prisma.project.createMany({
+        data: [
+            {id: 1, title: "Project A", display_name: "Demo Project 1", description: "A",},
+            {id: 2, title: "Project B", display_name: "Demo Project 2", description: "B",},
+        ],
+    });
+
+    const vicki = await prisma.users.findUnique({where: {email: "vcl123@rit.edu"}});
+    const jimmy = await prisma.users.findUnique({where: {email: "jlp123@rit.edu"}});
+    const dudeBro = await prisma.users.findUnique({where: {email: "def123@rit.edu"}});
+    await prisma.teams.create({
+        data: {
+            name: "Alpha",
+            projectId: 1,
+            members: {
+                connect: [
+                    {id: vicki.id},
+                    {id: jimmy.id},
+                    {id: dudeBro.id}
+                ]
+            }
+        }
+    })
     console.log("Drop and create finished.");
 }
 main()

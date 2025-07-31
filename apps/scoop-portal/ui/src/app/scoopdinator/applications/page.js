@@ -235,7 +235,6 @@ export default function SupervisorApplicationsPage() {
                     </>
                 )}
             </Dialog>
-            </Box>
 
             <Snackbar
                 open={notification.open}

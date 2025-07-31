@@ -1,8 +1,7 @@
-// import { NextResponse } from "next/server";
 import { Router } from "express";
 const router = Router();
-import { PrismaClient as _PrismaClient } from "../../server/src/generated/prisma/index.js";
-const prisma = new _PrismaClient();
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 /**
  * Post route to save an application
