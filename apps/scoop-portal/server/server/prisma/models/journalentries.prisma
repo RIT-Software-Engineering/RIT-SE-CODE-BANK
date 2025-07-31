@@ -1,9 +1,12 @@
 model Journal_Entry {
-    id              Int      @id @default(autoincrement())
-    date            DateTime
-    contactee       users    @relation("ContacteeJournalEntries", fields: [contacteeId], references: [id])
-    contacteeId     String
-    notes           String?  @db.VarChar(500)
-    journal_owner   users    @relation("OwnerJournalEntries", fields: [journal_ownerId], references: [id])
-    journal_ownerId String
+    id                 Int             @id @default(autoincrement())
+    date               DateTime
+    contactee          users           @relation("ContacteeJournalEntries", fields: [contacteeEmail], references: [email])
+    contacteeEmail     String
+    notes              String?         @default("") @db.VarChar(500)
+    journal_owner      users?          @relation("OwnerJournalEntries", fields: [journal_ownerEmail], references: [email])
+    journal_ownerEmail String?
+    journal_owner_type String
+    Semester_Group     Semester_Group? @relation(fields: [semester_GroupId], references: [id])
+    semester_GroupId   Int?
 }
