@@ -23,6 +23,7 @@ import Step1EmployerAndAdmin from './EmployerAndAdmin/form-steps/Step1';
  * @param {object[]} props.courseOptions - The list of available courses.
  * @param {function} props.onUpdateSuccess - Callback for successful profile updates.
  * @param {string} props.editingSection - The section being edited (mainly for candidate/employee).
+ * @param {object[]} props.allUsers - The list of all existing users for uniqueness checks.
  */
 export default function UserProfileForm({
   user,
@@ -31,6 +32,7 @@ export default function UserProfileForm({
   courseOptions,
   onUpdateSuccess,
   editingSection,
+  allUsers = [],
 }) {
   const { showNotification } = useNotification();
   const isEditMode = mode === 'edit';
@@ -54,9 +56,13 @@ export default function UserProfileForm({
     setValue,
     watch,
     trigger,
+    getValues,
   } = useForm({
     defaultValues: {
-      fullName: user?.name || '',
+      uid: user?.uid || '',
+      fname: user?.fname || '',
+      lname: user?.lname || '',
+      email: user?.email || '',
       pronouns: user?.pronouns || '',
       major: user?.candidate?.major || '',
       yearLevel: user?.candidate?.year || '',
@@ -71,7 +77,10 @@ export default function UserProfileForm({
   useEffect(() => {
     if (user) {
       const defaultValues = {
-        fullName: user.name || '',
+        uid: user.uid || '',
+        fname: user.fname || '',
+        lname: user.lname || '',
+        email: user.email || '',
         pronouns: user.pronouns || '',
       };
       if (isCandidateOrEmployee) {
@@ -104,24 +113,59 @@ export default function UserProfileForm({
     setValue('coursesWorked', coursesWorked);
   }, [setValue, coursesTaken, coursesWorked]);
 
-  // Handle next and previous steps
+  // Handle next step with custom validation
   const nextStep = async () => {
+    // First, trigger standard validation for required fields
     const fieldsToValidate =
       currentStep === 1
         ? [
-            'fullName',
+            'uid',
+            'fname',
+            'lname',
+            'email',
             'pronouns',
             'major',
             'graduateStatus',
             ...(watchedStatus === 'UNDERGRADUATE' ? ['yearLevel'] : []),
           ]
         : [];
-    if (await trigger(fieldsToValidate))
-      setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+
+    const isValid = await trigger(fieldsToValidate);
+    if (!isValid) return; // Stop if basic validation fails
+
+    // Second, perform custom validation for uniqueness and type, but only in create mode for step 1
+    if (currentStep === 1 && mode === 'create') {
+      const { uid, email } = getValues(); // Get current form values
+
+      // Check if UID is unique
+      const uidExists = allUsers.some((u) => u.uid.toString() === uid.trim());
+      if (uidExists) {
+        showNotification(
+          'This User ID is already taken. Please choose another one.',
+          'error'
+        );
+        return; // Stop navigation
+      }
+
+      // Check if email is unique
+      const emailExists = allUsers.some(
+        (u) => u.email.toLowerCase() === email.trim().toLowerCase()
+      );
+      if (emailExists) {
+        showNotification(
+          'This email is already in use by another account.',
+          'error'
+        );
+        return; // Stop navigation
+      }
+    }
+
+    setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
   };
+
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
-  // Handle course history
+  // Course history handlers
   const addCourseTaken = (course) => {
     if (!coursesTaken.find((c) => c.courseCode === course.courseCode))
       setCoursesTaken([
@@ -176,11 +220,14 @@ export default function UserProfileForm({
             wasPriorEmployee: true,
           });
       });
-      console.log('user role', user.role);
+
       const finalData = {
-        uid: user.uid,
-        name: data.fullName,
-        email: user.email,
+        uid: parseInt(data.uid, 10),
+        fname: data.fname,
+        lname: data.lname,
+        username: user.username,
+        password: user.password,
+        email: data.email,
         pronouns: data.pronouns,
         role: user.role,
         year,
@@ -205,9 +252,12 @@ export default function UserProfileForm({
   const onSubmitEmployer = async (data) => {
     try {
       const finalData = {
-        uid: user.uid,
-        name: data.fullName,
-        email: user.email,
+        uid: parseInt(data.uid, 10),
+        fname: data.fname,
+        lname: data.lname,
+        username: user.username,
+        password: user.password,
+        email: data.email,
         pronouns: data.pronouns,
         department: data.department,
         role: user.role,
@@ -230,7 +280,7 @@ export default function UserProfileForm({
 
   // Render the form content based on the current step
   const renderContent = () => {
-    // Section-edit mode
+    // Candidate/employee edit forms
     if (isEditMode && editingSection && isCandidateOrEmployee) {
       switch (editingSection) {
         case 'info':
@@ -269,7 +319,7 @@ export default function UserProfileForm({
           return <p>Invalid section selected.</p>;
       }
     }
-    // New user or full edit mode
+    // Candidate/Employee on-ramping form
     if (isCandidateOrEmployee) {
       switch (currentStep) {
         case 1:
@@ -309,7 +359,9 @@ export default function UserProfileForm({
       }
     }
     // Employer/Admin form
-    return <Step1EmployerAndAdmin user={user} register={register} errors={errors} />;
+    return (
+      <Step1EmployerAndAdmin user={user} register={register} errors={errors} />
+    );
   };
 
   return (

@@ -450,7 +450,8 @@ async function applyForJobPosition(applicationDetails) {
         candidateUID,
         jobPositionId,
         resumeId: resumeId,
-        candidateName: applicationFormData.name,
+        candidateFName: applicationFormData.fname,
+        candidateLName: applicationFormData.lname,
         candidatePronouns: applicationFormData.pronouns,
         candidateEmail: applicationFormData.email,
         candidateMajor: applicationFormData.major,
@@ -752,20 +753,30 @@ async function getCandidateApplicationsAsEmployer(searchTerm, searchBy, filters,
           { course: { courseCode: { contains: trimmedSearchTerm } } },
       ];
     } else if (searchBy === 'student') {
-      // If searching by student, we filter in two places:
-      // Filter the top-level positions to only those that have an application from the student.
-      positionWhereClause.jobPositionApplicationHistory = {
-        some: {
-          candidateName: { contains: trimmedSearchTerm },
-        }
+      // Split the search term by spaces to handle first and last names.
+      const nameParts = trimmedSearchTerm.split(' ').filter(part => part);
+
+      // Build a condition that requires each part of the name to be present in either the first or last name field.
+      // This handles "Jane Doe", "Doe Jane", "Jane", and "Doe" searches gracefully.
+      const studentNameCondition = {
+        AND: nameParts.map(part => ({
+          OR: [
+            { candidateFName: { contains: part } },
+            { candidateLName: { contains: part } },
+          ],
+        })),
       };
-      // Filter the included applications to only show the ones from that student.
+
+      // Filter the top-level positions to only those that have an application matching the name.
+      positionWhereClause.jobPositionApplicationHistory = {
+        some: studentNameCondition,
+      };
+
+      // Filter the included applications to only show the ones matching the name.
       if (!nestedApplicationWhereClause.AND) {
         nestedApplicationWhereClause.AND = [];
       }
-      nestedApplicationWhereClause.AND.push({
-        candidateName: { contains: trimmedSearchTerm },
-      });
+      nestedApplicationWhereClause.AND.push(studentNameCondition);
     }
   }
 
@@ -871,13 +882,19 @@ async function upsertCandidateProfile(candidateData) {
       await tx.user.upsert({
         where: { uid: candidateData.uid },
         update: {
-          name: candidateData.name,
+          fname: candidateData.fname,
+          lname: candidateData.lname,
+          username: candidateData.username,
+          password: candidateData.password,
           email: candidateData.email,
           pronouns: candidateData.pronouns,
         },
         create: {
           uid: candidateData.uid,
-          name: candidateData.name,
+          fname: candidateData.fname,
+          lname: candidateData.lname,
+          username: candidateData.username,
+          password: candidateData.password,
           email: candidateData.email,
           pronouns: candidateData.pronouns,
           role: candidateData.role,
@@ -950,14 +967,20 @@ async function upsertEmployerProfile(employerData) {
       await tx.user.upsert({
         where: { uid: employerData.uid },
         update: {
-          name: employerData.name,
+          fname: employerData.fname,
+          lname: employerData.lname,
+          username: employerData.username,
+          password: employerData.password,
           email: employerData.email,
           pronouns: employerData.pronouns,
           role: employerData.role,
         },
         create: {
           uid: employerData.uid,
-          name: employerData.name,
+          fname: employerData.fname,
+          lname: employerData.lname,
+          username: employerData.username,
+          password: employerData.password,
           email: employerData.email,
           pronouns: employerData.pronouns,
           role: employerData.role,

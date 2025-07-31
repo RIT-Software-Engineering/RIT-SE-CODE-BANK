@@ -24,11 +24,18 @@ export default function EditCandidateEmployeeData({ register, errors, watchedSta
             error={errors.uid}
         />
         <InputField
-            id="fullName"
-            label="Full Name"
-            placeholder="Enter Full Name"
-            registerProps={register("fullName", { required: "Full name is required." })}
-            error={errors.fullName}
+            id="fname"
+            label="First Name"
+            placeholder="Enter First Name"
+            registerProps={register("fname", { required: "First name is required." })}
+            error={errors.firstName}
+        />
+        <InputField
+            id="lname"
+            label="Last Name"
+            placeholder="Enter Last Name"
+            registerProps={register("lname", { required: "Last name is required." })}
+            error={errors.lastName}
         />
         <InputField
             id="email"

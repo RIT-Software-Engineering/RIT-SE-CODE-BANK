@@ -74,7 +74,7 @@ export default function Admin() {
         return users.filter(user => {
             // uid is a number, so convert to string
             const uidString = String(user.uid);
-            const name = user.name?.toLowerCase() || '';
+            const name = user.fname?.toLowerCase() + ' ' + user.lname?.toLowerCase() || '';
             const email = user.email?.toLowerCase() || '';
 
             return (
@@ -87,7 +87,7 @@ export default function Admin() {
 
     const handlePromoteToAdmin = async (user) => {
         try {
-            if (!user?.uid || !user?.name || !user?.email || !user?.pronouns) {
+            if (!user?.uid || !user?.fname || !user?.lname || !user?.email || !user?.pronouns) {
             console.error("User is missing required fields:", user);
             return;
             }
@@ -99,7 +99,10 @@ export default function Admin() {
 
             const updatedEmployer = {
             uid: user.uid,
-            name: user.name,
+            fname: user.fname,
+            lname: user.lname,
+            username: user.username,
+            password: user.password,
             email: user.email,
             pronouns: user.pronouns,
             department: user?.employer?.department || 'Unknown',

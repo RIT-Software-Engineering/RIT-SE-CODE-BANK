@@ -7,7 +7,7 @@ import { gradeEnumToStringValue } from '@/constants/gradeConstants';
 
 import ApplicationCard from '@/components/applications/CandidateAndEmployee/ApplicationCard';
 import SearchBar from '@/components/common/searchAndFilter/SearchBar';
-import Filter from '@/components/common/searchAndFilter/Filter';
+import { Filter } from '@/components/common/searchAndFilter/Filter';
 import { generateApplicationsFilterConfig } from './filter.config';
 
 import Accordion from '@mui/material/Accordion';

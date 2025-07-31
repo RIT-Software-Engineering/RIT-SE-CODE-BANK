@@ -43,9 +43,12 @@
 **For adding new and/or additional database tables:**
 1.  Define your new models (database tables) and relationships within the `prisma/schema.prisma` file.
 
-**Note** If your only adding additional datatables to your existing prisma instance, then we recommand first deleting the migration folder within the prisma folder project, the node_modules, ad the package-lock.json files. From there do `npm i` to reinstall the node_modules and package-lock.json. Then do `npx prisma migrate reset` within the prisma folder project to reset/drop the previous migration. An easier command to do this is `npm run prisma:reset` when you in the main `/server` folder. It will ask you for a confimration and for that, just type in `y`.
+**Note 1** If your only adding additional datatables to your existing prisma instance, then we recommand first deleting the migration folder within the prisma folder project. For this you can type in the command `npm run prisma:delete-migration` within the root server folder of the ta-protal directory to delete the existing migration that's present. Then do `npx prisma migrate reset` within the prisma folder project to reset/drop the previous migration. An easier command to do this is `npm run prisma:reset` when you in the main `/server` folder. It will ask you for a confimration and for that, just type in `y`.
+
 
 2.  Run `npx prisma migrate dev` within the prisma folder project to create and apply a new migration for the changes you've defined in `schema.prisma` file. An easier command to do this is `npm run prisma:migrate` when you in the main `/server` folder. You will be prompted to name the migration. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
+
+**Note 2** You may want also delete any existing instance of the node_modules, ad the package-lock.json files in case any problems were to airse here. From there do `npm i` to reinstall the node_modules and package-lock.json.
 
 ---
 **For generating the Prisma instance**

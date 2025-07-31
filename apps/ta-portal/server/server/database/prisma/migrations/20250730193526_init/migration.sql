@@ -1,7 +1,10 @@
 -- CreateTable
 CREATE TABLE `User` (
     `uid` INTEGER NOT NULL,
-    `name` TEXT NOT NULL,
+    `fname` TEXT NOT NULL,
+    `lname` TEXT NOT NULL,
+    `username` TEXT NOT NULL,
+    `password` TEXT NOT NULL,
     `email` TEXT NOT NULL,
     `pronouns` TEXT NOT NULL,
     `role` ENUM('GUEST', 'CANDIDATE', 'EMPLOYEE', 'EMPLOYER', 'ADMIN') NOT NULL DEFAULT 'GUEST',
@@ -77,7 +80,8 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `jobPositionId` VARCHAR(191) NOT NULL,
     `resumeId` INTEGER NOT NULL,
     `jobApplicationStatus` ENUM('APPLIED', 'HIRED', 'ACCEPTED_OFFER', 'PENDING_OFFER', 'INTERVIEW', 'ONHOLD', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'APPLIED',
-    `candidateName` TEXT NOT NULL,
+    `candidateFName` TEXT NOT NULL,
+    `candidateLName` TEXT NOT NULL,
     `candidatePronouns` TEXT NOT NULL,
     `candidateEmail` TEXT NOT NULL,
     `candidateMajor` TEXT NOT NULL,

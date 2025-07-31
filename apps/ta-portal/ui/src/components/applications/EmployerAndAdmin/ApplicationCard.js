@@ -79,13 +79,13 @@ export default function ApplicationCard({
       <div className="flex-shrink-0">
         <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
           <span className="text-2xl font-bold text-black">
-            {application.candidateName.charAt(0)}
+            {application.candidateFName.charAt(0)}
           </span>
         </div>
       </div>
       <div className="flex-1 min-w-0">
         <h2 className="text-2xl font-bold text-gray-800 truncate">
-          {application.candidateName}
+          {application.candidateFName} {application.candidateLName}
           {" "}
           ({currentUser.role === 'EMPLOYER' && (
             <span className="user-pronouns">{application.candidatePronouns}</span>

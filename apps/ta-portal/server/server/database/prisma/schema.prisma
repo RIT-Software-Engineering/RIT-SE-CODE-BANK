@@ -20,7 +20,10 @@ datasource db {
 model User {
   //Fields
   uid      Int    @id
-  name     String @db.Text
+  fname    String @db.Text
+  lname    String @db.Text
+  username String @db.Text
+  password String @db.Text
   email    String @db.Text
   pronouns String @db.Text
   role     Role   @default(GUEST)
@@ -110,7 +113,8 @@ model JobPositionApplicationHistory {
   jobPositionId                      String
   resumeId                           Int
   jobApplicationStatus               JobApplicationStatus @default(APPLIED)
-  candidateName                      String               @db.Text
+  candidateFName                     String               @db.Text
+  candidateLName                     String               @db.Text
   candidatePronouns                  String               @db.Text
   candidateEmail                     String               @db.Text
   candidateMajor                     String               @db.Text

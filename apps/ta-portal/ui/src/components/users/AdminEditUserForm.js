@@ -30,7 +30,8 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
     } = useForm({
             defaultValues: {
             uid: user.uid || '',
-            fullName: user.name || '',
+            fname: user.fname || '',
+            lname: user.lname || '',
             email: user.email || '',
             pronouns: user.pronouns || '',
             major: user.candidate?.major || '',
@@ -43,7 +44,8 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
     useEffect(() => {
         reset({
             uid: user.uid || '',
-            fullName: user.name || '',
+            fname: user.fname || '',
+            lname: user.lname || '',
             email: user.email || '',
             pronouns: user.pronouns || '',
             major: user.candidate?.major || '',
@@ -58,7 +60,10 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
         try {
             const updatedEmployer = {
             uid: user.uid,
-            name: user.name,
+            fname: user.fname,
+            lname: user.lname,
+            username: user.username,
+            password: user.password,
             email: user.email,
             pronouns: user.pronouns,
             department: user?.employer?.department || 'Unknown',
@@ -101,7 +106,10 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
             if (isCandidateOrEmployee) {
                 const finalData = {
                     uid: data.uid,
-                    name: data.fullName,
+                    fname: data.fname,
+                    lname: data.lname,
+                    username: user.username,
+                    password: user.password,
                     email: data.email,
                     pronouns: data.pronouns,
                     role: userRole,
@@ -113,7 +121,10 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
             } else {
                 const finalData = {
                     uid: data.uid,
-                    name: data.fullName,
+                    fname: data.fname,
+                    lname: data.lname,
+                    username: user.username,
+                    password: user.password,
                     email: data.email,
                     pronouns: data.pronouns,
                     department: data.department,
