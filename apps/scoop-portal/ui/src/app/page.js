@@ -3,6 +3,8 @@ import React from "react";
 import Link from "next/link";
 // import Header from "@components/Header";
 import LandingHeader from "@components/LandingHeader";
+import Footer from "@components/Footer";
+import {Box} from "@mui/material";
 
 const NavButton = ({ href, children }) => {
   const baseStyle = {
@@ -41,37 +43,67 @@ const NavButton = ({ href, children }) => {
 
 const LandingPage = () => {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "black",
-        color: "white",
-        fontFamily: "sans-serif",
-        display: "flex",
-        flexDirection: "column",
-      }}
+    <Box display="flex" flexDirection="column" minHeight="100vh"
+    sx={{
+    width: '100vw',
+    overflowX: 'hidden',
+  }}
+      // style={{
+      //   minHeight: "100vh",
+      //   backgroundColor: "fff",
+      //   color: "000",
+      //   fontFamily: "sans-serif",
+      //   display: "flex",
+      //   flexDirection: "column",
+      //   maxWidth: "100vw",
+      //   maxHeight: "100%",
+      //   overflowX: "hidden",
+      // }}
     >
       <LandingHeader />
       
 
       <div style={{ height: "64px" }} />
-      <div style={{ height: "64px" }} />
 
       <main
         style={{
           flexGrow: 1,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          padding: "80px 20px",
+          // display: "flex",
+          textAlign: "center",
+          maxWidth: "800px",
+          margin: "0 auto",
+          // minHeight: "100vw",
+          // justifyContent: "center",
+          // alignItems: "center",
         }}
       >
-        <img
-          src="/RIT_rgb_vert_w.png"
-          alt="RIT Logo"
-          style={{ maxWidth: "100%", maxHeight: "400px", objectFit: "contain" }}
-        />
+        <h1 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>
+                    Software Coop Program SCOOP
+                </h1>
+                <p style={{ fontSize: "1.2rem", marginBottom: "40px" }}>
+                    The Software Engineering department's SCOOP Program connects
+                    students with real-world software development experiences,
+                    interdisciplinary teams, and mentorship from faculty.
+                </p>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                    <NavButton href="/application">Apply Now</NavButton>
+                    <NavButton href="/interest-form">Interest Form</NavButton>
+                </div>
+        <Box 
+        sx={{
+          backgroundImage: 'url("/RIT_rgb_vert_w.png")',
+          backgroundSize: 'contain',
+          backgroundColor: 'black',
+          backgroundRepeat: 'no-repeat',
+          // height: '40px',
+
+        }}/>
+        
+        
       </main>
-    </div>
+      <Footer/>
+    </Box>
   );
 };
 
