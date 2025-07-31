@@ -3,7 +3,7 @@ CREATE TABLE `User` (
     `uid` INTEGER NOT NULL,
     `fname` TEXT NOT NULL,
     `lname` TEXT NOT NULL,
-    `username` TEXT NOT NULL,
+    `username` VARCHAR(7) NOT NULL,
     `password` TEXT NOT NULL,
     `email` TEXT NOT NULL,
     `pronouns` TEXT NOT NULL,

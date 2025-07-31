@@ -22,7 +22,7 @@ model User {
   uid      Int    @id
   fname    String @db.Text
   lname    String @db.Text
-  username String @db.Text
+  username String @db.VarChar(7) // this is your RIT user id that's normally at the front of your email address
   password String @db.Text
   email    String @db.Text
   pronouns String @db.Text

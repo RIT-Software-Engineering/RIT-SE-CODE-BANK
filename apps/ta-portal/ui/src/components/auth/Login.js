@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-// getUserProfile is still needed for the sign-in action.
 import { getUserProfile } from "../../services/db-apis";
 
 /**
@@ -117,7 +116,7 @@ export default function Login({ onLoginSuccess = () => {}, allUsers = [] }) {
             <div className="mt-6 w-64 space-y-4">
               <div>
                 <label htmlFor="new-user-username" className="block text-sm font-medium text-gray-700">Username</label>
-                <input type="text" id="new-username" value={newUser.username} onChange={(e) => setNewUser({...newUser, username: e.target.value})} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter username (i.e. xyz1234)"/>
+                <input type="text" id="new-username" maxLength="7" value={newUser.username} onChange={(e) => setNewUser({...newUser, username: e.target.value})} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter username (i.e. xyz1234)"/>
               </div>
               <div>
                 <label htmlFor="new-user-password" className="block text-sm font-medium text-gray-700">Password</label>
