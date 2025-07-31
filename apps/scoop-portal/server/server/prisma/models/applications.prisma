@@ -12,11 +12,12 @@ model Application {
   pendingOffersDetails    String?
   rejectionLetters        Boolean
   rejectionLettersDetails String?
-  SEcoopInterest          Boolean
-  SEcoopAvailability      Boolean?
-  remoteAbility           String?
-  additionalComments      String?
-  resumeFile              String?
-  accepted                Boolean? @default(false)
-  createdAt               DateTime @default(now())
+  SEcoopInterest Boolean
+  SEcoopAvailability Boolean?
+  remoteAbility String?
+  additionalComments String?
+  resumeFile String?
+  accepted Boolean?
+  createdAt DateTime @default(now())
+
 }

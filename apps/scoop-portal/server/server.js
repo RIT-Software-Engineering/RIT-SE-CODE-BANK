@@ -14,6 +14,7 @@ app.use("/api/application", applicationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/journal", journalRoutes);
 
+
 app.listen(PORT, () => {
     //load data?
     console.log(`Express server is running on port ${PORT}`);
