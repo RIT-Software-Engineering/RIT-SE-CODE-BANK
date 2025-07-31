@@ -74,11 +74,10 @@ router.put("/:id", async (req, res) => {
  * GET journal entries for scoopdinator
  */
 router.get("/admin", async (req, res) => {
-  // Get search/filter parameters from url
-  const { searchParams } = req.nextUrl;
-  const semester_groupId = searchParams.get("semester_groupId");
+  // Get query parameters from URL
+  const { semester_groupId } = req.query;
 
-  // Develop whereClause for fitlering
+  // Develop whereClause conditionally for fitlering
   const whereClause = { journal_owner_type: "admin" };
   if (semester_groupId) {
     whereClause.semester_groupId = semester_groupId;
