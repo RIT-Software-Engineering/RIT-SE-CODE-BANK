@@ -74,12 +74,6 @@ export default function SupervisorApplicationsPage() {
         }
     }, [selectedApp]);
 
-//     const { user } = useUser();
-//  console.log("current user: ", user, user ? user.type : 'no user');
-// if (!user || user.type !== "admin") {
-//     return <UnauthorizedPage />;
-//   }
-
     const handleOpen = (app) => {
         setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
         setApplications((prev) =>
