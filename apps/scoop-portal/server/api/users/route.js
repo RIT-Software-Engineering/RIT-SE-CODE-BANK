@@ -1,9 +1,10 @@
 import { Router } from "express";
 const router = Router();
-import { PrismaClient as _PrismaClient } from "../../server/src/generated/prisma/index.js";
-const prisma = new _PrismaClient();
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 router.post("/", async (req, res) => {
+<<<<<<< HEAD
   const {
     lastName,
     firstName,
@@ -22,6 +23,11 @@ router.post("/", async (req, res) => {
       data: {
         lastName,
         firstName,
+=======
+    const {
+        lname,
+        fname,
+>>>>>>> origin/scoop-portal-dev
         email,
         type,
         semester_group,
@@ -30,6 +36,7 @@ router.post("/", async (req, res) => {
         last_login,
         prev_login,
         createdAt,
+<<<<<<< HEAD
       },
     });
     res.status(200).json({ message: "User saved", user: saved });
@@ -39,6 +46,32 @@ router.post("/", async (req, res) => {
       .status(500)
       .json({ message: "Error saving user", error: error.message });
   }
+=======
+    } = req.body;
+
+    try {
+        const saved = await prisma.users.create({
+            data: {
+                lname,
+                fname,
+                email,
+                type,
+                semester_group,
+                project,
+                active,
+                last_login,
+                prev_login,
+                createdAt,
+            },
+        });
+        res.status(200).json({ message: "User saved", user: saved });
+    } catch (error) {
+        console.error("Error saving user:", error);
+        return res
+            .status(500)
+            .json({ message: "Error saving user", error: error.message });
+    }
+>>>>>>> origin/scoop-portal-dev
 });
 
 // GET all users
@@ -65,6 +98,7 @@ router.get("/", async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 // GET all employees
 router.get("/employees", async (req, res) => {
   try {
@@ -73,6 +107,32 @@ router.get("/employees", async (req, res) => {
         type: "student", //(temp using "students" type from old code)
       },
     });
+=======
+// GET employees with optional search by firstName or lastName
+router.get("/employees", async (req, res) => {
+  const search = req.query.search || "";
+
+  try {
+    const whereCondition = {
+      type: "student",
+      ...(search.trim() !== "" && {
+        OR: [
+            { fname: { contains: search, }, },
+            { lname: { contains: search, }, },
+          ],
+      }),
+    };
+
+    const employees = await prisma.users.findMany({
+      where: 
+      whereCondition,
+      include: {
+        teams: true,
+      },
+      take: 30, // Limiting to 30 for demo purposes, in case we mass populate db.
+    });
+
+>>>>>>> origin/scoop-portal-dev
     res.json(employees);
   } catch (error) {
     console.error("Error fetching employees:", error);

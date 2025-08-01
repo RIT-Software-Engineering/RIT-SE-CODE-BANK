@@ -1,4 +1,5 @@
 "use client";
+<<<<<<< HEAD
 
 import {
   Box,
@@ -15,6 +16,14 @@ import { EditOutlined } from "@mui/icons-material";
 import React, { useEffect, useState } from "react";
 import ProjectDetailsLoading from "./loading";
 import Header from "@components/Header";
+=======
+import Header from "@components/Header";
+import { Button, Typography } from "@mui/material";
+import { ArrowBack, Edit } from "@mui/icons-material";
+import {} from "@mui/icons-material";
+import { useUser } from "../../utils/user-context/page";
+import UnauthorizedPage from '../../unauthorized/page';
+>>>>>>> origin/scoop-portal-dev
 
 /**
  * This component fetches the details of a project based on the provided project ID and displays it on the Project Details page.
@@ -46,8 +55,19 @@ export default function ProjectDetails({ params }) {
       }
     };
 
+<<<<<<< HEAD
     if (projectId) fetchProject();
   }, [projectId]);
+=======
+async function ProjectDetails() {
+ const { user } = useUser();
+if (!user || user.type !== "admin") {
+    return <UnauthorizedPage />;
+  }
+
+    // Use to compare the loading skeleton to the page's content
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+>>>>>>> origin/scoop-portal-dev
 
   if (isLoading) {
     return <ProjectDetailsLoading />;
