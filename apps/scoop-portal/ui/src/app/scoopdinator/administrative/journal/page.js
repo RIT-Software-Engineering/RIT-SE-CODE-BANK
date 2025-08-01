@@ -58,22 +58,28 @@ export default function Journal() {
           `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`
         );
         const data = await res.json();
+        console.log(data);
         setJournalEntries(data);
 
         // Fetch contactee info for all unique contacteeIds
-        const uniqueContacteeIds = [...new Set(data.map((e) => e.contacteeId))];
+        const uniqueContactees = [
+          ...new Set(
+            data.map((e) => `${e.contactee_fname}:::${e.contactee_lname}`)
+          ),
+        ];
         const contacteeMap = {};
         await Promise.all(
-          uniqueContacteeIds.map(async (id) => {
-            // Adjust endpoint as needed for API
+          uniqueContactees.map(async (entry) => {
+            const [fname, lname] = entry.split(":::");
             const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`
+              `${process.env.NEXT_PUBLIC_API_URL}/api/users?fname=${encodeURIComponent(fname)}&lname=${encodeURIComponent(lname)}`
             );
             if (res.ok) {
               const user = await res.json();
-              contacteeMap[id] = `${user.fname} ${user.lname}`;
+              const fullName = `${fname} ${lname}`;
+              contacteeMap[fullName] = user[0].id;
             } else {
-              contacteeMap[id] = "Unknown";
+              contacteeMap["Unknown"] = "Unknown";
             }
           })
         );
@@ -129,9 +135,13 @@ export default function Journal() {
         url += `semester_GroupId=${filterSemesterValue}`;
       }
       if (filterSemesterValue != "" && filterContacteeValue != "") {
+        url += `&`;
       }
       if (filterContacteeValue) {
-        url += `contacteeId=${filterContacteeValue}`;
+        // For demo purposes and this bit of code,
+        // Don't use "SUPER DUPER ADMIN" in test data.
+        const [fname, lname] = filterContacteeValue.split(" ");
+        url += `contactee_fname=${encodeURIComponent(fname)}&contactee_lname=${encodeURIComponent(lname)}`;
       }
     }
 
@@ -140,6 +150,7 @@ export default function Journal() {
       console.log(url);
       const res = await fetch(url);
       const data = await res.json();
+      console.log(data);
       setJournalEntries(data);
     } catch (error) {
       console.error("Failed to apply filter:", err);
@@ -149,9 +160,6 @@ export default function Journal() {
     }
   };
 
-  useEffect(() => {
-    console.log("Semester Value: ", filterSemesterValue);
-  }, [filterSemesterValue]);
   // Functions for editing journal entry notes
   const handleEditClick = (entry) => {
     setEditingEntry(entry);
@@ -237,7 +245,7 @@ export default function Journal() {
                 </Button>
               </Box>
               <Typography variant="h3">
-                with {contactees[entry.contacteeId] || entry.contacteeId}
+                with {entry.contactee_fname} {entry.contactee_lname}
               </Typography>
               <Typography variant="body1">Notes:</Typography>
               <Box
@@ -297,8 +305,8 @@ export default function Journal() {
             <MenuItem key="none" value="">
               <em>None</em>
             </MenuItem>
-            {Object.entries(contactees).map(([id, name]) => (
-              <MenuItem key={id} value={id}>
+            {Object.entries(contactees).map(([name, id]) => (
+              <MenuItem key={id} value={name}>
                 {name}
               </MenuItem>
             ))}

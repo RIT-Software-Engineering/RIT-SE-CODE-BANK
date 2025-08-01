@@ -75,15 +75,18 @@ router.put("/:id", async (req, res) => {
  */
 router.get("/admin", async (req, res) => {
   // Get query parameters from URL
-  const { semester_GroupId, contacteeId } = req.query;
+  const { semester_GroupId, contactee_fname, contactee_lname } = req.query;
 
   // Develop whereClause conditionally for fitlering
   const whereClause = { journal_owner_type: "admin" };
   if (semester_GroupId) {
     whereClause.semester_GroupId = Number(semester_GroupId);
   }
-  if (contacteeId) {
-    whereClause.contacteeId = contacteeId;
+  if (contactee_fname) {
+    whereClause.contactee_fname = contactee_fname;
+  }
+  if (contactee_lname) {
+    whereClause.contactee_lname = contactee_lname;
   }
 
   // Develop orderByClause for ordering
