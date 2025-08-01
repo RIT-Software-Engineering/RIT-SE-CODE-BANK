@@ -51,6 +51,7 @@ const navItems = [
 
 // Pages need to be filled in as they are created
 const searchablePages = [
+    { label: "Workflows", path: "/scoopdinator/workflows" },
     { label: "Dashboard", path: "/scoopdinator/dashboard" },
     { label: "Review Applications", path: "/scoopdinator/applications" },
     { label: "View Scooployees", path: "/scoopdinator/scooployees/view" },
