@@ -7,22 +7,22 @@ import { sampleProjects } from "./test-data/sample_projects.js";
 const prisma = new PrismaClient();
 // Use prisma.<model> to interact with your database
 
-<<<<<<< HEAD
 const models = [
+  "fruit",
   "semester_Group",
   "users",
+  "teams",
   "project",
   "journal_Entry",
-  "fruit",
   "application",
 ];
 
 const sampleDataFiles = {
+  fruit: [{ name: "Apple", color: "Red", size: "Medium" }],
   semester_Group: sampleSemesterGroups,
   users: sampleUsers,
   project: sampleProjects,
   journal_Entry: sampleJournalEntries,
-  fruit: [{ name: "Apple", color: "Red", size: "Medium" }],
 };
 
 async function main() {
@@ -52,69 +52,42 @@ async function main() {
       console.error(`Error seeding ${model}:`, error.message);
     }
   }
+  const vicki = await prisma.users.findUnique({
+    where: { email: "vcl123@rit.edu" },
+  });
+  const jimmy = await prisma.users.findUnique({
+    where: { email: "jlp123@rit.edu" },
+  });
+  const dudeBro = await prisma.users.findUnique({
+    where: { email: "def123@rit.edu" },
+  });
+  await prisma.teams.create({
+    data: {
+      name: "Alpha",
+      projectId: 1,
+      members: {
+        connect: [{ id: vicki.id }, { id: jimmy.id }, { id: dudeBro.id }],
+      },
+    },
+  });
+
+  const galgirl = await prisma.users.findUnique({
+    where: { email: "klm123@rit.edu" },
+  });
+  const edison = await prisma.users.findUnique({
+    where: { email: "emh123@rit.edu" },
+  });
+  await prisma.teams.create({
+    data: {
+      name: "Omega",
+      projectId: 2,
+      members: {
+        connect: [{ id: galgirl.id }, { id: edison.id }],
+      },
+    },
+  });
 
   console.log("Drop and create finished.");
-=======
-async function main() {
-    console.log("Clearing data");
-    await prisma.fruit.deleteMany();
-    await prisma.journalEntry.deleteMany();
-    await prisma.users.deleteMany();
-    await prisma.teams.deleteMany();
-    await prisma.project.deleteMany();
-    await prisma.application.deleteMany();
-
-    console.log("Seeding data");
-    //example data
-    await prisma.fruit.create({
-        data: { name: "Apple", color: "Red", size: "Medium" },
-    });
-    await prisma.journalEntry.createMany({
-        data: sampleJournalEntries,
-    });
-    await prisma.users.createMany({
-        data: sampleUsers,
-    });
-    await prisma.project.createMany({
-        data: [
-            {id: 1, title: "Project A", display_name: "Demo Project 1", description: "A",},
-            {id: 2, title: "Project B", display_name: "Demo Project 2", description: "B",},
-        ],
-    });
-
-    const vicki = await prisma.users.findUnique({where: {email: "vcl123@rit.edu"}});
-    const jimmy = await prisma.users.findUnique({where: {email: "jlp123@rit.edu"}});
-    const dudeBro = await prisma.users.findUnique({where: {email: "def123@rit.edu"}});
-    await prisma.teams.create({
-        data: {
-            name: "Alpha",
-            projectId: 1,
-            members: {
-                connect: [
-                    {id: vicki.id},
-                    {id: jimmy.id},
-                    {id: dudeBro.id}
-                ]
-            }
-        }
-    })
-
-    const galgirl = await prisma.users.findUnique({where: {email: "klm123@rit.edu"}});
-    const edison = await prisma.users.findUnique({where: {email: "emh123@rit.edu"}});
-    await prisma.teams.create({
-        data: {
-            name: "Omega",
-            projectId: 2,
-            members: {
-                connect: [
-                    {id: galgirl.id},
-                    {id: edison.id},
-                ]
-            }
-        }
-    })
-    console.log("Drop and create finished.");
->>>>>>> origin/scoop-portal-dev
 }
 main()
   .then(async () => {

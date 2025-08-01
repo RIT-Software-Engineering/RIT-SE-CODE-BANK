@@ -1,20 +1,10 @@
-<<<<<<< HEAD
 "use client";
 import React from "react";
 import { Box, Typography, Container, Button, Grid, Paper } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-=======
-'use client';
-import React from 'react';
-import {
-  Box, Typography, Container, Button, Grid, Paper,
-} from '@mui/material';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 // import { useUser } from "../../user-context/page";
 // import UnauthorizedPage from '../../unauthorized/page';
 // import ProtectedRoute from "../../utils/ProtectedRoute";
-
->>>>>>> origin/scoop-portal-dev
 
 import Header from "../../_components/Header";
 
@@ -28,20 +18,9 @@ const workflows = [
         link: "/scoopdinator/applications",
       },
       {
-<<<<<<< HEAD
-        title: "View Employees",
+        title: "Manage Employees",
         description: "Review current scooployee details and statuses.",
-        link: "/scoopdinator/scooployees/view",
-      },
-      {
-        title: "Assign Scooployees to Teams",
-        description: "Assign scooployees to appropriate teams for projects.",
-        link: "/scoopdinator/scooployees/assign",
-=======
-        title: 'Manage Employees',
-        description: 'Review current scooployee details and statuses.',
-        link: '/scoopdinator/scooployees',
->>>>>>> origin/scoop-portal-dev
+        link: "/scoopdinator/scooployees",
       },
     ],
   },
@@ -64,15 +43,9 @@ const workflows = [
         link: "/projects/assign/team",
       },
       {
-<<<<<<< HEAD
-        title: "Assign Supervisors",
-        description: "Assign supervisors to oversee projects and teams.",
-        link: "/projects/assign/scoopervisor",
-=======
-        title: 'View Teams',
-        description: 'View and modify existing scoop teams.',
-        link: '/scoopdinator/teams',
->>>>>>> origin/scoop-portal-dev
+        title: "View Teams",
+        description: "View and modify existing scoop teams.",
+        link: "/scoopdinator/teams",
       },
     ],
   },
@@ -106,23 +79,20 @@ const workflows = [
 ];
 
 export default function WorkflowDashboard() {
-//     const { user } = useUser();
-//     console.log("current user: ", user, user ? user.type : 'no user');
-// if (!user || user.type !== "admin") {
-//     return <UnauthorizedPage />;
-//   }
-  
+  //     const { user } = useUser();
+  //     console.log("current user: ", user, user ? user.type : 'no user');
+  // if (!user || user.type !== "admin") {
+  //     return <UnauthorizedPage />;
+  //   }
+
   return (
-<<<<<<< HEAD
+    // <ProtectedRoute requiredRole="admin">
     <Box
       sx={{
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        color: "#212121",
       }}
     >
-=======
-    // <ProtectedRoute requiredRole="admin">
-    <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
->>>>>>> origin/scoop-portal-dev
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
         <Typography

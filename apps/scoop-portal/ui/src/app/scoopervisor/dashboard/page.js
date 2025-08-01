@@ -1,18 +1,9 @@
-<<<<<<< HEAD
 "use client";
 import React from "react";
 import { Box, Typography, Container, Button, Grid, Paper } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-=======
-'use client';
-import React from 'react';
-import {
-  Box, Typography, Container, Button, Grid, Paper,
-} from '@mui/material';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useUser } from "../../utils/user-context/page";
-import UnauthorizedPage from '../../unauthorized/page';
->>>>>>> origin/scoop-portal-dev
+import UnauthorizedPage from "../../unauthorized/page";
 
 import Header from "../../_components/Header";
 
@@ -94,9 +85,9 @@ const workflows = [
 
 export default function WorkflowDashboard() {
   const { user } = useUser();
-  if (!user || user.type !== "coach" && user.type !== "admin") {
-      return <UnauthorizedPage />;
-    }
+  if (!user || (user.type !== "coach" && user.type !== "admin")) {
+    return <UnauthorizedPage />;
+  }
   return (
     <Box
       sx={{

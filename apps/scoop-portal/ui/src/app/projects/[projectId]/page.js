@@ -1,5 +1,4 @@
 "use client";
-<<<<<<< HEAD
 
 import {
   Box,
@@ -11,19 +10,12 @@ import {
   Paper,
   useTheme,
 } from "@mui/material";
-import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
-import { EditOutlined } from "@mui/icons-material";
+import { ArrowBack, EditOutlined } from "@mui/icons-material";
 import React, { useEffect, useState } from "react";
 import ProjectDetailsLoading from "./loading";
 import Header from "@components/Header";
-=======
-import Header from "@components/Header";
-import { Button, Typography } from "@mui/material";
-import { ArrowBack, Edit } from "@mui/icons-material";
-import {} from "@mui/icons-material";
 import { useUser } from "../../utils/user-context/page";
-import UnauthorizedPage from '../../unauthorized/page';
->>>>>>> origin/scoop-portal-dev
+import UnauthorizedPage from "../../unauthorized/page";
 
 /**
  * This component fetches the details of a project based on the provided project ID and displays it on the Project Details page.
@@ -35,6 +27,7 @@ import UnauthorizedPage from '../../unauthorized/page';
  */
 export default function ProjectDetails({ params }) {
   const theme = useTheme();
+  const { user } = useUser();
   const { projectId } = React.use(params);
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState([]);
@@ -55,22 +48,11 @@ export default function ProjectDetails({ params }) {
       }
     };
 
-<<<<<<< HEAD
     if (projectId) fetchProject();
   }, [projectId]);
-=======
-async function ProjectDetails() {
- const { user } = useUser();
-if (!user || user.type !== "admin") {
+
+  if (!user || user.type !== "admin") {
     return <UnauthorizedPage />;
-  }
-
-    // Use to compare the loading skeleton to the page's content
-    await new Promise((resolve) => setTimeout(resolve, 1000));
->>>>>>> origin/scoop-portal-dev
-
-  if (isLoading) {
-    return <ProjectDetailsLoading />;
   }
 
   return (
@@ -80,7 +62,7 @@ if (!user || user.type !== "admin") {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Button
           href="/projects"
-          startIcon={<ArrowBackOutlinedIcon />}
+          startIcon={<ArrowBack />}
           variant="outline-orange"
         >
           Back to Projects
