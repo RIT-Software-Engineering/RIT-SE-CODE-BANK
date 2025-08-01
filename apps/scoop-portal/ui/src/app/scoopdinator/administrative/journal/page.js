@@ -34,9 +34,11 @@ export default function Journal() {
   const [journalEntries, setJournalEntries] = useState([]);
   const [contactees, setContactees] = useState({});
   const [semester_groups, setSemesterGroups] = useState({});
+
+  // New entries
+  const [newEntryOpen, setNewEntryOpen] = useState(false);
   // For opening the Filter Dialog
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
-
   // For filtering journal entries
   const [filterSemesterValue, setFilterSemesterValue] = useState("");
   const [filterContacteeValue, setFilterContacteeValue] = useState("");
@@ -208,6 +210,9 @@ export default function Journal() {
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, "& > *:last-child": { mb: "0" } }}>
         <JournalHeader setFilterDialogOpen={setFilterDialogOpen} />
+        <Button variant="outline-orange" onClick={() => setNewEntryOpen(true)}>
+          Add Entry
+        </Button>
         {journalEntries.length === 0 ? (
           <Typography variant="body1">
             No journal entries found. Please check back later.
@@ -270,6 +275,67 @@ export default function Journal() {
           ))
         )}
       </Container>
+      {/* Add Entry */}
+      <Dialog
+        open={newEntryOpen}
+        onClose={() => setNewEntryOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Create New Journal Entry</DialogTitle>
+        <DialogContent>
+          {/* Form inputs here */}
+          <Box>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Select
+                value={filterSemesterValue}
+                onChange={handleFilterSemesterChange}
+              >
+                <MenuItem value="">Select Semester</MenuItem>
+                {Object.entries(semester_groups).map(([id, name]) => (
+                  <MenuItem key={id} value={id}>
+                    {name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Select
+                value={filterContacteeValue}
+                onChange={handleFilterContacteeChange}
+              >
+                <MenuItem value="">Select Contactee</MenuItem>
+                {Object.entries(contactees).map(([name, id]) => (
+                  <MenuItem key={id} value={name}>
+                    {name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <textarea
+              placeholder="Write your notes here..."
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              style={{
+                width: "100%",
+                height: "150px",
+                border: "1px solid #ccc",
+                padding: "10px",
+                fontFamily:
+                  '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+              }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setNewEntryOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleCreateNewEntry}>
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* For Filter */}
       <FilterDialog
