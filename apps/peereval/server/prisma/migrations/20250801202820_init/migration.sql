@@ -82,6 +82,36 @@ CREATE TABLE `RubricRow` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Journal` (
+    `id` CHAR(36) NOT NULL,
+    `userId` CHAR(36) NOT NULL,
+
+    UNIQUE INDEX `Journal_userId_key`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `JournalEntry` (
+    `id` CHAR(36) NOT NULL,
+    `re` VARCHAR(191) NOT NULL,
+    `content` LONGTEXT NOT NULL,
+    `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `lastUpdated` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `journalId` CHAR(36) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `JournalEntryTag` (
+    `id` CHAR(36) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
+
+    UNIQUE INDEX `JournalEntryTag_name_key`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `_peers` (
     `A` CHAR(36) NOT NULL,
     `B` CHAR(36) NOT NULL,
@@ -126,6 +156,15 @@ CREATE TABLE `_InquiryToRubricRow` (
     INDEX `_InquiryToRubricRow_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `_JournalEntryToJournalEntryTag` (
+    `A` CHAR(36) NOT NULL,
+    `B` CHAR(36) NOT NULL,
+
+    UNIQUE INDEX `_JournalEntryToJournalEntryTag_AB_unique`(`A`, `B`),
+    INDEX `_JournalEntryToJournalEntryTag_B_index`(`B`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Project` ADD CONSTRAINT `Project_overseerId_fkey` FOREIGN KEY (`overseerId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -149,6 +188,12 @@ ALTER TABLE `InquiryResponse` ADD CONSTRAINT `InquiryResponse_inquiryId_fkey` FO
 
 -- AddForeignKey
 ALTER TABLE `InquiryResponse` ADD CONSTRAINT `InquiryResponse_formResponseId_fkey` FOREIGN KEY (`formResponseId`) REFERENCES `FormResponse`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Journal` ADD CONSTRAINT `Journal_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `JournalEntry` ADD CONSTRAINT `JournalEntry_journalId_fkey` FOREIGN KEY (`journalId`) REFERENCES `Journal`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_peers` ADD CONSTRAINT `_peers_A_fkey` FOREIGN KEY (`A`) REFERENCES `Project`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -179,3 +224,9 @@ ALTER TABLE `_InquiryToRubricRow` ADD CONSTRAINT `_InquiryToRubricRow_A_fkey` FO
 
 -- AddForeignKey
 ALTER TABLE `_InquiryToRubricRow` ADD CONSTRAINT `_InquiryToRubricRow_B_fkey` FOREIGN KEY (`B`) REFERENCES `RubricRow`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_JournalEntryToJournalEntryTag` ADD CONSTRAINT `_JournalEntryToJournalEntryTag_A_fkey` FOREIGN KEY (`A`) REFERENCES `JournalEntry`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_JournalEntryToJournalEntryTag` ADD CONSTRAINT `_JournalEntryToJournalEntryTag_B_fkey` FOREIGN KEY (`B`) REFERENCES `JournalEntryTag`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
