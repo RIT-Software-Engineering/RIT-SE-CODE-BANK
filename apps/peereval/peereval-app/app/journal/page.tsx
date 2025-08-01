@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Journal, JournalEntry } from "@/types/journal";
 import {
@@ -86,9 +86,50 @@ function AddJournalEntryModal({
 }
 
 function TagSearchButton() {
+    const [searching, setSearching] = useState(false);
+    const [tagInput, setTagInput] = useState("");
+    const goButtonRef = useRef<HTMLButtonElement>(null);
+
     const handleClick = () => {
-        alert("Tag search coming soon!");
+        setSearching(true);
     };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (tagInput.trim()) {
+            const params = new URLSearchParams(window.location.search);
+            params.set("fromProject", tagInput.trim());
+            window.location.search = params.toString();
+        }
+    };
+
+    if (searching) {
+        return (
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    placeholder="Enter tag..."
+                    className="text-sm px-2 py-1 border rounded"
+                    autoFocus
+                    onBlur={(e) => {
+                        // Only close if blur isn't going to the "Go" button
+                        if (e.relatedTarget !== goButtonRef.current) {
+                            setSearching(false);
+                        }
+                    }}
+                />
+                <button
+                    ref={goButtonRef}
+                    type="submit"
+                    className="bg-blue-600 text-white px-2 py-1 rounded text-sm"
+                >
+                    Go
+                </button>
+            </form>
+        );
+    }
 
     return (
         <button
@@ -112,7 +153,7 @@ function TagSearchButton() {
                     d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
                 />
             </svg>
-            Search by Tag
+            Use Tag
         </button>
     );
 }
