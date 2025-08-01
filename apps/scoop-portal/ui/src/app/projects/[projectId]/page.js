@@ -1,7 +1,10 @@
+"use client";
 import Header from "@components/Header";
 import { Button, Typography } from "@mui/material";
 import { ArrowBack, Edit } from "@mui/icons-material";
 import {} from "@mui/icons-material";
+import { useUser } from "../../utils/user-context/page";
+import UnauthorizedPage from '../../unauthorized/page';
 
 // The current border styles are NOT intended for the final product.
 // They are just to show how the divs are organized.
@@ -9,6 +12,11 @@ import {} from "@mui/icons-material";
 // This is hardcoded and under the assumption that the user viewing the page is an Admin
 
 async function ProjectDetails() {
+ const { user } = useUser();
+if (!user || user.type !== "admin") {
+    return <UnauthorizedPage />;
+  }
+
     // Use to compare the loading skeleton to the page's content
     await new Promise((resolve) => setTimeout(resolve, 1000));
 

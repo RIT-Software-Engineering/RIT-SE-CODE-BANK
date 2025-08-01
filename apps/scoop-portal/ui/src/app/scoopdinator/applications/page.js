@@ -24,11 +24,14 @@ import {
 import Header from "@components/Header";
 import { Block } from "@mui/icons-material";
 import { ST } from "next/dist/shared/lib/utils";
+import { useUser } from "../../utils/user-context/page";
+import UnauthorizedPage from '../../unauthorized/page';
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
 export default function SupervisorApplicationsPage() {
     const [applications, setApplications] = useState([]);
+    const [status, setStatus] = useState("");
     const [status, setStatus] = useState("");
     const [selectedApp, setSelectedApp] = useState(null);
     const [filter, setFilter] = useState("all");
@@ -52,7 +55,7 @@ export default function SupervisorApplicationsPage() {
                             ? STATUSES[1] // "accepted"
                             : app.accepted === false
                               ? STATUSES[2] // "rejected"
-                              : STATUSES[3] // "unprocessed"
+                              : STATUSES[3], // "unprocessed"
                 }));
 
                 setApplications(processed);
@@ -72,6 +75,7 @@ export default function SupervisorApplicationsPage() {
     }, [selectedApp]);
 
     const handleOpen = (app) => {
+        setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
         setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
         setApplications((prev) =>
             prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
@@ -95,9 +99,45 @@ export default function SupervisorApplicationsPage() {
         if (!res.ok) throw new Error(result.error || "Failed to update");
     }
 
+    async function putApplicationStatus(newStatus) {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/application/${selectedApp.id}`,
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    accepted: newStatus === STATUSES[1], // "accepted"
+                }),
+            }
+        );
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "Failed to update");
+    }
+
     const handleStatusUpdate = (status) => {
         console.log("Updating status to:", status);
+        console.log("Updating status to:", status);
         if (!selectedApp) return;
+
+        try {
+            //update in database
+            putApplicationStatus(status);
+
+            //update local state
+            setApplications((prev) =>
+                prev.map((a) =>
+                    a.id === selectedApp.id ? { ...a, status } : a
+                )
+            );
+
+            //
+            setSelectedApp((prev) =>
+                prev
+                    ? { ...prev, accepted: status === "accepted", status }
+                    : prev
+            );
+            // console.log(selectedApp.firstName, "has been", status);
+            setStatus(status);
 
         try {
             //update in database
@@ -131,7 +171,7 @@ export default function SupervisorApplicationsPage() {
                 severity: "error",
             });
         }
-        console.log("app status", selectedApp.status);
+        // console.log("app status", selectedApp.status);
     };
 
     const handleNotificationClose = (event, reason) => {
@@ -139,12 +179,71 @@ export default function SupervisorApplicationsPage() {
         setNotification({ ...notification, open: false });
     };
 
+async function postNewUsers(data) {
+        const response = await fetch(
+            process.env.NEXT_PUBLIC_API_URL + "/api/users",
+            {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+        console.log("Submitting users with data:", data);
+
+        return response;
+    }
+
+    //temporary data for user creation
+    const tempData = {
+        semester_group: "default",
+        project: "default",
+        active: "default",
+        last_login: "default",
+        prev_login: "default",
+    }
+    const createUserFromApp = (app) => {
+        return {
+            fname: app.firstName,
+            lname: app.lastName,
+            email: app.ritEmail,
+            type: "student", //change to scooployee
+            semester_group: tempData.semester_group,
+            project: tempData.project,
+            active : tempData.active,
+            last_login: tempData.last_login,
+            prev_login: tempData.prev_login,
+        }
+    }
+
+    //for each application where accepted=true, format data into user and then do users post like how u do application post
+    const handleSubmit = () => {
+    //   let data ;
+    //   
+        const acceptedApps = applications.filter((app) => app.accepted === true);
+        // console.log(acceptedApps)
+        for (let app of acceptedApps){
+            // console.log(app)
+           let newUser= createUserFromApp(app) 
+           console.log("Submitting user:", newUser);
+            postNewUsers(newUser);
+        }
+       
+    }
+
     const filteredApps =
         filter === "all"
             ? applications
             : applications.filter((app) => app.status === filter);
 
     return (
+        <Box
+            sx={{
+                fontFamily: `"Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif"`,
+                bgcolor: "#f5f5f5",
+                minHeight: "100vh",
+                p: 4,
+            }}
+        >
         <Box
             sx={{
                 fontFamily: `"Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif"`,
@@ -176,6 +275,30 @@ export default function SupervisorApplicationsPage() {
                     ))}
                 </Select>
 
+                <Button
+                onClick={() => handleSubmit()}
+                    sx={{
+                        bgcolor: "#F76902",
+                        color: "white",
+                        "&:hover": {
+                            bgcolor: "#d95e00",
+                        },
+                        m: 1,
+                    }}
+                >
+                    Submit Accepted
+                </Button>
+
+                <Paper elevation={1}>
+                    <Table>
+                        <TableHead sx={{ backgroundColor: "#F76902" }}>
+                            <TableRow>
+                                <TableCell sx={{ color: "#fff" }}>
+                                    First Name
+                                </TableCell>
+                                <TableCell sx={{ color: "#fff" }}>
+                                    Last Name
+                                </TableCell>
                 <Paper elevation={1}>
                     <Table>
                         <TableHead sx={{ backgroundColor: "#F76902" }}>
@@ -189,6 +312,51 @@ export default function SupervisorApplicationsPage() {
                                 <TableCell sx={{ color: "#fff" }}>
                                     Email
                                 </TableCell>
+                                <TableCell sx={{ color: "#fff" }}>
+                                    Submitted
+                                </TableCell>
+                                <TableCell sx={{ color: "#fff" }} align="right">
+                                    Actions
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {filteredApps.map((app) => (
+                                <TableRow
+                                    key={app.id}
+                                    sx={{
+                                        opacity: app.hasBeenRead ? 0.6 : 1,
+                                        transition: "opacity 0.3s",
+                                        "&:hover": {
+                                            backgroundColor: "#fafafa",
+                                        },
+                                    }}
+                                >
+                                    <TableCell>{app.firstName}</TableCell>
+                                    <TableCell>{app.lastName}</TableCell>
+                                    <TableCell>{app.ritEmail}</TableCell>
+                                    <TableCell>{app.createdAt}</TableCell>
+                                    <TableCell align="right">
+                                        <Button
+                                            variant="outlined"
+                                            onClick={() => handleOpen(app)}
+                                            sx={{
+                                                borderColor: "#F76902",
+                                                color: "#F76902",
+                                                "&:hover": {
+                                                    backgroundColor: "#F76902",
+                                                    color: "#fff",
+                                                },
+                                            }}
+                                        >
+                                            View
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </Paper>
                                 <TableCell sx={{ color: "#fff" }}>
                                     Submitted
                                 </TableCell>
