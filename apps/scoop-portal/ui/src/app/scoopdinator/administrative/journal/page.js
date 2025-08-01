@@ -334,7 +334,7 @@ export default function Journal() {
               })}
               <br />
               with{" "}
-              {contactees[editingEntry.contacteeId] || editingEntry.contacteeId}
+              {`${editingEntry.contactee_fname} ${editingEntry.contactee_lname}`}
             </DialogTitle>
             <DialogContent>
               <Box>
