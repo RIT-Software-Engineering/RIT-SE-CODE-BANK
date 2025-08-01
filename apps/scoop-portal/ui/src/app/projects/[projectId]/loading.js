@@ -1,5 +1,7 @@
 import Skeleton from "../../_components/Skeleton";
 
+// TODO: Redo to imitate layout of project details page
+
 function ProjectDetailsLoading() {
     return (
         <main>

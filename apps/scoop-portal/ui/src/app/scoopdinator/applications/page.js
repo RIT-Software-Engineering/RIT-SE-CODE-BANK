@@ -1,23 +1,23 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import {
-    Box,
-    Button,
-    Typography,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Table,
-    TableHead,
-    TableRow,
-    TableCell,
-    TableBody,
-    Select,
-    MenuItem,
-    Paper,
-    Snackbar,
-    Alert,
+  Box,
+  Button,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Select,
+  MenuItem,
+  Paper,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 // import { application } from "express";
 
@@ -174,10 +174,10 @@ export default function SupervisorApplicationsPage() {
         // console.log("app status", selectedApp.status);
     };
 
-    const handleNotificationClose = (event, reason) => {
-        if (reason === "clickaway") return;
-        setNotification({ ...notification, open: false });
-    };
+  const handleNotificationClose = (event, reason) => {
+    if (reason === "clickaway") return;
+    setNotification({ ...notification, open: false });
+  };
 
 async function postNewUsers(data) {
         const response = await fetch(
@@ -638,6 +638,7 @@ async function postNewUsers(data) {
                     {notification.message}
                 </Alert>
             </Snackbar>
+        </Box>
         </Box>
     );
 }

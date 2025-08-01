@@ -1,95 +1,189 @@
 "use client";
+
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Typography,
+  Paper,
+  useTheme,
+} from "@mui/material";
+import { ArrowBack, EditOutlined } from "@mui/icons-material";
+import React, { useEffect, useState } from "react";
+import ProjectDetailsLoading from "./loading";
 import Header from "@components/Header";
-import { Button, Typography } from "@mui/material";
-import { ArrowBack, Edit } from "@mui/icons-material";
-import {} from "@mui/icons-material";
 import { useUser } from "../../utils/user-context/page";
-import UnauthorizedPage from '../../unauthorized/page';
+import UnauthorizedPage from "../../unauthorized/page";
 
-// The current border styles are NOT intended for the final product.
-// They are just to show how the divs are organized.
+/**
+ * This component fetches the details of a project based on the provided project ID and displays it on the Project Details page.
+ *
+ * @param {*} params - The parameters passed to the component.
+ * @returns {JSX.Element} The elements that make up the Project Details page.
+ * @throws {Error} If the project ID is not provided or if there is an error fetching the project data, it will log an error to the console.
+ *
+ */
+export default function ProjectDetails({ params }) {
+  const theme = useTheme();
+  const { user } = useUser();
+  const { projectId } = React.use(params);
+  const [isLoading, setIsLoading] = useState(true);
+  const [project, setProject] = useState([]);
 
-// This is hardcoded and under the assumption that the user viewing the page is an Admin
+  useEffect(() => {
+    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
+    const fetchProject = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/project/${projectId}`
+        );
+        const data = await res.json();
+        setProject(data);
+      } catch (err) {
+        console.error("Failed to fetch project: ", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-async function ProjectDetails() {
- const { user } = useUser();
-if (!user || user.type !== "admin") {
+    if (projectId) fetchProject();
+  }, [projectId]);
+
+  if (!user || user.type !== "admin") {
     return <UnauthorizedPage />;
   }
 
-    // Use to compare the loading skeleton to the page's content
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  return (
+    <>
+      <Header />
 
-    return (
-        <>
-            <Header />
-            <main>
-                <Button href="/projects" startIcon={<ArrowBack />}>
-                    Back to Projects
-                </Button>
-                <div
-                    id="project-header"
-                    className="flex justify-between mb-4"
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: "1rem",
-                    }}
-                >
-                    <Typography variant="h1" component={"h1"}>
-                        Demo Project
-                    </Typography>
-                    <Button startIcon={<Edit />}>Edit Project</Button>
-                </div>
-                <div
-                    id="description-box"
-                    className="border-2 border-dashed mb-6"
-                    style={{
-                        border: "2px dashed #ccc",
-                        marginBottom: "1.5rem",
-                    }}
-                >
-                    [ Project description ]
-                </div>
-                <div
-                    id="other-details"
-                    className="flex justify-between"
-                    style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                    <div
-                        id="participants"
-                        className="w-1/3 border-2 border-dashed"
-                        stylwe={{ width: "33.33%", border: "2px dashed #ccc" }}
-                    >
-                        <div id="employer" title="Employer">
-                            Employer
-                        </div>
-                        <div id="employee-list" title="Employees">
-                            <ul>
-                                <li>Employee 1</li>
-                                <li>Employee 2</li>
-                                <li>Employee 3</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div
-                        id="actions"
-                        className="w-2/3 border-2 border-dashed"
-                        style={{ width: "66.67%", border: "2px dashed #ccc" }}
-                    >
-                        <Typography variant="h2" component="h2">
-                            Actions
-                        </Typography>
-                        <ul className="list-disc list-inside">
-                            <li>Action 1</li>
-                            <li>Action 2</li>
-                            <li>Action 3</li>
-                        </ul>
-                    </div>
-                </div>
-            </main>
-        </>
-    );
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Button
+          href="/projects"
+          startIcon={<ArrowBack />}
+          variant="outline-orange"
+        >
+          Back to Projects
+        </Button>
+        <Paper
+          sx={{
+            marginTop: "1rem",
+            padding: "1rem",
+          }}
+        >
+          <Container
+            disableGutters
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              px: "0",
+            }}
+          >
+            <Typography variant="h1">
+              {project.display_name || project.title}
+            </Typography>
+            <Button
+              startIcon={<EditOutlined />}
+              variant="solid-orange"
+              onClick={() => {
+                alert("Edit functionality not implemented yet");
+              }}
+            >
+              Edit Details
+            </Button>
+          </Container>
+          <Box
+            sx={{
+              marginBlock: "1rem",
+              padding: "0.5em 1em",
+              display: "inline-block",
+              backgroundColor:
+                project.status === "active"
+                  ? "rgba(0, 156, 189, 0.2)"
+                  : project.status === "in progress"
+                    ? "rgba(246, 190, 0, 0.2)"
+                    : project.status === "completed"
+                      ? "rgba(132, 189, 0, 0.2)"
+                      : "rgba(124, 135, 142, 0.2)",
+              color:
+                project.status === "active"
+                  ? theme.palette.info.main
+                  : project.status === "in progress"
+                    ? theme.palette.warning.main
+                    : project.status === "completed"
+                      ? theme.palette.success.main
+                      : "rgb(124, 135, 142)",
+            }}
+          >
+            <Typography sx={{ margin: "0" }}>
+              {project.status.toUpperCase()}
+            </Typography>
+          </Box>
+          <Typography>{project.description}</Typography>
+          <Container
+            disableGutters
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              px: "0",
+            }}
+          >
+            <Card
+              variant="outlined"
+              sx={{
+                width: "45%",
+                padding: "0.25rem 1rem",
+              }}
+            >
+              <CardContent>
+                <Typography variant="h3">Challenges:</Typography>
+                <Typography>{project.project_challenges}</Typography>
+              </CardContent>
+            </Card>
+            <Card
+              variant="outlined"
+              sx={{
+                width: "45%",
+                padding: "0.25rem 1rem",
+              }}
+            >
+              <CardContent>
+                <Typography variant="h3">Constraints & Assumptions:</Typography>
+                <Typography>{project.constraints_assumptions}</Typography>
+              </CardContent>
+            </Card>
+          </Container>
+          <Typography variant="body1" sx={{ marginTop: "1rem" }}>
+            Project Team: {project.team_name}
+          </Typography>
+          <Typography>
+            Created:{" "}
+            {project.created_at
+              ? new Date(project.created_at).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                })
+              : "Unknown Date"}
+          </Typography>
+          <Typography>
+            Last updated:{" "}
+            {project.updated_at
+              ? new Date(project.updated_at).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                })
+              : "Unknown Date"}
+          </Typography>
+        </Paper>
+      </Container>
+    </>
+  );
 }
-
-export default ProjectDetails;

@@ -6,70 +6,80 @@ const prisma = new PrismaClient();
 /**
  * Post route to save an application
  * @param {Object} req - The request object containing application data
+ * @param {Object} res - The response object to send back the saved application or an error
  */
 router.post("/", async (req, res) => {
-  const {
-     lastName,
-     firstName,
-     ritEmail,
-     coopsCompleted,
-     startSemester,
-     coursesTaken,
-     coopSearchStartDate,
-     coopSearchPlatforms,
-     pendingOffers,
-     pendingOffersDetails,
-     rejectionLetters,
-     rejectionLettersDetails,
-     SEcoopInterest,
-     SEcoopAvailability,
-     remoteAbility,
-     additionalComments,
-     resumeFile,
-     createdAt
-  } = req.body;
-
-  try {
-    const saved = await prisma.application.create({
-      data: {
+    const {
         lastName,
-     firstName,
-     ritEmail,
-     coopsCompleted,
-     startSemester,
-     coursesTaken,
-     coopSearchStartDate,
-     coopSearchPlatforms,
-     pendingOffers,
-     pendingOffersDetails,
-     rejectionLetters,
-     rejectionLettersDetails,
-     SEcoopInterest,
-     SEcoopAvailability,
-     remoteAbility,
-     additionalComments,
-     resumeFile,
-     createdAt
-      }
-    });
-    res.status(200).json({ message: "Application saved", application: saved });
+        firstName,
+        ritEmail,
+        coopsCompleted,
+        startSemester,
+        coursesTaken,
+        coopSearchStartDate,
+        coopSearchPlatforms,
+        pendingOffers,
+        pendingOffersDetails,
+        rejectionLetters,
+        rejectionLettersDetails,
+        SEcoopInterest,
+        SEcoopAvailability,
+        remoteAbility,
+        additionalComments,
+        resumeFile,
+        createdAt,
+    } = req.body;
 
-  } catch (error) {
-    console.error("Error saving application:", error);
-    return res.status(500).json({ message: "Error saving application", error: error.message });
-  }
-  
-})
+    try {
+        const saved = await prisma.application.create({
+            data: {
+                lastName,
+                firstName,
+                ritEmail,
+                coopsCompleted,
+                startSemester,
+                coursesTaken,
+                coopSearchStartDate,
+                coopSearchPlatforms,
+                pendingOffers,
+                pendingOffersDetails,
+                rejectionLetters,
+                rejectionLettersDetails,
+                SEcoopInterest,
+                SEcoopAvailability,
+                remoteAbility,
+                additionalComments,
+                resumeFile,
+                createdAt,
+            },
+        });
+        res.status(200).json({
+            message: "Application saved",
+            application: saved,
+        });
+    } catch (error) {
+        console.error("Error saving application:", error);
+        return res.status(500).json({
+            message: "Error saving application",
+            error: error.message,
+        });
+    }
+});
 
-// GET all applications
+/**
+ * GET all applications
+ *
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object that sends back all applications or an error
+ */
 router.get("/", async (req, res) => {
-  try {
-    const applications = await prisma.application.findMany();
-    res.json(applications);
-  } catch (error) {
-    console.error("Error fetching applications:", error);
-    res.status(500).json({ error: "Failed to fetch applications" });
-  }
+    try {
+        const applications = await prisma.application.findMany();
+        res.json(applications);
+    } catch (error) {
+        console.error("Error fetching applications:", error);
+        res.status(500).json({ error: "Failed to fetch applications" });
+    }
 });
 
 // Update application accepted status

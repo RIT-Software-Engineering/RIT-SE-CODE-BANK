@@ -1,0 +1,12 @@
+model Journal_Entry {
+  id                  Int             @id @default(autoincrement())
+  date                DateTime
+  contactee_fname     String
+  contactee_lname     String
+  notes               String?         @db.VarChar(500)
+  journal_owner_fname String
+  journal_owner_lname String
+  journal_owner_type  String?
+  Semester_Group      Semester_Group? @relation(fields: [semester_GroupId], references: [id])
+  semester_GroupId    Int?
+}
