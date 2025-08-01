@@ -1,6 +1,7 @@
 import { PrismaClient } from "./src/generated/prisma/index.js";
 import { sampleUsers } from "./test-data/sample_users.js";
 import { sampleJournalEntries } from "./test-data/sample_journal_entries.js";
+import { sampleApplications } from "./test-data/sample_applications.js";
 const prisma = new PrismaClient();
 // Use prisma.<model> to interact with your database
 
@@ -23,6 +24,9 @@ async function main() {
     });
     await prisma.users.createMany({
         data: sampleUsers,
+    });
+    await prisma.application.createMany({
+        data: sampleApplications,
     });
     await prisma.project.createMany({
         data: [

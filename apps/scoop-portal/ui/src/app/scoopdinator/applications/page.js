@@ -19,13 +19,8 @@ import {
     Snackbar,
     Alert,
 } from "@mui/material";
-// import { application } from "express";
 
 import Header from "@components/Header";
-import { Block } from "@mui/icons-material";
-import { ST } from "next/dist/shared/lib/utils";
-import { useUser } from "../../utils/user-context/page";
-import UnauthorizedPage from '../../unauthorized/page';
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
@@ -279,7 +274,13 @@ async function postNewUsers(data) {
                                     <TableCell>{app.firstName}</TableCell>
                                     <TableCell>{app.lastName}</TableCell>
                                     <TableCell>{app.ritEmail}</TableCell>
-                                    <TableCell>{app.createdAt}</TableCell>
+                                    <TableCell>
+                                        {new Date(app.createdAt).toLocaleDateString(undefined, {
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric',
+                                        })}
+                                    </TableCell>
                                     <TableCell align="right">
                                         <Button
                                             variant="outlined"
@@ -323,7 +324,7 @@ async function postNewUsers(data) {
                             </DialogTitle>
                             <DialogContent dividers>
                                 <Typography variant="body2">
-                                    Submitted at: {selectedApp.createdAt}
+                                    Submitted on: {new Date(selectedApp.createdAt).toLocaleDateString()}
                                 </Typography>
                                 <Typography margin={2}>
                                     <strong>Email:</strong> <br />
