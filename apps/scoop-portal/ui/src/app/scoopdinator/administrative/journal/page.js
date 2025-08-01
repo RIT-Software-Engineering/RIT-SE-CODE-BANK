@@ -13,6 +13,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   MenuItem,
   Select,
   Typography,
@@ -32,10 +33,13 @@ export default function Journal() {
   // For the journal entry data
   const [journalEntries, setJournalEntries] = useState([]);
   const [contactees, setContactees] = useState({});
+  const [semester_groups, setSemesterGroups] = useState({});
   // For opening the Filter Dialog
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
   // For filtering journal entries
+  const [filterSemesterValue, setFilterSemesterValue] = useState("");
+  const [filterContacteeValue, setFilterContacteeValue] = useState("");
   // For editing nournal entry notes
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
@@ -48,31 +52,19 @@ export default function Journal() {
     const fetchEntries = async () => {
       setLoading(true);
 
-      // Build the API url for fetching the data
-      let url = `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`;
-      // if (semesterGroupId || contacteeId) {
-      //   url += "?";
-      //   if (semesterGroupId) {
-      //     url += `semester_group=${semesterGroupId}`;
-      //   }
-      //   if (contacteeEmail) {
-      //     url += `contactee=${contacteeId}`;
-      //   }
-      // }
-
       // Fetch the journal entries
       try {
-        console.log("Fetching journal entries...");
-        const res = await fetch(url);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`
+        );
         const data = await res.json();
-        console.log(data);
         setJournalEntries(data);
 
         // Fetch contactee info for all unique contacteeIds
-        const uniqueIds = [...new Set(data.map((e) => e.contacteeId))];
+        const uniqueContacteeIds = [...new Set(data.map((e) => e.contacteeId))];
         const contacteeMap = {};
         await Promise.all(
-          uniqueIds.map(async (id) => {
+          uniqueContacteeIds.map(async (id) => {
             // Adjust endpoint as needed for API
             const res = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`
@@ -81,13 +73,34 @@ export default function Journal() {
               const user = await res.json();
               contacteeMap[id] = `${user.fname} ${user.lname}`;
             } else {
-              contacteeMap[i] = "Unknown";
+              contacteeMap[id] = "Unknown";
             }
           })
         );
         setContactees(contacteeMap);
+
+        // Fetch semester info for all unique semester_GroupId
+        const uniqueSemesterGroupIds = [
+          ...new Set(data.map((e) => e.semester_GroupId)),
+        ];
+        const semesterGroupMap = {};
+        await Promise.all(
+          uniqueSemesterGroupIds.map(async (id) => {
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup/${id}`
+            );
+            if (res.ok) {
+              const semester_group = await res.json();
+              semesterGroupMap[id] = `${semester_group.name}`;
+            } else {
+              semesterGroupMap[id] = "Unknown";
+            }
+          })
+        );
+        setSemesterGroups(semesterGroupMap);
+        console.log(semesterGroupMap);
       } catch (err) {
-        console.error("Failed to fetch journal entries or contactees:", err);
+        console.error("Failed to fetch journal entries or contactees: ", err);
       } finally {
         setLoading(false);
       }
@@ -99,11 +112,46 @@ export default function Journal() {
   // Functions for filtering journal entries
   const handleOpenFilterDialog = () => setFilterDialogOpen(true);
   const handleCloseFilterDialog = () => setFilterDialogOpen(false);
+  const handleFilterSemesterChange = (event) => {
+    setFilterSemesterValue(event.target.value || "");
+  };
+  const handleFilterContacteeChange = (event) => {
+    setFilterContacteeValue(event.target.value || "");
+  };
+  const handleApplyFilter = async () => {
+    setLoading(true);
 
-  // const handleCancelFilter = () => {
-  //   return;
-  // };
+    // Build the API url for fetching the data
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`;
+    if (filterSemesterValue != "" || filterContacteeValue != "") {
+      url += "?";
+      if (filterSemesterValue) {
+        url += `semester_GroupId=${filterSemesterValue}`;
+      }
+      if (filterSemesterValue != "" && filterContacteeValue != "") {
+      }
+      if (filterContacteeValue) {
+        url += `contacteeId=${filterContacteeValue}`;
+      }
+    }
 
+    // Fetch filtered journal entries
+    try {
+      console.log(url);
+      const res = await fetch(url);
+      const data = await res.json();
+      setJournalEntries(data);
+    } catch (error) {
+      console.error("Failed to apply filter:", err);
+    } finally {
+      setLoading(false);
+      setFilterDialogOpen(false); // Close the dialog after applying
+    }
+  };
+
+  useEffect(() => {
+    console.log("Semester Value: ", filterSemesterValue);
+  }, [filterSemesterValue]);
   // Functions for editing journal entry notes
   const handleEditClick = (entry) => {
     setEditingEntry(entry);
@@ -220,13 +268,42 @@ export default function Journal() {
         open={filterDialogOpen}
         title="Filter Journal Entries"
         onCancel={handleCloseFilterDialog}
-        actionLabel="Filter"
+        onSubmit={handleApplyFilter}
+        actionLabel="Apply Filter"
       >
         <Typography>Filter by semester</Typography>
-        <Select>
-          <MenuItem>There is no option</MenuItem>
-        </Select>
+        <FormControl>
+          <Select
+            value={filterSemesterValue}
+            onChange={handleFilterSemesterChange}
+          >
+            <MenuItem key="none" value="">
+              <em>None</em>
+            </MenuItem>
+            {Object.entries(semester_groups).map(([id, name]) => (
+              <MenuItem key={id} value={id}>
+                {name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         <Typography>Filter by contactee</Typography>
+        <FormControl>
+          <Select
+            value={filterContacteeValue}
+            onChange={handleFilterContacteeChange}
+          >
+            <MenuItem key="none" value="">
+              <em>None</em>
+            </MenuItem>
+            {Object.entries(contactees).map(([id, name]) => (
+              <MenuItem key={id} value={id}>
+                {name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </FilterDialog>
 
       {/* For Note Editing */}
@@ -254,7 +331,7 @@ export default function Journal() {
             <DialogContent>
               <Box>
                 <textarea
-                  value={editValue}
+                  value={editValue | ""}
                   onChange={(e) => setEditValue(e.target.value)}
                   style={{
                     resize: "none",
