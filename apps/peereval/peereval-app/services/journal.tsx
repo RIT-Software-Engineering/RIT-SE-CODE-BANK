@@ -2,8 +2,10 @@ import { handleResponse } from "./utils";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
 
-export async function getJournalByUser(id: string) {
-    const res = await fetch(`${BASE_URL}/journals/${id}`);
+export async function getJournalByUser(id: string, tag?: string) {
+    const res = await fetch(
+        `${BASE_URL}/journals/${id}${tag ? `?tag=${tag}` : ""}`
+    );
 
     return handleResponse(res, "Couldn't find journal for user " + id);
 }
@@ -12,7 +14,7 @@ export async function createJournalEntry(journalEntry: {
     userId: string;
     re: string;
     content: string;
-    tags: string[];
+    tag: string;
 }) {
     const res = await fetch(`${BASE_URL}/journals`, {
         method: "POST",
@@ -30,7 +32,7 @@ export async function editJournalEntry(
         userId: string;
         re: string;
         content: string;
-        tags: string[];
+        tag: string;
     }
 ) {
     const res = await fetch(`${BASE_URL}/journals/${id}`, {

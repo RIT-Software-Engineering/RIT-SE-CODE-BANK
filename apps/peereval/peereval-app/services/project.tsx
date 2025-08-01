@@ -23,6 +23,14 @@ export async function createProject(
     return handleResponse(res, "Couldn't create project");
 }
 
+export async function getProjectByID(id: string): Promise<Project> {
+    const res = await fetch(`${BASE_URL}/projects/${id}`, {
+        credentials: "include",
+    });
+
+    return handleResponse(res, "Couldn't get project " + id);
+}
+
 export async function getProjectsByPeer(userId: string): Promise<Project[]> {
     const res = await fetch(`${BASE_URL}/projects/asPeer/${userId}`, {
         credentials: "include",

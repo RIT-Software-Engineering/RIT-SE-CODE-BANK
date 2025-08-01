@@ -85,9 +85,41 @@ function AddJournalEntryModal({
     );
 }
 
+function TagSearchButton() {
+    const handleClick = () => {
+        alert("Tag search coming soon!");
+    };
+
+    return (
+        <button
+            className="flex items-center text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded border border-gray-300 hover:bg-gray-200 transition"
+            onClick={handleClick}
+            type="button"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                className="mr-1"
+            >
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+                />
+            </svg>
+            Search by Tag
+        </button>
+    );
+}
+
 export default function JournalPage() {
     const searchParams = useSearchParams();
-    const tag = searchParams.get("tag") || "All";
+    const tag = searchParams.get("fromProject") || "";
 
     const [journal, setJournal] = useState<Journal>();
     const [showAddEntry, setShowAddEntry] = useState(false);
@@ -99,7 +131,7 @@ export default function JournalPage() {
 
     const fetchJournal = async () => {
         if (!currentUser) return;
-        setJournal(await getJournalByUser(currentUser.id));
+        setJournal(await getJournalByUser(currentUser.id, tag));
     };
 
     useEffect(() => {
@@ -111,14 +143,18 @@ export default function JournalPage() {
 
     if (!journal) return <p>Loading...</p>;
 
-    const submitEntryHandler = async (re: string, content: string) => {
+    const submitEntryHandler = async (
+        re: string,
+        content: string,
+        tag: string
+    ) => {
         if (!currentUser) return;
 
         await createJournalEntry({
             userId: currentUser.id,
             re,
             content,
-            tags: [],
+            tag,
         });
 
         await fetchJournal();
@@ -127,7 +163,8 @@ export default function JournalPage() {
     const editEntryHandler = async (
         id: string,
         re: string,
-        content: string
+        content: string,
+        tag: string
     ) => {
         if (!currentUser) return;
 
@@ -135,7 +172,7 @@ export default function JournalPage() {
             userId: currentUser.id,
             re,
             content,
-            tags: [],
+            tag,
         });
 
         await fetchJournal();
@@ -165,12 +202,26 @@ export default function JournalPage() {
             <h1 className="text-3xl font-bold mb-2">Your Journal</h1>
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <span className="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded">
-                        Viewing
-                    </span>
-                    <span className="text-sm font-medium text-blue-600">
-                        {tag}
-                    </span>
+                    {tag ? (
+                        <button
+                            className="flex items-center text-sm font-medium text-blue-600 bg-gray-200 px-2 py-1 rounded border border-gray-300 hover:bg-gray-300 transition"
+                            onClick={() => {
+                                // Remove tag from URL
+                                const params = new URLSearchParams(
+                                    window.location.search
+                                );
+                                params.delete("fromProject");
+                                window.location.search = params.toString();
+                            }}
+                        >
+                            {tag}
+                            <span className="ml-1 text-gray-500 hover:text-red-500 cursor-pointer">
+                                &times;
+                            </span>
+                        </button>
+                    ) : (
+                        <TagSearchButton />
+                    )}
                 </div>
                 <button
                     className="bg-blue-600 text-white py-1 px-4 rounded hover:bg-blue-700 transition cursor-pointer"
@@ -185,7 +236,9 @@ export default function JournalPage() {
             <ul className="space-y-4 overflow-scroll max-h-110">
                 {journal.entries.length === 0 && (
                     <li className="text-center text-gray-500 py-8">
-                        You have no journal entries yet. Try and create one!
+                        {tag
+                            ? `You have no journal entries for the tag "${tag}". Try and create one!`
+                            : "You have no journal entries yet. Try and create one!"}
                     </li>
                 )}
                 {journal.entries.map((entry) => (
@@ -295,11 +348,12 @@ export default function JournalPage() {
                         editEntryHandler(
                             entryUnderEdit?.id ?? "",
                             subject,
-                            content
+                            content,
+                            tag
                         );
                         setEditingEntry(false);
                         setEntryUnderEdit(undefined);
-                    } else submitEntryHandler(subject, content);
+                    } else submitEntryHandler(subject, content, tag);
                 }}
                 baseEntry={entryUnderEdit}
             />

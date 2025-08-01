@@ -168,8 +168,7 @@ model JournalEntryTag {
   name String
 
   // Required for relations
-  journalEntry   JournalEntry? @relation(fields: [journalEntryId], references: [id])
-  journalEntryId String?       @db.Char(36)
+  journalEntries JournalEntry[]
 
   @@unique([name])
 }

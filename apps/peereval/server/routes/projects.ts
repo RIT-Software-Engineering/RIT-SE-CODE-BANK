@@ -17,6 +17,22 @@ router.get("/", async (req, res) => {
     res.json(projects);
 });
 
+// Get project by ID
+// /projects/:id
+router.get("/:id", async (req, res) => {
+    const { id } = req.params;
+    const project = await prisma.project.findUnique({
+        where: { id },
+    });
+
+    if (!project) {
+        res.sendStatus(404);
+        return;
+    }
+
+    res.json(project);
+});
+
 // Create project
 // /projects
 router.post("/", async (req, res) => {
