@@ -1,8 +1,7 @@
-// import { NextResponse } from "next/server";
 import { Router } from "express";
 const router = Router();
-import { PrismaClient as _PrismaClient } from "../../server/src/generated/prisma/index.js";
-const prisma = new _PrismaClient();
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 /**
  * Post route to save an application
@@ -71,6 +70,21 @@ router.get("/", async (req, res) => {
     console.error("Error fetching applications:", error);
     res.status(500).json({ error: "Failed to fetch applications" });
   }
+});
+
+// Update application accepted status
+router.put("/:id", async (req, res) => {
+    const { id } = req.params;
+    const { accepted } = req.body;
+    try {
+        const updated = await prisma.application.update({
+            where: { id: Number(id) },
+            data: { accepted },
+        });
+        res.json(updated);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to update application status" });
+    }
 });
 
 //Get all accepted applications
