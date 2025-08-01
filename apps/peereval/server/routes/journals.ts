@@ -13,15 +13,19 @@ router.get("/", async (req, res) => {
 });
 
 // Get journal by user
+// Can query by tag (single tag only)
 // /journals/:userId
 router.get("/:userId", async (req, res) => {
     const { userId } = req.params;
+    const { tag } = req.query as { tag?: string };
 
     const j = await prisma.journal.findUnique({
         where: { userId },
         include: {
             entries: {
+                where: tag ? { tags: { some: { name: tag } } } : {},
                 orderBy: { date: "desc" },
+                include: { tags: { select: { name: true } } },
             },
         },
     });
@@ -32,11 +36,11 @@ router.get("/:userId", async (req, res) => {
 // Add journal entry
 // /journals
 router.post("/", async (req, res) => {
-    const { userId, re, content, tags } = req.body as {
+    const { userId, re, content, tag } = req.body as {
         userId: string;
         re: string;
         content: string;
-        tags: string[];
+        tag: string;
     };
 
     // Get the user's journal
@@ -51,10 +55,12 @@ router.post("/", async (req, res) => {
             re,
             content,
             tags: {
-                connectOrCreate: tags.map((name) => ({
-                    where: { name },
-                    create: { name },
-                })),
+                connectOrCreate: [
+                    {
+                        where: { name: tag },
+                        create: { name: tag },
+                    },
+                ],
             },
         },
     });
@@ -67,11 +73,11 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
     const { id } = req.params;
 
-    const { userId, re, content, tags } = req.body as {
+    const { userId, re, content, tag } = req.body as {
         userId: string;
         re: string;
         content: string;
-        tags: string[];
+        tag: string;
     };
 
     const entry = await prisma.journalEntry.update({
@@ -80,10 +86,12 @@ router.put("/:id", async (req, res) => {
             re,
             content,
             tags: {
-                connectOrCreate: tags.map((name) => ({
-                    where: { name },
-                    create: { name },
-                })),
+                connectOrCreate: [
+                    {
+                        where: { name: tag },
+                        create: { name: tag },
+                    },
+                ],
             },
             lastUpdated: new Date(),
         },

@@ -2,8 +2,13 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { getAssessmentsByProject } from "@/services/assessment";
-import { getProjectsPeers } from "@/services/project";
+import {
+    getProjectByID,
+    getProjectOverseers,
+    getProjectsPeers,
+} from "@/services/project";
 import { Assessment } from "@/types/assessment";
+import { Project } from "@/types/project";
 import { UserProfile } from "@/types/userProfile";
 import { Drawer } from "@mui/material";
 import Link from "next/link";
@@ -113,6 +118,9 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
     >([]);
     const [isLoading, setIsLoading] = useState<Boolean>(true);
     const [isInProject, setIsInProject] = useState<Boolean>(false);
+    const [projectInfo, setProjectInfo] = useState<Project | undefined>(
+        undefined
+    );
 
     const { projectId } = params;
 
@@ -143,8 +151,21 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
             setReceivedAssessments(
                 ras.filter((ra) => new Date() > new Date(ra.dueDate))
             );
+
+            // Get the project info
+            setProjectInfo(await getProjectByID(projectId));
         })();
     }, [currentUser]);
+
+    // Helper function to convert a string to camelCase (lowercase first, then camelCase based on spaces)
+    function toCamelCase(str: string): string {
+        return str
+            .toLowerCase()
+            .replace(/(?:^\w|[ ]\w)/g, (match, offset) =>
+                offset === 0 ? match.toLowerCase() : match.trim().toUpperCase()
+            )
+            .replace(/\s+/g, "");
+    }
 
     if (isLoading) return <p>Loading...</p>;
     if (!isInProject)
@@ -163,6 +184,8 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
         );
 
     const { pastDue, toDo, upcoming } = splitAssessments(assessments);
+
+    console.dir(projectInfo);
 
     return (
         <>
@@ -213,7 +236,12 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                     <ProjectPeersList projectId={projectId} />
                 </div>
                 <Link
-                    href="/journal"
+                    href={
+                        "/journal" +
+                        (projectInfo == undefined
+                            ? ""
+                            : `?fromProject=${toCamelCase(projectInfo.name)}`)
+                    }
                     className="bg-blue-600 text-white py-2 mx-2 rounded font-semibold cursor-pointer text-center"
                 >
                     <button className="cursor-pointer">Your Journal</button>
