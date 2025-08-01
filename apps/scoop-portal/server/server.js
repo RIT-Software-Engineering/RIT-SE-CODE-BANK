@@ -11,6 +11,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
 app.use(cors());
 app.use(express.json());
 app.use("/api/semestergroup", semesterGroupRoutes);
@@ -20,7 +21,18 @@ app.use("/api/journal", journalRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/projects", projectsRoutes);
 
-app.listen(PORT, () => {
-  //load data?
-  console.log(`Express server is running on port ${PORT}`);
-});
+(async () => {
+  const workflowsRoutesModule = await import('../../workflow/server/api/routes/workflows.js');
+  const actionsRoutesModule = await import('../../workflow/server/api/routes/actions.js');
+  const statesRoutesModule = await import('../../workflow/server/api/routes/states.js');
+  const permissionsRoutesModule = await import('../../workflow/server/api/routes/permissions.js');
+
+  app.use("/workflows", workflowsRoutesModule.default);
+  app.use("/actions", actionsRoutesModule.default);
+  app.use("/states", statesRoutesModule.default);
+  app.use("/permissions", permissionsRoutesModule.default);
+
+  app.listen(PORT, () => {
+    console.log(`Express server is running on port ${PORT}`);
+  });
+})();

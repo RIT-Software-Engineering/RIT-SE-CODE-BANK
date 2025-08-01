@@ -4,6 +4,7 @@ import { sampleJournalEntries } from "./test-data/sample_journal_entries.js";
 import { sampleSemesterGroups } from "./test-data/sample_semester_groups.js";
 import { sampleProjects } from "./test-data/sample_projects.js";
 
+import { sampleApplications } from "./test-data/sample_applications.js";
 const prisma = new PrismaClient();
 // Use prisma.<model> to interact with your database
 
@@ -37,7 +38,26 @@ async function main() {
     }
   }
 
-  console.log("Seeding data");
+    console.log("Seeding data");
+    //example data
+    await prisma.fruit.create({
+        data: { name: "Apple", color: "Red", size: "Medium" },
+    });
+    await prisma.journalEntry.createMany({
+        data: sampleJournalEntries,
+    });
+    await prisma.users.createMany({
+        data: sampleUsers,
+    });
+    await prisma.application.createMany({
+        data: sampleApplications,
+    });
+    await prisma.project.createMany({
+        data: [
+            {id: 1, title: "Project A", display_name: "Demo Project 1", description: "A",},
+            {id: 2, title: "Project B", display_name: "Demo Project 2", description: "B",},
+        ],
+    });
 
   //example data
   for (const model of models) {

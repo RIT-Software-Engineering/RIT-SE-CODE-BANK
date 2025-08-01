@@ -19,19 +19,13 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-// import { application } from "express";
 
 import Header from "@components/Header";
-import { Block } from "@mui/icons-material";
-import { ST } from "next/dist/shared/lib/utils";
-import { useUser } from "../../utils/user-context/page";
-import UnauthorizedPage from '../../unauthorized/page';
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
 export default function SupervisorApplicationsPage() {
     const [applications, setApplications] = useState([]);
-    const [status, setStatus] = useState("");
     const [status, setStatus] = useState("");
     const [selectedApp, setSelectedApp] = useState(null);
     const [filter, setFilter] = useState("all");
@@ -76,7 +70,6 @@ export default function SupervisorApplicationsPage() {
 
     const handleOpen = (app) => {
         setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
-        setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
         setApplications((prev) =>
             prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
         );
@@ -99,45 +92,10 @@ export default function SupervisorApplicationsPage() {
         if (!res.ok) throw new Error(result.error || "Failed to update");
     }
 
-    async function putApplicationStatus(newStatus) {
-        const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/application/${selectedApp.id}`,
-            {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    accepted: newStatus === STATUSES[1], // "accepted"
-                }),
-            }
-        );
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || "Failed to update");
-    }
-
     const handleStatusUpdate = (status) => {
         console.log("Updating status to:", status);
         console.log("Updating status to:", status);
         if (!selectedApp) return;
-
-        try {
-            //update in database
-            putApplicationStatus(status);
-
-            //update local state
-            setApplications((prev) =>
-                prev.map((a) =>
-                    a.id === selectedApp.id ? { ...a, status } : a
-                )
-            );
-
-            //
-            setSelectedApp((prev) =>
-                prev
-                    ? { ...prev, accepted: status === "accepted", status }
-                    : prev
-            );
-            // console.log(selectedApp.firstName, "has been", status);
-            setStatus(status);
 
         try {
             //update in database
@@ -244,14 +202,6 @@ async function postNewUsers(data) {
                 p: 4,
             }}
         >
-        <Box
-            sx={{
-                fontFamily: `"Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif"`,
-                bgcolor: "#f5f5f5",
-                minHeight: "100vh",
-                p: 4,
-            }}
-        >
             <Header />
             <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
                 Review Applications
@@ -288,17 +238,6 @@ async function postNewUsers(data) {
                 >
                     Submit Accepted
                 </Button>
-
-                <Paper elevation={1}>
-                    <Table>
-                        <TableHead sx={{ backgroundColor: "#F76902" }}>
-                            <TableRow>
-                                <TableCell sx={{ color: "#fff" }}>
-                                    First Name
-                                </TableCell>
-                                <TableCell sx={{ color: "#fff" }}>
-                                    Last Name
-                                </TableCell>
                 <Paper elevation={1}>
                     <Table>
                         <TableHead sx={{ backgroundColor: "#F76902" }}>
@@ -335,52 +274,13 @@ async function postNewUsers(data) {
                                     <TableCell>{app.firstName}</TableCell>
                                     <TableCell>{app.lastName}</TableCell>
                                     <TableCell>{app.ritEmail}</TableCell>
-                                    <TableCell>{app.createdAt}</TableCell>
-                                    <TableCell align="right">
-                                        <Button
-                                            variant="outlined"
-                                            onClick={() => handleOpen(app)}
-                                            sx={{
-                                                borderColor: "#F76902",
-                                                color: "#F76902",
-                                                "&:hover": {
-                                                    backgroundColor: "#F76902",
-                                                    color: "#fff",
-                                                },
-                                            }}
-                                        >
-                                            View
-                                        </Button>
+                                    <TableCell>
+                                        {new Date(app.createdAt).toLocaleDateString(undefined, {
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric',
+                                        })}
                                     </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Paper>
-                                <TableCell sx={{ color: "#fff" }}>
-                                    Submitted
-                                </TableCell>
-                                <TableCell sx={{ color: "#fff" }} align="right">
-                                    Actions
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {filteredApps.map((app) => (
-                                <TableRow
-                                    key={app.id}
-                                    sx={{
-                                        opacity: app.hasBeenRead ? 0.6 : 1,
-                                        transition: "opacity 0.3s",
-                                        "&:hover": {
-                                            backgroundColor: "#fafafa",
-                                        },
-                                    }}
-                                >
-                                    <TableCell>{app.firstName}</TableCell>
-                                    <TableCell>{app.lastName}</TableCell>
-                                    <TableCell>{app.ritEmail}</TableCell>
-                                    <TableCell>{app.createdAt}</TableCell>
                                     <TableCell align="right">
                                         <Button
                                             variant="outlined"
@@ -424,7 +324,7 @@ async function postNewUsers(data) {
                             </DialogTitle>
                             <DialogContent dividers>
                                 <Typography variant="body2">
-                                    Submitted at: {selectedApp.createdAt}
+                                    Submitted on: {new Date(selectedApp.createdAt).toLocaleDateString()}
                                 </Typography>
                                 <Typography margin={2}>
                                     <strong>Email:</strong> <br />
