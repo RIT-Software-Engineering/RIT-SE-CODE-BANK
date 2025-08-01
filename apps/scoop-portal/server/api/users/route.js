@@ -1,12 +1,12 @@
 import { Router } from "express";
 const router = Router();
-import { PrismaClient as _PrismaClient } from "../../server/src/generated/prisma/index.js";
-const prisma = new _PrismaClient();
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 router.post("/", async (req, res) => {
     const {
-        lastName,
-        firstName,
+        lname,
+        fname,
         email,
         type,
         semester_group,
@@ -20,8 +20,8 @@ router.post("/", async (req, res) => {
     try {
         const saved = await prisma.users.create({
             data: {
-                lastName,
-                firstName,
+                lname,
+                fname,
                 email,
                 type,
                 semester_group,
@@ -52,19 +52,35 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET all employees 
+// GET employees with optional search by firstName or lastName
 router.get("/employees", async (req, res) => {
-    try {
-        const employees = await prisma.users.findMany({ 
-            where: {
-                type: "student", //(temp using "students" type from old code)
-            },
-        });
-        res.json(employees);
-    } catch (error) {
-        console.error("Error fetching employees:", error);
-        res.status(500).json({ error: "Failed to fetch employees" });
-    }
+  const search = req.query.search || "";
+
+  try {
+    const whereCondition = {
+      type: "student",
+      ...(search.trim() !== "" && {
+        OR: [
+            { fname: { contains: search, }, },
+            { lname: { contains: search, }, },
+          ],
+      }),
+    };
+
+    const employees = await prisma.users.findMany({
+      where: 
+      whereCondition,
+      include: {
+        teams: true,
+      },
+      take: 30, // Limiting to 30 for demo purposes, in case we mass populate db.
+    });
+
+    res.json(employees);
+  } catch (error) {
+    console.error("Error fetching employees:", error);
+    res.status(500).json({ error: "Failed to fetch employees" });
+  }
 });
 
 export default router;
