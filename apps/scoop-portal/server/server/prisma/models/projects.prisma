@@ -1,6 +1,0 @@
-model Project {
-    id           Int    @id
-    title        String
-    display_name String
-    description  String @db.VarChar(255)
-}
