@@ -1,5 +1,5 @@
 const { permissionTypes } = require("../api/consts");
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient, StateType } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
@@ -186,6 +186,137 @@ async function main() {
     //         index: 0,
     //     },
     // });
+
+    //////////////////////////
+    // Onboarding Demo Data //
+    //////////////////////////
+    const onboardingWorkflowData = {
+        name: "Onboarding Workflow",
+        description: "Proof of concept demo for an admin walking through an onboarding process",
+        metadata: [],
+        userId: "1",
+    };
+
+    const onboardingWorkflow = await prisma.workflowAttributes.create({
+        data: {
+            baseAction: {
+                create: {
+                    name: onboardingWorkflowData.name,
+                    description: onboardingWorkflowData.description,
+                    metadata: {
+                        create: onboardingWorkflowData.metadata,
+                    },
+                    permissions: {
+                        createMany: {
+                            data: permissionTypes.map((permissionType) => ({
+                                userId: onboardingWorkflowData.userId,
+                                permissionType: permissionType,
+                            })),
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    console.log("Created onboardingWorkflow with ID:", onboardingWorkflow.id);
+
+    const onboardingActionsData = [
+        {
+            name: "Review Applications",
+            description: "Review pending student applications and accept or reject students.",
+            metadata: [],
+            userId: "1",
+        },
+        {
+            name: "Upload Students CSV and View Employees",
+            description: "Upload additional CSV file of new hires and verify current employees.",
+            metadata: [],
+            userId: "1",
+        },
+        {
+            name: "Create and Assign Teams",
+            description: "Assign students to teams, new or existing.",
+            metadata: [],
+            userId: "1",
+        },
+        {
+            name: "Create and Assign Projects",
+            description: "Assign projects to teams, new or existing.",
+            metadata: [],
+            userId: "1",
+        },
+        {
+            name: "Start Semester",
+            description: "Kick off the semester officially!",
+            metadata: [],
+            userId: "1",
+        },
+
+    ];
+
+    const onboardingActions = await Promise.all(
+        onboardingActionsData.map((action) =>
+            prisma.action.create({
+                data: {
+                    name: action.name,
+                    description: action.description,
+                    metadata: {
+                        create: action.metadata,
+                    },
+                    permissions: {
+                        createMany: {
+                            data: permissionTypes.map((permissionType) => ({
+                                userId: "1",
+                                permissionType: permissionType,
+                            })),
+                        },
+                    },
+                },
+            })
+        )
+    );
+
+    const onboardingWorkflowState = await prisma.workflowState.create({
+      data: {
+        userId: "1",
+        workflowId: onboardingWorkflow.id,
+      },
+    });
+
+    // Seed Action States for each step
+    await Promise.all(
+      onboardingActions.map((action, index) =>
+        prisma.actionState.create({
+          data: {
+            workflowStateId: onboardingWorkflowState.id,
+            actionId: action.id,
+            stateType: StateType.notStarted,
+            index,
+          },
+        })
+      )
+    );
+
+    await prisma.workflowAttributes.update({
+        where: { id: onboardingWorkflow.id },
+        data: {
+            rootAction: { connect: { id: onboardingActions[0].id } },
+        },
+    });
+
+    for (let i = 0; i < onboardingActions.length - 1; i++) {
+        await prisma.action.update({
+            where: { id: onboardingActions[i].id },
+            data: {
+                nextAction: { connect: { id: onboardingActions[i + 1].id } },
+            },
+        });
+    }
+
+    /////////////////////////
+    // End Onboarding Demo //
+    /////////////////////////
 
     console.log("🌱 Seed data created successfully!");
 }

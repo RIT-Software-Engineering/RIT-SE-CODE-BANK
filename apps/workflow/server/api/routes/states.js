@@ -31,15 +31,32 @@ router.get('/workflow', async (req, res) => {
   if (workflowId) where.workflowId = workflowId;
 
   const states = await prisma.workflowState.findMany({
-    where: where,
-    include: {
-      actionStates: {
-        orderBy: {
-          index: 'asc'
+  where,
+  include: {
+    workflow: {
+      select: {
+        id: true,
+        baseActionId: true,
+        rootActionId: true,
+        baseAction: {
+          select: {
+            name: true,
+          }
+        },
+        rootAction: {
+          select: {
+            name: true,
+          }
         }
       }
+    },
+    actionStates: {
+      orderBy: {
+        index: 'asc'
+      }
     }
-  });
+  }
+});
 
   res.json(states);
 });
