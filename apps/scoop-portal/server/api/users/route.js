@@ -43,8 +43,21 @@ router.post("/", async (req, res) => {
 
 // GET all users
 router.get("/", async (req, res) => {
+  const { fname, lname } = req.query;
+  const whereClause = {};
+  if (fname) {
+    whereClause.fname = fname;
+  }
+  if (lname) {
+    whereClause.lname = lname;
+  }
   try {
-    const users = await prisma.users.findMany();
+    let users;
+    if (fname || lname) {
+      users = await prisma.users.findMany({ where: whereClause });
+    } else {
+      users = await prisma.users.findMany();
+    }
     res.json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
