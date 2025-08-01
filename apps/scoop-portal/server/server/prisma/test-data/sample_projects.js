@@ -2,6 +2,30 @@ export const sampleProjects = [
   {
     id: 1,
     status: "active",
+    title: "Project A",
+    display_name: "Demo Project 1",
+    description: "A",
+    project_challenges: "Challenges A",
+    constraints_assumptions: "A",
+    project_search_keywords: "A",
+    team_name: "Team Alpha",
+    semesterId: 8,
+  },
+  {
+    id: 2,
+    status: "active",
+    title: "Project B",
+    display_name: "Demo Project 2",
+    description: "B",
+    project_challenges: "Challenges B",
+    constraints_assumptions: "B",
+    project_search_keywords: "B",
+    team_name: "Team Omega",
+    semesterId: 8,
+  },
+  {
+    id: 3,
+    status: "active",
     title: "SCOOP Portal Development",
     display_name: "SCOOP Portal Development",
     description:
@@ -14,7 +38,7 @@ export const sampleProjects = [
     semesterId: 1,
   },
   {
-    id: 2,
+    id: 4,
     status: "active",
     title: "Mobile App for Campus Navigation",
     display_name: "Mobile App for Campus Navigation",
@@ -27,7 +51,7 @@ export const sampleProjects = [
     semesterId: 1,
   },
   {
-    id: 3,
+    id: 5,
     status: "in progress",
     title: "AI Chatbot for Student Services",
     display_name: "AI Chatbot for Student Services",
@@ -41,7 +65,7 @@ export const sampleProjects = [
     semesterId: 1,
   },
   {
-    id: 4,
+    id: 6,
     status: "completed",
     title: "Virtual Reality Lab Tour",
     display_name: "Virtual Reality Lab Tour",
@@ -53,7 +77,7 @@ export const sampleProjects = [
     semesterId: 1,
   },
   {
-    id: 5,
+    id: 7,
     status: "active",
     title: "Once upon a project",
     display_name: "Once upon a project",
