@@ -1,7 +1,6 @@
 const { permissionTypes } = require("../api/consts");
 const { importMetadata } = require("../api/helpers/metadata");
 const { PrismaClient } = require("@prisma/client");
-const { connect } = require("../api/routes/workflows");
 const prisma = new PrismaClient();
 
 /**
@@ -25,6 +24,16 @@ async function createWorkflow(workflowData) {
       create: importMetadata(workflowData.metadata),
     };
   }
+  if (workflowData.previousActionId) {
+    baseActionData.previousAction = {
+      connect: { id: workflowData.previousActionId },
+    };
+  }
+  if (workflowData.parentActionId) {
+    baseActionData.parentAction = {
+      connect: { id: workflowData.parentActionId },
+    };
+  }
 
   let workflow;
 
@@ -35,6 +44,7 @@ async function createWorkflow(workflowData) {
         baseAction: {
           create: {
             ...baseActionData,
+            actionType: "workflow",
             permissions: {
               createMany: {
                 data: permissionTypes.map((permissionType) => ({
@@ -79,6 +89,7 @@ async function createAction(actionData) {
   if (actionData.actionType && actionData.actionType === "workflow") {
     // Create a workflow and return the base action as the newly create action
     const workflow = await createWorkflow(actionData);
+    // throw Error(actionData.previousActionId);
     return await prisma.action.findUnique({
       where: { id: workflow.baseActionId },
     });
@@ -125,7 +136,7 @@ async function createAction(actionData) {
       for (let i = 0; i < actionData.childActions.length; i++) {
         const childAction = actionData.childActions[i];
         childAction.parentActionId = action.id;
-        
+
         await createAction(childAction);
       }
     }
