@@ -21,7 +21,9 @@ model Project {
   display_name String
   description  String @db.VarChar(255)
 
-  teams Teams[]
+  teams            Teams[]
+  Semester_Group   Semester_Group? @relation(fields: [semester_GroupId], references: [id])
+  semester_GroupId Int?
 }
 
 model users {
@@ -37,13 +39,6 @@ model users {
   prev_login     String
 
   teams Teams[] @relation("TeamMembers")
-}
-
-model JournalEntry {
-  id        Int      @id @default(autoincrement())
-  date      DateTime
-  contactee String
-  notes     String?  @db.VarChar(500)
 }
 
 model Application {
@@ -75,5 +70,28 @@ model Teams {
   projectId Int?
 
   project Project? @relation(fields: [projectId], references: [id])
-  members users[] @relation("TeamMembers")
+  members users[]  @relation("TeamMembers")
+}
+
+model Semester_Group {
+  id              Int             @id @default(autoincrement())
+  name            String          @unique @db.VarChar(100)
+  dept            String          @db.VarChar(100)
+  start_date      DateTime        @default(now())
+  end_date        DateTime        @default(now())
+  projects        Project[]
+  journal_entries Journal_Entry[]
+}
+
+model Journal_Entry {
+  id                  Int             @id @default(autoincrement())
+  date                DateTime
+  contactee_fname     String
+  contactee_lname     String
+  notes               String?         @db.VarChar(500)
+  journal_owner_fname String
+  journal_owner_lname String
+  journal_owner_type  String?
+  Semester_Group      Semester_Group? @relation(fields: [semester_GroupId], references: [id])
+  semester_GroupId    Int?
 }

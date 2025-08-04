@@ -539,6 +539,5 @@ async function postNewUsers(data) {
                 </Alert>
             </Snackbar>
         </Box>
-        </Box>
     );
 }
