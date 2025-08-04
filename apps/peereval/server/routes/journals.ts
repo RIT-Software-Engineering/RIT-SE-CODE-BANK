@@ -86,6 +86,7 @@ router.put("/:id", async (req, res) => {
             re,
             content,
             tags: {
+                set: [],
                 connectOrCreate: [
                     {
                         where: { name: tag },

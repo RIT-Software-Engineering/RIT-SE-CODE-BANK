@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Journal, JournalEntry } from "@/types/journal";
 import {
@@ -24,29 +24,35 @@ function AddJournalEntryModal({
     onClose,
     onSubmit,
     baseEntry,
+    tag: initialTag,
 }: {
     open: boolean;
     onClose: () => void;
-    onSubmit: (subject: string, content: string) => void;
+    onSubmit: (subject: string, content: string, tag: string) => void;
     baseEntry?: JournalEntry;
+    tag: string;
 }) {
     const [subject, setSubject] = useState(baseEntry?.re ?? "");
     const [content, setContent] = useState(baseEntry?.content ?? "");
+    const [tag, setTag] = useState(initialTag);
 
     useEffect(() => {
         setSubject(baseEntry?.re ?? "");
         setContent(baseEntry?.content ?? "");
-    }, [baseEntry]);
+        setTag(baseEntry ? baseEntry.tags[0].name : initialTag);
+    }, [baseEntry, initialTag]);
 
     const handleSubmit = () => {
-        onSubmit(subject, content);
+        onSubmit(subject, content, tag);
         setSubject("");
         setContent("");
+        setTag(initialTag);
     };
 
     const handleClose = () => {
         setSubject("");
         setContent("");
+        setTag(initialTag);
         onClose();
     };
 
@@ -70,6 +76,15 @@ function AddJournalEntryModal({
                     multiline
                     minRows={4}
                 />
+                <div className="flex justify-start mt-2">
+                    <TextField
+                        label="Tag"
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                        size="small"
+                        style={{ minWidth: 120 }}
+                    />
+                </div>
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleClose}>Cancel</Button>
@@ -86,9 +101,50 @@ function AddJournalEntryModal({
 }
 
 function TagSearchButton() {
+    const [searching, setSearching] = useState(false);
+    const [tagInput, setTagInput] = useState("");
+    const goButtonRef = useRef<HTMLButtonElement>(null);
+
     const handleClick = () => {
-        alert("Tag search coming soon!");
+        setSearching(true);
     };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (tagInput.trim()) {
+            const params = new URLSearchParams(window.location.search);
+            params.set("fromProject", tagInput.trim());
+            window.location.search = params.toString();
+        }
+    };
+
+    if (searching) {
+        return (
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    placeholder="Enter tag..."
+                    className="text-sm px-2 py-1 border rounded"
+                    autoFocus
+                    onBlur={(e) => {
+                        // Only close if blur isn't going to the "Go" button
+                        if (e.relatedTarget !== goButtonRef.current) {
+                            setSearching(false);
+                        }
+                    }}
+                />
+                <button
+                    ref={goButtonRef}
+                    type="submit"
+                    className="bg-blue-600 text-white px-2 py-1 rounded text-sm"
+                >
+                    Go
+                </button>
+            </form>
+        );
+    }
 
     return (
         <button
@@ -112,7 +168,7 @@ function TagSearchButton() {
                     d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
                 />
             </svg>
-            Search by Tag
+            Use Tag
         </button>
     );
 }
@@ -148,6 +204,7 @@ export default function JournalPage() {
         content: string,
         tag: string
     ) => {
+        console.log(`the tag is ${tag}`);
         if (!currentUser) return;
 
         await createJournalEntry({
@@ -247,15 +304,25 @@ export default function JournalPage() {
                         className="border rounded p-4 bg-white shadow relative"
                     >
                         <div className="flex justify-between items-center mb-1">
-                            {entry.re ? (
-                                <h2 className="text-lg font-semibold">
-                                    {entry.re}
-                                </h2>
-                            ) : (
-                                <h2 className="text-gray-500 font-semibold italic">
-                                    Unnamed Entry
-                                </h2>
-                            )}
+                            <div className="flex">
+                                {entry.re ? (
+                                    <h2 className="text-lg font-semibold">
+                                        {entry.re}
+                                    </h2>
+                                ) : (
+                                    <h2 className="text-gray-500 font-semibold italic">
+                                        Unnamed Entry
+                                    </h2>
+                                )}
+                                {entry.tags.map(
+                                    ({ name }) =>
+                                        name.length > 0 && (
+                                            <span className="flex items-center text-sm font-medium text-blue-600 bg-gray-200 px-1 mx-2 rounded border border-gray-300">
+                                                {name}
+                                            </span>
+                                        )
+                                )}
+                            </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-xs text-gray-500">
                                     {new Date(entry.date).toLocaleString(
@@ -342,7 +409,7 @@ export default function JournalPage() {
                     setEditingEntry(false);
                     setEntryUnderEdit(undefined);
                 }}
-                onSubmit={(subject, content) => {
+                onSubmit={(subject, content, tag) => {
                     setShowAddEntry(false);
                     if (editingEntry) {
                         editEntryHandler(
@@ -356,6 +423,7 @@ export default function JournalPage() {
                     } else submitEntryHandler(subject, content, tag);
                 }}
                 baseEntry={entryUnderEdit}
+                tag={tag}
             />
         </div>
     );
