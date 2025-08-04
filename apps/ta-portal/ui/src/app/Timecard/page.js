@@ -1,4 +1,3 @@
-// app/Timecard/page.js
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -15,15 +14,13 @@ import ConfirmationModal from "@/components/common/models/ConfirmationModal";
 import { useNotification } from "@/contexts/NotificationContext";
 import { 
     upsertTimecard, 
-    getAllTimecardsForJob, // Use the new function
+    getAllTimecardsForJob,
     upsertTimecardDay,
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import TimecardHistory from "@/components/timecard/TimecardHistory";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import Typography from "@mui/material/Typography";
+
+import { Accordion, AccordionSummary, AccordionDetails, Typography } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 
@@ -38,8 +35,10 @@ export default function Timecard() {
     const [weekStartDate, setWeekStartDate] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState(null);
 
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
     const [notesModal, setNotesModal] = useState({ show: false, day: null });
 
     // --- HELPER & UTILITY FUNCTIONS ---
@@ -98,14 +97,13 @@ export default function Timecard() {
 
     const loadAllTimecards = async (jobHistoryId) => {
         setLoading(true);
+        setError(null);
         try {
             const allTimecards = await getAllTimecardsForJob(jobHistoryId);
             const mostRecent = allTimecards.length > 0 ? allTimecards[0] : null;
             
-            // Set previous timecards (all except the most recent one)
             setPreviousTimecards(allTimecards.length > 1 ? allTimecards.slice(1) : []);
 
-            // Set up the current, editable timecard
             const weekStart = mostRecent ? new Date(mostRecent.weekStartDate) : getWeekStartDateFor(new Date());
             setWeekStartDate(weekStart);
 
@@ -119,12 +117,9 @@ export default function Timecard() {
             }
             setCurrentTimecard(editableWeek);
 
-        } catch (error) {
-            console.error("Failed to load timecards:", error);
-            const weekStart = getWeekStartDateFor(new Date());
-            setCurrentTimecard(buildWeekFrom(weekStart));
-            setWeekStartDate(weekStart);
-            showNotification("Could not find any timecards. Starting a new one.", "info");
+        } catch (err) {
+            console.error("Failed to load timecards:", err);
+            setError(err.message || "An unknown error occurred.");
         } finally {
             setLoading(false);
         }
@@ -142,7 +137,7 @@ export default function Timecard() {
         });
     };
 
-    const handleSubmit = async () => {
+    const handleSaveProgress = async () => {
         if (!jobPositionHistoryId) {
             showNotification("No active job found.", "error");
             return;
@@ -158,14 +153,18 @@ export default function Timecard() {
                     timeIn3: day.ins[2] || null, timeOut3: day.outs[2] || null,
                 })),
             };
-            const response = await upsertTimecard(payload);
-            showNotification(response.message || "Timecard submitted successfully!", "success");
-            await loadAllTimecards(jobPositionHistoryId);
+            await upsertTimecard(payload);
+            showNotification("Progress saved successfully!", "success");
         } catch (error) {
-            showNotification(error.message || "Submission failed.", "error");
+            showNotification(error.message || "Failed to save progress.", "error");
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleFinalSubmit = async () => {
+        setShowSubmitConfirm(false);
+        await handleSaveProgress();
     };
 
     const handleClearConfirm = () => {
@@ -174,14 +173,9 @@ export default function Timecard() {
         showNotification("Timecard has been cleared.", "success");
     };
 
-    const handleSaveNotes = async (date, notes) => {
-        try {
-            const updatedDay = await upsertTimecardDay({ jobPositionHistoryId, date, notes, weekStartDate });
-            setCurrentTimecard(prev => prev.map(day => day.date === date ? { ...day, notes, id: updatedDay.id } : day));
-            showNotification("Notes saved!", "success");
-        } catch (err) {
-            showNotification("Failed to save notes.", "error");
-        }
+    const handleSaveNotes = (date, notes) => {
+        setCurrentTimecard(prev => prev.map(d => d.date === date ? { ...d, notes } : d));
+        showNotification("Notes updated. Click 'Save Progress' to save to the database.", "success");
     };
 
     const handleExport = () => {
@@ -203,15 +197,14 @@ export default function Timecard() {
     const weeklyTotal = currentTimecard.reduce((sum, d) => sum + (d.total || 0), 0);
 
     if (loading) return <div className="text-center py-20 text-gray-500">Loading timecard...</div>;
+    if (error) return <div className="text-center py-20 text-red-600">Error: {error}</div>;
     if (!jobPositionHistoryId) return <div className="text-center py-20 text-gray-500">You do not have an active job position.</div>;
 
     return (
         <>
             <div className="p-4 sm:p-6 lg:p-8">
                 <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-7xl mx-auto">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">
-                        Weekly Timecard
-                    </h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Weekly Timecard</h1>
                     <div className="overflow-x-auto rounded-lg border border-gray-200">
                         <table className={tableClasses}>
                             <thead className="bg-gray-50">
@@ -244,28 +237,22 @@ export default function Timecard() {
                         </table>
                     </div>
                     <div className="mt-8 flex justify-center space-x-4">
-                        <button onClick={() => setShowClearConfirm(true)} disabled={submitting} className={`${buttonClasses} bg-gray-200 text-gray-800 hover:bg-gray-300`}>Clear</button>
+                        <button onClick={() => setShowClearConfirm(true)} disabled={submitting || !!error} className={`${buttonClasses} bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:opacity-50`}>Clear</button>
                         <button onClick={handleExport} disabled={submitting} className={`${buttonClasses} bg-gray-200 text-gray-800 hover:bg-gray-300`}>Export</button>
-                        <button onClick={handleSubmit} disabled={submitting} className={`${buttonClasses} bg-rit-orange text-white hover:bg-rit-dark-orange`}>{submitting ? "Submitting..." : "Submit"}</button>
+                        <button onClick={handleSaveProgress} disabled={submitting || !!error} className={`${buttonClasses} bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50`}>{submitting ? "Saving..." : "Save"}</button>
+                        <button onClick={() => setShowSubmitConfirm(true)} disabled={submitting || !!error} className={`${buttonClasses} bg-rit-orange text-white hover:bg-gray-900 disabled:opacity-50`}>Submit</button>
                     </div>
                 </div>
 
-                {/* --- Previous Timecards Accordion (Using MUI) --- */}
                 {previousTimecards.length > 0 && (
                     <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-7xl mx-auto mt-8">
                         <Accordion>
-                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                <Typography variant="h6" fontWeight={600}>Previous Timecards</Typography>
-                            </AccordionSummary>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}><Typography variant="h6" fontWeight={600}>Previous Timecards</Typography></AccordionSummary>
                             <AccordionDetails>
                                 {previousTimecards.map(timecard => (
                                     <Accordion key={timecard.id}>
-                                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                            <Typography>Timecard for week of {formatDate(timecard.weekStartDate)}</Typography>
-                                        </AccordionSummary>
-                                        <AccordionDetails>
-                                            <TimecardHistory timecard={timecard} />
-                                        </AccordionDetails>
+                                        <AccordionSummary expandIcon={<ExpandMoreIcon />}><Typography>Timecard for week of {formatDate(timecard.weekStartDate)}</Typography></AccordionSummary>
+                                        <AccordionDetails><TimecardHistory timecard={timecard} /></AccordionDetails>
                                     </Accordion>
                                 ))}
                             </AccordionDetails>
@@ -274,8 +261,11 @@ export default function Timecard() {
                 )}
             </div>
             
-            <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Clear Timecard" isConfirming={submitting}>
+            <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Clear Timecard">
                 Are you sure you want to clear all entries for this week? This action cannot be undone.
+            </ConfirmationModal>
+            <ConfirmationModal isOpen={showSubmitConfirm} onClose={() => setShowSubmitConfirm(false)} onConfirm={handleFinalSubmit} title="Submit Timecard" isConfirming={submitting}>
+                Are you sure you are ready to submit your timecard for the week? This will create a new weekly timecard.
             </ConfirmationModal>
             {notesModal.show && <NotesModal isOpen={notesModal.show} dayEntry={notesModal.day} onClose={() => setNotesModal({ show: false, day: null })} onSave={handleSaveNotes} />}
         </>

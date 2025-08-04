@@ -38,7 +38,7 @@ export default function NotesModal({ dayEntry, isOpen, onClose, onSave }) {
                 await onSave(dayEntry.date, noteInput);
                 onClose();
                 }}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                className="px-4 py-2 bg-rit-orange hover:bg-gray-900 text-white rounded"
             >
                 Save
             </button>
