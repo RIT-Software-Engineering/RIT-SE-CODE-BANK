@@ -39,7 +39,7 @@ function AddJournalEntryModal({
     useEffect(() => {
         setSubject(baseEntry?.re ?? "");
         setContent(baseEntry?.content ?? "");
-        setTag(initialTag);
+        setTag(baseEntry ? baseEntry.tags[0].name : initialTag);
     }, [baseEntry, initialTag]);
 
     const handleSubmit = () => {
