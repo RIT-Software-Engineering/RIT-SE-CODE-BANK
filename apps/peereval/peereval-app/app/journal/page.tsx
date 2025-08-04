@@ -288,15 +288,25 @@ export default function JournalPage() {
                         className="border rounded p-4 bg-white shadow relative"
                     >
                         <div className="flex justify-between items-center mb-1">
-                            {entry.re ? (
-                                <h2 className="text-lg font-semibold">
-                                    {entry.re}
-                                </h2>
-                            ) : (
-                                <h2 className="text-gray-500 font-semibold italic">
-                                    Unnamed Entry
-                                </h2>
-                            )}
+                            <div className="flex">
+                                {entry.re ? (
+                                    <h2 className="text-lg font-semibold">
+                                        {entry.re}
+                                    </h2>
+                                ) : (
+                                    <h2 className="text-gray-500 font-semibold italic">
+                                        Unnamed Entry
+                                    </h2>
+                                )}
+                                {!tag && (
+                                    <span
+                                        className="flex items-center text-sm font-medium text-blue-600 bg-gray-200 px-1 mx-2 rounded border border-gray-300"
+                                        style={{ pointerEvents: "none" }}
+                                    >
+                                        {entry.tags[0].name}
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-xs text-gray-500">
                                     {new Date(entry.date).toLocaleString(
