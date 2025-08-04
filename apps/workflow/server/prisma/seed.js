@@ -102,7 +102,7 @@ async function createAction(actionData) {
   }
   // actions directly in complex/branching actions only
   if (actionData.parentActionId) {
-    data.parentActionId = { connect: { id: actionData.parentActionId } };
+    data.parentAction = { connect: { id: actionData.parentActionId } };
   }
   // actions directly in workflows only
   if (actionData.previousActionId) {
@@ -122,9 +122,10 @@ async function createAction(actionData) {
 
     // Create any child actions for this action
     if (actionData.childActions?.length > 0) {
-      for (let i = 0; i < actionData.childActions; i++) {
+      for (let i = 0; i < actionData.childActions.length; i++) {
         const childAction = actionData.childActions[i];
         childAction.parentActionId = action.id;
+        
         await createAction(childAction);
       }
     }
@@ -326,8 +327,6 @@ async function main() {
       await createWorkflow(w);
 
       // TODO: Figure out how to setup the action state
-
-      
 
       // Create all of the state for the workflow
       // if (w.workflowStates?.length > 0) {
