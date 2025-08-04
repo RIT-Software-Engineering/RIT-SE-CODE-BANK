@@ -1,31 +1,23 @@
 @ECHO OFF
 SETLOCAL
 
-REM --- TA-Portal Configuration ---
+REM --- Workflow Configuration ---
 SET "DB_ROOT_PASSWORD=newPassword"
 SET "DB_HOST=127.0.0.1"
 SET "DB_PORT=8000"
-SET "DB_NAME_TAPORTAL=ta_portal"
+SET "DB_NAME_WORKFLOWS=workflows"
 SET "DB_APP_USER=app_user"
 SET "DB_APP_PASSWORD=app_password"
-
-SET "APP_BACKEND_URL=https://localhost:3300"
-SET "APP_FRONTEND_URL=http://localhost:3000"
-SET "WORKFLOWS_URL=http://localhost:3001"
-SET "APP_NODE_ENV=DEV"
-SET "APP_SERVER_PORT=3300"
-
-SET "SLACK_CLIENT_ID=8356401273568.9110035154276"
-SET "SLACK_CLIENT_SECRET=03750f2fb26d6cc604010e4d306dafdc"
-SET "SLACK_REDIRECT_URI=https://localhost:3300/api/slack/oauth_redirect"
+SET "APP_SERVER_PORT=3001"
+SET "NODE_ENV=development"
 
 SET "ENV_FILE=.env"
 REM --- End Configuration ---
 
 ECHO --- (Step 1/3) Starting MariaDB Database Setup ---
 ECHO.
-REM This script creates the ta_portal database and the dedicated app user
-node ./server/database/setup_db.js
+REM This script creates the workflows database and the dedicated app user
+node ./setup_db.js
 
 IF %ERRORLEVEL% NEQ 0 (
     ECHO.
@@ -44,15 +36,15 @@ ECHO   2) App User (Recommended, more secure)
 SET /P "USER_CHOICE=Enter choice [1-2]: "
 ECHO.
 
-SET "DATABASE_URL_TAPORTAL="
+SET "DATABASE_URL_WORKFLOWS="
 IF "%USER_CHOICE%"=="1" (
     ECHO Configuring application to use the 'root' user.
-    SET "DATABASE_URL_TAPORTAL=mysql://root:%DB_ROOT_PASSWORD%@%DB_HOST%:%DB_PORT%/%DB_NAME_TAPORTAL%"
+    SET "DATABASE_URL_WORKFLOWS=mysql://root:%DB_ROOT_PASSWORD%@%DB_HOST%:%DB_PORT%/%DB_NAME_WORKFLOWS%"
     GOTO :UserChoiceContinue
 )
 IF "%USER_CHOICE%"=="2" (
     ECHO Configuring application to use the dedicated 'app_user'.
-    SET "DATABASE_URL_TAPORTAL=mysql://%DB_APP_USER%:%DB_APP_PASSWORD%@%DB_HOST%:%DB_PORT%/%DB_NAME_TAPORTAL%"
+    SET "DATABASE_URL_WORKFLOWS=mysql://%DB_APP_USER%:%DB_APP_PASSWORD%@%DB_HOST%:%DB_PORT%/%DB_NAME_WORKFLOWS%"
     GOTO :UserChoiceContinue
 )
 
@@ -62,7 +54,7 @@ GOTO :UserChoicePrompt
 
 :UserChoiceContinue
 ECHO.
-ECHO --- (Step 3/3) Creating TA-Portal .env file ---
+ECHO --- (Step 3/3) Creating Workflow .env file ---
 
 IF EXIST "%ENV_FILE%" (
     ECHO WARNING: Found existing %ENV_FILE%. Deleting it.
@@ -70,21 +62,13 @@ IF EXIST "%ENV_FILE%" (
 )
 type NUL > "%ENV_FILE%"
 
-(
-    ECHO DATABASE_URL="%DATABASE_URL_TAPORTAL%"
-    ECHO DB_ROOT_PASSWORD="%DB_ROOT_PASSWORD%"
-    ECHO BACKEND_URL="%APP_BACKEND_URL%"
-    ECHO FRONTEND_URL="%APP_FRONTEND_URL%"
-    ECHO WORKFLOWS_URL="%WORKFLOWS_URL%"
-    ECHO NODE_ENV="%APP_NODE_ENV%"
-    ECHO PORT="%APP_SERVER_PORT%"
-    ECHO SLACK_CLIENT_ID="%SLACK_CLIENT_ID%"
-    ECHO SLACK_CLIENT_SECRET="%SLACK_CLIENT_SECRET%"
-    ECHO SLACK_REDIRECT_URI="%SLACK_REDIRECT_URI%"
-) > "%ENV_FILE%"
+REM --- Populate Workflow .env file ---
+CALL :update_env_var "DATABASE_URL" "%DATABASE_URL_WORKFLOWS%"
+CALL :update_env_var "PORT" "%APP_SERVER_PORT%"
+CALL :update_env_var "NODE_ENV" "%NODE_ENV%"
 
 ECHO.
-ECHO --- TA-Portal Setup Complete ---
+ECHO --- Workflow Setup Complete ---
 ECHO.
 ECHO --- Final %ENV_FILE% Contents ---
 ECHO ----------------------------------------------
@@ -92,4 +76,22 @@ type "%ENV_FILE%"
 ECHO ----------------------------------------------
 
 ENDLOCAL
+GOTO :EOF
+
+:update_env_var
+SETLOCAL
+SET "VAR_NAME=%~1"
+SET "VAR_VALUE=%~2"
+SET "TARGET_FILE=.env"
+SET "TEMP_FILE=%TARGET_FILE%.tmp"
+ECHO Setting %VAR_NAME%...
+IF EXIST "%TEMP_FILE%" DEL "%TEMP_FILE%"
+FOR /F "usebackq tokens=* delims=" %%A IN ("%TARGET_FILE%") DO (
+    ECHO "%%A" | findstr /B /C:"%VAR_NAME%=" >NUL
+    IF ERRORLEVEL 1 (
+        ECHO %%A>>"%TEMP_FILE%"
+    )
+)
+ECHO %VAR_NAME%="%VAR_VALUE%">>"%TEMP_FILE%"
+MOVE /Y "%TEMP_FILE%" "%TARGET_FILE%" >NUL
 GOTO :EOF
