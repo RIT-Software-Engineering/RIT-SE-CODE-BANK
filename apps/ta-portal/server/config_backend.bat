@@ -24,7 +24,7 @@ REM --- End Configuration ---
 
 ECHO --- (Step 1/3) Starting MariaDB Database Setup ---
 ECHO.
-REM This script creates the ta_portal database and the dedicated app user
+REM This script creates the ta_portal database and the dedicated app user using the env variables set above while in the command prompt session
 node ./server/database/setup_db.js
 
 IF %ERRORLEVEL% NEQ 0 (

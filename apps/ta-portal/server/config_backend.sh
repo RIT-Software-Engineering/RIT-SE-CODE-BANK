@@ -23,7 +23,7 @@ ENV_FILE=".env"
 
 echo "--- (Step 1/3) Starting MariaDB Database Setup ---"
 echo ""
-# This script creates the ta_portal database and the dedicated app user
+#  This script creates the ta_portal database and the dedicated app user using the env variables set above while in the command prompt session
 if ! node ./server/database/setup_db.js; then
     echo ""
     echo "ERROR: The Node.js database setup script failed."

@@ -44,6 +44,9 @@
 1.  Define your new models (database tables) and relationships within the `prisma/schema.prisma` file.
 
 2.  Run `npx prisma migrate dev` within the prisma folder project to create and apply a new migration for the changes you've defined in `schema.prisma` file. An easier command to do this is `npm run prisma:migrate` when you in the main `/server` folder. You will be prompted to name the migration. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
+
+**NOTE** If there's any issues with running this commmand (i.e. it suggesting to resetting the database, but the reset command still doesn't work) re-run the config files to reset everything
+
 ---
 **For dropping, creating, and then populating the data tables**
 1. Run `npx prisma migrate reset` within the prisma folder project. An easier command to do this is `npm run prisma:reset` when you in the main `/server` folder. It may ask you for a confirmation and for that, just type in `y`.
