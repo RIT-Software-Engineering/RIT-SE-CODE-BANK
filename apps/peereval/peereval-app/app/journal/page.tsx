@@ -24,29 +24,35 @@ function AddJournalEntryModal({
     onClose,
     onSubmit,
     baseEntry,
+    tag: initialTag,
 }: {
     open: boolean;
     onClose: () => void;
-    onSubmit: (subject: string, content: string) => void;
+    onSubmit: (subject: string, content: string, tag: string) => void;
     baseEntry?: JournalEntry;
+    tag: string;
 }) {
     const [subject, setSubject] = useState(baseEntry?.re ?? "");
     const [content, setContent] = useState(baseEntry?.content ?? "");
+    const [tag, setTag] = useState(initialTag);
 
     useEffect(() => {
         setSubject(baseEntry?.re ?? "");
         setContent(baseEntry?.content ?? "");
-    }, [baseEntry]);
+        setTag(initialTag);
+    }, [baseEntry, initialTag]);
 
     const handleSubmit = () => {
-        onSubmit(subject, content);
+        onSubmit(subject, content, tag);
         setSubject("");
         setContent("");
+        setTag(initialTag);
     };
 
     const handleClose = () => {
         setSubject("");
         setContent("");
+        setTag(initialTag);
         onClose();
     };
 
@@ -70,6 +76,15 @@ function AddJournalEntryModal({
                     multiline
                     minRows={4}
                 />
+                <div className="flex justify-start mt-2">
+                    <TextField
+                        label="Tag"
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                        size="small"
+                        style={{ minWidth: 120 }}
+                    />
+                </div>
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleClose}>Cancel</Button>
@@ -189,6 +204,7 @@ export default function JournalPage() {
         content: string,
         tag: string
     ) => {
+        console.log(`the tag is ${tag}`);
         if (!currentUser) return;
 
         await createJournalEntry({
@@ -298,13 +314,13 @@ export default function JournalPage() {
                                         Unnamed Entry
                                     </h2>
                                 )}
-                                {!tag && (
-                                    <span
-                                        className="flex items-center text-sm font-medium text-blue-600 bg-gray-200 px-1 mx-2 rounded border border-gray-300"
-                                        style={{ pointerEvents: "none" }}
-                                    >
-                                        {entry.tags[0].name}
-                                    </span>
+                                {entry.tags.map(
+                                    ({ name }) =>
+                                        name.length > 0 && (
+                                            <span className="flex items-center text-sm font-medium text-blue-600 bg-gray-200 px-1 mx-2 rounded border border-gray-300">
+                                                {name}
+                                            </span>
+                                        )
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
@@ -393,7 +409,7 @@ export default function JournalPage() {
                     setEditingEntry(false);
                     setEntryUnderEdit(undefined);
                 }}
-                onSubmit={(subject, content) => {
+                onSubmit={(subject, content, tag) => {
                     setShowAddEntry(false);
                     if (editingEntry) {
                         editEntryHandler(
@@ -407,6 +423,7 @@ export default function JournalPage() {
                     } else submitEntryHandler(subject, content, tag);
                 }}
                 baseEntry={entryUnderEdit}
+                tag={tag}
             />
         </div>
     );
