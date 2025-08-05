@@ -41,18 +41,23 @@ async function initializeDatabase() {
             password: config.rootPassword
         });
         console.log("Root connection successful.");
+        
+        // -- Step 1: Drop the existing database if it already exists ---
+        console.log(`Dropping database '${config.dbName}' if it already exists...`);
+        await connection.query(`DROP DATABASE IF EXISTS \`${config.dbName}\`;`);
+        console.log(`Database '${config.dbName}' has been dropped.`);
 
-        // --- Step 1: Create the application database ---
+        // --- Step 2: Create the application database ---
         console.log(`Creating database '${config.dbName}'...`);
         await connection.query(`CREATE DATABASE IF NOT EXISTS \`${config.dbName}\`;`);
         console.log(`Database '${config.dbName}' is ready.`);
 
-        // --- Step 2: Create the dedicated application user ---
+        // --- Step 3: Create the dedicated application user ---
         console.log(`Creating user '${config.appUser}'...`);
         await connection.query(`CREATE USER IF NOT EXISTS '${config.appUser}'@'%' IDENTIFIED BY '${config.appPassword}';`);
         console.log(`User '${config.appUser}' is ready.`);
 
-        // --- Step 3: Grant privileges to the new user ---
+        // --- Step 4: Grant privileges to the new user ---
         console.log(`Granting privileges to '${config.appUser}'...`);
         // We grant privileges on *.* (all databases) to allow Prisma to create
         // its temporary shadow database during development migrations.
@@ -61,7 +66,7 @@ async function initializeDatabase() {
         console.log("Successfully applied global privileges for development.");
 
 
-        // --- Step 4: Apply the changes ---
+        // --- Step 5: Apply the changes ---
         await connection.query('FLUSH PRIVILEGES;');
         console.log("Privileges have been flushed and applied.");
 
