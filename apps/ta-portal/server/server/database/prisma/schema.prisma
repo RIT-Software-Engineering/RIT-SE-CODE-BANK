@@ -36,7 +36,7 @@ model Candidate {
   year               Int            @db.Int
   major              String         @db.Text
   graduateStatus     GraduateStatus @default(UNDERGRADUATE)
-  wasPriorEmployee   Boolean        @db.TinyInt
+  wasPriorEmployee   Boolean
 
   //Relationships
   user                              User                              @relation(fields: [uid], references: [uid])
@@ -61,7 +61,7 @@ model Resume {
   id                  Int           @id @default(autoincrement())
   name                String        @db.Text
   candidateUID        Int
-  isPrimary           Boolean       @db.TinyInt
+  isPrimary           Boolean
   resumeURL           String
 
   //Relationships
@@ -116,8 +116,8 @@ model JobPositionApplicationHistory {
   candidateMajor                     String               @db.Text
   candidateYear                      Int
   candidateGrade                     Grade?
-  wasPriorEmployeeForThisCourse      Boolean              @db.TinyInt
-  wasPriorEmployeeForOtherCourses    Boolean              @db.TinyInt
+  wasPriorEmployeeForThisCourse      Boolean
+  wasPriorEmployeeForOtherCourses    Boolean
   priorEmploymentHistory             String?              @db.Text
   coverLetterName                    String?              @db.Text
   coverLetterURL                     String?
@@ -135,8 +135,8 @@ model CourseHistory {
   candidateUID     Int
   courseCode       String   @db.VarChar(8)
   grade            Grade? //Letter Grade
-  hasTaken         Boolean  @db.TinyInt
-  wasPriorEmployee Boolean  @db.TinyInt
+  hasTaken         Boolean
+  wasPriorEmployee Boolean
 
   // Relations
   candidate Candidate @relation(fields: [candidateUID], references: [uid])
@@ -168,7 +168,7 @@ model JobPosition {
   locationType                LocationType
   graduateStatusRequirement   GraduateStatus?
   gradeRequirement            Grade?
-  courseTakenRequirement      Boolean         @db.TinyInt
+  courseTakenRequirement      Boolean
   startDate                   DateTime
   endDate                     DateTime
 

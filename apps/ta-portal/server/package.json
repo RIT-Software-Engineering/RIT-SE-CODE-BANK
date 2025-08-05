@@ -8,9 +8,9 @@
   "scripts": {
     "start": "node main.js",
     "dev": "nodemon main.js",
-    "prisma:migrate": "cd ./server/database/prisma && npx prisma migrate dev",
     "prisma:generate": "cd ./server/database/prisma && npx prisma generate",
-    "prisma:reset": "cd ./server/database/prisma && npx prisma migrate reset"
+    "prisma:migrate": "cd ./server/database/prisma && npx prisma migrate dev",
+    "prisma:reset": "cd ./server/database/prisma && npx prisma migrate reset --force"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +27,11 @@
     "os": "^0.1.2"
   },
   "devDependencies": {
+    "mysql2": "^3.14.3",
+    "node-sql-parser": "^5.3.10",
     "prisma": "^6.11.1"
+  },
+  "prisma": {
+    "seed": "node ./seed.js"
   }
 }
