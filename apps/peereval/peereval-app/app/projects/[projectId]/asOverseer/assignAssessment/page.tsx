@@ -401,14 +401,8 @@ export default function AssignAssessmentPage({
             let newI = i as any;
             if (i.type === InquiryType.RUBRIC) {
                 newI.rows = {
-                    create: i.rows.map((row) => ({
-                        ...row,
-                        options: row.options.join(";"),
-                    })),
+                    create: i.rows,
                 };
-            }
-            if (i.type === InquiryType.RATING) {
-                newI.labels = i.labels!.join(";");
             }
             return newI;
         });

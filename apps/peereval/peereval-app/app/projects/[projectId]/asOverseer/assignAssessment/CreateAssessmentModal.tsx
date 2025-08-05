@@ -166,18 +166,21 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                                 <TextField
                                                     label="Left Label"
                                                     value={
-                                                        inq?.labels?.[0] ?? ""
+                                                        inq?.labels?.split(
+                                                            ";"
+                                                        )[0] ?? ""
                                                     }
                                                     onChange={(e) =>
                                                         handleInquiryChange(
                                                             idx,
                                                             "labels",
-                                                            [
-                                                                e.target.value,
-                                                                inq
-                                                                    ?.labels?.[1] ??
-                                                                    "",
-                                                            ]
+                                                            `${
+                                                                e.target.value
+                                                            };${
+                                                                inq?.labels?.split(
+                                                                    ";"
+                                                                )[1] ?? ""
+                                                            }`
                                                         )
                                                     }
                                                     sx={{ width: 90 }}
@@ -185,18 +188,19 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                                 <TextField
                                                     label="Right Label"
                                                     value={
-                                                        inq?.labels?.[1] ?? ""
+                                                        inq?.labels?.split(
+                                                            ";"
+                                                        )[1] ?? ""
                                                     }
                                                     onChange={(e) =>
                                                         handleInquiryChange(
                                                             idx,
                                                             "labels",
-                                                            [
-                                                                inq
-                                                                    ?.labels?.[0] ??
-                                                                    "",
-                                                                e.target.value,
-                                                            ]
+                                                            `${
+                                                                inq.labels?.split(
+                                                                    ";"
+                                                                )[0]
+                                                            };${e.target.value}`
                                                         )
                                                     }
                                                     sx={{ width: 90 }}
@@ -243,10 +247,8 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                                             sx={{ width: 120 }}
                                                         />
                                                         <TextField
-                                                            label="Options (comma separated)"
-                                                            value={row.options.join(
-                                                                ", "
-                                                            )}
+                                                            label="Options (; separated)"
+                                                            value={row.options}
                                                             onChange={(e) => {
                                                                 const newRows =
                                                                     [
@@ -257,19 +259,9 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                                                     {
                                                                         ...row,
                                                                         options:
-                                                                            e.target.value
-                                                                                .split(
-                                                                                    ","
-                                                                                )
-                                                                                .map(
-                                                                                    (
-                                                                                        opt
-                                                                                    ) =>
-                                                                                        opt.trim()
-                                                                                )
-                                                                                .filter(
-                                                                                    Boolean
-                                                                                ),
+                                                                            e
+                                                                                .target
+                                                                                .value,
                                                                     };
                                                                 handleInquiryChange(
                                                                     idx,
