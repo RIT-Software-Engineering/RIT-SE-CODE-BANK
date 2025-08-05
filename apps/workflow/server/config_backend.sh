@@ -1,30 +1,22 @@
 #!/bin/bash
 
-# --- TA-Portal Configuration ---
+# --- Workflow Configuration ---
 export DB_ROOT_PASSWORD="newPassword"
 export DB_HOST="127.0.0.1"
 export DB_PORT="8000"
-export DB_NAME_TAPORTAL="ta_portal"
+export DB_NAME_WORKFLOWS="workflows"
 export DB_APP_USER="app_user"
 export DB_APP_PASSWORD="app_password"
-
-export APP_BACKEND_URL="https://localhost:3300"
-export APP_FRONTEND_URL="http://localhost:3000"
-export WORKFLOWS_URL="http://localhost:3001"
-export APP_NODE_ENV="DEV"
-export APP_SERVER_PORT="3300"
-
-export SLACK_CLIENT_ID="8356401273568.9110035154276"
-export SLACK_CLIENT_SECRET="03750f2fb26d6cc604010e4d306dafdc"
-export SLACK_REDIRECT_URI="https://localhost:3300/api/slack/oauth_redirect"
+export APP_SERVER_PORT="3001"
+export NODE_ENV="development"
 
 ENV_FILE=".env"
 # --- End Configuration ---
 
 echo "--- (Step 1/3) Starting MariaDB Database Setup ---"
 echo ""
-#  This script creates the ta_portal database and the dedicated app user using the env variables set above while in the command prompt session
-if ! node ./server/database/setup_db.js; then
+# This script creates the workflows database and the dedicated app user
+if ! node ./setup_db.js; then
     echo ""
     echo "ERROR: The Node.js database setup script failed."
     exit 1
@@ -34,7 +26,7 @@ echo "Database and user setup completed successfully."
 echo ""
 echo "--- (Step 2/3) Configure Database User for Application ---"
 
-DATABASE_URL_TAPORTAL=""
+DATABASE_URL_WORKFLOWS=""
 while true; do
     echo "Which database user should the application use for its connection string?"
     echo "  1) Root User (Less Secure, for diagnostics)"
@@ -45,12 +37,12 @@ while true; do
     case $user_choice in
         1)
             echo "Configuring application to use the 'root' user."
-            DATABASE_URL_TAPORTAL="mysql://root:${DB_ROOT_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME_TAPORTAL}"
+            DATABASE_URL_WORKFLOWS="mysql://root:${DB_ROOT_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME_WORKFLOWS}"
             break
             ;;
         2)
             echo "Configuring application to use the dedicated 'app_user'."
-            DATABASE_URL_TAPORTAL="mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME_TAPORTAL}"
+            DATABASE_URL_WORKFLOWS="mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME_WORKFLOWS}"
             break
             ;;
         *)
@@ -61,7 +53,7 @@ while true; do
 done
 echo ""
 
-echo "--- (Step 3/3) Creating TA-Portal .env file ---"
+echo "--- (Step 3/3) Creating Workflow .env file ---"
 
 if [ -f "$ENV_FILE" ]; then
     echo "WARNING: Found existing $ENV_FILE. Deleting it."
@@ -77,20 +69,13 @@ append_env_var() {
     echo "${var_name}=\"$var_value\"" >> "$ENV_FILE"
 }
 
-# --- Populate TA Portal .env file ---
-append_env_var "DATABASE_URL" "$DATABASE_URL_TAPORTAL"
-append_env_var "DB_ROOT_PASSWORD" "$DB_ROOT_PASSWORD"
-append_env_var "BACKEND_URL" "$APP_BACKEND_URL"
-append_env_var "FRONTEND_URL" "$APP_FRONTEND_URL"
-append_env_var "WORKFLOWS_URL" "$WORKFLOWS_URL"
-append_env_var "NODE_ENV" "$APP_NODE_ENV"
+# --- Populate Workflow .env file ---
+append_env_var "DATABASE_URL" "$DATABASE_URL_WORKFLOWS"
 append_env_var "PORT" "$APP_SERVER_PORT"
-append_env_var "SLACK_CLIENT_ID" "$SLACK_CLIENT_ID"
-append_env_var "SLACK_CLIENT_SECRET" "$SLACK_CLIENT_SECRET"
-append_env_var "SLACK_REDIRECT_URI" "$SLACK_REDIRECT_URI"
+append_env_var "NODE_ENV" "$NODE_ENV"
 
 echo ""
-echo "--- TA-Portal Setup Complete ---"
+echo "--- Workflow Setup Complete ---"
 echo ""
 echo "--- Final $ENV_FILE Contents ---"
 echo "----------------------------------------------"

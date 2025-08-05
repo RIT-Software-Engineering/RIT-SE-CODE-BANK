@@ -1,11 +1,9 @@
 # TA-Portal Backend Setup
 
 ## Prerequisites
-1.  **MySQL Community Server**
-    * Download from: [https://dev.mysql.com/downloads/mysql/](https://dev.mysql.com/downloads/mysql/)
-2.  **Node.js**
+1.  **Node.js**
     * Download from: [https://nodejs.org/en/download](https://nodejs.org/en/download)
-3.  **Docker**
+2.  **Docker**
     * Download from: [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/)
 * **Note 1:** Ensure you add the installation PATH to your local machine's environment variables and possibly within vscode for these technologies
 
@@ -19,9 +17,11 @@
         docker run --name project-name-maria-db-instance -e MARIADB_ROOT_PASSWORD=newPassword -p 8000:3306 -d mariadb:latest
         ```
 
-2.  Navigate to the `config_backend` files in the `/server` folder and update the `DB_ROOT_PASSWORD` variable with the password you set in the previous step (e.g., `newPassword`). You can change some other attributes depending on the situation (e.g. changing port numbers if needed).
+2.  Navigate to the `config_backend` files in the `/server` folder and update the `DB_ROOT_PASSWORD` variable with the password you set in the previous step (e.g., `newPassword`). You can change some other attributes depending on the situation (e.g. changing port numbers if needed, if you want to create a new database user as well, you can that the DB_USER and DB_USER_PASSWORD).
     * For Windows, navigate to specifically the `config_backend.bat` file and make the changes neccessary there. Since it's a `.bat` file you don't need to set permissions.
     * For MacOS/Linux, navigate to specifically the `config_backend.sh` file and make the changes neccessary there. After you made the changes, set execute permissions for the script by running `chmod +x config_backend.sh`.
+
+**NOTE** It will prompt you to choose what database user you want to configure with for your application. Chose either the root user (1) or the application user created within the config files.
 
 3. Then, execute the script itself. This will create an `.env` file with default permissions suitable for a development server.
 
@@ -43,10 +43,13 @@
 **For adding new and/or additional database tables:**
 1.  Define your new models (database tables) and relationships within the `prisma/schema.prisma` file.
 
-**Note** If your only adding additional datatables to your existing prisma instance, then we recommand first deleting the migration folder within the prisma folder project, the node_modules, ad the package-lock.json files. From there do `npm i` to reinstall the node_modules and package-lock.json. Then do `npx prisma migrate reset` within the prisma folder project to reset/drop the previous migration. An easier command to do this is `npm run prisma:reset` when you in the main `/server` folder. It will ask you for a confimration and for that, just type in `y`.
-
 2.  Run `npx prisma migrate dev` within the prisma folder project to create and apply a new migration for the changes you've defined in `schema.prisma` file. An easier command to do this is `npm run prisma:migrate` when you in the main `/server` folder. You will be prompted to name the migration. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
 
+**NOTE** If there's any issues with running this commmand (i.e. it suggesting to resetting the database, but the reset command still doesn't work) re-run the config files to reset everything
+
+---
+**For dropping, creating, and then populating the data tables**
+1. Run `npx prisma migrate reset` within the prisma folder project. An easier command to do this is `npm run prisma:reset` when you in the main `/server` folder. It may ask you for a confirmation and for that, just type in `y`.
 ---
 **For generating the Prisma instance**
 
@@ -80,3 +83,9 @@ Phpmyadmin instance
 * `docker stop myadmin`
 * `docker rm myadmin`
 * `docker rmi phpmyadmin/phpmyadmin:latest`
+
+**NOTE** in some cases you may need to delete the left over data that's retained from docker after deleting these two containers and images. For that, use the command `docker volume prune` to delete all Docker volumes that are not currently being used by any container.
+
+### running the mariaDB console
+`docker exec -it project-name-maria-db-instance /bin/bash`
+`mariadb -u root -p`

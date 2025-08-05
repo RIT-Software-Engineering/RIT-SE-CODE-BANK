@@ -1,11 +1,12 @@
-// server/database/setup_db.js
+// setup_db.js
 
 /**
  * This script connects to the MariaDB server using the root credentials.
  * It performs the following actions:
- * 1. Creates the main application database if it doesn't exist.
+ * 1. Creates the 'workflows' application database if it doesn't exist.
  * 2. Creates a dedicated application user if it doesn't exist.
- * 3. Grants the necessary privileges to that user for the application database.
+ * 3. Grants the necessary privileges to that user for the 'workflows' database
+ * and for Prisma's development migration features.
  */
 
 const mysql = require('mysql2/promise');
@@ -16,7 +17,7 @@ async function initializeDatabase() {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         rootPassword: process.env.DB_ROOT_PASSWORD,
-        dbName: process.env.DB_NAME_TAPORTAL,
+        dbName: process.env.DB_NAME_WORKFLOWS,
         appUser: process.env.DB_APP_USER,
         appPassword: process.env.DB_APP_PASSWORD,
     };
@@ -25,7 +26,7 @@ async function initializeDatabase() {
     const requiredVars = ['host', 'port', 'rootPassword', 'dbName', 'appUser', 'appPassword'];
     for (const v of requiredVars) {
         if (!config[v]) {
-            console.error(`FATAL ERROR: Missing required environment variable '${'DB_' + v.toUpperCase()}'. Aborting.`);
+            console.error(`FATAL ERROR: Missing required environment variable for '${v}'. Aborting.`);
             process.exit(1);
         }
     }
@@ -49,6 +50,7 @@ async function initializeDatabase() {
 
         // --- Step 2: Create the dedicated application user ---
         console.log(`Creating user '${config.appUser}'...`);
+        // The user is created for '%', allowing connections from any host (ideal for Docker).
         await connection.query(`CREATE USER IF NOT EXISTS '${config.appUser}'@'%' IDENTIFIED BY '${config.appPassword}';`);
         console.log(`User '${config.appUser}' is ready.`);
 

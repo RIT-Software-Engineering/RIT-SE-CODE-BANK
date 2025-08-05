@@ -31,7 +31,6 @@ const path = require('path');
 const cors = require('cors');
 
 // Import custom modules from the application's codebase.
-const setupDatabase = require('./server/database/setup_db'); // The database reset script.
 const apiRoutes = require('./server/routing/index'); // The main API router.
 
 // Initialize the Express application.
@@ -67,25 +66,10 @@ async function initializeApp() {
       cert: fs.readFileSync('./localhost+2.pem')
     };
 
-    // CRITICAL: Validate that the PORT environment variable is defined before proceeding.
+    // Validate that the PORT environment variable is defined before proceeding.
     if (!port) {
         console.error("FATAL ERROR: PORT is not defined in your .env file. Server cannot start.");
         process.exit(1); // Exit the process with an error code.
-    }
-
-    // In a development environment, run the database setup script to ensure a clean slate.
-    // This is skipped in production to prevent accidental data loss.
-    if (process.env.NODE_ENV !== 'production') {
-        console.log("Running in development environment: Initializing database setup...");
-        try {
-            await setupDatabase();
-            console.log("Database setup completed successfully.");
-        } catch (error) {
-            console.error("FATAL ERROR: Failed to complete database setup. Server cannot start.", error);
-            process.exit(1); // Exit if the database setup fails.
-        }
-    } else {
-        console.log("Running in production environment. Skipping automatic database setup.");
     }
     
     // Define a simple root route to confirm the server is running.
