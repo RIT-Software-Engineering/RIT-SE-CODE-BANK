@@ -27,4 +27,28 @@ router.get("/", async (req, res) => {
     );
 });
 
+// Create a form
+// /forms
+router.post("/", async (req, res) => {
+    const { title, inquiries } = req.body as {
+        title: string;
+        inquiries: any[];
+    };
+
+    // First create inquiries
+    const inqs = await Promise.all(
+        inquiries.map((i) => prisma.inquiry.create({ data: i }))
+    );
+
+    // Then feedback form
+    const form = await prisma.feedbackForm.create({
+        data: {
+            name: title,
+            inquiries: { connect: inqs.map(({ id }) => ({ id })) },
+        },
+    });
+
+    res.status(201).json(form);
+});
+
 export default router;
