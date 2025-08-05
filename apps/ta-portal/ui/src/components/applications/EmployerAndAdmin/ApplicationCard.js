@@ -110,6 +110,13 @@ export default function ApplicationCard({
     </div>
   );
 
+
+  // TODO Make this into a reusable component that takes an list of object that define the options
+  // Each object would possibly have
+  //- label: string (The text to display)
+  //- onClick: function (The function to call on click)
+  //- className: string (Optional additional classes for the button, e.g., 'text-red-600')
+  // Actions menu is also called in PositionsCard.js
   const ActionsMenu = () => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef(null);

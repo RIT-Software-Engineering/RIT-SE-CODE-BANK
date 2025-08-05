@@ -287,4 +287,5 @@ enum JobPositionStatus {
   ONHOLD
   INACTIVE
   PENDING_APPROVAL
+  REJECTED
 }
