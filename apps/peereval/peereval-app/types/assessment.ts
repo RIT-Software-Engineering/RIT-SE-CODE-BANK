@@ -32,7 +32,7 @@ export type FreeResponseInquiry = BaseInquiry & {
 export type RatingInquiry = BaseInquiry & {
     type: InquiryType.RATING;
     scale: number; // e.g., 5 for 1-5, 10 for 1-10
-    labels?: string; // Optional: leftLabel;rightLabel
+    labels: string; // Optional: leftLabel;rightLabel
 };
 
 export type RubricInquiry = BaseInquiry & {

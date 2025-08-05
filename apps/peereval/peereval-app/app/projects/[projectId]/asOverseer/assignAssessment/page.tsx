@@ -39,7 +39,8 @@ function QuestionDisplay({ inquiry }: { inquiry: Inquiry }) {
                     <div>
                         {inquiry.labels && (
                             <span>
-                                Scale: {inquiry.labels[0]} - {inquiry.labels[1]}
+                                Scale: {inquiry.labels.split(";")[0]} -{" "}
+                                {inquiry.labels.split(";")[1]}
                             </span>
                         )}
                         <input
@@ -412,8 +413,8 @@ export default function AssignAssessmentPage({
             inquiries: inquiriesSansId,
         });
 
-        console.log("DA FORM:");
-        console.dir(form);
+        // Re-fetch forms since we added a new one
+        setForms(await getAllForms());
 
         setSelectedForm(form);
         setIsCreateModalOpen(false);

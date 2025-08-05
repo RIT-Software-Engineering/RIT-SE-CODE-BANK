@@ -21,10 +21,7 @@ router.get("/", async (req, res) => {
         },
     });
 
-    res.json(
-        // There's gotta be a better way to do this...
-        fs.map((f) => exportForm(f))
-    );
+    res.json(fs);
 });
 
 // Create a form
