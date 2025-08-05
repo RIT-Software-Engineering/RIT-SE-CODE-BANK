@@ -46,6 +46,13 @@ router.post("/", async (req, res) => {
             name: title,
             inquiries: { connect: inqs.map(({ id }) => ({ id })) },
         },
+        include: {
+            inquiries: {
+                include: {
+                    rows: true,
+                },
+            },
+        },
     });
 
     res.status(201).json(form);
