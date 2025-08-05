@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { tableClasses, thClasses, tdClasses, totalTdClasses } from "@/constants/timecardConstants";
+import { tableClasses, thClasses, tdClasses, totalTdClasses, buttonClasses } from "@/constants/timecardConstants";
 
 // Helper function to format date to YYYY-MM-DD
 const formatDate = (date) => date ? new Date(date).toISOString().slice(0, 10) : "";
@@ -25,7 +25,7 @@ const buildFullWeek = (weekStartDate) => {
     });
 };
 
-const TimecardHistory = ({ timecard }) => {
+const TimecardHistory = ({ timecard, currentUser }) => {
     // 1. Build a full 7-day week structure.
     const fullWeek = buildFullWeek(timecard.weekStartDate);
 
@@ -48,6 +48,31 @@ const TimecardHistory = ({ timecard }) => {
     });
 
     const weeklyTotal = displayWeek.reduce((sum, day) => sum + day.duration, 0);
+
+    const handleExport = () => {
+        const headers = ["Day", "Date", "Time In 1", "Time Out 1", "Time In 2", "Time Out 2", "Time In 3", "Time Out 3", "Total (hrs)", "Notes"];
+        const rows = displayWeek.map(d => 
+            [
+                d.dayLabel, d.date, 
+                d.timeIn1?.slice(11, 16) || '', d.timeOut1?.slice(11, 16) || '',
+                d.timeIn2?.slice(11, 16) || '', d.timeOut2?.slice(11, 16) || '',
+                d.timeIn3?.slice(11, 16) || '', d.timeOut3?.slice(11, 16) || '',
+                d.duration.toFixed(2), 
+                `"${(d.notes || '').replace(/"/g, '""')}"`
+            ].join(",")
+        );
+        const totalRow = `\nWeek Total,,,,,,,,${weeklyTotal.toFixed(2)}`;
+        const csv = [headers.join(","), ...rows].join("\n").concat(totalRow);
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        const name = currentUser?.name.replace(/\s+/g, '_') || 'user';
+        const week = formatDate(timecard.weekStartDate);
+        link.download = `${name}_timecard_${week}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div className="overflow-x-auto rounded-lg border border-gray-200 my-4">
@@ -85,12 +110,20 @@ const TimecardHistory = ({ timecard }) => {
                 <tfoot className="bg-gray-50">
                     <tr>
                         <td colSpan="9" className={`${tdClasses} text-right font-bold text-gray-600 uppercase`}>Week Total:</td>
-                        <td className={`${totalTdClasses} text-lg ${weeklyTotal > 40 ? "text-red-600" : "text-gray-800"}`}>
+                        <td className={`${totalTdClasses} text-lg ${weeklyTotal > 10 ? "text-red-600" : "text-gray-800"}`}>
                             {weeklyTotal.toFixed(2)}
                         </td>
                     </tr>
                 </tfoot>
             </table>
+            <div className="mt-4 flex justify-end">
+                <button 
+                    onClick={handleExport}
+                    className={`${buttonClasses} bg-gray-200 text-gray-800 hover:bg-gray-300`}
+                >
+                    Export this Week
+                </button>
+            </div>
         </div>
     );
 };
