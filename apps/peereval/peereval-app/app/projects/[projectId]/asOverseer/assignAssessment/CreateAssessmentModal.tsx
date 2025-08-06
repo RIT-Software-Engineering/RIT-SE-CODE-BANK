@@ -42,7 +42,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
             ...prev,
             {
                 id: "",
-                question: "How are you today?",
+                question: "",
                 type: InquiryType.FREE_RESPONSE,
             },
         ]);
@@ -64,6 +64,23 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
         onCreate({ title, inquiries });
         setTitle("");
         setInquiries([]);
+    };
+
+    const isInquiryValid = (inq: Inquiry): boolean => {
+        if (!inq.question.trim()) return false;
+        if (inq.type === InquiryType.RATING) {
+            const [left, right] = (inq.labels ?? "").split(";");
+            return left?.trim() != "" && right?.trim() != "" && inq.scale > 0;
+        }
+        if (inq.type === InquiryType.RUBRIC) {
+            return (
+                !!inq.options?.trim() &&
+                Array.isArray(inq.rows) &&
+                inq.rows.length > 0 &&
+                inq.rows.every((r) => r.label?.trim())
+            );
+        }
+        return true;
     };
 
     return (
@@ -90,6 +107,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                 >
                                     <TextField
                                         label="Inquiry question"
+                                        required
                                         value={inq.question}
                                         onChange={(e) =>
                                             handleInquiryChange(
@@ -143,7 +161,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                                 label="Scale"
                                                 type="number"
                                                 inputProps={{ min: 2, max: 10 }}
-                                                value={inq.scale ?? 5}
+                                                value={inq.scale}
                                                 onChange={(e) =>
                                                     handleInquiryChange(
                                                         idx,
@@ -165,6 +183,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                             <Stack direction="row" spacing={1}>
                                                 <TextField
                                                     label="Left Label"
+                                                    required
                                                     value={
                                                         inq?.labels?.split(
                                                             ";"
@@ -187,6 +206,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                                 />
                                                 <TextField
                                                     label="Right Label"
+                                                    required
                                                     value={
                                                         inq?.labels?.split(
                                                             ";"
@@ -216,6 +236,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                         >
                                             <TextField
                                                 label="Options (; separated)"
+                                                required
                                                 value={inq.options ?? ""}
                                                 onChange={(e) =>
                                                     handleInquiryChange(
@@ -236,6 +257,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                                     >
                                                         <TextField
                                                             label="Row Label"
+                                                            required
                                                             value={row.label}
                                                             onChange={(e) => {
                                                                 const newRows =
@@ -318,7 +340,11 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                 <Button
                     onClick={handleSubmit}
                     variant="contained"
-                    disabled={!title.trim() || inquiries.length === 0}
+                    disabled={
+                        !title.trim() ||
+                        inquiries.length === 0 ||
+                        inquiries.some((i) => !isInquiryValid(i))
+                    }
                 >
                     Create
                 </Button>

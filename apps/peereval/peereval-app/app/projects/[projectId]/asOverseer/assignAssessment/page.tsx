@@ -38,10 +38,16 @@ function QuestionDisplay({ inquiry }: { inquiry: Inquiry }) {
                     <div className="mb-1">{inquiry.question}</div>
                     <div>
                         {inquiry.labels && (
-                            <span>
-                                Scale: {inquiry.labels.split(";")[0]} -{" "}
-                                {inquiry.labels.split(";")[1]}
-                            </span>
+                            <>
+                                <span></span>
+                                <span>
+                                    Scale: {inquiry.scale}
+                                    <br />
+                                    Labels: {
+                                        inquiry.labels.split(";")[0]
+                                    } - {inquiry.labels.split(";")[1]}
+                                </span>
+                            </>
                         )}
                         <input
                             type="range"
