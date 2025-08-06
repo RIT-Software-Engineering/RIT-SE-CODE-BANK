@@ -25,12 +25,16 @@ import JournalLoading from "./loading";
 
 // TODO: Doc comment for Journal()
 /**
- *
- * @returns
+ * Renders the Journal Page
+ * @returns {JSX.Element}
  */
 export default function Journal() {
   const theme = useTheme();
-  // For the journal entry data
+  /*
+   * These constants are for storing data on the journal entries,
+   * contactees in the entries, and semester groups that the entries
+   * are a part of.
+   */
   const [journalEntries, setJournalEntries] = useState([]);
   const [contactees, setContactees] = useState({});
   const [semester_groups, setSemesterGroups] = useState({});
@@ -106,7 +110,6 @@ export default function Journal() {
           })
         );
         setSemesterGroups(semesterGroupMap);
-        console.log(semesterGroupMap);
       } catch (err) {
         console.error("Failed to fetch journal entries or contactees: ", err);
       } finally {
@@ -201,6 +204,10 @@ export default function Journal() {
     });
   };
 
+  const handleCreateNewEntry = () => {
+    alert("Funcitonality not implemented yet.");
+  };
+
   if (loading) {
     return <JournalLoading />;
   }
@@ -291,6 +298,7 @@ export default function Journal() {
                 value={filterSemesterValue}
                 onChange={handleFilterSemesterChange}
               >
+                {/* TODO: Expand this to all semester groups for selection */}
                 <MenuItem value="">Select Semester</MenuItem>
                 {Object.entries(semester_groups).map(([id, name]) => (
                   <MenuItem key={id} value={id}>
@@ -405,7 +413,7 @@ export default function Journal() {
             <DialogContent>
               <Box>
                 <textarea
-                  value={editValue | ""}
+                  value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   style={{
                     resize: "none",
