@@ -84,7 +84,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
     };
 
     return (
-        <Dialog open={visible} onClose={onCancel} fullWidth maxWidth="sm">
+        <Dialog open={visible} onClose={onCancel} fullWidth maxWidth="md">
             <DialogTitle>Create Assessment</DialogTitle>
             <DialogContent>
                 <Stack spacing={2}>
