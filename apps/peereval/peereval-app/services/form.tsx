@@ -10,3 +10,17 @@ export async function getAllForms(): Promise<FeedbackForm[]> {
 
     return handleResponse(res, "Couldn't get feedback forms");
 }
+
+export async function createForm(form: {
+    title: string;
+    inquiries: any[];
+}): Promise<FeedbackForm> {
+    const res = await fetch(`${BASE_URL}/forms`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+    });
+
+    return handleResponse(res, "Couldn't creat form");
+}

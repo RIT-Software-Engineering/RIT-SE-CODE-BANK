@@ -4,16 +4,15 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FeedbackForm, Inquiry, InquiryType } from "@/types/assessment";
-import { getAllForms } from "@/services/form";
+import { createForm, getAllForms } from "@/services/form";
 import {
     assignAssessmentToProject,
     getProjectsPeers,
 } from "@/services/project";
-import { IconButton, InputAdornment, TextField } from "@mui/material";
-import { Add } from "@mui/icons-material";
 import { UserProfile } from "@/types/userProfile";
+import CreateAssessmentModal from "./CreateAssessmentModal";
 
-type AssessmentModalProps = {
+type ReuseAssessmentModalProps = {
     assessments: FeedbackForm[];
     isOpen: boolean;
     onClose: () => void;
@@ -39,9 +38,16 @@ function QuestionDisplay({ inquiry }: { inquiry: Inquiry }) {
                     <div className="mb-1">{inquiry.question}</div>
                     <div>
                         {inquiry.labels && (
-                            <span>
-                                Scale: {inquiry.labels[0]} - {inquiry.labels[1]}
-                            </span>
+                            <>
+                                <span></span>
+                                <span>
+                                    Scale: {inquiry.scale}
+                                    <br />
+                                    Labels: {
+                                        inquiry.labels.split(";")[0]
+                                    } - {inquiry.labels.split(";")[1]}
+                                </span>
+                            </>
                         )}
                         <input
                             type="range"
@@ -75,7 +81,7 @@ function QuestionDisplay({ inquiry }: { inquiry: Inquiry }) {
                                         {row.label}
                                     </td>
                                     <td className="border px-2 py-1">
-                                        {row.options}
+                                        {inquiry.options}
                                     </td>
                                 </tr>
                             ))}
@@ -88,12 +94,12 @@ function QuestionDisplay({ inquiry }: { inquiry: Inquiry }) {
     }
 }
 
-export function AssessmentModal({
+export function ReuseAssessmentModal({
     assessments,
     isOpen,
     onClose,
     onFormSelect,
-}: AssessmentModalProps) {
+}: ReuseAssessmentModalProps) {
     const [openIdx, setOpenIdx] = useState<number[]>([]);
 
     if (!isOpen) return null;
@@ -355,7 +361,8 @@ export default function AssignAssessmentPage({
     params,
 }: AssignAssessmentPageProps) {
     const router = useRouter();
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isReuseModalOpen, setIsReuseModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [forms, setForms] = useState<FeedbackForm[]>([]);
     const [selectedForm, setSelectedForm] = useState<FeedbackForm | undefined>(
         undefined
@@ -390,17 +397,39 @@ export default function AssignAssessmentPage({
         })();
     }, []);
 
-    const handleCreateNew = () => {
-        router.push("./createAssessment");
-    };
+    const handleCreateNew = async (assessment: {
+        title: string;
+        inquiries: Inquiry[];
+    }) => {
+        let inquiriesSansId = assessment.inquiries.map(
+            ({ id, ...rest }) => rest // Remove ID field
+        );
+        inquiriesSansId = inquiriesSansId.map((i) => {
+            let newI = i as any;
+            if (i.type === InquiryType.RUBRIC) {
+                newI.rows = {
+                    create: i.rows,
+                };
+            }
+            return newI;
+        });
 
-    const handleUsePreMade = () => {
-        setIsModalOpen(true);
+        const form = await createForm({
+            ...assessment,
+            inquiries: inquiriesSansId,
+        });
+
+        // Re-fetch forms since we added a new one
+        setForms(await getAllForms());
+
+        setSelectedForm(form);
+        setIsCreateModalOpen(false);
+        setFormName(form.name);
     };
 
     const handleFormSelect = (form: FeedbackForm) => {
         setSelectedForm(form);
-        setIsModalOpen(false);
+        setIsReuseModalOpen(false);
         setFormName(form.name);
     };
 
@@ -458,21 +487,26 @@ export default function AssignAssessmentPage({
                     </h1>
                     <button
                         className="px-6 py-3 text-lg bg-blue-600 text-white rounded hover:bg-blue-700 transition cursor-pointer"
-                        onClick={handleCreateNew}
+                        onClick={() => setIsCreateModalOpen(true)}
                     >
                         Create New Assessment
                     </button>
                     <button
                         className="px-6 py-3 text-lg bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition cursor-pointer"
-                        onClick={handleUsePreMade}
+                        onClick={() => setIsReuseModalOpen(true)}
                     >
                         Use Pre-made Assessment
                     </button>
-                    <AssessmentModal
+                    <ReuseAssessmentModal
                         assessments={forms}
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
+                        isOpen={isReuseModalOpen}
+                        onClose={() => setIsReuseModalOpen(false)}
                         onFormSelect={handleFormSelect}
+                    />
+                    <CreateAssessmentModal
+                        visible={isCreateModalOpen}
+                        onCancel={() => setIsCreateModalOpen(false)}
+                        onCreate={handleCreateNew}
                     />
                 </div>
             </div>

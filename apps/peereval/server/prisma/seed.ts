@@ -103,11 +103,9 @@ async function main() {
         {
             type: InquiryType.RUBRIC,
             question: "Evaluate the following aspects:",
+            options: "Poor;Fair;Good;Excellent",
             rows: {
-                create: [
-                    { label: "Clarity", options: "Poor;Fair;Good;Excellent" },
-                    { label: "Teamwork", options: "Poor;Fair;Good;Excellent" },
-                ],
+                create: [{ label: "Clarity" }, { label: "Teamwork" }],
             },
         },
     ];
@@ -121,10 +119,10 @@ async function main() {
         data: {
             name: "Basic Form",
             inquiries: {
-                connect: [
-                    { id: inquiries[0].id },
-                    { id: inquiries[1].id },
-                    { id: inquiries[2].id },
+                create: [
+                    { index: 0, inquiry: { connect: { id: inquiries[0].id } } },
+                    { index: 1, inquiry: { connect: { id: inquiries[1].id } } },
+                    { index: 2, inquiry: { connect: { id: inquiries[2].id } } },
                 ],
             },
         },
@@ -289,8 +287,13 @@ async function main() {
             name: "Super Simple Form",
             inquiries: {
                 create: {
-                    type: InquiryType.FREE_RESPONSE,
-                    question: "What'd you think?",
+                    index: 0,
+                    inquiry: {
+                        create: {
+                            type: InquiryType.FREE_RESPONSE,
+                            question: "What'd you think?",
+                        },
+                    },
                 },
             },
         },
