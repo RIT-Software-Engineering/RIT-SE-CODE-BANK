@@ -37,12 +37,12 @@ export type RatingInquiry = BaseInquiry & {
 
 export type RubricInquiry = BaseInquiry & {
     type: InquiryType.RUBRIC;
+    options: string; // e.g., Poor;Average;Excellent
     rows: RubricRow[];
 };
 
 export type RubricRow = {
     label: string;
-    options: string; // e.g., Poor;Average;Excellent
 };
 
 export type Inquiry = FreeResponseInquiry | RatingInquiry | RubricInquiry;

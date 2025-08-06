@@ -114,7 +114,8 @@ model Inquiry {
   labels String?
 
   // For RUBRIC
-  rows RubricRow[]
+  rows    RubricRow[]
+  options String?
 
   // Required for relations
   feedbackForms        FeedbackForm[]
@@ -128,9 +129,8 @@ enum InquiryType {
 }
 
 model RubricRow {
-  id      String @id @default(uuid()) @db.Char(36)
-  label   String
-  options String
+  id    String @id @default(uuid()) @db.Char(36)
+  label String
 
   // Required for relations
   inquiries Inquiry[]

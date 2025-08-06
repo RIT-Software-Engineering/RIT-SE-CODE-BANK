@@ -75,7 +75,7 @@ function QuestionDisplay({ inquiry }: { inquiry: Inquiry }) {
                                         {row.label}
                                     </td>
                                     <td className="border px-2 py-1">
-                                        {row.options}
+                                        {inquiry.options}
                                     </td>
                                 </tr>
                             ))}

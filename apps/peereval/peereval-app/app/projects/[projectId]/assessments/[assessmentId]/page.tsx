@@ -8,7 +8,6 @@ import {
     getAssessmentPeers,
     sendAssessmentResponses,
 } from "@/services/assessment";
-import { getProjectsPeers as getProjectPeers } from "@/services/project";
 import { UserProfile } from "@/types/userProfile";
 import {
     Assessment,
@@ -246,7 +245,11 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                         {q.question}
                                     </label>
                                     <div className="flex items-center space-x-2">
-                                        {q.labels && <span>{q.labels[0]}</span>}
+                                        {q.labels && (
+                                            <span>
+                                                {q.labels.split(";")[0]}
+                                            </span>
+                                        )}
                                         {[...Array(q.scale)].map((_, i) => (
                                             <label
                                                 key={i}
@@ -271,7 +274,11 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                                 <span>{i + 1}</span>
                                             </label>
                                         ))}
-                                        {q.labels && <span>{q.labels[1]}</span>}
+                                        {q.labels && (
+                                            <span>
+                                                {q.labels.split(";")[1]}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -285,16 +292,16 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                         <thead>
                                             <tr>
                                                 <th></th>
-                                                {q.rows[0].options.map(
-                                                    (opt, colIdx) => (
+                                                {q.options
+                                                    .split(";")
+                                                    .map((opt, colIdx) => (
                                                         <th
                                                             key={colIdx}
                                                             className="px-2 py-1 border"
                                                         >
                                                             {opt}
                                                         </th>
-                                                    )
-                                                )}
+                                                    ))}
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -303,8 +310,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                                     <td className="border px-2 py-1">
                                                         {row.label}
                                                     </td>
-                                                    {row.options.map(
-                                                        (_, colIdx) => (
+                                                    {q.options
+                                                        .split(";")
+                                                        .map((_, colIdx) => (
                                                             <td
                                                                 key={colIdx}
                                                                 className="border text-center"
@@ -345,8 +353,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                                                                     }
                                                                 />
                                                             </td>
-                                                        )
-                                                    )}
+                                                        ))}
                                                 </tr>
                                             ))}
                                         </tbody>

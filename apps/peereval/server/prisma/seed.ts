@@ -103,11 +103,9 @@ async function main() {
         {
             type: InquiryType.RUBRIC,
             question: "Evaluate the following aspects:",
+            options: "Poor;Fair;Good;Excellent",
             rows: {
-                create: [
-                    { label: "Clarity", options: "Poor;Fair;Good;Excellent" },
-                    { label: "Teamwork", options: "Poor;Fair;Good;Excellent" },
-                ],
+                create: [{ label: "Clarity" }, { label: "Teamwork" }],
             },
         },
     ];

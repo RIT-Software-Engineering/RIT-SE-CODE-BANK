@@ -29,19 +29,6 @@ router.get("/:id", async (req, res) => {
     res.json(a);
 });
 
-type ReturnedInquiry = {
-    id: string;
-    type: $Enums.InquiryType;
-    question: string;
-    scale?: number;
-    labels?: string[];
-    rows?: {
-        id: string;
-        label: string;
-        options: string[];
-    }[];
-};
-
 // Get assessment inquiries by id
 // /assessments/:id/inquiries
 router.get("/:id/inquiries", async (req, res) => {
@@ -54,7 +41,7 @@ router.get("/:id/inquiries", async (req, res) => {
                 include: {
                     inquiries: {
                         include: {
-                            rows: {},
+                            rows: true,
                         },
                     },
                 },
@@ -71,19 +58,7 @@ router.get("/:id/inquiries", async (req, res) => {
 
     const inqs = a.feedbackForm.inquiries!;
 
-    res.json(
-        inqs.map(
-            (i) =>
-                ({
-                    ...i,
-                    labels: i.labels?.split(";") ?? [],
-                    rows: i.rows.map((row) => ({
-                        ...row,
-                        options: row.options.split(";"),
-                    })),
-                } as ReturnedInquiry)
-        )
-    );
+    res.json(inqs);
 });
 
 // Get project's assessments

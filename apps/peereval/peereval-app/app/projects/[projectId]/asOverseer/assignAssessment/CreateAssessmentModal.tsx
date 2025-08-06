@@ -214,6 +214,18 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                             spacing={1}
                                             sx={{ minWidth: 320 }}
                                         >
+                                            <TextField
+                                                label="Options (; separated)"
+                                                value={inq.options ?? ""}
+                                                onChange={(e) =>
+                                                    handleInquiryChange(
+                                                        idx,
+                                                        "options",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                sx={{ width: 240 }}
+                                            />
                                             {(inq.rows ?? []).map(
                                                 (row: any, rIdx: number) => (
                                                     <Stack
@@ -246,31 +258,6 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                                             }}
                                                             sx={{ width: 120 }}
                                                         />
-                                                        <TextField
-                                                            label="Options (; separated)"
-                                                            value={row.options}
-                                                            onChange={(e) => {
-                                                                const newRows =
-                                                                    [
-                                                                        ...(inq.rows ??
-                                                                            []),
-                                                                    ];
-                                                                newRows[rIdx] =
-                                                                    {
-                                                                        ...row,
-                                                                        options:
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                    };
-                                                                handleInquiryChange(
-                                                                    idx,
-                                                                    "rows",
-                                                                    newRows
-                                                                );
-                                                            }}
-                                                            sx={{ width: 160 }}
-                                                        />
                                                         <IconButton
                                                             color="error"
                                                             onClick={() => {
@@ -301,10 +288,7 @@ const CreateAssessmentModal: React.FC<CreateAssessmentModalProps> = ({
                                                 onClick={() => {
                                                     const newRows = [
                                                         ...(inq.rows ?? []),
-                                                        {
-                                                            label: "",
-                                                            options: [],
-                                                        },
+                                                        { label: "" },
                                                     ];
                                                     handleInquiryChange(
                                                         idx,
