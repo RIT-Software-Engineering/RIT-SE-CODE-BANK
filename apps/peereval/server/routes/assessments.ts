@@ -41,8 +41,11 @@ router.get("/:id/inquiries", async (req, res) => {
                 include: {
                     inquiries: {
                         include: {
-                            rows: true,
+                            inquiry: {
+                                include: { rows: true },
+                            },
                         },
+                        orderBy: { index: "asc" },
                     },
                 },
             },
@@ -58,7 +61,7 @@ router.get("/:id/inquiries", async (req, res) => {
 
     const inqs = a.feedbackForm.inquiries!;
 
-    res.json(inqs);
+    res.json(inqs.map((i) => i.inquiry));
 });
 
 // Get project's assessments

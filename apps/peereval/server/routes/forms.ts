@@ -15,13 +15,19 @@ router.get("/", async (req, res) => {
         include: {
             inquiries: {
                 include: {
-                    rows: true,
+                    inquiry: { include: { rows: true } },
                 },
+                orderBy: { index: "asc" },
             },
         },
     });
 
-    res.json(fs);
+    res.json(
+        fs.map((f) => ({
+            ...f,
+            inquiries: f.inquiries.map((i) => i.inquiry),
+        }))
+    );
 });
 
 // Create a form
@@ -41,18 +47,27 @@ router.post("/", async (req, res) => {
     const form = await prisma.feedbackForm.create({
         data: {
             name: title,
-            inquiries: { connect: inqs.map(({ id }) => ({ id })) },
+            inquiries: {
+                create: inqs.map((inq, index) => ({
+                    index,
+                    inquiry: { connect: { id: inq.id } },
+                })),
+            },
         },
         include: {
             inquiries: {
                 include: {
-                    rows: true,
+                    inquiry: { include: { rows: true } },
                 },
+                orderBy: { index: "asc" },
             },
         },
     });
 
-    res.status(201).json(form);
+    res.status(201).json({
+        ...form,
+        inquiries: form.inquiries.map((i) => i.inquiry),
+    });
 });
 
 export default router;

@@ -96,12 +96,23 @@ model InquiryResponse {
 // FEEDBACK FORMS
 // ---------------------------------------
 model FeedbackForm {
-  id        String    @id @default(uuid()) @db.Char(36)
+  id        String        @id @default(uuid()) @db.Char(36)
   name      String
-  inquiries Inquiry[]
+  inquiries FormInquiry[]
 
   // Required for relations
   assessments Assessment[]
+}
+
+model FormInquiry {
+  id           String       @id @default(uuid()) @db.Char(36)
+  feedbackForm FeedbackForm @relation(fields: [feedbackFormId], references: [id])
+  inquiry      Inquiry      @relation(fields: [inquiryId], references: [id])
+  index        Int
+
+  // required for relations
+  feedbackFormId String @db.Char(36)
+  inquiryId      String @db.Char(36)
 }
 
 model Inquiry {
@@ -118,8 +129,8 @@ model Inquiry {
   options String?
 
   // Required for relations
-  feedbackForms        FeedbackForm[]
   peerInquiryResponses InquiryResponse[]
+  formInquiry          FormInquiry[]
 }
 
 enum InquiryType {
