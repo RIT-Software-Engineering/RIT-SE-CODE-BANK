@@ -1,28 +1,30 @@
-import { PrismaClient } from "./src/generated/prisma/index.js";
-import { sampleUsers } from "./test-data/sample_users.js";
+import { PrismaClient } from "@prisma/client";
+import { sampleApplications } from "./test-data/sample_applications.js";
 import { sampleJournalEntries } from "./test-data/sample_journal_entries.js";
-import { sampleSemesterGroups } from "./test-data/sample_semester_groups.js";
 import { sampleProjects } from "./test-data/sample_projects.js";
+import { sampleSemesterGroups } from "./test-data/sample_semester_groups.js";
+import { sampleUsers } from "./test-data/sample_users.js";
 
 const prisma = new PrismaClient();
 // Use prisma.<model> to interact with your database
 
 const models = [
   "fruit",
-  "semester_Group",
+  "SemesterGroup",
+  "Project",
   "users",
-  "teams",
-  "project",
-  "journal_Entry",
-  "application",
+  "JournalEntry",
+  "Application",
+  "Teams",
 ];
 
 const sampleDataFiles = {
   fruit: [{ name: "Apple", color: "Red", size: "Medium" }],
-  semester_Group: sampleSemesterGroups,
+  SemesterGroup: sampleSemesterGroups,
+  Project: sampleProjects,
   users: sampleUsers,
-  project: sampleProjects,
-  journal_Entry: sampleJournalEntries,
+  JournalEntry: sampleJournalEntries,
+  Application: sampleApplications,
 };
 
 async function main() {
@@ -52,14 +54,14 @@ async function main() {
       console.error(`Error seeding ${model}:`, error.message);
     }
   }
-  const vicki = await prisma.users.findUnique({
-    where: { email: "vcl123@rit.edu" },
+  const vicki = await prisma.users.findFirst({
+    where: { fname: "Vicki", lname: "Leigh" },
   });
-  const jimmy = await prisma.users.findUnique({
-    where: { email: "jlp123@rit.edu" },
+  const jimmy = await prisma.users.findFirst({
+    where: { fname: "Jimmy", lname: "Post" },
   });
-  const dudeBro = await prisma.users.findUnique({
-    where: { email: "def123@rit.edu" },
+  const dudeBro = await prisma.users.findFirst({
+    where: { fname: "Dude", lname: "Bro" },
   });
   await prisma.teams.create({
     data: {
