@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { PrismaClient } from "../../server/src/generated/prisma/index.js";
+import { PrismaClient } from "@prisma/client";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -11,11 +11,15 @@ const prisma = new PrismaClient();
  */
 router.get("/", async (req, res) => {
   try {
-    const semesters = await prisma.semester_Group.findMany();
+    const semesters = await prisma.semesterGroup.findMany();
+    // const semesters = await prisma.semesterGroup.findMany();
     res.status(200).json(semesters);
   } catch (error) {
     console.error("Error fetching semester groups: ", error);
-    res.status(500).json({ message: "Error fetching semester groups." });
+    res.status(500).json({
+      message: "Error fetching semester groups.",
+      error: error.message,
+    });
   }
 });
 
@@ -27,7 +31,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const { name, dept, start_date, end_date } = req.body;
   try {
-    const newSemester = await prisma.semester_Group.create({
+    const newSemester = await prisma.semesterGroup.create({
       data: { name, dept, start_date, end_date },
     });
     res.status(200).json({
@@ -48,7 +52,7 @@ router.post("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const semester = await prisma.semester_Group.findUnique({
+    const semester = await prisma.semesterGroup.findUnique({
       where: { id: Number(id) },
     });
     res.status(200).json(semester);
