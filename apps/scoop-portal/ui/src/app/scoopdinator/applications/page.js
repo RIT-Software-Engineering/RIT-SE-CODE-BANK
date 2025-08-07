@@ -1,31 +1,25 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import Header from "@components/Header";
 import {
+  Alert,
   Box,
   Button,
-  Typography,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Select,
+  DialogContent,
+  DialogTitle,
   MenuItem,
   Paper,
+  Select,
   Snackbar,
-  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
 } from "@mui/material";
-// import { application } from "express";
-
-import Header from "@components/Header";
-import { Block } from "@mui/icons-material";
-import { ST } from "next/dist/shared/lib/utils";
-import { useUser } from "../../utils/user-context/page";
-import UnauthorizedPage from "../../unauthorized/page";
+import { useEffect, useState } from "react";
 
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
@@ -81,21 +75,6 @@ export default function SupervisorApplicationsPage() {
   };
 
   const handleClose = () => setSelectedApp(null);
-
-  async function putApplicationStatus(newStatus) {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/application/${selectedApp.id}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          accepted: newStatus === STATUSES[1], // "accepted"
-        }),
-      }
-    );
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || "Failed to update");
-  }
 
   async function putApplicationStatus(newStatus) {
     const res = await fetch(
