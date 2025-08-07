@@ -1,4 +1,4 @@
-// app/Timecard/page.js
+// app/Timecard/Employee/[username]/page.js
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -30,7 +30,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StartDateModal from "@/components/timecard/StartDateModal";
 
 
-export default function Timecard() {
+export default function EmployeeTimecard() {
     // --- STATE MANAGEMENT ---
     const { currentUser } = useAuth();
     const { showNotification } = useNotification();
