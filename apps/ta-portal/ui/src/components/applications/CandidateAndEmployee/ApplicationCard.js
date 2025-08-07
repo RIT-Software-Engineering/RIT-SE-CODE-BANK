@@ -59,7 +59,7 @@ export default function CandidateApplicationCard({
   const executeWithdrawal = async () => {
     setIsProcessingWithdrawal(true);
     try {
-      await deleteApplication(currentUser.uid, application.jobPositionId);
+      await deleteApplication(currentUser.username, application.jobPositionId);
       await refreshUserProfile();
       showNotification("Application withdrawn successfully.", "success");
       if (onStatusChange) {

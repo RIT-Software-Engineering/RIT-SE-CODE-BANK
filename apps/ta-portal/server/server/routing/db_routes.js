@@ -14,9 +14,14 @@ const {
   getAllUsers,
   getAllCourses,
   createCourse,
+  authenticateUser,
+  resetPassword,
+  getUser,
   getUserProfile,
-  upsertCandidateProfile,
-  upsertEmployerProfile,
+  createCandidateProfile,
+  updateCandidateProfile,
+  createEmployerProfile,
+  updateEmployerProfile,
   getOpenJobPositions,
   getCandidateApplicationsAsEmployer,
   applyForJobPosition,
@@ -62,7 +67,7 @@ fs.mkdirSync(coverLetterStoragePath, { recursive: true });
 const storage = multer.diskStorage({
   /**
    * Sets the destination folder for the uploaded file.
-   * Creates a user-specific subfolder using their UID to organize resumes.
+   * Creates a user-specific subfolder using their username to organize resumes.
    */
   destination: function (req, file, cb) {
     let basePath;
@@ -78,7 +83,7 @@ const storage = multer.diskStorage({
     }
     
     // Create the user-specific folder inside the correct base path.
-    const userFolderPath = path.join(basePath, req.body.candidateUID);
+    const userFolderPath = path.join(basePath, req.body.candidateUsername);
     fs.mkdirSync(userFolderPath, { recursive: true }); // Ensure the user's folder exists.
     cb(null, userFolderPath);
   },
@@ -116,22 +121,16 @@ const upload = multer({
  * @access  Public
  * @query   {string} [searchTerm] - Text to search in course names/codes.
  * @query   {string} [filters] - A JSON string of filter criteria.
- * @query   {string} [candidateUID] - The UID of the candidate for eligibility checks.
+ * @query   {string} [candidateUsername] - The Username of the candidate for eligibility checks.
  */
 router.get('/open-positions', async (req, res) => {
-  const { searchTerm, filters: filtersString, candidateUID } = req.query;
+  const { searchTerm, filters: filtersString, candidateUsername } = req.query;
   try {
     const filters = filtersString ? JSON.parse(filtersString) : {};
-    const numericCandidateUID = parseInt(candidateUID, 10);
-    if (isNaN(numericCandidateUID)) {
-      return res
-        .status(400)
-        .json({ error: 'Candidate UID must be a valid number.' });
-    }
     const positions = await getOpenJobPositions(
       searchTerm,
       filters,
-      numericCandidateUID
+      candidateUsername
     );
     res.status(200).json(positions);
   } catch (error) {
@@ -167,13 +166,10 @@ router.put("/modify-position/:id", async (req, res) => {
   }
 });
 
-router.post("/create-position", async (req, res) => {
+router.post("/create-position/:employerUsername", async (req, res) => {
   try{
     const positionData = req.body;
-    console.log("Created position:", positionData);
-
-    const position = await createPosition(positionData,positionData.EmployerUID);
-    console.log("Route call with employer: ", positionData.EmployerUID);
+    const position = await createPosition(positionData, req.params.employerUsername);
     res.status(201).json(position);
   } catch (error) {
     console.error("Error in /create-position route:", error);
@@ -232,7 +228,7 @@ router.post(
   async (req, res) => {
     try {
       const {
-        candidateUID,
+        candidateUsername,
         jobPositionId,
         jobPositionApplicationFormData,
         resumeName,
@@ -241,15 +237,9 @@ router.post(
       } = req.body;
 
       // --- Prepare Application Details ---
-      const numericCandidateUID = parseInt(candidateUID, 10);
-      if (isNaN(numericCandidateUID)) {
-        return res
-          .status(400)
-          .json({ error: 'Candidate UID must be a valid number.' });
-      }
-
       const applicationDetails = {
-        candidateUID: numericCandidateUID,
+        candidateUsername: candidateUsername,
+        resumeId: resumeId,
         jobPositionId: jobPositionId,
         jobPositionApplicationFormData: jobPositionApplicationFormData,
       };
@@ -261,12 +251,12 @@ router.post(
           return res.status(400).json({ error: 'New resume name is required.' });
         }
         const resumeFile = req.files.resumeFile[0];
-        const newResumeUrl = `/resources/resumes/${candidateUID}/${resumeFile.filename}`;
+        const newResumeUrl = `/resources/resumes/${candidateUsername}/${resumeFile.filename}`;
         
-        const existingResumes = await getCandidateResumes(numericCandidateUID);
+        const existingResumes = await getCandidateResumes(candidateUsername);
         const isPrimary = existingResumes.length === 0;
 
-        const newResume = await addNewCandidateResume(numericCandidateUID, isPrimary, newResumeUrl, resumeName);
+        const newResume = await addNewCandidateResume(candidateUsername, isPrimary, newResumeUrl, resumeName);
         applicationDetails.resumeId = newResume.id;
       } else if (resumeId) {
         // If no new resume, use the provided resumeId
@@ -278,8 +268,8 @@ router.post(
       // --- Handle Cover Letter (if uploaded) ---
       if (req.files && req.files.coverLetterFile) {
         const coverLetterFile = req.files.coverLetterFile[0];
-        applicationDetails.coverLetterURL = `/resources/cover-letters/${candidateUID}/${coverLetterFile.filename}`;
-        applicationDetails.coverLetterName = coverLetterName || 'Cover Letter'; // Use provided name or a default
+        applicationDetails.coverLetterURL = `/resources/cover-letters/${candidateUsername}/${coverLetterFile.filename}`;
+        applicationDetails.coverLetterName = coverLetterName || 'Cover Letter';
       }
 
       // --- Create the Application ---
@@ -294,26 +284,21 @@ router.post(
 );
   
 /**
- * @route   DELETE /api/db/applications/:uid
+ * @route   DELETE /api/db/applications/:username
  * @desc    Deletes a job application record for a candidate.
  * @access  Public
- * @param   {string} uid - The UID of the candidate.
- * @param   {string} jobPositionId - The ID of the job position.
+ * @param   {string} username - The username of the candidate.
+ * @query   {string} jobPositionId - The ID of the job position.
  */
-router.delete('/applications/:uid', async (req, res) => {
+router.delete('/applications/:username', async (req, res) => {
   try {
-    const candidateUID = parseInt(req.params.uid, 10);
-    if (isNaN(candidateUID)) {
-      return res.status(400).json({ message: 'A valid numeric candidate UID is required.' });
-    }
-
     const { jobPositionId } = req.query;
     if (!jobPositionId) {
       return res.status(400).json({ message: 'The jobPositionId query parameter is required.' });
     }
 
     // Get the application details
-    const application = await getCandidateApplication(candidateUID, jobPositionId);
+    const application = await getCandidateApplication(req.params.username, jobPositionId);
 
     // Delete the cover letter file if it exists
     if (application.coverLetterURL) {
@@ -406,22 +391,16 @@ router.put('/applications/:id', async (req, res) => {
  * @access  Public
  * @query   {string} [searchTerm] - Text to search in course names/codes.
  * @query   {string} [filters] - A JSON string of filter criteria.
- * @query   {string} [candidateUID] - The UID of the candidate for eligibility checks.
+ * @query   {string} [candidateUsername] - The Username of the candidate for eligibility checks.
  */
 router.get('/applications/candidate', async (req, res) => {
   try {
-    const { searchTerm, filters: filtersString, candidateUID } = req.query;
+    const { searchTerm, filters: filtersString, candidateUsername } = req.query;
     const filters = filtersString ? JSON.parse(filtersString) : {};
-    const numericCandidateUID = parseInt(candidateUID, 10);
-    if (isNaN(numericCandidateUID)) {
-      return res
-        .status(400)
-        .json({ error: 'Candidate UID must be a valid number.' });
-    }
     const applications = await getCandidateApplications(
       searchTerm,
       filters,
-      numericCandidateUID
+      candidateUsername
     );
     res.status(200).json(applications);
   } catch (error) {
@@ -436,24 +415,18 @@ router.get('/applications/candidate', async (req, res) => {
  * @access  Public
  * @query   {string} [searchTerm] - Text to search in course names/codes.
  * @query   {string} [filters] - A JSON string of filter criteria.
- * @query   {string} [employerUID] - The UID of the employer for eligibility checks.
+ * @query   {string} [employerUsername] - The Username of the employer for eligibility checks.
  */
 router.get('/applications/employer', async (req, res) => {
   try {
-    const { searchTerm, searchBy, filters: filtersString, employerUID } = req.query;
+    const { searchTerm, searchBy, filters: filtersString, employerUsername } = req.query;
     const filters = filtersString ? JSON.parse(filtersString) : {};
-    
-    // Ensure employerUID is a number before proceeding
-    const numericEmployerUID = parseInt(employerUID, 10);
-    if (isNaN(numericEmployerUID)) {
-      return res.status(400).json({ error: 'Employer UID must be a valid number.' });
-    }
 
     const applications = await getCandidateApplicationsAsEmployer(
       searchTerm,
       searchBy,
       filters,
-      numericEmployerUID
+      employerUsername
     );
     res.status(200).json(applications);
   } catch (error) {
@@ -467,18 +440,12 @@ router.get('/applications/employer', async (req, res) => {
  * @route   GET /api/db/semester-codes
  * @desc    Retrieves all applications for job positions managed by a specific employer.
  * @access  Public
- * @param   {string} employerUid - The UID of the employer.
+ * @param   {string} employerUsername - The Username of the employer.
  * @returns {Array} An array of unique semester codes.
  */ 
-router.get('/semester-codes/:employerUID', async (req, res) => {
+router.get('/semester-codes/:employerUsername', async (req, res) => {
   try {
-    const employerUid = parseInt(req.params.employerUID, 10);
-    if (isNaN(employerUid)) {
-      return res
-        .status(400)
-        .json({ error: 'Employer UID must be a valid number.' });
-    }
-    const applications = await getSemesterCodesForEmployer(employerUid);
+    const applications = await getSemesterCodesForEmployer(req.params.employerUsername);
     res.status(200).json(applications);
   } catch (error) {
     console.error('Error in /semester-codes route:', error.message, error.stack);
@@ -506,85 +473,189 @@ router.get('/users', async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/users/:UID
- * @desc    Retrieves a single user's profile by their UID.
+ * @route   GET /api/db/user/:username
+ * @desc    Retrieves a user's profile by their username.
  * @access  Public
- * @param   {string} UID - The user's unique identifier.
+ * @param   {string} username - The user's unique identifier.
+ * @returns {object} The user profile given in the users table.
  */
-router.get('/users/:UID', async (req, res) => {
-  const { UID } = req.params;
+router.get('/user/:username', async (req, res) => {
   try {
-    const numericUID = parseInt(UID, 10);
-    if (isNaN(numericUID)) {
-      return res
-        .status(400)
-        .json({ error: "User UID must be a valid number." });
+    const user = await getUser(req.params.username);
+    if (user) {
+      res.status(200).json(user);
+    } else {
+      res.status(404).json({ error: 'User not found.' });
     }
-    const user = await getUserProfile(numericUID);
-    res.status(200).json(user);
   } catch (error) {
-    console.error(`Error in /users/${UID} route:`, error);
+    console.error('Error in /user route:', error);
     res.status(500).json({ error: 'Failed to retrieve user.' });
   }
 });
 
 /**
- * @route   POST /api/db/upsert-candidate-profile
- * @desc    Creates or updates a candidate's profile.
+ * @route   POST /api/db/login
+ * @desc    Authenticates a user and returns their profile.
  * @access  Public
- * @body    {object} candidateData - The full profile data for the candidate.
+ * @body    {string} username - The username of the user.
+ * @body    {string} password - The password of the user.
+ * @returns {object} The authenticated user's profile.
  */
-router.post('/upsert-candidate-profile', async (req, res) => {
-  const candidateData = req.body;
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
   try {
-    const profile = await upsertCandidateProfile(candidateData);
-    res.status(200).json(profile);
+    const user = await authenticateUser(username, password);
+    if (user) {
+      res.status(200).json(user);
+    } else {
+      res.status(401).json({ error: 'Invalid username or password.' });
+    }
   } catch (error) {
-    console.error("Error in /upsert-candidate-profile route:", error);
-    res.status(500).json({ error: "Failed to upsert candidate profile." });
+    console.error('Error in /login route:', error);
+    res.status(500).json({ error: 'Failed to authenticate user.' });
   }
-});
+})
 
 /**
- * @route   POST /api/db/upsert-employer-profile
- * @desc    Creates or updates an employer's profile.
+ * @route   POST /api/db/reset-password
+ * @desc    Sets a new password using a reset token.
  * @access  Public
- * @body    {object} employerData - The full profile data for the employer.
+ * @body    {string} token - The password reset token.
+ * @body    {string} newPassword - The new password.
  */
-router.post("/upsert-employer-profile", async (req, res) => {
-  const employerData = req.body;
-  try {
-    const profile = await upsertEmployerProfile(employerData);
-    res.status(200).json(profile);
-  } catch (error) {
-    console.error("Error in /upsert-employer-profile route:", error);
-    res.status(500).json({ error: "Failed to upsert employer profile." });
+router.post('/reset-password', async (req, res) => {
+  const { username, newPassword } = req.body;
+  if (!username || !newPassword) {
+    return res.status(400).json({ error: 'Username and new password are required.' });
   }
-});
 
-/**
- * @route   PUT /api/db/terminate-employee/:uid
- * @desc    Terminates an employee by updating their job history to 'TERMINATED'.
- * @access  Public
- * @param   {number} uid - The employee's UID.
- */
-router.put('/terminate-employee/:uid', async (req, res) => {
   try {
-    const { uid } = req.params;
-    const numericUID = parseInt(uid, 10);
-
-    if (isNaN(numericUID)) {
-      return res.status(400).json({ error: 'UID must be a valid number.' });
+    const user = await resetPassword(username, newPassword);
+    
+    if (!user) {
+      return res.status(400).json({ error: 'User does not exist.' });
     }
 
-    const result = await terminateEmployee(numericUID); // <- Your new query function
+    res.status(200).json({ message: 'Password reset successfully.' });
+  } catch (error) {
+    console.error('Error in force-reset-password route:', error);
+    res.status(500).json({ error: 'An internal server error occurred.' });
+  }
+});
+
+/**
+ * @route   GET /api/db/users/:username
+ * @desc    Retrieves a single user's profile by their username.
+ * @access  Public
+ * @param   {string} username - The user's unique identifier.
+ */
+router.get('/user-profile/:username', async (req, res) => {
+  try {
+    const user = await getUserProfile(req.params.username);
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(`Error in /user-profile/${req.params.username} route:`, error);
+    res.status(500).json({ error: 'Failed to retrieve user.' });
+  }
+});
+
+/**
+ * @route   POST /api/db/candidate-profile
+ * @desc    Creates a new candidate profile.
+ * @access  Public (or protected, depending on your auth rules)
+ * @body    {object} candidateData - The full profile data for the new candidate.
+ */
+router.post('/candidate-profile', async (req, res) => {
+  try {
+    // The complete data, including username, username, etc., comes from the request body.
+    const newProfile = await createCandidateProfile(req.body);
+    res.status(201).json(newProfile); // 201 Created is the standard status for success
+  } catch (error) {
+    console.error("Error in POST /candidate-profile route:", error);
+    // Check for specific Prisma error for unique constraints (e.g., username taken)
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: `A user with this ${error.meta.target.join(', ')} already exists.` });
+    }
+    res.status(500).json({ error: "Failed to create candidate profile." });
+  }
+});
+
+/**
+ * @route   PUT /api/db/candidate-profile/:username
+ * @desc    Updates an existing candidate's profile.
+ * @access  Public (or protected)
+ * @param   {string} username - The unique identifier of the user to update.
+ * @body    {object} candidateData - The profile data fields to be updated.
+ */
+router.put('/candidate-profile/:username', async (req, res) => {
+  try {
+    // Combine the Username from the URL with the update data from the body
+    const dataToUpdate = { ...req.body, username: req.params.username };
+
+    const updatedProfile = await updateCandidateProfile(dataToUpdate);
+    res.status(200).json(updatedProfile);
+  } catch (error) {
+    console.error(`Error in PUT /candidate-profile/${req.params.username} route:`, error);
+    res.status(500).json({ error: "Failed to update candidate profile." });
+  }
+});
+
+/**
+ * @route   POST /api/db/employer-profile
+ * @desc    Creates a new employer profile.
+ * @access  Public (or protected)
+ * @body    {object} employerData - The full profile data for the new employer.
+ */
+router.post("/employer-profile", async (req, res) => {
+  try {
+    const newProfile = await createEmployerProfile(req.body);
+    res.status(201).json(newProfile);
+  } catch (error) {
+    console.error("Error in POST /employer-profile route:", error);
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: `A user with this ${error.meta.target.join(', ')} already exists.` });
+    }
+    res.status(500).json({ error: "Failed to create employer profile." });
+  }
+});
+
+/**
+ * @route   PUT /api/db/employer-profile/:username
+ * @desc    Updates an existing employer's profile.
+ * @access  Public (or protected)
+ * @param   {string} username - The unique identifier of the user to update.
+ * @body    {object} employerData - The profile data fields to be updated.
+ */
+router.put("/employer-profile/:username", async (req, res) => {
+  try {
+    // Combine the Username from the URL with the update data from the body
+    const dataToUpdate = { ...req.body, username: req.params.username };
+
+    const updatedProfile = await updateEmployerProfile(dataToUpdate);
+    res.status(200).json(updatedProfile);
+  } catch (error) {
+    console.error(`Error in PUT /employer-profile/${req.params.username} route:`, error);
+    res.status(500).json({ error: "Failed to update employer profile." });
+  }
+});
+
+/**
+ * @route   PUT /api/db/terminate-employee/:username
+ * @desc    Terminates an employee by updating their job history to 'TERMINATED'.
+ * @access  Public
+ * @param   {number} username - The employee's username.
+ */
+router.put('/terminate-employee/:username', async (req, res) => {
+  try {
+
+    const result = await terminateEmployee(req.params.username);
 
     res.status(200).json({
-      message: `Employee ${numericUID} terminated successfully.`,
+      message: `Employee ${req.params.username} terminated successfully.`,
       user: result,
     });
   } catch (error) {
-    console.error(`Error in /terminate-employee/${req.params.uid}:`, error);
+    console.error(`Error in /terminate-employee/${req.params.username}:`, error);
     res.status(500).json({ error: 'Failed to terminate employee.' });
   }
 });
@@ -605,21 +676,20 @@ router.post('/resume', upload.single('resumeFile'), async (req, res) => {
         return res.status(400).json({ error: 'Resume file is required.' });
       }
 
-      const { candidateUID, name } = req.body;
-      if (!candidateUID || !name) {
+      const { candidateUsername, name } = req.body;
+      if (!candidateUsername || !name) {
         fs.unlinkSync(req.file.path);
         return res
           .status(400)
-          .json({ error: 'Candidate UID and resume name are required.' });
+          .json({ error: 'Candidate Username and resume name are required.' });
       }
 
-      const numericCandidateUID = parseInt(candidateUID, 10);
-      const resumeURL = `/resources/resumes/${candidateUID}/${req.file.filename}`;
+      const resumeURL = `/resources/resumes/${candidateUsername}/${req.file.filename}`;
 
-      const existingResumes = await getCandidateResumes(numericCandidateUID);
+      const existingResumes = await getCandidateResumes(candidateUsername);
       const isPrimary = existingResumes.length === 0;
 
-      const newResume = await addNewCandidateResume(numericCandidateUID, isPrimary, resumeURL, name);
+      const newResume = await addNewCandidateResume(candidateUsername, isPrimary, resumeURL, name);
 
       res.status(201).json(newResume);
     } catch (error) {
@@ -630,15 +700,14 @@ router.post('/resume', upload.single('resumeFile'), async (req, res) => {
 );
 
 /**
- * @route   Update /api/db/primary-resume/:candidateUID/:resumeId
+ * @route   Update /api/db/primary-resume/:candidateUsername/:resumeId
  * @desc    Updates the primary resume by its ID.
  * @access  Public
  */
-router.put('/primary-resume/:candidateUID/:resumeId', async (req, res) => {
+router.put('/primary-resume/:candidateUsername/:resumeId', async (req, res) => {
     try {
       const resumeId = parseInt(req.params.resumeId, 10);
-      const candidateUID = parseInt(req.params.candidateUID, 10);
-      const updatedResume = await updatePrimaryResume(candidateUID, resumeId);
+      const updatedResume = await updatePrimaryResume(req.params.candidateUsername, resumeId);
       res.status(200).json(updatedResume);
     } catch (error) {
       console.error('Error in /update-primary-resume route:', error);

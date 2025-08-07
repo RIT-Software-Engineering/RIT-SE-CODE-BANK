@@ -27,7 +27,7 @@ export default function ProfileInfoCard({
       <div className='p-6 flex justify-between items-start'>
         <div>
           <h2 className='text-2xl font-bold text-gray-900'>
-            {profileData.name}
+            {profileData.fname} {profileData.lname}
           </h2>
           <p>
             <span className='font-semibold'>Email:</span>{' '}

@@ -16,7 +16,8 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
 
     const initialValues = {
         uid: user?.uid || 0,
-        name: user?.name || '',
+        fname: user?.fname || '',
+        lname: user?.lname || '',
         pronouns: user?.pronouns || '',
         email: user?.email || '',
         major: user?.candidate?.major || '',
@@ -55,6 +56,11 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
         try {
             const isUploadingNewResume = formData.resumeId === 'new';
             const isUploadingCoverLetter = formData.coverLetterFile && formData.coverLetterFile.length > 0;
+            
+            // If no grade is selected, set it to null
+            if (formData.grade === '') {
+                formData.grade = null;
+            }
 
             // If uploading a new resume OR a new cover letter, we must use FormData.
             if (isUploadingNewResume || isUploadingCoverLetter) {
@@ -65,7 +71,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                 }
 
                 const data = new FormData();
-                data.append('candidateUID', user.uid);
+                data.append('candidateUsername', user.username);
                 data.append('jobPositionId', position.id);
 
                 if (isUploadingNewResume) {
@@ -81,6 +87,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                     data.append('coverLetterName', formData.coverLetterName);
                 }
                 
+                // retireve the rest of the form data except for the files
                 const { resumeFile, resumeId, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 data.append('jobPositionApplicationFormData', JSON.stringify(restOfFormData));
                 
@@ -91,7 +98,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                 // No new files being uploaded, so the simpler JSON API call is used.
                 const { resumeFile, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 const applicationDetails = {
-                    candidateUID: user.uid,
+                    candidateUsername: user.username,
                     jobPositionId: position.id,
                     resumeId: parseInt(formData.resumeId, 10),
                     jobPositionApplicationFormData: JSON.stringify(restOfFormData),
@@ -120,14 +127,21 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <DisplayField label="UID" value={initialValues.uid} />
-                    <DisplayField label="Full Name" value={initialValues.name} />
+                    <DisplayField label="Full Name" value={initialValues.fname + ' ' + initialValues.lname} />
                     <DisplayField label="Pronouns" value={initialValues.pronouns} />
                     <DisplayField label="Email" value={initialValues.email} />
                     <DisplayField label="Major" value={initialValues.major} />
                     <DisplayField label="Year" value={initialValues.year} />
                     <DisplayField label={`Prior Employment For ${position.course.courseCode}`} value={initialValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
                     <DisplayField label="Prior Employment For Any Other Course" value={initialValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
-                    <DisplayField label="Prior Employment History" value={initialValues.priorEmploymentHistory.map(item => item.courseCode).join(', ')}  />
+                    <DisplayField 
+                        label="Prior Employment History" 
+                        value={
+                            initialValues.priorEmploymentHistory.length > 0
+                                ? initialValues.priorEmploymentHistory.map(item => item.courseCode).join(', ')
+                                : 'None'
+                        }
+                    />
 
                     <Controller
                         name="grade"

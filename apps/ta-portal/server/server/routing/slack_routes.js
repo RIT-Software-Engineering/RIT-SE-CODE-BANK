@@ -17,15 +17,19 @@ const router = require('express').Router();
  * The frontend calls this endpoint to get the URL that users click to
  * initiate the Slack authorization process.
  * @access  Public
+ * @query   {string} [state] - An optional state parameter (e.g., an email) to pass through.
  * @returns {JSON} An object containing the full Slack authorization URL.
  */
 router.get('/oauth-url', (req, res) => {
+    const { state } = req.query;
     const clientId = process.env.SLACK_CLIENT_ID;
     const redirectUri = encodeURIComponent(process.env.SLACK_REDIRECT_URI);
     // Define the permissions your app is requesting.
     const scope = encodeURIComponent('users:read.email,chat:write,im:write,users:read');
     // Construct the final URL with all necessary parameters.
-    const oauthUrl = `https://slack.com/oauth/v2/authorize?client_id=${clientId}&user_scope=${scope}&redirect_uri=${redirectUri}`;
+    const oauthUrl = `https://slack.com/oauth/v2/authorize?client_id=${clientId}&user_scope=${scope}&redirect_uri=${redirectUri}&state=${
+      state || ""
+    }`;
     
     res.json({ url: oauthUrl });
 });
@@ -39,48 +43,63 @@ router.get('/oauth-url', (req, res) => {
  * frontend with the token.
  * @access  Public
  * @query   {string} code - The temporary authorization code from Slack.
+ * @query   {string} [state] - The state parameter passed back from Slack.
  * @query   {string} [error] - An error message if the user denies authorization.
  */
 router.get('/oauth_redirect', async (req, res) => {
-  const { code } = req.query;
+  const { code, state, error } = req.query; 
   const frontendUrl = process.env.FRONTEND_URL;
 
-  // If the user denied the request or an error occurred, Slack sends no code.
-  if (!code) {
-    const errorMessage = 'Authorization denied or failed.';
-    return res.redirect(`${frontendUrl}/Messaging?error=${encodeURIComponent(errorMessage)}`);
+  const email = state ? decodeURIComponent(state) : null;
+
+  // Determine the correct base URL for the final redirect.
+  const baseRedirectUrl = email
+    ? `${frontendUrl}/Messaging/${encodeURIComponent(email)}`
+    : `${frontendUrl}/Messaging`;
+
+  if (error || !code) {
+    const errorMessage = error || "Authorization denied or failed.";
+    return res.redirect(
+      `${baseRedirectUrl}?error=${encodeURIComponent(errorMessage)}`
+    );
   }
 
   try {
-    // Exchange the temporary code for a user access token by calling Slack's API.
-    const response = await axios.post('https://slack.com/api/oauth.v2.access', null, {
-      params: {
-        client_id: process.env.SLACK_CLIENT_ID,
-        client_secret: process.env.SLACK_CLIENT_SECRET,
-        code,
-        redirect_uri: process.env.SLACK_REDIRECT_URI,
-      },
-    });
+    // Exchange the temporary code for a permanent user access token
+    const response = await axios.post(
+      "https://slack.com/api/oauth.v2.access",
+      null,
+      {
+        params: {
+          client_id: process.env.SLACK_CLIENT_ID,
+          client_secret: process.env.SLACK_CLIENT_SECRET,
+          code,
+          redirect_uri: process.env.SLACK_REDIRECT_URI,
+        },
+      }
+    );
 
-    // Handle cases where the Slack API returns an error (e.g., invalid code).
+    // Handle cases where the OAuth fails (e.g., invalid code).
     if (!response.data.ok) {
-      console.error('Slack OAuth Error:', response.data.error);
       const errorMessage = `OAuth failed: ${response.data.error}`;
-      return res.redirect(`${frontendUrl}/Messaging?error=${encodeURIComponent(errorMessage)}`);
+      return res.redirect(
+        `${baseRedirectUrl}?error=${encodeURIComponent(errorMessage)}`
+      );
     }
 
-    // Extract the user token and team ID from the successful response.
     const userToken = response.data.authed_user.access_token;
     const teamId = response.data.team.id;
 
-    // Redirect the user back to the frontend, passing the token and teamId as query parameters.
-    res.redirect(`${frontendUrl}/Messaging?token=${userToken}&teamId=${teamId}`);
+    // Construct the final URL with query parameters using the URL API
+    const finalRedirectUrl = new URL(baseRedirectUrl);
+    finalRedirectUrl.searchParams.append("token", userToken);
+    finalRedirectUrl.searchParams.append("teamId", teamId);
 
-  } catch (error) {
-    // Handle unexpected server errors during the API call.
-    console.error('Error during OAuth token exchange:', error.message);
-    const errorMessage = 'An internal error occurred during the OAuth process.';
-    res.redirect(`${frontendUrl}/Messaging?error=${encodeURIComponent(errorMessage)}`);
+    // Redirect to the correctly constructed URL
+    res.redirect(finalRedirectUrl.toString());
+  } catch (err) {
+    const errorMessage = "An internal error occurred during OAuth.";
+    res.redirect(`${baseRedirectUrl}?error=${encodeURIComponent(errorMessage)}`);
   }
 });
 

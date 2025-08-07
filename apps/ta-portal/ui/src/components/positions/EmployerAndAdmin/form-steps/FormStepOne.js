@@ -104,6 +104,14 @@ export default function FormStepOne({
             control={control}
             rules={{
               required: "A course code is required.",
+              minLength: {
+                value: 8,
+                message: "Course code must be 8 characters long (e.g. SWEN-261)."
+              },
+              maxLength: {
+                value: 8,
+                message: "Course code must be 8 characters long (e.g. SWEN-261)."
+              },
               pattern: {
                 value: /^[A-Za-z]+-\d+$/,
                 message: "Course code must be in the format DEPARTMENT-COURSE_NUMBER (e.g., SWEN-261)."

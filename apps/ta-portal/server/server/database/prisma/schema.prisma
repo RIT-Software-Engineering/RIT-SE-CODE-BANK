@@ -19,9 +19,12 @@ datasource db {
 
 model User {
   //Fields
-  uid      Int    @id
-  name     String @db.Text
-  email    String @db.Text
+  username String @id @db.VarChar(7) // this is your RIT user id that's normally at the front of your email address
+  uid      Int    @unique
+  fname    String @db.Text
+  lname    String @db.Text
+  password String @db.Text
+  email    String @unique @db.VarChar(255)
   pronouns String @db.Text
   role     Role   @default(GUEST)
 
@@ -32,61 +35,61 @@ model User {
 
 model Candidate {
   //Fields
-  uid                Int            @id
+  username           String         @id
   year               Int            @db.Int
   major              String         @db.Text
   graduateStatus     GraduateStatus @default(UNDERGRADUATE)
   wasPriorEmployee   Boolean
 
   //Relationships
-  user                              User                              @relation(fields: [uid], references: [uid])
-  resumes                           Resume[]
-  courseHistory                     CourseHistory[]
-  employees                         Employee[]
-  jobPositionApplicationHistory     JobPositionApplicationHistory[]
+  user                          User                            @relation(fields: [username], references: [username])
+  resumes                       Resume[]
+  courseHistory                 CourseHistory[]
+  employee                      Employee[]
+  jobPositionApplicationHistory JobPositionApplicationHistory[]
 }
 
 model Comment {
   //Fields
-  id                Int             @id @default(autoincrement())
-  foreignTableName  String          @db.Text
-  foreignKey        String          @db.Text                      //this is the id of a specific entry within one of the foreign tables
-  status            String          @db.Text
-  comment           String          @db.Text
-  timestamp         DateTime
+  id               Int      @id @default(autoincrement())
+  foreignTableName String   @db.Text
+  foreignKey       String   @db.Text //this is the id of a specific entry within one of the foreign tables
+  status           String   @db.Text
+  comment          String   @db.Text
+  timestamp        DateTime
 }
 
 model Resume {
-  //Fields
-  id                  Int           @id @default(autoincrement())
-  name                String        @db.Text
-  candidateUID        Int
-  isPrimary           Boolean
-  resumeURL           String
+  //Fields
+  id          Int     @id @default(autoincrement())
+  name        String  @db.Text
+  username    String //Foreign key for the user table (specificallly users who are in the candidate table)
+  isPrimary   Boolean
+  resumeURL   String
 
-  //Relationships
-  candidate          Candidate      @relation(fields: [candidateUID], references: [uid])
-  jobPositionApplicationHistory     JobPositionApplicationHistory[]
+  //Relationships
+  candidate                     Candidate                       @relation(fields: [username], references: [username])
+  jobPositionApplicationHistory JobPositionApplicationHistory[]
 }
 
 model Employer {
   //Fields
-  uid        Int    @id
-  department String @db.Text
+  username    String @id //Foreign key for the user table
+  department  String @db.Text
 
   //Relationships
-  user        User          @relation(fields: [uid], references: [uid])
+  user        User          @relation(fields: [username], references: [username])
   jobPostions JobPosition[]
 }
 
 model Employee {
   //Fields
-  id             Int            @id //employee id that RIT gives to you when you start working under a new position (like a Course Assistant)
-  candidateUID   Int
+  id             Int          @id //employee id that RIT gives to you when you start working under a new position (like a Course Assistant)
+  username       String       //Foreign key for the user table (specificallly users who are in the candidate table)
   employeeStatus EmployeeStatus @default(ACTIVE)
 
   //Relationships
-  candidate          Candidate            @relation(fields: [candidateUID], references: [uid])
+  candidate          Candidate            @relation(fields: [username], references: [username])
   jobPositionHistory JobPositionHistory[]
 }
 
@@ -105,25 +108,27 @@ model JobPositionHistory {
 
 model JobPositionApplicationHistory {
   //Fields
-  id                                 Int                  @id @default(autoincrement())
-  candidateUID                       Int
-  jobPositionId                      String
-  resumeId                           Int
-  jobApplicationStatus               JobApplicationStatus @default(APPLIED)
-  candidateName                      String               @db.Text
-  candidatePronouns                  String               @db.Text
-  candidateEmail                     String               @db.Text
-  candidateMajor                     String               @db.Text
-  candidateYear                      Int
-  candidateGrade                     Grade?
-  wasPriorEmployeeForThisCourse      Boolean
-  wasPriorEmployeeForOtherCourses    Boolean
-  priorEmploymentHistory             String?              @db.Text
-  coverLetterName                    String?              @db.Text
-  coverLetterURL                     String?
+  id                              Int                  @id @default(autoincrement())
+  username                        String               //Foreign key for the user table (specificallly users who are in the candidate table)
+  candidateUID                    Int
+  jobPositionId                   String
+  resumeId                        Int
+  jobApplicationStatus            JobApplicationStatus @default(APPLIED)
+  candidateFName                  String               @db.Text
+  candidateLName                  String               @db.Text
+  candidatePronouns               String               @db.Text
+  candidateEmail                  String               @db.Text
+  candidateMajor                  String               @db.Text
+  candidateYear                   Int
+  candidateGrade                  Grade?
+  wasPriorEmployeeForThisCourse   Boolean
+  wasPriorEmployeeForOtherCourses Boolean
+  priorEmploymentHistory          String?              @db.Text
+  coverLetterName                 String?              @db.Text
+  coverLetterURL                  String?
 
   // Relations
-  candidate   Candidate   @relation(fields: [candidateUID], references: [uid])
+  candidate   Candidate   @relation(fields: [username], references: [username])
   resume      Resume      @relation(fields: [resumeId], references: [id])
   jobPosition JobPosition @relation(fields: [jobPositionId], references: [id])
 }
@@ -131,15 +136,15 @@ model JobPositionApplicationHistory {
 //This table to storing specifically past courses a Candidate has taken before or has been an employee in the past
 model CourseHistory {
   //Fields
-  id               Int      @id @default(autoincrement())
-  candidateUID     Int
-  courseCode       String   @db.VarChar(8)
-  grade            Grade? //Letter Grade
+  id               Int     @id @default(autoincrement())
+  username         String  //Foreign key for the user table (specificallly users who are in the candidate table)
+  courseCode       String  @db.VarChar(8)
+  grade            Grade?  //Letter Grade
   hasTaken         Boolean
   wasPriorEmployee Boolean
 
   // Relations
-  candidate Candidate @relation(fields: [candidateUID], references: [uid])
+  candidate Candidate @relation(fields: [username], references: [username])
   course    Course    @relation(fields: [courseCode], references: [courseCode])
 }
 
@@ -157,27 +162,27 @@ model Course {
 
 model JobPosition {
   //Fields
-  id                          String          @id // For for id here is SemesterCode-CourseCode-SectionNumber
-  courseCode                  String          @db.VarChar(8)
-  sectionNumber               Int
-  semesterCode                Int
-  employerUID                 Int
-  maxCAs                      Int
-  jobPositionStatus           JobPositionStatus @default(OPEN)
-  location                    String          @db.Text
-  locationType                LocationType
-  graduateStatusRequirement   GraduateStatus?
-  gradeRequirement            Grade?
-  courseTakenRequirement      Boolean
-  startDate                   DateTime
-  endDate                     DateTime
+  id                        String            @id // For for id here is SemesterCode-CourseCode-SectionNumber
+  courseCode                String            @db.VarChar(8)
+  sectionNumber             Int
+  semesterCode              Int
+  username                  String            //Foreign key for the user table (specificallly users who are in the employer table)
+  maxCAs                    Int
+  jobPositionStatus         JobPositionStatus @default(OPEN)
+  location                  String            @db.Text
+  locationType              LocationType
+  graduateStatusRequirement GraduateStatus?
+  gradeRequirement          Grade?
+  courseTakenRequirement    Boolean
+  startDate                 DateTime
+  endDate                   DateTime
 
   // Relations
-  course                          Course                            @relation(fields: [courseCode], references: [courseCode])
-  employer                         Employer                         @relation(fields: [employerUID], references: [uid])
-  jobSchedules                    JobSchedule[]
-  jobPositionHistory              JobPositionHistory[]
-  jobPositionApplicationHistory   JobPositionApplicationHistory[]
+  course                        Course                        @relation(fields: [courseCode], references: [courseCode])
+  employer                      Employer                      @relation(fields: [username], references: [username])
+  jobSchedules                  JobSchedule[]
+  jobPositionHistory            JobPositionHistory[]
+  jobPositionApplicationHistory JobPositionApplicationHistory[]
 }
 
 model JobSchedule {

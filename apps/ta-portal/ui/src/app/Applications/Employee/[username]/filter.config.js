@@ -1,4 +1,4 @@
-// app/applications/Employee/[uid]/filter.config.js
+// app/applications/Employee/[username]/filter.config.js
 
 export const generateApplicationsFilterConfig = (semesterOptions = []) => [
   {

@@ -13,17 +13,27 @@ async function handleApiResponse(response) {
   return response.json();
 }
 
-// Fetches the OAuth URL for Slack
-export async function getSlackOAuthURL() {
+/**
+ * Fetches the OAuth URL for Slack from the backend.
+ * @param {string} [email] - Optional email to pass through the OAuth flow as state.
+ * @returns {Promise<string>} The full Slack authorization URL.
+ */
+export async function getSlackOAuthURL(email = "") {
   if (!BASE_API_URL || !SLACK_API_EXTENSION) {
-    throw new Error("Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_SLACK_API_EXTENSION) are not defined. Check your .env.local file.");
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
   }
 
-  const url = `${BASE_API_URL}${SLACK_API_EXTENSION}/oauth-url`;
-  console.log(`Fetching from: ${url}`);
+  // Use URL to safely construct the path with an optional query parameter.
+  const url = new URL(`${BASE_API_URL}${SLACK_API_EXTENSION}/oauth-url`);
+  if (email) {
+    url.searchParams.append("state", email); // Use 'state' as the parameter name
+  }
 
-  const response = await fetch(url);
+  console.log(`Fetching from: ${url.toString()}`);
 
+  const response = await fetch(url.toString());
   const data = await handleApiResponse(response);
   return data.url;
 }

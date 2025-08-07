@@ -11,7 +11,8 @@ export default function ViewableApplicationForm({position, application, onClose 
 
   const displayValues = {
     uid: application.candidateUID || 0,
-    name: application.candidateName || '',
+    fname: application.candidateFName || '',
+    lname: application.candidateLName || '',
     pronouns: application.candidatePronouns || '',
     email: application.candidateEmail || '',
     major: application.candidateMajor || '',
@@ -19,7 +20,7 @@ export default function ViewableApplicationForm({position, application, onClose 
     grade: application.candidateGrade || '',
     wasPriorEmployeeForThisCourse: application.wasPriorEmployeeForThisCourse || false,
     wasPriorEmployeeForOtherCourses: application.wasPriorEmployeeForOtherCourses || false,
-    priorEmploymentHistory: application.priorEmploymentHistory || [],
+    priorEmploymentHistory: application.priorEmploymentHistory || 'None',
     coverLetterName: application.coverLetterName || '',
     coverLetterURL: application.coverLetterURL || '',
   };
@@ -36,7 +37,7 @@ export default function ViewableApplicationForm({position, application, onClose 
 
         <div className="space-y-4">
           <DisplayField label="UID" value={displayValues.uid} />
-          <DisplayField label="Full Name" value={displayValues.name} />
+          <DisplayField label="Full Name" value={displayValues.fname + ' ' + displayValues.lname} />
           <DisplayField label="Pronouns" value={displayValues.pronouns} />
           <DisplayField label="Email" value={displayValues.email} />
           <DisplayField label="Major" value={displayValues.major} />
@@ -44,7 +45,10 @@ export default function ViewableApplicationForm({position, application, onClose 
           <DisplayField label={`Grade for ${position.courseCode}`} value={displayValues.grade} />
           <DisplayField label={`Prior Employment For ${position.courseCode}`} value={displayValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
           <DisplayField label="Prior Employment For Any Other Courses" value={displayValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
-          <DisplayField label="Prior Employment History" value={displayValues.priorEmploymentHistory}  />
+          <DisplayField 
+            label="Prior Employment History" 
+            value={displayValues.priorEmploymentHistory}
+          />
 
           {/* Resume */}
           {submittedResume?.resumeURL && (

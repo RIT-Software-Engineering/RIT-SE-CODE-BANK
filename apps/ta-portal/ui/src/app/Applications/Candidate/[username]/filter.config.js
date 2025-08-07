@@ -1,11 +1,11 @@
-// app/applications/Employer/[uid]/filter.config.js
+// app/applications/Candidate/[username]/filter.config.js
 
 export const generateApplicationsFilterConfig = (semesterOptions = []) => [
   {
     id: 'status',
     label: 'Application Status',
     type: 'checkbox',
-    options: ['Applied', 'Accepted Offer', 'Pending Acceptance', 'Interview', 'Onhold', 'Rejected', 'Inactive'],
+    options: ['Applied', 'Accepted Offer', 'Pending Offer', 'Interview', 'Onhold', 'Rejected', 'Inactive'],
   },
   {
     id: 'level',
@@ -20,11 +20,5 @@ export const generateApplicationsFilterConfig = (semesterOptions = []) => [
     placeholder: 'Any Semester',
     options: semesterOptions,
     optionLabel: (semester) => `Semester ${semester}`,
-  },
-  {
-    id: 'hasApplications',
-    label: 'Has Applications',
-    type: 'radio',
-    options: ["Yes", "No", "Any"],
   }
 ];
