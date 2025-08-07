@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import FilterDialog from "@components/FilterDialog";
 import Header from "@components/Header";
 import JournalHeader from "@components/journal/JournalHeader";
-import FilterDialog from "@components/FilterDialog";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 import {
   Box,
   Button,
@@ -19,7 +19,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import EditNoteIcon from "@mui/icons-material/EditNote";
+import React, { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import JournalLoading from "./loading";
 
@@ -175,6 +175,12 @@ export default function Journal() {
     setEditingEntry(null);
   };
 
+  // TODO: Doc comment for saveEntryNotes
+  /**
+   *
+   * @async
+   * @param {*} entry - THe entry that will have their notes updated
+   */
   const saveEntryNotes = async (entry) => {
     try {
       const res = await fetch(
@@ -196,12 +202,18 @@ export default function Journal() {
     setEditingEntry(null);
   };
 
+  // TODO: Doc comment for handleSaveEdit
+  /**
+   *
+   * @param {*} entry - The entry to be updated in the database
+   */
   const handleSaveEdit = (entry) => {
     toast.promise(saveEntryNotes(entry), {
       loading: "Saving...",
       success: "Notes saved!",
       error: "Failed to save notes.",
     });
+    setEditValue("");
   };
 
   const handleCreateNewEntry = () => {
@@ -216,10 +228,11 @@ export default function Journal() {
     <>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, "& > *:last-child": { mb: "0" } }}>
-        <JournalHeader setFilterDialogOpen={setFilterDialogOpen} />
-        <Button variant="outline-orange" onClick={() => setNewEntryOpen(true)}>
-          Add Entry
-        </Button>
+        <JournalHeader
+          setFilterDialogOpen={setFilterDialogOpen}
+          setNewEntryOpen={setNewEntryOpen}
+        />
+
         {journalEntries.length === 0 ? (
           <Typography variant="body1">
             No journal entries found. Please check back later.
@@ -338,8 +351,13 @@ export default function Journal() {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setNewEntryOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCreateNewEntry}>
+          <Button
+            variant="outline-orange"
+            onClick={() => setNewEntryOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button variant="outline-orange" onClick={handleCreateNewEntry}>
             Save
           </Button>
         </DialogActions>
