@@ -78,19 +78,22 @@ const workflows = [
   },
 ];
 
+/**
+ * Renders the content for the Scoopdinator's Dashboard
+ * @returns {JSX.Element}
+ */
 export default function WorkflowDashboard() {
-  //     const { user } = useUser();
-  //     console.log("current user: ", user, user ? user.type : 'no user');
+  // const { user } = useUser();
+  // console.log("current user: ", user, user ? user.type : "no user");
   // if (!user || user.type !== "admin") {
-  //     return <UnauthorizedPage />;
-  //   }
+  //   return <UnauthorizedPage />;
+  // }
 
   return (
     // <ProtectedRoute requiredRole="admin">
     <Box
       sx={{
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
-        color: "#212121",
       }}
     >
       <Header />
@@ -221,6 +224,7 @@ export default function WorkflowDashboard() {
         </Typography>
       </Box>
     </Box>
+    //{" "}
     // </ProtectedRoute>
   );
 }
