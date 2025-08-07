@@ -164,7 +164,7 @@ async function postNewUsers(data) {
             fname: app.firstName,
             lname: app.lastName,
             email: app.ritEmail,
-            type: "student", //change to scooployee
+            type: "scooployee", //changed to scooployee
             semester_group: tempData.semester_group,
             project: tempData.project,
             active : tempData.active,

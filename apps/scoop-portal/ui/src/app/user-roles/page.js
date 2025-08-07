@@ -25,9 +25,9 @@ export default function SelectUserPage() {
     if (user) {
       setUser(user); // set user
       console.log(user.type)
-      if (user.type === "admin") { //rename to scoopdinator later
+      if (user.type === "scoopdinator") { //renamed to scoopdinator 
         router.push("scoopdinator/dashboard"); 
-      } else if (user.type === "coach") { //rename to scoopervisor later
+      } else if (user.type === "scoopervisor") { //renamed to scoopervisor
         router.push("scoopervisor/dashboard"); 
       } else {
         router.push("scooployee/dashboard")

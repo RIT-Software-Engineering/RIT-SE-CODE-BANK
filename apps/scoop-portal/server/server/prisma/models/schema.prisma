@@ -31,7 +31,7 @@ model users {
   fname          String
   lname          String
   email          String @unique
-  type           String
+  role           String
   semester_group String
   project        String
   active         String

@@ -57,7 +57,7 @@ export default function Journal() {
       // Fetch the journal entries
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin` //change to scoopdinator?
         );
         const data = await res.json();
         console.log(data);
@@ -66,7 +66,7 @@ export default function Journal() {
         // Fetch contactee info for all unique contacteeIds
         const uniqueContactees = [
           ...new Set(
-            data.map((e) => `${e.contactee_fname}:::${e.contactee_lname}`)
+            data?.map((e) => `${e.contactee_fname}:::${e.contactee_lname}`)
           ),
         ];
         const contacteeMap = {};
@@ -130,7 +130,7 @@ export default function Journal() {
     setLoading(true);
 
     // Build the API url for fetching the data
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`;
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`; //change to scoopdinator?
     if (filterSemesterValue != "" || filterContacteeValue != "") {
       url += "?";
       if (filterSemesterValue) {
@@ -220,7 +220,7 @@ export default function Journal() {
             No journal entries found. Please check back later.
           </Typography>
         ) : (
-          journalEntries.map((entry) => (
+          journalEntries?.map((entry) => (
             <Card
               key={entry.id}
               square

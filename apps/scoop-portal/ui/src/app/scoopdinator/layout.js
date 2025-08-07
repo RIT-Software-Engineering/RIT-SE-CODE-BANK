@@ -1,9 +1,9 @@
 import ProtectedRoute from "../utils/ProtectedRoute";
 
-//edit "admin" to "scoopdinator" later
-export default function AdminLayout({ children }) {
+//edited "scoopdinator" 
+export default function scoopdinatorLayout({ children }) {
   return (
-    <ProtectedRoute requiredRole="admin">
+    <ProtectedRoute requiredRole="scoopdinator">
       {children}
     </ProtectedRoute>
   );
