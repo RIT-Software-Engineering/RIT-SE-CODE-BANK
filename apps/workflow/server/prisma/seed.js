@@ -169,7 +169,6 @@ async function main() {
       name: "Empty Workflow",
       description: "This is a workflow with no root action.",
       userId: users[0].id,
-      workflowStates: [{ userId: users[1].id }],
     },
     {
       name: "Workflow with three actions",
@@ -196,32 +195,6 @@ async function main() {
         {
           name: "Action 3",
           description: "This is the third action in this workflow.",
-        },
-      ],
-      workflowStates: [
-        {
-          userId: users[1].id, // User2
-          actionStates: [
-            { stateType: "notStarted" },
-            { stateType: "notStarted" },
-            { stateType: "notStarted" },
-          ],
-        },
-        {
-          userId: users[2].id, // User3
-          actionStates: [
-            { stateType: "completed" },
-            { stateType: "notStarted" },
-            { stateType: "notStarted" },
-          ],
-        },
-        {
-          userId: users[3].id, // User4
-          actionStates: [
-            { stateType: "completed" },
-            { stateType: "completed" },
-            { stateType: "completed" },
-          ],
         },
       ],
     },
@@ -302,29 +275,103 @@ async function main() {
           ],
         },
       ],
-      workflowStates: [
+    },
+    {
+      name: "Workflow with deep nesting complex actions",
+      description:
+        "A workflow that contains complex actions where some contain further complex actions.",
+      userId: users[0].id,
+      actions: [
         {
-          userId: users[1].id, // User2
-          actionStates: [
-            { stateType: "notStarted" },
-            { stateType: "notStarted" },
-            { stateType: "notStarted" },
+          name: "Complex action 1",
+          description: "This is the simple action in this workflow.",
+          actionType: "complex",
+          childActions: [
+            {
+              name: "Complex Action 1",
+              description: "This is the first action in this complex action.",
+            },
+            {
+              name: "Complex Action 2",
+              description: "This is the second action in this complex action.",
+            },
+            {
+              name: "Complex Action 3",
+              description: "This is the third action in this complex action.",
+            },
           ],
         },
         {
-          userId: users[2].id, // User3
-          actionStates: [
-            { stateType: "completed" },
-            { stateType: "notStarted" },
-            { stateType: "notStarted" },
-          ],
-        },
-        {
-          userId: users[3].id, // User4
-          actionStates: [
-            { stateType: "completed" },
-            { stateType: "completed" },
-            { stateType: "completed" },
+          name: "Complex action 2",
+          description: "This is the complex action in this workflow.",
+          actionType: "complex",
+          childActions: [
+            {
+              name: "Complex action 1",
+              description: "This is the complex action in this workflow.",
+              actionType: "complex",
+              childActions: [
+                {
+                  name: "Complex Action 1.1",
+                  description:
+                    "This is the first action in this complex action.",
+                },
+                {
+                  name: "Complex Action 1.2",
+                  description:
+                    "This is the second action in this complex action.",
+                },
+                {
+                  name: "Complex Action 1.3",
+                  description:
+                    "This is the third action in this complex action.",
+                },
+              ],
+            },
+            {
+              name: "Complex action 2",
+              description: "This is the complex action in this workflow.",
+              actionType: "complex",
+              childActions: [
+                {
+                  name: "Complex Action 2.1",
+                  description:
+                    "This is the first action in this complex action.",
+                },
+                {
+                  name: "Complex Action 2.2",
+                  description:
+                    "This is the second action in this complex action.",
+                },
+                {
+                  name: "Complex Action 2.3",
+                  description:
+                    "This is the third action in this complex action.",
+                },
+              ],
+            },
+            {
+              name: "Complex action 3",
+              description: "This is the complex action in this workflow.",
+              actionType: "complex",
+              childActions: [
+                {
+                  name: "Complex Action 3.1",
+                  description:
+                    "This is the first action in this complex action.",
+                },
+                {
+                  name: "Complex Action 3.2",
+                  description:
+                    "This is the second action in this complex action.",
+                },
+                {
+                  name: "Complex Action 3.3",
+                  description:
+                    "This is the third action in this complex action.",
+                },
+              ],
+            },
           ],
         },
       ],
@@ -336,38 +383,6 @@ async function main() {
     workflowData.map(async (w) => {
       // Create the workflow
       await createWorkflow(w);
-
-      // TODO: Figure out how to setup the action state
-
-      // Create all of the state for the workflow
-      // if (w.workflowStates?.length > 0) {
-      //   await Promise.all(
-      //     w.workflowStates.map(async (ws) => {
-      //       // Create workflow state
-      //       const workflowState = await prisma.workflowState.create({
-      //         data: {
-      //           rootActionOf: workflow.id,
-      //           userId: ws.userId,
-      //         },
-      //       });
-
-      //       // Create all action states for this workflow state
-      //       for (let i = 0; i < ws.actionStates.length; i++) {
-      //         const as = ws.actionStates[i];
-
-      //         await prisma.actionState.create({
-      //           data: {
-      //             workflowState: { connect: { id: workflowState.id } },
-      //             action: { connect: { id: actionIds[i] } },
-      //             stateType: as.stateType,
-      //             index: i,
-      //           },
-      //         });
-      //       }
-      //     })
-      //   );
-      // }
-      // }
     })
   );
 

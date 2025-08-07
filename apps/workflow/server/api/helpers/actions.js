@@ -1,39 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-async function getActionChain(rootActionId) {
-  const actions = [];
-  let currentActionId = rootActionId;
-
-  await prisma.$transaction(async () => {
-    while (currentActionId) {
-      const action = await prisma.action.findUnique({
-        where: { id: currentActionId },
-        include: {
-          metadata: true,
-          previousAction: {
-            select: {
-              id: true,
-            },
-          },
-        },
-      });
-
-      if (!action) {
-        break; // No more actions in the chain
-      }
-
-      actions.push(action);
-      currentActionId = null;
-      if (action.nextActionId) currentActionId = action.nextActionId; // Move to the next action in the chain
-    }
-  });
-
-  return actions;
-}
-
-
-// TODO: Fix this method.
 async function getFullActionTree(rootActionId) {
   const actions = [];
   let currentActionId = rootActionId;
@@ -122,7 +89,6 @@ const exportAction = (action) => ({
 });
 
 module.exports = {
-  getActionChain,
   getFullActionTree,
   exportAction,
 };
