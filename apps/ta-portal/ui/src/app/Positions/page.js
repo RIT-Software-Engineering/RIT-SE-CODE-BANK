@@ -1,7 +1,7 @@
 // src/app/Positions/page.js
 "use client";
 
-import React, { useEffect, useCallback, useState,useRef } from "react";
+import React, { useEffect, useCallback, useState,useRef, useMemo } from "react";
 import { getOpenPositions } from "../../services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
@@ -14,8 +14,7 @@ import JobPositionsCard from "@/components/positions/EmployerAndAdmin/JobPositio
 
 export default function Positions() {
   const filterRef = useRef();
-  const { currentUser } = useAuth();
-
+  const { currentUser, refreshUserProfile } = useAuth();
 
   const [openPositions, setOpenPositions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +29,17 @@ export default function Positions() {
   });
   const [activeTab, setActiveTab] = useState("open-positions");
 
+  const visibleFilters = useMemo(() => {
+    if (!currentUser || !currentUser.role) return positionFilterConfig;
+
+    const filtersToHide = ["eligibility", "applied"];
+    
+    if (currentUser.role === "EMPLOYER" || currentUser.role === "ADMIN") {
+      return positionFilterConfig.filter((filter) => !filtersToHide.includes(filter.id));
+    }
+    return positionFilterConfig;
+  }, [currentUser]);
+
   const fetchData = useCallback(
     async (currentSearch, currentFilters) => {
       if (!currentUser) return;
@@ -40,7 +50,7 @@ export default function Positions() {
         const data = await getOpenPositions(
           currentSearch,
           currentFilters,
-          currentUser.uid
+          currentUser.username
         );
         const positions = data.map((position) => {
           if (
@@ -72,6 +82,12 @@ export default function Positions() {
       fetchData(searchTerm, appliedFilters);
     }
   }, [appliedFilters, currentUser, activeTab, fetchData]);
+
+  useEffect(() => {
+    if (activeTab === 'my-positions') {
+      refreshUserProfile();
+    }
+  }, [activeTab, refreshUserProfile]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -159,7 +175,7 @@ export default function Positions() {
             <Filter
               ref={filterRef}
               onFilterChange={handleFilterChange}
-              filterConfig={positionFilterConfig}
+              filterConfig={visibleFilters}
             />
             <button
               type="submit"

@@ -1,56 +1,83 @@
-// src/app/page.js (home page)
+// src/app/page.js (root page)
+
 'use client';
 
-import { useState } from "react";
-import Login from "@/components/auth/Login";
+import { useState, useEffect } from "react";
+import LoginWrapper from "@/components/auth/Login/LoginWrapper";
+import SignUpForm from "@/components/auth/SignUpForm";
 import LandingDashboard from "@/components/dashboard/LandingDashboard";
 import { useAuth } from "@/contexts/AuthContext";
-// Import the modal component you'll be using
 import UserProfileModal from "@/components/profile/UserProfileModal";
-
+import { getAllUsers, getUserProfile } from "@/services/db-apis";
+import { useNotification } from "@/contexts/NotificationContext";
 
 export default function Home() {
   const { currentUser, setCurrentUser } = useAuth();
-  
-  // State to manage the user profile modal's visibility and data
+  const { showNotification } = useNotification();
+  const [users, setUsers] = useState([]);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileDataForModal, setProfileDataForModal] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authView, setAuthView] = useState('login');
 
-  const handleLoginSuccess = (user, action) => {
-    // If the action is 'login', it's an existing user signing in.
-    if (action === 'login' && user && user.uid) {
-      localStorage.setItem('userUID', user.uid); 
-      setCurrentUser(user);
-      console.log("User logged in and session saved:", user);
-    // If the action is 'signup', it's a new user.
-    } else if (action === 'signup' && user && user.uid) {
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const data = await getAllUsers();
+        setUsers(data);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchUsers();
+  }, []);
+
+  // Handle successful login or signup
+  const handleLoginSuccess = async (user, action) => {
+    if (action === 'login' && user && user.username) {
+      try {
+        // After successful login, immediately fetch the full profile
+        const fullProfile = await getUserProfile(user.username);
+        
+        // Set the full profile in the context and save the session
+        localStorage.setItem('username', fullProfile.username);
+        setCurrentUser(fullProfile);
+        showNotification("Login successful!", "success");
+        console.log("User logged in and session saved:", fullProfile);
+      } catch (error) {
+        
+        console.error("Failed to fetch full user profile after login:", error);
+      }
+
+    } else if (action === 'signup' && user) {
       console.log("New user creation started. Opening profile form.", user);
-      // Set the temporary user data and open the modal to complete the profile.
       setProfileDataForModal(user);
+      showNotification("Profile creation started.", "success");
       setIsProfileModalOpen(true);
     } else {
       console.error("Login/Signup failed: Data is missing or invalid.", { user, action });
+      showNotification("Login/Signup failed. Please try again.", "error");
     }
   };
 
-  // This function is called by the UserProfileModal after a new profile is created.
   const handleProfileUpdateSuccess = (newlyCreatedProfile) => {
     console.log("Profile creation successful. Logging in new user:", newlyCreatedProfile);
-    localStorage.setItem('userUID', newlyCreatedProfile.uid);
+    localStorage.setItem('username', newlyCreatedProfile.username);
     setCurrentUser(newlyCreatedProfile);
     setIsProfileModalOpen(false);
     setProfileDataForModal(null);
+    setAuthView('login');
   };
 
-  // Function to handle user logout
-  const handleLogout = () => {
-    localStorage.removeItem('userUID');
-    setCurrentUser(null);
-  };
+  // Render a loading indicator while fetching initial data
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
 
   return (
     <>
-      {/* Conditionally render the UserProfileModal for new user creation */}
       {isProfileModalOpen && (
         <UserProfileModal
           isOpen={isProfileModalOpen}
@@ -58,25 +85,31 @@ export default function Home() {
           mode="create"
           profileData={profileDataForModal}
           onUpdateSuccess={handleProfileUpdateSuccess}
+          allUsers={users}
         />
       )}
 
-      {/* Render Login component if no user is logged in AND the profile modal is closed */}
       {!currentUser && !isProfileModalOpen && (
-        <Login onLoginSuccess={handleLoginSuccess} />
+        <>
+          {authView === 'login' && (
+            <LoginWrapper
+              onLoginSuccess={handleLoginSuccess}
+              allUsers={users}
+              onSwitchToSignUp={() => setAuthView('signup')}
+            />
+          )}
+          {authView === 'signup' && (
+            <SignUpForm
+              onSignUpSubmit={handleLoginSuccess}
+              allUsers={users}
+              onSwitchToLogin={() => setAuthView('login')}
+            />
+          )}
+        </>
       )}
 
-      {/* Render Dashboard if a user is logged in */}
       {currentUser && (
-        <>
-          <button
-            onClick={handleLogout}
-            className="fixed top-20 right-4 bg-red-500 text-white py-2 px-4 rounded-lg shadow-md z-50 hover:bg-red-600"
-          >
-            Logout
-          </button>
-          <LandingDashboard user={currentUser} />
-        </>
+        <LandingDashboard user={currentUser} />
       )}
     </>
   );

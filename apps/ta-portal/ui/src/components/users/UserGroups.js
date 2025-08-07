@@ -32,11 +32,11 @@ export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = 
                     <div className="space-y-4">
                         {group.map((user) => (
                         <ProfileInfoCard
-                            key={user.uid}
+                            key={user.username}
                             profileData={user}
                             isEmployerOrAdmin={false}
                             isCandidateOrEmployee
-                            onEdit={() => onEditUser(user.uid)}
+                            onEdit={() => onEditUser(user.username)}
                         />
                         ))}
                     </div>
@@ -61,11 +61,11 @@ export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = 
             <div className="space-y-4">
             {users.map((user) => (
                 <ProfileInfoCard
-                key={user.uid}
+                key={user.username}
                 profileData={user}
                 isEmployerOrAdmin={user.role === 'EMPLOYER' || user.role === 'ADMIN'}
                 isCandidateOrEmployee={user.role === 'CANDIDATE' || user.role === 'EMPLOYEE'}
-                onEdit={() => onEditUser(user.uid)}
+                onEdit={() => onEditUser(user.username)}
                 />
             ))}
             </div>

@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-    upsertCandidateProfile,
-    upsertEmployerProfile,
+    updateCandidateProfile,
+    updateEmployerProfile,
     terminateEmployee,
 } from '@/services/db-apis';
 import { useNotification } from '@/contexts/NotificationContext';
@@ -30,7 +30,8 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
     } = useForm({
             defaultValues: {
             uid: user.uid || '',
-            fullName: user.name || '',
+            fname: user.fname || '',
+            lname: user.lname || '',
             email: user.email || '',
             pronouns: user.pronouns || '',
             major: user.candidate?.major || '',
@@ -43,7 +44,8 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
     useEffect(() => {
         reset({
             uid: user.uid || '',
-            fullName: user.name || '',
+            fname: user.fname || '',
+            lname: user.lname || '',
             email: user.email || '',
             pronouns: user.pronouns || '',
             major: user.candidate?.major || '',
@@ -58,14 +60,16 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
         try {
             const updatedEmployer = {
             uid: user.uid,
-            name: user.name,
+            fname: user.fname,
+            lname: user.lname,
+            username: user.username,
             email: user.email,
             pronouns: user.pronouns,
             department: user?.employer?.department || 'Unknown',
             role: 'ADMIN',
             };
 
-            await upsertEmployerProfile(updatedEmployer);
+            await updateEmployerProfile(updatedEmployer);
             showNotification('User promoted to Admin successfully!', 'success');
 
             if (onUpdateSuccess) onUpdateSuccess();
@@ -83,7 +87,7 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
     const handleTerminateEmployee = async () => {
         setIsTerminating(true);
         try {
-            await terminateEmployee(user.uid);
+            await terminateEmployee(user.username);
             showNotification('Employee terminated successfully.', 'success');
             if (onUpdateSuccess) onUpdateSuccess();
             if (onClose) onClose();
@@ -101,7 +105,9 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
             if (isCandidateOrEmployee) {
                 const finalData = {
                     uid: data.uid,
-                    name: data.fullName,
+                    fname: data.fname,
+                    lname: data.lname,
+                    username: user.username,
                     email: data.email,
                     pronouns: data.pronouns,
                     role: userRole,
@@ -109,17 +115,19 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
                     graduateStatus: data.graduateStatus,
                     year: data.graduateStatus === 'GRADUATE' ? 6 : parseInt(data.yearLevel, 10),
                 };
-                await upsertCandidateProfile(finalData);
+                await updateCandidateProfile(finalData);
             } else {
                 const finalData = {
                     uid: data.uid,
-                    name: data.fullName,
+                    fname: data.fname,
+                    lname: data.lname,
+                    username: user.username,
                     email: data.email,
                     pronouns: data.pronouns,
                     department: data.department,
                     role: userRole,
                 };
-                await upsertEmployerProfile(finalData);
+                await updateEmployerProfile(finalData);
             }
 
             showNotification('Profile updated successfully!', 'success');
@@ -154,7 +162,7 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
             )}
 
             {userRole === 'EMPLOYEE' &&
-                user?.candidate?.employees?.[0]?.employeeStatus !== 'TERMINATED' && (
+                user?.candidate?.employee?.[0]?.employeeStatus !== 'TERMINATED' && (
                 <Button
                     variant="contained"
                     color="error"

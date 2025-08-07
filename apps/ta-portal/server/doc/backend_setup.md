@@ -42,7 +42,7 @@
 ---
 **For adding new and/or additional database tables:**
 1.  Define your new models (database tables) and relationships within the `prisma/schema.prisma` file.
-
+2.  Run `npm install` (or `npm i`) to install all project dependencies, and then `npm run dev` to start the backend server.
 2.  Run `npx prisma migrate dev` within the prisma folder project to create and apply a new migration for the changes you've defined in `schema.prisma` file. An easier command to do this is `npm run prisma:migrate` when you in the main `/server` folder. You will be prompted to name the migration. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
 
 **NOTE** If there's any issues with running this commmand (i.e. it suggesting to resetting the database, but the reset command still doesn't work) re-run the config files to reset everything
@@ -59,7 +59,7 @@
 ---
 
 ### Final Backend Setup step
-Finally, run `npm install` (or `npm i`) to install all project dependencies, and then `npm run dev` to start the backend server.
+Finally, run `npm run dev` to start the backend server.
 
 ---
 ### PHPMyAdmin Setup
@@ -87,5 +87,5 @@ Phpmyadmin instance
 **NOTE** in some cases you may need to delete the left over data that's retained from docker after deleting these two containers and images. For that, use the command `docker volume prune` to delete all Docker volumes that are not currently being used by any container.
 
 ### running the mariaDB console
-`docker exec -it project-name-maria-db-instance /bin/bash`
-`mariadb -u root -p`
+* `docker exec -it project-name-maria-db-instance /bin/bash`
+* `mariadb -u root -p`

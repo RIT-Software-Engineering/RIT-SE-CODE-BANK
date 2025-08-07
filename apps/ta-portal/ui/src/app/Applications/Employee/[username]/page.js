@@ -7,7 +7,7 @@ import { gradeEnumToStringValue } from '@/constants/gradeConstants';
 
 import ApplicationCard from '@/components/applications/CandidateAndEmployee/ApplicationCard';
 import SearchBar from '@/components/common/searchAndFilter/SearchBar';
-import {Filter} from '@/components/common/searchAndFilter/Filter';
+import { Filter } from '@/components/common/searchAndFilter/Filter';
 import { generateApplicationsFilterConfig } from './filter.config';
 
 import Accordion from '@mui/material/Accordion';
@@ -38,14 +38,14 @@ export default function CandidateApplicationsPage() {
 
  // Fetch semester options on load to build the filter component's configuration
   useEffect(() => {
-    if (currentUser?.uid) {
+    if (currentUser?.username) {
       const fetchSemesterOptions = async () => {
         try {
           // Use the search/filter function with default params to get all applications
           const allApps = await getCandidateApplicationsAsCandidate(
             '', // No search term
             { status: [], level: '', semester: '' }, // Default filters
-            currentUser.uid
+            currentUser.username
           );
           
           const semesterCodes = [...new Set(allApps.map(app => app.jobPositionId.split('-')[0]))]
@@ -64,7 +64,7 @@ export default function CandidateApplicationsPage() {
 
   // Central function to fetch and display applications based on search/filters
   const updateApplicationsView = useCallback(async (search, filters) => {
-    if (!currentUser?.uid) return;
+    if (!currentUser?.username) return;
     setLoading(true);
     setError(null);
 
@@ -72,7 +72,7 @@ export default function CandidateApplicationsPage() {
       const data = await getCandidateApplicationsAsCandidate(
         search,
         filters,
-        currentUser.uid
+        currentUser.username
       );
 
       // convert grade enum to string

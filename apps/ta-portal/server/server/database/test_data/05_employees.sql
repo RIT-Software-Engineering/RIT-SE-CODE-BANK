@@ -1,4 +1,4 @@
-INSERT INTO `Employee` (`id`, `candidateUID`, `employeeStatus`) VALUES
-(1, 301, 'ACTIVE'),
-(2, 302, 'ACTIVE'),
-(3, 304, 'INACTIVE');
+INSERT INTO `Employee` (`id`, `username`, `employeeStatus`) VALUES
+(1, 'cc5678', 'ACTIVE'),
+(2, 'dd6789', 'ACTIVE'),
+(3, 'tt7890', 'INACTIVE');

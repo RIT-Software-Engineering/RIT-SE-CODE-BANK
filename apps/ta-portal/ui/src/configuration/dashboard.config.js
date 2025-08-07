@@ -16,38 +16,56 @@ export const DASHBOARD_OPTIONS = [
   {
     category: 'Personal',
     text: 'Kronos',
-    link: '',
+    link: 'https://kronosapps.rit.edu/kronosTimecard/login',
+    roles: [ROLES.EMPLOYEE, ROLES.ADMIN]
+  },
+  {
+    category: 'Personal',
+    text: 'Oracle',
+    link: 'https://myinfo.rit.edu',
     roles: [ROLES.EMPLOYEE, ROLES.ADMIN]
   },
   {
     category: 'Personal',
     text: 'My Positions',
-    link: '',
-    roles: [ROLES.EMPLOYEE, ROLES.ADMIN]
+    link: '', // TODO
+    roles: [ROLES.EMPLOYER, ROLES.ADMIN]
   },
   {
     category: 'Personal',
     text: 'Send Message',
     link: '/Messaging',
-    roles: [ROLES.CANDIDATE,ROLES.ADMIN]
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN]
+  },
+  {
+    category: 'Personal',
+    text: 'View Timecards',
+    link: '', // TODO
+    roles: [ROLES.EMPLOYER, ROLES.ADMIN]
+  },
+  {
+    category: 'Personal',
+    text: 'Manage Profile',
+    link: '/Profile',
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN]
   },
   // --- EMPLOYEE-SPECIFIC PERSONAL OPTIONS ---
   {
     category: 'Personal',
-    text: 'Timecard',
+    text: 'My Timecards',
     link: '/Timecard',
-    roles: [ROLES.EMPLOYEE, ROLES.ADMIN]
+    roles: [ROLES.EMPLOYEE]
   },
-    {
+  {
     category: 'Personal',
-    text: 'Send Message',
-    link: '/Users',
+    text: 'My Positions',
+    link: '', // TODO
     roles: [ROLES.EMPLOYEE]
   },
   {
     category: 'Personal',
     text: 'My Applications',
-    link: '/Applications/Employee/[uid]',
+    link: '/Applications/Employee/[username]',
     roles: [ROLES.EMPLOYEE]
   },
   // --- ADMIN-SPECIFIC PERSONAL OPTIONS ---
@@ -63,18 +81,24 @@ export const DASHBOARD_OPTIONS = [
     link: '/Positions',
     roles: [ROLES.ADMIN]
   },
+  {
+    category: 'Personal',
+    text: 'View Applications',
+    link: '/Applications/Admin/[username]',
+    roles: [ROLES.ADMIN]
+  },
   // --- FACULTY SPECIFIC OPTIONS ---
   {
     category: 'Personal',
     text: 'View Applications',
-    link: '/Applications/Employer/[uid]',
+    link: '/Applications/Employer/[username]',
     roles: [ROLES.EMPLOYER],
   },
   // --- CANDIDATE-SPECIFIC OPTIONS ---
   {
     category: 'Personal',
     text: 'My Applications',
-    link: '/Applications/Candidate/[uid]',
+    link: '/Applications/Candidate/[username]',
     roles: [ROLES.CANDIDATE],
   },
 ];

@@ -19,8 +19,8 @@ export default function LandingDashboard({ user }) {
           <div className="grid grid-cols-4">
             {PersonalOptions.map((option, index) => {
               const finalLink =
-                option.link.includes("[uid]") && user
-                  ? option.link.replace("[uid]", user.uid)
+                option.link.includes("[username]") && user
+                  ? option.link.replace("[username]", user.username)
                   : option.link;
 
               return (
