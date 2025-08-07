@@ -4,6 +4,14 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { getFullActionTree } = require("../helpers/actions.js");
 
+/**
+ * Recurisve function for collecting all action states branching from a a specific action.
+ *
+ * @param {*} where
+ * @param {*} include
+ * @param {*} select
+ * @returns
+ */
 async function getChildren(where, include = null, select = null) {
   // Get the children for the action whose ID matches parentActionId.
   const children = await prisma.actionState.findMany({
@@ -78,6 +86,7 @@ router.get("/workflow", async (req, res) => {
  *
  * @param {Array<Object>} actions
  * @param {String} parentActionStateId
+ * @param {() => void} [dataModifier=() => {}] A function reference for modifying the data object that is passed to the function.
  */
 async function createActionStates(
   actions,
@@ -154,7 +163,13 @@ router.post("/workflow", async (req, res) => {
 
   res.json(state);
 });
-// Helper function to flatten actions
+
+/**
+ * Helper function used to reorganize a action in a tree into a flat list.
+ *
+ * @param {*} actions
+ * @returns A list of actions
+ */
 function flattenActions(actions) {
   const actionSet = new Set();
   function recurse(actionList) {
@@ -177,6 +192,15 @@ function flattenActions(actions) {
   return [...actionSet];
 }
 
+/**
+ * Helper function used to collect all action states in a tree stemming from one action state
+ * and save them in a flat list.
+ *
+ * @param {*} where
+ * @param {*} include
+ * @param {*} select
+ * @returns A list of actionStates
+ */
 async function flattenActionStates(where, include = null, select = null) {
   let actionStateList = [];
   // Get the children for the action whose ID matches parentActionId.
@@ -273,9 +297,18 @@ router.put("/workflow/:id", async (req, res) => {
         }
       }
     );
-  });
 
-  res.json("Updated");
+    // Add any actionStates stemming from the baseActionState as it's children
+    const children = await getChildren(
+      { parentId: workflowState.baseActionStateId },
+      { action: true }
+    );
+    if (children?.length > 0) {
+      workflowState.baseActionState.children = children;
+    }
+
+    res.json(workflowState);
+  });
 });
 
 // DELETE /states/workflow/:id
