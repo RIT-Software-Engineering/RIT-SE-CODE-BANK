@@ -198,12 +198,6 @@ export default function SupervisorApplicationsPage() {
 
   return (
     <Box
-      sx={{
-        fontFamily: `"Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif"`,
-        bgcolor: "#f5f5f5",
-        minHeight: "100vh",
-        p: 4,
-      }}
     >
       <Header />
       <IconButton onClick={handleBack} aria-label="back">
@@ -213,7 +207,7 @@ export default function SupervisorApplicationsPage() {
         Review Applications
       </Typography>
 
-      <Box mb={3}>
+      <Box mb={3} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }} >
         <Select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -244,6 +238,8 @@ export default function SupervisorApplicationsPage() {
         >
           Submit Accepted
         </Button>
+
+        </Box>
         <Paper elevation={1}>
           <Table>
             <TableHead sx={{ backgroundColor: "#F76902" }}>
@@ -493,7 +489,7 @@ export default function SupervisorApplicationsPage() {
             </>
           )}
         </Dialog>
-      </Box>
+     
 
       <Snackbar
         open={notification.open}
