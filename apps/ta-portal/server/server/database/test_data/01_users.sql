@@ -1,11 +1,11 @@
-INSERT INTO `User` (`uid`, `fname`, `lname`, `username`, `password`, `email`, `pronouns`, `role`) VALUES
-(100, "Alice", "Admin", "aa1234", "password", 'admin@example.com', 'they/them', 'ADMIN'),
-(200, "Dr. John", "Doe", "jd2345", "password", 'faculty1@example.com', 'he/him', 'EMPLOYER'),
-(250, "Dr. Jane", "Doe", "jd3456", "password", 'faculty2@example.com', 'she/her', 'EMPLOYER'),
-(300, "Dr. Bob", "Doe", "bd4567", "password", 'faculty3@example.com', 'he/him', 'EMPLOYER'),
-(301, "Charlie", "Coder", "cc5678", "password", 'student1@example.com', 'he/him', 'EMPLOYEE'),
-(302, "Denise", "Designer", "dd6789", "password", 'student2@example.com', 'she/her', 'EMPLOYEE'),
-(304, "Tyler", "Tester", "tt7890", "password", 'student4@example.com', 'he/him', 'EMPLOYEE'),
-(303, "Evan", "Engineer", "ee8901", "password", 'student3@example.com', 'they/them', 'CANDIDATE'),
-(305, "Sally", "Student", "ss9012", "password", 'student5@example.com', 'they/them', 'CANDIDATE'),
-(306, "Liang", "Chu", "lc2410", "password", 'lc2410@g.rit.edu', 'he/him', 'CANDIDATE');
+INSERT INTO `User` (`username`, `fname`, `lname`, `uid`, `password`, `email`, `pronouns`, `role`) VALUES
+('aa1234', 'Alice', 'Admin', 100, 'password', 'admin@example.com', 'they/them', 'ADMIN'),
+('jd2345', 'Dr. John', 'Doe', 200, 'password', 'faculty1@example.com', 'he/him', 'EMPLOYER'),
+('jd3456', 'Dr. Jane', 'Doe', 250, 'password', 'faculty2@example.com', 'she/her', 'EMPLOYER'),
+('bd4567', 'Dr. Bob', 'Doe', 300, 'password', 'faculty3@example.com', 'he/him', 'EMPLOYER'),
+('cc5678', 'Charlie', 'Coder', 301, 'password', 'student1@example.com', 'he/him', 'EMPLOYEE'),
+('dd6789', 'Denise', 'Designer', 302, 'password', 'student2@example.com', 'she/her', 'EMPLOYEE'),
+('tt7890', 'Tyler', 'Tester', 304, 'password', 'student4@example.com', 'he/him', 'EMPLOYEE'),
+('ee8901', 'Evan', 'Engineer', 303, 'password', 'student3@example.com', 'they/them', 'CANDIDATE'),
+('ss9012', 'Sally', 'Student', 305, 'password', 'student5@example.com', 'they/them', 'CANDIDATE'),
+('lc2410', 'Liang', 'Chu', 306, 'password', 'lc2410@g.rit.edu', 'he/him', 'CANDIDATE');

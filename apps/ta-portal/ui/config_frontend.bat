@@ -11,10 +11,42 @@ SET "BACKEND_URL=https://localhost:3300"
 SET "API_EXTENSION=/api"
 SET "DB_API_EXTENSION=/db"
 SET "SLACK_API_EXTENSION=/slack"
-REM Add any other frontend variables here
-
 SET "ENV_FILE=.env"
 REM --- End Configuration ---
+
+REM --- Prompt user for environment selection ---
+:PROMPT_ENV
+ECHO Please select the node environment:
+ECHO 1) DEV
+ECHO 2) PROD
+SET /P "CHOICE=Enter your choice (1 or 2): "
+
+IF "%CHOICE%"=="1" (
+    SET "NODE_ENV=DEV"
+    ECHO Environment set to DEV.
+    GOTO :CONTINUE_SCRIPT
+)
+IF "%CHOICE%"=="2" (
+    SET "NODE_ENV=PROD"
+    ECHO Environment set to PROD.
+    GOTO :CONTINUE_SCRIPT
+)
+
+ECHO Invalid choice. Please enter 1 or 2.
+ECHO.
+GOTO :PROMPT_ENV
+
+:CONTINUE_SCRIPT
+
+
+ECHO Deleting old %ENV_FILE%...
+REM --- Delete existing .env file ---
+IF EXIST "%ENV_FILE%" (
+    ECHO Existing %ENV_FILE% found. Deleting it.
+    DEL "%ENV_FILE%"
+)
+REM Create a new empty file to prevent errors
+type NUL > "%ENV_FILE%"
 
 
 ECHO.
@@ -24,7 +56,8 @@ REM Call the subroutine to update each variable
 CALL :update_env_var "NEXT_PUBLIC_BACKEND_URL" "%BACKEND_URL%"
 CALL :update_env_var "NEXT_PUBLIC_API_EXTENSION" "%API_EXTENSION%"
 CALL :update_env_var "NEXT_PUBLIC_DATABASE_API_EXTENSION" "%DB_API_EXTENSION%"
-call :update_env_var "NEXT_PUBLIC_SLACK_API_EXTENSION" "%DB_SLACK_EXTENSION%"
+CALL :update_env_var "NEXT_PUBLIC_SLACK_API_EXTENSION" "%SLACK_API_EXTENSION%"
+CALL :update_env_var "NEXT_PUBLIC_NODE_ENV" "%NODE_ENV%"
 REM Add calls for other variables here
 
 
@@ -33,7 +66,7 @@ ECHO --- Frontend Environment Variables Setup Complete ---
 
 ECHO.
 ECHO --- Current %ENV_FILE% (relevant section) ---
-findstr /R /C:"^NEXT_PUBLIC_BACKEND_URL=" /C:"^NEXT_PUBLIC_API_EXTENSION=" /C:"^NEXT_PUBLIC_DATABASE_API_EXTENSION=" /C:"^NEXT_PUBLIC_SLACK_API_EXTENSION=" "%ENV_FILE%"
+findstr /R /C:"^NEXT_PUBLIC_BACKEND_URL=" /C:"^NEXT_PUBLIC_API_EXTENSION=" /C:"^NEXT_PUBLIC_DATABASE_API_EXTENSION=" /C:"^NEXT_PUBLIC_SLACK_API_EXTENSION=" /C:"^NEXT_PUBLIC_NODE_ENV=" "%ENV_FILE%"
 ECHO --------------------------------------------------
 
 ENDLOCAL
@@ -47,7 +80,7 @@ SET "VAR_NAME=%~1"
 SET "VAR_VALUE=%~2"
 SET "TEMP_FILE=%ENV_FILE%.tmp"
 
-ECHO Setting %VAR_NAME%=%VAR_VALUE%
+ECHO Setting %VAR_NAME%="%VAR_VALUE%"
 
 REM This subroutine safely edits a file by:
 REM 1. Creating a temporary file.
@@ -67,7 +100,7 @@ FOR /F "usebackq tokens=* delims=" %%A IN ("%ENV_FILE%") DO (
 )
 
 REM Now, add the new or updated value to the end of the temp file
-ECHO %VAR_NAME%=%VAR_VALUE%>>"%TEMP_FILE%"
+ECHO %VAR_NAME%="%VAR_VALUE%">>"%TEMP_FILE%"
 
 REM Replace the original file with the updated temporary file
 MOVE /Y "%TEMP_FILE%" "%ENV_FILE%" >NUL

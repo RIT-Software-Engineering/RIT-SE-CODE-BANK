@@ -2,8 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  upsertCandidateProfile,
-  upsertEmployerProfile,
+  createCandidateProfile,
+  createEmployerProfile,
+  updateCandidateProfile,
+  updateEmployerProfile,
 } from '@/services/db-apis';
 import { useNotification } from '@/contexts/NotificationContext';
 
@@ -226,7 +228,6 @@ export default function UserProfileForm({
         fname: data.fname,
         lname: data.lname,
         username: user.username,
-        password: user.password,
         email: data.email,
         pronouns: data.pronouns,
         role: user.role,
@@ -237,18 +238,25 @@ export default function UserProfileForm({
         courseHistory: Array.from(courseHistoryMap.values()),
       };
 
-      const updatedProfile = await upsertCandidateProfile(finalData);
+      let updatedProfile;
+      if (isEditMode) {
+        // Call the update function for existing users
+        updatedProfile = await updateCandidateProfile(finalData);
+      } else {
+        finalData.password = user.password; // Password from initial signup object
+        updatedProfile = await createCandidateProfile(finalData);
+      }
+
       if (onUpdateSuccess) onUpdateSuccess(updatedProfile);
       showNotification('Profile saved!', 'success');
       if (onClose) onClose();
     } catch (error) {
       console.error('Failed to submit form:', error);
-      showNotification(
-        `Error: Could not save profile. ${error.message}`,
-        'error'
-      );
+      showNotification(`Error: Could not save profile. ${error.message}`, 'error');
     }
   };
+
+
   const onSubmitEmployer = async (data) => {
     try {
       const finalData = {
@@ -256,22 +264,27 @@ export default function UserProfileForm({
         fname: data.fname,
         lname: data.lname,
         username: user.username,
-        password: user.password,
         email: data.email,
         pronouns: data.pronouns,
         department: data.department,
         role: user.role,
       };
-      const updatedProfile = await upsertEmployerProfile(finalData);
+      let updatedProfile;
+      if (isEditMode) {
+        // Call the update function for existing users
+        updatedProfile = await updateEmployerProfile(finalData);
+      } else {
+        // Call the create function for new users, adding password
+        finalData.password = user.password;
+        updatedProfile = await createEmployerProfile(finalData);
+      }
+
       if (onUpdateSuccess) onUpdateSuccess(updatedProfile);
       showNotification('Profile saved!', 'success');
       if (onClose) onClose();
     } catch (error) {
       console.error('Failed to submit employer form:', error);
-      showNotification(
-        `Error: Could not save profile. ${error.message}`,
-        'error'
-      );
+      showNotification(`Error: Could not save profile. ${error.message}`, 'error');
     }
   };
 
@@ -286,7 +299,6 @@ export default function UserProfileForm({
         case 'info':
           return (
             <Step1CandidateAndEmployee
-              user={user}
               register={register}
               errors={errors}
               watchedStatus={watchedStatus}
@@ -325,7 +337,6 @@ export default function UserProfileForm({
         case 1:
           return (
             <Step1CandidateAndEmployee
-              user={user}
               register={register}
               errors={errors}
               watchedStatus={watchedStatus}
@@ -360,7 +371,7 @@ export default function UserProfileForm({
     }
     // Employer/Admin form
     return (
-      <Step1EmployerAndAdmin user={user} register={register} errors={errors} />
+      <Step1EmployerAndAdmin register={register} errors={errors} />
     );
   };
 

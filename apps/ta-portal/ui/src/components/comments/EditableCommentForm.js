@@ -11,9 +11,14 @@ export default function EditableCommentForm({ isOpen, onClose, onConfirm, title,
     onConfirm(comment);
   };
 
+  const handleCancel = () => {
+    setComment('');
+    onClose();
+  };
+
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      handleCancel();
     }
   };
 
@@ -36,7 +41,7 @@ export default function EditableCommentForm({ isOpen, onClose, onConfirm, title,
 
         <div className="flex justify-end space-x-3 mt-6">
           <button
-            onClick={onClose}
+            onClick={handleCancel}
             disabled={isProcessing}
             className="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50"
           >

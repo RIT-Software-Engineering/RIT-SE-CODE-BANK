@@ -16,9 +16,6 @@ export default function JobPositionsCard({ profileData }) {
   useEffect(() => {
     const jobs = profileData?.employer?.jobPostions || [];
     setJobPositions(jobs);
-    console.log("Current Faculty:", profileData?.uid);
-
-    // const schedule =
   }, [profileData]); // This runs when profileData changes
 
   const handleOpenModal = (job) => {
@@ -110,7 +107,7 @@ export default function JobPositionsCard({ profileData }) {
           job={selectedJob}
           onClose={handleCloseModal}
           onSave={handleSaveJob}
-          EmployerUID={profileData?.uid}
+          EmployerUsername={profileData?.username}
         />
       )}
     </>

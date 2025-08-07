@@ -1,24 +1,25 @@
-// src/app/page.js (home page)
+// src/app/page.js (root page)
+
 'use client';
 
 import { useState, useEffect } from "react";
-import Login from "@/components/auth/Login";
+import LoginWrapper from "@/components/auth/Login/LoginWrapper";
+import SignUpForm from "@/components/auth/SignUpForm";
 import LandingDashboard from "@/components/dashboard/LandingDashboard";
 import { useAuth } from "@/contexts/AuthContext";
 import UserProfileModal from "@/components/profile/UserProfileModal";
-import { getAllUsers } from "@/services/db-apis";
-
+import { getAllUsers, getUserProfile } from "@/services/db-apis";
+import { useNotification } from "@/contexts/NotificationContext";
 
 export default function Home() {
   const { currentUser, setCurrentUser } = useAuth();
+  const { showNotification } = useNotification();
   const [users, setUsers] = useState([]);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileDataForModal, setProfileDataForModal] = useState(null);
-  
-  // ADDED: State to manage the initial data fetch
   const [isLoading, setIsLoading] = useState(true);
+  const [authView, setAuthView] = useState('login');
 
-  // Fetch all users when the component mounts
   useEffect(() => {
     async function fetchUsers() {
       try {
@@ -33,31 +34,41 @@ export default function Home() {
     fetchUsers();
   }, []);
 
-  const handleLoginSuccess = (user, action) => {
-    if (action === 'login' && user && user.uid) {
-      localStorage.setItem('userUID', user.uid); 
-      setCurrentUser(user);
-      console.log("User logged in and session saved:", user);
+  // Handle successful login or signup
+  const handleLoginSuccess = async (user, action) => {
+    if (action === 'login' && user && user.username) {
+      try {
+        // After successful login, immediately fetch the full profile
+        const fullProfile = await getUserProfile(user.username);
+        
+        // Set the full profile in the context and save the session
+        localStorage.setItem('username', fullProfile.username);
+        setCurrentUser(fullProfile);
+        showNotification("Login successful!", "success");
+        console.log("User logged in and session saved:", fullProfile);
+      } catch (error) {
+        
+        console.error("Failed to fetch full user profile after login:", error);
+      }
+
     } else if (action === 'signup' && user) {
       console.log("New user creation started. Opening profile form.", user);
       setProfileDataForModal(user);
+      showNotification("Profile creation started.", "success");
       setIsProfileModalOpen(true);
     } else {
       console.error("Login/Signup failed: Data is missing or invalid.", { user, action });
+      showNotification("Login/Signup failed. Please try again.", "error");
     }
   };
 
   const handleProfileUpdateSuccess = (newlyCreatedProfile) => {
     console.log("Profile creation successful. Logging in new user:", newlyCreatedProfile);
-    localStorage.setItem('userUID', newlyCreatedProfile.uid);
+    localStorage.setItem('username', newlyCreatedProfile.username);
     setCurrentUser(newlyCreatedProfile);
     setIsProfileModalOpen(false);
     setProfileDataForModal(null);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('userUID');
-    setCurrentUser(null);
+    setAuthView('login');
   };
 
   // Render a loading indicator while fetching initial data
@@ -79,19 +90,26 @@ export default function Home() {
       )}
 
       {!currentUser && !isProfileModalOpen && (
-        <Login onLoginSuccess={handleLoginSuccess} allUsers={users} />
+        <>
+          {authView === 'login' && (
+            <LoginWrapper
+              onLoginSuccess={handleLoginSuccess}
+              allUsers={users}
+              onSwitchToSignUp={() => setAuthView('signup')}
+            />
+          )}
+          {authView === 'signup' && (
+            <SignUpForm
+              onSignUpSubmit={handleLoginSuccess}
+              allUsers={users}
+              onSwitchToLogin={() => setAuthView('login')}
+            />
+          )}
+        </>
       )}
 
       {currentUser && (
-        <>
-          <button
-            onClick={handleLogout}
-            className="fixed top-20 right-4 bg-red-500 text-white py-2 px-4 rounded-lg shadow-md z-50 hover:bg-red-600"
-          >
-            Logout
-          </button>
-          <LandingDashboard user={currentUser} />
-        </>
+        <LandingDashboard user={currentUser} />
       )}
     </>
   );

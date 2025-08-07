@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ROLES } from "@/configuration/dashboard.config";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const HEADER_LINKS = [
   {
@@ -17,24 +18,39 @@ const HEADER_LINKS = [
   },
   { text: "Timecard", href: "/Timecard", roles: [ROLES.EMPLOYEE] },
   {
+    text: "Timecard",
+    href: "", // TODO
+    roles: [ROLES.EMPLOYER, ROLES.ADMIN], 
+  },
+  {
     text: "Positions",
     href: "/Positions",
     roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
   },
   {
     text: "Applications",
-    href: "/Applications/Candidate/[uid]",
+    href: "/Applications/Candidate/[username]",
     roles: [ROLES.CANDIDATE],
   },
   {
     text: "Applications",
-    href: "/Applications/Employer/[uid]",
+    href: "/Applications/Employer/[username]",
     roles: [ROLES.EMPLOYER],
   },
   {
     text: "Applications",
-    href: "/Applications/Employee/[uid]",
+    href: "/Applications/Employee/[username]",
     roles: [ROLES.EMPLOYEE],
+  },
+  {
+    text: "Applications",
+    href: "/Applications/Admin/[username]",
+    roles: [ROLES.ADMIN],
+  },
+  {
+    text: "Users",
+    href: "/Users",
+    roles: [ROLES.ADMIN],
   },
   {
     text: "Profile",
@@ -44,12 +60,19 @@ const HEADER_LINKS = [
 ];
 
 export default function Header() {
-  const { currentUser } = useAuth();
+  const { currentUser, setCurrentUser } = useAuth();
+  const router = useRouter();
   const userRole = currentUser ? currentUser.role : null;
 
   const availableLinks = HEADER_LINKS.filter((link) =>
     link.roles.includes(userRole)
   );
+
+  const handleLogout = () => {
+    localStorage.removeItem("username");
+    setCurrentUser(null);
+    router.push("/");
+  };
 
   return (
     <div className="bg-rit-orange p-4 flex flex-row">
@@ -58,9 +81,9 @@ export default function Header() {
         <h3>Department of Software Engineering, RIT </h3>
       </div>
       <nav className="pb-2 mt-2 text-white text-lg text-right flex-grow space-x-4 pr-10">
-         {availableLinks.map((link) => {
-          const finalHref = link.href.includes("[uid]") && currentUser
-              ? link.href.replace("[uid]", currentUser.uid)
+        {availableLinks.map((link) => {
+          const finalHref = link.href.includes("[username]") && currentUser
+              ? link.href.replace("[username]", currentUser.username)
               : link.href;
 
           return (
@@ -69,6 +92,15 @@ export default function Header() {
             </Link>
           );
         })}
+
+        {currentUser && (
+          <button
+            onClick={handleLogout}
+            className="bg-white text-rit-orange font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-100 transition-colors duration-200"
+          >
+            Logout
+          </button>
+        )}
       </nav>
     </div>
   );

@@ -71,7 +71,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                 }
 
                 const data = new FormData();
-                data.append('candidateUID', user.uid);
+                data.append('candidateUsername', user.username);
                 data.append('jobPositionId', position.id);
 
                 if (isUploadingNewResume) {
@@ -87,6 +87,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                     data.append('coverLetterName', formData.coverLetterName);
                 }
                 
+                // retireve the rest of the form data except for the files
                 const { resumeFile, resumeId, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 data.append('jobPositionApplicationFormData', JSON.stringify(restOfFormData));
                 
@@ -97,7 +98,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                 // No new files being uploaded, so the simpler JSON API call is used.
                 const { resumeFile, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 const applicationDetails = {
-                    candidateUID: user.uid,
+                    candidateUsername: user.username,
                     jobPositionId: position.id,
                     resumeId: parseInt(formData.resumeId, 10),
                     jobPositionApplicationFormData: JSON.stringify(restOfFormData),

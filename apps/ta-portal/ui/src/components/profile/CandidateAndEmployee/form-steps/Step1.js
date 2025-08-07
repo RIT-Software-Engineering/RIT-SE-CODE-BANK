@@ -3,26 +3,18 @@
 import React from "react";
 import InputField from "../../../common/fields/InputField";
 import SelectField from "../../../common/fields/SelectField";
-import DisplayField from "@/components/common/fields/DisplayField";
 
 /**
  * Component for the first step of the form for candidates and employees
  * @param {object} props - The component props.
- * @param {object} props.user - The user's profile data object.
  * @param {function} props.register - The form register function.
  * @param {object} props.errors - The form errors object.
  * @param {object} props.watchedStatus - The form watched status object.
  * @returns {JSX.Element} The rendered Step1 component.
  */
-export default function Step1CandidateAndEmployee({ user, register, errors, watchedStatus }) {
+export default function Step1CandidateAndEmployee({ register, errors, watchedStatus }) {
   return (
     <fieldset className="space-y-4 animate-fade-in">
-      {/* --- NON-EDITABLE UID AND EMAIL FIELDS --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <DisplayField label="User Name" value={user?.username} />
-        <DisplayField label="Password" value={user?.password} />
-      </div>
-
       {/* --- EDITABLE FIELDS --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputField

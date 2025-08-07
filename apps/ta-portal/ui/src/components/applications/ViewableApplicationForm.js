@@ -20,11 +20,10 @@ export default function ViewableApplicationForm({position, application, onClose 
     grade: application.candidateGrade || '',
     wasPriorEmployeeForThisCourse: application.wasPriorEmployeeForThisCourse || false,
     wasPriorEmployeeForOtherCourses: application.wasPriorEmployeeForOtherCourses || false,
-    priorEmploymentHistory: application.priorEmploymentHistory || [],
+    priorEmploymentHistory: application.priorEmploymentHistory || 'None',
     coverLetterName: application.coverLetterName || '',
     coverLetterURL: application.coverLetterURL || '',
   };
-  console.log("prior emp history", displayValues.priorEmploymentHistory);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center">
@@ -48,11 +47,7 @@ export default function ViewableApplicationForm({position, application, onClose 
           <DisplayField label="Prior Employment For Any Other Courses" value={displayValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
           <DisplayField 
             label="Prior Employment History" 
-            value={
-              displayValues.priorEmploymentHistory.length > 0
-                ? displayValues.priorEmploymentHistory.map(item => item.courseCode).join(', ')
-                : 'None'
-            }
+            value={displayValues.priorEmploymentHistory}
           />
 
           {/* Resume */}

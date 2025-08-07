@@ -12,17 +12,17 @@ export default function AuthProvider({ children }) {
     const loadUserData = async () => {
       setLoading(true);
       try {
-        const storedUID = localStorage.getItem('userUID');
-        if (storedUID) {
+        const storedUsername = localStorage.getItem('username');
+        if (storedUsername) {
           // If a user ID is in storage, fetch their full profile
-          const userProfile = await getUserProfile(parseInt(storedUID, 10));
+          const userProfile = await getUserProfile(storedUsername);
           console.log("Session restored:", userProfile);
           setCurrentUser(userProfile);
         }
       } catch (error) {
         console.error("Session restore failed:", error);
         // Clear out any bad data if the fetch fails
-        localStorage.removeItem('userUID');
+        localStorage.removeItem('username');
         setCurrentUser(null);
       } finally {
         setLoading(false);
@@ -35,9 +35,9 @@ export default function AuthProvider({ children }) {
 
   const refreshUserProfile = async () => {
     try {
-      const storedUID = localStorage.getItem('userUID');
-      if (storedUID) {
-        const userProfile = await getUserProfile(parseInt(storedUID, 10));
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername) {
+        const userProfile = await getUserProfile(storedUsername);
         setCurrentUser(userProfile);
       }
     } catch (error) {

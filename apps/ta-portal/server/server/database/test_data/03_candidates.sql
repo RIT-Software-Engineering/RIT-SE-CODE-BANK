@@ -1,7 +1,7 @@
-INSERT INTO `Candidate` (`uid`, `year`, `major`, `graduateStatus`, `wasPriorEmployee`) VALUES
-(301, 2, 'Software Engineering', 'UNDERGRADUATE', TRUE),
-(302, 5, 'Mathematics', 'GRADUATE', TRUE),
-(303, 3, 'Computer Engineering', 'UNDERGRADUATE', FALSE),
-(304, 6, 'Mathematics', 'GRADUATE', TRUE),
-(305, 3, 'Computer Engineering', 'UNDERGRADUATE', FALSE),
-(306, 4, 'Software Engineering', 'UNDERGRADUATE', FALSE);
+INSERT INTO `Candidate` (`username`, `year`, `major`, `graduateStatus`, `wasPriorEmployee`) VALUES
+('cc5678', 5, 'Software Engineering', 'UNDERGRADUATE', TRUE),
+('dd6789', 6, 'Web and Mobile Computing', 'GRADUATE', TRUE),
+('tt7890', 6, 'Computer Science', 'GRADUATE', FALSE),
+('ee8901', 2, 'Computer Engineering', 'UNDERGRADUATE', TRUE),
+('ss9012', 4, 'Cybersecurity', 'UNDERGRADUATE', FALSE),
+('lc2410', 3, 'Software Engineering', 'UNDERGRADUATE', FALSE);

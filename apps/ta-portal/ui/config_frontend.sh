@@ -8,6 +8,37 @@ SLACK_API_EXTENSION="/slack"
 ENV_FILE=".env"
 # --- End Configuration ---
 
+
+# --- Prompt user for environment selection ---
+echo "Please select the node environment:"
+options=("DEV" "PROD")
+select opt in "${options[@]}"
+do
+    case $opt in
+        "DEV")
+            NODE_ENV="DEV"
+            echo "Environment set to DEV."
+            break
+            ;;
+        "PROD")
+            NODE_ENV="PROD"
+            echo "Environment set to PROD."
+            break
+            ;;
+        *) echo "Invalid option $REPLY. Please enter 1 or 2.";;
+    esac
+done
+
+
+echo "Deleting old $ENV_FILE..."
+# --- Delete existing .env file ---
+if [ -f "$ENV_FILE" ]; then
+    echo "Existing $ENV_FILE found. Deleting it."
+    rm "$ENV_FILE"
+fi
+# Create a new empty .env file to ensure it exists for appending
+touch "$ENV_FILE"
+
 echo "Configuring $ENV_FILE for frontend..."
 
 # --- Configuration Function to update or add an environment variable ---
@@ -43,6 +74,7 @@ update_env_var "NEXT_PUBLIC_BACKEND_URL" "$BACKEND_URL"
 update_env_var "NEXT_PUBLIC_API_EXTENSION" "$API_EXTENSION"
 update_env_var "NEXT_PUBLIC_DATABASE_API_EXTENSION" "$DATABASE_API_EXTENSION"
 update_env_var "NEXT_PUBLIC_SLACK_API_EXTENSION" "$SLACK_API_EXTENSION"
+update_env_var "NEXT_PUBLIC_NODE_ENV" "$NODE_ENV"
 
 
 # --- Final Output ---

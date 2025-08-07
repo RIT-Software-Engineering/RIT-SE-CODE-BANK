@@ -1,3 +1,4 @@
+// src/app/Applications/Employer/[username]/page.js
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -40,12 +41,12 @@ export default function Applications() {
   });
 
   useEffect(() => {
-    if (currentUser?.uid) {
+    if (currentUser?.username) {
       const fetchAndSetConfig = async () => {
         try {
-          // Fetch the semester codes using the employer's UID
+          // Fetch the semester codes using the employer's username
           const semesterCodes = await getSemesterCodesForEmployer(
-            currentUser.uid
+            currentUser.username
           );
           console.log('Semester codes fetched:', semesterCodes);
           // Generate the config with the fetched data
@@ -64,7 +65,7 @@ export default function Applications() {
   // This is now the single function for fetching and processing data.
   const updateApplicationsView = useCallback(
     async (search, searchType, filters) => {
-      if (!currentUser?.uid) return;
+      if (!currentUser?.username) return;
       setLoading(true);
       setError(null);
 
@@ -74,7 +75,7 @@ export default function Applications() {
           search,
           searchType,
           filters,
-          currentUser.uid
+          currentUser.username
         );
 
         // Convert gradeRequirement from enum to string
