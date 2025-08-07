@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { PrismaClient } from "../../server/src/generated/prisma/index.js";
+import { PrismaClient } from "@prisma/client";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -11,35 +11,35 @@ const prisma = new PrismaClient();
  * @param {Object} res - The response object
  */
 router.get("/", async (req, res) => {
-    try {
-        const projects = await prisma.project.findMany();
-        res.status(200).json(projects);
-    } catch (error) {
-        console.error("Error fetching projects: ", error);
-        res.status(500).json({
-            message: "Error fetching projects",
-            error: error.message,
-        });
-    }
+  try {
+    const projects = await prisma.project.findMany();
+    res.status(200).json(projects);
+  } catch (error) {
+    console.error("Error fetching projects: ", error);
+    res.status(500).json({
+      message: "Error fetching projects",
+      error: error.message,
+    });
+  }
 });
 
 /**
  * GET a specific project
  */
 router.get("/:id", async (req, res) => {
-    const { id } = req.params;
-    try {
-        const project = await prisma.project.findUnique({
-            where: { id: Number(id) },
-        });
-        res.status(200).json(project);
-    } catch (error) {
-        console.error("Error fetching project: ", error);
-        res.status(500).json({
-            message: "Failed to fetch project",
-            error: error.message,
-        });
-    }
+  const { id } = req.params;
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id: Number(id) },
+    });
+    res.status(200).json(project);
+  } catch (error) {
+    console.error("Error fetching project: ", error);
+    res.status(500).json({
+      message: "Failed to fetch project",
+      error: error.message,
+    });
+  }
 });
 
 /**
@@ -49,7 +49,27 @@ router.get("/:id", async (req, res) => {
  * @param {Object} res - The response object
  */
 router.post("/", async (req, res) => {
-    const {
+  const {
+    submission_date,
+    status,
+    title,
+    display_name,
+    description,
+    project_challenges,
+    constraints_assumptions,
+    project_search_keywords,
+    team_name,
+    poster,
+    video,
+    website,
+    synopsis,
+    semesterId,
+    created_at,
+    updated_at,
+  } = req.body;
+  try {
+    const newProject = await prisma.project.create({
+      data: {
         submission_date,
         status,
         title,
@@ -66,39 +86,19 @@ router.post("/", async (req, res) => {
         semesterId,
         created_at,
         updated_at,
-    } = req.body;
-    try {
-        const newProject = await prisma.project.create({
-            data: {
-                submission_date,
-                status,
-                title,
-                display_name,
-                description,
-                project_challenges,
-                constraints_assumptions,
-                project_search_keywords,
-                team_name,
-                poster,
-                video,
-                website,
-                synopsis,
-                semesterId,
-                created_at,
-                updated_at,
-            },
-        });
-        res.status(200).json({
-            message: "Project created",
-            project: newProject,
-        });
-    } catch (error) {
-        console.error();
-        res.status(500).json({
-            message: "Error creating project",
-            error: error.message,
-        });
-    }
+      },
+    });
+    res.status(200).json({
+      message: "Project created",
+      project: newProject,
+    });
+  } catch (error) {
+    console.error();
+    res.status(500).json({
+      message: "Error creating project",
+      error: error.message,
+    });
+  }
 });
 
 /**
@@ -108,8 +108,28 @@ router.post("/", async (req, res) => {
  * @param {Object} res - The response object
  */
 router.put("/:id", async (req, res) => {
-    const { id } = req.params;
-    const {
+  const { id } = req.params;
+  const {
+    submission_date,
+    status,
+    title,
+    display_name,
+    description,
+    project_challenges,
+    constraints_assumptions,
+    project_search_keywords,
+    team_name,
+    poster,
+    video,
+    website,
+    synopsis,
+    semesterId,
+    updated_at,
+  } = req.body;
+  try {
+    const updatedProject = await prisma.project.update({
+      where: { id: Number(id) },
+      data: {
         submission_date,
         status,
         title,
@@ -125,36 +145,16 @@ router.put("/:id", async (req, res) => {
         synopsis,
         semesterId,
         updated_at,
-    } = req.body;
-    try {
-        const updatedProject = await prisma.project.update({
-            where: { id: Number(id) },
-            data: {
-                submission_date,
-                status,
-                title,
-                display_name,
-                description,
-                project_challenges,
-                constraints_assumptions,
-                project_search_keywords,
-                team_name,
-                poster,
-                video,
-                website,
-                synopsis,
-                semesterId,
-                updated_at,
-            },
-        });
-        res.status(200).json(updatedProject);
-    } catch (error) {
-        console.error("Error updating project: ", error);
-        res.status(500).json({
-            message: "Failed to update project",
-            error: error.message,
-        });
-    }
+      },
+    });
+    res.status(200).json(updatedProject);
+  } catch (error) {
+    console.error("Error updating project: ", error);
+    res.status(500).json({
+      message: "Failed to update project",
+      error: error.message,
+    });
+  }
 });
 
 export default router;
