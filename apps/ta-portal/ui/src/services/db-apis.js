@@ -591,3 +591,105 @@ export async function getComments(tableName, foreignKey) {
   const response = await fetch(url);
   return handleApiResponse(response);
 }
+
+/**
+ * Fetches the current weekly timecard for a given job.
+ * @param {number} jobPositionHistoryId - The ID of the job history record.
+ * @returns {Promise<object>} A promise that resolves to the timecard data.
+ */
+export async function getEmployeeTimecard(jobPositionHistoryId) {
+    if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+      throw new Error("Backend API URL components are not defined.");
+    }
+  
+    const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/${jobPositionHistoryId}`;
+  
+    const response = await fetch(url);
+    return handleApiResponse(response);
+  }
+
+/**
+ * Fetches the most recent timecard for a given job position history ID.
+ * @param {number} jobPositionHistoryId - The ID of the job history record.
+ * @returns {Promise<object>} A promise that resolves to the timecard data.
+ */
+export async function getMostRecentTimecard(jobPositionHistoryId) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined.");
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/most-recent/${jobPositionHistoryId}`;
+  console.log(`Fetching most recent timecard from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+/**
+ * Creates or updates a single day's entry, primarily for saving notes.
+ * @param {object} dayData - The data for the day, including jobPositionHistoryId, date, and notes.
+ * @returns {Promise<object>}
+ */
+export async function upsertTimecardDay(dayData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+      throw new Error("Backend API URL components are not defined.");
+    }
+    
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/day/notes`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(dayData),
+  });
+  return handleApiResponse(response);
+}
+
+/**
+ * Submits a weekly timecard for an employee.
+ * @param {object} timecardData - The payload containing jobPositionHistoryId and time entries.
+ * @returns {Promise<object>} A promise that resolves to the server's response.
+ */
+export async function upsertTimecard(timecardData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-timecard`;
+  console.log(`Submitting timecard to: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(timecardData),
+  });
+  return handleApiResponse(response);
+}
+
+/**
+ * Retrieves all weekly timecards for a given job from the backend API.
+ * @param {number} jobPositionHistoryId - The ID of the employee's job.
+ * @returns {Promise<Array>} A promise that resolves to an array of timecard objects.
+ */
+export async function getAllTimecardsForJob(jobPositionHistoryId) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/all/${jobPositionHistoryId}`;
+  console.log(`Fetching all timecards from: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return handleApiResponse(response);
+}
