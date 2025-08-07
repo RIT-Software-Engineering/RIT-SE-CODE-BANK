@@ -924,7 +924,7 @@ async function getUserProfile(username) {
               resumes: true,
               courseHistory: { include: { course: true } },
               jobPositionApplicationHistory: { include: { jobPosition: true } },
-              employees: {
+              employee: {
                 include: {
                   jobPositionHistory: true,
                 }

@@ -66,7 +66,8 @@ const TimecardHistory = ({ timecard, currentUser }) => {
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        const name = currentUser?.name.replace(/\s+/g, '_') || 'user';
+        const fullName = currentUser?.fname + " " + currentUser?.lname;
+        const name = fullName.replace(/\s+/g, '_') || 'user';
         const week = formatDate(timecard.weekStartDate);
         link.download = `${name}_timecard_${week}.csv`;
         document.body.appendChild(link);
