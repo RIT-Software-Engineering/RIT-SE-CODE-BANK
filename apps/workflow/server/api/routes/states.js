@@ -239,6 +239,8 @@ async function flattenActionStates(where, include = null, select = null) {
 router.put("/workflow/:id", async (req, res) => {
   const { id } = req.params;
 
+  // TODO: Figure out how to make sure that the state of actions with children are adjusted accordingly.
+
   await prisma.$transaction(async () => {
     // Get the workflowState by id to get the workflow and actionStates
     const workflowState = await prisma.workflowState.findUnique({
@@ -328,6 +330,7 @@ router.delete("/workflow/:id", async (req, res) => {
   res.json({ message: "Deleted" });
 });
 
+// May not need this
 // GET /states/action/:id
 router.get("/action/:id", async (req, res) => {
   const { id } = req.params;
@@ -345,7 +348,7 @@ router.get("/action/:id", async (req, res) => {
 // What do I really want from this function?
 // Should the child actionStates be nested, or should this just be a flat list?
 // How do I manage the UserId search and the workflowStateId search
-
+// May not even need this
 // GET /states/action
 router.get("/action", async (req, res) => {
   const { userId, workflowStateId, actionId, stateType } = req.query;
@@ -375,6 +378,7 @@ router.get("/action", async (req, res) => {
   res.json(states);
 });
 
+// This may not be necessary
 // PUT /states/action/:id
 router.put("/action/:id", async (req, res) => {
   const { id } = req.params;
@@ -393,8 +397,10 @@ router.put("/action/:id", async (req, res) => {
   res.json(actionState);
 });
 
-// TODO: Add endpoints for /state/action to delete if necessary
-
+/**
+ * An endpoint that takes you to the first step in the workflow that isn't completed or hidden.
+ * If this is a complex action or a branching action, it stops at that level.
+ */
 router.get("/workflow/:workflowStateId/findStep", async (req, res) => {
   const { workflowStateId } = req.params;
 
@@ -415,17 +421,150 @@ router.get("/workflow/:workflowStateId/findStep", async (req, res) => {
   res.json(states);
 });
 
-function cascadeSubmission(actionState) {
-  console.log(actionState);
+/**
+ * Function for recursively updating an actionState and all of it's 
+ * parent actionStates based on their children's stateTypes.
+ * 
+ * @param {*} actionStateId
+ */
+async function cascadeSubmission(actionStateId) {
+  await prisma.$transaction(async () => {
+    // Get the current stateType, actionType, and all child actionState stateTypes.
+    const actionState = await prisma.actionState.findUnique({
+      where: { id: actionStateId },
+      select: {
+        parentId: true,
+        stateType: true,
+        children: {
+          select: {
+            stateType: true,
+          },
+        },
+        action: {
+          select: {
+            actionType: true,
+          },
+        },
+      },
+    });
+
+    // Updated stateType
+    let newStateType = "notStarted";
+
+    // State machine for determining the new stateType
+    currentStateType: switch (actionState.action.actionType) {
+      // For workflow and complex actionTypes
+      case "workflow":
+      case "complex":
+        for (let i = 0; i < actionState.children.length; i++) {
+          const child = actionState.children[i];
+
+          // Update the newActionState based on what it currently is, and the stateTypes of it's children
+          switch (child.stateType) {
+            // newStateType will be completed if all visible children are completed,
+            // or inProgress of any of the visible children aren't completed.
+            case "completed":
+              if (newStateType === "completed" || i === 0) {
+                newStateType = "completed";
+              } else if (newStateType === "notStarted") {
+                newStateType = "inProgress";
+                break currentStateType;
+              }
+              break;
+
+            // newStateType will be inProgress
+            case "inProgress":
+              newStateType = "inProgress";
+              break currentStateType;
+
+            // newStateType will be notStarted if all children were notStarted.
+            // Otherwise, newStateType will be inProgress.
+            case "notStarted":
+              if (newStateType === "completed") {
+                newStateType = "inProgress";
+                break currentStateType;
+              }
+              break;
+
+            // Hidden actionStates don't effect parent actionState.
+            case "hidden":
+              break;
+
+            // If the actionState isn't one of our defined ones.
+            default:
+              throw Error("Unexpected state type encountered");
+          }
+        }
+        break;
+
+      // For branching actions
+      case "branching":
+        for (let i = 0; i < actionState.children.length; i++) {
+          const child = actionState.children[i];
+
+          // Update the newActionState based on what it currently is, and the stateTypes of it's children
+          switch (child.stateType) {
+            // newStateType is completed if any child is completed.
+            case "completed":
+              newStateType = "completed";
+              break currentStateType;
+
+            // newStateType is unless there is another child that is completed.
+            case "inProgress":
+              newStateType = "inProgress";
+              break;
+
+            // newStateType is not affected by a child with these stateTypes.
+            case "notStarted":
+            case "hidden":
+              break;
+
+            // If the actionState isn't one of our defined ones.
+            default:
+              throw Error("Unexpected state type encountered");
+          }
+        }
+        break;
+    }
+
+    // Update the state to what it needs to be
+    if (actionState.stateType !== newStateType) {
+      await prisma.actionState.update({
+        where: { id: actionStateId },
+        data: { stateType: newStateType },
+      });
+    }
+
+    // Cascade status updates upward
+    if (actionState.parentId) await cascadeSubmission(actionState.parentId);
+  });
 }
 
+/**
+ * Update the state of actions to track progress.
+ */
 router.post("/handleSubmit", async (req, res) => {
   const { actionStateId } = req.body;
 
-  const validated = true; // TODO: Check to make sure the data is valid and has been transferred back to the client app.
+  // Find the type of the action, and determine whether or not it can be completed this way.
+  const actionState = await prisma.actionState.findUnique({
+    where: { id: actionStateId },
+    select: {
+      action: {
+        select: {
+          actionType: true,
+        },
+      },
+    },
+  });
+  if (actionState.action.actionType !== "simple") {
+    return res.status(400).json({
+      message: "This action will only be completed by completing sub actions.",
+    });
+  }
 
-  // If the data was transferred and validated properly, mark the action as complete.
-  if (validated) {
+  // If the action can be completed, complete the action and cascade the status updates
+  await prisma.$transaction(async () => {
     const actionState = await prisma.actionState.update({
       where: { id: actionStateId },
       data: {
@@ -436,12 +575,11 @@ router.post("/handleSubmit", async (req, res) => {
       },
     });
 
-    cascadeSubmission(actionState);
+    // Cascade status updates upward
+    if (actionState.parentId) await cascadeSubmission(actionState.parentId);
 
     res.status(200).json({ message: "Completed" });
-  }
-
-  res.status(500).json({ message: "Something failed" }); // TODO: Provide a better error message.
+  });
 });
 
 module.exports = router;
