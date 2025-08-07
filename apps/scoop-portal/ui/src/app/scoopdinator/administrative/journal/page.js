@@ -23,9 +23,8 @@ import React, { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import JournalLoading from "./loading";
 
-// TODO: Doc comment for Journal()
 /**
- * Renders the Journal Page
+ * Renders the content for the Journal Page
  * @returns {JSX.Element}
  */
 export default function Journal() {
@@ -39,7 +38,10 @@ export default function Journal() {
   const [contactees, setContactees] = useState({});
   const [semester_groups, setSemesterGroups] = useState({});
 
-  // New entries
+  /**
+   * This is for determining whether the dialog box for creating a
+   * new journal entry should be open or closed.
+   */
   const [newEntryOpen, setNewEntryOpen] = useState(false);
   // For opening the Filter Dialog
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
@@ -123,12 +125,40 @@ export default function Journal() {
   // Functions for filtering journal entries
   const handleOpenFilterDialog = () => setFilterDialogOpen(true);
   const handleCloseFilterDialog = () => setFilterDialogOpen(false);
+
+  /**
+   * Handles the change in the semester filter selections.
+   *
+   * This function updates the state of the semester filter value
+   * based on the selected value from the dropdown.
+   * @param {*} event
+   * @returns {void}
+   */
   const handleFilterSemesterChange = (event) => {
     setFilterSemesterValue(event.target.value || "");
   };
+
+  /**
+   * Handles the change in the contactee filter selection.
+   *
+   * This function updates the state of the contactee filter value
+   * based on the selected value from the dropdown.
+   * @param {*} event
+   * @returns {void}
+   */
   const handleFilterContacteeChange = (event) => {
     setFilterContacteeValue(event.target.value || "");
   };
+
+  /**
+   * Handles the logic for applying the filter to the journal entries.
+   *
+   * This function will fetch the journal entries based on the selected semester
+   * and contactee values. If no filters are applied, it will fetch all journal entries.
+   * It will also close the filter dialog after applying the filter.
+   * @async
+   * @returns {void}
+   */
   const handleApplyFilter = async () => {
     setLoading(true);
 
@@ -166,20 +196,38 @@ export default function Journal() {
   };
 
   // Functions for editing journal entry notes
+  /**
+   * Handles the logic for setting up the journal entry to have their notes edited.
+   *
+   * This function will set the editing entry to the entry that is being edited
+   * and set the edit value to the current notes of that entry.
+   * @param {*} entry
+   * @returns {void}
+   */
   const handleEditClick = (entry) => {
     setEditingEntry(entry);
     setEditValue(entry.notes);
   };
 
+  /**
+   * Handles the logic for canceling editing journal entry notes.
+   *
+   * This functiol will set the editing entry to null. No changes will be saved
+   * to the database.
+   * @returns {void}
+   */
   const handleCancelEdit = () => {
     setEditingEntry(null);
   };
 
-  // TODO: Doc comment for saveEntryNotes
   /**
+   * Saves the new notes for the journal entry to the database.
    *
+   * This function will update the journal entry notes in the database
+   * and update the state of the journal entries to reflect the changes.
    * @async
-   * @param {*} entry - THe entry that will have their notes updated
+   * @param {*} entry - The entry that will have their notes updated
+   * @returns {void}
    */
   const saveEntryNotes = async (entry) => {
     try {
@@ -196,15 +244,19 @@ export default function Journal() {
       setJournalEntries((prev) =>
         prev.map((e) => (e.id === entry.id ? { ...e, notes: editValue } : e))
       );
+      res.status(200).json({ message: "Notes saved successfully." });
     } catch (error) {
       console.error("Failed to save entry notes:", error);
     }
     setEditingEntry(null);
   };
 
-  // TODO: Doc comment for handleSaveEdit
   /**
+   * Handles the logic for saving the edited notes of a journal entry.
    *
+   * This function will call the saveEntryNotes function
+   * to update the notes in the database and reset the edit value.
+   * A toast notification will be displayed to indicate success or failure.
    * @param {*} entry - The entry to be updated in the database
    */
   const handleSaveEdit = (entry) => {
@@ -216,6 +268,11 @@ export default function Journal() {
     setEditValue("");
   };
 
+  /**
+   * A stubbed function for creating a new journal entry.
+   * Currently, an alert is produced.
+   * @returns {void}
+   */
   const handleCreateNewEntry = () => {
     alert("Funcitonality not implemented yet.");
   };
