@@ -38,7 +38,7 @@ export default function PositionSection({ title, positions, onEdit, onDelete, em
                 key={position.id}
                 className="border-b border-gray-200 pb-4 last:border-b-0 flex flex-row justify-between"
               >
-                {/* This part displays the position details */}
+                {/* displays the position details */}
                 <div>
                   <div className="font-semibold text-gray-800">{position.id}</div>
                   <div className="text-md text-gray-600">
@@ -57,7 +57,6 @@ export default function PositionSection({ title, positions, onEdit, onDelete, em
                     ))}
                   </div>
                 </div>
-                {/* These buttons now call the functions passed in as props */}
                 <div>
                   <EditButton handleOpenModal={() => onEdit(position)} />
                   <DeleteButton handleDelete={() => onDelete(position)} />

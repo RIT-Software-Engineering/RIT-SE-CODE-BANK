@@ -155,7 +155,7 @@ export default function Positions() {
     setIsModalOpen(true);
   };
   const handleSaveJob = (savedJob) => {
-    // Check if the job already exists in our list
+    
     fetchData(searchTerm, appliedFilters);
   };
 

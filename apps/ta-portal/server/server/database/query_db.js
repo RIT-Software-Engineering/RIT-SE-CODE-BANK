@@ -197,13 +197,21 @@ async function getOpenJobPositions(searchTerm, filters, candidateUID) {
   }
 }
 
-async function getPendingJobPositions() {
+async function getJobPositionsByStatus(status, employerUID = null) {
+  const whereClause = {
+    jobPositionStatus: status,
+  };
+
+  console.log("Employeer is ", employerUID);
+  if (employerUID) {
+    whereClause.employerUID = employerUID;
+  }
+
   try {
     console.log("getting query");
+    console.log("Where Clause is ", whereClause);
     return await prisma.jobPosition.findMany({
-      where: {
-        jobPositionStatus: "PENDING_APPROVAL",
-      },
+      where: whereClause,
       include: {
         course: {
           select: { name: true, description: true, courseCode: true },
@@ -211,6 +219,12 @@ async function getPendingJobPositions() {
         jobSchedules: {
           select: { dayOfWeek: true, startTime: true, endTime: true },
         },
+        // comment: {
+        //   select: { comment: true, timestamp: true },
+        //   orderBy: {
+        //     timestamp: "desc", // Order comments by timestamp, newest first
+        //   },
+        // },
       },
       orderBy: {
         id: "asc", // Or any other order you prefer
@@ -1328,7 +1342,7 @@ async function getComments(tableName, foreignKey) {
 
 module.exports = {
   getOpenJobPositions,
-  getPendingJobPositions,
+  getJobPositionsByStatus,
   getCandidateApplicationsAsEmployer,
   getCandidateApplications,
   deleteCandidateApplication,

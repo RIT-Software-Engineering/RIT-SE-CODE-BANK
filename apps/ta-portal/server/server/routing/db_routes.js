@@ -18,7 +18,7 @@ const {
   upsertCandidateProfile,
   upsertEmployerProfile,
   getOpenJobPositions,
-  getPendingJobPositions,
+  getJobPositionsByStatus,
   getCandidateApplicationsAsEmployer,
   applyForJobPosition,
   addNewCandidateResume,
@@ -138,19 +138,28 @@ router.get('/open-positions', async (req, res) => {
   }
 });
 
-router.get("/pending-job-positions", async (req, res)=>{
+router.get("/pending-job-positions", async (req, res) => {
+  const { status, employerUID } = req.query; 
+
+  // Add a check to ensure status is provided
+  if (!status) {
+    return res.status(400).json({ error: 'Status parameter is required.' });
+  }
+
   try {
-    const positions = await getPendingJobPositions();
-    console.log("Positions are: ", positions)
+    // Pass both status and employerUID to your database function
+    const uidAsInt = employerUID ? parseInt(employerUID, 10) : null;
+
+    const positions = await getJobPositionsByStatus(status, uidAsInt);
+    console.log("Positions are: ", positions);
     res.status(200).json(positions);
-  } catch (error){
+  } catch (error) {
     console.error('Error in /pending-job-positions route:', error);
     res
       .status(500)
       .json({ error: 'Failed to retrieve pending positions.' });
-
   }
-})
+});
 
 router.put("/modify-position/:id", async (req, res) => {
   try {
