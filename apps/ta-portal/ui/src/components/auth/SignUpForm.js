@@ -106,7 +106,7 @@ export default function SignUpForm({
       
       <button
         onClick={onSwitchToLogin}
-        className="mt-4 text-sm text-blue-600 hover:underline"
+        className="mt-4 text-sm text-black underline hover:text-rit-orange transition-colors duration-200 cursor-pointer"
       >
         Already have an account? Sign In
       </button>

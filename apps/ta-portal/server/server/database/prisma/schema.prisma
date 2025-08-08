@@ -19,14 +19,14 @@ datasource db {
 
 model User {
   //Fields
-  username String @id @db.VarChar(7) // this is your RIT user id that's normally at the front of your email address
-  uid      Int    @unique
-  fname    String @db.Text
-  lname    String @db.Text
+  username String @id @db.VarChar(7) // RIT user id that's normally at the front of your email address (i.e. xyz1234)
+  uid      Int    @unique            // 9 digit numeric id
+  fname    String @db.Text           // first name
+  lname    String @db.Text           // last name
   password String @db.Text
   email    String @unique @db.VarChar(255)
   pronouns String @db.Text
-  role     Role   @default(GUEST)
+  role     Role   @default(GUEST)    // we have the role types be GUEST, CANDIDATE, EMPLOYEE, EMPLOYER, & ADMIN
 
   //Relationships
   candidate Candidate?

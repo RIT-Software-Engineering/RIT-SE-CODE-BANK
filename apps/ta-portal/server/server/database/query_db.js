@@ -866,7 +866,8 @@ async function authenticateUser(username, password) {
     const isPasswordCorrect = await verifyPassword(password, user.password);
 
     if (isPasswordCorrect) {
-      return user;
+      const { password,...userWithoutPassword } = user;
+      return userWithoutPassword;
     }
     return null;
   } catch (error) {
@@ -885,12 +886,21 @@ async function authenticateUser(username, password) {
 async function resetPassword(username, newPassword) {
   const user = await prisma.user.findUnique({ where: { username } });
 
-  // If the user exists, proceed with the password update
+  // If the user exists, proceed with the password update and return the updated without the password
   if (user) {
     const newHashedPassword = await hashPassword(newPassword);
     return prisma.user.update({
       where: { username: username },
       data: { password: newHashedPassword },
+      select: {
+        uid: true,
+        fname: true,
+        lname: true,
+        username: true,
+        email: true,
+        pronouns: true,
+        role: true
+      }
     });
   }
   

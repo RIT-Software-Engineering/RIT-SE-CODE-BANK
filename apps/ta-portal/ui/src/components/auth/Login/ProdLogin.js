@@ -4,6 +4,7 @@
 import { authenticateUser, resetPassword } from "@/services/db-apis";
 import { useNotification } from "@/contexts/NotificationContext";
 import React, { useState } from "react";
+import { set } from "react-hook-form";
 
 /**
  * A component for a production username/password login system.
@@ -67,6 +68,7 @@ export default function ProdLogin({
     } catch (err) {
       showNotification(err.message || "An error occurred during password reset.", "error");
     } finally {
+      setResetCredentials({ username: "", newPassword: "" });
       setIsLoading(false);
     }
   };
@@ -77,7 +79,7 @@ export default function ProdLogin({
       <div className="mt-6 w-64 space-y-4">
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
-          <input type="text" id="username" name="username" value={loginCredentials.username} onChange={handleLoginChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter username (i.e. xyz1234)"/>
+          <input type="text" id="username" maxLength="7" name="username" value={loginCredentials.username} onChange={handleLoginChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter username (i.e. xyz1234)"/>
         </div>
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
@@ -112,18 +114,18 @@ export default function ProdLogin({
       <div className="mt-6 w-64 space-y-4">
         <div>
           <label htmlFor="reset-username" className="block text-sm font-medium text-gray-700">Your Username</label>
-          <input type="text" id="reset-username" name="username" value={resetCredentials.username} onChange={handleResetChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" />
+          <input type="text" id="reset-username" maxLength="7" name="username" value={resetCredentials.username} onChange={handleResetChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter username (i.e. xyz1234)" />
         </div>
         <div>
           <label htmlFor="reset-new-password" className="block text-sm font-medium text-gray-700">New Password</label>
-          <input type="password" id="reset-new-password" name="newPassword" value={resetCredentials.newPassword} onChange={handleResetChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" />
+          <input type="password" id="reset-new-password" name="newPassword" value={resetCredentials.newPassword} onChange={handleResetChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter new password" />
         </div>
       </div>
 
-      <button onClick={handleResetPassword} disabled={isLoading} className="bg-red-600 text-white w-64 rounded-lg p-3 text-lg mt-6 hover:bg-red-700 disabled:bg-red-400">
+      <button onClick={handleResetPassword} disabled={isLoading} className="bg-rit-orange text-white w-64 rounded-lg p-3 text-lg mt-10 hover:bg-orange-600">
         {isLoading ? "Resetting..." : "Reset Password"}
       </button>
-      <button onClick={() => setView('login')} className="mt-4 text-sm text-blue-600 hover:underline">
+      <button onClick={() => setView('login')} className="mt-4 text-sm text-black underline hover:text-rit-orange transition-colors duration-200 cursor-pointer">
         Back to Login
       </button>
     </>
