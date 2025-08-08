@@ -49,7 +49,7 @@ export default function PositionSection({ title, positions, onEdit, onDelete, em
                   </div>
                   <div>
                     {position.jobSchedules?.map((day) => (
-                      <span key={day.id} className="mr-3">
+                      <span key={day.jobPositionId+day.dayOfWeek} className="mr-3">
                         {day.dayOfWeek} <br />
                         {formatTime(day.startTime)} - {formatTime(day.endTime)}
                         <br />

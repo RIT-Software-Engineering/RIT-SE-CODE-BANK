@@ -72,8 +72,8 @@ export default function Positions() {
 
         if (currentUser.role == "EMPLOYER") {
           promises.push(
-            getJobPositionsByStatus("PENDING_APPROVAL", currentUser.uid),
-            getJobPositionsByStatus("REJECTED",currentUser.uid)
+            getJobPositionsByStatus("PENDING_APPROVAL", currentUser.username),
+            getJobPositionsByStatus("REJECTED",currentUser.username)
           );
         }
 

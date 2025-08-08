@@ -44,15 +44,15 @@ export async function getOpenPositions(searchTerm, appliedFilters, candidateUser
   return handleApiResponse(response);
 }
 
-export async function getJobPositionsByStatus(status, employerUID) {
-  console.log("API UID: ",employerUID)
+export async function getJobPositionsByStatus(status, employerUsername) {
+  console.log("API UID: ",employerUsername)
   const params = new URLSearchParams({ status }); // Always include status
-  if (employerUID) {
-    params.append('employerUID', employerUID);
+  if (employerUsername) {
+    params.append('employerUID', employerUsername);
   }
 
 
-  const query = employerUID ? `?employerUID=${encodeURIComponent(employerUID)}` : "";
+  const query = employerUsername ? `?employerUsername=${encodeURIComponent(employerUsername)}` : "";
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/pending-job-positions?${params.toString()}`;
   console.log("Getting from URL: ",url)
 
