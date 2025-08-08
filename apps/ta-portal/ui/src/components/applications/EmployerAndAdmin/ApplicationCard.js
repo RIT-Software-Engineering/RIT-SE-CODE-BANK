@@ -1,3 +1,4 @@
+// components/applications/EmployerAndAdmin/ApplicationCard.js
 "use client";
 
 import Link from "next/link";
@@ -61,7 +62,6 @@ export default function ApplicationCard({
         "success"
       );
       console.log("Updated application:", updatedApplication);
-      // Call the callback prop to refresh the parent page's data
       if (onStatusChange) {
         onStatusChange();
       }
@@ -79,20 +79,20 @@ export default function ApplicationCard({
       <div className="flex-shrink-0">
         <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
           <span className="text-2xl font-bold text-black">
-            {application.candidateName.charAt(0)}
+            {application.candidateFName.charAt(0)}
           </span>
         </div>
       </div>
       <div className="flex-1 min-w-0">
         <h2 className="text-2xl font-bold text-gray-800 truncate">
-          {application.candidateName}
+          {application.candidateFName} {application.candidateLName}
           {" "}
           ({currentUser.role === 'EMPLOYER' && (
             <span className="user-pronouns">{application.candidatePronouns}</span>
           )})
           {" | "}
           <Link
-            href={`/Users/${application.candidateUID}/Messaging`}
+            href={`/Messaging/${encodeURIComponent(application.candidateEmail)}`}
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-gray-600 hover:text-gray-800">
@@ -137,7 +137,7 @@ export default function ApplicationCard({
       setIsOpen(!isOpen);
     };
 
-    // NOTE: You'll want to add your real onClick logic to these buttons
+
     return (
       <div className="relative" ref={menuRef}>
         <button
@@ -259,7 +259,6 @@ export default function ApplicationCard({
             <div>
               <div className="flex items-center space-x-2">
                 <p className="text-sm font-medium text-gray-500">Cover Letter</p>
-                {/* Re-using ResumeIcon, but you could add a specific one */}
                 <DocumentIcon />
               </div>
               <a

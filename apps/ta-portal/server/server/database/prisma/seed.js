@@ -4,6 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const { Parser } = require('node-sql-parser');
 const fs = require('fs').promises;
 const path = require('path');
+const { hashPassword } = require('../../config/passwordHashes');
 
 const prisma = new PrismaClient();
 const parser = new Parser();
@@ -72,7 +73,7 @@ async function main() {
                     }
 
                     const columns = stmt.columns;
-                    const dataObjects = stmt.values.map(valueSet => {
+                    let dataObjects = stmt.values.map(valueSet => {
                         const obj = {};
                         columns.forEach((col, index) => {
                             // Convert SQL values to JS types
@@ -80,6 +81,21 @@ async function main() {
                         });
                         return obj;
                     });
+
+                    // --- Hash passwords if this is the User model ---
+                    if (modelName === 'User') {
+                        console.log(`Hashing passwords for ${dataObjects.length} users...`);
+                        // Use Promise.all to wait for all hashing operations to complete
+                        dataObjects = await Promise.all(
+                            dataObjects.map(async (user) => {
+                                // Check if a password exists before hashing
+                                if (user.password) {
+                                    user.password = await hashPassword(user.password);
+                                }
+                                return user;
+                            })
+                        );
+                    }
 
                     console.log(`Seeding ${dataObjects.length} records into '${modelName}' from ${file}...`);
                     await prisma[prismaModelKey].createMany({

@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { modifyPosition, createPosition } from "@/services/db-apis";
 import MultiStepForm from "./MultiStepForm"; // Import the new form component
 import { getAllCourses } from "@/services/db-apis";
-import { formatDate, formatTime } from "@/utils/applicationUtils";
+import { formatTime } from "@/utils/applicationUtils";
 import { convertDisplayTimeToInputValue } from "@/utils/applicationUtils";
 
 // Helper functions can live outside the component
@@ -36,11 +36,9 @@ export default function EditPositionModal({
   job,
   onClose,
   onSave,
-  EmployerUID,
+  EmployerUsername,
 }) {
   const isEditMode = !!job.id; // Use !!job for a clear boolean
-  console.log("Editing?", isEditMode, "Job data:", job);
-  console.log("Faculty UID in modal:", EmployerUID);
 
   // 1. All form logic and state management stays in the container
   const formMethods = useForm({
@@ -58,12 +56,10 @@ export default function EditPositionModal({
       : newJobTemplate,
   });
 
-  console.log("Form default values:", formMethods.getValues());
-
   // 2. The submission logic stays here as it deals with APIs and parent state
   const onSubmit = async (data) => {
     try {
-      const payload = { ...data, EmployerUID };
+      const payload = { ...data, EmployerUsername };
 
             // If the job was rejected, submitting it again should set it back to pending.
       if (payload.jobPositionStatus === 'REJECTED') {
@@ -101,7 +97,7 @@ export default function EditPositionModal({
 
         payload.course = course;
 
-        savedJob = await createPosition(payload, EmployerUID);
+        savedJob = await createPosition(payload, EmployerUsername);
       }
       onSave(savedJob);
     } catch (error) {
@@ -124,7 +120,7 @@ export default function EditPositionModal({
           isEditMode={isEditMode}
           job={job}
           formMethods={formMethods} // Pass the entire form instance
-          EmployerUID={EmployerUID} // Pass the employer UID for API calls
+          EmployerUsername={EmployerUsername} // Pass the employer Username for API calls
         />
       </div>
     </div>

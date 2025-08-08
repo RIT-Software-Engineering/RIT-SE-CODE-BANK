@@ -113,7 +113,7 @@ useEffect(() => {
           job={selectedJob}
           onClose={handleCloseModal}
           onSave={handleSaveJob}
-          EmployerUID={profileData?.uid}
+          EmployerUsername={profileData?.username}
         />
       )}
     </>

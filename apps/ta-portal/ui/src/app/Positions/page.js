@@ -27,7 +27,7 @@ import PositionSection from "@/components/positions/EmployerAndAdmin/PositionsSe
 
 export default function Positions() {
   const filterRef = useRef();
-  const { currentUser } = useAuth();
+  const { currentUser, refreshUserProfile } = useAuth();
 
   const [openPositions, setOpenPositions] = useState([]);
   //for employers and admins
@@ -47,6 +47,17 @@ export default function Positions() {
     applied: "",
   });
   const [activeTab, setActiveTab] = useState("open-positions");
+
+  const visibleFilters = useMemo(() => {
+    if (!currentUser || !currentUser.role) return positionFilterConfig;
+
+    const filtersToHide = ["eligibility", "applied"];
+    
+    if (currentUser.role === "EMPLOYER" || currentUser.role === "ADMIN") {
+      return positionFilterConfig.filter((filter) => !filtersToHide.includes(filter.id));
+    }
+    return positionFilterConfig;
+  }, [currentUser]);
 
   const fetchData = useCallback(
     async (currentSearch, currentFilters) => {
@@ -80,7 +91,7 @@ export default function Positions() {
         const data = await getOpenPositions(
           currentSearch,
           currentFilters,
-          currentUser.uid
+          currentUser.username
         );
         const positions = data.map((position) => {
           if (
@@ -121,6 +132,12 @@ export default function Positions() {
       fetchData(searchTerm, appliedFilters);
     }
   }, [appliedFilters, currentUser, activeTab, fetchData]);
+
+  useEffect(() => {
+    if (activeTab === 'my-positions') {
+      refreshUserProfile();
+    }
+  }, [activeTab, refreshUserProfile]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -221,7 +238,7 @@ export default function Positions() {
             <Filter
               ref={filterRef}
               onFilterChange={handleFilterChange}
-              filterConfig={positionFilterConfig}
+              filterConfig={visibleFilters}
             />
             <button
               type="submit"

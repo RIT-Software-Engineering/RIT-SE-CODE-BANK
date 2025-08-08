@@ -22,9 +22,9 @@ export default function ProfilePage() {
 
   // This function fetches the user's profile and updates the state.
   const handleProfileRefresh = useCallback(async () => {
-    if (!currentUser?.uid) return;
+    if (!currentUser?.username) return;
     try {
-      const user = await getUserProfile(currentUser.uid);
+      const user = await getUserProfile(currentUser.username);
       setProfileData(user);
       refreshUserProfile();
     } catch (err) {
@@ -35,7 +35,7 @@ export default function ProfilePage() {
 
   // This effect fetches both the user's profile and the master course list.
   useEffect(() => {
-    if (!currentUser?.uid) {
+    if (!currentUser?.username) {
       setIsLoading(false);
       return;
     }
@@ -44,7 +44,7 @@ export default function ProfilePage() {
       setError(null);
       try {
         const [user, courses] = await Promise.all([
-          getUserProfile(currentUser.uid),
+          getUserProfile(currentUser.username),
           getAllCourses(),
         ]);
         setProfileData(user);
@@ -119,7 +119,7 @@ export default function ProfilePage() {
           <section className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
              <ResumeManager
                 resumes={profileData.candidate?.resumes || []}
-                candidateUID={profileData.uid}
+                candidateUsername={profileData.username}
                 onProfileRefresh={handleProfileRefresh}
               />
           </section>

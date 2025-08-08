@@ -14,10 +14,10 @@ import ConfirmationModal from '@/components/common/models/ConfirmationModal';
  * A component to manage a candidate's resumes (list, upload, rename, delete).
  * @param {object} props - The component props.
  * @param {Array} props.resumes - The list of resume objects.
- * @param {string} props.candidateUID - The UID of the candidate.
+ * @param {string} props.candidateUsername - The Username of the candidate.
  * @param {function} props.onProfileRefresh - Callback to refresh the profile data.
  */
-export default function ResumeManager({ resumes, candidateUID, onProfileRefresh }) {
+export default function ResumeManager({ resumes, candidateUsername, onProfileRefresh }) {
   const { showNotification } = useNotification();
 
   // State for uploading a new resume
@@ -68,7 +68,7 @@ export default function ResumeManager({ resumes, candidateUID, onProfileRefresh 
 
   const handleSetPrimary = async (resumeId) => {
     try {
-      await updatePrimaryResume(candidateUID, resumeId);
+      await updatePrimaryResume(candidateUsername, resumeId);
       onProfileRefresh();
       showNotification('Primary resume updated successfully.', 'success');
     } catch (err) {
@@ -112,7 +112,7 @@ export default function ResumeManager({ resumes, candidateUID, onProfileRefresh 
     }
     setIsUploading(true);
     const formData = new FormData();
-    formData.append('candidateUID', candidateUID);
+    formData.append('candidateUsername', candidateUsername);
     formData.append('name', newResumeName);
     formData.append('resumeFile', newResumeFile);
 

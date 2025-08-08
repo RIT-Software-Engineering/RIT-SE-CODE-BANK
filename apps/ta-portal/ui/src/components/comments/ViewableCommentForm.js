@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getComments } from '@/services/db-apis';
 import { formatTimestamp } from '@/utils/dateTimeUtils';
+import { applicationStatusEnumToString } from '@/constants/applicationStatusConstants';
 
 export default function ViewCommentForm({ application, jobPosition, onClose }) {
   const [comments, setComments] = useState([]);
@@ -44,7 +45,7 @@ export default function ViewCommentForm({ application, jobPosition, onClose }) {
         {comments.map((comment) => (
           <li key={comment.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex justify-between items-center mb-2">
-              <p className="font-bold text-gray-800">{comment.status}</p>
+              <p className="font-bold text-gray-800">{applicationStatusEnumToString[comment.status]}</p>
               <p className="text-sm text-gray-500">{formatTimestamp(comment.timestamp)}</p>
             </div>
             <p className="text-gray-700 italic">&quot;{comment.comment}&quot;</p>
