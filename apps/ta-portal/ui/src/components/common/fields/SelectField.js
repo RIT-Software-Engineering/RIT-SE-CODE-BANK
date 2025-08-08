@@ -1,18 +1,24 @@
 "use client";
 import React from "react";
 
-// Reusable styles from your InputField component
+// Base styles for the select field, with border color removed for conditional application.
+const selectBase = "w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow";
+
 const formLabel = "block text-sm font-medium text-slate-700 mb-1";
-const selectField = "w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow";
 
 export default function SelectField({
   id,
   label,
   registerProps,
   error,
-  required,
+  required = false,
   children,
 }) {
+  const errorId = `${id}-error`;
+  const finalSelectClassName = `${selectBase} ${
+    error ? "border-red-500" : "border-slate-300"
+  }`;
+
   return (
     <div>
       <label htmlFor={id} className={formLabel}>
@@ -22,13 +28,17 @@ export default function SelectField({
       <select
         id={id}
         {...registerProps}
-        className={`${selectField} ${
-          error ? "border-red-500" : "border-slate-300"
-        }`}
+        className={finalSelectClassName}
+        aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
       >
         {children}
       </select>
-      {error && <p className="text-red-500 text-xs mt-1">{error.message}</p>}
+      {error && (
+        <p id={errorId} className="text-red-500 text-xs mt-1">
+          {error.message}
+        </p>
+      )}
     </div>
   );
 }

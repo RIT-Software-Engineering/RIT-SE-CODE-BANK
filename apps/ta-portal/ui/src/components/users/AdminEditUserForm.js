@@ -104,7 +104,7 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
         try {
             if (isCandidateOrEmployee) {
                 const finalData = {
-                    uid: data.uid,
+                    uid: parseInt(data.uid, 10),
                     fname: data.fname,
                     lname: data.lname,
                     username: user.username,
@@ -118,7 +118,7 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
                 await updateCandidateProfile(finalData);
             } else {
                 const finalData = {
-                    uid: data.uid,
+                    uid: parseInt(data.uid, 10),
                     fname: data.fname,
                     lname: data.lname,
                     username: user.username,

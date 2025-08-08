@@ -20,6 +20,7 @@ export default function Step1EmployerAndAdmin({ register, errors }) {
           label="First Name"
           placeholder="Enter First Name"
           registerProps={register("fname", { required: "First name is required." })}
+          required={true}
           error={errors.fname}
         />
         <InputField
@@ -27,6 +28,7 @@ export default function Step1EmployerAndAdmin({ register, errors }) {
           label="Last Name"
           placeholder="Enter Last Name"
           registerProps={register("lname", { required: "Last name is required." })}
+          required={true}
           error={errors.lname}
         />
       </div>
@@ -34,9 +36,13 @@ export default function Step1EmployerAndAdmin({ register, errors }) {
         <InputField
           id="uid"
           label="User ID"
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           placeholder="Enter User ID"
-          registerProps={register("uid", { required: "A User ID is required." })}
+          registerProps={register("uid", {required: "A User ID is required." })}
+          maxLength={9}
+          required={true}
           error={errors.uid}
         />
         <InputField
@@ -45,6 +51,7 @@ export default function Step1EmployerAndAdmin({ register, errors }) {
           type="email"
           placeholder="Enter Email"
           registerProps={register("email", { required: "An email is required." })}
+          required={true}
           error={errors.email}
         />
       </div>
@@ -54,6 +61,7 @@ export default function Step1EmployerAndAdmin({ register, errors }) {
           label="Pronouns"
           placeholder="Enter Pronouns"
           registerProps={register("pronouns", { required: "Pronouns are required." })}
+          required={true}
           error={errors.pronouns}
         />
         <InputField
@@ -61,6 +69,7 @@ export default function Step1EmployerAndAdmin({ register, errors }) {
           label="Department"
           placeholder="Enter Department"
           registerProps={register("department", { required: "Department is required." })}
+          required={true}
           error={errors.department}
         />
       </div>
