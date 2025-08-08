@@ -44,8 +44,18 @@ export async function getOpenPositions(searchTerm, appliedFilters, candidateUID)
   return handleApiResponse(response);
 }
 
-export async function getPendingJobPositions() {
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/pending-job-positions`;
+export async function getJobPositionsByStatus(status, employerUID) {
+  console.log("API UID: ",employerUID)
+  const params = new URLSearchParams({ status }); // Always include status
+  if (employerUID) {
+    params.append('employerUID', employerUID);
+  }
+
+
+  const query = employerUID ? `?employerUID=${encodeURIComponent(employerUID)}` : "";
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/pending-job-positions?${params.toString()}`;
+  console.log("Getting from URL: ",url)
+
   try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -55,7 +65,7 @@ export async function getPendingJobPositions() {
     console.log("Frontend API received:", data); // <-- Add this log
     return data;
   } catch (error) {
-    console.error("Error fetching pending positions:", error);
+    console.error(`Error fetching positions with status ${status}:`, error);
     throw error; // Re-throw the error to be caught by the component
   }
 }

@@ -1,4 +1,4 @@
-import { getPendingJobPositions } from "@/services/db-apis";
+import { getJobPositionsByStatus } from "@/services/db-apis";
 import { useEffect, useState } from "react";
 import { useNotification } from "@/contexts/NotificationContext";
 import PositionsCard from "../PositionsCard";
@@ -14,7 +14,7 @@ export default function PendingPositions() {
 
   useEffect(() => {
     async function fetchPositions() {
-      const allPositions = await getPendingJobPositions();
+      const allPositions = await getJobPositionsByStatus("PENDING_APPROVAL");
       setPositions(allPositions);
     }
     fetchPositions();
@@ -27,19 +27,16 @@ export default function PendingPositions() {
 
   setIsProcessingUpdate(true);
   try {
-    // 1. Create a copy of the position data and update its status
     const updatedPositionData = {
       ...selectedPosition,
-      jobPositionStatus: modalState.status, // Set the new status (e.g., 'OPEN' or 'INACTIVE')
+      jobPositionStatus: modalState.status, // Set the new status 
     };
 
-    // 2. Call your existing modifyPosition function with the full object
     const updatedPosition = await modifyPosition(
       selectedPosition.id,
       updatedPositionData
     );
 
-    // 3. Remove the updated position from the local state to refresh the UI
     setPositions((prevPositions) =>
       prevPositions.filter((p) => p.id !== updatedPosition.id)
     );

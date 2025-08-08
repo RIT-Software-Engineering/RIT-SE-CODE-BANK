@@ -1,8 +1,18 @@
 // src/app/Positions/page.js
 "use client";
+// I'm so sorry for how messy the code has become
 
-import React, { useEffect, useCallback, useState,useRef, useMemo } from "react";
-import { getOpenPositions } from "../../services/db-apis";
+import React, {
+  useEffect,
+  useCallback,
+  useState,
+  useRef,
+  useMemo,
+} from "react";
+import {
+  getJobPositionsByStatus,
+  getOpenPositions,
+} from "../../services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
 
@@ -12,13 +22,20 @@ import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { positionFilterConfig } from "./filter.config";
 import JobPositionsCard from "@/components/positions/EmployerAndAdmin/JobPositionsCard";
 import PendingPositions from "@/components/positions/EmployerAndAdmin/PendingPositions";
+import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
+import PositionSection from "@/components/positions/EmployerAndAdmin/PositionsSections";
 
 export default function Positions() {
   const filterRef = useRef();
   const { currentUser } = useAuth();
 
-
   const [openPositions, setOpenPositions] = useState([]);
+  //for employers and admins
+  const [pendingPositions, setPendingPositions] = useState([]);
+  const [rejectedPositions, setRejectedPositions] = useState([]);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,6 +55,28 @@ export default function Positions() {
       setIsLoading(true);
       setError(null);
       try {
+        const promises = [
+          getOpenPositions(currentSearch, currentFilters, currentUser.uid),
+        ];
+
+        if (currentUser.role == "EMPLOYER") {
+          promises.push(
+            getJobPositionsByStatus("PENDING_APPROVAL", currentUser.uid),
+            getJobPositionsByStatus("REJECTED",currentUser.uid)
+          );
+        }
+
+        const results = await Promise.all(promises);
+
+        setOpenPositions(results[0] || []);
+
+        if (currentUser.role == "EMPLOYER") {
+          setPendingPositions(results[1] || []);
+          setRejectedPositions(results[2] || []);
+
+          console.log("Pending positions", pendingPositions);
+        }
+
         const data = await getOpenPositions(
           currentSearch,
           currentFilters,
@@ -56,8 +95,17 @@ export default function Positions() {
           }
           return position;
         });
-
         setOpenPositions(positions);
+
+        if (currentUser.role == "EMPLOYER") {
+          console.log("Current User is: ",currentUser.uid)
+          const pendingPositions = await getJobPositionsByStatus(
+            "PENDING_APPROVAL",
+            currentUser.uid
+          );
+          setPendingPositions(pendingPositions);
+          console.log("Pending Positions are ", pendingPositions);
+        }
       } catch (err) {
         console.error("Failed to fetch open positions:", err);
         setError("Failed to load positions. Please try again later.");
@@ -84,7 +132,6 @@ export default function Positions() {
     fetchData(searchTerm, latestFilters);
   };
 
-
   const handleFilterChange = (newFilters) => {
     setAppliedFilters(newFilters);
   };
@@ -95,6 +142,21 @@ export default function Positions() {
     if (newTerm === "") {
       fetchData("", appliedFilters);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedJob(null);
+  };
+
+  // More copied code to be put into a component
+  const handleOpenModal = (job) => {
+    setSelectedJob(job);
+    setIsModalOpen(true);
+  };
+  const handleSaveJob = (savedJob) => {
+    // Check if the job already exists in our list
+    fetchData(searchTerm, appliedFilters);
   };
 
   const renderOpenPositionsContent = () => {
@@ -139,7 +201,6 @@ export default function Positions() {
       />
     ));
   };
-
   // --- TABS CONFIGURATION ---
   const tabs = [
     {
@@ -185,52 +246,57 @@ export default function Positions() {
       id: "my-positions",
       label: "My Positions",
       description: "View and manage your positions.",
-      content: <JobPositionsCard profileData={currentUser} />,
-      roles: ["EMPLOYER","ADMIN"]
+      content: (
+        <>
+          <PositionSection title="Pending Positions" positions={pendingPositions} onEdit={handleOpenModal} emptyMessage="No positions are currently pending approval."/>
+          <PositionSection title="Rejected Positions" positions={rejectedPositions} onEdit={handleOpenModal} emptyMessage="No positions have been rejected"/>
+          <JobPositionsCard profileData={currentUser} />
+        </>
+      ),
+      roles: ["EMPLOYER", "ADMIN"],
     },
     {
-      id:"pending-approval",
-      label:"Pending Admin Approval",
-      description:"Approve positions to be publically posted",
-      content: <PendingPositions/>,
-      roles: ["ADMIN"]
-    }
-
+      id: "pending-approval",
+      label: "Pending Admin Approval",
+      description: "Approve positions to be publically posted",
+      content: <PendingPositions />,
+      roles: ["ADMIN"],
+    },
   ];
 
-  const visibleTabs = useMemo(() =>{
-    if (!currentUser) return []
+  const visibleTabs = useMemo(() => {
+    if (!currentUser) return [];
 
-    return tabs.filter(tab=>{
-      return !tab.roles || tab.roles.includes(currentUser.role)
-    })
-  })
+    return tabs.filter((tab) => {
+      return !tab.roles || tab.roles.includes(currentUser.role);
+    });
+  });
 
   const activeTabData = visibleTabs.find((tab) => tab.id === activeTab);
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-          {(currentUser?.role === "EMPLOYER" ||
-            currentUser?.role === "ADMIN") && (
-            <div className="border-b border-gray-200 px-6 sm:px-8">
-              <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                {visibleTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-                      activeTab === tab.id
-                        ? "border-orange-500 text-orange-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          )}
+        {(currentUser?.role === "EMPLOYER" ||
+          currentUser?.role === "ADMIN") && (
+          <div className="border-b border-gray-200 px-6 sm:px-8">
+            <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+              {visibleTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`whitespace-nowrap pb-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                    activeTab === tab.id
+                      ? "border-orange-500 text-orange-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
         <div className="bg-white rounded-xl shadow-lg w-full">
           <div className="p-6 sm:p-8">
             <div className="text-center mb-8">
@@ -247,6 +313,14 @@ export default function Positions() {
           </div>
         </div>
       </div>
+      {isModalOpen && (
+        <EditPositionModal
+          job={selectedJob}
+          onClose={handleCloseModal}
+          onSave={handleSaveJob}
+          EmployerUID={currentUser?.uid}
+        />
+      )}
     </div>
   );
 }

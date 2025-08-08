@@ -62,10 +62,14 @@ export default function EditPositionModal({
 
   // 2. The submission logic stays here as it deals with APIs and parent state
   const onSubmit = async (data) => {
-    console.log("Submitting for Faculty: ", EmployerUID);
-    console.log("Form data:", data);
     try {
       const payload = { ...data, EmployerUID };
+
+            // If the job was rejected, submitting it again should set it back to pending.
+      if (payload.jobPositionStatus === 'REJECTED') {
+        payload.jobPositionStatus = 'PENDING_APPROVAL';
+      }
+      
       payload.maxCAs = parseInt(data.maxCAs, 10) || 0;
       console.log("Submitting job data:", payload);
 

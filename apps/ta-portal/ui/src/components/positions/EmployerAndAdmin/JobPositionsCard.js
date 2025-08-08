@@ -13,12 +13,15 @@ export default function JobPositionsCard({ profileData }) {
   const [selectedJob, setSelectedJob] = useState(null);
 
   // Use useEffect to set the initial jobs from props
-  useEffect(() => {
-    const jobs = profileData?.employer?.jobPostions || [];
-    setJobPositions(jobs);
+useEffect(() => {
+    const allJobs = profileData?.employer?.jobPostions || [];
+
+    // Filter the array to only include positions with the status 'OPEN'
+    const openJobs = allJobs.filter(job => job.jobPositionStatus === 'OPEN');
+
+    setJobPositions(openJobs);
     console.log("Current Faculty:", profileData?.uid);
 
-    // const schedule =
   }, [profileData]); // This runs when profileData changes
 
   const handleOpenModal = (job) => {
