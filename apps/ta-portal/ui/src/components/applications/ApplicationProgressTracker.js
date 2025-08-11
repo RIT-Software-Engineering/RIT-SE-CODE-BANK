@@ -13,10 +13,10 @@ const progressStages = [
 ];
 
 const otherStates = {
-  REJECTED: { label: 'Rejected', color: 'bg-red-500', icon: '✕' },
-  ONHOLD: { label: 'On Hold', color: 'bg-yellow-500', icon: '⏸' },
-  INACTIVE: { label: 'Inactive', color: 'bg-gray-400', icon: '!' },
-  ARCHIVED: { label: 'Archived', color: 'bg-gray-400', icon: '!' },
+  REJECTED: { label: 'Rejected', color: 'bg-red-500', icon: '✕', tooltip: 'The student has been rejected for this position.' },
+  DECLINED_OFFER: { label: 'Declined', color: 'bg-red-500', icon: '✕', tooltip: 'The student has declined the offer for this position.' },
+  ONHOLD: { label: 'On Hold', color: 'bg-yellow-500', icon: '⏸', tooltip: 'The student has been placed on hold for this position.' },
+  INACTIVE: { label: 'Inactive', color: 'bg-gray-400', icon: '!', tooltip: 'The application is no longer active.' },
 };
 
 /**
@@ -32,13 +32,22 @@ export default function ApplicationTracker({ currentStep }) {
   if (otherStates[currentStep]) {
     const stateInfo = otherStates[currentStep];
     return (
-      <div className={`flex items-center justify-center space-x-2 p-2 rounded-full text-white text-sm font-semibold ${stateInfo.color}`}>
-        <span>{stateInfo.icon}</span>
-        <span>{stateInfo.label}</span>
+      <div className="w-full font-sans relative group">
+        {/* This div is now a full-width bar, matching the height of the progress bar */}
+        <div className={`w-full h-8 flex items-center justify-center space-x-2 rounded-full text-white text-sm font-semibold ${stateInfo.color}`}>
+          <span>{stateInfo.icon}</span>
+          <span>{stateInfo.label}</span>
+        </div>
+        
+        {/* Tooltip positioned relative to the full-width container */}
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
+          {stateInfo.tooltip}
+        </div>
       </div>
     );
   }
 
+  // Handle in-progress/non-terminal stages like Applied or Interview
   return (
     <div className="w-full font-sans">
       {/* This container uses flexbox and a gap to create the segmented look */}

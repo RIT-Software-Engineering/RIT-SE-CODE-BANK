@@ -52,6 +52,7 @@ model Candidate {
 model Comment {
   //Fields
   id               Int      @id @default(autoincrement())
+  author           String            //this is the full name of the user who wrote the comment
   foreignTableName String   @db.Text
   foreignKey       String   @db.Text //this is the id of a specific entry within one of the foreign tables
   status           String   @db.Text
@@ -271,12 +272,13 @@ enum JobApplicationStatus {
   APPLIED
   HIRED
   ACCEPTED_OFFER
+  DECLINED_OFFER //used to rejct offers given by employers/admin
   PENDING_OFFER
   INTERVIEW
   ONHOLD
-  REJECTED
+  REJECTED //used for rejecting applications made by candidate/employee
   INACTIVE
-  //any withdrawal or deletion of a job position will delete the jobposition application altogether
+  //any deletion of a job position will delete the jobposition application altogether
 }
 
 enum Grade {

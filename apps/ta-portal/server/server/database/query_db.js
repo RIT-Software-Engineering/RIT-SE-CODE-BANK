@@ -482,7 +482,8 @@ async function applyForJobPosition(applicationDetails) {
         data: {
           foreignTableName: 'JobPositionApplicationHistory',
           foreignKey: String(newApplication.id), // Use the ID from the just-created application
-          status: 'APPLIED',                 // The initial status
+          author: applicationFormData.fname + ' ' + applicationFormData.lname,
+          status: 'APPLIED',                     // The initial status
           comment: 'Candidate submitted application.', // A system-generated comment
           timestamp: new Date(),
         },
@@ -550,15 +551,37 @@ async function deleteCandidateApplication(applicationId) {
   }
 }
 
+/**
+ * Checks if a candidate has already been hired or has at least accepted an offer for another job position. 
+ * This is used to prevent candidates from applying for multiple positions by notifing employers and administrators that this candidate has already been hired for this semester.
+ * @param {string} candidateUsername - The username of the candidate.
+ * @param (number} semestercode - The semester code that the employer is hiring for.
+ * @returns {Promise<boolean>} A promise that resolves to true if the candidate has been hired, false otherwise.
+ */
+async function getCandidateHiredStatus(candidateUsername, semestercode) {
+  const application = await prisma.jobPositionApplicationHistory.findFirst({
+    where: {
+      username: candidateUsername,
+      jobApplicationStatus: { in: ['ACCEPTED_OFFER', 'HIRED'] },
+      jobPosition: {
+        semesterCode: semestercode,
+      },
+    },
+  });
+  return !!application;
+}
+
+
 
 /**
  * Updates an application's status and creates a new comment record in a transaction.
+ * @param {string} author - The full name of the user who is changing the application status.
  * @param {string} applicationId - The ID of the JobPositionApplicationHistory record.
  * @param {string} status - The new status for the application (e.g., 'Rejected', 'Accepted').
  * @param {string} comments - The text for the new comment record.
  * @returns {Promise<object>} The updated application record.
  */
-async function changeCandidateApplicationStatus(applicationId, status, comments) {
+async function changeCandidateApplicationStatus(author, applicationId, status, comments) {
   try {
     // Use a transaction to ensure both the update and create operations succeed or fail together.
     const updatedApplication = await prisma.$transaction(async (tx) => {
@@ -577,6 +600,7 @@ async function changeCandidateApplicationStatus(applicationId, status, comments)
       await tx.comment.create({
         data: {
           foreignTableName: 'JobPositionApplicationHistory', // The table this comment relates to
+          author: author,                                 // The user who made the change
           foreignKey: String(applicationId),              // The specific record ID
           status: status,                                 // The new status being set
           comment: comments,                              // The comment text
@@ -1797,6 +1821,7 @@ module.exports = {
   getCandidateApplication,
   getSemesterCodesForEmployer,
   applyForJobPosition,
+  getCandidateHiredStatus,
   changeCandidateApplicationStatus,
   getUser,
   authenticateUser,

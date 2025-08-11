@@ -36,6 +36,7 @@ const {
   getSemesterCodesForEmployer,
   deleteCandidateApplication,
   getCandidateApplication,
+  getCandidateHiredStatus,
   changeCandidateApplicationStatus,
   getComments,
   createPosition,
@@ -337,21 +338,49 @@ router.delete('/applications/:username', async (req, res) => {
 });
 
 /**
+ * @route   GET /api/db/candidate/:username/hired-status
+ * @desc    Retrieves the hired status of a candidate for a specific semester.
+ * @access  Public
+ * @param   {string} username - The username of the candidate.
+ * @query   {string} semesterCode - The code of the semester.
+ * @returns {boolean} - The hired status of the candidate.
+ */ 
+router.get('/candidate/:username/hired-status', async (req, res) => {
+  try{
+  const { username } = req.params;
+  const { semesterCode } = req.query;
+  if (!username) {
+    return res.status(400).json({ error: 'Candidate username is required.' });
+  }
+  if (!semesterCode || isNaN(semesterCode)) {
+    return res.status(400).json({ error: 'Semester code is required.' });
+  }
+
+  const hiredStatus = await getCandidateHiredStatus(username, parseInt(semesterCode, 10));
+  res.status(200).json(hiredStatus);
+  } catch (error) {
+    console.error('Error in /candidate/:username/hired-status route:', error);
+    res.status(500).json({ error: 'Failed to retrieve candidate hired status.' });
+  }
+});
+
+/**
  * @route   PUT /api/db/applications/:id
- * @desc    Updates a job application record's status for a candidate.
+ * @desc    Updates an existing job application record's status and comments that was initially created by a candidate.
  * @access  Public
  * @param   {string} id - The id of the application.
+ * @body    {string} author - The full name of the user making the update.
  * @body    {string} status - The new status of the application.
  * @body    {string} comments - The comments associated with the update.
  */
 router.put('/applications/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, comments } = req.body;
+    const { status, comments, author } = req.body;
 
     // 1. Validate the input from the request.
-    if (!status || !id) {
-      return res.status(400).json({ error: 'Status and the application id are a required fields.' });
+    if (!status || !id || !author) {
+      return res.status(400).json({ error: 'Status, the application id, and the author of who\'s making the update are a required fields.' });
     }
     
     const numericApplicationId = parseInt(id, 10);
@@ -364,6 +393,7 @@ router.put('/applications/:id', async (req, res) => {
 
     // 2. Call the backend function with the validated data.
     const updatedApplication = await changeCandidateApplicationStatus(
+      author,
       numericApplicationId,
       status,
       commentText

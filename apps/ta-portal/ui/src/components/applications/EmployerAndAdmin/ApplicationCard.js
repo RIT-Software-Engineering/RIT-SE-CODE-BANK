@@ -6,19 +6,19 @@ import { useState, useRef, useEffect } from "react";
 import { getStatusClasses } from "@/utils/applicationUtils";
 import { DocumentIcon, EllipsisVerticalIcon } from "@/assets/icons";
 import ViewableApplicationForm from "../ViewableApplicationForm";
-import ViewCommentForm from "../../comments/ViewableCommentForm";
+import ViewableCommentForm from "../../comments/ViewableCommentForm";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
-import { updateCandidateApplicationStatus } from "@/services/db-apis";
+import { updateCandidateApplicationStatus, getCandidateHiredStatus } from "@/services/db-apis";
+import ConfirmationModal from "@/components/common/models/ConfirmationModal";
 import { useNotification } from "@/contexts/NotificationContext";
 import ApplicationTracker from "../ApplicationProgressTracker";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function ApplicationCard({
+  currentUser,
   jobPosition,
   application,
   onStatusChange,
 }) {
-  const { currentUser } = useAuth();
   const { showNotification } = useNotification();
   const [isViewingApplication, setIsViewingApplication] = useState(false);
   const [isViewingComments, setIsViewingComments] = useState(false);
@@ -29,6 +29,10 @@ export default function ApplicationCard({
     title: "",
   });
   const [isProcessingUpdate, setIsProcessingUpdate] = useState(false);
+
+  // check if candidate has already been accepted or hired for a position for the given semester
+  const [isConfirmingOffer, setIsConfirmingOffer] = useState(false);
+  const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
   const { id, jobApplicationStatus, resume } = application;
 
@@ -43,13 +47,47 @@ export default function ApplicationCard({
     setModalState({ isOpen: false, status: null, title: "" });
   };
 
+  const handleOfferPosition = async () => {
+    if (!jobPosition?.semesterCode) {
+      showNotification(
+        "Cannot check candidate status: Semester code is missing.",
+        "error"
+      );
+      return;
+    }
+
+    setIsCheckingHiredStatus(true);
+    try {
+      const hiredStatus = await getCandidateHiredStatus(
+        application.username,
+        jobPosition.semesterCode
+      );
+
+      // If the candidate is already hired for the semester, show the confirmation modal.
+      if (hiredStatus) {
+        setIsConfirmingOffer(true);
+      } else {
+        // Otherwise, proceed directly to the comment modal for the offer.
+        handleOpenUpdateModal("PENDING_OFFER", "Offer Position");
+      }
+    } catch (error) {
+      console.error("Failed to check candidate hired status:", error);
+      showNotification(`Error checking hired status: ${error.message}`, "error");
+    } finally {
+      setIsCheckingHiredStatus(false);
+    }
+  };
+
+
   const handleConfirmUpdate = async (comment) => {
     setIsProcessingUpdate(true);
     try {
       console.log(
         `Updating status to "${modalState.status}" for application ID: ${id} with comment: ${comment}`
       );
+      let fullName = currentUser.fname + " " + currentUser.lname
       const updatedApplication = await updateCandidateApplicationStatus(
+        fullName,
         id,
         modalState.status,
         comment
@@ -136,6 +174,7 @@ export default function ApplicationCard({
         <button
           onClick={handleMenuToggle}
           className="p-2 rounded-full hover:bg-gray-100"
+          disabled={isCheckingHiredStatus}
         >
           <EllipsisVerticalIcon />
         </button>
@@ -167,8 +206,10 @@ export default function ApplicationCard({
               <div className="my-1 border-t border-gray-100"></div>
 
               {(jobApplicationStatus.toLowerCase() === "applied" ||
+                jobApplicationStatus.toLowerCase() === "interview" ||
                 jobApplicationStatus.toLowerCase() === "pending_offer" ||
-                jobApplicationStatus.toLowerCase() === "interview") && (
+                jobApplicationStatus.toLowerCase() === "accepted_offer" ||
+                jobApplicationStatus.toLowerCase() === "hired") && (
                 <li>
                   <button
                     onClick={() => {
@@ -177,7 +218,7 @@ export default function ApplicationCard({
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                   >
-                    Reject
+                    Reject Application
                   </button>
                 </li>
               )}
@@ -203,10 +244,7 @@ export default function ApplicationCard({
                   <button
                     onClick={() => {
                       setIsOpen(false);
-                      handleOpenUpdateModal(
-                        "PENDING_OFFER",
-                        "Offer Position"
-                      );
+                      handleOfferPosition();
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
@@ -292,7 +330,7 @@ export default function ApplicationCard({
 
           <div className="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
             <div className="w-2/3 mt-6">
-              <ApplicationTracker currentStep={jobApplicationStatus} />
+              <ApplicationTracker currentStep={jobApplicationStatus}/>
             </div>
             <span
               className={`px-4 py-2 text-md font-bold rounded-full ${statusClasses}`}
@@ -312,9 +350,10 @@ export default function ApplicationCard({
       )}
 
       {isViewingComments && (
-        <ViewCommentForm
+        <ViewableCommentForm
           application={application}
           jobPosition={jobPosition}
+          userRole={currentUser.role}
           onClose={() => setIsViewingComments(false)}
         />
       )}
@@ -326,6 +365,26 @@ export default function ApplicationCard({
         title={modalState.title}
         isProcessing={isProcessingUpdate}
       />
+
+      {/* confirmation model to confirm that an employer/admin wants to offer a position to a candidate who has already taken another position's offer */}
+      <ConfirmationModal
+        isOpen={isConfirmingOffer}
+        onClose={() => setIsConfirmingOffer(false)}
+        onConfirm={() => {
+          setIsConfirmingOffer(false);
+          // If confirmed, open the original comment modal for the offer
+          handleOpenUpdateModal("PENDING_OFFER", "Offer Position");
+        }}
+        title="Confirm Offer"
+        isConfirming={isProcessingUpdate}
+      >
+        <p>
+          Candidate <strong>{application.candidateFName} {application.candidateLName}</strong> has already accepted another position for this semester.
+        </p>
+        <p className="mt-2">
+          Are you sure you want to proceed with making them an offer?
+        </p>
+      </ConfirmationModal>
     </>
   );
 }

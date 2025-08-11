@@ -5,7 +5,7 @@ INSERT INTO `User` (`username`, `fname`, `lname`, `uid`, `password`, `email`, `p
 ('bd4567', 'Dr. Bob', 'Doe', 300, 'password', 'faculty3@example.com', 'he/him', 'EMPLOYER'),
 ('cc5678', 'Charlie', 'Coder', 301, 'password', 'student1@example.com', 'he/him', 'EMPLOYEE'),
 ('dd6789', 'Denise', 'Designer', 302, 'password', 'student2@example.com', 'she/her', 'EMPLOYEE'),
-('tt7890', 'Tyler', 'Tester', 304, 'password', 'student4@example.com', 'he/him', 'EMPLOYEE'),
 ('ee8901', 'Evan', 'Engineer', 303, 'password', 'student3@example.com', 'they/them', 'CANDIDATE'),
+('tt7890', 'Tyler', 'Tester', 304, 'password', 'student4@example.com', 'he/him', 'EMPLOYEE'),
 ('ss9012', 'Sally', 'Student', 305, 'password', 'student5@example.com', 'they/them', 'CANDIDATE'),
-('lc2410', 'Liang', 'Chu', 306, 'password', 'lc2410@g.rit.edu', 'he/him', 'CANDIDATE');
+('gg5672', 'Gary', 'Greenfield', 306, 'password', 'student6@example.com', 'he/him', 'CANDIDATE');
