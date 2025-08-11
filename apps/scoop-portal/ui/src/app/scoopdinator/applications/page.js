@@ -21,9 +21,15 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
+/**
+ * The statuses to filter applications by.
+ */
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
 export default function SupervisorApplicationsPage() {
+  /**
+   * The list of applications to be displayed on the page.
+   */
   const [applications, setApplications] = useState([]);
   const [status, setStatus] = useState("");
   const [selectedApp, setSelectedApp] = useState(null);
@@ -67,6 +73,16 @@ export default function SupervisorApplicationsPage() {
     }
   }, [selectedApp]);
 
+  /**
+   * Handles the logic for opening a selected application.
+   *
+   * This function sets the selectedApp constant to the application that was
+   * passed in and changes its hasBeenRead status to true. Next, it refelcts
+   * this change in the list of applications.
+   *
+   * @param {*} app - The application that's been selected to be opened.
+   * @returns {void}
+   */
   const handleOpen = (app) => {
     setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
     setApplications((prev) =>
@@ -74,8 +90,27 @@ export default function SupervisorApplicationsPage() {
     );
   };
 
+  /**
+   * Handles the logic for closing a selected application.
+   *
+   * This function simply sets the selectedApp constant to null.
+   *
+   * @returns {void}
+   */
   const handleClose = () => setSelectedApp(null);
 
+  /**
+   * Updates the status of an application in the database.
+   *
+   * This function sends a PUT request to the API to update the status of
+   * a specific application. It expects the application ID to be in
+   * `selectedApp.id` and the new status to be passed as `newStatus`.
+   *
+   * @async
+   * @param {*} newStatus - The new status to set for the application.
+   * @throws {Error} If the update fails
+   * @returns {Promise<void>}
+   */
   async function putApplicationStatus(newStatus) {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/application/${selectedApp.id}`,
@@ -91,6 +126,12 @@ export default function SupervisorApplicationsPage() {
     if (!res.ok) throw new Error(result.error || "Failed to update");
   }
 
+  /**
+   * Handles the logic for updating the status of a selected application.
+   *
+   * @param {*} status - The new status to set the application to
+   * @returns {void}
+   */
   const handleStatusUpdate = (status) => {
     console.log("Updating status to:", status);
     if (!selectedApp) return;
@@ -150,6 +191,11 @@ export default function SupervisorApplicationsPage() {
     setNotification({ ...notification, open: false });
   };
 
+  /**
+   *
+   * @param {*} data
+   * @returns {Response}
+   */
   async function postNewUsers(data) {
     const response = await fetch(
       process.env.NEXT_PUBLIC_API_URL + "/api/users",
@@ -164,7 +210,9 @@ export default function SupervisorApplicationsPage() {
     return response;
   }
 
-  //temporary data for user creation
+  /**
+   * Temporary data for user creation
+   */
   const tempData = {
     semester_group: "default",
     project: "default",
@@ -172,12 +220,19 @@ export default function SupervisorApplicationsPage() {
     last_login: "default",
     prev_login: "default",
   };
+
+  /**
+   *
+   *
+   * @param {*} app - The application providing information on the new user to create.
+   * @returns {User} The new user created from the application.
+   */
   const createUserFromApp = (app) => {
     return {
       fname: app.firstName,
       lname: app.lastName,
       email: app.ritEmail,
-      type: "student", //change to scooployee
+      type: "student", //TODO: change to scooployee
       semester_group: tempData.semester_group,
       project: tempData.project,
       active: tempData.active,
@@ -186,14 +241,16 @@ export default function SupervisorApplicationsPage() {
     };
   };
 
-  //for each application where accepted=true, format data into user and then do users post like how u do application post
+  // TODO: More info for doc comment
+  /**
+   * Handles the logic to submit accepted applicants as new users into the database.
+   *
+   * For each application where accepted=true, format data into user and then do users post like how you would do application post.
+   * @returns {void}
+   */
   const handleSubmit = () => {
-    //   let data ;
-    //
     const acceptedApps = applications.filter((app) => app.accepted === true);
-    // console.log(acceptedApps)
     for (let app of acceptedApps) {
-      // console.log(app)
       let newUser = createUserFromApp(app);
       console.log("Submitting user:", newUser);
       postNewUsers(newUser);
