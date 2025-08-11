@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+// import "./globals.css";
+import "@/styles/styles.css";
+import ThemeRegistry from "@/styles/ThemeRegistry";
 import UserProvider from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 
@@ -30,8 +32,10 @@ export default function RootLayout({
                 className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
             >
                 <UserProvider>
-                    <main className="grow">{children}</main>
-                    <Footer />
+                    <ThemeRegistry>
+                        <main className="grow">{children}</main>
+                        <Footer />
+                    </ThemeRegistry>
                 </UserProvider>
             </body>
         </html>
