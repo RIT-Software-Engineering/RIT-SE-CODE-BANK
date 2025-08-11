@@ -93,13 +93,17 @@ export default function AdminTimecardsPage() {
 
     // Filter data based on search term
     useEffect(() => {
-        // If the search term is empty, show all the data.
-        if (!searchTerm) {
+        // Trim whitespace from the start and end of the search term.
+        const trimmedSearchTerm = searchTerm.trim();
+
+        // If the trimmed term is empty, show all data.
+        if (!trimmedSearchTerm) {
             setFilteredData(groupedData);
             return;
         }
 
-        const lowerTerm = searchTerm.toLowerCase();
+        const lowerTerm = trimmedSearchTerm.toLowerCase();
+
         // Filter the original data based on the user's full name or employee ID
         const filtered = groupedData.filter(employeeEntry => 
             employeeEntry.user.fullName.toLowerCase().includes(lowerTerm) ||

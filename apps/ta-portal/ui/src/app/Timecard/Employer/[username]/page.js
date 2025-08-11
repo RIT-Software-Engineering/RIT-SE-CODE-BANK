@@ -97,12 +97,16 @@ export default function EmployerTimecardsPage() {
 
     // This effect filters the data based on the search term.
     useEffect(() => {
-        if (!searchTerm) {
+        // Trim whitespace from the start and end of the search term.
+        const trimmedSearchTerm = searchTerm.trim();
+
+        // 2. If the trimmed term is empty, show all data.
+        if (!trimmedSearchTerm) {
             setFilteredData(groupedData);
             return;
         }
 
-        const lowerTerm = searchTerm.toLowerCase();
+        const lowerTerm = trimmedSearchTerm.toLowerCase();
         
         const filtered = groupedData.map(courseGroup => {
             // Filter the employees within this course.
