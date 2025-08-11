@@ -11,6 +11,17 @@ import {
 } from "@/services/project";
 import { UserProfile } from "@/types/userProfile";
 import CreateAssessmentModal from "./CreateAssessmentModal";
+import {
+    Modal,
+    Box,
+    Button,
+    Typography,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import BackArrow from "@/components/BackArrow";
 
 type ReuseAssessmentModalProps = {
     assessments: FeedbackForm[];
@@ -105,58 +116,91 @@ export function ReuseAssessmentModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-lg/40 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-                <button
-                    className="absolute top-4 right-6 text-gray-500 hover:text-gray-700 cursor-pointer"
-                    onClick={onClose}
+        <div>
+            <Modal open={isOpen} onClose={onClose}>
+                <Box
+                    sx={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        bgcolor: "background.paper",
+                        borderRadius: 2,
+                        boxShadow: 24,
+                        p: 4,
+                        width: "100%",
+                        maxWidth: 600,
+                        maxHeight: "80vh",
+                        overflowY: "auto",
+                    }}
                 >
-                    ×
-                </button>
-                <h2 className="text-2xl font-bold mb-4">Assessments</h2>
-                <div>
-                    {assessments.map((form, idx) => (
-                        <div key={form.id} className="mb-3 border rounded">
-                            <button
-                                className="w-full text-left px-4 py-2 bg-gray-100 hover:bg-gray-200 font-semibold rounded-t flex justify-between items-center"
-                                onClick={() =>
+                    <Button
+                        onClick={onClose}
+                        sx={{
+                            position: "absolute",
+                            top: 16,
+                            right: 16,
+                            minWidth: 0,
+                            color: "grey.600",
+                            fontSize: 24,
+                        }}
+                    >
+                        ×
+                    </Button>
+                    <Typography variant="h5" fontWeight="bold" mb={3}>
+                        Assessments
+                    </Typography>
+                    <div>
+                        {assessments.map((form, idx) => (
+                            <Accordion
+                                key={form.id}
+                                expanded={openIdx.includes(idx)}
+                                onChange={() =>
                                     setOpenIdx(
                                         openIdx.includes(idx)
-                                            ? openIdx.filter((i) => i != idx)
+                                            ? openIdx.filter((i) => i !== idx)
                                             : [...openIdx, idx]
                                     )
                                 }
+                                sx={{ mb: 2 }}
                             >
-                                <span>{form.name}</span>
-                                <span>{openIdx.includes(idx) ? "▲" : "▼"}</span>
-                            </button>
-                            {openIdx.includes(idx) && (
-                                <>
-                                    <div className="px-4 py-3 bg-white rounded-b">
-                                        {form.inquiries.length === 0 && (
-                                            <div className="text-gray-500 italic">
-                                                No questions.
-                                            </div>
-                                        )}
-                                        {form.inquiries.map((q, qIdx) => (
-                                            <QuestionDisplay
-                                                key={qIdx}
-                                                inquiry={q}
-                                            />
-                                        ))}
-                                    </div>
-                                    <button
-                                        className="left-0 bottom-0 w-full px-4 py-3 bg-blue-600 text-white hover:bg-blue-700 transition cursor-pointer"
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                >
+                                    <Typography fontWeight="bold">
+                                        {form.name}
+                                    </Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    {form.inquiries.length === 0 && (
+                                        <Typography
+                                            color="text.secondary"
+                                            fontStyle="italic"
+                                        >
+                                            No questions.
+                                        </Typography>
+                                    )}
+                                    {form.inquiries.map((q, qIdx) => (
+                                        <QuestionDisplay
+                                            key={qIdx}
+                                            inquiry={q}
+                                        />
+                                    ))}
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        fullWidth
+                                        sx={{ mt: 2 }}
                                         onClick={() => onFormSelect(form)}
                                     >
                                         Select This Form
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
+                                    </Button>
+                                </AccordionDetails>
+                            </Accordion>
+                        ))}
+                    </div>
+                </Box>
+            </Modal>
         </div>
     );
 }
@@ -239,115 +283,181 @@ export function PeerSelectModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
-                <button
-                    className="absolute top-4 right-6 text-gray-500 hover:text-gray-700 cursor-pointer"
+                <Button
                     onClick={onClose}
-                    type="button"
+                    sx={{
+                        position: "absolute",
+                        top: 16,
+                        right: 24,
+                        minWidth: 0,
+                        color: "grey.600",
+                        fontSize: 24,
+                    }}
                 >
                     ×
-                </button>
-                <h2 className="text-2xl font-bold mb-4">Select Peers</h2>
-                <div className="mb-4 flex items-center gap-4">
-                    <label className="flex items-center gap-2">
+                </Button>
+                <Typography variant="h5" fontWeight="bold" mb={3}>
+                    Select Peers
+                </Typography>
+                <Box mb={4} display="flex" alignItems="center" gap={2}>
+                    <Box display="flex" alignItems="center">
                         <input
                             type="checkbox"
                             checked={splitPeers}
                             onChange={(e) => setSplitPeers(e.target.checked)}
+                            style={{ marginRight: 8 }}
+                            id="split-peers-checkbox"
                         />
-                        <span>Split into responders and receivers</span>
-                    </label>
-                </div>
-                <div className="mb-4 flex gap-2">
-                    <button
-                        className="px-3 py-1 rounded border hover:bg-gray-100 cursor-pointer"
+                        <label htmlFor="split-peers-checkbox">
+                            Split into responders and receivers
+                        </label>
+                    </Box>
+                </Box>
+                <Box mb={4} display="flex" gap={2}>
+                    <Button
+                        variant="outlined"
+                        color="primary"
                         onClick={handleSelectAll}
                         type="button"
                     >
                         Select All
-                    </button>
-                    <button
-                        className="px-3 py-1 rounded border hover:bg-gray-100 cursor-pointer"
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        color="primary"
                         onClick={handleDeselectAll}
                         type="button"
                     >
                         Deselect All
-                    </button>
-                </div>
+                    </Button>
+                </Box>
                 {splitPeers ? (
-                    <div className="flex gap-6">
-                        <div className="flex-1">
-                            <h3 className="font-semibold mb-2">Responders</h3>
-                            <div className="flex flex-wrap gap-2">
+                    <Box display="flex" gap={6}>
+                        <Box flex={1}>
+                            <Typography
+                                variant="subtitle1"
+                                fontWeight="bold"
+                                mb={2}
+                            >
+                                Responders
+                            </Typography>
+                            <Box display="flex" flexWrap="wrap" gap={2}>
                                 {peers.map((peer) => (
-                                    <button
+                                    <Button
                                         key={peer.id}
-                                        type="button"
-                                        className={`px-2 py-1 rounded border ${
+                                        variant={
                                             responders.includes(peer)
-                                                ? "bg-blue-600 text-white"
-                                                : "bg-gray-100 text-gray-800"
-                                        }`}
+                                                ? "contained"
+                                                : "outlined"
+                                        }
+                                        color={
+                                            responders.includes(peer)
+                                                ? "primary"
+                                                : "inherit"
+                                        }
                                         onClick={() =>
                                             togglePeer(peer, "responders")
                                         }
+                                        sx={{
+                                            borderRadius: 2,
+                                            minWidth: 0,
+                                            px: 2,
+                                            py: 1,
+                                            textTransform: "none",
+                                        }}
                                     >
                                         {peer.name}
-                                    </button>
+                                    </Button>
                                 ))}
-                            </div>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-semibold mb-2">Receivers</h3>
-                            <div className="flex flex-wrap gap-2">
+                            </Box>
+                        </Box>
+                        <Box flex={1}>
+                            <Typography
+                                variant="subtitle1"
+                                fontWeight="bold"
+                                mb={2}
+                            >
+                                Receivers
+                            </Typography>
+                            <Box display="flex" flexWrap="wrap" gap={2}>
                                 {peers.map((peer) => (
-                                    <button
+                                    <Button
                                         key={peer.id}
-                                        type="button"
-                                        className={`px-2 py-1 rounded border ${
+                                        variant={
                                             receivers.includes(peer)
-                                                ? "bg-blue-600 text-white"
-                                                : "bg-gray-100 text-gray-800"
-                                        }`}
+                                                ? "contained"
+                                                : "outlined"
+                                        }
+                                        color={
+                                            receivers.includes(peer)
+                                                ? "primary"
+                                                : "inherit"
+                                        }
                                         onClick={() =>
                                             togglePeer(peer, "receivers")
                                         }
+                                        sx={{
+                                            borderRadius: 2,
+                                            minWidth: 0,
+                                            px: 2,
+                                            py: 1,
+                                            textTransform: "none",
+                                        }}
                                     >
                                         {peer.name}
-                                    </button>
+                                    </Button>
                                 ))}
-                            </div>
-                        </div>
-                    </div>
+                            </Box>
+                        </Box>
+                    </Box>
                 ) : (
-                    <div>
-                        <h3 className="font-semibold mb-2">Peers</h3>
-                        <div className="flex flex-wrap gap-2">
+                    <Box>
+                        <Typography
+                            variant="subtitle1"
+                            fontWeight="bold"
+                            mb={2}
+                        >
+                            Peers
+                        </Typography>
+                        <Box display="flex" flexWrap="wrap" gap={2}>
                             {peers.map((peer) => (
-                                <button
+                                <Button
                                     key={peer.id}
-                                    type="button"
-                                    className={`px-2 py-1 rounded border ${
+                                    variant={
                                         selected.includes(peer)
-                                            ? "bg-blue-600 text-white"
-                                            : "bg-gray-100 text-gray-800"
-                                    }`}
+                                            ? "contained"
+                                            : "outlined"
+                                    }
+                                    color={
+                                        selected.includes(peer)
+                                            ? "primary"
+                                            : "inherit"
+                                    }
                                     onClick={() => togglePeer(peer, "all")}
+                                    sx={{
+                                        borderRadius: 2,
+                                        minWidth: 0,
+                                        px: 2,
+                                        py: 1,
+                                        textTransform: "none",
+                                    }}
                                 >
                                     {peer.name}
-                                </button>
+                                </Button>
                             ))}
-                        </div>
-                    </div>
+                        </Box>
+                    </Box>
                 )}
-                <div className="mt-6 flex justify-end">
-                    <button
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                <Box mt={6} display="flex" justifyContent="flex-end">
+                    <Button
+                        variant="contained"
+                        color="primary"
                         onClick={onClose}
                         type="button"
                     >
                         Done
-                    </button>
-                </div>
+                    </Button>
+                </Box>
             </div>
         </div>
     );
@@ -472,31 +582,45 @@ export default function AssignAssessmentPage({
 
     if (!selectedForm)
         return (
-            <div className="max-w-3xl mx-auto py-8 px-4">
-                <button
-                    className="mb-4 text-blue-600 underline"
+            <Box maxWidth="md" mx="auto" py={8} px={4}>
+                <Button
+                    sx={{ mb: 2 }}
+                    color="primary"
+                    variant="text"
+                    startIcon={<span>&larr;</span>}
                     aria-label="Back"
                     onClick={() => router.back()}
                 >
-                    &larr; Back
-                </button>
+                    Back
+                </Button>
 
-                <div className="flex flex-col items-center gap-6">
-                    <h1 className="text-3xl font-bold mb-4">
+                <Box
+                    display="flex"
+                    flexDirection="column"
+                    alignItems="center"
+                    gap={4}
+                >
+                    <Typography variant="h4" fontWeight="bold" mb={2}>
                         Assign Assessment
-                    </h1>
-                    <button
-                        className="px-6 py-3 text-lg bg-blue-600 text-white rounded hover:bg-blue-700 transition cursor-pointer"
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        size="large"
+                        sx={{ px: 4, py: 2 }}
                         onClick={() => setIsCreateModalOpen(true)}
                     >
                         Create New Assessment
-                    </button>
-                    <button
-                        className="px-6 py-3 text-lg bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition cursor-pointer"
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        color="primary"
+                        size="large"
+                        sx={{ px: 4, py: 2 }}
                         onClick={() => setIsReuseModalOpen(true)}
                     >
                         Use Pre-made Assessment
-                    </button>
+                    </Button>
                     <ReuseAssessmentModal
                         assessments={forms}
                         isOpen={isReuseModalOpen}
@@ -508,61 +632,81 @@ export default function AssignAssessmentPage({
                         onCancel={() => setIsCreateModalOpen(false)}
                         onCreate={handleCreateNew}
                     />
-                </div>
-            </div>
+                </Box>
+            </Box>
         );
 
     return (
         <div className="max-w-3xl mx-auto py-8 px-4">
-            <button
-                className="mb-4 text-blue-600 underline"
-                aria-label="Back"
-                onClick={() => setSelectedForm(undefined)}
+            <BackArrow />
+            <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                gap={6}
             >
-                &larr; Back
-            </button>
-            <div className="flex flex-col items-center gap-6">
-                <h1 className="text-3xl font-bold mb-4">Assign Assessment</h1>
-                <div className="flex gap-8 w-full max-w-4xl">
+                <Typography variant="h4" fontWeight="bold" mb={4}>
+                    Assign Assessment
+                </Typography>
+                <Box display="flex" gap={8} width="100%" maxWidth="lg">
                     {/* Selected Feedback Form Preview */}
-                    <div className="flex-1 border rounded-lg p-4 bg-white shadow">
-                        <h2 className="text-xl font-semibold mb-3">
+                    <Box
+                        flex={1}
+                        borderRadius={2}
+                        p={4}
+                        bgcolor="background.paper"
+                        boxShadow={2}
+                    >
+                        <Typography variant="h6" fontWeight="bold" mb={3}>
                             Selected Feedback Form
-                        </h2>
+                        </Typography>
                         {typeof selectedForm === "object" && selectedForm ? (
                             <>
                                 {selectedForm.inquiries.length === 0 && (
-                                    <div className="text-gray-500 italic">
+                                    <Typography
+                                        color="text.secondary"
+                                        fontStyle="italic"
+                                    >
                                         No questions.
-                                    </div>
+                                    </Typography>
                                 )}
                                 {selectedForm.inquiries.map((q, idx) => (
                                     <QuestionDisplay key={idx} inquiry={q} />
                                 ))}
                             </>
                         ) : (
-                            <div className="text-gray-500 italic">
+                            <Typography
+                                color="text.secondary"
+                                fontStyle="italic"
+                            >
                                 No form selected.
-                            </div>
+                            </Typography>
                         )}
-                    </div>
+                    </Box>
                     {/* Assignment Details Form */}
-                    <form
-                        className="flex-1 p-4 bg-white flex flex-col gap-4"
-                        onSubmit={(e) => {
+                    <Box
+                        component="form"
+                        flex={1}
+                        p={4}
+                        bgcolor="background.paper"
+                        display="flex"
+                        flexDirection="column"
+                        gap={2}
+                        onSubmit={(e: React.FormEvent) => {
                             e.preventDefault();
                             handleAssign();
                         }}
                     >
-                        <h2 className="text-xl font-semibold mb-3">
+                        <Typography variant="h6" fontWeight="bold" mb={3}>
                             Assignment Details
-                        </h2>
-                        <label className="flex flex-col gap-1">
-                            Name
+                        </Typography>
+                        <Box mb={2}>
+                            <Typography>Name</Typography>
                             <input
                                 type="text"
-                                className="border rounded px-2 py-1"
                                 required
+                                className="border rounded px-2 py-1"
+                                style={{ width: "100%", marginTop: 4 }}
                                 defaultValue={
                                     typeof selectedForm === "object" &&
                                     selectedForm
@@ -571,42 +715,47 @@ export default function AssignAssessmentPage({
                                 }
                                 onChange={(e) => setFormName(e.target.value)}
                             />
-                        </label>
-                        <label className="flex flex-col gap-1">
-                            Description
+                        </Box>
+                        <Box mb={2}>
+                            <Typography>Description</Typography>
                             <input
                                 type="text"
                                 className="border rounded px-2 py-1"
+                                style={{ width: "100%", marginTop: 4 }}
                                 onChange={(e) => setFormDesc(e.target.value)}
                             />
-                        </label>
-                        <label className="flex flex-col gap-1">
-                            Start Date
+                        </Box>
+                        <Box mb={2}>
+                            <Typography>Start Date</Typography>
                             <input
                                 type="date"
-                                className="border rounded px-2 py-1"
                                 required
+                                className="border rounded px-2 py-1"
+                                style={{ width: "100%", marginTop: 4 }}
                                 defaultValue={today}
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
-                        </label>
-                        <label className="flex flex-col gap-1">
-                            Due Date
+                        </Box>
+                        <Box mb={2}>
+                            <Typography>Due Date</Typography>
                             <input
                                 type="date"
-                                className="border rounded px-2 py-1"
                                 required
+                                className="border rounded px-2 py-1"
+                                style={{ width: "100%", marginTop: 4 }}
                                 defaultValue={inAWeek}
                                 onChange={(e) => setDueDate(e.target.value)}
                             />
-                        </label>
-                        <button
-                            className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                        </Box>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            sx={{ mt: 2 }}
                             onClick={() => setIsPeerModalOpen(true)}
                             type="button"
                         >
                             Select Peers
-                        </button>
+                        </Button>
                         <PeerSelectModal
                             isOpen={isPeerModalOpen}
                             onClose={() => setIsPeerModalOpen(false)}
@@ -620,16 +769,22 @@ export default function AssignAssessmentPage({
                             selected={selected}
                             setSelected={setSelected}
                         />
-                        <button
+                        <Button
                             type="submit"
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                            variant="contained"
+                            color="primary"
+                            sx={{ mt: 2 }}
                         >
                             Assign Assessment
-                        </button>
-                        {error && <div className="text-red-600">{error}</div>}
-                    </form>
-                </div>
-            </div>
+                        </Button>
+                        {error && (
+                            <Typography color="error" sx={{ mt: 1 }}>
+                                {error}
+                            </Typography>
+                        )}
+                    </Box>
+                </Box>
+            </Box>
         </div>
     );
 }
