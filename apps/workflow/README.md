@@ -29,17 +29,9 @@ Note: You can comment out the credentials settings in our cors policies to execu
         docker run --name project-name-maria-db-instance -e MARIADB_ROOT_PASSWORD=newPassword -p 8000:3306 -d mariadb:latest
         ```
 
-    **WARNING:** Windows may be default use PORT 8000 for Windows Communication Foundation (WCF). If this is the case, it will prevent you from running this docker image on your computer. 
 
-    To deactivate Windows Communication Foundation (WCF) HTTP Activation, the following steps can be taken:
-    1.  Open Windows Features:
-    *   Click the search bar in the Start menu and type "turn Windows features on or off," then select the corresponding option.
-    2.  Locate .NET Framework:
-    *   In the "Windows Features" window that appears, find the relevant .NET Framework version (e.g., .NET Framework 3.5 or 4.8) and click the plus sign  next to it to expand its components.
-    3.  Disable HTTP Activation:
-    *   Within the expanded .NET Framework section, locate "WCF Services" and expand it. Uncheck the box next to "HTTP Activation."
-    4.  Apply Changes and Restart:
-    *   Click "OK" to apply the changes. You may be prompted to restart your computer for the changes to take effect. Restarting is necessary to fully disable the HTTP Activation component.
+    **WARNING:** Windows may by default use PORT 8000 for Windows Communication Foundation (WCF) or a different application specific to your PC brand. If this is the case, it will prevent you from running this docker image on your computer. 
+    If this is the case, I would recommend using a different port and updating the `config_backend` files accordingly and update `SET "DB_PORT=8000"` to the whatever port you are using instead of 8000. 
 
 2.  Navigate to the `config_backend` files in the `/server` folder and update the `DB_ROOT_PASSWORD` variable with the password you set in the previous step (e.g., `newPassword`). You can change some other attributes depending on the situation (e.g. changing port numbers if needed, if you want to create a new database user as well, you can that the DB_USER and DB_USER_PASSWORD).
     * For Windows, navigate to specifically the `config_backend.bat` file and make the changes neccessary there. Since it's a `.bat` file you don't need to set permissions.
