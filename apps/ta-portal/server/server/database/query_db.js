@@ -131,7 +131,7 @@ async function buildPositionFilterClause(filters, candidateUsername) {
 async function getOpenJobPositions(
   searchTerm,
   filters,
-  candidateUID
+  candidateUsername
 ) {
   try {
     // 1. Build the search and filter clauses separately.
@@ -202,14 +202,14 @@ async function getOpenJobPositions(
   }
 }
 
-async function getJobPositionsByStatus(status, employerUID = null) {
+async function getJobPositionsByStatus(status, username = null) {
   const whereClause = {
     jobPositionStatus: status,
   };
 
-  console.log("Employeer is ", employerUID);
-  if (employerUID) {
-    whereClause.employerUID = employerUID;
+  console.log("Employeer is ", username);
+  if (username) {
+    whereClause.username = username;
   }
 
   try {
@@ -259,7 +259,7 @@ async function modifyPosition(jobId, positionData) {
         data: {
           location: jobData.location,
           locationType: jobData.locationType,
-          maxCAs: jobData.maxCAs,
+          maxTAs: jobData.maxTAs,
           startDate: jobData.startDate,
           endDate: jobData.endDate,
           jobPositionStatus: jobData.jobPositionStatus,
@@ -398,7 +398,7 @@ async function createPosition(positionData, employerUsername) {
         employer: {
           connect: { username: employerUsername },
         },        
-        maxCAs: jobData.maxCAs,
+        maxTAs: jobData.maxTAs,
         location: jobData.location,
         locationType: jobData.locationType,
         startDate: jobData.startDate,

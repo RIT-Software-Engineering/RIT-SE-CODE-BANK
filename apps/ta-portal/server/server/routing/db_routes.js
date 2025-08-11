@@ -143,7 +143,7 @@ router.get('/open-positions', async (req, res) => {
 });
 
 router.get("/pending-job-positions", async (req, res) => {
-  const { status, employerUID } = req.query; 
+  const { status, employerUsername } = req.query; 
 
   // Add a check to ensure status is provided
   if (!status) {
@@ -151,10 +151,7 @@ router.get("/pending-job-positions", async (req, res) => {
   }
 
   try {
-    // Pass both status and employerUID to your database function
-    const uidAsInt = employerUID ? parseInt(employerUID, 10) : null;
-
-    const positions = await getJobPositionsByStatus(status, uidAsInt);
+    const positions = await getJobPositionsByStatus(status, employerUsername);
     console.log("Positions are: ", positions);
     res.status(200).json(positions);
   } catch (error) {

@@ -47,6 +47,9 @@ export default function PositionSection({ title, positions, onEdit, onDelete, em
                   <div className="text-sm text-gray-600 mt-1">
                     {position.location} ({position.locationType}) – {position.jobPositionStatus}
                   </div>
+                  <div className="text-sm text-gray-800 mt-1">
+                    Max TAs: {position.maxTAs}
+                  </div>
                   <div>
                     {position.jobSchedules?.map((day) => (
                       <span key={day.jobPositionId+day.dayOfWeek} className="mr-3">

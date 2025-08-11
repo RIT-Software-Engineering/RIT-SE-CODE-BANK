@@ -20,7 +20,7 @@ const formatDateToInputValue = (dateString) => {
 const newJobTemplate = {
   location: "",
   locationType: "INPERSON",
-  maxCAs: 1,
+  maxTAs: 1,
   startDate: "",
   endDate: "",
   jobSchedules: [],
@@ -66,7 +66,7 @@ export default function EditPositionModal({
         payload.jobPositionStatus = 'PENDING_APPROVAL';
       }
       
-      payload.maxCAs = parseInt(data.maxCAs, 10) || 0;
+      payload.maxTAs = parseInt(data.maxTAs, 10) || 0;
       console.log("Submitting job data:", payload);
 
       if (payload.startDate)

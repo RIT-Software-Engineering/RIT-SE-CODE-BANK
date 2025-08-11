@@ -1,4 +1,4 @@
-INSERT INTO `JobPosition` (`id`, `courseCode`, `sectionNumber`, `semesterCode`, `username`, `maxCAs`, `jobPositionStatus`, `location`, `locationType`, `gradeRequirement`, `graduateStatusRequirement`, `courseTakenRequirement`, `startDate`, `endDate`) VALUES
+INSERT INTO `JobPosition` (`id`, `courseCode`, `sectionNumber`, `semesterCode`, `username`, `maxTAs`, `jobPositionStatus`, `location`, `locationType`, `gradeRequirement`, `graduateStatusRequirement`, `courseTakenRequirement`, `startDate`, `endDate`) VALUES
 ('2241-SWEN-344-1', 'SWEN-344', 1, 2241, 'jd2345', 1, 'OPEN', 'ONLINE ASYNC', 'REMOTE', 'A', Null, TRUE, '2025-08-25T00:00:00.000Z', '2025-12-25T00:00:00.000Z'),
 ('2241-SWEN-344-2', 'SWEN-344', 2, 2241, 'jd3456', 2, 'OPEN', 'GOL-1500', 'INPERSON', 'B_PLUS', Null, TRUE, '2025-08-25T00:00:00.000Z', '2025-12-25T00:00:00.000Z'),
 ('2241-SWEN-344-3', 'SWEN-344', 3, 2241, 'jd2345', 1, 'ONHOLD', 'GOL-1520', 'INPERSON', 'A_MINUS', Null, TRUE, '2025-08-25T00:00:00.000Z', '2025-12-25T00:00:00.000Z'),
