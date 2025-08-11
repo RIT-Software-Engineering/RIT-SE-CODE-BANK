@@ -628,7 +628,6 @@ export async function upsertTimecard(timecardData) {
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-timecard`;
-  console.log(`Submitting timecard to: ${url}`);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -653,7 +652,6 @@ export async function getAllTimecardsForJob(jobPositionHistoryId) {
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/all/${jobPositionHistoryId}`;
-  console.log(`Fetching all timecards from: ${url}`);
 
   const response = await fetch(url, {
     method: 'GET',
@@ -674,7 +672,6 @@ export async function fetchAdminViewData() {
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/admin/all`;
-  console.log(`Fetching admin timecard data from: ${url}`);
 
   const response = await fetch(url);
   return handleApiResponse(response);
@@ -695,7 +692,6 @@ export async function fetchEmployerViewData(employerUsername) {
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/employer/${employerUsername}`;
-  console.log(`Fetching employer timecard data from: ${url}`);
 
   const response = await fetch(url);
   return handleApiResponse(response);
