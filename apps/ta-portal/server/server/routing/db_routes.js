@@ -23,6 +23,7 @@ const {
   createEmployerProfile,
   updateEmployerProfile,
   getOpenJobPositions,
+  getJobPositionsByStatus,
   getCandidateApplicationsAsEmployer,
   applyForJobPosition,
   addNewCandidateResume,
@@ -140,6 +141,26 @@ router.get('/open-positions', async (req, res) => {
     res
       .status(500)
       .json({ error: 'Failed to search or filter open positions.' });
+  }
+});
+
+router.get("/pending-job-positions", async (req, res) => {
+  const { status, employerUsername } = req.query; 
+
+  // Add a check to ensure status is provided
+  if (!status) {
+    return res.status(400).json({ error: 'Status parameter is required.' });
+  }
+
+  try {
+    const positions = await getJobPositionsByStatus(status, employerUsername);
+    console.log("Positions are: ", positions);
+    res.status(200).json(positions);
+  } catch (error) {
+    console.error('Error in /pending-job-positions route:', error);
+    res
+      .status(500)
+      .json({ error: 'Failed to retrieve pending positions.' });
   }
 });
 

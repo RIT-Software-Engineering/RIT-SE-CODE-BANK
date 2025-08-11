@@ -54,15 +54,15 @@ export default function FormStepTwo({ register, control }) {
 
       <div>
         <label
-          htmlFor="maxCAs"
+          htmlFor="maxTAs"
           className="block text-sm font-medium text-gray-700"
         >
           Max TA&apos;s
         </label>
         <input
           type="number"
-          id="maxCAs"
-          {...register("maxCAs", { valueAsNumber: true })}
+          id="maxTAs"
+          {...register("maxTAs", { valueAsNumber: true })}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         />
       </div>

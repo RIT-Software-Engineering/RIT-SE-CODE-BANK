@@ -33,7 +33,7 @@ export default function MultiStepForm({
       ],
       2: ["location",
         "locationType",
-        "maxCAs",
+        "maxTAs",
         "gradeRequirement", 
         "courseTakenRequirement"
       ],

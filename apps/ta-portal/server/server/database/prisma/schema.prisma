@@ -168,8 +168,8 @@ model JobPosition {
   sectionNumber             Int
   semesterCode              Int
   username                  String            //Foreign key for the user table (specificallly users who are in the employer table)
-  maxCAs                    Int
-  jobPositionStatus         JobPositionStatus @default(OPEN)
+  maxTAs                    Int
+  jobPositionStatus         JobPositionStatus @default(PENDING_APPROVAL)
   location                  String            @db.Text
   locationType              LocationType
   graduateStatusRequirement GraduateStatus?
@@ -306,4 +306,6 @@ enum JobPositionStatus {
   FILLED
   ONHOLD
   INACTIVE
+  PENDING_APPROVAL
+  REJECTED
 }

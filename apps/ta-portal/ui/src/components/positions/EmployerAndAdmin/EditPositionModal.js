@@ -20,11 +20,12 @@ const formatDateToInputValue = (dateString) => {
 const newJobTemplate = {
   location: "",
   locationType: "INPERSON",
-  maxCAs: 1,
+  maxTAs: 1,
   startDate: "",
   endDate: "",
   jobSchedules: [],
   courseCode: "",
+  jobPositionStatus: 'PENDING_APPROVAL',
   sectionNumber: "",
   semesterCode: "2241", // Default semester
   gradeRequirement: null,
@@ -59,7 +60,13 @@ export default function EditPositionModal({
   const onSubmit = async (data) => {
     try {
       const payload = { ...data, EmployerUsername };
-      payload.maxCAs = parseInt(data.maxCAs, 10) || 0;
+
+            // If the job was rejected, submitting it again should set it back to pending.
+      if (payload.jobPositionStatus === 'REJECTED') {
+        payload.jobPositionStatus = 'PENDING_APPROVAL';
+      }
+      
+      payload.maxTAs = parseInt(data.maxTAs, 10) || 0;
       console.log("Submitting job data:", payload);
 
       if (payload.startDate)
