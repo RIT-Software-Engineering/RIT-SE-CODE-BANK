@@ -11,6 +11,8 @@ import { getProjectsPeers as getProjectPeers } from "@/services/project";
 import { UserProfile } from "@/types/userProfile";
 import { Assessment, Inquiry, InquiryType } from "@/types/assessment";
 import React, { useEffect, useState } from "react";
+import BackArrow from "@/components/BackArrow";
+import { Tabs, Tab, Button } from "@mui/material";
 
 // --- Main Component ---
 interface FeedbackFormProps {
@@ -111,34 +113,27 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
     return (
         <>
             <form className="max-w-xl mx-auto p-4 space-y-8">
-                <button
-                    type="button"
-                    onClick={handleBack}
-                    className="mb-4 text-blue-600 underline"
-                >
-                    &larr; Back
-                </button>
-                <div className="flex justify-center mb-6 space-x-2">
-                    {peers.map(({ id, name }, idx) => (
-                        <button
-                            key={name}
-                            type="button"
-                            className={`px-4 py-2 rounded-t ${
-                                activeTab === idx
-                                    ? "bg-blue-600 text-white font-bold"
-                                    : "bg-gray-200 text-gray-700"
-                            }`}
-                            onClick={() => handleSwitchTab(idx)}
+                <BackArrow />
+                <div className="flex justify-center mb-6">
+                    <div>
+                        <Tabs
+                            value={activeTab}
+                            onChange={(_, idx) => handleSwitchTab(idx)}
+                            indicatorColor="primary"
+                            textColor="primary"
+                            variant="scrollable"
+                            scrollButtons="auto"
+                            aria-label="Peer Tabs"
                         >
-                            {name}
-                        </button>
-                    ))}
+                            {peers.map(({ id, name }, idx) => (
+                                <Tab key={id} label={name} />
+                            ))}
+                        </Tabs>
+                    </div>
                 </div>
                 <p className="text-xl">
                     {assessmentMetadata.name} —{" "}
-                    <span className="font-semibold">
-                        {activePeer.name} [RECEIVED]
-                    </span>
+                    <span className="font-semibold">{activePeer.name}</span>
                 </p>
                 {inquiries.map((q) => {
                     switch (q.type) {
@@ -278,12 +273,16 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                     }
                 })}
 
-                <button
+                <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{ py: 1, fontWeight: "bold" }}
                     disabled
-                    className="w-full bg-gray-400 text-white py-2 rounded font-semibold"
                 >
                     Read Only
-                </button>
+                </Button>
             </form>
         </>
     );
