@@ -1551,127 +1551,6 @@ async function getComments(tableName, foreignKey) {
 // =============================================================================
 
 /**
- * Retrieves the current weekly timecard for a specific job.
- * @param {number} jobPositionHistoryId - The ID of the employee's specific job history record.
- * @returns {Promise<object|null>} The weekly timecard object with its daily entries, or null if not found.
- */
-async function getEmployeeTimecard(jobPositionHistoryId) {
-    try {
-      return await prisma.timecardWeeklyHistory.findFirst({
-        where: {
-          jobPositionHistoryId: jobPositionHistoryId,
-          isCurrentWeek: true,
-        },
-        include: {
-          dailyEntries: {
-            orderBy: {
-              day: 'asc',
-            },
-          },
-        },
-      });
-    } catch (error) {
-      console.error(`Error fetching timecard for jobPositionHistoryId ${jobPositionHistoryId}:`, error);
-      throw error;
-    }
-  }
-
-/**
- * Retrieves the most recent weekly timecard marked as the current week for a specific job position history ID.
- * 
- * @param {number} jobPositionHistoryId - The ID of the employee's job position history record.
- * @returns {Promise<Object|null>} A Promise that resolves to the timecardWeeklyHistory record
- */
-async function getMostRecentTimecard(jobPositionHistoryId) {
-  const current = await prisma.timecardWeeklyHistory.findFirst({
-    where: {
-      jobPositionHistoryId: jobPositionHistoryId,
-      isCurrentWeek: true
-    },
-    include: {
-      dailyEntries: {
-        orderBy: {
-          day: 'asc',
-        },
-      },
-      jobPositionHistory: true,
-    },
-  });
-
-  return current;
-}
-
-/**
- * Creates or updates a single day entry in a timecard.
- * This function handles all fields for a day, including times, duration, and notes.
- * If the weekly record doesn't exist, it will be created first.
- *
- * @param {object} dayData - The data for the day entry.
- * @returns {Promise<object>} The created or updated timecard day record.
- */
-async function upsertTimecardDay(dayData) {
-    const { 
-        jobPositionHistoryId, 
-        weekStartDate, 
-        date, 
-        notes, 
-        duration,
-        timeIn1, timeOut1,
-        timeIn2, timeOut2,
-        timeIn3, timeOut3
-    } = dayData;
-
-    return prisma.$transaction(async (tx) => {
-        const jobHistory = await tx.jobPositionHistory.findUnique({
-            where: { id: jobPositionHistoryId },
-            select: { employeeId: true },
-        });
-        if (!jobHistory) {
-            throw new Error(`JobPositionHistory with ID ${jobPositionHistoryId} not found.`);
-        }
-        const { employeeId } = jobHistory;
-        const dayId = `${employeeId}-${date}`;
-
-        // Ensure the weekly container exists
-        let weeklyHistory = await tx.timecardWeeklyHistory.findFirst({
-            where: { jobPositionHistoryId, weekStartDate }
-        });
-
-        if (!weeklyHistory) {
-            weeklyHistory = await tx.timecardWeeklyHistory.create({
-                data: { jobPositionHistoryId, weekStartDate, isCurrentWeek: true }
-            });
-        }
-
-        // Helper to convert time strings to Date objects for Prisma
-        const createDate = (d, time) => time ? new Date(`${d}T${time}:00Z`) : null;
-
-        const dataToUpsert = {
-            notes,
-            duration,
-            timeIn1: createDate(date, timeIn1),
-            timeOut1: createDate(date, timeOut1),
-            timeIn2: createDate(date, timeIn2),
-            timeOut2: createDate(date, timeOut2),
-            timeIn3: createDate(date, timeIn3),
-            timeOut3: createDate(date, timeOut3),
-        };
-
-        // Upsert the daily entry with all fields
-        return await tx.timecardDay.upsert({
-            where: { id: dayId },
-            update: dataToUpsert,
-            create: {
-                id: dayId,
-                day: new Date(date),
-                timecardWeeklyHistoryId: weeklyHistory.id,
-                ...dataToUpsert
-            },
-        });
-    });
-}
-
-/**
  * Creates or updates an employee's weekly timecard by individually
  * upserting each day's entry. This is a non-destructive operation.
  * @param {object} timecardData - The data submitted from the frontend.
@@ -1809,6 +1688,60 @@ async function fetchAdminViewData() {
   }
 }
 
+/**
+ * For the Employer View: Retrieves all timecards for a specific employer's employees.
+ * @param {string} employerUsername - The RIT username of the employer.
+ * @returns {Promise<Array>} A promise resolving to a flat array of timecard records for that employer.
+ */
+async function fetchEmployerViewData(employerUsername) {
+  try {
+    return await prisma.timecardWeeklyHistory.findMany({
+      where: {
+        jobPositionHistory: {
+          jobPosition: {
+            username: employerUsername,
+          },
+          employee: {
+            employeeStatus: 'ACTIVE',
+          },
+        },
+      },
+      include: {
+        dailyEntries: {
+          orderBy: { day: 'asc' },
+        },
+        jobPositionHistory: {
+          include: {
+            jobPosition: { select: { courseCode: true, sectionNumber: true } },
+            employee: {
+              include: {
+                candidate: {
+                  include: {
+                    user: {
+                      select: {
+                        username: true,
+                        fname: true,
+                        lname: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        weekStartDate: 'desc',
+      },
+    });
+  } catch (error)
+  {
+    console.error(`Error fetching employer timecard data for employer ${employerUsername}:`, error);
+    throw error;
+  }
+}
+
 // =============================================================================
 // EXPORTS & PROCESS HANDLING
 // =============================================================================
@@ -1845,11 +1778,9 @@ module.exports = {
   getComments,
   terminateEmployee,
   upsertTimecard,
-  upsertTimecardDay,
-  getMostRecentTimecard,
-  getEmployeeTimecard,
   getAllTimecardsForJob,
   fetchAdminViewData,
+  fetchEmployerViewData,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.
