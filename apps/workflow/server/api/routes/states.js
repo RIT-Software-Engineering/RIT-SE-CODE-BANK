@@ -6,6 +6,13 @@ const { getFullActionTree } = require("../helpers/actions.js");
 
 // I'm sorry for the chaos that this file is. I tried to leave enough inline comments that you could follow my madness. I'm very short on time.
 
+// TODOs: 
+// - Come up with a standard approach to calling all of these recursive methods
+// - Figure out what needs to be awaited and what can remain asyncronous
+// - Set this up to avoid too much recursion depth causing stack overflow errors (haven't run into one, but should have preventative measures)
+// - Optimize
+// - Improve readability and organization
+
 /**
  * Recurisve function for collecting all action states branching from a a specific action.
  *
