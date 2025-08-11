@@ -5,6 +5,16 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getProjectsByOverseer, getProjectsByPeer } from "@/services/project";
 import { Project } from "@/types/project";
+import {
+    Container,
+    Typography,
+    Box,
+    Grid,
+    Card,
+    CardActionArea,
+    CardContent,
+    Divider,
+} from "@mui/material";
 
 const Dashboard: React.FC = () => {
     const { currentUser } = useAuth();
@@ -22,89 +32,140 @@ const Dashboard: React.FC = () => {
     }, [currentUser]);
 
     return (
-        <div className="px-8 py-10 max-w-5xl mx-auto">
-            <h1 className="text-3xl font-bold mb-8">Projects</h1>
-            <div className="space-y-12">
+        <Container maxWidth="lg" sx={{ px: 4, py: 10 }}>
+            <Typography variant="h1" sx={{ mb: 8 }}>
+                Projects
+            </Typography>
+
+            <Box sx={{ display: "grid", rowGap: 12 }}>
+                {/* Projects as Peer */}
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4">
+                    <Typography variant="h2" sx={{ mb: 4 }}>
                         Projects as Peer
-                    </h2>
+                    </Typography>
+
                     {projectsAsPeer.length === 0 ? (
-                        <p className="text-gray-500">
+                        <Typography color="textPrimary">
                             You are not a peer in any projects.
-                        </p>
+                        </Typography>
                     ) : (
-                        <div className="flex flex-wrap gap-6">
+                        <Grid container spacing={3}>
                             {projectsAsPeer.map((project) => (
-                                <Link
-                                    href={`/projects/${project.id}/`}
+                                <Grid
                                     key={project.id}
-                                    className="w-full sm:w-64"
+                                    size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
                                 >
-                                    <div
-                                        className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        tabIndex={0}
-                                        role="button"
+                                    <Card
+                                        variant="elevation"
+                                        sx={{ height: "100%" }}
                                     >
-                                        <h3 className="text-xl font-semibold mb-2">
-                                            {project.name}
-                                        </h3>
-                                        <p className="text-gray-600 text-sm">
-                                            {project.description}
-                                        </p>
-                                    </div>
-                                </Link>
+                                        <CardActionArea
+                                            component={Link}
+                                            href={`/projects/${project.id}/`}
+                                            focusRipple
+                                            sx={{ height: "100%" }}
+                                        >
+                                            <CardContent>
+                                                <Typography
+                                                    variant="h3"
+                                                    sx={{ mb: 1.25 }}
+                                                >
+                                                    {project.name}
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    {project.description}
+                                                </Typography>
+                                            </CardContent>
+                                        </CardActionArea>
+                                    </Card>
+                                </Grid>
                             ))}
-                        </div>
+                        </Grid>
                     )}
                 </section>
+
+                {/* Divider between Peer and Overseer */}
+                <Divider />
+
+                {/* Projects as Overseer */}
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4">
+                    <Typography variant="h2" sx={{ mb: 4 }}>
                         Projects as Overseer
-                    </h2>
-                    <div className="flex flex-wrap gap-6">
+                    </Typography>
+
+                    <Grid container spacing={3}>
                         {projectsAsOverseer.map((project) => (
-                            <Link
-                                href={`/projects/${project.id}/asOverseer`}
+                            <Grid
                                 key={project.id}
-                                className="w-full sm:w-64"
+                                size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
                             >
-                                <div
-                                    className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    tabIndex={0}
-                                    role="button"
+                                <Card
+                                    variant="elevation"
+                                    sx={{ height: "100%" }}
                                 >
-                                    <h3 className="text-xl font-semibold mb-2">
-                                        {project.name}
-                                    </h3>
-                                    <p className="text-gray-600 text-sm">
-                                        {project.description}
-                                    </p>
-                                </div>
-                            </Link>
+                                    <CardActionArea
+                                        component={Link}
+                                        href={`/projects/${project.id}/asOverseer`}
+                                        focusRipple
+                                        sx={{ height: "100%" }}
+                                    >
+                                        <CardContent>
+                                            <Typography
+                                                variant="h3"
+                                                sx={{ mb: 1.25 }}
+                                            >
+                                                {project.name}
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                {project.description}
+                                            </Typography>
+                                        </CardContent>
+                                    </CardActionArea>
+                                </Card>
+                            </Grid>
                         ))}
-                        <Link
-                            href="/projects/create"
-                            className="w-full sm:w-64"
-                        >
-                            <div
-                                className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-5 shadow-sm hover:shadow-lg transition-shadow cursor-pointer h-full flex flex-col items-center justify-center min-h-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                tabIndex={0}
-                                role="button"
+
+                        {/* Create New Project */}
+                        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                            <Card
+                                variant="elevation"
+                                sx={{ height: "100%", borderStyle: "dashed" }}
                                 aria-label="Create new project"
                             >
-                                <span className="text-5xl text-gray-400 mb-2">
-                                    +
-                                </span>
-                                <span className="text-gray-600 font-medium">
-                                    Create New Project
-                                </span>
-                            </div>
-                        </Link>
-                    </div>
+                                <CardActionArea
+                                    component={Link}
+                                    href="/projects/create"
+                                    focusRipple
+                                    sx={{
+                                        height: "100%",
+                                        minHeight: 160,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        flexDirection: "column",
+                                        textAlign: "center",
+                                        p: 3,
+                                    }}
+                                >
+                                    <Typography
+                                        variant="h2"
+                                        sx={{ lineHeight: 1, mb: 1 }}
+                                    >
+                                        +
+                                    </Typography>
+                                    <Typography
+                                        fontWeight={600}
+                                        color="textPrimary"
+                                    >
+                                        Create New Project
+                                    </Typography>
+                                </CardActionArea>
+                            </Card>
+                        </Grid>
+                    </Grid>
                 </section>
-            </div>
-        </div>
+            </Box>
+        </Container>
     );
 };
 
