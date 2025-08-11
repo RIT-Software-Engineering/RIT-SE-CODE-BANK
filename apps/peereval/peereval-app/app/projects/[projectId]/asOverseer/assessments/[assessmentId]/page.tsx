@@ -10,6 +10,8 @@ import {
 import { UserProfile } from "@/types/userProfile";
 import { Assessment, Inquiry, InquiryType } from "@/types/assessment";
 import React, { useEffect, useState } from "react";
+import BackArrow from "@/components/BackArrow";
+import { Button, MenuItem, Select } from "@mui/material";
 
 // --- Main Component ---
 interface FeedbackFormProps {
@@ -130,51 +132,51 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
     return (
         <>
             <form className="max-w-xl mx-auto p-4 space-y-8">
-                <button
-                    type="button"
-                    onClick={handleBack}
-                    className="mb-4 text-blue-600 underline"
-                >
-                    &larr; Back
-                </button>
-                <div className="mb-6">
-                    <div className="mb-6 flex justify-center items-center space-x-2">
-                        {/* First dropdown */}
-                        <select
-                            className="px-4 py-2 rounded bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={activePair[0].id}
-                            onChange={(e) =>
-                                handleResponderSelect(e.target.value)
-                            }
-                        >
-                            {responders.map((peer) => (
-                                <option key={peer.id} value={peer.id}>
-                                    {peer.name}
-                                </option>
-                            ))}
-                        </select>
+                <BackArrow />
+                <div className="mb-6 flex justify-center items-baseline space-x-2 h-16">
+                    {/* First dropdown */}
+                    <Select
+                        value={activePair[0].id}
+                        onChange={(e) =>
+                            handleResponderSelect(e.target.value as string)
+                        }
+                        displayEmpty
+                        sx={{
+                            minWidth: 160,
+                            mr: 2,
+                            background: "white",
+                        }}
+                        inputProps={{ "aria-label": "Responder" }}
+                    >
+                        {responders.map((peer) => (
+                            <MenuItem key={peer.id} value={peer.id}>
+                                {peer.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
 
-                        {/* Arrow */}
-                        <span className="text-lg font-semibold text-gray-600">
-                            →
-                        </span>
+                    {/* Arrow */}
+                    <span className="text-lg font-semibold text-gray-600">
+                        →
+                    </span>
 
-                        {/* Second dropdown */}
-                        <select
-                            className="px-4 py-2 rounded bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={activePair[1].id}
-                            onChange={(e) =>
-                                handleReceiverSelect(e.target.value)
-                            }
-                        >
-                            {receivers.map((peer) => (
-                                <option key={peer.id} value={peer.id}>
-                                    {peer.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>{" "}
-                </div>{" "}
+                    {/* Second dropdown */}
+                    <Select
+                        value={activePair[1].id}
+                        onChange={(e) =>
+                            handleReceiverSelect(e.target.value as string)
+                        }
+                        displayEmpty
+                        sx={{ minWidth: 160, ml: 2, background: "white" }}
+                        inputProps={{ "aria-label": "Receiver" }}
+                    >
+                        {receivers.map((peer) => (
+                            <MenuItem key={peer.id} value={peer.id}>
+                                {peer.name}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </div>
                 <p className="text-xl">
                     {assessmentMetadata.name} —{" "}
                     <span className="font-semibold">
@@ -317,12 +319,16 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                             return <p>There shouldn't be a question here.</p>;
                     }
                 })}
-                <button
+                <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{ py: 1, fontWeight: "bold" }}
                     disabled
-                    className="w-full bg-gray-400 text-white py-2 rounded font-semibold"
                 >
                     Read Only
-                </button>
+                </Button>
             </form>
         </>
     );
