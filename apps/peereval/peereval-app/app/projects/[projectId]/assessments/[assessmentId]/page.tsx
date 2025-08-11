@@ -25,6 +25,7 @@ import {
     Tabs,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import BackArrow from "@/components/BackArrow";
 
 // --- Main Component ---
 interface FeedbackFormProps {
@@ -196,14 +197,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                 onSubmit={handleSubmit}
                 className="max-w-xl mx-auto p-4 space-y-8"
             >
-                <IconButton
-                    type="button"
-                    onClick={handleBack}
-                    sx={{ mb: 2 }}
-                    aria-label="back"
-                >
-                    <CloseIcon />
-                </IconButton>
+                <BackArrow />
                 <div className="flex justify-center mb-6">
                     <div>
                         <Tabs
