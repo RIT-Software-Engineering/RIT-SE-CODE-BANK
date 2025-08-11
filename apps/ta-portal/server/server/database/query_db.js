@@ -1733,6 +1733,48 @@ async function getAllTimecardsForJob(jobPositionHistoryId) {
   }
 }
 
+/**
+ * For the Admin View: Retrieves all timecards from all users.
+ * Navigates through the new schema to include the user's first and last name.
+ * @returns {Promise<Array>} A promise resolving to a flat array of all timecard records.
+ */
+async function fetchAdminViewData() {
+  try {
+    return await prisma.timecardWeeklyHistory.findMany({
+      include: {
+        dailyEntries: {
+          orderBy: { day: 'asc' },
+        },
+        jobPositionHistory: {
+          include: {
+            employee: {
+              include: {
+                candidate: {
+                  include: {
+                    user: {
+                      select: {
+                        username: true,
+                        fname: true,
+                        lname: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        weekStartDate: 'desc',
+      },
+    });
+  } catch (error) {
+    console.error(`Error fetching admin timecard data:`, error);
+    throw error;
+  }
+}
+
 // =============================================================================
 // EXPORTS & PROCESS HANDLING
 // =============================================================================
@@ -1772,6 +1814,7 @@ module.exports = {
   getMostRecentTimecard,
   getEmployeeTimecard,
   getAllTimecardsForJob,
+  fetchAdminViewData,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.

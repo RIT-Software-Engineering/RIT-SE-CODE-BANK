@@ -45,6 +45,7 @@ const {
   getMostRecentTimecard,
   getEmployeeTimecard,
   getAllTimecardsForJob,
+  fetchAdminViewData,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -939,6 +940,20 @@ router.get('/timecard/all/:jobPositionHistoryId', async (req, res) => {
     } catch (error) {
         console.error('Failed to fetch all timecards:', error);
         res.status(500).json({ message: 'Failed to retrieve timecard history.' });
+    }
+});
+
+/**
+ * @route   GET /api/db/timecard/admin/all
+ * @desc    Retrieves all timecards for the admin view.
+ */
+router.get("/timecard/admin/all", async (req, res) => {
+    try {
+      const allTimecards = await fetchAdminViewData();
+      res.status(200).json(allTimecards);
+    } catch (error) {
+      console.error("Error in /timecard/admin/all route:", error);
+      res.status(500).json({ error: "Failed to retrieve admin timecard data." });
     }
 });
 

@@ -693,3 +693,19 @@ export async function getAllTimecardsForJob(jobPositionHistoryId) {
   });
   return handleApiResponse(response);
 }
+
+/**
+ * For the Admin View: Fetches all timecard data from the backend.
+ * @returns {Promise<Array>} A promise that resolves to an array of all timecard objects.
+ */
+export async function fetchAdminViewData() {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/admin/all`;
+  console.log(`Fetching admin timecard data from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
