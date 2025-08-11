@@ -16,7 +16,14 @@ import {
     RubricInquiry,
 } from "@/types/assessment";
 import React, { useEffect, useState } from "react";
-import { IconButton, Snackbar, SnackbarCloseReason } from "@mui/material";
+import {
+    Button,
+    IconButton,
+    Snackbar,
+    SnackbarCloseReason,
+    Tab,
+    Tabs,
+} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 // --- Main Component ---
@@ -189,28 +196,30 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                 onSubmit={handleSubmit}
                 className="max-w-xl mx-auto p-4 space-y-8"
             >
-                <button
+                <IconButton
                     type="button"
                     onClick={handleBack}
-                    className="mb-4 text-blue-600 underline"
+                    sx={{ mb: 2 }}
+                    aria-label="back"
                 >
-                    &larr; Back
-                </button>
-                <div className="flex justify-center mb-6 space-x-2">
-                    {peersToEval.map(({ id, name }, idx) => (
-                        <button
-                            key={name}
-                            type="button"
-                            className={`px-4 py-2 rounded-t ${
-                                activeTab === idx
-                                    ? "bg-blue-600 text-white font-bold"
-                                    : "bg-gray-200 text-gray-700"
-                            }`}
-                            onClick={() => handleSwitchTab(idx)}
+                    <CloseIcon />
+                </IconButton>
+                <div className="flex justify-center mb-6">
+                    <div>
+                        <Tabs
+                            value={activeTab}
+                            onChange={(_, idx) => handleSwitchTab(idx)}
+                            indicatorColor="primary"
+                            textColor="primary"
+                            variant="scrollable"
+                            scrollButtons="auto"
+                            aria-label="Peer Tabs"
                         >
-                            {name}
-                        </button>
-                    ))}
+                            {peersToEval.map(({ id, name }, idx) => (
+                                <Tab key={id} label={name} />
+                            ))}
+                        </Tabs>
+                    </div>
                 </div>
                 <p className="text-xl">
                     {assessmentMetadata.name} —{" "}
@@ -366,12 +375,15 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                 })}
                 {editable ? (
                     <>
-                        <button
+                        <Button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-2 rounded font-semibold cursor-pointer"
+                            variant="contained"
+                            color="primary"
+                            fullWidth
+                            sx={{ py: 1, fontWeight: "bold" }}
                         >
                             Submit
-                        </button>
+                        </Button>
                         <Snackbar
                             open={showSnack}
                             autoHideDuration={6000}
