@@ -13,7 +13,7 @@ export default function LandingDashboard({ user }) {
 
   return (
     <>
-      <div className="bg-white h-screen p-10 pl-10 mb-10">
+      <div className="bg-white p-10 pl-10 mb-10">
         <div>
           <h1 className="text-3xl ">Personal</h1>
           <div className="grid grid-cols-4">

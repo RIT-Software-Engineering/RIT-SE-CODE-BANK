@@ -77,7 +77,7 @@ export default function Home() {
   }
 
   return (
-    <>
+    <div className="h-full flex flex-col">
       {isProfileModalOpen && (
         <UserProfileModal
           isOpen={isProfileModalOpen}
@@ -111,6 +111,6 @@ export default function Home() {
       {currentUser && (
         <LandingDashboard user={currentUser} />
       )}
-    </>
+    </div>
   );
 }
