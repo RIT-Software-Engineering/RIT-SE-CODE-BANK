@@ -5,7 +5,7 @@ import { getComments } from '@/services/db-apis';
 import { formatTimestamp } from '@/utils/dateTimeUtils';
 import { applicationStatusEnumToString } from '@/constants/applicationStatusConstants';
 
-export default function ViewCommentForm({ application, jobPosition, onClose }) {
+export default function ViewableCommentForm({ application, jobPosition, userRole, onClose }) {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,11 +44,26 @@ export default function ViewCommentForm({ application, jobPosition, onClose }) {
       <ul className="space-y-4">
         {comments.map((comment) => (
           <li key={comment.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex justify-between items-center mb-2">
-              <p className="font-bold text-gray-800">{applicationStatusEnumToString[comment.status]}</p>
-              <p className="text-sm text-gray-500">{formatTimestamp(comment.timestamp)}</p>
+            <div className="flex justify-between items-start mb-2">
+              {/* Left side: Status and Author */}
+              <div>
+                <p className="font-bold text-gray-800">
+                  {applicationStatusEnumToString[comment.status]}
+                </p>
+                {(userRole === 'ADMIN' || userRole === 'EMPLOYER') && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    By: <span className="font-medium text-gray-700">{comment.author}</span>
+                  </p>
+                )}
+              </div>
+              {/* Right side: Timestamp */}
+              <p className="text-sm text-gray-500 flex-shrink-0">
+                {formatTimestamp(comment.timestamp)}
+              </p>
             </div>
-            <p className="text-gray-700 italic">&quot;{comment.comment}&quot;</p>
+            <p className="text-gray-700 italic pt-2 border-t border-gray-200">
+              &quot;{comment.comment}&quot;
+            </p>
           </li>
         ))}
       </ul>

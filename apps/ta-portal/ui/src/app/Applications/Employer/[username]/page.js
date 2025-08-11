@@ -198,6 +198,7 @@ export default function Applications() {
                   {position.jobPositionApplicationHistory.length > 0 ? (
                     position.jobPositionApplicationHistory.map((app) => (
                       <ApplicationCard
+                        currentUser={currentUser}
                         key={app.id}
                         jobPosition={position}
                         application={app}

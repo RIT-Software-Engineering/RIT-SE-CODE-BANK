@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { deleteApplication, updateCandidateApplicationStatus } from '@/services/db-apis';
+import { deleteApplication, updateCandidateApplicationStatus, getCandidateHiredStatus } from '@/services/db-apis';
 import ViewableApplicationForm from '../ViewableApplicationForm';
 import ConfirmationModal from '../../common/models/ConfirmationModal';
 import {
@@ -16,7 +16,7 @@ import {
   LocationIcon,
 } from "@/assets/icons";
 import { useNotification } from "@/contexts/NotificationContext";
-import ViewCommentForm from "../../comments/ViewableCommentForm";
+import ViewableCommentForm from "../../comments/ViewableCommentForm";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
 import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
@@ -30,8 +30,8 @@ export default function CandidateApplicationCard({
   const { id } = application;
   const { showNotification } = useNotification();
   const [isViewingApplication, setIsViewingApplication] = useState(false);
-  const [isConfirmingWithdrawal, setIsConfirmingWithdrawal] = useState(false);
-  const [isProcessingWithdrawal, setIsProcessingWithdrawal] = useState(false);
+  const [isConfirmingDeletion, setIsConfirmingDeletion] = useState(false);
+  const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
   const [isViewingComments, setIsViewingComments] = useState(false);
 
   const [modalState, setModalState] = useState({
@@ -40,6 +40,10 @@ export default function CandidateApplicationCard({
     title: "",
   });
   const [isProcessingUpdate, setIsProcessingUpdate] = useState(false);
+
+  // check if candidate has already been accepted or hired for any position for the given semester
+  const [isConfirmingAcceptance, setIsConfirmingAcceptance] = useState(false);
+  const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
   const { jobPosition, jobApplicationStatus } = application;
   const statusClasses = getStatusClasses(jobApplicationStatus);
@@ -52,25 +56,56 @@ export default function CandidateApplicationCard({
     setModalState({ isOpen: false, status: null, title: "" });
   };
 
-  const handleWithdrawClick = () => {
-    setIsConfirmingWithdrawal(true);
+  const handleAcceptOffer = async () => {
+    if (!jobPosition?.semesterCode) {
+      showNotification(
+        "Cannot check your status: Semester code is missing.",
+        "error"
+      );
+      return;
+    }
+
+    setIsCheckingHiredStatus(true);
+    try {
+      const hiredStatus = await getCandidateHiredStatus(
+        currentUser.username,
+        jobPosition.semesterCode
+      );
+
+      // If already hired or accepted another offer, show the confirmation modal
+      if (hiredStatus) {
+        setIsConfirmingAcceptance(true);
+      } else {
+        // Otherwise, proceed directly to accepting the offer
+        handleOpenUpdateModal("ACCEPTED_OFFER", "Accept Position Offer");
+      }
+    } catch (error) {
+      console.error("Failed to check hired status:", error);
+      showNotification(`Error checking your status: ${error.message}`, "error");
+    } finally {
+      setIsCheckingHiredStatus(false);
+    }
   };
 
-  const executeWithdrawal = async () => {
-    setIsProcessingWithdrawal(true);
+  const handleDeleteClick = () => {
+    setIsConfirmingDeletion(true);
+  };
+
+  const executeDeletion = async () => {
+    setIsProcessingDeletion(true);
     try {
       await deleteApplication(currentUser.username, application.jobPositionId);
       await refreshUserProfile();
-      showNotification("Application withdrawn successfully.", "success");
+      showNotification("Application deleted successfully.", "success");
       if (onStatusChange) {
         onStatusChange();
       }
     } catch (error) {
-      console.error("Failed to withdraw application:", error);
-      showNotification("Failed to withdraw application.", "error");
+      console.error("Failed to delete application:", error);
+      showNotification("Failed to delete application.", "error");
     } finally {
-      setIsProcessingWithdrawal(false);
-      setIsConfirmingWithdrawal(false);
+      setIsProcessingDeletion(false);
+      setIsConfirmingDeletion(false);
     }
   };
 
@@ -80,7 +115,9 @@ export default function CandidateApplicationCard({
       console.log(
         `Updating status to "${modalState.status}" for application ID: ${id} with comment: ${comment}`
       );
+      let fullName = currentUser.fname + " " + currentUser.lname
       const updatedApplication = await updateCandidateApplicationStatus(
+        fullName,
         id,
         modalState.status,
         comment
@@ -149,6 +186,7 @@ export default function CandidateApplicationCard({
         <button
           onClick={handleMenuToggle}
           className="p-2 rounded-full hover:bg-gray-100"
+          disabled={isCheckingHiredStatus}
         >
           <EllipsisVerticalIcon />
         </button>
@@ -177,17 +215,18 @@ export default function CandidateApplicationCard({
                   View Comment History
                 </button>
               </li>
-              {jobApplicationStatus.toLowerCase() !== "accepted_offer" && (
+              {(jobApplicationStatus.toLowerCase() === "applied" ||
+                jobApplicationStatus.toLowerCase() === "interview") && (
                 <li>
                   <button
                     onClick={() => {
-                      handleWithdrawClick();
+                      handleDeleteClick();
                       setIsOpen(false);
                     }}
-                    disabled={isProcessingWithdrawal}
+                    disabled={isProcessingDeletion}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 disabled:text-gray-400"
                   >
-                    Withdraw
+                    Delete Application
                   </button>
                 </li>
               )}
@@ -197,11 +236,25 @@ export default function CandidateApplicationCard({
                   <button
                     onClick={() => {
                       setIsOpen(false);
-                      handleOpenUpdateModal("ACCEPTED_OFFER", "Accept Position");
+                      handleOpenUpdateModal("DECLINED_OFFER", "Decline Position Offer");
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  >
+                    Decline Position Offer
+                  </button>
+                </li>
+              )}
+
+              {jobApplicationStatus.toLowerCase() === "pending_offer" && (
+                <li>
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      handleAcceptOffer();
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Accept Position
+                    Accept Position Offer
                   </button>
                 </li>
               )}
@@ -259,16 +312,39 @@ export default function CandidateApplicationCard({
         </div>
       </div>
 
+      {/* confirmation modal for deleting application */}
       <ConfirmationModal
-        isOpen={isConfirmingWithdrawal}
-        onClose={() => setIsConfirmingWithdrawal(false)}
-        onConfirm={executeWithdrawal}
-        title="Confirm Withdrawal"
-        isConfirming={isProcessingWithdrawal}
+        isOpen={isConfirmingDeletion}
+        onClose={() => setIsConfirmingDeletion(false)}
+        onConfirm={executeDeletion}
+        title="Confirm Deletion"
+        isConfirming={isProcessingDeletion}
       >
-        Are you sure you want to withdraw your application for{" "}
+        Are you sure you want to delete your application for{" "}
         <strong>{jobPosition.course.name}</strong>? This action cannot be
         undone.
+      </ConfirmationModal>
+
+      {/* confirmation modal for accepting offer */}
+      <ConfirmationModal
+        isOpen={isConfirmingAcceptance}
+        onClose={() => setIsConfirmingAcceptance(false)}
+        onConfirm={() => {
+          setIsConfirmingAcceptance(false);
+          handleOpenUpdateModal("ACCEPTED_OFFER", "Accept Position Offer");
+        }}
+        title="Confirm Offer Acceptance"
+        isConfirming={isProcessingUpdate}
+      >
+        <p className='mt-2'>
+          You have already accepted an offer for another position this semester.
+          In most cases, you are expected to accept <strong>only one offer</strong> per semester. 
+          Accepting this offer will not automatically withdraw you from the other position. 
+          Please contact the administrator or the other course&apos;s professor if you wish to change your decision.
+        </p>
+        <p className="mt-2 font-semibold">
+          Are you sure you want to accept this offer?
+        </p>
       </ConfirmationModal>
 
       {isViewingApplication && (
@@ -280,9 +356,10 @@ export default function CandidateApplicationCard({
       )}
 
       {isViewingComments && (
-        <ViewCommentForm
+        <ViewableCommentForm
           application={application}
           jobPosition={jobPosition}
+          userRole={currentUser.role}
           onClose={() => setIsViewingComments(false)}
         />
       )}

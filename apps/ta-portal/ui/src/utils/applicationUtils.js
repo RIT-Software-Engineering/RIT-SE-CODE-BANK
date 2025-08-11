@@ -81,11 +81,32 @@ export const convertDisplayTimeToInputValue = (displayTime) => {
 
 export const getStatusClasses = (status) => {
   switch (status?.toLowerCase()) {
-    case "accepted_offer": case "A": return "bg-green-100 text-green-800";
-    case "onhold": return "bg-yellow-100 text-yellow-800";
-    case "rejected": return "bg-red-100 text-red-800";
-    case "pending_offer": return "bg-gray-500 text-white";
-    case "inactive": return "bg-gray-100 text-gray-800";
-    case "interview": default: return "bg-blue-100 text-blue-800";
+    // --- Positive / Success States (Green) ---
+    case "hired":
+      return "bg-green-500 text-white"; // Strong, final success
+    case "accepted_offer":
+      return "bg-green-100 text-green-800"; // Positive step complete
+
+    // --- Active / In-Progress States (Blue/Indigo) ---
+    case "pending_offer":
+      return "bg-blue-500 text-white"; // Important action/decision point
+    case "interview":
+      return "bg-blue-100 text-blue-800"; // Active process step
+    
+    // --- Attention State (Yellow) ---
+    case "onhold":
+      return "bg-yellow-100 text-yellow-800"; // Indicates a waiting period
+
+    // --- Negative / Terminal States (Red) ---
+    case "rejected":
+    case "declined_offer":
+      return "bg-red-100 text-red-800"; // Final negative outcome
+
+    // --- Neutral / Default States (Gray/Indigo) ---
+    case "inactive":
+      return "bg-gray-200 text-gray-600"; // Archived or closed
+    case "applied":
+    default:
+      return "bg-indigo-100 text-indigo-800"; // The default starting point
   }
 };

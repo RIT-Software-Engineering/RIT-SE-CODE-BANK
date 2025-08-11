@@ -7,6 +7,9 @@ import { useState, useMemo } from 'react';
 import { CheckIcon, XIcon, CalendarIcon, ClockIcon, LocationIcon } from '@/assets/icons';
 import { formatDate, formatTime } from '@/utils/applicationUtils';
 import { gradeEnumToStringValue, letterToGradeValue } from '@/constants/gradeConstants';
+import ConfirmationModal from '../common/models/ConfirmationModal';
+import { getCandidateHiredStatus } from '@/services/db-apis';
+import { useNotification } from '@/contexts/NotificationContext';
 
 const Requirement = ({ text, met }) => (
   <li className={`flex items-center space-x-2 text-sm ${met ? 'text-gray-700' : 'text-red-600 font-medium'}`}>
@@ -17,7 +20,11 @@ const Requirement = ({ text, met }) => (
 
 export default function PositionsCard({ position, index }) {
   const { currentUser, refreshUserProfile } = useAuth();
+  const { showNotification } = useNotification();
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const [isConfirmingApplication, setIsConfirmingApplication] = useState(false);
+  const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
   const hasApplied =
     currentUser?.candidate?.jobPositionApplicationHistory?.some(
@@ -62,6 +69,36 @@ export default function PositionsCard({ position, index }) {
     return { details: requirements, isOverallEligible, reason };
   }, [currentUser, position]);
 
+  const handleApplyClick = async () => {
+    if (!position?.semesterCode) {
+      showNotification("Cannot check your status: Semester code is missing.", "error");
+      // Fallback to opening the form directly if semester code is missing
+      setIsFormOpen(true);
+      return;
+    }
+
+    setIsCheckingHiredStatus(true);
+    try {
+      const hiredStatus = await getCandidateHiredStatus(
+        currentUser.username,
+        position.semesterCode
+      );
+      console.log(hiredStatus);
+
+      if (hiredStatus) {
+        setIsConfirmingApplication(true);
+      } else {
+        setIsFormOpen(true);
+      }
+    } catch (error) {
+      console.error("Failed to check hired status:", error);
+      showNotification(`Error checking your status: ${error.message}`, "error");
+      // Let the user apply anyway if the check fails
+      setIsFormOpen(true);
+    } finally {
+      setIsCheckingHiredStatus(false);
+    }
+  };
 
 
   const renderApplyButton = () => {
@@ -75,8 +112,12 @@ export default function PositionsCard({ position, index }) {
 
     if (eligibilityDetails.isOverallEligible) {
       return (
-        <button onClick={() => setIsFormOpen(true)} className='bg-rit-orange text-white font-bold py-2 px-5 rounded-lg hover:bg-orange-600 transition-colors duration-300 shadow-sm whitespace-nowrap'>
-          Apply Now
+        <button 
+          onClick={handleApplyClick} 
+          disabled={isCheckingHiredStatus}
+          className='bg-rit-orange text-white font-bold py-2 px-5 rounded-lg hover:bg-orange-600 transition-colors duration-300 shadow-sm whitespace-nowrap'
+        >
+          {isCheckingHiredStatus ? 'Checking...' : 'Apply Now'}
         </button>
       );
     }
@@ -104,6 +145,7 @@ export default function PositionsCard({ position, index }) {
           </div>
           {(currentUser?.role === 'CANDIDATE' || currentUser?.role === 'EMPLOYEE') && renderApplyButton()}
         </div>
+
         <div className='mt-4 pt-4 border-t border-gray-200'>
           <p className='text-gray-700 mb-4'>{position.course.description}</p>
           <div className='flex flex-col sm:flex-row sm:space-x-8 space-y-3 sm:space-y-0 text-gray-600'>
@@ -144,6 +186,27 @@ export default function PositionsCard({ position, index }) {
           onApplySuccess={refreshUserProfile}
         />
       )}
+
+      {/* Confirmation modal for already accepted offer */}
+      <ConfirmationModal
+        isOpen={isConfirmingApplication}
+        onClose={() => setIsConfirmingApplication(false)}
+        onConfirm={() => {
+          setIsConfirmingApplication(false);
+          setIsFormOpen(true);
+        }}
+        title="Confirm New Application"
+        isConfirming={isCheckingHiredStatus}
+      >
+        <p className="mt-2">
+          You have already accepted an offer for another position this semester.
+          In most cases, you are expected to accept <strong>only one offer</strong> per semester. 
+          You can still apply for other positions, but please be prepared to communicate with the professors involved if you receive multiple offers.
+        </p>
+        <p className="mt-2 font-semibold">
+          Are you sure you want to proceed with this application?
+        </p>
+      </ConfirmationModal>
     </>
   );
 }

@@ -1,9 +1,11 @@
 export const applicationStatusEnumToString = {
     APPLIED: "Applied",
-    ACCEPTED_OFFER: "Accepted Offer",
-    PENDING_OFFER: "Pending Offer",
     INTERVIEW: "Interview",
-    ONHOLD: "Onhold",
+    PENDING_OFFER: "Pending Offer",
+    ACCEPTED_OFFER: "Accepted Offer",
+    HIRED: "Hired",
+    DECLINED_OFFER: "Declined Offer",
     REJECTED: "Rejected",
+    ONHOLD: "Onhold",
     INACTIVE: "Inactive"
 }
