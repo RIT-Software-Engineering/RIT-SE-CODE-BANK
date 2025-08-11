@@ -130,14 +130,14 @@ export default function AdminTimecardsPage() {
                         Admin Timecard Viewer
                     </h1>
                     <p className="mt-2 text-lg text-gray-500">
-                        Review and manage all employee timecards.
+                        Review and manage all TA timecards.
                     </p>
                 </div>
 
                 <SearchBar
                     value={searchTerm}
                     onChange={setSearchTerm}
-                    placeholder="Search by employee name..."
+                    placeholder="Search by name or employee ID..."
                 />
 
                 <div className="mt-6">
