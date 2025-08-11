@@ -1,9 +1,11 @@
-"use client";
+'use client';
 
-import { useAuth } from "@/contexts/AuthContext";
-import Tooltip from "../common/ToolTip";
-import EditableApplicationForm from "../applications/EditableApplicationForm";
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useAuth } from '@/contexts/AuthContext';
+import { useNotification } from '@/contexts/NotificationContext';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import Tooltip from '../common/ToolTip';
+import ConfirmationModal from '../common/models/ConfirmationModal';
+import EditableApplicationForm from '../applications/EditableApplicationForm';
 import {
   CheckIcon,
   XIcon,
@@ -11,17 +13,18 @@ import {
   ClockIcon,
   LocationIcon,
   EllipsisVerticalIcon,
-} from "@/assets/icons";
-import { formatDate, formatTime } from "@/utils/applicationUtils";
+} from '@/assets/icons';
+import { getCandidateHiredStatus } from '@/services/db-apis';
+import { formatDate, formatTime } from '@/utils/applicationUtils';
 import {
   gradeEnumToStringValue,
   letterToGradeValue,
-} from "@/constants/gradeConstants";
+} from '@/constants/gradeConstants';
 
 const Requirement = ({ text, met }) => (
   <li
     className={`flex items-center space-x-2 text-sm ${
-      met ? "text-gray-700" : "text-red-600 font-medium"
+      met ? 'text-gray-700' : 'text-red-600 font-medium'
     }`}
   >
     {met ? <CheckIcon /> : <XIcon />}
@@ -29,12 +32,20 @@ const Requirement = ({ text, met }) => (
   </li>
 );
 
-export default function PositionsCard({ position, index, handleOpenUpdateModal }) {
+export default function PositionsCard({
+  position,
+  index,
+  handleOpenUpdateModal,
+}) {
   const { currentUser, refreshUserProfile } = useAuth();
+  const { showNotification } = useNotification();
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const isPendingApproval =
-    position.jobPositionStatus == "PENDING_APPROVAL" ? true : false;
+    position.jobPositionStatus == 'PENDING_APPROVAL' ? true : false;
+  const [isConfirmingApplication, setIsConfirmingApplication] = useState(false);
+  const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
+
   const hasApplied =
     currentUser?.candidate?.jobPositionApplicationHistory?.some(
       (app) => app.jobPositionId === position.id
@@ -45,7 +56,7 @@ export default function PositionsCard({ position, index, handleOpenUpdateModal }
       return {
         details: [],
         isOverallEligible: false,
-        reason: "User is not a candidate.",
+        reason: 'User is not a candidate.',
       };
     }
 
@@ -88,16 +99,50 @@ export default function PositionsCard({ position, index, handleOpenUpdateModal }
 
     const isOverallEligible = requirements.every((req) => req.met);
     const unmetReasons = requirements.filter((req) => !req.met);
-    const reason = unmetReasons.map((req) => req.text).join(" and ");
+    const reason = unmetReasons.map((req) => req.text).join(' and ');
 
     return { details: requirements, isOverallEligible, reason };
   }, [currentUser, position]);
+
+  const handleApplyClick = async () => {
+    if (!position?.semesterCode) {
+      showNotification(
+        'Cannot check your status: Semester code is missing.',
+        'error'
+      );
+      // Fallback to opening the form directly if semester code is missing
+      setIsFormOpen(true);
+      return;
+    }
+
+    setIsCheckingHiredStatus(true);
+    try {
+      const hiredStatus = await getCandidateHiredStatus(
+        currentUser.username,
+        position.semesterCode
+      );
+      console.log(hiredStatus);
+
+      if (hiredStatus) {
+        setIsConfirmingApplication(true);
+      } else {
+        setIsFormOpen(true);
+      }
+    } catch (error) {
+      console.error('Failed to check hired status:', error);
+      showNotification(`Error checking your status: ${error.message}`, 'error');
+      // Let the user apply anyway if the check fails
+      setIsFormOpen(true);
+    } finally {
+      setIsCheckingHiredStatus(false);
+    }
+  };
 
   const renderApplyButton = () => {
     if (hasApplied) {
       return (
         <button
-          className="bg-green-600 text-white font-bold py-2 px-5 rounded-lg shadow-sm whitespace-nowrap cursor-default"
+          className='bg-green-600 text-white font-bold py-2 px-5 rounded-lg shadow-sm whitespace-nowrap cursor-default'
           disabled
         >
           Applied
@@ -108,10 +153,11 @@ export default function PositionsCard({ position, index, handleOpenUpdateModal }
     if (eligibilityDetails.isOverallEligible) {
       return (
         <button
-          onClick={() => setIsFormOpen(true)}
-          className="bg-rit-orange text-white font-bold py-2 px-5 rounded-lg hover:bg-orange-600 transition-colors duration-300 shadow-sm whitespace-nowrap"
+          onClick={handleApplyClick}
+          disabled={isCheckingHiredStatus}
+          className='bg-rit-orange text-white font-bold py-2 px-5 rounded-lg hover:bg-orange-600 transition-colors duration-300 shadow-sm whitespace-nowrap'
         >
-          Apply Now
+          {isCheckingHiredStatus ? 'Checking...' : 'Apply Now'}
         </button>
       );
     }
@@ -119,7 +165,7 @@ export default function PositionsCard({ position, index, handleOpenUpdateModal }
     return (
       <Tooltip text={eligibilityDetails.reason}>
         <button
-          className="bg-gray-300 text-gray-500 font-bold py-2 px-5 rounded-lg shadow-sm whitespace-nowrap cursor-not-allowed"
+          className='bg-gray-300 text-gray-500 font-bold py-2 px-5 rounded-lg shadow-sm whitespace-nowrap cursor-not-allowed'
           disabled
         >
           Apply Now
@@ -138,9 +184,9 @@ export default function PositionsCard({ position, index, handleOpenUpdateModal }
           setIsOpen(false);
         }
       };
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener('mousedown', handleClickOutside);
       return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const handleMenuToggle = (e) => {
@@ -150,23 +196,23 @@ export default function PositionsCard({ position, index, handleOpenUpdateModal }
 
     // NOTE: You'll want to add your real onClick logic to these buttons
     return (
-      <div className="relative" ref={menuRef}>
+      <div className='relative' ref={menuRef}>
         <button
           onClick={handleMenuToggle}
-          className="p-2 rounded-full hover:bg-gray-100"
+          className='p-2 rounded-full hover:bg-gray-100'
         >
           <EllipsisVerticalIcon />
         </button>
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20">
-            <ul className="py-1">
+          <div className='absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20'>
+            <ul className='py-1'>
               <li>
                 <button
                   onClick={() => {
-                    handleOpenUpdateModal(position,"OPEN","Approve Position")
-                    console.log("Approved")
+                    handleOpenUpdateModal(position, 'OPEN', 'Approve Position');
+                    console.log('Approved');
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                 >
                   Approve Position
                 </button>
@@ -174,10 +220,14 @@ export default function PositionsCard({ position, index, handleOpenUpdateModal }
               <li>
                 <button
                   onClick={() => {
-                    handleOpenUpdateModal(position,"REJECTED","Reject Position")
+                    handleOpenUpdateModal(
+                      position,
+                      'REJECTED',
+                      'Reject Position'
+                    );
                     setIsOpen(false);
                   }}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100'
                 >
                   Reject
                 </button>
@@ -193,60 +243,61 @@ export default function PositionsCard({ position, index, handleOpenUpdateModal }
     <>
       <div
         key={index}
-        className="bg-white p-6 mb-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 w-full"
+        className='bg-white p-6 mb-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 w-full'
       >
-        <div className="flex justify-between items-start flex-wrap gap-4">
-          <div className="">
-            <h2 className="text-2xl font-bold text-gray-800">
+        <div className='flex justify-between items-start flex-wrap gap-4'>
+          <div className=''>
+            <h2 className='text-2xl font-bold text-gray-800'>
               {position.course.name}
             </h2>
-            <p className="text-md text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded-md inline-block mt-1">
+            <p className='text-md text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded-md inline-block mt-1'>
               {position.id}
             </p>
-            <div className="flex items-center text-gray-600 mt-2">
+            <div className='flex items-center text-gray-600 mt-2'>
               <CalendarIcon />
               <span>
-                {formatDate(position.startDate)} -{" "}
+                {formatDate(position.startDate)} -{' '}
                 {formatDate(position.endDate)}
               </span>
             </div>
           </div>
           {isPendingApproval && (
-            <div className="text-right">
+            <div className='text-right'>
               <ActionsMenu />
             </div>
           )}
-          {(currentUser?.role === "CANDIDATE" ||
-            currentUser?.role === "EMPLOYEE") &&
+          {(currentUser?.role === 'CANDIDATE' ||
+            currentUser?.role === 'EMPLOYEE') &&
             renderApplyButton()}
         </div>
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <p className="text-gray-700 mb-4">{position.course.description}</p>
-          <div className="flex flex-col sm:flex-row sm:space-x-8 space-y-3 sm:space-y-0 text-gray-600">
-            <div className="flex items-center">
+
+        <div className='mt-4 pt-4 border-t border-gray-200'>
+          <p className='text-gray-700 mb-4'>{position.course.description}</p>
+          <div className='flex flex-col sm:flex-row sm:space-x-8 space-y-3 sm:space-y-0 text-gray-600'>
+            <div className='flex items-center'>
               <LocationIcon />
               <span>{position.location}</span>
             </div>
-            <div className="flex items-center">
+            <div className='flex items-center'>
               <ClockIcon />
               <div>
                 {position.jobSchedules.map((slot, i) => (
-                  <span key={i} className="block">
-                    <span className="font-semibold">{slot.dayOfWeek}:</span>{" "}
+                  <span key={i} className='block'>
+                    <span className='font-semibold'>{slot.dayOfWeek}:</span>{' '}
                     {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
                   </span>
                 ))}
               </div>
             </div>
           </div>
-          {(currentUser?.role === "CANDIDATE" ||
-            currentUser?.role === "EMPLOYEE") &&
+          {(currentUser?.role === 'CANDIDATE' ||
+            currentUser?.role === 'EMPLOYEE') &&
             eligibilityDetails.details.length > 0 && (
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <h4 className="text-md font-semibold text-gray-800 mb-2">
+              <div className='mb-4 p-4 bg-gray-50 rounded-lg'>
+                <h4 className='text-md font-semibold text-gray-800 mb-2'>
                   Job Requirements
                 </h4>
-                <ul className="space-y-1">
+                <ul className='space-y-1'>
                   {eligibilityDetails.details.map((req, i) => (
                     <Requirement key={i} text={req.text} met={req.met} />
                   ))}
@@ -264,6 +315,29 @@ export default function PositionsCard({ position, index, handleOpenUpdateModal }
           onApplySuccess={refreshUserProfile}
         />
       )}
+
+      {/* Confirmation modal for already accepted offer */}
+      <ConfirmationModal
+        isOpen={isConfirmingApplication}
+        onClose={() => setIsConfirmingApplication(false)}
+        onConfirm={() => {
+          setIsConfirmingApplication(false);
+          setIsFormOpen(true);
+        }}
+        title='Confirm New Application'
+        isConfirming={isCheckingHiredStatus}
+      >
+        <p className='mt-2'>
+          You have already accepted an offer for another position this semester.
+          In most cases, you are expected to accept{' '}
+          <strong>only one offer</strong> per semester. You can still apply for
+          other positions, but please be prepared to communicate with the
+          professors involved if you receive multiple offers.
+        </p>
+        <p className='mt-2 font-semibold'>
+          Are you sure you want to proceed with this application?
+        </p>
+      </ConfirmationModal>
     </>
   );
 }

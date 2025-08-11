@@ -323,9 +323,32 @@ export async function getSemesterCodesForEmployer(employerUsername) {
   return handleApiResponse(response);
 }
 
-export async function updateCandidateApplicationStatus(applicationId, status, comments) {
+export async function getCandidateHiredStatus(candidateUsername, semestercode) {
+  if (!candidateUsername) {
+    throw new Error("A Username is required to see a candidate's hired status.");
+  }
+  if (!semestercode) {
+    throw new Error("A Semester Code is required to see a candidate's hired status.");
+  }
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/candidate/${candidateUsername}/hired-status?semesterCode=${semestercode}`;
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+export async function updateCandidateApplicationStatus(author, applicationId, status, comments) {
   if (!applicationId) {
     throw new Error("An application ID is required to update an application status.");
+  }
+  if (!status) {
+    throw new Error("A status is required to update an application status.");
+  }
+  if (!author) {
+    throw new Error("An author is required to update an application status.");
   }
   
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
@@ -340,7 +363,7 @@ export async function updateCandidateApplicationStatus(applicationId, status, co
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ status: status, comments: comments }),
+    body: JSON.stringify({ author: author, status: status, comments: comments }),
   });
   return handleApiResponse(response);
 }
@@ -483,8 +506,8 @@ export async function applyForJobPositionWithNewUploads(jobPositionApplicationDa
 
 /**
  * Deletes a candidate's application for a specific job position.
- * @param {number} candidateUsername - The Username of the candidate withdrawing the application.
- * @param {string} jobPositionId - The ID of the job position to withdraw from.
+ * @param {number} candidateUsername - The Username of the candidate deleting the application.
+ * @param {string} jobPositionId - The ID of the job position to delete the application from.
  * @returns {Promise<object>} A promise that resolves to the data of the deleted application record.
  */
 export async function deleteApplication(candidateUsername, jobPositionId) {
@@ -717,5 +740,21 @@ export async function getAllTimecardsForJob(jobPositionHistoryId) {
       'Content-Type': 'application/json',
     },
   });
+  return handleApiResponse(response);
+}
+
+/**
+ * For the Admin View: Fetches all timecard data from the backend.
+ * @returns {Promise<Array>} A promise that resolves to an array of all timecard objects.
+ */
+export async function fetchAdminViewData() {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/timecard/admin/all`;
+  console.log(`Fetching admin timecard data from: ${url}`);
+
+  const response = await fetch(url);
   return handleApiResponse(response);
 }

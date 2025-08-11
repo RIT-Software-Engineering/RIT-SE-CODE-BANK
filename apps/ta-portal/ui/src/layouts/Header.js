@@ -16,11 +16,16 @@ const HEADER_LINKS = [
     href: "/Messaging",
     roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
   },
-  { text: "Timecard", href: "/Timecard", roles: [ROLES.EMPLOYEE] },
+  { text: "Timecard", href: "/Timecard/Employee/[username]", roles: [ROLES.EMPLOYEE] },
   {
     text: "Timecard",
-    href: "", // TODO
-    roles: [ROLES.EMPLOYER, ROLES.ADMIN], 
+    href: "/Timecard/Admin/[username]",
+    roles: [ROLES.ADMIN], 
+  },
+  {
+    text: "Timecard",
+    href: "/Timecard/Employer/[username]",
+    roles: [ROLES.EMPLOYER], 
   },
   {
     text: "Positions",

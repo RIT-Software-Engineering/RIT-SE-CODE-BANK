@@ -25,7 +25,14 @@ const buildFullWeek = (weekStartDate) => {
     });
 };
 
-const TimecardHistory = ({ timecard, currentUser }) => {
+/**
+ * TimecardHistory is a client-side component that displays a read-only view
+ * of a single weekly timecard. It is used to show previous weeks' timecards.
+ * @param {Object} props - The component's props.
+ * @param {Object} props.timecard - The timecard object, including its daily entries.
+ * @param {Object} props.user - The user object for the employee whose timecard this is.
+ */
+const TimecardHistory = ({ timecard, user }) => {
     // 1. Build a full 7-day week structure.
     const fullWeek = buildFullWeek(timecard.weekStartDate);
 
@@ -47,10 +54,16 @@ const TimecardHistory = ({ timecard, currentUser }) => {
         return day;
     });
 
+    // Calculate the total hours for the week to display in the footer.
     const weeklyTotal = displayWeek.reduce((sum, day) => sum + day.duration, 0);
 
+    /**
+     * Handles the logic for exporting the current timecard view as a CSV file.
+     */
     const handleExport = () => {
+        // Define the headers for the CSV file.
         const headers = ["Day", "Date", "Time In 1", "Time Out 1", "Time In 2", "Time Out 2", "Time In 3", "Time Out 3", "Total (hrs)", "Notes"];
+        // Map over the display data to create each row of the CSV.
         const rows = displayWeek.map(d => 
             [
                 d.dayLabel, d.date, 
@@ -58,18 +71,26 @@ const TimecardHistory = ({ timecard, currentUser }) => {
                 d.timeIn2?.slice(11, 16) || '', d.timeOut2?.slice(11, 16) || '',
                 d.timeIn3?.slice(11, 16) || '', d.timeOut3?.slice(11, 16) || '',
                 d.duration.toFixed(2), 
-                `"${(d.notes || '').replace(/"/g, '""')}"`
+                `"${(d.notes || '').replace(/"/g, '""')}"` // Enclose notes in quotes to handle commas
             ].join(",")
         );
         const totalRow = `\nWeek Total,,,,,,,,${weeklyTotal.toFixed(2)}`;
+        // Combine headers, rows, and the total row into a single string.
         const csv = [headers.join(","), ...rows].join("\n").concat(totalRow);
+        // Create a Blob object to represent the file.
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        // Create a temporary link element to trigger the download.
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        const fullName = currentUser?.fname + " " + currentUser?.lname;
-        const name = fullName.replace(/\s+/g, '_') || 'user';
+
+        // Construct the filename using the employee's name and the week's start date.
+        const employeeName = (user && user.fname && user.lname) 
+            ? `${user.lname}_${user.fname}` 
+            : 'user';
         const week = formatDate(timecard.weekStartDate);
-        link.download = `${name}_timecard_${week}.csv`;
+        link.download = `${employeeName}_timecard_${week}.csv`;
+        
+        // Programmatically click the link to start the download and then remove it.
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

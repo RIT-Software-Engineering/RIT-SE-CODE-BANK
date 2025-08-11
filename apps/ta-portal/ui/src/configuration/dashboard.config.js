@@ -40,8 +40,14 @@ export const DASHBOARD_OPTIONS = [
   {
     category: 'Personal',
     text: 'View Timecards',
-    link: '', // TODO
-    roles: [ROLES.EMPLOYER, ROLES.ADMIN]
+    link: '/Timecard/Admin/[username]',
+    roles: [ROLES.ADMIN]
+  },
+  {
+    category: 'Personal',
+    text: 'View Timecards',
+    link: '/Timecard/Employer/[username]',
+    roles: [ROLES.EMPLOYER]
   },
   {
     category: 'Personal',
@@ -53,7 +59,7 @@ export const DASHBOARD_OPTIONS = [
   {
     category: 'Personal',
     text: 'My Timecards',
-    link: '/Timecard',
+    link: '/Timecard/Employee/[username]',
     roles: [ROLES.EMPLOYEE]
   },
   {

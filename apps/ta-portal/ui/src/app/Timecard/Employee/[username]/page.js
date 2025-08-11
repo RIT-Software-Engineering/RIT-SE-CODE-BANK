@@ -1,4 +1,4 @@
-// app/Timecard/page.js
+// app/Timecard/Employee/[username]/page.js
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -29,19 +29,27 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StartDateModal from "@/components/timecard/StartDateModal";
 
-
-export default function Timecard() {
+/**
+ * EmployeeTimecard is a client-side component for employees to
+ * manage their weekly timecards. It allows viewing, editing, and exporting.
+ */
+export default function EmployeeTimecard() {
     // --- STATE MANAGEMENT ---
     const { currentUser } = useAuth();
     const { showNotification } = useNotification();
+
+    // State for timecard data
     const [currentTimecard, setCurrentTimecard] = useState([]);
     const [previousTimecards, setPreviousTimecards] = useState([]);
     const [jobPositionHistoryId, setJobPositionHistoryId] = useState(null);
     const [weekStartDate, setWeekStartDate] = useState(null);
+
+    // State for UI status (loading, submitting, errors)
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
 
+    // State for controlling modals
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
     const [notesModal, setNotesModal] = useState({ show: false, day: null });
@@ -52,6 +60,11 @@ export default function Timecard() {
     const formatDate = (date) => date ? new Date(date).toISOString().slice(0, 10) : "";
     const formatTime = (date) => date ? new Date(date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }) : "";
     
+    /**
+     * Generates a 7-day week structure starting from a given date.
+     * @param {Date} weekStart - The starting date of the week.
+     * @returns {Array<Object>} An array of day objects for the timecard grid.
+     */
     const buildWeekFrom = (weekStart) => {
         const dayLabels = ["Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
         return dayLabels.map((label, i) => {
@@ -61,6 +74,12 @@ export default function Timecard() {
         });
     };
 
+    /**
+     * Calculates the difference in hours between two time strings (e.g., "14:30").
+     * @param {string} startStr - The start time.
+     * @param {string} endStr - The end time.
+     * @returns {number} The duration in hours.
+     */
     const hoursDiff = (startStr, endStr) => {
         if (!startStr || !endStr) return 0;
         const [sh, sm] = startStr.split(":").map(Number);
@@ -74,13 +93,16 @@ export default function Timecard() {
     // --- DATA LOADING & SIDE EFFECTS ---
     useEffect(() => {
         const loadInitialData = async () => {
+            // Find the user's currently active job from their records.
             const employeeRecords = currentUser.candidate?.employee;
             const activeJob = employeeRecords?.flatMap(e => e.jobPositionHistory).find(j => j.jobPositionHistoryStatus === "ACTIVE");
             
             if (activeJob) {
                 setJobPositionHistoryId(activeJob.id);
+                // If an active job is found, fetch all associated timecards.
                 await loadAllTimecards(activeJob.id);
             } else {
+                // No active job, stop loading.
                 setLoading(false);
             }
         };
@@ -92,6 +114,10 @@ export default function Timecard() {
         }
     }, [currentUser]);
 
+    /**
+     * Fetches all timecards for a given job and populates the component's state.
+     * @param {number} jobHistoryId - The ID of the active job history record.
+     */
     const loadAllTimecards = async (jobHistoryId) => {
         setLoading(true);
         setError(null);
@@ -104,12 +130,14 @@ export default function Timecard() {
                 setCurrentTimecard([]);
                 setPreviousTimecards([]);
             } else {
+                // The API returns timecards sorted by most recent first.
                 const mostRecent = allTimecards[0];
                 setPreviousTimecards(allTimecards.length > 1 ? allTimecards.slice(1) : []);
                 
                 const weekStart = new Date(mostRecent.weekStartDate);
                 setWeekStartDate(weekStart);
 
+                // Populate the editable week with data from the most recent timecard.
                 let editableWeek = buildWeekFrom(weekStart);
                 if (mostRecent?.dailyEntries) {
                     const entriesMap = new Map(mostRecent.dailyEntries.map(entry => [formatDate(entry.day), entry]));
@@ -130,6 +158,10 @@ export default function Timecard() {
     };
 
     // --- EVENT HANDLERS ---
+    /**
+     * Updates the state when a user types in a time input field.
+     * Recalculates the total hours for that day.
+     */
     const handleTimeChange = (dayIdx, pairIdx, type, value) => {
         setCurrentTimecard(prev => {
             const newTimecard = [...prev];
@@ -141,6 +173,9 @@ export default function Timecard() {
         });
     };
 
+    /**
+     * Saves the current state of the timecard to the database.
+     */
     const handleSaveProgress = async () => {
         if (!jobPositionHistoryId) {
             showNotification("No active job found.", "error");
@@ -166,17 +201,26 @@ export default function Timecard() {
         }
     };
 
+    /**
+     * Clears all time entries from the current week after user confirmation.
+     */
     const handleClearConfirm = () => {
         setCurrentTimecard(buildWeekFrom(weekStartDate));
         setShowClearConfirm(false);
         showNotification("Timecard has been cleared.", "success");
     };
 
+    /**
+     * Saves the notes from the NotesModal to the component's state.
+     */
     const handleSaveNotes = (date, notes) => {
         setCurrentTimecard(prev => prev.map(d => d.date === date ? { ...d, notes } : d));
         showNotification("Notes updated. Click 'Save Progress' to save to the database.", "success");
     };
-
+    
+    /**
+     * Exports the current week's timecard data as a CSV file.
+     */
     const handleExport = (timecardData, startDate) => {
         const weeklyTotal = timecardData.reduce((sum, d) => sum + (d.total || 0), 0);
         const headers = ["Day", "Date", "Time In 1", "Time Out 1", "Time In 2", "Time Out 2", "Time In 3", "Time Out 3", "Total (hrs)", "Notes"];
@@ -186,7 +230,7 @@ export default function Timecard() {
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        const fullName = currentUser?.fname + " " + currentUser?.lname;
+        const fullName = currentUser?.lname + " " + currentUser?.fname;
         const name = fullName.replace(/\s+/g, '_') || 'user';
         const week = formatDate(startDate);
         link.download = `${name}_timecard_${week}.csv`;
@@ -195,11 +239,18 @@ export default function Timecard() {
         document.body.removeChild(link);
     };
 
+    /**
+     * Initiates the final submit process by showing the date selection modal.
+     */
     const handleInitiateSubmit = () => {
         setShowSubmitConfirm(false);
         setShowStartDateModal(true);
     };
 
+    /**
+     * Finalizes the submission, exports the old week, and creates a new blank week.
+     * @param {Date} newStartDate - The start date for the new timecard week.
+     */
     const handleFinalSubmitAndCreateNew = async (newStartDate) => {
         setSubmitting(true);
         try {
@@ -232,6 +283,10 @@ export default function Timecard() {
         }
     };
 
+    /**
+     * Creates the very first timecard for a new employee.
+     * @param {Date} startDate - The selected start date for their first week.
+     */
     const handleCreateInitialTimecard = (startDate) => {
         setWeekStartDate(startDate);
         setCurrentTimecard(buildWeekFrom(startDate));
@@ -311,7 +366,7 @@ export default function Timecard() {
                     </div>
                 </div>
 
-                {previousTimecards.length > 0 && (
+                {previousTimecards.length > 0 && currentUser && (
                     <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-7xl mx-auto mt-8">
                         <Accordion>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}><Typography variant="h6" fontWeight={600}>Previous Timecards</Typography></AccordionSummary>
@@ -319,7 +374,7 @@ export default function Timecard() {
                                 {previousTimecards.map(timecard => (
                                     <Accordion key={timecard.id}>
                                         <AccordionSummary expandIcon={<ExpandMoreIcon />}><Typography>Timecard for week of {formatDate(timecard.weekStartDate)}</Typography></AccordionSummary>
-                                        <AccordionDetails><TimecardHistory timecard={timecard} currentUser={currentUser} /></AccordionDetails>
+                                        <AccordionDetails><TimecardHistory timecard={timecard} user={currentUser} /></AccordionDetails>
                                     </Accordion>
                                 ))}
                             </AccordionDetails>
