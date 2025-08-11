@@ -5,6 +5,7 @@ import Header from "@components/Header";
 import JournalHeader from "@components/journal/JournalHeader";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -14,8 +15,10 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  InputLabel,
   MenuItem,
   Select,
+  TextField,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -62,58 +65,34 @@ export default function Journal() {
 
       // Fetch the journal entries
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`
-        );
-        const data = await res.json();
-        console.log(data);
-        setJournalEntries(data);
+        const [entriesRes, usersRes, semestersRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup`),
+        ]);
 
-        // Fetch contactee info for all unique contacteeIds
-        const uniqueContactees = [
-          ...new Set(
-            data.map((e) => `${e.contactee_fname}:::${e.contactee_lname}`)
-          ),
-        ];
+        const [entries, users, semesterGroups] = await Promise.all([
+          entriesRes.json(),
+          usersRes.json(),
+          semestersRes.json(),
+        ]);
+
+        setJournalEntries(entries);
+
         const contacteeMap = {};
-        await Promise.all(
-          uniqueContactees.map(async (entry) => {
-            const [fname, lname] = entry.split(":::");
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/users?fname=${encodeURIComponent(fname)}&lname=${encodeURIComponent(lname)}`
-            );
-            if (res.ok) {
-              const user = await res.json();
-              const fullName = `${fname} ${lname}`;
-              contacteeMap[fullName] = user[0].id;
-            } else {
-              contacteeMap["Unknown"] = "Unknown";
-            }
-          })
-        );
+        users.forEach((user) => {
+          const fullName = `${user.fname} ${user.lname}`;
+          contacteeMap[fullName] = user.id;
+        });
         setContactees(contacteeMap);
 
-        // Fetch semester info for all unique semester_GroupId
-        const uniqueSemesterGroupIds = [
-          ...new Set(data.map((e) => e.semester_GroupId)),
-        ];
         const semesterGroupMap = {};
-        await Promise.all(
-          uniqueSemesterGroupIds.map(async (id) => {
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup/${id}`
-            );
-            if (res.ok) {
-              const semester_group = await res.json();
-              semesterGroupMap[id] = `${semester_group.name}`;
-            } else {
-              semesterGroupMap[id] = "Unknown";
-            }
-          })
-        );
+        semesterGroups.forEach((group) => {
+          semesterGroupMap[group.id] = group.name;
+        });
         setSemesterGroups(semesterGroupMap);
       } catch (err) {
-        console.error("Failed to fetch journal entries or contactees: ", err);
+        console.error("Failed to fetch data: ", err);
       } finally {
         setLoading(false);
       }
@@ -123,9 +102,6 @@ export default function Journal() {
   }, []);
 
   // Functions for filtering journal entries
-  const handleOpenFilterDialog = () => setFilterDialogOpen(true);
-  const handleCloseFilterDialog = () => setFilterDialogOpen(false);
-
   /**
    * Handles the change in the semester filter selections.
    *
@@ -329,6 +305,9 @@ export default function Journal() {
               <Typography variant="h3">
                 with {entry.contactee_fname} {entry.contactee_lname}
               </Typography>
+              <Typography>
+                Semester: {semester_groups[entry.semester_GroupId] || "Unknown"}
+              </Typography>
               <Typography variant="body1">Notes:</Typography>
               <Box
                 sx={{
@@ -363,23 +342,45 @@ export default function Journal() {
         <DialogContent>
           {/* Form inputs here */}
           <Box>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <Select
-                value={filterSemesterValue}
-                onChange={handleFilterSemesterChange}
-              >
-                {/* TODO: Expand this to all semester groups for selection */}
-                <MenuItem value="">Select Semester</MenuItem>
-                {Object.entries(semester_groups).map(([id, name]) => (
-                  <MenuItem key={id} value={id}>
-                    {name}
-                  </MenuItem>
-                ))}
-              </Select>
+            {/* TODO: Add option and functionality for picking the date and time for the journal entries. */}
+            {/* TODO: Create separate constants for semester group and contactee in new journal entry */}
+            <FormControl fullWidth>
+              <Autocomplete
+                options={Object.entries(semester_groups).map(([id, name]) => ({
+                  label: name,
+                  value: id,
+                }))}
+                getOptionLabel={(option) => option.label}
+                onChange={(event, newValue) =>
+                  setFilterSemesterValue(newValue ? newValue.value : "")
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Semester"
+                    variant="outlined"
+                    fullWidth
+                  />
+                )}
+                sx={{ mb: 2 }}
+              />
             </FormControl>
 
             <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel
+                id="contactee-select-label"
+                sx={{
+                  "&.Mui-focused": {
+                    color: theme.ritColors.orange,
+                  },
+                }}
+              >
+                Contactee
+              </InputLabel>
               <Select
+                labelId="contactee-select-label"
+                id="contactee-select"
+                label="Contactee"
                 value={filterContacteeValue}
                 onChange={handleFilterContacteeChange}
               >
@@ -424,7 +425,7 @@ export default function Journal() {
       <FilterDialog
         open={filterDialogOpen}
         title="Filter Journal Entries"
-        onCancel={handleCloseFilterDialog}
+        onCancel={() => setFilterDialogOpen(false)}
         onSubmit={handleApplyFilter}
         actionLabel="Apply Filter"
       >
