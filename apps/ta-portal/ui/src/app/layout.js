@@ -24,12 +24,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         <AuthProvider>
           <NotificationProvider>
             <Header />
-            {children}
+            {/* This <main> tag will now grow to fill the space */}
+            <main className="flex-grow relative">{children}</main>
             <Footer />
           </NotificationProvider>
         </AuthProvider>
