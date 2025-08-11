@@ -1,5 +1,6 @@
 "use client";
 
+import BackArrow from "@/components/BackArrow";
 import { useAuth } from "@/context/AuthContext";
 import {
     getAssessmentById,
@@ -13,6 +14,24 @@ import {
 } from "@/services/project";
 import { Assessment } from "@/types/assessment";
 import { UserProfile } from "@/types/userProfile";
+import { Close } from "@mui/icons-material";
+import {
+    ListItem,
+    IconButton,
+    ListItemButton,
+    ListItemText,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    TextField,
+    Alert,
+    DialogActions,
+    Stack,
+    Card,
+    CardContent,
+    Typography,
+} from "@mui/material";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -82,162 +101,186 @@ const OverseerProjectView: React.FC<{
     if (!isOverseer)
         return (
             <div className="max-w-3xl mx-auto py-8 px-4">
-                {/* Back Arrow */}
-                <Link href="/dashboard">
-                    <button
-                        className="mb-4 text-blue-600 underline"
-                        aria-label="Back"
-                    >
-                        &larr; Back
-                    </button>
-                </Link>
+                <BackArrow />
                 <p>You ain't an overseer for this project &gt;:*(</p>
             </div>
         );
 
     return (
         <div className="max-w-3xl mx-auto py-8 px-4">
-            {/* Back Arrow */}
-            <Link href="/dashboard">
-                <button
-                    className="mb-4 text-blue-600 underline"
-                    aria-label="Back"
-                >
-                    &larr; Back
-                </button>
-            </Link>
+            <BackArrow />
             <section className="mb-8">
                 <h2 className="text-lg font-semibold mb-4">Project Peers</h2>
                 <ul>
                     {peers.map((peer) => (
-                        <li
-                            key={peer.id}
-                            className="group flex items-center gap-2 cursor-pointer"
-                        >
-                            <span
-                                className="underline group-hover:text-blue-700"
-                                title="Remove peer"
-                                onClick={() => handleRemovePeer(peer)}
+                        <li key={peer.id}>
+                            <ListItem
+                                secondaryAction={
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="remove"
+                                        color="error"
+                                        onClick={() => handleRemovePeer(peer)}
+                                    >
+                                        <Close />
+                                    </IconButton>
+                                }
+                                disablePadding
                             >
-                                {peer.name}
-                            </span>
-                            <button
-                                className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
-                                title="Remove peer"
-                                onClick={() => handleRemovePeer(peer)}
-                            >
-                                ×
-                            </button>
+                                <ListItemButton
+                                    onClick={() => handleRemovePeer(peer)}
+                                >
+                                    <ListItemText primary={peer.name} />
+                                </ListItemButton>
+                            </ListItem>
                         </li>
                     ))}
                 </ul>
-                <button
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{ mt: 2 }}
                     onClick={() => setShowAddPeerModal(true)}
                 >
                     Add Peer
-                </button>
-                {showAddPeerModal && (
-                    <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm gap-6">
-                        <div className="bg-white p-6 rounded shadow-lg w-full max-w-sm">
-                            <h3 className="text-lg font-semibold mb-4">
-                                Add Peer
-                            </h3>
-                            <form
-                                onSubmit={async (e) => {
-                                    e.preventDefault();
-                                    if (!addPeerEmail) return;
-                                    handleAddPeer();
-                                }}
-                            >
-                                <input
-                                    type="email"
-                                    className="w-full border rounded px-3 py-2 mb-4"
-                                    placeholder="Enter peer email"
-                                    value={addPeerEmail}
-                                    onChange={(e) =>
-                                        setAddPeerEmail(e.target.value)
-                                    }
-                                    required
-                                />
-                                <div className="flex justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        className="px-4 py-2 rounded bg-gray-200"
-                                        onClick={() => {
-                                            setShowAddPeerModal(false);
-                                            setAddPeerEmail("");
-                                            setModalError("");
-                                        }}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-                                    >
-                                        Add
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                </Button>
+                <Dialog
+                    open={showAddPeerModal}
+                    onClose={() => {
+                        setShowAddPeerModal(false);
+                        setAddPeerEmail("");
+                        setModalError("");
+                    }}
+                >
+                    <DialogTitle>Add Peer</DialogTitle>
+                    <DialogContent>
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            label="Peer Email"
+                            type="email"
+                            fullWidth
+                            variant="outlined"
+                            value={addPeerEmail}
+                            onChange={(e) => setAddPeerEmail(e.target.value)}
+                            required
+                        />
                         {modalError && (
-                            <div className="bg-red-600 p-2 rounded shadow-lg">
-                                <p className="text-white">{modalError}</p>
-                            </div>
+                            <Alert severity="error" sx={{ mt: 2 }}>
+                                {modalError}
+                            </Alert>
                         )}
-                    </div>
-                )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button
+                            onClick={() => {
+                                setShowAddPeerModal(false);
+                                setAddPeerEmail("");
+                                setModalError("");
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleAddPeer}
+                            variant="contained"
+                            color="primary"
+                        >
+                            Add
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </section>
             <section className="mb-8">
                 <h2 className="text-lg font-semibold mb-4">
                     Project Assessments
                 </h2>
-                {assessments
-                    .toSorted(
-                        (a, b) =>
-                            new Date(a.startDate).getTime() -
-                            new Date(b.startDate).getTime()
-                    )
-                    .map((a) => (
-                        <Link
-                            href={`/projects/${projectId}/asOverseer/assessments/${a.id}`}
-                        >
-                            <div
+                <Stack spacing={2}>
+                    {assessments
+                        .toSorted(
+                            (a, b) =>
+                                new Date(a.startDate).getTime() -
+                                new Date(b.startDate).getTime()
+                        )
+                        .map((a) => (
+                            <Link
                                 key={a.id}
-                                className="flex items-center justify-between p-4 rounded border"
+                                href={`/projects/${projectId}/asOverseer/assessments/${a.id}`}
+                                passHref
+                                legacyBehavior
                             >
-                                <div className="flex-1">
-                                    <div className="font-medium">{a.name}</div>
-                                    <div className="text-xs text-gray-500">
-                                        {new Date(
-                                            a.startDate
-                                        ).toLocaleDateString()}{" "}
-                                        &ndash;{" "}
-                                        {new Date(
-                                            a.dueDate
-                                        ).toLocaleDateString()}
-                                    </div>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
-                <div className="flex items-center justify-between p-4 rounded border border-dashed mt-4 bg-gray-50">
-                    <div className="flex-1">
-                        <div className="font-medium text-gray-700">
-                            Assign New Assessment
-                        </div>
-                        <div className="text-xs text-gray-500">
-                            Create and assign a new assessment to project peers.
-                        </div>
-                    </div>
-                    <Link
-                        href={`/projects/${projectId}/asOverseer/assignAssessment`}
-                        className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                <Card
+                                    variant="outlined"
+                                    sx={{
+                                        cursor: "pointer",
+                                        "&:hover": { boxShadow: 3 },
+                                    }}
+                                >
+                                    <CardContent>
+                                        <Typography variant="h6">
+                                            {a.name}
+                                        </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                        >
+                                            {new Date(
+                                                a.startDate
+                                            ).toLocaleDateString()}{" "}
+                                            &ndash;{" "}
+                                            {new Date(
+                                                a.dueDate
+                                            ).toLocaleDateString()}
+                                        </Typography>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        ))}
+                    <Card
+                        variant="outlined"
+                        sx={{
+                            borderStyle: "dashed",
+                            bgcolor: "grey.50",
+                        }}
                     >
-                        Assign
-                    </Link>
-                </div>
+                        <CardContent
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                            }}
+                        >
+                            <div>
+                                <Typography
+                                    variant="subtitle1"
+                                    color="text.primary"
+                                >
+                                    Assign New Assessment
+                                </Typography>
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                >
+                                    Create and assign a new assessment to
+                                    project peers.
+                                </Typography>
+                            </div>
+                            <Link
+                                href={`/projects/${projectId}/asOverseer/assignAssessment`}
+                                passHref
+                                legacyBehavior
+                            >
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    sx={{ ml: 2 }}
+                                >
+                                    Assign
+                                </Button>
+                            </Link>
+                        </CardContent>
+                    </Card>
+                </Stack>
             </section>
         </div>
     );
