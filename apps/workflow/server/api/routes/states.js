@@ -358,8 +358,6 @@ async function flattenActionStates(where, include = null, select = null) {
 router.put("/workflow/:id", async (req, res) => {
   const { id } = req.params;
 
-  // TODO: Figure out how to make sure that the state of actions with children are adjusted accordingly.
-
   await prisma.$transaction(async () => {
     // Get the workflowState by id to get the workflow and actionStates
     const workflowState = await prisma.workflowState.findUnique({
@@ -570,8 +568,6 @@ router.get("/workflow/:workflowStateId/findStep", async (req, res) => {
   });
 
   const step = await findFirstSimpleIncomplete(workflowState.baseActionStateId);
-
-  console.log(step);
 
   res.json(step);
 });
