@@ -6,6 +6,6 @@ export const applicationStatusEnumToString = {
     HIRED: "Hired",
     DECLINED_OFFER: "Declined Offer",
     REJECTED: "Rejected",
-    ONHOLD: "Onhold",
+    ONHOLD: "On hold",
     INACTIVE: "Inactive"
 }
