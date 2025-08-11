@@ -4,6 +4,8 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { getFullActionTree } = require("../helpers/actions.js");
 
+// I'm sorry for the chaos that this file is. I tried to leave enough inline comments that you could follow my madness. I'm very short on time.
+
 /**
  * Recurisve function for collecting all action states branching from a a specific action.
  *
@@ -82,6 +84,122 @@ router.get("/workflow", async (req, res) => {
 });
 
 /**
+ * Function for updating an actionState its children's stateTypes.
+ *
+ * @param {*} actionStateId
+ * @returns The ActionState that was updated.
+ */
+async function updateStateByChildren(actionStateId) {
+  // Get the current stateType, actionType, and all child actionState stateTypes.
+  const actionState = await prisma.actionState.findUnique({
+    where: { id: actionStateId },
+    select: {
+      parentId: true,
+      stateType: true,
+      children: {
+        select: {
+          stateType: true,
+        },
+      },
+      action: {
+        select: {
+          actionType: true,
+        },
+      },
+    },
+  });
+
+  // Updated stateType
+  let newStateType = "notStarted";
+
+  // State machine for determining the new stateType
+  currentStateType: switch (actionState.action.actionType) {
+    // For workflow and complex actionTypes
+    case "workflow":
+    case "complex":
+      for (let i = 0; i < actionState.children.length; i++) {
+        const child = actionState.children[i];
+
+        // Update the newActionState based on what it currently is, and the stateTypes of it's children
+        switch (child.stateType) {
+          // newStateType will be completed if all visible children are completed,
+          // or inProgress of any of the visible children aren't completed.
+          case "completed":
+            if (newStateType === "completed" || i === 0) {
+              newStateType = "completed";
+            } else if (newStateType === "notStarted") {
+              newStateType = "inProgress";
+              break currentStateType;
+            }
+            break;
+
+          // newStateType will be inProgress
+          case "inProgress":
+            newStateType = "inProgress";
+            break currentStateType;
+
+          // newStateType will be notStarted if all children were notStarted.
+          // Otherwise, newStateType will be inProgress.
+          case "notStarted":
+            if (newStateType === "completed") {
+              newStateType = "inProgress";
+              break currentStateType;
+            }
+            break;
+
+          // Hidden actionStates don't effect parent actionState.
+          case "hidden":
+            break;
+
+          // If the actionState isn't one of our defined ones.
+          default:
+            throw Error("Unexpected state type encountered");
+        }
+      }
+      break;
+
+    // For branching actions
+    case "branching":
+      for (let i = 0; i < actionState.children.length; i++) {
+        const child = actionState.children[i];
+
+        // Update the newActionState based on what it currently is, and the stateTypes of it's children
+        switch (child.stateType) {
+          // newStateType is completed if any child is completed.
+          case "completed":
+            newStateType = "completed";
+            break currentStateType;
+
+          // newStateType is unless there is another child that is completed.
+          case "inProgress":
+            newStateType = "inProgress";
+            break;
+
+          // newStateType is not affected by a child with these stateTypes.
+          case "notStarted":
+          case "hidden":
+            break;
+
+          // If the actionState isn't one of our defined ones.
+          default:
+            throw Error("Unexpected state type encountered");
+        }
+      }
+      break;
+  }
+
+  // Update the state to what it needs to be
+  if (actionState.stateType !== newStateType) {
+    await prisma.actionState.update({
+      where: { id: actionStateId },
+      data: { stateType: newStateType },
+    });
+  }
+
+  return actionState;
+}
+
+/**
  * Recursive function used to create state for all of the actions and sub actions in a list of actions.
  *
  * @param {Array<Object>} actions
@@ -119,6 +237,7 @@ async function createActionStates(
       ); // Recursively create child actions of the current action
     }
   }
+  await updateStateByChildren(parentActionStateId);
 }
 
 // POST /states/workflow
@@ -300,16 +419,25 @@ router.put("/workflow/:id", async (req, res) => {
       }
     );
 
+    // Return the updated workflowState
+    const updated = await prisma.workflowState.findUnique({
+      where: { id: id },
+      include: {
+        workflow: true,
+        baseActionState: true,
+      },
+    });
+
     // Add any actionStates stemming from the baseActionState as it's children
     const children = await getChildren(
-      { parentId: workflowState.baseActionStateId },
+      { parentId: updated.baseActionStateId },
       { action: true }
     );
     if (children?.length > 0) {
-      workflowState.baseActionState.children = children;
+      updated.baseActionState.children = children;
     }
 
-    res.json(workflowState);
+    res.json(updated);
   });
 });
 
@@ -397,6 +525,39 @@ router.put("/action/:id", async (req, res) => {
   res.json(actionState);
 });
 
+async function findFirstSimpleIncomplete(actionStateId) {
+  const actionState = await prisma.actionState.findUnique({
+    where: {
+      id: actionStateId,
+    },
+    include: {
+      action: true,
+    },
+  });
+
+  if (
+    actionState.stateType === "completed" ||
+    actionState.stateType === "hidden"
+  ) {
+    return null;
+  } else {
+    if (actionState.action.actionType === "simple") {
+      return actionState;
+    } else {
+      const firstIncompleteChild = await prisma.actionState.findFirst({
+        select: { id: true },
+        where: {
+          parentId: actionStateId,
+          stateType: { notIn: ["completed", "hidden"] },
+        },
+        orderBy: { index: "asc" },
+      });
+      if (!firstIncompleteChild) return null;
+      return await findFirstSimpleIncomplete(firstIncompleteChild.id);
+    }
+  }
+}
+
 /**
  * An endpoint that takes you to the first step in the workflow that isn't completed or hidden.
  * If this is a complex action or a branching action, it stops at that level.
@@ -404,136 +565,26 @@ router.put("/action/:id", async (req, res) => {
 router.get("/workflow/:workflowStateId/findStep", async (req, res) => {
   const { workflowStateId } = req.params;
 
-  // TODO: ActionStates aren't ordered, and aren't a linked list like Actions, so how do we know which one is first. (right now it's randomized...)
-  const states = await prisma.actionState.findFirst({
-    where: {
-      workflowStateId: workflowStateId,
-      stateType: "notStarted",
-    },
-    include: {
-      action: true,
-    },
-    orderBy: {
-      index: "asc",
-    },
+  const workflowState = await prisma.workflowState.findUnique({
+    where: { id: workflowStateId },
   });
 
-  res.json(states);
+  const step = await findFirstSimpleIncomplete(workflowState.baseActionStateId);
+
+  console.log(step);
+
+  res.json(step);
 });
 
 /**
- * Function for recursively updating an actionState and all of it's 
- * parent actionStates based on their children's stateTypes.
- * 
+ * Calls updateStateByChildren recursively for the ActionState associated
+ * with the passed actionStateId, and all of the parenting ActionStates.
+ *
  * @param {*} actionStateId
  */
 async function cascadeSubmission(actionStateId) {
   await prisma.$transaction(async () => {
-    // Get the current stateType, actionType, and all child actionState stateTypes.
-    const actionState = await prisma.actionState.findUnique({
-      where: { id: actionStateId },
-      select: {
-        parentId: true,
-        stateType: true,
-        children: {
-          select: {
-            stateType: true,
-          },
-        },
-        action: {
-          select: {
-            actionType: true,
-          },
-        },
-      },
-    });
-
-    // Updated stateType
-    let newStateType = "notStarted";
-
-    // State machine for determining the new stateType
-    currentStateType: switch (actionState.action.actionType) {
-      // For workflow and complex actionTypes
-      case "workflow":
-      case "complex":
-        for (let i = 0; i < actionState.children.length; i++) {
-          const child = actionState.children[i];
-
-          // Update the newActionState based on what it currently is, and the stateTypes of it's children
-          switch (child.stateType) {
-            // newStateType will be completed if all visible children are completed,
-            // or inProgress of any of the visible children aren't completed.
-            case "completed":
-              if (newStateType === "completed" || i === 0) {
-                newStateType = "completed";
-              } else if (newStateType === "notStarted") {
-                newStateType = "inProgress";
-                break currentStateType;
-              }
-              break;
-
-            // newStateType will be inProgress
-            case "inProgress":
-              newStateType = "inProgress";
-              break currentStateType;
-
-            // newStateType will be notStarted if all children were notStarted.
-            // Otherwise, newStateType will be inProgress.
-            case "notStarted":
-              if (newStateType === "completed") {
-                newStateType = "inProgress";
-                break currentStateType;
-              }
-              break;
-
-            // Hidden actionStates don't effect parent actionState.
-            case "hidden":
-              break;
-
-            // If the actionState isn't one of our defined ones.
-            default:
-              throw Error("Unexpected state type encountered");
-          }
-        }
-        break;
-
-      // For branching actions
-      case "branching":
-        for (let i = 0; i < actionState.children.length; i++) {
-          const child = actionState.children[i];
-
-          // Update the newActionState based on what it currently is, and the stateTypes of it's children
-          switch (child.stateType) {
-            // newStateType is completed if any child is completed.
-            case "completed":
-              newStateType = "completed";
-              break currentStateType;
-
-            // newStateType is unless there is another child that is completed.
-            case "inProgress":
-              newStateType = "inProgress";
-              break;
-
-            // newStateType is not affected by a child with these stateTypes.
-            case "notStarted":
-            case "hidden":
-              break;
-
-            // If the actionState isn't one of our defined ones.
-            default:
-              throw Error("Unexpected state type encountered");
-          }
-        }
-        break;
-    }
-
-    // Update the state to what it needs to be
-    if (actionState.stateType !== newStateType) {
-      await prisma.actionState.update({
-        where: { id: actionStateId },
-        data: { stateType: newStateType },
-      });
-    }
+    const actionState = await updateStateByChildren(actionStateId);
 
     // Cascade status updates upward
     if (actionState.parentId) await cascadeSubmission(actionState.parentId);
