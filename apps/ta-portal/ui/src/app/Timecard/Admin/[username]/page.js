@@ -48,8 +48,12 @@ export default function AdminTimecardsPage() {
             // The result will be an array of objects, where each object contains a user and their list of timecards.
             // e.g., [{ user: {...}, timecards: [...] }, { user: {...}, timecards: [...] }]
             const grouped = rawTimecards.reduce((acc, timecard) => {
-                const user = timecard.jobPositionHistory?.employee?.candidate?.user;
-                if (!user) return acc;
+                if (!timecard.jobPositionHistory?.employee?.candidate?.user) {
+                    return acc;
+                }
+
+                const employee = timecard.jobPositionHistory.employee;
+                const user = employee.candidate.user;
 
                 // Combine first and last name for display and search
                 const fullName = `${user.fname} ${user.lname}`;
@@ -61,6 +65,7 @@ export default function AdminTimecardsPage() {
                 if (!userEntry) {
                     userEntry = { 
                         user: { ...user, fullName }, 
+                        employeeId: employee.id,
                         timecards: [] 
                     };
                     acc.push(userEntry);
@@ -95,10 +100,12 @@ export default function AdminTimecardsPage() {
         }
 
         const lowerTerm = searchTerm.toLowerCase();
-        // Filter the original data based on the user's full name
-        const filtered = groupedData.filter(({ user }) => 
-            user.fullName.toLowerCase().includes(lowerTerm) ||
-            user.username.toLowerCase().includes(lowerTerm)
+        // Filter the original data based on the user's full name or employee ID
+        const filtered = groupedData.filter(employeeEntry => 
+            employeeEntry.user.fullName.toLowerCase().includes(lowerTerm) ||
+            employeeEntry.user.username.toLowerCase().includes(lowerTerm) ||
+            // Add a check to ensure employeeId exists before searching it
+            (employeeEntry.employeeId && String(employeeEntry.employeeId).includes(lowerTerm))
         );
         setFilteredData(filtered);
 
