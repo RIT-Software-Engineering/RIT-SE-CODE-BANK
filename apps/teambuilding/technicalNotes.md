@@ -20,3 +20,4 @@ Currently there is zro authentication in the system. There is 2 places where thi
     * some algorthym based off of the stable roommates problem to best match everyone together
 - userView:
     A more indepth user view, as it currently only shows teams you are apart of. This could be expanded
+ 
