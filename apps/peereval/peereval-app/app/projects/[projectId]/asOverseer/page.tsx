@@ -31,6 +31,7 @@ import {
     Card,
     CardContent,
     Typography,
+    List,
 } from "@mui/material";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -111,31 +112,52 @@ const OverseerProjectView: React.FC<{
             <BackArrow />
             <section className="mb-8">
                 <h2 className="text-lg font-semibold mb-4">Project Peers</h2>
-                <ul>
+                <List>
                     {peers.map((peer) => (
-                        <li key={peer.id}>
-                            <ListItem
-                                secondaryAction={
-                                    <IconButton
-                                        edge="end"
-                                        aria-label="remove"
-                                        color="error"
-                                        onClick={() => handleRemovePeer(peer)}
-                                    >
-                                        <Close />
-                                    </IconButton>
-                                }
-                                disablePadding
-                            >
-                                <ListItemButton
+                        <ListItem
+                            key={peer.id}
+                            secondaryAction={
+                                <IconButton
+                                    edge="end"
+                                    aria-label="remove"
+                                    color="error"
                                     onClick={() => handleRemovePeer(peer)}
+                                    sx={{ m: 0, p: 0.5 }}
                                 >
-                                    <ListItemText primary={peer.name} />
-                                </ListItemButton>
-                            </ListItem>
-                        </li>
+                                    <Close />
+                                </IconButton>
+                            }
+                            disablePadding
+                            sx={{
+                                m: 0,
+                                p: 0,
+                                "&:last-child": { borderBottom: "none" },
+                            }}
+                        >
+                            <ListItemButton
+                                onClick={() => handleRemovePeer(peer)}
+                                sx={{ m: 0, p: 1 }}
+                            >
+                                <ListItemText
+                                    sx={{ m: 0 }}
+                                    primary={
+                                        <>
+                                            {peer.name}
+                                            <span
+                                                style={{
+                                                    color: "#888",
+                                                    marginLeft: 8,
+                                                }}
+                                            >
+                                                ({peer.email})
+                                            </span>
+                                        </>
+                                    }
+                                />
+                            </ListItemButton>
+                        </ListItem>
                     ))}
-                </ul>
+                </List>
                 <Button
                     variant="contained"
                     color="primary"
