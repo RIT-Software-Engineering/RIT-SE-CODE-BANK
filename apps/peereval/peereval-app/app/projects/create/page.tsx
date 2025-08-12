@@ -52,6 +52,11 @@ export default function CreateProjectPage() {
             return;
         }
 
+        if (peerEmails.length < 2) {
+            setError("Project must contain at least two peers.");
+            return;
+        }
+
         try {
             await createProject(
                 {
@@ -66,6 +71,8 @@ export default function CreateProjectPage() {
             setName("");
             setDescription("");
             setPeerEmails([]);
+
+            window.location.href = "/dashboard";
         } catch (err) {
             setError("Failed to create project: " + err);
         }

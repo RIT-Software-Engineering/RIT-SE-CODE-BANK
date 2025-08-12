@@ -37,7 +37,7 @@ const Dashboard: React.FC = () => {
                 Projects
             </Typography>
 
-            <Box sx={{ display: "grid", rowGap: 12 }}>
+            <Box sx={{ display: "grid", rowGap: 6 }}>
                 {/* Projects as Peer */}
                 <section>
                     <Typography variant="h2" sx={{ mb: 4 }}>
@@ -84,8 +84,7 @@ const Dashboard: React.FC = () => {
                     )}
                 </section>
 
-                {/* Divider between Peer and Overseer */}
-                <Divider />
+                <hr />
 
                 {/* Projects as Overseer */}
                 <section>
