@@ -68,7 +68,7 @@ router.get("/", async (req, res) => {
 
 // POST /actions
 router.post("/", async (req, res) => {
-    const { name, description, form, actionType, metadata, parentActionId } =
+    const { name, description, form, actionType, targetType, metadata, parentActionId } =
         req.body;
     const { userId } = req.body; // TODO: make this work with req.user instead
 
@@ -84,6 +84,9 @@ router.post("/", async (req, res) => {
     }
     if (actionType) {
         data.actionType = actionType;
+    }
+    if (targetType) {
+        data.targetType = targetType;
     }
     if (parentActionId) {
         data.parentAction = { connect: { id: parentActionId } };
@@ -117,6 +120,7 @@ router.put("/:id", async (req, res) => {
         description,
         form,
         actionType,
+        targetType,
         metadata,
         nextActionId,
         parentActionId,
@@ -135,6 +139,9 @@ router.put("/:id", async (req, res) => {
     }
     if (actionType) {
         data.actionType = actionType;
+    }
+    if (targetType) {
+        data.targetType = targetType;
     }
     if (nextActionId) {
         data.nextAction = { connect: { id: nextActionId } };
