@@ -14,7 +14,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User roles: admin, manager, user
+//It was easier in the backend to make everything a "user" with a role type. The firstname/lastName/email fields is bad practice
+//what should of been done is to create a seperate table for user attributes with firstname/lastname/email each being a row, that way you could easily add/remove things you want a user to have
+//
 model User {
   id        Int      @id @default(autoincrement())
   username  String   @unique

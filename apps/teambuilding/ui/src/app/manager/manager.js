@@ -1,6 +1,9 @@
+//This is very big, I know. This should probly be broken up into smaller components to make it more manageable.
+
 'use client';
 import { useState, useEffect } from "react";
 import "./manager.css";
+import React from "react";
 
 export default function ManagerPage() {
   const [managerId, setManagerId] = useState(null);
@@ -362,38 +365,7 @@ export default function ManagerPage() {
     }
   };
 
-  const handleUserCheckboxChange = (communityId, userId) => {
-    setSelectedUsersToAdd(prev => {
-      const prevSelected = prev[communityId] || [];
-      if (prevSelected.includes(userId)) {
-        return { ...prev, [communityId]: prevSelected.filter(id => id !== userId) };
-      } else {
-        return { ...prev, [communityId]: [...prevSelected, userId] };
-      }
-    });
-  };
 
-  const addUsersToCommunity = async (communityId) => {
-    const userIds = selectedUsersToAdd[communityId] || [];
-    if (userIds.length === 0) return;
-    try {
-      const res = await fetch(`http://localhost:3000/api/community/${communityId}/add-users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userIds }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        console.log("Failed to add users to community:", data.error);
-      } else {
-        console.log("Users added to community successfully");
-        setSelectedUsersToAdd(prev => ({ ...prev, [communityId]: [] }));
-        reloadCommunities();
-      }
-    } catch {
-      console.log("Server error adding users to community");
-    }
-  };
 
   // CSV Import functionality
   const handleCsvFileChange = (teamId, file) => {
@@ -808,6 +780,8 @@ export default function ManagerPage() {
 
   return (
     <div className="manager-root">
+     
+      <div className="manager-root">
       <h1>Manager Page</h1>
       <div>
         <h2>Create User</h2>
@@ -1070,6 +1044,7 @@ export default function ManagerPage() {
           <div>No communities found.</div>
         )}
       </div>
+    </div>
     </div>
   );
 }

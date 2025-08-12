@@ -1,3 +1,4 @@
+//Navbar is hidden when not logged in, shows everything for admin, doesn't show admin page for manager, and doesn't show admin or manager page to user
 'use client';
 import React from "react";
 import { useRouter } from "next/navigation";
