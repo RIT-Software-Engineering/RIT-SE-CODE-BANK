@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  },
+  
+  "scripts": {
+    "setupportal": "node ./scripts/setupportal.js",
+    "startportal": "node ./scripts/startportal.js",
+    "stopportal": "node ./scripts/stopportal.js"
+  }
+}

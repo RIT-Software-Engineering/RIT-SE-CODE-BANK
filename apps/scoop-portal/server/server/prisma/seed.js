@@ -63,6 +63,7 @@ async function main() {
   const dudeBro = await prisma.users.findFirst({
     where: { fname: "Dude", lname: "Bro" },
   });
+
   await prisma.teams.create({
     data: {
       name: "Alpha",
