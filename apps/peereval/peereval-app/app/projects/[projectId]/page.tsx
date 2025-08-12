@@ -154,9 +154,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                 receiver: currentUser?.id,
             });
             // Only show if after due date
-            setReceivedAssessments(
-                ras.filter((ra) => new Date() > new Date(ra.dueDate))
-            );
+            setReceivedAssessments(splitAssessments(ras).pastDue);
 
             // Get the project info
             setProjectInfo(await getProjectByID(projectId));
