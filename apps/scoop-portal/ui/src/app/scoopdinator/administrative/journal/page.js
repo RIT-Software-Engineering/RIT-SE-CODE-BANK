@@ -265,7 +265,6 @@ export default function Journal() {
           setFilterDialogOpen={setFilterDialogOpen}
           setNewEntryOpen={setNewEntryOpen}
         />
-
         {journalEntries.length === 0 ? (
           <Typography variant="body1">
             No journal entries found. Please check back later.

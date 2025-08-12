@@ -1,12 +1,11 @@
-"use client";
-import React from "react";
-import { Box, Typography, Container, Button, Grid, Paper } from "@mui/material";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-// import { useUser } from "../../user-context/page";
-// import UnauthorizedPage from '../../unauthorized/page';
-// import ProtectedRoute from "../../utils/ProtectedRoute";
+'use client';
+import React from 'react';
+import {
+  Box, Typography, Container, Button, Grid, Paper,
+} from '@mui/material';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
-import Header from "../../_components/Header";
+import Header from '../../_components/Header';
 
 const workflows = [
   {
@@ -21,6 +20,11 @@ const workflows = [
         title: "Manage Employees",
         description: "Review current scooployee details and statuses.",
         link: "/scoopdinator/scooployees",
+      },
+      {
+        title: 'Onboarding Workflow',
+        description: 'To begin the total onboarding process, view the workflow dashboard.',
+        link: '/scoopdinator/workflows',
       },
     ],
   },

@@ -27,17 +27,17 @@ const sampleDataFiles = {
   Application: sampleApplications,
 };
 
+
 async function main() {
   console.log("Clearing data");
-  for (const model of models) {
-    try {
-      if (prisma[model]) {
-        await prisma[model].deleteMany();
-      }
-    } catch (error) {
-      console.error(`Error clearing ${model}: `, error.message);
-    }
-  }
+
+  await prisma.Teams.deleteMany();
+  await prisma.Journal_Entry.deleteMany();
+  await prisma.Project.deleteMany();
+  await prisma.users.deleteMany();
+  await prisma.Application.deleteMany();
+  await prisma.Semester_Group.deleteMany();
+  await prisma.fruit.deleteMany();
 
   console.log("Seeding data");
 
@@ -62,8 +62,18 @@ async function main() {
   });
   const dudeBro = await prisma.users.findFirst({
     where: { fname: "Dude", lname: "Bro" },
+
   });
-  await prisma.teams.create({
+
+  await prisma.journal_Entry.createMany({
+    data: sampleJournalEntries,
+  });
+
+  const vicki = await prisma.users.findUnique({ where: { email: "vcl123@rit.edu" } });
+  const jimmy = await prisma.users.findUnique({ where: { email: "jlp123@rit.edu" } });
+  const dudeBro = await prisma.users.findUnique({ where: { email: "def123@rit.edu" } });
+
+  await prisma.Teams.create({
     data: {
       name: "Alpha",
       projectId: 1,
@@ -73,13 +83,10 @@ async function main() {
     },
   });
 
-  const galgirl = await prisma.users.findUnique({
-    where: { email: "klm123@rit.edu" },
-  });
-  const edison = await prisma.users.findUnique({
-    where: { email: "emh123@rit.edu" },
-  });
-  await prisma.teams.create({
+  const galgirl = await prisma.users.findUnique({ where: { email: "klm123@rit.edu" } });
+  const edison = await prisma.users.findUnique({ where: { email: "emh123@rit.edu" } });
+
+  await prisma.Teams.create({
     data: {
       name: "Omega",
       projectId: 2,
@@ -89,14 +96,15 @@ async function main() {
     },
   });
 
-  console.log("Drop and create finished.");
+  console.log("Seed finished.");
 }
+
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+    .then(async () => {
+        await prisma.$disconnect();
+    })
+    .catch(async (e) => {
+        console.error(e);
+        await prisma.$disconnect();
+        process.exit(1);
+    });

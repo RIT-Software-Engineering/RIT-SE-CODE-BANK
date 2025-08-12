@@ -20,7 +20,6 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-
 import Header from "@components/Header";
 
 /**
@@ -29,24 +28,53 @@ import Header from "@components/Header";
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
 export default function SupervisorApplicationsPage() {
-  /**
-   * The list of applications to be displayed on the page.
-   */
-  const [applications, setApplications] = useState([]);
-  const [status, setStatus] = useState("");
-  const [selectedApp, setSelectedApp] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [notification, setNotification] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+    const [applications, setApplications] = useState([]);
+    const [status, setStatus] = useState("");
+    const [selectedApp, setSelectedApp] = useState(null);
+    const [filter, setFilter] = useState("all");
+    const [notification, setNotification] = useState({
+        open: false,
+        message: "",
+        severity: "success",
+    });
 
-  useEffect(() => {
-    const fetchApps = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/application`
+    useEffect(() => {
+        const fetchApps = async () => {
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/application`
+                );
+                const data = await res.json();
+                const processed = data.map((app) => ({
+                    ...app,
+                    status:
+                        app.accepted === true
+                            ? STATUSES[1] // "accepted"
+                            : app.accepted === false
+                              ? STATUSES[2] // "rejected"
+                              : STATUSES[3], // "unprocessed"
+                }));
+
+                setApplications(processed);
+            } catch (err) {
+                console.error("Failed to fetch applications:", err);
+            }
+        };
+
+        fetchApps();
+    }, []);
+
+    //For testing. Runs when setSelectApp and handleOpen are called
+    useEffect(() => {
+        if (selectedApp) {
+            console.log("opening app:", selectedApp.firstName);
+        }
+    }, [selectedApp]);
+
+    const handleOpen = (app) => {
+        setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
+        setApplications((prev) =>
+            prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
         );
         const data = await res.json();
         const processed = data.map((app) => ({
@@ -134,41 +162,46 @@ export default function SupervisorApplicationsPage() {
    * @param {*} status - The new status to set the application to
    * @returns {void}
    */
-  const handleStatusUpdate = (status) => {
-    console.log("Updating status to:", status);
-    console.log("Updating status to:", status);
-    if (!selectedApp) return;
+      const handleStatusUpdate = (status) => {
+        console.log("Updating status to:", status);
+        console.log("Updating status to:", status);
+        if (!selectedApp) return;
 
-    try {
-      //update in database
-      putApplicationStatus(status);
+        try {
+            //update in database
+            putApplicationStatus(status);
 
-      //update local state
-      setApplications((prev) =>
-        prev.map((a) => (a.id === selectedApp.id ? { ...a, status } : a))
-      );
+            //update local state
+            setApplications((prev) =>
+                prev.map((a) =>
+                    a.id === selectedApp.id ? { ...a, status } : a
+                )
+            );
 
-      //
-      setSelectedApp((prev) =>
-        prev ? { ...prev, accepted: status === "accepted", status } : prev
-      );
-      // console.log(selectedApp.firstName, "has been", status);
-      setStatus(status);
+            //
+            setSelectedApp((prev) =>
+                prev
+                    ? { ...prev, accepted: status === "accepted", status }
+                    : prev
+            );
+            // console.log(selectedApp.firstName, "has been", status);
+            setStatus(status);
 
-      setNotification({
-        open: true,
-        message: `Application for ${selectedApp.firstName} has been ${status}.`,
-        severity: status === STATUSES[1] ? "success" : "error",
-      });
-    } catch (err) {
-      setNotification({
-        open: true,
-        message: `Failed to update status: ${err.message}`,
-        severity: "error",
-      });
-    }
-    // console.log("app status", selectedApp.status);
-  };
+            setNotification({
+                open: true,
+                message: `Application for ${selectedApp.firstName} has been ${status}.`,
+                severity: status === STATUSES[1] ? "success" : "error",
+            });
+        } catch (err) {
+            setNotification({
+                open: true,
+                message: `Failed to update status: ${err.message}`,
+                severity: "error",
+            });
+        }
+        // console.log("app status", selectedApp.status);
+    };
+
 
   const handleNotificationClose = (event, reason) => {
     if (reason === "clickaway") return;
