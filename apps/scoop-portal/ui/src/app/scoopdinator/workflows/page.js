@@ -24,7 +24,7 @@ export default function WorkflowDashboard() {
 
   // Hardcoded userId and workflowId for debugging
   const userId = '1';
-  const workflowId = '92ae268a-14b0-463c-97fe-6ad66ef7b23f';
+  const workflowId = 'bd342ea6-86d0-41e7-8192-8392e34fa0af';
 
   useEffect(() => {
     const fetchWorkflowAndActions = async () => {
