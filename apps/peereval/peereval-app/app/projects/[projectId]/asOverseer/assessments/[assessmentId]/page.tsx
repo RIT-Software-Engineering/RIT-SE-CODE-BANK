@@ -144,7 +144,12 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                         sx={{
                             minWidth: 160,
                             mr: 2,
-                            background: "white",
+                            "& .MuiSelect-icon": {
+                                color: (theme) =>
+                                    theme.palette.mode === "dark"
+                                        ? theme.ritColors.gray_1 // VSCode thinks `ritColors` is undefined :(
+                                        : theme.palette.grey[800],
+                            },
                         }}
                         inputProps={{ "aria-label": "Responder" }}
                     >
@@ -167,7 +172,16 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                             handleReceiverSelect(e.target.value as string)
                         }
                         displayEmpty
-                        sx={{ minWidth: 160, ml: 2, background: "white" }}
+                        sx={{
+                            minWidth: 160,
+                            mr: 2,
+                            "& .MuiSelect-icon": {
+                                color: (theme) =>
+                                    theme.palette.mode === "dark"
+                                        ? theme.ritColors.gray_1 // VSCode thinks `ritColors` is undefined :(
+                                        : theme.palette.grey[800],
+                            },
+                        }}
                         inputProps={{ "aria-label": "Receiver" }}
                     >
                         {receivers.map((peer) => (

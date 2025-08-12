@@ -120,12 +120,12 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                             value={activeTab}
                             onChange={(_, idx) => handleSwitchTab(idx)}
                             indicatorColor="primary"
-                            textColor="primary"
+                            textColor="inherit"
                             variant="scrollable"
                             scrollButtons="auto"
                             aria-label="Peer Tabs"
                         >
-                            {peers.map(({ id, name }, idx) => (
+                            {peers.map(({ id, name }) => (
                                 <Tab key={id} label={name} />
                             ))}
                         </Tabs>

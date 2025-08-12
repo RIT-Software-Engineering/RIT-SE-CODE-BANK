@@ -44,7 +44,7 @@ const Section: React.FC<{
         </Typography>
         <Stack spacing={2}>
             {assessments.length === 0 && (
-                <Typography color="text.secondary">No assessments.</Typography>
+                <Typography color="textPrimary">No assessments.</Typography>
             )}
             {assessments.map((a) => (
                 <Link
@@ -63,7 +63,7 @@ const Section: React.FC<{
                             >
                                 {a.name}
                             </Typography>
-                            <Typography variant="caption" color="textSecondary">
+                            <Typography variant="caption" color="textPrimary">
                                 {new Date(a.startDate).toLocaleDateString()}{" "}
                                 &ndash;{" "}
                                 {new Date(a.dueDate).toLocaleDateString()}
@@ -98,18 +98,25 @@ const ProjectPeersList: React.FC<{ projectId: string }> = ({ projectId }) => {
         return <div className="text-sm text-gray-500">No peers found.</div>;
 
     return (
-        <ul className="space-y-1">
+        <Stack spacing={1} className="mt-2">
             {peers
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((peer) => (
-                    <li key={peer.id} className="text-md text-gray-800">
-                        {peer.name}{" "}
-                        <span className="text-sm text-gray-600">
+                    <Stack
+                        key={peer.id}
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                    >
+                        <Typography variant="body1" color="textPrimary">
+                            {peer.name}
+                        </Typography>
+                        <Typography variant="body2" color="textPrimary">
                             ({peer.email})
-                        </span>
-                    </li>
+                        </Typography>
+                    </Stack>
                 ))}
-        </ul>
+        </Stack>
     );
 };
 

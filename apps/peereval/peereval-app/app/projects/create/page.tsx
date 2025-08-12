@@ -10,6 +10,7 @@ import {
     IconButton,
     ListItemText,
     Alert,
+    Paper,
 } from "@mui/material";
 import React, { useState } from "react";
 
@@ -73,7 +74,17 @@ export default function CreateProjectPage() {
     return (
         <div className="max-w-xl mx-auto p-4 space-y-8">
             <BackArrow />
-            <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
+            <Paper
+                className="max-w-xl mx-auto mt-10 p-6"
+                elevation={3}
+                sx={{
+                    borderRadius: 2,
+                    bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                            ? theme.palette.background.paper
+                            : "#f9f9f9",
+                }}
+            >
                 <h1 className="text-2xl font-bold mb-4">
                     Create a New Project
                 </h1>
@@ -112,13 +123,7 @@ export default function CreateProjectPage() {
                         <label className="block font-medium mb-1">
                             Invite Peers (optional)
                         </label>
-                        <div
-                            style={{
-                                display: "flex",
-                                gap: 8,
-                                alignItems: "center",
-                            }}
-                        >
+                        <div style={{ display: "flex", gap: 8 }}>
                             <TextField
                                 type="email"
                                 variant="outlined"
@@ -132,13 +137,13 @@ export default function CreateProjectPage() {
                                 variant="contained"
                                 color="secondary"
                                 onClick={handleAddPeer}
-                                sx={{ minWidth: 80, my: 0 }}
+                                sx={{ minWidth: 80, maxHeight: "2.5rem" }} // Probably shouldn't hard code this...
                             >
                                 Add
                             </Button>
                         </div>
                         {peerEmails.length > 0 && (
-                            <List sx={{ mt: 1 }}>
+                            <List>
                                 {peerEmails.map((email) => (
                                     <ListItem
                                         key={email}
@@ -155,6 +160,9 @@ export default function CreateProjectPage() {
                                             </IconButton>
                                         }
                                         disablePadding
+                                        sx={{
+                                            maxHeight: "2rem",
+                                        }}
                                     >
                                         <ListItemText primary={email} />
                                     </ListItem>
@@ -174,7 +182,7 @@ export default function CreateProjectPage() {
                         Create Project
                     </Button>
                 </form>
-            </div>
+            </Paper>
         </div>
     );
 }

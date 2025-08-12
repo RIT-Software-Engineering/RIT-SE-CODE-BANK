@@ -282,7 +282,7 @@ export function PeerSelectModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative">
+            <div className="rounded-lg shadow-lg p-6 w-full max-w-lg relative bg-white dark:bg-zinc-900">
                 <Button
                     onClick={onClose}
                     sx={{

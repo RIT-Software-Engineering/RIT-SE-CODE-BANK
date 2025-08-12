@@ -222,7 +222,7 @@ const OverseerProjectView: React.FC<{
                                         </Typography>
                                         <Typography
                                             variant="body2"
-                                            color="text.secondary"
+                                            color="textPrimary"
                                         >
                                             {new Date(
                                                 a.startDate
@@ -236,11 +236,11 @@ const OverseerProjectView: React.FC<{
                                 </Card>
                             </Link>
                         ))}
+                    <hr />
                     <Card
                         variant="outlined"
                         sx={{
                             borderStyle: "dashed",
-                            bgcolor: "grey.50",
                         }}
                     >
                         <CardContent
@@ -253,14 +253,11 @@ const OverseerProjectView: React.FC<{
                             <div>
                                 <Typography
                                     variant="subtitle1"
-                                    color="text.primary"
+                                    color="textPrimary"
                                 >
                                     Assign New Assessment
                                 </Typography>
-                                <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                >
+                                <Typography variant="body2" color="textPrimary">
                                     Create and assign a new assessment to
                                     project peers.
                                 </Typography>

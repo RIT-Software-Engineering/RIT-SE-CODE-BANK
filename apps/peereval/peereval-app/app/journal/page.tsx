@@ -18,6 +18,7 @@ import {
     Button,
     TextField,
     Chip,
+    Typography,
 } from "@mui/material";
 import BackArrow from "@/components/BackArrow";
 
@@ -137,41 +138,56 @@ function TagSearchButton() {
                         }
                     }}
                 />
-                <button
+                <Button
                     ref={goButtonRef}
                     type="submit"
-                    className="bg-blue-600 text-white px-2 py-1 rounded text-sm"
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    sx={{ px: 2, py: 0.5, minWidth: 0, fontSize: "0.875rem" }}
                 >
                     Go
-                </button>
+                </Button>
             </form>
         );
     }
 
     return (
-        <button
-            className="flex items-center text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded border border-gray-300 hover:bg-gray-200 transition"
+        <Button
+            variant="outlined"
+            color="primary"
+            startIcon={
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+                    />
+                </svg>
+            }
             onClick={handleClick}
-            type="button"
+            sx={{
+                textTransform: "none",
+                bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                        ? theme.palette.grey[800]
+                        : theme.palette.grey[100],
+                borderColor: (theme) =>
+                    theme.palette.mode === "dark"
+                        ? theme.palette.grey[700]
+                        : theme.palette.grey[300],
+            }}
         >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="mr-1"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
-                />
-            </svg>
             Use Tag
-        </button>
+        </Button>
     );
 }
 
@@ -290,8 +306,14 @@ export default function JournalPage() {
                             }
                             sx={{
                                 textTransform: "none",
-                                bgcolor: "grey.100",
-                                borderColor: "grey.300",
+                                bgcolor: (theme) =>
+                                    theme.palette.mode === "dark"
+                                        ? theme.palette.grey[800]
+                                        : theme.palette.grey[100],
+                                borderColor: (theme) =>
+                                    theme.palette.mode === "dark"
+                                        ? theme.palette.grey[700]
+                                        : theme.palette.grey[300],
                             }}
                         >
                             {tag}
@@ -311,27 +333,40 @@ export default function JournalPage() {
             <hr className="mb-6" />
             <ul className="space-y-4 overflow-scroll max-h-110">
                 {journal.entries.length === 0 && (
-                    <li className="text-center text-gray-500 py-8">
-                        {tag
-                            ? `You have no journal entries for the tag "${tag}". Try and create one!`
-                            : "You have no journal entries yet. Try and create one!"}
+                    <li>
+                        <Typography
+                            align="center"
+                            color="textPrimary"
+                            sx={{ py: 4 }}
+                        >
+                            {tag
+                                ? `You have no journal entries for the tag "${tag}". Try and create one!`
+                                : "You have no journal entries yet. Try and create one!"}
+                        </Typography>
                     </li>
                 )}
                 {journal.entries.map((entry) => (
                     <li
                         key={entry.id}
-                        className="border rounded p-4 bg-white shadow relative"
+                        className="border rounded p-4 shadow relative"
                     >
                         <div className="flex justify-between items-center mb-1">
                             <div className="flex items-center gap-2">
                                 {entry.re ? (
-                                    <h2 className="text-lg font-semibold">
+                                    <Typography
+                                        variant="h6"
+                                        component="h2"
+                                        className="font-semibold"
+                                    >
                                         {entry.re}
-                                    </h2>
+                                    </Typography>
                                 ) : (
-                                    <h2 className="text-gray-500 font-semibold italic">
+                                    <Typography
+                                        variant="h6"
+                                        className="text-gray-500 font-semibold italic"
+                                    >
                                         Unnamed Entry
-                                    </h2>
+                                    </Typography>
                                 )}
                                 {entry.tags.map(
                                     ({ name }) =>
@@ -349,7 +384,10 @@ export default function JournalPage() {
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-500">
+                                <Typography
+                                    variant="caption"
+                                    color="textPrimary"
+                                >
                                     {new Date(entry.date).toLocaleString(
                                         "en-US",
                                         {
@@ -361,7 +399,7 @@ export default function JournalPage() {
                                             hour12: true,
                                         }
                                     )}
-                                </span>
+                                </Typography>
                                 {/* Edit button */}
                                 <Button
                                     variant="outlined"
@@ -428,7 +466,9 @@ export default function JournalPage() {
                                 </Button>
                             </div>
                         </div>
-                        <p className="text-gray-700">{entry.content}</p>
+                        <Typography color="textPrimary">
+                            {entry.content}
+                        </Typography>
                     </li>
                 ))}
             </ul>
