@@ -31,7 +31,7 @@ Note: You can comment out the credentials settings in our cors policies to execu
 
 
     **WARNING:** Windows may by default use PORT 8000 for Windows Communication Foundation (WCF) or a different application specific to your PC brand. If this is the case, it will prevent you from running this docker image on your computer. 
-    If this is the case, I would recommend using a different port and updating the `config_backend` files accordingly and update `SET "DB_PORT=8000"` to the whatever port you are using instead of 8000. 
+    If this is the case, I would recommend using a different port and updating the `config_backend` files accordingly and update `SET "DB_PORT=8000"` to the whatever port you are using instead of 8000. Then use `git update-index --assume-unchanged <file>` to tell git to ignore your changes to that file.
 
 2.  Navigate to the `config_backend` files in the `/server` folder and update the `DB_ROOT_PASSWORD` variable with the password you set in the previous step (e.g., `newPassword`). You can change some other attributes depending on the situation (e.g. changing port numbers if needed, if you want to create a new database user as well, you can that the DB_USER and DB_USER_PASSWORD).
     * For Windows, navigate to specifically the `config_backend.bat` file and make the changes neccessary there. Since it's a `.bat` file you don't need to set permissions.
