@@ -4,8 +4,3 @@ node_modules
 
 /generated/prisma
 /prisma/migrations
-
-# Ignore changes to the config_backend scripts because port number 
-# changes may be necessary depending on personal environments
-config_backend.bat
-config_backend.sh
