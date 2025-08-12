@@ -1,5 +1,6 @@
 "use client";
 
+import BackArrow from "@/components/BackArrow";
 import { useAuth } from "@/context/AuthContext";
 import { getAssessmentsByProject } from "@/services/assessment";
 import {
@@ -13,6 +14,7 @@ import { UserProfile } from "@/types/userProfile";
 import { Drawer } from "@mui/material";
 import Link from "next/link";
 import React, { Fragment, useEffect, useState } from "react";
+import { Card, CardContent, Typography, Button, Stack } from "@mui/material";
 
 // Helper to split assessments by status
 const splitAssessments = (assessments: Assessment[]) => {
@@ -37,10 +39,12 @@ const Section: React.FC<{
     received?: boolean;
 }> = ({ projectId, title, assessments, received = false }) => (
     <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">{title}</h2>
-        <div className="space-y-2">
+        <Typography variant="h6" component="h2" gutterBottom>
+            {title}
+        </Typography>
+        <Stack spacing={2}>
             {assessments.length === 0 && (
-                <div className="text-gray-500 text-sm">No assessments.</div>
+                <Typography color="textPrimary">No assessments.</Typography>
             )}
             {assessments.map((a) => (
                 <Link
@@ -48,25 +52,27 @@ const Section: React.FC<{
                         received ? "/received" : ""
                     }`}
                     key={a.id}
+                    style={{ textDecoration: "none" }}
                 >
-                    <div
-                        key={a.id}
-                        className={
-                            "flex items-center justify-between p-4 rounded border cursor-pointer hover:bg-gray-50 transition mb-1"
-                        }
-                    >
-                        <div className="flex-1">
-                            <div className="font-medium">{a.name}</div>
-                            <div className="text-xs text-gray-500">
+                    <Card variant="outlined">
+                        <CardContent>
+                            <Typography
+                                variant="subtitle1"
+                                color="textPrimary"
+                                fontWeight={500}
+                            >
+                                {a.name}
+                            </Typography>
+                            <Typography variant="caption" color="textPrimary">
                                 {new Date(a.startDate).toLocaleDateString()}{" "}
                                 &ndash;{" "}
                                 {new Date(a.dueDate).toLocaleDateString()}
-                            </div>
-                        </div>
-                    </div>
+                            </Typography>
+                        </CardContent>
+                    </Card>
                 </Link>
             ))}
-        </div>
+        </Stack>
     </section>
 );
 
@@ -92,18 +98,25 @@ const ProjectPeersList: React.FC<{ projectId: string }> = ({ projectId }) => {
         return <div className="text-sm text-gray-500">No peers found.</div>;
 
     return (
-        <ul className="space-y-1">
+        <Stack spacing={1} className="mt-2">
             {peers
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((peer) => (
-                    <li key={peer.id} className="text-md text-gray-800">
-                        {peer.name}{" "}
-                        <span className="text-sm text-gray-600">
+                    <Stack
+                        key={peer.id}
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                    >
+                        <Typography variant="body1" color="textPrimary">
+                            {peer.name}
+                        </Typography>
+                        <Typography variant="body2" color="textPrimary">
                             ({peer.email})
-                        </span>
-                    </li>
+                        </Typography>
+                    </Stack>
                 ))}
-        </ul>
+        </Stack>
     );
 };
 
@@ -148,9 +161,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                 receiver: currentUser?.id,
             });
             // Only show if after due date
-            setReceivedAssessments(
-                ras.filter((ra) => new Date() > new Date(ra.dueDate))
-            );
+            setReceivedAssessments(splitAssessments(ras).pastDue);
 
             // Get the project info
             setProjectInfo(await getProjectByID(projectId));
@@ -171,14 +182,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
     if (!isInProject)
         return (
             <div className="max-w-3xl mx-auto py-8 px-4">
-                <Link href="/dashboard">
-                    <button
-                        className="mb-4 text-blue-600 underline"
-                        aria-label="Back"
-                    >
-                        &larr; Back
-                    </button>
-                </Link>
+                <BackArrow />
                 <p>You ain't in this project as a peer &gt;:(</p>
             </div>
         );
@@ -190,15 +194,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
     return (
         <>
             <div className="max-w-3xl mx-auto py-8 px-4">
-                {/* Back Arrow */}
-                <Link href="/dashboard">
-                    <button
-                        className="mb-4 text-blue-600 underline"
-                        aria-label="Back"
-                    >
-                        &larr; Back
-                    </button>
-                </Link>
+                <BackArrow />
 
                 {/* Past Due Assessments Section */}
                 <Section
@@ -232,20 +228,28 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
             </div>
             <Drawer variant="permanent" anchor="right">
                 <div className="w-64 p-4">
-                    <h3 className="text-xl font-semibold mb-2">Your Peers</h3>
+                    <Typography variant="h6" className="mb-2" fontWeight={600}>
+                        Your Peers
+                    </Typography>
                     <ProjectPeersList projectId={projectId} />
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        component={Link}
+                        href={
+                            "/journal" +
+                            (projectInfo == undefined
+                                ? ""
+                                : `?fromProject=${toCamelCase(
+                                      projectInfo.name
+                                  )}`)
+                        }
+                        sx={{ mt: 3 }}
+                    >
+                        Your Journal
+                    </Button>
                 </div>
-                <Link
-                    href={
-                        "/journal" +
-                        (projectInfo == undefined
-                            ? ""
-                            : `?fromProject=${toCamelCase(projectInfo.name)}`)
-                    }
-                    className="bg-blue-600 text-white py-2 mx-2 rounded font-semibold cursor-pointer text-center"
-                >
-                    <button className="cursor-pointer">Your Journal</button>
-                </Link>
             </Drawer>
         </>
     );

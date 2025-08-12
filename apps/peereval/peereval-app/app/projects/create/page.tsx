@@ -1,6 +1,17 @@
 "use client";
+import BackArrow from "@/components/BackArrow";
 import { useAuth } from "@/context/AuthContext";
 import { createProject } from "@/services/project";
+import {
+    TextField,
+    Button,
+    List,
+    ListItem,
+    IconButton,
+    ListItemText,
+    Alert,
+    Paper,
+} from "@mui/material";
 import React, { useState } from "react";
 
 export default function CreateProjectPage() {
@@ -60,20 +71,20 @@ export default function CreateProjectPage() {
         }
     };
 
-    const handleBack = () => {
-        window.history.back();
-    };
-
     return (
         <div className="max-w-xl mx-auto p-4 space-y-8">
-            <button
-                type="button"
-                onClick={handleBack}
-                className="my-4 text-blue-600 underline"
+            <BackArrow />
+            <Paper
+                className="max-w-xl mx-auto mt-10 p-6"
+                elevation={3}
+                sx={{
+                    borderRadius: 2,
+                    bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                            ? theme.palette.background.paper
+                            : "#f9f9f9",
+                }}
             >
-                &larr; Back
-            </button>
-            <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded shadow">
                 <h1 className="text-2xl font-bold mb-4">
                     Create a New Project
                 </h1>
@@ -82,77 +93,96 @@ export default function CreateProjectPage() {
                         <label className="block font-medium mb-1">
                             Project Name<span className="text-red-500">*</span>
                         </label>
-                        <input
-                            type="text"
-                            className="w-full border rounded px-3 py-2"
+                        <TextField
+                            fullWidth
+                            variant="outlined"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
+                            size="small"
+                            placeholder="Project Name"
                         />
                     </div>
                     <div>
                         <label className="block font-medium mb-1">
                             Description<span className="text-red-500">*</span>
                         </label>
-                        <textarea
-                            className="w-full border rounded px-3 py-2"
+                        <TextField
+                            fullWidth
+                            variant="outlined"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             required
+                            size="small"
+                            multiline
+                            minRows={3}
+                            placeholder="Project Description"
                         />
                     </div>
                     <div>
                         <label className="block font-medium mb-1">
                             Invite Peers (optional)
                         </label>
-                        <div className="flex gap-2">
-                            <input
+                        <div style={{ display: "flex", gap: 8 }}>
+                            <TextField
                                 type="email"
-                                className="flex-1 border rounded px-3 py-2"
+                                variant="outlined"
+                                size="small"
+                                fullWidth
                                 placeholder="Enter peer email"
                                 value={peerEmail}
                                 onChange={(e) => setPeerEmail(e.target.value)}
                             />
-                            <button
-                                type="button"
-                                className="bg-blue-500 text-white px-4 py-2 rounded"
+                            <Button
+                                variant="contained"
+                                color="secondary"
                                 onClick={handleAddPeer}
+                                sx={{ minWidth: 80, maxHeight: "2.5rem" }} // Probably shouldn't hard code this...
                             >
                                 Add
-                            </button>
+                            </Button>
                         </div>
                         {peerEmails.length > 0 && (
-                            <ul className="mt-2">
-                                {peerEmails.map((email, idx) => (
-                                    <li
+                            <List>
+                                {peerEmails.map((email) => (
+                                    <ListItem
                                         key={email}
-                                        className="flex items-center gap-2"
+                                        secondaryAction={
+                                            <IconButton
+                                                edge="end"
+                                                color="error"
+                                                size="small"
+                                                onClick={() =>
+                                                    handleRemovePeer(email)
+                                                }
+                                            >
+                                                ×
+                                            </IconButton>
+                                        }
+                                        disablePadding
+                                        sx={{
+                                            maxHeight: "2rem",
+                                        }}
                                     >
-                                        <span>{email}</span>
-                                        <button
-                                            type="button"
-                                            className="text-red-500 text-sm"
-                                            onClick={() =>
-                                                handleRemovePeer(email)
-                                            }
-                                        >
-                                            Remove
-                                        </button>
-                                    </li>
+                                        <ListItemText primary={email} />
+                                    </ListItem>
                                 ))}
-                            </ul>
+                            </List>
                         )}
                     </div>
-                    {error && <div className="text-red-600">{error}</div>}
-                    {success && <div className="text-green-600">{success}</div>}
-                    <button
+                    {error && <Alert severity="error">{error}</Alert>}
+                    {success && <Alert severity="success">{success}</Alert>}
+                    <Button
                         type="submit"
-                        className="bg-green-600 text-white px-6 py-2 rounded font-semibold"
+                        variant="contained"
+                        color="primary"
+                        fullWidth
+                        sx={{ fontWeight: "bold", py: 1.5 }}
                     >
                         Create Project
-                    </button>
+                    </Button>
                 </form>
-            </div>
+            </Paper>
         </div>
     );
 }

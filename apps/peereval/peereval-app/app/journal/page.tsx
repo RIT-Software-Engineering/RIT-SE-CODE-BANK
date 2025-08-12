@@ -17,7 +17,10 @@ import {
     DialogActions,
     Button,
     TextField,
+    Chip,
+    Typography,
 } from "@mui/material";
+import BackArrow from "@/components/BackArrow";
 
 function AddJournalEntryModal({
     open,
@@ -135,41 +138,56 @@ function TagSearchButton() {
                         }
                     }}
                 />
-                <button
+                <Button
                     ref={goButtonRef}
                     type="submit"
-                    className="bg-blue-600 text-white px-2 py-1 rounded text-sm"
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    sx={{ px: 2, py: 0.5, minWidth: 0, fontSize: "0.875rem" }}
                 >
                     Go
-                </button>
+                </Button>
             </form>
         );
     }
 
     return (
-        <button
-            className="flex items-center text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded border border-gray-300 hover:bg-gray-200 transition"
+        <Button
+            variant="outlined"
+            color="primary"
+            startIcon={
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+                    />
+                </svg>
+            }
             onClick={handleClick}
-            type="button"
+            sx={{
+                textTransform: "none",
+                bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                        ? theme.palette.grey[800]
+                        : theme.palette.grey[100],
+                borderColor: (theme) =>
+                    theme.palette.mode === "dark"
+                        ? theme.palette.grey[700]
+                        : theme.palette.grey[300],
+            }}
         >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="mr-1"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
-                />
-            </svg>
             Use Tag
-        </button>
+        </Button>
     );
 }
 
@@ -249,82 +267,127 @@ export default function JournalPage() {
 
     return (
         <div className="max-w-2xl mx-auto p-6">
-            <button
-                type="button"
-                onClick={handleBack}
-                className="mb-4 text-blue-600 underline"
-            >
-                &larr; Back
-            </button>
+            <BackArrow />
             <h1 className="text-3xl font-bold mb-2">Your Journal</h1>
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     {tag ? (
-                        <button
-                            className="flex items-center text-sm font-medium text-blue-600 bg-gray-200 px-2 py-1 rounded border border-gray-300 hover:bg-gray-300 transition"
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            size="small"
                             onClick={() => {
-                                // Remove tag from URL
                                 const params = new URLSearchParams(
                                     window.location.search
                                 );
                                 params.delete("fromProject");
                                 window.location.search = params.toString();
                             }}
+                            endIcon={
+                                <span>
+                                    {/* MUI Close Icon */}
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="20"
+                                        height="20"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        style={{ verticalAlign: "middle" }}
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M6 18L18 6M6 6l12 12"
+                                        />
+                                    </svg>
+                                </span>
+                            }
+                            sx={{
+                                textTransform: "none",
+                                bgcolor: (theme) =>
+                                    theme.palette.mode === "dark"
+                                        ? theme.palette.grey[800]
+                                        : theme.palette.grey[100],
+                                borderColor: (theme) =>
+                                    theme.palette.mode === "dark"
+                                        ? theme.palette.grey[700]
+                                        : theme.palette.grey[300],
+                            }}
                         >
                             {tag}
-                            <span className="ml-1 text-gray-500 hover:text-red-500 cursor-pointer">
-                                &times;
-                            </span>
-                        </button>
+                        </Button>
                     ) : (
                         <TagSearchButton />
                     )}
                 </div>
-                <button
-                    className="bg-blue-600 text-white py-1 px-4 rounded hover:bg-blue-700 transition cursor-pointer"
-                    onClick={() => {
-                        setShowAddEntry(true);
-                    }}
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => setShowAddEntry(true)}
                 >
                     Add Journal Entry
-                </button>
+                </Button>
             </div>
             <hr className="mb-6" />
             <ul className="space-y-4 overflow-scroll max-h-110">
                 {journal.entries.length === 0 && (
-                    <li className="text-center text-gray-500 py-8">
-                        {tag
-                            ? `You have no journal entries for the tag "${tag}". Try and create one!`
-                            : "You have no journal entries yet. Try and create one!"}
+                    <li>
+                        <Typography
+                            align="center"
+                            color="textPrimary"
+                            sx={{ py: 4 }}
+                        >
+                            {tag
+                                ? `You have no journal entries for the tag "${tag}". Try and create one!`
+                                : "You have no journal entries yet. Try and create one!"}
+                        </Typography>
                     </li>
                 )}
                 {journal.entries.map((entry) => (
                     <li
                         key={entry.id}
-                        className="border rounded p-4 bg-white shadow relative"
+                        className="border rounded p-4 shadow relative"
                     >
                         <div className="flex justify-between items-center mb-1">
-                            <div className="flex">
+                            <div className="flex items-center gap-2">
                                 {entry.re ? (
-                                    <h2 className="text-lg font-semibold">
+                                    <Typography
+                                        variant="h6"
+                                        component="h2"
+                                        className="font-semibold"
+                                    >
                                         {entry.re}
-                                    </h2>
+                                    </Typography>
                                 ) : (
-                                    <h2 className="text-gray-500 font-semibold italic">
+                                    <Typography
+                                        variant="h6"
+                                        className="text-gray-500 font-semibold italic"
+                                    >
                                         Unnamed Entry
-                                    </h2>
+                                    </Typography>
                                 )}
                                 {entry.tags.map(
                                     ({ name }) =>
                                         name.length > 0 && (
-                                            <span className="flex items-center text-sm font-medium text-blue-600 bg-gray-200 px-1 mx-2 rounded border border-gray-300">
-                                                {name}
+                                            <span key={name}>
+                                                <Chip
+                                                    label={name}
+                                                    size="small"
+                                                    color="primary"
+                                                    variant="outlined"
+                                                    sx={{ ml: 1 }}
+                                                />
                                             </span>
                                         )
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-500">
+                                <Typography
+                                    variant="caption"
+                                    color="textPrimary"
+                                >
                                     {new Date(entry.date).toLocaleString(
                                         "en-US",
                                         {
@@ -336,16 +399,19 @@ export default function JournalPage() {
                                             hour12: true,
                                         }
                                     )}
-                                </span>
+                                </Typography>
                                 {/* Edit button */}
-                                <button
-                                    className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 flex items-center"
+                                <Button
+                                    variant="outlined"
+                                    color="warning"
+                                    size="small"
                                     title="Edit entry"
                                     onClick={() => {
                                         setEditingEntry(true);
                                         setEntryUnderEdit(entry);
                                         setShowAddEntry(true);
                                     }}
+                                    sx={{ minWidth: 0, px: 1 }}
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -363,10 +429,12 @@ export default function JournalPage() {
                                             d="M16.862 3.487a2.25 2.25 0 1 1 3.182 3.182l-11.25 11.25a2 2 0 0 1-.878.513l-4 1a.5.5 0 0 1-.606-.606l1-4a2 2 0 0 1 .513-.878l11.25-11.25z"
                                         />
                                     </svg>
-                                </button>{" "}
-                                {/* Delete (X) button in the top-right corner */}
-                                <button
-                                    className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded hover:bg-red-200 flex items-center"
+                                </Button>
+                                {/* Delete button */}
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    size="small"
                                     title="Delete entry"
                                     onClick={() => {
                                         if (
@@ -377,6 +445,7 @@ export default function JournalPage() {
                                             deleteEntryHandler(entry.id);
                                         }
                                     }}
+                                    sx={{ minWidth: 0, px: 1 }}
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -394,10 +463,12 @@ export default function JournalPage() {
                                             d="M6 18L18 6M6 6l12 12"
                                         />
                                     </svg>
-                                </button>
+                                </Button>
                             </div>
                         </div>
-                        <p className="text-gray-700">{entry.content}</p>
+                        <Typography color="textPrimary">
+                            {entry.content}
+                        </Typography>
                     </li>
                 ))}
             </ul>
