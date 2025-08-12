@@ -79,4 +79,4 @@ runInDir(`npx prisma migrate dev --name init`, portalServerDir);
 runInDir(`npx prisma db seed`, portalServerDir);
 
 // End
-console.log("\nPortal setup complete! Run `startportal` to launch.");
+console.log("\nPortal setup complete! Run `npm run startportal` to launch.");
