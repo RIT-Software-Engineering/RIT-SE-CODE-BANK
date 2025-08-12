@@ -32,6 +32,7 @@ model Action {
   description    String?    @db.Text
   form           String?    @db.Text
   actionType     ActionType @default(simple)
+  targetType     TargetType @default(individual)
   isFrozen       Boolean    @default(false) // Indicates if the action is frozen and cannot be modified (only the creator can change this)
   nextActionId   String?    @unique @db.Char(36)
   parentActionId String?    @db.Char(36)
@@ -53,6 +54,11 @@ enum ActionType {
   workflow
   complex
   branching
+}
+
+enum TargetType {
+  individual
+  team
 }
 
 model Metadata {
