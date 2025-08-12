@@ -5,7 +5,7 @@ REM --- Workflow Configuration ---
 REM Note: DB_PORT may need to be set to something different if your OS restricts access to the preset port.
 SET "DB_ROOT_PASSWORD=newPassword"
 SET "DB_HOST=127.0.0.1"
-SET "DB_PORT=7000"
+SET "DB_PORT=8000"
 SET "DB_NAME_WORKFLOWS=workflows"
 SET "DB_APP_USER=app_user"
 SET "DB_APP_PASSWORD=app_password"

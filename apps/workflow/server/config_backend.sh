@@ -3,7 +3,7 @@
 # --- Workflow Configuration ---
 export DB_ROOT_PASSWORD="newPassword"
 export DB_HOST="127.0.0.1"
-export DB_PORT="7000"
+export DB_PORT="8000"
 export DB_NAME_WORKFLOWS="workflows"
 export DB_APP_USER="app_user"
 export DB_APP_PASSWORD="app_password"
