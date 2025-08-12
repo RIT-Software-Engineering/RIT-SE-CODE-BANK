@@ -1,10 +1,13 @@
 "use client";
-
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Box,
   Button,
+  Typography,
   Dialog,
+  DialogTitle,
+  DialogContent,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -19,8 +22,6 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-
 import Header from "@components/Header";
 
 /**
@@ -216,7 +217,7 @@ export default function SupervisorApplicationsPage() {
       fname: app.firstName,
       lname: app.lastName,
       email: app.ritEmail,
-      type: "student", //TODO: change to scooployee
+      type: "student", //change to scooployee
       semester_group: tempData.semester_group,
       project: tempData.project,
       active: tempData.active,
