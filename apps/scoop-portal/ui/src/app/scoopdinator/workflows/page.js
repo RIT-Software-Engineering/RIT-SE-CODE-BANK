@@ -2,307 +2,170 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Typography,
-  Container,
-  Button,
-  Grid,
-  Paper,
-  Checkbox,
+  Box, Typography, Container, Grid, Paper,
 } from '@mui/material';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { useRouter } from 'next/navigation';
 
 import Header from '@components/Header';
 
-export default function WorkflowDashboard() {
-  const [workflowState, setWorkflowState] = useState(null);
-  const [actionsMap, setActionsMap] = useState({});
+const userId = '1'; // Hardcoded for testing and demo purposes
+
+export default function WorkflowsList() {
+  const router = useRouter();
+
+  const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [completedSteps, setCompletedSteps] = useState(new Set());
-  const [actionStateIdsMap, setActionStateIdsMap] = useState({});
-
-  // Hardcoded userId and workflowId for debugging
-  const userId = '1';
-  const workflowId = '981dea68-4834-44dd-b074-80bdccaa4a28';
+  const [completedStepsMap, setCompletedStepsMap] = useState({});
 
   useEffect(() => {
-    const fetchWorkflowAndActions = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        setError(null);
-
         const baseUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL;
 
-        const workflowUrl = new URL(`${baseUrl}/states/workflow`);
-        workflowUrl.searchParams.append('userId', userId);
-        workflowUrl.searchParams.append('workflowId', workflowId);
+        const workflowsRes = await fetch(`${baseUrl}/workflows`);
+        if (!workflowsRes.ok) throw new Error('Failed to fetch workflows');
+        const workflowsData = await workflowsRes.json();
 
-        const workflowResponse = await fetch(workflowUrl.toString());
-        if (!workflowResponse.ok) throw new Error('Failed to fetch workflow state');
-        const states = await workflowResponse.json();
-        if (!states.length) throw new Error('No workflow state found for user');
+        const statesUrl = new URL(`${baseUrl}/states/workflow`);
+        statesUrl.searchParams.append('userId', userId);
+        const workflowStatesRes = await fetch(statesUrl.toString());
+        if (!workflowStatesRes.ok) throw new Error('Failed to fetch workflow states');
+        const workflowStatesData = await workflowStatesRes.json();
 
-        const state = states[0];
-        setWorkflowState(state);
-
-        const idsMap = {};
-        state.actionStates.forEach(as => {
-          idsMap[as.actionId] = as.id;
+        const allActionIdsSet = new Set();
+        workflowStatesData.forEach(ws => {
+          ws.actionStates.forEach(as => allActionIdsSet.add(as.actionId));
         });
-        setActionStateIdsMap(idsMap);
+        const allActionIds = Array.from(allActionIdsSet);
 
-        const actionIds = state.actionStates.map((as) => as.actionId);
-        if (actionIds.length === 0) {
-          setActionsMap({});
-          setCompletedSteps(new Set());
-          setLoading(false);
-          return;
+        let actionsMap = {};
+        if (allActionIds.length > 0) {
+          const actionsRes = await fetch(`${baseUrl}/actions?ids=${allActionIds.join(',')}`);
+          if (!actionsRes.ok) throw new Error('Failed to fetch actions');
+          const actionsData = await actionsRes.json();
+          actionsData.forEach(a => {
+            actionsMap[a.id] = a;
+          });
         }
 
-        const actionsUrl = new URL(`${baseUrl}/actions`);
-        actionsUrl.searchParams.append('ids', actionIds.join(','));
-
-        const actionsResponse = await fetch(actionsUrl.toString());
-        if (!actionsResponse.ok) throw new Error('Failed to fetch actions');
-
-        const actions = await actionsResponse.json();
-
-        const map = {};
-        actions.forEach((action) => {
-          map[action.id] = action;
+        const workflowsById = {};
+        workflowsData.forEach(wf => {
+          workflowsById[wf.id] = wf;
         });
-        setActionsMap(map);
 
-        const completed = new Set(
-          state.actionStates
-            .filter((as) => as.stateType === 'completed')
-            .map((as) => as.actionId)
-        );
-        setCompletedSteps(completed);
+        const workflowsWithSteps = workflowStatesData.map(ws => {
+          const wf = workflowsById[ws.workflowId];
+          const wfName = wf?.name || actionsMap[wf?.baseActionId]?.name || 'Untitled Workflow';
+
+          const steps = ws.actionStates.map(as => ({
+            actionId: as.actionId,
+            title: actionsMap[as.actionId]?.name || 'Untitled Step',
+            link: `/scoopdinator/workflows/${ws.workflowId}`,
+          }));
+
+          return {
+            id: ws.workflowId,
+            name: wfName,
+            steps,
+          };
+        });
+
+        setWorkflows(workflowsWithSteps);
+
+        const completedMap = {};
+        workflowStatesData.forEach(ws => {
+          const completedSet = new Set(
+            ws.actionStates
+              .filter(as => as.stateType === 'completed')
+              .map(as => as.actionId)
+          );
+          completedMap[ws.workflowId] = completedSet;
+        });
+        setCompletedStepsMap(completedMap);
+
       } catch (err) {
-        setError(err.message || 'Failed to load workflow state');
-        setWorkflowState(null);
-        setActionsMap({});
-        setCompletedSteps(new Set());
+        setError(err.message || 'Error loading workflows');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchWorkflowAndActions();
-  }, [userId, workflowId]);
-
-  const toggleComplete = async (actionId) => {
-      const actionStateId = actionStateIdsMap[actionId];
-      if (!actionStateId) {
-        alert('No actionState ID found for this action. Cannot update.');
-        return;
-      }
-
-      const currentlyCompleted = completedSteps.has(actionId);
-      const newCompleted = !currentlyCompleted;
-
-      try {
-        let response;
-        if (newCompleted) {
-          response = await fetch(
-            `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/handleSubmit`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ actionStateId }),
-            }
-          );
-        } else {
-          response = await fetch(
-            `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/action/${actionStateId}`,
-            {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ stateType: 'notStarted' }),
-            }
-          );
-        }
-
-        if (!response.ok) {
-          const resBody = await response.json().catch(() => null);
-          throw new Error(resBody?.message || 'Failed to update action state');
-        }
-
-        setCompletedSteps((prev) => {
-          const newSet = new Set(prev);
-          if (newCompleted) {
-            newSet.add(actionId);
-          } else {
-            newSet.delete(actionId);
-          }
-          return newSet;
-        });
-      } catch (error) {
-        alert(`Error updating step: ${error.message}`);
-      }
-    };
-
-
-  const stepIndexToUrl = {
-    0: '/scoopdinator/applications',
-    1: '/scoopdinator/scooployees',
-    2: '/scoopdinator/teams',
-    3: '/projects/assign',
-    4: 'https://example.com/placeholder',
-  };
+    fetchData();
+  }, []);
 
   if (loading) return <Typography sx={{ p: 4 }}>Loading workflows...</Typography>;
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
-  if (!workflowState) return <Typography sx={{ p: 4 }}>No workflow state available</Typography>;
-
-  const steps = workflowState.actionStates;
 
   return (
     <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
-        <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, mb: 5, color: '#fff' }}>
-          Workflow Dashboard
+        <Typography variant="h1" sx={{ mb: 5 }}>
+          Workflows Dashboard
         </Typography>
 
-        <Grid container spacing={4} direction="column">
-          <Grid item xs={12}>
-            <Paper elevation={1} sx={{ p: 3 }}>
-              <Typography
-                variant="h2"
-                sx={{
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
-                  mb: 3,
-                  borderBottom: '2px solid #F76902',
-                  pb: 1,
-                  maxWidth: 'max-content',
-                }}
-              >
-                {
-                  actionsMap[workflowState.workflow?.baseActionId]?.name
-                  ?? workflowState.workflow?.name
-                  ?? 'Untitled Workflow'
-                }
-              </Typography>
+        {workflows.length === 0 ? (
+          <Typography sx={{ p: 4 }}>No workflows found.</Typography>
+        ) : (
+          <Grid container spacing={4} direction="column">
+            {workflows.map((workflow) => {
+              const completedSet = completedStepsMap[workflow.id] || new Set();
 
-              <Box>
-                {steps.map((step, index) => {
-                  const prevStep = steps[index - 1];
-                  const isLocked = index > 0 && !completedSteps.has(prevStep.actionId);
-                  const isCompleted = completedSteps.has(step.actionId);
-
-                  const action = actionsMap[step.actionId];
-
-                  let metadataTitle = '';
-                  if (Array.isArray(action?.metadata)) {
-                    metadataTitle = action.metadata.find((m) => m.key === 'title')?.value || '';
-                  } else if (action?.metadata && typeof action.metadata === 'object') {
-                    metadataTitle = action.metadata.title || '';
-                  }
-
-                  return (
-                    <Box
-                      key={step.id}
+              return (
+                <Grid item xs={12} key={workflow.id}>
+                  <Paper
+                    elevation={1}
+                    onClick={() => router.push(`/scoopdinator/workflows/${workflow.id}`)}
+                    sx={{
+                      p: 3,
+                      cursor: 'pointer',
+                      '&:hover': {
+                        boxShadow: 6,
+                        bgcolor: '#fff3e0',
+                      },
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="h2"
                       sx={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        mb: index !== steps.length - 1 ? 3 : 0,
-                        flexWrap: 'nowrap',
-                        opacity: isLocked ? 0.5 : 1,
-                        pointerEvents: isLocked ? 'none' : 'auto',
+                        fontWeight: 700,
+                        borderBottom: '2px solid #F76902',
+                        pb: 1,
+                        maxWidth: 'max-content',
                       }}
                     >
-                      <Checkbox
-                        checked={isCompleted}
-                        onChange={() => toggleComplete(step.actionId)}
-                        disabled={isLocked}
-                        sx={{ color: '#F76902', mr: 1 }}
-                        inputProps={{ 'aria-label': 'Mark step complete' }}
-                      />
+                      {workflow.name}
+                    </Typography>
 
-                      <Box
-                        sx={{
-                          minWidth: 32,
-                          minHeight: 32,
-                          borderRadius: '50%',
-                          bgcolor: isCompleted ? '#4caf50' : '#F76902',
-                          color: '#fff',
-                          fontWeight: 700,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mr: 2,
-                          userSelect: 'none',
-                          fontSize: '1rem',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {index + 1}
-                      </Box>
-
-                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                        <Typography
-                          variant="h3"
-                          sx={{
-                            fontSize: '1.25rem',
-                            fontWeight: 300,
-                            mb: 0.5,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            textDecoration: isCompleted ? 'line-through' : 'none',
-                            color: isCompleted ? '#888' : 'inherit',
-                          }}
-                          title={metadataTitle || action?.name || 'Untitled Step'}
-                        >
-                          {metadataTitle || action?.name || 'Untitled Step'}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: '1rem',
-                            lineHeight: 1.5,
-                            color: '#555',
-                            whiteSpace: 'normal',
-                            textDecoration: isCompleted ? 'line-through' : 'none',
-                          }}
-                        >
-                          {action?.description || 'No description available'}
-                        </Typography>
-                      </Box>
-
-                      <Button
-                        variant="contained"
-                        disabled={isLocked}
-                        sx={{
-                          backgroundColor: '#F76902',
-                          textTransform: 'none',
-                          ml: 2,
-                          flexShrink: 0,
-                          '&:hover': { backgroundColor: '#d65a00' },
-                        }}
-                        endIcon={<ArrowForwardIosIcon fontSize="small" />}
-                        onClick={() => {
-                          const url = stepIndexToUrl[index];
-                          if (url) {
-                            window.location.href = url;
-                          } else {
-                            alert('No URL defined for this step');
-                          }
-                        }}
-                      >
-                        Go
-                      </Button>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      {workflow.steps.map((step, index) => {
+                        const completed = completedSet.has(step.actionId);
+                        return (
+                          <Box
+                            key={`${workflow.id}-step-${index}`}
+                            sx={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              bgcolor: completed ? '#4caf50' : '#bbb',
+                              transition: 'background-color 0.3s ease',
+                            }}
+                            title={step.title}
+                          />
+                        );
+                      })}
                     </Box>
-                  );
-                })}
-              </Box>
-            </Paper>
+                  </Paper>
+                </Grid>
+              );
+            })}
           </Grid>
-        </Grid>
+        )}
       </Container>
 
       <Box

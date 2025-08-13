@@ -156,6 +156,15 @@ export const darkTheme = createTheme({
     },
     text: { primary: "#FFFFFF" },
   },
+  components: {
+    MuiTypography: {
+      styleOverrides: {
+        h1: {
+          color: "#FFFFFF",
+        },
+      },
+    },
+  },
 });
 
 export default baseTheme;
