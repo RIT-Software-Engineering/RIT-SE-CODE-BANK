@@ -27,11 +27,10 @@ const navItems = [
     ],
   },
   {
-    label: "Projects",
+    label: "Workflows",
     submenu: [
-      { label: "Project Home", path: "/projects" },
-      { label: "Demo Project 1", path: "/projects/1" },
-      { label: "Assign Team", path: "/projects/assign/team" },
+      { label: "Scooployee", path: "/scooployee/workflows" },
+      { label: "Scoopdinator", path: "/scoopdinator/workflows" },
     ],
   },
   {

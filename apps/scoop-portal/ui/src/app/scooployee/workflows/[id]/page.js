@@ -13,18 +13,19 @@ import {
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import Header from '@components/Header';
+import { useParams, useRouter } from 'next/navigation';
 
-export default function ExpandedWorkflow() {
+export default function WorkflowDashboard() {
+  const { id: workflowId } = useParams(); // get workflowId from route param
+  const router = useRouter();
+  const userId = '2';
+
   const [workflowState, setWorkflowState] = useState(null);
   const [actionsMap, setActionsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [actionStateIdsMap, setActionStateIdsMap] = useState({});
-
-  // Hardcoded userId and workflowId for debugging
-  const userId = '2';
-  const workflowId = 'b3b0e1bb-920e-47ac-9063-e09db450c138';
 
   useEffect(() => {
     const fetchWorkflowAndActions = async () => {
@@ -90,59 +91,59 @@ export default function ExpandedWorkflow() {
       }
     };
 
-    fetchWorkflowAndActions();
+    if (workflowId) fetchWorkflowAndActions();
   }, [userId, workflowId]);
 
   const toggleComplete = async (actionId) => {
-      const actionStateId = actionStateIdsMap[actionId];
-      if (!actionStateId) {
-        alert('No actionState ID found for this action. Cannot update.');
-        return;
-      }
+    const actionStateId = actionStateIdsMap[actionId];
+    if (!actionStateId) {
+      alert('No actionState ID found for this action. Cannot update.');
+      return;
+    }
 
-      const currentlyCompleted = completedSteps.has(actionId);
-      const newCompleted = !currentlyCompleted;
+    const currentlyCompleted = completedSteps.has(actionId);
+    const newCompleted = !currentlyCompleted;
 
-      try {
-        let response;
-        if (newCompleted) {
-          response = await fetch(
-            `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/handleSubmit`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ actionStateId }),
-            }
-          );
-        } else {
-          response = await fetch(
-            `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/action/${actionStateId}`,
-            {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ stateType: 'notStarted' }),
-            }
-          );
-        }
-
-        if (!response.ok) {
-          const resBody = await response.json().catch(() => null);
-          throw new Error(resBody?.message || 'Failed to update action state');
-        }
-
-        setCompletedSteps((prev) => {
-          const newSet = new Set(prev);
-          if (newCompleted) {
-            newSet.add(actionId);
-          } else {
-            newSet.delete(actionId);
+    try {
+      let response;
+      if (newCompleted) {
+        response = await fetch(
+          `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/handleSubmit`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ actionStateId }),
           }
-          return newSet;
-        });
-      } catch (error) {
-        alert(`Error updating step: ${error.message}`);
+        );
+      } else {
+        response = await fetch(
+          `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/action/${actionStateId}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stateType: 'notStarted' }),
+          }
+        );
       }
-    };
+
+      if (!response.ok) {
+        const resBody = await response.json().catch(() => null);
+        throw new Error(resBody?.message || 'Failed to update action state');
+      }
+
+      setCompletedSteps((prev) => {
+        const newSet = new Set(prev);
+        if (newCompleted) {
+          newSet.add(actionId);
+        } else {
+          newSet.delete(actionId);
+        }
+        return newSet;
+      });
+    } catch (error) {
+      alert(`Error updating step: ${error.message}`);
+    }
+  };
 
   const stepIndexToUrl = {
     0: 'https://rit-csm.symplicity.com/students/index.php?s=profile&ss=coop',
@@ -151,6 +152,7 @@ export default function ExpandedWorkflow() {
     3: 'https://coopeval.rit.edu/student/evaluations',
   };
 
+  if (!workflowId) return <Typography sx={{ p: 4 }}>No workflow ID provided.</Typography>;
   if (loading) return <Typography sx={{ p: 4 }}>Loading workflows...</Typography>;
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
   if (!workflowState) return <Typography sx={{ p: 4 }}>No workflow state available</Typography>;
@@ -162,7 +164,7 @@ export default function ExpandedWorkflow() {
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
         <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, mb: 5, color: '#fff' }}>
-          New Scooployee Workflow
+          Scooployee Workflow
         </Typography>
 
         <Grid container spacing={4} direction="column">
@@ -173,7 +175,7 @@ export default function ExpandedWorkflow() {
                 sx={{
                   fontSize: '1.5rem',
                   fontWeight: 700,
-                  mb: 3,
+                  mb: 1,
                   borderBottom: '2px solid #F76902',
                   pb: 1,
                   maxWidth: 'max-content',
@@ -317,7 +319,7 @@ export default function ExpandedWorkflow() {
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 300 }}>
-          © {new Date().getFullYear()} RIT | Contact | Terms
+          © {new Date().getFullYear()} RIT | Powered by Scoop Software
         </Typography>
       </Box>
     </Box>
