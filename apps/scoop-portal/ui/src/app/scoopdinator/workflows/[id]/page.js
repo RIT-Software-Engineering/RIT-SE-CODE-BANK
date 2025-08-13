@@ -36,6 +36,12 @@ export default function WorkflowPage() {
   const [newActionName, setNewActionName] = useState('');
   const [newActionDescription, setNewActionDescription] = useState('');
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingActionId, setEditingActionId] = useState(null);
+  const [editingActionName, setEditingActionName] = useState('');
+  const [editingActionDescription, setEditingActionDescription] = useState('');
+
+
   const baseUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL;
 
   const fetchWorkflowAndActions = async () => {
@@ -152,6 +158,21 @@ export default function WorkflowPage() {
     setNewActionDescription('');
   };
 
+  const handleOpenEditModal = (action) => {
+    setEditingActionId(action.id);
+    setEditingActionName(action.name || '');
+    setEditingActionDescription(action.description || '');
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingActionId(null);
+    setEditingActionName('');
+    setEditingActionDescription('');
+  };
+
+
   const handleCreateAction = async () => {
     if (!newActionName.trim()) return;
     if (!workflowState?.id) {
@@ -160,7 +181,6 @@ export default function WorkflowPage() {
     }
     
     try {
-      // 1️⃣ Create the action
       const response = await fetch(`${baseUrl}/actions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -176,7 +196,6 @@ export default function WorkflowPage() {
       if (!response.ok) throw new Error('Failed to create action');
       const newAction = await response.json();
 
-      // 2️⃣ Link new action to the last action in workflow
       const lastStep = workflowState.actionStates[workflowState.actionStates.length - 1];
       if (lastStep) {
         await fetch(`${baseUrl}/actions/${lastStep.actionId}`, {
@@ -192,7 +211,6 @@ export default function WorkflowPage() {
         });
       }
     
-      // 3️⃣ Attach new action to workflow state
       const attachRes = await fetch(`${baseUrl}/states/workflow/${workflowState.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -203,14 +221,35 @@ export default function WorkflowPage() {
       });
       if (!attachRes.ok) throw new Error('Failed to attach action to workflow state');
     
-      // 4️⃣ Refresh UI
       await fetchWorkflowAndActions();
     
-      // 5️⃣ Reset modal
       handleCloseModal();
     } catch (error) {
       console.error('Error creating action:', error);
       alert(error.message);
+    }
+  };
+
+  const handleUpdateAction = async () => {
+    if (!editingActionId || !editingActionName.trim()) return;
+
+    try {
+      const response = await fetch(`${baseUrl}/actions/${editingActionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editingActionName.trim(),
+          description: editingActionDescription.trim(),
+          metadata: { title: editingActionName.trim() }
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update action');
+
+      await fetchWorkflowAndActions();
+      handleCloseEditModal();
+    } catch (error) {
+      alert(`Error updating action: ${error.message}`);
     }
   };
 
@@ -390,6 +429,14 @@ export default function WorkflowPage() {
                       >
                         Open
                       </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{ textTransform: 'none', ml: 1 }}
+                        onClick={() => handleOpenEditModal(action)}
+                      >
+                        Edit
+                      </Button>
                     </Box>
                   );
                 })}
@@ -425,6 +472,36 @@ export default function WorkflowPage() {
           <Button onClick={handleCloseModal}>Cancel</Button>
           <Button onClick={handleCreateAction} variant="contained">
             Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Action Modal */}
+      <Dialog open={isEditModalOpen} onClose={handleCloseEditModal}>
+        <DialogTitle>Edit Action</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Action Name"
+            fullWidth
+            value={editingActionName}
+            onChange={(e) => setEditingActionName(e.target.value)}
+          />
+          <TextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            value={editingActionDescription}
+            onChange={(e) => setEditingActionDescription(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditModal}>Cancel</Button>
+          <Button onClick={handleUpdateAction} variant="contained">
+            Save
           </Button>
         </DialogActions>
       </Dialog>
