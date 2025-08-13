@@ -60,6 +60,9 @@ export default function Journal() {
   // For page loading
   const [loading, setLoading] = useState(false);
 
+  /**
+   * This fetches all the necessary data for the journal page.
+   */
   useEffect(() => {
     console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
 
