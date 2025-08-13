@@ -95,3 +95,11 @@ model Journal_Entry {
   Semester_Group      Semester_Group? @relation(fields: [semester_GroupId], references: [id])
   semester_GroupId    Int?
 }
+
+model Login {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
