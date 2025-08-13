@@ -138,6 +138,20 @@ const baseTheme = createTheme({
         },
       },
     },
+    MuiAutocomplete: {
+      styleOverrides: {
+        inputRoot: {
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#F76902",
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: { "&.Mui-focused": { color: "#F76902" } },
+      },
+    },
   },
 });
 
