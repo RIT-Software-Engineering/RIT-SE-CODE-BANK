@@ -129,6 +129,15 @@ const baseTheme = createTheme({
         },
       },
     },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#F76902",
+          },
+        },
+      },
+    },
   },
 });
 
@@ -157,6 +166,7 @@ export const darkTheme = createTheme({
     text: { primary: "#FFFFFF" },
   },
   components: {
+    ...baseTheme.components,
     MuiTypography: {
       styleOverrides: {
         h1: {
