@@ -20,4 +20,5 @@ Currently there is zro authentication in the system. There is 2 places where thi
     * some algorthym based off of the stable roommates problem to best match everyone together
 - userView:
     A more indepth user view, as it currently only shows teams you are apart of. This could be expanded
+- .env file to control what ports are used to run the backend and frontend. Currently it is hardcoded for the ui to call the backend at port 3000. As a result you have to run the backend first then the frontend for it to work proberly
  
