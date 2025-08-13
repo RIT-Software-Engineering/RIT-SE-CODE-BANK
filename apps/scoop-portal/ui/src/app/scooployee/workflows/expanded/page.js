@@ -14,7 +14,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import Header from '@components/Header';
 
-export default function WorkflowDashboard() {
+export default function ExpandedWorkflow() {
   const [workflowState, setWorkflowState] = useState(null);
   const [actionsMap, setActionsMap] = useState({});
   const [loading, setLoading] = useState(true);
@@ -23,8 +23,8 @@ export default function WorkflowDashboard() {
   const [actionStateIdsMap, setActionStateIdsMap] = useState({});
 
   // Hardcoded userId and workflowId for debugging
-  const userId = '1';
-  const workflowId = '981dea68-4834-44dd-b074-80bdccaa4a28';
+  const userId = '2';
+  const workflowId = '96a5ab6f-2cff-44f2-8da7-dd4b9035a6d6';
 
   useEffect(() => {
     const fetchWorkflowAndActions = async () => {
@@ -144,13 +144,11 @@ export default function WorkflowDashboard() {
       }
     };
 
-
   const stepIndexToUrl = {
-    0: '/scoopdinator/applications',
-    1: '/scoopdinator/scooployees',
-    2: '/scoopdinator/teams',
-    3: '/projects/assign',
-    4: 'https://example.com/placeholder',
+    0: 'https://rit-csm.symplicity.com/students/index.php?s=profile&ss=coop',
+    1: 'https://rit.enterprise.slack.com',
+    2: 'https://github.com/RIT-Software-Engineering',
+    3: 'https://coopeval.rit.edu/student/evaluations',
   };
 
   if (loading) return <Typography sx={{ p: 4 }}>Loading workflows...</Typography>;
@@ -164,7 +162,7 @@ export default function WorkflowDashboard() {
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
         <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, mb: 5, color: '#fff' }}>
-          Workflow Dashboard
+          New Scooployee Workflow
         </Typography>
 
         <Grid container spacing={4} direction="column">

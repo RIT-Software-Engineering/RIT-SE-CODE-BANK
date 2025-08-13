@@ -318,6 +318,130 @@ async function main() {
     // End Onboarding Demo //
     /////////////////////////
 
+    //////////////////////////////
+    // New Scooployee Demo Data //
+    //////////////////////////////
+    const newScooployeeData = {
+        name: "New Scooployee Workflow",
+        description: "Proof of concept demo for a new scooployee walking through an onboarding process",
+        metadata: [],
+        userId: "2",
+    };
+
+    const newScooployeeWorkflow = await prisma.workflowAttributes.create({
+        data: {
+            baseAction: {
+                create: {
+                    name: newScooployeeData.name,
+                    description: newScooployeeData.description,
+                    metadata: {
+                        create: newScooployeeData.metadata,
+                    },
+                    permissions: {
+                        createMany: {
+                            data: permissionTypes.map((permissionType) => ({
+                                userId: newScooployeeData.userId,
+                                permissionType: permissionType,
+                            })),
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    console.log("Created newScooployeeWorkflow with ID:", newScooployeeWorkflow.id);
+
+    const newScooployeeActionsData = [
+        {
+            name: "Report Your CO-OP",
+            description: "Submit the details of your co-op before getting started.",
+            metadata: [],
+            userId: "2",
+        },
+        {
+            name: "Join The Slack",
+            description: "Join the RIT SCOOP slack to get communications from your team members.",
+            metadata: [],
+            userId: "2",
+        },
+        {
+            name: "Join The GitHub",
+            description: "Join the RIT shared apps GitHub to start contributing.",
+            metadata: [],
+            userId: "2",
+        },
+        {
+            name: "Submit Your CO-OP Work Report",
+            description: "At the end of the term, fill out your report of your co-op experience.",
+            metadata: [],
+            userId: "2",
+        },
+    ];
+
+    const newScooployeeActions = await Promise.all(
+        newScooployeeActionsData.map((action) =>
+            prisma.action.create({
+                data: {
+                    name: action.name,
+                    description: action.description,
+                    metadata: {
+                        create: action.metadata,
+                    },
+                    permissions: {
+                        createMany: {
+                            data: permissionTypes.map((permissionType) => ({
+                                userId: "2",
+                                permissionType: permissionType,
+                            })),
+                        },
+                    },
+                },
+            })
+        )
+    );
+
+    const newScooployeeWorkflowState = await prisma.workflowState.create({
+      data: {
+        userId: "2",
+        workflowId: newScooployeeWorkflow.id,
+      },
+    });
+
+    // Seed Action States for each step
+    await Promise.all(
+      newScooployeeActions.map((action, index) =>
+        prisma.actionState.create({
+          data: {
+            workflowStateId: newScooployeeWorkflowState.id,
+            actionId: action.id,
+            stateType: StateType.notStarted,
+            index,
+          },
+        })
+      )
+    );
+
+    await prisma.workflowAttributes.update({
+        where: { id: newScooployeeWorkflow.id },
+        data: {
+            rootAction: { connect: { id: newScooployeeActions[0].id } },
+        },
+    });
+
+    for (let i = 0; i < newScooployeeActions.length - 1; i++) {
+        await prisma.action.update({
+            where: { id: newScooployeeActions[i].id },
+            data: {
+                nextAction: { connect: { id: newScooployeeActions[i + 1].id } },
+            },
+        });
+    }
+
+    /////////////////////////////
+    // End New Scooployee Demo //
+    /////////////////////////////
+
     console.log("🌱 Seed data created successfully!");
 }
 
