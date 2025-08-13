@@ -39,6 +39,8 @@ model users {
   prev_login     String
 
   teams Teams[] @relation("TeamMembers")
+  login Login? @relation(fields: [loginId], references: [id])
+  loginId Int? @unique
 }
 
 model Application {
@@ -102,4 +104,6 @@ model Login {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user users?
+
 }

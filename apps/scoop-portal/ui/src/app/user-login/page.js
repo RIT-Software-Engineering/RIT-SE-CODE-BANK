@@ -1,30 +1,48 @@
 "use client";
 import { useState } from "react";
-// import { useAuth } from "@/contexts/AuthContext";
-import { useUser } from "../utils/user-context/page";
+import { Box, TextField, Button, Typography } from "@mui/material";
 
-export default function ProdLogin() {
-  const { setUser } = useUser();
-  const [username, setUsername] = useState("");
+export default function AuthPage() {
+  const [isSignup, setIsSignup] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    const res = await fetch("/api/login", {
+  const handleSubmit = async () => {
+    const endpoint = isSignup ? "/api/auth/signup" : "/api/auth/login";
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ email, password })
     });
-    if (!res.ok) return alert("Invalid credentials");
     const data = await res.json();
-    setUser(data);
+    console.log(data);
   };
 
   return (
-    <form onSubmit={handleLogin}>
-      <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
-      <button type="submit">Login</button>
-    </form>
+    <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100vh">
+      <Typography variant="h4" mb={2}>
+        {isSignup ? "Create an Account" : "Log In"}
+      </Typography>
+      <TextField
+        label="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        sx={{ mb: 2, width: "300px" }}
+      />
+      <TextField
+        label="Password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        sx={{ mb: 2, width: "300px" }}
+      />
+      <Button variant="contained" onClick={handleSubmit} sx={{ width: "300px", mb: 1 , backgroundColor: "#F76902", color: "#fff" }}>
+        {isSignup ? "Sign Up" : "Log In"}
+      </Button>
+      <Button variant="text" onClick={() => setIsSignup(!isSignup)}>
+        {isSignup ? "Already have an account? Log in" : "Don't have an account? Sign up"}
+      </Button>
+    </Box>
   );
 }
+

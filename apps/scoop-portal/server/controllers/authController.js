@@ -1,18 +1,54 @@
-import { prisma } from "../prismaClient";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 
-export default async function signup(req, res) {
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-
-  const { email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
+export const signup = async (req, res) => {
+  const { email, password, fname, lname, type } = req.body;
 
   try {
-    const user = await prisma.login.create({
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const loginRecord = await prisma.login.create({
       data: { email, password: hashedPassword }
     });
-    res.status(201).json({ message: "Account created", user: { id: user.id, email: user.email } });
-  } catch (error) {
-    res.status(400).json({ error: "Email already exists" });
+
+    const userRecord = await prisma.users.create({
+      data: {
+        email,
+        fname,
+        lname,
+        type,
+        semester_group: "",
+        project: "",
+        active: "yes",
+        last_login: new Date().toISOString(),
+        prev_login: "",
+        loginId: loginRecord.id
+      }
+    });
+
+    res.status(201).json({ message: "User created", user: userRecord });
+  } catch (err) {
+    res.status(400).json({ error: "Error creating account" });
   }
-}
+};
+
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const loginRecord = await prisma.login.findUnique({ where: { email } });
+    if (!loginRecord) return res.status(401).json({ error: "Invalid credentials" });
+
+    const isValid = await bcrypt.compare(password, loginRecord.password);
+    if (!isValid) return res.status(401).json({ error: "Invalid credentials" });
+
+    const userRecord = await prisma.users.findUnique({
+      where: { email },
+    });
+
+    res.status(200).json({ message: "Login successful", user: userRecord });
+  } catch (err) {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
