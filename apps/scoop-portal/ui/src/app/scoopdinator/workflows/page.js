@@ -130,7 +130,6 @@ export default function WorkflowsList() {
     setCreateError(null);
   };
 
-  // New: create action and link it as rootActionId to the workflow after creation
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -153,7 +152,6 @@ export default function WorkflowsList() {
             .split(',')
             .map(t => t.trim())
             .filter(Boolean),
-          // no rootActionId here, per your backend limitation
         }),
       });
 
@@ -209,19 +207,16 @@ export default function WorkflowsList() {
           ],
         }),
       });
-      
+
       if (!stateResponse.ok) {
         throw new Error('Failed to create workflow state');
       }
 
-      // Close modal and refresh workflows list
       handleClose();
-      // Refresh the workflows list after creation to reflect the new data
       setLoading(true);
       setError(null);
       setWorkflows([]);
       setCompletedStepsMap({});
-      // Re-fetch workflows after creation
       const fetchDataAgain = async () => {
         try {
           const workflowsRes = await fetch(`${baseUrl}/workflows`);
