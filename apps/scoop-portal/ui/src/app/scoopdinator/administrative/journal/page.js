@@ -413,6 +413,7 @@ export default function Journal() {
                     label="Semester"
                     variant="outlined"
                     fullWidth
+                    required
                   />
                 )}
                 sx={{ my: 2 }}
@@ -435,6 +436,7 @@ export default function Journal() {
                     label="Contactee"
                     variant="outlined"
                     fullWidth
+                    required
                   />
                 )}
               />
