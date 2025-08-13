@@ -5,7 +5,7 @@
 - User: a person that is put into communities and teams
 
 #### Authentication
-Currently there is zro authentication in the system. There is 2 places where this is needed:
+Currently there is zero  authentication in the system. There is 2 places where this is needed:
 - api endpoints:
         Currently there is no check if the right person is using any of the endpoints and this should be fixed at somepoint. It should be pretty similar to what is currently implimented in workflows using middleware
 - the login:
