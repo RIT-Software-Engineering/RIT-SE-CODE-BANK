@@ -25,9 +25,11 @@ export const UserProvider = ({ children }) => {
   // Wrap setUser to update state and storage
   const setUser = (u) => setUserState(u);
 
+const logout = () => setUser(undefined);
+
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, logout }}>
       {children}
     </UserContext.Provider>
   );
