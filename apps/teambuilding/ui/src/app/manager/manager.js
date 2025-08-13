@@ -1,8 +1,14 @@
+//This is very big, I know. This should probly be broken up into smaller components to make it more manageable.
+
 'use client';
 import { useState, useEffect } from "react";
 import "./manager.css";
+import React from "react";
+import ThemeRegistry from "../../../styles/ThemeRegistry";
+import { useTheme } from "@mui/material/styles";
 
 export default function ManagerPage() {
+  const theme = useTheme();
   const [managerId, setManagerId] = useState(null);
   const [communities, setCommunities] = useState([]);
   const [users, setUsers] = useState([]);
@@ -236,7 +242,23 @@ export default function ManagerPage() {
       return;
     }
     if (algo === "manual") {
-      console.log("Manual team creation selected");
+      // Create an empty team of the specified size
+      const teamName = `Team ${Math.floor(Math.random() * 10000)}`;
+      try {
+        const res = await fetch("http://localhost:3000/api/team", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: teamName, communityId, maxSize: teamSize }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          console.log("Failed to create team:", data.error);
+        } else {
+          reloadCommunities();
+        }
+      } catch {
+        console.log("Server error creating empty team");
+      }
       return;
     }
 
@@ -362,38 +384,7 @@ export default function ManagerPage() {
     }
   };
 
-  const handleUserCheckboxChange = (communityId, userId) => {
-    setSelectedUsersToAdd(prev => {
-      const prevSelected = prev[communityId] || [];
-      if (prevSelected.includes(userId)) {
-        return { ...prev, [communityId]: prevSelected.filter(id => id !== userId) };
-      } else {
-        return { ...prev, [communityId]: [...prevSelected, userId] };
-      }
-    });
-  };
 
-  const addUsersToCommunity = async (communityId) => {
-    const userIds = selectedUsersToAdd[communityId] || [];
-    if (userIds.length === 0) return;
-    try {
-      const res = await fetch(`http://localhost:3000/api/community/${communityId}/add-users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userIds }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        console.log("Failed to add users to community:", data.error);
-      } else {
-        console.log("Users added to community successfully");
-        setSelectedUsersToAdd(prev => ({ ...prev, [communityId]: [] }));
-        reloadCommunities();
-      }
-    } catch {
-      console.log("Server error adding users to community");
-    }
-  };
 
   // CSV Import functionality
   const handleCsvFileChange = (teamId, file) => {
@@ -807,7 +798,7 @@ export default function ManagerPage() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="manager-root">
+    <div className="manager-root" style={{ background: theme.palette.background.default, color: theme.palette.text.primary, margin: "0px", padding: "0px" }}>
       <h1>Manager Page</h1>
       <div>
         <h2>Create User</h2>
@@ -834,15 +825,7 @@ export default function ManagerPage() {
           <button
             onClick={triggerBulkImportFileInput}
             disabled={bulkImportState.importing}
-            style={{
-              backgroundColor: bulkImportState.importing ? '#ccc' : '#17a2b8',
-              color: 'white',
-              border: 'none',
-              padding: '8px 12px',
-              borderRadius: '4px',
-              cursor: bulkImportState.importing ? 'not-allowed' : 'pointer',
-              marginLeft: '8px'
-            }}
+           
             title="Import communities from JSON file with structure: {communityName: {teamName: [users]}}"
           >
             {bulkImportState.importing ? 'Importing...' : 'Import Communities'}
@@ -850,19 +833,13 @@ export default function ManagerPage() {
         </div>
       </div>
       <div className="show classes">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h2>Communities</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px' }}>Display users as:</label>
+          <div >
+            <label >Display users as:</label>
             <select
               value={userDisplayFormat}
               onChange={e => setUserDisplayFormat(e.target.value)}
-              style={{
-                padding: '4px 8px',
-                fontSize: '14px',
-                border: '1px solid #ccc',
-                borderRadius: '4px'
-              }}
+             
             >
               <option value="username">Username</option>
               <option value="email">Email</option>
@@ -870,25 +847,15 @@ export default function ManagerPage() {
               <option value="lastName firstName">Last, First</option>
             </select>
           </div>
-        </div>
         {communities.length > 0 ? (
           communities.map((community) => (
             <div key={community.id} className="manager-class-box">
               <p className="manager-class-header">
                 <strong>{community.name}</strong>
-                <div style={{ display: 'flex', gap: '4px' }}>
                   <button
                     onClick={() => triggerCommunityFileInput(community.id)}
                     disabled={communityImportStates[community.id]?.importing}
-                    style={{
-                      fontSize: '12px',
-                      padding: '4px 8px',
-                      backgroundColor: communityImportStates[community.id]?.importing ? '#ccc' : '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '3px',
-                      cursor: communityImportStates[community.id]?.importing ? 'not-allowed' : 'pointer'
-                    }}
+                  
                     title="Import users from CSV file to this community"
                   >
                     {communityImportStates[community.id]?.importing ? 'Importing...' : 'Import Users'}
@@ -900,7 +867,6 @@ export default function ManagerPage() {
                   >
                     Delete Community
                   </button>
-                </div>
               </p>
               <div>
                 <h3>Users in this Community</h3>
@@ -910,9 +876,8 @@ export default function ManagerPage() {
                   ))}
                 </ul>
                 <div>
-                  <div style={{ marginBottom: 8 }}>Add user to this community:</div>
+                  <div>Add user to this community:</div>
                   <select
-                    style={{ minWidth: 200 }}
                     value={addUserInputs[community.id] || ""}
                     onChange={e => setAddUserInputs(prev => ({ ...prev, [community.id]: e.target.value }))}
                   >
@@ -924,7 +889,6 @@ export default function ManagerPage() {
                       ))}
                   </select>
                   <button
-                    style={{ marginTop: 8, display: "block" }}
                     onClick={() => addUserToCommunity(community.id)}
                     disabled={!addUserInputs[community.id]}
                   >
@@ -942,23 +906,13 @@ export default function ManagerPage() {
                       onDragLeave={(e) => handleDragLeave(e, team.id)}
                       onDrop={(e) => handleDrop(e, team.id)}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                         <strong>
                           {team.name} <span className="manager-team-size">(max {team.maxSize})</span>
                         </strong>
-                        <div style={{ display: 'flex', gap: '4px' }}>
                           <button
                             onClick={() => triggerFileInput(team.id)}
                             disabled={csvImportStates[team.id]?.importing}
-                            style={{
-                              fontSize: '12px',
-                              padding: '4px 8px',
-                              backgroundColor: csvImportStates[team.id]?.importing ? '#ccc' : '#28a745',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '3px',
-                              cursor: csvImportStates[team.id]?.importing ? 'not-allowed' : 'pointer'
-                            }}
+                          
                             title="Import users from CSV file"
                           >
                             {csvImportStates[team.id]?.importing ? 'Importing...' : 'Import Users'}
@@ -980,11 +934,9 @@ export default function ManagerPage() {
                           >
                             Delete Team
                           </button>
-                        </div>
-                      </div>
                       <div>
                         <strong>Members:</strong>
-                        <ul style={{ margin: "4px 0 0 0", paddingLeft: 18 }}>
+                        <ul>
                           {(teamMembers[team.id] || []).length > 0 ? (
                             teamMembers[team.id].map(user => (
                               <li 
@@ -999,7 +951,7 @@ export default function ManagerPage() {
                               </li>
                             ))
                           ) : (
-                            <li style={{ color: "#888" }}>No members</li>
+                            <li>No members</li>
                           )}
                         </ul>
                       </div>

@@ -1,0 +1,2 @@
+These 3 files are taken from work from another group. Evenually it will be added as a shared asset between all of the apps, at that point
+it will no longer be needed to keep these files here in the project

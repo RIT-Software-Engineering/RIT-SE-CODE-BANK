@@ -1,3 +1,5 @@
+//seed data is data that will show up and override any changes made to the database every time it is reset
+
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

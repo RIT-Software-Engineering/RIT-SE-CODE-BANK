@@ -163,7 +163,7 @@ router.get('/user/:username/details', async (req: Request, res: Response) => {
 });
 
 // Endpoint to update user details (firstName, lastName, email) by username
-router.put('/user/:username/update', async (req: Request, res: Response) => {
+router.put('/user/:username', async (req: Request, res: Response) => {
   const { username } = req.params;
   const { firstName, lastName, email } = req.query;
   
