@@ -18,8 +18,15 @@ export default function AuthPage() {
     console.log(data);
   };
 
+   const handleBack = () => {
+    router.back();
+  };
+  
   return (
     <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100vh">
+      <IconButton onClick={handleBack} aria-label="back">
+              <ArrowBackIcon />
+            </IconButton>
       <Typography variant="h4" mb={2}>
         {isSignup ? "Create an Account" : "Log In"}
       </Typography>
