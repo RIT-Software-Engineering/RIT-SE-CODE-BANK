@@ -254,7 +254,6 @@ export default function ManagerPage() {
         if (!res.ok) {
           console.log("Failed to create team:", data.error);
         } else {
-          console.log("Empty team created successfully:", teamName);
           reloadCommunities();
         }
       } catch {
