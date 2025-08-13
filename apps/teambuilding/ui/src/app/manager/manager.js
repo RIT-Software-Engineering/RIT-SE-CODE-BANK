@@ -798,7 +798,7 @@ export default function ManagerPage() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="manager-root" style={{ background: theme.palette.background.default, color: theme.palette.text.primary }}>
+    <div className="manager-root" style={{ background: theme.palette.background.default, color: theme.palette.text.primary, margin: "0px", padding: "0px" }}>
       <h1>Manager Page</h1>
       <div>
         <h2>Create User</h2>
