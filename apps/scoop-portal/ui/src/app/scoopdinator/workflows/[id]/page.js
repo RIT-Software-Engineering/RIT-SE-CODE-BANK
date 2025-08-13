@@ -9,14 +9,19 @@ import {
   Grid,
   Paper,
   Checkbox,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import Header from '@components/Header';
 import { useParams, useRouter } from 'next/navigation';
 
-export default function WorkflowDashboard() {
-  const { id: workflowId } = useParams(); // get workflowId from route param
+export default function WorkflowPage() {
+  const { id: workflowId } = useParams(); 
   const router = useRouter();
   const userId = '1';
 
@@ -27,70 +32,74 @@ export default function WorkflowDashboard() {
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [actionStateIdsMap, setActionStateIdsMap] = useState({});
 
-  useEffect(() => {
-    const fetchWorkflowAndActions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newActionName, setNewActionName] = useState('');
+  const [newActionDescription, setNewActionDescription] = useState('');
 
-        const baseUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL;
 
-        const workflowUrl = new URL(`${baseUrl}/states/workflow`);
-        workflowUrl.searchParams.append('userId', userId);
-        workflowUrl.searchParams.append('workflowId', workflowId);
+  const fetchWorkflowAndActions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const workflowResponse = await fetch(workflowUrl.toString());
-        if (!workflowResponse.ok) throw new Error('Failed to fetch workflow state');
-        const states = await workflowResponse.json();
-        if (!states.length) throw new Error('No workflow state found for user');
+      const workflowUrl = new URL(`${baseUrl}/states/workflow`);
+      workflowUrl.searchParams.append('userId', userId);
+      workflowUrl.searchParams.append('workflowId', workflowId);
 
-        const state = states[0];
-        setWorkflowState(state);
+      const workflowResponse = await fetch(workflowUrl.toString());
+      if (!workflowResponse.ok) throw new Error('Failed to fetch workflow state');
+      const states = await workflowResponse.json();
+      if (!states.length) throw new Error('No workflow state found for user');
 
-        const idsMap = {};
-        state.actionStates.forEach(as => {
-          idsMap[as.actionId] = as.id;
-        });
-        setActionStateIdsMap(idsMap);
+      const state = states[0];
+      setWorkflowState(state);
 
-        const actionIds = state.actionStates.map((as) => as.actionId);
-        if (actionIds.length === 0) {
-          setActionsMap({});
-          setCompletedSteps(new Set());
-          setLoading(false);
-          return;
-        }
+      const idsMap = {};
+      state.actionStates.forEach(as => {
+        idsMap[as.actionId] = as.id;
+      });
+      setActionStateIdsMap(idsMap);
 
-        const actionsUrl = new URL(`${baseUrl}/actions`);
-        actionsUrl.searchParams.append('ids', actionIds.join(','));
-
-        const actionsResponse = await fetch(actionsUrl.toString());
-        if (!actionsResponse.ok) throw new Error('Failed to fetch actions');
-
-        const actions = await actionsResponse.json();
-
-        const map = {};
-        actions.forEach((action) => {
-          map[action.id] = action;
-        });
-        setActionsMap(map);
-
-        const completed = new Set(
-          state.actionStates
-            .filter((as) => as.stateType === 'completed')
-            .map((as) => as.actionId)
-        );
-        setCompletedSteps(completed);
-      } catch (err) {
-        setError(err.message || 'Failed to load workflow state');
-        setWorkflowState(null);
+      const actionIds = state.actionStates.map((as) => as.actionId);
+      if (actionIds.length === 0) {
         setActionsMap({});
         setCompletedSteps(new Set());
-      } finally {
         setLoading(false);
+        return;
       }
-    };
 
+      const actionsUrl = new URL(`${baseUrl}/actions`);
+      actionsUrl.searchParams.append('ids', actionIds.join(','));
+
+      const actionsResponse = await fetch(actionsUrl.toString());
+      if (!actionsResponse.ok) throw new Error('Failed to fetch actions');
+
+      const actions = await actionsResponse.json();
+
+      const map = {};
+      actions.forEach((action) => {
+        map[action.id] = action;
+      });
+      setActionsMap(map);
+
+      const completed = new Set(
+        state.actionStates
+          .filter((as) => as.stateType === 'completed')
+          .map((as) => as.actionId)
+      );
+      setCompletedSteps(completed);
+    } catch (err) {
+      setError(err.message || 'Failed to load workflow state');
+      setWorkflowState(null);
+      setActionsMap({});
+      setCompletedSteps(new Set());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (workflowId) fetchWorkflowAndActions();
   }, [userId, workflowId]);
 
@@ -107,23 +116,17 @@ export default function WorkflowDashboard() {
     try {
       let response;
       if (newCompleted) {
-        response = await fetch(
-          `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/handleSubmit`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ actionStateId }),
-          }
-        );
+        response = await fetch(`${baseUrl}/states/handleSubmit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actionStateId }),
+        });
       } else {
-        response = await fetch(
-          `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/action/${actionStateId}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ stateType: 'notStarted' }),
-          }
-        );
+        response = await fetch(`${baseUrl}/states/action/${actionStateId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stateType: 'notStarted' }),
+        });
       }
 
       if (!response.ok) {
@@ -133,11 +136,8 @@ export default function WorkflowDashboard() {
 
       setCompletedSteps((prev) => {
         const newSet = new Set(prev);
-        if (newCompleted) {
-          newSet.add(actionId);
-        } else {
-          newSet.delete(actionId);
-        }
+        if (newCompleted) newSet.add(actionId);
+        else newSet.delete(actionId);
         return newSet;
       });
     } catch (error) {
@@ -145,9 +145,73 @@ export default function WorkflowDashboard() {
     }
   };
 
-  const handleEditWorkflow = (id) => {
-    if (!id) return alert('No workflow ID found');
-    window.location.href = `/workflows/edit/${id}`;
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setNewActionName('');
+    setNewActionDescription('');
+  };
+
+  const handleCreateAction = async () => {
+    if (!newActionName.trim()) return;
+    if (!workflowState?.id) {
+      alert('No workflow state loaded');
+      return;
+    }
+    
+    try {
+      // 1️⃣ Create the action
+      const response = await fetch(`${baseUrl}/actions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workflowId,
+          name: newActionName.trim(),
+          description: newActionDescription.trim(),
+          userId,
+          metadata: { title: newActionName.trim() }
+        })
+      });
+    
+      if (!response.ok) throw new Error('Failed to create action');
+      const newAction = await response.json();
+
+      // 2️⃣ Link new action to the last action in workflow
+      const lastStep = workflowState.actionStates[workflowState.actionStates.length - 1];
+      if (lastStep) {
+        await fetch(`${baseUrl}/actions/${lastStep.actionId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nextActionId: newAction.id })
+        });
+
+        await fetch(`${baseUrl}/actions/${newAction.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ parentActionId: lastStep.actionId })
+        });
+      }
+    
+      // 3️⃣ Attach new action to workflow state
+      const attachRes = await fetch(`${baseUrl}/states/workflow/${workflowState.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actionId: newAction.id,
+          stateType: 'notStarted'
+        })
+      });
+      if (!attachRes.ok) throw new Error('Failed to attach action to workflow state');
+    
+      // 4️⃣ Refresh UI
+      await fetchWorkflowAndActions();
+    
+      // 5️⃣ Reset modal
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error creating action:', error);
+      alert(error.message);
+    }
   };
 
   const handleDeleteWorkflow = async (id) => {
@@ -155,12 +219,10 @@ export default function WorkflowDashboard() {
     if (!confirm('Are you sure you want to delete this workflow?')) return;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/workflows/${id}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(`${baseUrl}/workflows/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete workflow');
       alert('Workflow deleted');
-      router.push('/scoopdinator/workflows'); // <-- Redirect here after delete
+      router.push('/scoopdinator/workflows');
     } catch (err) {
       alert(err.message);
     }
@@ -203,11 +265,7 @@ export default function WorkflowDashboard() {
                   maxWidth: 'max-content',
                 }}
               >
-                {
-                  actionsMap[workflowState.workflow?.baseActionId]?.name
-                  ?? workflowState.workflow?.name
-                  ?? 'Untitled Workflow'
-                }
+                {actionsMap[workflowState.workflow?.baseActionId]?.name ?? workflowState.workflow?.name ?? 'Untitled Workflow'}
               </Typography>
 
               <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
@@ -215,9 +273,9 @@ export default function WorkflowDashboard() {
                   variant="outlined"
                   size="small"
                   sx={{ textTransform: 'none', borderColor: '#F76902', color: '#F76902' }}
-                  onClick={() => handleEditWorkflow(workflowState.workflow?.id)}
+                  onClick={handleOpenModal}
                 >
-                  Edit
+                  Add Action
                 </Button>
                 <Button
                   variant="outlined"
@@ -230,12 +288,12 @@ export default function WorkflowDashboard() {
                 </Button>
               </Box>
 
+              {/* Steps rendering */}
               <Box>
                 {steps.map((step, index) => {
                   const prevStep = steps[index - 1];
                   const isLocked = index > 0 && !completedSteps.has(prevStep.actionId);
                   const isCompleted = completedSteps.has(step.actionId);
-
                   const action = actionsMap[step.actionId];
 
                   let metadataTitle = '';
@@ -265,7 +323,6 @@ export default function WorkflowDashboard() {
                         sx={{ color: '#F76902', mr: 1 }}
                         inputProps={{ 'aria-label': 'Mark step complete' }}
                       />
-
                       <Box
                         sx={{
                           minWidth: 32,
@@ -285,7 +342,6 @@ export default function WorkflowDashboard() {
                       >
                         {index + 1}
                       </Box>
-
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography
                           variant="h3"
@@ -315,7 +371,6 @@ export default function WorkflowDashboard() {
                           {action?.description || 'No description available'}
                         </Typography>
                       </Box>
-
                       <Button
                         variant="contained"
                         disabled={isLocked}
@@ -329,14 +384,11 @@ export default function WorkflowDashboard() {
                         endIcon={<ArrowForwardIosIcon fontSize="small" />}
                         onClick={() => {
                           const url = stepIndexToUrl[index];
-                          if (url) {
-                            window.location.href = url;
-                          } else {
-                            alert('No URL defined for this step');
-                          }
+                          if (url?.startsWith('http')) window.open(url, '_blank');
+                          else router.push(url);
                         }}
                       >
-                        Go
+                        Open
                       </Button>
                     </Box>
                   );
@@ -347,23 +399,35 @@ export default function WorkflowDashboard() {
         </Grid>
       </Container>
 
-      <Box
-        component="footer"
-        sx={{
-          height: '80px',
-          bgcolor: '#212121',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 2, md: 3 },
-          mt: 8,
-        }}
-      >
-        <Typography variant="body2" sx={{ fontWeight: 300 }}>
-          © {new Date().getFullYear()} RIT | Powered by Scoop Software
-        </Typography>
-      </Box>
+      {/* Add Action Modal */}
+      <Dialog open={isModalOpen} onClose={handleCloseModal}>
+        <DialogTitle>Add Action</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Action Name"
+            fullWidth
+            value={newActionName}
+            onChange={(e) => setNewActionName(e.target.value)}
+          />
+          <TextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            value={newActionDescription}
+            onChange={(e) => setNewActionDescription(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal}>Cancel</Button>
+          <Button onClick={handleCreateAction} variant="contained">
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
