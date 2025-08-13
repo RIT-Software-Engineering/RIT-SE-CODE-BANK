@@ -13,7 +13,7 @@ Many of you may have already done the following if you are working with MariaDB 
 
 You will need to complete these steps for all
 - Open the MariaDB CLI tool and log in as root user if you have not already: If using the path variables the command will be `mysql -u root -p` (enter your root user's password)
-- Create a database for the Workflows data: `CREATE DATABASE {database_name};`
+- Create a database for the teambuilding data: `CREATE DATABASE {database_name};`
 - Grant necessary privileges to your user:
     - `GRANT CREATE, DROP, ALTER, REFERENCES ON {database_name}.* TO '{username}'@'localhost';` (In practice, this has failed and we are not sure why yet, but if you need to, you can fall back on `GRANT ALL PRIVILEGES ON *.* TO '{username}'@'localhost';`, but this is not a best practice.)
     - Save the changes to privileges: `FLUSH PRIVILEGES;`
@@ -27,7 +27,7 @@ For a head start, you can copy the .env.sample file in the same location, change
 - Add the following lines to your `.env` file:
     - A reference to your local database for prisma and the user that has permissions to it: `DATABASE_URL=mysql://{username}:{password}@localhost:3306/{database_name}`
         - Note: `3306` is the default port that MariaDB uses. If you used a different one, you should change it to that.
-    - Used by the backend to specify which port to run the server on: `PORT=3001`
+    - Used by the backend to specify which port to run the server on: `PORT=3000`
     - Used by the API's cors policy to specify where the API expects to receive requests from: `BASE_URL={your_app_url}`
     - Used to specify what stage (e.g., development, production) this app is running on: `NODE_ENV=development`
 
@@ -40,7 +40,7 @@ For a head start, you can copy the .env.sample file in the same location, change
 
 #### Step 4: Start the backend server
 
-- Navigate to the apps/workflow/server directory
+- Navigate to the teambuilding/express directory
 - Run `npm run dev`
 
 Note: if the server fails to start because you are missing a package, please run `npm install {package name}`
