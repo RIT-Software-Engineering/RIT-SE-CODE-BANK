@@ -179,6 +179,16 @@ export const darkTheme = createTheme({
     },
     text: { primary: "#FFFFFF" },
   },
+  components: {
+    ...baseTheme.components,
+    MuiTypography: {
+      styleOverrides: {
+        h1: {
+          color: "#FFFFFF",
+        },
+      },
+    },
+  },
 });
 
 export default baseTheme;

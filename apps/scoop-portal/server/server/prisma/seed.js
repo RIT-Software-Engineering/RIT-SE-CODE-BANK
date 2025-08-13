@@ -54,14 +54,15 @@ async function main() {
       console.error(`Error seeding ${model}:`, error.message);
     }
   }
-  const vicki = await prisma.users.findFirst({
-    where: { fname: "Vicki", lname: "Leigh" },
+
+  const vicki = await prisma.users.findUnique({
+    where: { email: "vcl123@rit.edu" },
   });
-  const jimmy = await prisma.users.findFirst({
-    where: { fname: "Jimmy", lname: "Post" },
+  const jimmy = await prisma.users.findUnique({
+    where: { email: "jlp123@rit.edu" },
   });
-  const dudeBro = await prisma.users.findFirst({
-    where: { fname: "Dude", lname: "Bro" },
+  const dudeBro = await prisma.users.findUnique({
+    where: { email: "def123@rit.edu" },
   });
 
   await prisma.teams.create({

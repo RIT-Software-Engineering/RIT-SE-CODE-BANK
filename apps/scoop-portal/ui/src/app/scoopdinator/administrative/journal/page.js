@@ -88,16 +88,12 @@ export default function Journal() {
           contacteeMap[user.id] = fullName;
         });
         setContactees(contacteeMap);
-        console.log("Contactee Map: ", contacteeMap);
-        console.log("Contactees: ", contactees);
 
         const semesterGroupMap = {};
         semesterGroups.forEach((group) => {
           semesterGroupMap[group.id] = group.name;
         });
         setSemesterGroups(semesterGroupMap);
-        console.log("Semester Group Map: ", semesterGroupMap);
-        console.log("Semester Groups: ", semesterGroups);
       } catch (err) {
         console.error("Failed to fetch data: ", err);
       } finally {

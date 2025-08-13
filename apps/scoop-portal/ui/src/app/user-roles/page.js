@@ -34,7 +34,6 @@ export default function SelectUserPage() {
       } else {
         router.push("scooployee/dashboard");
       }
-      // router.push("/home-page");
     }
   };
 

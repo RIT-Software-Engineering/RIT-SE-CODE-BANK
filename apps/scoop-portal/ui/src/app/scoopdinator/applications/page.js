@@ -7,10 +7,8 @@ import {
   Typography,
   Dialog,
   DialogTitle,
-  DialogContent,
   DialogActions,
   DialogContent,
-  DialogTitle,
   MenuItem,
   Paper,
   Select,
@@ -20,9 +18,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
 import Header from "@components/Header";
 
 /**
@@ -31,6 +27,9 @@ import Header from "@components/Header";
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
 export default function SupervisorApplicationsPage() {
+  /**
+   * The list of applications to be displayed on the page.
+   */
   const [applications, setApplications] = useState([]);
   const [status, setStatus] = useState("");
   const [selectedApp, setSelectedApp] = useState(null);
@@ -90,13 +89,6 @@ export default function SupervisorApplicationsPage() {
       prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
     );
   };
-
-  //For testing. Runs when setSelectApp and handleOpen are called
-  useEffect(() => {
-    if (selectedApp) {
-      console.log("opening app:", selectedApp.firstName);
-    }
-  }, [selectedApp]);
 
   /**
    * Handles the logic for closing a selected application.

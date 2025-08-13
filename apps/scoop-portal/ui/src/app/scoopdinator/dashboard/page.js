@@ -6,7 +6,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 // import UnauthorizedPage from '../../unauthorized/page';
 // import ProtectedRoute from "../../utils/ProtectedRoute";
 
-import Header from "../../_components/Header";
+import Header from "@components/Header";
 
 const workflows = [
   {

@@ -12,7 +12,6 @@ const prisma = new PrismaClient();
 router.get("/", async (req, res) => {
   try {
     const semesters = await prisma.semesterGroup.findMany();
-    // const semesters = await prisma.semesterGroup.findMany();
     res.status(200).json(semesters);
   } catch (error) {
     console.error("Error fetching semester groups: ", error);

@@ -21,7 +21,7 @@ import {
 export default function Projects() {
   const theme = useTheme();
   const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     console.log("API URL: ", process.env.NEXT_PUBLIC_API_URL);
@@ -105,7 +105,7 @@ export default function Projects() {
                 }}
               >
                 <Typography sx={{ margin: "0" }}>
-                  {project.status.toUpperCase()}
+                  {project.status ? project.status.toUpperCase() : "UNKNOWN"}
                 </Typography>
               </Box>
               <Typography>{project.description}</Typography>
