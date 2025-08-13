@@ -93,9 +93,11 @@ const baseTheme = createTheme({
         {
           props: { variant: "solid-orange" },
           style: {
+            border: "1px solid #F76902",
             backgroundColor: "#F76902",
             color: "#FFFFFF",
             "&:hover": {
+              border: "1px solid #000000",
               backgroundColor: "#000000",
             },
           },
@@ -103,9 +105,11 @@ const baseTheme = createTheme({
         {
           props: { variant: "solid-gray" },
           style: {
+            border: "1px solid #D0D3D4",
             backgroundColor: "#D0D3D4",
             color: "#000000",
             "&:hover": {
+              border: "1px solid #A2AAAD",
               backgroundColor: "#A2AAAD",
             },
           },
@@ -136,6 +140,20 @@ const baseTheme = createTheme({
             borderColor: "#F76902",
           },
         },
+      },
+    },
+    MuiAutocomplete: {
+      styleOverrides: {
+        inputRoot: {
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#F76902",
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: { "&.Mui-focused": { color: "#F76902" } },
       },
     },
   },

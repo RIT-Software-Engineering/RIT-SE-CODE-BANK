@@ -18,7 +18,7 @@ export const sampleApplications = [
     additionalComments: "Interested in mobile dev",
     resumeFile: "resume_liam_anderson.pdf",
     accepted: false,
-    createdAt: new Date("2023-02-20T12:00:00Z")
+    createdAt: new Date("2023-02-20T12:00:00Z"),
   },
   {
     firstName: "Maya",
@@ -39,7 +39,7 @@ export const sampleApplications = [
     additionalComments: "",
     resumeFile: "resume_maya_roberts.pdf",
     accepted: true,
-    createdAt: new Date("2023-04-01T09:15:00Z")
+    createdAt: new Date("2023-04-01T09:15:00Z"),
   },
   {
     firstName: "Ethan",
@@ -60,7 +60,7 @@ export const sampleApplications = [
     additionalComments: "Open to relocation",
     resumeFile: "resume_ethan_harris.pdf",
     accepted: false,
-    createdAt: new Date("2023-06-20T10:30:00Z")
+    createdAt: new Date("2023-06-20T10:30:00Z"),
   },
   {
     firstName: "Chloe",
@@ -81,7 +81,7 @@ export const sampleApplications = [
     additionalComments: "Looking for frontend roles",
     resumeFile: "resume_chloe_morgan.pdf",
     accepted: true,
-    createdAt: new Date("2023-01-15T11:45:00Z")
+    createdAt: new Date("2023-01-15T11:45:00Z"),
   },
   {
     firstName: "Noah",
@@ -102,7 +102,7 @@ export const sampleApplications = [
     additionalComments: "Interested in AI/ML roles",
     resumeFile: "resume_noah_walker.pdf",
     accepted: false,
-    createdAt: new Date("2023-08-10T13:00:00Z")
+    createdAt: new Date("2023-08-10T13:00:00Z"),
   },
   {
     firstName: "Ava",
@@ -123,7 +123,7 @@ export const sampleApplications = [
     additionalComments: "",
     resumeFile: "resume_ava_scott.pdf",
     accepted: true,
-    createdAt: new Date("2023-01-30T14:00:00Z")
+    createdAt: new Date("2023-01-30T14:00:00Z"),
   },
   {
     firstName: "Oliver",
@@ -144,7 +144,7 @@ export const sampleApplications = [
     additionalComments: "Interested in backend roles",
     resumeFile: "resume_oliver_king.pdf",
     accepted: false,
-    createdAt: new Date("2023-01-10T10:20:00Z")
+    createdAt: new Date("2023-01-10T10:20:00Z"),
   },
   {
     firstName: "Ella",
@@ -165,7 +165,7 @@ export const sampleApplications = [
     additionalComments: "Open to hybrid work",
     resumeFile: "resume_ella_green.pdf",
     accepted: true,
-    createdAt: new Date("2023-05-15T09:45:00Z")
+    createdAt: new Date("2023-05-15T09:45:00Z"),
   },
   {
     firstName: "Jack",
@@ -186,7 +186,7 @@ export const sampleApplications = [
     additionalComments: "Prefers remote",
     resumeFile: "resume_jack_nelson.pdf",
     accepted: false,
-    createdAt: new Date("2023-03-25T15:30:00Z")
+    createdAt: new Date("2023-03-25T15:30:00Z"),
   },
   {
     firstName: "Zoe",
@@ -207,7 +207,7 @@ export const sampleApplications = [
     additionalComments: "Looking for UX roles",
     resumeFile: "resume_zoe_turner.pdf",
     accepted: true,
-    createdAt: new Date("2023-06-30T08:00:00Z")
+    createdAt: new Date("2023-06-30T08:00:00Z"),
   },
   {
     lastName: "Adams",
