@@ -1,6 +1,5 @@
 // src/components/common/searchAndFilter/Filter.js
 "use client";
-// 1. IMPORT forwardRef and useImperativeHandle
 import React, { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import { FilterIcon } from "../../../assets/icons";
 
@@ -21,6 +20,12 @@ export const Filter = forwardRef(function FilterComponent({ onFilterChange, filt
   );
 
   const wrapperRef = useRef(null);
+  
+  // Reset filters when filterConfig changes
+  useEffect(() => {
+    const newInitialState = createInitialState(filterConfig);
+    setSelectedFilters(newInitialState);
+  }, [filterConfig]);
   
   // 3. ADD useImperativeHandle to expose a function to the parent
   useImperativeHandle(ref, () => ({
@@ -108,7 +113,7 @@ export const Filter = forwardRef(function FilterComponent({ onFilterChange, filt
                         <input
                           type="checkbox"
                           className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                          checked={selectedFilters[filter.id].includes(option)}
+                          checked={(selectedFilters[filter.id] || []).includes(option)}
                           onChange={() =>
                             handleFilterChange(filter.id, option, "checkbox")
                           }

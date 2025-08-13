@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { modifyPosition, createPosition } from "@/services/db-apis";
-import MultiStepForm from "./MultiStepForm"; // Import the new form component
+import MultiStepForm from "./MultiStepForm";
 import { getAllCourses } from "@/services/db-apis";
 import { formatTime } from "@/utils/applicationUtils";
 import { convertDisplayTimeToInputValue } from "@/utils/applicationUtils";
@@ -15,7 +15,6 @@ const formatDateToInputValue = (dateString) => {
     return "";
   }
 };
-
 
 const newJobTemplate = {
   location: "",
@@ -36,11 +35,11 @@ export default function EditPositionModal({
   job,
   onClose,
   onSave,
-  EmployerUsername,
+  EmployerUsername, // Note: This prop seems unused in the onSubmit logic
 }) {
-  const isEditMode = !!job.id; // Use !!job for a clear boolean
+  // CORRECTED: Check for the existence of the 'job' object itself, not its 'id' property.
+  const isEditMode = !!job; 
 
-  // 1. All form logic and state management stays in the container
   const formMethods = useForm({
     defaultValues: isEditMode
       ? {
@@ -56,12 +55,10 @@ export default function EditPositionModal({
       : newJobTemplate,
   });
 
-  // 2. The submission logic stays here as it deals with APIs and parent state
   const onSubmit = async (data) => {
     try {
-      const payload = { ...data, EmployerUsername };
+      const payload = { ...data };
 
-            // If the job was rejected, submitting it again should set it back to pending.
       if (payload.jobPositionStatus === 'REJECTED') {
         payload.jobPositionStatus = 'PENDING_APPROVAL';
       }
@@ -75,35 +72,21 @@ export default function EditPositionModal({
         payload.endDate = new Date(`${payload.endDate}T00:00:00.000Z`);
       if (Array.isArray(payload.jobSchedules)) {
         payload.jobSchedules = payload.jobSchedules.map((schedule) => ({
-          ...schedule, // Keep other potential fields like id
+          ...schedule,
           startTime: `1970-01-01T${schedule.startTime}:00.000Z`,
           endTime: `1970-01-01T${schedule.endTime}:00.000Z`,
         }));
       } else {
-        // If jobSchedules isn't an array (e.g., undefined), ensure it's an empty array for the payload.
         payload.jobSchedules = [];
       }
 
-      let savedJob;
-      if (isEditMode) {
-        savedJob = await modifyPosition(job.id, payload);
-      } else {
-        const allCourses = await getAllCourses();
-        const course = allCourses.find((c) => c.courseCode === data.courseCode);
+      // Pass the prepared data directly to the onSave handler from the parent.
+      // The parent (AdminPositions.js) is now responsible for calling the correct API.
+      onSave(payload);
 
-        if (!course) {
-          throw new Error(`Course with code ${data.courseCode} not found`);
-        }
-
-        payload.course = course;
-
-        savedJob = await createPosition(payload, EmployerUsername);
-      }
-      onSave(savedJob);
     } catch (error) {
-      console.error("Failed to save position:", error);
+      console.error("Failed to prepare position data:", error);
     }
-    onClose();
   };
 
   return (
@@ -113,14 +96,12 @@ export default function EditPositionModal({
           {isEditMode ? "Edit Job Position" : "Create New Job Position"}
         </h2>
 
-        {/* 3. Render the form component, passing down all necessary data and functions */}
         <MultiStepForm
           onSubmit={onSubmit}
           onClose={onClose}
           isEditMode={isEditMode}
           job={job}
-          formMethods={formMethods} // Pass the entire form instance
-          EmployerUsername={EmployerUsername} // Pass the employer Username for API calls
+          formMethods={formMethods}
         />
       </div>
     </div>

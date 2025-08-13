@@ -9,6 +9,7 @@ export default function EditableCommentForm({ isOpen, onClose, onConfirm, title,
 
   const handleConfirm = () => {
     onConfirm(comment);
+    setComment('');
   };
 
   const handleCancel = () => {
@@ -24,7 +25,7 @@ export default function EditableCommentForm({ isOpen, onClose, onConfirm, title,
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4"
+      className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-60 flex justify-center items-center z-50"
       onClick={handleOverlayClick}
     >
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">

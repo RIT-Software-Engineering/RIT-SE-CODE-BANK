@@ -18,6 +18,7 @@ import {
 import { useNotification } from "@/contexts/NotificationContext";
 import ViewableCommentForm from "../../comments/ViewableCommentForm";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
+import { applicationStatusEnumToString } from '@/constants/applicationStatusConstants';
 import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
 
@@ -357,8 +358,11 @@ export default function CandidateApplicationCard({
 
       {isViewingComments && (
         <ViewableCommentForm
-          application={application}
-          jobPosition={jobPosition}
+          foreignKey={application.id}
+          foreignTableName="JobPositionApplicationHistory"
+          itemTitle="Application Comment History"
+          itemSubtitle={application.jobPosition.course.name}
+          statusEnumMap={applicationStatusEnumToString}
           userRole={currentUser.role}
           onClose={() => setIsViewingComments(false)}
         />

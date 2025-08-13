@@ -7,12 +7,12 @@ import Tooltip from '../common/ToolTip';
 import ConfirmationModal from '../common/models/ConfirmationModal';
 import EditableApplicationForm from '../applications/EditableApplicationForm';
 import {
+  EllipsisVerticalIcon,
   CheckIcon,
   XIcon,
   CalendarIcon,
   ClockIcon,
   LocationIcon,
-  EllipsisVerticalIcon,
 } from '@/assets/icons';
 import { getCandidateHiredStatus } from '@/services/db-apis';
 import { formatDate, formatTime } from '@/utils/applicationUtils';
@@ -20,6 +20,10 @@ import {
   gradeEnumToStringValue,
   letterToGradeValue,
 } from '@/constants/gradeConstants';
+import PositionTracker from './EmployerAndAdmin/PositionTracker';
+import ViewablePositionForm from './EmployerAndAdmin/ViewablePositionForm';
+import ViewableCommentForm from '../comments/ViewableCommentForm';
+import { positionStatusEnumToString } from '@/constants/positionStatusConstants';
 
 const Requirement = ({ text, met }) => (
   <li
@@ -35,14 +39,19 @@ const Requirement = ({ text, met }) => (
 export default function PositionsCard({
   position,
   index,
-  handleOpenUpdateModal,
+  onEdit,
+  onApprove,
+  onReject,
+  showEditAction,
+  showApproveRejectActions,
+  showTracker,
 }) {
   const { currentUser, refreshUserProfile } = useAuth();
   const { showNotification } = useNotification();
-  const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const isPendingApproval =
-    position.jobPositionStatus == 'PENDING_APPROVAL' ? true : false;
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isViewingDetails, setIsViewingDetails] = useState(false);
+  const [isViewingComments, setIsViewingComments] = useState(false);
   const [isConfirmingApplication, setIsConfirmingApplication] = useState(false);
   const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
@@ -66,7 +75,6 @@ export default function PositionsCard({
       (historyItem) => historyItem.courseCode === position.courseCode
     );
 
-    // 1. Graduate Status Check
     if (position.graduateStatusRequirement) {
       const met = candidateStatus === position.graduateStatusRequirement;
       requirements.push({
@@ -75,7 +83,6 @@ export default function PositionsCard({
       });
     }
 
-    // 2. Course Taken Check
     if (position.courseTakenRequirement) {
       const met = !!courseInData;
       requirements.push({
@@ -84,7 +91,6 @@ export default function PositionsCard({
       });
     }
 
-    // 3. Grade Check
     if (position.gradeRequirement) {
       const requiredValue = letterToGradeValue[position.gradeRequirement];
       const userValue = courseInData
@@ -110,7 +116,6 @@ export default function PositionsCard({
         'Cannot check your status: Semester code is missing.',
         'error'
       );
-      // Fallback to opening the form directly if semester code is missing
       setIsFormOpen(true);
       return;
     }
@@ -121,8 +126,6 @@ export default function PositionsCard({
         currentUser.username,
         position.semesterCode
       );
-      console.log(hiredStatus);
-
       if (hiredStatus) {
         setIsConfirmingApplication(true);
       } else {
@@ -131,7 +134,6 @@ export default function PositionsCard({
     } catch (error) {
       console.error('Failed to check hired status:', error);
       showNotification(`Error checking your status: ${error.message}`, 'error');
-      // Let the user apply anyway if the check fails
       setIsFormOpen(true);
     } finally {
       setIsCheckingHiredStatus(false);
@@ -194,7 +196,6 @@ export default function PositionsCard({
       setIsOpen(!isOpen);
     };
 
-    // NOTE: You'll want to add your real onClick logic to these buttons
     return (
       <div className='relative' ref={menuRef}>
         <button
@@ -209,29 +210,71 @@ export default function PositionsCard({
               <li>
                 <button
                   onClick={() => {
-                    handleOpenUpdateModal(position, 'OPEN', 'Approve Position');
-                    console.log('Approved');
+                    setIsViewingDetails(true);
+                    setIsOpen(false);
                   }}
                   className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                 >
-                  Approve Position
+                  View Details
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => {
-                    handleOpenUpdateModal(
-                      position,
-                      'REJECTED',
-                      'Reject Position'
-                    );
+                    setIsViewingComments(true);
                     setIsOpen(false);
                   }}
-                  className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100'
+                  className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                 >
-                  Reject
+                  View Comments
                 </button>
               </li>
+
+              {showEditAction && (
+                <>
+                  <div className='my-1 border-t border-gray-100'></div>
+                  <li>
+                    <button
+                      onClick={() => {
+                        onEdit(position);
+                        setIsOpen(false);
+                      }}
+                      className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                    >
+                      Edit Position
+                    </button>
+                  </li>
+                </>
+              )}
+
+              {showApproveRejectActions &&
+                position.jobPositionStatus === 'PENDING_APPROVAL' && (
+                  <>
+                    <div className='my-1 border-t border-gray-100'></div>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onApprove(position.id);
+                          setIsOpen(false);
+                        }}
+                        className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                      >
+                        Approve Position
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => {
+                          onReject(position.id);
+                          setIsOpen(false);
+                        }}
+                        className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100'
+                      >
+                        Reject Position
+                      </button>
+                    </li>
+                  </>
+                )}
             </ul>
           </div>
         )}
@@ -246,7 +289,7 @@ export default function PositionsCard({
         className='bg-white p-6 mb-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 w-full'
       >
         <div className='flex justify-between items-start flex-wrap gap-4'>
-          <div className=''>
+          <div className='flex-grow'>
             <h2 className='text-2xl font-bold text-gray-800'>
               {position.course.name}
             </h2>
@@ -254,21 +297,19 @@ export default function PositionsCard({
               {position.id}
             </p>
             <div className='flex items-center text-gray-600 mt-2'>
-              <CalendarIcon />
-              <span>
-                {formatDate(position.startDate)} -{' '}
-                {formatDate(position.endDate)}
+              <CalendarIcon className="h-4 w-4 mr-1.5" />
+              <span className="text-sm">
+                {formatDate(position.startDate)} - {formatDate(position.endDate)}
               </span>
             </div>
           </div>
-          {isPendingApproval && (
-            <div className='text-right'>
-              <ActionsMenu />
-            </div>
-          )}
-          {(currentUser?.role === 'CANDIDATE' ||
-            currentUser?.role === 'EMPLOYEE') &&
-            renderApplyButton()}
+          <div className='flex items-center gap-2'>
+            {(currentUser?.role === 'ADMIN' ||
+              currentUser?.role === 'EMPLOYER') && <ActionsMenu />}
+            {(currentUser?.role === 'CANDIDATE' ||
+              currentUser?.role === 'EMPLOYEE') &&
+              renderApplyButton()}
+          </div>
         </div>
 
         <div className='mt-4 pt-4 border-t border-gray-200'>
@@ -293,7 +334,7 @@ export default function PositionsCard({
           {(currentUser?.role === 'CANDIDATE' ||
             currentUser?.role === 'EMPLOYEE') &&
             eligibilityDetails.details.length > 0 && (
-              <div className='mb-4 p-4 bg-gray-50 rounded-lg'>
+              <div className='mt-4 p-4 bg-gray-50 rounded-lg'>
                 <h4 className='text-md font-semibold text-gray-800 mb-2'>
                   Job Requirements
                 </h4>
@@ -305,6 +346,12 @@ export default function PositionsCard({
               </div>
             )}
         </div>
+
+        {showTracker && (
+          <div className='mt-4 pt-4 border-t border-gray-200'>
+            <PositionTracker currentStep={position.jobPositionStatus} />
+          </div>
+        )}
       </div>
 
       {isFormOpen && (
@@ -315,8 +362,24 @@ export default function PositionsCard({
           onApplySuccess={refreshUserProfile}
         />
       )}
+      {isViewingDetails && (
+        <ViewablePositionForm
+          position={position}
+          onClose={() => setIsViewingDetails(false)}
+        />
+      )}
+      {isViewingComments && (
+        <ViewableCommentForm
+          foreignKey={position.id}
+          foreignTableName="JobPosition"
+          itemTitle="Position Comment History"
+          itemSubtitle={position.course.name}
+          statusEnumMap={positionStatusEnumToString}
+          userRole={currentUser.role}
+          onClose={() => setIsViewingComments(false)}
+        />
+      )}
 
-      {/* Confirmation modal for already accepted offer */}
       <ConfirmationModal
         isOpen={isConfirmingApplication}
         onClose={() => setIsConfirmingApplication(false)}

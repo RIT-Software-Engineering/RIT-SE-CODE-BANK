@@ -58,7 +58,7 @@ export default function FormStepOne({
       try {
         const [courses, positions] = await Promise.all([
           getAllCourses(),
-          getAllPositions() // Assuming this function fetches all job positions
+          getAllPositions()
         ]);
         
         setAvailableCourses(courses);

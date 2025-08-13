@@ -8,7 +8,7 @@ const { PrismaClient } = require("@prisma/client");
 const path = require("path");
 const { gradetoNumericValue } = require("../constants/grade");
 const { locationMap } = require("../constants/location");
-const { applicationStatusStringToEnum } = require('../constants/status');
+const { applicationStatusStringToEnum, positionStatusStringToEnum } = require('../constants/status');
 const { verifyPassword, hashPassword } = require("../config/passwordHashes");
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
@@ -26,175 +26,130 @@ const prisma = new PrismaClient();
 // --- Private Helper Functions for Job Search ---
 
 /**
- * Constructs a Prisma `where` clause for text-based searching on course name or code.
- * @param {string} searchTerm - The search term entered by the user.
- * @returns {object} A Prisma `where` clause for the search functionality.
+ * Builds a search clause for job positions based on the provided search term.
+ * @param {string} searchTerm - The search term to use for the search.
+ * @returns {object} The search clause for the job positions.
  */
 function buildPositionSearchClause(searchTerm) {
-  // Base clause shows only OPEN positions by default.
-  const where = {
-    jobPositionStatus: "OPEN",
-  };
-
-  // If there's no search term, return the base clause.
   if (!searchTerm || !searchTerm.trim()) {
-    return where;
+    return {};
   }
-
-  // Add search logic to filter by course name or course code.
-  where.course = {
+  return {
     OR: [
-      { name: { contains: searchTerm } },
-      { courseCode: { contains: searchTerm } },
+      { course: { name: { contains: searchTerm } } },
+      { course: { courseCode: { contains: searchTerm } } },
     ],
   };
-
-  return where;
 }
 
 /**
- * Constructs a Prisma `where` clause from various filter options.
- * @param {object} filters - An object containing filter criteria (e.g., days, level, location, applied).
- * @param {string} candidateUsername - The username of the logged-in user, used for "applied" and "eligibility" filters for candidate data.
- * @returns {Promise<object>} A promise that resolves to an object containing the filter `where` clause and fetched candidate data.
+ * Builds a filter clause for the job positions based on the provided filters.
+ * @param {object} filters - The filters to apply to the job positions.
+ * @returns {object} The filter clause for the job positions.
  */
-async function buildPositionFilterClause(filters, candidateUsername) {
+function buildPositionFilterClause(filters) {
   const filterWhere = {};
-  let candidateData = null;
-
-  // Fetch candidate data if needed for "applied" or "eligibility" filters.
-  if (candidateUsername) {
-    candidateData = await prisma.candidate.findUnique({
-      where: { username: candidateUsername },
-      include: {
-        courseHistory: true,
-        jobPositionApplicationHistory: { select: { jobPositionId: true } },
-      },
-    });
-  }
-
-  // Add "Day of the Week" filter.
+  // Filter by days of the week
   if (filters.days && filters.days.length > 0) {
-    filterWhere.jobSchedules = {
-      some: { dayOfWeek: { in: filters.days } },
-    };
+    filterWhere.jobSchedules = { some: { dayOfWeek: { in: filters.days } } };
   }
 
-  // Add "Course Level" filter (e.g., "100-level", "200-level").
-  if (
-    filters.level &&
-    Array.isArray(filters.level) &&
-    filters.level.length > 0
-  ) {
-    const levelConditions = filters.level.map((levelString) => {
-      // Extracts the first digit from strings like "100-level" -> "1"
-      const levelDigit = levelString.replace("-level", "").charAt(0);
-      return {
-        courseCode: {
-          contains: `-${levelDigit}`,
-        },
-      };
-    });
-
-    // Add the OR conditions to the main filter clause.
-    filterWhere.OR = levelConditions;
+  // Filter by level of the course (passed in as a string array)
+  if (filters.level && Array.isArray(filters.level) && filters.level.length > 0) {
+    filterWhere.OR = filters.level.map((levelString) => ({
+      courseCode: { contains: `-${levelString.charAt(0)}` },
+    }));
   }
 
-  // Add "Location" filter.
+  // Filter by location
   if (filters.location && locationMap[filters.location]) {
     filterWhere.locationType = locationMap[filters.location];
   }
 
-  // Add "Applied" status filter.
-  if (filters.applied && filters.applied !== "Any" && candidateData) {
-    const appliedPositionIds = candidateData.jobPositionApplicationHistory.map(
-      (app) => app.jobPositionId
-    );
-    if (filters.applied === "Applied") {
-      filterWhere.id = { in: appliedPositionIds };
-    } else if (filters.applied === "Not Applied") {
-      filterWhere.id = { notIn: appliedPositionIds };
+  // Filter by semester
+  if (filters.semester) {
+    filterWhere.semesterCode = parseInt(filters.semester, 10);
+  }
+
+  // Filter by status
+  if (filters.status && Array.isArray(filters.status) && filters.status.length > 0) {
+    const statusEnums = filters.status.map((s) => positionStatusStringToEnum[s]);
+    if (statusEnums.length > 0) {
+      filterWhere.jobPositionStatus = { in: statusEnums };
     }
   }
 
-  return { filterWhere, candidateData };
+  return filterWhere;
 }
 
-// --- Public Functions for Job Search ---
+
+// --- Main Data Fetching Function ---
+
 /**
- * Searches and filters open job positions based on a search term and a set of filters.
- * @param {string} searchTerm - The text to search for in course names and codes.
- * @param {object} filters - The filter criteria (eligibility, days, level, location, applied).
- * @param {string} candidateUsername - The username of the logged-in user, used for "applied" and "eligibility" filters for candidate data.
+ * Retrieves and filters OPEN job positions, applying candidate-specific logic if a username is provided.
+ * @param {string} [searchTerm=''] - The text to search for in course names and codes.
+ * @param {object} [filters={}] - The filter criteria (eligibility, days, semester, level, location, applied).
+ * @param {string|null} [candidateUsername=null] - The username of the logged-in user.
  * @returns {Promise<Array>} A promise that resolves to an array of filtered and processed job positions.
  */
-async function getOpenJobPositions(
-  searchTerm,
-  filters,
-  candidateUsername
-) {
+async function getOpenJobPositions(searchTerm = "", filters = {}, candidateUsername = null) {
   try {
-    // 1. Build the search and filter clauses separately.
-    const searchWhere = buildPositionSearchClause(searchTerm);
-    const { filterWhere, candidateData } = await buildPositionFilterClause(
-      filters,
-      candidateUsername
-    );
+    const searchClause = buildPositionSearchClause(searchTerm);
+    const filterClause = buildPositionFilterClause(filters);
+    let candidateData = null;
+    let appliedClause = {};
 
-    // 2. Merge the clauses into a single `where` object for one database query.
+    // Apply candidate-specific logic if a username is provided
+    if (candidateUsername) {
+      candidateData = await prisma.candidate.findUnique({
+        where: { username: candidateUsername },
+        include: {
+          courseHistory: true,
+          jobPositionApplicationHistory: { select: { jobPositionId: true } },
+        },
+      });
+
+      // Filter by applied status (candidate/employee-specific logic)
+      if (filters.applied && filters.applied !== "Any" && candidateData) {
+        const appliedPositionIds = candidateData.jobPositionApplicationHistory.map(app => app.jobPositionId);
+        if (filters.applied === "Applied") {
+          appliedClause = { id: { in: appliedPositionIds } };
+        } else if (filters.applied === "Not Applied") {
+          appliedClause = { id: { notIn: appliedPositionIds } };
+        }
+      }
+    }
+
     const finalWhere = {
-      ...searchWhere,
-      ...filterWhere,
-
-      // Manually merge the nested 'course' object to prevent it from being overwritten.
-      course: {
-        ...(searchWhere.course || {}),
-        ...(filterWhere.course || {}),
-      },
+      AND: [
+        { jobPositionStatus: 'OPEN' },
+        searchClause,
+        filterClause,
+        appliedClause,
+      ],
     };
-    // Add a default job position status filter to show only OPEN positions.
-    finalWhere.jobPositionStatus = "OPEN";
 
-    // 3. Execute the single database query to get a preliminary list of positions.
     let positions = await prisma.jobPosition.findMany({
       where: finalWhere,
       include: {
-        course: {
-          select: { name: true, description: true, courseCode: true },
-        },
-        jobSchedules: {
-          select: { dayOfWeek: true, startTime: true, endTime: true },
-        },
+        course: true,
+        jobSchedules: true,
       },
-      orderBy: {
-        course: {
-          name: "asc",
-        },
-      },
+      orderBy: { course: { name: "asc" } },
     });
 
-    // 4. Perform post-query filtering for "Eligibility" as it requires complex logic on fetched data.
+    // Filter by eligibility (candidate/employee-specific logic)
     if (filters.eligibility && filters.eligibility !== "Any" && candidateData) {
       positions = positions.filter((position) => {
-        const gradStatusMatch =
-          !position.graduateStatusRequirement ||
-          position.graduateStatusRequirement === candidateData.graduateStatus;
-        const courseHistory = candidateData.courseHistory?.find(
-          (ch) => ch.courseCode === position.courseCode
-        );
-        const courseTakenMatch =
-          !position.courseTakenRequirement || !!courseHistory;
-        const gradeMatch =
-          !position.gradeRequirement ||
-          (courseHistory?.grade &&
-            gradetoNumericValue[courseHistory.grade] >=
-              gradetoNumericValue[position.gradeRequirement]);
+        const gradStatusMatch = !position.graduateStatusRequirement || position.graduateStatusRequirement === candidateData.graduateStatus;
+        const courseHistory = candidateData.courseHistory?.find((ch) => ch.courseCode === position.courseCode);
+        const courseTakenMatch = !position.courseTakenRequirement || !!courseHistory;
+        const gradeMatch = !position.gradeRequirement || (courseHistory?.grade && gradetoNumericValue[courseHistory.grade] >= gradetoNumericValue[position.gradeRequirement]);
         const isEligible = gradStatusMatch && courseTakenMatch && gradeMatch;
         return filters.eligibility === "Eligible" ? isEligible : !isEligible;
       });
     }
 
-    // 5. return the filtered and processed positions
     return positions;
   } catch (error) {
     console.error("Error in getOpenJobPositions:", error);
@@ -202,107 +157,235 @@ async function getOpenJobPositions(
   }
 }
 
-async function getJobPositionsByStatus(status, username = null) {
-  const whereClause = {
-    jobPositionStatus: status,
-  };
-
-  console.log("Employeer is ", username);
-  if (username) {
-    whereClause.username = username;
-  }
-
+/**
+ * Retrieves and filters job positions based on the provided search term, filters, and owner username.
+ * @param {string} searchTerm - The text to search for in course names and codes.
+ * @param {object} filters - The filter criteria (days, semester, level, location).
+ * @param {string} ownerUsername - The username of the owner of the job positions.
+ * @returns {Promise<Array>} A promise that resolves to an array of filtered and processed job positions.
+ */
+async function getJobPositionsByOwner(searchTerm = "", filters = {}, ownerUsername=null) {
   try {
-    console.log("getting query");
-    console.log("Where Clause is ", whereClause);
+    const searchClause = buildPositionSearchClause(searchTerm);
+    const filterClause = buildPositionFilterClause(filters);
+
+    const finalWhere = {
+      AND: [
+        { username: ownerUsername },
+        searchClause,
+        filterClause,
+      ],
+    };
+
     return await prisma.jobPosition.findMany({
-      where: whereClause,
+      where: finalWhere,
       include: {
-        course: {
-          select: { name: true, description: true, courseCode: true },
-        },
-        jobSchedules: {
-          select: { dayOfWeek: true, startTime: true, endTime: true },
-        },
-        // comment: {
-        //   select: { comment: true, timestamp: true },
-        //   orderBy: {
-        //     timestamp: "desc", // Order comments by timestamp, newest first
-        //   },
-        // },
+        course: true,
+        jobSchedules: true,
       },
-      orderBy: {
-        id: "asc", // Or any other order you prefer
-      },
+      orderBy: { course: { name: "asc" } },
     });
   } catch (error) {
-    console.error("Error retrieving pending job positions:", error);
+    console.error("Error in getJobPositionsByOwner:", error);
     throw error;
   }
 }
+
 /**
- * Modifies an existing job position in the database.
- * @param {string} jobId - The ID of the job position to modify.
- * @param {object} positionData - The updated data for the job position.
- * @returns {Promise<object>} A promise that resolves to the modified job position.
+ * Searches and filters ALL job positions in the database.
+ * @param {string} [searchTerm=''] - Optional text to search for.
+ * @param {object} [filters={}] - Optional filter criteria (status, level, etc.).
+ * @returns {Promise<Array>}
  */
-async function modifyPosition(jobId, positionData) {
-  // Separate the schedules array from the rest of the job data
-  const { jobSchedules, ...jobData } = positionData;
+async function getAllJobPositions(searchTerm = "", filters = {}) {
+  try {
+    const searchClause = buildPositionSearchClause(searchTerm);
+    const filterClause = buildPositionFilterClause(filters);
+
+    const finalWhere = {
+      AND: [
+        searchClause,
+        filterClause,
+      ],
+    };
+
+    return await prisma.jobPosition.findMany({
+      where: finalWhere,
+      include: {
+        course: true,
+        jobSchedules: true,
+      },
+      orderBy: { course: { name: "asc" } },
+    });
+  } catch (error) {
+    console.error("Error in getAllJobPositions:", error);
+    throw error;
+  }
+}
+
+/**
+ * Creates a new JobPosition and its related schedules.
+ * @param {object} positionData The data for the new position from the form.
+ * @param {object} employerData The data for the employer.
+ * @returns {Promise<object>} The newly created JobPosition object with all relations.
+ */
+async function createJobPosition(positionData, employerData) {
+  const {
+    jobSchedules,
+    semesterCode,
+    courseCode,
+    sectionNumber,
+    maxTAs,
+    jobPositionStatus,
+    location,
+    locationType,
+    graduateStatusRequirement,
+    gradeRequirement,
+    courseTakenRequirement,
+    startDate,
+    endDate
+  } = positionData;
+
+  const {
+    username,
+    fname,
+    lname,
+  } = employerData;
+
+  const newJobId = `${semesterCode}-${courseCode}-${sectionNumber}`;
 
   try {
-    // Use a transaction to ensure all operations succeed or none do
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Update the direct fields of the JobPosition model
-      await tx.jobPosition.update({
-        where: { id: jobId },
+
+    const newPosition = await prisma.$transaction(async (tx) => {
+      // Create the new position
+      const position = await tx.jobPosition.create({
         data: {
-          location: jobData.location,
-          locationType: jobData.locationType,
-          maxTAs: jobData.maxTAs,
-          startDate: jobData.startDate,
-          endDate: jobData.endDate,
-          jobPositionStatus: jobData.jobPositionStatus,
-          graduateStatusRequirement: jobData.graduateStatusRequirement,
-          gradeRequirement: jobData.gradeRequirement,
-          courseTakenRequirement: jobData.courseTakenRequirement,
+          id: newJobId,
+          sectionNumber: parseInt(sectionNumber, 10),
+          semesterCode: parseInt(semesterCode, 10),
+          courseCode: courseCode,
+          username: username,
+          maxTAs: maxTAs,
+          jobPositionStatus: jobPositionStatus,
+          location: location,
+          locationType: locationType,
+          graduateStatusRequirement: graduateStatusRequirement,
+          gradeRequirement: gradeRequirement,
+          courseTakenRequirement: courseTakenRequirement,
+          startDate: startDate,
+          endDate: endDate,
+          jobSchedules: {
+            create: (jobSchedules || []).map((sch) => ({
+              dayOfWeek: sch.dayOfWeek,
+              startTime: sch.startTime,
+              endTime: sch.endTime,
+            })),
+          },
         },
-      });
-
-      // 2. Delete all existing schedules for this job
-      await tx.jobSchedule.deleteMany({
-        where: { jobPositionId: jobId },
-      });
-
-      // 3. Create the new schedules from the data sent by the frontend
-      if (jobSchedules && jobSchedules.length > 0) {
-        const schedulesToCreate = jobSchedules.map((sch) => ({
-          jobPositionId: jobId,
-          dayOfWeek: sch.dayOfWeek,
-          // FIX: Pass the ISO string directly to Prisma without creating a new Date object.
-          // This prevents the server's timezone from altering the UTC time.
-          startTime: sch.startTime,
-          endTime: sch.endTime,
-        }));
-
-        await tx.jobSchedule.createMany({
-          data: schedulesToCreate,
-        });
-      }
-
-      // 4. Fetch and return the fully updated job with all its relations
-      const finalJob = await tx.jobPosition.findUnique({
-        where: { id: jobId },
         include: {
           course: true,
           jobSchedules: true,
         },
       });
 
-      return finalJob;
+      // Create a comment for the new position
+      await tx.comment.create({
+        data: {
+          foreignTableName: 'JobPosition',
+          foreignKey: position.id,
+          author: `${fname} ${lname}`,
+          status: jobPositionStatus,
+          comment: 'New position has been created',
+          timestamp: new Date(),
+        },
+      });
+
+      return position;
     });
 
-    return result;
+    return newPosition;
+  } catch (error) {
+    if (error.code === "P2002") {
+      throw new Error(`A job position with ID ${newJobId} already exists.`);
+    }
+    console.error(`Failed to create position:`, error);
+    throw new Error(`Could not create job position.`);
+  }
+}
+
+/**
+ * Modifies an existing job position and its schedules in a single atomic transaction.
+ * @param {string} jobId - The ID of the job position to modify.
+ * @param {object} positionData - The updated data for the job position.
+ * @param {object} commentData - The comment data for the job position (including the author and comment).
+ * @returns {Promise<object>} A promise that resolves to the modified job position with its relations.
+ */
+async function updateJobPosition(jobId, positionData, commentData) {
+  const {
+    jobSchedules,
+    location,
+    locationType,
+    maxTAs,
+    startDate,
+    endDate,
+    jobPositionStatus,
+    graduateStatusRequirement,
+    gradeRequirement,
+    courseTakenRequirement,
+  } = positionData;
+
+  const {
+    fname,
+    lname,
+    comment,
+  } = commentData;
+
+  try {
+    const updatedPosition = await prisma.$transaction(async (tx) => {
+      // Update the job position
+      const position = await tx.jobPosition.update({
+        where: { id: jobId },
+        data: {
+          location: location,
+          locationType: locationType,
+          maxTAs: maxTAs,
+          startDate: startDate,
+          endDate: endDate,
+          jobPositionStatus: jobPositionStatus,
+          graduateStatusRequirement: graduateStatusRequirement,
+          gradeRequirement: gradeRequirement,
+          courseTakenRequirement: courseTakenRequirement,
+          jobSchedules: {
+            deleteMany: {},
+            create: (jobSchedules || []).map((sch) => ({
+              dayOfWeek: sch.dayOfWeek,
+              startTime: sch.startTime,
+              endTime: sch.endTime,
+            })),
+          },
+        },
+        include: {
+          course: true,
+          jobSchedules: true,
+        },
+      });
+
+      // Create a comment for the updated position
+      await tx.comment.create({
+        data: {
+          foreignTableName: 'JobPosition',
+          foreignKey: jobId,
+          author: `${fname} ${lname}`,
+          status: jobPositionStatus,
+          comment: comment,
+          timestamp: new Date(),
+        },
+      });
+      
+      return position;
+    });
+
+    return updatedPosition;
   } catch (error) {
     console.error(`Failed to modify position ${jobId}:`, error);
     throw new Error(`Could not modify job position ${jobId}.`);
@@ -310,20 +393,52 @@ async function modifyPosition(jobId, positionData) {
 }
 
 /**
- * Gets all job positions from the database.
- * @returns {Promise<object>} A Promise that resolves to an array of all job positions.
+ * Update the status of a job position and create a comment for the update in a single atomic transaction.
+ * @param {string} jobId - The ID of the job position to modify.
+ * @param {string} status - The new status for the job position.
+ * @param {object} commentData - The comment data for the job position (including the author and comment).
+ * @returns 
  */
-async function getAllPositions() {
+async function updateJobPositionStatus(jobId, status, commentData) {
+  const {
+    fname,
+    lname,
+    comment,
+  } = commentData;
+
   try {
-    return await prisma.jobPosition.findMany({
-      include: {
-        course: true,
-        jobSchedules: true,
-      },
+    const updatedPosition = await prisma.$transaction(async (tx) => {
+      // Update the job position
+      const position = await tx.jobPosition.update({
+        where: { id: jobId },
+        data: {
+          jobPositionStatus: status,
+        },
+        include: {
+          course: true,
+          jobSchedules: true,
+        },
+      });
+
+      // Create a comment for the updated position
+      await tx.comment.create({
+        data: {
+          foreignTableName: 'JobPosition',
+          foreignKey: jobId,
+          author: `${fname} ${lname}`,
+          status: status,
+          comment: comment,
+          timestamp: new Date(),
+        },
+      });
+      
+      return position;
     });
+
+    return updatedPosition;
   } catch (error) {
-    console.error("Error retrieving all job positions:", error);
-    throw error;
+    console.error(`Failed to modify position ${jobId}:`, error);
+    throw new Error(`Could not modify job position ${jobId}.`);
   }
 }
 
@@ -371,64 +486,9 @@ async function getAllPositions() {
 //     throw new Error(`Could not delete job position ${jobId}.`);
 //   }
 // }
-// --- Public Functions for Job Search & Retrieval ---
 
-/**
- * Creates a new JobPosition and its related schedules.
- * @param {object} positionData The data for the new position from the form.
- * @param {string} employerUsername The username of the employer creating the position.
- * @returns {Promise<object>} The newly created JobPosition object with all relations.
- */
-async function createPosition(positionData, employerUsername) {
-  const { jobSchedules, ...jobData } = positionData;
-  // The unique ID is a combination of semester, course, and section.
-  const newJobId = `${jobData.semesterCode}-${jobData.courseCode}-${jobData.sectionNumber}`;
-  try {
-    const newPosition = await prisma.jobPosition.create({
-      data: {
-        id: newJobId,
-        sectionNumber: parseInt(jobData.sectionNumber, 10),
-        semesterCode: parseInt(jobData.semesterCode, 10),
-        gradeRequirement: jobData.gradeRequirement,
-        graduateStatusRequirement: jobData.graduateStatusRequirement,
-        courseTakenRequirement: jobData.courseTakenRequirement,
-        course: {
-          connect: { courseCode: jobData.courseCode },
-        },
-        employer: {
-          connect: { username: employerUsername },
-        },        
-        maxTAs: jobData.maxTAs,
-        location: jobData.location,
-        locationType: jobData.locationType,
-        startDate: jobData.startDate,
-        endDate: jobData.endDate,
-        // Create the related schedules at the same time
-        jobSchedules: {
-          create: (jobSchedules || []).map((sch) => ({
-            dayOfWeek: sch.dayOfWeek,
-            startTime: sch.startTime,
-            endTime: sch.endTime,
-          })),
-        },
-      },
-      include: {
-        course: true,
-        jobSchedules: true,
-      },
-    });
 
-    return newPosition;
-  } catch (error) {
-    // Handle potential unique constraint violation if the ID already exists
-    if (error.code === "P2002") {
-      throw new Error(`A job position with ID ${newJobId} already exists.`);
-    }
-    console.error(`Failed to create position:`, error);
-    throw new Error(`Could not create job position.`);
-  }
-}
-
+// --- JOB APPLICATIONS ---
 /**
  * Creates a new job application record for a candidate.
  * @param {object} applicationDetails - The application data.
@@ -647,6 +707,39 @@ async function changeCandidateApplicationStatus(author, applicationId, status, c
         },
       });
 
+      // If the status is ACCEPTED_OFFER, update the corresponding job positions record if neccessary
+      if (status === 'ACCEPTED_OFFER') {
+        const jobPosition = await tx.jobPosition.findUnique({
+          where: {
+            id: applicationUpdate.jobPositionId,
+          },
+        });
+
+        if (!jobPosition) {
+          throw new Error(`Job position with ID ${applicationUpdate.jobPositionId} not found.`);
+        }
+
+        const acceptedOfferCount = await tx.jobPositionApplicationHistory.count({
+          where: {
+            jobPositionId: applicationUpdate.jobPositionId,
+            jobApplicationStatus: {
+              in: ['ACCEPTED_OFFER', 'HIRED'],
+            },
+          },
+        });
+        
+        if (acceptedOfferCount >= jobPosition.maxTAs) {
+          await tx.jobPosition.update({
+            where: {
+              id: applicationUpdate.jobPositionId,
+            },
+            data: {
+              jobPositionStatus: 'FILLED',
+            },
+          });
+        }
+      }
+
       // Return the updated application record from the transaction.
       return applicationUpdate;
     });
@@ -660,13 +753,137 @@ async function changeCandidateApplicationStatus(author, applicationId, status, c
 }
 
 /**
- * Get all of the semester codes that exist in the database for a given employer and their job positions.
- * @param {string} employerUsername - The username of the employer to retrieve job positions for.
+ * Hire a candidate for a job position and promote them to a TA(Employee).
+ * @param {string} candidateUsername - The username of the candidate to be hired.
+ * @param {string} applicationId - The ID of the application record.
+ * @param {string} jobPositionId - The ID of the job position the candidate is being hired for.
+ * @param {number} employeeId - The ID for the candidate to be hired.
+ * @returns {Promise<object>} A promise that resolves to the updated application record.
+ */
+async function hireCandidateForJobPosition(candidateUsername, applicationId, jobPositionId, employeeId, commentData) {
+  try {
+    // Update the candidate's application status to "HIRED".
+    const updatedApplication = await prisma.jobPositionApplicationHistory.update({
+      where: {
+        id: applicationId,
+      },
+      data: {
+        jobApplicationStatus: "HIRED",
+      }
+    })
+
+    // Create a new comment record for the hiring action.
+    await prisma.comment.create({
+      data: {
+        foreignTableName: "JobPositionApplicationHistory",
+        author: commentData.author,
+        foreignKey: String(applicationId),
+        status: "HIRED",
+        comment: commentData.comment,
+        timestamp: new Date(),
+      }
+    })
+
+    // Update the candidate's role to 'EMPLOYEE'.
+    await prisma.user.update({
+      where: {
+        username: candidateUsername,
+      },
+      data: {
+        role: "EMPLOYEE",
+      }
+    })
+
+    // Create new employee record or update existing one to ACTIVE status
+    await prisma.employee.upsert({
+      where: {
+        id: employeeId,
+      },
+      update: {
+        employeeStatus: "ACTIVE",
+        username: candidateUsername,
+      },
+      create: {
+        id: employeeId,
+        username: candidateUsername,
+        employeeStatus: "ACTIVE",
+      }
+    })
+
+    // Add the job position record to the JobPositionHistory table.
+    await prisma.jobPositionHistory.create({
+      data: {
+        jobPositionId: jobPositionId,
+        employeeId: employeeId,
+        jobPositionHistoryStatus: "ACTIVE",
+      }
+    })
+
+    // Get the job position to check maxTAs
+    const jobPosition = await prisma.jobPosition.findUnique({
+      where: {
+        id: jobPositionId,
+      }
+    })
+
+    if (!jobPosition) {
+      throw new Error(`Job position with ID ${jobPositionId} not found`);
+    }
+
+    // Count the number of ACTIVE job position history records for this job position
+    const activeJobPositionHistoryCount = await prisma.jobPositionHistory.count({
+      where: {
+        jobPositionId: jobPositionId,
+        jobPositionHistoryStatus: "ACTIVE",
+      }
+    })
+
+    // Update job position status to 'ACTIVE' if we've reached the maximum TAs
+    if (activeJobPositionHistoryCount >= jobPosition.maxTAs) {
+      await prisma.jobPosition.update({
+        where: {
+          id: jobPositionId,
+        },
+        data: {
+          jobPositionStatus: "ACTIVE",
+        }
+      })
+      // Add comment
+      await prisma.comment.create({
+        data: {
+          foreignTableName: "JobPosition",
+          author: commentData.author,
+          foreignKey: String(jobPositionId),
+          status: "ACTIVE",
+          comment: 'Position is now active as the all of the students who accepted the position have now been hired.',
+          timestamp: new Date(),
+        }
+      })
+    }
+
+    return updatedApplication;
+  } catch (error) {
+    console.error('Error hiring candidate:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get all of the distinct semester codes that exist in the database based on the provided filters.
+ * @param {string} status - The job position status to filter by.
+ * @param {string} employer - The username of the employer to filter by.
  * @returns {Promise<Array>} A promise that resolves to an array of unique semester codes.
  */
-async function getSemesterCodesForEmployer(employerUsername) {
+async function getSemesterCodes(status, employer) {
+  const whereClause = {};
+  if (status) {
+    whereClause.jobPositionStatus = status;
+  }
+  if (employer) {
+    whereClause.username = employer;
+  }
   const positions = await prisma.jobPosition.findMany({
-    where: { username: employerUsername },
+    where: { ...whereClause },
     select: { semesterCode: true },
     distinct: ["semesterCode"],
   });
@@ -878,6 +1095,55 @@ async function getCandidateApplicationsAsEmployer(
   });
 
   return positions;
+}
+/**
+ * Gets all applications for hiring for admin
+ * @returns retrieves all applications for hiring
+ */
+async function getCandidateApplicationsAsAdmin(){
+  return await prisma.jobPositionApplicationHistory.findMany({
+    where: { 
+      jobApplicationStatus: "ACCEPTED_OFFER"
+    },
+    include: {
+      jobPosition: {
+        include: {
+          course: {
+            select: { name: true, description: true },
+          },
+          jobSchedules: {
+            select: { dayOfWeek: true, startTime: true, endTime: true },
+          },
+        },
+      },
+      resume: {
+        select: { name: true, resumeURL: true },
+      },
+    },
+  });
+}
+
+
+/**
+ * Check if a job position is full based on its status
+ * @param {string} jobPositionId - The ID of the job position to check
+ * @returns {Promise<boolean>} Returns true if job position status is 'FILLED' or 'ACTIVE', false otherwise
+ */
+async function isJobPositionFull(jobPositionId) {
+  const jobPosition = await prisma.jobPosition.findUnique({
+    where: { 
+      id: jobPositionId 
+    },
+    select: {
+      jobPositionStatus: true
+    }
+  });
+
+  if (!jobPosition) {
+    return false; // Job position doesn't exist
+  }
+
+  return jobPosition.jobPositionStatus === "FILLED" || jobPosition.jobPositionStatus === "ACTIVE";
 }
 
 // =============================================================================
@@ -1799,16 +2065,17 @@ async function fetchEmployerViewData(employerUsername) {
 // =============================================================================
 
 module.exports = {
-  getOpenJobPositions,
-  getJobPositionsByStatus,
   getCandidateApplicationsAsEmployer,
   getCandidateApplications,
+  getCandidateApplicationsAsAdmin,
   deleteCandidateApplication,
   getCandidateApplication,
-  getSemesterCodesForEmployer,
+  getSemesterCodes,
   applyForJobPosition,
   getCandidateHiredStatus,
   changeCandidateApplicationStatus,
+  hireCandidateForJobPosition,
+  isJobPositionFull,
   getUser,
   authenticateUser,
   resetPassword,
@@ -1824,9 +2091,12 @@ module.exports = {
   getCandidateResumes,
   getAllUsers,
   getAllCourses,
-  modifyPosition,
-  createPosition,
-  getAllPositions,
+  createJobPosition,
+  updateJobPosition,
+  updateJobPositionStatus,
+  getOpenJobPositions,
+  getJobPositionsByOwner,
+  getAllJobPositions,
   createCourse,
   getComments,
   terminateEmployee,
