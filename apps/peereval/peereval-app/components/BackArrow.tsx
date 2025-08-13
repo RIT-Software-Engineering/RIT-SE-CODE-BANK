@@ -4,15 +4,13 @@ import Button from "@mui/material/Button";
 
 export default function BackArrow() {
     return (
-        <Link href="/dashboard" passHref legacyBehavior>
-            <Button
-                component="a"
-                startIcon={<ArrowBackIcon />}
-                sx={{ mb: 2, textTransform: "none" }}
-                aria-label="Back"
-            >
-                Back
-            </Button>
-        </Link>
+        <Button
+            onClick={() => window.history.back()}
+            startIcon={<ArrowBackIcon />}
+            sx={{ mb: 2, textTransform: "none" }}
+            aria-label="Back"
+        >
+            Back
+        </Button>
     );
 }
