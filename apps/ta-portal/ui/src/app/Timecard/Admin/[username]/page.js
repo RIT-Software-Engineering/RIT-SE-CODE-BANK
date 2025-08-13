@@ -48,8 +48,12 @@ export default function AdminTimecardsPage() {
             // The result will be an array of objects, where each object contains a user and their list of timecards.
             // e.g., [{ user: {...}, timecards: [...] }, { user: {...}, timecards: [...] }]
             const grouped = rawTimecards.reduce((acc, timecard) => {
-                const user = timecard.jobPositionHistory?.employee?.candidate?.user;
-                if (!user) return acc;
+                if (!timecard.jobPositionHistory?.employee?.candidate?.user) {
+                    return acc;
+                }
+
+                const employee = timecard.jobPositionHistory.employee;
+                const user = employee.candidate.user;
 
                 // Combine first and last name for display and search
                 const fullName = `${user.fname} ${user.lname}`;
@@ -61,6 +65,7 @@ export default function AdminTimecardsPage() {
                 if (!userEntry) {
                     userEntry = { 
                         user: { ...user, fullName }, 
+                        employeeId: employee.id,
                         timecards: [] 
                     };
                     acc.push(userEntry);
@@ -88,17 +93,23 @@ export default function AdminTimecardsPage() {
 
     // Filter data based on search term
     useEffect(() => {
-        // If the search term is empty, show all the data.
-        if (!searchTerm) {
+        // Trim whitespace from the start and end of the search term.
+        const trimmedSearchTerm = searchTerm.trim();
+
+        // If the trimmed term is empty, show all data.
+        if (!trimmedSearchTerm) {
             setFilteredData(groupedData);
             return;
         }
 
-        const lowerTerm = searchTerm.toLowerCase();
-        // Filter the original data based on the user's full name
-        const filtered = groupedData.filter(({ user }) => 
-            user.fullName.toLowerCase().includes(lowerTerm) ||
-            user.username.toLowerCase().includes(lowerTerm)
+        const lowerTerm = trimmedSearchTerm.toLowerCase();
+
+        // Filter the original data based on the user's full name or employee ID
+        const filtered = groupedData.filter(employeeEntry => 
+            employeeEntry.user.fullName.toLowerCase().includes(lowerTerm) ||
+            employeeEntry.user.username.toLowerCase().includes(lowerTerm) ||
+            // Add a check to ensure employeeId exists before searching it
+            (employeeEntry.employeeId && String(employeeEntry.employeeId).includes(lowerTerm))
         );
         setFilteredData(filtered);
 
@@ -123,14 +134,14 @@ export default function AdminTimecardsPage() {
                         Admin Timecard Viewer
                     </h1>
                     <p className="mt-2 text-lg text-gray-500">
-                        Review and manage all employee timecards.
+                        Review and manage all TA timecards.
                     </p>
                 </div>
 
                 <SearchBar
                     value={searchTerm}
                     onChange={setSearchTerm}
-                    placeholder="Search by employee name..."
+                    placeholder="Search by name or employee ID..."
                 />
 
                 <div className="mt-6">

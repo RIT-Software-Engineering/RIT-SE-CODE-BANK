@@ -1,4 +1,4 @@
-// components/NotesModal.js
+// components/timecard/NotesModal.js
 import React, { useState, useEffect } from 'react';
 
 export default function NotesModal({ dayEntry, isOpen, onClose, onSave }) {

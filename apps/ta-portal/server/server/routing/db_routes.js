@@ -43,11 +43,9 @@ const {
   createPosition,
   terminateEmployee,
   upsertTimecard,
-  upsertTimecardDay,
-  getMostRecentTimecard,
-  getEmployeeTimecard,
   getAllTimecardsForJob,
   fetchAdminViewData,
+  fetchEmployerViewData,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -898,31 +896,6 @@ router.post("/create-course", async (req, res) => {
 // TIMECARD ROUTES
 // =============================================================================
 
-/**
- * @route   GET /api/db/timecard/:jobPositionHistoryId
- * @desc    Retrieves the current weekly timecard for a specific job.
- * @access  Public
- * @param   {string} jobPositionHistoryId - The ID of the job history record.
- */
-router.get("/timecard/:jobPositionHistoryId", async (req, res) => {
-    try {
-      const jobPositionHistoryId = parseInt(req.params.jobPositionHistoryId, 10);
-      if (isNaN(jobPositionHistoryId)) {
-        return res.status(400).json({ error: "Invalid Job Position History ID." });
-      }
-      const timecard = await getEmployeeTimecard(jobPositionHistoryId);
-      if (!timecard) {
-        return res.status(404).json({ message: "No timecard found for the current week." });
-      }
-      res.status(200).json(timecard);
-    } catch (error) {
-      console.error(`Error in /timecard/${req.params.jobPositionHistoryId} route:`, error);
-      const errorMessage = process.env.NODE_ENV === 'development' 
-        ? error.message 
-        : "An error occurred while retrieving the timecard.";
-      res.status(500).json({ error: errorMessage });
-    }
-});
 
 /**
  * @route   POST /upsert-timecard
@@ -944,37 +917,6 @@ router.post("/upsert-timecard", async (req, res) => {
   }
 });
 
-/**
- * @route   GET /timecard/most-recent/:jobPositionHistoryId
- * @desc    Retrieves the most recent weekly timecard for the specified job position history ID.
- * @access  Public
- * @param   {string} jobPositionHistoryId - The ID of the employee's job position history.
- */
-router.get('/timecard/most-recent/:jobPositionHistoryId', async (req, res) => {
-  const { jobPositionHistoryId } = req.params;
-
-  try {
-    const data = await getMostRecentTimecard(Number(jobPositionHistoryId));
-    res.json(data);
-  } catch (error) {
-    console.error('Error in /timecard/most-recent:', error);
-    res.status(500).json({ message: 'Failed to retrieve most recent timecard.' });
-  }
-});
-
-router.post('/timecard/day/notes', async (req, res) => {
-    try {
-        const { jobPositionHistoryId, date, notes } = req.body;
-        if (!jobPositionHistoryId || !date) {
-            return res.status(400).json({ error: "Missing required data for saving notes." });
-        }
-        const result = await upsertTimecardDay({ jobPositionHistoryId, date, notes });
-        res.status(200).json(result);
-    } catch (error) {
-        console.error('Failed to save notes:', error);
-        res.status(500).json({ message: 'Failed to save notes.' });
-    }
-});
 
 router.get('/timecard/all/:jobPositionHistoryId', async (req, res) => {
     try {
@@ -1005,6 +947,25 @@ router.get("/timecard/admin/all", async (req, res) => {
     } catch (error) {
       console.error("Error in /timecard/admin/all route:", error);
       res.status(500).json({ error: "Failed to retrieve admin timecard data." });
+    }
+});
+
+/**
+ * @route   GET /api/db/timecard/employer/:employerUsername
+ * @desc    Retrieves all timecards for a specific employer's employees.
+ * @param   {string} employerUsername - The RIT username of the employer.
+ */
+router.get("/timecard/employer/:employerUsername", async (req, res) => {
+    try {
+      const { employerUsername } = req.params;
+      if (!employerUsername) {
+          return res.status(400).json({ error: "Employer username is required." });
+      }
+      const timecards = await fetchEmployerViewData(employerUsername);
+      res.status(200).json(timecards);
+    } catch (error) {
+      console.error(`Error in /timecard/employer/${req.params.employerUsername} route:`, error);
+      res.status(500).json({ error: "Failed to retrieve employer timecard data." });
     }
 });
 
