@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { Box, TextField, Button, Typography } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function AuthPage() {
   const [isSignup, setIsSignup] = useState(false);
@@ -21,12 +23,13 @@ export default function AuthPage() {
    const handleBack = () => {
     router.back();
   };
-  
+
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100vh">
+    <Box>
       <IconButton onClick={handleBack} aria-label="back">
               <ArrowBackIcon />
             </IconButton>
+            <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height="100vh">
       <Typography variant="h4" mb={2}>
         {isSignup ? "Create an Account" : "Log In"}
       </Typography>
@@ -49,6 +52,7 @@ export default function AuthPage() {
       <Button variant="text" onClick={() => setIsSignup(!isSignup)}>
         {isSignup ? "Already have an account? Log in" : "Don't have an account? Sign up"}
       </Button>
+      </Box>
     </Box>
   );
 }
