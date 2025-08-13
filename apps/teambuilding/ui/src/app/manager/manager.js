@@ -242,7 +242,24 @@ export default function ManagerPage() {
       return;
     }
     if (algo === "manual") {
-      console.log("Manual team creation selected");
+      // Create an empty team of the specified size
+      const teamName = `Team ${Math.floor(Math.random() * 10000)}`;
+      try {
+        const res = await fetch("http://localhost:3000/api/team", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: teamName, communityId, maxSize: teamSize }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          console.log("Failed to create team:", data.error);
+        } else {
+          console.log("Empty team created successfully:", teamName);
+          reloadCommunities();
+        }
+      } catch {
+        console.log("Server error creating empty team");
+      }
       return;
     }
 
