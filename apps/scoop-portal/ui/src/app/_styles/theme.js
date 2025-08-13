@@ -93,9 +93,11 @@ const baseTheme = createTheme({
         {
           props: { variant: "solid-orange" },
           style: {
+            border: "1px solid #F76902",
             backgroundColor: "#F76902",
             color: "#FFFFFF",
             "&:hover": {
+              border: "1px solid #000000",
               backgroundColor: "#000000",
             },
           },
@@ -103,9 +105,11 @@ const baseTheme = createTheme({
         {
           props: { variant: "solid-gray" },
           style: {
+            border: "1px solid #D0D3D4",
             backgroundColor: "#D0D3D4",
             color: "#000000",
             "&:hover": {
+              border: "1px solid #A2AAAD",
               backgroundColor: "#A2AAAD",
             },
           },
