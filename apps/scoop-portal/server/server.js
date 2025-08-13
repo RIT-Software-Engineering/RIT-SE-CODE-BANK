@@ -5,7 +5,7 @@ import applicationRoutes from "./api/application/route.js";
 import userRoutes from "./api/users/route.js";
 import journalRoutes from "./api/journal/route.js";
 import teamRoutes from "./api/teams/route.js";
-import projectsRoutes from "./api/projects/route.js";
+import projectRoutes from "./api/project/route.js";
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -19,7 +19,7 @@ app.use("/api/application", applicationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/journal", journalRoutes);
 app.use("/api/teams", teamRoutes);
-app.use("/api/projects", projectsRoutes);
+app.use("/api/project", projectRoutes);
 
 (async () => {
   const workflowsRoutesModule = await import('../../workflow/server/api/routes/workflows.js');

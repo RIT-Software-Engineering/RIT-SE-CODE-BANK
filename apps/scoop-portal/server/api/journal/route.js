@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
  */
 router.get("/", async (req, res) => {
   try {
-    const entries = await prisma.journal_Entry.findMany();
+    const entries = await prisma.journalEntry.findMany();
     res.status(200).json(entries);
   } catch (error) {
     console.error("Error fetching journal entries:", error);
@@ -31,7 +31,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const { date, contactee, notes } = req.body;
   try {
-    const newEntry = await prisma.journal_Entry.create({
+    const newEntry = await prisma.journalEntry.create({
       data: { date, contactee, notes },
     });
     res.status(200).json(newEntry);
@@ -54,7 +54,7 @@ router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { notes } = req.body;
   try {
-    const updatedEntry = await prisma.journal_Entry.update({
+    const updatedEntry = await prisma.journalEntry.update({
       where: { id: Number(id) },
       data: { notes },
     });
@@ -93,7 +93,7 @@ router.get("/admin", async (req, res) => {
 
   // Fetch journal entries based on the two clauses
   try {
-    const adminEntries = await prisma.journal_Entry.findMany({
+    const adminEntries = await prisma.journalEntry.findMany({
       where: whereClause,
       orderBy: orderByClause,
     });
@@ -113,7 +113,7 @@ router.get("/admin", async (req, res) => {
 router.get("/coach", async (req, res) => {
   const whereClause = { journal_owner_type: "coach" };
   try {
-    const coachEntries = await prisma.journal_Entry.findMany({
+    const coachEntries = await prisma.journalEntry.findMany({
       where: whereClause,
     });
     res.status(200).json(coachEntries);
@@ -131,7 +131,7 @@ router.get("/coach", async (req, res) => {
  */
 router.get("/student", async (req, res) => {
   try {
-    const studentEntries = await prisma.journal_Entry.findMany({
+    const studentEntries = await prisma.journalEntry.findMany({
       where: { journal_owner_type: "student" },
     });
     res.status(200).json(studentEntries);
