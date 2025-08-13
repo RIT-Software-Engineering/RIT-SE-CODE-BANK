@@ -129,6 +129,15 @@ const baseTheme = createTheme({
         },
       },
     },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#F76902",
+          },
+        },
+      },
+    },
   },
 });
 

@@ -1,11 +1,12 @@
-'use client';
-import React from 'react';
-import {
-  Box, Typography, Container, Button, Grid, Paper,
-} from '@mui/material';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+"use client";
+import React from "react";
+import { Box, Typography, Container, Button, Grid, Paper } from "@mui/material";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+// import { useUser } from "../../user-context/page";
+// import UnauthorizedPage from '../../unauthorized/page';
+// import ProtectedRoute from "../../utils/ProtectedRoute";
 
-import Header from '../../_components/Header';
+import Header from "../../_components/Header";
 
 const workflows = [
   {
@@ -20,11 +21,6 @@ const workflows = [
         title: "Manage Employees",
         description: "Review current scooployee details and statuses.",
         link: "/scoopdinator/scooployees",
-      },
-      {
-        title: 'Onboarding Workflow',
-        description: 'To begin the total onboarding process, view the workflow dashboard.',
-        link: '/scoopdinator/workflows',
       },
     ],
   },
@@ -82,19 +78,22 @@ const workflows = [
   },
 ];
 
+/**
+ * Renders the content for the Scoopdinator's Dashboard
+ * @returns {JSX.Element}
+ */
 export default function WorkflowDashboard() {
-  //     const { user } = useUser();
-  //     console.log("current user: ", user, user ? user.type : 'no user');
+  // const { user } = useUser();
+  // console.log("current user: ", user, user ? user.type : "no user");
   // if (!user || user.type !== "admin") {
-  //     return <UnauthorizedPage />;
-  //   }
+  //   return <UnauthorizedPage />;
+  // }
 
   return (
     // <ProtectedRoute requiredRole="admin">
     <Box
       sx={{
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
-        color: "#212121",
       }}
     >
       <Header />
@@ -225,6 +224,7 @@ export default function WorkflowDashboard() {
         </Typography>
       </Box>
     </Box>
+    //{" "}
     // </ProtectedRoute>
   );
 }

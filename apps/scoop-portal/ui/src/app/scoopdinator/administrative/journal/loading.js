@@ -10,6 +10,10 @@ import {
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 
+/**
+ * Renders the loading skeleton for the journal cards for the main skeleton
+ * @returns {JSX.Element}
+ */
 function JournalCardLoading() {
   return (
     <Card
@@ -65,6 +69,10 @@ function JournalCardLoading() {
   );
 }
 
+/**
+ * Renders the loading skeleton for the Scoopdinator's Journal page
+ * @returns {JSX.Element}
+ */
 function JournalLoading() {
   return (
     <>

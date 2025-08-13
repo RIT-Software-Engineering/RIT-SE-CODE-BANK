@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Papa from "papaparse";
 import Header from "@components/Header";
 import {
@@ -25,8 +24,6 @@ import {
 } from "@mui/material";
 
 export default function ViewScooployees() {
-  const router = useRouter();
-
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [filter, setFilter] = useState("all");
@@ -243,12 +240,6 @@ export default function ViewScooployees() {
     });
   };
 
-  const handleJournalClick = () => {
-    if (selectedEmployee?.id) {
-      router.push(`/scoopdinator/administrative/journal`);
-    }
-  };
-
   return (
     <>
       <Header />
@@ -372,11 +363,7 @@ export default function ViewScooployees() {
               </Box>
             </DialogContent>
             <DialogActions sx={{ px: 3, py: 2 }}>
-              <Button
-                variant="contained"
-                sx={{ bgcolor: "#84BD00", "&:hover": { bgcolor: "#6da400" } }}
-                onClick={handleJournalClick}
-              >
+              <Button variant="contained" sx={{ bgcolor: "#84BD00", "&:hover": { bgcolor: "#6da400" } }}>
                 Journal
               </Button>
               <Button variant="contained" sx={{ bgcolor: "#007bff", "&:hover": { bgcolor: "#0066cc" } }} onClick={handleAssignClick}>
@@ -425,71 +412,45 @@ export default function ViewScooployees() {
           <Typography>
             Are you sure you want to assign{" "}
             <strong>{selectedEmployee?.fname} {selectedEmployee?.lname}</strong> to the team{" "}
-            <strong>{teams.find((t) => t.id === selectedTeam)?.name}</strong>?
+            <strong>{teams.find((t) => t.id === selectedTeam)?.name || ""}</strong>?
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmAssignOpen(false)} color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleConfirmAssign} variant="contained">
+          <Button onClick={handleConfirmAssign} variant="contained" color="primary">
             Yes, Assign
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Manage Modal */}
-      <Dialog open={manageOpen} onClose={() => setManageOpen(false)} maxWidth="sm" fullWidth>
+      {/* Manage Employees Modal */}
+      <Dialog open={manageOpen} onClose={() => setManageOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Manage Employees</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mb: 2 }}>
-            <Button variant="contained" onClick={downloadCSV} sx={{ mr: 2 }}>
-              Export CSV
-            </Button>
-            <Button
-              variant="contained"
-              component="label"
-              disabled={importing}
-            >
-              Import CSV
-              <input
-                type="file"
-                accept=".csv"
-                hidden
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-              />
-            </Button>
-            {importFile && (
-              <Button
-                variant="contained"
-                color="success"
-                onClick={handleImportCSV}
-                disabled={importing}
-                sx={{ ml: 2 }}
-              >
-                {importing ? "Importing..." : "Start Import"}
-              </Button>
-            )}
-          </Box>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Button variant="outlined" onClick={downloadCSV}>
+            Export CSV
+          </Button>
+          <Button variant="contained" onClick={handleImportCSV} disabled={!importFile || importing}>
+            {importing ? "Importing..." : "Import CSV"}
+          </Button>
+          <input type="file" accept=".csv" onChange={(e) => setImportFile(e.target.files?.[0] || null)} disabled={importing} />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setManageOpen(false)} color="inherit">
-            Close
-          </Button>
+          <Button onClick={() => setManageOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar */}
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={3000}
+        autoHideDuration={4000}
         onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
-          {snackbarMsg}
+        <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: "100%" }}>
+          {snackbarMsg || "Employee successfully assigned to team!"}
         </Alert>
       </Snackbar>
     </>

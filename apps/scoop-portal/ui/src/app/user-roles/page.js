@@ -24,15 +24,17 @@ export default function SelectUserPage() {
     const user = users.find((u) => u.id === selectedUserId);
     if (user) {
       setUser(user); // set user
-      console.log(user.type)
-      if (user.type === "admin") { //rename to scoopdinator later
-        router.push("scoopdinator/dashboard"); 
-      } else if (user.type === "coach") { //rename to scoopervisor later
-        router.push("scoopervisor/dashboard"); 
+      console.log(user.type);
+      if (user.type === "admin") {
+        //rename to scoopdinator later
+        router.push("scoopdinator/dashboard");
+      } else if (user.type === "coach") {
+        //rename to scoopervisor later
+        router.push("scoopervisor/dashboard");
       } else {
-        router.push("scooployee/dashboard")
+        router.push("scooployee/dashboard");
       }
-      // router.push("/home-page"); 
+      // router.push("/home-page");
     }
   };
 
@@ -51,7 +53,7 @@ export default function SelectUserPage() {
           </MenuItem>
         ))}
       </Select>
-      <Button variant="contained" onClick={handleSelect}>
+      <Button variant="outline-orange" onClick={handleSelect}>
         Continue
       </Button>
     </Box>
