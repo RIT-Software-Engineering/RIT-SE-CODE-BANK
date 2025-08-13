@@ -10,6 +10,7 @@ export default function LandingDashboard({ user }) {
     (option) =>
       option.roles.includes(userRole) && option.category === "Personal"
   );
+  const formattedUserRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase();
 
   return (
     <>
@@ -36,10 +37,10 @@ export default function LandingDashboard({ user }) {
         <div>
           <h1 className="text-3xl">Explore</h1>
           <div className="flex justify-center">
-            <Link href={"/Positions"} className="w-full flex justify-center">
+            <Link href={`/Positions/${formattedUserRole}/${user.username}`} className="w-full flex justify-center">
               <button className="bg-white border-2 border-rit-light-gray min-h-44 rounded-xl p-6 m-8 flex flex-col items-center justify-center w-4/5 shadow hover:bg-[#fff4e6] hover:scale-105  transition duration-200 ease-in-out hover:shadow-lg cursor-pointer">
                 <span className="text-xl font-semibold text-rit-orange">
-                  Find Positions
+                  Find Open Positions
                 </span>
               </button>
             </Link>

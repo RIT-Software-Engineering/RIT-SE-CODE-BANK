@@ -9,7 +9,6 @@ import ProfileInfoCard from "@/components/profile/ProfileInfoCard";
 import CoursesTakenCard from "@/components/profile/CandidateAndEmployee/CoursesTakenCard";
 import CoursesWorkedCard from "@/components/profile/CandidateAndEmployee/CoursesWorkedCard";
 import ResumeManager from "@/components/profile/CandidateAndEmployee/ResumeManager";
-import JobPositionsCard from "@/components/positions/EmployerAndAdmin/JobPositionsCard";
 
 export default function ProfilePage() {
   const [editingSection, setEditingSection] = useState(null); 
@@ -124,12 +123,6 @@ export default function ProfilePage() {
               />
           </section>
         </>
-      )}
-
-      {isEmployerOrAdmin && (
-        <JobPositionsCard
-          profileData={profileData}
-        />
       )}
 
       {editingSection && (

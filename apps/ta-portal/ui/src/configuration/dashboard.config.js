@@ -27,12 +27,6 @@ export const DASHBOARD_OPTIONS = [
   },
   {
     category: 'Personal',
-    text: 'My Positions',
-    link: '', // TODO
-    roles: [ROLES.EMPLOYER, ROLES.ADMIN]
-  },
-  {
-    category: 'Personal',
     text: 'Send Message',
     link: '/Messaging',
     roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN]
@@ -64,12 +58,6 @@ export const DASHBOARD_OPTIONS = [
   },
   {
     category: 'Personal',
-    text: 'My Positions',
-    link: '', // TODO
-    roles: [ROLES.EMPLOYEE]
-  },
-  {
-    category: 'Personal',
     text: 'My Applications',
     link: '/Applications/Employee/[username]',
     roles: [ROLES.EMPLOYEE]
@@ -83,22 +71,40 @@ export const DASHBOARD_OPTIONS = [
   },
   {
     category: 'Personal',
-    text: 'Manage Positions',
-    link: '/Positions',
+    text: 'Manage My Positions',
+    link: '/Positions/Admin/[username]?tab=my-positions',
+    roles: [ROLES.ADMIN]
+  },
+  {
+    category: 'Personal',
+    text: 'Hire Candidate',
+    link: '/Applications/Admin/[username]?tab=hiring',
+    roles: [ROLES.ADMIN]
+  },
+  {
+    category: 'Personal',
+    text: 'Manage All Positions',
+    link: '/Positions/Admin/[username]?tab=all-positions',
     roles: [ROLES.ADMIN]
   },
   {
     category: 'Personal',
     text: 'View Applications',
-    link: '/Applications/Admin/[username]',
+    link: '/Applications/Admin/[username]?tab=applications',
     roles: [ROLES.ADMIN]
   },
-  // --- FACULTY SPECIFIC OPTIONS ---
+  // --- EMPLOYER SPECIFIC OPTIONS ---
   {
     category: 'Personal',
     text: 'View Applications',
     link: '/Applications/Employer/[username]',
     roles: [ROLES.EMPLOYER],
+  },
+  {
+    category: 'Personal',
+    text: 'Manage My Positions',
+    link: '/Positions/Employer/[username]?tab=my-positions',
+    roles: [ROLES.EMPLOYER]
   },
   // --- CANDIDATE-SPECIFIC OPTIONS ---
   {

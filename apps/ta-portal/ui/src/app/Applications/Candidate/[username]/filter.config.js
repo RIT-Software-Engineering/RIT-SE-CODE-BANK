@@ -5,7 +5,7 @@ export const generateApplicationsFilterConfig = (semesterOptions = []) => [
     id: 'status',
     label: 'Application Status',
     type: 'checkbox',
-    options: ['Applied', 'Accepted Offer', 'Pending Offer', 'Interview', 'Onhold', 'Rejected', 'Inactive'],
+    options: ['Applied', 'Accepted Offer', 'Declined Offer', 'Hired', 'Pending Offer', 'Interview', 'Onhold', 'Rejected', 'Inactive'],
   },
   {
     id: 'level',

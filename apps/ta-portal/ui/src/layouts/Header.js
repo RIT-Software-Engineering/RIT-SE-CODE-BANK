@@ -29,8 +29,23 @@ const HEADER_LINKS = [
   },
   {
     text: "Positions",
-    href: "/Positions",
-    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
+    href: "/Positions/Candidate/[username]",
+    roles: [ROLES.CANDIDATE],
+  },
+  {
+    text: "Positions",
+    href: "/Positions/Employer/[username]",
+    roles: [ROLES.EMPLOYER],
+  },
+  {
+    text: "Positions",
+    href: "/Positions/Employee/[username]",
+    roles: [ROLES.EMPLOYEE],
+  },
+  {
+    text: "Positions",
+    href: "/Positions/Admin/[username]",
+    roles: [ROLES.ADMIN],
   },
   {
     text: "Applications",
@@ -65,7 +80,7 @@ const HEADER_LINKS = [
 ];
 
 export default function Header() {
-  const { currentUser, setCurrentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
   const router = useRouter();
   const userRole = currentUser ? currentUser.role : null;
 
@@ -74,8 +89,7 @@ export default function Header() {
   );
 
   const handleLogout = () => {
-    localStorage.removeItem("username");
-    setCurrentUser(null);
+    logout();
     router.push("/");
   };
 

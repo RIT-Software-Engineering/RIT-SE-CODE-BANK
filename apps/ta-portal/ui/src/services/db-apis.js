@@ -30,99 +30,90 @@ async function handleApiResponse(response) {
  * @returns {Promise<any>} The result of the API response handler.
  * @throws {Error} If required API URL components are not defined.
  */
-export async function getOpenPositions(searchTerm, appliedFilters, candidateUsername) {
+// TODO: Rename from getOpenPositions to getOpenJobPositions
+export async function getOpenJobPositions(searchTerm = "", appliedFilters = {}, candidateUsername) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error(
       "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
     );
   }
-  const params = new URLSearchParams({ searchTerm: searchTerm, filters: JSON.stringify(appliedFilters), candidateUsername: candidateUsername});
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/open-positions?${params.toString()}`;
+  const params = new URLSearchParams({ 
+    searchTerm: searchTerm, 
+    filters: JSON.stringify(appliedFilters), 
+    candidateUsername: candidateUsername
+  });
+  
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/positions/open?${params.toString()}`;
   console.log(`Searching from: ${url}`);
 
   const response = await fetch(url);
   return handleApiResponse(response);
 }
 
-export async function getJobPositionsByStatus(status, employerUsername) {
-  console.log("API UID: ",employerUsername)
-  const params = new URLSearchParams({ status }); // Always include status
-  if (employerUsername) {
-    params.append('employerUID', employerUsername);
-  }
-
-
-  const query = employerUsername ? `?employerUsername=${encodeURIComponent(employerUsername)}` : "";
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/pending-job-positions?${params.toString()}`;
-  console.log("Getting from URL: ",url)
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`API call failed with status: ${response.status}`);
-    }
-    const data = await response.json();
-    console.log("Frontend API received:", data); // <-- Add this log
-    return data;
-  } catch (error) {
-    console.error(`Error fetching positions with status ${status}:`, error);
-    throw error; // Re-throw the error to be caught by the component
-  }
-}
-
-export async function modifyPosition(jobID, positionData) {
+/**
+ * Retrieves job positions owned by a specific user, with optional search and filter criteria.
+ * @param {string} ownerUsername - The username of the employer or admin who owns the positions.
+ * A `searchTerm` and `appliedFilters` are optional.
+ * @param {string} [searchTerm=""] - The term to search for within the owned positions.
+ * @param {Object} [appliedFilters={}] - The filters to apply to the search (e.g., status, semester).
+ * @returns {Promise<any>} The result of the API response handler.
+ * @throws {Error} If the ownerUsername is not provided or API URLs are not defined.
+ */
+export async function getPositionsByOwner(ownerUsername, searchTerm = "", appliedFilters = {}) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error(
-      "Backend API URL components are not defined. Check your .env.local file."
+      "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
     );
   }
- 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/modify-position/${jobID}`;
-
-  const response = await fetch(url, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // Pass the positionData to be stringified
-    body: JSON.stringify(positionData),
-  });
-
-  // Check if the request was successful
-  if (!response.ok) {
-    // Throw an error to be caught by the calling function
-    throw new Error(`API call failed with status: ${response.status}`);
+  if (!ownerUsername) {
+    throw new Error("An owner's username is required to fetch their positions.");
   }
 
-  // Parse the JSON from the response and return it
-  return response.json();
+  const params = new URLSearchParams({
+    searchTerm: searchTerm,
+    filters: JSON.stringify(appliedFilters),
+  });
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/positions/owner/${ownerUsername}?${params.toString()}`;
+  
+  console.log(`Fetching owned positions from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response); 
 }
 
-export async function createPosition(positionData, employerUsername) {
+/**
+ * Retrieves all job positions from the backend based on the provided search term and applied filters.
+ * @param {string} [searchTerm=""] - The term to search for within the positions.
+ * @param {Object} [appliedFilters={}] - The filters to apply to the search (e.g., status, semester).
+ * @returns {Promise<any>} The result of the API response handler.
+ */
+export async function getAllPositions(searchTerm = "", appliedFilters = {}) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error(
       "Backend API URL components are not defined. Check your .env.local file."
     );
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/create-position/${employerUsername}`;
-  console.log(`Creating position at: ${url}`);
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(positionData),
-  });
+  const params = new URLSearchParams({
+    searchTerm: searchTerm,
+    filters: JSON.stringify(appliedFilters),
+  })
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/positions?${params.toString()}`;
+  console.log(`Fetching all positions from: ${url}`);
 
-  if (!response.ok) {
-    throw new Error(`API call failed with status: ${response.status}`);
-  }
-
-  return response.json();
+  const response = await fetch(url);
+  return handleApiResponse(response);
 }
 
-export async function getAllPositions() {
+/**
+ * Creates a new job position by sending position and employer data to the backend.
+ * @param {object} positionData - An object containing all details for the new position.
+ * @param {object} employerData - An object containing the creating employer's details (username, fname, lname).
+ * @returns {Promise<any>} The result of the API response handler.
+ * @throws {Error} If required API URL components are not defined.
+ */
+export async function createPosition(positionData, employerData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error(
       "Backend API URL components are not defined. Check your .env.local file."
@@ -130,9 +121,148 @@ export async function getAllPositions() {
   }
 
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/positions`;
-  console.log(`Fetching all positions from: ${url}`);
+  console.log(`Creating position at: ${url}`);
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ positionData, employerData }),
+  });
+
+  return handleApiResponse(response); 
+}
+
+/**
+ * Updates an existing job position with new data and a comment.
+ * @param {string} jobID - The ID of the job position to update.
+ * @param {object} positionData - An object containing the fields to update on the position.
+ * @param {object} commentData - An object containing details for the update comment.
+ * @returns {Promise<any>} The result of the API response handler.
+ * @throws {Error} If required API URL components are not defined.
+ */
+// TODO: Change name from modifyPosition to updatePosition
+export async function updatePosition(jobID, positionData, commentData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+ 
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/positions/${jobID}`;
+  console.log(`Updating position at: ${url}`);
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ positionData, commentData }),
+  });
+
+  return handleApiResponse(response); 
+}
+
+/**
+ * Updates the status of a specific job position.
+ * @param {string} jobID - The ID of the job position to update.
+ * @param {string} status - The new status to set for the position (e.g., 'APPROVED', 'REJECTED').
+ * @param {object} commentData - An object containing details for the update comment.
+ * @returns {Promise<any>} The result of the API response handler.
+ * @throws {Error} If required parameters or API URL components are not defined.
+ */
+export async function updatePositionStatus(jobID, status, commentData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+  if (!jobID || !status || !commentData) {
+    throw new Error("A job ID, status, and comment data are required to update the status.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/positions/${jobID}/status`;
+  console.log(`Updating status for job ${jobID} at: ${url}`);
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status, commentData }),
+  });
+
+  return handleApiResponse(response); 
+}
+
+/**
+ * Retrieves all applications with status "ACCEPTED_OFFER" for admin hiring review.
+ * @returns {Promise<Array>} An array of application objects with job position and resume details.
+ */
+export async function getCandidateApplicationsAsAdmin() {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/admin`;
+  console.log(`Fetching admin applications from: ${url}`);
 
   const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+/**
+ * Checks if a job position is full.
+ * @param {string} jobPositionId - The ID of the job position.
+ * @returns {Promise<{isFull: boolean}>} An object containing the isFull boolean result.
+ */
+export async function checkJobPositionIsFull(jobPositionId) {
+  if (!jobPositionId) {
+    throw new Error("A Job Position ID is required to check if it is full.");
+  }
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/positions/${jobPositionId}/is-full`;
+  console.log(`Checking if job position is full at: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+/**
+ * Hires a candidate for a job position and promotes them to employee.
+ * @param {string} candidateUsername - The username of the candidate to hire.
+ * @param {string|number} applicationId - The ID of the application record.
+ * @param {string} jobPositionId - The ID of the job position.
+ * @param {number} employeeId - The employee ID to assign.
+ * @param {Object} commentData - Comment data for the hiring action.
+ * @returns {Promise<Object>} The updated application record.
+ */
+export async function hireCandidate(candidateUsername, applicationId, jobPositionId, employeeId, commentData) {
+  if (!candidateUsername || !applicationId || !jobPositionId || !employeeId || !commentData) {
+    throw new Error("Missing required fields: candidateUsername, applicationId, jobPositionId, employeeId, and commentData are all required.");
+  }
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined. Check your .env.local file.");
+  }
+  
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/hire`;
+  console.log(`Hiring candidate via: ${url}`);
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      candidateUsername,
+      applicationId,
+      jobPositionId,
+      employeeId,
+      commentData,
+    }),
+  });
+
   return handleApiResponse(response);
 }
 
@@ -309,16 +439,38 @@ export async function getCandidateApplicationsAsEmployer(searchTerm, searchBy, a
   return handleApiResponse(response);
 }
 
+/**
+ * Gathers a list of all unique semester codes for job positions with an "OPEN" status.
+ * @returns {Promise<Array>} A promise that resolves to an array of semester codes.
+ */
+export async function getSemesterCodesForOpenPositions() {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/semester-codes?status=OPEN`;
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+/**
+ * Gathers a list of all unique semester codes for a specific employer's job positions.
+ * @param {string} employerUsername - The username of the employer. 
+ * @returns {Promise<Array>} A promise that resolves to an array of semester codes.
+ */
 export async function getSemesterCodesForEmployer(employerUsername) {
   if (!employerUsername) {
-    throw new Error("A Username is required to fetch a user profile.");
+    throw new Error("A username is required to fetch semester codes for an employer.");
   }
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error(
       "Backend API URL components are not defined. Check your .env.local file."
     );
   }
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/semester-codes/${employerUsername}`;
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/semester-codes?employer=${employerUsername}`;
   const response = await fetch(url);
   return handleApiResponse(response);
 }

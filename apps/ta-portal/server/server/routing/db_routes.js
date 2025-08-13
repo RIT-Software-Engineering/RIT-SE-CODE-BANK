@@ -11,6 +11,12 @@ const multer = require("multer");
 
 // Import all necessary database query functions.
 const {
+  createJobPosition,
+  updateJobPosition,
+  updateJobPositionStatus,
+  getOpenJobPositions,
+  getJobPositionsByOwner,
+  getAllJobPositions,
   getAllUsers,
   getAllCourses,
   createCourse,
@@ -22,9 +28,10 @@ const {
   updateCandidateProfile,
   createEmployerProfile,
   updateEmployerProfile,
-  getOpenJobPositions,
-  getJobPositionsByStatus,
   getCandidateApplicationsAsEmployer,
+  getCandidateApplicationsAsAdmin,
+  hireCandidateForJobPosition,
+  isJobPositionFull,
   applyForJobPosition,
   addNewCandidateResume,
   updatePrimaryResume,
@@ -32,15 +39,12 @@ const {
   getCandidateResumes,
   updateResumeName,
   getCandidateApplications,
-  modifyPosition,
-  getAllPositions,
-  getSemesterCodesForEmployer,
+  getSemesterCodes,
   deleteCandidateApplication,
   getCandidateApplication,
   getCandidateHiredStatus,
   changeCandidateApplicationStatus,
   getComments,
-  createPosition,
   terminateEmployee,
   upsertTimecard,
   upsertTimecardDay,
@@ -119,94 +123,185 @@ const upload = multer({
 // =============================================================================
 
 /**
- * @route   GET /api/db/open-positions
- * @desc    Retrieves and searches and filters open job positions based on query parameters.
- * @access  Public
- * @query   {string} [searchTerm] - Text to search in course names/codes.
- * @query   {string} [filters] - A JSON string of filter criteria.
- * @query   {string} [candidateUsername] - The Username of the candidate for eligibility checks.
+ * @route   GET /api/db/positions
+ * @desc    Searches all job positions, or retrieves all if no queries are provided.
+ * @access  Public (Admins get more powerful filtering on the frontend)
+ * @query   {string} [searchTerm] - Optional search term.
+ * @query   {string} [filters] - Optional URL-encoded JSON string of filter criteria.
+ * @returns {Array} An array of all matching job position objects.
  */
-router.get('/open-positions', async (req, res) => {
-  const { searchTerm, filters: filtersString, candidateUsername } = req.query;
-  try {
-    const filters = filtersString ? JSON.parse(filtersString) : {};
-    const positions = await getOpenJobPositions(
-      searchTerm,
-      filters,
-      candidateUsername
-    );
-    res.status(200).json(positions);
-  } catch (error) {
-    console.error('Error in /open-positions route:', error);
-    res
-      .status(500)
-      .json({ error: 'Failed to search or filter open positions.' });
-  }
-});
-
-router.get("/pending-job-positions", async (req, res) => {
-  const { status, employerUsername } = req.query; 
-
-  // Add a check to ensure status is provided
-  if (!status) {
-    return res.status(400).json({ error: 'Status parameter is required.' });
-  }
-
-  try {
-    const positions = await getJobPositionsByStatus(status, employerUsername);
-    console.log("Positions are: ", positions);
-    res.status(200).json(positions);
-  } catch (error) {
-    console.error('Error in /pending-job-positions route:', error);
-    res
-      .status(500)
-      .json({ error: 'Failed to retrieve pending positions.' });
-  }
-});
-
-router.put("/modify-position/:id", async (req, res) => {
-  try {
-    // This is the critical step.
-    // It pulls the 'id' property out into its own variable.
-    // Everything else goes into the 'positionData' object.
-    const { id, ...positionData } = req.body;
-
-    // Check if the ID was actually in the request body.
-    if (!id) {
-      return res.status(400).json({ error: "Job position ID is required in the request body." });
-    }
-
-    // Now, call your database function with the correct arguments:
-    // 1. The ID string
-    // 2. The object with the rest of the data
-    const position = await modifyPosition(id, positionData);
-    
-    res.status(200).json(position);
-
-  } catch (error) {
-    console.error("Error in /modify-position route: ", error);
-    res.status(500).json({ error: "Failed to update position" });
-  }
-});
-
-router.post("/create-position/:employerUsername", async (req, res) => {
-  try{
-    const positionData = req.body;
-    const position = await createPosition(positionData, req.params.employerUsername);
-    res.status(201).json(position);
-  } catch (error) {
-    console.error("Error in /create-position route:", error);
-    res.status(500).json({ error: "Failed to create position." });
-  }
-})
-
 router.get("/positions", async (req, res) => {
   try {
-    const positions = await getAllPositions();
+    const { searchTerm } = req.query;
+    let filters = {};
+
+    if (req.query.filters) {
+      try {
+        filters = JSON.parse(req.query.filters);
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid filters format." });
+      }
+    }
+
+    // Call the new, more powerful search function
+    const positions = await getAllJobPositions(searchTerm, filters);
     res.status(200).json(positions);
+
   } catch (error) {
-    console.error("Error in /positions route:", error);
+    console.error("Error in GET /positions route:", error);
     res.status(500).json({ error: "Failed to retrieve positions." });
+  }
+});
+
+/**
+ * @route   GET /api/db/positions/open
+ * @desc    Searches and filters all OPEN job positions.
+ * @access  Public
+ * @query   {string} [searchTerm] - Optional search term.
+ * @query   {string} [filters] - Optional URL-encoded JSON string of filter criteria.
+ * @query   {string} [candidateUsername] - Optional username for candidate-specific filters.
+ * @returns {Array} An array of matching open job position objects.
+ */
+router.get("/positions/open", async (req, res) => {
+  try {
+    const { searchTerm, candidateUsername } = req.query;
+    let filters = {};
+
+    if (req.query.filters) {
+      try {
+        filters = JSON.parse(req.query.filters);
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid filters format. Must be a valid JSON string." });
+      }
+    }
+
+    const positions = await getOpenJobPositions(searchTerm, filters, candidateUsername);
+    res.status(200).json(positions);
+    
+  } catch (error) {
+    console.error("Error in GET /positions/open route:", error);
+    res.status(500).json({ error: "Failed to retrieve open positions." });
+  }
+});
+
+/**
+ * @route   GET /api/db/positions/owner/:username
+ * @desc    Retrieves job positions owned by a specific user, with optional filters.
+ * @access  Public (should be protected by auth middleware)
+ * @param   {string} username - The username of the position owner.
+ * @query   {string} [searchTerm] - Optional search term.
+ * @query   {string} [filters] - Optional URL-encoded JSON string of filter criteria.
+ * @returns {Array} An array of matching job position objects.
+ */
+router.get("/positions/owner/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+    const { searchTerm } = req.query;
+    let filters = {};
+
+    if (req.query.filters) {
+      try {
+        filters = JSON.parse(req.query.filters);
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid filters format. Must be a valid JSON string." });
+      }
+    }
+
+    const positions = await getJobPositionsByOwner(searchTerm, filters, username);
+    res.status(200).json(positions);
+
+  } catch (error) {
+    console.error(`Error in GET /positions/owner/${req.params.username} route:`, error);
+    res.status(500).json({ error: "Failed to retrieve owned positions." });
+  }
+});
+
+/**
+ * @route   POST /api/db/positions
+ * @desc    Creates a new job position record.
+ * @access  Public
+ * @body    {Object} positionData - An object containing job position details.
+ * @body    {Object} employerData - An object containing employer details.
+ * @returns {Object} The newly created job position object.
+ */
+router.post("/positions", async (req, res) => {
+  try {
+    // Expect the request body to contain the two required data objects
+    const { positionData, employerData } = req.body;
+
+    // Basic validation to ensure the required data is present
+    if (!positionData || !employerData) {
+      return res.status(400).json({ error: "Request body must contain 'positionData' and 'employerData' objects." });
+    }
+
+    const newPosition = await createJobPosition(positionData, employerData);
+    res.status(201).json(newPosition);
+
+  } catch (error) {
+    // The db function throws a specific error for duplicates
+    if (error.message.includes("already exists")) {
+      return res.status(409).json({ error: error.message }); // 409 Conflict
+    }
+    console.error("Error in POST /positions route:", error);
+    res.status(500).json({ error: "Failed to create position." });
+  }
+});
+
+/**
+ * @route   PUT /api/db/positions/:id
+ * @desc    Updates an existing job position record.
+ * @access  Public
+ * @param   {string} id - The ID of the job position to update.
+ * @body    {Object} positionData - An object containing updated job position details.
+ * @body    {Object} commentData - An object containing updated comment details.
+ * @returns {Object} The updated job position object.
+ */
+router.put("/positions/:id", async (req, res) => {
+  try {
+    // Get the job ID from the URL parameters
+    const { id } = req.params;
+    
+    // Get the position and comment data from the request body
+    const { positionData, commentData } = req.body;
+
+    // Validation
+    if (!positionData || !commentData) {
+      return res.status(400).json({ error: "Request body must contain 'positionData' and 'commentData' objects." });
+    }
+
+    const updatedPosition = await updateJobPosition(id, positionData, commentData);
+    res.status(200).json(updatedPosition);
+
+  } catch (error) {
+    console.error(`Error in PUT /positions/${req.params.id} route:`, error);
+    res.status(500).json({ error: "Failed to update position." });
+  }
+});
+
+/**
+ * @route   PUT /api/db/positions/:id/status
+ * @desc    Updates only the status of a specific job position.
+ * @access  Public (should be protected by auth middleware)
+ * @param   {string} id - The ID of the job position to update.
+ * @body    {string} status - The new status for the job position.
+ * @body    {Object} commentData - An object containing comment details.
+ * @returns {Object} The updated job position object.
+ */
+router.put("/positions/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, commentData } = req.body;
+
+    if (!status || !commentData) {
+      return res.status(400).json({ error: "Request body must contain 'status' and 'commentData'." });
+    }
+
+    const updatedPosition = await updateJobPositionStatus(id, status, commentData);
+    res.status(200).json(updatedPosition);
+
+  } catch (error) {
+    console.error(`Error in PUT /positions/${req.params.id}/status route:`, error);
+    res.status(500).json({ error: "Failed to update position status." });
   }
 });
 
@@ -490,20 +585,119 @@ router.get('/applications/employer', async (req, res) => {
 
 /**
  * @route   GET /api/db/semester-codes
- * @desc    Retrieves all applications for job positions managed by a specific employer.
+ * @desc    Retrieves all unique semester codes. Can be filtered by status or employer.
  * @access  Public
- * @param   {string} employerUsername - The Username of the employer.
+ * @query   {string} [status] - Optional. Filter by job position status.
+ * @query   {string} [employer] - Optional. Filter by employer username.
  * @returns {Array} An array of unique semester codes.
- */ 
-router.get('/semester-codes/:employerUsername', async (req, res) => {
+ */
+router.get('/semester-codes', async (req, res) => {
   try {
-    const applications = await getSemesterCodesForEmployer(req.params.employerUsername);
-    res.status(200).json(applications);
+    const { status, employer } = req.query;
+    const semesterCodes = await getSemesterCodes(status, employer);
+    res.status(200).json(semesterCodes);
   } catch (error) {
     console.error('Error in /semester-codes route:', error.message, error.stack);
-    res.status(500).json({ error: 'An error occurred while searching and filtering applications.' });
+    res.status(500).json({ error: 'An error occurred while retrieving semester codes.' });
   }
-})
+});
+
+
+/**
+ * @route   GET /api/db/applications/admin
+ * @desc    Gets all applications with status "ACCEPTED_OFFER" for admin hiring review.
+ * @access  Public (should be protected by admin auth middleware)
+ * @returns {Array} An array of application objects with job position and resume details.
+ */
+router.get("/applications/admin", async (req, res) => {
+  try {
+    const applications = await getCandidateApplicationsAsAdmin();
+    res.status(200).json(applications);
+  } catch (error) {
+    console.error("Error in GET /applications/admin route:", error);
+    res.status(500).json({ error: "Failed to retrieve applications for admin." });
+  }
+});
+
+/**
+ * @route   GET /api/db/positions/:id/is-full
+ * @desc    Checks if a job position is full (status is 'FILLED' or 'ACTIVE').
+ * @access  Public (should be protected by auth middleware)
+ * @param   {string} id - The ID of the job position to check.
+ * @returns {Object} An object containing the isFull boolean result.
+ */
+router.get("/positions/:id/is-full", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({ error: "Job position ID is required." });
+    }
+
+    const isFull = await isJobPositionFull(id);
+    res.status(200).json({ isFull });
+  } catch (error) {
+    console.error(`Error in GET /positions/${req.params.id}/is-full route:`, error);
+    res.status(500).json({ error: "Failed to check if job position is full." });
+  }
+});
+
+/**
+ * @route   POST /api/db/hire
+ * @desc    Hires a candidate for a job position and promotes them to employee.
+ * @access  Public (should be protected by admin auth middleware)
+ * @body    {string} candidateUsername - The username of the candidate to hire.
+ * @body    {string} applicationId - The ID of the application record.
+ * @body    {string} jobPositionId - The ID of the job position.
+ * @body    {number} employeeId - The employee ID to assign.
+ * @body    {Object} commentData - Comment data for the hiring action.
+ * @returns {Object} The updated application record.
+ */
+router.post("/hire", async (req, res) => {
+  try {
+    const { candidateUsername, applicationId, jobPositionId, employeeId, commentData } = req.body;
+
+    // Validate required fields
+    if (!candidateUsername || !applicationId || !jobPositionId || !employeeId || !commentData) {
+      return res.status(400).json({ 
+        error: "Missing required fields: candidateUsername, applicationId, jobPositionId, employeeId, and commentData are all required." 
+      });
+    }
+
+    // Validate commentData structure
+    if (!commentData.author || !commentData.comment) {
+      return res.status(400).json({ 
+        error: "commentData must contain 'author' and 'comment' fields." 
+      });
+    }
+
+    // Validate employeeId is a number
+    if (typeof employeeId !== 'number' || isNaN(employeeId)) {
+      return res.status(400).json({ 
+        error: "employeeId must be a valid number." 
+      });
+    }
+
+    const updatedApplication = await hireCandidateForJobPosition(
+      candidateUsername, 
+      parseInt(applicationId), 
+      jobPositionId, 
+      employeeId, 
+      commentData
+    );
+    
+    res.status(200).json(updatedApplication);
+  } catch (error) {
+    console.error("Error in POST /hire route:", error);
+    
+    // Handle specific error cases
+    if (error.message.includes("not found")) {
+      return res.status(404).json({ error: error.message });
+    }
+    
+    res.status(500).json({ error: "Failed to hire candidate." });
+  }
+});
 
 // =============================================================================
 // USER & PROFILE ROUTES

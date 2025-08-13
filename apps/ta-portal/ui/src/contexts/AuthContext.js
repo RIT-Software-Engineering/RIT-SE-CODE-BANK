@@ -1,27 +1,24 @@
 'use client';
-import { createContext, useState, useContext, useEffect } from "react";
-import { getUserProfile } from "@/services/db-apis"; 
+import { createContext, useState, useContext, useEffect, useCallback, useMemo } from "react";
+import { getUserProfile } from "@/services/db-apis";
 
 const AuthContext = createContext(null);
 
 export default function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Add a loading state
-  // This effect runs once when the app loads
+  const [loading, setLoading] = useState(true);
+
+  // Effect to load user data from storage on initial mount
   useEffect(() => {
     const loadUserData = async () => {
-      setLoading(true);
       try {
         const storedUsername = localStorage.getItem('username');
         if (storedUsername) {
-          // If a user ID is in storage, fetch their full profile
           const userProfile = await getUserProfile(storedUsername);
-          console.log("Session restored:", userProfile);
           setCurrentUser(userProfile);
         }
       } catch (error) {
         console.error("Session restore failed:", error);
-        // Clear out any bad data if the fetch fails
         localStorage.removeItem('username');
         setCurrentUser(null);
       } finally {
@@ -30,10 +27,10 @@ export default function AuthProvider({ children }) {
     };
 
     loadUserData();
-  }, []); // Empty dependency array means this runs only on mount
+  }, []); // Empty array ensures this runs only once on mount
 
-
-  const refreshUserProfile = async () => {
+  // Function to refresh user data on demand
+  const refreshUserProfile = useCallback(async () => {
     try {
       const storedUsername = localStorage.getItem('username');
       if (storedUsername) {
@@ -43,15 +40,22 @@ export default function AuthProvider({ children }) {
     } catch (error) {
       console.error("Failed to refresh user profile:", error);
     }
-  };
+  }, []);
 
+  // the logout function to clear the session
+  const logout = useCallback(() => {
+    localStorage.removeItem('username');
+    setCurrentUser(null);
+  }, []);
 
-  const value = {
+  // Memoize the context value to prevent unnecessary re-renders in consumers
+  const value = useMemo(() => ({
     currentUser,
     setCurrentUser,
-    loading, // Expose loading state
+    loading,
     refreshUserProfile,
-  };
+    logout
+  }), [currentUser, loading, refreshUserProfile, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
