@@ -504,7 +504,7 @@ export default function Journal() {
             <MenuItem key="none" value="">
               <em>None</em>
             </MenuItem>
-            {Object.entries(contactees).map(([name, id]) => (
+            {Object.entries(contactees).map(([id, name]) => (
               <MenuItem key={id} value={name}>
                 {name}
               </MenuItem>
