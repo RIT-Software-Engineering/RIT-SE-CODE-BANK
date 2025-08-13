@@ -50,29 +50,30 @@ const navItems = [
 
 // Pages need to be filled in as they are created
 const searchablePages = [
-  { label: "Dashboard", path: "/scoopdinator/dashboard" },
-  { label: "Review Applications", path: "/scoopdinator/applications" },
-  { label: "View Scooployees", path: "/scoopdinator/scooployees/view" },
-  {
-    label: "Assign Scooployees to Teams",
-    path: "/scoopdinator/scooployees/assign",
-  },
-  { label: "Manage Projects", path: "/projects/1" },
-  { label: "View Projects", path: "/projects" },
-  { label: "Assign Teams", path: "/projects/assign/team" },
-  { label: "Assign Scoopervisor", path: "/projects/assign/scoopervisor" },
-  {
-    label: "Contact Advisors",
-    path: "/scoopdinator/administrative/contact/advisors",
-  },
-  {
-    label: "Contact Co-op Coordinators",
-    path: "/scoopdinator/administrative/contact/coordinators",
-  },
-  {
-    label: "Manage Co-op Reports",
-    path: "/scoopdinator/administrative/reports",
-  },
+    { label: "Workflows", path: "/scoopdinator/workflows" },
+    { label: "Dashboard", path: "/scoopdinator/dashboard" },
+    { label: "Review Applications", path: "/scoopdinator/applications" },
+    { label: "View Scooployees", path: "/scoopdinator/scooployees/view" },
+    {
+        label: "Assign Scooployees to Teams",
+        path: "/scoopdinator/scooployees/assign",
+    },
+    { label: "Manage Projects", path: "/projects/1" },
+    { label: "View Projects", path: "/projects" },
+    { label: "Assign Teams", path: "/projects/assign/team" },
+    { label: "Assign Scoopervisor", path: "/projects/assign/scoopervisor" },
+    {
+        label: "Contact Advisors",
+        path: "/scoopdinator/administrative/contact/advisors",
+    },
+    {
+        label: "Contact Co-op Coordinators",
+        path: "/scoopdinator/administrative/contact/coordinators",
+    },
+    {
+        label: "Manage Co-op Reports",
+        path: "/scoopdinator/administrative/reports",
+    },
 ];
 
 export default function Header() {

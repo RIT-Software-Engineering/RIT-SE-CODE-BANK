@@ -39,7 +39,7 @@ export default function Journal() {
    */
   const [journalEntries, setJournalEntries] = useState([]);
   const [contactees, setContactees] = useState({});
-  const [semesterGroups, setSemesterGroups] = useState({});
+  const [semester_groups, setSemesterGroups] = useState({});
 
   /**
    * This is for determining whether the dialog box for creating a
@@ -51,10 +51,7 @@ export default function Journal() {
   // For filtering journal entries
   const [filterSemesterValue, setFilterSemesterValue] = useState("");
   const [filterContacteeValue, setFilterContacteeValue] = useState("");
-  // For creating new journal entries
-  const [newEntrySemester, setNewEntrySemester] = useState("");
-  const [newEntryContactee, setNewEntryContactee] = useState("");
-  // For editing journal entry notes
+  // For editing nournal entry notes
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
   // For page loading
@@ -85,7 +82,7 @@ export default function Journal() {
         const contacteeMap = {};
         users.forEach((user) => {
           const fullName = `${user.fname} ${user.lname}`;
-          contacteeMap[user.id] = fullName;
+          contacteeMap[fullName] = user.id;
         });
         setContactees(contacteeMap);
 
@@ -225,7 +222,7 @@ export default function Journal() {
       );
       res.status(200).json({ message: "Notes saved successfully." });
     } catch (error) {
-      console.error("Failed to save entry notes: ", error);
+      console.error("Failed to save entry notes:", error);
     }
     setEditingEntry(null);
   };
@@ -247,64 +244,13 @@ export default function Journal() {
     setEditValue("");
   };
 
-  const postNewEntry = async () => {
-    const [contactee_fname, contactee_lname] = contactees[
-      newEntryContactee
-    ]?.split(" ") || ["", ""];
-
-    const entry = {
-      date: new Date().toISOString(), // Add this to match existing entries
-      contactee_fname,
-      contactee_lname,
-      notes: editValue,
-      journal_owner_fname: "Demo",
-      journal_owner_lname: "Owner",
-      journal_owner_type: "admin",
-      semester_GroupId: Number(newEntrySemester),
-    };
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/journal`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(entry),
-        }
-      );
-      const data = await res.json();
-      if (data.entry) {
-        setJournalEntries((prev) => [data.entry, ...prev]);
-      } else {
-        console.warn("No entry returned from API");
-        throw error;
-      }
-
-      setNewEntryOpen(false);
-      setEditValue("");
-      setNewEntrySemester("");
-      setNewEntryContactee("");
-    } catch (error) {
-      console.error("Failed to create a new journal entry: ", error);
-    }
-  };
-
   /**
    * A stubbed function for creating a new journal entry.
    * Currently, an alert is produced.
    * @returns {void}
    */
   const handleCreateNewEntry = () => {
-    if (!newEntrySemester || !newEntryContactee) {
-      toast.error("Please fill out all fields.");
-      return;
-    }
-
-    toast.promise(postNewEntry(), {
-      loading: "Creating new journal entry...",
-      success: "Journal entry created!",
-      error: "Failed to create a new journal entry.",
-    });
+    alert("Funcitonality not implemented yet.");
   };
 
   if (loading) {
@@ -319,6 +265,7 @@ export default function Journal() {
           setFilterDialogOpen={setFilterDialogOpen}
           setNewEntryOpen={setNewEntryOpen}
         />
+
         {journalEntries.length === 0 ? (
           <Typography variant="body1">
             No journal entries found. Please check back later.
@@ -359,7 +306,7 @@ export default function Journal() {
                 with {entry.contactee_fname} {entry.contactee_lname}
               </Typography>
               <Typography>
-                Semester: {semesterGroups[entry.semester_GroupId] || "Unknown"}
+                Semester: {semester_groups[entry.semester_GroupId] || "Unknown"}
               </Typography>
               <Typography variant="body1">Notes:</Typography>
               <Box
@@ -399,13 +346,13 @@ export default function Journal() {
             {/* TODO: Create separate constants for semester group and contactee in new journal entry */}
             <FormControl fullWidth>
               <Autocomplete
-                options={Object.entries(semesterGroups).map(([id, name]) => ({
+                options={Object.entries(semester_groups).map(([id, name]) => ({
                   label: name,
                   value: id,
                 }))}
                 getOptionLabel={(option) => option.label}
                 onChange={(event, newValue) =>
-                  setNewEntrySemester(newValue ? newValue.value : "")
+                  setFilterSemesterValue(newValue ? newValue.value : "")
                 }
                 renderInput={(params) => (
                   <TextField
@@ -413,33 +360,37 @@ export default function Journal() {
                     label="Semester"
                     variant="outlined"
                     fullWidth
-                    required
                   />
                 )}
-                sx={{ my: 2 }}
+                sx={{ mb: 2 }}
               />
             </FormControl>
 
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <Autocomplete
-                options={Object.entries(contactees).map(([id, name]) => ({
-                  label: name,
-                  value: id,
-                }))}
-                getOptionLabel={(option) => option.label}
-                onChange={(event, newValue) =>
-                  setNewEntryContactee(newValue ? newValue.value : "")
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Contactee"
-                    variant="outlined"
-                    fullWidth
-                    required
-                  />
-                )}
-              />
+              <InputLabel
+                id="contactee-select-label"
+                sx={{
+                  "&.Mui-focused": {
+                    color: theme.ritColors.orange,
+                  },
+                }}
+              >
+                Contactee
+              </InputLabel>
+              <Select
+                labelId="contactee-select-label"
+                id="contactee-select"
+                label="Contactee"
+                value={filterContacteeValue}
+                onChange={handleFilterContacteeChange}
+              >
+                <MenuItem value="">Select Contactee</MenuItem>
+                {Object.entries(contactees).map(([name, id]) => (
+                  <MenuItem key={id} value={name}>
+                    {name}
+                  </MenuItem>
+                ))}
+              </Select>
             </FormControl>
 
             <textarea
@@ -487,7 +438,7 @@ export default function Journal() {
             <MenuItem key="none" value="">
               <em>None</em>
             </MenuItem>
-            {Object.entries(semesterGroups).map(([id, name]) => (
+            {Object.entries(semester_groups).map(([id, name]) => (
               <MenuItem key={id} value={id}>
                 {name}
               </MenuItem>
