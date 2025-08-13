@@ -69,7 +69,7 @@ export default function Journal() {
     const fetchEntries = async () => {
       setLoading(true);
 
-      // Fetch the journal entries
+      // Fetch the journal entries, users, and semester groups
       try {
         const [entriesRes, usersRes, semestersRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`),
@@ -294,7 +294,7 @@ export default function Journal() {
 
   /**
    * A stubbed function for creating a new journal entry.
-   * Currently, an alert is produced.
+   *
    * @returns {void}
    */
   const handleCreateNewEntry = () => {
