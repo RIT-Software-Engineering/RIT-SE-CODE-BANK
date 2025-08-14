@@ -140,7 +140,16 @@ export default function AdminApplicationsPage() {
 
     try {
       const applications = await getCandidateApplicationsAsAdmin();
-      setHiringApplications(applications);
+      const processedApplications = applications.map((app) => {
+        if (app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]) {
+          return {
+            ...app,
+            candidateGrade: gradeEnumToStringValue[app.candidateGrade],
+          };
+        }
+        return app;
+      });
+      setHiringApplications(processedApplications);
     } catch (err) {
       console.error('Error fetching hiring applications:', err);
       setHiringError(err.message);

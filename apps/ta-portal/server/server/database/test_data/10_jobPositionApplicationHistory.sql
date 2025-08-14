@@ -9,6 +9,9 @@ INSERT INTO `JobPositionApplicationHistory` (`username`, `candidateUID`, `jobPos
 ('dd6789', 302, '2241-MATH-123-1', 2, 'HIRED', 'Denise', 'Designer', 'she/her', 'student2@example.com', 'Mathematics', 5, 'A', TRUE, TRUE, 'MATH-123', NULL, NULL),
 ('dd6789', 302, '2241-SWEN-561-1', 2, 'REJECTED', 'Denise', 'Designer', 'she/her', 'student2@example.com', 'Mathematics', 5, NULL, FALSE, TRUE, 'MATH-123', NULL, NULL),
 
+-- Student 303 (Evan Engineer) Application
+('ee8901', 303, '2241-SWEN-344-1', 3, 'ACCEPTED_OFFER', 'Evan', 'Engineer', 'they/them', 'student3@example.com', 'Computer Engineering', 2, 'B_PLUS', FALSE, TRUE, 'MATH-123, SWEN-561, SWEN-383', NULL, NULL),
+
 -- Student 304 (Tyler Tester) Application
 ('tt7890', 304, '2241-SWEN-561-2', 3, 'APPLIED', 'Tyler', 'Tester', 'they/them', 'student4@example.com', 'Mathematics', 6, NULL, FALSE, TRUE, 'MATH-123', NULL, NULL),
 ('tt7890', 304, '2237-SWEN-344-1', 3, 'INACTIVE', 'Tyler', 'Tester', 'they/them', 'student4@example.com', 'Mathematics', 6, NULL, FALSE, TRUE, 'MATH-123', NULL, NULL),
