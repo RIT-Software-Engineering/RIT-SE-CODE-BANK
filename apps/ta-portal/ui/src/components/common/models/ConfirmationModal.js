@@ -15,7 +15,7 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, title, c
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center" aria-modal="true" role="dialog">
+    <div className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-60 flex justify-center items-center z-50" aria-modal="true" role="dialog">
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4">
         <h2 className="text-xl font-bold text-gray-800 mb-4">{title}</h2>
         <div className="text-gray-600 mb-6">
