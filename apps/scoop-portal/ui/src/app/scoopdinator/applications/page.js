@@ -203,6 +203,7 @@ export default function SupervisorApplicationsPage() {
     prev_login: "default",
   };
 
+  // TODO: Doc comment description
   /**
    *
    *
@@ -313,9 +314,6 @@ export default function SupervisorApplicationsPage() {
                   sx={{
                     opacity: app.hasBeenRead ? 0.6 : 1,
                     transition: "opacity 0.3s",
-                    "&:hover": {
-                      backgroundColor: "#fafafa",
-                    },
                   }}
                 >
                   <TableCell>{app.firstName}</TableCell>

@@ -170,6 +170,18 @@ export const lightTheme = createTheme({
     },
     text: { primary: "#000000" },
   },
+  components: {
+    ...baseTheme.components,
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          "&:hover": {
+            backgroundColor: "#fafafa",
+          },
+        },
+      },
+    },
+  },
 });
 
 // Dark Theme
@@ -185,6 +197,15 @@ export const darkTheme = createTheme({
   },
   components: {
     ...baseTheme.components,
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          "&:hover": {
+            backgroundColor: "#0e0e0e",
+          },
+        },
+      },
+    },
     MuiTypography: {
       styleOverrides: {
         h1: {
