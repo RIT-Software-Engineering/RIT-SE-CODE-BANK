@@ -1,11 +1,14 @@
 import { createTheme } from "@mui/material/styles";
 
 /**
- * This is the foundation of the theme.
+ * This is the foundation of the custom themes.
  */
 const baseTheme = createTheme({
-  // If you need to use the RIT brand colors for anything specific,
-  // you can use the variables in ritColors
+  /**
+   * If you need to use the RIT brand colors for anything specific
+   * (and you don't feel like memorizing the color codes), you can
+   * use the variables in ritColors
+   */
   ritColors: {
     orange: "#F76902",
     white: "#FFFFFF",
@@ -159,7 +162,10 @@ const baseTheme = createTheme({
   },
 });
 
-// Light Theme
+/**
+ * This is the light theme.
+ * It extends from the base theme and adds additional styles to make the light theme.
+ */
 export const lightTheme = createTheme({
   ...baseTheme,
   palette: {
@@ -184,7 +190,10 @@ export const lightTheme = createTheme({
   },
 });
 
-// Dark Theme
+/**
+ * This is the dark theme.
+ * It extends from the base theme and adds additional styles to make the dark theme.
+ */
 export const darkTheme = createTheme({
   ...baseTheme,
   palette: {
