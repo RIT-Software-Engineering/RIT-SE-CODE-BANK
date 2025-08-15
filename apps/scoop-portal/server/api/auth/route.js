@@ -9,7 +9,7 @@ function hashPassword(password) {
   return crypto.createHash("sha256").update(password).digest("hex");
 }
 
-// SIGNUP - create login record
+// create login record
 router.post("/signup", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -34,7 +34,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// LOGIN - verify credentials
+// verify credentials
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -48,7 +48,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    // Optionally find related user record
+    //  find related user record
     const userRecord = await prisma.users.findUnique({ where: { email } });
 
     res.status(200).json({
