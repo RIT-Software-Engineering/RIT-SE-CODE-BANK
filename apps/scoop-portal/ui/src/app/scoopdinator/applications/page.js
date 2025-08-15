@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@mui/material";
 import Header from "@components/Header";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 
 /**
  * The statuses to filter applications by.
@@ -203,9 +204,13 @@ export default function SupervisorApplicationsPage() {
     prev_login: "default",
   };
 
-  // TODO: Doc comment description
   /**
+   * Creates a new user object from the application data.
    *
+   * This function formats the application data into a user object that can be
+   * used to create a new user in the database. It extracts relevant fields
+   * from the application and sets default values for fields that are not
+   * provided.
    *
    * @param {*} app - The application providing information on the new user to create.
    * @returns {User} The new user created from the application.
@@ -224,9 +229,12 @@ export default function SupervisorApplicationsPage() {
     };
   };
 
-  // TODO: More info for doc comment
   /**
    * Handles the logic to submit accepted applicants as new users into the database.
+   *
+   * This function filters the applications to find those that have been accepted, and then
+   * creates a new user object for each accepted application. It then posts each new user
+   * to the users API endpoint.
    *
    * For each application where accepted=true, format data into user and then do users post like how you would do application post.
    * @returns {void}
@@ -268,11 +276,11 @@ export default function SupervisorApplicationsPage() {
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           sx={{
-            bgcolor: "#fff",
             borderRadius: 2,
             minWidth: 200,
             boxShadow: 1,
           }}
+          startAdornment={<FilterAltOutlinedIcon />}
         >
           {STATUSES.map((status) => (
             <MenuItem key={status} value={status}>
