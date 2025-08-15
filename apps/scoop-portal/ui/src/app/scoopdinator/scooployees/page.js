@@ -225,7 +225,9 @@ export default function ViewScooployees() {
           setImportFile(null);
           setManageOpen(false);
 
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/employees`);
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/users/employees`
+          );
           const data = await res.json();
           setEmployees(data);
         } catch (err) {
@@ -256,12 +258,18 @@ export default function ViewScooployees() {
         View Scooployees
       </Typography>
 
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
         <Select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           sx={{
-            bgcolor: "#fff",
             borderRadius: 2,
             minWidth: 200,
             boxShadow: 1,
@@ -273,7 +281,11 @@ export default function ViewScooployees() {
             </MenuItem>
           ))}
         </Select>
-        <Button variant="contained" onClick={() => setManageOpen(true)} sx={{ mr: "10px"}}>
+        <Button
+          variant="contained"
+          onClick={() => setManageOpen(true)}
+          sx={{ mr: "10px" }}
+        >
           Manage
         </Button>
       </Box>
@@ -291,7 +303,12 @@ export default function ViewScooployees() {
                     active={sortField === field}
                     direction={sortField === field ? sortOrder : "asc"}
                     onClick={() => handleSort(field)}
-                    sx={{ color: "#fff", "& .MuiTableSortLabel-icon": { color: "#b35200 !important" } }}
+                    sx={{
+                      color: "#fff",
+                      "& .MuiTableSortLabel-icon": {
+                        color: "#b35200 !important",
+                      },
+                    }}
                   >
                     {field === "fname" && "First Name"}
                     {field === "lname" && "Last Name"}
@@ -315,9 +332,6 @@ export default function ViewScooployees() {
                 sx={{
                   opacity: employee.hasBeenRead ? 0.6 : 1,
                   transition: "opacity 0.3s",
-                  "&:hover": {
-                    backgroundColor: "#fafafa",
-                  },
                 }}
               >
                 <TableCell>{employee.fname}</TableCell>
@@ -330,16 +344,8 @@ export default function ViewScooployees() {
                 </TableCell>
                 <TableCell align="right">
                   <Button
-                    variant="outlined"
+                    variant="outline-orange"
                     onClick={() => handleOpen(employee)}
-                    sx={{
-                      borderColor: "#F76902",
-                      color: "#F76902",
-                      "&:hover": {
-                        backgroundColor: "#F76902",
-                        color: "#fff",
-                      },
-                    }}
                   >
                     View
                   </Button>
@@ -351,18 +357,34 @@ export default function ViewScooployees() {
       </Paper>
 
       {/* Employee View Modal */}
-      <Dialog open={!!selectedEmployee} onClose={handleClose} maxWidth="sm" fullWidth>
+      <Dialog
+        open={!!selectedEmployee}
+        onClose={handleClose}
+        maxWidth="sm"
+        fullWidth
+      >
         {selectedEmployee && (
           <>
-            <DialogTitle sx={{ bgcolor: "#F76902", color: "#fff", fontWeight: 600 }}>
+            <DialogTitle
+              sx={{ bgcolor: "#F76902", color: "#fff", fontWeight: 600 }}
+            >
               Employee: {selectedEmployee.fname} {selectedEmployee.lname}
             </DialogTitle>
             <DialogContent dividers>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <Typography><strong>First Name:</strong> {selectedEmployee.fname}</Typography>
-                <Typography><strong>Last Name:</strong> {selectedEmployee.lname}</Typography>
-                <Typography><strong>Email:</strong> {selectedEmployee.email}</Typography>
-                <Typography><strong>Semester Group:</strong> {selectedEmployee.semesterGroup}</Typography>
+                <Typography>
+                  <strong>First Name:</strong> {selectedEmployee.fname}
+                </Typography>
+                <Typography>
+                  <strong>Last Name:</strong> {selectedEmployee.lname}
+                </Typography>
+                <Typography>
+                  <strong>Email:</strong> {selectedEmployee.email}
+                </Typography>
+                <Typography>
+                  <strong>Semester Group:</strong>{" "}
+                  {selectedEmployee.semesterGroup}
+                </Typography>
                 <Typography>
                   <strong>Team:</strong>{" "}
                   {selectedEmployee.teams && selectedEmployee.teams.length > 0
@@ -379,7 +401,11 @@ export default function ViewScooployees() {
               >
                 Journal
               </Button>
-              <Button variant="contained" sx={{ bgcolor: "#007bff", "&:hover": { bgcolor: "#0066cc" } }} onClick={handleAssignClick}>
+              <Button
+                variant="contained"
+                sx={{ bgcolor: "#007bff", "&:hover": { bgcolor: "#0066cc" } }}
+                onClick={handleAssignClick}
+              >
                 Assign
               </Button>
               <Button onClick={handleClose} variant="outlined" color="inherit">
@@ -391,7 +417,12 @@ export default function ViewScooployees() {
       </Dialog>
 
       {/* Assign Team Modal */}
-      <Dialog open={assignModalOpen} onClose={() => setAssignModalOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Assign Team</DialogTitle>
         <DialogContent>
           <Select
@@ -400,7 +431,9 @@ export default function ViewScooployees() {
             fullWidth
             displayEmpty
           >
-            <MenuItem value="" disabled>Select a Team</MenuItem>
+            <MenuItem value="" disabled>
+              Select a Team
+            </MenuItem>
             {teams.map((team) => (
               <MenuItem key={team.id} value={team.id}>
                 {team.name}
@@ -412,19 +445,29 @@ export default function ViewScooployees() {
           <Button onClick={() => setAssignModalOpen(false)} color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleConfirmAssignOpen} disabled={!selectedTeam} variant="contained">
+          <Button
+            onClick={handleConfirmAssignOpen}
+            disabled={!selectedTeam}
+            variant="contained"
+          >
             Confirm
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Confirm Assign Dialog */}
-      <Dialog open={confirmAssignOpen} onClose={() => setConfirmAssignOpen(false)}>
+      <Dialog
+        open={confirmAssignOpen}
+        onClose={() => setConfirmAssignOpen(false)}
+      >
         <DialogTitle>Confirm Assignment</DialogTitle>
         <DialogContent>
           <Typography>
             Are you sure you want to assign{" "}
-            <strong>{selectedEmployee?.fname} {selectedEmployee?.lname}</strong> to the team{" "}
+            <strong>
+              {selectedEmployee?.fname} {selectedEmployee?.lname}
+            </strong>{" "}
+            to the team{" "}
             <strong>{teams.find((t) => t.id === selectedTeam)?.name}</strong>?
           </Typography>
         </DialogContent>
@@ -439,18 +482,19 @@ export default function ViewScooployees() {
       </Dialog>
 
       {/* Manage Modal */}
-      <Dialog open={manageOpen} onClose={() => setManageOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={manageOpen}
+        onClose={() => setManageOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Manage Employees</DialogTitle>
         <DialogContent>
           <Box sx={{ mb: 2 }}>
             <Button variant="contained" onClick={downloadCSV} sx={{ mr: 2 }}>
               Export CSV
             </Button>
-            <Button
-              variant="contained"
-              component="label"
-              disabled={importing}
-            >
+            <Button variant="contained" component="label" disabled={importing}>
               Import CSV
               <input
                 type="file"

@@ -10,12 +10,24 @@ CREATE TABLE `fruit` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `SemesterGroup` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(100) NOT NULL,
+    `dept` VARCHAR(100) NOT NULL,
+    `start_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `end_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    UNIQUE INDEX `SemesterGroup_name_key`(`name`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Project` (
     `id` INTEGER NOT NULL,
     `title` VARCHAR(191) NOT NULL,
     `display_name` VARCHAR(191) NOT NULL,
     `description` VARCHAR(255) NOT NULL,
-    `semester_GroupId` INTEGER NULL,
+    `semesterGroupId` INTEGER NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -34,6 +46,21 @@ CREATE TABLE `users` (
     `prev_login` VARCHAR(191) NOT NULL,
 
     UNIQUE INDEX `users_email_key`(`email`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `JournalEntry` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `date` DATETIME(3) NOT NULL,
+    `contactee_fname` VARCHAR(191) NOT NULL,
+    `contactee_lname` VARCHAR(191) NOT NULL,
+    `notes` VARCHAR(500) NULL,
+    `journal_owner_fname` VARCHAR(191) NOT NULL,
+    `journal_owner_lname` VARCHAR(191) NOT NULL,
+    `journal_owner_type` VARCHAR(191) NULL,
+    `semester_GroupId` INTEGER NULL,
+
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -73,33 +100,6 @@ CREATE TABLE `Teams` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Semester_Group` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(100) NOT NULL,
-    `dept` VARCHAR(100) NOT NULL,
-    `start_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `end_date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    UNIQUE INDEX `Semester_Group_name_key`(`name`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `Journal_Entry` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `date` DATETIME(3) NOT NULL,
-    `contactee_fname` VARCHAR(191) NOT NULL,
-    `contactee_lname` VARCHAR(191) NOT NULL,
-    `notes` VARCHAR(500) NULL,
-    `journal_owner_fname` VARCHAR(191) NOT NULL,
-    `journal_owner_lname` VARCHAR(191) NOT NULL,
-    `journal_owner_type` VARCHAR(191) NULL,
-    `semester_GroupId` INTEGER NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `_TeamMembers` (
     `A` INTEGER NOT NULL,
     `B` VARCHAR(191) NOT NULL,
@@ -109,13 +109,13 @@ CREATE TABLE `_TeamMembers` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `Project` ADD CONSTRAINT `Project_semester_GroupId_fkey` FOREIGN KEY (`semester_GroupId`) REFERENCES `Semester_Group`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `Project` ADD CONSTRAINT `Project_semesterGroupId_fkey` FOREIGN KEY (`semesterGroupId`) REFERENCES `SemesterGroup`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `JournalEntry` ADD CONSTRAINT `JournalEntry_semester_GroupId_fkey` FOREIGN KEY (`semester_GroupId`) REFERENCES `SemesterGroup`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Teams` ADD CONSTRAINT `Teams_projectId_fkey` FOREIGN KEY (`projectId`) REFERENCES `Project`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Journal_Entry` ADD CONSTRAINT `Journal_Entry_semester_GroupId_fkey` FOREIGN KEY (`semester_GroupId`) REFERENCES `Semester_Group`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_TeamMembers` ADD CONSTRAINT `_TeamMembers_A_fkey` FOREIGN KEY (`A`) REFERENCES `Teams`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

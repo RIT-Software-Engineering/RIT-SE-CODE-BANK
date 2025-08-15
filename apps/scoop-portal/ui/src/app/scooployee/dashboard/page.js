@@ -3,7 +3,7 @@ import React from "react";
 import { Box, Typography, Container, Button, Grid, Paper } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
-import Header from "../../_components/Header";
+import Header from "@components/Header";
 
 const workflows = [
   {

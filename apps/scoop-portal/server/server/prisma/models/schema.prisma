@@ -15,15 +15,26 @@ model fruit {
   rating String @default("0")
 }
 
+model SemesterGroup {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique @db.VarChar(100)
+  dept       String   @db.VarChar(100)
+  start_date DateTime @default(now())
+  end_date   DateTime @default(now())
+
+  projects        Project[]
+  journal_entries JournalEntry[]
+}
+
 model Project {
   id           Int    @id
   title        String
   display_name String
   description  String @db.VarChar(255)
 
-  teams            Teams[]
-  Semester_Group   Semester_Group? @relation(fields: [semester_GroupId], references: [id])
-  semester_GroupId Int?
+  teams           Teams[]
+  SemesterGroup   SemesterGroup? @relation(fields: [semesterGroupId], references: [id])
+  semesterGroupId Int?
 }
 
 model users {
@@ -31,7 +42,7 @@ model users {
   fname          String
   lname          String
   email          String @unique
-  type           String
+  role           String
   semester_group String
   project        String
   active         String
@@ -39,6 +50,20 @@ model users {
   prev_login     String
 
   teams Teams[] @relation("TeamMembers")
+}
+
+model JournalEntry {
+  id                  Int      @id @default(autoincrement())
+  date                DateTime
+  contactee_fname     String
+  contactee_lname     String
+  notes               String?  @db.VarChar(500)
+  journal_owner_fname String
+  journal_owner_lname String
+  journal_owner_type  String?
+
+  Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
+  semester_GroupId Int?
 }
 
 model Application {
@@ -65,33 +90,10 @@ model Application {
 }
 
 model Teams {
-  id        Int    @id @default(autoincrement())
-  name      String
+  id   Int    @id @default(autoincrement())
+  name String
+
   projectId Int?
-
-  project Project? @relation(fields: [projectId], references: [id])
-  members users[]  @relation("TeamMembers")
-}
-
-model Semester_Group {
-  id              Int             @id @default(autoincrement())
-  name            String          @unique @db.VarChar(100)
-  dept            String          @db.VarChar(100)
-  start_date      DateTime        @default(now())
-  end_date        DateTime        @default(now())
-  projects        Project[]
-  journal_entries Journal_Entry[]
-}
-
-model Journal_Entry {
-  id                  Int             @id @default(autoincrement())
-  date                DateTime
-  contactee_fname     String
-  contactee_lname     String
-  notes               String?         @db.VarChar(500)
-  journal_owner_fname String
-  journal_owner_lname String
-  journal_owner_type  String?
-  Semester_Group      Semester_Group? @relation(fields: [semester_GroupId], references: [id])
-  semester_GroupId    Int?
+  project   Project? @relation(fields: [projectId], references: [id])
+  members   users[]  @relation("TeamMembers")
 }

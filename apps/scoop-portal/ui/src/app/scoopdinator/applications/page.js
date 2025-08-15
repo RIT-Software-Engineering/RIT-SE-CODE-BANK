@@ -1,33 +1,40 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import {
+  Alert,
   Box,
   Button,
   Typography,
   Dialog,
   DialogTitle,
-  DialogContent,
   DialogActions,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Select,
+  DialogContent,
   MenuItem,
   Paper,
+  Select,
   Snackbar,
-  Alert,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import Header from "@components/Header";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 
+/**
+ * The statuses to filter applications by.
+ */
 const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
 
 export default function SupervisorApplicationsPage() {
+  /**
+   * The list of applications to be displayed on the page.
+   */
   const [applications, setApplications] = useState([]);
   const [status, setStatus] = useState("");
   const [selectedApp, setSelectedApp] = useState(null);
@@ -72,15 +79,44 @@ export default function SupervisorApplicationsPage() {
     }
   }, [selectedApp]);
 
+  /**
+   * Handles the logic for opening a selected application.
+   *
+   * This function sets the selectedApp constant to the application that was
+   * passed in and changes its hasBeenRead status to true. Next, it refelcts
+   * this change in the list of applications.
+   *
+   * @param {*} app - The application that's been selected to be opened.
+   * @returns {void}
+   */
   const handleOpen = (app) => {
-    setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
+    setSelectedApp({ ...app, hasBeenRead: true }); 
     setApplications((prev) =>
       prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
     );
   };
 
+  /**
+   * Handles the logic for closing a selected application.
+   *
+   * This function simply sets the selectedApp constant to null.
+   *
+   * @returns {void}
+   */
   const handleClose = () => setSelectedApp(null);
 
+  /**
+   * Updates the status of an application in the database.
+   *
+   * This function sends a PUT request to the API to update the status of
+   * a specific application. It expects the application ID to be in
+   * `selectedApp.id` and the new status to be passed as `newStatus`.
+   *
+   * @async
+   * @param {*} newStatus - The new status to set for the application.
+   * @throws {Error} If the update fails
+   * @returns {Promise<void>}
+   */
   async function putApplicationStatus(newStatus) {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/application/${selectedApp.id}`,
@@ -96,6 +132,12 @@ export default function SupervisorApplicationsPage() {
     if (!res.ok) throw new Error(result.error || "Failed to update");
   }
 
+  /**
+   * Handles the logic for updating the status of a selected application.
+   *
+   * @param {*} status - The new status to set the application to
+   * @returns {void}
+   */
   const handleStatusUpdate = (status) => {
     console.log("Updating status to:", status);
     console.log("Updating status to:", status);
@@ -137,6 +179,11 @@ export default function SupervisorApplicationsPage() {
     setNotification({ ...notification, open: false });
   };
 
+  /**
+   *
+   * @param {*} data
+   * @returns {Response}
+   */
   async function postNewUsers(data) {
     const response = await fetch(
       process.env.NEXT_PUBLIC_API_URL + "/api/users",
@@ -151,7 +198,10 @@ export default function SupervisorApplicationsPage() {
     return response;
   }
 
-  //temporary data for user creation
+
+  /**
+   * Temporary data for user creation
+   */
   const tempData = {
     semester_group: "default",
     project: "default",
@@ -159,6 +209,18 @@ export default function SupervisorApplicationsPage() {
     last_login: "default",
     prev_login: "default",
   };
+
+  /**
+   * Creates a new user object from the application data.
+   *
+   * This function formats the application data into a user object that can be
+   * used to create a new user in the database. It extracts relevant fields
+   * from the application and sets default values for fields that are not
+   * provided.
+   *
+   * @param {*} app - The application providing information on the new user to create.
+   * @returns {User} The new user created from the application.
+   */
   const createUserFromApp = (app) => {
     return {
       fname: app.firstName,
@@ -173,7 +235,16 @@ export default function SupervisorApplicationsPage() {
     };
   };
 
-  //for each application where accepted=true, format data into user and then do users post like how u do application post
+  /**
+   * Handles the logic to submit accepted applicants as new users into the database.
+   *
+   * This function filters the applications to find those that have been accepted, and then
+   * creates a new user object for each accepted application. It then posts each new user
+   * to the users API endpoint.
+   *
+   * For each application where accepted=true, format data into user and then do users post like how you would do application post.
+   * @returns {void}
+   */
   const handleSubmit = () => {
     //   let data ;
     //
@@ -217,6 +288,7 @@ export default function SupervisorApplicationsPage() {
             minWidth: 200,
             boxShadow: 1,
           }}
+          startAdornment={<FilterAltOutlinedIcon />}
         >
           {STATUSES.map((status) => (
             <MenuItem key={status} value={status}>
@@ -437,59 +509,63 @@ export default function SupervisorApplicationsPage() {
                   {selectedApp.resumeFile}
                 </Typography>
 
-                <Box mt={3}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Current Status: {String(selectedApp.status)}
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: "#7D55C7",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {/* {application} */}
-                    {/* {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)} */}
-                  </Typography>
-                </Box>
-              </DialogContent>
-              <DialogActions sx={{ px: 3, py: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={
-                    () => handleStatusUpdate(STATUSES[1]) // "accepted"
-                  }
-                  sx={{
-                    bgcolor: "#84BD00",
-                    "&:hover": { bgcolor: "#6da400" },
-                  }}
-                >
-                  Accept
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={
-                    () => handleStatusUpdate(STATUSES[2]) // "rejected"
-                  }
-                  sx={{
-                    bgcolor: "#DA291C",
-                    "&:hover": { bgcolor: "#b82018" },
-                  }}
-                >
-                  Reject
-                </Button>
-                <Button
-                  onClick={handleClose}
-                  variant="outlined"
-                  color="inherit"
-                >
-                  Close
-                </Button>
-              </DialogActions>
-            </>
-          )}
-        </Dialog>
-     
+                                <Box mt={3}>
+                                    <Typography
+                                        variant="subtitle2"
+                                        color="text.secondary"
+                                    >
+                                        Current Status:{" "}
+                                        {String(selectedApp.status)}
+                                    </Typography>
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            color: "#7D55C7",
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        {/* {application} */}
+                                        {/* {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)} */}
+                                    </Typography>
+                                </Box>
+                            </DialogContent>
+                            <DialogActions sx={{ px: 3, py: 2 }}>
+                                <Button
+                                    variant="contained"
+                                    onClick={
+                                        () => handleStatusUpdate(STATUSES[1]) // "accepted"
+                                    }
+                                    sx={{
+                                        bgcolor: "#84BD00",
+                                        "&:hover": { bgcolor: "#6da400" },
+                                    }}
+                                >
+                                    Accept
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    onClick={
+                                        () => handleStatusUpdate(STATUSES[2]) // "rejected"
+                                    }
+                                    sx={{
+                                        bgcolor: "#DA291C",
+                                        "&:hover": { bgcolor: "#b82018" },
+                                    }}
+                                >
+                                    Reject
+                                </Button>
+                                <Button
+                                    onClick={handleClose}
+                                    variant="outlined"
+                                    color="inherit"
+                                >
+                                    Close
+                                </Button>
+                            </DialogActions>
+                        </>
+                    )}
+                </Dialog>
+            
 
       <Snackbar
         open={notification.open}

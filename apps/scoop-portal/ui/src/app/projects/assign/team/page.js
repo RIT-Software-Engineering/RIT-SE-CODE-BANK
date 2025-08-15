@@ -7,7 +7,7 @@ import UnauthorizedPage from '../../../unauthorized/page';
 
 export default function AssignProjectTeams() {
   const { user } = useUser();
-    if (!user || user.type !== "coach" && user.type !== "admin") {
+    if (!user || user.type !== "scoopervisor" && user.type !== "scoopdinator") {
         return <UnauthorizedPage />;
       }
   return (

@@ -1,4 +1,4 @@
-import Skeleton from "../../_components/Skeleton";
+import Skeleton from '@mui/material/Skeleton';
 
 // TODO: Redo to imitate layout of project details page
 
