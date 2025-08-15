@@ -396,7 +396,6 @@ export default function Journal() {
           {/* Form inputs here */}
           <Box>
             {/* TODO: Add option and functionality for picking the date and time for the journal entries. */}
-            {/* TODO: Create separate constants for semester group and contactee in new journal entry */}
             <FormControl fullWidth>
               <Autocomplete
                 options={Object.entries(semesterGroups).map(([id, name]) => ({
