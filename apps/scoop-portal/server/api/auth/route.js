@@ -1,24 +1,74 @@
 import { Router } from "express";
+import { PrismaClient } from "@prisma/client";
+import crypto from "crypto";
+
+const prisma = new PrismaClient();
 const router = Router();
-// import { PrismaClient } from "@prisma/client";
-import { signup, login } from "../../controllers/authController.js";
 
-// const prisma = new PrismaClient();
-router.post("/signup", signup);
-router.post("/login", login);
+function hashPassword(password) {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
 
+// SIGNUP - create login record
+router.post("/signup", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const existing = await prisma.login.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
 
-// router.post("/login", async (req, res) => {
-//     const users = await prisma.users.findMany();
-//   const { username, password } = req.body;
-//   const user = await authenticateUser(username, password);
-//   if (!user) return res.status(401).json({ error: "Invalid credentials" });
-// res.json(user);   
-// });
+    const hashedPassword = hashPassword(password);
 
-// router.post("/reset-password", async (req, res) => {
-//   const { username, newPassword } = req.body;
-//   await resetPassword(username, newPassword);
-//   res.json({ success: true });
-// });
+    const newLogin = await prisma.login.create({
+      data: {
+        email,
+        password: hashedPassword,
+      },
+    });
+
+    res.status(201).json({ message: "Account created", login: newLogin });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// LOGIN - verify credentials
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const loginRecord = await prisma.login.findUnique({ where: { email } });
+    if (!loginRecord) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const hashedPassword = hashPassword(password);
+    if (hashedPassword !== loginRecord.password) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    // Optionally find related user record
+    const userRecord = await prisma.users.findUnique({ where: { email } });
+
+    res.status(200).json({
+      message: "Login successful",
+      user: userRecord || null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.get("/", async (req, res) =>{
+    try {
+        const loginCreds = await prisma.login.findMany();
+        res.json(loginCreds);
+    } catch (error) {
+        console.error("Error fetching logins:", error);
+        res.status(500).json({ error: "Failed to fetch login credentials" });
+    }
+});
+
 export default router;

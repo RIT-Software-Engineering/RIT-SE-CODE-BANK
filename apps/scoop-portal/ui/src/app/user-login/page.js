@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Box, TextField, Button, Typography } from "@mui/material";
+import { useRouter } from "next/navigation";
 import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
@@ -8,9 +9,10 @@ export default function AuthPage() {
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async () => {
-    const endpoint = isSignup ? "/api/auth/signup" : "/api/auth/login";
+    const endpoint = isSignup ? `${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup` : `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`;
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

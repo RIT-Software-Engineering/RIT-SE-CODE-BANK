@@ -21,8 +21,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/journal", journalRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/projects", projectsRoutes);
-app.use("/api/auth/login", authRoutes);
-app.use("/api/auth/signup", authRoutes);
+app.use("/api/auth", authRoutes);
 
 (async () => {
   const workflowsRoutesModule = await import('../../workflow/server/api/routes/workflows.js');
