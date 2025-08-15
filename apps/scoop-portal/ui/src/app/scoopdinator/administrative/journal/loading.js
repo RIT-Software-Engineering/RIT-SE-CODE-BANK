@@ -86,6 +86,11 @@ function JournalLoading() {
             <Button startIcon={<FilterAltOutlinedIcon />}>Filter</Button>
           </Skeleton>
         </Box>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+          <Skeleton variant="rectangular">
+            <Button startIcon={<AddIcon />}>Add Entry</Button>
+          </Skeleton>
+        </Box>
         <JournalCardLoading />
         <JournalCardLoading />
         <JournalCardLoading />
