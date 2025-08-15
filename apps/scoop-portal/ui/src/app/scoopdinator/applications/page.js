@@ -193,6 +193,7 @@ export default function SupervisorApplicationsPage() {
     return response;
   }
 
+
   /**
    * Temporary data for user creation
    */

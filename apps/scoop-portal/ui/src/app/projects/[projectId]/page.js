@@ -50,7 +50,7 @@ export default function ProjectDetails({ params }) {
     if (projectId) fetchProject();
   }, [projectId]);
 
-  if (!user || user.type !== "admin") {
+  if (!user || user.type !== "scoopdinator") {
     return <UnauthorizedPage />;
   }
 

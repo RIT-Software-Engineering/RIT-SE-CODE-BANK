@@ -68,8 +68,9 @@ export default function Journal() {
 
       // Fetch the journal entries
       try {
+
         const [entriesRes, usersRes, semestersRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal/scoopdinator`), //changed admin to scoopdinator
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`),
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup`),
         ]);
@@ -142,7 +143,7 @@ export default function Journal() {
     setLoading(true);
 
     // Build the API url for fetching the data
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`;
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/journal/scoopdinator`; //changed to scoopdinator
     if (filterSemesterValue != "" || filterContacteeValue != "") {
       url += "?";
       if (filterSemesterValue) {
@@ -324,7 +325,7 @@ export default function Journal() {
             No journal entries found. Please check back later.
           </Typography>
         ) : (
-          journalEntries.map((entry) => (
+          journalEntries?.map((entry) => (
             <Card
               key={entry.id}
               square

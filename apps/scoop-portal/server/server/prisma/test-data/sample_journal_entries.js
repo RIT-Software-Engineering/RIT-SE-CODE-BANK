@@ -22,7 +22,7 @@ export const sampleJournalEntries = [
     notes: "Edit this note for testing.",
     journal_owner_fname: "Samuel",
     journal_owner_lname: "Sangsong",
-    journal_owner_type: "admin",
+    journal_owner_type: "scoopdinator",
     semester_GroupId: 8,
   },
   {
@@ -33,7 +33,7 @@ export const sampleJournalEntries = [
     notes: "",
     journal_owner_fname: "Samuel",
     journal_owner_lname: "Sangsong",
-    journal_owner_type: "admin",
+    journal_owner_type: "scoopdinator",
     semester_GroupId: 8,
   },
   {
@@ -44,7 +44,7 @@ export const sampleJournalEntries = [
     notes: "",
     journal_owner_fname: "Samuel",
     journal_owner_lname: "Sangsong",
-    journal_owner_type: "admin",
+    journal_owner_type: "scoopdinator",
     semester_GroupId: 8,
   },
 ];
