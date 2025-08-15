@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { ArrowBack, EditOutlined } from "@mui/icons-material";
 import React, { useEffect, useState } from "react";
-import ProjectDetailsLoading from "./loading";
 import Header from "@components/Header";
 import { useUser } from "../../utils/user-context/page";
 import UnauthorizedPage from "../../unauthorized/page";
@@ -28,9 +27,9 @@ import UnauthorizedPage from "../../unauthorized/page";
 export default function ProjectDetails({ params }) {
   const theme = useTheme();
   const { user } = useUser();
-  const { projectId } = React.use(params);
+  const { projectId } = params;
   const [isLoading, setIsLoading] = useState(true);
-  const [project, setProject] = useState([]);
+  const [project, setProject] = useState({});
 
   useEffect(() => {
     console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
@@ -55,6 +54,17 @@ export default function ProjectDetails({ params }) {
     return <UnauthorizedPage />;
   }
 
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Typography variant="h6">Loading project details...</Typography>
+        </Container>
+      </>
+    );
+  }
+
   return (
     <>
       <Header />
@@ -64,15 +74,11 @@ export default function ProjectDetails({ params }) {
           href="/projects"
           startIcon={<ArrowBack />}
           variant="outline-orange"
+          sx={{ mb: 2 }}
         >
           Back to Projects
         </Button>
-        <Paper
-          sx={{
-            marginTop: "1rem",
-            padding: "1rem",
-          }}
-        >
+        <Paper sx={{ marginTop: "1rem", padding: "1rem" }}>
           <Container
             disableGutters
             sx={{
@@ -82,7 +88,7 @@ export default function ProjectDetails({ params }) {
             }}
           >
             <Typography variant="h1">
-              {project.display_name || project.title}
+              {project.display_name || project.title || "Untitled Project"}
             </Typography>
             <Button
               startIcon={<EditOutlined />}
@@ -103,31 +109,32 @@ export default function ProjectDetails({ params }) {
                 project.status === "active"
                   ? "rgba(0, 156, 189, 0.2)"
                   : project.status === "in progress"
-                    ? "rgba(246, 190, 0, 0.2)"
-                    : project.status === "completed"
-                      ? "rgba(132, 189, 0, 0.2)"
-                      : "rgba(124, 135, 142, 0.2)",
+                  ? "rgba(246, 190, 0, 0.2)"
+                  : project.status === "completed"
+                  ? "rgba(132, 189, 0, 0.2)"
+                  : "rgba(124, 135, 142, 0.2)",
               color:
                 project.status === "active"
                   ? theme.palette.info.main
                   : project.status === "in progress"
-                    ? theme.palette.warning.main
-                    : project.status === "completed"
-                      ? theme.palette.success.main
-                      : "rgb(124, 135, 142)",
+                  ? theme.palette.warning.main
+                  : project.status === "completed"
+                  ? theme.palette.success.main
+                  : "rgb(124, 135, 142)",
             }}
           >
-            <Typography sx={{ margin: "0" }}>
-              {project.status.toUpperCase()}
+            <Typography sx={{ margin: 0 }}>
+              {project.status ? project.status.toUpperCase() : "UNKNOWN STATUS"}
             </Typography>
           </Box>
-          <Typography>{project.description}</Typography>
+          <Typography>{project.description || "No description available."}</Typography>
           <Container
             disableGutters
             sx={{
               display: "flex",
               justifyContent: "space-between",
-              px: "0",
+              px: 0,
+              mt: 2,
             }}
           >
             <Card
@@ -139,7 +146,9 @@ export default function ProjectDetails({ params }) {
             >
               <CardContent>
                 <Typography variant="h3">Challenges:</Typography>
-                <Typography>{project.project_challenges}</Typography>
+                <Typography>
+                  {project.project_challenges || "No challenges listed."}
+                </Typography>
               </CardContent>
             </Card>
             <Card
@@ -151,12 +160,14 @@ export default function ProjectDetails({ params }) {
             >
               <CardContent>
                 <Typography variant="h3">Constraints & Assumptions:</Typography>
-                <Typography>{project.constraints_assumptions}</Typography>
+                <Typography>
+                  {project.constraints_assumptions || "No constraints or assumptions listed."}
+                </Typography>
               </CardContent>
             </Card>
           </Container>
           <Typography variant="body1" sx={{ marginTop: "1rem" }}>
-            Project Team: {project.team_name}
+            Project Team: {project.team_name || "N/A"}
           </Typography>
           <Typography>
             Created:{" "}

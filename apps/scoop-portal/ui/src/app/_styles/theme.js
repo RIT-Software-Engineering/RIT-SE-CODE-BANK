@@ -1,11 +1,14 @@
 import { createTheme } from "@mui/material/styles";
 
 /**
- * This is the foundation of the theme.
+ * This is the foundation of the custom themes.
  */
 const baseTheme = createTheme({
-  // If you need to use the RIT brand colors for anything specific,
-  // you can use the variables in ritColors
+  /**
+   * If you need to use the RIT brand colors for anything specific
+   * (and you don't feel like memorizing the color codes), you can
+   * use the variables in ritColors
+   */
   ritColors: {
     orange: "#F76902",
     white: "#FFFFFF",
@@ -93,9 +96,11 @@ const baseTheme = createTheme({
         {
           props: { variant: "solid-orange" },
           style: {
+            border: "1px solid #F76902",
             backgroundColor: "#F76902",
             color: "#FFFFFF",
             "&:hover": {
+              border: "1px solid #000000",
               backgroundColor: "#000000",
             },
           },
@@ -103,9 +108,11 @@ const baseTheme = createTheme({
         {
           props: { variant: "solid-gray" },
           style: {
+            border: "1px solid #D0D3D4",
             backgroundColor: "#D0D3D4",
             color: "#000000",
             "&:hover": {
+              border: "1px solid #A2AAAD",
               backgroundColor: "#A2AAAD",
             },
           },
@@ -129,13 +136,40 @@ const baseTheme = createTheme({
         },
       },
     },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#F76902",
+          },
+        },
+      },
+    },
+    MuiAutocomplete: {
+      styleOverrides: {
+        inputRoot: {
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#F76902",
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: { "&.Mui-focused": { color: "#F76902" } },
+      },
+    },
   },
 });
 
-// Light Theme
+/**
+ * This is the light theme.
+ * It extends from the base theme and adds additional styles to make the light theme.
+ */
 export const lightTheme = createTheme({
   ...baseTheme,
   palette: {
+    ...baseTheme.palette,
     mode: "light",
     background: {
       default: "#FFFFFF",
@@ -143,18 +177,53 @@ export const lightTheme = createTheme({
     },
     text: { primary: "#000000" },
   },
+  components: {
+    ...baseTheme.components,
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          "&:hover": {
+            backgroundColor: "#fafafa",
+          },
+        },
+      },
+    },
+  },
 });
 
-// Dark Theme
+/**
+ * This is the dark theme.
+ * It extends from the base theme and adds additional styles to make the dark theme.
+ */
 export const darkTheme = createTheme({
   ...baseTheme,
   palette: {
+    ...baseTheme.palette,
     mode: "dark",
     background: {
       default: "#000000",
       paper: "#101010",
     },
     text: { primary: "#FFFFFF" },
+  },
+  components: {
+    ...baseTheme.components,
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          "&:hover": {
+            backgroundColor: "#0e0e0e",
+          },
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        h1: {
+          color: "#FFFFFF",
+        },
+      },
+    },
   },
 });
 

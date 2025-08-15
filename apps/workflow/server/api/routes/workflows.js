@@ -38,7 +38,7 @@ router.get("/", async (req, res) => {
   if (userId) {
   } // TODO: Add handling for userId
   if (tags) {
-    where.AND = tags.split(",").map((name) => ({
+    where.OR = tags.split(",").map((name) => ({
       tags: { some: { name } },
     }));
   }
