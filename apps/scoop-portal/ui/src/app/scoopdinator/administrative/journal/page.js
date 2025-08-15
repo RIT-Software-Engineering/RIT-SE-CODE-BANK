@@ -57,7 +57,7 @@ export default function Journal() {
       // Fetch the journal entries
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin` //change to scoopdinator?
+          `${process.env.NEXT_PUBLIC_API_URL}/api/journal/scoopdinator` //changed to scoopdinator
         );
         const data = await res.json();
         console.log(data);
@@ -130,7 +130,7 @@ export default function Journal() {
     setLoading(true);
 
     // Build the API url for fetching the data
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/journal/admin`; //change to scoopdinator?
+    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/journal/scoopdinator`; //changed to scoopdinator
     if (filterSemesterValue != "" || filterContacteeValue != "") {
       url += "?";
       if (filterSemesterValue) {
