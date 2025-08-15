@@ -169,6 +169,7 @@ const baseTheme = createTheme({
 export const lightTheme = createTheme({
   ...baseTheme,
   palette: {
+    ...baseTheme.palette,
     mode: "light",
     background: {
       default: "#FFFFFF",
@@ -197,6 +198,7 @@ export const lightTheme = createTheme({
 export const darkTheme = createTheme({
   ...baseTheme,
   palette: {
+    ...baseTheme.palette,
     mode: "dark",
     background: {
       default: "#000000",
