@@ -281,7 +281,7 @@ router.post('/handleSubmit', async (req, res) => {
       }
     });
 
-    res.status(200).json({ message: "Completed" });
+    return res.status(200).json({ message: "Completed" });
   }
 
   res.status(500).json({ message: "Something failed" }); // TODO: Provide a better error message.

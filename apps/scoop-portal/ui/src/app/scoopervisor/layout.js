@@ -1,10 +1,10 @@
 import ProtectedRoute from "../utils/ProtectedRoute";
 
-//edit "coach" to "scoopervisor" later
-export default function CoachLayout({ children }) {
+//editd to "scoopervisor"
+export default function scoopervisorLayout({ children }) {
   return (
-    // add admin to required role
-    <ProtectedRoute requiredRole="coach"> 
+    // add admin to required role?
+    <ProtectedRoute requiredRole="scoopervisor"> 
       {children}
     </ProtectedRoute>
   );

@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
  */
 router.get("/", async (req, res) => {
   try {
-    const entries = await prisma.journal_Entry.findMany();
+    const entries = await prisma.journalEntry.findMany();
     res.status(200).json(entries);
   } catch (error) {
     console.error("Error fetching journal entries:", error);
@@ -29,12 +29,32 @@ router.get("/", async (req, res) => {
  * @param {Object} res - The response object to send back the created entry or an error
  */
 router.post("/", async (req, res) => {
-  const { date, contactee, notes } = req.body;
+  const {
+    date,
+    contactee_fname,
+    contactee_lname,
+    notes,
+    journal_owner_fname,
+    journal_owner_lname,
+    journal_owner_type,
+    semester_GroupId,
+  } = req.body;
   try {
-    const newEntry = await prisma.journal_Entry.create({
-      data: { date, contactee, notes },
+    const newEntry = await prisma.journalEntry.create({
+      data: {
+        date: new Date(date),
+        contactee_fname,
+        contactee_lname,
+        notes,
+        journal_owner_fname,
+        journal_owner_lname,
+        journal_owner_type,
+        semester_GroupId: semester_GroupId ? Number(semester_GroupId) : null,
+      },
     });
-    res.status(200).json(newEntry);
+    res
+      .status(200)
+      .json({ message: "New journal entry created", entry: newEntry });
   } catch (error) {
     console.error("Error creating journal entry:", error);
     res.status(500).json({
@@ -54,7 +74,7 @@ router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { notes } = req.body;
   try {
-    const updatedEntry = await prisma.journal_Entry.update({
+    const updatedEntry = await prisma.journalEntry.update({
       where: { id: Number(id) },
       data: { notes },
     });
@@ -72,12 +92,12 @@ router.put("/:id", async (req, res) => {
 /**
  * GET journal entries for scoopdinator
  */
-router.get("/admin", async (req, res) => {
+router.get("/scoopdinator", async (req, res) => {
   // Get query parameters from URL
   const { semester_GroupId, contactee_fname, contactee_lname } = req.query;
 
   // Develop whereClause conditionally for fitlering
-  const whereClause = { journal_owner_type: "admin" };
+  const whereClause = { journal_owner_type: "scoopdinator" };
   if (semester_GroupId) {
     whereClause.semester_GroupId = Number(semester_GroupId);
   }
@@ -93,15 +113,15 @@ router.get("/admin", async (req, res) => {
 
   // Fetch journal entries based on the two clauses
   try {
-    const adminEntries = await prisma.journal_Entry.findMany({
+    const scoopdinatorEntries = await prisma.journal_Entry.findMany({
       where: whereClause,
       orderBy: orderByClause,
     });
-    res.status(200).json(adminEntries);
+    res.status(200).json(scoopdinatorEntries);
   } catch (error) {
-    console.error("Error fetching the admin journal entries: ", error);
+    console.error("Error fetching the scoopdinator journal entries: ", error);
     res.status(500).json({
-      message: "Error fetching admin journal entries",
+      message: "Error fetching scoopdinator journal entries",
       error: error.message,
     });
   }
@@ -110,17 +130,17 @@ router.get("/admin", async (req, res) => {
 /**
  * GET journal entries for scoopervisor
  */
-router.get("/coach", async (req, res) => {
-  const whereClause = { journal_owner_type: "coach" };
+router.get("/scoopervisor", async (req, res) => {
+  const whereClause = { journal_owner_type: "scoopervisor" };
   try {
-    const coachEntries = await prisma.journal_Entry.findMany({
+    const scoopervisorEntries = await prisma.journal_Entry.findMany({
       where: whereClause,
     });
-    res.status(200).json(coachEntries);
+    res.status(200).json(scoopervisorEntries);
   } catch (error) {
-    console.error("Error fetching the coach journal entries: ", error);
+    console.error("Error fetching the scoopervisor journal entries: ", error);
     res.status(500).json({
-      message: "Error fetching coach journal entries",
+      message: "Error fetching scoopervisor journal entries",
       error: error.message,
     });
   }
@@ -129,16 +149,16 @@ router.get("/coach", async (req, res) => {
 /**
  * GET journal entries for scooployee
  */
-router.get("/student", async (req, res) => {
+router.get("/scooployee", async (req, res) => {
   try {
-    const studentEntries = await prisma.journal_Entry.findMany({
-      where: { journal_owner_type: "student" },
+    const scooployeeEntries = await prisma.journal_Entry.findMany({
+      where: { journal_owner_type: "scooployee" },
     });
-    res.status(200).json(studentEntries);
+    res.status(200).json(scooployeeEntries);
   } catch (error) {
-    console.error("Error fetching the student journal entries: ", error);
+    console.error("Error fetching the scooployee journal entries: ", error);
     res.status(500).json({
-      message: "Error fetching student journal entries",
+      message: "Error fetching scooployee journal entries",
       error: error.message,
     });
   }

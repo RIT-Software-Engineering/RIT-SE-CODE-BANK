@@ -1,5 +1,5 @@
-'use client'
-import React, { useEffect, useState } from 'react';
+"use client";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -12,8 +12,8 @@ import {
   Button,
   Modal,
   TextField,
-} from '@mui/material';
-import Header from '../../_components/Header';
+} from "@mui/material";
+import Header from "../../_components/Header";
 
 export default function TeamsPage() {
   const [teams, setTeams] = useState([]);
@@ -21,14 +21,13 @@ export default function TeamsPage() {
   const [activeTeam, setActiveTeam] = useState(null);
   const [openModal, setOpenModal] = useState(null);
   const [addMemberModalOpen, setAddMemberModalOpen] = useState(false);
-  const [userSearch, setUserSearch] = useState('');
+  const [userSearch, setUserSearch] = useState("");
   const [userResults, setUserResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
-  const [newTeamName, setNewTeamName] = useState('');
-  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [newTeamName, setNewTeamName] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
   const [projects, setProjects] = useState([]);
-
 
   useEffect(() => {
     async function fetchTeams() {
@@ -37,7 +36,7 @@ export default function TeamsPage() {
         const data = await res.json();
         setTeams(data);
       } catch (error) {
-        console.error('Failed to fetch teams:', error);
+        console.error("Failed to fetch teams:", error);
       } finally {
         setLoading(false);
       }
@@ -48,11 +47,13 @@ export default function TeamsPage() {
   useEffect(() => {
     async function fetchProjects() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects`);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/projects`
+        );
         const data = await res.json();
         setProjects(data);
       } catch (err) {
-        console.error('Failed to fetch projects:', err);
+        console.error("Failed to fetch projects:", err);
       }
     }
     fetchProjects();
@@ -62,8 +63,10 @@ export default function TeamsPage() {
     const delayDebounceFn = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/employees?search=${encodeURIComponent(userSearch)}`);
-        if (!res.ok) throw new Error('Failed to fetch users');
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/employees?search=${encodeURIComponent(userSearch)}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch users");
         const users = await res.json();
         setUserResults(users);
       } catch (err) {
@@ -81,27 +84,36 @@ export default function TeamsPage() {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/teams/${activeTeam.id}`,
-        { method: 'DELETE' }
+        { method: "DELETE" }
       );
-      if (!res.ok) throw new Error('Failed to delete team');
+      if (!res.ok) throw new Error("Failed to delete team");
 
       setTeams((prev) => prev.filter((t) => t.id !== activeTeam.id));
       setActiveTeam(null);
       setOpenModal(null);
     } catch (err) {
-      console.error('Error deleting team:', err);
+      console.error("Error deleting team:", err);
     }
   }
 
   return (
-    <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+      }}
+    >
       <Header />
 
-      <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, color: '#fff' }}>
-            Teams Overview
-          </Typography>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Typography variant="h1">Teams Overview</Typography>
           <Button
             variant="contained"
             color="primary"
@@ -112,43 +124,55 @@ export default function TeamsPage() {
         </Box>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
             <CircularProgress color="warning" />
           </Box>
         ) : (
           <Grid container spacing={4}>
             {teams.map((team, index) => (
-              <Grid item xs={12} md={6} lg={4} key={team.id ?? `temp-team-${index}`}>
-                <Paper elevation={2} sx={{ borderRadius: 4, p: 3, bgcolor: '#fafafa' }}>
-                  <Typography variant="h2" sx={{ fontSize: '1.5rem', fontWeight: 700, mb: 1 }}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+                lg={4}
+                key={team.id ?? `temp-team-${index}`}
+              >
+                <Paper elevation={2} sx={{ borderRadius: 4, p: 3 }}>
+                  <Typography
+                    variant="h2"
+                    sx={{ fontSize: "1.5rem", fontWeight: 700, mb: 1 }}
+                  >
                     {team.name}
                   </Typography>
-                  <Typography sx={{ fontSize: '1rem', color: '#666', mb: 2 }}>
-                    Project: {team.project?.display_name || 'No project assigned'}
+                  <Typography sx={{ fontSize: "1rem", color: "#666", mb: 2 }}>
+                    Project:{" "}
+                    {team.project?.display_name || "No project assigned"}
                   </Typography>
 
                   <Divider sx={{ my: 2 }} />
 
-                  <Typography sx={{ fontWeight: 500, mb: 1 }}>Members:</Typography>
+                  <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                    Members:
+                  </Typography>
                   {Array.isArray(team.members) && team.members.length > 0 ? (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                       {team.members.map((member) => (
                         <Chip
                           key={member.id}
                           label={`${member.fname} ${member.lname}`}
-                          sx={{ backgroundColor: '#F76902', color: '#fff' }}
+                          sx={{ backgroundColor: "#F76902", color: "#fff" }}
                         />
                       ))}
                     </Box>
                   ) : (
-                    <Typography variant="body2" sx={{ color: '#999' }}>
+                    <Typography variant="body2" sx={{ color: "#999" }}>
                       No members assigned
                     </Typography>
                   )}
 
                   <Divider sx={{ my: 2 }} />
 
-                  <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                  <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
                     {/* Added a button for changing the project but not sure if it's even needed. Something to discuss. */}
                     {/* <Button
                       size="small"
@@ -168,7 +192,7 @@ export default function TeamsPage() {
                       color="info"
                       onClick={() => {
                         setActiveTeam(team);
-                        setOpenModal('members');
+                        setOpenModal("members");
                       }}
                     >
                       Edit Members
@@ -180,7 +204,7 @@ export default function TeamsPage() {
                       color="error"
                       onClick={() => {
                         setActiveTeam(team);
-                        setOpenModal('delete');
+                        setOpenModal("delete");
                       }}
                     >
                       Delete Team
@@ -194,27 +218,34 @@ export default function TeamsPage() {
       </Container>
 
       {/* Modal for project and members */}
-      <Modal open={!!openModal && openModal !== 'delete'} onClose={() => setOpenModal(null)}>
+      <Modal
+        open={!!openModal && openModal !== "delete"}
+        onClose={() => setOpenModal(null)}
+      >
         <Box
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
             width: 400,
-            bgcolor: 'background.paper',
+            bgcolor: "background.paper",
             borderRadius: 2,
             boxShadow: 24,
             p: 4,
-            color: '#212121',
           }}
         >
-          {openModal === 'project' && (
+          {openModal === "project" && (
             <>
               <Typography variant="h6" mb={2} fontWeight="bold">
                 Change Project for {activeTeam?.name}
               </Typography>
-              <TextField fullWidth label="New Project ID" variant="outlined" sx={{ mb: 3 }} />
+              <TextField
+                fullWidth
+                label="New Project ID"
+                variant="outlined"
+                sx={{ mb: 3 }}
+              />
               <Button
                 variant="contained"
                 color="primary"
@@ -226,63 +257,66 @@ export default function TeamsPage() {
             </>
           )}
 
-          {openModal === 'members' && (
+          {openModal === "members" && (
             <>
               <Typography variant="h6" mb={2} fontWeight="bold">
                 Edit Members for {activeTeam?.name}
               </Typography>
 
-              {Array.isArray(activeTeam?.members) && activeTeam.members.map((member) => (
-                <Box
-                  key={member.id}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 1.5,
-                  }}
-                >
-                  <Typography>
-                    {member.fname} {member.lname}
-                  </Typography>
-                  <Button
-                    size="small"
-                    color="error"
-                    variant="contained"
-                    onClick={async () => {
-                      try {
-                        const res = await fetch(
-                          `${process.env.NEXT_PUBLIC_API_URL}/api/teams/${activeTeam.id}/members/${member.id}`,
-                          { method: 'DELETE' }
-                        );
-
-                        if (!res.ok) throw new Error('Failed to remove member');
-
-                        const updatedTeam = await res.json();
-                        setTeams((prev) =>
-                          prev.map((t) => (t.id === activeTeam.id ? updatedTeam.team : t))
-                        );
-                        setActiveTeam(updatedTeam.team);
-                      } catch (err) {
-                        console.error('Error removing member:', err);
-                      }
+              {Array.isArray(activeTeam?.members) &&
+                activeTeam.members.map((member) => (
+                  <Box
+                    key={member.id}
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 1.5,
                     }}
                   >
-                    Remove
-                  </Button>
-                </Box>
-              ))}
-              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                    <Typography>
+                      {member.fname} {member.lname}
+                    </Typography>
+                    <Button
+                      size="small"
+                      color="error"
+                      variant="contained"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/api/teams/${activeTeam.id}/members/${member.id}`,
+                            { method: "DELETE" }
+                          );
+
+                          if (!res.ok)
+                            throw new Error("Failed to remove member");
+
+                          const updatedTeam = await res.json();
+                          setTeams((prev) =>
+                            prev.map((t) =>
+                              t.id === activeTeam.id ? updatedTeam.team : t
+                            )
+                          );
+                          setActiveTeam(updatedTeam.team);
+                        } catch (err) {
+                          console.error("Error removing member:", err);
+                        }
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </Box>
+                ))}
+              <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
                 <Button
-                  variant="contained"
-                  color="secondary"
+                  variant="solid-orange"
                   sx={{ flex: 1 }}
                   onClick={() => setAddMemberModalOpen(true)}
                 >
                   Add Members
                 </Button>
                 <Button
-                  variant="outlined"
+                  variant="outline-orange"
                   sx={{ flex: 1 }}
                   onClick={() => setOpenModal(null)}
                 >
@@ -295,33 +329,29 @@ export default function TeamsPage() {
       </Modal>
 
       {/* Delete confirmation modal */}
-      <Modal open={openModal === 'delete'} onClose={() => setOpenModal(null)}>
+      <Modal open={openModal === "delete"} onClose={() => setOpenModal(null)}>
         <Box
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
             width: 380,
-            bgcolor: 'background.paper',
+            bgcolor: "background.paper",
             borderRadius: 2,
             boxShadow: 24,
             p: 4,
-            color: '#212121',
           }}
         >
           <Typography variant="h6" mb={3} fontWeight="bold">
             Confirm Delete
           </Typography>
           <Typography mb={3}>
-            Are you sure you want to delete the team{' '}
+            Are you sure you want to delete the team{" "}
             <strong>{activeTeam?.name}</strong>? This action cannot be undone.
           </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={() => setOpenModal(null)}
-            >
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+            <Button variant="outlined" onClick={() => setOpenModal(null)}>
               Cancel
             </Button>
             <Button
@@ -336,21 +366,23 @@ export default function TeamsPage() {
       </Modal>
 
       {/* Add Member Search Modal */}
-      <Modal open={addMemberModalOpen} onClose={() => setAddMemberModalOpen(false)}>
+      <Modal
+        open={addMemberModalOpen}
+        onClose={() => setAddMemberModalOpen(false)}
+      >
         <Box
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
             width: 400,
-            maxHeight: '70vh',
-            overflowY: 'auto',
-            bgcolor: 'background.paper',
+            maxHeight: "70vh",
+            overflowY: "auto",
+            bgcolor: "background.paper",
             borderRadius: 2,
             boxShadow: 24,
             p: 4,
-            color: '#212121',
           }}
         >
           <Typography variant="h6" mb={2} fontWeight="bold">
@@ -367,29 +399,37 @@ export default function TeamsPage() {
           />
 
           {searchLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
               <CircularProgress size={24} />
             </Box>
           )}
 
           {/* Compute if no matching results after filtering out members */}
           {!searchLoading &&
-            userResults.filter(user =>
-              !activeTeam?.members?.some(member => member.id === user.id)
-            ).length === 0 && userSearch.trim() !== '' && (
-            <Typography sx={{ color: '#999' }}>No matching results</Typography>
-          )}
+            userResults.filter(
+              (user) =>
+                !activeTeam?.members?.some((member) => member.id === user.id)
+            ).length === 0 &&
+            userSearch.trim() !== "" && (
+              <Typography sx={{ color: "#999" }}>
+                No matching results
+              </Typography>
+            )}
 
-          <Box sx={{
-            maxHeight: 200,
-            overflowY: 'auto',
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 1,
-            mb: 1,
-          }}>
+          <Box
+            sx={{
+              maxHeight: 200,
+              overflowY: "auto",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1,
+              mb: 1,
+            }}
+          >
             {userResults.map((user) => {
-              const isMember = activeTeam?.members?.some((member) => member.id === user.id);
+              const isMember = activeTeam?.members?.some(
+                (member) => member.id === user.id
+              );
 
               return (
                 <Chip
@@ -400,36 +440,42 @@ export default function TeamsPage() {
                   variant="outlined"
                   disabled={isMember}
                   sx={{
-                    borderRadius: '16px',
+                    borderRadius: "16px",
                     opacity: isMember ? 0.5 : 1,
-                    cursor: isMember ? 'not-allowed' : 'pointer',
+                    cursor: isMember ? "not-allowed" : "pointer",
                   }}
                   onClick={async () => {
                     if (isMember) return; // ignore clicks on disabled chips
 
                     try {
-                      console.log("Adding user to team:", activeTeam.id, user.id);
+                      console.log(
+                        "Adding user to team:",
+                        activeTeam.id,
+                        user.id
+                      );
                       const res = await fetch(
                         `${process.env.NEXT_PUBLIC_API_URL}/api/teams/${activeTeam.id}/members`,
                         {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ userId: user.id }),
                         }
                       );
 
-                      if (!res.ok) throw new Error('Failed to add member');
+                      if (!res.ok) throw new Error("Failed to add member");
 
                       const updatedTeam = await res.json();
 
                       setTeams((prev) =>
-                        prev.map((t) => (t.id === activeTeam.id ? updatedTeam.team : t))
+                        prev.map((t) =>
+                          t.id === activeTeam.id ? updatedTeam.team : t
+                        )
                       );
                       setActiveTeam(updatedTeam.team);
                       setAddMemberModalOpen(false);
                     } catch (error) {
-                      console.error('Add member error:', error);
-                      alert('Failed to add member. Please try again.');
+                      console.error("Add member error:", error);
+                      alert("Failed to add member. Please try again.");
                     }
                   }}
                 />
@@ -440,19 +486,21 @@ export default function TeamsPage() {
       </Modal>
 
       {/* New Team Modal */}
-      <Modal open={createTeamModalOpen} onClose={() => setCreateTeamModalOpen(false)}>
+      <Modal
+        open={createTeamModalOpen}
+        onClose={() => setCreateTeamModalOpen(false)}
+      >
         <Box
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
             width: 400,
-            bgcolor: 'background.paper',
+            bgcolor: "background.paper",
             borderRadius: 2,
             boxShadow: 24,
             p: 4,
-            color: '#212121',
           }}
         >
           <Typography variant="h6" fontWeight="bold" mb={2}>
@@ -474,7 +522,7 @@ export default function TeamsPage() {
             label="Project (optional)"
             value={selectedProjectId}
             onChange={(e) => setSelectedProjectId(e.target.value)}
-            slotProps={{ select: { native: true, }, }}
+            slotProps={{ select: { native: true } }}
             sx={{ mb: 3 }}
           >
             <option value=""></option>
@@ -494,27 +542,35 @@ export default function TeamsPage() {
               try {
                 const body = {
                   name: newTeamName,
-                  ...(selectedProjectId ? { projectId: Number(selectedProjectId) } : {})
+                  ...(selectedProjectId
+                    ? { projectId: Number(selectedProjectId) }
+                    : {}),
                 };
 
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(body),
-                });
+                const res = await fetch(
+                  `${process.env.NEXT_PUBLIC_API_URL}/api/teams`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                  }
+                );
 
-                if (!res.ok) throw new Error('Failed to create team');
-                const allTeamsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`);
-                if (!allTeamsRes.ok) throw new Error('Failed to fetch teams after creation');
+                if (!res.ok) throw new Error("Failed to create team");
+                const allTeamsRes = await fetch(
+                  `${process.env.NEXT_PUBLIC_API_URL}/api/teams`
+                );
+                if (!allTeamsRes.ok)
+                  throw new Error("Failed to fetch teams after creation");
                 const allTeams = await allTeamsRes.json();
 
                 setTeams(allTeams);
-                setNewTeamName('');
-                setSelectedProjectId('');
+                setNewTeamName("");
+                setSelectedProjectId("");
                 setCreateTeamModalOpen(false);
               } catch (err) {
-                console.error('Error creating team:', err);
-                alert('Failed to create team. Please try again.');
+                console.error("Error creating team:", err);
+                alert("Failed to create team. Please try again.");
               }
             }}
           >
@@ -523,19 +579,21 @@ export default function TeamsPage() {
         </Box>
       </Modal>
 
-
-
       <Box
         component="footer"
         sx={{
-          height: '80px',
-          bgcolor: '#212121',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          width: "100%",
+          height: "80px",
+          bgcolor: "#212121",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           px: { xs: 2, md: 3 },
           mt: 8,
+          position: "fixed",
+          bottom: 0,
+          left: 0,
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 300 }}>

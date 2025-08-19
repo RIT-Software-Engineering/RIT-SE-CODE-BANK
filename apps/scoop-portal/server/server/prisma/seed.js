@@ -10,12 +10,12 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Clearing data");
 
-  await prisma.Teams.deleteMany();
-  await prisma.Journal_Entry.deleteMany();
-  await prisma.Project.deleteMany();
+  await prisma.teams.deleteMany();
+  await prisma.journalEntry.deleteMany();
+  await prisma.project.deleteMany();
   await prisma.users.deleteMany();
-  await prisma.Application.deleteMany();
-  await prisma.Semester_Group.deleteMany();
+  await prisma.application.deleteMany();
+  await prisma.semesterGroup.deleteMany();
   await prisma.fruit.deleteMany();
 
   console.log("Seeding data");
@@ -24,11 +24,11 @@ async function main() {
     data: { name: "Apple", color: "Red", size: "Medium" },
   });
 
-  await prisma.semester_Group.createMany({
+  await prisma.semesterGroup.createMany({
     data: sampleSemesterGroups,
   });
 
-  await prisma.Project.createMany({
+  await prisma.project.createMany({
     data: sampleProjects.map(({ id, title, display_name, description }) => ({
       id,
       title,
@@ -41,11 +41,11 @@ async function main() {
     data: sampleUsers,
   });
 
-  await prisma.Application.createMany({
+  await prisma.application.createMany({
     data: sampleApplications,
   });
 
-  await prisma.journal_Entry.createMany({
+  await prisma.journalEntry.createMany({
     data: sampleJournalEntries,
   });
 
@@ -53,7 +53,7 @@ async function main() {
   const jimmy = await prisma.users.findUnique({ where: { email: "jlp123@rit.edu" } });
   const dudeBro = await prisma.users.findUnique({ where: { email: "def123@rit.edu" } });
 
-  await prisma.Teams.create({
+  await prisma.teams.create({
     data: {
       name: "Alpha",
       projectId: 1,
@@ -66,7 +66,7 @@ async function main() {
   const galgirl = await prisma.users.findUnique({ where: { email: "klm123@rit.edu" } });
   const edison = await prisma.users.findUnique({ where: { email: "emh123@rit.edu" } });
 
-  await prisma.Teams.create({
+  await prisma.teams.create({
     data: {
       name: "Omega",
       projectId: 2,

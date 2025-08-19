@@ -71,7 +71,7 @@ router.get("/employees", async (req, res) => {
 
   try {
     const whereCondition = {
-      type: "student",
+      type: "scooployee",
       ...(search.trim() !== "" && {
         OR: [{ fname: { contains: search } }, { lname: { contains: search } }],
       }),

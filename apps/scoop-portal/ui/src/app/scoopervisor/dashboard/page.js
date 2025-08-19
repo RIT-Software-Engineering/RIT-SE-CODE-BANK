@@ -85,7 +85,7 @@ const workflows = [
 
 export default function WorkflowDashboard() {
   const { user } = useUser();
-  if (!user || (user.type !== "coach" && user.type !== "admin")) {
+  if (!user || (user.type !== "scoopervisor" && user.type !== "admin")) {
     return <UnauthorizedPage />;
   }
   return (
