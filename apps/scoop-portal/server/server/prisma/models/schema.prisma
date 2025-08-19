@@ -42,7 +42,7 @@ model users {
   fname          String
   lname          String
   email          String @unique
-  role           String
+  type           String
   semester_group String
   project        String
   active         String
