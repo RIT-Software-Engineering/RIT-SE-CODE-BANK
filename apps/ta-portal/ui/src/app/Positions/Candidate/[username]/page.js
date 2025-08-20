@@ -1,3 +1,4 @@
+// src/app/Positions/Candidate/[username]/page.js
 "use client";
 
 import React, {
@@ -18,6 +19,15 @@ import PositionsCard from "@/components/positions/PositionsCard";
 import { Filter } from "@/components/common/searchAndFilter/Filter";
 import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { generatePositionsFilterConfig } from "./filter.config";
+
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Paper,
+  Typography,
+} from "@mui/material";
 
 export default function CandidatePositionsPage() {
   const filterRef = useRef();
@@ -56,7 +66,6 @@ export default function CandidatePositionsPage() {
     fetchAndSetConfig();
   }, []);
 
-  // Filter out status filter since candidates only see open positions
   const visibleFilters = useMemo(() => {
     return filterConfig.filter((f) => f.id !== "status");
   }, [filterConfig]);
@@ -68,7 +77,6 @@ export default function CandidatePositionsPage() {
       setIsLoading(true);
       setError(null);
       try {
-        // Use getOpenJobPositions like the admin page, but pass currentUser.username for candidate-specific filtering
         const data = await getOpenJobPositions(currentSearch, currentFilters, currentUser.username);
 
         const processedPositions = (data || []).map((position) => {
@@ -121,15 +129,27 @@ export default function CandidatePositionsPage() {
 
   const renderContent = () => {
     if (isLoading) {
-      return <p className="text-center py-10">Loading...</p>;
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
     }
 
     if (error) {
-      return <p className="text-center py-10 text-red-500">{error}</p>;
+      return (
+        <Typography color="error" align="center" sx={{ p: 4 }}>
+          {error}
+        </Typography>
+      );
     }
 
     if (openPositions.length === 0) {
-      return <p className="text-center py-10">No positions found.</p>;
+      return (
+        <Paper sx={{ textAlign: 'center', p: 4, mt: 2 }}>
+          <Typography variant="h6">No Positions Found</Typography>
+        </Paper>
+      );
     }
 
     return openPositions.map((position, index) => (
@@ -145,52 +165,51 @@ export default function CandidatePositionsPage() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="mt-4 bg-white rounded-xl shadow-lg w-full p-6 sm:p-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">All Open Positions</h2>
-              <p className="mt-1 text-md text-gray-600">
-                Browse all publicly available positions.
-              </p>
-            </div>
-          </div>
-          
-          <form onSubmit={handleSearch} className="mb-4 flex flex-col sm:flex-row items-center gap-2">
-            <SearchBar
-              value={searchTerm}
-              onChange={handleSearchTermChange}
-              placeholder="Search via course code or name:"
-            />
-            <Filter 
-              key={`filter-${filterConfig.length}`} // Force re-render when config changes
-              ref={filterRef} 
-              onFilterChange={handleFilterChange} 
-              filterConfig={visibleFilters} 
-            />
-            <button
-              type="submit"
-              className="h-10 px-4 text-sm font-semibold rounded-md bg-orange-600 text-white hover:bg-orange-700 transition-colors"
-            >
-              Search
-            </button>
-          </form>
-          
-          <div className="mb-4 text-sm text-gray-600">
-            {!isLoading && !error && (
-              <p>
-                <strong>{openPositions.length}</strong>
-                {` ${openPositions.length === 1 ? 'result' : 'results'} found`}
-              </p>
-            )}
-          </div>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h1" component="h1" gutterBottom>
+          Open Positions
+        </Typography>
+        <Typography variant="h3" color="text.secondary">
+          Browse and apply for all available TA positions.
+        </Typography>
+      </Box>
 
-          <div className="space-y-4">
-            {renderContent()}
-          </div>
-        </div>
-      </div>
-    </div>
+      <Paper elevation={2} sx={{ p: { xs: 2, md: 4 } }}>
+        <Box component="form" onSubmit={handleSearch} sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+          <SearchBar
+            value={searchTerm}
+            onChange={handleSearchTermChange}
+            placeholder="Search via course code or name:"
+            sx={{ flexGrow: 1 }}
+          />
+          <Filter 
+            key={`filter-${filterConfig.length}`}
+            ref={filterRef} 
+            onFilterChange={handleFilterChange} 
+            filterConfig={visibleFilters} 
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ height: 40 }}
+          >
+            Search
+          </Button>
+        </Box>
+        
+        {!isLoading && !error && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <strong>{openPositions.length}</strong>
+            {` ${openPositions.length === 1 ? 'result' : 'results'} found`}
+          </Typography>
+        )}
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {renderContent()}
+        </Box>
+      </Paper>
+    </Container>
   );
 }

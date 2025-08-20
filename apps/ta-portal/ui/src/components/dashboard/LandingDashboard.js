@@ -1,7 +1,10 @@
+// src/components/dashboard/LandingDashboard.js
+'use client';
+
 import SelectionCard from "@/components/dashboard/SelectionCard";
 import { DASHBOARD_OPTIONS } from "@/configuration/dashboard.config";
 import Link from "next/link";
-
+import { Box, Container, Grid, Paper, Typography } from "@mui/material";
 
 export default function LandingDashboard({ user }) {
   // filter options based on user role
@@ -13,40 +16,72 @@ export default function LandingDashboard({ user }) {
   const formattedUserRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase();
 
   return (
-    <>
-      <div className="bg-white p-10 pl-10 mb-10">
-        <div>
-          <h1 className="text-3xl ">Personal</h1>
-          <div className="grid grid-cols-4">
-            {PersonalOptions.map((option, index) => {
-              const finalLink =
-                option.link.includes("[username]") && user
-                  ? option.link.replace("[username]", user.username)
-                  : option.link;
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Personal Section */}
+      <Box sx={{ mb: 6 }}>
+        <Typography variant="h2" component="h1" mb={2}>
+          Personal
+        </Typography>
+        <Grid container spacing={4} justifyContent="center">
+          {PersonalOptions.map((option, index) => {
+            const finalLink =
+              option.link.includes("[username]") && user
+                ? option.link.replace("[username]", user.username)
+                : option.link;
 
-              return (
-                <SelectionCard
-                  text={option.text}
-                  link={finalLink}
-                  key={index}
-                />
-              );
-            })}
-          </div>
-        </div>
-        <div>
-          <h1 className="text-3xl">Explore</h1>
-          <div className="flex justify-center">
-            <Link href={`/Positions/${formattedUserRole}/${user.username}`} className="w-full flex justify-center">
-              <button className="bg-white border-2 border-rit-light-gray min-h-44 rounded-xl p-6 m-8 flex flex-col items-center justify-center w-4/5 shadow hover:bg-[#fff4e6] hover:scale-105  transition duration-200 ease-in-out hover:shadow-lg cursor-pointer">
-                <span className="text-xl font-semibold text-rit-orange">
-                  Find Open Positions
-                </span>
-              </button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </>
+            return (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <SelectionCard text={option.text} link={finalLink} />
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
+
+      {/* --- Integrated Explore Section --- */}
+      <Box sx={{ width: '100%', textAlign: 'center', mt: 10 }}>
+        <Typography variant="h3" component="h1" mb={2}>
+          Explore
+        </Typography>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+          <Paper
+            component={Link}
+            href={`/Positions/${formattedUserRole}/${user.username}`}
+            elevation={3}
+            sx={{
+              // Sizing and Layout
+              width: '90%',
+              minHeight: 176,
+              p: 3,
+              borderRadius: 3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textDecoration: 'none',
+
+              // Transitions & Hover Effects
+              transition: (theme) => theme.transitions.create(
+                ['transform', 'box-shadow', 'background-color'],
+                { duration: '200ms', easing: 'ease-in-out' }
+              ),
+              '&:hover': {
+                backgroundColor: '#fff4e6',
+                transform: 'scale(1.05)',
+                boxShadow: 8,
+              },
+            }}
+          >
+            <Typography
+              variant="h5"
+              fontWeight="600"
+              color="primary"
+            >
+              Find Open Positions
+            </Typography>
+          </Paper>
+        </Box>
+      </Box>
+    </Container>
   );
 }

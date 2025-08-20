@@ -1,3 +1,4 @@
+// src/app/Applications/Candidate/[username]/page.js
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -10,12 +11,18 @@ import SearchBar from '@/components/common/searchAndFilter/SearchBar';
 import { Filter } from '@/components/common/searchAndFilter/Filter';
 import { generateApplicationsFilterConfig } from './filter.config';
 
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Paper,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 export default function CandidateApplicationsPage() {
   const { currentUser, refreshUserProfile } = useAuth();
@@ -36,15 +43,13 @@ export default function CandidateApplicationsPage() {
   const pageTitle = "My Applications";
   const pageSubtitle = "Track the status of all positions you've applied for.";
 
- // Fetch semester options on load to build the filter component's configuration
   useEffect(() => {
     if (currentUser?.username) {
       const fetchSemesterOptions = async () => {
         try {
-          // Use the search/filter function with default params to get all applications
           const allApps = await getCandidateApplicationsAsCandidate(
-            '', // No search term
-            { status: [], level: '', semester: '' }, // Default filters
+            '',
+            { status: [], level: '', semester: '' },
             currentUser.username
           );
           
@@ -62,7 +67,6 @@ export default function CandidateApplicationsPage() {
     }
   }, [currentUser]);
 
-  // Central function to fetch and display applications based on search/filters
   const updateApplicationsView = useCallback(async (search, filters) => {
     if (!currentUser?.username) return;
     setLoading(true);
@@ -74,7 +78,6 @@ export default function CandidateApplicationsPage() {
         filters,
         currentUser.username
       );
-      // convert grade enum to string
       const applications = data.map(application => {
         if (application.candidateGrade && gradeEnumToStringValue[application.candidateGrade]) {
           return {
@@ -101,65 +104,74 @@ export default function CandidateApplicationsPage() {
     }
   }, [currentUser]);
 
-  // Fetch initial data on component mount
   useEffect(() => {
     if (currentUser) {
-      updateApplicationsView(searchTerm, appliedFilters);
+      // We explicitly pass an empty string for the search term to ensure a clean initial load.
+      updateApplicationsView('', { status: [], level: [], semester: '' });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+  }, [currentUser, updateApplicationsView]);
 
-  // --- Event Handlers ---
   const handleStatusChange = () => {
     updateApplicationsView(searchTerm, appliedFilters);
   };
 
-  // Called when "Apply Filters" or "Clear All" is clicked in the Filter component
   const handleFilterChange = (filters) => {
     setAppliedFilters(filters);
     updateApplicationsView(searchTerm, filters);
   };
   
-  
-  // Updates search term state as the user types.
-  const handleSearchTermChange = (newValue) => {
-    setSearchTerm(newValue);
-    if (newValue === '') {
+  const handleSearchTermChange = (newTerm) => {
+    setSearchTerm(newTerm);
+    if (newTerm === '') {
       updateApplicationsView('', appliedFilters);
     }
   };
   
-  // Called when the search form is submitted
   const handleSearch = (e) => {
     e.preventDefault();
-    // Get the most up-to-date filters directly from the Filter component
     const latestFilters = filterRef.current.getFilters();
-    // Update the parent's state so the UI is consistent
     setAppliedFilters(latestFilters);
-    // Fetch data with the latest filters and search term
     updateApplicationsView(searchTerm, latestFilters);
   };
 
-  // --- Render Logic ---
   const renderContent = () => {
-    if (loading) return <div className="text-center text-gray-500 py-8">Loading applications...</div>;
-    if (error) return <div className='text-red-500 text-center py-8'>Error: {error}</div>;
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+    if (error) {
+      return (
+        <Typography color="error" align="center" sx={{ p: 4 }}>
+          Error: {error}
+        </Typography>
+      );
+    }
     
     const semesterCodes = Object.keys(displayData).sort((a, b) => b.localeCompare(a));
 
     if (semesterCodes.length === 0) {
-      return <div className="text-center text-gray-500 py-8">No applications match your criteria.</div>;
+      return (
+        <Paper sx={{ textAlign: 'center', p: 4, mt: 2 }}>
+          <Typography variant="h6">No Applications Found</Typography>
+          <Typography color="text.secondary" sx={{ mt: 1 }}>
+            No applications match your current search or filter criteria.
+          </Typography>
+        </Paper>
+      );
     }
 
     return (
-      <div className='w-full max-w-4xl'>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {semesterCodes.map((semester) => (
           <Accordion key={semester} defaultExpanded>
-            <AccordionSummary expandIcon={<KeyboardArrowDownOutlinedIcon />} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h5">{`Semester ${semester}`}</Typography>
             </AccordionSummary>
-            <AccordionDetails sx={{ padding: '16px', backgroundColor: '#f9f9f9' }}>
-              <div className="space-y-4">
+            <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {displayData[semester].map((app) => (
                   <ApplicationCard
                     key={app.id}
@@ -169,60 +181,79 @@ export default function CandidateApplicationsPage() {
                     refreshUserProfile={refreshUserProfile}
                   />
                 ))}
-              </div>
+              </Box>
             </AccordionDetails>
           </Accordion>
         ))}
-      </div>
+      </Box>
     );
   };
 
   const totalApplications = Object.values(displayData).reduce((acc, apps) => acc + apps.length, 0);
 
   return (
-    <main>
-      <div className='flex flex-col items-center p-6 bg-white shadow-sm'>
-        <h1 className='text-4xl font-bold text-gray-800'>{pageTitle}</h1>
-        <p className='text-md text-gray-600 mt-2'>{pageSubtitle}</p>
-      </div>
-
-      <Box component="form" onSubmit={handleSearch} className='flex justify-center p-4 bg-gray-100 border-b border-gray-200 sticky top-0 z-10'>
-        <Box className='w-full max-w-4xl flex flex-col md:flex-row gap-4 items-center'>
-            <SearchBar
-                value={searchTerm}
-                onChange={handleSearchTermChange}
-                placeholder="Search by Course Name or Code..."
-            />
-            {filterConfig.length > 0 ? (
-                <Filter
-                  ref={filterRef}
-                  onFilterChange={handleFilterChange}
-                  filterConfig={filterConfig}
-                />
-            ) : (
-                <Box className='w-24 h-10 animate-pulse bg-gray-300 rounded-md' />
-            )}
-            <button
-              type='submit'
-              className='h-10 shrink-0 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-orange-600'
-            >
-              Search
-            </button>
-        </Box>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h1" component="h1" gutterBottom>
+          {pageTitle}
+        </Typography>
+        <Typography variant="h3" color="text.secondary">
+          {pageSubtitle}
+        </Typography>
       </Box>
 
-      <div className='flex justify-center bg-gray-50 p-4 md:p-8 min-h-screen'>
-        <div className='w-full max-w-4xl'>
-          {!loading && !error && (
-            <div className="mb-4 text-sm text-gray-600">
-              <strong>
-                {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
-              </strong>
-            </div>
-          )}
-          {renderContent()}
-        </div>
-      </div>
-    </main>
+      <Paper
+        component="form"
+        onSubmit={handleSearch}
+        elevation={2}
+        sx={{
+          p: 2,
+          mb: 4,
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          alignItems: 'center',
+          gap: 2,
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          backgroundColor: 'background.paper',
+        }}
+      >
+        <SearchBar
+          value={searchTerm}
+          onChange={handleSearchTermChange}
+          placeholder="Search by Course Name or Code..."
+          sx={{ width: '100%' }}
+        />
+        {filterConfig.length > 0 ? (
+          <Filter
+            ref={filterRef}
+            onFilterChange={handleFilterChange}
+            filterConfig={filterConfig}
+          />
+        ) : (
+          <Box sx={{ width: 120, height: 40, bgcolor: 'action.disabledBackground', borderRadius: 1 }} />
+        )}
+        <Button
+          type='submit'
+          variant='contained'
+          color='primary'
+          sx={{ height: 40, width: { xs: '100%', md: 'auto' } }}
+        >
+          Search
+        </Button>
+      </Paper>
+
+      <Box>
+        {!loading && !error && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <strong>
+              {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
+            </strong>
+          </Typography>
+        )}
+        {renderContent()}
+      </Box>
+    </Container>
   );
 }

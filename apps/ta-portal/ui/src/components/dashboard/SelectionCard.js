@@ -1,17 +1,66 @@
+// src/components/dashboard/SelectionCard.js
 "use client";
-import { useRouter } from "next/navigation";
+
+import Link from "next/link";
+import { Paper, Typography, ButtonBase, Box } from "@mui/material";
+
+/**
+ * A styled, fixed-size card component for dashboard navigation.
+ * @param {object} props - The component props.
+ * @param {string} props.text - The text to display on the card.
+ * @param {React.ReactNode} props.icon - The icon to display on the card.
+ * @param {string} props.link - The navigation link for the card.
+ */
 export default function SelectionCard({ text, icon, link }) {
-  const Router = useRouter();
-  const handleRedirect = () => {
-    Router.push(link);
-  };
-return (
-    <button
-        onClick={handleRedirect}
-        className="bg-white min-h-44 rounded-xl p-6 m-8 flex flex-col items-center justify-center shadow-lg hover:bg-gray-100 hover:scale-105 transition duration-200 ease-in-out hover:shadow-2xl cursor-pointer"
+  return (
+    <Paper
+      elevation={3}
+      sx={{
+        width: 200, // Set a fixed width
+        height: 200, // Set a fixed height
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+        "&:hover": {
+          transform: "scale(1.05)",
+          boxShadow: 6,
+        },
+      }}
     >
-        {icon && <span className="mb-3 text-4xl text-indigo-600">{icon}</span>}
-        <span className="text-xl font-semibold text-gray-900">{text}</span>
-    </button>
-);
+      <ButtonBase
+        component={Link}
+        href={link}
+        sx={{
+          width: "100%",
+          height: "100%",
+          p: 2,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          borderRadius: 1,
+        }}
+      >
+        {icon && (
+          <Box
+            component="span"
+            sx={{ mb: 1.5, fontSize: "2.25rem", color: "primary.main" }}
+          >
+            {icon}
+          </Box>
+        )}
+        <Typography
+          variant="h2"
+          sx={{
+            textAlign: "center",
+            color: "text.primary",
+            fontSize: "1.25rem",
+          }}
+        >
+          {text}
+        </Typography>
+      </ButtonBase>
+    </Paper>
+  );
 }

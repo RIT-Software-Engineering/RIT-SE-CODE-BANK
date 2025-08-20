@@ -1,10 +1,25 @@
+'use client';
+
+import { TextField } from '@mui/material';
+
+/**
+ * A styled, read-only field for displaying information using Material-UI.
+ * @param {object} props - The component props.
+ * @param {string} props.label - The label for the display field.
+ * @param {string | number} props.value - The value to display in the field.
+ */
 export default function DisplayField({ label, value }) {
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      <p className="mt-1 block w-full rounded-md border-gray-200 bg-gray-100 shadow-sm p-2 text-gray-600">
-        {value || 'None'}
-      </p>
-    </div>
+    <TextField
+      fullWidth
+      variant="filled"
+      label={label}
+      value={value || 'None'}
+      InputProps={{
+        readOnly: true,
+      }}
+      // This prevents the label from shrinking when there is no value
+      InputLabelProps={{ shrink: true }}
+    />
   );
 }

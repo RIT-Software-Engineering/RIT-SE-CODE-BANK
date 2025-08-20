@@ -3,31 +3,35 @@
 
 import React, { useState, useEffect } from "react";
 import {
-    tableClasses,
-    thClasses,
-    tdClasses,
-    inputClasses,
-    totalTdClasses,
-    buttonClasses,
-} from "@/constants/timecardConstants";
+    Box,
+    Button,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TableFooter,
+    Typography,
+    TextField,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+    CircularProgress,
+    Container,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import NotesModal from "@/components/timecard/NotesModal";
 import ConfirmationModal from "@/components/common/models/ConfirmationModal";
+import StartDateModal from "@/components/timecard/StartDateModal";
 import { useNotification } from "@/contexts/NotificationContext";
-import { 
-    upsertTimecard, 
+import {
+    upsertTimecard,
     getAllTimecardsForJob,
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import TimecardHistory from "@/components/timecard/TimecardHistory";
-
-import { 
-    Accordion, 
-    AccordionSummary, 
-    AccordionDetails, 
-    Typography,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import StartDateModal from "@/components/timecard/StartDateModal";
 
 /**
  * EmployeeTimecard is a client-side component for employees to
@@ -59,7 +63,7 @@ export default function EmployeeTimecard() {
     // --- HELPER & UTILITY FUNCTIONS ---
     const formatDate = (date) => date ? new Date(date).toISOString().slice(0, 10) : "";
     const formatTime = (date) => date ? new Date(date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }) : "";
-    
+
     /**
      * Generates a 7-day week structure starting from a given date.
      * @param {Date} weekStart - The starting date of the week.
@@ -96,7 +100,7 @@ export default function EmployeeTimecard() {
             // Find the user's currently active job from their records.
             const employeeRecords = currentUser.candidate?.employee;
             const activeJob = employeeRecords?.flatMap(e => e.jobPositionHistory).find(j => j.jobPositionHistoryStatus === "ACTIVE");
-            
+
             if (activeJob) {
                 setJobPositionHistoryId(activeJob.id);
                 // If an active job is found, fetch all associated timecards.
@@ -123,7 +127,7 @@ export default function EmployeeTimecard() {
         setError(null);
         try {
             const allTimecards = await getAllTimecardsForJob(jobHistoryId);
-            
+
             if (allTimecards.length === 0) {
                 // No timecards exist, prompt user to create the first one.
                 setNeedsInitialTimecard(true);
@@ -133,7 +137,7 @@ export default function EmployeeTimecard() {
                 // The API returns timecards sorted by most recent first.
                 const mostRecent = allTimecards[0];
                 setPreviousTimecards(allTimecards.length > 1 ? allTimecards.slice(1) : []);
-                
+
                 const weekStart = new Date(mostRecent.weekStartDate);
                 setWeekStartDate(weekStart);
 
@@ -217,7 +221,7 @@ export default function EmployeeTimecard() {
         setCurrentTimecard(prev => prev.map(d => d.date === date ? { ...d, notes } : d));
         showNotification("Notes updated. Click 'Save Progress' to save to the database.", "success");
     };
-    
+
     /**
      * Exports the current week's timecard data as a CSV file.
      */
@@ -254,27 +258,37 @@ export default function EmployeeTimecard() {
     const handleFinalSubmitAndCreateNew = async (newStartDate) => {
         setSubmitting(true);
         try {
-            // 1. Export the current (soon to be previous) timecard
-            handleExport(currentTimecard, weekStartDate);
-
-            // 2. Save the current timecard's final state
-            await handleSaveProgress(); 
-
-            // 3. Reset the state for the new week
-            setWeekStartDate(newStartDate);
-            setCurrentTimecard(buildWeekFrom(newStartDate));
-
-            // 4. Immediately save the new empty timecard to the DB to establish it
-            const newPayload = {
-                jobPositionHistoryId, weekStartDate: newStartDate, isCurrentWeek: true, entries: []
+            // 1. First, perform a final save of the current week's data.
+            const finalSavePayload = {
+                jobPositionHistoryId,
+                weekStartDate,
+                isCurrentWeek: true,
+                entries: currentTimecard.map(day => ({
+                    date: day.date, notes: day.notes || "", duration: day.total || 0,
+                    timeIn1: day.ins[0] || null, timeOut1: day.outs[0] || null,
+                    timeIn2: day.ins[1] || null, timeOut2: day.outs[1] || null,
+                    timeIn3: day.ins[2] || null, timeOut3: day.outs[2] || null,
+                })),
             };
-            await upsertTimecard(newPayload);
-            
-            // 5. Reload all data to refresh the "previous timecards" list
+            await upsertTimecard(finalSavePayload);
+    
+            // 2. Now, create the NEW week.
+            const newWeekPayload = {
+                jobPositionHistoryId,
+                weekStartDate: newStartDate,
+                isCurrentWeek: true,
+                entries: []
+            };
+            await upsertTimecard(newWeekPayload);
+    
+            // 3. Export the data we just saved.
+            handleExport(currentTimecard, weekStartDate);
+    
+            // 4. Reload everything from the DB.
             await loadAllTimecards(jobPositionHistoryId);
-
+    
             showNotification("Timecard submitted and new week started!", "success");
-
+    
         } catch (error) {
             showNotification(error.message || "Failed to submit timecard.", "error");
         } finally {
@@ -284,40 +298,52 @@ export default function EmployeeTimecard() {
     };
 
     /**
-     * Creates the very first timecard for a new employee.
+     * Creates the very first timecard for a new employee and saves it immediately.
      * @param {Date} startDate - The selected start date for their first week.
      */
-    const handleCreateInitialTimecard = (startDate) => {
-        setWeekStartDate(startDate);
-        setCurrentTimecard(buildWeekFrom(startDate));
-        setNeedsInitialTimecard(false);
-        setShowStartDateModal(false);
-        showNotification("New timecard created. Start entering your hours.", "info");
+    const handleCreateInitialTimecard = async (startDate) => {
+        setSubmitting(true);
+        try {
+            const payload = {
+                jobPositionHistoryId,
+                weekStartDate: startDate,
+                isCurrentWeek: true,
+                entries: [] // A new week starts empty
+            };
+            await upsertTimecard(payload);
+            
+            // Now that the record is created, reload all data.
+            await loadAllTimecards(jobPositionHistoryId);
+            showNotification("New timecard created. Start entering your hours.", "info");
+
+        } catch (error) {
+            showNotification(error.message || "Failed to create timecard.", "error");
+        } finally {
+            setSubmitting(false);
+            setShowStartDateModal(false);
+        }
     };
 
     const weeklyTotal = currentTimecard.reduce((sum, d) => sum + (d.total || 0), 0);
 
-    if (loading) return <div className="text-center py-20 text-gray-500">Loading timecard...</div>;
-    if (error) return <div className="text-center py-20 text-red-600">Error: {error}</div>;
-    if (!jobPositionHistoryId) return <div className="text-center py-20 text-gray-500">You do not have an active job position.</div>;
+    if (loading) return <Box sx={{ textAlign: 'center', py: 10 }}><CircularProgress /><Typography sx={{ mt: 2 }}>Loading timecard...</Typography></Box>;
+    if (error) return <Box sx={{ textAlign: 'center', py: 10 }}><Typography color="error">Error: {error}</Typography></Box>;
+    if (!jobPositionHistoryId) return <Box sx={{ textAlign: 'center', py: 10 }}><Typography color="text.secondary">You do not have an active job position.</Typography></Box>;
 
     if (needsInitialTimecard) {
         return (
             <>
-                <div className="text-center py-20">
-                    <p className="text-gray-600 mb-4">No timecard found. Let's create your first one.</p>
-                    <button 
-                        onClick={() => setShowStartDateModal(true)}
-                        className={`${buttonClasses} bg-rit-orange text-white hover:bg-gray-900`}
-                    >
-                        Create First Timecard
-                    </button>
-                </div>
-                <StartDateModal 
+                <Box sx={{ textAlign: 'center', py: 10 }}>
+                    <Typography color="text.secondary" sx={{ mb: 2 }}>No timecard found. Let&apos;s create your first one.</Typography>
+                    <Button variant="contained" onClick={() => setShowStartDateModal(true)} disabled={submitting}>
+                        {submitting ? <CircularProgress size={24} /> : "Create First Timecard"}
+                    </Button>
+                </Box>
+                <StartDateModal
                     isOpen={showStartDateModal}
                     onClose={() => setShowStartDateModal(false)}
                     onConfirm={handleCreateInitialTimecard}
-                    isSubmitting={false}
+                    isSubmitting={submitting}
                 />
             </>
         )
@@ -325,49 +351,65 @@ export default function EmployeeTimecard() {
 
     return (
         <>
-            <div className="p-4 sm:p-6 lg:p-8">
-                <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-7xl mx-auto">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 text-center">Weekly Timecard</h1>
-                    <div className="overflow-x-auto rounded-lg border border-gray-200">
-                        <table className={tableClasses}>
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className={thClasses}>Day</th><th className={thClasses}>Date</th><th className={thClasses}>Time In 1</th><th className={thClasses}>Time Out 1</th><th className={thClasses}>Time In 2</th><th className={thClasses}>Time Out 2</th><th className={thClasses}>Time In 3</th><th className={thClasses}>Time Out 3</th><th className={thClasses}>Total (hrs)</th><th className={thClasses}>Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+            <Container maxWidth="xl" sx={{ py: 4 }}>
+                <Paper sx={{ p: { xs: 2, sm: 4 }, mb: 4 }}>
+                    <Typography variant="h4" component="h1" align="center" gutterBottom fontWeight="bold">
+                        Weekly Timecard
+                    </Typography>
+                    <TableContainer component={Paper} elevation={2}>
+                        <Table sx={{ minWidth: 1200 }} size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Day</TableCell><TableCell>Date</TableCell><TableCell>Time In 1</TableCell><TableCell>Time Out 1</TableCell><TableCell>Time In 2</TableCell><TableCell>Time Out 2</TableCell><TableCell>Time In 3</TableCell><TableCell>Time Out 3</TableCell><TableCell align="right">Total (hrs)</TableCell><TableCell>Notes</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
                                 {currentTimecard.map((day, dayIdx) => (
-                                    <tr key={day.date} className="hover:bg-gray-50">
-                                        <td className={`${tdClasses} font-medium text-gray-900`}>{day.day}</td>
-                                        <td className={tdClasses}><input type="date" value={day.date} readOnly className={`${inputClasses} bg-gray-100 cursor-not-allowed`}/></td>
+                                    <TableRow key={day.date} hover>
+                                        <TableCell component="th" scope="row"><Typography fontWeight="medium">{day.day}</Typography></TableCell>
+                                        <TableCell><TextField type="date" value={day.date} variant="standard" InputProps={{ readOnly: true, disableUnderline: true }} /></TableCell>
                                         {Array.from({ length: 3 }).map((_, pairIdx) => (
                                             <React.Fragment key={pairIdx}>
-                                                <td className={tdClasses}><input type="time" value={day.ins[pairIdx] || ""} onChange={(e) => handleTimeChange(dayIdx, pairIdx, "in", e.target.value)} className={inputClasses}/></td>
-                                                <td className={tdClasses}><input type="time" value={day.outs[pairIdx] || ""} onChange={(e) => handleTimeChange(dayIdx, pairIdx, "out", e.target.value)} className={inputClasses}/></td>
+                                                <TableCell>
+                                                    <TextField 
+                                                        type="time" 
+                                                        value={day.ins[pairIdx] || ""} 
+                                                        onChange={(e) => handleTimeChange(dayIdx, pairIdx, "in", e.target.value)} 
+                                                        variant="standard"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <TextField 
+                                                        type="time" 
+                                                        value={day.outs[pairIdx] || ""} 
+                                                        onChange={(e) => handleTimeChange(dayIdx, pairIdx, "out", e.target.value)} 
+                                                        variant="standard"
+                                                    />
+                                                </TableCell>
                                             </React.Fragment>
                                         ))}
-                                        <td className={totalTdClasses}>{(day.total || 0).toFixed(2)}</td>
-                                        <td className={tdClasses}><button onClick={() => setNotesModal({ show: true, day: day })} className="text-blue-600 underline text-sm">{day.notes ? "Edit Notes" : "Add Notes"}</button></td>
-                                    </tr>
+                                        <TableCell align="right"><Typography>{(day.total || 0).toFixed(2)}</Typography></TableCell>
+                                        <TableCell><Button variant="text" size="small" onClick={() => setNotesModal({ show: true, day: day })}>{day.notes ? "Edit" : "Add"}</Button></TableCell>
+                                    </TableRow>
                                 ))}
-                            </tbody>
-                            <tfoot className="bg-gray-50">
-                                <tr>
-                                    <td colSpan="9" className={`${tdClasses} text-right font-bold text-gray-600 uppercase`}>Week Total:</td>
-                                    <td className={`${totalTdClasses} text-lg ${weeklyTotal > 10 ? "text-red-600" : "text-gray-800"}`}>{weeklyTotal.toFixed(2)}</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    <div className="mt-8 flex justify-center space-x-4">
-                        <button onClick={() => setShowClearConfirm(true)} disabled={submitting || !!error} className={`${buttonClasses} bg-red-600 text-white hover:bg-gray-800 disabled:opacity-50`}>Clear</button>
-                        <button onClick={handleSaveProgress} disabled={submitting || !!error} className={`${buttonClasses} bg-gray-200 text-gray-800 hover:bg-rit-orange disabled:opacity-50`}>{submitting ? "Saving..." : "Save"}</button>
-                        <button onClick={() => setShowSubmitConfirm(true)} disabled={submitting || !!error} className={`${buttonClasses} bg-rit-orange text-white hover:bg-gray-900 disabled:opacity-50`}>Submit Week</button>
-                    </div>
-                </div>
+                            </TableBody>
+                            <TableFooter>
+                                <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                                    <TableCell colSpan={8} align="right"><Typography variant="button" fontWeight="bold">Week Total:</Typography></TableCell>
+                                    <TableCell colSpan={2} align="left"><Typography variant="h6" fontWeight="bold" color={weeklyTotal > 10 ? 'error.main' : 'text.primary'}>{weeklyTotal.toFixed(2)}</Typography></TableCell>
+                                </TableRow>
+                            </TableFooter>
+                        </Table>
+                    </TableContainer>
+                    <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+                        <Button variant="contained" color="error" onClick={() => setShowClearConfirm(true)} disabled={submitting || !!error}>Clear</Button>
+                        <Button variant="outlined" onClick={handleSaveProgress} disabled={submitting || !!error} startIcon={submitting ? <CircularProgress size={20} /> : null}>{submitting ? "Saving..." : "Save Progress"}</Button>
+                        <Button variant="contained" color="primary" onClick={() => setShowSubmitConfirm(true)} disabled={submitting || !!error}>Submit Week</Button>
+                    </Box>
+                </Paper>
 
                 {previousTimecards.length > 0 && currentUser && (
-                    <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-7xl mx-auto mt-8">
+                    <Paper sx={{ p: { xs: 2, sm: 4 } }}>
                         <Accordion>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}><Typography variant="h6" fontWeight={600}>Previous Timecards</Typography></AccordionSummary>
                             <AccordionDetails>
@@ -379,27 +421,27 @@ export default function EmployeeTimecard() {
                                 ))}
                             </AccordionDetails>
                         </Accordion>
-                    </div>
+                    </Paper>
                 )}
-            </div>
-            
+            </Container>
+
             <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Clear Timecard">
                 Are you sure you want to clear all entries for this week? This action cannot be undone.
             </ConfirmationModal>
 
-            <ConfirmationModal 
-                isOpen={showSubmitConfirm} 
-                onClose={() => setShowSubmitConfirm(false)} 
-                onConfirm={handleInitiateSubmit} 
-                title="Submit Timecard" 
+            <ConfirmationModal
+                isOpen={showSubmitConfirm}
+                onClose={() => setShowSubmitConfirm(false)}
+                onConfirm={handleInitiateSubmit}
+                title="Submit Timecard"
                 isConfirming={submitting}
             >
                 Are you sure you are ready to submit your timecard for the week? This will save the current week and start a new one. You will NOT be able to edit this timecard again.
             </ConfirmationModal>
 
             {notesModal.show && <NotesModal isOpen={notesModal.show} dayEntry={notesModal.day} onClose={() => setNotesModal({ show: false, day: null })} onSave={handleSaveNotes} />}
-            
-            <StartDateModal 
+
+            <StartDateModal
                 isOpen={showStartDateModal && !needsInitialTimecard}
                 onClose={() => setShowStartDateModal(false)}
                 onConfirm={handleFinalSubmitAndCreateNew}

@@ -2,7 +2,20 @@
 'use client';
 
 import React from 'react';
-import { tableClasses, thClasses, tdClasses, totalTdClasses, buttonClasses } from "@/constants/timecardConstants";
+import { 
+    Box, 
+    Button, 
+    Paper, 
+    Table, 
+    TableBody, 
+    TableCell, 
+    TableContainer, 
+    TableHead, 
+    TableRow, 
+    TableFooter,
+    Typography 
+} from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
 
 // Helper function to format date to YYYY-MM-DD
 const formatDate = (date) => date ? new Date(date).toISOString().slice(0, 10) : "";
@@ -97,56 +110,69 @@ const TimecardHistory = ({ timecard, user }) => {
     };
 
     return (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 my-4">
-            <table className={tableClasses}>
-                <thead className="bg-gray-50">
-                    <tr>
-                        <th className={thClasses}>Day</th>
-                        <th className={thClasses}>Date</th>
-                        <th className={thClasses}>Time In 1</th>
-                        <th className={thClasses}>Time Out 1</th>
-                        <th className={thClasses}>Time In 2</th>
-                        <th className={thClasses}>Time Out 2</th>
-                        <th className={thClasses}>Time In 3</th>
-                        <th className={thClasses}>Time Out 3</th>
-                        <th className={thClasses}>Total (hrs)</th>
-                        <th className={thClasses}>Notes</th>
-                    </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                    {displayWeek.map((day) => (
-                        <tr key={day.date} className="hover:bg-gray-50">
-                            <td className={`${tdClasses} font-medium text-gray-900`}>{day.dayLabel}</td>
-                            <td className={tdClasses}>{day.date}</td>
-                            <td className={tdClasses}>{day.timeIn1?.slice(11, 16) || '--'}</td>
-                            <td className={tdClasses}>{day.timeOut1?.slice(11, 16) || '--'}</td>
-                            <td className={tdClasses}>{day.timeIn2?.slice(11, 16) || '--'}</td>
-                            <td className={tdClasses}>{day.timeOut2?.slice(11, 16) || '--'}</td>
-                            <td className={tdClasses}>{day.timeIn3?.slice(11, 16) || '--'}</td>
-                            <td className={tdClasses}>{day.timeOut3?.slice(11, 16) || '--'}</td>
-                            <td className={totalTdClasses}>{(day.duration || 0).toFixed(2)}</td>
-                            <td className={`${tdClasses} text-sm`}>{day.notes || '--'}</td>
-                        </tr>
-                    ))}
-                </tbody>
-                <tfoot className="bg-gray-50">
-                    <tr>
-                        <td colSpan="9" className={`${tdClasses} text-right font-bold text-gray-600 uppercase`}>Week Total:</td>
-                        <td className={`${totalTdClasses} text-lg ${weeklyTotal > 10 ? "text-red-600" : "text-gray-800"}`}>
-                            {weeklyTotal.toFixed(2)}
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-            <div className="mt-4 flex justify-end">
-                <button 
+        <Paper sx={{ my: 2, overflow: 'hidden' }}>
+            <TableContainer sx={{ maxHeight: 500 }}>
+                <Table stickyHeader aria-label="timecard history table">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Day</TableCell>
+                            <TableCell>Date</TableCell>
+                            <TableCell>Time In 1</TableCell>
+                            <TableCell>Time Out 1</TableCell>
+                            <TableCell>Time In 2</TableCell>
+                            <TableCell>Time Out 2</TableCell>
+                            <TableCell>Time In 3</TableCell>
+                            <TableCell>Time Out 3</TableCell>
+                            <TableCell align="right">Total (hrs)</TableCell>
+                            <TableCell>Notes</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {displayWeek.map((day) => (
+                            <TableRow key={day.date} hover>
+                                <TableCell component="th" scope="row">
+                                    <Typography variant="body2" fontWeight="medium">{day.dayLabel}</Typography>
+                                </TableCell>
+                                <TableCell>{day.date}</TableCell>
+                                <TableCell>{day.timeIn1?.slice(11, 16) || '--'}</TableCell>
+                                <TableCell>{day.timeOut1?.slice(11, 16) || '--'}</TableCell>
+                                <TableCell>{day.timeIn2?.slice(11, 16) || '--'}</TableCell>
+                                <TableCell>{day.timeOut2?.slice(11, 16) || '--'}</TableCell>
+                                <TableCell>{day.timeIn3?.slice(11, 16) || '--'}</TableCell>
+                                <TableCell>{day.timeOut3?.slice(11, 16) || '--'}</TableCell>
+                                <TableCell align="right">{(day.duration || 0).toFixed(2)}</TableCell>
+                                <TableCell sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>{day.notes || '--'}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                    <TableFooter>
+                        <TableRow sx={{ '&:last-child td, &:last-child th': { border: 0 }, backgroundColor: 'action.hover' }}>
+                            <TableCell colSpan={8} align="right">
+                                <Typography variant="body1" fontWeight="bold" textTransform="uppercase">Week Total:</Typography>
+                            </TableCell>
+                            <TableCell colSpan={2} align="left">
+                                <Typography 
+                                    variant="h6" 
+                                    fontWeight="bold"
+                                    color={weeklyTotal > 10 ? 'error.main' : 'text.primary'}
+                                >
+                                    {weeklyTotal.toFixed(2)}
+                                </Typography>
+                            </TableCell>
+                        </TableRow>
+                    </TableFooter>
+                </Table>
+            </TableContainer>
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                <Button 
                     onClick={handleExport}
-                    className={`${buttonClasses} bg-gray-200 text-gray-800 hover:bg-gray-300`}
+                    variant="outlined"
+                    startIcon={<DownloadIcon />}
                 >
                     Export this Week
-                </button>
-            </div>
-        </div>
+                </Button>
+            </Box>
+        </Paper>
     );
 };
 

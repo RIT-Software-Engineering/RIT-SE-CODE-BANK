@@ -1,8 +1,8 @@
 // src/app/page.js (root page)
-
 'use client';
 
 import { useState, useEffect } from "react";
+import { Box, CircularProgress } from "@mui/material";
 import LoginWrapper from "@/components/auth/Login/LoginWrapper";
 import SignUpForm from "@/components/auth/SignUpForm";
 import LandingDashboard from "@/components/dashboard/LandingDashboard";
@@ -54,7 +54,6 @@ export default function Home() {
     } else if (action === 'signup' && user) {
       console.log("New user creation started. Opening profile form.", user);
       setProfileDataForModal(user);
-      showNotification("Profile creation started.", "success");
       setIsProfileModalOpen(true);
     } else {
       console.error("Login/Signup failed: Data is missing or invalid.", { user, action });
@@ -73,11 +72,22 @@ export default function Home() {
 
   // Render a loading indicator while fetching initial data
   if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {isProfileModalOpen && (
         <UserProfileModal
           isOpen={isProfileModalOpen}
@@ -111,6 +121,6 @@ export default function Home() {
       {currentUser && (
         <LandingDashboard user={currentUser} />
       )}
-    </div>
+    </Box>
   );
 }

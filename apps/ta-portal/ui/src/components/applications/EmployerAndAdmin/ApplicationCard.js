@@ -2,9 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
-import { getStatusClasses } from "@/utils/applicationUtils";
-import { DocumentIcon, EllipsisVerticalIcon } from "@/assets/icons";
+import { useState } from "react";
+import { getStatusChipColor } from "@/utils/applicationUtils";
 import ViewableApplicationForm from "../ViewableApplicationForm";
 import ViewableCommentForm from "../../comments/ViewableCommentForm";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
@@ -18,6 +17,26 @@ import { useNotification } from "@/contexts/NotificationContext";
 import { applicationStatusEnumToString } from "@/constants/applicationStatusConstants";
 import ApplicationTracker from "../ApplicationProgressTracker";
 
+import {
+  Avatar,
+  Box,
+  Chip,
+  CircularProgress,
+  Divider,
+  Grid,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+  Typography,
+  Link as MuiLink,
+} from '@mui/material';
+import { 
+    MoreVert as EllipsisVerticalIcon,
+    Article as DocumentIcon
+} from '@mui/icons-material';
+
+
 export default function ApplicationCard({
   currentUser,
   jobPosition,
@@ -29,6 +48,7 @@ export default function ApplicationCard({
   const { showNotification } = useNotification();
   const [isViewingApplication, setIsViewingApplication] = useState(false);
   const [isViewingComments, setIsViewingComments] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -37,7 +57,6 @@ export default function ApplicationCard({
   });
   const [isProcessingUpdate, setIsProcessingUpdate] = useState(false);
 
-  // Confirmation modal states
   const [isConfirmingOffer, setIsConfirmingOffer] = useState(false);
   const [isConfirmingPositionFull, setIsConfirmingPositionFull] = useState(false);
   const [pendingOfferStep, setPendingOfferStep] = useState(null);
@@ -46,11 +65,20 @@ export default function ApplicationCard({
 
   const { id, jobApplicationStatus, resume } = application;
 
-  const statusClasses = getStatusClasses(jobApplicationStatus);
+  const statusColor = getStatusChipColor(jobApplicationStatus);
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const handleOpenUpdateModal = (status, title) => {
     setModalState({ isOpen: true, status, title });
+    handleMenuClose();
   };
 
   const handleCloseUpdateModal = () => {
@@ -67,6 +95,7 @@ export default function ApplicationCard({
     }
 
     setIsCheckingHiredStatus(true);
+    handleMenuClose();
     try {
       const [hiredStatus, positionFullStatus] = await Promise.all([
         getCandidateHiredStatus(application.username, jobPosition.semesterCode),
@@ -75,26 +104,22 @@ export default function ApplicationCard({
 
       const isFull = positionFullStatus?.isFull;
 
-      // Both conditions true — show hired modal first, then position full
       if (hiredStatus && isFull) {
         setPendingOfferStep("positionFull");
         setIsConfirmingOffer(true);
         return;
       }
 
-      // Only hired condition
       if (hiredStatus) {
         setIsConfirmingOffer(true);
         return;
       }
 
-      // Only position full condition
       if (isFull) {
         setIsConfirmingPositionFull(true);
         return;
       }
 
-      // Neither condition — go straight to offer modal
       handleOpenUpdateModal("PENDING_OFFER", "Offer Position");
 
     } catch (error) {
@@ -108,15 +133,15 @@ export default function ApplicationCard({
   const handleConfirmUpdate = async (comment) => {
     setIsProcessingUpdate(true);
     try {
-      let fullName = currentUser.fname + " " + currentUser.lname;
-      const updatedApplication = await updateCandidateApplicationStatus(
+      let fullName = `${currentUser.fname} ${currentUser.lname}`;
+      await updateCandidateApplicationStatus(
         fullName,
         id,
         modalState.status,
         comment
       );
       showNotification(
-        `Application status successfully updated to "${modalState.status?.replaceAll(
+        `Application status successfully updated to "${modalState.status?.replace(
           "_",
           " "
         )}".`,
@@ -134,251 +159,114 @@ export default function ApplicationCard({
     }
   };
 
-  const EmployerHeader = () => (
-    <div className="flex items-center space-x-4 flex-1 min-w-0">
-      <div className="flex-shrink-0">
-        <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-          <span className="text-2xl font-bold text-black">
-            {application.candidateFName.charAt(0)}
-          </span>
-        </div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <h2 className="text-2xl font-bold text-gray-800 truncate">
-          {application.candidateFName} {application.candidateLName}
-          {" "}
-          {currentUser.role === 'EMPLOYER' && (
-            <span className="user-pronouns">({application.candidatePronouns})</span>
-          )}
-          {" | "}
-          <Link
-            href={`/Messaging/${encodeURIComponent(application.candidateEmail)}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="text-gray-600 hover:text-gray-800">
-              {application.candidateEmail}
-            </span>
-          </Link>
-        </h2>
-        <p className="text-md text-gray-500">
-          {"UID: " + application.candidateUID}
-        </p>
-        <p className="text-md text-gray-500">
-          {"Year " + application.candidateYear} | {application.candidateMajor}
-        </p>
-      </div>
-    </div>
-  );
-
-  const ActionsMenu = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const menuRef = useRef(null);
-
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (menuRef.current && !menuRef.current.contains(event.target)) {
-          setIsOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleMenuToggle = (e) => {
-      e.stopPropagation();
-      setIsOpen(!isOpen);
-    };
-
-    return (
-      <div className="relative" ref={menuRef}>
-        <button
-          onClick={handleMenuToggle}
-          className="p-2 rounded-full hover:bg-gray-100"
-          disabled={isCheckingHiredStatus}
-        >
-          <EllipsisVerticalIcon />
-        </button>
-        {isOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20">
-            <ul className="py-1">
-              <li>
-                <button
-                  onClick={() => {
-                    setIsViewingApplication(true);
-                    setIsOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  View Application Submission
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    setIsViewingComments(true);
-                    setIsOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  View Comment History
-                </button>
-              </li>
-              <div className="my-1 border-t border-gray-100"></div>
-
-              {showHireAction && 
-               currentUser?.role === 'ADMIN' && 
-               jobApplicationStatus?.toLowerCase() === "accepted_offer" && (
-                <li>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      if (onHire) {
-                        onHire();
-                      }
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-gray-100 font-medium"
-                  >
-                    Hire Candidate
-                  </button>
-                </li>
-              )}
-
-              {(jobApplicationStatus.toLowerCase() === "applied" ||
-                jobApplicationStatus.toLowerCase() === "interview" ||
-                jobApplicationStatus.toLowerCase() === "pending_offer" ||
-                jobApplicationStatus.toLowerCase() === "accepted_offer" ||
-                jobApplicationStatus.toLowerCase() === "hired") && (
-                <li>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      handleOpenUpdateModal("REJECTED", "Reject Application");
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                  >
-                    Reject Application
-                  </button>
-                </li>
-              )}
-              {jobApplicationStatus.toLowerCase() === "applied" && (
-                <li>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      handleOpenUpdateModal(
-                        "INTERVIEW",
-                        "Select for Interview"
-                      );
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Select for Interview
-                  </button>
-                </li>
-              )}
-              {(jobApplicationStatus.toLowerCase() === "applied" ||
-                jobApplicationStatus.toLowerCase() === "interview") && (
-                <li>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      handleOfferPosition();
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Offer Position
-                  </button>
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
-  };
+  const status = jobApplicationStatus?.toLowerCase();
+  const showHireOption = showHireAction && currentUser?.role === 'ADMIN' && status === "accepted_offer";
+  const showRejectOption = ["applied", "interview", "pending_offer", "accepted_offer", "hired"].includes(status);
+  const showInterviewOption = status === "applied";
+  const showOfferOption = ["applied", "interview"].includes(status);
+  const showActionMenuItems = showHireOption || showRejectOption || showInterviewOption || showOfferOption;
 
   return (
     <>
-      <div className="w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-        <div className="p-6">
-          <div className="flex justify-between items-start flex-wrap gap-4">
-            <EmployerHeader />
-            <div className="text-right">
-              <ActionsMenu />
-            </div>
-          </div>
+      <Paper elevation={3} sx={{ overflow: 'hidden', mb: 3 }}>
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
+              <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>
+                <Typography variant="h4" color="white">{application.candidateFName.charAt(0)}</Typography>
+              </Avatar>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="h2" component="h2" noWrap>
+                  {application.candidateFName} {application.candidateLName}
+                  {currentUser.role === 'EMPLOYER' && ` (${application.candidatePronouns})`}
+                  {' | '}
+                  <MuiLink component={Link} href={`/Messaging/${encodeURIComponent(application.candidateEmail)}`} underline="hover">
+                    {application.candidateEmail}
+                  </MuiLink>
+                </Typography>
+                <Typography color="text.secondary">
+                  UID: {application.candidateUID}
+                </Typography>
+                <Typography color="text.secondary">
+                  Year {application.candidateYear} | {application.candidateMajor}
+                </Typography>
+              </Box>
+            </Box>
+            <IconButton onClick={handleMenuClick} disabled={isCheckingHiredStatus}>
+                {isCheckingHiredStatus ? <CircularProgress size={24} /> : <EllipsisVerticalIcon />}
+            </IconButton>
+            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+                <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
+                <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
+                
+                {showActionMenuItems && <Divider />}
 
-          <div className="my-5 border-t border-gray-200"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-            <div>
-              <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium text-gray-500">Resume</p>
-                <DocumentIcon />
-              </div>
-              <a
-                href={`${backendURL}${resume.resumeURL}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-indigo-600 hover:text-indigo-800 font-medium"
-              >
-                {resume.name}
-              </a>
-            </div>
+                {showHireOption && (
+                    <MenuItem onClick={() => { if(onHire) onHire(); handleMenuClose(); }} sx={{color: 'success.main'}}>Hire Candidate</MenuItem>
+                )}
+                {showRejectOption && (
+                    <MenuItem onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} sx={{color: 'error.main'}}>Reject Application</MenuItem>
+                )}
+                {showInterviewOption && (
+                    <MenuItem onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>Select for Interview</MenuItem>
+                )}
+                {showOfferOption && (
+                    <MenuItem onClick={handleOfferPosition}>Offer Position</MenuItem>
+                )}
+            </Menu>
+          </Box>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                    <Typography variant="body2" color="text.secondary">Resume</Typography>
+                    <DocumentIcon fontSize="small" />
+                </Box>
+                <MuiLink href={`${backendURL}${resume.resumeURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
+                    {resume.name}
+                </MuiLink>
+            </Grid>
             {application.coverLetterURL && (
-            <div>
-              <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium text-gray-500">Cover Letter</p>
-                <DocumentIcon />
-              </div>
-              <a
-                href={`${backendURL}${application.coverLetterURL}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-indigo-600 hover:text-indigo-800 font-medium"
-              >
-                {application.coverLetterName || 'View Cover Letter'}
-              </a>
-            </div>
+                <Grid item xs={12} sm={6}>
+                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                        <Typography variant="body2" color="text.secondary">Cover Letter</Typography>
+                        <DocumentIcon fontSize="small" />
+                    </Box>
+                    <MuiLink href={`${backendURL}${application.coverLetterURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
+                        {application.coverLetterName || 'View Cover Letter'}
+                    </MuiLink>
+                </Grid>
             )}
-            <div>
-              <p className="text-sm font-medium text-gray-500">
-                Recent Course Grade
-              </p>
-              <p className="text-lg font-semibold text-gray-800">
-                {application.candidateGrade || "N/A"}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">
-                Previous TA Experience For This Course
-              </p>
-              <p className="text-lg font-semibold text-gray-800">
-                {application.wasPriorEmployeeForThisCourse ? "Yes" : "No"}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">
-                Previously TA&apos;d Courses
-              </p>
-              <p className="text-lg font-semibold text-gray-800">
-                {application.priorEmploymentHistory || "None"}
-              </p>
-            </div>
-          </div>
+            <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary">Recent Course Grade</Typography>
+                <Typography fontWeight="bold">{application.candidateGrade || "N/A"}</Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary">Previous TA Experience For This Course</Typography>
+                <Typography fontWeight="bold">{application.wasPriorEmployeeForThisCourse ? "Yes" : "No"}</Typography>
+            </Grid>
+            <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary">Previously TA&apos;d Courses</Typography>
+                <Typography fontWeight="bold">{application.priorEmploymentHistory || "None"}</Typography>
+            </Grid>
+          </Grid>
 
-          <div className="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
-            <div className="w-2/3 mt-6">
+          <Divider sx={{ my: 3 }} />
+          
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ width: { xs: '100%', md: '65%' } }}>
               <ApplicationTracker currentStep={jobApplicationStatus}/>
-            </div>
-            <span
-              className={`px-4 py-2 text-md font-bold rounded-full ${statusClasses}`}
-            >
-              {jobApplicationStatus?.replaceAll("_", " ")}
-            </span>
-          </div>
-        </div>
-      </div>
+            </Box>
+            <Chip
+              label={jobApplicationStatus?.replace("_", " ")}
+              color={statusColor}
+              sx={{ fontWeight: 'bold', fontSize: '1rem' }}
+            />
+          </Box>
+        </Box>
+      </Paper>
 
       {isViewingApplication && (
         <ViewableApplicationForm
@@ -408,13 +296,9 @@ export default function ApplicationCard({
         isProcessing={isProcessingUpdate}
       />
 
-      {/* Candidate already hired modal */}
       <ConfirmationModal
         isOpen={isConfirmingOffer}
-        onClose={() => {
-          setIsConfirmingOffer(false);
-          setPendingOfferStep(null);
-        }}
+        onClose={() => { setIsConfirmingOffer(false); setPendingOfferStep(null); }}
         onConfirm={() => {
           setIsConfirmingOffer(false);
           if (pendingOfferStep === "positionFull") {
@@ -427,13 +311,12 @@ export default function ApplicationCard({
         title="Confirm Offer"
         isConfirming={isProcessingUpdate}
       >
-        <p>
+        <Typography>
           Candidate <strong>{application.candidateFName} {application.candidateLName}</strong> has already accepted another position for this semester.
-        </p>
-        <p className="mt-2">Are you sure you want to proceed with making them an offer?</p>
+        </Typography>
+        <Typography sx={{ mt: 2 }}>Are you sure you want to proceed with making them an offer?</Typography>
       </ConfirmationModal>
 
-      {/* Position is full modal */}
       <ConfirmationModal
         isOpen={isConfirmingPositionFull}
         onClose={() => setIsConfirmingPositionFull(false)}
@@ -444,10 +327,10 @@ export default function ApplicationCard({
         title="Position Full"
         isConfirming={isProcessingUpdate}
       >
-        <p>
+        <Typography>
           This position is already marked as <strong>FILLED</strong>.
-        </p>
-        <p className="mt-2">Do you still want to proceed with offering it to this candidate?</p>
+        </Typography>
+        <Typography sx={{ mt: 2 }}>Do you still want to proceed with offering it to this candidate?</Typography>
       </ConfirmationModal>
     </>
   );

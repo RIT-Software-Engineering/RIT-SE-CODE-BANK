@@ -1,3 +1,4 @@
+// src/components/profile/UserProfileForm.js
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -8,6 +9,8 @@ import {
   updateEmployerProfile,
 } from '@/services/db-apis';
 import { useNotification } from '@/contexts/NotificationContext';
+import { Box, Typography, Button, IconButton, CircularProgress } from '@mui/material';
+import { Close } from '@mui/icons-material';
 
 // Import the step components
 import Step1CandidateAndEmployee from './CandidateAndEmployee/form-steps/Step1';
@@ -16,17 +19,6 @@ import Step3CandidateAndEmployee from './CandidateAndEmployee/form-steps/Step3';
 import Step1EmployerAndAdmin from './EmployerAndAdmin/form-steps/Step1';
 
 
-/**
- * Form component for the UserProfileModal that allows users to create or edit their profile.
- * @param {object} props - The component props.
- * @param {object} props.user - The user's profile data object.
- * @param {string} props.mode - The mode of the form (edit or create).
- * @param {function} props.onClose - Function to call to close the modal.
- * @param {object[]} props.courseOptions - The list of available courses.
- * @param {function} props.onUpdateSuccess - Callback for successful profile updates.
- * @param {string} props.editingSection - The section being edited (mainly for candidate/employee).
- * @param {object[]} props.allUsers - The list of all existing users for uniqueness checks.
- */
 export default function UserProfileForm({
   user,
   mode,
@@ -50,6 +42,31 @@ export default function UserProfileForm({
   const [takenSearch, setTakenSearch] = useState('');
   const [workedSearch, setWorkedSearch] = useState('');
 
+  // Create initial default values to prevent undefined errors
+  const getInitialDefaultValues = () => {
+    const baseDefaults = {
+      uid: user?.uid || '',
+      fname: user?.fname || '',
+      lname: user?.lname || '',
+      email: user?.email || '',
+      pronouns: user?.pronouns || '',
+    };
+
+    if (isCandidateOrEmployee) {
+      return {
+        ...baseDefaults,
+        major: user?.candidate?.major || '',
+        yearLevel: user?.candidate?.year?.toString() || '',
+        graduateStatus: user?.candidate?.graduateStatus || '',
+      };
+    } else {
+      return {
+        ...baseDefaults,
+        department: user?.employer?.department || '',
+      };
+    }
+  };
+
   const {
     register,
     handleSubmit,
@@ -60,22 +77,13 @@ export default function UserProfileForm({
     trigger,
     getValues,
   } = useForm({
-    defaultValues: {
-      uid: user?.uid || '',
-      fname: user?.fname || '',
-      lname: user?.lname || '',
-      email: user?.email || '',
-      pronouns: user?.pronouns || '',
-      major: user?.candidate?.major || '',
-      yearLevel: user?.candidate?.year || '',
-      graduateStatus: user?.candidate?.graduateStatus || '',
-      department: user?.employer?.department || '',
-    },
+    // Provide initial default values to prevent undefined errors
+    defaultValues: getInitialDefaultValues(),
   });
 
   const watchedStatus = watch('graduateStatus');
 
-  // Set default values
+  // This useEffect updates the form when user data changes
   useEffect(() => {
     if (user) {
       const defaultValues = {
@@ -87,7 +95,7 @@ export default function UserProfileForm({
       };
       if (isCandidateOrEmployee) {
         defaultValues.major = user.candidate?.major || '';
-        defaultValues.yearLevel = user.candidate?.year || '';
+        defaultValues.yearLevel = user.candidate?.year?.toString() || '';
         defaultValues.graduateStatus = user.candidate?.graduateStatus || '';
         const initialTaken =
           user.candidate?.courseHistory
@@ -109,7 +117,7 @@ export default function UserProfileForm({
     }
   }, [user, isCandidateOrEmployee, reset]);
 
-  // Update form values
+  // Update form values for courses
   useEffect(() => {
     setValue('coursesTaken', coursesTaken);
     setValue('coursesWorked', coursesWorked);
@@ -117,7 +125,6 @@ export default function UserProfileForm({
 
   // Handle next step with custom validation
   const nextStep = async () => {
-    // First, trigger standard validation for required fields
     const fieldsToValidate =
       currentStep === 1
         ? [
@@ -133,23 +140,18 @@ export default function UserProfileForm({
         : [];
 
     const isValid = await trigger(fieldsToValidate);
-    if (!isValid) return; // Stop if basic validation fails
+    if (!isValid) return;
 
-    // Second, perform custom validation for uniqueness and type, but only in create mode for step 1
     if (currentStep === 1 && mode === 'create') {
-      const { uid, email } = getValues(); // Get current form values
-
-      // Check if UID is unique
+      const { uid, email } = getValues();
       const uidExists = allUsers.some((u) => u.uid.toString() === uid.trim());
       if (uidExists) {
         showNotification(
           'This User ID is already taken. Please choose another one.',
           'error'
         );
-        return; // Stop navigation
+        return;
       }
-
-      // Check if email is unique
       const emailExists = allUsers.some(
         (u) => u.email.toLowerCase() === email.trim().toLowerCase()
       );
@@ -158,10 +160,9 @@ export default function UserProfileForm({
           'This email is already in use by another account.',
           'error'
         );
-        return; // Stop navigation
+        return;
       }
     }
-
     setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
   };
 
@@ -240,10 +241,9 @@ export default function UserProfileForm({
 
       let updatedProfile;
       if (isEditMode) {
-        // Call the update function for existing users
         updatedProfile = await updateCandidateProfile(finalData);
       } else {
-        finalData.password = user.password; // Password from initial signup object
+        finalData.password = user.password;
         updatedProfile = await createCandidateProfile(finalData);
       }
 
@@ -255,7 +255,6 @@ export default function UserProfileForm({
       showNotification(`Error: Could not save profile. ${error.message}`, 'error');
     }
   };
-
 
   const onSubmitEmployer = async (data) => {
     try {
@@ -271,10 +270,8 @@ export default function UserProfileForm({
       };
       let updatedProfile;
       if (isEditMode) {
-        // Call the update function for existing users
         updatedProfile = await updateEmployerProfile(finalData);
       } else {
-        // Call the create function for new users, adding password
         finalData.password = user.password;
         updatedProfile = await createEmployerProfile(finalData);
       }
@@ -288,12 +285,9 @@ export default function UserProfileForm({
     }
   };
 
-  // Set the onSubmit function based on user role
   const onSubmit = isCandidateOrEmployee ? onSubmitCandidate : onSubmitEmployer;
 
-  // Render the form content based on the current step
   const renderContent = () => {
-    // Candidate/employee edit forms
     if (isEditMode && editingSection && isCandidateOrEmployee) {
       switch (editingSection) {
         case 'info':
@@ -302,6 +296,7 @@ export default function UserProfileForm({
               register={register}
               errors={errors}
               watchedStatus={watchedStatus}
+              watch={watch}
             />
           );
         case 'coursesTaken':
@@ -328,10 +323,9 @@ export default function UserProfileForm({
             />
           );
         default:
-          return <p>Invalid section selected.</p>;
+          return <Typography>Invalid section selected.</Typography>;
       }
     }
-    // Candidate/Employee on-ramping form
     if (isCandidateOrEmployee) {
       switch (currentStep) {
         case 1:
@@ -340,6 +334,7 @@ export default function UserProfileForm({
               register={register}
               errors={errors}
               watchedStatus={watchedStatus}
+              watch={watch}
             />
           );
         case 2:
@@ -369,79 +364,72 @@ export default function UserProfileForm({
           return null;
       }
     }
-    // Employer/Admin form
-    return (
-      <Step1EmployerAndAdmin register={register} errors={errors} />
-    );
+    return <Step1EmployerAndAdmin register={register} errors={errors} />;
   };
 
   return (
-    <div className='p-6 sm:p-8 flex-grow overflow-y-auto'>
-      <div className='flex justify-between items-start mb-2'>
-        <h2 className='text-2xl font-bold text-slate-900'>
+    <Box sx={{ p: { xs: 2, sm: 4 }, flexGrow: 1, overflowY: 'auto' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        <Typography variant="h1" component="h2">
           {isEditMode ? `Edit Profile` : 'Complete Your Profile'}
-        </h2>
-        <button
-          onClick={onClose}
-          className='text-slate-400 hover:text-slate-700 text-3xl leading-none'
-        >
-          &times;
-        </button>
-      </div>
-      <p className='text-slate-500 mb-6'>
+        </Typography>
+        <IconButton onClick={onClose} aria-label="close">
+          <Close />
+        </IconButton>
+      </Box>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         {isCandidateOrEmployee && !editingSection
           ? `Please complete all steps. Step ${currentStep} of ${totalSteps}.`
           : 'Update your details below.'}
-      </p>
+      </Typography>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className='space-y-6'>
-        {renderContent()}
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <Box sx={{ mb: 4 }}>
+            {renderContent()}
+        </Box>
 
-        <div className='pt-4 flex justify-between items-center'>
-          {/* Previous button or a placeholder div to maintain space */}
+        <Box sx={{ pt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {isCandidateOrEmployee && !editingSection && currentStep > 1 ? (
-            <button
-              type='button'
+            <Button
+              variant="outlined"
               onClick={prevStep}
-              className='bg-slate-200 text-slate-800 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 transition-colors'
             >
               Previous
-            </button>
+            </Button>
           ) : (
-            <div /> // Empty div on the left to push content to the right
+            <div /> // Placeholder for alignment
           )}
 
-          <div className='flex items-center gap-4'>
-            {/* Show Next button ONLY in multi-step mode */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {isCandidateOrEmployee &&
               !editingSection &&
               currentStep < totalSteps && (
-                <button
-                  type='button'
-                  onClick={nextStep}
-                  className='bg-rit-orange text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-600 transition-colors'
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={nextStep}
                 >
                   Next
-                </button>
+                </Button>
               )}
-
-            {/* Show Save button if it's a single-step form, OR the last step of a multi-step form, OR we are editing a single section */}
             {(!isCandidateOrEmployee ||
               (isCandidateOrEmployee &&
                 !editingSection &&
                 currentStep === totalSteps) ||
               editingSection) && (
-              <button
-                type='submit'
-                disabled={isSubmitting}
-                className='bg-rit-orange text-white font-bold py-3 px-4 rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-rit-light-gray transition-all duration-300 ease-in-out disabled:bg-rit-dark-gray disabled:cursor-not-allowed flex items-center justify-center'
-              >
-                {isSubmitting ? 'Saving...' : 'Save Profile'}
-              </button>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={isSubmitting}
+                    startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
+                >
+                    {isSubmitting ? 'Saving...' : 'Save Profile'}
+                </Button>
             )}
-          </div>
-        </div>
+          </Box>
+        </Box>
       </form>
-    </div>
+    </Box>
   );
 }

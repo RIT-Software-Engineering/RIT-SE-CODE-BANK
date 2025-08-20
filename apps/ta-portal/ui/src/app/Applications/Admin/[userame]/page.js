@@ -14,18 +14,28 @@ import { useNotification } from '@/contexts/NotificationContext';
 import { gradeEnumToStringValue } from '@/constants/gradeConstants';
 
 import ApplicationCard from '@/components/applications/EmployerAndAdmin/ApplicationCard';
-
 import { Filter } from '@/components/common/searchAndFilter/Filter';
 import SearchBar from '@/components/common/searchAndFilter/SearchBar';
 import { generateApplicationsFilterConfig } from './filter.config';
 import HireModal from '@/components/applications/EmployerAndAdmin/HireModel';
 
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  FormControl,
+  MenuItem,
+  Paper,
+  Select,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 export default function AdminApplicationsPage() {
   const { currentUser } = useAuth();
@@ -33,13 +43,11 @@ export default function AdminApplicationsPage() {
   const filterRef = useRef();
   const searchParams = useSearchParams();
 
-  // Tab management
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
-    return tabParam === 'hiring' ? 'hiring' : 'applications';
+    return tabParam === 'hiring' ? 1 : 0;
   });
 
-  // Applications tab state
   const [displayData, setDisplayData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,12 +61,10 @@ export default function AdminApplicationsPage() {
     hasApplications: '',
   });
 
-  // Hiring tab state
   const [hiringApplications, setHiringApplications] = useState([]);
   const [hiringLoading, setHiringLoading] = useState(false);
   const [hiringError, setHiringError] = useState(null);
 
-  // Modal state
   const [isHireModalOpen, setIsHireModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -81,7 +87,6 @@ export default function AdminApplicationsPage() {
     }
   }, [currentUser]);
 
-  // Applications tab logic
   const updateApplicationsView = useCallback(
     async (search, searchType, filters) => {
       if (!currentUser?.username) return;
@@ -99,7 +104,10 @@ export default function AdminApplicationsPage() {
         const positions = data.map((position) => {
           const applicationsHistory =
             position.jobPositionApplicationHistory.map((app) => {
-              if (app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]) {
+              if (
+                app.candidateGrade &&
+                gradeEnumToStringValue[app.candidateGrade]
+              ) {
                 return {
                   ...app,
                   candidateGrade: gradeEnumToStringValue[app.candidateGrade],
@@ -133,7 +141,6 @@ export default function AdminApplicationsPage() {
     [currentUser]
   );
 
-  // Hiring tab logic
   const fetchHiringApplications = useCallback(async () => {
     setHiringLoading(true);
     setHiringError(null);
@@ -160,27 +167,33 @@ export default function AdminApplicationsPage() {
 
   useEffect(() => {
     if (currentUser) {
-      if (activeTab === 'applications') {
+      if (activeTab === 0) {
         updateApplicationsView(searchTerm, searchBy, appliedFilters);
-      } else if (activeTab === 'hiring') {
+      } else if (activeTab === 1) {
         fetchHiringApplications();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, activeTab]);
 
-  // Tab management
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    if (tabId === 'applications') {
-      setSearchTerm('');
-      updateApplicationsView('', searchBy, appliedFilters);
-    } else if (tabId === 'hiring') {
-      fetchHiringApplications();
+  const handleTabChange = (event, newValue) => {
+    setSearchTerm('');
+    setSearchBy('course');
+    const initialFilters = {
+      status: [],
+      level: [],
+      semester: '',
+      hasApplications: '',
+    };
+    setAppliedFilters(initialFilters);
+
+    if (filterRef.current && typeof filterRef.current.clearAll === 'function') {
+      filterRef.current.clearAll();
     }
+    
+    setActiveTab(newValue);
   };
 
-  // Applications tab event handlers
   const handleStatusChange = () => {
     updateApplicationsView(searchTerm, searchBy, appliedFilters);
   };
@@ -197,6 +210,15 @@ export default function AdminApplicationsPage() {
     }
   };
 
+  const handleSearchByChange = (event) => {
+    const newSearchBy = event.target.value;
+    setSearchBy(newSearchBy);
+    if (searchTerm !== '') {
+      setSearchTerm('');
+      updateApplicationsView('', newSearchBy, appliedFilters);
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     const latestFilters = filterRef.current.getFilters();
@@ -204,7 +226,6 @@ export default function AdminApplicationsPage() {
     updateApplicationsView(searchTerm, searchBy, latestFilters);
   };
 
-  // Hiring modal handlers
   const handleOpenHireModal = (application) => {
     setSelectedApplication(application);
     setIsHireModalOpen(true);
@@ -235,7 +256,7 @@ export default function AdminApplicationsPage() {
 
       showNotification('Candidate hired successfully!', 'success');
       handleCloseHireModal();
-      fetchHiringApplications(); // Refresh the hiring applications list
+      fetchHiringApplications();
     } catch (err) {
       console.error('Error hiring candidate:', err);
       showNotification(err.message || 'Failed to hire candidate.', 'error');
@@ -244,206 +265,205 @@ export default function AdminApplicationsPage() {
     }
   };
 
-  // Render functions
   const renderApplicationsTab = () => {
-    const renderGroupedView = () => {
-      const semesterCodes = Object.keys(displayData);
-      if (semesterCodes.length === 0) {
-        return (
-          <div className='text-center py-10 px-4 bg-gray-50 border border-gray-200 rounded-lg mt-4'>
-            <p className='text-lg font-semibold text-gray-800'>No Positions Found</p>
-            <p className='text-gray-600 mt-2'>Your search or filter criteria did not match any job positions.</p>
-          </div>
-        );
-      }
-      return semesterCodes.map((semesterCode) => (
-        <Accordion key={semesterCode} defaultExpanded>
-          <AccordionSummary
-            expandIcon={<KeyboardArrowDownOutlinedIcon />}
-            sx={{ backgroundColor: 'rgba(0, 0, 0, .03)' }}
-          >
-            <Typography variant='h5'>{`Semester ${semesterCode}`}</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box>
-              {displayData[semesterCode].map((position) => (
-                <Accordion key={position.id} defaultExpanded>
-                  <AccordionSummary expandIcon={<KeyboardArrowDownOutlinedIcon />}>
-                    <Typography variant='h6'>
-                      {position.courseCode}-{String(position.sectionNumber).padStart(2, '0')}: {position.course?.name}
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    {position.jobPositionApplicationHistory.length > 0 ? (
-                      position.jobPositionApplicationHistory.map((app) => (
-                        <ApplicationCard
-                          currentUser={currentUser}
-                          key={app.id}
-                          jobPosition={position}
-                          application={app}
-                          onStatusChange={handleStatusChange}
-                        />
-                      ))
-                    ) : (
-                      <p>No matching applications for this position.</p>
-                    )}
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-            </Box>
-          </AccordionDetails>
-        </Accordion>
-      ));
-    };
-
-    const renderContent = () => {
-      if (loading) return <div className='text-center p-8'>Loading applications...</div>;
-      if (error) return <div className='text-red-500 text-center p-8'>Error: {error}</div>;
-      return renderGroupedView();
-    };
-    
-    const totalApplications = Object.values(displayData).flat().reduce((acc, position) => acc + position.jobPositionApplicationHistory.length, 0);
+    const totalApplications = Object.values(displayData)
+      .flat()
+      .reduce(
+        (acc, position) => acc + position.jobPositionApplicationHistory.length,
+        0
+      );
 
     return (
-      <div className='w-full max-w-5xl flex flex-col items-center justify-center'>
-        {filterConfig.length > 0 ? (
-          <form onSubmit={handleSearch} className='w-full mb-6 flex items-center gap-x-2 bg-white p-4 rounded-lg shadow'>
-            <select
+      <Box sx={{ width: '100%' }}>
+        <Paper
+          component="form"
+          onSubmit={handleSearch}
+          elevation={2}
+          sx={{
+            p: 2,
+            mb: 4,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            backgroundColor: 'background.paper',
+          }}
+        >
+          <FormControl sx={{ minWidth: 150 }}>
+            <Select
               value={searchBy}
-              onChange={(e) => setSearchBy(e.target.value)}
-              className='h-10 rounded-md border-gray-300 bg-gray-50 hover:bg-gray-100 px-4 text-sm focus:ring-orange-500 focus:border-orange-500'
+              onChange={handleSearchByChange}
+              size="small"
             >
-              <option value='course'>By Course</option>
-              <option value='student'>By Student</option>
-            </select>
-            <SearchBar
-              value={searchTerm}
-              onChange={handleSearchTermChange}
-              placeholder={
-                searchBy === 'course'
-                  ? 'Search by course code or name...'
-                  : 'Search by student name...'
-              }
-            />
-            <Filter
-              ref={filterRef}
-              onFilterChange={handleFilterChange}
-              filterConfig={filterConfig}
-            />
-            <button
-              type='submit'
-              className='h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-orange-600'
-            >
-              Search
-            </button>
-          </form>
-        ) : (
-          <div className='w-full mb-6 h-[88px] animate-pulse bg-gray-200 rounded-lg p-4'></div>
+              <MenuItem value="course">By Course</MenuItem>
+              <MenuItem value="student">By Student</MenuItem>
+            </Select>
+          </FormControl>
+          <SearchBar
+            value={searchTerm}
+            onChange={handleSearchTermChange}
+            placeholder={
+              searchBy === 'course'
+                ? 'Search by course code or name...'
+                : 'Search by student name...'
+            }
+            sx={{ flexGrow: 1 }}
+          />
+          <Filter
+            ref={filterRef}
+            onFilterChange={handleFilterChange}
+            filterConfig={filterConfig}
+          />
+          <Button type="submit" variant="contained" color="primary">
+            Search
+          </Button>
+        </Paper>
+
+        {!loading && !error && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <strong>
+              {totalApplications}{' '}
+              {totalApplications === 1 ? 'application' : 'applications'} found
+            </strong>
+          </Typography>
         )}
-        <div id='section-container' className='w-full max-w-5xl p-2'>
-          {!loading && !error && (
-            <div className="mb-4 text-sm text-gray-600">
-              <strong>
-                {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
-              </strong>
-            </div>
-          )}
-          {renderContent()}
-        </div>
-      </div>
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Typography color="error" align="center" sx={{ p: 4 }}>
+            Error: {error}
+          </Typography>
+        ) : Object.keys(displayData).length === 0 ? (
+          <Paper sx={{ textAlign: 'center', p: 4, mt: 2 }}>
+            <Typography variant="h6">No Positions Found</Typography>
+            <Typography color="text.secondary" sx={{ mt: 1 }}>
+              Your search or filter criteria did not match any job positions.
+            </Typography>
+          </Paper>
+        ) : (
+          Object.keys(displayData).map((semesterCode) => (
+            <Accordion key={semesterCode} defaultExpanded>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h5">{`Semester ${semesterCode}`}</Typography>
+              </AccordionSummary>
+             <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
+                {displayData[semesterCode].map((position) => (
+                  <Accordion key={position.id} defaultExpanded>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="h6">
+                        {position.courseCode}-
+                        {String(position.sectionNumber).padStart(2, '0')}:{' '}
+                        {position.course?.name}
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      {position.jobPositionApplicationHistory.length > 0 ? (
+                        position.jobPositionApplicationHistory.map((app) => (
+                          <ApplicationCard
+                            currentUser={currentUser}
+                            key={app.id}
+                            jobPosition={position}
+                            application={app}
+                            onStatusChange={handleStatusChange}
+                          />
+                        ))
+                      ) : (
+                        <Typography sx={{ p: 2 }}>
+                          No matching applications for this position.
+                        </Typography>
+                      )}
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </AccordionDetails>
+            </Accordion>
+          ))
+        )}
+      </Box>
     );
   };
 
   const renderHiringTab = () => {
-    const renderHiringContent = () => {
-      if (hiringLoading) return <div className='text-center p-8'>Loading hiring applications...</div>;
-      if (hiringError) return <div className='text-red-500 text-center p-8'>Error: {hiringError}</div>;
-      if (hiringApplications.length === 0) {
-        return (
-          <div className='text-center py-10 px-4 bg-gray-50 border border-gray-200 rounded-lg'>
-            <p className='text-lg font-semibold text-gray-800'>No Applications Ready for Hiring</p>
-            <p className='text-gray-600 mt-2'>There are currently no candidates who have accepted job offers.</p>
-          </div>
-        );
-      }
-
-      return (
-        <div className='space-y-4'>
-          {hiringApplications.map((application) => (
-            <ApplicationCard
-              key={application.id}
-              currentUser={currentUser}
-              jobPosition={application.jobPosition}
-              application={application}
-              onStatusChange={() => fetchHiringApplications()}
-              onHire={() => handleOpenHireModal(application)}
-              showHireAction={true}
-            />
-          ))}
-        </div>
-      );
-    };
-
     return (
-      <div className='w-full max-w-5xl'>
-        <div className="mb-4 text-sm text-gray-600">
+      <Box sx={{ width: '100%' }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           <strong>
-            {hiringApplications.length} {hiringApplications.length === 1 ? 'candidate' : 'candidates'} ready for hiring
+            {hiringApplications.length}{' '}
+            {hiringApplications.length === 1 ? 'candidate' : 'candidates'}{' '}
+            ready for hiring
           </strong>
-        </div>
-        {renderHiringContent()}
-      </div>
+        </Typography>
+        {hiringLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : hiringError ? (
+          <Typography color="error" align="center" sx={{ p: 4 }}>
+            Error: {hiringError}
+          </Typography>
+        ) : hiringApplications.length === 0 ? (
+          <Paper sx={{ textAlign: 'center', p: 4 }}>
+            <Typography variant="h6">
+              No Applications Ready for Hiring
+            </Typography>
+            <Typography color="text.secondary" sx={{ mt: 1 }}>
+              There are currently no candidates who have accepted job offers.
+            </Typography>
+          </Paper>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {hiringApplications.map((application) => (
+              <ApplicationCard
+                key={application.id}
+                currentUser={currentUser}
+                jobPosition={application.jobPosition}
+                application={application}
+                onStatusChange={() => fetchHiringApplications()}
+                onHire={() => handleOpenHireModal(application)}
+                showHireAction={true}
+              />
+            ))}
+          </Box>
+        )}
+      </Box>
     );
   };
 
-  const tabs = [
-    { id: 'applications', label: 'My Applications' },
-    { id: 'hiring', label: 'Ready to Hire' },
-  ];
-
   return (
-    <>
-      <div className='flex flex-col items-center p-4'>
-        <h1 className='text-4xl font-bold'>Applications</h1>
-        <p className='text-md text-gray-600 mt-1'>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h1" component="h1" gutterBottom>
+          Applications
+        </Typography>
+        <Typography variant="h3" color="text.secondary">
           Search, filter, and review candidate applications.
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className='flex flex-col items-center bg-gray-100 p-4 mb-10'>
-        {currentUser && currentUser.role === 'ADMIN' ? (
-          <>
-            {/* Tab Navigation */}
-            <div className="w-full max-w-5xl mb-6">
-              <div className="border-b border-gray-200">
-                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabChange(tab.id)}
-                      className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-                        activeTab === tab.id
-                          ? "border-orange-500 text-orange-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-            </div>
+      {currentUser && currentUser.role === 'ADMIN' ? (
+        <Box sx={{ width: '100%' }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              aria-label="admin applications tabs"
+              centered
+            >
+              <Tab label="My Applications" />
+              <Tab label="Ready to Hire" />
+            </Tabs>
+          </Box>
+          {activeTab === 0 && renderApplicationsTab()}
+          {activeTab === 1 && renderHiringTab()}
+        </Box>
+      ) : (
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Typography>Please make sure you are logged in as an ADMIN.</Typography>
+        </Paper>
+      )}
 
-            {/* Tab Content */}
-            {activeTab === 'applications' && renderApplicationsTab()}
-            {activeTab === 'hiring' && renderHiringTab()}
-          </>
-        ) : (
-          <div>Please make sure you are logged in as an ADMIN.</div>
-        )}
-      </div>
-
-      {/* Hire Modal */}
       {isHireModalOpen && selectedApplication && (
         <HireModal
           application={selectedApplication}
@@ -452,6 +472,6 @@ export default function AdminApplicationsPage() {
           isProcessing={isProcessing}
         />
       )}
-    </>
+    </Container>
   );
 }

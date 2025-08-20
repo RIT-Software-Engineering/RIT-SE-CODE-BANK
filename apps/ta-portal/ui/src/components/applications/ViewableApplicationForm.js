@@ -1,12 +1,23 @@
+// src/components/applications/ViewableApplicationForm.js
 'use client';
 
 import DisplayField from "../common/fields/DisplayField";
-
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Link as MuiLink,
+  Typography,
+} from '@mui/material';
+import { Close as CloseIcon, Article as DocumentIcon } from '@mui/icons-material';
 
 export default function ViewableApplicationForm({position, application, onClose }) {
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  // The definitive resume URL now comes directly from the included resume object.
   const submittedResume = application.resume;
 
   const displayValues = {
@@ -26,18 +37,19 @@ export default function ViewableApplicationForm({position, application, onClose 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center">
-      <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800">
-            Viewing Application for {position.course.name}
-          </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
-        </div>
-
-        <div className="space-y-4">
+    <Dialog open={true} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h2" component="div">
+          Viewing Application for {position.course.name}
+        </Typography>
+        <IconButton onClick={onClose}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <DisplayField label="UID" value={displayValues.uid} />
-          <DisplayField label="Full Name" value={displayValues.fname + ' ' + displayValues.lname} />
+          <DisplayField label="Full Name" value={`${displayValues.fname} ${displayValues.lname}`} />
           <DisplayField label="Pronouns" value={displayValues.pronouns} />
           <DisplayField label="Email" value={displayValues.email} />
           <DisplayField label="Major" value={displayValues.major} />
@@ -50,41 +62,42 @@ export default function ViewableApplicationForm({position, application, onClose 
             value={displayValues.priorEmploymentHistory}
           />
 
-          {/* Resume */}
           {submittedResume?.resumeURL && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Submitted Resume</label>
-              <p className="text-sm text-gray-600 mt-1">
-                <a
-                  href={`${backendURL}${submittedResume.resumeURL}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  {submittedResume.name || 'View Submitted Resume'}
-                </a>
-              </p>
-            </div>
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Submitted Resume</Typography>
+              <MuiLink
+                href={`${backendURL}${submittedResume.resumeURL}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                underline="hover"
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <DocumentIcon fontSize="small" />
+                {submittedResume.name || 'View Submitted Resume'}
+              </MuiLink>
+            </Box>
           )}
 
-          {/* Cover Letter */}
           {displayValues.coverLetterURL && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Submitted Cover Letter</label>
-              <p className="text-sm text-gray-600 mt-1">
-                <a
-                  href={`${backendURL}${displayValues.coverLetterURL}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  {displayValues.coverLetterName || 'View Submitted Cover Letter'}
-                </a>
-              </p>
-            </div>
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Submitted Cover Letter</Typography>
+              <MuiLink
+                href={`${backendURL}${displayValues.coverLetterURL}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                underline="hover"
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <DocumentIcon fontSize="small" />
+                {displayValues.coverLetterName || 'View Submitted Cover Letter'}
+              </MuiLink>
+            </Box>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose}>Close</Button>
+      </DialogActions>
+    </Dialog>
   );
 }

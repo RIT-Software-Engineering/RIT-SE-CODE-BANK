@@ -7,7 +7,8 @@ import {
     Accordion,
     AccordionSummary, 
     AccordionDetails, 
-    Typography 
+    Typography,
+    Box
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
@@ -19,11 +20,15 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
  */
 export default function GroupedByCourseView({ groupedData }) {
     if (!groupedData || groupedData.length === 0) {
-        return <div className="text-center py-10 text-gray-500">No timecard data to display.</div>;
+        return (
+            <Box sx={{ textAlign: 'center', py: 10 }}>
+                <Typography color="text.secondary">No timecard data to display.</Typography>
+            </Box>
+        );
     }
 
     return (
-        <div className="space-y-4">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {/* Level 1: Map over each COURSE group */}
             {groupedData.map(({ courseId, courseTitle, employees }) => (
                 <Accordion key={courseId} defaultExpanded>
@@ -31,7 +36,7 @@ export default function GroupedByCourseView({ groupedData }) {
                         <Typography variant="h5" fontWeight={700}>{courseTitle}</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <div className="space-y-3 pl-4">
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pl: 2 }}>
                             {/* Level 2: Map over each EMPLOYEE in the course */}
                             {employees.map(({ user, timecards }) => {
                                 const employeeId = timecards[0]?.jobPositionHistory?.employee?.id;
@@ -42,14 +47,14 @@ export default function GroupedByCourseView({ groupedData }) {
                                             <Typography variant="h6" fontWeight={600}>
                                                 {`${user.fname} ${user.lname}`}
                                                 {employeeId && (
-                                                    <span className="text-gray-500 font-normal text-base ml-2">
+                                                    <Typography component="span" color="text.secondary" sx={{ ml: 1, fontWeight: 400 }}>
                                                         | ID: {employeeId}
-                                                    </span>
+                                                    </Typography>
                                                 )}
                                             </Typography>
                                         </AccordionSummary>
                                         <AccordionDetails>
-                                            <div className="space-y-2">
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                                 {/* Level 3: Map over each TIMECARD for the employee */}
                                                 {timecards.map(timecard => (
                                                     <Accordion key={timecard.id}>
@@ -63,15 +68,15 @@ export default function GroupedByCourseView({ groupedData }) {
                                                         </AccordionDetails>
                                                     </Accordion>
                                                 ))}
-                                            </div>
+                                            </Box>
                                         </AccordionDetails>
                                     </Accordion>
                                 );
                             })}
-                        </div>
+                        </Box>
                     </AccordionDetails>
                 </Accordion>
             ))}
-        </div>
+        </Box>
     );
 }

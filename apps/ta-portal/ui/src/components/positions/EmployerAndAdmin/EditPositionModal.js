@@ -1,11 +1,16 @@
-import { useForm } from "react-hook-form";
-import { modifyPosition, createPosition } from "@/services/db-apis";
-import MultiStepForm from "./MultiStepForm";
-import { getAllCourses } from "@/services/db-apis";
-import { formatTime } from "@/utils/applicationUtils";
-import { convertDisplayTimeToInputValue } from "@/utils/applicationUtils";
+// src/components/positions/EmployerAndAdmin/MultiStepForm.js
+'use client';
 
-// Helper functions can live outside the component
+import { useForm } from "react-hook-form";
+import MultiStepForm from "./MultiStepForm";
+import { formatTime, convertDisplayTimeToInputValue } from "@/utils/applicationUtils";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from "@mui/material";
+
 const formatDateToInputValue = (dateString) => {
   if (!dateString) return "";
   try {
@@ -26,7 +31,7 @@ const newJobTemplate = {
   courseCode: "",
   jobPositionStatus: 'PENDING_APPROVAL',
   sectionNumber: "",
-  semesterCode: "2241", // Default semester
+  semesterCode: "",
   gradeRequirement: null,
   courseTakenRequirement: false,
 };
@@ -35,9 +40,7 @@ export default function EditPositionModal({
   job,
   onClose,
   onSave,
-  EmployerUsername, // Note: This prop seems unused in the onSubmit logic
 }) {
-  // CORRECTED: Check for the existence of the 'job' object itself, not its 'id' property.
   const isEditMode = !!job; 
 
   const formMethods = useForm({
@@ -64,7 +67,6 @@ export default function EditPositionModal({
       }
       
       payload.maxTAs = parseInt(data.maxTAs, 10) || 0;
-      console.log("Submitting job data:", payload);
 
       if (payload.startDate)
         payload.startDate = new Date(`${payload.startDate}T00:00:00.000Z`);
@@ -80,8 +82,6 @@ export default function EditPositionModal({
         payload.jobSchedules = [];
       }
 
-      // Pass the prepared data directly to the onSave handler from the parent.
-      // The parent (AdminPositions.js) is now responsible for calling the correct API.
       onSave(payload);
 
     } catch (error) {
@@ -90,12 +90,13 @@ export default function EditPositionModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-6">
+    <Dialog open={true} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle>
+        <Typography variant="h2" component="div">
           {isEditMode ? "Edit Job Position" : "Create New Job Position"}
-        </h2>
-
+        </Typography>
+      </DialogTitle>
+      <DialogContent>
         <MultiStepForm
           onSubmit={onSubmit}
           onClose={onClose}
@@ -103,7 +104,7 @@ export default function EditPositionModal({
           job={job}
           formMethods={formMethods}
         />
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

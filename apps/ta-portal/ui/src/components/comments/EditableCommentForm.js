@@ -1,15 +1,31 @@
+// src/components/comments/EditableCommentForm.js
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+  Typography,
+} from '@mui/material';
 
 export default function EditableCommentForm({ isOpen, onClose, onConfirm, title, isProcessing }) {
   const [comment, setComment] = useState('');
 
-  if (!isOpen) return null;
+  // Clear the comment when the modal is closed to prevent stale data
+  useEffect(() => {
+    if (!isOpen) {
+      setComment('');
+    }
+  }, [isOpen]);
 
   const handleConfirm = () => {
     onConfirm(comment);
-    setComment('');
   };
 
   const handleCancel = () => {
@@ -17,46 +33,45 @@ export default function EditableCommentForm({ isOpen, onClose, onConfirm, title,
     onClose();
   };
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      handleCancel();
-    }
-  };
-
   return (
-    <div 
-      className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-60 flex justify-center items-center z-50"
-      onClick={handleOverlayClick}
-    >
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
-        <p className="text-gray-600 mb-4">Please provide a comment for this:</p>
-        
-        <textarea
+    <Dialog open={isOpen} onClose={handleCancel} fullWidth maxWidth="sm">
+      <DialogTitle>
+        <Typography variant="h2" component="div">
+          {title}
+        </Typography>
+      </DialogTitle>
+      <DialogContent dividers>
+        <DialogContentText sx={{ mb: 2 }}>
+          Please provide a comment for this action:
+        </DialogContentText>
+        <TextField
+          autoFocus
+          margin="dense"
+          id="comment"
+          label="Comment"
+          type="text"
+          fullWidth
+          multiline
+          rows={4}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           placeholder="Enter comment..."
-          className="w-full h-28 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-rit-orange focus:outline-none"
           disabled={isProcessing}
         />
-
-        <div className="flex justify-end space-x-3 mt-6">
-          <button
-            onClick={handleCancel}
-            disabled={isProcessing}
-            className="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!comment || isProcessing}
-            className="px-4 py-2 bg-rit-orange text-white font-semibold rounded-lg shadow-md hover:bg-rit-dark-orange disabled:bg-gray-400"
-          >
-            {isProcessing ? 'Processing...' : 'Confirm'}
-          </button>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+      <DialogActions sx={{ p: 3 }}>
+        <Button onClick={handleCancel} disabled={isProcessing}>
+          Cancel
+        </Button>
+        <Button
+          onClick={handleConfirm}
+          variant="contained"
+          color="primary"
+          disabled={!comment || isProcessing}
+        >
+          {isProcessing ? <CircularProgress size={24} /> : 'Confirm'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

@@ -1,19 +1,11 @@
+// src/components/positions/PositionsCard.js
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/contexts/NotificationContext';
-import { useState, useMemo, useRef, useEffect } from 'react';
-import Tooltip from '../common/ToolTip';
+import { useState, useMemo } from 'react';
 import ConfirmationModal from '../common/models/ConfirmationModal';
 import EditableApplicationForm from '../applications/EditableApplicationForm';
-import {
-  EllipsisVerticalIcon,
-  CheckIcon,
-  XIcon,
-  CalendarIcon,
-  ClockIcon,
-  LocationIcon,
-} from '@/assets/icons';
 import { getCandidateHiredStatus } from '@/services/db-apis';
 import { formatDate, formatTime } from '@/utils/applicationUtils';
 import {
@@ -25,20 +17,42 @@ import ViewablePositionForm from './EmployerAndAdmin/ViewablePositionForm';
 import ViewableCommentForm from '../comments/ViewableCommentForm';
 import { positionStatusEnumToString } from '@/constants/positionStatusConstants';
 
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Divider,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+  Tooltip,
+  Typography,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
+import {
+  MoreVert as EllipsisVerticalIcon,
+  CheckCircleOutline as CheckIcon,
+  CancelOutlined as XIcon,
+  CalendarMonth as CalendarIcon,
+  AccessTime as ClockIcon,
+  LocationOn as LocationIcon,
+} from '@mui/icons-material';
+
 const Requirement = ({ text, met }) => (
-  <li
-    className={`flex items-center space-x-2 text-sm ${
-      met ? 'text-gray-700' : 'text-red-600 font-medium'
-    }`}
-  >
-    {met ? <CheckIcon /> : <XIcon />}
-    <span>{text}</span>
-  </li>
+  <ListItem sx={{ py: 0.5, px: 0 }}>
+    <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: met ? 'success.main' : 'error.main' }}>
+      {met ? <CheckIcon fontSize="small" /> : <XIcon fontSize="small" />}
+    </ListItemIcon>
+    <ListItemText primary={text} primaryTypographyProps={{ variant: 'body2', color: met ? 'text.primary' : 'error.main' }} />
+  </ListItem>
 );
 
 export default function PositionsCard({
   position,
-  index,
   onEdit,
   onApprove,
   onReject,
@@ -62,11 +76,7 @@ export default function PositionsCard({
 
   const eligibilityDetails = useMemo(() => {
     if (!currentUser?.candidate) {
-      return {
-        details: [],
-        isOverallEligible: false,
-        reason: 'User is not a candidate.',
-      };
+      return { details: [], isOverallEligible: false, reason: 'User is not a candidate.' };
     }
 
     const requirements = [];
@@ -77,55 +87,34 @@ export default function PositionsCard({
 
     if (position.graduateStatusRequirement) {
       const met = candidateStatus === position.graduateStatusRequirement;
-      requirements.push({
-        text: `Must be a ${position.graduateStatusRequirement.toLowerCase()} candidate`,
-        met,
-      });
+      requirements.push({ text: `Must be a ${position.graduateStatusRequirement.toLowerCase()} candidate`, met });
     }
-
     if (position.courseTakenRequirement) {
       const met = !!courseInData;
-      requirements.push({
-        text: `Must have taken ${position.courseCode}`,
-        met,
-      });
+      requirements.push({ text: `Must have taken ${position.courseCode}`, met });
     }
-
     if (position.gradeRequirement) {
       const requiredValue = letterToGradeValue[position.gradeRequirement];
-      const userValue = courseInData
-        ? letterToGradeValue[gradeEnumToStringValue[courseInData.grade]]
-        : 0;
+      const userValue = courseInData ? letterToGradeValue[gradeEnumToStringValue[courseInData.grade]] : 0;
       const met = userValue >= requiredValue;
-      requirements.push({
-        text: `Requires a grade of ${position.gradeRequirement} or higher`,
-        met,
-      });
+      requirements.push({ text: `Requires a grade of ${position.gradeRequirement} or higher`, met });
     }
 
     const isOverallEligible = requirements.every((req) => req.met);
-    const unmetReasons = requirements.filter((req) => !req.met);
-    const reason = unmetReasons.map((req) => req.text).join(' and ');
-
-    return { details: requirements, isOverallEligible, reason };
+    const unmetReasons = requirements.filter((req) => !req.met).map((req) => req.text);
+    return { details: requirements, isOverallEligible, reason: unmetReasons.join(' and ') };
   }, [currentUser, position]);
 
   const handleApplyClick = async () => {
     if (!position?.semesterCode) {
-      showNotification(
-        'Cannot check your status: Semester code is missing.',
-        'error'
-      );
+      showNotification('Cannot check your status: Semester code is missing.', 'error');
       setIsFormOpen(true);
       return;
     }
 
     setIsCheckingHiredStatus(true);
     try {
-      const hiredStatus = await getCandidateHiredStatus(
-        currentUser.username,
-        position.semesterCode
-      );
+      const hiredStatus = await getCandidateHiredStatus(currentUser.username, position.semesterCode);
       if (hiredStatus) {
         setIsConfirmingApplication(true);
       } else {
@@ -143,230 +132,134 @@ export default function PositionsCard({
   const renderApplyButton = () => {
     if (hasApplied) {
       return (
-        <button
-          className='bg-green-600 text-white font-bold py-2 px-5 rounded-lg shadow-sm whitespace-nowrap cursor-default'
-          disabled
-        >
+        <Button variant="contained" color="success" sx={{ cursor: 'default', pointerEvents: 'none' }}>
           Applied
-        </button>
+        </Button>
       );
     }
 
     if (eligibilityDetails.isOverallEligible) {
       return (
-        <button
+        <Button
           onClick={handleApplyClick}
           disabled={isCheckingHiredStatus}
-          className='bg-rit-orange text-white font-bold py-2 px-5 rounded-lg hover:bg-orange-600 transition-colors duration-300 shadow-sm whitespace-nowrap'
+          variant="contained"
+          color="primary"
         >
-          {isCheckingHiredStatus ? 'Checking...' : 'Apply Now'}
-        </button>
+          {isCheckingHiredStatus ? <CircularProgress size={24} color="inherit" /> : 'Apply Now'}
+        </Button>
       );
     }
 
     return (
-      <Tooltip text={eligibilityDetails.reason}>
-        <button
-          className='bg-gray-300 text-gray-500 font-bold py-2 px-5 rounded-lg shadow-sm whitespace-nowrap cursor-not-allowed'
-          disabled
-        >
-          Apply Now
-        </button>
+      <Tooltip title={eligibilityDetails.reason} arrow>
+        <span>
+          <Button variant="contained" disabled>
+            Apply Now
+          </Button>
+        </span>
       </Tooltip>
     );
   };
 
   const ActionsMenu = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const menuRef = useRef(null);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const handleMenuClick = (event) => setAnchorEl(event.currentTarget);
+    const handleMenuClose = () => setAnchorEl(null);
 
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (menuRef.current && !menuRef.current.contains(event.target)) {
-          setIsOpen(false);
-        }
-      };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () =>
-        document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const handleMenuToggle = (e) => {
-      e.stopPropagation();
-      setIsOpen(!isOpen);
-    };
+    const status = position.jobPositionStatus;
+    const showEdit = showEditAction;
+    const showApprove = showApproveRejectActions && status === 'PENDING_APPROVAL';
+    const showReject = showApproveRejectActions && status === 'PENDING_APPROVAL';
+    const showActionItems = showEdit || showApprove || showReject;
 
     return (
-      <div className='relative' ref={menuRef}>
-        <button
-          onClick={handleMenuToggle}
-          className='p-2 rounded-full hover:bg-gray-100'
-        >
+      <>
+        <IconButton onClick={handleMenuClick}>
           <EllipsisVerticalIcon />
-        </button>
-        {isOpen && (
-          <div className='absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20'>
-            <ul className='py-1'>
-              <li>
-                <button
-                  onClick={() => {
-                    setIsViewingDetails(true);
-                    setIsOpen(false);
-                  }}
-                  className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                >
-                  View Details
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    setIsViewingComments(true);
-                    setIsOpen(false);
-                  }}
-                  className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                >
-                  View Comments
-                </button>
-              </li>
-
-              {showEditAction && (
-                <>
-                  <div className='my-1 border-t border-gray-100'></div>
-                  <li>
-                    <button
-                      onClick={() => {
-                        onEdit(position);
-                        setIsOpen(false);
-                      }}
-                      className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                    >
-                      Edit Position
-                    </button>
-                  </li>
-                </>
-              )}
-
-              {showApproveRejectActions &&
-                position.jobPositionStatus === 'PENDING_APPROVAL' && (
-                  <>
-                    <div className='my-1 border-t border-gray-100'></div>
-                    <li>
-                      <button
-                        onClick={() => {
-                          onApprove(position.id);
-                          setIsOpen(false);
-                        }}
-                        className='w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                      >
-                        Approve Position
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        onClick={() => {
-                          onReject(position.id);
-                          setIsOpen(false);
-                        }}
-                        className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100'
-                      >
-                        Reject Position
-                      </button>
-                    </li>
-                  </>
-                )}
-            </ul>
-          </div>
-        )}
-      </div>
+        </IconButton>
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
+          <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
+          {showActionItems && <Divider />}
+          {showEdit && <MenuItem onClick={() => { onEdit(position); handleMenuClose(); }}>Edit Position</MenuItem>}
+          {showApprove && <MenuItem onClick={() => { onApprove(position.id); handleMenuClose(); }}>Approve Position</MenuItem>}
+          {showReject && <MenuItem onClick={() => { onReject(position.id); handleMenuClose(); }} sx={{ color: 'error.main' }}>Reject Position</MenuItem>}
+        </Menu>
+      </>
     );
   };
 
   return (
     <>
-      <div
-        key={index}
-        className='bg-white p-6 mb-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300 w-full'
-      >
-        <div className='flex justify-between items-start flex-wrap gap-4'>
-          <div className='flex-grow'>
-            <h2 className='text-2xl font-bold text-gray-800'>
+      <Paper elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
+          <Box flexGrow={1}>
+            <Typography variant="h2" component="h2" gutterBottom>
               {position.course.name}
-            </h2>
-            <p className='text-md text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded-md inline-block mt-1'>
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace', bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1, display: 'inline-block' }}>
               {position.id}
-            </p>
-            <div className='flex items-center text-gray-600 mt-2'>
-              <CalendarIcon className="h-4 w-4 mr-1.5" />
-              <span className="text-sm">
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
+              <CalendarIcon sx={{ mr: 1, fontSize: '1rem' }} />
+              <Typography variant="body2">
                 {formatDate(position.startDate)} - {formatDate(position.endDate)}
-              </span>
-            </div>
-          </div>
-          <div className='flex items-center gap-2'>
-            {(currentUser?.role === 'ADMIN' ||
-              currentUser?.role === 'EMPLOYER') && <ActionsMenu />}
-            {(currentUser?.role === 'CANDIDATE' ||
-              currentUser?.role === 'EMPLOYEE') &&
-              renderApplyButton()}
-          </div>
-        </div>
+              </Typography>
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {(currentUser?.role === 'ADMIN' || currentUser?.role === 'EMPLOYER') && <ActionsMenu />}
+            {(currentUser?.role === 'CANDIDATE' || currentUser?.role === 'EMPLOYEE') && renderApplyButton()}
+          </Box>
+        </Box>
 
-        <div className='mt-4 pt-4 border-t border-gray-200'>
-          <p className='text-gray-700 mb-4'>{position.course.description}</p>
-          <div className='flex flex-col sm:flex-row sm:space-x-8 space-y-3 sm:space-y-0 text-gray-600'>
-            <div className='flex items-center'>
-              <LocationIcon />
-              <span>{position.location}</span>
-            </div>
-            <div className='flex items-center'>
-              <ClockIcon />
-              <div>
-                {position.jobSchedules.map((slot, i) => (
-                  <span key={i} className='block'>
-                    <span className='font-semibold'>{slot.dayOfWeek}:</span>{' '}
-                    {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-          {(currentUser?.role === 'CANDIDATE' ||
-            currentUser?.role === 'EMPLOYEE') &&
-            eligibilityDetails.details.length > 0 && (
-              <div className='mt-4 p-4 bg-gray-50 rounded-lg'>
-                <h4 className='text-md font-semibold text-gray-800 mb-2'>
-                  Job Requirements
-                </h4>
-                <ul className='space-y-1'>
-                  {eligibilityDetails.details.map((req, i) => (
-                    <Requirement key={i} text={req.text} met={req.met} />
-                  ))}
-                </ul>
-              </div>
-            )}
-        </div>
+        <Divider sx={{ my: 2 }} />
+
+        <Typography color="text.secondary" sx={{ mb: 2 }}>
+          {position.course.description}
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 4 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+            <LocationIcon sx={{ mr: 1 }} />
+            <Typography variant="body2">{position.location}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+            <ClockIcon sx={{ mr: 1 }} />
+            <Box>
+              {position.jobSchedules.map((slot, i) => (
+                <Typography key={i} variant="body2">
+                  <Box component="span" fontWeight="bold">{slot.dayOfWeek}:</Box> {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+                </Typography>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+
+        {(currentUser?.role === 'CANDIDATE' || currentUser?.role === 'EMPLOYEE') && eligibilityDetails.details.length > 0 && (
+          <Paper variant="outlined" sx={{ mt: 2, p: 2, bgcolor: 'action.hover' }}>
+            <Typography variant="h3" sx={{ mb: 1 }}>Job Requirements</Typography>
+            <List dense>
+              {eligibilityDetails.details.map((req, i) => (
+                <Requirement key={i} text={req.text} met={req.met} />
+              ))}
+            </List>
+          </Paper>
+        )}
 
         {showTracker && (
-          <div className='mt-4 pt-4 border-t border-gray-200'>
+          <>
+            <Divider sx={{ my: 2 }} />
             <PositionTracker currentStep={position.jobPositionStatus} />
-          </div>
+          </>
         )}
-      </div>
+      </Paper>
 
       {isFormOpen && (
-        <EditableApplicationForm
-          user={currentUser}
-          position={position}
-          onClose={() => setIsFormOpen(false)}
-          onApplySuccess={refreshUserProfile}
-        />
+        <EditableApplicationForm user={currentUser} position={position} onClose={() => setIsFormOpen(false)} onApplySuccess={refreshUserProfile} />
       )}
       {isViewingDetails && (
-        <ViewablePositionForm
-          position={position}
-          onClose={() => setIsViewingDetails(false)}
-        />
+        <ViewablePositionForm position={position} onClose={() => setIsViewingDetails(false)} />
       )}
       {isViewingComments && (
         <ViewableCommentForm
@@ -383,23 +276,16 @@ export default function PositionsCard({
       <ConfirmationModal
         isOpen={isConfirmingApplication}
         onClose={() => setIsConfirmingApplication(false)}
-        onConfirm={() => {
-          setIsConfirmingApplication(false);
-          setIsFormOpen(true);
-        }}
-        title='Confirm New Application'
+        onConfirm={() => { setIsConfirmingApplication(false); setIsFormOpen(true); }}
+        title="Confirm New Application"
         isConfirming={isCheckingHiredStatus}
       >
-        <p className='mt-2'>
-          You have already accepted an offer for another position this semester.
-          In most cases, you are expected to accept{' '}
-          <strong>only one offer</strong> per semester. You can still apply for
-          other positions, but please be prepared to communicate with the
-          professors involved if you receive multiple offers.
-        </p>
-        <p className='mt-2 font-semibold'>
+        <Typography sx={{ mt: 2 }}>
+          You have already accepted an offer for another position this semester. In most cases, you are expected to accept <strong>only one offer</strong> per semester. You can still apply for other positions, but please be prepared to communicate with the professors involved if you receive multiple offers.
+        </Typography>
+        <Typography sx={{ mt: 2, fontWeight: 'bold' }}>
           Are you sure you want to proceed with this application?
-        </p>
+        </Typography>
       </ConfirmationModal>
     </>
   );

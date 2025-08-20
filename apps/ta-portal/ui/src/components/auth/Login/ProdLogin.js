@@ -4,7 +4,16 @@
 import { authenticateUser, resetPassword } from "@/services/db-apis";
 import { useNotification } from "@/contexts/NotificationContext";
 import React, { useState } from "react";
-import { set } from "react-hook-form";
+import {
+  Box,
+  Button,
+  Container,
+  Paper,
+  TextField,
+  Typography,
+  CircularProgress,
+  Link as MuiLink,
+} from "@mui/material";
 
 /**
  * A component for a production username/password login system.
@@ -19,8 +28,14 @@ export default function ProdLogin({
   const { showNotification } = useNotification();
 
   const [view, setView] = useState("login");
-  const [loginCredentials, setLoginCredentials] = useState({ username: "", password: "" });
-  const [resetCredentials, setResetCredentials] = useState({ username: "", newPassword: "" });
+  const [loginCredentials, setLoginCredentials] = useState({
+    username: "",
+    password: "",
+  });
+  const [resetCredentials, setResetCredentials] = useState({
+    username: "",
+    newPassword: "",
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLoginChange = (e) => {
@@ -43,7 +58,7 @@ export default function ProdLogin({
     setIsLoading(true);
     try {
       const user = await authenticateUser(username, password);
-      onLoginSuccess(user, 'login');
+      onLoginSuccess(user, "login");
     } catch (err) {
       console.error("Login failed:", err);
       showNotification(err.message || "Invalid username or password.", "error");
@@ -52,21 +67,26 @@ export default function ProdLogin({
     }
   };
 
-
   // Handle password reset
   const handleResetPassword = async () => {
     const { username, newPassword } = resetCredentials;
     if (!username || !newPassword) {
-      showNotification("Please provide a username and a new password.", "error");
+      showNotification(
+        "Please provide a username and a new password.",
+        "error"
+      );
       return;
     }
     setIsLoading(true);
     try {
       const response = await resetPassword(username, newPassword);
       showNotification(response.message, "success");
-      setView('login');
+      setView("login");
     } catch (err) {
-      showNotification(err.message || "An error occurred during password reset.", "error");
+      showNotification(
+        err.message || "An error occurred during password reset.",
+        "error"
+      );
     } finally {
       setResetCredentials({ username: "", newPassword: "" });
       setIsLoading(false);
@@ -76,72 +96,135 @@ export default function ProdLogin({
   // Render the login view
   const renderLoginView = () => (
     <>
-      <div className="mt-6 w-64 space-y-4">
-        <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
-          <input type="text" id="username" maxLength="7" name="username" value={loginCredentials.username} onChange={handleLoginChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter username (i.e. xyz1234)"/>
-        </div>
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-          <input type="password" id="password" name="password" value={loginCredentials.password} onChange={handleLoginChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter password"/>
-        </div>
-      </div>
-
-      <button onClick={handleSignIn} disabled={isLoading} className="bg-black text-white w-40 rounded-lg p-3 text-lg mt-10 hover:bg-gray-800 disabled:bg-gray-400">
-        {isLoading ? "Signing In..." : "Sign In"}
-      </button>
-
-      <div className="flex flex-col items-center space-y-2 mt-4 text-sm">
-        <button
-          onClick={() => setView('forgot')}
-          className="text-black underline hover:text-rit-orange transition-colors duration-200 cursor-pointer"
+      <TextField
+        label="Username"
+        name="username"
+        value={loginCredentials.username}
+        onChange={handleLoginChange}
+        margin="normal"
+        fullWidth
+        placeholder="Enter username (e.g., xyz1234)"
+        inputProps={{ maxLength: 7 }}
+      />
+      <TextField
+        label="Password"
+        name="password"
+        type="password"
+        value={loginCredentials.password}
+        onChange={handleLoginChange}
+        margin="normal"
+        fullWidth
+        placeholder="Enter password"
+      />
+      <Button
+        onClick={handleSignIn}
+        disabled={isLoading}
+        variant="contained"
+        color="secondary"
+        size="large"
+        sx={{ mt: 3, mb: 2, width: "60%" }}
+      >
+        {isLoading ? (
+          <CircularProgress size={24} color="inherit" />
+        ) : (
+          "Sign In"
+        )}
+      </Button>
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 1 }}>
+        <MuiLink
+          component="button"
+          variant="body2"
+          onClick={() => setView("forgot")}
+          sx={{ mb: 1 }}
         >
           Forgot Password?
-        </button>
-        <button
+        </MuiLink>
+        <MuiLink
+          component="button"
+          variant="body2"
           onClick={onSwitchToSignUp}
-          className="text-black underline hover:text-rit-orange transition-colors duration-200 cursor-pointer"
         >
           Don&apos;t have an account? Sign Up
-        </button>
-      </div>
+        </MuiLink>
+      </Box>
     </>
   );
 
   // Render the forgot password view
   const renderForgotView = () => (
     <>
-      <div className="mt-6 w-64 space-y-4">
-        <div>
-          <label htmlFor="reset-username" className="block text-sm font-medium text-gray-700">Your Username</label>
-          <input type="text" id="reset-username" maxLength="7" name="username" value={resetCredentials.username} onChange={handleResetChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter username (i.e. xyz1234)" />
-        </div>
-        <div>
-          <label htmlFor="reset-new-password" className="block text-sm font-medium text-gray-700">New Password</label>
-          <input type="password" id="reset-new-password" name="newPassword" value={resetCredentials.newPassword} onChange={handleResetChange} className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm" placeholder="Enter new password" />
-        </div>
-      </div>
-
-      <button onClick={handleResetPassword} disabled={isLoading} className="bg-rit-orange text-white w-64 rounded-lg p-3 text-lg mt-10 hover:bg-orange-600">
+      <TextField
+        label="Your Username"
+        name="username"
+        value={resetCredentials.username}
+        onChange={handleResetChange}
+        margin="normal"
+        fullWidth
+        placeholder="Enter username (e.g., xyz1234)"
+        inputProps={{ maxLength: 7 }}
+      />
+      <TextField
+        label="New Password"
+        name="newPassword"
+        type="password"
+        value={resetCredentials.newPassword}
+        onChange={handleResetChange}
+        margin="normal"
+        fullWidth
+        placeholder="Enter new password"
+      />
+      <Button
+        onClick={handleResetPassword}
+        disabled={isLoading}
+        variant="contained"
+        color="primary"
+        size="large"
+        sx={{ mt: 3, mb: 2, width: "80%" }}
+      >
         {isLoading ? "Resetting..." : "Reset Password"}
-      </button>
-      <button onClick={() => setView('login')} className="mt-4 text-sm text-black underline hover:text-rit-orange transition-colors duration-200 cursor-pointer">
+      </Button>
+      <MuiLink
+        component="button"
+        variant="body2"
+        onClick={() => setView("login")}
+      >
         Back to Login
-      </button>
+      </MuiLink>
     </>
   );
 
   return (
-    <div className="bg-white">
-      <div className="bg-rit-light-gray h-screen rounded-lg p-5 m-10 justify-center items-center flex flex-col">
-        <div className="text-center text-3xl w-1/2">
+    <Container
+      maxWidth="sm"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "calc(100vh - 200px)",
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: { xs: 3, md: 5 },
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          backgroundColor: "background.paper",
+        }}
+      >
+        <Typography variant="h2" component="h1" textAlign="center">
           Welcome to the RIT Teaching Assistant Portal
-          <br />
-          <br />
-          {view === 'login' ? 'Sign in with your RIT Account' : 'Reset Your Password'}
-        </div>
-        {view === 'login' ? renderLoginView() : renderForgotView()}
-      </div>
-    </div>
+        </Typography>
+        <Typography variant="h3" textAlign="center" sx={{ mt: 2, mb: 3 }}>
+          {view === "login"
+            ? "Sign in with your RIT Account"
+            : "Reset Your Password"}
+        </Typography>
+        {view === "login" ? renderLoginView() : renderForgotView()}
+      </Paper>
+    </Container>
   );
 }

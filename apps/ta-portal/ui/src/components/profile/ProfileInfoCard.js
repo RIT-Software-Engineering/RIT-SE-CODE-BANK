@@ -1,17 +1,26 @@
 // components/Profile/ProfileInfoCard.js
+'use client';
 
 import React from 'react';
 import EditButton from '../common/buttons/EditButton';
+import {
+  Box,
+  Paper,
+  Typography,
+  Divider,
+} from '@mui/material';
 
-/**
- * A card component to display user profile information for candidates, employees, employers, and admins.
- * @param {object} props - The component props.
- * @param {object} props.profileData - The user's profile data object.
- * @param {boolean} props.isEmployerOrAdmin - Flag to show employer/admin specific fields.
- * @param {boolean} props.isCandidateOrEmployee - Flag to show candidate/employee specific fields.
- * @param {function} props.onEdit - The function to call when the edit icon is clicked.
- * @returns {JSX.Element} The rendered ProfileInfoCard component.
- */
+const InfoItem = ({ label, value }) => (
+  <Box sx={{ py: 1 }}>
+    <Typography variant="body2" color="text.secondary">
+      {label}
+    </Typography>
+    <Typography variant="body1" fontWeight="medium">
+      {value || 'N/A'}
+    </Typography>
+  </Box>
+);
+
 export default function ProfileInfoCard({
   profileData,
   isEmployerOrAdmin,
@@ -23,45 +32,28 @@ export default function ProfileInfoCard({
   const yearLevel = profileData.candidate?.graduateStatus === "GRADUATE" ? "Graduate" : profileData.candidate?.year;
 
   return (
-    <section className='bg-white rounded-xl shadow-lg border border-gray-200'>
-      <div className='p-6 flex justify-between items-start'>
-        <div>
-          <h2 className='text-2xl font-bold text-gray-900'>
-            {profileData.fname} {profileData.lname}
-          </h2>
-          <p>
-            <span className='font-semibold'>Email:</span>{' '}
-            {profileData.email || 'N/A'}
-          </p>
-          <p>
-            <span className='font-semibold'>UID:</span>{' '}
-            {profileData.uid || 'N/A'}
-          </p>
-          <p>
-            <span className='font-semibold'>Pronouns:</span>{' '}
-            {profileData.pronouns || 'N/A'}
-          </p>
-          {isCandidateOrEmployee && (
-            <div className='text-gray-800'>
-              <p>
-                <span className='font-semibold'>Major:</span>{' '}
-                {profileData.candidate?.major || 'N/A'}
-              </p>
-              <p>
-                <span className='font-semibold'>Year:</span>{' '}
-                {yearLevel || 'N/A'}
-              </p>
-            </div>
-          )}
-          {isEmployerOrAdmin && (
-            <p>
-              <span className='font-semibold'>Department:</span>{' '}
-              {profileData.employer?.department || 'N/A'}
-            </p>
-          )}
-        </div>
+    <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        <Typography variant="h2" component="h2">
+          {profileData.fname} {profileData.lname}
+        </Typography>
         <EditButton handleOpenModal={onEdit} />
-      </div>
-    </section>
+      </Box>
+      <Divider />
+      <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column' }}>
+        <InfoItem label="Email" value={profileData.email} />
+        <InfoItem label="UID" value={profileData.uid} />
+        <InfoItem label="Pronouns" value={profileData.pronouns} />
+        {isCandidateOrEmployee && (
+          <>
+            <InfoItem label="Major" value={profileData.candidate?.major} />
+            <InfoItem label="Year" value={yearLevel} />
+          </>
+        )}
+        {isEmployerOrAdmin && (
+          <InfoItem label="Department" value={profileData.employer?.department} />
+        )}
+      </Box>
+    </Paper>
   );
 }

@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchAdminViewData } from '@/services/db-apis';
 import GroupedTimecardView from '@/components/timecard/GroupedTimecardView';
 import SearchBar from '@/components/common/searchAndFilter/SearchBar';
+import { Container, Box, Typography, CircularProgress, Paper } from '@mui/material';
 
 /**
  * AdminTimecardsPage is a client-side component for administrators to view,
@@ -119,24 +120,28 @@ export default function AdminTimecardsPage() {
     // Use case where the user is not an admin (Access Denied).
     if (!isAdministrator) {
         return (
-            <div className="text-center py-20">
-                <h1 className="text-2xl font-bold text-red-600">Access Denied</h1>
-                <p className="mt-2">You do not have permission to view this page.</p>
-            </div>
+            <Container sx={{ textAlign: 'center', py: 10 }}>
+                <Typography variant="h4" component="h1" color="error.main" fontWeight="bold">
+                    Access Denied
+                </Typography>
+                <Typography sx={{ mt: 1 }}>
+                    You do not have permission to view this page.
+                </Typography>
+            </Container>
         );
     }
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
-            <div className="w-full max-w-7xl mx-auto">
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+        <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: { xs: 2, sm: 4 } }}>
+            <Container maxWidth="lg">
+                <Box sx={{ textAlign: 'center', mb: 4 }}>
+                    <Typography variant="h2" component="h1" fontWeight="bold" gutterBottom>
                         Admin Timecard Viewer
-                    </h1>
-                    <p className="mt-2 text-lg text-gray-500">
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
                         Review and manage all TA timecards.
-                    </p>
-                </div>
+                    </Typography>
+                </Box>
 
                 <SearchBar
                     value={searchTerm}
@@ -144,22 +149,28 @@ export default function AdminTimecardsPage() {
                     placeholder="Search by name or employee ID..."
                 />
 
-                <div className="mt-6">
+                <Box sx={{ mt: 4 }}>
                     {isLoading ? (
-                        <div className="text-center py-10">
-                            <div className="w-8 h-8 border-4 border-dashed rounded-full animate-spin border-rit-blue mx-auto"></div>
-                            <p className="mt-4 text-gray-600">Loading Timecards...</p>
-                        </div>
+                        <Box sx={{ textAlign: 'center', py: 5 }}>
+                            <CircularProgress />
+                            <Typography sx={{ mt: 2 }} color="text.secondary">
+                                Loading Timecards...
+                            </Typography>
+                        </Box>
                     ) : error ? (
-                        <div className="text-center py-10 px-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-lg font-semibold text-red-700">An Error Occurred</p>
-                            <p className="text-gray-600 mt-2">{error}</p>
-                        </div>
+                        <Paper elevation={2} sx={{ textAlign: 'center', p: 4, bgcolor: 'error.light' }}>
+                            <Typography variant="h6" color="error.main" fontWeight="bold">
+                                An Error Occurred
+                            </Typography>
+                            <Typography sx={{ mt: 1 }} color="text.secondary">
+                                {error}
+                            </Typography>
+                        </Paper>
                     ) : (
                         <GroupedTimecardView groupedData={filteredData}/>
                     )}
-                </div>
-            </div>
-        </div>
+                </Box>
+            </Container>
+        </Box>
     );
 }

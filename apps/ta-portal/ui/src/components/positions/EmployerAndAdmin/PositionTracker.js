@@ -1,6 +1,13 @@
+// src/components/positions/EmployerAndAdmin/PositionTracker.js
 "use client";
 
 import React from 'react';
+import { Box, Typography, Tooltip, Chip, useTheme } from '@mui/material';
+import {
+  Close as CloseIcon,
+  Pause as PauseIcon,
+  PriorityHigh as PriorityHighIcon,
+} from '@mui/icons-material';
 
 const progressStages = [
   { status: 'PENDING_APPROVAL', label: 'Pending', tooltip: 'Position is awaiting admin approval.' },
@@ -10,66 +17,84 @@ const progressStages = [
 ];
 
 const otherStates = {
-  REJECTED: { label: 'Rejected', color: 'bg-red-500', icon: '✕', tooltip: 'This position submission was rejected by an admin.' },
-  ONHOLD: { label: 'On Hold', color: 'bg-yellow-500', icon: '⏸', tooltip: 'This position is temporarily on hold.' },
-  INACTIVE: { label: 'Inactive', color: 'bg-gray-400', icon: '!', tooltip: 'This position is no longer active.' },
+  REJECTED: { label: 'Rejected', color: 'error', icon: <CloseIcon />, tooltip: 'This position submission was rejected by an admin.' },
+  ONHOLD: { label: 'On Hold', color: 'warning', icon: <PauseIcon />, tooltip: 'This position is temporarily on hold.' },
+  INACTIVE: { label: 'Inactive', color: 'default', icon: <PriorityHighIcon />, tooltip: 'This position is no longer active.' },
 };
 
 export default function PositionTracker({ currentStep }) {
+  const theme = useTheme();
   const currentIndex = progressStages.findIndex(stage => stage.status === currentStep);
 
   if (otherStates[currentStep]) {
     const stateInfo = otherStates[currentStep];
     return (
-      <div className="w-full font-sans relative group mt-2">
-        <div className={`w-full h-7 flex items-center justify-center space-x-2 rounded-full text-white text-xs font-semibold ${stateInfo.color}`}>
-          <span>{stateInfo.icon}</span>
-          <span>{stateInfo.label}</span>
-        </div>
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
-          {stateInfo.tooltip}
-        </div>
-      </div>
+      <Tooltip title={stateInfo.tooltip} arrow>
+        <Chip
+          icon={stateInfo.icon}
+          label={stateInfo.label}
+          color={stateInfo.color}
+          sx={{
+            width: '100%',
+            height: '28px',
+            borderRadius: '14px',
+            fontWeight: 'bold',
+            fontSize: '0.8rem',
+          }}
+        />
+      </Tooltip>
     );
   }
 
   return (
-    <div className="w-full font-sans mt-2">
-      <div className="flex w-full h-7 space-x-1">
-        {progressStages.map((stage, index) => {
-          const isCompleted = currentIndex > -1 && index <= currentIndex;
-          let stageColor = 'bg-gray-200';
-          let textColor = 'text-gray-500';
+    <Box sx={{ display: 'flex', width: '100%', height: '28px', gap: '4px' }}>
+      {progressStages.map((stage, index) => {
+        const isCompleted = currentIndex > -1 && index <= currentIndex;
+        const isCurrent = index === currentIndex;
 
-          if (isCompleted) {
-            stageColor = 'bg-gray-700';
-            textColor = 'text-white';
-          }
-          
-          if (index === currentIndex) {
-            stageColor = 'bg-rit-orange';
-          }
+        let bgColor = theme.palette.mode === 'light' ? theme.palette.grey[300] : theme.palette.grey[800];
+        let textColor = theme.palette.text.secondary;
 
-          const roundedClasses = 
-            index === 0 ? 'rounded-l-full' : 
-            index === progressStages.length - 1 ? 'rounded-r-full' : '';
+        if (isCompleted) {
+          bgColor = theme.palette.mode === 'light' ? theme.palette.grey[700] : theme.palette.grey[600];
+          textColor = theme.palette.getContrastText(bgColor);
+        }
+        
+        if (isCurrent) {
+          bgColor = theme.palette.primary.main;
+          textColor = theme.palette.primary.contrastText;
+        }
 
-          return (
-            <div key={stage.status} className="relative flex-1 group">
-              <div
-                className={`w-full h-full flex items-center justify-center transition-colors duration-500 ${stageColor} ${roundedClasses}`}
+        return (
+          <Tooltip key={stage.status} title={stage.tooltip} arrow>
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.5s ease',
+                backgroundColor: bgColor,
+                ...(index === 0 && { borderTopLeftRadius: 14, borderBottomLeftRadius: 14 }),
+                ...(index === progressStages.length - 1 && { borderTopRightRadius: 14, borderBottomRightRadius: 14 }),
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  color: textColor,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  px: 1,
+                  fontSize: { xs: '0.6rem', sm: '0.7rem' }
+                }}
               >
-                <span className={`text-xs font-semibold text-center z-10 px-1 ${textColor}`}>
-                  {stage.label}
-                </span>
-              </div>
-              <div className="absolute bottom-full mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
-                {stage.tooltip}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+                {stage.label}
+              </Typography>
+            </Box>
+          </Tooltip>
+        );
+      })}
+    </Box>
   );
 }

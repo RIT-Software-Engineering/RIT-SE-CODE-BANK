@@ -1,28 +1,37 @@
-// components/profile/form-steps/CandidateAndEmployee/Step3.js
+// src/components/profile/form-steps/CandidateAndEmployee/Step1.js
 "use client";
 import React from "react";
 import InputField from "../../../common/fields/InputField";
 import SelectField from "../../../common/fields/SelectField";
+import { MenuItem, Typography, Box, Divider } from "@mui/material";
 
-/**
- * Component for the first step of the form for candidates and employees
- * @param {object} props - The component props.
- * @param {function} props.register - The form register function.
- * @param {object} props.errors - The form errors object.
- * @param {object} props.watchedStatus - The form watched status object.
- * @returns {JSX.Element} The rendered Step1 component.
- */
-export default function Step1CandidateAndEmployee({ register, errors, watchedStatus }) {
+export default function Step1CandidateAndEmployee({
+  register,
+  errors,
+  watchedStatus,
+  watch,
+}) {
+  const currentValues = watch ? watch() : {};
+
   return (
-    <fieldset className="space-y-4 animate-fade-in">
-      {/* --- EDITABLE FIELDS --- */}
+    <fieldset className="space-y-8 animate-fade-in">
+      <Box mb={4}>
+        <Typography variant="h1" mb={2}>
+          Personal Information
+        </Typography>
+        <Typography variant="body1">
+          Please provide your basic information and academic details.
+        </Typography>
+      </Box>
+
+      {/* First + Last Name */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputField
           id="fname"
           label="First Name"
           placeholder="Enter First Name"
           registerProps={register("fname", { required: "First name is required." })}
-          required={true}
+          required
           error={errors.fname}
         />
         <InputField
@@ -30,80 +39,123 @@ export default function Step1CandidateAndEmployee({ register, errors, watchedSta
           label="Last Name"
           placeholder="Enter Last Name"
           registerProps={register("lname", { required: "Last name is required." })}
-          required={true}
+          required
           error={errors.lname}
         />
       </div>
+
+      {/* User ID + Email */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <InputField
-          id="uid"
-          label="User ID"
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          placeholder="Enter User ID"
-          registerProps={register("uid", {required: "A User ID is required." })}
-          maxLength={9}
-          required={true}
-          error={errors.uid}
-        />
-        <InputField
-          id="email"
-          label="Email"
-          type="email"
-          placeholder="Enter Email"
-          registerProps={register("email", { required: "An email is required." })}
-          required={true}
-          error={errors.email}
-        />
+        <div>
+          <InputField
+            id="uid"
+            label="User ID"
+            type="text"
+            inputMode="numeric"
+            placeholder="Enter User ID"
+            registerProps={register("uid", { required: "A User ID is required." })}
+            maxLength={9}
+            required
+            error={errors.uid}
+          />
+          <Typography variant="smalltext" mt={1} fontStyle="italic">
+            Enter your 9-digit RIT ID number
+          </Typography>
+        </div>
+        <div>
+          <InputField
+            id="email"
+            label="Email"
+            type="email"
+            placeholder="Enter Email"
+            registerProps={register("email", { required: "An email is required." })}
+            required
+            error={errors.email}
+          />
+          <Typography variant="smalltext" mt={1} fontStyle="italic">
+            Use your RIT email address
+          </Typography>
+        </div>
       </div>
+
+      {/* Pronouns + Major */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <InputField
           id="pronouns"
           label="Pronouns"
-          placeholder="Enter Pronouns"
+          placeholder="e.g., he/him, she/her, they/them"
           registerProps={register("pronouns", { required: "Pronouns are required." })}
-          required={true}
+          required
           error={errors.pronouns}
         />
         <InputField
           id="major"
           label="Major"
-          placeholder="Enter Major"
+          placeholder="Enter your major/program"
           registerProps={register("major", { required: "Major is required." })}
-          required={true}
+          required
           error={errors.major}
         />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <SelectField
-          id="graduateStatus"
-          label="Academic Status"
-          required={true}
-          registerProps={register("graduateStatus", { required: "Academic status is required." })}
-          error={errors.graduateStatus}
-        >
-          <option value="">Select Status...</option>
-          <option value="UNDERGRADUATE">Undergraduate</option>
-          <option value="GRADUATE">Graduate</option>
-        </SelectField>
 
-        {watchedStatus === "UNDERGRADUATE" && (
+      {/* Academic Info */}
+      <Box pt={4}>
+        <Divider sx={{ mb: 4 }} />
+
+        <Box mb={3}>
+          <Typography variant="h2" mb={2}>
+            Academic Status
+          </Typography>
+          <Typography variant="body1">
+            Select your current academic level and year if applicable.
+          </Typography>
+        </Box>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <SelectField
-            id="yearLevel"
-            label="Year Level"
-            required={true}
-            registerProps={register("yearLevel", { required: "Year level is required for undergraduates." })}
-            error={errors.yearLevel}
+            id="graduateStatus"
+            label="Academic Status"
+            required
+            registerProps={register("graduateStatus", {
+              required: "Academic status is required.",
+            })}
+            value={currentValues.graduateStatus || ""}
+            error={errors.graduateStatus}
           >
-            <option value="">Select Year...</option>
-            <option value="2">Second Year</option>
-            <option value="3">Third Year</option>
-            <option value="4">Fourth Year</option>
-            <option value="5">Fifth Year</option>
+            <MenuItem value="">
+              <em>Select Status...</em>
+            </MenuItem>
+            <MenuItem value="UNDERGRADUATE">Undergraduate</MenuItem>
+            <MenuItem value="GRADUATE">Graduate</MenuItem>
           </SelectField>
-        )}
-      </div>
+
+          {watchedStatus === "UNDERGRADUATE" && (
+            <div className="animate-fade-in">
+              <SelectField
+                id="yearLevel"
+                label="Year Level"
+                required
+                registerProps={register("yearLevel", {
+                  required: "Year level is required for undergraduates.",
+                })}
+                value={currentValues.yearLevel || ""}
+                error={errors.yearLevel}
+              >
+                <MenuItem value="">
+                  <em>Select Year...</em>
+                </MenuItem>
+                <MenuItem value="2">Second Year</MenuItem>
+                <MenuItem value="3">Third Year</MenuItem>
+                <MenuItem value="4">Fourth Year</MenuItem>
+                <MenuItem value="5">Fifth Year</MenuItem>
+              </SelectField>
+              <Typography variant="smalltext" mt={1} fontStyle="italic">
+                Select your current academic year
+              </Typography>
+            </div>
+          )}
+        </div>
+      </Box>
     </fieldset>
   );
 }

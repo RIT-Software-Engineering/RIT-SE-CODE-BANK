@@ -10,16 +10,23 @@ import CoursesTakenCard from "@/components/profile/CandidateAndEmployee/CoursesT
 import CoursesWorkedCard from "@/components/profile/CandidateAndEmployee/CoursesWorkedCard";
 import ResumeManager from "@/components/profile/CandidateAndEmployee/ResumeManager";
 
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Container,
+  Paper,
+  Typography,
+} from "@mui/material";
+
 export default function ProfilePage() {
-  const [editingSection, setEditingSection] = useState(null); 
+  const [editingSection, setEditingSection] = useState(null);
   const { currentUser, refreshUserProfile } = useAuth();
   const [profileData, setProfileData] = useState(null);
-  // State to hold the master list of all available courses.
   const [courseOptions, setCourseOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // This function fetches the user's profile and updates the state.
   const handleProfileRefresh = useCallback(async () => {
     if (!currentUser?.username) return;
     try {
@@ -32,7 +39,6 @@ export default function ProfilePage() {
     }
   }, [currentUser, refreshUserProfile]);
 
-  // This effect fetches both the user's profile and the master course list.
   useEffect(() => {
     if (!currentUser?.username) {
       setIsLoading(false);
@@ -58,29 +64,32 @@ export default function ProfilePage() {
     fetchData();
   }, [currentUser]);
 
-  // This function is called when a profile update is successful.
   const handleUpdateSuccess = (updatedProfile) => {
     setProfileData(updatedProfile);
     refreshUserProfile();
-    setEditingSection(null); // Close the modal on success
+    setEditingSection(null);
   };
 
-  // This function is called when a user requests to edit a specific section.
   const handleEditRequest = (section) => {
     setEditingSection(section);
   };
 
-  // Calculate the courses taken by the user
   const coursesTaken = useMemo(() => {
     const history = profileData?.candidate?.courseHistory || [];
     if (!history.length || !courseOptions.length) return [];
     return history.map((historyItem) => {
-      const courseCode = historyItem.course?.courseCode || historyItem.courseCode;
-      const courseDetails = courseOptions.find((c) => c.courseCode === courseCode);
+      const courseCode =
+        historyItem.course?.courseCode || historyItem.courseCode;
+      const courseDetails = courseOptions.find(
+        (c) => c.courseCode === courseCode
+      );
       return {
         courseCode: courseCode,
         name: courseDetails?.name || "Unknown Course",
-        description: historyItem.course?.description || courseDetails?.description || "No description available",
+        description:
+          historyItem.course?.description ||
+          courseDetails?.description ||
+          "No description available",
         grade: historyItem.grade,
         hasTaken: historyItem.hasTaken,
         wasPriorEmployee: historyItem.wasPriorEmployee,
@@ -88,42 +97,74 @@ export default function ProfilePage() {
     });
   }, [profileData, courseOptions]);
 
-  const isCandidateOrEmployee = profileData?.role === "CANDIDATE" || profileData?.role === "EMPLOYEE";
-  const isEmployerOrAdmin = profileData?.role === "EMPLOYER" || profileData?.role === "ADMIN";
+  const isCandidateOrEmployee =
+    profileData?.role === "CANDIDATE" || profileData?.role === "EMPLOYEE";
+  const isEmployerOrAdmin =
+    profileData?.role === "EMPLOYER" || profileData?.role === "ADMIN";
 
-  if (isLoading) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
-  if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
-  if (!profileData) return <div className="p-8 text-center text-gray-500">No profile data available. Please log in.</div>;
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "80vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  // --- Main Render ---
+  if (error) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Alert severity="info">
+          No profile data available. Please log in.
+        </Alert>
+      </Container>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-8 max-w-4xl mx-auto">
-      <ProfileInfoCard
-        profileData={profileData}
-        isEmployerOrAdmin={isEmployerOrAdmin}
-        isCandidateOrEmployee={isCandidateOrEmployee}
-        onEdit={() => handleEditRequest('info')}
-      />
-      
-      {isCandidateOrEmployee && (
-        <>
-          <CoursesTakenCard
-            coursesTaken={coursesTaken}
-            onEdit={() => handleEditRequest('coursesTaken')}
-          />
-          <CoursesWorkedCard
-            coursesTaken={coursesTaken}
-            onEdit={() => handleEditRequest('coursesWorked')}
-          />
-          <section className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-             <ResumeManager
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <ProfileInfoCard
+          profileData={profileData}
+          isEmployerOrAdmin={isEmployerOrAdmin}
+          isCandidateOrEmployee={isCandidateOrEmployee}
+          onEdit={() => handleEditRequest("info")}
+        />
+
+        {isCandidateOrEmployee && (
+          <>
+            <CoursesTakenCard
+              coursesTaken={coursesTaken}
+              onEdit={() => handleEditRequest("coursesTaken")}
+            />
+            <CoursesWorkedCard
+              coursesTaken={coursesTaken}
+              onEdit={() => handleEditRequest("coursesWorked")}
+            />
+            <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
+              <ResumeManager
                 resumes={profileData.candidate?.resumes || []}
                 candidateUsername={profileData.username}
                 onProfileRefresh={handleProfileRefresh}
               />
-          </section>
-        </>
-      )}
+            </Paper>
+          </>
+        )}
+      </Box>
 
       {editingSection && (
         <UserProfileModal
@@ -136,6 +177,6 @@ export default function ProfilePage() {
           courseOptions={courseOptions}
         />
       )}
-    </div>
+    </Container>
   );
 }

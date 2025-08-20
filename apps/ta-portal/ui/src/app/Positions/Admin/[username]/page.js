@@ -28,6 +28,17 @@ import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
 
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Paper,
+  Tab,
+  Tabs,
+  Typography,
+} from "@mui/material";
+
 export default function AdminPositions() {
   const filterRef = useRef();
   const { currentUser } = useAuth();
@@ -56,13 +67,9 @@ export default function AdminPositions() {
   
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'my-positions') {
-      return 'my-positions';
-    }
-    if (tabParam === 'all-positions') {
-      return 'all-positions';
-    }
-    return 'open-positions'; // default
+    if (tabParam === 'my-positions') return 1;
+    if (tabParam === 'all-positions') return 2;
+    return 0; // default to 'open-positions'
   });
 
   const createInitialState = (config) => {
@@ -89,16 +96,17 @@ export default function AdminPositions() {
   }, []);
 
   const visibleFilters = useMemo(() => {
-    if (activeTab === "open-positions") {
+    if (activeTab === 0) { // open-positions
       return filterConfig.filter((f) => f.id !== "status");
     }
     return filterConfig;
   }, [activeTab, filterConfig]);
 
-  const fetchData = useCallback(async (tabId, currentSearch, currentFilters) => {
+  const fetchData = useCallback(async (tabIndex, currentSearch, currentFilters) => {
     if (!currentUser) return;
     setIsLoading(true);
     setError(null);
+    const tabId = tabs[tabIndex].id;
 
     try {
       let data;
@@ -118,6 +126,7 @@ export default function AdminPositions() {
     } finally {
       setIsLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
   useEffect(() => {
@@ -125,8 +134,7 @@ export default function AdminPositions() {
       const initialFilters = createInitialState(filterConfig);
       fetchData(activeTab, "", initialFilters);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, filterConfig]);
+  }, [currentUser, filterConfig, activeTab, fetchData]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -148,13 +156,12 @@ export default function AdminPositions() {
     fetchData(activeTab, searchTerm, newFilters);
   };
 
-  const handleTabChange = (tabId) => {
+  const handleTabChange = (event, newTabIndex) => {
     setIsLoading(true);
     setSearchTerm("");
     const initialFilters = createInitialState(filterConfig);
     setAppliedFilters(initialFilters);
-    setActiveTab(tabId);
-    fetchData(tabId, "", initialFilters);
+    setActiveTab(newTabIndex);
   };
   
   const handleOpenModal = (job = null) => {
@@ -183,7 +190,7 @@ export default function AdminPositions() {
           lname: currentUser.lname,
         };
         const finalPositionData = { ...positionData, jobPositionStatus: 'OPEN' };
-        
+        console.log("Final Position Data:", finalPositionData);
         await createPosition(finalPositionData, employerData);
         showNotification('Position created successfully!', 'success');
         handleCloseModal();
@@ -256,11 +263,37 @@ export default function AdminPositions() {
       handleCloseCommentModal();
     }
   };
+    
+  const tabs = [
+    { id: "open-positions", label: "All Open Positions", data: openPositions },
+    { id: "my-positions", label: "My Created Positions", data: myPositions },
+    { id: "all-positions", label: "Manage All Positions", data: allPositions },
+  ];
+
+  const activeTabData = tabs[activeTab];
 
   const renderContent = (positions) => {
-    if (isLoading) return <p className="text-center py-10">Loading...</p>;
-    if (error) return <p className="text-center py-10 text-red-500">{error}</p>;
-    if (positions.length === 0) return <p className="text-center py-10">No positions found.</p>;
+    if (isLoading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+    if (error) {
+      return (
+        <Typography color="error" align="center" sx={{ p: 4 }}>
+          {error}
+        </Typography>
+      );
+    }
+    if (positions.length === 0) {
+      return (
+        <Paper sx={{ textAlign: 'center', p: 4, mt: 2 }}>
+          <Typography variant="h6">No Positions Found</Typography>
+        </Paper>
+      );
+    }
 
     return positions.map((position) => (
       <PositionsCard 
@@ -269,96 +302,96 @@ export default function AdminPositions() {
         onEdit={handleOpenModal}
         onApprove={(jobId) => handleStatusUpdate(jobId, 'OPEN')}
         onReject={(jobId) => handleStatusUpdate(jobId, 'REJECTED')}
-        showEditAction={activeTab === 'my-positions'}
-        showApproveRejectActions={activeTab === 'all-positions'}
-        showTracker={activeTab !== 'open-positions'}
+        showEditAction={activeTab === 1} // my-positions
+        showApproveRejectActions={activeTab === 2} // all-positions
+        showTracker={activeTab !== 0} // not open-positions
       />
     ));
   };
-    
-  const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-    { id: "all-positions", label: "Manage All Positions", data: allPositions },
-  ];
-
-  const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-                  activeTab === tab.id
-                    ? "border-orange-500 text-orange-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Page Title Section */}
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h1" component="h1" gutterBottom>
+          Positions
+        </Typography>
+        <Typography variant="h3" color="text.secondary">
+          Browse, manage, and create job positions.
+        </Typography>
+      </Box>
 
-        <div className="mt-4 bg-white rounded-xl shadow-lg w-full p-6 sm:p-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{activeTabData?.label}</h2>
-              <p className="mt-1 text-md text-gray-600">
-                {activeTab !== 'open-positions' && "Search and filter all positions you have access to."}
-                {activeTab === 'open-positions' && "Browse all publicly available positions."}
-              </p>
-            </div>
-            {activeTab === 'my-positions' && (
-              <button
-                className="py-2 px-4 text-sm font-semibold rounded-md bg-orange-600 text-white hover:bg-orange-700 transition-colors disabled:bg-gray-400"
-                onClick={() => handleOpenModal()}
-                disabled={isProcessing}
-              >
-                {isProcessing ? 'Processing...' : 'Create New Position'}
-              </button>
-            )}
-          </div>
-          
-          <form onSubmit={handleSearch} className="mb-4 flex flex-col sm:flex-row items-center gap-2">
-            <SearchBar
-              value={searchTerm}
-              onChange={handleSearchTermChange}
-              placeholder="Search via course code or name:"
-            />
-            <Filter 
-              key={activeTab}
-              ref={filterRef} 
-              onFilterChange={handleFilterChange} 
-              filterConfig={visibleFilters} 
-            />
-            <button
-              type="submit"
-              className="h-10 px-4 text-sm font-semibold rounded-md bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          aria-label="position tabs"
+          centered
+        >
+          {tabs.map((tab) => (
+            <Tab key={tab.id} label={tab.label} />
+          ))}
+        </Tabs>
+      </Box>
+
+      <Paper elevation={2} sx={{ p: { xs: 2, md: 4 } }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4, flexWrap: 'wrap' }}>
+          <Box>
+            <Typography variant="h2" component="h1" gutterBottom>
+              {activeTabData?.label}
+            </Typography>
+            <Typography color="text.secondary">
+              {activeTab !== 0 && "Search and filter all positions you have access to."}
+              {activeTab === 0 && "Browse all publicly available positions."}
+            </Typography>
+          </Box>
+          {activeTab === 1 && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => handleOpenModal()}
+              disabled={isProcessing}
+              sx={{ mt: { xs: 2, md: 0 } }}
             >
-              Search
-            </button>
-          </form>
-          
-          <div className="mb-4 text-sm text-gray-600">
-            {!isLoading && !error && (
-              <p>
-                <strong>{activeTabData?.data?.length || 0}</strong>
-                {` ${activeTabData?.data?.length === 1 ? 'result' : 'results'} found`}
-              </p>
-            )}
-          </div>
+              {isProcessing ? <CircularProgress size={24} /> : 'Create New Position'}
+            </Button>
+          )}
+        </Box>
+        
+        <Box component="form" onSubmit={handleSearch} sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+          <SearchBar
+            value={searchTerm}
+            onChange={handleSearchTermChange}
+            placeholder="Search via course code or name:"
+            sx={{ flexGrow: 1 }}
+          />
+          <Filter 
+            key={activeTab}
+            ref={filterRef} 
+            onFilterChange={handleFilterChange} 
+            filterConfig={visibleFilters} 
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            sx={{ height: 40 }}
+          >
+            Search
+          </Button>
+        </Box>
+        
+        {!isLoading && !error && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <strong>{activeTabData?.data?.length || 0}</strong>
+            {` ${activeTabData?.data?.length === 1 ? 'result' : 'results'} found`}
+          </Typography>
+        )}
 
-          <div className="space-y-4">
-            {renderContent(activeTabData?.data)}
-          </div>
-        </div>
-      </div>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {renderContent(activeTabData?.data)}
+        </Box>
+      </Paper>
 
       {isModalOpen && (
         <EditPositionModal
@@ -375,6 +408,6 @@ export default function AdminPositions() {
         title={commentModalState.title}
         isProcessing={isProcessing}
       />
-    </div>
+    </Container>
   );
 }

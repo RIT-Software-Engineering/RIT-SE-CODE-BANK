@@ -2,19 +2,30 @@
 "use client";
 import React from "react";
 import InputField from "@/components/common/fields/InputField";
+import { Box } from "@mui/material";
 
-/** 
- * Component for the first step (and currently only step) of the form for employers and admins
+/** * Component for editing data for employers and admins within the admin form.
  * @param {function} register - The form register function.
  * @param {object} errors - The form errors object.
- * @returns {JSX.Element} The rendered Step1 component.
+ * @returns {JSX.Element} The rendered EditEmployerAdminData component.
 */
 export default function EditEmployerAdminData({ register, errors }) {
   return (
-    <fieldset className="space-y-4 animate-fade-in">
+    <Box 
+      component="fieldset" 
+      className="animate-fade-in"
+      sx={{ 
+        border: 'none', 
+        p: 0, 
+        m: 0, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: 3 
+      }}
+    >
 
       {/* --- EDITABLE FIELDS --- */}
-         <InputField
+        <InputField
             id="uid"
             label="User ID"
             type="text"
@@ -50,24 +61,24 @@ export default function EditEmployerAdminData({ register, errors }) {
             required={true}
             error={errors.email}
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
             <InputField
-            id="pronouns"
-            label="Pronouns"
-            placeholder="Enter Pronouns"
-            registerProps={register("pronouns", { required: "Pronouns are required." })}
-            required={true}
-            error={errors.pronouns}
+                id="pronouns"
+                label="Pronouns"
+                placeholder="Enter Pronouns"
+                registerProps={register("pronouns", { required: "Pronouns are required." })}
+                required={true}
+                error={errors.pronouns}
             />
             <InputField
-            id="department"
-            label="Department"
-            placeholder="Enter Department"
-            registerProps={register("department", { required: "Department is required." })}
-            required={true}
-            error={errors.department}
+                id="department"
+                label="Department"
+                placeholder="Enter Department"
+                registerProps={register("department", { required: "Department is required." })}
+                required={true}
+                error={errors.department}
             />
-        </div>
-        </fieldset>
+        </Box>
+    </Box>
     );
 }

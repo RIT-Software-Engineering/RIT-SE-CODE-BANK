@@ -2,6 +2,8 @@
 "use client";
 import React from "react";
 import SearchBar from "../../../common/searchAndFilter/SearchBar";
+import { Typography, Box, Paper, IconButton, Chip } from "@mui/material";
+import { Close } from "@mui/icons-material";
 
 /**
  * Component for Step 3 of the Candidate and Employee form
@@ -23,47 +25,117 @@ export default function Step3CandidateAndEmployee({
   removeCourseWorked,
 }) {
   const filteredWorkedCourses = workedSearch
-    ? courseOptions.filter(c => c.courseCode.toLowerCase().includes(workedSearch.toLowerCase()))
+    ? courseOptions.filter(c =>
+        c.courseCode.toLowerCase().includes(workedSearch.toLowerCase())
+      )
     : [];
 
   return (
-    <fieldset className="space-y-2 animate-fade-in">
-      <label className="block text-sm font-medium text-slate-700">Prior TA/Grader Experience</label>
-      <p className="text-sm text-slate-500">Add any courses for which you have previously worked as a Teaching Assistant or Grader.</p>
-      <SearchBar
-        value={workedSearch}
-        onChange={setWorkedSearch}
-        placeholder="Search for a course you have worked for..."
-      />
-      {workedSearch && (
-        <ul className="border rounded-md max-h-40 overflow-y-auto bg-white">
-          {filteredWorkedCourses.length > 0 ? (
-            filteredWorkedCourses.map((course) => (
-              <li
-                key={course.courseCode}
-                onClick={() => addCourseWorked(course)}
-                className="p-2 hover:bg-rit-light-gray cursor-pointer"
-              >
-                {course.courseCode}: {course.name}
-              </li>
-            ))
-          ) : (
-            <li className="p-2 text-gray-500">No courses found.</li>
-          )}
-        </ul>
-      )}
-      <div className="space-y-2 pt-2">
+    <fieldset className="space-y-6 animate-fade-in">
+      <div className="space-y-3">
+        <Typography variant="h1">Prior TA/Grader Experience</Typography>
+        <Typography variant="body1">
+          Add any courses for which you have previously worked as a Teaching
+          Assistant or Grader.
+        </Typography>
+      </div>
+
+      {/* Search Bar + Results */}
+      <div className="space-y-4">
+        <SearchBar
+          value={workedSearch}
+          onChange={setWorkedSearch}
+          placeholder="Search for a course you have worked for..."
+        />
+
+        {workedSearch && (
+          <Paper elevation={3} sx={{ maxHeight: "12rem", overflowY: "auto" }}>
+            {filteredWorkedCourses.length > 0 ? (
+              filteredWorkedCourses.map((course) => (
+                <Box
+                  key={course.courseCode}
+                  onClick={() => addCourseWorked(course)}
+                  sx={{
+                    p: 3,
+                    cursor: "pointer",
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                    "&:last-child": { borderBottom: "none" },
+                    "&:hover": { bgcolor: "action.hover" },
+                  }}
+                >
+                  <Typography variant="body1" fontWeight={600} display="inline">
+                    {course.courseCode}:
+                  </Typography>
+                  <Typography variant="body1" ml={1} display="inline">
+                    {course.name}
+                  </Typography>
+                </Box>
+              ))
+            ) : (
+              <Box sx={{ p: 3, textAlign: "center" }}>
+                <Typography variant="body1" fontStyle="italic">
+                  No courses found matching &quot;{workedSearch}&quot;
+                </Typography>
+              </Box>
+            )}
+          </Paper>
+        )}
+      </div>
+
+      {/* Selected Courses */}
+      <div className="space-y-4 pt-4">
+        {coursesWorked.length > 0 && (
+          <Box display="flex" alignItems="center" gap={2} mb={2}>
+            <Typography variant="h2">Selected Courses</Typography>
+            <Chip label={coursesWorked.length} size="small" color="primary" />
+          </Box>
+        )}
+
         {coursesWorked.map((courseCode) => (
-          <div key={courseCode} className="flex items-center justify-between bg-slate-100 p-2 rounded-md">
-            <span>{courseCode}</span>
-            <button
-              type="button"
-              onClick={() => removeCourseWorked(courseCode)}
-              className="text-red-500 hover:text-red-700 font-bold"
-            >
-              &times;
-            </button>
-          </div>
+          <Paper
+            key={courseCode}
+            elevation={2}
+            sx={{
+              p: 2,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: "8px",
+              transition: "box-shadow 0.2s ease, transform 0.1s ease",
+              "&:hover": {
+                boxShadow: 4,
+                transform: "translateY(-1px)",
+              },
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <Typography variant="h3" fontWeight={700} letterSpacing="0.025em">
+                {courseCode}
+              </Typography>
+
+              <IconButton
+                onClick={() => removeCourseWorked(courseCode)}
+                size="small"
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: "8px",
+                  width: 40,
+                  height: 40,
+                  "&:hover": {
+                    bgcolor: "error.main",
+                    color: "error.contrastText",
+                    borderColor: "error.main",
+                    transform: "scale(1.05)",
+                  },
+                  transition: "all 0.2s ease",
+                }}
+                title={`Remove ${courseCode}`}
+              >
+                <Close fontSize="small" />
+              </IconButton>
+            </div>
+          </Paper>
         ))}
       </div>
     </fieldset>

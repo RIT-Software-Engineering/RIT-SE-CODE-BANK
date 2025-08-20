@@ -8,7 +8,17 @@ import UserGroup from '@/components/users/UserGroups';
 import AdminEditUserForm from '@/components/users/AdminEditUserForm';
 import SearchBar from '@/components/common/searchAndFilter/SearchBar';
 
-export default function Admin() {
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Container,
+  Modal,
+  Paper,
+  Typography,
+} from '@mui/material';
+
+export default function AdminUsersPage() {
   const { currentUser } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,9 +71,9 @@ export default function Admin() {
     setIsModalOpen(false);
   };
 
-  const filterUsers = (users, searchTerm) => {
-    if (!searchTerm) return users;
-    const lowerTerm = searchTerm.toLowerCase();
+  const filterUsers = (users, term) => {
+    if (!term) return users;
+    const lowerTerm = term.toLowerCase();
     return users.filter((user) => {
       const uidString = String(user.uid);
       const name = `${user.fname?.toLowerCase() || ''} ${
@@ -81,110 +91,114 @@ export default function Admin() {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className='text-center py-10'>
-          <div className='w-8 h-8 border-4 border-dashed rounded-full animate-spin border-rit-orange mx-auto'></div>
-          <p className='mt-4 text-gray-600'>Loading Users...</p>
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
       );
     }
 
     if (error) {
-      return (
-        <div className='text-center py-10 px-4 bg-red-50 border border-red-200 rounded-lg'>
-          <p className='text-lg font-semibold text-red-700'>
-            An Error Occurred
-          </p>
-          <p className='text-gray-600 mt-2'>{error}</p>
-        </div>
-      );
+      return <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>;
     }
 
     const roleOrder = ['ADMIN', 'EMPLOYER', 'EMPLOYEE', 'CANDIDATE'];
+    const filteredRoles = roleOrder.filter((role) => groupedUsers[role]);
 
-    return roleOrder
-      .filter((role) => groupedUsers[role])
-      .map((role) => {
-        const filtered = filterUsers(groupedUsers[role], searchTerm);
-        if (filtered.length === 0 && searchTerm) return null;
+    if (filteredRoles.length === 0 && !searchTerm) {
+        return <Typography sx={{textAlign: 'center', p: 4}}>No users found.</Typography>
+    }
 
-        if (role === 'EMPLOYEE') {
-          const groupedByStatus = filtered.reduce((acc, user) => {
-            const status =
-              user?.candidate?.employee?.[0]?.employeeStatus || 'UNKNOWN';
-            if (!acc[status]) acc[status] = [];
-            acc[status].push(user);
-            return acc;
-          }, {});
+    return filteredRoles.map((role) => {
+      const filtered = filterUsers(groupedUsers[role], searchTerm);
+      if (filtered.length === 0) return null;
 
-          return (
-            <UserGroup
-              key={role}
-              title={role}
-              users={groupedByStatus}
-              onEditUser={handleEditClick}
-              isEmployeeGroup
-            />
-          );
-        }
+      if (role === 'EMPLOYEE') {
+        const groupedByStatus = filtered.reduce((acc, user) => {
+          const status =
+            user?.candidate?.employee?.[0]?.employeeStatus || 'UNKNOWN';
+          if (!acc[status]) acc[status] = [];
+          acc[status].push(user);
+          return acc;
+        }, {});
 
         return (
           <UserGroup
             key={role}
             title={role}
-            users={filtered}
+            users={groupedByStatus}
             onEditUser={handleEditClick}
+            isEmployeeGroup
           />
         );
-      });
+      }
+
+      return (
+        <UserGroup
+          key={role}
+          title={role}
+          users={filtered}
+          onEditUser={handleEditClick}
+        />
+      );
+    });
   };
 
+  if (!isAdministrator && !isLoading) {
+    return (
+        <Container maxWidth="sm" sx={{py: 8, textAlign: 'center'}}>
+            <Typography variant="h1" color="error">Access Denied</Typography>
+            <Typography variant="h3" color="text.secondary" sx={{mt: 2}}>You do not have permission to view this page.</Typography>
+        </Container>
+    )
+  }
+
   return (
-    <div className='bg-gray-50 py-10'>
-      <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
-        {isAdministrator ? (
-          <div className='w-full max-w-4xl mx-auto'>
-            <div className='text-center mb-8'>
-              <h1 className='text-4xl font-extrabold text-gray-900 tracking-tight'>
-                Edit Users
-              </h1>
-              <p className='mt-2 text-lg text-gray-500'>
-                Manage user roles and permissions.
-              </p>
-            </div>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h1" component="h1" gutterBottom>
+          Edit Users
+        </Typography>
+        <Typography variant="h3" color="text.secondary">
+          Manage user roles and permissions.
+        </Typography>
+      </Box>
 
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder='Search by name, email, or UID...'
+      <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
+        <SearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder='Search by name, email, or UID...'
+          sx={{ mb: 3 }}
+        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {renderContent()}
+        </Box>
+      </Paper>
+
+      <Modal
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        aria-labelledby="edit-user-modal-title"
+        sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}
+      >
+        <Paper sx={{
+            p: {xs: 2, md: 4},
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+        }}>
+            <AdminEditUserForm
+                user={selectedUser}
+                onClose={handleCloseModal}
+                onUpdateSuccess={fetchData}
             />
-
-            <div className='mt-6 bg-white p-6 sm:p-8 rounded-xl shadow-md space-y-4'>
-              {renderContent()}
-            </div>
-
-            {isModalOpen && selectedUser && (
-              <div className='fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center p-4'>
-                <div className='bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto'>
-                  <AdminEditUserForm
-                    user={selectedUser}
-                    onClose={handleCloseModal}
-                    onUpdateSuccess={fetchData}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className='text-center py-20'>
-            <h1 className='text-4xl text-center font-extrabold text-red-600 tracking-tight'>
-              Access Denied
-            </h1>
-            <p className='mt-4 text-lg text-gray-600'>
-              You do not have permission to view this page.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+        </Paper>
+      </Modal>
+    </Container>
   );
 }

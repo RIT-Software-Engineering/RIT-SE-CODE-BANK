@@ -910,18 +910,13 @@ function buildJobPositionForApplicationFilterClause(filters) {
     Array.isArray(filters.level) &&
     filters.level.length > 0
   ) {
-    const levelConditions = filters.level.map((levelString) => {
-      // Extracts the first digit from strings like "100-level" -> "1"
-      const levelDigit = levelString.replace("-level", "").charAt(0);
-      return {
-        courseCode: {
-          contains: `-${levelDigit}`,
-        },
-      };
-    });
-
-    // Add the OR conditions to the main filter clause.
-    where.OR = levelConditions;
+    // This is the new, more concise line that replaces the old block.
+    where.OR = filters.level.map((levelString) => ({
+      courseCode: {
+        // Extracts the first digit (e.g., "1" from "100-level")
+        contains: `-${levelString.charAt(0)}`, 
+      },
+    }));
   }
 
   // Filter by semester code
@@ -1113,6 +1108,16 @@ async function getCandidateApplicationsAsAdmin(){
           },
           jobSchedules: {
             select: { dayOfWeek: true, startTime: true, endTime: true },
+          },
+          employer: {
+            include: {
+              user: {
+                select: {
+                  fname: true,
+                  lname: true
+                },
+              },
+            },
           },
         },
       },
