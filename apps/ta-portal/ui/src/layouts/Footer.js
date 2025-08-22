@@ -36,7 +36,7 @@ export default function Footer() {
         Rochester Institute of Technology
       </Typography>
       <Typography variant="body1">
-        One Lomb Memorial Drive, Rochester, NY 14623-5603
+        1 Lomb Memorial Drive, Rochester, NY 14623-5603
         <br />
         Copyright © Rochester Institute of Technology. All Rights Reserved.
       </Typography>
