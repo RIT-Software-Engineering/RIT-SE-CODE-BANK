@@ -42,7 +42,7 @@ model users {
   fname          String
   lname          String
   email          String @unique
-  role           String
+  type           String
   semester_group String
   project        String
   active         String
@@ -50,6 +50,8 @@ model users {
   prev_login     String
 
   teams Teams[] @relation("TeamMembers")
+  login Login? @relation(fields: [loginId], references: [id])
+  loginId Int? @unique
 }
 
 model JournalEntry {
@@ -96,4 +98,14 @@ model Teams {
   projectId Int?
   project   Project? @relation(fields: [projectId], references: [id])
   members   users[]  @relation("TeamMembers")
+}
+
+model Login {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user users?
+
 }
