@@ -9,9 +9,21 @@ import {
 import { useNotification } from '@/contexts/NotificationContext';
 import EditCandidateEmployeeData from './EditCandidateEmployeeData';
 import EditEmployerAdminData from './EditEmployerAdminData';
-import Button from '@mui/material/Button';
+import { Box, Button, CircularProgress } from '@mui/material';
 import ConfirmationModal from '@/components/common/models/ConfirmationModal';
 
+/**
+ * AdminEditUserForm component for admins to edit user data.
+ *
+ * Displays different edit forms based on the user's role (candidate, employee, employer, or admin).
+ * Allows promoting an employer to an admin and terminating an employee's employment.
+ * Submits the form via API calls and triggers parent callbacks.
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.user - The user data to be edited
+ * @param {Function} props.onClose - Callback to close the form dialog
+ * @param {Function} props.onUpdateSuccess - Callback fired after successful user data update
+ */
 export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
     const { showNotification } = useNotification();
     const userRole = user?.role?.toUpperCase();
@@ -27,6 +39,7 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
         handleSubmit,
         formState: { errors, isSubmitting },
         reset,
+        watch,
     } = useForm({
             defaultValues: {
             uid: user.uid || '',
@@ -40,6 +53,8 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
             department: user.employer?.department || '',
         },
     });
+
+    const watchedStatus = watch('graduateStatus');
 
     useEffect(() => {
         reset({
@@ -141,76 +156,83 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
 
     return (
         <>
-            <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-            {isCandidateOrEmployee ? (
-                <EditCandidateEmployeeData user={user} register={register} errors={errors} />
-            ) : (
-                <>
-                <EditEmployerAdminData user={user} register={register} errors={errors} />
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                    {isCandidateOrEmployee ? (
+                        <EditCandidateEmployeeData
+                            register={register}
+                            errors={errors}
+                            watchedStatus={watchedStatus}
+                            watch={watch}
+                        />
+                    ) : (
+                        <>
+                        <EditEmployerAdminData user={user} register={register} errors={errors} />
 
-                {user.role === 'EMPLOYER' && (
-                    <Button
-                    variant="contained"
-                    color="warning"
-                    onClick={() => setShowConfirm(true)}
-                    className="!mt-2"
-                    >
-                    Promote to Admin
-                    </Button>
-                )}
-                </>
-            )}
+                        {user.role === 'EMPLOYER' && (
+                            <Button
+                                variant="contained"
+                                color="warning"
+                                onClick={() => setShowConfirm(true)}
+                                sx={{ mt: 2 }}
+                            >
+                            Promote to Admin
+                            </Button>
+                        )}
+                        </>
+                    )}
 
-            {userRole === 'EMPLOYEE' &&
-                user?.candidate?.employee?.[0]?.employeeStatus !== 'TERMINATED' && (
-                <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => setShowTerminateConfirm(true)}
-                    className="!mt-2"
-                >
-                    Terminate Employee
-                </Button>
-                )}
+                    {userRole === 'EMPLOYEE' &&
+                        user?.candidate?.employee?.[0]?.employeeStatus !== 'TERMINATED' && (
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={() => setShowTerminateConfirm(true)}
+                            sx={{ mt: 2 }}
+                        >
+                            Terminate Employee
+                        </Button>
+                        )}
 
-            <div className="pt-4 flex justify-end gap-4">
-                <button
-                type="button"
-                onClick={onClose}
-                className="bg-slate-200 text-slate-700 font-medium px-4 py-2 rounded hover:bg-slate-300"
-                >
-                Cancel
-                </button>
-                <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-rit-orange text-white font-bold px-6 py-2 rounded hover:bg-orange-600"
-                >
-                {isSubmitting ? 'Saving...' : 'Save Changes'}
-                </button>
-            </div>
+                    <Box sx={{ pt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                        <Button
+                            variant="outlined"
+                            onClick={onClose}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={isSubmitting}
+                            startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
+                        >
+                            {isSubmitting ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </Box>
+                </Box>
             </form>
 
             {/* Promote to Admin Modal */}
             <ConfirmationModal
-            isOpen={showConfirm}
-            onClose={() => setShowConfirm(false)}
-            onConfirm={handlePromoteToAdmin}
-            title="Confirm Promotion"
-            isConfirming={isPromoting}
+                isOpen={showConfirm}
+                onClose={() => setShowConfirm(false)}
+                onConfirm={handlePromoteToAdmin}
+                title="Confirm Promotion"
+                isConfirming={isPromoting}
             >
-            Are you sure you want to promote this employer to an admin?
+                Are you sure you want to promote this employer to an admin?
             </ConfirmationModal>
 
             {/* Terminate Employee Modal */}
             <ConfirmationModal
-            isOpen={showTerminateConfirm}
-            onClose={() => setShowTerminateConfirm(false)}
-            onConfirm={handleTerminateEmployee}
-            title="Confirm Termination"
-            isConfirming={isTerminating}
+                isOpen={showTerminateConfirm}
+                onClose={() => setShowTerminateConfirm(false)}
+                onConfirm={handleTerminateEmployee}
+                title="Confirm Termination"
+                isConfirming={isTerminating}
             >
-            Are you sure you want to terminate this employee? This action cannot be undone.
+                Are you sure you want to terminate this employee? This action cannot be undone.
             </ConfirmationModal>
         </>
     );

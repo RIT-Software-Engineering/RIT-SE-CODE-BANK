@@ -3,6 +3,18 @@
 "use client";
 
 import React, { useState } from "react";
+import {
+  Button,
+  Container,
+  Paper,
+  TextField,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Link as MuiLink,
+} from "@mui/material";
 
 /**
  * A form for creating a new user account.
@@ -42,74 +54,95 @@ export default function SignUpForm({
     }
 
     setError(null);
-    onSignUpSubmit(newUser, 'signup'); // Pass data and action to parent
+    onSignUpSubmit(newUser, "signup"); // Pass data and action to parent
   };
 
   return (
-    <div className="bg-rit-light-gray h-screen rounded-lg p-5 m-10 justify-center items-center flex flex-col">
-      <div className="text-center text-3xl w-1/2">
-        Welcome to the RIT Teaching Assistant Portal
-        <br />
-        <br />
-        Create a New Account
-      </div>
+    <Container
+      maxWidth="sm"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "calc(100vh - 200px)",
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: { xs: 3, md: 5 },
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          backgroundColor: "background.paper",
+        }}
+      >
+        <Typography variant="h2" component="h1" textAlign="center">
+          Welcome to the RIT Teaching Assistant Portal
+        </Typography>
+        <Typography variant="h3" textAlign="center" sx={{ mt: 2, mb: 3 }}>
+          Create a New Account
+        </Typography>
 
-      {/* User Creation Form */}
-      <div className="mt-6 w-64 space-y-4">
-        <div>
-          <label htmlFor="new-username" className="block text-sm font-medium text-gray-700">Username</label>
-          <input
-            type="text"
-            id="new-username"
-            maxLength="7"
-            value={newUser.username}
-            onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-            className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm"
-            placeholder="Enter username (i.e. xyz1234)"
-          />
-        </div>
-        <div>
-          <label htmlFor="new-password" className="block text-sm font-medium text-gray-700">Password</label>
-          <input
-            type="password"
-            id="new-password"
-            value={newUser.password}
-            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-            className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm"
-            placeholder="Enter password"
-          />
-        </div>
-        <div>
-          <label htmlFor="new-user-role" className="block text-sm font-medium text-gray-700">I am a...</label>
-          <select
-            id="new-user-role"
+        <TextField
+          label="Username"
+          value={newUser.username}
+          onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+          margin="normal"
+          fullWidth
+          placeholder="Enter username (e.g., xyz1234)"
+          inputProps={{ maxLength: 7 }}
+        />
+        <TextField
+          label="Password"
+          type="password"
+          value={newUser.password}
+          onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+          margin="normal"
+          fullWidth
+          placeholder="Enter password"
+        />
+        <FormControl fullWidth margin="normal">
+          <InputLabel id="role-select-label">I am a...</InputLabel>
+          <Select
+            labelId="role-select-label"
             value={newUser.role}
+            label="I am a..."
             onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-            className="mt-1 block w-full p-2 rounded-md border-gray-300 shadow-sm"
           >
-            <option value="CANDIDATE">Candidate</option>
-            <option value="EMPLOYEE">Employee</option>
-            <option value="EMPLOYER">Employer</option>
-            <option value="ADMIN">Admin</option>
-          </select>
-        </div>
-      </div>
+            <MenuItem value="CANDIDATE">Candidate</MenuItem>
+            <MenuItem value="EMPLOYEE">Employee</MenuItem>
+            <MenuItem value="EMPLOYER">Employer</MenuItem>
+            <MenuItem value="ADMIN">Admin</MenuItem>
+          </Select>
+        </FormControl>
 
-      {error && <p className="text-red-500 mt-4">{error}</p>}
+        {error && (
+          <Typography color="error" sx={{ mt: 2 }}>
+            {error}
+          </Typography>
+        )}
 
-      <button
-        className="bg-rit-orange text-white w-64 rounded-lg p-3 text-lg mt-10 hover:bg-orange-600"
-        onClick={handleCreateAndContinue}
-      >
-        Create and Continue
-      </button>
-      
-      <button
-        onClick={onSwitchToLogin}
-        className="mt-4 text-sm text-black underline hover:text-rit-orange transition-colors duration-200 cursor-pointer"
-      >
-        Already have an account? Sign In
-      </button>
-    </div>
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          onClick={handleCreateAndContinue}
+          sx={{ mt: 3, mb: 2, width: "80%" }}
+        >
+          Create and Continue
+        </Button>
+
+        <MuiLink
+          component="button"
+          variant="body2"
+          onClick={onSwitchToLogin}
+        >
+          Already have an account? Sign In
+        </MuiLink>
+      </Paper>
+    </Container>
   );
 }

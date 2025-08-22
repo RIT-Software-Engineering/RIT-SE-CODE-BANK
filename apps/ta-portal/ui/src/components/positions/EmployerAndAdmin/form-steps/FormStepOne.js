@@ -1,46 +1,39 @@
+// src/components/positions/EmployerAndAdmin/form-steps/FormStepOne.js
+'use client';
+
 import { Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { getAllCourses, getAllPositions } from "@/services/db-apis"; // Assuming these API functions exist
-import CreateCourseModal from "../CreateCourseModal"; // Import the modal component
+import { getAllCourses, getAllPositions } from "@/services/db-apis";
+import CreateCourseModal from "../CreateCourseModal";
+import {
+  Autocomplete,
+  Box,
+  CircularProgress,
+  TextField,
+  Link as MuiLink,
+} from "@mui/material";
 
-// =============================================================================
-// Reusable Autocomplete Component
-// =============================================================================
-const CourseAutocomplete = ({
-  value,
-  onChange,
-  error,
-  availableCourses,
-}) => (
-  <div className="relative">
-    <label
-      htmlFor="courseCode"
-      className="block text-sm font-medium text-gray-700"
-    >
-      Course Code
-    </label>
-    <input
-      id="courseCode"
-      type="text"
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value.toUpperCase())}
-      list="course-list"
-      placeholder="e.g., SWEN-261"
-      className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm ${
-        error ? "border-red-500" : "border-gray-300"
-      }`}
-      autoComplete="off"
-    />
-    <datalist id="course-list">
-      {availableCourses.slice(0, 15).map((course) => (
-        <option key={course.courseCode} value={course.courseCode}>
-          {course.name}
-        </option>
-      ))}
-    </datalist>
-  </div>
-);
-
+/**
+ * The first step in the multi-step form for creating a new job position.
+ *
+ * Includes fields for:
+ * - Course Code (Autocomplete)
+ * - Semester Code (number)
+ * - Section Number (number)
+ *
+ * If the course code is not already in the database, the user is given the option
+ * to create a new course. If the section number is already in use, the user is given
+ * an error message.
+ *
+ * @param {Object} props - The props for the component.
+ * @param {function} props.register - The register function from react-hook-form.
+ * @param {function} props.control - The control function from react-hook-form.
+ * @param {Object} props.errors - The errors object from react-hook-form.
+ * @param {function} props.getValues - The getValues function from react-hook-form.
+ * @param {function} props.setValue - The setValue function from react-hook-form.
+ * @param {boolean} props.isEditMode - Whether the form is in edit mode or not.
+ * @returns {ReactNode} The form step component.
+ */
 export default function FormStepOne({
   register,
   control,
@@ -52,6 +45,7 @@ export default function FormStepOne({
   const [availableCourses, setAvailableCourses] = useState([]);
   const [availablePositions, setAvailablePositions] = useState([]);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [loadingCourses, setLoadingCourses] = useState(true);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -65,19 +59,22 @@ export default function FormStepOne({
         setAvailablePositions(positions);
       } catch (error) {
         console.error("Failed to fetch initial form data:", error);
+      } finally {
+        setLoadingCourses(false);
       }
     };
 
-    if (!isEditMode) { // Only fetch positions if we are in "create" mode
+    if (!isEditMode) {
         fetchInitialData();
     } else {
-        // In edit mode, we only need the courses for the autocomplete
         const fetchCourses = async () => {
             try {
                 const courses = await getAllCourses();
                 setAvailableCourses(courses);
             } catch (error) {
                 console.error("Failed to fetch courses:", error);
+            } finally {
+                setLoadingCourses(false);
             }
         };
         fetchCourses();
@@ -85,139 +82,114 @@ export default function FormStepOne({
   }, [isEditMode]);
 
   const handleCourseCreated = (newCourse) => {
-    // Add the new course to our list so it's available for autocomplete
     setAvailableCourses((prev) => [...prev, newCourse]);
-    // Set the form value to the new course code, which autofills the input
     setValue("courseCode", newCourse.courseCode, { shouldValidate: true });
-    // Note: The modal is closed by the `onClose` call inside its own `handleCreate` function
   };
 
-
-
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-        {/* Course Code Autocomplete */}
-        <div className="md:col-span-1">
-          <Controller
-            name="courseCode"
-            control={control}
-            rules={{
-              required: "A course code is required.",
-              minLength: {
-                value: 8,
-                message: "Course code must be 8 characters long (e.g. SWEN-261)."
-              },
-              maxLength: {
-                value: 8,
-                message: "Course code must be 8 characters long (e.g. SWEN-261)."
-              },
-              pattern: {
-                value: /^[A-Za-z]+-\d+$/,
-                message: "Course code must be in the format DEPARTMENT-COURSE_NUMBER (e.g., SWEN-261)."
-              },
-              validate: (value) =>
-                availableCourses.some(
-                  (course) => course.courseCode === value
-                ) || "NOT_FOUND",
-            }}
-            render={({ field, fieldState }) => (
-              <CourseAutocomplete
-                {...field}
-                error={fieldState.error}
-                availableCourses={availableCourses}
-              />
-            )}
-          />
-          {errors.courseCode && (
-            <div className="text-red-500 text-xs mt-1">
-              {errors.courseCode.message === "NOT_FOUND" ? (
-                <span>
-                  Course not found.{" "}
-                  <button
-                    type="button"
-                    onClick={() => setCreateModalOpen(true)}
-                    className="text-blue-600 underline font-semibold"
-                  >
-                    Create a new course?
-                  </button>
-                </span>
-              ) : (
-                errors.courseCode.message
+    <Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Controller
+          name="courseCode"
+          control={control}
+          rules={{
+            required: "A course code is required.",
+            minLength: { value: 8, message: "Course code must be 8 characters long (e.g. SWEN-261)." },
+            maxLength: { value: 8, message: "Course code must be 8 characters long (e.g. SWEN-261)." },
+            pattern: { value: /^[A-Z]+-\d+$/, message: "Format: DEPT-NUM (e.g., SWEN-261)." },
+            validate: (value) =>
+              availableCourses.some((course) => course.courseCode === value) || "NOT_FOUND",
+          }}
+          render={({ field, fieldState }) => (
+            <Autocomplete
+              {...field}
+              options={availableCourses.map((option) => option.courseCode)}
+              getOptionLabel={(option) => option}
+              isOptionEqualToValue={(option, value) => option === value}
+              onChange={(event, newValue) => field.onChange(newValue)}
+              onInputChange={(event, newInputValue) => {
+                  field.onChange(newInputValue.toUpperCase());
+              }}
+              freeSolo
+              autoSelect
+              loading={loadingCourses}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Course Code"
+                  error={!!fieldState.error}
+                  helperText={
+                    fieldState.error?.message === "NOT_FOUND" ? (
+                      <span>
+                        Course not found.{" "}
+                        <MuiLink
+                          component="button"
+                          type="button"
+                          onClick={() => setCreateModalOpen(true)}
+                        >
+                          Create new?
+                        </MuiLink>
+                      </span>
+                    ) : (
+                      fieldState.error?.message
+                    )
+                  }
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loadingCourses ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
               )}
-            </div>
+            />
           )}
-        </div>
-
-        {/* Other fields... */}
-        <div>
-          <label
-            htmlFor="semesterCode"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Semester Code
-          </label>
-          <input
-            type="number"
-            id="semesterCode"
-            {...register("semesterCode", {
-              required: "Semester Code is required.",
-            })}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm ${
-              errors.semesterCode ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.semesterCode && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.semesterCode.message}
-            </p>
-          )}
-        </div>
-        <div>
-          <label
-            htmlFor="sectionNumber"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Section Number
-          </label>
-          <input
-            type="number"
-            id="sectionNumber"
-            {...register("sectionNumber", {
-              required: "Section Number is required.",
-              // Check to ensure the position is not already taken
-              validate: (value) => {
-                // Only run this validation in "create" mode
-                if (isEditMode) return true;
-
-                const { courseCode, semesterCode } = getValues();
-                if (!value || !courseCode || !semesterCode) return true;
-
-                const newPositionId = `${semesterCode}-${courseCode}-${value}`;
-                const alreadyExists = availablePositions.some(pos => pos.id === newPositionId);
-                
-                return !alreadyExists || "This job position already exists.";
-              }
-            })}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm ${
-              errors.sectionNumber ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          {errors.sectionNumber && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.sectionNumber.message}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {isCreateModalOpen && (
-        <CreateCourseModal
-          initialCode={getValues("courseCode")}
-          onClose={() => setCreateModalOpen(false)}
-          onCourseCreated={handleCourseCreated}
         />
-      )}
-    </div>
+
+        <TextField
+          fullWidth
+          type="number"
+          id="semesterCode"
+          label="Semester Code"
+          {...register("semesterCode", { required: "Semester Code is required." })}
+          error={!!errors.semesterCode}
+          helperText={errors.semesterCode?.message}
+        />
+
+        <TextField
+          fullWidth
+          type="number"
+          id="sectionNumber"
+          label="Section Number"
+          {...register("sectionNumber", {
+            required: "Section Number is required.",
+            min: {
+              value: 1,
+              message: "Section number must be 1 or greater."
+            },
+            validate: (value) => {
+              if (isEditMode) return true;
+              const { courseCode, semesterCode } = getValues();
+              if (!value || !courseCode || !semesterCode) return true;
+              const newPositionId = `${semesterCode}-${courseCode}-${value}`;
+              const alreadyExists = availablePositions.some(pos => pos.id === newPositionId);
+              return !alreadyExists || "This job position already exists.";
+            }
+          })}
+          error={!!errors.sectionNumber}
+          helperText={errors.sectionNumber?.message}
+        />
+      </Box>
+
+      <CreateCourseModal
+        isOpen={isCreateModalOpen}
+        initialCode={getValues("courseCode")}
+        onClose={() => setCreateModalOpen(false)}
+        onCourseCreated={handleCourseCreated}
+      />
+    </Box>
   );
 }

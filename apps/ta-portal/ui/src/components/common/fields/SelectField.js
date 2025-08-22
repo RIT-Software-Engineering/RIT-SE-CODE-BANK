@@ -1,10 +1,22 @@
+// src/components/common/fields/SelectField.js
 "use client";
 import React from "react";
+import { FormControl, InputLabel, Select, FormHelperText } from "@mui/material";
 
-// Base styles for the select field, with border color removed for conditional application.
-const selectBase = "w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow";
-
-const formLabel = "block text-sm font-medium text-slate-700 mb-1";
+/**
+ * SelectField component wraps MUI Select with label, error handling, and react-hook-form integration.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {string} props.id - Unique ID for the select field
+ * @param {string} props.label - Label displayed above the select field
+ * @param {Object} [props.registerProps] - Props from react-hook-form's `register` function
+ * @param {Object} [props.error] - Error object with message to display if invalid
+ * @param {boolean} [props.required=false] - Whether the field is required
+ * @param {React.ReactNode} props.children - Option elements (<MenuItem>) to render inside the select
+ * @param {any} [props.value] - Optional controlled value for the select field
+ * @param {...any} rest - Any additional props passed to MUI Select
+ */
 
 export default function SelectField({
   id,
@@ -13,32 +25,32 @@ export default function SelectField({
   error,
   required = false,
   children,
+  value,
+  ...rest
 }) {
-  const errorId = `${id}-error`;
-  const finalSelectClassName = `${selectBase} ${
-    error ? "border-red-500" : "border-slate-300"
-  }`;
+  const { ref, onChange, onBlur, name } = registerProps || {};
+  const selectValue = value ?? registerProps?.value ?? "";
 
   return (
-    <div>
-      <label htmlFor={id} className={formLabel}>
+    <FormControl fullWidth error={!!error}>
+      <InputLabel id={`${id}-label`}>
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      <select
+        {required && <span> *</span>}
+      </InputLabel>
+      <Select
+        labelId={`${id}-label`}
         id={id}
-        {...registerProps}
-        className={finalSelectClassName}
-        aria-invalid={!!error}
-        aria-describedby={error ? errorId : undefined}
+        label={label}
+        name={name}
+        value={selectValue}
+        onChange={onChange}
+        onBlur={onBlur}
+        inputRef={ref}
+        {...rest}
       >
         {children}
-      </select>
-      {error && (
-        <p id={errorId} className="text-red-500 text-xs mt-1">
-          {error.message}
-        </p>
-      )}
-    </div>
+      </Select>
+      {error && <FormHelperText>{error.message}</FormHelperText>}
+    </FormControl>
   );
 }

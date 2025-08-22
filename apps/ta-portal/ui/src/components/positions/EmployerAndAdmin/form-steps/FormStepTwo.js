@@ -1,11 +1,38 @@
+// src/components/positions/EmployerAndAdmin/form-steps/FormStepTwo.js
+'use client';
+
 import { Controller } from "react-hook-form";
 import GradeSelector from "../../../common/fields/GradeSelector";
 import PrerequisiteCheckboxes from "../form-components/PrerequisiteCheckboxes";
+import {
+  Box,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+} from "@mui/material";
 
-export default function FormStepTwo({ register, control }) {
+/**
+ * The second step in the multi-step form for creating a new job position.
+ *
+ * Includes fields for:
+ * - Prerequisites (PrerequisiteCheckboxes)
+ * - Minimum grade requirement (GradeSelector)
+ * - Location (TextField)
+ * - Location type (Select)
+ * - Max TA's (TextField)
+ *
+ * @prop {function} register - The register function from react-hook-form.
+ * @prop {object} control - The control object from react-hook-form.
+ * @prop {object} errors - The errors object from react-hook-form.
+ * @returns {ReactNode} The form step component.
+ */
+export default function FormStepTwo({ register, control, errors }) {
   return (
-    <div>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <PrerequisiteCheckboxes register={register} control={control} />
+      
       <Controller
         name="gradeRequirement"
         control={control}
@@ -19,53 +46,43 @@ export default function FormStepTwo({ register, control }) {
           />
         )}
       />
-      <div>
-        <label
-          htmlFor="location"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Location
-        </label>
-        <input
-          type="text"
-          id="location"
-          {...register("location")}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        />
-      </div>
 
-      <div>
-        <label
-          htmlFor="locationType"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Location Type
-        </label>
-        <select
+      <TextField
+        fullWidth
+        id="location"
+        label="Location"
+        {...register("location")}
+        error={!!errors.location}
+        helperText={errors.location?.message}
+      />
+
+      <FormControl fullWidth>
+        <InputLabel id="locationType-label">Location Type</InputLabel>
+        <Select
+          labelId="locationType-label"
           id="locationType"
+          label="Location Type"
           {...register("locationType")}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          defaultValue="INPERSON"
         >
-          <option value="REMOTE">Remote</option>
-          <option value="HYBRID">Hybrid</option>
-          <option value="INPERSON">In-Person</option>
-        </select>
-      </div>
+          <MenuItem value="REMOTE">Remote</MenuItem>
+          <MenuItem value="HYBRID">Hybrid</MenuItem>
+          <MenuItem value="INPERSON">In-Person</MenuItem>
+        </Select>
+      </FormControl>
 
-      <div>
-        <label
-          htmlFor="maxTAs"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Max TA&apos;s
-        </label>
-        <input
-          type="number"
-          id="maxTAs"
-          {...register("maxTAs", { valueAsNumber: true })}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        />
-      </div>
-    </div>
+      <TextField
+        fullWidth
+        type="number"
+        id="maxTAs"
+        label="Max TA's"
+        {...register("maxTAs", { 
+          valueAsNumber: true,
+          min: { value: 1, message: "Must have at least 1 TA." } 
+        })}
+        error={!!errors.maxTAs}
+        helperText={errors.maxTAs?.message}
+      />
+    </Box>
   );
 }

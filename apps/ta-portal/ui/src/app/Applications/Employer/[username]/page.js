@@ -11,25 +11,42 @@ import { gradeEnumToStringValue } from '@/constants/gradeConstants';
 
 import ApplicationCard from '@/components/applications/EmployerAndAdmin/ApplicationCard';
 import SearchBar from '@/components/common/searchAndFilter/SearchBar';
-import { Filter }from '@/components/common/searchAndFilter/Filter';
+import { Filter } from '@/components/common/searchAndFilter/Filter';
 import { generateApplicationsFilterConfig } from './filter.config';
 
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  FormControl,
+  MenuItem,
+  Paper,
+  Select,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-
-export default function Applications() {
+/**
+ * Renders the main applications management page for Employers.
+ * This page allows employers to view and manage applications for the job positions they own.
+ * It includes functionality to search, filter, and review candidate applications,
+ * and to update application statuses.
+ */
+export default function EmployerApplicationsPage() {
+  // Core hooks for authentication context and component references.
   const { currentUser } = useAuth();
   const filterRef = useRef();
 
-  // displayData is now an object where keys are semester codes and values are arrays of positions
+  // State for managing application data, loading, and errors.
   const [displayData, setDisplayData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // State for search and filter functionality.
   const [searchTerm, setSearchTerm] = useState('');
   const [searchBy, setSearchBy] = useState('course');
   const [filterConfig, setFilterConfig] = useState([]);
@@ -40,21 +57,23 @@ export default function Applications() {
     hasApplications: '',
   });
 
+  // Effect to fetch and configure filters on component mount or when the user changes.
   useEffect(() => {
     if (currentUser?.username) {
+      /**
+       * Fetches semester codes associated with the employer's positions
+       * to dynamically generate and set the filter configuration.
+       */
       const fetchAndSetConfig = async () => {
         try {
-          // Fetch the semester codes using the employer's username
           const semesterCodes = await getSemesterCodesForEmployer(
             currentUser.username
           );
-          console.log('Semester codes fetched:', semesterCodes);
-          // Generate the config with the fetched data
           const newConfig = generateApplicationsFilterConfig(semesterCodes);
           setFilterConfig(newConfig);
         } catch (err) {
           console.error('Failed to load filter configuration:', err);
-          // Fallback to a config with no semester options on error
+          // Set a default empty config on error to prevent crashes.
           setFilterConfig(generateApplicationsFilterConfig([]));
         }
       };
@@ -62,7 +81,13 @@ export default function Applications() {
     }
   }, [currentUser]);
 
-  // This is now the single function for fetching and processing data.
+  /**
+   * Fetches, processes, and displays applications for the positions owned by the employer.
+   * This function handles searching, filtering, and grouping the data by semester.
+   * @param {string} search - The current search term.
+   * @param {string} searchType - The category to search by ('course' or 'student').
+   * @param {object} filters - The active filter object.
+   */
   const updateApplicationsView = useCallback(
     async (search, searchType, filters) => {
       if (!currentUser?.username) return;
@@ -70,7 +95,6 @@ export default function Applications() {
       setError(null);
 
       try {
-        // The API now returns an array of JobPosition objects, with applications nested inside.
         const data = await getCandidateApplicationsAsEmployer(
           search,
           searchType,
@@ -78,31 +102,32 @@ export default function Applications() {
           currentUser.username
         );
 
-        // Convert gradeRequirement from enum to string
-        const positions = data.map(position => {
-          // Map over the applications within this position
-          const applicationsHistory = position.jobPositionApplicationHistory.map(app => {
-            // Check if the grade exists and can be converted
-            if (app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]) {
-              return {
-                ...app,
-                candidateGrade: gradeEnumToStringValue[app.candidateGrade]
-              };
-            }
-            return app; // Return the app unmodified if no conversion is needed
-          });
-          // Return a new position object with the transformed applications
+        // Process positions to convert grade enums to human-readable strings for display.
+        const positions = data.map((position) => {
+          const applicationsHistory =
+            position.jobPositionApplicationHistory.map((app) => {
+              if (
+                app.candidateGrade &&
+                gradeEnumToStringValue[app.candidateGrade]
+              ) {
+                return {
+                  ...app,
+                  candidateGrade: gradeEnumToStringValue[app.candidateGrade],
+                };
+              }
+              return app;
+            });
           return {
             ...position,
-            jobPositionApplicationHistory: applicationsHistory
+            jobPositionApplicationHistory: applicationsHistory,
           };
         });
 
-        // Group the returned positions by their semester code for the accordion UI.
+        // Group the flattened list of positions by their semester code for display in accordions.
         const groupedBySemester = positions.reduce((acc, position) => {
           const semesterCode = position.semesterCode || 'Uncategorized';
           if (!acc[semesterCode]) {
-            acc[semesterCode] = []; // Initialize an array for the semester
+            acc[semesterCode] = [];
           }
           acc[semesterCode].push(position);
           return acc;
@@ -119,25 +144,41 @@ export default function Applications() {
     [currentUser]
   );
 
-  // This effect runs on initial load to fetch the default view.
+  // Effect to perform the initial data load when the component mounts or the user changes.
   useEffect(() => {
     if (currentUser) {
-      updateApplicationsView(searchTerm, searchBy, appliedFilters);
+      // Pass empty values to ensure a clean initial load of all applications.
+      updateApplicationsView('', 'course', {
+        status: [],
+        level: [],
+        semester: '',
+        hasApplications: '',
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+  }, [currentUser, updateApplicationsView]);
 
-  // --- Event Handlers ---
-
+  /**
+   * Callback function passed to child ApplicationCard components.
+   * Triggers a refresh of the applications view when a status is changed.
+   */
   const handleStatusChange = () => {
     updateApplicationsView(searchTerm, searchBy, appliedFilters);
   };
 
+  /**
+   * Handles updates from the Filter component, triggering a data refresh.
+   * @param {object} filters - The new set of applied filters.
+   */
   const handleFilterChange = (filters) => {
     setAppliedFilters(filters);
     updateApplicationsView(searchTerm, searchBy, filters);
   };
 
+  /**
+   * Updates the search term state as the user types in the search bar.
+   * If the search bar is cleared, it refreshes the view.
+   * @param {string} newTerm - The new value from the search input.
+   */
   const handleSearchTermChange = (newTerm) => {
     setSearchTerm(newTerm);
     if (newTerm === '') {
@@ -145,156 +186,196 @@ export default function Applications() {
     }
   };
 
+  /**
+   * Handles changes to the search category dropdown (e.g., 'By Course', 'By Student').
+   * Resets the search term if the category is changed while a search term exists.
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The change event from the Select component.
+   */
+  const handleSearchByChange = (event) => {
+    const newSearchBy = event.target.value;
+    setSearchBy(newSearchBy);
+    // If a search term exists, clear it to prevent mismatched searches.
+    if (searchTerm !== '') {
+      setSearchTerm('');
+      updateApplicationsView('', newSearchBy, appliedFilters);
+    }
+  };
+
+  /**
+   * Triggers a search and data refresh when the search form is submitted.
+   * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+   */
   const handleSearch = (e) => {
     e.preventDefault();
-    // Get the most up-to-date filters directly from the Filter component
     const latestFilters = filterRef.current.getFilters();
-    // Update the parent's state so the UI is consistent
     setAppliedFilters(latestFilters);
-    // Fetch data with the latest filters and search term
     updateApplicationsView(searchTerm, searchBy, latestFilters);
   };
 
-  // --- Render Logic ---
-  const renderGroupedView = () => {
-    const semesterCodes = Object.keys(displayData);
-
-    if (semesterCodes.length === 0) {
+  /**
+   * Renders the main content of the page, handling loading, error, and no-data states.
+   * @returns {React.ReactNode} The JSX for the main content area.
+   */
+  const renderContent = () => {
+    // Show a loading spinner while data is being fetched.
+    if (loading) {
       return (
-        <div className='text-center py-10 px-4 bg-gray-50 border border-gray-200 rounded-lg mt-4'>
-          <p className='text-lg font-semibold text-gray-800'>
-            No Positions Found
-          </p>
-          <p className='text-gray-600 mt-2'>
-            Your search or filter criteria did not match any job positions.
-          </p>
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+    // Show an error message if the API call fails.
+    if (error) {
+      return (
+        <Typography color="error" align="center" sx={{ p: 4 }}>
+          Error: {error}
+        </Typography>
       );
     }
 
+    // Show a message if no positions match the current filters.
+    const semesterCodes = Object.keys(displayData);
+    if (semesterCodes.length === 0) {
+      return (
+        <Paper sx={{ textAlign: 'center', p: 4, mt: 2 }}>
+          <Typography variant="h6">No Positions Found</Typography>
+          <Typography color="text.secondary" sx={{ mt: 1 }}>
+            Your search or filter criteria did not match any job positions.
+          </Typography>
+        </Paper>
+      );
+    }
+
+    // Render the list of positions and their applications, grouped by semester.
     return semesterCodes.map((semesterCode) => (
       <Accordion key={semesterCode} defaultExpanded>
-        <AccordionSummary
-          expandIcon={<KeyboardArrowDownOutlinedIcon />}
-          sx={{ backgroundColor: 'rgba(0, 0, 0, .03)' }}
-        >
-          <Typography variant='h5'>{`Semester ${semesterCode}`}</Typography>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography variant="h5">{`Semester ${semesterCode}`}</Typography>
         </AccordionSummary>
-        <AccordionDetails>
-          <Box>
-            {/* The data is now an array, so we can map it directly. */}
-            {displayData[semesterCode].map((position) => (
-              <Accordion key={position.id} defaultExpanded>
-                <AccordionSummary
-                  expandIcon={<KeyboardArrowDownOutlinedIcon />}
-                >
-                  <Typography variant='h6'>
-                    {position.courseCode}-
-                    {String(position.sectionNumber).padStart(2, '0')}:{' '}
-                    {position.course?.name}
+        <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
+          {displayData[semesterCode].map((position) => (
+            <Accordion key={position.id} defaultExpanded>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6">
+                  {position.courseCode}-
+                  {String(position.sectionNumber).padStart(2, '0')}:{' '}
+                  {position.course?.name}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {position.jobPositionApplicationHistory.length > 0 ? (
+                  position.jobPositionApplicationHistory.map((app) => (
+                    <ApplicationCard
+                      currentUser={currentUser}
+                      key={app.id}
+                      jobPosition={position}
+                      application={app}
+                      onStatusChange={handleStatusChange}
+                    />
+                  ))
+                ) : (
+                  <Typography sx={{ p: 2 }}>
+                    No matching applications for this position.
                   </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  {position.jobPositionApplicationHistory.length > 0 ? (
-                    position.jobPositionApplicationHistory.map((app) => (
-                      <ApplicationCard
-                        currentUser={currentUser}
-                        key={app.id}
-                        jobPosition={position}
-                        application={app}
-                        onStatusChange={handleStatusChange}
-                      />
-                    ))
-                  ) : (
-                    <p>No matching applications for this position.</p>
-                  )}
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Box>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          ))}
         </AccordionDetails>
       </Accordion>
     ));
   };
 
-  const renderContent = () => {
-    if (loading)
-      return <div className='text-center p-8'>Loading applications...</div>;
-    if (error)
-      return <div className='text-red-500 text-center p-8'>Error: {error}</div>;
-    return renderGroupedView();
-  };
-  
-  // Calculate the total number of applications
-  const totalApplications = Object.values(displayData).flat().reduce((acc, position) => acc + position.jobPositionApplicationHistory.length, 0);
+  // Calculate the total number of applications currently displayed.
+  const totalApplications = Object.values(displayData)
+    .flat()
+    .reduce(
+      (acc, position) => acc + position.jobPositionApplicationHistory.length,
+      0
+    );
 
-  // Main body of application
+  // Main component render method.
   return (
-    <>
-      <div className='flex flex-col items-center p-4'>
-        <h1 className='text-4xl font-bold'>Applications</h1>
-        <p className='text-md text-gray-600 mt-1'>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h1" component="h1" gutterBottom>
+          Applications
+        </Typography>
+        <Typography variant="h3" color="text.secondary">
           Search, filter, and review candidate applications.
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className='flex flex-col items-center bg-gray-100 p-4 mb-10'>
-        {currentUser && currentUser.role === 'EMPLOYER' ? (
-          <div className='w-full max-w-5xl flex flex-col items-center justify-center'>
-            {filterConfig.length > 0 ? (
-              <form
-                onSubmit={handleSearch}
-                className='w-full mb-6 flex items-center gap-x-2 bg-white p-4 rounded-lg shadow'
+      {/* Conditionally render content based on user role. */}
+      {currentUser && currentUser.role === 'EMPLOYER' ? (
+        <Box>
+          {/* Search and Filter Bar */}
+          <Paper
+            component="form"
+            onSubmit={handleSearch}
+            elevation={2}
+            sx={{
+              p: 2,
+              mb: 4,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+              backgroundColor: 'background.paper',
+            }}
+          >
+            <FormControl sx={{ minWidth: 150 }}>
+              <Select
+                value={searchBy}
+                onChange={handleSearchByChange}
+                size="small"
               >
-                <select
-                  value={searchBy}
-                  onChange={(e) => setSearchBy(e.target.value)}
-                  className='h-10 rounded-md border-gray-300 bg-gray-50 hover:bg-gray-100 px-4 text-sm focus:ring-orange-500 focus:border-orange-500'
-                >
-                  <option value='course'>By Course</option>
-                  <option value='student'>By Student</option>
-                </select>
-                <SearchBar
-                  value={searchTerm}
-                  onChange={handleSearchTermChange}
-                  placeholder={
-                    searchBy === 'course'
-                      ? 'Search by course code or name...'
-                      : 'Search by student name...'
-                  }
-                />
-                <Filter
-                  ref={filterRef}
-                  onFilterChange={handleFilterChange}
-                  filterConfig={filterConfig}
-                />
-                <button
-                  type='submit'
-                  className='h-10 rounded-md bg-rit-orange px-4 text-sm font-semibold text-white shadow-sm hover:bg-orange-700 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-orange-600'
-                >
-                  Search
-                </button>
-              </form>
-            ) : (
-              // Render a placeholder while the config is loading to prevent layout shift
-              <div className='w-full mb-6 h-[88px] animate-pulse bg-gray-200 rounded-lg p-4'></div>
-            )}
+                <MenuItem value="course">By Course</MenuItem>
+                <MenuItem value="student">By Student</MenuItem>
+              </Select>
+            </FormControl>
+            <SearchBar
+              value={searchTerm}
+              onChange={handleSearchTermChange}
+              placeholder={
+                searchBy === 'course'
+                  ? 'Search by course code or name...'
+                  : 'Search by student name...'
+              }
+              sx={{ flexGrow: 1 }}
+            />
+            <Filter
+              ref={filterRef}
+              onFilterChange={handleFilterChange}
+              filterConfig={filterConfig}
+            />
+            <Button type="submit" variant="contained" color="primary">
+              Search
+            </Button>
+          </Paper>
 
-            <div id='section-container' className='w-full max-w-5xl p-2'>
-              {!loading && !error && (
-                <div className="mb-4 text-sm text-gray-600">
-                  <strong>
-                    {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
-                  </strong>
-                </div>
-              )}
-              {renderContent()}
-            </div>
-          </div>
-        ) : (
-          <div>Please make sure you are logged in as an EMPLOYER.</div>
-        )}
-      </div>
-    </>
+          {/* Application Count and Main Content */}
+          {!loading && !error && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <strong>
+                {totalApplications}{' '}
+                {totalApplications === 1 ? 'application' : 'applications'} found
+              </strong>
+            </Typography>
+          )}
+          {renderContent()}
+        </Box>
+      ) : (
+        // Render a fallback message if the user is not an employer or not logged in.
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Typography>
+            Please make sure you are logged in as an EMPLOYER.
+          </Typography>
+        </Paper>
+      )}
+    </Container>
   );
 }

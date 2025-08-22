@@ -28,23 +28,44 @@ import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
 
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Paper,
+  Tab,
+  Tabs,
+  Typography,
+} from "@mui/material";
+
+/**
+ * Renders the main positions management page for Administrators.
+ * This page provides a comprehensive view with three tabs:
+ * 1. "All Open Positions": A public view of all available job positions.
+ * 2. "My Created Positions": Positions created by the currently logged-in admin.
+ * 3. "Manage All Positions": A view of all positions in the system for administrative actions.
+ */
 export default function AdminPositions() {
+  // Core hooks for component references, authentication, and notifications.
   const filterRef = useRef();
   const { currentUser } = useAuth();
   const { showNotification } = useNotification();
-
   const searchParams = useSearchParams();
 
+  // State for each of the three data tabs.
   const [openPositions, setOpenPositions] = useState([]);
   const [myPositions, setMyPositions] = useState([]);
   const [allPositions, setAllPositions] = useState([]);
 
+  // General state for loading, errors, and search/filter functionality.
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [appliedFilters, setAppliedFilters] = useState({});
   const [filterConfig, setFilterConfig] = useState([]);
 
+  // State for managing modals (edit/create position and comment confirmation).
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -54,17 +75,20 @@ export default function AdminPositions() {
     context: {},
   });
   
+  // Initialize the active tab based on URL search parameters for linkability.
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'my-positions') {
-      return 'my-positions';
-    }
-    if (tabParam === 'all-positions') {
-      return 'all-positions';
-    }
-    return 'open-positions'; // default
+    if (tabParam === 'my-positions') return 1;
+    if (tabParam === 'all-positions') return 2;
+    return 0; // Default to 'open-positions'.
   });
 
+  /**
+   * Creates an initial state object for the filters based on the filter configuration.
+   * This ensures that the filter state is always in sync with the available filters.
+   * @param {object[]} config - The filter configuration array.
+   * @returns {object} An object representing the initial state of all filters.
+   */
   const createInitialState = (config) => {
     const initialState = {};
     config.forEach((filter) => {
@@ -73,7 +97,12 @@ export default function AdminPositions() {
     return initialState;
   };
 
+  // Effect to fetch semester codes and generate the filter configuration on mount.
   useEffect(() => {
+    /**
+     * Fetches semester codes to dynamically populate the semester filter dropdown,
+     * then generates and sets the filter configuration.
+     */
     const fetchAndSetConfig = async () => {
       try {
         const semesterCodes = await getSemesterCodesForOpenPositions();
@@ -82,23 +111,37 @@ export default function AdminPositions() {
         setAppliedFilters(createInitialState(newConfig));
       } catch (err) {
         console.error("Failed to load filter configuration:", err);
+        // Set a default empty config on error to prevent crashes.
         setFilterConfig(generatePositionsFilterConfig([]));
       }
     };
     fetchAndSetConfig();
   }, []);
 
+  /**
+   * A memoized value that determines which filters are visible based on the active tab.
+   * The 'status' filter is hidden on the "All Open Positions" tab since all positions there are 'Open'.
+   * @returns {object[]} The array of filter configurations to be displayed.
+   */
   const visibleFilters = useMemo(() => {
-    if (activeTab === "open-positions") {
+    if (activeTab === 0) { // open-positions tab
       return filterConfig.filter((f) => f.id !== "status");
     }
     return filterConfig;
   }, [activeTab, filterConfig]);
 
-  const fetchData = useCallback(async (tabId, currentSearch, currentFilters) => {
+  /**
+   * A centralized function to fetch data for any of the three tabs based on the current
+   * search and filter criteria.
+   * @param {number} tabIndex - The index of the active tab.
+   * @param {string} currentSearch - The current search term.
+   * @param {object} currentFilters - The currently applied filters.
+   */
+  const fetchData = useCallback(async (tabIndex, currentSearch, currentFilters) => {
     if (!currentUser) return;
     setIsLoading(true);
     setError(null);
+    const tabId = tabs[tabIndex].id;
 
     try {
       let data;
@@ -118,16 +161,22 @@ export default function AdminPositions() {
     } finally {
       setIsLoading(false);
     }
+  // Disabling exhaustive-deps because `tabs` is a stable, locally defined array.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
+  // Effect to trigger the initial data fetch when the component mounts or the active tab changes.
   useEffect(() => {
     if (currentUser && filterConfig.length > 0) {
       const initialFilters = createInitialState(filterConfig);
       fetchData(activeTab, "", initialFilters);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, filterConfig]);
+  }, [currentUser, filterConfig, activeTab, fetchData]);
 
+  /**
+   * Handles the form submission for a search, triggering a data fetch.
+   * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+   */
   const handleSearch = (e) => {
     e.preventDefault();
     const latestFilters = filterRef.current.getFilters();
@@ -135,6 +184,11 @@ export default function AdminPositions() {
     fetchData(activeTab, searchTerm, latestFilters);
   };
 
+  /**
+   * Updates the search term state as the user types.
+   * If the search bar is cleared, it refreshes the view.
+   * @param {string} newTerm - The new value from the search input.
+   */
   const handleSearchTermChange = (newTerm) => {
     setSearchTerm(newTerm);
     if (newTerm === "") {
@@ -143,38 +197,64 @@ export default function AdminPositions() {
     }
   };
   
+  /**
+   * Handles updates from the Filter component, triggering a data refresh.
+   * @param {object} newFilters - The new set of applied filters.
+   */
   const handleFilterChange = (newFilters) => {
     setAppliedFilters(newFilters);
     fetchData(activeTab, searchTerm, newFilters);
   };
 
-  const handleTabChange = (tabId) => {
+  /**
+   * Handles the user switching between tabs.
+   * Resets search and filter states and fetches data for the new tab.
+   * @param {React.SyntheticEvent} event - The event source of the callback.
+   * @param {number} newTabIndex - The index of the newly selected tab.
+   */
+  const handleTabChange = (event, newTabIndex) => {
     setIsLoading(true);
     setSearchTerm("");
     const initialFilters = createInitialState(filterConfig);
     setAppliedFilters(initialFilters);
-    setActiveTab(tabId);
-    fetchData(tabId, "", initialFilters);
+    setActiveTab(newTabIndex);
   };
   
+  /**
+   * Opens the EditPositionModal for creating a new position or editing an existing one.
+   * @param {object | null} job - The job object to edit, or null to create a new one.
+   */
   const handleOpenModal = (job = null) => {
     setSelectedJob(job);
     setIsModalOpen(true);
   };
 
+  /**
+   * Closes the EditPositionModal and resets the selected job state.
+   */
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedJob(null);
   };
   
+  /**
+   * Closes the comment confirmation modal.
+   */
   const handleCloseCommentModal = () => {
     setCommentModalState({ isOpen: false, title: '', context: {} });
   };
 
+  /**
+   * Handles saving a job position from the EditPositionModal.
+   * It determines whether to perform a CREATE or UPDATE action.
+   * For updates, it opens a comment modal for confirmation.
+   * @param {object} positionData - The data of the position to be saved.
+   */
   const handleSaveJob = async (positionData) => {
     if (!currentUser) return;
   
-    if (!selectedJob) { // CREATE action
+    // If no job is selected, this is a CREATE action.
+    if (!selectedJob) {
       setIsProcessing(true);
       try {
         const employerData = {
@@ -182,12 +262,13 @@ export default function AdminPositions() {
           fname: currentUser.fname,
           lname: currentUser.lname,
         };
+        // New positions are set to 'OPEN' by default.
         const finalPositionData = { ...positionData, jobPositionStatus: 'OPEN' };
-        
         await createPosition(finalPositionData, employerData);
         showNotification('Position created successfully!', 'success');
         handleCloseModal();
         
+        // Refresh the data grid after creation.
         setSearchTerm("");
         const initialFilters = createInitialState(filterConfig);
         setAppliedFilters(initialFilters);
@@ -199,7 +280,7 @@ export default function AdminPositions() {
       } finally {
         setIsProcessing(false);
       }
-    } else { // UPDATE action
+    } else { // Otherwise, it's an UPDATE action, which requires a comment.
       handleCloseModal();
       setCommentModalState({
         isOpen: true,
@@ -213,6 +294,11 @@ export default function AdminPositions() {
     }
   };
 
+  /**
+   * Initiates a status update by opening the comment modal for confirmation.
+   * @param {string} jobId - The ID of the job to update.
+   * @param {string} newStatus - The new status to set (e.g., 'OPEN', 'REJECTED').
+   */
   const handleStatusUpdate = async (jobId, newStatus) => {
     setCommentModalState({
       isOpen: true,
@@ -225,6 +311,12 @@ export default function AdminPositions() {
     });
   };
 
+  /**
+   * Handles the final confirmation from the comment modal.
+   * It performs the appropriate API call (status update or position update)
+   * with the provided comment.
+   * @param {string} comment - The comment entered by the user.
+   */
   const handleConfirmComment = async (comment) => {
     if (!currentUser) return;
     setIsProcessing(true);
@@ -243,6 +335,7 @@ export default function AdminPositions() {
         showNotification('Position updated successfully!', 'success');
       }
       
+      // Refresh the data grid after the action is complete.
       setSearchTerm("");
       const initialFilters = createInitialState(filterConfig);
       setAppliedFilters(initialFilters);
@@ -256,12 +349,49 @@ export default function AdminPositions() {
       handleCloseCommentModal();
     }
   };
+    
+  // Configuration for the tabs, linking them to their respective data states.
+  const tabs = [
+    { id: "open-positions", label: "All Open Positions", data: openPositions },
+    { id: "my-positions", label: "My Created Positions", data: myPositions },
+    { id: "all-positions", label: "Manage All Positions", data: allPositions },
+  ];
 
+  // Get the data for the currently active tab.
+  const activeTabData = tabs[activeTab];
+
+  /**
+   * Renders the main content area, handling loading, error, and no-data states.
+   * @param {object[]} positions - The array of positions to render.
+   * @returns {React.ReactNode} The JSX for the content area.
+   */
   const renderContent = (positions) => {
-    if (isLoading) return <p className="text-center py-10">Loading...</p>;
-    if (error) return <p className="text-center py-10 text-red-500">{error}</p>;
-    if (positions.length === 0) return <p className="text-center py-10">No positions found.</p>;
+    // Show a loading spinner while data is being fetched.
+    if (isLoading) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+    // Show an error message if the API call fails.
+    if (error) {
+      return (
+        <Typography color="error" align="center" sx={{ p: 4 }}>
+          {error}
+        </Typography>
+      );
+    }
+    // Show a message if no positions match the current filters.
+    if (positions.length === 0) {
+      return (
+        <Paper sx={{ textAlign: 'center', p: 4, mt: 2 }}>
+          <Typography variant="h6">No Positions Found</Typography>
+        </Paper>
+      );
+    }
 
+    // Render the list of position cards.
     return positions.map((position) => (
       <PositionsCard 
         key={position.id}
@@ -269,97 +399,115 @@ export default function AdminPositions() {
         onEdit={handleOpenModal}
         onApprove={(jobId) => handleStatusUpdate(jobId, 'OPEN')}
         onReject={(jobId) => handleStatusUpdate(jobId, 'REJECTED')}
-        showEditAction={activeTab === 'my-positions'}
-        showApproveRejectActions={activeTab === 'all-positions'}
-        showTracker={activeTab !== 'open-positions'}
+        showEditAction={activeTab === 1} // Only show edit on "My Positions" tab.
+        showApproveRejectActions={activeTab === 2} // Only show approve/reject on "Manage All" tab.
+        showTracker={activeTab !== 0} // Show tracker on all tabs except "Open Positions".
       />
     ));
   };
-    
-  const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-    { id: "all-positions", label: "Manage All Positions", data: allPositions },
-  ];
 
-  const activeTabData = tabs.find((tab) => tab.id === activeTab);
-
+  // Main component render method.
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
-                  activeTab === tab.id
-                    ? "border-orange-500 text-orange-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Page Title Section */}
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h1" component="h1" gutterBottom>
+          Positions
+        </Typography>
+        <Typography variant="h3" color="text.secondary">
+          Browse, manage, and create job positions.
+        </Typography>
+      </Box>
 
-        <div className="mt-4 bg-white rounded-xl shadow-lg w-full p-6 sm:p-8">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{activeTabData?.label}</h2>
-              <p className="mt-1 text-md text-gray-600">
-                {activeTab !== 'open-positions' && "Search and filter all positions you have access to."}
-                {activeTab === 'open-positions' && "Browse all publicly available positions."}
-              </p>
-            </div>
-            {activeTab === 'my-positions' && (
-              <button
-                className="py-2 px-4 text-sm font-semibold rounded-md bg-orange-600 text-white hover:bg-orange-700 transition-colors disabled:bg-gray-400"
-                onClick={() => handleOpenModal()}
-                disabled={isProcessing}
-              >
-                {isProcessing ? 'Processing...' : 'Create New Position'}
-              </button>
-            )}
-          </div>
-          
-          <form onSubmit={handleSearch} className="mb-4 flex flex-col sm:flex-row items-center gap-2">
-            <SearchBar
-              value={searchTerm}
-              onChange={handleSearchTermChange}
-              placeholder="Search via course code or name:"
-            />
-            <Filter 
-              key={activeTab}
-              ref={filterRef} 
-              onFilterChange={handleFilterChange} 
-              filterConfig={visibleFilters} 
-            />
-            <button
-              type="submit"
-              className="h-10 px-4 text-sm font-semibold rounded-md bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+      {/* Conditionally render content based on user role. */}
+      {currentUser && currentUser.role === 'ADMIN' ? (
+        <>
+          {/* Tab Navigation */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              aria-label="position tabs"
+              centered
             >
-              Search
-            </button>
-          </form>
-          
-          <div className="mb-4 text-sm text-gray-600">
+              {tabs.map((tab) => (
+                <Tab key={tab.id} label={tab.label} />
+              ))}
+            </Tabs>
+          </Box>
+
+          {/* Main Content Paper */}
+          <Paper elevation={2} sx={{ p: { xs: 2, md: 4 } }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4, flexWrap: 'wrap' }}>
+              <Box>
+                <Typography variant="h2" component="h1" gutterBottom>
+                  {activeTabData?.label}
+                </Typography>
+                <Typography color="text.secondary">
+                  {activeTab !== 0 && "Search and filter all positions you have access to."}
+                  {activeTab === 0 && "Browse all publicly available positions."}
+                </Typography>
+              </Box>
+              {/* "Create New Position" button is only visible on the "My Positions" tab. */}
+              {activeTab === 1 && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleOpenModal()}
+                  disabled={isProcessing}
+                  sx={{ mt: { xs: 2, md: 0 } }}
+                >
+                  {isProcessing ? <CircularProgress size={24} /> : 'Create New Position'}
+                </Button>
+              )}
+            </Box>
+            
+            {/* Search and Filter Bar */}
+            <Box component="form" onSubmit={handleSearch} sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+              <SearchBar
+                value={searchTerm}
+                onChange={handleSearchTermChange}
+                placeholder="Search via course code or name:"
+                sx={{ flexGrow: 1 }}
+              />
+              <Filter 
+                key={activeTab} // Use key to force re-render when tab changes, ensuring correct filters are shown.
+                ref={filterRef} 
+                onFilterChange={handleFilterChange} 
+                filterConfig={visibleFilters} 
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                sx={{ height: 40 }}
+              >
+                Search
+              </Button>
+            </Box>
+            
+            {/* Result Count */}
             {!isLoading && !error && (
-              <p>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 <strong>{activeTabData?.data?.length || 0}</strong>
                 {` ${activeTabData?.data?.length === 1 ? 'result' : 'results'} found`}
-              </p>
+              </Typography>
             )}
-          </div>
 
-          <div className="space-y-4">
-            {renderContent(activeTabData?.data)}
-          </div>
-        </div>
-      </div>
+            {/* Content Area */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {renderContent(activeTabData?.data)}
+            </Box>
+          </Paper>
+        </>
+      ) : (
+        // Render a fallback message if the user is not an admin or not logged in.
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Typography>Please make sure you are logged in as an ADMIN to view this page.</Typography>
+        </Paper>
+      )}
 
+      {/* Modals are rendered conditionally outside the main content flow. */}
       {isModalOpen && (
         <EditPositionModal
           job={selectedJob}
@@ -375,6 +523,6 @@ export default function AdminPositions() {
         title={commentModalState.title}
         isProcessing={isProcessing}
       />
-    </div>
+    </Container>
   );
 }

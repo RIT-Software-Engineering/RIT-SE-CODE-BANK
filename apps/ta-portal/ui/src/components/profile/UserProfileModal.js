@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import UserProfileForm from './UserProfileForm';
 import { getAllCourses } from '@/services/db-apis';
+import { Modal, Box, Paper, Typography, Button, CircularProgress } from '@mui/material';
 
 /**
  * Wrapper component for the UserProfileForm modal.
@@ -28,38 +29,68 @@ export default function UserProfileModal({
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchCourseData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const courses = await getAllCourses();
-        setCourseOptions(courses);
-      } catch (err) {
-        console.error('Error fetching courses for profile form:', err);
-        setError('Could not load course data. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCourseData();
-  }, []);
+    if (isOpen) {
+      const fetchCourseData = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          const courses = await getAllCourses();
+          setCourseOptions(courses);
+        } catch (err) {
+          console.error('Error fetching courses for profile form:', err);
+          setError('Could not load course data. Please try again.');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchCourseData();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
+  // Style for the modal content
+  const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '90%',
+    maxWidth: '56rem', // max-w-3xl
+    maxHeight: '90vh',
+    bgcolor: 'background.paper',
+    borderRadius: '12px',
+    boxShadow: 24,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  };
+
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4'>
-      <div className='bg-white rounded-xl shadow-2xl overflow-hidden w-full max-w-3xl max-h-[90vh] flex flex-col'>
-        {isLoading && <div className='p-8 text-center'>Loading Form...</div>}
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      aria-labelledby="user-profile-modal-title"
+      aria-describedby="user-profile-modal-description"
+    >
+      <Paper sx={style}>
+        {isLoading && (
+            <Box sx={{ p: 4, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <CircularProgress />
+                <Typography>Loading Form...</Typography>
+            </Box>
+        )}
         {error && (
-          <div className='p-8 text-center'>
-            <p className='text-red-500 font-semibold'>{error}</p>
-            <button
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography color="error" fontWeight="bold">{error}</Typography>
+            <Button
               onClick={onClose}
-              className='mt-4 px-4 py-2 bg-slate-200 rounded-lg'
+              variant="outlined"
+              sx={{ mt: 2 }}
             >
               Close
-            </button>
-          </div>
+            </Button>
+          </Box>
         )}
         {!isLoading && !error && profileData && (
           <UserProfileForm
@@ -72,7 +103,7 @@ export default function UserProfileModal({
             allUsers={allUsers}
           />
         )}
-      </div>
-    </div>
+      </Paper>
+    </Modal>
   );
 }

@@ -1,4 +1,5 @@
-// src/components/profile/ResumeManager.js
+// src/components/profile/CandidateAndEmployee/ResumeManager.js
+'use client';
 
 import React, { useState } from 'react';
 import {
@@ -9,27 +10,45 @@ import {
 } from '@/services/db-apis';
 import { useNotification } from '@/contexts/NotificationContext';
 import ConfirmationModal from '@/components/common/models/ConfirmationModal';
+import {
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Divider,
+  IconButton,
+  List,
+  Paper,
+  TextField,
+  Typography,
+  Link as MuiLink,
+} from '@mui/material';
+import {
+    Delete as DeleteIcon, 
+    Check as CheckIcon, 
+    Close as CancelIcon,
+    Star as PrimaryIcon,
+    UploadFile as UploadFileIcon
+} from '@mui/icons-material';
 
 /**
- * A component to manage a candidate's resumes (list, upload, rename, delete).
- * @param {object} props - The component props.
- * @param {Array} props.resumes - The list of resume objects.
- * @param {string} props.candidateUsername - The Username of the candidate.
- * @param {function} props.onProfileRefresh - Callback to refresh the profile data.
+ * A component that allows candidates to manage their resumes.
+ * 
+ * @param {object} props - Component props.
+ * @param {array} props.resumes - Array of candidate's resumes.
+ * @param {string} props.candidateUsername - Candidate's username.
+ * @param {function} props.onProfileRefresh - Function to be called when the resume list changes.
  */
 export default function ResumeManager({ resumes, candidateUsername, onProfileRefresh }) {
   const { showNotification } = useNotification();
 
-  // State for uploading a new resume
   const [newResumeName, setNewResumeName] = useState('');
   const [newResumeFile, setNewResumeFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // State for editing an existing resume's name
   const [editingResumeId, setEditingResumeId] = useState(null);
   const [editingResumeName, setEditingResumeName] = useState('');
 
-  // State to manage the confirmation model
   const [deleteModalState, setDeleteModalState] = useState({
     isOpen: false,
     resumeId: null,
@@ -37,8 +56,6 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
   });
 
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-  // --- All handler functions are moved here ---
 
   const handleStartEditing = (resume) => {
     setEditingResumeId(resume.id);
@@ -61,7 +78,6 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
       onProfileRefresh();
       handleCancelEditing();
     } catch (err) {
-      console.error('Failed to rename resume:', err);
       showNotification(err.message || 'Failed to rename resume.', 'error');
     }
   };
@@ -72,17 +88,14 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
       onProfileRefresh();
       showNotification('Primary resume updated successfully.', 'success');
     } catch (err) {
-      console.error('Failed to set primary resume:', err);
       showNotification(err.message || 'Failed to set primary resume.', 'error');
     }
   };
 
-  // Function to open the confirmation modal
   const handleOpenDeleteModal = (resumeId) => {
     setDeleteModalState({ isOpen: true, resumeId, isProcessing: false });
   };
 
-  // Function to close the confirmation modal
   const handleCloseDeleteModal = () => {
     setDeleteModalState({ isOpen: false, resumeId: null, isProcessing: false });
   };
@@ -97,10 +110,9 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
       onProfileRefresh();
       showNotification('Resume deleted successfully.', 'success');
     } catch (err) {
-      console.error('Failed to delete resume:', err);
       showNotification(err.message || 'Failed to delete resume.', 'error');
     } finally {
-      handleCloseDeleteModal(); // Close modal regardless of outcome
+      handleCloseDeleteModal();
     }
   };
 
@@ -124,7 +136,6 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
       onProfileRefresh();
       showNotification('Resume uploaded successfully.', 'success');
     } catch (err) {
-      console.error('Failed to upload resume:', err);
       showNotification(err.message || 'An error occurred. Failed to upload resume.', 'error');
     } finally {
       setIsUploading(false);
@@ -132,65 +143,83 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
   };
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold text-gray-800 mb-3">My Resumes</h3>
+    <Box>
+      <Typography variant="h3" component="h3" gutterBottom>
+        My Resumes
+      </Typography>
       
-      {/* List of existing resumes */}
-      <div className="space-y-3 mb-6">
+      <List sx={{ mb: 3 }}>
         {resumes.length > 0 ? (
           resumes.map((resume) => (
-            <div key={resume.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border">
+            <Paper key={resume.id} variant="outlined" sx={{ p: 1.5, mb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               {editingResumeId === resume.id ? (
                 <>
-                  <input
-                    type="text" value={editingResumeName} onChange={(e) => setEditingResumeName(e.target.value)}
-                    className="flex-grow rounded-md border-gray-300 shadow-sm p-2 mr-3" autoFocus
+                  <TextField
+                    value={editingResumeName}
+                    onChange={(e) => setEditingResumeName(e.target.value)}
+                    size="small"
+                    autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                    sx={{ flexGrow: 1, mr: 2 }}
                   />
-                  <div className="flex items-center space-x-2 flex-shrink-0">
-                    <button onClick={handleSaveName} className="text-sm font-medium text-green-600 hover:text-green-800">Save</button>
-                    <button onClick={handleCancelEditing} className="text-sm font-medium text-rit-dark-gray hover:text-gray-800">Cancel</button>
-                  </div>
+                  <Box>
+                    <IconButton onClick={handleSaveName} size="small" color="success"><CheckIcon /></IconButton>
+                    <IconButton onClick={handleCancelEditing} size="small"><CancelIcon /></IconButton>
+                  </Box>
                 </>
               ) : (
                 <>
-                  <div>
-                    <a href={`${backendURL}${resume.resumeURL}`} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:underline">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <MuiLink href={`${backendURL}${resume.resumeURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
                       {resume.name}
-                    </a>
-                    {resume.isPrimary && <span className="ml-3 text-xs font-bold text-white bg-rit-orange py-1 px-2 rounded-full">Primary</span>}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button onClick={() => handleStartEditing(resume)} className="text-sm font-medium text-blue-600 hover:text-rit-dark-gray">Rename</button>
-                    <button onClick={() => handleSetPrimary(resume.id)} disabled={resume.isPrimary} className="text-sm font-medium text-blue-600 hover:text-rit-dark-gray disabled:text-gray-400 disabled:cursor-not-allowed">Set Primary</button>
-                    <button onClick={() => handleOpenDeleteModal(resume.id)} className="text-sm font-medium text-red-600 hover:text-red-800">Delete</button>
-                  </div>
+                    </MuiLink>
+                    {resume.isPrimary && <Chip label="Primary" color="primary" size="small" icon={<PrimaryIcon />} sx={{ ml: 2 }} />}
+                  </Box>
+                  <Box>
+                    <Button size="small" onClick={() => handleStartEditing(resume)}>Rename</Button>
+                    <Button size="small" onClick={() => handleSetPrimary(resume.id)} disabled={resume.isPrimary}>Set Primary</Button>
+                    <IconButton onClick={() => handleOpenDeleteModal(resume.id)} size="small" color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
                 </>
               )}
-            </div>
+            </Paper>
           ))
         ) : (
-          <p className="text-gray-500">No resumes uploaded yet.</p>
+          <Typography color="text.secondary">No resumes uploaded yet.</Typography>
         )}
-      </div>
+      </List>
 
-      {/* Form to add a new resume */}
-      <form onSubmit={handleAddNewResume} className="space-y-4">
-        <h4 className="font-semibold text-gray-700">Upload New Resume</h4>
-        <div>
-          <label htmlFor="resumeName" className="block text-sm font-medium text-gray-700 mb-1">Resume Name</label>
-          <input type="text" id="resumeName" value={newResumeName} onChange={(e) => setNewResumeName(e.target.value)} className="block w-full rounded-md border-gray-300 shadow-sm p-2" placeholder="e.g., Software Engineering Resume" />
-        </div>
-        <div>
-          <label htmlFor="resumeFile" className="block text-sm font-medium text-gray-700 mb-1">Resume File (PDF only)</label>
-          <input type="file" id="resumeFile" onChange={(e) => setNewResumeFile(e.target.files[0])} accept=".pdf" className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-rit-orange file:text-white hover:file:bg-orange-600" />
-        </div>
-        <button type="submit" disabled={isUploading} className="w-full sm:w-auto px-4 py-2 bg-gray-800 text-white font-semibold rounded-md hover:bg-gray-700 disabled:bg-gray-400">
-          {isUploading ? 'Uploading...' : 'Upload Resume'}
-        </button>
-      </form>
+      <Divider sx={{ my: 3 }} />
 
-      {/* Delete confirmation modal */}
+      <Box component="form" onSubmit={handleAddNewResume} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Typography>Upload New Resume</Typography>
+        <TextField
+          label="Resume Name"
+          value={newResumeName}
+          onChange={(e) => setNewResumeName(e.target.value)}
+          placeholder="e.g., Software Engineering Resume"
+          fullWidth
+        />
+        <Button
+          component="label"
+          variant="outlined"
+          startIcon={<UploadFileIcon />}
+        >
+          {newResumeFile ? newResumeFile.name : 'Select Resume File (PDF)'}
+          <input type="file" hidden onChange={(e) => setNewResumeFile(e.target.files[0])} accept=".pdf" />
+        </Button>
+        <Button
+          type="submit"
+          disabled={isUploading}
+          variant="contained"
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          {isUploading ? <CircularProgress size={24} /> : 'Upload Resume'}
+        </Button>
+      </Box>
+
       <ConfirmationModal
         isOpen={deleteModalState.isOpen}
         onClose={handleCloseDeleteModal}
@@ -200,6 +229,6 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
       >
         Are you sure you want to delete this resume? This action cannot be undone.
       </ConfirmationModal>
-    </div>
+    </Box>
   );
 }

@@ -1,27 +1,49 @@
+// src/components/applications/CandidateAndEmployee/ApplicationCard.js
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { deleteApplication, updateCandidateApplicationStatus, getCandidateHiredStatus } from '@/services/db-apis';
 import ViewableApplicationForm from '../ViewableApplicationForm';
 import ConfirmationModal from '../../common/models/ConfirmationModal';
 import {
   formatDate,
   formatTime,
-  getStatusClasses,
+  getStatusChipColor,
 } from "@/utils/applicationUtils";
-import {
-  CalendarIcon,
-  ClockIcon,
-  EllipsisVerticalIcon,
-  LocationIcon,
-} from "@/assets/icons";
 import { useNotification } from "@/contexts/NotificationContext";
 import ViewableCommentForm from "../../comments/ViewableCommentForm";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
 import { applicationStatusEnumToString } from '@/constants/applicationStatusConstants';
 import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
+import {
+  Box,
+  Chip,
+  CircularProgress,
+  Divider,
+  IconButton,
+  Menu,
+  MenuItem,
+  Paper,
+  Typography,
+} from '@mui/material';
+import {
+  CalendarMonth as CalendarIcon,
+  AccessTime as ClockIcon,
+  MoreVert as EllipsisVerticalIcon,
+  LocationOn as LocationIcon,
+} from '@mui/icons-material';
 
+/**
+ * Component for displaying and managing a candidate's job application. Provides options to view the job position's details,
+ * review application documents, track application status, and update candidate status (i.e. interview, offer, reject, hire).
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.currentUser - The currently logged-in user object
+ * @param {Object} props.application - The job application object (also contains the job position it's associated with)
+ * @param {Function} props.refreshUserProfile - Callback to refresh user data in the parent component
+ * @param {Function} [props.onStatusChange] - Optional callback triggered after application status changes
+ */
 export default function CandidateApplicationCard({
   currentUser,
   application,
@@ -34,6 +56,7 @@ export default function CandidateApplicationCard({
   const [isConfirmingDeletion, setIsConfirmingDeletion] = useState(false);
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
   const [isViewingComments, setIsViewingComments] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -42,15 +65,23 @@ export default function CandidateApplicationCard({
   });
   const [isProcessingUpdate, setIsProcessingUpdate] = useState(false);
 
-  // check if candidate has already been accepted or hired for any position for the given semester
   const [isConfirmingAcceptance, setIsConfirmingAcceptance] = useState(false);
   const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
   const { jobPosition, jobApplicationStatus } = application;
-  const statusClasses = getStatusClasses(jobApplicationStatus);
+  const statusColor = getStatusChipColor(jobApplicationStatus);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   const handleOpenUpdateModal = (status, title) => {
     setModalState({ isOpen: true, status, title });
+    handleMenuClose();
   };
 
   const handleCloseUpdateModal = () => {
@@ -67,17 +98,16 @@ export default function CandidateApplicationCard({
     }
 
     setIsCheckingHiredStatus(true);
+    handleMenuClose();
     try {
       const hiredStatus = await getCandidateHiredStatus(
         currentUser.username,
         jobPosition.semesterCode
       );
 
-      // If already hired or accepted another offer, show the confirmation modal
       if (hiredStatus) {
         setIsConfirmingAcceptance(true);
       } else {
-        // Otherwise, proceed directly to accepting the offer
         handleOpenUpdateModal("ACCEPTED_OFFER", "Accept Position Offer");
       }
     } catch (error) {
@@ -90,6 +120,7 @@ export default function CandidateApplicationCard({
 
   const handleDeleteClick = () => {
     setIsConfirmingDeletion(true);
+    handleMenuClose();
   };
 
   const executeDeletion = async () => {
@@ -113,25 +144,20 @@ export default function CandidateApplicationCard({
   const handleConfirmUpdate = async (comment) => {
     setIsProcessingUpdate(true);
     try {
-      console.log(
-        `Updating status to "${modalState.status}" for application ID: ${id} with comment: ${comment}`
-      );
-      let fullName = currentUser.fname + " " + currentUser.lname
-      const updatedApplication = await updateCandidateApplicationStatus(
+      let fullName = `${currentUser.fname} ${currentUser.lname}`;
+      await updateCandidateApplicationStatus(
         fullName,
         id,
         modalState.status,
         comment
       );
       showNotification(
-        `Application status successfully updated to "${modalState.status?.replaceAll(
+        `Application status successfully updated to "${modalState.status?.replace(
           "_",
           " "
         )}".`,
         "success"
       );
-      console.log("Updated application:", updatedApplication);
-      // Call the callback prop to refresh the parent page's data
       if (onStatusChange) {
         onStatusChange();
       }
@@ -144,176 +170,85 @@ export default function CandidateApplicationCard({
     }
   };
 
-  const CandidateAndEmployeeHeader = () => (
-    <div className="flex-1 min-w-0">
-      <h2 className="text-2xl font-bold text-gray-800">
-        {jobPosition.course.name}
-      </h2>
-      <p className="text-md text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded-md inline-block mt-1">
-        {jobPosition.id}
-      </p>
-      <div className="flex items-center text-gray-600 mt-2">
-        <CalendarIcon />
-        <span>
-          {formatDate(jobPosition.startDate)} -{" "}
-          {formatDate(jobPosition.endDate)}
-        </span>
-      </div>
-    </div>
-  );
-
-  const ActionsMenu = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const menuRef = useRef(null);
-
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (menuRef.current && !menuRef.current.contains(event.target)) {
-          setIsOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const handleMenuToggle = (e) => {
-      e.stopPropagation();
-      setIsOpen(!isOpen);
-    };
-
-    return (
-      <div className="relative" ref={menuRef}>
-        <button
-          onClick={handleMenuToggle}
-          className="p-2 rounded-full hover:bg-gray-100"
-          disabled={isCheckingHiredStatus}
-        >
-          <EllipsisVerticalIcon />
-        </button>
-        {isOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20">
-            <ul className="py-1">
-              <li>
-                <button
-                  onClick={() => {
-                    setIsViewingApplication(true);
-                    setIsOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  View Application Submission
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => {
-                    setIsViewingComments(true);
-                    setIsOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  View Comment History
-                </button>
-              </li>
-              {(jobApplicationStatus.toLowerCase() === "applied" ||
-                jobApplicationStatus.toLowerCase() === "interview") && (
-                <li>
-                  <button
-                    onClick={() => {
-                      handleDeleteClick();
-                      setIsOpen(false);
-                    }}
-                    disabled={isProcessingDeletion}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 disabled:text-gray-400"
-                  >
-                    Delete Application
-                  </button>
-                </li>
-              )}
-
-              {jobApplicationStatus.toLowerCase() === "pending_offer" && (
-                <li>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      handleOpenUpdateModal("DECLINED_OFFER", "Decline Position Offer");
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                  >
-                    Decline Position Offer
-                  </button>
-                </li>
-              )}
-
-              {jobApplicationStatus.toLowerCase() === "pending_offer" && (
-                <li>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      handleAcceptOffer();
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Accept Position Offer
-                  </button>
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <>
-      <div className="w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-        <div className="p-6">
-          <div className="flex justify-between items-start flex-wrap gap-4">
-            <CandidateAndEmployeeHeader />
-            <div className="text-right">
-              <ActionsMenu />
-            </div>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-gray-700 mb-4">
-              {jobPosition.course.description}
-            </p>
-            <div className="flex flex-col sm:flex-row sm:space-x-8 space-y-3 sm:space-y-0 text-gray-600">
-              <div className="flex items-center">
-                <LocationIcon />
-                <span>{jobPosition.location}</span>
-              </div>
-              <div className="flex items-center">
-                <ClockIcon />
-                <div>
-                  {jobPosition.jobSchedules.map((slot, i) => (
-                    <span key={i} className="block">
-                      <span className="font-semibold">{slot.dayOfWeek}:</span>{" "}
-                      {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
-            <div className="w-2/3 mt-6">
-              <ApplicationProgressTracker currentStep={jobApplicationStatus} />
-            </div>
-            <span
-              className={`px-4 py-2 text-md font-bold rounded-full ${statusClasses}`}
+      <Paper elevation={3} sx={{ overflow: 'hidden' }}>
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
+            <Box>
+              <Typography variant="h2" component="h2" gutterBottom>
+                {jobPosition.course.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace', bgcolor: 'action.hover', px: 1, py: 0.5, borderRadius: 1, display: 'inline-block' }}>
+                {jobPosition.id}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
+                <CalendarIcon sx={{ mr: 1, fontSize: '1.25rem' }} />
+                <Typography variant="body2">
+                  {formatDate(jobPosition.startDate)} - {formatDate(jobPosition.endDate)}
+                </Typography>
+              </Box>
+            </Box>
+            <IconButton onClick={handleMenuClick} disabled={isCheckingHiredStatus}>
+              {isCheckingHiredStatus ? <CircularProgress size={24} /> : <EllipsisVerticalIcon />}
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
             >
-              {jobApplicationStatus?.replaceAll("_", " ")}
-            </span>
-          </div>
-        </div>
-      </div>
+              <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
+              <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
+              {(jobApplicationStatus.toLowerCase() === "applied" || jobApplicationStatus.toLowerCase() === "interview") && (
+                <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>Delete Application</MenuItem>
+              )}
+              {jobApplicationStatus.toLowerCase() === "pending_offer" && (
+                <MenuItem onClick={handleAcceptOffer}>Accept Offer</MenuItem>
+              )}
+              {jobApplicationStatus.toLowerCase() === "pending_offer" && (
+                <MenuItem onClick={() => handleOpenUpdateModal("DECLINED_OFFER", "Decline Position Offer")} sx={{ color: 'error.main' }}>Decline Offer</MenuItem>
+              )}
+            </Menu>
+          </Box>
 
-      {/* confirmation modal for deleting application */}
+          <Divider sx={{ my: 2 }} />
+
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
+            {jobPosition.course.description}
+          </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 4 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+              <LocationIcon sx={{ mr: 1, fontSize: '1.25rem' }} />
+              <Typography variant="body2">{jobPosition.location}</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+              <ClockIcon sx={{ mr: 1, fontSize: '1.25rem' }} />
+              <Box>
+                {jobPosition.jobSchedules.map((slot, i) => (
+                  <Typography key={i} variant="body2">
+                    <Typography component="span" fontWeight="bold">{slot.dayOfWeek}:</Typography> {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+                  </Typography>
+                ))}
+              </Box>
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ width: { xs: '100%', md: '65%' } }}>
+              <ApplicationProgressTracker currentStep={jobApplicationStatus} />
+            </Box>
+            <Chip
+              label={jobApplicationStatus?.replace("_", " ")}
+              color={statusColor}
+              sx={{ fontWeight: 'bold', fontSize: '1rem' }}
+            />
+          </Box>
+        </Box>
+      </Paper>
+
       <ConfirmationModal
         isOpen={isConfirmingDeletion}
         onClose={() => setIsConfirmingDeletion(false)}
@@ -321,12 +256,9 @@ export default function CandidateApplicationCard({
         title="Confirm Deletion"
         isConfirming={isProcessingDeletion}
       >
-        Are you sure you want to delete your application for{" "}
-        <strong>{jobPosition.course.name}</strong>? This action cannot be
-        undone.
+        Are you sure you want to delete your application for <strong>{jobPosition.course.name}</strong>? This action cannot be undone.
       </ConfirmationModal>
 
-      {/* confirmation modal for accepting offer */}
       <ConfirmationModal
         isOpen={isConfirmingAcceptance}
         onClose={() => setIsConfirmingAcceptance(false)}
@@ -337,15 +269,12 @@ export default function CandidateApplicationCard({
         title="Confirm Offer Acceptance"
         isConfirming={isProcessingUpdate}
       >
-        <p className='mt-2'>
-          You have already accepted an offer for another position this semester.
-          In most cases, you are expected to accept <strong>only one offer</strong> per semester. 
-          Accepting this offer will not automatically withdraw you from the other position. 
-          Please contact the administrator or the other course&apos;s professor if you wish to change your decision.
-        </p>
-        <p className="mt-2 font-semibold">
+        <Typography sx={{ mt: 2 }}>
+          You have already accepted an offer for another position this semester. In most cases, you are expected to accept <strong>only one offer</strong> per semester. Accepting this offer will not automatically withdraw you from the other position. Please contact the administrator or the other course&apos;s professor if you wish to change your decision.
+        </Typography>
+        <Typography sx={{ mt: 2, fontWeight: 'bold' }}>
           Are you sure you want to accept this offer?
-        </p>
+        </Typography>
       </ConfirmationModal>
 
       {isViewingApplication && (

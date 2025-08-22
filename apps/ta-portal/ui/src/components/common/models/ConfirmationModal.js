@@ -1,7 +1,18 @@
+// src/components/common/models/ConfirmationModal.js
 'use client';
 
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from '@mui/material';
+
 /**
- * A reusable confirmation dialog component.
+ * A reusable confirmation dialog component styled with Material-UI.
  * @param {boolean} isOpen - Whether the modal is visible.
  * @param {function} onClose - Function to call when the modal is closed or cancelled.
  * @param {function} onConfirm - Function to call when the confirm button is clicked.
@@ -15,31 +26,33 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, title, c
   }
 
   return (
-    <div className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-60 flex justify-center items-center z-50" aria-modal="true" role="dialog">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">{title}</h2>
-        <div className="text-gray-600 mb-6">
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      aria-labelledby="confirmation-dialog-title"
+      aria-describedby="confirmation-dialog-description"
+    >
+      <DialogTitle id="confirmation-dialog-title">
+        <Typography variant="h2" component="div">{title}</Typography>
+      </DialogTitle>
+      <DialogContent>
+        <div id="confirmation-dialog-description">
           {children}
         </div>
-        <div className="flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isConfirming}
-            className="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={isConfirming}
-            className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed"
-          >
-            {isConfirming ? 'Confirming...' : 'Confirm'}
-          </button>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} disabled={isConfirming}>
+          Cancel
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          color="error"
+          disabled={isConfirming}
+        >
+          {isConfirming ? <CircularProgress size={24} color="inherit" /> : 'Confirm'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

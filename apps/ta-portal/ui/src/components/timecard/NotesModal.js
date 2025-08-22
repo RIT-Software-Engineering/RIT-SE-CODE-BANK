@@ -1,49 +1,80 @@
 // components/timecard/NotesModal.js
 import React, { useState, useEffect } from 'react';
+import { Modal, Box, Paper, Typography, TextField, Button } from '@mui/material';
 
+/**
+ * A modal component for editing notes associated with a particular day entry
+ * in the timecard.
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.dayEntry - The day entry object with the date and notes
+ * that are displayed in the modal.
+ * @param {boolean} props.isOpen - Whether the modal is visible.
+ * @param {function} props.onClose - Function to call when the modal is closed.
+ * @param {function} props.onSave - Function to call when the save button is
+ * clicked. It is passed the date and updated notes text.
+ */
 export default function NotesModal({ dayEntry, isOpen, onClose, onSave }) {
     const [noteInput, setNoteInput] = useState('');
 
     useEffect(() => {
         if (dayEntry?.notes) {
-        setNoteInput(dayEntry.notes);
+            setNoteInput(dayEntry.notes);
         } else {
-        setNoteInput('');
+            setNoteInput('');
         }
     }, [dayEntry]);
 
     if (!isOpen || !dayEntry) return null;
 
+    const style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '90%',
+        maxWidth: '32rem', // max-w-lg
+        bgcolor: 'background.paper',
+        borderRadius: '12px',
+        boxShadow: 24,
+        p: 4,
+    };
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-lg">
-            <h2 className="text-xl font-semibold mb-4">
-            Edit Notes for {dayEntry.day} ({dayEntry.date})
-            </h2>
-            <textarea
-            className="w-full border rounded-md p-2 mb-4"
-            rows={6}
-            value={noteInput}
-            onChange={(e) => setNoteInput(e.target.value)}
-            />
-            <div className="flex justify-end gap-3">
-            <button
-                onClick={onClose}
-                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded"
-            >
-                Cancel
-            </button>
-            <button
-                onClick={async () => {
-                await onSave(dayEntry.date, noteInput);
-                onClose();
-                }}
-                className="px-4 py-2 bg-rit-orange hover:bg-gray-900 text-white rounded"
-            >
-                Save
-            </button>
-            </div>
-        </div>
-        </div>
+        <Modal
+            open={isOpen}
+            onClose={onClose}
+            aria-labelledby="notes-modal-title"
+        >
+            <Paper sx={style}>
+                <Typography id="notes-modal-title" variant="h6" component="h2" sx={{ mb: 2 }}>
+                    Edit Notes for {dayEntry.day} ({dayEntry.date})
+                </Typography>
+                <TextField
+                    fullWidth
+                    multiline
+                    rows={6}
+                    value={noteInput}
+                    onChange={(e) => setNoteInput(e.target.value)}
+                    variant="outlined"
+                    sx={{ mb: 3 }}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                    <Button variant="outlined" onClick={onClose}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={async () => {
+                            await onSave(dayEntry.date, noteInput);
+                            onClose();
+                        }}
+                    >
+                        Save
+                    </Button>
+                </Box>
+            </Paper>
+        </Modal>
     );
 }

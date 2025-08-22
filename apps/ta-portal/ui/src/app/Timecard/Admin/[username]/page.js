@@ -6,34 +6,42 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchAdminViewData } from '@/services/db-apis';
 import GroupedTimecardView from '@/components/timecard/GroupedTimecardView';
 import SearchBar from '@/components/common/searchAndFilter/SearchBar';
+import { Container, Box, Typography, CircularProgress, Paper, Alert } from '@mui/material';
 
 /**
- * AdminTimecardsPage is a client-side component for administrators to view,
- * search, and manage all employee timecards across the system.
+ * Renders the administrator's timecard management page.
+ * This page fetches all timecards from every employee in the system,
+ * groups them by employee, and allows the admin to search and review the data.
+ * Access is restricted to users with the 'ADMIN' role.
  */
 export default function AdminTimecardsPage() {
     // --- STATE MANAGEMENT ---
+
+    // Core hook to get the currently authenticated user.
     const { currentUser } = useAuth();
 
-    // State for UI status (loading, errors)
+    // State for managing UI status (loading, errors).
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // State for timecard data
+    // `groupedData` holds the original, unprocessed data from the API.
+    // `filteredData` holds the data to be displayed after applying the search term.
     const [groupedData, setGroupedData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const isAdministrator = currentUser?.role === 'ADMIN';
-
     // --- DATA FETCHING & PROCESSING ---
+
     /**
      * Fetches all timecard data from the database and groups it by user.
-     * Wrapped in useCallback to prevent re-creation on every render, optimizing performance.
+     * The raw flat array of timecards is transformed into a nested structure
+     * where each top-level element represents an employee and contains their timecards.
+     * This function is wrapped in useCallback to prevent re-creation on every render,
+     * which optimizes performance by avoiding unnecessary re-fetches.
      */
     const fetchData = useCallback(async () => {
-        // Only proceed if the user is confirmed to be an administrator.
-        if (!isAdministrator) {
+        // Halt execution if the user is not authenticated.
+        if (!currentUser) {
             setIsLoading(false);
             return;
         }
@@ -41,13 +49,13 @@ export default function AdminTimecardsPage() {
         setError(null);
 
         try {
-            // Group the raw data by user
+            // Fetch the raw timecard data from the backend.
             const rawTimecards = await fetchAdminViewData();
             
-            // Group the flat array of timecards into a nested structure.
-            // The result will be an array of objects, where each object contains a user and their list of timecards.
-            // e.g., [{ user: {...}, timecards: [...] }, { user: {...}, timecards: [...] }]
+            // Use reduce to group the flat array of timecards into a nested structure.
+            // The result is an array of objects, e.g., [{ user: {...}, timecards: [...] }, ...].
             const grouped = rawTimecards.reduce((acc, timecard) => {
+                // Safely skip any timecard that doesn't have the expected nested user data.
                 if (!timecard.jobPositionHistory?.employee?.candidate?.user) {
                     return acc;
                 }
@@ -55,10 +63,10 @@ export default function AdminTimecardsPage() {
                 const employee = timecard.jobPositionHistory.employee;
                 const user = employee.candidate.user;
 
-                // Combine first and last name for display and search
+                // Combine first and last name for easier display and searching.
                 const fullName = `${user.fname} ${user.lname}`;
 
-                // Check if this user is already in our array.
+                // Check if this user is already in our accumulator array.
                 let userEntry = acc.find(entry => entry.user.username === user.username);
                 
                 // If the user is not found, create a new entry for them.
@@ -71,7 +79,7 @@ export default function AdminTimecardsPage() {
                     acc.push(userEntry);
                 }
 
-                // Add the current timecard to this user's list of timecards.
+                // Add the current timecard to this user's list.
                 userEntry.timecards.push(timecard);
                 return acc;
             }, []);
@@ -85,18 +93,19 @@ export default function AdminTimecardsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [isAdministrator]);
+    }, [currentUser]);
 
+    // Effect to trigger the initial data fetch when the component mounts or the user changes.
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    // Filter data based on search term
+    // Effect to filter the displayed data whenever the search term or the original data changes.
     useEffect(() => {
-        // Trim whitespace from the start and end of the search term.
+        // Trim whitespace from the search term for more accurate matching.
         const trimmedSearchTerm = searchTerm.trim();
 
-        // If the trimmed term is empty, show all data.
+        // If the search bar is empty, show all data.
         if (!trimmedSearchTerm) {
             setFilteredData(groupedData);
             return;
@@ -104,11 +113,10 @@ export default function AdminTimecardsPage() {
 
         const lowerTerm = trimmedSearchTerm.toLowerCase();
 
-        // Filter the original data based on the user's full name or employee ID
+        // Filter the original data based on the user's full name, username, or employee ID.
         const filtered = groupedData.filter(employeeEntry => 
             employeeEntry.user.fullName.toLowerCase().includes(lowerTerm) ||
             employeeEntry.user.username.toLowerCase().includes(lowerTerm) ||
-            // Add a check to ensure employeeId exists before searching it
             (employeeEntry.employeeId && String(employeeEntry.employeeId).includes(lowerTerm))
         );
         setFilteredData(filtered);
@@ -116,50 +124,63 @@ export default function AdminTimecardsPage() {
     }, [searchTerm, groupedData]);
 
     // --- RENDER LOGIC ---
-    // Use case where the user is not an admin (Access Denied).
-    if (!isAdministrator) {
+
+    // Display a loading spinner while the initial user authentication is being checked.
+    if (currentUser === undefined) {
         return (
-            <div className="text-center py-20">
-                <h1 className="text-2xl font-bold text-red-600">Access Denied</h1>
-                <p className="mt-2">You do not have permission to view this page.</p>
-            </div>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+                <CircularProgress />
+            </Box>
         );
     }
-
+    
+    // Main component render method.
     return (
-        <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
-            <div className="w-full max-w-7xl mx-auto">
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+        <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: { xs: 2, sm: 4 } }}>
+            <Container maxWidth="lg">
+                <Box sx={{ textAlign: 'center', mb: 4 }}>
+                    <Typography variant="h2" component="h1" fontWeight="bold" gutterBottom>
                         Admin Timecard Viewer
-                    </h1>
-                    <p className="mt-2 text-lg text-gray-500">
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
                         Review and manage all TA timecards.
-                    </p>
-                </div>
+                    </Typography>
+                </Box>
+                
+                {/* Conditionally render content based on user role. */}
+                {currentUser && currentUser.role === 'ADMIN' ? (
+                    <>
+                        <SearchBar
+                            value={searchTerm}
+                            onChange={setSearchTerm}
+                            placeholder="Search by name or employee ID..."
+                        />
 
-                <SearchBar
-                    value={searchTerm}
-                    onChange={setSearchTerm}
-                    placeholder="Search by name or employee ID..."
-                />
-
-                <div className="mt-6">
-                    {isLoading ? (
-                        <div className="text-center py-10">
-                            <div className="w-8 h-8 border-4 border-dashed rounded-full animate-spin border-rit-blue mx-auto"></div>
-                            <p className="mt-4 text-gray-600">Loading Timecards...</p>
-                        </div>
-                    ) : error ? (
-                        <div className="text-center py-10 px-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-lg font-semibold text-red-700">An Error Occurred</p>
-                            <p className="text-gray-600 mt-2">{error}</p>
-                        </div>
-                    ) : (
-                        <GroupedTimecardView groupedData={filteredData}/>
-                    )}
-                </div>
-            </div>
-        </div>
+                        <Box sx={{ mt: 4 }}>
+                            {isLoading ? (
+                                <Box sx={{ textAlign: 'center', py: 5 }}>
+                                    <CircularProgress />
+                                    <Typography sx={{ mt: 2 }} color="text.secondary">
+                                        Loading Timecards...
+                                    </Typography>
+                                </Box>
+                            ) : error ? (
+                                <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
+                            ) : (
+                                <GroupedTimecardView groupedData={filteredData}/>
+                            )}
+                        </Box>
+                    </>
+                ) : (
+                    // Render a fallback message if the user is not an admin.
+                    <Paper sx={{ p: 4, textAlign: 'center' }}>
+                        <Typography variant="h6" color="error">Access Denied</Typography>
+                        <Typography sx={{ mt: 1 }}>
+                            You do not have the necessary permissions to view this page.
+                        </Typography>
+                    </Paper>
+                )}
+            </Container>
+        </Box>
     );
 }

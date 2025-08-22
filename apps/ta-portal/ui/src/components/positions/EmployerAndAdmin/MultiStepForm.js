@@ -1,9 +1,37 @@
+// src/components/positions/EmployerAndAdmin/MultiStepForm.js
+'use client';
+
 import FormStepOne from "./form-steps/FormStepOne";
 import FormStepTwo from "./form-steps/FormStepTwo";
 import FormStepThree from "./form-steps/FormStepThree";
 import DisplayField from "../../common/fields/DisplayField";
 import { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Stepper,
+  Step,
+  StepLabel,
+  CircularProgress,
+  Divider,
+} from "@mui/material";
 
+const steps = ["Course Details", "Position Logistics", "Schedule"];
+
+/**
+ * A multi-step form for creating or editing a job position.
+ * 
+ * The form is divided into three steps:
+ * 1. Course Details: This step includes fields for course code, section number, and semester code.
+ * 2. Position Logistics: This step includes fields for location, maximum number of TAs, grade requirement, and course taken requirement.
+ * 3. Schedule: This step includes fields for start date, end date, and schedule (with days of the week and start and end times).
+ * 
+ * @param {function} onSubmit - The function to call when the form is submitted.
+ * @param {function} onClose - The function to call when the form is closed.
+ * @param {boolean} isEditMode - Whether the form is in edit mode or not.
+ * @param {object} job - The job object to edit, if `isEditMode` is true.
+ * @param {object} formMethods - The form methods object from `useForm`.
+ */
 export default function MultiStepForm({
   onSubmit,
   onClose,
@@ -23,40 +51,28 @@ export default function MultiStepForm({
   } = formMethods;
 
   const handleNext = async (event) => {
-    event.preventDefault(); 
-    // This maps validation fields to the step they appear on.
+    event.preventDefault();
     const fieldsByStep = {
-      1: [
-        "courseCode",
-        "sectionNumber",
-        "semesterCode",
-      ],
-      2: ["location",
-        "locationType",
-        "maxTAs",
-        "gradeRequirement", 
-        "courseTakenRequirement"
-      ],
+      1: ["courseCode", "sectionNumber", "semesterCode"],
+      2: ["location", "locationType", "maxTAs", "gradeRequirement", "courseTakenRequirement"],
     };
 
     const fieldsToValidate = fieldsByStep[currentStep];
     
-    // Only validate if fields are defined for the current step.
     if (fieldsToValidate) {
-        const isValid = await trigger(fieldsToValidate);
-        if (isValid) {
-          setCurrentStep((prev) => prev + 1);
-        }
-    } else {
-        // If no validation needed for this step, just proceed.
+      const isValid = await trigger(fieldsToValidate);
+      if (isValid) {
         setCurrentStep((prev) => prev + 1);
+      }
+    } else {
+      setCurrentStep((prev) => prev + 1);
     }
   };
 
   const handleBack = () => {
     setCurrentStep((prev) => prev - 1);
   };
-  // Automatically skip to step 2 in edit mode
+
   useEffect(() => {
     if (isEditMode) {
       setCurrentStep(2);
@@ -64,75 +80,63 @@ export default function MultiStepForm({
   }, [isEditMode]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+      {!isEditMode && (
+        <Stepper activeStep={currentStep - 1} alternativeLabel sx={{ mb: 4 }}>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      )}
+
       {isEditMode && <DisplayField label={"Position ID"} value={job.id} />}
-      {/* Inputs for creating a new course */}
-      {currentStep === 1 && !isEditMode && (
-        <FormStepOne
-          getValues={getValues}
-          setValue={setValue}
-          register={register}
-          errors={errors}
-          control={control}
-          isEditMode={isEditMode}
-        />
-      )}
-      {currentStep === 2 && (
-        <FormStepTwo register={register} control={control} errors={errors} />
-      )}
-      {currentStep === 3 && (
-        <FormStepThree register={register} control={control} errors={errors} />
-      )}
+      
+      <Box sx={{ minHeight: 300, p: 1 }}>
+        {currentStep === 1 && !isEditMode && (
+          <FormStepOne
+            getValues={getValues}
+            setValue={setValue}
+            register={register}
+            errors={errors}
+            control={control}
+            isEditMode={isEditMode}
+          />
+        )}
+        {currentStep === 2 && (
+          <FormStepTwo register={register} control={control} errors={errors} />
+        )}
+        {currentStep === 3 && (
+          <FormStepThree register={register} control={control} errors={errors} />
+        )}
+      </Box>
 
-      <div className="flex justify-between pt-6 border-t mt-8">
-        <div>
-          {(currentStep > 1 && !isEditMode || currentStep == 3) ? (
-            <button
-              type="button"
-              onClick={handleBack}
-              className="px-4 py-2 bg-gray-200 rounded-md font-semibold"
-            >
-              Back
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 rounded-md font-semibold"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
+      <Divider sx={{ my: 2 }} />
 
-        <div>
-          {currentStep < 3 ? (
-            <div>
-              <button
-                type="button"
-                onClick={handleNext}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md font-semibold"
-              >
-                Next
-              </button>
-            </div>
-          ) : (
-            <div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-green-600 text-white rounded-md font-semibold"
-              >
-                {isSubmitting
-                  ? "Saving..."
-                  : isEditMode
-                  ? "Save Changes"
-                  : "Create Position"}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </form>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 2 }}>
+        <Button
+          onClick={ (currentStep > 1 && !isEditMode) || currentStep === 3 ? handleBack : onClose }
+          disabled={isSubmitting}
+        >
+          { (currentStep > 1 && !isEditMode) || currentStep === 3 ? "Back" : "Cancel" }
+        </Button>
+
+        {currentStep < 3 ? (
+          <Button variant="contained" onClick={handleNext}>
+            Next
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            variant="contained"
+            color="success"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : (isEditMode ? "Save Changes" : "Create Position")}
+          </Button>
+        )}
+      </Box>
+    </Box>
   );
 }

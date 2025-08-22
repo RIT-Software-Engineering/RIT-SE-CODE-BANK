@@ -149,8 +149,8 @@ This will create two files in your current directory:
 
 3. Set Up Redirect URI: While still on the OAuth & Permissions page, scroll down to the Redirect URLs section. Add the following URL exactly as written: `https://localhost:3300/api/slack/oauth_redirect`
  
-4. Get Credentials: Navigate to the Basic Information page in the sidebar. Scroll down to the App Credentials section to find your Client ID and Client Secret. You will need these for the backend setup in the `config_backend.bat` or `config_backend.bat.sh` files. Make sure the other team members use the same Client ID and Client Secret so that they to can connect to your app that you just made here.
+4. Get Credentials: Navigate to the Basic Information page in the sidebar. Scroll down to the App Credentials section to find your Client ID and Client Secret. You will need these for the backend setup in the `config_backend.bat` or `config_backend.sh` files. Make sure the other team members use the same Client ID and Client Secret so that they to can connect to your app that you just made here.
 
 5. After that run one of these configuration scripts depending on the following local machine:
     * For Windows, it's `./config_backend.bat` and `./config_frontend.bat`. If it runs into an error (i.e. 'mysql' is not recognized), try navigating to a powershell terminal outside of vscode and run the script there.
-    * For MacOS/Linux, it's `./config_backend.sh` and `./config_frontend.sh`. You may need to do set execute permissions for the script by running `chmod +x config_backend.sh` and/or `chmod +x config_frontend.sh` beforehand if it's your first time running the script. 
+    * For MacOS/Linux, it's `./config_backend.sh` and `./config_frontend.sh`. You may need to do set execute permissions for the script by running `chmod +x config_backend.sh` and/or `chmod +x config_frontend.sh` beforehand if it's your first time running the script.

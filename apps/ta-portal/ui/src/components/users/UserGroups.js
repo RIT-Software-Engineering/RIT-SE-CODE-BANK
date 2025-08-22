@@ -7,7 +7,18 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ProfileInfoCard from "@/components/profile/ProfileInfoCard";
+import { Box } from "@mui/material";
 
+/**
+ * A reusable component for displaying a group of users in an accordion.
+ * If the group is for employees, it will group the users by status (e.g. "Active", "Inactive", etc.).
+ * Otherwise, it will display all the users in a single list.
+ * @param {string} props.title - The title to display for the group.
+ * @param {User[]} props.users - The list of users to display.
+ * @param {(username: string) => void} props.onEditUser - The callback to call when a user is clicked to edit.
+ * @param {boolean} [props.isEmployeeGroup=false] - Whether the group is for employees or not.
+ * @returns {ReactElement}
+ */
 export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = false }) {
     if (isEmployeeGroup) {
     const totalCount = Object.values(users).reduce((sum, arr) => sum + arr.length, 0);
@@ -20,7 +31,7 @@ export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = 
             </Typography>
             </AccordionSummary>
             <AccordionDetails>
-            <div className="space-y-4">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {Object.entries(users).map(([status, group]) => (
                 <Accordion key={status}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -29,7 +40,7 @@ export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = 
                     </Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                    <div className="space-y-4">
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {group.map((user) => (
                         <ProfileInfoCard
                             key={user.username}
@@ -39,11 +50,11 @@ export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = 
                             onEdit={() => onEditUser(user.username)}
                         />
                         ))}
-                    </div>
+                    </Box>
                     </AccordionDetails>
                 </Accordion>
                 ))}
-            </div>
+            </Box>
             </AccordionDetails>
         </Accordion>
         );
@@ -58,7 +69,7 @@ export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = 
             </Typography>
         </AccordionSummary>
         <AccordionDetails>
-            <div className="space-y-4">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {users.map((user) => (
                 <ProfileInfoCard
                 key={user.username}
@@ -68,7 +79,7 @@ export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = 
                 onEdit={() => onEditUser(user.username)}
                 />
             ))}
-            </div>
+            </Box>
         </AccordionDetails>
         </Accordion>
     );

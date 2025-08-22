@@ -79,34 +79,32 @@ export const convertDisplayTimeToInputValue = (displayTime) => {
   return `${formattedHours}:${minutes}`;
 }
 
-export const getStatusClasses = (status) => {
+export const getStatusChipColor = (status) => {
   switch (status?.toLowerCase()) {
-    // --- Positive / Success States (Green) ---
+    // --- Positive / Success States ---
     case "hired":
-      return "bg-green-500 text-white"; // Strong, final success
     case "accepted_offer":
-      return "bg-green-100 text-green-800"; // Positive step complete
+      return "success"; // Use the theme's success color (green)
 
-    // --- Active / In-Progress States (Blue/Indigo) ---
+    // --- Active / In-Progress States ---
     case "pending_offer":
-      return "bg-blue-500 text-white"; // Important action/decision point
     case "interview":
-      return "bg-blue-100 text-blue-800"; // Active process step
+      return "info"; // Use the theme's info color (blue)
     
-    // --- Attention State (Yellow) ---
+    // --- Attention State ---
     case "onhold":
-      return "bg-yellow-100 text-yellow-800"; // Indicates a waiting period
+      return "warning"; // Use the theme's warning color (yellow)
 
-    // --- Negative / Terminal States (Red) ---
+    // --- Negative / Terminal States ---
     case "rejected":
     case "declined_offer":
-      return "bg-red-100 text-red-800"; // Final negative outcome
+      return "error"; // Use the theme's error color (red)
 
-    // --- Neutral / Default States (Gray/Indigo) ---
+    // --- Neutral / Default States ---
     case "inactive":
-      return "bg-gray-200 text-gray-600"; // Archived or closed
+      return "default"; // Use the theme's default gray color
     case "applied":
     default:
-      return "bg-indigo-100 text-indigo-800"; // The default starting point
+      return "primary"; // Use the theme's primary color (orange)
   }
 };

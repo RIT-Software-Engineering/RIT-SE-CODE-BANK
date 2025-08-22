@@ -442,51 +442,6 @@ async function updateJobPositionStatus(jobId, status, commentData) {
   }
 }
 
-// // NOTE TO DEV: Not sure in what databases we should be deleting it in
-
-// /**
-//  * Deletes a JobPosition and all its related records from the database.
-//  * @param {string} jobId The ID of the job position to delete.
-//  * @returns {Promise<object>} The deleted JobPosition object.
-//  */
-// export async function deleteJobPosition(jobId) {
-//   try {
-//     // A transaction ensures all these operations succeed or none do.
-//     const result = await prisma.$transaction([
-//       // 1. Delete all related job schedules
-//       prisma.jobSchedule.deleteMany({
-//         where: { jobPositionId: jobId },
-//       }),
-
-//       // 3. Delete all related job position histories
-//       // Note: This also implies TimeLogHistory records linked to these will be an issue
-//       // if not handled by cascading deletes in the schema. For simplicity, we assume
-//       // deleting the history is sufficient or cascades are in place.
-//       prisma.jobPositionHistory.deleteMany({
-//         where: { jobPositionId: jobId },
-//       }),
-
-//       // 4. Finally, delete the actual JobPosition
-//       prisma.jobPosition.delete({
-//         where: { id: jobId },
-//       }),
-//     ]);
-
-//     // The result of a transaction is an array of the results of each operation.
-//     // We return the last one, which is the deleted JobPosition object.
-//     const deletedJobPosition = result[result.length - 1];
-
-//     console.log(
-//       `Successfully deleted JobPosition ${jobId} and its related records.`
-//     );
-//     return deletedJobPosition;
-//   } catch (error) {
-//     console.error(`Failed to delete JobPosition ${jobId}:`, error);
-//     // Re-throw the error so the calling function in your API route can handle it
-//     throw new Error(`Could not delete job position ${jobId}.`);
-//   }
-// }
-
 
 // --- JOB APPLICATIONS ---
 /**
@@ -910,18 +865,13 @@ function buildJobPositionForApplicationFilterClause(filters) {
     Array.isArray(filters.level) &&
     filters.level.length > 0
   ) {
-    const levelConditions = filters.level.map((levelString) => {
-      // Extracts the first digit from strings like "100-level" -> "1"
-      const levelDigit = levelString.replace("-level", "").charAt(0);
-      return {
-        courseCode: {
-          contains: `-${levelDigit}`,
-        },
-      };
-    });
-
-    // Add the OR conditions to the main filter clause.
-    where.OR = levelConditions;
+    // This is the new, more concise line that replaces the old block.
+    where.OR = filters.level.map((levelString) => ({
+      courseCode: {
+        // Extracts the first digit (e.g., "1" from "100-level")
+        contains: `-${levelString.charAt(0)}`, 
+      },
+    }));
   }
 
   // Filter by semester code
@@ -1113,6 +1063,16 @@ async function getCandidateApplicationsAsAdmin(){
           },
           jobSchedules: {
             select: { dayOfWeek: true, startTime: true, endTime: true },
+          },
+          employer: {
+            include: {
+              user: {
+                select: {
+                  fname: true,
+                  lname: true
+                },
+              },
+            },
           },
         },
       },

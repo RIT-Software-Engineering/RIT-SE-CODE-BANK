@@ -1,41 +1,33 @@
-import { useState } from "react";
+// src/components/positions/EmployerAndAdmin/form-components/ScheduleEditor.js
+'use client';
 
-// A reusable icon for a clean UI
-const TrashIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 hover:text-red-500">
-    <path d="M3 6h18" />
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-    <line x1="10" y1="11" x2="10" y2="17" />
-    <line x1="14" y1="11" x2="14" y2="17" />
-  </svg>
-);
+import { useState } from "react";
+import {
+  Box,
+  Button,
+  Divider,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { Delete as TrashIcon } from "@mui/icons-material";
 
 /**
- * Formats a date-time string for a time input's value, consistently using UTC.
- * @param {string} timeString - The full ISO date string from the database or a "HH:mm" string.
- * @returns {string} The time formatted as "HH:mm".
+ * ScheduleEditor component allows editing a weekly schedule with days and time ranges.
+ * Users can add, update, and remove schedule entries, and the changes are
+ * propagated to a parent component via `onSchedulesChange`.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Array<{dayOfWeek: string, startTime: string, endTime: string, id?: string|number}>} [props.initialSchedules=[]] - Initial schedule entries
+ * @param {function(Array): void} props.onSchedulesChange - Callback triggered when schedules are updated
  */
-// const formatTimeToInputValue = (timeString) => {
-//   if (!timeString) return "";
-
-//   // If the value is already "HH:mm" (from a user edit), return it directly.
-//   if (typeof timeString === 'string' && timeString.match(/^\d{2}:\d{2}$/)) {
-//     return timeString;
-//   }
-  
-//   // Otherwise, parse the full date string and get its UTC time components.
-//   try {
-//     const date = new Date(timeString);
-//     // Use getUTCHours() and getUTCMinutes() to ignore the local timezone.
-//     const hours = date.getUTCHours().toString().padStart(2, '0');
-//     const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-//     return `${hours}:${minutes}`;
-//   } catch (error) {
-//     console.error("Error formatting time:", error);
-//     return "";
-//   }
-// };
-
 
 export default function ScheduleEditor({
   initialSchedules = [],
@@ -85,83 +77,92 @@ export default function ScheduleEditor({
     setNewSchedule({ dayOfWeek: "Monday", startTime: "", endTime: "" });
   };
 
-
-  console.log("Current schedules:", schedules);
   return (
-    <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-      <h3 className="text-lg font-semibold text-gray-800">
+    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
+      <Typography variant="h3" gutterBottom>
         Edit Weekly Schedule
-      </h3>
-      <div className="space-y-3">
+      </Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 2 }}>
         {schedules.map((schedule, index) => (
-          <div
-            key={schedule.id || index}
-            className="grid grid-cols-[1fr_auto_auto_auto] gap-3 items-center p-2 rounded-md bg-white border"
-          >
-            <span className="font-medium text-gray-700 capitalize">
-              {schedule.dayOfWeek.toLowerCase()}
-            </span>
-            <input
-              type="time"
-              value={schedule.startTime}
-              onChange={(e) => handleTimeChange(index, "startTime", e.target.value)}
-              className="w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm"
-            />
-            <input
-              type="time"
-              value={schedule.endTime}
-              onChange={(e) => handleTimeChange(index, "endTime", e.target.value)}
-              className="w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm"
-            />
-            <button
-              type="button"
-              onClick={() => handleRemoveSchedule(index)}
-              className="p-1"
-              aria-label="Remove schedule"
-            >
-              <TrashIcon />
-            </button>
-          </div>
+          <Grid container spacing={2} key={schedule.id || index} alignItems="center">
+            <Grid item xs={4}>
+              <Typography sx={{ textTransform: 'capitalize' }}>
+                {schedule.dayOfWeek.toLowerCase()}
+              </Typography>
+            </Grid>
+            <Grid item xs={3}>
+              <TextField
+                type="time"
+                value={schedule.startTime}
+                onChange={(e) => handleTimeChange(index, "startTime", e.target.value)}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <TextField
+                type="time"
+                value={schedule.endTime}
+                onChange={(e) => handleTimeChange(index, "endTime", e.target.value)}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={2} sx={{ textAlign: 'right' }}>
+              <IconButton onClick={() => handleRemoveSchedule(index)} aria-label="Remove schedule" size="small">
+                <TrashIcon />
+              </IconButton>
+            </Grid>
+          </Grid>
         ))}
-      </div>
-       <div className="pt-4 border-t">
-         <h4 className="text-md font-semibold text-gray-700 mb-2">Add a New Day</h4>
-         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 items-end">
-            <select
-              name="dayOfWeek"
-              value={newSchedule.dayOfWeek}
-              onChange={handleNewScheduleInputChange}
-              className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm"
-            >
-              <option value="Monday">Monday</option>
-              <option value="Tuesday">Tuesday</option>
-              <option value="Wednesday">Wednesday</option>
-              <option value="Thursday">Thursday</option>
-              <option value="Friday">Friday</option>
-            </select>
-            <input
-              type="time"
-              name="startTime"
-              value={newSchedule.startTime}
-              onChange={handleNewScheduleInputChange}
-              className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
-            <input
-              type="time"
-              name="endTime"
-              value={newSchedule.endTime}
-              onChange={handleNewScheduleInputChange}
-              className="w-full px-2 py-2 border border-gray-300 rounded-md shadow-sm"
-            />
-            <button
-              type="button"
-              onClick={handleAddSchedule}
-              className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700"
-            >
-              Add
-            </button>
-         </div>
-      </div>
-    </div>
+      </Box>
+      <Divider sx={{ my: 2 }} />
+      <Typography variant="h3" gutterBottom>Add a New Day</Typography>
+      {/* Replaced Grid with a Flexbox container for better control */}
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'center' }}>
+        <FormControl size="small" sx={{ flex: 1.5, width: '100%' }}>
+          <InputLabel>Day</InputLabel>
+          <Select
+            name="dayOfWeek"
+            label="Day"
+            value={newSchedule.dayOfWeek}
+            onChange={handleNewScheduleInputChange}
+          >
+            <MenuItem value="Monday">Monday</MenuItem>
+            <MenuItem value="Tuesday">Tuesday</MenuItem>
+            <MenuItem value="Wednesday">Wednesday</MenuItem>
+            <MenuItem value="Thursday">Thursday</MenuItem>
+            <MenuItem value="Friday">Friday</MenuItem>
+          </Select>
+        </FormControl>
+        <TextField
+          type="time"
+          name="startTime"
+          label="Start Time"
+          value={newSchedule.startTime}
+          onChange={handleNewScheduleInputChange}
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          sx={{ flex: 1, width: '100%' }}
+        />
+        <TextField
+          type="time"
+          name="endTime"
+          label="End Time"
+          value={newSchedule.endTime}
+          onChange={handleNewScheduleInputChange}
+          size="small"
+          InputLabelProps={{ shrink: true }}
+          sx={{ flex: 1, width: '100%' }}
+        />
+        <Button
+          onClick={handleAddSchedule}
+          variant="contained"
+          sx={{ height: '40px', width: { xs: '100%', sm: 'auto' } }}
+        >
+          Add
+        </Button>
+      </Box>
+    </Paper>
   );
 }

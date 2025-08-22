@@ -1,49 +1,66 @@
+// src/components/comments/ViewableCommentForm.js
 "use client";
 import React from 'react';
 import { gradeOptions } from '@/constants/gradeConstants';
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+  Typography,
+} from '@mui/material';
 
 /**
- * A simple, native dropdown component for selecting a grade from a predefined list.
- * This version uses the standard HTML <select> element for maximum simplicity and accessibility.
+ * GradeSelector component for selecting a grade from predefined options.
+ *
+ * Renders a Material-UI Select input with grade options and optional error handling.
+ * Can display an optional label if the grade selection is not required.
+ *
+ * @param {Object} props - Component props
+ * @param {string|null} props.value - Current selected grade value
+ * @param {Function} props.onChange - Callback triggered when a new grade is selected
+ * @param {string} props.id - Unique ID for the Select input
+ * @param {string} props.label - Label displayed for the Select input
+ * @param {boolean} [props.isOptional=false] - Whether selecting a grade is optional
+ * @param {Object} [props.error] - Error object containing message to display if invalid
  */
+
 export default function GradeSelector({ value, onChange, id, label, isOptional = false, error }) {
   
   const handleChange = (event) => {
     onChange(event.target.value || null);
   };
 
-  // Define the TailwindCSS classes for styling the <select> element.
-  const selectClasses = `mt-1 block w-full rounded-md border shadow-sm py-2 pl-3 pr-10 text-base focus:outline-none sm:text-sm ${
-    error 
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-      : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
-  }`;
-
   return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
+    <FormControl fullWidth error={!!error}>
+      <InputLabel id={`${id}-label`}>
         {label}
-        {isOptional && <span className="text-gray-500 text-xs ml-1">(Optional)</span>}
-      </label>
-
-      <select
+        {isOptional && (
+          <Typography component="span" variant="caption" sx={{ ml: 0.5 }}>
+            (Optional)
+          </Typography>
+        )}
+      </InputLabel>
+      <Select
+        labelId={`${id}-label`}
         id={id}
         value={value || ''}
+        label={label}
         onChange={handleChange}
-        className={selectClasses}
       >
-        <option value="">
-          {isOptional ? '-- No Grade --' : 'Select a grade...'}
-        </option>
+        <MenuItem value="">
+          <em>{isOptional ? '-- No Grade --' : 'Select a grade...'}</em>
+        </MenuItem>
 
         {gradeOptions.map(option => (
-          <option key={option.value} value={option.value}>
+          <MenuItem key={option.value} value={option.value}>
             {option.label}
-          </option>
+          </MenuItem>
         ))}
-      </select>
+      </Select>
 
-      {error && <p className="text-red-500 text-sm mt-1">{error.message}</p>}
-    </div>
+      {error && <FormHelperText>{error.message}</FormHelperText>}
+    </FormControl>
   );
 }

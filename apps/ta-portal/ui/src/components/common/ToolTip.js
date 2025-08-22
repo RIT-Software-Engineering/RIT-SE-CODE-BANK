@@ -1,37 +1,20 @@
+// src/components/common/ToolTip.js
 'use client';
 
-import { useState } from 'react';
+import { Tooltip as MuiTooltip } from '@mui/material';
 
 /**
- * A reusable tooltip component that shows a message on hover.
- * @param {React.ReactNode} props.children - The element to hover over.
+ * A reusable tooltip component that wraps a child element and shows a message on hover.
+ * This component is a simple wrapper around Material-UI's Tooltip for consistency.
+ * @param {React.ReactNode} props.children - The element to hover over. This element must be able to accept a ref.
  * @param {string} props.text - The text to display in the tooltip.
- * @param {string} props.className - Optional classes for the wrapper element.
+ * @param {...any} props - Any additional props passed to Material-UI Tooltip
  */
-export default function Tooltip({ children, text, className }) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  const wrapperClasses = `relative inline-flex ${className || ''}`;
-
+export default function Tooltip({ children, text, ...props }) {
   return (
-    <div
-      className={wrapperClasses}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-    >
+    <MuiTooltip title={text} arrow {...props}>
+      {/* The child element is passed directly. It must be an element that can accept event listeners and a ref. */}
       {children}
-      {isVisible && (
-        <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs px-3 py-1.5 
-                     bg-gray-800 text-white text-sm font-semibold rounded-lg shadow-lg z-50
-                     pointer-events-none"
-        >
-          {text}
-          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 
-                      border-x-4 border-x-transparent 
-                      border-t-4 border-t-gray-800"></div>
-        </div>
-      )}
-    </div>
+    </MuiTooltip>
   );
 }

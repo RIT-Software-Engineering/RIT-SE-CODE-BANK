@@ -2,6 +2,17 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import {
+  Button,
+  Container,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import { getUser } from "../../../services/db-apis";
 
 /**
@@ -18,14 +29,14 @@ export default function DevLogin({
 }) {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUsername, setSelectedUsername] = useState("");
 
   // Set a default user from the list when the component loads
   useEffect(() => {
-    if (allUsers && allUsers.length > 0 && !selectedUser) {
-      setSelectedUser(allUsers[0]);
+    if (allUsers && allUsers.length > 0 && !selectedUsername) {
+      setSelectedUsername(allUsers[0].username);
     }
-  }, [allUsers, selectedUser]);
+  }, [allUsers, selectedUsername]);
 
   // Handle changes in the user selection dropdown
   const handleSelectChange = (e) => {
@@ -33,14 +44,13 @@ export default function DevLogin({
     if (value === "new-user") {
       onSwitchToSignUp(); // Trigger the view switch in the parent
     } else {
-      const user = allUsers.find((u) => u.username === value);
-      setSelectedUser(user);
+      setSelectedUsername(value);
     }
   };
 
   // Handle the sign-in action
   const handleSignIn = async () => {
-    if (!selectedUser) {
+    if (!selectedUsername) {
       setError("Please select a user.");
       return;
     }
@@ -48,8 +58,8 @@ export default function DevLogin({
     setError(null);
     try {
       // Fetch the basic user info for the selected user
-      const user = await getUser(selectedUser.username);
-      onLoginSuccess(user, 'login');
+      const user = await getUser(selectedUsername);
+      onLoginSuccess(user, "login");
       console.log(`${user.role} signed in using DEV mode.`);
     } catch (err) {
       console.error("Sign in failed:", err);
@@ -60,44 +70,78 @@ export default function DevLogin({
   };
 
   return (
-    <div className="bg-white">
-      <div className="bg-rit-light-gray h-screen rounded-lg p-5 m-10 justify-center items-center flex flex-col">
-        <div className="text-center text-3xl w-1/2">
-          Welcome to the RIT Teaching Assistant Portal (DEV)
-          <br />
-          <br />
-          Sign in with your RIT Account
-        </div>
-
-        <div className="mt-6">
-          <label htmlFor="user_select" className="block text-sm font-medium text-gray-700 mb-2">
-            Select User
-          </label>
-          <select
-            id="user_select"
-            value={selectedUser ? selectedUser.username : ""}
-            onChange={handleSelectChange}
-            className="block w-64 rounded-md border-gray-300 shadow-sm focus:border-rit-orange focus:ring focus:ring-rit-orange focus:ring-opacity-50 p-2"
-          >
-            <option value="new-user">-- Create New User --</option>
-            {allUsers.map((user) => (
-              <option key={user.username} value={user.username}>
-                {user.fname} {user.lname} ({user.role})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {error && <p className="text-red-500 mt-4">{error}</p>}
-
-        <button
-          className="bg-black text-white w-40 rounded-lg p-3 text-lg mt-10 hover:bg-gray-800 disabled:bg-gray-400"
-          onClick={handleSignIn}
-          disabled={!selectedUser || isLoggingIn}
+    <Container
+      maxWidth="sm"
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "calc(100vh - 200px)", // Adjust based on header/footer height
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: { xs: 3, md: 5 },
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          backgroundColor: "background.paper", // Adapts to theme
+        }}
+      >
+        <Typography
+          variant="h2"
+          component="h1"
+          textAlign="center"
+          gutterBottom
         >
-          {isLoggingIn ? "Signing In..." : "Sign In"}
-        </button>
-      </div>
-    </div>
+          Welcome to the RIT Teaching Assistant Portal (DEV)
+        </Typography>
+        <Typography variant="h3" textAlign="center" sx={{ mb: 4 }}>
+          Sign in with your RIT Account
+        </Typography>
+
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel id="user-select-label">Select User</InputLabel>
+          <Select
+            labelId="user-select-label"
+            id="user_select"
+            value={selectedUsername}
+            label="Select User"
+            onChange={handleSelectChange}
+          >
+            <MenuItem value="new-user">-- Create New User --</MenuItem>
+            {allUsers.map((user) => (
+              <MenuItem key={user.username} value={user.username}>
+                {user.fname} {user.lname} ({user.role})
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {error && (
+          <Typography color="error" sx={{ mt: 2 }}>
+            {error}
+          </Typography>
+        )}
+
+        <Button
+          variant="contained"
+          color="secondary"
+          size="large"
+          onClick={handleSignIn}
+          disabled={!selectedUsername || isLoggingIn}
+          sx={{ mt: 4, width: "60%" }}
+        >
+          {isLoggingIn ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            "Sign In"
+          )}
+        </Button>
+      </Paper>
+    </Container>
   );
 }

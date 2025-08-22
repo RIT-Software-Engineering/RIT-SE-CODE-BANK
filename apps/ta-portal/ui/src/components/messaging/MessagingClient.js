@@ -3,7 +3,26 @@
 
 import { useState, useEffect } from "react";
 import { getSlackOAuthURL, sendMessageToSlack } from "@/services/slack-apis";
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 
+/**
+ * A component that allows users to send a direct message to a Slack user by email.
+ * The component will prompt the user to connect their Slack account if they haven't already.
+ * Once connected, the user can enter the recipient's email and a message to send.
+ * The component will display success or error messages to the user.
+ *
+ * @param {object} props
+ * @param {string} [props.initialEmail] The email address to pre-fill in the form.
+ */
 export default function MessagingClient({ initialEmail = "" }) {
   const [slackToken, setSlackToken] = useState(null);
   const [teamId, setTeamId] = useState(null);
@@ -72,64 +91,92 @@ export default function MessagingClient({ initialEmail = "" }) {
   };
 
   return (
-    <div className="h-auto bg-rit-gray p-10 md:p-20 w-full md:w-2/3 m-auto mt-10 md:mt-20 rounded-xl">
-      <div className="bg-rit-light-gray h-full flex flex-col p-6 md:p-10 rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold text-rit-dark-gray mb-6 text-center">
+    <Container maxWidth="md" sx={{ py: { xs: 4, md: 8 } }}>
+      <Paper
+        elevation={4}
+        sx={{
+          p: { xs: 3, md: 5 },
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          backgroundColor: "background.paper",
+        }}
+      >
+        <Typography variant="h1" component="h1" gutterBottom>
           Send a Slack Message
-        </h1>
+        </Typography>
+
         {!slackToken ? (
-          <div className="text-center">
-            <p className="mb-4 text-gray-700">
+          <Box sx={{ textAlign: "center", mt: 2 }}>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
               Please connect your Slack account to continue.
-            </p>
-            <button
+            </Typography>
+            <Button
               onClick={handleConnectToSlack}
               disabled={isLoading}
-              className="bg-rit-orange hover:bg-rit-dark-orange text-white font-bold py-2 px-4 rounded-lg transition duration-300 disabled:bg-gray-400"
+              variant="contained"
+              color="primary"
+              size="large"
             >
-              {isLoading ? "Redirecting..." : "Connect to Slack"}
-            </button>
-          </div>
+              {isLoading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Connect to Slack"
+              )}
+            </Button>
+          </Box>
         ) : (
-          <form onSubmit={handleSendMessage}>
-            <input
+          <Box
+            component="form"
+            onSubmit={handleSendMessage}
+            sx={{ width: "100%", mt: 3 }}
+          >
+            <TextField
               type="email"
-              placeholder="Enter recipient's email"
+              label="Recipient's Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mb-5 w-full p-3 bg-white rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rit-orange"
+              fullWidth
+              margin="normal"
               required
             />
-            <textarea
-              placeholder="Type your message here..."
+            <TextField
+              label="Your Message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full h-40 p-3 rounded-lg mb-5 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-rit-orange"
+              fullWidth
+              margin="normal"
+              multiline
+              rows={6}
               required
             />
-            <div className="flex justify-center">
-              <button
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-rit-orange hover:bg-rit-dark-orange text-white font-bold py-2 px-6 rounded-lg transition duration-300 disabled:bg-gray-400"
+                variant="contained"
+                color="primary"
+                size="large"
               >
-                {isLoading ? "Sending..." : "Send"}
-              </button>
-            </div>
-          </form>
+                {isLoading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Send Message"
+                )}
+              </Button>
+            </Box>
+          </Box>
         )}
+
         {feedback.message && (
-          <div
-            className={`mt-6 p-3 rounded-lg text-center ${
-              feedback.type === "error"
-                ? "bg-red-100 text-red-700"
-                : "bg-green-100 text-green-700"
-            }`}
+          <Alert
+            severity={feedback.type === "error" ? "error" : "success"}
+            sx={{ width: "100%", mt: 4 }}
           >
             {feedback.message}
-          </div>
+          </Alert>
         )}
-      </div>
-    </div>
+      </Paper>
+    </Container>
   );
 }

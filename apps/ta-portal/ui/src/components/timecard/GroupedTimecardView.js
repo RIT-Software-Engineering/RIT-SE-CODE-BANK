@@ -7,7 +7,8 @@ import {
     Accordion,
     AccordionSummary, 
     AccordionDetails, 
-    Typography 
+    Typography,
+    Box
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
@@ -23,11 +24,15 @@ export default function GroupedTimecardView({ groupedData }) {
     // A safeguard to prevent errors if no data is passed.
     // Provides error message if no data is available.
     if (!groupedData || groupedData.length === 0) {
-        return <div className="text-center py-10 text-gray-500">No timecard data to display.</div>;
+        return (
+            <Box sx={{ textAlign: 'center', py: 10 }}>
+                <Typography color="text.secondary">No timecard data to display.</Typography>
+            </Box>
+        );
     }
 
     return (
-        <div className="space-y-4">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {groupedData.map(({ user, timecards }) => {
                 const employeeId = timecards[0]?.jobPositionHistory?.employee?.id;
 
@@ -37,23 +42,23 @@ export default function GroupedTimecardView({ groupedData }) {
                             <Typography variant="h6" fontWeight={600}>
                                 {`${user.fname} ${user.lname}`}
                                 {employeeId && (
-                                    <span className="text-gray-500 font-normal text-base ml-2">
+                                    <Typography component="span" color="text.secondary" sx={{ ml: 1, fontWeight: 400, fontSize: '1rem' }}>
                                         | Employee ID: {employeeId}
-                                    </span>
+                                    </Typography>
                                 )}
                             </Typography>
                         </AccordionSummary>
                         <AccordionDetails>
-                            <div className="space-y-2">
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                             {timecards.map(timecard => (
                                 <Accordion key={timecard.id}>
                                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                         <Typography>
                                             Week of {new Date(timecard.weekStartDate).toLocaleDateString()}
                                             {timecard.jobPositionHistory?.jobPosition?.courseCode && (
-                                                <span className="text-gray-500 text-sm ml-4">
+                                                <Typography component="span" color="text.secondary" sx={{ ml: 2, fontSize: '0.875rem' }}>
                                                     (Position: {timecard.jobPositionHistory.jobPosition.courseCode}-{timecard.jobPositionHistory.jobPosition.sectionNumber})
-                                                </span>
+                                                </Typography>
                                             )}
                                         </Typography>
                                     </AccordionSummary>
@@ -62,11 +67,11 @@ export default function GroupedTimecardView({ groupedData }) {
                                     </AccordionDetails>
                                 </Accordion>
                             ))}
-                        </div>
+                        </Box>
                         </AccordionDetails>
                     </Accordion>
                 );
             })}
-        </div>
+        </Box>
     );
 }

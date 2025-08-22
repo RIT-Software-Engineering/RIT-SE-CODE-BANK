@@ -1,3 +1,4 @@
+// src/components/applications/EditableApplicationForm.js
 'use client';
 
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -7,9 +8,39 @@ import { useNotification } from '@/contexts/NotificationContext';
 import DisplayField from '../common/fields/DisplayField';
 import GradeSelector from '../common/fields/GradeSelector';
 
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { Close as CloseIcon, UploadFile as UploadFileIcon } from '@mui/icons-material';
 
+/**
+ * EditableApplicationForm component for candidates to apply for a job position.
+ *
+ * Displays user and course information, validates grade and employment history,
+ * allows uploading or selecting a resume, and optionally attaching a cover letter.
+ * Submits the application via API calls and triggers parent callbacks.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Object} props.user - The currently logged-in user (candidate)
+ * @param {Object} props.position - The job position being applied for
+ * @param {Function} props.onClose - Callback to close the form dialog
+ * @param {Function} props.onApplySuccess - Callback fired after successful application
+ */
 export default function EditableApplicationForm({ user, position, onClose, onApplySuccess }) {
-    // Get the list of resumes and find the primary one to pre-select.
     const { showNotification } = useNotification();
     const existingResumes = user?.candidate?.resumes || [];
     const primaryResume = existingResumes.find(r => r.isPrimary) || existingResumes[0];
@@ -28,9 +59,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
         priorEmploymentHistory: user?.candidate?.courseHistory?.filter(ch => ch.wasPriorEmployee)?.map(ch => ({
             courseCode: ch.courseCode
         })),
-        // Set the default dropdown value to the primary resume's ID, or 'new' if none exist.
         resumeId: primaryResume ? String(primaryResume.id) : 'new',
-        // This is for the new resume input field.
         resumeName: '',
         coverLetterName: '',
     };
@@ -45,28 +74,22 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
         defaultValues: initialValues,
     });
 
-    // Watch the resume dropdown's value to conditionally show the file input.
     const selectedResumeId = useWatch({ control, name: 'resumeId' });
+    const resumeFile = useWatch({ control, name: 'resumeFile' });
+    const coverLetterFile = useWatch({ control, name: 'coverLetterFile' });
 
-    /**
-     * Handles the form submission, routing to the correct API
-     * based on whether a new resume is being uploaded.
-     */
     const onSubmit = async (formData) => {
         try {
             const isUploadingNewResume = formData.resumeId === 'new';
             const isUploadingCoverLetter = formData.coverLetterFile && formData.coverLetterFile.length > 0;
             
-            // If no grade is selected, set it to null
             if (formData.grade === '') {
                 formData.grade = null;
             }
 
-            // If uploading a new resume OR a new cover letter, we must use FormData.
             if (isUploadingNewResume || isUploadingCoverLetter) {
-                // Validate that a resume file is provided if 'new' is selected
                 if (isUploadingNewResume && (!formData.resumeFile || formData.resumeFile.length === 0)) {
-                    alert("Please select a resume file to upload.");
+                    showNotification("Please select a resume file to upload.", "error");
                     return;
                 }
 
@@ -78,7 +101,6 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                     data.append('resumeFile', formData.resumeFile[0]);
                     data.append('resumeName', formData.resumeName);
                 } else {
-                    // Use the existing resume's ID
                     data.append('resumeId', parseInt(formData.resumeId, 10));
                 }
 
@@ -87,15 +109,12 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                     data.append('coverLetterName', formData.coverLetterName);
                 }
                 
-                // retireve the rest of the form data except for the files
                 const { resumeFile, resumeId, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 data.append('jobPositionApplicationFormData', JSON.stringify(restOfFormData));
                 
-                // This API call now handles all file uploads
                 await applyForJobPositionWithNewUploads(data);
 
             } else {
-                // No new files being uploaded, so the simpler JSON API call is used.
                 const { resumeFile, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 const applicationDetails = {
                     candidateUsername: user.username,
@@ -116,171 +135,123 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
     };
 
     return (
-        <div className="fixed top-0 left-0 w-screen h-screen bg-black bg-opacity-60 flex justify-center items-center z-50">
-            <div className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-3xl font-bold text-gray-800">
-                        Apply for {position.course.name}
-                    </h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
-                </div>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <DisplayField label="UID" value={initialValues.uid} />
-                    <DisplayField label="Full Name" value={initialValues.fname + ' ' + initialValues.lname} />
-                    <DisplayField label="Pronouns" value={initialValues.pronouns} />
-                    <DisplayField label="Email" value={initialValues.email} />
-                    <DisplayField label="Major" value={initialValues.major} />
-                    <DisplayField label="Year" value={initialValues.year} />
-                    <DisplayField label={`Prior Employment For ${position.course.courseCode}`} value={initialValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
-                    <DisplayField label="Prior Employment For Any Other Course" value={initialValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
-                    <DisplayField 
-                        label="Prior Employment History" 
-                        value={
-                            initialValues.priorEmploymentHistory.length > 0
-                                ? initialValues.priorEmploymentHistory.map(item => item.courseCode).join(', ')
-                                : 'None'
-                        }
-                    />
-
-                    <Controller
-                        name="grade"
-                        control={control}
-                        rules={{ // Validation rules moved here
-                            required: position.gradeRequirement ? "Your grade for this course is required" : false,
-                            validate: (enteredGradeEnum) => {
-                                // enteredGradeEnum is passed as a Enum value (e.g., 'B_PLUS') whereas position.gradeRequirement is a string value (e.g., 'B+').
-                                // Here we convert enteredGradeEnum to a string value for comparison.
-                                if (!position.gradeRequirement || !enteredGradeEnum) return true;
-                                
-                                const enteredValue = letterToGradeValue[gradeEnumToStringValue[enteredGradeEnum]];
-                                const requiredValue = letterToGradeValue[position.gradeRequirement];
-
-                                if (enteredValue === undefined) return "Please enter a valid grade.";
-                                if (enteredValue < requiredValue) {
-                                    return `A grade of ${position.gradeRequirement} or higher is required.`;
+        <Dialog open={true} onClose={onClose} fullWidth maxWidth="md">
+            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h2" component="div">
+                    Apply for {position.course.name}
+                </Typography>
+                <IconButton onClick={onClose} disabled={isSubmitting}>
+                    <CloseIcon />
+                </IconButton>
+            </DialogTitle>
+            <DialogContent dividers>
+                <Box component="form" id="application-form" onSubmit={handleSubmit(onSubmit)}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+                        <DisplayField label="UID" value={initialValues.uid} />
+                        <DisplayField label="Full Name" value={`${initialValues.fname} ${initialValues.lname}`} />
+                        <DisplayField label="Pronouns" value={initialValues.pronouns} />
+                        <DisplayField label="Email" value={initialValues.email} />
+                        <DisplayField label="Major" value={initialValues.major} />
+                        <DisplayField label="Year" value={initialValues.year} />
+                        <DisplayField label={`Prior TA For ${position.course.courseCode}`} value={initialValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
+                        <DisplayField label="Prior TA For Other Courses" value={initialValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
+                        <DisplayField label="Prior TA History" value={initialValues.priorEmploymentHistory.length > 0 ? initialValues.priorEmploymentHistory.map(item => item.courseCode).join(', ') : 'None'} />
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Controller
+                            name="grade"
+                            control={control}
+                            rules={{
+                                required: position.gradeRequirement ? "Your grade for this course is required" : false,
+                                validate: (enteredGradeEnum) => {
+                                    if (!position.gradeRequirement || !enteredGradeEnum) return true;
+                                    const enteredValue = letterToGradeValue[gradeEnumToStringValue[enteredGradeEnum]];
+                                    const requiredValue = letterToGradeValue[position.gradeRequirement];
+                                    if (enteredValue === undefined) return "Please enter a valid grade.";
+                                    if (enteredValue < requiredValue) {
+                                        return `A grade of ${position.gradeRequirement} or higher is required.`;
+                                    }
+                                    return true;
                                 }
-                                return true;
-                            }
-                        }}
-                        render={({ field, fieldState }) => (
-                            <GradeSelector
-                                {...field} // Passes onChange, onBlur, value
-                                id="courseGrade"
-                                label={`Grade for ${position.course.courseCode}`}
-                                isOptional={!position.gradeRequirement}
-                                error={fieldState.error}
-                            />
-                        )}
-                    />
+                            }}
+                            render={({ field, fieldState }) => (
+                                <GradeSelector
+                                    {...field}
+                                    id="courseGrade"
+                                    label={`Grade for ${position.course.courseCode}`}
+                                    isOptional={!position.gradeRequirement}
+                                    error={fieldState.error}
+                                />
+                            )}
+                        />
 
-                    <div>
-                        <label htmlFor="resumeId" className="block text-sm font-medium text-gray-700">Resume</label>
-                        <select
-                            id="resumeId"
-                            {...register("resumeId")}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"
-                        >
-                            {existingResumes.length > 0 &&
-                                existingResumes.map(resume => (
-                                    <option key={resume.id} value={String(resume.id)}>
+                        <FormControl fullWidth>
+                            <InputLabel id="resume-select-label">Resume</InputLabel>
+                            <Select
+                                labelId="resume-select-label"
+                                id="resumeId"
+                                label="Resume"
+                                {...register("resumeId")}
+                                defaultValue={initialValues.resumeId}
+                            >
+                                {existingResumes.map(resume => (
+                                    <MenuItem key={resume.id} value={String(resume.id)}>
                                         {`${resume.name}${resume.isPrimary ? ' (Primary)' : ''}`}
-                                    </option>
-                                ))
-                            }
-                            <option value="new">Upload a new resume...</option>
-                        </select>
-                    </div>
+                                    </MenuItem>
+                                ))}
+                                <MenuItem value="new">Upload a new resume...</MenuItem>
+                            </Select>
+                        </FormControl>
 
-                    {selectedResumeId === 'new' && (
-                        <>
-                            <div>
-                                <label htmlFor="resumeName" className="block text-sm font-medium text-gray-700">
-                                    New Resume Name
-                                </label>
-                                <input
-                                    type="text"
-                                    id="resumeName"
-                                    {...register("resumeName", {
-                                        required: selectedResumeId === 'new' ? "Resume name is required." : false,
-                                    })}
-                                    className="mt-1 block w-full rounded-md border-gray-400 shadow-sm p-2"
+                        {selectedResumeId === 'new' && (
+                            <>
+                                <TextField
+                                    fullWidth
+                                    label="New Resume Name"
+                                    {...register("resumeName", { required: "Resume name is required." })}
+                                    error={!!errors.resumeName}
+                                    helperText={errors.resumeName?.message}
                                     placeholder="e.g., General Purpose Resume"
                                 />
-                                {errors.resumeName && <p className="text-red-500 text-sm mt-1">{errors.resumeName.message}</p>}
-                            </div>
+                                <Box>
+                                    <Button component="label" variant="outlined" startIcon={<UploadFileIcon />} fullWidth>
+                                        {resumeFile && resumeFile[0] ? resumeFile[0].name : 'Upload Resume (PDF)'}
+                                        <input type="file" hidden {...register("resumeFile", { validate: (v) => v.length > 0 || "A PDF resume is required." })} accept=".pdf" />
+                                    </Button>
+                                    {errors.resumeFile && <Typography color="error" variant="caption" sx={{ml: 2}}>{errors.resumeFile.message}</Typography>}
+                                </Box>
+                            </>
+                        )}
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Upload New Resume (PDF)
-                                </label>
-                                <input
-                                    type="file"
-                                    {...register("resumeFile", {
-                                        validate: (fileList) => (selectedResumeId !== 'new' || fileList.length > 0) || "A PDF resume is required to apply."
-                                    })}
-                                    accept=".pdf"
-                                    className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-rit-orange file:text-white hover:file:bg-orange-600"
-                                />
-                                {errors.resumeFile && <p className="text-red-500 text-sm mt-1">{errors.resumeFile.message}</p>}
-                            </div>
-                        </>
-                    )}
-
-                    <div className="pt-2">
-                        <label htmlFor="coverLetterName" className="block text-sm font-medium text-gray-700">
-                            Cover Letter Name (Optional)
-                        </label>
-                        <input
-                            type="text"
-                            id="coverLetterName"
+                        <TextField
+                            fullWidth
+                            label="Cover Letter Name (Optional)"
                             {...register("coverLetterName", {
-                                validate: (value) => {
-                                    const file = getValues("coverLetterFile");
-                                    // If a file is uploaded, a name is required.
-                                    if (file && file.length > 0 && !value) {
-                                        return "Name is required when a cover letter file is uploaded.";
-                                    }
-                                    return true;
-                                }
+                                validate: (v) => (getValues("coverLetterFile")?.length > 0 && !v) ? "Name is required for cover letter." : true
                             })}
-                            className="mt-1 block w-full rounded-md border-gray-400 shadow-sm p-2"
+                            error={!!errors.coverLetterName}
+                            helperText={errors.coverLetterName?.message}
                             placeholder="e.g., Application for SWEN-261"
                         />
-                        {errors.coverLetterName && <p className="text-red-500 text-sm mt-1">{errors.coverLetterName.message}</p>}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                            Upload Cover Letter (Optional, PDF)
-                        </label>
-                        <input
-                            type="file"
-                            {...register("coverLetterFile", {
-                                validate: (value) => {
-                                    const name = getValues("coverLetterName");
-                                    // If a name is entered, a file is required.
-                                    if (name && (!value || value.length === 0)) {
-                                        return "File is required when a cover letter name is provided.";
-                                    }
-                                    return true;
-                                }
-                            })}
-                            accept=".pdf"
-                            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-rit-orange file:text-white hover:file:bg-orange-600"
-                        />
-                        {errors.coverLetterFile && <p className="text-red-500 text-sm mt-1">{errors.coverLetterFile.message}</p>}
-                    </div>
-                    <div className="flex justify-end space-x-4 pt-4">
-                        <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 font-bold py-2 px-5 rounded-lg hover:bg-gray-300">
-                            Cancel
-                        </button>
-                        <button type="submit" disabled={isSubmitting} className="bg-rit-orange text-white font-bold py-2 px-5 rounded-lg hover:bg-orange-600 disabled:bg-gray-400">
-                            {isSubmitting ? 'Submitting...' : 'Submit Application'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                        <Box>
+                            <Button component="label" variant="outlined" startIcon={<UploadFileIcon />} fullWidth>
+                                {coverLetterFile && coverLetterFile[0] ? coverLetterFile[0].name : 'Upload Cover Letter (PDF)'}
+                                <input type="file" hidden {...register("coverLetterFile", {
+                                    validate: (v) => (getValues("coverLetterName") && v.length === 0) ? "File is required for cover letter." : true
+                                })} accept=".pdf" />
+                            </Button>
+                            {errors.coverLetterFile && <Typography color="error" variant="caption" sx={{ml: 2}}>{errors.coverLetterFile.message}</Typography>}
+                        </Box>
+                    </Box>
+                </Box>
+            </DialogContent>
+            <DialogActions sx={{ p: 3 }}>
+                <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+                <Button type="submit" form="application-form" variant="contained" color="primary" disabled={isSubmitting}>
+                    {isSubmitting ? <CircularProgress size={24} /> : 'Submit Application'}
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 }

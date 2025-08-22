@@ -1,8 +1,11 @@
+// src/components/applications/ApplicationProgressTracker.js
 import React from 'react';
-
-// =============================================================================
-// Redesigned Application Tracker Component (Final Segmented Bar Version)
-// =============================================================================
+import { Box, Typography, Tooltip, Chip, useTheme } from '@mui/material';
+import {
+  Close as CloseIcon,
+  Pause as PauseIcon,
+  PriorityHigh as PriorityHighIcon,
+} from '@mui/icons-material';
 
 const progressStages = [
   { status: 'APPLIED', label: 'Applied', tooltip: 'The student\'s application has been successfully submitted.' },
@@ -13,84 +16,93 @@ const progressStages = [
 ];
 
 const otherStates = {
-  REJECTED: { label: 'Rejected', color: 'bg-red-500', icon: '✕', tooltip: 'The student has been rejected for this position.' },
-  DECLINED_OFFER: { label: 'Declined', color: 'bg-red-500', icon: '✕', tooltip: 'The student has declined the offer for this position.' },
-  ONHOLD: { label: 'On Hold', color: 'bg-yellow-500', icon: '⏸', tooltip: 'The student has been placed on hold for this position.' },
-  INACTIVE: { label: 'Inactive', color: 'bg-gray-400', icon: '!', tooltip: 'The application is no longer active.' },
+  REJECTED: { label: 'Rejected', color: 'error', icon: <CloseIcon />, tooltip: 'The student has been rejected for this position.' },
+  DECLINED_OFFER: { label: 'Declined', color: 'error', icon: <CloseIcon />, tooltip: 'The student has declined the offer for this position.' },
+  ONHOLD: { label: 'On Hold', color: 'warning', icon: <PauseIcon />, tooltip: 'The student has been placed on hold for this position.' },
+  INACTIVE: { label: 'Inactive', color: 'default', icon: <PriorityHighIcon />, tooltip: 'The application is no longer active.' },
 };
 
 /**
- * A visual component that displays application progress in a horizontal segmented bar.
- * This version uses a simple, robust design that avoids layout bugs.
+ * A visual component that displays application progress using Material-UI components.
  * @param {object} props
  * @param {string} props.currentStep - The current status of the application (e.g., 'INTERVIEW', 'REJECTED').
  */
 export default function ApplicationTracker({ currentStep }) {
+  const theme = useTheme();
   const currentIndex = progressStages.findIndex(stage => stage.status === currentStep);
 
-  // Handle terminal states like Rejected or On Hold
+  // Handle terminal states like Rejected or On Hold using the Chip component
   if (otherStates[currentStep]) {
     const stateInfo = otherStates[currentStep];
     return (
-      <div className="w-full font-sans relative group">
-        {/* This div is now a full-width bar, matching the height of the progress bar */}
-        <div className={`w-full h-8 flex items-center justify-center space-x-2 rounded-full text-white text-sm font-semibold ${stateInfo.color}`}>
-          <span>{stateInfo.icon}</span>
-          <span>{stateInfo.label}</span>
-        </div>
-        
-        {/* Tooltip positioned relative to the full-width container */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
-          {stateInfo.tooltip}
-        </div>
-      </div>
+      <Tooltip title={stateInfo.tooltip} arrow>
+        <Chip
+          icon={stateInfo.icon}
+          label={stateInfo.label}
+          color={stateInfo.color}
+          sx={{
+            width: '100%',
+            height: '32px',
+            borderRadius: '16px',
+            fontWeight: 'bold',
+            fontSize: '0.875rem',
+          }}
+        />
+      </Tooltip>
     );
   }
 
-  // Handle in-progress/non-terminal stages like Applied or Interview
+  // Handle in-progress/non-terminal stages with a segmented bar
   return (
-    <div className="w-full font-sans">
-      {/* This container uses flexbox and a gap to create the segmented look */}
-      <div className="flex w-full h-8 space-x-1">
-        {progressStages.map((stage, index) => {
-          const isCompleted = currentIndex > -1 && index <= currentIndex;
-          
-          let stageColor = 'bg-gray-200';
-          let textColor = 'text-gray-500';
+    <Box sx={{ display: 'flex', width: '100%', height: '32px', gap: '4px' }}>
+      {progressStages.map((stage, index) => {
+        const isCompleted = currentIndex > -1 && index <= currentIndex;
+        const isCurrent = index === currentIndex;
 
-          if (isCompleted) {
-            stageColor = 'bg-gray-800'; 
-            textColor = 'text-white';
-          }
-          
-          // Add a special highlight for the very last completed step
-          if (index === currentIndex) {
-            stageColor = 'bg-rit-orange'; 
-          }
+        // Define colors based on the theme and completion status
+        let bgColor = theme.palette.mode === 'light' ? theme.palette.grey[300] : theme.palette.grey[800];
+        let textColor = theme.palette.text.secondary;
 
-          // Apply rounded corners to the first and last segments
-          const roundedClasses = 
-            index === 0 ? 'rounded-l-full' : 
-            index === progressStages.length - 1 ? 'rounded-r-full' : '';
+        if (isCompleted) {
+          bgColor = theme.palette.mode === 'light' ? theme.palette.grey[800] : theme.palette.grey[600];
+          textColor = theme.palette.getContrastText(bgColor);
+        }
+        
+        if (isCurrent) {
+          bgColor = theme.palette.primary.main;
+          textColor = theme.palette.primary.contrastText;
+        }
 
-          return (
-            <div key={stage.status} className="relative flex-1 group">
-              <div
-                className={`w-full h-full flex items-center justify-center transition-colors duration-500 ${stageColor} ${roundedClasses}`}
+        return (
+          <Tooltip key={stage.status} title={stage.tooltip} arrow>
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'background-color 0.5s ease',
+                backgroundColor: bgColor,
+                ...(index === 0 && { borderTopLeftRadius: 16, borderBottomLeftRadius: 16 }),
+                ...(index === progressStages.length - 1 && { borderTopRightRadius: 16, borderBottomRightRadius: 16 }),
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  color: textColor,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  px: 1,
+                  fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                }}
               >
-                <span className={`text-xs sm:text-sm font-semibold text-center z-10 px-2 ${textColor}`}>
-                  {stage.label}
-                </span>
-              </div>
-              
-              {/* Tooltip */}
-              <div className="absolute bottom-full mb-2 w-max max-w-xs px-3 py-1.5 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-30">
-                {stage.tooltip}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+                {stage.label}
+              </Typography>
+            </Box>
+          </Tooltip>
+        );
+      })}
+    </Box>
   );
 }
