@@ -14,6 +14,21 @@ import {
   Typography,
 } from '@mui/material';
 
+/**
+ * EditableCommentForm component for capturing user comments in a modal dialog.
+ *
+ * Displays a dialog with a text field for entering a comment, along with
+ * cancel and confirm actions. Useful for requiring user justification
+ * or feedback before proceeding with an action.
+ *
+ * @param {Object} props - Component props
+ * @param {boolean} props.isOpen - Whether the dialog is open
+ * @param {Function} props.onClose - Callback to close the dialog
+ * @param {Function} props.onConfirm - Callback fired with the entered comment when confirmed
+ * @param {string} props.title - Title text displayed at the top of the dialog
+ * @param {boolean} props.isProcessing - Whether the confirm action is processing (disables input and shows loader)
+ */
+
 export default function EditableCommentForm({ isOpen, onClose, onConfirm, title, isProcessing }) {
   const [comment, setComment] = useState('');
 

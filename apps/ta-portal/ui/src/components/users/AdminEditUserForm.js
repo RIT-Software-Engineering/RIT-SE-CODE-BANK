@@ -12,6 +12,18 @@ import EditEmployerAdminData from './EditEmployerAdminData';
 import { Box, Button, CircularProgress } from '@mui/material';
 import ConfirmationModal from '@/components/common/models/ConfirmationModal';
 
+/**
+ * AdminEditUserForm component for admins to edit user data.
+ *
+ * Displays different edit forms based on the user's role (candidate, employee, employer, or admin).
+ * Allows promoting an employer to an admin and terminating an employee's employment.
+ * Submits the form via API calls and triggers parent callbacks.
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.user - The user data to be edited
+ * @param {Function} props.onClose - Callback to close the form dialog
+ * @param {Function} props.onUpdateSuccess - Callback fired after successful user data update
+ */
 export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
     const { showNotification } = useNotification();
     const userRole = user?.role?.toUpperCase();

@@ -42,6 +42,13 @@ import {
   LocationOn as LocationIcon,
 } from '@mui/icons-material';
 
+/**
+ * A Requirement component to show a single requirement.
+ * @param {{ text: string, met: boolean }} props
+ * @prop {string} text The requirement text
+ * @prop {boolean} met Whether the requirement is met or not
+ * @returns {ReactElement} The requirement component
+ */
 const Requirement = ({ text, met }) => (
   <ListItem sx={{ py: 0.5, px: 0 }}>
     <ListItemIcon sx={{ minWidth: 'auto', mr: 1, color: met ? 'success.main' : 'error.main' }}>
@@ -51,6 +58,17 @@ const Requirement = ({ text, met }) => (
   </ListItem>
 );
 
+/**
+ * A card component to display a job position.
+ * @prop {JobPosition} position The job position to display
+ * @prop {(position: JobPosition) => void} onEdit A callback to edit the position
+ * @prop {(positionId: string) => void} onApprove A callback to approve the position
+ * @prop {(positionId: string) => void} onReject A callback to reject the position
+ * @prop {boolean} showEditAction Whether to show the edit action
+ * @prop {boolean} showApproveRejectActions Whether to show the approve and reject actions
+ * @prop {boolean} showTracker Whether to show the position tracker
+ * @returns {ReactElement} The card component
+ */
 export default function PositionsCard({
   position,
   onEdit,

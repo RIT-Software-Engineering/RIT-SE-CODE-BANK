@@ -12,11 +12,15 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
+
 /**
- * GroupedByCourseView renders a three-level accordion for the employer view:
- * 1. Course
- * 2. Employee
- * 3. Weekly Timecard
+ * GroupedByCourseView is a client-side component responsible for displaying
+ * a nested accordion view of timecards, grouped by course and then by employee.
+ * It is designed to be reusable for both Admin and Employer pages.
+ * @param {Object} props - The component's props.
+ * @param {Array} props.groupedData - The pre-grouped array of timecard data.
+ * Each element should be an object like: { courseId, courseTitle, employees: [...] }.
+ * The employees array should contain objects like: { user, timecards: [...] }.
  */
 export default function GroupedByCourseView({ groupedData }) {
     if (!groupedData || groupedData.length === 0) {

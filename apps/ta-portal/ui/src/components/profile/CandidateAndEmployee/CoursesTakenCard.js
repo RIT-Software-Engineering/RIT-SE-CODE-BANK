@@ -15,6 +15,13 @@ import {
 } from '@mui/material';
 import { gradeEnumToStringValue } from '@/constants/gradeConstants';
 
+/**
+ * A card component to display a list of courses taken by a candidate.
+ * @prop {JobPosition[]} coursesTaken The courses taken by the candidate
+ * @prop {(position: JobPosition) => void} onEdit A callback to edit the position
+ *
+ * @returns {ReactElement} The card component
+ */
 export default function CoursesTakenCard({ coursesTaken, onEdit }) {
   const gradedCourses = coursesTaken.filter(course => course.hasTaken === true);
 

@@ -31,6 +31,14 @@ import {
     UploadFile as UploadFileIcon
 } from '@mui/icons-material';
 
+/**
+ * A component that allows candidates to manage their resumes.
+ * 
+ * @param {object} props - Component props.
+ * @param {array} props.resumes - Array of candidate's resumes.
+ * @param {string} props.candidateUsername - Candidate's username.
+ * @param {function} props.onProfileRefresh - Function to be called when the resume list changes.
+ */
 export default function ResumeManager({ resumes, candidateUsername, onProfileRefresh }) {
   const { showNotification } = useNotification();
 

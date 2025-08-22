@@ -14,6 +14,18 @@ import {
   Typography,
 } from "@mui/material";
 
+/**
+ * A modal dialog for creating a new course.
+ * This component allows employers and administrators to create a new course to be used in job postings.
+ * The dialog includes fields for course code, name, description, and a submit button.
+ *
+ * @param {boolean} isOpen - Whether the dialog is visible.
+ * @param {function} onClose - Callback to close the dialog.
+ * @param {function} onCourseCreated - Callback fired with the newly created course when confirmed.
+ * @param {string} initialCode - The initial course code to use.
+ *
+ * @returns {ReactNode} The dialog component.
+ */
 export default function CreateCourseModal ({ isOpen, onClose, onCourseCreated, initialCode }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');

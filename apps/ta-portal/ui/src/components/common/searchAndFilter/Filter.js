@@ -29,6 +29,24 @@ const createInitialState = (config) => {
   return initialState;
 };
 
+
+/**
+ * Filter component provides a dynamic popover-based UI for selecting filters.
+ * Supports checkbox, select, and radio types, and integrates with parent components via callbacks.
+ * Can be controlled via a ref to get current filter values or reset filters programmatically.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Function} props.onFilterChange - Callback invoked with current filter values when applied
+ * @param {Array<Object>} props.filterConfig - Configuration for filters. Each object should have:
+ *   @param {string} filterConfig[].id - Unique ID for the filter
+ *   @param {string} filterConfig[].label - Label displayed for the filter
+ *   @param {'checkbox'|'select'|'radio'} filterConfig[].type - Type of filter control
+ *   @param {Array<string>} filterConfig[].options - Options for the filter
+ *   @param {string} [filterConfig[].placeholder] - Optional placeholder for select filters
+ *   @param {Function} [filterConfig[].optionLabel] - Optional function to render select option labels
+ *
+ */ 
 export const Filter = forwardRef(function FilterComponent({ onFilterChange, filterConfig }, ref) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedFilters, setSelectedFilters] = useState(

@@ -21,6 +21,12 @@ import {
 } from '@mui/icons-material';
 import { gradeEnumToStringValue } from '@/constants/gradeConstants';
 
+/**
+ * A component that displays a label and a value
+ * @param {string} label The label that describes the value
+ * @param {ReactNode} children The value to be displayed
+ * @returns {ReactElement}
+ */
 const DetailItem = ({ label, children }) => (
   <Box>
     <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -32,6 +38,16 @@ const DetailItem = ({ label, children }) => (
   </Box>
 );
 
+/**
+ * A dialog component that displays a job position's details in a read-only format.
+ * The dialog displays the position's name, description, logistics, and requirements.
+ * It takes in a `position` object as a prop, which is the job position to be displayed.
+ * The dialog also takes in an `onClose` function, which is called when the dialog is closed.
+ * @param {Object} props - Component props
+ * @param {Object} props.position - The job position to be displayed
+ * @param {Function} props.onClose - Callback to close the dialog
+ * @returns {ReactElement}
+ */
 export default function ViewablePositionForm({ position, onClose }) {
   if (!position) return null;
   console.log(position);

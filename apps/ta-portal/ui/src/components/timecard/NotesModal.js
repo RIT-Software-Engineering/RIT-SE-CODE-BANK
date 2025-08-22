@@ -2,6 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Box, Paper, Typography, TextField, Button } from '@mui/material';
 
+/**
+ * A modal component for editing notes associated with a particular day entry
+ * in the timecard.
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.dayEntry - The day entry object with the date and notes
+ * that are displayed in the modal.
+ * @param {boolean} props.isOpen - Whether the modal is visible.
+ * @param {function} props.onClose - Function to call when the modal is closed.
+ * @param {function} props.onSave - Function to call when the save button is
+ * clicked. It is passed the date and updated notes text.
+ */
 export default function NotesModal({ dayEntry, isOpen, onClose, onSave }) {
     const [noteInput, setNoteInput] = useState('');
 

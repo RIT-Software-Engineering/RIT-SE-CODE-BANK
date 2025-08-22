@@ -36,7 +36,19 @@ import {
     Article as DocumentIcon
 } from '@mui/icons-material';
 
-
+/**
+ * ApplicationCard component for displaying and managing a candidate's job application for the employer/admin.
+ * Provides options to view candidate details, review application documents, track application status, and 
+ * update candidate status (interview, offer, reject, hire).
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.currentUser - The currently logged-in user
+ * @param {Object} props.jobPosition - The job position associated with the application
+ * @param {Object} props.application - The candidate's application data
+ * @param {Function} [props.onStatusChange] - Optional callback triggered after status change
+ * @param {Function} [props.onHire] - Optional callback when candidate is hired
+ * @param {boolean} [props.showHireAction=false] - Whether to show the "Hire Candidate" option
+ */
 export default function ApplicationCard({
   currentUser,
   jobPosition,

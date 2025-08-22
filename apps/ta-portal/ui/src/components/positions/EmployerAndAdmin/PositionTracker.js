@@ -22,6 +22,14 @@ const otherStates = {
   INACTIVE: { label: 'Inactive', color: 'default', icon: <PriorityHighIcon />, tooltip: 'This position is no longer active.' },
 };
 
+/**
+ * A visual component that displays the position's progress status using Material-UI components.
+ * The component supports rendering a segmented bar for in-progress stages and a Chip for terminal
+ * stages like Rejected or On Hold.
+ *
+ * @param {object} props
+ * @param {string} props.currentStep - The current status of the position (e.g., 'PENDING_APPROVAL', 'OPEN', 'FILLED', 'ACTIVE').
+ */
 export default function PositionTracker({ currentStep }) {
   const theme = useTheme();
   const currentIndex = progressStages.findIndex(stage => stage.status === currentStep);

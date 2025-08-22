@@ -8,6 +8,7 @@ import { Tooltip as MuiTooltip } from '@mui/material';
  * This component is a simple wrapper around Material-UI's Tooltip for consistency.
  * @param {React.ReactNode} props.children - The element to hover over. This element must be able to accept a ref.
  * @param {string} props.text - The text to display in the tooltip.
+ * @param {...any} props - Any additional props passed to Material-UI Tooltip
  */
 export default function Tooltip({ children, text, ...props }) {
   return (

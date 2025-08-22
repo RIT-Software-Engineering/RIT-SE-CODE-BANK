@@ -18,6 +18,20 @@ import {
 
 const steps = ["Course Details", "Position Logistics", "Schedule"];
 
+/**
+ * A multi-step form for creating or editing a job position.
+ * 
+ * The form is divided into three steps:
+ * 1. Course Details: This step includes fields for course code, section number, and semester code.
+ * 2. Position Logistics: This step includes fields for location, maximum number of TAs, grade requirement, and course taken requirement.
+ * 3. Schedule: This step includes fields for start date, end date, and schedule (with days of the week and start and end times).
+ * 
+ * @param {function} onSubmit - The function to call when the form is submitted.
+ * @param {function} onClose - The function to call when the form is closed.
+ * @param {boolean} isEditMode - Whether the form is in edit mode or not.
+ * @param {object} job - The job object to edit, if `isEditMode` is true.
+ * @param {object} formMethods - The form methods object from `useForm`.
+ */
 export default function MultiStepForm({
   onSubmit,
   onClose,

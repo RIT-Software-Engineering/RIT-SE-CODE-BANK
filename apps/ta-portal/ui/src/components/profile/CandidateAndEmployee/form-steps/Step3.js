@@ -7,6 +7,7 @@ import { Close } from "@mui/icons-material";
 
 /**
  * Component for Step 3 of the Candidate and Employee form
+ * This form step includes fields for prior TA/Grader experience
  * @param {object} props - The component props
  * @param {object[]} props.coursesWorked - The user's course data array
  * @param {string} props.workedSearch - The search query for worked courses

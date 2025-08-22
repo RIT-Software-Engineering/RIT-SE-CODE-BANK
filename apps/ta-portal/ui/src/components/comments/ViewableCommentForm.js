@@ -20,6 +20,23 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
+/**
+ * ViewableCommentForm component for displaying a history of comments related to an item.
+ *
+ * Fetches and renders comments from the database for a given foreign key and table.
+ * Shows comment details such as status, author (for admin/employer roles), timestamp,
+ * and the comment text. Also handles loading and error states gracefully.
+ *
+ * @param {Object} props - Component props
+ * @param {string|number} props.foreignKey - Identifier of the related item to fetch comments for
+ * @param {string} props.foreignTableName - Name of the database table to query for comments
+ * @param {string} props.itemTitle - Title of the related item, displayed in the dialog header
+ * @param {string} [props.itemSubtitle] - Optional subtitle for additional context
+ * @param {Object.<string, string>} props.statusEnumMap - Map of status values to human-readable labels
+ * @param {string} props.userRole - Role of the current user (e.g., "ADMIN", "EMPLOYER", "CANDIDATE")
+ * @param {Function} props.onClose - Callback to close the dialog
+ */
+
 export default function ViewableCommentForm({ 
   foreignKey, 
   foreignTableName,

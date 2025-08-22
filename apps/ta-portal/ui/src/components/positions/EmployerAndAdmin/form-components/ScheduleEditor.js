@@ -18,6 +18,17 @@ import {
 } from "@mui/material";
 import { Delete as TrashIcon } from "@mui/icons-material";
 
+/**
+ * ScheduleEditor component allows editing a weekly schedule with days and time ranges.
+ * Users can add, update, and remove schedule entries, and the changes are
+ * propagated to a parent component via `onSchedulesChange`.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Array<{dayOfWeek: string, startTime: string, endTime: string, id?: string|number}>} [props.initialSchedules=[]] - Initial schedule entries
+ * @param {function(Array): void} props.onSchedulesChange - Callback triggered when schedules are updated
+ */
+
 export default function ScheduleEditor({
   initialSchedules = [],
   onSchedulesChange,

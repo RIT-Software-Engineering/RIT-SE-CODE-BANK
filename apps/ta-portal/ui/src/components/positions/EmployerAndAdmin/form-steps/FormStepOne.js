@@ -13,6 +13,27 @@ import {
   Link as MuiLink,
 } from "@mui/material";
 
+/**
+ * The first step in the multi-step form for creating a new job position.
+ *
+ * Includes fields for:
+ * - Course Code (Autocomplete)
+ * - Semester Code (number)
+ * - Section Number (number)
+ *
+ * If the course code is not already in the database, the user is given the option
+ * to create a new course. If the section number is already in use, the user is given
+ * an error message.
+ *
+ * @param {Object} props - The props for the component.
+ * @param {function} props.register - The register function from react-hook-form.
+ * @param {function} props.control - The control function from react-hook-form.
+ * @param {Object} props.errors - The errors object from react-hook-form.
+ * @param {function} props.getValues - The getValues function from react-hook-form.
+ * @param {function} props.setValue - The setValue function from react-hook-form.
+ * @param {boolean} props.isEditMode - Whether the form is in edit mode or not.
+ * @returns {ReactNode} The form step component.
+ */
 export default function FormStepOne({
   register,
   control,

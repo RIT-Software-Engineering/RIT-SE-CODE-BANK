@@ -5,7 +5,8 @@ import InputField from "../../../common/fields/InputField";
 import { Typography, Box } from "@mui/material";
 
 /**
- * Component for the first step (and currently only step) of the form for employers and admins
+ * Component for the first step (and currently only step) of the form for employers and admins.
+ * This form step includes fields for personal information.
  * @param {object} props - The component props.
  * @param {function} props.register - The form register function.
  * @param {object} props.errors - The form errors object.

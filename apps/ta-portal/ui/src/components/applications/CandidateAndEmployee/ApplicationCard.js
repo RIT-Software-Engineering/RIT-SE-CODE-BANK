@@ -34,6 +34,16 @@ import {
   LocationOn as LocationIcon,
 } from '@mui/icons-material';
 
+/**
+ * Component for displaying and managing a candidate's job application. Provides options to view the job position's details,
+ * review application documents, track application status, and update candidate status (i.e. interview, offer, reject, hire).
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.currentUser - The currently logged-in user object
+ * @param {Object} props.application - The job application object (also contains the job position it's associated with)
+ * @param {Function} props.refreshUserProfile - Callback to refresh user data in the parent component
+ * @param {Function} [props.onStatusChange] - Optional callback triggered after application status changes
+ */
 export default function CandidateApplicationCard({
   currentUser,
   application,

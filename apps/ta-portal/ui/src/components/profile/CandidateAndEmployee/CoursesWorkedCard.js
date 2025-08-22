@@ -13,6 +13,13 @@ import {
   Typography,
 } from '@mui/material';
 
+/**
+ * A card component to display a list of courses a candidate has previously worked on.
+ * @prop {JobPosition[]} coursesTaken The courses taken by the candidate
+ * @prop {(position: JobPosition) => void} onEdit A callback to edit the position
+ *
+ * @returns {ReactElement} The card component
+ */
 export default function CoursesWorkedCard({ coursesTaken, onEdit }) {
   const coursesWorked = coursesTaken.filter(
     (course) => course.wasPriorEmployee === true

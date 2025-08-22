@@ -10,6 +10,12 @@ import {
   Divider,
 } from '@mui/material';
 
+/**
+ * A component that displays a label and a value
+ * @param {string} label The label that describes the value
+ * @param {string} value The value to be displayed
+ * @returns {ReactElement}
+ */
 const InfoItem = ({ label, value }) => (
   <Box sx={{ py: 1 }}>
     <Typography variant="body2" color="text.secondary">
@@ -21,6 +27,14 @@ const InfoItem = ({ label, value }) => (
   </Box>
 );
 
+/**
+ * A component that displays a user's profile information.
+ * @param {object} profileData The user's profile data, as returned by the API.
+ * @param {boolean} isEmployerOrAdmin True if the user is an employer or admin, false otherwise.
+ * @param {boolean} isCandidateOrEmployee True if the user is a candidate or employee, false otherwise.
+ * @param {function} onEdit Function to call when the edit button is clicked. This is used to open the edit profile modal.
+ * @returns {ReactElement} A React Element representing the ProfileInfoCard.
+ */
 export default function ProfileInfoCard({
   profileData,
   isEmployerOrAdmin,

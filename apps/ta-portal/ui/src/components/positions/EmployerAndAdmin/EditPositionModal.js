@@ -11,6 +11,13 @@ import {
   Typography,
 } from "@mui/material";
 
+/**
+ * Formats a date string into a format that can be used as an input value.
+ * If the input string is invalid, returns an empty string.
+ *
+ * @param {string} dateString - The date string to format.
+ * @returns {string} A string representing the date in the format "YYYY-MM-DD".
+ */
 const formatDateToInputValue = (dateString) => {
   if (!dateString) return "";
   try {
@@ -36,6 +43,25 @@ const newJobTemplate = {
   courseTakenRequirement: false,
 };
 
+/**
+ * A modal component for creating or editing a job position.
+ *
+ * The modal displays a form with fields for the job position's details,
+ * including the location, maximum number of TAs, start and end dates,
+ * job schedules, course code, job position status, section number, and
+ * semester code. The form also includes fields for the grade requirement
+ * and course taken requirement.
+ *
+ * The modal takes in a `job` object as a prop, which is the job position to
+ * be edited. If `job` is null, the modal is in create mode. The modal
+ * also takes in an `onClose` function, which is called when the modal is
+ * closed (either by clicking the close button or by submitting the form).
+ * The modal also takes in an `onSave` function, which is called when the
+ * form is submitted and the job position data is valid.
+ *
+ * The modal uses the `useForm` hook from `react-hook-form` to manage the
+ * form state.
+ */
 export default function EditPositionModal({
   job,
   onClose,

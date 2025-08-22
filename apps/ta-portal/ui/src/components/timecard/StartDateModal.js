@@ -7,6 +7,17 @@ import { Modal, Box, Paper, Typography, TextField, Button, CircularProgress } fr
 // Helper to get today's date in YYYY-MM-DD format
 const getTodayString = () => new Date().toISOString().slice(0, 10);
 
+/**
+ * StartDateModal is a client-side component that displays a modal dialog
+ * for selecting the starting date of a new timecard week.
+ *
+ * @param {Object} props - Component props
+ * @param {boolean} props.isOpen - Whether the dialog is open
+ * @param {function} props.onClose - Callback to close the dialog
+ * @param {function} props.onConfirm - Callback fired with the selected start date
+ * @param {boolean} props.isSubmitting - Whether the confirm action is in progress
+ * @returns {React.ReactElement} - A Modal component with a form for selecting a date
+ */
 export default function StartDateModal({ isOpen, onClose, onConfirm, isSubmitting }) {
     const [startDate, setStartDate] = useState(getTodayString());
     const [error, setError] = useState('');

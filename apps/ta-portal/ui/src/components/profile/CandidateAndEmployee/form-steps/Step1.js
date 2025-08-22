@@ -5,6 +5,15 @@ import InputField from "../../../common/fields/InputField";
 import SelectField from "../../../common/fields/SelectField";
 import { MenuItem, Typography, Box, Divider } from "@mui/material";
 
+/**
+ * Component for Step 1 of the Candidate and Employee form.
+ * This form step includes fields for personal information and academic details.
+ * @param {function} register - The form register function.
+ * @param {object} errors - The form errors object.
+ * @param {string} watchedStatus - The watched value of the 'graduateStatus' field.
+ * @param {function} watch - The form watch function.
+ * @returns {JSX.Element} The rendered Step1 component.
+ */
 export default function Step1CandidateAndEmployee({
   register,
   errors,

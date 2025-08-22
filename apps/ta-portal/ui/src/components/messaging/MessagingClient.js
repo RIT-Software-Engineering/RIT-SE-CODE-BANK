@@ -14,6 +14,15 @@ import {
   Typography,
 } from "@mui/material";
 
+/**
+ * A component that allows users to send a direct message to a Slack user by email.
+ * The component will prompt the user to connect their Slack account if they haven't already.
+ * Once connected, the user can enter the recipient's email and a message to send.
+ * The component will display success or error messages to the user.
+ *
+ * @param {object} props
+ * @param {string} [props.initialEmail] The email address to pre-fill in the form.
+ */
 export default function MessagingClient({ initialEmail = "" }) {
   const [slackToken, setSlackToken] = useState(null);
   const [teamId, setTeamId] = useState(null);

@@ -912,7 +912,6 @@ router.put('/terminate-employee/:username', async (req, res) => {
  * @route   POST /api/db/resume
  * @desc    Adds a new resume for a candidate.
  * @access  Public
- *
  */
 router.post('/resume', upload.single('resumeFile'), async (req, res) => {
     try {
@@ -1075,6 +1074,11 @@ router.get('/comments', async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/db/create-course
+ * @desc    Creates a new course with the provided data.
+ * @access  Public
+ */
 router.post("/create-course", async (req, res) => {
   try {
     const courseData = req.body;
@@ -1111,7 +1115,11 @@ router.post("/upsert-timecard", async (req, res) => {
   }
 });
 
-
+/**
+ * @route   GET /api/db/timecard/all/:jobPositionHistoryId
+ * @desc    Retrieves all timecards for a specific job position history.
+ * @access  Public
+ */
 router.get('/timecard/all/:jobPositionHistoryId', async (req, res) => {
     try {
         const { jobPositionHistoryId } = req.params;

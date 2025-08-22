@@ -11,6 +11,21 @@ import {
   Typography,
 } from '@mui/material';
 
+/**
+ * GradeSelector component for selecting a grade from predefined options.
+ *
+ * Renders a Material-UI Select input with grade options and optional error handling.
+ * Can display an optional label if the grade selection is not required.
+ *
+ * @param {Object} props - Component props
+ * @param {string|null} props.value - Current selected grade value
+ * @param {Function} props.onChange - Callback triggered when a new grade is selected
+ * @param {string} props.id - Unique ID for the Select input
+ * @param {string} props.label - Label displayed for the Select input
+ * @param {boolean} [props.isOptional=false] - Whether selecting a grade is optional
+ * @param {Object} [props.error] - Error object containing message to display if invalid
+ */
+
 export default function GradeSelector({ value, onChange, id, label, isOptional = false, error }) {
   
   const handleChange = (event) => {

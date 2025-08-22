@@ -6,6 +6,18 @@ import GradeSelector from "@/components/common/fields/GradeSelector";
 import { Typography, Box, Paper, IconButton, Chip } from "@mui/material";
 import { Close } from "@mui/icons-material";
 
+/**
+ * Component for Step 2 of the Candidate and Employee form.
+ * Displays a list of taken courses and allows adding, updating, and removing courses.
+ * @param {object[]} coursesTaken - The user's course data array
+ * @param {string} takenSearch - The search query for taken courses
+ * @param {function} setTakenSearch - The function to update the search query for taken courses
+ * @param {object[]} courseOptions - The list of available course options
+ * @param {function} addCourseTaken - The function to add a course to the user's taken courses
+ * @param {function} updateCourseGrade - The function to update a course's grade
+ * @param {function} removeCourseTaken - The function to remove a course from the user's taken courses
+ * @returns {JSX.Element} The rendered Step2 component
+ */
 export default function Step2CandidateAndEmployee({
   coursesTaken,
   takenSearch,

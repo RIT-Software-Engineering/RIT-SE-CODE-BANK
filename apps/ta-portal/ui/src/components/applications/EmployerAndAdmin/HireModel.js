@@ -17,6 +17,17 @@ import {
 } from '@mui/material';
 import { Close as XIcon } from '@mui/icons-material';
 
+/**
+ * HireModal component for finalizing the hiring process of a candidate.
+ * Displays candidate and job position details, collects an Employee ID
+ * and a hiring comment, validates the form, and triggers confirmation.
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.application - Candidate's application data
+ * @param {Function} props.onClose - Callback to close the modal
+ * @param {Function} props.onConfirm - Callback fired when hire is confirmed, receives (employeeId: number, comment: string)
+ * @param {boolean} props.isProcessing - Whether a hire action is currently being processed (disables inputs/buttons)
+ */
 export default function HireModal({ application, onClose, onConfirm, isProcessing }) {
   const [employeeId, setEmployeeId] = useState('');
   const [comment, setComment] = useState('');

@@ -15,6 +15,19 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, Article as DocumentIcon } from '@mui/icons-material';
 
+/**
+ * ViewableApplicationForm component for displaying a submitted job application.
+ *
+ * Renders candidate details, academic info, prior employment history,
+ * and links to submitted resume and cover letter (if available).
+ * Used by admins/reviewers to view applications in a read-only format.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Object} props.position - The job position related to the application
+ * @param {Object} props.application - The candidate's submitted application data
+ * @param {Function} props.onClose - Callback to close the dialog
+ */
 export default function ViewableApplicationForm({position, application, onClose }) {
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 

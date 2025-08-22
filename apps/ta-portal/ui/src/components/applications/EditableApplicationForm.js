@@ -26,6 +26,20 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, UploadFile as UploadFileIcon } from '@mui/icons-material';
 
+/**
+ * EditableApplicationForm component for candidates to apply for a job position.
+ *
+ * Displays user and course information, validates grade and employment history,
+ * allows uploading or selecting a resume, and optionally attaching a cover letter.
+ * Submits the application via API calls and triggers parent callbacks.
+ *
+ * @component
+ * @param {Object} props - Component props
+ * @param {Object} props.user - The currently logged-in user (candidate)
+ * @param {Object} props.position - The job position being applied for
+ * @param {Function} props.onClose - Callback to close the form dialog
+ * @param {Function} props.onApplySuccess - Callback fired after successful application
+ */
 export default function EditableApplicationForm({ user, position, onClose, onApplySuccess }) {
     const { showNotification } = useNotification();
     const existingResumes = user?.candidate?.resumes || [];

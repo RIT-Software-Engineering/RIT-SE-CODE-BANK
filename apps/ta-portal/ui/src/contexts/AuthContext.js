@@ -4,6 +4,19 @@ import { getUserProfile } from "@/services/db-apis";
 
 const AuthContext = createContext(null);
 
+/**
+ * The AuthProvider component provides authentication state and functions to its children.
+ *
+ * When the component mounts, it attempts to restore a user session from local storage.
+ * If the stored username is valid, the user profile is fetched and stored in the component
+ * state. The component also provides functions to refresh the user profile and log out.
+ *
+ * The component memoizes its context value to prevent unnecessary re-renders in consumers.
+ *
+ * @param {ReactNode} children The children of the component.
+ *
+ * @returns {ReactElement} The AuthContext.Provider component with the context value.
+ */
 export default function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);

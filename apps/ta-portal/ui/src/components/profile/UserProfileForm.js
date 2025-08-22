@@ -19,6 +19,17 @@ import Step3CandidateAndEmployee from './CandidateAndEmployee/form-steps/Step3';
 import Step1EmployerAndAdmin from './EmployerAndAdmin/form-steps/Step1';
 
 
+/**
+ * Form component for editing user profile.
+ * @param {object} props - The component props.
+ * @param {object} props.user - The user data to be edited.
+ * @param {'edit' | 'create'} props.mode - The mode of the form, either edit or create.
+ * @param {function} props.onClose - Function to call when the form is closed.
+ * @param {object[]} props.courseOptions - The list of available courses.
+ * @param {function} props.onUpdateSuccess - Callback function when the form is successfully submitted.
+ * @param {string} props.editingSection - The section being edited, only applicable for candidate/employee users.
+ * @param {object[]} props.allUsers - A list of all users in the system.
+ */
 export default function UserProfileForm({
   user,
   mode,

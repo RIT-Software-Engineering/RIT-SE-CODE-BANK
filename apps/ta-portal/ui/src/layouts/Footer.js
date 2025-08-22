@@ -3,6 +3,12 @@
 
 import { Box, Typography } from '@mui/material';
 
+
+/**
+ * Footer component, used to display information about the Rochester Institute of Technology at the bottom of each page.
+ * 
+ * @returns {JSX.Element} The JSX element representing the footer.
+ */
 export default function Footer() {
   return (
     <Box

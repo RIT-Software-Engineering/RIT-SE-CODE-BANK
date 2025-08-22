@@ -37,6 +37,7 @@ import { ROLES } from "@/configuration/dashboard.config";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeContext } from "@/styles/ThemeRegistry";
 
+// Define header links
 const HEADER_LINKS = [
   {
     text: "Home",
@@ -130,6 +131,16 @@ const HEADER_LINKS = [
   },
 ];
 
+
+/**
+ * Header component
+ *
+ * This component is used to display the top-level navigation bar and drawer
+ * for the application. It provides links to the main sections of the app, as
+ * well as a toggle for the theme and a logout button.
+ *
+ * @returns {JSX.Element} The Header component
+ */
 export default function Header() {
   const { currentUser, logout } = useAuth();
   const router = useRouter();

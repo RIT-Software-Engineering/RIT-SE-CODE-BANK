@@ -83,6 +83,7 @@ export default function ProdLogin({
       showNotification(response.message, "success");
       setView("login");
     } catch (err) {
+      console.error("Password reset failed:", err);
       showNotification(
         err.message || "An error occurred during password reset.",
         "error"

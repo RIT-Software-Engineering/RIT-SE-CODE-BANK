@@ -15,6 +15,21 @@ import {
   FormLabel,
 } from '@mui/material';
 
+/**
+ * A form component for selecting prerequisites for a job position.
+ *
+ * This component renders two parts:
+ * 1. A checkbox for requiring the course as a prerequisite.
+ * 2. A radio group for selecting the graduate status requirement.
+ *
+ * The component uses the `react-hook-form` library to register the fields and
+ * handle form state.
+ *
+ * @prop {function} register - The `register` function from `react-hook-form`.
+ * @prop {object} control - The `control` object from `react-hook-form`.
+ *
+ * @returns A JSX element containing the prerequisites form fields.
+ */
 export default function PrerequisiteCheckboxes({ register, control }) {
   if (!control || !register) {
     return null;

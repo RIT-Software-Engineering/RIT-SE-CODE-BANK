@@ -13,6 +13,21 @@ import {
   TextField,
 } from "@mui/material";
 
+/**
+ * The second step in the multi-step form for creating a new job position.
+ *
+ * Includes fields for:
+ * - Prerequisites (PrerequisiteCheckboxes)
+ * - Minimum grade requirement (GradeSelector)
+ * - Location (TextField)
+ * - Location type (Select)
+ * - Max TA's (TextField)
+ *
+ * @prop {function} register - The register function from react-hook-form.
+ * @prop {object} control - The control object from react-hook-form.
+ * @prop {object} errors - The errors object from react-hook-form.
+ * @returns {ReactNode} The form step component.
+ */
 export default function FormStepTwo({ register, control, errors }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>

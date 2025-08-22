@@ -37,17 +37,28 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+/**
+ * Renders the main applications management page for Administrators.
+ * This page features two primary views accessible via tabs:
+ * 1. "My Applications": Allows admins to view and manage applications for positions they own,
+ * acting in an employer capacity.
+ * 2. "Ready to Hire": Shows a system-wide list of candidates who have accepted offers and are
+ * awaiting final processing by an admin to be hired.
+ */
 export default function AdminApplicationsPage() {
+  // Core hooks for authentication, notifications, and component references.
   const { currentUser } = useAuth();
   const { showNotification } = useNotification();
   const filterRef = useRef();
   const searchParams = useSearchParams();
 
+  // Initialize active tab based on URL search parameter for linkability.
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
     return tabParam === 'hiring' ? 1 : 0;
   });
 
+  // State for the "My Applications" tab.
   const [displayData, setDisplayData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -61,16 +72,23 @@ export default function AdminApplicationsPage() {
     hasApplications: '',
   });
 
+  // State for the "Ready to Hire" tab.
   const [hiringApplications, setHiringApplications] = useState([]);
   const [hiringLoading, setHiringLoading] = useState(false);
   const [hiringError, setHiringError] = useState(null);
 
+  // State for the hiring modal functionality.
   const [isHireModalOpen, setIsHireModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Effect to fetch and configure filters on component mount or when the user changes.
   useEffect(() => {
     if (currentUser?.username) {
+      /**
+       * Fetches semester codes associated with the admin's own positions
+       * to dynamically generate and set the filter configuration.
+       */
       const fetchAndSetConfig = async () => {
         try {
           const semesterCodes = await getSemesterCodesForEmployer(
@@ -80,13 +98,20 @@ export default function AdminApplicationsPage() {
           setFilterConfig(newConfig);
         } catch (err) {
           console.error('Failed to load filter configuration:', err);
-          setFilterConfig(generateApplicationsFilterConfig([]));
+          setFilterConfig(generateApplicationsFilterConfig([])); // Set a default config on error
         }
       };
       fetchAndSetConfig();
     }
   }, [currentUser]);
 
+  /**
+   * Fetches, processes, and displays applications for the positions owned by the admin.
+   * This function handles searching, filtering, and grouping the data by semester.
+   * @param {string} search - The current search term.
+   * @param {string} searchType - The category to search by ('course' or 'student').
+   * @param {object} filters - The active filter object.
+   */
   const updateApplicationsView = useCallback(
     async (search, searchType, filters) => {
       if (!currentUser?.username) return;
@@ -101,6 +126,7 @@ export default function AdminApplicationsPage() {
           currentUser.username
         );
 
+        // Process positions to convert grade enums to human-readable strings.
         const positions = data.map((position) => {
           const applicationsHistory =
             position.jobPositionApplicationHistory.map((app) => {
@@ -121,6 +147,7 @@ export default function AdminApplicationsPage() {
           };
         });
 
+        // Group the flattened list of positions by their semester code for display in accordions.
         const groupedBySemester = positions.reduce((acc, position) => {
           const semesterCode = position.semesterCode || 'Uncategorized';
           if (!acc[semesterCode]) {
@@ -141,12 +168,17 @@ export default function AdminApplicationsPage() {
     [currentUser]
   );
 
+  /**
+   * Fetches applications from across the system that have the 'ACCEPTED_OFFER' status,
+   * preparing them for the "Ready to Hire" tab.
+   */
   const fetchHiringApplications = useCallback(async () => {
     setHiringLoading(true);
     setHiringError(null);
 
     try {
       const applications = await getCandidateApplicationsAsAdmin();
+      // Process applications to format grade data.
       const processedApplications = applications.map((app) => {
         if (app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]) {
           return {
@@ -165,6 +197,7 @@ export default function AdminApplicationsPage() {
     }
   }, []);
 
+  // Main data fetching effect that runs when the active tab or user context changes.
   useEffect(() => {
     if (currentUser) {
       if (activeTab === 0) {
@@ -173,10 +206,19 @@ export default function AdminApplicationsPage() {
         fetchHiringApplications();
       }
     }
+    // Disabling exhaustive-deps because we intentionally want this to run only when the tab or user changes,
+    // not on every change to search/filter state, which are handled by their own callbacks.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, activeTab]);
 
+  /**
+   * Handles the user switching between the "My Applications" and "Ready to Hire" tabs.
+   * Resets all search and filter states to provide a clean slate for the new view.
+   * @param {React.SyntheticEvent} event - The event source of the callback.
+   * @param {number} newValue - The index of the newly selected tab.
+   */
   const handleTabChange = (event, newValue) => {
+    // Reset search and filter states.
     setSearchTerm('');
     setSearchBy('course');
     const initialFilters = {
@@ -187,6 +229,7 @@ export default function AdminApplicationsPage() {
     };
     setAppliedFilters(initialFilters);
 
+    // Clear all filters in the child Filter component via its ref.
     if (filterRef.current && typeof filterRef.current.clearAll === 'function') {
       filterRef.current.clearAll();
     }
@@ -194,15 +237,28 @@ export default function AdminApplicationsPage() {
     setActiveTab(newValue);
   };
 
+  /**
+   * Callback function passed to child ApplicationCard components.
+   * Triggers a refresh of the "My Applications" view when a status is changed.
+   */
   const handleStatusChange = () => {
     updateApplicationsView(searchTerm, searchBy, appliedFilters);
   };
 
+  /**
+   * Handles updates from the Filter component, triggering a data refresh.
+   * @param {object} filters - The new set of applied filters.
+   */
   const handleFilterChange = (filters) => {
     setAppliedFilters(filters);
     updateApplicationsView(searchTerm, searchBy, filters);
   };
 
+  /**
+   * Updates the search term state as the user types in the search bar.
+   * Clears the view if the search term is empty.
+   * @param {string} newTerm - The new value from the search input.
+   */
   const handleSearchTermChange = (newTerm) => {
     setSearchTerm(newTerm);
     if (newTerm === '') {
@@ -210,15 +266,25 @@ export default function AdminApplicationsPage() {
     }
   };
 
+  /**
+   * Handles changes to the search category dropdown (e.g., 'By Course', 'By Student').
+   * Resets the search term if the category is changed while a search term exists.
+   * @param {React.ChangeEvent<HTMLInputElement>} event - The change event from the Select component.
+   */
   const handleSearchByChange = (event) => {
     const newSearchBy = event.target.value;
     setSearchBy(newSearchBy);
+    // If a search term exists, clear it to prevent mismatched searches.
     if (searchTerm !== '') {
       setSearchTerm('');
       updateApplicationsView('', newSearchBy, appliedFilters);
     }
   };
 
+  /**
+   * Triggers a search and data refresh when the search form is submitted.
+   * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
+   */
   const handleSearch = (e) => {
     e.preventDefault();
     const latestFilters = filterRef.current.getFilters();
@@ -226,16 +292,29 @@ export default function AdminApplicationsPage() {
     updateApplicationsView(searchTerm, searchBy, latestFilters);
   };
 
+  /**
+   * Opens the hire confirmation modal and sets the selected application.
+   * @param {object} application - The application object for the candidate to be hired.
+   */
   const handleOpenHireModal = (application) => {
     setSelectedApplication(application);
     setIsHireModalOpen(true);
   };
 
+  /**
+   * Closes the hire confirmation modal and clears the selected application state.
+   */
   const handleCloseHireModal = () => {
     setIsHireModalOpen(false);
     setSelectedApplication(null);
   };
 
+  /**
+   * Handles the final confirmation of hiring a candidate from the modal.
+   * Calls the hireCandidate API service and refreshes the hiring list on success.
+   * @param {string} employeeId - The new employee ID for the candidate.
+   * @param {string} comment - An optional comment for the hiring record.
+   */
   const handleConfirmHire = async (employeeId, comment) => {
     if (!selectedApplication || !currentUser) return;
 
@@ -256,7 +335,7 @@ export default function AdminApplicationsPage() {
 
       showNotification('Candidate hired successfully!', 'success');
       handleCloseHireModal();
-      fetchHiringApplications();
+      fetchHiringApplications(); // Refresh the list after hiring
     } catch (err) {
       console.error('Error hiring candidate:', err);
       showNotification(err.message || 'Failed to hire candidate.', 'error');
@@ -265,7 +344,13 @@ export default function AdminApplicationsPage() {
     }
   };
 
+  /**
+   * Renders the UI for the "My Applications" tab, including search, filters,
+   * and the accordion-style list of applications grouped by semester and position.
+   * @returns {React.ReactNode} The JSX for the applications tab.
+   */
   const renderApplicationsTab = () => {
+    // Calculate the total number of applications currently displayed.
     const totalApplications = Object.values(displayData)
       .flat()
       .reduce(
@@ -275,6 +360,7 @@ export default function AdminApplicationsPage() {
 
     return (
       <Box sx={{ width: '100%' }}>
+        {/* Search and Filter Bar */}
         <Paper
           component="form"
           onSubmit={handleSearch}
@@ -318,6 +404,7 @@ export default function AdminApplicationsPage() {
           </Button>
         </Paper>
 
+        {/* Application Count */}
         {!loading && !error && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             <strong>
@@ -327,6 +414,7 @@ export default function AdminApplicationsPage() {
           </Typography>
         )}
 
+        {/* Main Content: Loading, Error, No Results, or Data */}
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
@@ -385,6 +473,11 @@ export default function AdminApplicationsPage() {
     );
   };
 
+  /**
+   * Renders the UI for the "Ready to Hire" tab, displaying a list
+   * of candidates who have accepted offers and can be hired.
+   * @returns {React.ReactNode} The JSX for the hiring tab.
+   */
   const renderHiringTab = () => {
     return (
       <Box sx={{ width: '100%' }}>
@@ -431,6 +524,7 @@ export default function AdminApplicationsPage() {
     );
   };
 
+  // Main component render method.
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -442,6 +536,7 @@ export default function AdminApplicationsPage() {
         </Typography>
       </Box>
 
+      {/* Conditionally render content based on user role */}
       {currentUser && currentUser.role === 'ADMIN' ? (
         <Box sx={{ width: '100%' }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -464,6 +559,7 @@ export default function AdminApplicationsPage() {
         </Paper>
       )}
 
+      {/* Render the modal conditionally */}
       {isHireModalOpen && selectedApplication && (
         <HireModal
           application={selectedApplication}

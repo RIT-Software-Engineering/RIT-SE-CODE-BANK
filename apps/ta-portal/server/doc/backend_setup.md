@@ -58,6 +58,8 @@
 2. Execute `npx prisma generate` to (re)generate the Prisma Client based on your `schema.prisma` file. An easier command to do this is `npm run prisma:generate` when you in the main `/server` folder. This is necessary after making changes to your `schema.prisma` file, if you've pulling from someone else's code changes, or if you manually deleted your `node_modules` and need to re-generate the client.
 ---
 
+> **Note:** Our backend does require you to setup the slack app for the messaging feature. For that, please refer to the file [messaging_feature.md](messaging_feature.md).
+
 ### Final Backend Setup step
 Finally, run `npm run dev` to start the backend server.
 
