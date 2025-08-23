@@ -1,7 +1,7 @@
 @ECHO OFF
 SETLOCAL
 
-REM --- TA-Portal Configuration ---
+REM --- TA-Portal Configuration (MODIFY THESE IF NEEDED) ---
 SET "DB_ROOT_PASSWORD=newPassword"
 SET "DB_HOST=127.0.0.1"
 SET "DB_PORT=8000"

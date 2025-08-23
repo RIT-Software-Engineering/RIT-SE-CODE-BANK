@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# --- TA-Portal Configuration ---
+# --- TA-Portal Configuration (MODIFY THESE IF NEEDED) ---
 export DB_ROOT_PASSWORD="newPassword"
 export DB_HOST="127.0.0.1"
 export DB_PORT="8000"
