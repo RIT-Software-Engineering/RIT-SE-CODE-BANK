@@ -7,21 +7,12 @@ Ensure the following are installed:
 - [npm](https://www.npmjs.com/)
 - [MariaDB](https://mariadb.org/)
 - [Prisma CLI](https://www.prisma.io/docs/reference/api-reference/command-reference)
+- [Docker](https://www.docker.com/)
 
 ## MariaDB Local Setup
 Download and install MariaDB. In the setup wizard, choose a password for the root user 
 (Since this is only for local development "password" is ok. This is not recommended for a production environment). **This
 password will be used in the .env file.** Ensure the TCP port is set to 3306. Continue the install. 
-
-In a terminal, navigate to the MariaDB installation directory (On Windows this is at C:\ Program Files\mariadb 11.8\bin). Login to the mysql shell and enter your password when prompted: 
-```
-mysql -u root -p
-```
-To create a database:
-```
-create database [your-db-name];
-```
-This database name will be used to connect to Prisma.
 
 ### Useful MySQL Shell Commands
 
@@ -36,32 +27,21 @@ Manipulating the database or schema directly will cause incongruencies between y
 
 ## Environment Variables
 In the `server/` directory:
-Create a `.env` file according to the `.env.example`, replacing `<USER>`, `<PASSWORD>`, and `<DATABASE_NAME>` with your actual database credentials. This database URL allows Prisma to connect to your local MariaDB/MySQL database at the default port 3306.
-Set the port to port 5000. This is the port where the express server will be running on.
+Create a `.env` file according to the `.env.example`, replacing `<USER>`, `<PASSWORD>`, and `<DATABASE_NAME>` with your actual database credentials. This database URL allows Prisma to connect to your local MariaDB/MySQL database at the default port 3306. There is a setup script that will overwrite this file with the information needed to run the portal.
 
 
 In the `ui/` directory:
 Create a `.env.development` file according to the `.env.development.example`. We are integrating Express with Next.js, where Express is handling the requests and then routing them to Next.js for page rendering, so Next.js and Express will need to be on the same port (5000). Set NEXT_PUBLIC_API_URL to http://localhost:5000.
 
 Create a `.env.production` file according to the `.env.production.example`.
-<!-- Future instructions for production/deployment environment -->
+
+There is a setup script that will overwrite this file with the information needed to run the portal.
 
 ## Install Dependencies
-In the scoop-portal root directory, run `npm install` <!-- This will be changed as duplicate code gets cleaned up-->
+In the monorepo root directory, run `npm install`
 
-In the `server/` directory, run: `npm install`. 
-Ensure dotenv is installed with `npm install dotenv`
-
-If Prisma isn't installed yet:
-```
-npm install prisma --save-dev
-npm install @prisma/client
-```
-
-In the `ui/` directory, run: `npm install`.
-
-## Prisma Setup
-
+## Prisma
+**THE FOLLOWING STEPS ARE DEPRECATED FOR SETUP DUE TO SCRIPTS BUT ARE USEFUL FOR ERROR CORRECTIONS:**   
 To generate a Prisma client:  
 Navigate to the `/server` directory.
 Run `npx prisma generate`
@@ -90,11 +70,12 @@ Ensure .gitignore includes the Prisma Generated files:
 `**/generated/prisma`
 
 ## Run The Server
-You will need two terminals to run the Next app.
+Open and run Docker.
 
-Run the Node Express server: `node server.js`
+In the monorepo root directory, run `npm run setupportal`, followed by `npm run startportal`.
 
-Start the Next development server: `npm run dev`
+**NOTE**   
+There is a known issue where the database seeding may not be executed on setup. If this happens, run the setup script again and it should populate.
 
 ## API Endpoints
 API endpoints can be found under `api/` in the server directory.
