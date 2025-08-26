@@ -25,6 +25,9 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
+import { redirect, RedirectType, useRouter } from 'next/navigation';
+
+
 
 const MODAL_STATUS = { SUCCESS: "success", FAIL: "fail", CLOSED: false };
 const APPLICATION_STATUSES = {
@@ -35,6 +38,7 @@ const APPLICATION_STATUSES = {
 };
 
 function ApplicationPage() {
+    const router = useRouter();
     // const history = useHistory();
     const [formValues, setActualformValues] = useState({
         assignment_of_rights: "full_rights",
@@ -155,6 +159,8 @@ function ApplicationPage() {
 
             if (response.status === 200) {
                 setModalOpen(MODAL_STATUS.SUCCESS);
+                redirect("/", RedirectType.replace);
+
             } else {
                 setModalOpen(MODAL_STATUS.FAIL);
                 const errorData = result;
@@ -165,6 +171,7 @@ function ApplicationPage() {
                     });
                     setErrors(newErrors);
                 }
+                router.refresh();
             }
         } catch (err) {
             console.error(err);
@@ -176,8 +183,13 @@ function ApplicationPage() {
             setActualformValues({});
             setFormFiles(null);
             setErrors({});
+            redirect("/", RedirectType.replace);
+    
+            setModalOpen(MODAL_STATUS.CLOSED);
+        } else if (modalOpen === MODAL_STATUS.FAIL) {             
+             setModalOpen(MODAL_STATUS.CLOSED);       
         }
-        setModalOpen(MODAL_STATUS.CLOSED);
+        
     };
 
     const VisuallyHiddenInput = styled("input")({

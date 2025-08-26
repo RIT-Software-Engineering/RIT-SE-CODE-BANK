@@ -19,6 +19,10 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
+import { useRouter } from "next/navigation";
+import IconButton from "@mui/material/IconButton";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
 import Header from "@components/Header";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 
@@ -40,6 +44,7 @@ export default function SupervisorApplicationsPage() {
     message: "",
     severity: "success",
   });
+  const router = useRouter();
 
   useEffect(() => {
     const fetchApps = async () => {
@@ -85,7 +90,7 @@ export default function SupervisorApplicationsPage() {
    * @returns {void}
    */
   const handleOpen = (app) => {
-    setSelectedApp({ ...app, hasBeenRead: true }); //this isnt working
+    setSelectedApp({ ...app, hasBeenRead: true }); 
     setApplications((prev) =>
       prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
     );
@@ -258,25 +263,27 @@ export default function SupervisorApplicationsPage() {
       ? applications
       : applications.filter((app) => app.status === filter);
 
+  const handleBack = () => {
+    router.back();
+  };
+
   return (
     <Box
-      sx={{
-        fontFamily: `"Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif"`,
-        bgcolor: "#f5f5f5",
-        minHeight: "100vh",
-        p: 4,
-      }}
     >
       <Header />
-      <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
+      <IconButton onClick={handleBack} aria-label="back">
+        <ArrowBackIcon />
+      </IconButton>
+      <Typography  variant="h4" sx={{ textAlign:"center", fontWeight: 600, mb: 3 }} >
         Review Applications
       </Typography>
 
-      <Box mb={3}>
+      <Box mb={3} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }} >
         <Select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           sx={{
+            bgcolor: "#fff",
             borderRadius: 2,
             minWidth: 200,
             boxShadow: 1,
@@ -303,6 +310,8 @@ export default function SupervisorApplicationsPage() {
         >
           Submit Accepted
         </Button>
+
+        </Box>
         <Paper elevation={1}>
           <Table>
             <TableHead sx={{ backgroundColor: "#F76902" }}>
@@ -323,6 +332,9 @@ export default function SupervisorApplicationsPage() {
                   sx={{
                     opacity: app.hasBeenRead ? 0.6 : 1,
                     transition: "opacity 0.3s",
+                    "&:hover": {
+                      backgroundColor: "#fafafa",
+                    },
                   }}
                 >
                   <TableCell>{app.firstName}</TableCell>
@@ -337,8 +349,16 @@ export default function SupervisorApplicationsPage() {
                   </TableCell>
                   <TableCell align="right">
                     <Button
-                      variant="outline-orange"
+                      variant="outlined"
                       onClick={() => handleOpen(app)}
+                      sx={{
+                        borderColor: "#F76902",
+                        color: "#F76902",
+                        "&:hover": {
+                          backgroundColor: "#F76902",
+                          color: "#fff",
+                        },
+                      }}
                     >
                       View
                     </Button>
@@ -489,61 +509,63 @@ export default function SupervisorApplicationsPage() {
                   {selectedApp.resumeFile}
                 </Typography>
 
-                <Box mt={3}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Current Status: {String(selectedApp.status)}
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      color: "#7D55C7",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {/* {application} */}
-                    {/* {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)} */}
-                  </Typography>
-                </Box>
-              </DialogContent>
-              <DialogActions sx={{ px: 3, py: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={
-                    () => handleStatusUpdate(STATUSES[1]) // "accepted"
-                  }
-                  sx={{
-                    bgcolor: "#84BD00",
-                    color: "white",
-                    "&:hover": { bgcolor: "#6da400" },
-                  }}
-                >
-                  Accept
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={
-                    () => handleStatusUpdate(STATUSES[2]) // "rejected"
-                  }
-                  sx={{
-                    bgcolor: "#DA291C",
-                    color: "white",
-                    "&:hover": { bgcolor: "#b82018" },
-                  }}
-                >
-                  Reject
-                </Button>
-                <Button
-                  onClick={handleClose}
-                  variant="outlined"
-                  color="inherit"
-                >
-                  Close
-                </Button>
-              </DialogActions>
-            </>
-          )}
-        </Dialog>
-      </Box>
+                                <Box mt={3}>
+                                    <Typography
+                                        variant="subtitle2"
+                                        color="text.secondary"
+                                    >
+                                        Current Status:{" "}
+                                        {String(selectedApp.status)}
+                                    </Typography>
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            color: "#7D55C7",
+                                            fontWeight: 500,
+                                        }}
+                                    >
+                                        {/* {application} */}
+                                        {/* {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)} */}
+                                    </Typography>
+                                </Box>
+                            </DialogContent>
+                            <DialogActions sx={{ px: 3, py: 2 }}>
+                                <Button
+                                    variant="contained"
+                                    onClick={
+                                        () => handleStatusUpdate(STATUSES[1]) // "accepted"
+                                    }
+                                    sx={{
+                                        bgcolor: "#84BD00",
+                                        "&:hover": { bgcolor: "#6da400" },
+                                    }}
+                                >
+                                    Accept
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    onClick={
+                                        () => handleStatusUpdate(STATUSES[2]) // "rejected"
+                                    }
+                                    sx={{
+                                        bgcolor: "#DA291C",
+                                        "&:hover": { bgcolor: "#b82018" },
+                                    }}
+                                >
+                                    Reject
+                                </Button>
+                                <Button
+                                    onClick={handleClose}
+                                    variant="outlined"
+                                    color="inherit"
+                                >
+                                    Close
+                                </Button>
+                            </DialogActions>
+                        </>
+                    )}
+                </Dialog>
+            
 
       <Snackbar
         open={notification.open}
