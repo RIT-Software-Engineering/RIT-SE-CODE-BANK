@@ -58,7 +58,7 @@ NEXT_PUBLIC_WORKFLOWS_API_URL=http://localhost:5001
 
 if (!fs.existsSync(envFileWorkflowServer)) {
   console.log("Creating workflow server .env file...");
-  const defaultEnv = `DATABASE_URL=mysql://root:password@localhost:3307/workflows
+  const defaultEnv = `DATABASE_URL=mysql://root:password@localhost:3307/scoop_portal_demo
 PORT=5001
 BASE_URL=http://localhost:3000
 NODE_ENV=development
