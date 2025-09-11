@@ -14,6 +14,7 @@ Ensure the following are installed:
 ## Install Dependencies
 In the monorepo root directory, run `npm install`
 
+run `npm install cors`
 
 ## Run The Server
 Open Docker. On most Docker installations, this involves opening Docker Desktop.
