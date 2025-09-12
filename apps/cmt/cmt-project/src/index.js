@@ -5,7 +5,7 @@ import App from "./App.jsx";
 import TeamBuilderPage from "./pages/TeamBuilderPage.jsx";
 import CalPage from "./pages/CalPage.jsx";
 import CoursePage from "./pages/CoursePage.jsx";
-//import "./styles/global.css";
+import "./styles/global.css";
 import "./styles/index.css";
 
 console.log("pages seen:", require.context("./pages", false, /\.jsx$/).keys());
