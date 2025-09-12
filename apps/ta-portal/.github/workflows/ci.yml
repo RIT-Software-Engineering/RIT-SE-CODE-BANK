@@ -1,0 +1,34 @@
+# GitHub Actions CI/CD workflow for TA Portal
+
+name: TA Portal CI
+
+on:
+  push:
+    branches: [ main, 'ta-portal-dev*' ]
+  pull_request:
+    branches: [ main, 'ta-portal-dev*' ]
+
+jobs:
+  test-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: ./server
+      - run: npm test
+        working-directory: ./server
+    
+  test-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+        working-directory: ./ui
+      - run: npm test
+        working-directory: ./ui
