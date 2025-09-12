@@ -20,6 +20,8 @@ jobs:
           node-version: '20'
       - run: npm install
         working-directory: ./apps/ta-portal/server
+      - run: npx prisma generate
+        working-directory: ./apps/ta-portal/server
       - run: npm test
         working-directory: ./apps/ta-portal/server
     
