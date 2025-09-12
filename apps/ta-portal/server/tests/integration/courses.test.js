@@ -3,7 +3,10 @@
  * Tests the full flow: Route -> Database Query -> Response
  */
 
-// Mock Prisma Client before any imports
+/*
+* jest.mock replaces the actual Prisma Client with a mock function.
+* PrismaClient: jest.fn(() => ({})): This is the mock Prisma Client function.s
+*/
 jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => ({
     // Mock Prisma methods as needed
@@ -14,6 +17,11 @@ const request = require('supertest');
 const express = require('express');
 const apiRoutes = require('../../server/routing/index');
 
+/*
+* jest.mock replaces the actual getAllCourses function with a mock function.
+* getAllCourses: jest.fn(): This is the mock getAllCourses function.
+* Returns a resolved promise with an array of courses.
+*/
 jest.mock('../../server/database/query_db', () => ({
   getAllCourses: jest.fn(),
 }));
@@ -27,6 +35,13 @@ const createTestApp = () => {
   return app;
 };
 
+/*
+* describe is used to group related tests together.
+* beforeAll is used to run a function before all tests in the describe block.
+* test is used to define a single test case.
+* expect is used to assert that a condition is true.
+* toBeDefined is used to check if a value is defined.
+*/
 describe('Courses Integration Tests', () => {
   let app;
   

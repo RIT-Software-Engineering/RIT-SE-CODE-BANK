@@ -10,6 +10,12 @@ jest.mock('@prisma/client', () => ({
 
 const router = require('../../server/routing/index');
 
+/*
+* describe is used to group related tests together.
+* test is used to define a single test case.
+* expect is used to assert that a condition is true.
+* toBeDefined is used to check if a value is defined.
+*/
 describe('Main Router', () => {
   test('should export a router object', () => {
     expect(router).toBeDefined();

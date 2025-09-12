@@ -8,11 +8,15 @@ jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => ({}))
 }));
 
+/*
+* Supertest is a library that is used to test HTTP requests to the server.
+*/
 const request = require('supertest');
 const express = require('express');
 const apiRoutes = require('../../server/routing/index');
 
-// Create a test Express app that mimics the main server setup
+
+//create a test Express app that mimics the main server setup
 const createTestApp = () => {
   const app = express();
   app.use(express.json());
@@ -26,6 +30,13 @@ const createTestApp = () => {
   return app;
 };
 
+/*
+* describe is used to group related tests together.
+* beforeAll is used to run a function before all tests in the describe block.
+* test is used to define a single test case.
+* expect is used to assert that a condition is true.
+* toBeDefined is used to check if a value is defined.
+*/
 describe('Basic Routes', () => {
   let app;
   
