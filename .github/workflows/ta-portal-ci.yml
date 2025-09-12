@@ -5,8 +5,10 @@ name: TA Portal CI
 on:
   push:
     branches: [ main, 'ta-portal-dev*' ]
+    paths: ['apps/ta-portal/**']
   pull_request:
     branches: [ main, 'ta-portal-dev*' ]
+    paths: ['apps/ta-portal/**']
 
 jobs:
   test-server:
@@ -17,9 +19,9 @@ jobs:
         with:
           node-version: '20'
       - run: npm install
-        working-directory: ./server
+        working-directory: ./apps/ta-portal/server
       - run: npm test
-        working-directory: ./server
+        working-directory: ./apps/ta-portal/server
     
   test-ui:
     runs-on: ubuntu-latest
@@ -29,6 +31,6 @@ jobs:
         with:
           node-version: '20'
       - run: npm install
-        working-directory: ./ui
+        working-directory: ./apps/ta-portal/ui
       - run: npm test
-        working-directory: ./ui
+        working-directory: ./apps/ta-portal/ui
