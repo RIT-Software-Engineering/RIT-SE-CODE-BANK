@@ -29,9 +29,12 @@
     "os": "^0.1.2"
   },
   "devDependencies": {
+    "jest": "^30.1.3",
     "mysql2": "^3.14.3",
+    "node-mocks-http": "^1.17.2",
     "node-sql-parser": "^5.3.10",
-    "prisma": "^6.11.1"
+    "prisma": "^6.11.1",
+    "supertest": "^7.1.4"
   },
   "prisma": {
     "seed": "node ./seed.js"
