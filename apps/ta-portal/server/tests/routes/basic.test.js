@@ -3,6 +3,11 @@
  * Tests the simplest endpoints to verify routing is working
  */
 
+// Mock Prisma Client before any imports
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => ({}))
+}));
+
 const request = require('supertest');
 const express = require('express');
 const apiRoutes = require('../../server/routing/index');

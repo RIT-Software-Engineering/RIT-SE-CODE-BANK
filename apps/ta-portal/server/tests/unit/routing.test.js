@@ -3,6 +3,11 @@
  * This verifies that Jest is working and that our routing setup is correct
  */
 
+// Mock Prisma Client before any imports
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn(() => ({}))
+}));
+
 const router = require('../../server/routing/index');
 
 describe('Main Router', () => {
