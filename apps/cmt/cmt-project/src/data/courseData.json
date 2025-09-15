@@ -1,0 +1,126 @@
+{
+  "courses": [
+    {
+      "id": "cs101",
+      "name": "CS 101 - Intro to Programming",
+      "color": "blue",
+      "students": 45
+    },
+    {
+      "id": "cs201",
+      "name": "CS 201 - Data Structures",
+      "color": "green",
+      "students": 38
+    },
+    {
+      "id": "cs301",
+      "name": "CS 301 - Algorithms",
+      "color": "purple",
+      "students": 32
+    },
+    {
+      "id": "cs401",
+      "name": "CS 401 - Senior Capstone",
+      "color": "orange",
+      "students": 28
+    }
+  ],
+  "events": {
+    "2025-09-15": [
+      {
+        "id": 1,
+        "title": "Midterm Exam",
+        "course": "cs201",
+        "type": "exam",
+        "time": "10:00 AM",
+        "location": "Room 205",
+        "description": "Data Structures midterm covering arrays, linked lists, and stacks",
+        "importance": "High",
+        "preparation": [
+          "Review lecture notes 1-8",
+          "Practice problems assigned",
+          "Office hours available"
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Project 2 Due",
+        "course": "cs301",
+        "type": "assignment",
+        "time": "11:59 PM",
+        "location": "Online Submission",
+        "description": "Algorithm analysis project focusing on sorting algorithms",
+        "importance": "High",
+        "preparation": [
+          "Check rubric",
+          "Test all edge cases",
+          "Submit before deadline"
+        ]
+      }
+    ],
+    "2025-09-16": [
+      {
+        "id": 3,
+        "title": "Lecture: Advanced Sorting",
+        "course": "cs301",
+        "type": "lecture",
+        "time": "2:00 PM",
+        "location": "Room 301",
+        "description": "Introduction to quicksort and mergesort algorithms",
+        "importance": "Medium",
+        "preparation": [
+          "Prepare slides",
+          "Demo code examples",
+          "Interactive exercises"
+        ]
+      }
+    ],
+    "2025-09-18": [
+      {
+        "id": 4,
+        "title": "Office Hours",
+        "course": "all",
+        "type": "office_hours",
+        "time": "1:00 PM - 3:00 PM",
+        "location": "Office 415",
+        "description": "Open office hours for all courses",
+        "importance": "Low",
+        "preparation": [
+          "Review common questions",
+          "Prepare example problems"
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Faculty Meeting",
+        "course": "admin",
+        "type": "meeting",
+        "time": "4:00 PM",
+        "location": "Conference Room A",
+        "description": "Monthly department faculty meeting",
+        "importance": "Medium",
+        "preparation": [
+          "Review agenda",
+          "Prepare course updates"
+        ]
+      }
+    ],
+    "2025-09-20": [
+      {
+        "id": 6,
+        "title": "Lab: Database Design",
+        "course": "cs201",
+        "type": "lab",
+        "time": "9:00 AM",
+        "location": "Computer Lab 2",
+        "description": "Hands-on database design and normalization",
+        "importance": "Medium",
+        "preparation": [
+          "Set up lab environment",
+          "Prepare dataset",
+          "Test all examples"
+        ]
+      }
+    ]
+  }
+}

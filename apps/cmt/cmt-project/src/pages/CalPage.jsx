@@ -1,99 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, ChevronLeft, ChevronRight, ExternalLink, Edit, Trash2, X, Bell, BookOpen, Users, FileText, Clock } from 'lucide-react';
 import '../styles/calendar.css';
+import dataLoader from '../backend/dataLoader';
+import EventActions from '../backend/eventActions';
+
 export default function CalPage() {
   console.log("Loaded CalPage.jsx");
   
-  // Current date state
+  // State management
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showEventModal, setShowEventModal] = useState(false);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState('all');
+  const [courses, setCourses] = useState([]);
+  const [events, setEvents] = useState({});
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    course: '',
+    type: 'lecture',
+    time: '',
+    location: '',
+    description: '',
+    importance: 'Medium',
+    preparation: []
+  });
 
-  // Sample course data
-  const courses = [
-    { id: 'cs101', name: 'CS 101 - Intro to Programming', color: 'blue', students: 45 },
-    { id: 'cs201', name: 'CS 201 - Data Structures', color: 'green', students: 38 },
-    { id: 'cs301', name: 'CS 301 - Algorithms', color: 'purple', students: 32 },
-    { id: 'cs401', name: 'CS 401 - Senior Capstone', color: 'orange', students: 28 }
-  ];
+  // Load data on component mount
+  useEffect(() => {
+    setCourses(dataLoader.getCourses());
+    setEvents(dataLoader.getEvents());
+  }, []);
 
-  // Sample events data
-  const events = {
-    '2025-09-15': [
-      {
-        id: 1,
-        title: 'Midterm Exam',
-        course: 'cs201',
-        type: 'exam',
-        time: '10:00 AM',
-        location: 'Room 205',
-        description: 'Data Structures midterm covering arrays, linked lists, and stacks',
-        importance: 'High',
-        preparation: ['Review lecture notes 1-8', 'Practice problems assigned', 'Office hours available']
-      },
-      {
-        id: 2,
-        title: 'Project 2 Due',
-        course: 'cs301',
-        type: 'assignment',
-        time: '11:59 PM',
-        location: 'Online Submission',
-        description: 'Algorithm analysis project focusing on sorting algorithms',
-        importance: 'High',
-        preparation: ['Check rubric', 'Test all edge cases', 'Submit before deadline']
+  // Button handler functions
+  const handleAddEvent = (date = null) => {
+    setSelectedDate(date);
+    setNewEvent({
+      title: '',
+      course: '',
+      type: 'lecture',
+      time: '',
+      location: '',
+      description: '',
+      importance: 'Medium',
+      preparation: []
+    });
+    setShowAddEventModal(true);
+  };
+
+  const handleSaveNewEvent = () => {
+    const eventData = {
+      ...newEvent,
+      date: selectedDate || formatDate(currentDate.getFullYear(), currentDate.getMonth(), 1)
+    };
+
+    const result = EventActions.addEvent(eventData);
+    
+    if (result.success) {
+      // Refresh events data
+      setEvents(dataLoader.getEvents());
+      setShowAddEventModal(false);
+      alert('Event added successfully!');
+    } else {
+      alert(`Error: ${result.error}`);
+    }
+  };
+
+  const handleEditEvent = () => {
+    if (!selectedEvent) return;
+    
+    // For now, just show an alert. In a real app, you'd open an edit modal
+    alert(`Edit functionality would open for: ${selectedEvent.title}`);
+  };
+
+  const handleDeleteEvent = () => {
+    if (!selectedEvent) return;
+    
+    if (window.confirm(`Are you sure you want to delete "${selectedEvent.title}"?`)) {
+      const result = EventActions.deleteEvent(selectedEvent.id);
+      
+      if (result.success) {
+        setEvents(dataLoader.getEvents());
+        setShowEventModal(false);
+        setSelectedEvent(null);
+        alert('Event deleted successfully!');
+      } else {
+        alert(`Error: ${result.error}`);
       }
-    ],
-    '2025-09-16': [
-      {
-        id: 3,
-        title: 'Lecture: Advanced Sorting',
-        course: 'cs301',
-        type: 'lecture',
-        time: '2:00 PM',
-        location: 'Room 301',
-        description: 'Introduction to quicksort and mergesort algorithms',
-        importance: 'Medium',
-        preparation: ['Prepare slides', 'Demo code examples', 'Interactive exercises']
-      }
-    ],
-    '2025-09-18': [
-      {
-        id: 4,
-        title: 'Office Hours',
-        course: 'all',
-        type: 'office_hours',
-        time: '1:00 PM - 3:00 PM',
-        location: 'Office 415',
-        description: 'Open office hours for all courses',
-        importance: 'Low',
-        preparation: ['Review common questions', 'Prepare example problems']
-      },
-      {
-        id: 5,
-        title: 'Faculty Meeting',
-        course: 'admin',
-        type: 'meeting',
-        time: '4:00 PM',
-        location: 'Conference Room A',
-        description: 'Monthly department faculty meeting',
-        importance: 'Medium',
-        preparation: ['Review agenda', 'Prepare course updates']
-      }
-    ],
-    '2025-09-20': [
-      {
-        id: 6,
-        title: 'Lab: Database Design',
-        course: 'cs201',
-        type: 'lab',
-        time: '9:00 AM',
-        location: 'Computer Lab 2',
-        description: 'Hands-on database design and normalization',
-        importance: 'Medium',
-        preparation: ['Set up lab environment', 'Prepare dataset', 'Test all examples']
-      }
-    ]
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowEventModal(false);
+    setSelectedEvent(null);
+  };
+
+  const handleCloseAddModal = () => {
+    setShowAddEventModal(false);
+    setSelectedDate(null);
   };
 
   // Month names
@@ -171,31 +176,15 @@ export default function CalPage() {
   };
 
   const getCourseInfo = (courseId) => {
-    return courses.find(course => course.id === courseId) || { name: 'Administrative', color: 'gray' };
+    return dataLoader.getCourseById(courseId) || { name: 'Administrative', color: 'gray' };
   };
 
   const filterEventsByCourse = (dayEvents) => {
-    if (selectedCourse === 'all') return dayEvents;
-    return dayEvents.filter(event => event.course === selectedCourse || event.course === 'all' || event.course === 'admin');
+    return dataLoader.filterEventsByCourse(selectedCourse, dayEvents);
   };
 
   const getUpcomingDeadlines = () => {
-    const today = new Date();
-    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const deadlines = [];
-    
-    Object.entries(events).forEach(([date, dayEvents]) => {
-      const eventDate = new Date(date);
-      if (eventDate >= today && eventDate <= nextWeek) {
-        dayEvents.forEach(event => {
-          if (event.type === 'exam' || event.type === 'assignment') {
-            deadlines.push({ ...event, date });
-          }
-        });
-      }
-    });
-    
-    return deadlines.sort((a, b) => new Date(a.date) - new Date(b.date));
+    return dataLoader.getUpcomingDeadlines(7);
   };
 
   return (
@@ -211,7 +200,10 @@ export default function CalPage() {
           </p>
         </div>
         <div className="header-buttons">
-          <button className="btn btn-primary">
+          <button 
+            className="btn btn-primary"
+            onClick={() => handleAddEvent()}
+          >
             <Plus size={16} />
             Add Event
           </button>
@@ -261,11 +253,11 @@ export default function CalPage() {
             </div>
             <div className="stats-item">
               <span className="stats-label">Total Students:</span>
-              <span className="stats-value">{courses.reduce((sum, course) => sum + course.students, 0)}</span>
+              <span className="stats-value">{dataLoader.getTotalStudents()}</span>
             </div>
             <div className="stats-item">
               <span className="stats-label">This Month's Events:</span>
-              <span className="stats-value">{Object.values(events).flat().length}</span>
+              <span className="stats-value">{dataLoader.getTotalEvents()}</span>
             </div>
           </div>
         </div>
@@ -313,7 +305,7 @@ export default function CalPage() {
             <div key={weekIndex} className="calendar-week">
               {week.map((day, dayIndex) => {
                 const dateKey = day !== 0 ? formatDate(currentDate.getFullYear(), currentDate.getMonth(), day) : null;
-                const dayEvents = dateKey ? events[dateKey] || [] : [];
+                const dayEvents = dateKey ? dataLoader.getEventsForDate(dateKey) : [];
                 const filteredEvents = filterEventsByCourse(dayEvents);
                 
                 return (
@@ -326,7 +318,13 @@ export default function CalPage() {
                         {/* Day Number */}
                         <div className="day-number">
                           <span>{day}</span>
-                          <button className="add-event-btn">
+                          <button 
+                            className="add-event-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddEvent(dateKey);
+                            }}
+                          >
                             <Plus size={12} />
                           </button>
                         </div>
@@ -372,7 +370,7 @@ export default function CalPage() {
                 {selectedEvent.title}
               </h3>
               <button 
-                onClick={() => setShowEventModal(false)}
+                onClick={handleCloseModal}
                 className="modal-close"
               >
                 <X size={20} />
@@ -425,19 +423,157 @@ export default function CalPage() {
             </div>
             
             <div className="modal-footer">
-              <button className="btn btn-primary">
+              <button 
+                className="btn btn-primary"
+                onClick={handleEditEvent}
+              >
                 <Edit size={16} />
                 Edit Event
               </button>
-              <button className="btn" style={{ background: 'var(--danger)', color: 'white' }}>
+              <button 
+                className="btn" 
+                style={{ background: 'var(--danger)', color: 'white' }}
+                onClick={handleDeleteEvent}
+              >
                 <Trash2 size={16} />
                 Delete Event
               </button>
               <button 
-                onClick={() => setShowEventModal(false)}
+                onClick={handleCloseModal}
                 className="btn btn-outline"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Event Modal */}
+      {showAddEventModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3 className="modal-title">
+                <Plus size={20} />
+                Add New Event
+              </h3>
+              <button 
+                onClick={handleCloseAddModal}
+                className="modal-close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="modal-grid">
+                <div className="detail-item">
+                  <div className="detail-label">Event Title</div>
+                  <input
+                    type="text"
+                    className="course-filter"
+                    placeholder="Enter event title"
+                    value={newEvent.title}
+                    onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                  />
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Course</div>
+                  <select
+                    className="course-filter"
+                    value={newEvent.course}
+                    onChange={(e) => setNewEvent({...newEvent, course: e.target.value})}
+                  >
+                    <option value="">Select Course</option>
+                    {courses.map(course => (
+                      <option key={course.id} value={course.id}>{course.name}</option>
+                    ))}
+                    <option value="all">All Courses</option>
+                    <option value="admin">Administrative</option>
+                  </select>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Event Type</div>
+                  <select
+                    className="course-filter"
+                    value={newEvent.type}
+                    onChange={(e) => setNewEvent({...newEvent, type: e.target.value})}
+                  >
+                    <option value="lecture">Lecture</option>
+                    <option value="exam">Exam</option>
+                    <option value="assignment">Assignment</option>
+                    <option value="lab">Lab</option>
+                    <option value="office_hours">Office Hours</option>
+                    <option value="meeting">Meeting</option>
+                  </select>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Time</div>
+                  <input
+                    type="text"
+                    className="course-filter"
+                    placeholder="e.g., 10:00 AM"
+                    value={newEvent.time}
+                    onChange={(e) => setNewEvent({...newEvent, time: e.target.value})}
+                  />
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Location</div>
+                  <input
+                    type="text"
+                    className="course-filter"
+                    placeholder="e.g., Room 205"
+                    value={newEvent.location}
+                    onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
+                  />
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">Importance</div>
+                  <select
+                    className="course-filter"
+                    value={newEvent.importance}
+                    onChange={(e) => setNewEvent({...newEvent, importance: e.target.value})}
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="detail-item">
+                <div className="detail-label">Description</div>
+                <textarea
+                  className="course-filter"
+                  rows="3"
+                  placeholder="Enter event description"
+                  value={newEvent.description}
+                  onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+                  style={{ resize: 'vertical', minHeight: '80px' }}
+                />
+              </div>
+            </div>
+            
+            <div className="modal-footer">
+              <button 
+                className="btn btn-primary"
+                onClick={handleSaveNewEvent}
+                disabled={!newEvent.title || !newEvent.course}
+              >
+                <Plus size={16} />
+                Add Event
+              </button>
+              <button 
+                onClick={handleCloseAddModal}
+                className="btn btn-outline"
+              >
+                Cancel
               </button>
             </div>
           </div>
