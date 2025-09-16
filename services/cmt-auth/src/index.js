@@ -6,6 +6,9 @@ const passport = require("passport");
 const cors = require("cors");
 const { createSamlStrategy } = require("./saml/strategy");
 
+console.log("[env] SAML_IDP_CERT present:", !!process.env.SAML_IDP_CERT, "len:", (process.env.SAML_IDP_CERT || "").length);
+
+
 const PORT = process.env.PORT || 3001;
 const AUTH_BASE_URL = process.env.AUTH_BASE_URL || `http://localhost:${PORT}`;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173"; // Vite default
@@ -21,6 +24,7 @@ const cfg = {
 cfg.ACS_URL = `${AUTH_BASE_URL}${cfg.ACS_PATH}`;
 
 const app = express();
+app.set('trust proxy', 1); // so secure cookies work behind Nginx/HTTPS
 
 // CORS (if client hosted on another origin)
 app.use(cors({
@@ -95,4 +99,16 @@ app.get("/saml/metadata", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`cmt-auth listening on ${AUTH_BASE_URL}`);
+});
+
+app.get("/", (req, res) => {
+  res.type("html").send(`
+    <h1>CMT Auth Server</h1>
+    <ul>
+      <li><a href="/health">/health</a></li>
+      <li><a href="/saml/metadata">/saml/metadata</a></li>
+      <li><a href="/login?returnTo=%2F">/login</a> (SP-initiated)</li>
+      <li>/api/me (requires auth)</li>
+    </ul>
+  `);
 });
