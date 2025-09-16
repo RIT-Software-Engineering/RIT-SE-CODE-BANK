@@ -21,7 +21,7 @@ enum DayOfWeek {
     FRI
 }
 
-//model Users {
+//model User {
     //username      String @id
     //uid           Int
     //fname         String
@@ -29,22 +29,33 @@ enum DayOfWeek {
     //email         String
 //}
 
+model Professor {
+    id      Int @id @default(autoincrement()) // default ids, can change to use uids or something
+    fname   String
+    lname   String
+    email   String
+    courses Course[]
+}
+
 // Defines an individual course
 model Course {
-    id          Int @id @default(autoincrement())
-    code        String  // ex. SWEN340
+    id          String
     name        String
     semester    String
+    professorId Int
+    professor   Professor @relation(fields: [professorId], references: [id])
     sections    Section[]
+    @@id([id, professorId])
 }
 
 // Represents how a course can have multiple sections
 model Section {
     id              Int @id @default(autoincrement())
-    sectionCode     Int
-    courseId        Int
-    course          Course @relation(fields: [courseId], references: [id])
-    classTimes           CourseTime[]
+    sectionCode     Int // ex. 01
+    courseId        String
+    professorId     Int
+    course          Course @relation(fields: [courseId, professorId], references: [id, professorId])
+    classTimes      CourseTime[]
 }
 
 // Indicates what days and times
