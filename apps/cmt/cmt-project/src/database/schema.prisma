@@ -1,0 +1,58 @@
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+enum DayOfWeek {
+    MON
+    TUE
+    WED
+    THU
+    FRI
+}
+
+//model Users {
+    //username      String @id
+    //uid           Int
+    //fname         String
+    //lname         String
+    //email         String
+//}
+
+// Defines an individual course
+model Course {
+    id          Int @id @default(autoincrement())
+    code        String  // ex. SWEN340
+    name        String
+    semester    String
+    sections    Section[]
+}
+
+// Represents how a course can have multiple sections
+model Section {
+    id              Int @id @default(autoincrement())
+    sectionCode     Int
+    courseId        Int
+    course          Course @relation(fields: [courseId], references: [id])
+    classTimes           CourseTime[]
+}
+
+// Indicates what days and times
+model ClassTime {
+    id          Int @id @default(autoincrement())
+    dayOfWeek   DayOfWeek
+    startTime   DateTime
+    endTime     DateTime
+    sectionId   Int
+    section     Section @relation(fields: [sectionId], references: [id])
+}
