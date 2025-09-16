@@ -17,7 +17,7 @@ export default function Journal() {
 
   return (
     <>
-      <Header />
+      <Header role="/scoopervisor/dashboard"/>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ mb: 4 }}>
           Journal
@@ -52,7 +52,7 @@ export default function Journal() {
                   padding: "1em",
                 }}
               >
-                {JorunalEntry.notes}
+                {JournalEntry.notes}
               </Box>
             </Container>
           ))}

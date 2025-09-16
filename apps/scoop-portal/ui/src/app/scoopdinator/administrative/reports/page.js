@@ -5,7 +5,7 @@ import { Container, Typography } from "@mui/material";
 export default function CoopReporting() {
   return (
     <>
-      <Header />
+      <Header role="/scoopdinator/dashboard"/>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ mb: 4 }}>
           Co-op Reporting

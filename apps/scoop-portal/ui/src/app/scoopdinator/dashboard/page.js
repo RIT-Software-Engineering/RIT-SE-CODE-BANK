@@ -100,7 +100,7 @@ export default function WorkflowDashboard() {
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
       }}
     >
-      <Header />
+      <Header role="/scoopdinator/dashboard"/>
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
         <Typography
           variant="h1"
