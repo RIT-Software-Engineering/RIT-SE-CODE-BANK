@@ -24,6 +24,7 @@ const navItems = [
       { label: "Scooployee", path: "/scooployee/dashboard" },
       { label: "Scoopervisor", path: "/scoopervisor/dashboard" },
       { label: "Scoopdinator", path: "/scoopdinator/dashboard" },
+      { label: "Unified", path: "/new-dashboards" },
     ],
   },
   {

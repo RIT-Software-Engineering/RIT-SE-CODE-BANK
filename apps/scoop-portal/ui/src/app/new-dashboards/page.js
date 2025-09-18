@@ -1,9 +1,10 @@
 'use client';
-import React from 'react';
+import React, {useState, useEffect } from 'react';
 import {
   Box, Typography, Container, Button, Grid, Paper,
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { useUser } from "../utils/user-context/page";
 
 import Header from '@components/Header';
 
@@ -19,13 +20,13 @@ const workflows = [
       },
       {
         title: "Manage Employees",
-        roles: ["Scoopdinator"],
+        roles: ["scoopdinator"],
         description: "Review current scooployee details and statuses.",
         link: "/scoopdinator/scooployees",
       },
       {
         title: 'Onboarding Workflow',
-        roles: ["Scoopdinator","Scoopervisor"],
+        roles: ["scoopdinator","scoopervisor"],
         description: 'To begin the total onboarding process, view the workflow dashboard.',
         link: '/scoopdinator/workflows',
       },
@@ -36,25 +37,25 @@ const workflows = [
     steps: [
       {
         title: "Manage Projects",
-        roles: ["Scoopdinator"],
+        roles: ["scoopdinator"],
         description: "Create, edit, and archive scoop projects.",
         link: "/projects/1",
       },
       {
         title: "View Projects",
-        roles: ["Scoopdinator"],
+        roles: ["scoopdinator"],
         description: "View existing projects and their statuses.",
         link: "/projects",
       },
       {
         title: "Assign Teams",
-        roles: ["Scoopdinator"],
+        roles: ["scoopdinator"],
         description: "Assign teams to existing projects.",
         link: "/projects/assign/team",
       },
       {
         title: "View Teams",
-        roles: ["Scoopdinator","Scoopervisor"],
+        roles: ["scoopdinator","scoopervisor"],
         description: "View and modify existing scoop teams.",
         link: "/scoopdinator/teams",
       },
@@ -65,25 +66,25 @@ const workflows = [
     steps: [
       {
         title: "Contact Advisors",
-        roles: ["Scoopdinator","Scoopervisor","Scooployee"],
+        roles: ["scoopdinator","scoopervisor","scooployee"],
         description: "Get in touch with academic advisors.",
         link: "/scoopdinator/administrative/contact/advisors",
       },
       {
         title: "Contact Co-op Coordinators",
-        roles: ["Scoopdinator","Scoopervisor","Scooployee"],
+        roles: ["scoopdinator","scoopervisor","scooployee"],
         description: "Communicate with coordinators for co-op management and advising.",
         link: "/scoopdinator/administrative/contact/coordinators",
       },
       {
         title: "Manage Co-op Reports",
-        roles: ["Scoopdinator","Scoopervisor"],
+        roles: ["scoopdinator","scoopervisor"],
         description: "Review and manage reports related to co-op experiences.",
         link: "/scoopdinator/administrative/reports",
       },
       {
         title: "Open Communications Journal",
-        roles: ["Scoopdinator","Scoopervisor","Scooployee"],
+        roles: ["scoopdinator","scoopervisor","scooployee"],
         description:
           "View your past communications with others and leave notes.",
         link: "/scoopdinator/administrative/journal",
@@ -91,21 +92,38 @@ const workflows = [
     ],
   },
 ];
-const filteredWorkflows = []
 
 /**
  * Renders the content for the Scoopdinator's Dashboard
  * @returns {JSX.Element}
  */
 export default function WorkflowDashboard() {
-  const { user } = useUser();
-  // console.log("current user: ", user, user ? user.type : 'no user');
-  // if (!user || user.type !== "admin") {
-  //   return <UnauthorizedPage />;
-  // }
+    const [filteredWorkflows, setfilteredWorkflows] = useState([]);
+    const { user } = useUser();
+
+  useEffect(() => {
+    async function fetchTeammates() {
+      if (user == null || user.fname == null){
+        return;
+      }
+
+      const filteredWorkflows = workflows.map((workflow) => {
+      const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
+      if (filteredSteps.length > 0) {
+      return {
+        ...workflow,
+        steps: filteredSteps
+      };
+    }
+    return null;
+  }).filter(Boolean);
+      setfilteredWorkflows(filteredWorkflows);
+
+    }
+    fetchTeammates();
+  }, [user]);
 
   return (
-    // <ProtectedRoute requiredRole="admin">
     <Box
       sx={{
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
@@ -119,11 +137,11 @@ export default function WorkflowDashboard() {
             mb: 5,
           }}
         >
-          {user} Dashboard
+          Dashboard
         </Typography>
 
         <Grid container spacing={4} direction="column">
-          {workflows.forEach((workflow) => workflow.steps.filter((step) => step.roles.includes(user.type))).map((workflow) => (
+          {filteredWorkflows.map((workflow) => (
             <Grid item xs={12} key={workflow.title}>
               <Paper elevation={1} sx={{ p: 3 }}>
                 <Typography
@@ -140,7 +158,7 @@ export default function WorkflowDashboard() {
                 </Typography>
 
                 <Box>
-                  {workflow.map((step, index) => (
+                  {workflow.steps.map((step, index) => (
                     <Box
                       key={step.title}
                       sx={{
@@ -239,6 +257,5 @@ export default function WorkflowDashboard() {
         </Typography>
       </Box>
     </Box>
-    // </ProtectedRoute>
   );
 }
