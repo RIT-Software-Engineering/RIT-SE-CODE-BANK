@@ -40,6 +40,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: 'npm'
+          cache-dependency-path: |
+            apps/ta-portal/ui/package-lock.json
+            apps/ta-portal/server/package-lock.json
+            apps/workflow/server/package-lock.json
 
       - name: Install dependencies
         run: npm ci
