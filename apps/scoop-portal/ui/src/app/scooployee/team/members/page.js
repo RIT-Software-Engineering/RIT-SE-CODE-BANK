@@ -59,7 +59,7 @@ export default function ViewTeamMembers() {
 
   return (
     <>
-      <Header role="/scooployee/dashboard"/>
+      <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, color: '#fff', mb: 4 }}>
           Your Team Members

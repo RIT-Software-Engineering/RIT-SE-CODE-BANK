@@ -77,7 +77,7 @@ const searchablePages = [
     },
 ];
 
-export default function Header({role}) {
+export default function Header() {
   const [anchorEls, setAnchorEls] = useState({});
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");

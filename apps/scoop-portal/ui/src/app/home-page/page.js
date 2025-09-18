@@ -50,7 +50,7 @@ const Home = () => {
         flexDirection: "column",
       }}
     >
-      <Header role="/"/>
+      <Header />
       <nav
         style={{
           position: "fixed",

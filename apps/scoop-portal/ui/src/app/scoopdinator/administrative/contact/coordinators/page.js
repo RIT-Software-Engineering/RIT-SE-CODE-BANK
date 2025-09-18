@@ -5,7 +5,7 @@ import { Container, Typography } from "@mui/material";
 export default function ContactCoordinators() {
   return (
     <>
-      <Header role="/scoopdinator/dashboard"/>
+      <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ mb: 4 }}>
           Contact Co-op Coordinators

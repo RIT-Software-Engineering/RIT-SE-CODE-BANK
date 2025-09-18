@@ -253,7 +253,7 @@ export default function ViewScooployees() {
 
   return (
     <>
-      <Header role="/scoopdinator/dashboard"/>
+      <Header />
       <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
         View Scooployees
       </Typography>
