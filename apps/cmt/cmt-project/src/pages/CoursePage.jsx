@@ -1,19 +1,51 @@
+import {useEffect, useState} from 'react';
+import Button from 'react-bootstrap/Button';
+import Col from 'react-bootstrap/Col';
+import Form from 'react-bootstrap/Form';
+import InputGroup from 'react-bootstrap/InputGroup';
+import Row from 'react-bootstrap/Row';
+import {useRef} from 'react';
 
-const CoursePage = () => {
 
+function CoursePage(){
+  const [courseId, setCourseId] = useState('');
+  const [courseName, setCourseName] = useState('');
+  const [semester, setSemester] = useState('');
+  const [numOfSections, setNumOfSections] = useState('');
 
+  const handleSubmit = (e) => {
 
-  if (!loaded) return (
-    <h1>Loading course info...</h1>
-  )
+  }
 
   return (
     <>
-      
-      <h2>Courses:</h2>
+      <Form onSubmit={handleSubmit}>
+        <Form.Group controlId='formCourseCode'>
+          <Form.Label>Course ID: </Form.Label>
+          <Form.Control value={courseId} onChange={(e) => setCourseId(e.target.value)}
+            placeholder='ex. Swen101'></Form.Control>
+        </Form.Group>
 
-      <h2>Sessions + Sections</h2>
-      
+        <Form.Group controlId='formCourseName'>
+          <Form.Label>Course Name: </Form.Label>
+          <Form.Control value={courseName} onChange={(e) => setCourseName(e.target.value)}
+            placeholder='ex. Freshmen Seminar'></Form.Control>
+        </Form.Group>
+
+        <Form.Group controlId='formCourseSemester'>
+          <Form.Label>Semester: </Form.Label>
+          <Form.Control value={semester} onChange={(e) => setSemester(e.target.value)}
+            placeholder='ex. Fall'></Form.Control>
+        </Form.Group>
+
+        <Form.Group controlId='formCourseSections'>
+          <Form.Label>Number of sections: </Form.Label>
+          <Form.Control value={numOfSections} onChange={(e) => setNumOfSections(e.target.value)}
+            placeholder='ex. 2'></Form.Control>
+        </Form.Group>
+
+        <Button type="submit">Create Course</Button>
+      </Form>
     </>
   )
 }
