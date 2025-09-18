@@ -76,7 +76,7 @@ const searchablePages = [
     },
 ];
 
-export default function Header() {
+export default function Header({role}) {
   const [anchorEls, setAnchorEls] = useState({});
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -113,7 +113,7 @@ export default function Header() {
           }}
         >
           <Box display="flex" alignItems="center">
-            <Link href="/" passHref>
+            <Link href={role} passHref>
               <Box
                 sx={{
                   display: "inline-flex",
@@ -170,75 +170,87 @@ export default function Header() {
               </Box>
             ))}
           </Box>
-
-          <ClickAwayListener onClickAway={() => setSearchOpen(false)}>
-            <Box sx={{ position: "relative" }}>
-              {searchOpen ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Paper
+          <Box display="flex" alignItems="center">
+            <ClickAwayListener onClickAway={() => setSearchOpen(false)}>
+              <Box sx={{ position: "relative" }}>
+                {searchOpen ? (
+                  <Box
                     sx={{
-                      px: 2,
-                      py: 0.5,
-                      mr: 1,
-                      bgcolor: "#f1f1f1",
-                      borderRadius: 2,
                       display: "flex",
                       alignItems: "center",
-                      minWidth: 200,
                     }}
                   >
-                    <InputBase
-                      placeholder="Search..."
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      autoFocus
-                      sx={{ width: "100%" }}
-                    />
-                  </Paper>
-                  <IconButton onClick={() => setSearchOpen(false)}>
-                    <CloseIcon />
+                    <Paper
+                      sx={{
+                        px: 2,
+                        py: 0.5,
+                        mr: 1,
+                        bgcolor: "#f1f1f1",
+                        borderRadius: 2,
+                        display: "flex",
+                        alignItems: "center",
+                        minWidth: 200,
+                      }}
+                    >
+                      <InputBase
+                        placeholder="Search..."
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        autoFocus
+                        sx={{ width: "100%" }}
+                      />
+                    </Paper>
+                    <IconButton onClick={() => setSearchOpen(false)}>
+                      <CloseIcon />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <IconButton onClick={() => setSearchOpen(true)}>
+                    <SearchIcon />
                   </IconButton>
-                </Box>
-              ) : (
-                <IconButton onClick={() => setSearchOpen(true)}>
-                  <SearchIcon />
-                </IconButton>
-              )}
+                )}
 
-              {searchOpen && filteredResults.length > 0 && (
-                <Paper
-                  sx={{
-                    position: "absolute",
-                    top: 48,
-                    right: 0,
-                    width: 250,
-                    maxHeight: 300,
-                    overflowY: "auto",
-                    zIndex: 999,
-                    borderRadius: 2,
-                  }}
-                >
-                  {filteredResults.map((page) => (
-                    <Link key={page.label} href={page.path} passHref>
-                      <MenuItem
-                        onClick={() => {
-                          setSearchOpen(false);
-                          setQuery("");
-                        }}
-                      >
-                        {page.label}
-                      </MenuItem>
-                    </Link>
-                  ))}
-                </Paper>
-              )}
-            </Box>
-          </ClickAwayListener>
+                {searchOpen && filteredResults.length > 0 && (
+                  <Paper
+                    sx={{
+                      position: "absolute",
+                      top: 48,
+                      right: 0,
+                      width: 250,
+                      maxHeight: 300,
+                      overflowY: "auto",
+                      zIndex: 999,
+                      borderRadius: 2,
+                    }}
+                  >
+                    {filteredResults.map((page) => (
+                      <Link key={page.label} href={page.path} passHref>
+                        <MenuItem
+                          onClick={() => {
+                            setSearchOpen(false);
+                            setQuery("");
+                          }}
+                        >
+                          {page.label}
+                        </MenuItem>
+                      </Link>
+                    ))}
+                  </Paper>
+                )}
+              </Box>
+            </ClickAwayListener>
+            <Button
+              href="/"
+              variant="solid-orange"
+              sx={{
+                textTransform: "none",
+                ml: 2,
+                flexShrink: 0,
+              }}
+              >
+              Logout
+          </Button>
+          </Box>
         </Toolbar>
       </AppBar>
       <Toolbar />

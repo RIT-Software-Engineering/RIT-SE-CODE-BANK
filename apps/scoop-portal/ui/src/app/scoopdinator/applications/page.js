@@ -270,7 +270,7 @@ export default function SupervisorApplicationsPage() {
   return (
     <Box
     >
-      <Header />
+      <Header role="/scoopdinator/dashboard"/>
       <IconButton onClick={handleBack} aria-label="back">
         <ArrowBackIcon />
       </IconButton>

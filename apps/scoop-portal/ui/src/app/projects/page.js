@@ -49,7 +49,7 @@ export default function Projects() {
 
   return (
     <>
-      <Header />
+      <Header role="/"/>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ mb: 4 }}>
           Projects
