@@ -85,6 +85,28 @@ router.get("/", async (req, res) => {
     }
 });
 
+// GET team members
+router.get("/:memberid", async (req, res) => {
+    const { memberid }  = req.params;
+    try {
+        const teams = await prisma.teams.findMany({
+        where: {
+          members: {
+            some: { id: memberid },
+            },
+        },
+        include: { members: true } 
+        });
+        res.status(200).json(teams);
+        
+    } catch (error) {
+        console.error("Error fetching teams:", error);
+        res.status(500).json({ message: "Failed to fetch teams", error: error.message });
+    }
+}); 
+
+
+
 // REMOVE a member from a team
 router.delete("/:teamId/members/:memberId", async (req, res) => {
   const { teamId, memberId } = req.params;
