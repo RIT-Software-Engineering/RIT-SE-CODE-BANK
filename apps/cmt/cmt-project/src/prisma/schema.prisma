@@ -34,11 +34,11 @@ model Professor {
     fname   String
     lname   String
     email   String
-    courses Course_Creation[]
+    courses CourseCreation[]
 }
 
 // Defines an individual course
-model Course_Creation{
+model CourseCreation{
     id          String
     name        String
     semester    String
@@ -51,10 +51,10 @@ model Course_Creation{
 // Represents how a course can have multiple sections
 model Section {
     id              Int @id @default(autoincrement())
-    sectionCode     Int // ex. 01
+    sectionNum      Int // ex. '1' for section 1
     courseId        String
     professorId     Int
-    course          Course_Creation @relation(fields: [courseId, professorId], references: [id, professorId])
+    course          CourseCreation @relation(fields: [courseId, professorId], references: [id, professorId])
     classTimes      ClassTime[]
 }
 
@@ -62,8 +62,8 @@ model Section {
 model ClassTime {
     id          Int @id @default(autoincrement())
     dayOfWeek   DayOfWeek
-    startTime   DateTime
-    endTime     DateTime
+    startTime   String
+    endTime     String
     sectionId   Int
     section     Section @relation(fields: [sectionId], references: [id])
 }
