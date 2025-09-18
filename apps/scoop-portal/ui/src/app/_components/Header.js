@@ -114,7 +114,7 @@ export default function Header({role}) {
           }}
         >
           <Box display="flex" alignItems="center">
-            <Link href={role} passHref>
+            <Link href={"/new-dashboards"} passHref>
               <Box
                 sx={{
                   display: "inline-flex",
