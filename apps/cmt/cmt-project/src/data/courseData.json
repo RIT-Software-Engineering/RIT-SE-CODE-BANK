@@ -121,6 +121,32 @@
           "Test all examples"
         ]
       }
+    ],
+    "2025-09-17": [
+      {
+        "id": 7,
+        "title": "ABC",
+        "course": "cs101",
+        "type": "exam",
+        "time": "10:00 AM",
+        "location": "21",
+        "description": "hi",
+        "importance": "Medium",
+        "preparation": []
+      }
+    ],
+    "2025-09-19": [
+      {
+        "id": 8,
+        "title": "Test",
+        "course": "cs401",
+        "type": "assignment",
+        "time": "13:00",
+        "location": "32",
+        "description": "",
+        "importance": "High",
+        "preparation": []
+      }
     ]
   }
 }
