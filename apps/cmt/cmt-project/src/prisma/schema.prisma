@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Change to "mysql" or "sqlite" as needed
+  url      = env("DATABASE_URL")
+}
+
+model Course {
+  id       String  @id
+  name     String
+  color    String
+  students Int
+  events   Event[]
+
+  @@map("courses")
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  courseId    String?  // Optional for events that apply to all courses or admin events
+  type        EventType
+  time        String
+  date        DateTime
+  location    String
+  description String?
+  importance  Importance
+  preparation String[] // Array of preparation items
+  
+  course      Course?  @relation(fields: [courseId], references: [id])
+
+  @@map("events")
+}
+
+enum EventType {
+  exam
+  assignment
+  lecture
+  lab
+  office_hours
+  meeting
+  
+  @@map("event_types")
+}
+
+enum Importance {
+  Low
+  Medium
+  High
+  
+  @@map("importance_levels")
+}
