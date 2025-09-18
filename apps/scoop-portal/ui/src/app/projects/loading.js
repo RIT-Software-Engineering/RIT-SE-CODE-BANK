@@ -59,7 +59,7 @@ function ProjectsLoading() {
   const theme = useTheme();
   return (
     <>
-      <Header />
+      <Header role="/"/>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ mb: 4 }}>
           <Skeleton variant="rectangular" height="2.5rem" width="9.5rem" />
