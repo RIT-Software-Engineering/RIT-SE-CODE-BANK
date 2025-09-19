@@ -113,7 +113,7 @@ router.get("/scoopdinator", async (req, res) => {
 
   // Fetch journal entries based on the two clauses
   try {
-    const scoopdinatorEntries = await prisma.journal_Entry.findMany({
+    const scoopdinatorEntries = await prisma.journalEntry.findMany({
       where: whereClause,
       orderBy: orderByClause,
     });
@@ -133,7 +133,7 @@ router.get("/scoopdinator", async (req, res) => {
 router.get("/scoopervisor", async (req, res) => {
   const whereClause = { journal_owner_type: "scoopervisor" };
   try {
-    const scoopervisorEntries = await prisma.journal_Entry.findMany({
+    const scoopervisorEntries = await prisma.journalEntry.findMany({
       where: whereClause,
     });
     res.status(200).json(scoopervisorEntries);
@@ -151,7 +151,7 @@ router.get("/scoopervisor", async (req, res) => {
  */
 router.get("/scooployee", async (req, res) => {
   try {
-    const scooployeeEntries = await prisma.journal_Entry.findMany({
+    const scooployeeEntries = await prisma.journalEntry.findMany({
       where: { journal_owner_type: "scooployee" },
     });
     res.status(200).json(scooployeeEntries);

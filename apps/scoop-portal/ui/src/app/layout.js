@@ -1,5 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
-// import "./globals.css";
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import ThemeRegistry from "ThemeRegistry";
 import { UserProvider } from "utils/user-context/page";
 
@@ -21,11 +21,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        <ThemeRegistry>
-          <UserProvider>{children}</UserProvider>
-        </ThemeRegistry>
-      </body>
+    <body>
+    <AppRouterCacheProvider>
+    <ThemeRegistry>
+    <UserProvider>{children}</UserProvider>
+    </ThemeRegistry>
+    </AppRouterCacheProvider>
+    </body>
     </html>
   );
 }
