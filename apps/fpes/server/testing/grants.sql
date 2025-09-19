@@ -3,11 +3,11 @@ CREATE TABLE grants (
     category ENUM('Funded', 'In Submission', 'Declined', 'In Development') NOT NULL,
     title VARCHAR(255) NOT NULL,
     funder VARCHAR(255) NOT NULL,
-    amount DECIMAL(12,2) DEFAULT NULL,              
-    est_amount DECIMAL(12,2) DEFAULT NULL,          
+    amount INT(12,2) DEFAULT NULL,              
+    est_amount INT(12,2) DEFAULT NULL,          
     time_period VARCHAR(100) NOT NULL,              
     faculty_role VARCHAR(150) NOT NULL,             
-    faculty_share DECIMAL(12,2) DEFAULT NULL,       
+    faculty_share INT(12,2) DEFAULT NULL,       
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
