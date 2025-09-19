@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import EditNoteIcon from "@mui/icons-material/EditNote";
+import AddIcon from "@mui/icons-material/Add";
 
 /**
  * Renders the loading skeleton for the journal cards for the main skeleton
