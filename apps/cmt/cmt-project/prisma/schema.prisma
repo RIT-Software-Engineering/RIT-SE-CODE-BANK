@@ -55,3 +55,89 @@ enum Importance {
   
   @@map("importance_levels")
 }
+
+/* =========================
+   Team Builder (NEW)
+   =========================
+   - Instructor selects a Section, imports roster rows (TBEnrollment)
+   - Generates a TeamSet (snapshot) per assignment/run
+   - Teams + Members live under the TeamSet
+*/
+
+model TBEnrollment {
+  id              Int     @id @default(autoincrement())
+  sectionId       Int
+  studentId       Int
+  email           String?
+  lastFirstName   String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  section         Section   @relation(fields: [sectionId], references: [[id]])
+
+  @@unique([sectionId, email])
+  @@unique([sectionId, studentId])
+  @@index([sectionId])
+}
+
+//A snapshot of teams for a specific section
+model TBTeamSet{
+  id            Int
+  sectionId     Int
+  name          String
+  status        TBTeamSetStatus @default(DRAFT)
+  teamSize      Int?
+  constraints   Json
+  publishedAt   DateTime?
+  archivedAt    DateTime?
+
+  createdByProfessorId  Int
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  section               Section     @relation(fields: [sectionId], references: [id])
+  createdByProfessor    Professor   @relation(fields: [createdByProfessorId], references: [id])
+  teams                 TBTeam[]
+
+  @@unique([sectionId, name])
+  @@index([sectionId, status])
+}
+
+enum TBTeamSetStatus{
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+//A single team within a teamset
+model TBTeam{
+  id      Int     @id @default(autoincrement())
+  teamSetId   Int
+  name        String
+  maxSize     Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  teamSet     TBTeamSet   @relation(fields: [teamSetId], references: [id])
+  members     TBMember[]
+
+  @@unique([teamSetId, name])
+}
+
+//Membership connects a roster entity (TBEnrollment) to a team
+//We link TBEnrollment (not a global User) so CSV-driven flow works
+model TBMember{
+  id    Int   @id @default(autoincrement())
+  teamId    Int
+  enrollmentId  Int
+  role          String?  //optional: "lead", "scribe", etc
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  team          TBTeam      @relation(fields: [teamId], references: [id])
+  enrollment    TBEnrollment    @relation(fields: [enrollmentId], references: [id])
+
+  @@unique([teamId, enrollmentId])
+  @@index([enrollmentId])
+}
