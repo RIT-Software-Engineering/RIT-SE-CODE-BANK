@@ -1,222 +1,418 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const dataHandler = require('../utils/dataHandler');
+const { PrismaClient } = require("@prisma/client");
 
-// Validation middleware
+const prisma = new PrismaClient();
+
 const validateEvent = (req, res, next) => {
-  const { title, course, type, date } = req.body;
-  
-  if (!title || !course || !type || !date) {
+  const { title, courseId, type, date } = req.body;
+
+  if (!title || !courseId || !type || !date) {
     return res.status(400).json({
-      error: 'Missing required fields',
-      required: ['title', 'course', 'type', 'date']
+      error: "Missing required fields",
+      required: ["title", "courseId", "type", "date"],
     });
   }
-  
+
   // Validate date format
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(date)) {
     return res.status(400).json({
-      error: 'Invalid date format. Use YYYY-MM-DD'
+      error: "Invalid date format. Use YYYY-MM-DD",
     });
   }
-  
+
+  // Validate event type
+  const validTypes = [
+    "exam",
+    "assignment",
+    "lecture",
+    "lab",
+    "office_hours",
+    "meeting",
+  ];
+  if (!validTypes.includes(type)) {
+    return res.status(400).json({
+      error: "Invalid event type",
+      validTypes,
+    });
+  }
+
+  // Validate importance
+  if (req.body.importance) {
+    const validImportance = ["Low", "Medium", "High"];
+    if (!validImportance.includes(req.body.importance)) {
+      return res.status(400).json({
+        error: "Invalid importance level",
+        validImportance,
+      });
+    }
+  }
+
   next();
 };
 
-// GET /api/events - Get all events
-router.get('/', async (req, res) => {
+// GET /api/events - Get all events with course information
+router.get("/", async (req, res) => {
   try {
-    const events = await dataHandler.getEvents();
+    const events = await prisma.event.findMany({
+      include: {
+        course: true, // Include course details
+      },
+      orderBy: {
+        date: "asc",
+      },
+    });
+
     res.json({
       success: true,
-      data: events
+      data: events,
     });
   } catch (error) {
+    console.error("Error fetching events:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // GET /api/events/courses - Get all courses
-router.get('/courses', async (req, res) => {
+router.get("/courses", async (req, res) => {
   try {
-    const courses = await dataHandler.getCourses();
+    const courses = await prisma.course.findMany({
+      include: {
+        _count: {
+          select: { events: true }, // Count events per course
+        },
+      },
+      orderBy: {
+        id: "asc",
+      },
+    });
+
     res.json({
       success: true,
-      data: courses
+      data: courses,
     });
   } catch (error) {
+    console.error("Error fetching courses:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // GET /api/events/stats - Get statistics
-router.get('/stats', async (req, res) => {
+router.get("/stats", async (req, res) => {
   try {
-    const stats = await dataHandler.getStats();
+    const totalEvents = await prisma.event.count();
+    const totalCourses = await prisma.course.count();
+
+    const eventsByType = await prisma.event.groupBy({
+      by: ["type"],
+      _count: {
+        id: true,
+      },
+    });
+
+    const eventsByImportance = await prisma.event.groupBy({
+      by: ["importance"],
+      _count: {
+        id: true,
+      },
+    });
+
+    const upcomingEvents = await prisma.event.count({
+      where: {
+        date: {
+          gte: new Date(),
+        },
+      },
+    });
+
+    const stats = {
+      totalEvents,
+      totalCourses,
+      upcomingEvents,
+      eventsByType: eventsByType.map((item) => ({
+        type: item.type,
+        count: item._count.id,
+      })),
+      eventsByImportance: eventsByImportance.map((item) => ({
+        importance: item.importance,
+        count: item._count.id,
+      })),
+    };
+
     res.json({
       success: true,
-      data: stats
+      data: stats,
     });
   } catch (error) {
+    console.error("Error fetching stats:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // GET /api/events/deadlines - Get upcoming deadlines
-router.get('/deadlines', async (req, res) => {
+router.get("/deadlines", async (req, res) => {
   try {
     const daysAhead = parseInt(req.query.days) || 7;
-    const deadlines = await dataHandler.getUpcomingDeadlines(daysAhead);
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + daysAhead);
+
+    const deadlines = await prisma.event.findMany({
+      where: {
+        date: {
+          gte: new Date(),
+          lte: endDate,
+        },
+        type: {
+          in: ["exam", "assignment"], // Only deadlines
+        },
+      },
+      include: {
+        course: true,
+      },
+      orderBy: {
+        date: "asc",
+      },
+    });
+
     res.json({
       success: true,
-      data: deadlines
+      data: deadlines,
     });
   } catch (error) {
+    console.error("Error fetching deadlines:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // GET /api/events/date/:date - Get events for specific date
-router.get('/date/:date', async (req, res) => {
+router.get("/date/:date", async (req, res) => {
   try {
     const { date } = req.params;
-    const events = await dataHandler.getEventsForDate(date);
+    const targetDate = new Date(date);
+
+    const events = await prisma.event.findMany({
+      where: {
+        date: targetDate,
+      },
+      include: {
+        course: true,
+      },
+      orderBy: {
+        time: "asc",
+      },
+    });
+
     res.json({
       success: true,
-      data: events
+      data: events,
     });
   } catch (error) {
+    console.error("Error fetching events for date:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
-// GET /api/events/course/:courseId - Get course by ID
-router.get('/course/:courseId', async (req, res) => {
+// GET /api/events/course/:courseId - Get course by ID with its events
+router.get("/course/:courseId", async (req, res) => {
   try {
     const { courseId } = req.params;
-    const course = await dataHandler.getCourseById(courseId);
-    
+
+    const course = await prisma.course.findUnique({
+      where: {
+        id: courseId,
+      },
+      include: {
+        events: {
+          orderBy: {
+            date: "asc",
+          },
+        },
+      },
+    });
+
     if (!course) {
       return res.status(404).json({
         success: false,
-        error: 'Course not found'
+        error: "Course not found",
       });
     }
-    
+
     res.json({
       success: true,
-      data: course
+      data: course,
     });
   } catch (error) {
+    console.error("Error fetching course:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // POST /api/events - Create new event
-router.post('/', validateEvent, async (req, res) => {
+router.post("/", validateEvent, async (req, res) => {
   try {
-    const { date, ...eventData } = req.body;
-    
-    // Set default values
-    const newEventData = {
-      title: eventData.title,
-      course: eventData.course,
-      type: eventData.type,
-      time: eventData.time || '12:00 PM',
-      location: eventData.location || 'TBD',
-      description: eventData.description || '',
-      importance: eventData.importance || 'Medium',
-      preparation: eventData.preparation || []
-    };
-    
-    const newEvent = await dataHandler.addEvent(date, newEventData);
-    
+    const { date, courseId, ...eventData } = req.body;
+
+    // Verify course exists
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+    });
+
+    if (!course && courseId !== "admin") {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid course ID",
+      });
+    }
+
+    const newEvent = await prisma.event.create({
+      data: {
+        title: eventData.title,
+        courseId: courseId === "admin" ? null : courseId,
+        type: eventData.type,
+        date: new Date(date),
+        time: eventData.time || "12:00 PM",
+        location: eventData.location || "TBD",
+        description: eventData.description || "",
+        importance: eventData.importance || "Medium",
+        preparation: eventData.preparation || [],
+      },
+      include: {
+        course: true,
+      },
+    });
+
     res.status(201).json({
       success: true,
-      message: 'Event created successfully',
-      data: newEvent
+      message: "Event created successfully",
+      data: newEvent,
     });
   } catch (error) {
+    console.error("Error creating event:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
 
 // PUT /api/events/:id - Update existing event
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const eventId = parseInt(req.params.id);
-    const updatedData = req.body;
-    
-    // Remove id from update data to prevent conflicts
-    delete updatedData.id;
-    
-    await dataHandler.updateEvent(eventId, updatedData);
-    
-    res.json({
-      success: true,
-      message: 'Event updated successfully'
+    const { date, courseId, ...updatedData } = req.body;
+
+    // Check if event exists
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
     });
-  } catch (error) {
-    if (error.message === 'Event not found') {
-      res.status(404).json({
+
+    if (!existingEvent) {
+      return res.status(404).json({
         success: false,
-        error: error.message
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        error: error.message
+        error: "Event not found",
       });
     }
+
+    // If courseId is being updated, verify it exists
+    if (courseId && courseId !== "admin") {
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
+      });
+
+      if (!course) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid course ID",
+        });
+      }
+    }
+
+    const updateData = {
+      ...updatedData,
+      ...(courseId !== undefined && {
+        courseId: courseId === "admin" ? null : courseId,
+      }),
+      ...(date && { date: new Date(date) }),
+    };
+
+    const updatedEvent = await prisma.event.update({
+      where: { id: eventId },
+      data: updateData,
+      include: {
+        course: true,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: "Event updated successfully",
+      data: updatedEvent,
+    });
+  } catch (error) {
+    console.error("Error updating event:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 });
 
 // DELETE /api/events/:id - Delete event
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const eventId = parseInt(req.params.id);
-    
-    await dataHandler.deleteEvent(eventId);
-    
-    res.json({
-      success: true,
-      message: 'Event deleted successfully'
+
+    // Check if event exists
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
     });
-  } catch (error) {
-    if (error.message === 'Event not found') {
-      res.status(404).json({
+
+    if (!existingEvent) {
+      return res.status(404).json({
         success: false,
-        error: error.message
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        error: error.message
+        error: "Event not found",
       });
     }
+
+    await prisma.event.delete({
+      where: { id: eventId },
+    });
+
+    res.json({
+      success: true,
+      message: "Event deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
+});
+
+// shutdown
+process.on("beforeExit", async () => {
+  await prisma.$disconnect();
 });
 
 module.exports = router;

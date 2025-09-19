@@ -26,11 +26,11 @@ export default function CalPage() {
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState("all");
   const [courses, setCourses] = useState([]);
-  const [events, setEvents] = useState({});
+  const [events, setEvents] = useState([]); // Changed from {} to []
   const [selectedDate, setSelectedDate] = useState(null);
   const [newEvent, setNewEvent] = useState({
     title: "",
-    course: "",
+    courseId: "", // Changed from 'course' to 'courseId'
     type: "lecture",
     time: "",
     location: "",
@@ -41,6 +41,7 @@ export default function CalPage() {
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
 
   const API_BASE = "http://localhost:5000/api/events";
+
   const loadCourses = async () => {
     try {
       const response = await fetch(`${API_BASE}/courses`);
@@ -55,7 +56,18 @@ export default function CalPage() {
     try {
       const response = await fetch(API_BASE);
       const result = await response.json();
-      if (result.success) setEvents(result.data);
+      if (result.success) {
+        // Transform the array of events into date-grouped object for calendar display
+        const eventsByDate = {};
+        result.data.forEach((event) => {
+          const dateKey = new Date(event.date).toISOString().split("T")[0];
+          if (!eventsByDate[dateKey]) {
+            eventsByDate[dateKey] = [];
+          }
+          eventsByDate[dateKey].push(event);
+        });
+        setEvents(eventsByDate);
+      }
     } catch (error) {
       console.error("Error loading events:", error);
     }
@@ -72,19 +84,20 @@ export default function CalPage() {
       const response = await fetch(`${API_BASE}/deadlines?days=7`);
       const result = await response.json();
       if (result.success) {
-        setUpcomingDeadlines(result.data); // Make sure this line exists
+        setUpcomingDeadlines(result.data);
       }
     } catch (error) {
       console.error("Error loading deadlines:", error);
       setUpcomingDeadlines([]);
     }
   };
+
   // Button handler functions
   const handleAddEvent = (date = null) => {
     setSelectedDate(date);
     setNewEvent({
       title: "",
-      course: "",
+      courseId: "", // Changed from 'course' to 'courseId'
       type: "lecture",
       time: "",
       location: "",
@@ -96,7 +109,7 @@ export default function CalPage() {
   };
 
   const handleSaveNewEvent = async () => {
-    if (!newEvent.title || !newEvent.course) {
+    if (!newEvent.title || !newEvent.courseId) {
       alert("Please fill in required fields: Title and Course");
       return;
     }
@@ -110,8 +123,8 @@ export default function CalPage() {
       const result = await response.json();
 
       if (result.success) {
-        await loadEvents(); // This should refresh the events
-        await loadUpcomingDeadlines(); // Also refresh deadlines
+        await loadEvents();
+        await loadUpcomingDeadlines();
         setShowAddEventModal(false);
         alert("Event added successfully!");
       } else {
@@ -121,9 +134,9 @@ export default function CalPage() {
       alert("Failed to save event");
     }
   };
+
   const handleEditEvent = () => {
     if (!selectedEvent) return;
-
     alert(`Edit functionality would open for: ${selectedEvent.title}`);
   };
 
@@ -139,6 +152,7 @@ export default function CalPage() {
 
       if (result.success) {
         await loadEvents();
+        await loadUpcomingDeadlines();
         setShowEventModal(false);
         alert("Event deleted successfully!");
       }
@@ -195,17 +209,14 @@ export default function CalPage() {
     const firstDay = getFirstDayOfMonth(currentDate);
     const days = [];
 
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(0);
     }
 
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day);
     }
 
-    // Group into weeks
     const weeks = [];
     for (let i = 0; i < days.length; i += 7) {
       weeks.push(days.slice(i, i + 7));
@@ -242,6 +253,11 @@ export default function CalPage() {
   };
 
   const getCourseInfo = (courseId) => {
+    // Handle null courseId for admin events
+    if (!courseId) {
+      return { name: "Administrative", color: "gray" };
+    }
+
     return (
       courses.find((course) => course.id === courseId) || {
         name: "Administrative",
@@ -254,22 +270,11 @@ export default function CalPage() {
     if (selectedCourse === "all") return dayEvents;
     return dayEvents.filter(
       (event) =>
-        event.course === selectedCourse ||
-        event.course === "all" ||
-        event.course === "admin"
+        event.courseId === selectedCourse ||
+        (!event.courseId && selectedCourse === "admin")
     );
   };
 
-  const getUpcomingDeadlines = async () => {
-    try {
-      const response = await fetch(`${API_BASE}/deadlines?days=7`);
-      const result = await response.json();
-      return result.success ? result.data : [];
-    } catch (error) {
-      console.error("Error loading deadlines:", error);
-      return [];
-    }
-  };
   return (
     <div className="calendar-container">
       {/* Header */}
@@ -304,6 +309,7 @@ export default function CalPage() {
                 {course.name}
               </option>
             ))}
+            <option value="admin">Administrative</option>
           </select>
         </div>
 
@@ -370,7 +376,6 @@ export default function CalPage() {
 
       {/* Calendar Grid */}
       <div className="calendar-grid">
-        {/* Calendar Header */}
         <div className="calendar-grid-header">
           {[
             "Sunday",
@@ -387,7 +392,6 @@ export default function CalPage() {
           ))}
         </div>
 
-        {/* Calendar Body */}
         <div className="calendar-weeks">
           {generateCalendarDays().map((week, weekIndex) => (
             <div key={weekIndex} className="calendar-week">
@@ -412,7 +416,6 @@ export default function CalPage() {
                   >
                     {day !== 0 && (
                       <>
-                        {/* Day Number */}
                         <div className="day-number">
                           <span>{day}</span>
                           <button
@@ -426,10 +429,9 @@ export default function CalPage() {
                           </button>
                         </div>
 
-                        {/* Events */}
                         <div className="events-container">
                           {filteredEvents.map((event) => {
-                            const courseInfo = getCourseInfo(event.course);
+                            const courseInfo = getCourseInfo(event.courseId);
                             const IconComponent =
                               eventTypes[event.type]?.icon || BookOpen;
 
@@ -445,12 +447,11 @@ export default function CalPage() {
                               >
                                 <div className="event-title">{event.title}</div>
                                 <div className="event-time">{event.time}</div>
-                                {event.course !== "all" &&
-                                  event.course !== "admin" && (
-                                    <div className="event-course">
-                                      {courseInfo.name}
-                                    </div>
-                                  )}
+                                {event.courseId && (
+                                  <div className="event-course">
+                                    {courseInfo.name}
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -487,7 +488,9 @@ export default function CalPage() {
                 <div className="detail-item">
                   <div className="detail-label">Course</div>
                   <div className="detail-value">
-                    {getCourseInfo(selectedEvent.course).name}
+                    {selectedEvent.course
+                      ? selectedEvent.course.name
+                      : getCourseInfo(selectedEvent.courseId).name}
                   </div>
                 </div>
 
@@ -514,19 +517,20 @@ export default function CalPage() {
                 <p className="detail-value">{selectedEvent.description}</p>
               </div>
 
-              {selectedEvent.preparation && (
-                <div className="detail-item">
-                  <div className="detail-label">Preparation Checklist</div>
-                  <ul className="preparation-list">
-                    {selectedEvent.preparation.map((item, index) => (
-                      <li key={index}>
-                        <span className="checkmark">✓</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {selectedEvent.preparation &&
+                selectedEvent.preparation.length > 0 && (
+                  <div className="detail-item">
+                    <div className="detail-label">Preparation Checklist</div>
+                    <ul className="preparation-list">
+                      {selectedEvent.preparation.map((item, index) => (
+                        <li key={index}>
+                          <span className="checkmark">✓</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
             </div>
 
             <div className="modal-footer">
@@ -583,9 +587,9 @@ export default function CalPage() {
                   <div className="detail-label">Course</div>
                   <select
                     className="course-filter"
-                    value={newEvent.course}
+                    value={newEvent.courseId}
                     onChange={(e) =>
-                      setNewEvent({ ...newEvent, course: e.target.value })
+                      setNewEvent({ ...newEvent, courseId: e.target.value })
                     }
                   >
                     <option value="">Select Course</option>
@@ -594,7 +598,6 @@ export default function CalPage() {
                         {course.name}
                       </option>
                     ))}
-                    <option value="all">All Courses</option>
                     <option value="admin">Administrative</option>
                   </select>
                 </div>
@@ -678,7 +681,7 @@ export default function CalPage() {
               <button
                 className="btn btn-primary"
                 onClick={handleSaveNewEvent}
-                disabled={!newEvent.title || !newEvent.course}
+                disabled={!newEvent.title || !newEvent.courseId}
               >
                 <Plus size={16} />
                 Add Event
