@@ -68,7 +68,6 @@ export default function Journal() {
 
       // Fetch the journal entries
       try {
-
         const [entriesRes, usersRes, semestersRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal/scoopdinator`), //changed admin to scoopdinator
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`),
@@ -81,7 +80,8 @@ export default function Journal() {
           semestersRes.json(),
         ]);
 
-        setJournalEntries(entries);
+        // Ensure entries is an array before setting it
+        setJournalEntries(Array.isArray(entries) ? entries : []);
 
         const contacteeMap = {};
         users.forEach((user) => {
@@ -97,6 +97,7 @@ export default function Journal() {
         setSemesterGroups(semesterGroupMap);
       } catch (err) {
         console.error("Failed to fetch data: ", err);
+        setJournalEntries([]); // Set to empty array on error
       } finally {
         setLoading(false);
       }
@@ -166,9 +167,11 @@ export default function Journal() {
       const res = await fetch(url);
       const data = await res.json();
       console.log(data);
-      setJournalEntries(data);
-    } catch (error) {
-      console.error("Failed to apply filter:", err);
+      // Ensure data is an array before setting it
+      setJournalEntries(Array.isArray(data) ? data : []);
+    } catch (error) { 
+      console.error("Failed to apply filter:", error);
+      setJournalEntries([]); // Set to empty array on error
     } finally {
       setLoading(false);
       setFilterDialogOpen(false); // Close the dialog after applying
@@ -221,14 +224,22 @@ export default function Journal() {
           body: JSON.stringify({ notes: editValue }),
         }
       );
+      // Check for successful response from API
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      // Assuming the update is successful, update local state
       setJournalEntries((prev) =>
         prev.map((e) => (e.id === entry.id ? { ...e, notes: editValue } : e))
       );
-      res.status(200).json({ message: "Notes saved successfully." });
+
+      return { message: "Notes saved successfully." };
     } catch (error) {
       console.error("Failed to save entry notes: ", error);
+      throw error;
+    } finally {
+      setEditingEntry(null);
     }
-    setEditingEntry(null);
   };
 
   /**
@@ -249,9 +260,8 @@ export default function Journal() {
   };
 
   const postNewEntry = async () => {
-    const [contactee_fname, contactee_lname] = contactees[
-      newEntryContactee
-    ]?.split(" ") || ["", ""];
+    const [contactee_fname, contactee_lname] =
+      contactees[newEntryContactee]?.split(" ") || ["", ""];
 
     const entry = {
       date: new Date().toISOString(), // Add this to match existing entries
@@ -273,20 +283,27 @@ export default function Journal() {
           body: JSON.stringify(entry),
         }
       );
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       const data = await res.json();
       if (data.entry) {
         setJournalEntries((prev) => [data.entry, ...prev]);
       } else {
-        console.warn("No entry returned from API");
-        throw error;
+        console.warn("No entry returned from API, or unexpected structure.");
+        throw new Error("API did not return the expected entry object.");
       }
 
       setNewEntryOpen(false);
       setEditValue("");
       setNewEntrySemester("");
       setNewEntryContactee("");
+      return { message: "Journal entry created!" };
     } catch (error) {
       console.error("Failed to create a new journal entry: ", error);
+      throw error;
     }
   };
 
@@ -325,7 +342,7 @@ export default function Journal() {
             No journal entries found. Please check back later.
           </Typography>
         ) : (
-          journalEntries?.map((entry) => (
+          journalEntries.map((entry) => (
             <Card
               key={entry.id}
               square
@@ -516,7 +533,7 @@ export default function Journal() {
       {/* For Note Editing */}
       <Dialog
         open={!!editingEntry}
-        onClose={handleSaveEdit}
+        onClose={handleCancelEdit}
         maxWidth="sm"
         fullWidth
       >
