@@ -29,8 +29,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-        with:
-          fetch-depth: 0
 
       - name: Set base and head commits for Nx
         id: set-base
@@ -64,8 +62,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-        with:
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -79,8 +75,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v4
@@ -152,8 +146,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v4
