@@ -314,7 +314,7 @@ export default function Journal() {
 
   return (
     <>
-      <Header role="/scoopdinator/dashboard"/>
+      <Header />
       <Container maxWidth="lg" sx={{ py: 4, "& > *:last-child": { mb: "0" } }}>
         <JournalHeader
           setFilterDialogOpen={setFilterDialogOpen}

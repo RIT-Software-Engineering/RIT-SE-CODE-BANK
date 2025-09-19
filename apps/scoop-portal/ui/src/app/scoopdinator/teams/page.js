@@ -102,7 +102,7 @@ export default function TeamsPage() {
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
       }}
     >
-      <Header role="/scoopdinator/dashboard"/>
+      <Header />
 
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
         <Box

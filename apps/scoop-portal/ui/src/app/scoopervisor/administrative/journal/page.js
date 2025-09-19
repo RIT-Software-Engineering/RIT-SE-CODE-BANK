@@ -17,7 +17,7 @@ export default function Journal() {
 
   return (
     <>
-      <Header role="/scoopervisor/dashboard"/>
+      <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ mb: 4 }}>
           Journal

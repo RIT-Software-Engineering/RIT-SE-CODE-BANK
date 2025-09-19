@@ -161,7 +161,7 @@ export default function WorkflowDashboard() {
 
   return (
     <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
-      <Header role="/scooployee/dashboard"/>
+      <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
         <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, mb: 5, color: '#fff' }}>
           Scooployee Workflow
