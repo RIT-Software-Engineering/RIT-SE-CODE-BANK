@@ -24,6 +24,7 @@ const navItems = [
       { label: "Scooployee", path: "/scooployee/dashboard" },
       { label: "Scoopervisor", path: "/scoopervisor/dashboard" },
       { label: "Scoopdinator", path: "/scoopdinator/dashboard" },
+      { label: "Unified", path: "/new-dashboards" },
     ],
   },
   {
@@ -76,7 +77,7 @@ const searchablePages = [
     },
 ];
 
-export default function Header({role}) {
+export default function Header() {
   const [anchorEls, setAnchorEls] = useState({});
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -113,7 +114,7 @@ export default function Header({role}) {
           }}
         >
           <Box display="flex" alignItems="center">
-            <Link href={role} passHref>
+            <Link href={"/new-dashboards"} passHref>
               <Box
                 sx={{
                   display: "inline-flex",

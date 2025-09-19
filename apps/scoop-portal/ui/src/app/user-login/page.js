@@ -37,7 +37,7 @@ export default function AuthPage() {
         setSnackbarOpen(true);
 
         setTimeout(() => {
-          router.push("/scooployee/dashboard");
+          router.push("/new-dashboards");
         }, 1500);
       } else {
         setSnackbarMessage(

@@ -76,7 +76,7 @@ function JournalCardLoading() {
 function JournalLoading() {
   return (
     <>
-      <Header role="/scoopdinator/dashboard"/>
+      <Header />
       <Container maxWidth="lg" sx={{ py: 4, "& > *:last-child": { mb: "0" } }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 4 }}>
           <Skeleton variant="reactangular">

@@ -5,7 +5,7 @@ import { Container, Typography } from '@mui/material';
 export default function AssignProjectScoopverisor() {
   return (
     <>
-      <Header role="/"/>
+      <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, color: '#fff', mb: 4 }}>
           Scoopervisor Assignment

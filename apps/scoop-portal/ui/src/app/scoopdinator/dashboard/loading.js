@@ -6,7 +6,7 @@ import Header from "@components/Header";
 export default function WorkflowDashboardLoading() {
   return (
     <Box>
-      <Header role="/scoopdinator/dashboard"/>
+      <Header />
       <Container></Container>
     </Box>
   );
