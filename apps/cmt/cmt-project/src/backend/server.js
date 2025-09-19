@@ -3,11 +3,13 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 
-
 const eventRoutes = require('./routes/events');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 
 app.use(cors({
@@ -63,6 +65,52 @@ app.use('*', (req, res) => {
     error: 'Route not found',
     path: req.originalUrl
   });
+});
+
+// get all courses + sections from a professor
+app.get('/api/courses', async (req, res) => {
+    try {
+        const courses = await prisma.courseCreation.findMany({
+            include: {professor: true, sections: true},
+        });
+        res.json(courses);
+    } catch (err) {
+        res.status(500).json({error: err.message});
+    }
+});
+
+// create a course
+app.post('/api/courses', async (req, res) => {
+    try {
+        const {id, name, semester, professorId} = req.body;
+        const course = await prisma.courseCreation.create({
+            data: {id, name, semester, professorId},
+        });
+        res.json(course);
+    } catch (err) {
+        res.status(500).json({error: err.message});
+    }
+});
+
+// create a section for a course
+app.post('/api/sections', async (req, res) => {
+    try {
+        const {sectionNum, courseId, professorId, classTimes} = req.body;
+        const section = await prisma.section.create({
+            data: {sectionNum, courseId, professorId,
+                classTimes : {
+                    create: classTimes.map(time => ({
+                        dayOfWeek: time.dayOfWeek,
+                        startTime: time.startTime,
+                        endTime: time.endTime,
+                    })),
+                },
+            },
+        });
+        res.json(section);
+    } catch (err) {
+        res.status(500).json({error: err.message});
+    }
 });
 
 // Start server

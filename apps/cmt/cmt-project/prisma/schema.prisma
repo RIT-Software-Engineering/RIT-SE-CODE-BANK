@@ -57,6 +57,57 @@ enum Importance {
 }
 
 /* =========================
+   Course Builder
+   =========================
+*/
+enum DayOfWeek {
+    MON
+    TUE
+    WED
+    THU
+    FRI
+}
+
+model Professor {
+    id      Int @id @default(autoincrement()) // default ids, can change to use uids or something
+    fname   String
+    lname   String
+    email   String
+    courses CourseCreation[]
+}
+
+// Defines an individual course
+model CourseCreation{
+    id          String
+    name        String
+    semester    String
+    professorId Int
+    professor   Professor @relation(fields: [professorId], references: [id])
+    sections    Section[]
+    @@id([id, professorId])
+}
+
+// Represents how a course can have multiple sections
+model Section {
+    id              Int @id @default(autoincrement())
+    sectionNum      Int // ex. '1' for section 1
+    courseId        String
+    professorId     Int
+    course          CourseCreation @relation(fields: [courseId, professorId], references: [id, professorId])
+    classTimes      ClassTime[]
+}
+
+// Indicates what days and times
+model ClassTime {
+    id          Int @id @default(autoincrement())
+    dayOfWeek   DayOfWeek
+    startTime   String
+    endTime     String
+    sectionId   Int
+    section     Section @relation(fields: [sectionId], references: [id])
+}
+
+/* =========================
    Team Builder (NEW)
    =========================
    - Instructor selects a Section, imports roster rows (TBEnrollment)
@@ -83,7 +134,7 @@ model TBEnrollment {
 
 //A snapshot of teams for a specific section
 model TBTeamSet{
-  id            Int
+  id            Int @unique
   sectionId     Int
   name          String
   status        TBTeamSetStatus @default(DRAFT)
