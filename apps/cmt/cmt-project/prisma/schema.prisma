@@ -74,6 +74,8 @@ model Professor {
     lname   String
     email   String
     courses CourseCreation[]
+
+    createdTeamSets TBTeamSet[] @relation("CreatedByProfessor")
 }
 
 // Defines an individual course
@@ -95,6 +97,9 @@ model Section {
     professorId     Int
     course          CourseCreation @relation(fields: [courseId, professorId], references: [id, professorId])
     classTimes      ClassTime[]
+
+    tbEnrollments   TBEnrollment[]
+    tbTeamSets      TBTeamSet[]
 }
 
 // Indicates what days and times
@@ -116,44 +121,50 @@ model ClassTime {
 */
 
 model TBEnrollment {
-  id              Int     @id @default(autoincrement())
-  sectionId       Int
-  studentId       Int
-  email           String?
-  lastFirstName   String?
+  id         Int       @id @default(autoincrement())
+  sectionId  Int
+  studentId  String?   // or Int? if you prefer; keep consistent everywhere
+  email      String?
+  firstName  String?
+  lastName   String?   // (you had lastfirst; rename is fine)
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  section         Section   @relation(fields: [sectionId], references: [[id]])
+  section    Section   @relation(fields: [sectionId], references: [id])
+
+  // opposite side of TBMember.enrollment
+  members    TBMember[]
 
   @@unique([sectionId, email])
   @@unique([sectionId, studentId])
   @@index([sectionId])
 }
 
+
 //A snapshot of teams for a specific section
-model TBTeamSet{
-  id            Int @unique
-  sectionId     Int
-  name          String
-  status        TBTeamSetStatus @default(DRAFT)
-  teamSize      Int?
-  constraints   Json
-  publishedAt   DateTime?
-  archivedAt    DateTime?
+model TBTeamSet {
+  id                   Int             @id @default(autoincrement())
+  sectionId            Int
+  name                 String
+  status               TBTeamSetStatus @default(DRAFT)
+  teamSize             Int?
+  constraints          Json?
+  publishedAt          DateTime?
+  archivedAt           DateTime?
 
-  createdByProfessorId  Int
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
+  createdByProfessorId Int
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
-  section               Section     @relation(fields: [sectionId], references: [id])
-  createdByProfessor    Professor   @relation(fields: [createdByProfessorId], references: [id])
-  teams                 TBTeam[]
+  section            Section   @relation(fields: [sectionId], references: [id])
+  createdByProfessor Professor @relation(name: "CreatedByProfessor", fields: [createdByProfessorId], references: [id])
+  teams              TBTeam[]
 
   @@unique([sectionId, name])
   @@index([sectionId, status])
 }
+
 
 enum TBTeamSetStatus{
   DRAFT
