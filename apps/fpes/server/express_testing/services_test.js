@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 
-require('dotenv').config();
+require('dotenv').config({path: "../.env"});
 
 const mariadb = require('mariadb')
 
@@ -9,10 +9,10 @@ async function createMariaDBConnection(){
     let connection;
     try{
         connection = await mariadb.createConnection({
-        host: 'localhost',
-        user: 'codebase-rit',
-        password: 'password',
-        database: 'rit_codebase'
+        host: process.env.HOST,
+        user: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DATABASE
         });
         console.log("Made Connection...");
     } catch (err) {
