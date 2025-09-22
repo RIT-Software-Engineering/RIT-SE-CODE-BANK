@@ -103,16 +103,18 @@ export default function Header() {
 
   const handleProfileOpen = () => {
     if (user != null && user.fname != null){
-      fetchTeammates();
+      fetchUserInfo();
     }
     setProfileOpen(true);
   };
 
   const handleProfileClose = () => {
     setProfileOpen(false);
+    setTeams([]);
+    setProjects([]);
   };
 
-  async function fetchTeammates() {
+  async function fetchUserInfo() {
         try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams/${user.id}`);
         const data = await res.json();
@@ -120,7 +122,7 @@ export default function Header() {
         const projects = data.map(team =>team.project)
         setProjects(projects.map(project => project.title));
       } catch (error) {
-        console.error("Failed to fetch teams:", error);
+        console.error("Failed to fetch user info:", error);
       } 
     }
 
