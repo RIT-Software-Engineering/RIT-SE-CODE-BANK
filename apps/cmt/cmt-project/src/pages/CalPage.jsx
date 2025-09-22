@@ -30,7 +30,7 @@ export default function CalPage() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [newEvent, setNewEvent] = useState({
     title: "",
-    courseId: "", // Changed from 'course' to 'courseId'
+    courseId: "",
     type: "lecture",
     time: "",
     location: "",
@@ -97,7 +97,7 @@ export default function CalPage() {
     setSelectedDate(date);
     setNewEvent({
       title: "",
-      courseId: "", // Changed from 'course' to 'courseId'
+      courseId: "",
       type: "lecture",
       time: "",
       location: "",
