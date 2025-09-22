@@ -97,14 +97,39 @@ async function main() {
     // Set up the database schema
     log("Running Prisma setup...", colors.blue);
 
-    // Windows needs .cmd extension, Unix doesn't
+    // Try multiple ways to run Prisma commands - different systems handle paths differently
     const isWindows = process.platform === "win32";
-    const prismaCmd = isWindows
-      ? "node_modules\\.bin\\prisma.cmd"
-      : "node_modules/.bin/prisma";
 
-    await runCommand(prismaCmd, ["generate"]); // Create Prisma client
-    await runCommand(prismaCmd, ["db", "push"]); // Push schema to database
+    try {
+      if (isWindows) {
+        // Windows: try the .cmd version first
+        await runCommand("node_modules\\.bin\\prisma.cmd", ["generate"]);
+        await runCommand("node_modules\\.bin\\prisma.cmd", ["db", "push"]);
+      } else {
+        // Unix/Mac: use the regular version
+        await runCommand("node_modules/.bin/prisma", ["generate"]);
+        await runCommand("node_modules/.bin/prisma", ["db", "push"]);
+      }
+    } catch (error) {
+      // Fallback: try using npx if direct path fails
+      log("Direct path failed, trying npx fallback...", colors.yellow);
+      try {
+        await runCommand("npx", ["prisma", "generate"]);
+        await runCommand("npx", ["prisma", "db", "push"]);
+      } catch (npxError) {
+        // Last resort: try running with node directly
+        log("npx failed, trying node fallback...", colors.yellow);
+        await runCommand("node", [
+          "./node_modules/prisma/build/index.js",
+          "generate",
+        ]);
+        await runCommand("node", [
+          "./node_modules/prisma/build/index.js",
+          "db",
+          "push",
+        ]);
+      }
+    }
 
     // Start backend server
     const backendPath = path.join(process.cwd(), "src", "backend");
