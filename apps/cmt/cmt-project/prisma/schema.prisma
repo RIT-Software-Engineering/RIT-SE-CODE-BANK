@@ -56,10 +56,10 @@ enum Importance {
   @@map("importance_levels")
 }
 
-/* =========================
-   Course Builder
-   =========================
-*/
+// =========================
+// Course Builder
+// =========================
+
 enum DayOfWeek {
     MON
     TUE
@@ -112,13 +112,12 @@ model ClassTime {
     section     Section @relation(fields: [sectionId], references: [id])
 }
 
-/* =========================
-   Team Builder (NEW)
-   =========================
-   - Instructor selects a Section, imports roster rows (TBEnrollment)
-   - Generates a TeamSet (snapshot) per assignment/run
-   - Teams + Members live under the TeamSet
-*/
+// =========================
+// Team Builder (NEW)
+// =========================
+// - Instructor selects a Section, imports roster rows (TBEnrollment)
+// - Generates a TeamSet (snapshot) per assignment/run
+// - Teams + Members live under the TeamSet
 
 model TBEnrollment {
   id         Int       @id @default(autoincrement())
@@ -141,8 +140,7 @@ model TBEnrollment {
   @@index([sectionId])
 }
 
-
-//A snapshot of teams for a specific section
+// A snapshot of teams for a specific section
 model TBTeamSet {
   id                   Int             @id @default(autoincrement())
   sectionId            Int
@@ -165,14 +163,13 @@ model TBTeamSet {
   @@index([sectionId, status])
 }
 
-
 enum TBTeamSetStatus{
   DRAFT
   PUBLISHED
   ARCHIVED
 }
 
-//A single team within a teamset
+// A single team within a teamset
 model TBTeam{
   id      Int     @id @default(autoincrement())
   teamSetId   Int
@@ -187,13 +184,13 @@ model TBTeam{
   @@unique([teamSetId, name])
 }
 
-//Membership connects a roster entity (TBEnrollment) to a team
-//We link TBEnrollment (not a global User) so CSV-driven flow works
+// Membership connects a roster entity (TBEnrollment) to a team
+// We link TBEnrollment (not a global User) so CSV-driven flow works
 model TBMember{
   id    Int   @id @default(autoincrement())
   teamId    Int
   enrollmentId  Int
-  role          String?  //optional: "lead", "scribe", etc
+  role          String?  // optional: "lead", "scribe", etc
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
