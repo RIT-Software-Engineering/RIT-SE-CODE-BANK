@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "csv-parse": "^6.1.0",
+    "express": "^5.1.0",
+    "multer": "^2.0.2"
+  }
+}
