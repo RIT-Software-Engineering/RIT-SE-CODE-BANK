@@ -17,6 +17,10 @@ model Course {
   students Int
   events   Event[]
 
+  // Team Builder back-relations
+  tbEnrollments TBEnrollment[]
+  tbTeamSets    TBTeamSet[]
+
   @@map("courses")
 }
 
@@ -96,8 +100,6 @@ model Section {
     professorId     Int
     course          CourseCreation @relation(fields: [courseId, professorId], references: [id, professorId])
     classTimes      ClassTime[]
-    tbEnrollments   TBEnrollment[]
-    tbTeamSets      TBTeamSet[]
 }
 
 // Indicates what days and times
@@ -111,38 +113,33 @@ model ClassTime {
 }
 
 // =========================
-// Team Builder (NEW)
+// Team Builder (COURSE-scoped)
 // =========================
-// - Instructor selects a Section, imports roster rows (TBEnrollment)
-// - Generates a TeamSet (snapshot) per assignment/run
-// - Teams + Members live under the TeamSet
 
 model TBEnrollment {
   id         Int       @id @default(autoincrement())
-  sectionId  Int
-  studentId  String?   // or Int? if you prefer; keep consistent everywhere
-  email      String?
+  courseId   String
+  studentId  String?   // CSV "ID" or a synthetic stable ID
+  email      String?   // not used by your RIT CSV, but okay to keep
   firstName  String?
-  lastName   String?   // (you had lastfirst; rename is fine)
+  lastName   String?
 
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  section    Section   @relation(fields: [sectionId], references: [id])
-
-  // opposite side of TBMember.enrollment
+  course     Course    @relation(fields: [courseId], references: [id])
   members    TBMember[]
 
-  @@unique([sectionId, email])
-  @@unique([sectionId, studentId])
-  @@index([sectionId])
+  // Choose keys you want; both allow multiple NULLs
+  @@unique([courseId, studentId])
+  @@unique([courseId, email])
+  @@index([courseId])
 }
 
-// A snapshot of teams for a specific section
 model TBTeamSet {
   id                   Int             @id @default(autoincrement())
-  sectionId            Int
-  name                 String
+  courseId             String
+  name                 String          // e.g., "Project 1"
   status               TBTeamSetStatus @default(DRAFT)
   teamSize             Int?
   constraints          Json?
@@ -153,47 +150,44 @@ model TBTeamSet {
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
 
-  section            Section   @relation(fields: [sectionId], references: [id])
-  createdByProfessor Professor @relation(name: "CreatedByProfessor", fields: [createdByProfessorId], references: [id])
-  teams              TBTeam[]
+  course               Course          @relation(fields: [courseId], references: [id])
+  createdByProfessor   Professor       @relation(name: "CreatedByProfessor", fields: [createdByProfessorId], references: [id])
+  teams                TBTeam[]
 
-  @@unique([sectionId, name])
-  @@index([sectionId, status])
+  @@unique([courseId, name])   // no duplicate run names within a course
+  @@index([courseId, status])
 }
 
-enum TBTeamSetStatus{
+enum TBTeamSetStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
 }
 
-// A single team within a teamset
-model TBTeam{
-  id      Int     @id @default(autoincrement())
+model TBTeam {
+  id          Int        @id @default(autoincrement())
   teamSetId   Int
   name        String
   maxSize     Int?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  teamSet     TBTeamSet   @relation(fields: [teamSetId], references: [id])
+  teamSet     TBTeamSet  @relation(fields: [teamSetId], references: [id])
   members     TBMember[]
 
   @@unique([teamSetId, name])
 }
 
-// Membership connects a roster entity (TBEnrollment) to a team
-// We link TBEnrollment (not a global User) so CSV-driven flow works
-model TBMember{
-  id    Int   @id @default(autoincrement())
-  teamId    Int
+model TBMember {
+  id            Int          @id @default(autoincrement())
+  teamId        Int
   enrollmentId  Int
-  role          String?  // optional: "lead", "scribe", etc
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  role          String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  team          TBTeam      @relation(fields: [teamId], references: [id])
-  enrollment    TBEnrollment    @relation(fields: [enrollmentId], references: [id])
+  team          TBTeam       @relation(fields: [teamId], references: [id])
+  enrollment    TBEnrollment @relation(fields: [enrollmentId], references: [id])
 
   @@unique([teamId, enrollmentId])
   @@index([enrollmentId])
