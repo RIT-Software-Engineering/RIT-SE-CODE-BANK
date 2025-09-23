@@ -48,7 +48,7 @@ export default function TeamsPage() {
     async function fetchProjects() {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/projects`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/project`
         );
         const data = await res.json();
         setProjects(data);
@@ -174,7 +174,7 @@ export default function TeamsPage() {
 
                   <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
                     {/* Added a button for changing the project but not sure if it's even needed. Something to discuss. */}
-                    {/* <Button
+                    { <Button
                       size="small"
                       variant="contained"
                       color="warning"
@@ -184,7 +184,7 @@ export default function TeamsPage() {
                       }}
                     >
                       Change Project
-                    </Button> */}
+                    </Button> }
 
                     <Button
                       size="small"
@@ -241,16 +241,50 @@ export default function TeamsPage() {
                 Change Project for {activeTeam?.name}
               </Typography>
               <TextField
+                select
                 fullWidth
-                label="New Project ID"
-                variant="outlined"
+                label="Project"
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                slotProps={{ select: { native: true } }}
                 sx={{ mb: 3 }}
-              />
+              >
+                <option value=""></option>
+                {projects.map((proj) => (
+                  <option key={proj.id} value={proj.id}>
+                    {proj.display_name}
+                  </option>
+                ))}
+              </TextField>
               <Button
                 variant="contained"
                 color="primary"
                 fullWidth
-                onClick={() => setOpenModal(null)}
+                onClick={async () => {
+                        try {
+                          const res = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/api/teams`,
+                            { method: "PUT",
+                              headers: {"Content-Type": "application/json"},
+                              body: JSON.stringify({teamId:activeTeam.id,projectId:selectedProjectId})
+                             }
+                          );
+
+                          if (!res.ok)
+                            throw new Error("Failed to update team project");
+                          const updatedTeam = await res.json();
+                          setTeams((prev) =>
+                            prev.map((t) =>
+                              t.id === activeTeam.id ? updatedTeam.team : t
+                            )
+                          );
+                          setActiveTeam(updatedTeam.team);
+                          setOpenModal(null);
+                        } catch (err) {
+                          console.error("Error updating team project:", err);
+                        }
+                        setSelectedProjectId("")
+                      }}
               >
                 Save
               </Button>

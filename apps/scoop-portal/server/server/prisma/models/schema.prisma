@@ -86,8 +86,10 @@ model Application {
   SEcoopAvailability      Boolean?
   remoteAbility           String?
   additionalComments      String?
-  resumeFile              String?
-  accepted                Boolean? @default(false)
+  resumeFile              Bytes?
+  resumeFileName          String?
+  resumeFileType          String?
+  status                  String   @default("UNPROCESSED")
   createdAt               DateTime @default(now())
 }
 
