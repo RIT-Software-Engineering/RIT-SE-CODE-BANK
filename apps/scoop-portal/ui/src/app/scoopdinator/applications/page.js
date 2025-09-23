@@ -29,7 +29,7 @@ import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 /**
  * The statuses to filter applications by.
  */
-const STATUSES = ["all", "accepted", "rejected", "unprocessed"];
+const STATUSES = ["ALL", "ACCEPTED", "REJECTED", "UNPROCESSED"];
 
 export default function SupervisorApplicationsPage() {
   /**
@@ -38,7 +38,7 @@ export default function SupervisorApplicationsPage() {
   const [applications, setApplications] = useState([]);
   const [status, setStatus] = useState("");
   const [selectedApp, setSelectedApp] = useState(null);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("ALL");
   const [notification, setNotification] = useState({
     open: false,
     message: "",
@@ -53,17 +53,8 @@ export default function SupervisorApplicationsPage() {
           `${process.env.NEXT_PUBLIC_API_URL}/api/application`
         );
         const data = await res.json();
-        const processed = data.map((app) => ({
-          ...app,
-          status:
-            app.accepted === true
-              ? STATUSES[1] // "accepted"
-              : app.accepted === false
-                ? STATUSES[2] // "rejected"
-                : STATUSES[3], // "unprocessed"
-        }));
 
-        setApplications(processed);
+        setApplications(data);
       } catch (err) {
         console.error("Failed to fetch applications:", err);
       }
@@ -75,7 +66,7 @@ export default function SupervisorApplicationsPage() {
   //For testing. Runs when setSelectApp and handleOpen are called
   useEffect(() => {
     if (selectedApp) {
-      console.log("opening app:", selectedApp.firstName);
+      console.log("opening app:", selectedApp);
     }
   }, [selectedApp]);
 
@@ -94,6 +85,31 @@ export default function SupervisorApplicationsPage() {
     setApplications((prev) =>
       prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
     );
+  };
+
+  const downloadResume = async (id) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/application/${id}/resume`);
+      if (!response.ok) throw new Error('Failed to download resume');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const app = applications.find(app => app.id === id);
+      a.download = app?.resumeFileName || 'resume.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading resume:', error);
+      setNotification({
+        open: true,
+        message: 'Failed to download resume',
+        severity: 'error'
+      });
+    }
   };
 
   /**
@@ -124,7 +140,7 @@ export default function SupervisorApplicationsPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          accepted: newStatus === STATUSES[1], // "accepted"
+          status: newStatus,
         }),
       }
     );
@@ -164,6 +180,7 @@ export default function SupervisorApplicationsPage() {
         message: `Application for ${selectedApp.firstName} has been ${status}.`,
         severity: status === STATUSES[1] ? "success" : "error",
       });
+      setSelectedApp(null);
     } catch (err) {
       setNotification({
         open: true,
@@ -259,7 +276,7 @@ export default function SupervisorApplicationsPage() {
   };
 
   const filteredApps =
-    filter === "all"
+    filter === "ALL"
       ? applications
       : applications.filter((app) => app.status === filter);
 
@@ -505,8 +522,19 @@ export default function SupervisorApplicationsPage() {
                   {selectedApp.additionalComments}
                 </Typography>
                 <Typography margin={2}>
-                  <strong>resumeFile:</strong> <br />
-                  {selectedApp.resumeFile}
+                  <strong>Resume:</strong> <br />
+                  {selectedApp.hasResume ? (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => downloadResume(selectedApp.id)}
+                      sx={{ mt: 1 }}
+                    >
+                      Download {selectedApp.resumeFileName || 'Resume'}
+                    </Button>
+                  ) : (
+                    "No resume uploaded"
+                  )}
                 </Typography>
 
                                 <Box mt={3}>

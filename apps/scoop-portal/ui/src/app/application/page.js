@@ -87,10 +87,48 @@ function ApplicationPage() {
         setCourseData(data);
     }, []);
 
-    const handleChange = (e) => {
+    const handleChange = async (e) => {
         const { name, value, type, checked, files } = e.target;
-        if (type === "file") {
-            setFormFiles(files);
+        if (type === "file" && files?.[0]) {
+            const file = files[0];
+            
+            // Validate file size (8MB limit)
+            if (file.size > 8 * 1024 * 1024) {
+                setErrors(prev => ({
+                    ...prev,
+                    resumeFile: "File is too large. Please upload a file smaller than 8MB."
+                }));
+                e.target.value = ''; // Clear the file input
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            if (!allowedTypes.includes(file.type)) {
+                setErrors(prev => ({
+                    ...prev,
+                    resumeFile: "Invalid file type. Please upload a PDF or Word document."
+                }));
+                e.target.value = ''; // Clear the file input
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onloadend = () => {
+                setActualformValues(prev => ({
+                    ...prev,
+                    resumeFile: reader.result,
+                    resumeFileName: file.name
+                }));
+                // Clear any previous errors
+                setErrors(prev => ({
+                    ...prev,
+                    resumeFile: undefined
+                }));
+            };
+            
+            reader.readAsDataURL(file);
         } else {
             //handle boolean if any 
             let parsedValue =
@@ -115,11 +153,14 @@ function ApplicationPage() {
             process.env.NEXT_PUBLIC_API_URL + "/api/application",
             {
                 method: "POST",
-                body: JSON.stringify(data),
+                body: JSON.stringify({
+                    ...data,
+                    resumeFile: formValues.resumeFile
+                }),
                 headers: { "Content-Type": "application/json" },
             }
         );
-        console.log("Submitting application with data:", data, formFiles);
+        console.log("Submitting application with data:", data);
 
         return response;
     }
