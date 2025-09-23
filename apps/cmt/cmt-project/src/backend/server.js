@@ -8,8 +8,11 @@ const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+// allows any port
+app.use(cors({ origin: /http:\/\/localhost:\d+$/, credentials: true }));
 app.use(bodyParser.json());
+
+//console.log(process.env.DATABASE_URL);
 
 // health check
 app.get('/api/health', (req, res) => {
@@ -17,7 +20,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // get all courses + sections from a professor
-app.get('/api/courses', async (req, res) => {
+// TODO: CHANGE IT SO IT'S BASED ON THE PROFESSOR ID THAT'S CURRENTLY LOGGED IN
+app.get('/api/courseCreation', async (req, res) => {
     try {
         const courses = await prisma.courseCreation.findMany({
             include: {professor: true, sections: true},
@@ -29,7 +33,7 @@ app.get('/api/courses', async (req, res) => {
 });
 
 // create a course
-app.post('/api/courses', async (req, res) => {
+app.post('/api/courseCreation', async (req, res) => {
     try {
         const {id, name, semester, professorId} = req.body;
         const course = await prisma.courseCreation.create({
@@ -37,27 +41,22 @@ app.post('/api/courses', async (req, res) => {
         });
         res.json(course);
     } catch (err) {
+        console.error('course creation failed: ', err)
         res.status(500).json({error: err.message});
     }
 });
 
 // create a section for a course
+// creates them without the class times
 app.post('/api/sections', async (req, res) => {
     try {
-        const {sectionNum, courseId, professorId, classTimes} = req.body;
+        const {sectionNum, courseId, professorId} = req.body;
         const section = await prisma.section.create({
-            data: {sectionNum, courseId, professorId,
-                classTimes : {
-                    create: classTimes.map(time => ({
-                        dayOfWeek: time.dayOfWeek,
-                        startTime: time.startTime,
-                        endTime: time.endTime,
-                    })),
-                },
-            },
+            data: {sectionNum, courseId, professorId}
         });
         res.json(section);
     } catch (err) {
+        console.error('section creation failed: ', err)
         res.status(500).json({error: err.message});
     }
 });
