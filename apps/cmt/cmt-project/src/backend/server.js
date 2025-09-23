@@ -12,7 +12,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 app.use(cors({
-  origin: 'http://localhost:3000', 
+  origin: /^http:\/\/localhost:\d+$/,  // allows any localhost port
   credentials: true
 }));
 app.use(bodyParser.json());
@@ -58,14 +58,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl
-  });
-});
-
 // get all courses + sections from a professor
 // TODO: CHANGE IT SO IT'S BASED ON THE PROFESSOR ID THAT'S CURRENTLY LOGGED IN
 app.get('/api/courseCreation', async (req, res) => {
@@ -106,6 +98,14 @@ app.post('/api/sections', async (req, res) => {
         console.error('section creation failed: ', err)
         res.status(500).json({error: err.message});
     }
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    path: req.originalUrl
+  });
 });
 
 // Start server
