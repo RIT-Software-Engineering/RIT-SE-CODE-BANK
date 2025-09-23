@@ -70,13 +70,13 @@ const workflows = [
     steps: [
       {
         title: "Review Applications",
-        roles: ["scoopdinator","scoopervisor"],
+        roles: ["scoopdinator"],
         description: "Approve or reject scooployee applications.",
         link: "/scoopdinator/applications",
       },
       {
         title: "Manage Employees",
-        roles: ["scoopdinator"],
+        roles: ["scoopdinator", "scoopervisor"],
         description: "Review current scooployee details and statuses.",
         link: "/scoopdinator/scooployees",
       },
@@ -166,13 +166,13 @@ const workflows = [
         title: "Contact Advisors",
         roles: ["scoopdinator","scoopervisor","scooployee"],
         description: "Get in touch with academic advisors.",
-        link: "/scoopdinator/administrative/contact/advisors",
+        link: "https://www.rit.edu/computing/academic-advising",
       },
       {
         title: "Contact Co-op Coordinators",
         roles: ["scoopdinator","scoopervisor","scooployee"],
         description: "Communicate with coordinators for co-op management and advising.",
-        link: "/scoopdinator/administrative/contact/coordinators",
+        link: "https://www.rit.edu/careerservices/contacts/coordinators-by-college",
       },
       {
         title: "Manage Co-op Reports",

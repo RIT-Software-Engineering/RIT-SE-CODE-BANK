@@ -105,7 +105,28 @@ router.get("/:memberid", async (req, res) => {
     }
 }); 
 
-
+// PUT a project on a team
+router.put("/", async(req,res) => {
+  const {teamId, projectId} = req.body;
+  console.log(teamId)
+  console.log(projectId)
+  try {
+    const team = await prisma.teams.update({
+      where: {id: parseInt(teamId)},
+      data: {
+        projectId: parseInt(projectId)
+      },
+      include: {
+        members: true,
+        project: true
+      }
+    })
+    res.status(200).json({ message: "Team project updated", team });
+  } catch (error) {
+    console.error("Error updating team project:", error);
+    res.status(500).json({ message: "Failed to update team project", error: error.message });
+  }
+})
 
 // REMOVE a member from a team
 router.delete("/:teamId/members/:memberId", async (req, res) => {
