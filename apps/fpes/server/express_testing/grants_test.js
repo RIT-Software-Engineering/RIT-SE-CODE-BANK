@@ -1,18 +1,6 @@
 const express = require('express');
-const app = express();
 const router = express.Router();
-
-const mariadb = require('mariadb');
-require('dotenv').config();
-
-
-const pool = mariadb.createPool({
-  host: process.env.HOST,
-  user: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DATABASE,
-  connectionLimit: 5
-});
+const pool = require('../db');
 
 
 router.get('/', async (req, res) => {
