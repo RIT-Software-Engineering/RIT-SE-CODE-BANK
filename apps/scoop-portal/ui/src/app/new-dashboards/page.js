@@ -154,7 +154,7 @@ const workflows = [
       {
         title: "View Teams",
         roles: ["scoopdinator"],
-        description: "View and modify existing scoop teams.",
+        description: "View and modify existing scoop teams and project assignments.",
         link: "/scoopdinator/teams",
       },
     ],
