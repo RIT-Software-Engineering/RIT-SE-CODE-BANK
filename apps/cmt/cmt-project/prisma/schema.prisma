@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // This is your Prisma schema file
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -13,6 +14,70 @@ generator client {
     provider = "prisma-client-js"
 }
 
+=======
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Course {
+  id       String  @id
+  name     String
+  color    String
+  students Int
+  events   Event[]
+
+  @@map("courses")
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  courseId    String?  // Optional for events that apply to all courses or admin events
+  type        EventType
+  time        String
+  date        DateTime
+  location    String
+  description String?
+  importance  Importance
+  preparation Json? // JSON field to store preparation items array
+  
+  course      Course?  @relation(fields: [courseId], references: [id])
+
+  @@map("events")
+}
+
+enum EventType {
+  exam
+  assignment
+  lecture
+  lab
+  office_hours
+  meeting
+  
+  @@map("event_types")
+}
+
+enum Importance {
+  Low
+  Medium
+  High
+  
+  @@map("importance_levels")
+}
+
+// =========================
+// Course Builder
+// =========================
+
+>>>>>>> CMT
 enum DayOfWeek {
     MON
     TUE
@@ -27,6 +92,11 @@ model Professor {
     lname   String
     email   String
     courses CourseCreation[]
+<<<<<<< HEAD
+=======
+
+    createdTeamSets TBTeamSet[] @relation("CreatedByProfessor")
+>>>>>>> CMT
 }
 
 // Defines an individual course
@@ -48,6 +118,12 @@ model Section {
     professorId     Int
     course          CourseCreation @relation(fields: [courseId, professorId], references: [id, professorId])
     classTimes      ClassTime[]
+<<<<<<< HEAD
+=======
+
+    tbEnrollments   TBEnrollment[]
+    tbTeamSets      TBTeamSet[]
+>>>>>>> CMT
 }
 
 // Indicates what days and times
@@ -58,4 +134,96 @@ model ClassTime {
     endTime     String
     sectionId   Int
     section     Section @relation(fields: [sectionId], references: [id])
+<<<<<<< HEAD
+=======
+}
+
+// =========================
+// Team Builder (NEW)
+// =========================
+// - Instructor selects a Section, imports roster rows (TBEnrollment)
+// - Generates a TeamSet (snapshot) per assignment/run
+// - Teams + Members live under the TeamSet
+
+model TBEnrollment {
+  id         Int       @id @default(autoincrement())
+  sectionId  Int
+  studentId  String?   // or Int? if you prefer; keep consistent everywhere
+  email      String?
+  firstName  String?
+  lastName   String?   // (you had lastfirst; rename is fine)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  section    Section   @relation(fields: [sectionId], references: [id])
+
+  // opposite side of TBMember.enrollment
+  members    TBMember[]
+
+  @@unique([sectionId, email])
+  @@unique([sectionId, studentId])
+  @@index([sectionId])
+}
+
+// A snapshot of teams for a specific section
+model TBTeamSet {
+  id                   Int             @id @default(autoincrement())
+  sectionId            Int
+  name                 String
+  status               TBTeamSetStatus @default(DRAFT)
+  teamSize             Int?
+  constraints          Json?
+  publishedAt          DateTime?
+  archivedAt           DateTime?
+
+  createdByProfessorId Int
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  section            Section   @relation(fields: [sectionId], references: [id])
+  createdByProfessor Professor @relation(name: "CreatedByProfessor", fields: [createdByProfessorId], references: [id])
+  teams              TBTeam[]
+
+  @@unique([sectionId, name])
+  @@index([sectionId, status])
+}
+
+enum TBTeamSetStatus{
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// A single team within a teamset
+model TBTeam{
+  id      Int     @id @default(autoincrement())
+  teamSetId   Int
+  name        String
+  maxSize     Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  teamSet     TBTeamSet   @relation(fields: [teamSetId], references: [id])
+  members     TBMember[]
+
+  @@unique([teamSetId, name])
+}
+
+// Membership connects a roster entity (TBEnrollment) to a team
+// We link TBEnrollment (not a global User) so CSV-driven flow works
+model TBMember{
+  id    Int   @id @default(autoincrement())
+  teamId    Int
+  enrollmentId  Int
+  role          String?  // optional: "lead", "scribe", etc
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  team          TBTeam      @relation(fields: [teamId], references: [id])
+  enrollment    TBEnrollment    @relation(fields: [enrollmentId], references: [id])
+
+  @@unique([teamId, enrollmentId])
+  @@index([enrollmentId])
+>>>>>>> CMT
 }
