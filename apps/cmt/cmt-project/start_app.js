@@ -1,4 +1,4 @@
-const { spawn } = require("child_process");
+const { spawn, exec } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
@@ -71,9 +71,78 @@ function checkPrismaInstalled() {
   return false;
 }
 
+// Wait for a service to be available on a specific port
+function waitForService(port, serviceName, timeout = 30000) {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now();
+
+    const checkService = () => {
+      exec(
+        `curl -f http://localhost:${port} || nc -z localhost ${port}`,
+        (error) => {
+          if (!error) {
+            log(`${serviceName} is ready on port ${port}`, colors.green);
+            resolve();
+          } else if (Date.now() - startTime > timeout) {
+            reject(
+              new Error(`${serviceName} failed to start within ${timeout}ms`)
+            );
+          } else {
+            // Check again in 1 second
+            setTimeout(checkService, 1000);
+          }
+        }
+      );
+    };
+
+    checkService();
+  });
+}
+
+// Run servers in foreground for CI/CD
+function startServerForCI(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    log(`Starting: ${command} ${args.join(" ")}`, colors.blue);
+
+    const child = spawn(command, args, {
+      stdio: ["pipe", "pipe", "pipe"], // Capture output for CI logs
+      shell: true,
+      cwd: process.cwd(),
+      ...options,
+    });
+
+    // Forward output to console with service labels
+    const serviceName = options.serviceName || "service";
+    child.stdout.on("data", (data) => {
+      process.stdout.write(`[${serviceName.toUpperCase()}] ${data}`);
+    });
+
+    child.stderr.on("data", (data) => {
+      process.stderr.write(`[${serviceName.toUpperCase()}] ${data}`);
+    });
+
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(new Error(`${serviceName} exited with code ${code}`));
+      }
+    });
+
+    child.on("error", (error) => {
+      reject(error);
+    });
+
+    // In CI, this will keep the container alive
+  });
+}
+
 async function main() {
   try {
-    log("Starting setup...", colors.yellow);
+    const isCI =
+      process.env.CI === "true" || process.env.NODE_ENV === "production";
+    log(
+      isCI ? "Running in CI/CD mode" : "Running in development mode",
+      colors.yellow
+    );
 
     // Only install Prisma if it's not already there
     log("Checking Prisma installation...", colors.blue);
@@ -131,65 +200,138 @@ async function main() {
       }
     }
 
-    // Start backend server
+    // Install dependencies for both frontend and backend
     const backendPath = path.join(process.cwd(), "src", "backend");
-    let backendPid = null;
-    let frontendPid = null;
 
     if (fs.existsSync(backendPath)) {
       log("Installing backend dependencies...", colors.blue);
       await runCommand("npm", ["install", "--legacy-peer-deps"], {
         cwd: backendPath,
       });
-
-      log("Starting backend in background...", colors.blue);
-      const backendProcess = spawn("npm", ["start"], {
-        cwd: backendPath,
-        stdio: "inherit",
-        shell: true,
-        detached: true, // Run independently so we can close this terminal
-      });
-      backendPid = backendProcess.pid;
-
-      // Give the backend time to start up
-      await new Promise((resolve) => setTimeout(resolve, 3000));
     }
 
-    // Start frontend server
     log("Installing frontend dependencies...", colors.blue);
     await runCommand("npm", ["install", "--legacy-peer-deps"]);
 
-    log("Starting frontend in background...", colors.blue);
-    const frontendProcess = spawn("npm", ["start"], {
-      stdio: "inherit",
-      shell: true,
-      detached: true, // Run independently
-    });
-    frontendPid = frontendProcess.pid;
+    if (isCI) {
+      // CI/CD mode: Start services and wait for them to be ready
+      log("Starting services for CI/CD...", colors.yellow);
 
-    // Save the process IDs so we can stop them later
-    const pids = {
-      backend: backendPid,
-      frontend: frontendPid,
-      timestamp: Date.now(),
-    };
+      if (fs.existsSync(backendPath)) {
+        // Start backend in background but capture output
+        log("Starting backend server...", colors.blue);
+        const backendProcess = spawn("npm", ["start"], {
+          cwd: backendPath,
+          stdio: ["pipe", "pipe", "pipe"],
+          shell: true,
+          detached: false,
+        });
 
-    fs.writeFileSync(".dev-pids.json", JSON.stringify(pids, null, 2));
-    log("Process IDs saved to .dev-pids.json", colors.blue);
+        backendProcess.stdout.on("data", (data) => {
+          process.stdout.write(`[BACKEND] ${data}`);
+        });
 
-    log("Both servers started in background!", colors.green);
-    log(
-      `Backend PID: ${backendPid}, Frontend PID: ${frontendPid}`,
-      colors.yellow
-    );
-    log("Your terminal is now free to use.", colors.yellow);
-    log("To stop servers, run: node stop_app.js", colors.blue);
+        backendProcess.stderr.on("data", (data) => {
+          process.stderr.write(`[BACKEND] ${data}`);
+        });
 
-    // Exit this script but leave the servers running
-    setTimeout(() => {
-      log("Setup complete! Script exiting...", colors.green);
-      process.exit(0);
-    }, 2000);
+        // Wait for backend to be ready
+        await waitForService(5000, "Backend", 60000);
+      }
+
+      // Start frontend server
+      log("Starting frontend server...", colors.blue);
+      const frontendProcess = spawn("npm", ["start"], {
+        stdio: ["pipe", "pipe", "pipe"],
+        shell: true,
+        detached: false,
+        env: { ...process.env, BROWSER: "none" }, // Prevent browser opening in CI
+      });
+
+      frontendProcess.stdout.on("data", (data) => {
+        process.stdout.write(`[FRONTEND] ${data}`);
+      });
+
+      frontendProcess.stderr.on("data", (data) => {
+        process.stderr.write(`[FRONTEND] ${data}`);
+      });
+
+      // Wait for frontend to be ready
+      await waitForService(3000, "Frontend", 60000);
+
+      log("All services are ready!", colors.green);
+      log(
+        "Services will continue running in foreground for CI/CD",
+        colors.blue
+      );
+
+      // Keep the script alive - CI will manage the lifecycle
+      process.on("SIGTERM", () => {
+        log("Received SIGTERM, shutting down gracefully...", colors.yellow);
+        process.exit(0);
+      });
+
+      process.on("SIGINT", () => {
+        log("Received SIGINT, shutting down gracefully...", colors.yellow);
+        process.exit(0);
+      });
+
+      // Wait indefinitely - CI will kill when needed
+      await new Promise(() => {});
+    } else {
+      // Development mode
+      log("Starting services for development...", colors.yellow);
+
+      let backendPid = null;
+      let frontendPid = null;
+
+      if (fs.existsSync(backendPath)) {
+        log("Starting backend in background...", colors.blue);
+        const backendProcess = spawn("npm", ["start"], {
+          cwd: backendPath,
+          stdio: "inherit",
+          shell: true,
+          detached: true, // Run independently
+        });
+        backendPid = backendProcess.pid;
+
+        // Give the backend time to start up
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+
+      // Start frontend server
+      log("Starting frontend in background...", colors.blue);
+      const frontendProcess = spawn("npm", ["start"], {
+        stdio: "inherit",
+        shell: true,
+        detached: true, // Run independently
+      });
+      frontendPid = frontendProcess.pid;
+
+      // Save the process IDs so we can stop later
+      const pids = {
+        backend: backendPid,
+        frontend: frontendPid,
+        timestamp: Date.now(),
+      };
+
+      fs.writeFileSync(".dev-pids.json", JSON.stringify(pids, null, 2));
+      log("Process IDs saved to .dev-pids.json", colors.blue);
+
+      log("Both servers started in background!", colors.green);
+      log(
+        `Backend PID: ${backendPid}, Frontend PID: ${frontendPid}`,
+        colors.yellow
+      );
+      log("Your terminal is now free to use.", colors.yellow);
+      log("To stop servers, run: node stop_app.js", colors.blue);
+
+      // Exit this script but leave the servers running
+      setTimeout(() => {
+        log("Setup complete! Script exiting...", colors.green);
+        process.exit(0);
+      }, 2000);
+    }
   } catch (error) {
     log(`Error: ${error.message}`, colors.red);
     process.exit(1);
