@@ -81,10 +81,10 @@ function CoursePage(){
       {showAlert && (<Alert variant="success" onClose={() => setShowAlert(false)} dismissible>
         ✅ Course and section(s) created successfully!
       </Alert>)}
-      <Form onSubmit={handleSubmit}>
+      <Form className="course-form" onSubmit={handleSubmit}>
         <Row>
           <Col>
-            <Form.Group controlId="formCourseCode">
+            <Form.Group id="formCourseCode">
               <Form.Label>Course ID: </Form.Label>
               <Form.Control type="text" required value={courseId} onChange={(e) => setCourseId(e.target.value)}
                 placeholder="ex. Swen101"></Form.Control>
@@ -92,7 +92,7 @@ function CoursePage(){
             </Col>
 
           <Col>
-            <Form.Group controlId="formCourseName">
+            <Form.Group id="formCourseName">
               <Form.Label>Course Name: </Form.Label>
               <Form.Control type="text" required value={courseName} onChange={(e) => setCourseName(e.target.value)}
                 placeholder="ex. Freshmen Seminar"></Form.Control>
@@ -102,27 +102,29 @@ function CoursePage(){
 
         <Row>
           <Col>
-            <Form.Group controlId="formCourseSemester">
-              <Form.Label>Semester: </Form.Label>
-              <Form.Control type="text" required value={semester} onChange={(e) => setSemester(e.target.value)}
-                placeholder="ex. Fall"></Form.Control>
-            </Form.Group>
-          </Col>
-          <Col>
-            <Form.Group controlId="formCourseSections">
+            <Form.Group id="formCourseSections">
               <Form.Label>Number of sections: </Form.Label>
               <Form.Control type="number" required value={numOfSections} onChange={(e) => setNumOfSections(e.target.value)}
                 placeholder="ex. 2"></Form.Control>
             </Form.Group>
           </Col>
+
+          <Col>
+            <Form.Group id="formCourseSemester">
+              <Form.Label>Semester: </Form.Label>
+              <Form.Control type="text" required value={semester} onChange={(e) => setSemester(e.target.value)}
+                placeholder="ex. Fall"></Form.Control>
+            </Form.Group>
+          </Col>
         </Row>
 
-        <Form.Group controlId="formFile">
+        <Form.Group id="formFile">
           <Form.Label>Upload Syllabus</Form.Label>
           <Form.Control type ="file"></Form.Control>
         </Form.Group>
-
-        <Button type="submit">Create Course</Button>
+        <div id="button-wrapper">
+          <Button id="form-button" type="submit">Create Course</Button>
+        </div>
       </Form>
     </>
   )
