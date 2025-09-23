@@ -3,11 +3,6 @@ const router = express.Router();
 const pool = require('../db');
 
 
-router.get('/', async (req, res) => {
-  res.send('Made connection...');
-});
-
-
 router.get('/:status', async (req, res) => {
   let conn;
   try {
