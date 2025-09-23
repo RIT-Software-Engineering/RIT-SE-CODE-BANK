@@ -1,58 +1,133 @@
-import {useEffect, useState} from 'react';
-import Button from 'react-bootstrap/Button';
-import Col from 'react-bootstrap/Col';
-import Form from 'react-bootstrap/Form';
-import InputGroup from 'react-bootstrap/InputGroup';
-import Row from 'react-bootstrap/Row';
-import {useRef} from 'react';
-
+import {useState} from "react";
+import { Form, Button, Row, Col } from "react-bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Alert from 'react-bootstrap/Alert';
+import "../styles/course.css";
 
 function CoursePage(){
-  const [courseId, setCourseId] = useState('');
-  const [courseName, setCourseName] = useState('');
-  const [semester, setSemester] = useState('');
-  const [numOfSections, setNumOfSections] = useState('');
+  const [courseId, setCourseId] = useState("");
+  const [courseName, setCourseName] = useState("");
+  const [semester, setSemester] = useState("");
+  const [numOfSections, setNumOfSections] = useState("");
+  const [showAlert, setShowAlert] = useState(false);
 
-  const handleSubmit = (e) => {
+  const API_BASE = "http://localhost:5000/api";
 
+  // add the event
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // add the course
+    try {
+      const courseResponse = await fetch(`${API_BASE}/courseCreation`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify ({
+          id: courseId,
+          name: courseName,
+          semester: semester,
+          professorId: 1  // TODO: REPLACE WITH REAL PROFESSORID
+        })
+      });
+
+      if (!courseResponse.ok) {
+        throw new Error("Failed to create a new course");
+      }
+
+      const courseData = await courseResponse.json();
+      console.log("New course created: ", courseData);
+
+      // create the # of sections
+      for (let i = 1; i <= parseInt(numOfSections); i++) {
+        const sectionResponse = await fetch(`${API_BASE}/sections`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            sectionNum: i,
+            courseId: courseId,
+            professorId: 1, // TODO: REPLACE WITH REAL PROFESSORID
+            classTimes: []
+          }),
+        });
+
+        if (!sectionResponse.ok) {
+        throw new Error(`Failed to create section ${i}`);
+      }
+
+        const sectionData = await sectionResponse.json();
+        console.log(`Section ${i} created: `, sectionData);
+      }
+
+      setShowAlert(true);
+      // hides the alert after 6 secs
+      setTimeout(() => setShowAlert(false), 6000);
+
+      // clear the form fields
+      setCourseId("");
+      setCourseName("");
+      setNumOfSections("");
+      setSemester("");
+
+    } catch (err) {
+      console.error(err.message);
+    }
   }
 
+  // TODO nothing happens with the syllabus upload yet
   return (
     <>
-      <Form onSubmit={handleSubmit}>
-        <Form.Group controlId='formCourseCode'>
-          <Form.Label>Course ID: </Form.Label>
-          <Form.Control value={courseId} onChange={(e) => setCourseId(e.target.value)}
-            placeholder='ex. Swen101'></Form.Control>
-        </Form.Group>
+      <h1>Create a course</h1>
 
-        <Form.Group controlId='formCourseName'>
-          <Form.Label>Course Name: </Form.Label>
-          <Form.Control value={courseName} onChange={(e) => setCourseName(e.target.value)}
-            placeholder='ex. Freshmen Seminar'></Form.Control>
-        </Form.Group>
+      {showAlert && (<Alert variant="success" onClose={() => setShowAlert(false)} dismissible>
+        ✅ Course and section(s) created successfully!
+      </Alert>)}
+      <Form className="course-form" onSubmit={handleSubmit}>
+        <Row>
+          <Col>
+            <Form.Group id="formCourseCode">
+              <Form.Label>Course ID: </Form.Label>
+              <Form.Control type="text" required value={courseId} onChange={(e) => setCourseId(e.target.value)}
+                placeholder="ex. Swen101"></Form.Control>
+            </Form.Group>
+            </Col>
 
-        <Form.Group controlId='formCourseSemester'>
-          <Form.Label>Semester: </Form.Label>
-          <Form.Control value={semester} onChange={(e) => setSemester(e.target.value)}
-            placeholder='ex. Fall'></Form.Control>
-        </Form.Group>
+          <Col>
+            <Form.Group id="formCourseName">
+              <Form.Label>Course Name: </Form.Label>
+              <Form.Control type="text" required value={courseName} onChange={(e) => setCourseName(e.target.value)}
+                placeholder="ex. Freshmen Seminar"></Form.Control>
+            </Form.Group>
+          </Col>
+        </Row>
 
-        <Form.Group controlId='formCourseSections'>
-          <Form.Label>Number of sections: </Form.Label>
-          <Form.Control value={numOfSections} onChange={(e) => setNumOfSections(e.target.value)}
-            placeholder='ex. 2'></Form.Control>
-        </Form.Group>
+        <Row>
+          <Col>
+            <Form.Group id="formCourseSections">
+              <Form.Label>Number of sections: </Form.Label>
+              <Form.Control type="number" required value={numOfSections} onChange={(e) => setNumOfSections(e.target.value)}
+                placeholder="ex. 2"></Form.Control>
+            </Form.Group>
+          </Col>
 
-        <Button type="submit">Create Course</Button>
+          <Col>
+            <Form.Group id="formCourseSemester">
+              <Form.Label>Semester: </Form.Label>
+              <Form.Control type="text" required value={semester} onChange={(e) => setSemester(e.target.value)}
+                placeholder="ex. Fall"></Form.Control>
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Form.Group id="formFile">
+          <Form.Label>Upload Syllabus</Form.Label>
+          <Form.Control type ="file"></Form.Control>
+        </Form.Group>
+        <div id="button-wrapper">
+          <Button id="form-button" type="submit">Create Course</Button>
+        </div>
       </Form>
     </>
   )
 }
 
 export default CoursePage;
-
-//export default function CoursePage() {
-  //console.log("Loaded CoursePage.jsx");
-  //return <h1>Course Builder</h1>;
-//}

@@ -17,7 +17,7 @@ const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 app.use('/api', teamBuilderRoutes);
 
 app.use(cors({
-  origin: 'http://localhost:3000', 
+  origin: /^http:\/\/localhost:\d+$/,  // allows any localhost port
   credentials: true
 }));
 app.use(bodyParser.json());
@@ -63,16 +63,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl
-  });
-});
-
 // get all courses + sections from a professor
-app.get('/api/courses', async (req, res) => {
+// TODO: CHANGE IT SO IT'S BASED ON THE PROFESSOR ID THAT'S CURRENTLY LOGGED IN
+app.get('/api/courseCreation', async (req, res) => {
     try {
         const courses = await prisma.courseCreation.findMany({
             include: {professor: true, sections: true},
@@ -84,7 +77,7 @@ app.get('/api/courses', async (req, res) => {
 });
 
 // create a course
-app.post('/api/courses', async (req, res) => {
+app.post('/api/courseCreation', async (req, res) => {
     try {
         const {id, name, semester, professorId} = req.body;
         const course = await prisma.courseCreation.create({
@@ -92,29 +85,32 @@ app.post('/api/courses', async (req, res) => {
         });
         res.json(course);
     } catch (err) {
+        console.error('course creation failed: ', err)
         res.status(500).json({error: err.message});
     }
 });
 
 // create a section for a course
+// creates them without the class times
 app.post('/api/sections', async (req, res) => {
     try {
-        const {sectionNum, courseId, professorId, classTimes} = req.body;
+        const {sectionNum, courseId, professorId} = req.body;
         const section = await prisma.section.create({
-            data: {sectionNum, courseId, professorId,
-                classTimes : {
-                    create: classTimes.map(time => ({
-                        dayOfWeek: time.dayOfWeek,
-                        startTime: time.startTime,
-                        endTime: time.endTime,
-                    })),
-                },
-            },
+            data: {sectionNum, courseId, professorId}
         });
         res.json(section);
     } catch (err) {
+        console.error('section creation failed: ', err)
         res.status(500).json({error: err.message});
     }
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    path: req.originalUrl
+  });
 });
 
 // Start server
