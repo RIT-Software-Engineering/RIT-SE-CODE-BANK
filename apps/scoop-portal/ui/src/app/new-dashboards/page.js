@@ -36,7 +36,7 @@ const workflows = [
         title: "View My Project",
         roles: ["scooployee"],
         description: "View project details, submit actions, and log time.",
-        link: "/projects/1",
+        link: "/scooployee/project",
       },
     ],
   },
