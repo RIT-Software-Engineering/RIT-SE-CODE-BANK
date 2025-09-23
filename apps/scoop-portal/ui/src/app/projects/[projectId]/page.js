@@ -57,7 +57,7 @@ export default function ProjectDetails({ params }) {
   if (isLoading) {
     return (
       <>
-        <Header role="/"/>
+        <Header />
         <Container maxWidth="lg" sx={{ py: 4 }}>
           <Typography variant="h6">Loading project details...</Typography>
         </Container>
@@ -67,7 +67,7 @@ export default function ProjectDetails({ params }) {
 
   return (
     <>
-      <Header role="/"/>
+      <Header />
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Button
