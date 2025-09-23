@@ -46,11 +46,11 @@ const navItems = [
     submenu: [
       {
         label: "Academic Advisors",
-        path: "/scoopdinator/administrative/contact/advisors",
+        path: "https://www.rit.edu/computing/academic-advising",
       },
       {
         label: "CO-OP Coordinators",
-        path: "/scoopdinator/administrative/contact/coordinators",
+        path: "https://www.rit.edu/careerservices/contacts/coordinators-by-college",
       },
     ],
   },
