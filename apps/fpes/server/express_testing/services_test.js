@@ -8,7 +8,8 @@ router.get("/", async (req,res) => {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("SELECT * FROM service");
+        const results = await connection.query("SELECT * FROM service");
+        console.log(results)
         res.json(results);
     } catch (err) {
         console.log(err);
@@ -22,7 +23,8 @@ router.get("/:id", async (req,res) => {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("SELECT * FROM service WHERE id = ?", [req.params.id]);
+        const results = await connection.query("SELECT * FROM service WHERE id = ?", [req.params.id]);
+        console.log(results)
         res.json(results);
     } catch (err) {
         console.log(err);
