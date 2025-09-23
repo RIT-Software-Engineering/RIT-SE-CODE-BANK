@@ -108,8 +108,6 @@ router.get("/:memberid", async (req, res) => {
 // PUT a project on a team
 router.put("/", async(req,res) => {
   const {teamId, projectId} = req.body;
-  console.log(teamId)
-  console.log(projectId)
   try {
     const team = await prisma.teams.update({
       where: {id: parseInt(teamId)},

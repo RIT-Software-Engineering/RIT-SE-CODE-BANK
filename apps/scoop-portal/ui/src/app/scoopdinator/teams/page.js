@@ -283,6 +283,7 @@ export default function TeamsPage() {
                         } catch (err) {
                           console.error("Error updating team project:", err);
                         }
+                        setSelectedProjectId("")
                       }}
               >
                 Save
