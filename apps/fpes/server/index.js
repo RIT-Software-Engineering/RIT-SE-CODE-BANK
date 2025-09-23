@@ -2,15 +2,9 @@ const express = require('express');
 const app = express();
 
 require('dotenv').config();
-const mariadb = require('mariadb');
 
-const pool = mariadb.createPool({
-  host: process.env.HOST,
-  user: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DATABASE,
-  connectionLimit: 5
-});
+const facultyRoutes = require('./express_testing/faculty_information_test');
+app.use('/faculty', facultyRoutes);
 
 // Test route (just to confirm server is alive)
 app.get('/', (req, res) => {
