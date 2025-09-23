@@ -12,10 +12,17 @@ import {
   InputBase,
   Paper,
   ClickAwayListener,
+  Modal,
+  Typography,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CloseIcon from "@mui/icons-material/Close";
+import { useUser } from "../utils/user-context/page";
 
 const navItems = [
   {
@@ -81,6 +88,10 @@ export default function Header() {
   const [anchorEls, setAnchorEls] = useState({});
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [profileOpen, setProfileOpen] = useState(false);
+  const {user} = useUser();
+  const [teams, setTeams] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   const handleMenuOpen = (event, label) => {
     setAnchorEls((prev) => ({ ...prev, [label]: event.currentTarget }));
@@ -89,6 +100,32 @@ export default function Header() {
   const handleMenuClose = (label) => {
     setAnchorEls((prev) => ({ ...prev, [label]: null }));
   };
+
+  const handleProfileOpen = () => {
+    if (user != null && user.fname != null){
+      fetchUserInfo();
+    }
+    setProfileOpen(true);
+  };
+
+  const handleProfileClose = () => {
+    setProfileOpen(false);
+    setTeams([]);
+    setProjects([]);
+  };
+
+  async function fetchUserInfo() {
+        try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams/${user.id}`);
+        const data = await res.json();
+        setTeams(data.map(team => team.name));
+        const projects = data.map(team =>team.project)
+        setProjects(projects.map(project => project.title));
+      } catch (error) {
+        console.error("Failed to fetch user info:", error);
+      } 
+    }
+
 
   const filteredResults = query
     ? searchablePages.filter((page) =>
@@ -240,6 +277,46 @@ export default function Header() {
                 )}
               </Box>
             </ClickAwayListener>
+            <Button               
+              variant="solid-orange"
+              sx={{
+                textTransform: "none",
+                ml: 2,
+                flexShrink: 0,
+              }} 
+              onClick={() => handleProfileOpen()}>
+              Profile
+            </Button>
+            <Modal open={profileOpen} onClose={handleProfileClose}>
+                          {user != null && user.fname != null ? (
+                          <Box  sx={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            width: 400,
+                            bgcolor: "background.paper",
+                            borderRadius: 2,
+                            boxShadow: 24,
+                            p: 4,
+                          }}>
+                            <Typography variant="h6">{user.fname} {user.lname}</Typography>
+                            <Divider sx={{ my: 1 }} />
+                            <Typography variant="body1">{user.email}</Typography>
+                            <Typography variant="body1">Role: {user.type}</Typography>
+                            {Array.isArray(teams) && teams.length > 0 ? (
+                              <Typography variant="body1">Team(s): {teams.toString()}</Typography>):(<Typography>No team assigned</Typography>)}
+                             {Array.isArray(projects) && projects.length > 0 ? (
+                              <Typography variant="body1">Project(s): {projects.toString()}</Typography>):(<Typography>No project assigned</Typography>)}
+                         
+        
+                            </Box>
+                            ) : (
+                              <Typography variant="body2" sx={{ color: "#999" }}>
+                                No user
+                              </Typography>
+                            )}                 
+            </Modal>
             <Button
               href="/"
               variant="solid-orange"

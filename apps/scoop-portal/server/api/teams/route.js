@@ -85,7 +85,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-// GET team members
+// GET all teams a user belongs to
 router.get("/:memberid", async (req, res) => {
     const { memberid }  = req.params;
     try {
@@ -95,7 +95,10 @@ router.get("/:memberid", async (req, res) => {
             some: { id: memberid },
             },
         },
-        include: { members: true } 
+        include: { 
+          members: true,
+          project: true,
+        } 
         });
         res.status(200).json(teams);
         
