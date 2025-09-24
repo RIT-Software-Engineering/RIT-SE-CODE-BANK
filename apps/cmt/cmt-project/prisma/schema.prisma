@@ -11,12 +11,18 @@ datasource db {
 }
 
 model Course {
-  id       String  @id
-  name     String
-  color    String
-  students Int
-  events   Event[]
+  id          String
+  name        String
+  semester    String
+  color       String
+  students    Int
+  professorId Int
+  professor   Professor @relation(fields: [professorId], references: [id])
+  events      Event[]
+  tbEnrollments   TBEnrollment[]
+  tbTeamSets      TBTeamSet[]
 
+  @@id([id, professorId])
   @@map("courses")
 }
 
@@ -56,64 +62,19 @@ enum Importance {
   @@map("importance_levels")
 }
 
-// =========================
-// Course Builder
-// =========================
-
-enum DayOfWeek {
-    MON
-    TUE
-    WED
-    THU
-    FRI
-}
-
 model Professor {
-    id      Int @id @default(autoincrement()) // default ids, can change to use uids or something
-    fname   String
-    lname   String
-    email   String
-    courses CourseCreation[]
-    createdTeamSets TBTeamSet[] @relation("CreatedByProfessor")
-}
-
-// Defines an individual course
-model CourseCreation{
-    id          String
-    name        String
-    semester    String
-    professorId Int
-    professor   Professor @relation(fields: [professorId], references: [id])
-    sections    Section[]
-    @@id([id, professorId])
-}
-
-// Represents how a course can have multiple sections
-model Section {
-    id              Int @id @default(autoincrement())
-    sectionNum      Int // ex. '1' for section 1
-    courseId        String
-    professorId     Int
-    course          CourseCreation @relation(fields: [courseId, professorId], references: [id, professorId])
-    classTimes      ClassTime[]
-    tbEnrollments   TBEnrollment[]
-    tbTeamSets      TBTeamSet[]
-}
-
-// Indicates what days and times
-model ClassTime {
-    id          Int @id @default(autoincrement())
-    dayOfWeek   DayOfWeek
-    startTime   String
-    endTime     String
-    sectionId   Int
-    section     Section @relation(fields: [sectionId], references: [id])
+  id      Int @id @default(autoincrement()) // default ids, can change to use uids or something
+  fname   String
+  lname   String
+  email   String
+  courses Course[]
+  createdTeamSets TBTeamSet[] @relation("CreatedByProfessor")
 }
 
 // =========================
 // Team Builder (NEW)
 // =========================
-// - Instructor selects a Section, imports roster rows (TBEnrollment)
+// - Instructor selects a course, imports roster rows (TBEnrollment)
 // - Generates a TeamSet (snapshot) per assignment/run
 // - Teams + Members live under the TeamSet
 
@@ -138,7 +99,7 @@ model TBEnrollment {
   @@index([sectionId])
 }
 
-// A snapshot of teams for a specific section
+// A snapshot of teams for a specific course
 model TBTeamSet {
   id                   Int             @id @default(autoincrement())
   sectionId            Int
