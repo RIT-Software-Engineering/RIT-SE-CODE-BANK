@@ -1,6 +1,7 @@
+
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const pool = require('../api/service_api');
 
 
 router.get('/:status', async (req, res) => {
@@ -41,5 +42,3 @@ router.post('/', async (req, res) => {
 });
 
 module.exports = router;
-
-//split stuff into routing files, integrate crud
