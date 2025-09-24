@@ -23,18 +23,18 @@ async function getServicesByFormId(form_id){
 }
 
 async function resetServiceTable(){
-    const resetQuery = await fs.readFileSync("../sql/services.sql", 'utf-8');
+    const resetQuery = await fs.readFileSync("sql/services.sql", 'utf-8');
 
-    let queries =resetQuery.split(';');
-    console.log(resetQuery);
+    let queries = resetQuery.split(';');
+    queries.pop();
     connection = await pool.getConnection();
+    let results = [];
     for (const query of queries){
-        console.log(query)
-        await connection.query(query);
+        results += await connection.query(query);
     }
     
     if (connection) connection.release();
-    return "Services Table reset";
+    return results;
 }
 
 
