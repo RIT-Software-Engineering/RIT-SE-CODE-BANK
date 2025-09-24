@@ -142,11 +142,9 @@ const StackTraceErrorPage = () => {
         <Button variant="contained" onClick={handleGoBack}>
           🔙 Go Back
         </Button>
-        {isDev && errorInfo?.stack && (
-          <Button variant="outlined" onClick={handleCopyStackTrace}>
-            📋 Copy Stack Trace
-          </Button>
-        )}
+        <Button variant="outlined" onClick={handleCopyStackTrace}>
+            {isDev ? "📋 Copy Stack Trace" : "📋 Copy Stack Trace"}
+        </Button>
         <Button
           color="secondary"
           variant="contained"
