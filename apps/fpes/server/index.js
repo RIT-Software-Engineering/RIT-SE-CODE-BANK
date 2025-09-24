@@ -6,7 +6,7 @@ require('dotenv').config();
 const facultyRoutes = require('./express_testing/faculty_information_test');
 app.use('/faculty', facultyRoutes);
 
-const serviceRoutes = require('./express_testing/services_test');
+const serviceRoutes = require('./routes/service_routes.js');
 app.use('/service', serviceRoutes);
 
 const grantsRoutes = require('./express_testing/grants_test.js')

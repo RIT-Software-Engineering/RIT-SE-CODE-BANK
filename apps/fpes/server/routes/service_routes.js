@@ -1,22 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db')
-const service_api = require('../api/service_api');
+const api = require('../api/service_api');
+
 
 router.get("/", async (req,res) => {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = await service_api.getAllServices(connection);
+        console.log(connection);
+        const results = await api.getAllServices(connection);
         console.log(results)
         res.json(results);
     } catch (err) {
         console.log(err);
-        res.status(500).send("Error");
+        res.status(500).send(err);
     } finally {
         if (connection) connection.release();
     }
-})
+});
 
 router.get("/:id", async (req,res) => {
     let connection;
@@ -34,11 +35,3 @@ router.get("/:id", async (req,res) => {
 })
 
 module.exports = router;
-
-
-
-
-
-
-
-
