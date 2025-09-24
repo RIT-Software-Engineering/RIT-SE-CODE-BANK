@@ -9,7 +9,7 @@ router.get('/:status', async (req, res) => {
     conn = await pool.getConnection();
     const rows = await conn.query(
       "SELECT * FROM grants WHERE grant_status = ?",
-      [req.params.status]
+      console.log(results)
     );
     res.json(rows);
   } catch (err) {
