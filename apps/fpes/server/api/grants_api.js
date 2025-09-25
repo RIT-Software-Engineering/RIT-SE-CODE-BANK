@@ -24,10 +24,10 @@ async function getGrantsByFormId(form_id){
     return results;
 }
 
-async function addGrant(grantData){ //Post
+async function addGrant(grantData){ //Create
   try {
     conn = await pool.getConnection();
-    const { title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status } = req.body;
+    const { title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status } = grantData;
     const result = await conn.query(
       `INSERT INTO grants (form_id, title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -40,12 +40,41 @@ async function addGrant(grantData){ //Post
 }
 
 //Update
+async function updateGrant(id, grantData) {
+  try {
+    conn = await pool.getConnection();
+    const { title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status } = grantData;
+    const result = await conn.query(
+      `UPDATE grants 
+       SET title = ?, funder = ?, amount = ?, time_period = ?, faculty_role = ?, faculty_share = ?, comments = ?, grant_status = ?
+       WHERE grant_id = ?`,
+      [title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status]
+    );
+    return result.affectedRows > 0;
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
 
 //Delete
+async function deleteGrant(id) {
+  try {
+    conn = await pool.getConnection();
+    const result = await conn.query("DELETE FROM grants WHERE grant_id = ?", [id]);
+    return result.affectedRows > 0;
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
+
 
 module.exports = {
     getAllGrants: getAllGrants,
     getGrantsById : getGrantsById,
     getGrantsByFormId : getGrantsByFormId,
-    addGrant : addGrant
+    addGrant : addGrant,
+    updateGrant : updateGrant,
+    deleteGrant : deleteGrant
 }
