@@ -1,7 +1,7 @@
 
 const express = require('express');
 const router = express.Router();
-const grantsApi = require('./grantsApi');
+const grantsApi = require('../api/grants_api');
 
 
 
