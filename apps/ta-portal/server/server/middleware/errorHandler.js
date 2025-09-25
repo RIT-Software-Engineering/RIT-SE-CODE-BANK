@@ -1,6 +1,7 @@
 // server/middleware/errorHandler.js
 function errorHandler(err, req, res, next) {
-  const isDev = process.env.NODE_ENV === "DEV";
+  const env = process.env.NODE_ENV;
+  const isDev = env === "development" || env === "DEV";
 
   console.error("\nCAUGHT ERROR:", err, "\n");
 
