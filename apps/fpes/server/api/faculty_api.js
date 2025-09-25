@@ -1,0 +1,98 @@
+const pool = require('../db');
+const mariadb = require('mariadb');
+require('dotenv').config();
+const fs = require('fs');
+
+// READ: all
+async function getAllFaculty() {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query('SELECT * FROM faculty_information');
+    return rows;
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
+// READ: by id
+async function getFacultyById(facultyId) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query(
+      'SELECT * FROM faculty_information WHERE faculty_id = ?',
+      [facultyId]
+    );
+    return rows[0] || null;
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
+// CREATE
+async function addFaculty({ name, rank, unit, affiliations = null }) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const result = await conn.query(
+      `INSERT INTO faculty_information (name, rank, unit, affiliations)
+       VALUES (?, ?, ?, ?)`,
+      [name, rank, unit, affiliations]
+    );
+    return { faculty_id: result.insertId };
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
+// UPDATE (partial)
+async function updateFaculty(facultyId, data = {}) {
+  const allowed = ['name', 'rank', 'unit', 'affiliations'];
+  const sets = [];
+  const params = [];
+
+  for (const key of allowed) {
+    if (data[key] !== undefined) {
+      sets.push(`${key} = ?`);
+      params.push(data[key]);
+    }
+  }
+  if (sets.length === 0) return { changedRows: 0 };
+
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    params.push(facultyId);
+    const result = await conn.query(
+      `UPDATE faculty_information SET ${sets.join(', ')} WHERE faculty_id = ?`,
+      params
+    );
+    return { changedRows: result.affectedRows };
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
+// DELETE
+async function deleteFaculty(facultyId) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const result = await conn.query(
+      'DELETE FROM faculty_information WHERE faculty_id = ?',
+      [facultyId]
+    );
+    return { deleted: result.affectedRows > 0 };
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
+module.exports = {
+  getAllFaculty,
+  getFacultyById,
+  addFaculty,
+  updateFaculty,
+  deleteFaculty,
+};
