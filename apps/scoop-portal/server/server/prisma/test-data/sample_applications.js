@@ -16,8 +16,8 @@ export const sampleApplications = [
     SEcoopAvailability: true,
     remoteAbility: "Yes",
     additionalComments: "Interested in mobile dev",
-    resumeFile: "resume_liam_anderson.pdf",
-    accepted: false,
+    resumeFile: null,
+    status: "REJECTED",
     createdAt: new Date("2023-02-20T12:00:00Z")
   },
   {
@@ -37,8 +37,8 @@ export const sampleApplications = [
     SEcoopAvailability: false,
     remoteAbility: "No",
     additionalComments: "",
-    resumeFile: "resume_maya_roberts.pdf",
-    accepted: true,
+    resumeFile: null,
+    status: "ACCEPTED",
     createdAt: new Date("2023-04-01T09:15:00Z")
   },
   {
@@ -58,8 +58,8 @@ export const sampleApplications = [
     SEcoopAvailability: true,
     remoteAbility: "Yes",
     additionalComments: "Open to relocation",
-    resumeFile: "resume_ethan_harris.pdf",
-    accepted: false,
+    resumeFile: null,
+    status: "REJECTED",
     createdAt: new Date("2023-06-20T10:30:00Z")
   },
   {
@@ -79,8 +79,8 @@ export const sampleApplications = [
     SEcoopAvailability: true,
     remoteAbility: "No",
     additionalComments: "Looking for frontend roles",
-    resumeFile: "resume_chloe_morgan.pdf",
-    accepted: true,
+    resumeFile: null,
+    status: "ACCEPTED",
     createdAt: new Date("2023-01-15T11:45:00Z")
   },
   {
@@ -100,8 +100,8 @@ export const sampleApplications = [
     SEcoopAvailability: true,
     remoteAbility: "Yes",
     additionalComments: "Interested in AI/ML roles",
-    resumeFile: "resume_noah_walker.pdf",
-    accepted: false,
+    resumeFile: null,
+    status: "REJECTED",
     createdAt: new Date("2023-08-10T13:00:00Z")
   },
   {
@@ -121,8 +121,8 @@ export const sampleApplications = [
     SEcoopAvailability: false,
     remoteAbility: "No",
     additionalComments: "",
-    resumeFile: "resume_ava_scott.pdf",
-    accepted: true,
+    resumeFile: null,
+    status: "ACCEPTED",
     createdAt: new Date("2023-01-30T14:00:00Z")
   },
   {
@@ -142,8 +142,8 @@ export const sampleApplications = [
     SEcoopAvailability: true,
     remoteAbility: "Yes",
     additionalComments: "Interested in backend roles",
-    resumeFile: "resume_oliver_king.pdf",
-    accepted: false,
+    resumeFile: null,
+    status: "REJECTED",
     createdAt: new Date("2023-01-10T10:20:00Z")
   },
   {
@@ -163,8 +163,8 @@ export const sampleApplications = [
     SEcoopAvailability: true,
     remoteAbility: "No",
     additionalComments: "Open to hybrid work",
-    resumeFile: "resume_ella_green.pdf",
-    accepted: true,
+    resumeFile: null,
+    status: "ACCEPTED",
     createdAt: new Date("2023-05-15T09:45:00Z")
   },
   {
@@ -184,8 +184,8 @@ export const sampleApplications = [
     SEcoopAvailability: true,
     remoteAbility: "Yes",
     additionalComments: "Prefers remote",
-    resumeFile: "resume_jack_nelson.pdf",
-    accepted: false,
+    resumeFile: null,
+    status: "REJECTED",
     createdAt: new Date("2023-03-25T15:30:00Z")
   },
   {
@@ -205,8 +205,8 @@ export const sampleApplications = [
     SEcoopAvailability: true,
     remoteAbility: "No",
     additionalComments: "Looking for UX roles",
-    resumeFile: "resume_zoe_turner.pdf",
-    accepted: true,
+    resumeFile: null,
+    status: "ACCEPTED",
     createdAt: new Date("2023-06-30T08:00:00Z")
   },
   {
@@ -227,7 +227,7 @@ export const sampleApplications = [
     remoteAbility: "Yes",
     additionalComments: null,
     resumeFile: null,
-    accepted: null,
+    status: "UNPROCESSED",
     createdAt: new Date("2025-07-15T10:00:00Z"),
   },
   {
@@ -248,7 +248,7 @@ export const sampleApplications = [
     remoteAbility: "No",
     additionalComments: "Looking for on-site co-op",
     resumeFile: null,
-    accepted: null,
+    status: "UNPROCESSED",
     createdAt: new Date("2025-07-20T14:30:00Z"),
   },
 ];

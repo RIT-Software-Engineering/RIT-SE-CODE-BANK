@@ -36,6 +36,7 @@ export default function ViewTeamMembers() {
     setOpen(false);
     setSelectedEmail('');
     setSelectedFname('');
+    setSelectedLname('');
   };
 
 
