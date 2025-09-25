@@ -2,8 +2,9 @@ const express = require('express');
 const app = express();
 
 require('dotenv').config();
+// app.use(express.json()); // <-- needed for POST/PUT JSON bodies
 
-const facultyRoutes = require('./express_testing/faculty_information_test');
+const facultyRoutes = require('./routes/faculty_routes.js');
 app.use('/faculty', facultyRoutes);
 
 const serviceRoutes = require('./routes/service_routes.js');
