@@ -58,12 +58,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-// get all courses + sections from a professor
+// get all courses from a professor
 // TODO: CHANGE IT SO IT'S BASED ON THE PROFESSOR ID THAT'S CURRENTLY LOGGED IN
-app.get('/api/courseCreation', async (req, res) => {
+app.get('/api/course', async (req, res) => {
     try {
         const courses = await prisma.courseCreation.findMany({
-            include: {professor: true, sections: true},
+            include: {professor: true},
         });
         res.json(courses);
     } catch (err) {
@@ -72,30 +72,15 @@ app.get('/api/courseCreation', async (req, res) => {
 });
 
 // create a course
-app.post('/api/courseCreation', async (req, res) => {
+app.post('/api/course', async (req, res) => {
     try {
-        const {id, name, semester, professorId} = req.body;
+        const {id, name, semester, color, students, professorId} = req.body;
         const course = await prisma.courseCreation.create({
-            data: {id, name, semester, professorId},
+            data: {id, name, semester, color, students, professorId},
         });
         res.json(course);
     } catch (err) {
         console.error('course creation failed: ', err)
-        res.status(500).json({error: err.message});
-    }
-});
-
-// create a section for a course
-// creates them without the class times
-app.post('/api/sections', async (req, res) => {
-    try {
-        const {sectionNum, courseId, professorId} = req.body;
-        const section = await prisma.section.create({
-            data: {sectionNum, courseId, professorId}
-        });
-        res.json(section);
-    } catch (err) {
-        console.error('section creation failed: ', err)
         res.status(500).json({error: err.message});
     }
 });
