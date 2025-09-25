@@ -8,8 +8,6 @@ async function getAllServices(){
         connection = await pool.getConnection();
         const results = await connection.query("SELECT * FROM service");
         return results; 
-    } catch (err) {
-        throw err;
     } finally {
         if (connection) connection.release();
     }
@@ -21,14 +19,23 @@ async function getAllServices(){
 async function getServiceById(id){
     let connection;
     try {
-    // Get connection from pool and query db
-    connection = await pool.getConnection();
-    const results = await connection.query("SELECT * FROM service WHERE id = ?", [id]);
-    return results;
-    } catch (err) {
-        throw err;
+        // Get connection from pool and query db
+        connection = await pool.getConnection();
+        const results = await connection.query("SELECT * FROM service WHERE id = ?", [id]);
+        return results;
     } finally {
         // Always makes sure to release connection in case of error
+        if (connection) connection.release();
+    }
+}
+
+async function deleteService(id){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = connection.query("DELETE FROM service WHERE id = ?", [id])
+        return results
+    } finally {
         if (connection) connection.release();
     }
 }
@@ -39,8 +46,6 @@ async function getServicesByFormId(form_id){
         connection = await pool.getConnection();
         const results = await connection.query("SELECT * FROM service WHERE form_id = ?", [form_id]);
         return results;
-    } catch (err) {
-        throw err;
     } finally {
         if (connection) connection.release();
     }
@@ -63,8 +68,6 @@ async function resetServiceTable(){
         }
 
         return results;
-    } catch (err) {
-        throw err;
     } finally {
         if (connection) connection.release();
     } 
@@ -75,7 +78,6 @@ async function createService(body){
     try {
         // Get Connection from Pool
         connection = await pool.getConnection();
-        console.log(body)
         const { form_id, service_type, title, hours_worked, other_contributions} = body;
 
         const results = await connection.query(
@@ -85,18 +87,38 @@ async function createService(body){
         );
         
         return results
-    } catch (err) {
-        throw err;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function updateService(body){
+    try {
+        // Get Connection from Pool
+        connection = await pool.getConnection();
+        const { id, form_id, service_type, title, hours_worked, other_contributions} = body;
+
+        const results = await connection.query(
+            `REPLACE INTO service (id, form_id, service_type, title, hours_worked, other_contributions) 
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [id, form_id, service_type, title, hours_worked, other_contributions]
+        );
+        
+        return results
     } finally {
         if (connection) connection.release();
     }
 }
 
 
+
+
 module.exports = {
-    getAllServices: getAllServices,
-    getServiceById: getServiceById,
-    getServicesByFormId: getServicesByFormId,
-    resetServiceTable, resetServiceTable,
-    createService, createService
+    getAllServices,
+    getServiceById,
+    getServicesByFormId,
+    resetServiceTable,
+    createService,
+    deleteService,
+    updateService
 }

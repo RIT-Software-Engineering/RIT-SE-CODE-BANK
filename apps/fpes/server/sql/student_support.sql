@@ -1,5 +1,5 @@
 CREATE TABLE student_support(
-    id INT PRIMARY_KEY AUTO_INCREMENT,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     independent_studies_supervised INT,
     bs_cs_students_supervised INT,
     ms_defence_chair INT,
