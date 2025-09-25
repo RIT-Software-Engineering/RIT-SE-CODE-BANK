@@ -7,6 +7,7 @@ import CalPage from "./pages/CalPage.jsx";
 import CoursePage from "./pages/CoursePage.jsx";
 import "./styles/global.css";
 import "./styles/index.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 console.log("pages seen:", require.context("./pages", false, /\.jsx$/).keys());
 
