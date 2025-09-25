@@ -73,6 +73,7 @@ run("docker compose up -d");
 // Run Prisma migrations & seeds for both DBs
 console.log("Applying schema & seeding workflows DB...");
 runInDir(`npx prisma migrate dev --name init`, workflowServerDir);
+runInDir(`npx prisma db seed`, workflowServerDir);
 
 console.log("Applying schema & seeding scoop portal DB...");
 runInDir(`npx prisma migrate dev --name init`, portalServerDir);
