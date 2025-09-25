@@ -9,8 +9,8 @@ app.use('/faculty', facultyRoutes);
 const serviceRoutes = require('./routes/service_routes.js');
 app.use('/service', serviceRoutes);
 
-const grantsRoutes = require('./express_testing/grants_test.js')
-app.use('/service', grantsRoutes);
+const grantsRoutes = require('./routes/grants_routes.js')
+app.use('/grants', grantsRoutes);
 
 // Test route (just to confirm server is alive)
 app.get('/', (req, res) => {
