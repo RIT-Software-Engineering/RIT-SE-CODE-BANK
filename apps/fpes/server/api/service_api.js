@@ -2,39 +2,94 @@ const pool = require('../db')
 const fs = require('fs')
 
 async function getAllServices(){
-    connection = await pool.getConnection();
-    const results = await connection.query("SELECT * FROM service");
-    if (connection) connection.release();
-    return results; 
+    let connection;
+    try {
+        // Get connection from pool and query db
+        connection = await pool.getConnection();
+        const results = await connection.query("SELECT * FROM service");
+        return results; 
+    } catch (err) {
+        throw err;
+    } finally {
+        if (connection) connection.release();
+    }
+
+    
+    
 }
 
 async function getServiceById(id){
+    let connection;
+    try {
+    // Get connection from pool and query db
     connection = await pool.getConnection();
     const results = await connection.query("SELECT * FROM service WHERE id = ?", [id]);
-    if (connection) connection.release();
     return results;
+    } catch (err) {
+        throw err;
+    } finally {
+        // Always makes sure to release connection in case of error
+        if (connection) connection.release();
+    }
 }
 
 async function getServicesByFormId(form_id){
-    connection = await pool.getConnection();
-    const results = await connection.query("SELECT * FROM service WHERE form_id = ?", [form_id]);
-    if (connection) connection.release();
-    return results;
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = await connection.query("SELECT * FROM service WHERE form_id = ?", [form_id]);
+        return results;
+    } catch (err) {
+        throw err;
+    } finally {
+        if (connection) connection.release();
+    }
 }
 
 async function resetServiceTable(){
-    const resetQuery = await fs.readFileSync("sql/services.sql", 'utf-8');
+    let connection;
+    try {
+        // Read sql file that rebuilds service table and inserts test data
+        const resetQuery = await fs.readFileSync("sql/services.sql", 'utf-8');
+        // Splits file into multiple queries
+        let queries = resetQuery.split(';');
+        // Removes the empty query at the end
+        queries.pop();
 
-    let queries = resetQuery.split(';');
-    queries.pop();
-    connection = await pool.getConnection();
-    let results = [];
-    for (const query of queries){
-        results += await connection.query(query);
+        connection = await pool.getConnection();
+        let results = [];
+        for (const query of queries){
+            results += await connection.query(query);
+        }
+
+        return results;
+    } catch (err) {
+        throw err;
+    } finally {
+        if (connection) connection.release();
+    } 
+}
+
+async function createService(body){
+    let connection;
+    try {
+        // Get Connection from Pool
+        connection = await pool.getConnection();
+        console.log(body)
+        const { form_id, service_type, title, hours_worked, other_contributions} = body;
+
+        const results = await connection.query(
+            `INSERT INTO service (form_id, service_type, title, hours_worked, other_contributions) 
+            VALUES (?, ?, ?, ?, ?)`,
+            [form_id, service_type, title, hours_worked, other_contributions]
+        );
+        
+        return results
+    } catch (err) {
+        throw err;
+    } finally {
+        if (connection) connection.release();
     }
-    
-    if (connection) connection.release();
-    return results;
 }
 
 
@@ -42,5 +97,6 @@ module.exports = {
     getAllServices: getAllServices,
     getServiceById: getServiceById,
     getServicesByFormId: getServicesByFormId,
-    resetServiceTable, resetServiceTable
+    resetServiceTable, resetServiceTable,
+    createService, createService
 }
