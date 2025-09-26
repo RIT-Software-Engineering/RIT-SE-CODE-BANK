@@ -71,10 +71,10 @@ async function deleteGrant(id) {
 
 
 module.exports = {
-    getAllGrants: getAllGrants,
-    getGrantsById : getGrantsById,
-    getGrantsByFormId : getGrantsByFormId,
-    addGrant : addGrant,
-    updateGrant : updateGrant,
-    deleteGrant : deleteGrant
+    getAllGrants,
+    getGrantsById,
+    getGrantsByFormId,
+    addGrant,
+    updateGrant,
+    deleteGrant
 }
