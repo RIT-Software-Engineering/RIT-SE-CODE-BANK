@@ -8,10 +8,13 @@ const facultyRoutes = require('./routes/faculty_routes.js');
 app.use('/faculty', facultyRoutes);
 
 const serviceRoutes = require('./routes/service_routes.js');
-app.use('/service', serviceRoutes);
+app.use('/services', serviceRoutes);
 
 const grantsRoutes = require('./routes/grants_routes.js')
 app.use('/grants', grantsRoutes);
+
+const courseSectionRoutes = require('./routes/course_section_routes.js');
+app.use('/course_sections', courseSectionRoutes);
 
 // Test route (just to confirm server is alive)
 app.get('/', (req, res) => {
