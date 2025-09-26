@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model fruit {
+  id     String @id @default(uuid())
+  name   String
+  color  String
+  size   String
+  rating String @default("0")
+}
+
+model SemesterGroup {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique @db.VarChar(100)
+  dept       String   @db.VarChar(100)
+  start_date DateTime @default(now())
+  end_date   DateTime @default(now())
+
+  projects        Project[]
+  journal_entries JournalEntry[]
+}
+
+model Project {
+  id           Int    @id
+  title        String
+  display_name String
+  description  String @db.VarChar(255)
+
+  teams           Teams[]
+  SemesterGroup   SemesterGroup? @relation(fields: [semesterGroupId], references: [id])
+  semesterGroupId Int?
+}
+
+model users {
+  id             String @id @default(uuid())
+  fname          String
+  lname          String
+  email          String @unique
+  type           String
+  semester_group String
+  project        String
+  active         String
+  last_login     String
+  prev_login     String
+
+  teams Teams[] @relation("TeamMembers")
+  login Login? @relation(fields: [loginId], references: [id])
+  loginId Int? @unique
+}
+
+model JournalEntry {
+  id                  Int      @id @default(autoincrement())
+  date                DateTime
+  contactee_fname     String
+  contactee_lname     String
+  notes               String?  @db.VarChar(500)
+  journal_owner_fname String
+  journal_owner_lname String
+  journal_owner_type  String?
+
+  Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
+  semester_GroupId Int?
+}
+
+model Application {
+  id                      Int      @id @default(autoincrement())
+  lastName                String
+  firstName               String?
+  ritEmail                String
+  coopsCompleted          Int?
+  startSemester           String
+  coursesTaken            String
+  coopSearchStartDate     String?
+  coopSearchPlatforms     String?
+  pendingOffers           Boolean
+  pendingOffersDetails    String?
+  rejectionLetters        Boolean
+  rejectionLettersDetails String?
+  SEcoopInterest          Boolean
+  SEcoopAvailability      Boolean?
+  remoteAbility           String?
+  additionalComments      String?
+  resumeFile              Bytes?
+  resumeFileName          String?
+  resumeFileType          String?
+  status                  String   @default("UNPROCESSED")
+  createdAt               DateTime @default(now())
+}
+
+model Teams {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  projectId Int?
+  project   Project? @relation(fields: [projectId], references: [id])
+  members   users[]  @relation("TeamMembers")
+}
+
+model Login {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user users?
+
+}

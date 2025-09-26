@@ -146,6 +146,7 @@ async function createAction(actionData) {
 }
 
 async function main() {
+
   if (process.env.NODE_ENV === "production") {
     throw Error(
       "This action should only be used in development for populating the database with test data."
@@ -385,6 +386,7 @@ async function main() {
       await createWorkflow(w);
     })
   );
+
 
   console.log("🌱 Seed data created successfully!");
 }

@@ -1,0 +1,38 @@
+import React from "react";
+import { Route, Switch } from "react-router-dom";
+import HomePage from "./components/pages/HomePage";
+import ProjectsPage from "./components/pages/ProjectsPage";
+import SponsorPage from "./components/pages/SponsorPage";
+import UniqueProjectPage from "./components/pages/UniqueProjectPage";
+import ProposalPage from "./components/pages/ProposalPage";
+import ErrorPage from "./components/pages/ErrorPage";
+import DashboardPage from "./components/pages/DashboardPage";
+import Header from "./components/shared/allPages/Header";
+import Footer from "./components/shared/allPages/Footer";
+import {UserContextProvider} from "./components/util/functions/UserContext";
+import "./App.css";
+import {Container} from "semantic-ui-react";
+
+function App() {
+    return (
+        <UserContextProvider>
+            <Header />
+            <div id="page">
+                <Container>
+                    <Switch>
+                        <Route path="/" component={HomePage} exact />
+                        <Route path="/projects/:url_slug" component={UniqueProjectPage}/>
+                        <Route path="/projects" component={ProjectsPage}/>
+                        <Route path="/proposal-form" component={ProposalPage} />
+                        <Route path="/sponsor" component={SponsorPage} />
+                        <Route path="/dashboard" component={DashboardPage} />
+                        <Route component={ErrorPage} />
+                    </Switch>
+                </Container>
+            </div>
+            <Footer/>
+        </UserContextProvider>
+    );
+}
+
+export default App;
