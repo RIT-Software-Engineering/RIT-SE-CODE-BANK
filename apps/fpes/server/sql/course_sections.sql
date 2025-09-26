@@ -1,6 +1,6 @@
-DROP TABLE course_section;
+DROP TABLE course_sections;
 
-CREATE TABLE IF NOT EXIST course_section (
+CREATE TABLE IF NOT EXIST course_sections (
     id INT UNSIGNED UNIQUE auto_increment PRIMARY KEY,
     course_id INT UNSIGNED FOREIGN KEY,
     room_location VARCHAR(60),

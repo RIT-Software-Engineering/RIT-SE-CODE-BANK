@@ -1,6 +1,6 @@
 DROP TABLE service;
 
-CREATE TABLE IF NOT EXISTS service (
+CREATE TABLE IF NOT EXISTS services (
     id INT UNSIGNED auto_increment PRIMARY KEY,
     form_id INT NOT NULL,
     service_type ENUM('internal', 'external') NOT NULL,

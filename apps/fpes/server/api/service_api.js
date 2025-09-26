@@ -6,7 +6,7 @@ async function getAllServices(){
     try {
         // Get connection from pool and query db
         connection = await pool.getConnection();
-        const results = await connection.query("SELECT * FROM service");
+        const results = await connection.query("SELECT * FROM services");
         return results; 
     } finally {
         if (connection) connection.release();
@@ -18,7 +18,7 @@ async function getServiceById(id){
     try {
         // Get connection from pool and query db
         connection = await pool.getConnection();
-        const results = await connection.query("SELECT * FROM service WHERE id = ?", [id]);
+        const results = await connection.query("SELECT * FROM services WHERE id = ?", [id]);
         return results;
     } finally {
         // Always makes sure to release connection in case of error
@@ -30,7 +30,7 @@ async function deleteService(id){
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("DELETE FROM service WHERE id = ?", [id])
+        const results = connection.query("DELETE FROM services WHERE id = ?", [id])
         return results
     } finally {
         if (connection) connection.release();
@@ -41,7 +41,7 @@ async function getServicesByFormId(form_id){
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = await connection.query("SELECT * FROM service WHERE form_id = ?", [form_id]);
+        const results = await connection.query("SELECT * FROM services WHERE form_id = ?", [form_id]);
         return results;
     } finally {
         if (connection) connection.release();
@@ -51,7 +51,7 @@ async function getServicesByFormId(form_id){
 async function resetServiceTable(){
     let connection;
     try {
-        // Read sql file that rebuilds service table and inserts test data
+        // Read sql file that rebuilds services table and inserts test data
         const resetQuery = await fs.readFileSync("sql/services.sql", 'utf-8');
         // Splits file into multiple queries
         let queries = resetQuery.split(';');
@@ -78,7 +78,7 @@ async function createService(body){
         const { form_id, service_type, title, hours_worked, other_contributions} = body;
 
         const results = await connection.query(
-            `INSERT INTO service (form_id, service_type, title, hours_worked, other_contributions) 
+            `INSERT INTO services (form_id, service_type, title, hours_worked, other_contributions) 
             VALUES (?, ?, ?, ?, ?)`,
             [form_id, service_type, title, hours_worked, other_contributions]
         );
@@ -96,7 +96,7 @@ async function updateService(body){
         const { id, form_id, service_type, title, hours_worked, other_contributions} = body;
 
         const results = await connection.query(
-            `UPDATE service SET form_id = ?, service_type = ?, title = ?, hours_worked = ?, other_contributions = ?
+            `UPDATE services SET form_id = ?, service_type = ?, title = ?, hours_worked = ?, other_contributions = ?
             WHERE id = ?`,
             [form_id, service_type, title, hours_worked, other_contributions, id]
         );
