@@ -1,7 +1,7 @@
 const importMetadata = (metadata) =>
     Object.entries(metadata).map(([k, v]) => ({
         key: k,
-        value: v,
+        value: v.toString(),
     }));
 
 module.exports = {

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
-const { getActionChain, exportAction } = require("../helpers/actions.js");
+const { getFullActionTree, exportAction } = require("../helpers/actions.js");
 const { importMetadata } = require("../helpers/metadata.js");
 const prisma = new PrismaClient();
 const { permissionTypes } = require("../consts.js") || [];
@@ -21,6 +21,7 @@ router.get("/:id", async (req, res) => {
 
     return res.json(exportAction(action));
 });
+
 // GET /actions
 router.get("/", async (req, res) => {
     const { workflowId } = req.query;
@@ -39,13 +40,8 @@ router.get("/", async (req, res) => {
         // the workflow that do not match the where clause, would cause this loop not to check actions in
         // the workflow beyond the first one that failed.
         if (workflow?.rootActionId) {
-            actionsByWorkflow = await getActionChain(workflow.rootActionId);
+            actionsByWorkflow = await getFullActionTree(workflow.rootActionId);
         }
-
-        // // find the actions that appear in both lists (filtered by workflows, and filtered by where clause)
-        // const intersection = actionsByWorkflow.filter((action1) =>
-        //     actions.some((action2) => action1.id === action2.id)
-        // );
 
         const intersection = await prisma.action.findMany({
             where: { ...where, id: { in: actionsByWorkflow.map((a) => a.id) } },
@@ -148,7 +144,7 @@ router.put("/:id", async (req, res) => {
     }
 
     // If the update to this action would create a loop, don't accept the update and return an error message.
-    const actionChainIds = (await getActionChain(nextActionId)).map((a) => (a.id));
+    const actionChainIds = (await getFullActionTree(nextActionId)).map((a) => (a.id)); // adding the child actions into this list may be important.
     if (actionChainIds.includes(id)){
         return res.status(500).json({message: "You can not link actions in such a way that it would create a loop."});
     }
