@@ -11,3 +11,7 @@ async function getAllCourseSections(){
         if (connection) connection.release();
     }
 }
+
+module.exports = {
+    getAllCourseSections
+}
