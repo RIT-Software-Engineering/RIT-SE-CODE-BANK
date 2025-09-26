@@ -10,10 +10,7 @@ async function getAllServices(){
         return results; 
     } finally {
         if (connection) connection.release();
-    }
-
-    
-    
+    } 
 }
 
 async function getServiceById(id){
@@ -99,9 +96,9 @@ async function updateService(body){
         const { id, form_id, service_type, title, hours_worked, other_contributions} = body;
 
         const results = await connection.query(
-            `REPLACE INTO service (id, form_id, service_type, title, hours_worked, other_contributions) 
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [id, form_id, service_type, title, hours_worked, other_contributions]
+            `UPDATE service SET form_id = ?, service_type = ?, title = ?, hours_worked = ?, other_contributions = ?
+            WHERE id = ?`,
+            [form_id, service_type, title, hours_worked, other_contributions, id]
         );
         
         return results

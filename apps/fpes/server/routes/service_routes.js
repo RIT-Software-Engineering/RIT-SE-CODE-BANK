@@ -3,8 +3,6 @@ const router = express.Router();
 const api = require('../api/service_api');
 router.use(express.json()); 
 
-
-
 // Gets service by its primary key
 router.get("/:id", async (req,res) => {
     try {
@@ -65,6 +63,7 @@ router.get("/", async (req,res) => {
     }
 });
 
+// Creates a new service
 router.post("/", async (req,res) => {
     try {
         const results = await api.createService(req.body);
@@ -76,6 +75,7 @@ router.post("/", async (req,res) => {
     }
 });
 
+// Updates an existing service
 router.put("/", async (req,res) => {
     try {
         const results = await api.updateService(req.body);
