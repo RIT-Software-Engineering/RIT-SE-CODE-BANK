@@ -16,7 +16,7 @@ app.use('/grants', grantsRoutes);
 const courseSectionRoutes = require('./routes/course_section_routes.js');
 app.use('/course_sections', courseSectionRoutes);
 
-const studentSupportRoutes = require('./routes/atudetn_support_routes.js');
+const studentSupportRoutes = require('./routes/student_support_routes.js');
 app.use('/student_support', studentSupportRoutes);
 
 // Test route (just to confirm server is alive)
