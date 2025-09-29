@@ -59,12 +59,6 @@ app.use('/resources', express.static(path.resolve(__dirname, 'resources')));
  * the server begins listening for requests.
  */
 async function initializeApp() {
-    // Define options for the HTTPS server, reading the SSL key and certificate files.
-    // These are required for enabling encrypted communication.
-    const httpsOptions = {
-      key: fs.readFileSync('./localhost+2-key.pem'),
-      cert: fs.readFileSync('./localhost+2.pem')
-    };
 
     // Validate that the PORT environment variable is defined before proceeding.
     if (!port) {
