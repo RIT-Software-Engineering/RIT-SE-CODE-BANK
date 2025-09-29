@@ -3,7 +3,7 @@ const mariadb = require('mariadb');
 require('dotenv').config();
 
 
-async function getAllStudentSupport() { //Read
+async function getAllStudentSupport(conn) { //Read
   let conn;
   try {
     conn = await pool.getConnection();
@@ -24,10 +24,22 @@ async function getStudentSupportById(id) {
   }
 }
 
-/*async function addStudentSupport(data) {  //Create
+async function addStudentSupport(studentSupportData) {  //Create
   let conn;
   try {
     conn = await pool.getConnection();
+        const { independent_studies_supervised,
+        bs_cs_students_supervised,
+        ms_defence_chair,
+        ms_defence_member,
+        active_ms_cs_as_chair,
+        other_bs_projects,
+        other_ms_projects,
+        current_phd_advisees,
+        phd_passed_rpa_as_chair,
+        phd_passed_pro_as_chair,
+        phd_passed_def_as_chair,
+        phd_rpa_def_pro_as_member } = studentSupportData
     const result = await conn.query(
       `INSERT INTO student_support 
        (independent_studies_supervised, bs_cs_students_supervised, ms_defence_chair, ms_defence_member,
@@ -49,18 +61,21 @@ async function getStudentSupportById(id) {
         phd_rpa_def_pro_as_member
       ]
     );
+
     return { id: result.insertId };
   } finally {
     if (conn) conn.release();
   }
-}*/
+}
+
+
 
 
 
 module.exports = {
   getAllStudentSupport,
   getStudentSupportById,
-  //addStudentSupport,
+  addStudentSupport,
   //updateStudentSupport,
   //deleteStudentSupport
 };
