@@ -19,6 +19,9 @@ app.use('/course_sections', courseSectionRoutes);
 const studentSupportRoutes = require('./routes/student_support_routes.js');
 app.use('/student_support', studentSupportRoutes);
 
+const coursesRoutes = require('./routes/courses_routes.js');
+app.use('/courses', coursesRoutes);
+
 // Test route (just to confirm server is alive)
 app.get('/', (req, res) => {
   res.send('Server is running...');
