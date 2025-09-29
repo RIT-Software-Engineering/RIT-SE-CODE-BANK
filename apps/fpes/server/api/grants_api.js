@@ -39,6 +39,35 @@ async function addGrant(grantData){ //Create
   }
 }
 
+//Update
+async function updateGrant(id, grantData) {
+  try {
+    conn = await pool.getConnection();
+    const { title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status } = grantData;
+    const result = await conn.query(
+      `UPDATE grants 
+       SET title = ?, funder = ?, amount = ?, time_period = ?, faculty_role = ?, faculty_share = ?, comments = ?, grant_status = ?
+       WHERE grant_id = ?`,
+      [title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status]
+    );
+    return result.affectedRows > 0;
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
+
+//Delete
+async function deleteGrant(id) {
+  try {
+    conn = await pool.getConnection();
+    const result = await conn.query("DELETE FROM grants WHERE grant_id = ?", [id]);
+    return result.affectedRows > 0;
+  } finally {
+    if (conn) conn.release();
+  }
+}
+
 
 
 module.exports = {
