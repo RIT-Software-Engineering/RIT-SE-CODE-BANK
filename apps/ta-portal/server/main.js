@@ -74,11 +74,24 @@ async function initializeApp() {
     // Mount the main API router. All requests to '/api' will be handled by this router.
     app.use('/api', apiRoutes);
 
-    // Create and start the HTTPS server using the provided SSL options and Express app.
-    https.createServer(httpsOptions, app).listen(port, () => {
-        console.log(`Server listening on ${process.env.BACKEND_URL}`);
-        console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
+    // Use HTTPS in development, HTTP in production (nginx handles SSL)
+    if (process.env.NODE_ENV === 'production') {
+        // HTTP server for production (behind nginx proxy)
+        app.listen(port, () => {
+            console.log(`Server listening on port ${port} in production mode`);
+            console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
+        });
+    } else {
+        // HTTPS server for local development
+        const httpsOptions = {
+            key: fs.readFileSync('./localhost+2-key.pem'),
+            cert: fs.readFileSync('./localhost+2.pem')
+        };
+        https.createServer(httpsOptions, app).listen(port, () => {
+            console.log(`Server listening on ${process.env.BACKEND_URL}`);
+            console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
+        });
+    }
 }
 
 // =============================================================================
