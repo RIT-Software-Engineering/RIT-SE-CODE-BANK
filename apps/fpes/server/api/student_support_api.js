@@ -3,7 +3,7 @@ const mariadb = require('mariadb');
 require('dotenv').config();
 
 
-async function getAllStudentSupport(conn) { //Read
+async function getAllStudentSupport() { //Read
   let conn;
   try {
     conn = await pool.getConnection();
