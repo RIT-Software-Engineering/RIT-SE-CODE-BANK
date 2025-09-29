@@ -22,7 +22,7 @@ services:
   workflow-api:
     build: ./apps/workflow/server
     environment:
-      DATABASE_URL: mysql://ta_user:ta_password@mariadb:3306/ta_portal_db
+      DATABASE_URL: mysql://ta_user:ta_password@mariadb:3306/workflow_db
       PORT: 3001
       BASE_URL: http://apps-staging.se.rit.edu/
       NODE_ENV: production
