@@ -12,6 +12,17 @@ async function getAllCourseSections(){
     }
 }
 
+async function getSectionByID(id){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = await connection.query("SELECT * FROM course_sections WHERE id = ?", [id]);
+        return results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
 async function getSectionsByCourseID(course_id){
     let connection;
     try {
@@ -23,6 +34,16 @@ async function getSectionsByCourseID(course_id){
     }
 }
 
+async function getSectionBySemesterAndYear(year, semester){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = await connection.query("SELECT * FROM course_sections WHERE year = ? AND semester = ?", [year, semester])
+        return results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
 
 async function initCourseSectionsTable(){
     let connection;
@@ -46,8 +67,64 @@ async function initCourseSectionsTable(){
     } 
 }
 
+async function createCourseSection(body){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const {course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year} = body;
+
+        const results = await connection.query(
+            `INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year)
+            VALUES (?,?,?,?,?,?)`,
+            [course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year]
+        );
+
+        return results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function updateCourseSection(id, body){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const {course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year} = body;
+
+        const results = await connection.query(
+            `UPDATE course_sections SET 
+            course_id = ?, room_location = ?, days_of_the_week = ?, number_of_students = ?, semester = ?, scholastic_year = ?
+            WHERE id = ?`,
+            [course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year, id]
+        );
+
+        return results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function removeCourseSectionByID(id){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = await connection.query(
+            `DELETE FROM course_sections WHERE id = ?`, [id]
+        );
+
+        return results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
 module.exports = {
     getAllCourseSections,
     initCourseSectionsTable,
-    getSectionsByCourseID
+    getSectionsByCourseID,
+    getSectionByID,
+    createCourseSection,
+    removeCourseSectionByID,
+    updateCourseSection,
+    getSectionBySemesterAndYear
 }
