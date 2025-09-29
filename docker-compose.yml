@@ -6,13 +6,14 @@ services:
     container_name: mariadb
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-DB_PASSWORD}
-      MYSQL_DATABASE: workflow_db
+      MYSQL_DATABASE: ta_portal_db
       MYSQL_USER: ${DB_USER:-TA_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD:-TA_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro  # Create multiple schemas
     healthcheck: 
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"] # Periodically runs mysqladmin ping -h localhost to check if the DB is up
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD:-password}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -20,9 +21,8 @@ services:
 
   workflow-api:
     build: ./apps/workflow/server
-    container_name: ta-portal-workflow-api
     environment:
-      DATABASE_URL: mysql://ta_user:ta_password@mariadb:3306/workflow_db
+      DATABASE_URL: mysql://ta_user:ta_password@mariadb:3306/ta_portal_db
       PORT: 3001
       BASE_URL: http://apps-staging.se.rit.edu/
       NODE_ENV: production
@@ -35,9 +35,19 @@ services:
     build: ./apps/ta-portal/server
     container_name: ta-portal-backend
     environment:
-      DATABASE_URL: mysql://${DB_USER:-ta_user}:${DB_PASSWORD:-ta_password}@mariadb:3306/workflow_db
+      DATABASE_URL: mysql://${DB_USER:-ta_user}:${DB_PASSWORD:-ta_password}@mariadb:3306/ta_portal_db
       WORKFLOWS_URL: http://workflow-api:3001
       PORT: 3300
+      NODE_ENV: production
+
+    ports:
+      - "3300:3300"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      workflow-api:
+        condition: service_started
+    restart: unless-stopped
 
   ta-portal-frontend:
     build: ./apps/ta-portal/ui
