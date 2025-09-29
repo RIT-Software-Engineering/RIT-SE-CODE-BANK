@@ -19,8 +19,8 @@ services:
     restart: unless-stopped # This flag ensures the container restarts on failure
 
   workflow-api:
-    build: ./apps/workflow-api/server
-    container_name: workflow-api
+    build: ./apps/workflow/server
+    container_name: ta-portal-workflow-api
     environment:
       DATABASE_URL: mysql://ta_user:ta_password@mariadb:3306/workflow_db
       PORT: 3001
@@ -32,7 +32,8 @@ services:
     restart: unless-stopped
 
   ta-portal-backend:
-    build: ./apps/ta-portal-backend
+    build: ./apps/ta-portal/server
+    container_name: ta-portal-backend
     environment:
       DATABASE_URL: mysql://${DB_USER:-ta_user}:${DB_PASSWORD:-ta_password}@mariadb:3306/ta_portal_db
       WORKFLOWS_URL: http://workflow-api:3001
@@ -40,13 +41,14 @@ services:
 
   ta-portal-frontend:
     build: ./apps/ta-portal/ui
+    container_name: ta-portal-frontend
     environment:
       NEXT_PUBLIC_BACKEND_URL: http://apps-staging.se.rit.edu
       NEXT_PUBLIC_API_EXTENSION: /api
     ports:
       - "3000:3000"
-    # depends_on:
-    #   - ta-portal-backend    # ← Commented out for testing
+    depends_on:
+      - ta-portal-backend
     restart: unless-stopped
 
 
