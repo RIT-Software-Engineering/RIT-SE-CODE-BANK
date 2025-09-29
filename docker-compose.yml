@@ -38,6 +38,16 @@ services:
       WORKFLOWS_URL: http://workflow-api:3001
       PORT: 3300
 
+  ta-portal-frontend:
+    build: ./apps/ta-portal/ui
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: http://apps-staging.se.rit.edu
+      NEXT_PUBLIC_API_EXTENSION: /api
+    ports:
+      - "3000:3000"
+    # depends_on:
+    #   - ta-portal-backend    # ← Commented out for testing
+    restart: unless-stopped
 
 
 volumes:
