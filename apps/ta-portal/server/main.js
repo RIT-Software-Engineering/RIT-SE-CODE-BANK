@@ -77,29 +77,22 @@ async function initializeApp() {
   app.get("/", (req, res) => {
     res.send("Welcome to the RIT TA Portal Backend!");
   });
-
-  // Test error route
-  app.get("/api/test-error", (req, res, next) => {
-    const err = new Error("Deliberate test error");
-    err.statusCode = 500;
-    next(err); // pass to error handler
-  });
-
+  
   // Mount main API router
   app.use("/api", apiRoutes);
 
-  // ✅ Catch-all 404 handler
+  // Catch-all 404 handler
   app.use((req, res, next) => {
     const err = new Error(`Not Found: ${req.originalUrl}`);
     err.statusCode = 404;
     next(err);
   });
 
-  // ✅ Custom error handler
+  // Custom error handler
   const errorHandler = require("./server/middleware/errorHandler.js");
   app.use(errorHandler);
 
-  // ✅ Only now start the server
+  // Start the server
   https.createServer(httpsOptions, app).listen(port, () => {
     console.log(`Server listening on ${process.env.BACKEND_URL}`);
     console.log(

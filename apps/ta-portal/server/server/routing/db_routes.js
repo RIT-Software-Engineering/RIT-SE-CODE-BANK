@@ -706,13 +706,14 @@ router.post("/hire", async (req, res) => {
  * @desc    Retrieves a list of all users.
  * @access  Public
  */
-router.get('/users', async (req, res) => {
+router.get('/users', async (req, res, next) => {
   try {
     const users = await getAllUsers();
     res.status(200).json(users);
   } catch (error) {
+    // Log and forward to central error handler so it can include name/stack
     console.error('Error in /users route:', error);
-    res.status(500).json({ error: 'Failed to retrieve users.' });
+    next(error);
   }
 });
 

@@ -11,6 +11,7 @@ export default function GlobalError({ error, reset }) {
     sessionStorage.setItem(
       "errorDetails",
       JSON.stringify({
+        name: error.name || null,
         error: error.message,
         stack: error.stack, // Save stack trace here
         statusCode: 500,
