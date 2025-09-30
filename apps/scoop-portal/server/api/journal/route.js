@@ -164,4 +164,28 @@ router.get("/scooployee", async (req, res) => {
   }
 });
 
+/**
+ * GET journal entries for user with id
+ */
+router.get("/:id", async (req, res) => {
+  const {id} = req.params;
+  try {
+    const idEntries = await prisma.journalEntry.findMany({
+      where: {
+        OR: [
+          {journal_owner_id:Number(id)},
+          {contactee_id:Number(id)},
+        ]
+      }
+    })
+    res.status(200).json(idEntries);
+  } catch (error) {
+    console.error("Error fetching the users journal entries: ", error);
+    res.status(500).json({
+      message: "Error fetching users journal entries",
+      error: error.message,
+    });
+  }
+})
+
 export default router;

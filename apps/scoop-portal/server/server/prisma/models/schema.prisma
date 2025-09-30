@@ -59,10 +59,12 @@ model JournalEntry {
   date                DateTime
   contactee_fname     String
   contactee_lname     String
+  contactee_id        Int
   notes               String?  @db.VarChar(500)
   journal_owner_fname String
   journal_owner_lname String
   journal_owner_type  String?
+  journal_owner_id    Int
 
   Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
   semester_GroupId Int?

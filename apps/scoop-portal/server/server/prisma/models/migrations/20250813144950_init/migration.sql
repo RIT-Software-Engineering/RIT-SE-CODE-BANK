@@ -55,10 +55,12 @@ CREATE TABLE `JournalEntry` (
     `date` DATETIME(3) NOT NULL,
     `contactee_fname` VARCHAR(191) NOT NULL,
     `contactee_lname` VARCHAR(191) NOT NULL,
+    `contactee_id` INTEGER NOT NULL,
     `notes` VARCHAR(500) NULL,
     `journal_owner_fname` VARCHAR(191) NOT NULL,
     `journal_owner_lname` VARCHAR(191) NOT NULL,
     `journal_owner_type` VARCHAR(191) NULL,
+    `journal_owner_id` INTEGER NOT NULL,
     `semester_GroupId` INTEGER NULL,
 
     PRIMARY KEY (`id`)
