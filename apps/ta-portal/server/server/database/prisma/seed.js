@@ -123,7 +123,7 @@ async function seedWindows() {
                     continue;
                 }
 
-                const values = stmt.values.values;
+                const values = stmt.values;
                 const columns = stmt.columns.map(col => {
                     const cleanCol = col.replace(/`/g, '');
                     return cleanCol === 'maxCAs' ? 'maxTAs' : cleanCol;

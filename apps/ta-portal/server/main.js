@@ -58,34 +58,49 @@ app.use('/resources', express.static(path.resolve(__dirname, 'resources')));
  * wraps the entire startup logic to handle setup tasks before
  * the server begins listening for requests.
  */
+// ... all your imports and setup stay the same ...
+
 async function initializeApp() {
-    // Define options for the HTTPS server, reading the SSL key and certificate files.
-    // These are required for enabling encrypted communication.
-    const httpsOptions = {
-      key: fs.readFileSync('./localhost+2-key.pem'),
-      cert: fs.readFileSync('./localhost+2.pem')
-    };
+  const httpsOptions = {
+    key: fs.readFileSync("./localhost+2-key.pem"),
+    cert: fs.readFileSync("./localhost+2.pem"),
+  };
 
-    // Validate that the PORT environment variable is defined before proceeding.
-    if (!port) {
-        console.error("FATAL ERROR: PORT is not defined in your .env file. Server cannot start.");
-        process.exit(1); // Exit the process with an error code.
-    }
-    
-    // Define a simple root route to confirm the server is running.
-    app.get('/', (req, res) => {
-        res.send('Welcome to the RIT TA Portal Backend!');
-    });
+  if (!port) {
+    console.error(
+      "FATAL ERROR: PORT is not defined in your .env file. Server cannot start."
+    );
+    process.exit(1);
+  }
 
-    // Mount the main API router. All requests to '/api' will be handled by this router.
-    app.use('/api', apiRoutes);
+  // Root route
+  app.get("/", (req, res) => {
+    res.send("Welcome to the RIT TA Portal Backend!");
+  });
+  
+  // Mount main API router
+  app.use("/api", apiRoutes);
 
-    // Create and start the HTTPS server using the provided SSL options and Express app.
-    https.createServer(httpsOptions, app).listen(port, () => {
-        console.log(`Server listening on ${process.env.BACKEND_URL}`);
-        console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
+  // Catch-all 404 handler
+  app.use((req, res, next) => {
+    const err = new Error(`Not Found: ${req.originalUrl}`);
+    err.statusCode = 404;
+    next(err);
+  });
+
+  // Custom error handler
+  const errorHandler = require("./server/middleware/errorHandler.js");
+  app.use(errorHandler);
+
+  // Start the server
+  https.createServer(httpsOptions, app).listen(port, () => {
+    console.log(`Server listening on ${process.env.BACKEND_URL}`);
+    console.log(
+      `Current Environment: ${process.env.NODE_ENV || "development"}`
+    );
+  });
 }
+
 
 // =============================================================================
 // START SERVER
