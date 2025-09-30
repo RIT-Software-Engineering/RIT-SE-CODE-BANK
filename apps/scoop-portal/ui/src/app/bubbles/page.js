@@ -10,19 +10,20 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 export default function bubbled(){
   
-  const [maybeWorkflows, setMaybe] = useState([]);
+  const [actions, setActions] = useState([]);
   const [open, setOpen] = useState(false);
   const [openWorkflow, setOpenWorkflow] = useState([]);
+  const [refresh, forceRefresh] = useState(0);
 
   useEffect(() => {
     async function getActions() {
 
       const res = await fetch(`http://localhost:5001/actions`);
       const data = await res.json();
-      setMaybe(data);
+      setActions(data);
     }
     getActions();
-  },[]);
+  },[refresh]);
 
   const handleOpen = (workflow) => {
     setOpenWorkflow(workflow);
@@ -32,6 +33,23 @@ export default function bubbled(){
   const handleClose = () => {
     setOpenWorkflow([]);
     setOpen(false);
+  };
+
+
+  const submitAction = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/states/handleSubmit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          actionStateId: openWorkflow.actionStates[0].id,
+        }),
+      });
+      forceRefresh(prevKey => prevKey + 1);
+    } catch (e) {console.error('Error handling submit:', e);}
+
   };
 
   const bubbleColor = (actionState) => {
@@ -56,12 +74,12 @@ export default function bubbled(){
         <Header />
         <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
           <Grid container spacing={4}>
-            {maybeWorkflows.slice(0, 30).map((maybeWorkflow) => (
+            {actions.slice(0, 30).map((action) => (
               <Chip
-                key={maybeWorkflow.id}
-                label={maybeWorkflow.name}
-                sx={bubbleColor(maybeWorkflow.actionStates)}
-                onClick={() => handleOpen(maybeWorkflow)}
+                key={action.id}
+                label={action.name}
+                sx={bubbleColor(action.actionStates)}
+                onClick={() => handleOpen(action)}
                 />
             ))}
           </Grid>
@@ -78,6 +96,7 @@ export default function bubbled(){
               p: 4,
               }}>
               <Typography variant="h6">{openWorkflow.description}</Typography>
+              <Button onClick={submitAction}>Submit</Button>
 
             </Box>
           </Modal>
