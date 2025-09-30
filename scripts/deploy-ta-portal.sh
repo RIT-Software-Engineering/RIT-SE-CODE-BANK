@@ -5,7 +5,7 @@ echo "🚀 Deploying TA Portal to apps-staging.se.rit.edu..."
 
 # Configuration
 VM_HOST="${DEPLOY_HOST:-apps-staging.se.rit.edu}"
-VM_USER="${DEPLOY_USER_TA_PORTAL:-kc8563}"
+VM_USER="${DEPLOY_USER:-kc8563}"
 DEPLOY_PATH="/opt/ta-portal"
 BRANCH="${GITHUB_REF##*/}"
 
