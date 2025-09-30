@@ -38,7 +38,18 @@ async function getSectionBySemesterAndYear(year, semester){
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = await connection.query("SELECT * FROM course_sections WHERE year = ? AND semester = ?", [year, semester])
+        const results = await connection.query("SELECT * FROM course_sections WHERE scholastic_year = ? AND semester = ?", [year, semester])
+        return results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function getSectionByYear(year){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = await connection.query("SELECT * FROM course_sections WHERE scholastic_year = ?", [year])
         return results;
     } finally {
         if (connection) connection.release();
@@ -126,5 +137,6 @@ module.exports = {
     createCourseSection,
     removeCourseSectionByID,
     updateCourseSection,
-    getSectionBySemesterAndYear
+    getSectionBySemesterAndYear,
+    getSectionByYear
 }

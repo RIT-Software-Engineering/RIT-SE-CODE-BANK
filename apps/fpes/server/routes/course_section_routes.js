@@ -14,6 +14,17 @@ router.get("/year/:year_id/semester/:semester", async (req,res) => {
     }
 });
 
+router.get("/year/:year_id", async (req,res) => {
+    try {
+        const results = await api.getSectionByYear(req.params.year_id)
+        console.log(results);
+        res.json(results);
+    } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+});
+
 router.get("/:id", async (req,res) => {
     try {
         const results = await api.getSectionByID(req.params.id)
