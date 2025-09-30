@@ -7,17 +7,19 @@ echo "🚀 Deploying TA Portal to apps-staging.se.rit.edu..."
 VM_HOST="${DEPLOY_HOST:-apps-staging.se.rit.edu}"
 VM_USER="${DEPLOY_USER:-kc8563}"
 DEPLOY_PATH="/opt/ta-portal"
-BRANCH="${GITHUB_REF##*/}"
+# Get the branch name from GitHub Actions environment
+DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
 
 # SSH and deploy
-ssh "${VM_USER}@${VM_HOST}" << 'ENDSSH'
+ssh "${VM_USER}@${VM_HOST}" << ENDSSH
     set -e
     
     echo "📂 Navigating to deployment directory..."
     cd /opt/ta-portal
     
-    echo "🔄 Pulling latest changes..."
-    git pull origin ta-portal-dev
+    echo "🔄 Pulling latest changes from ${DEPLOY_BRANCH}..."
+    git fetch origin
+    git reset --hard origin/${DEPLOY_BRANCH}
     
     echo "🐳 Rebuilding and restarting Docker containers..."
     docker compose down
