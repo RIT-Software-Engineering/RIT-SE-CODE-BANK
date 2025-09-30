@@ -196,13 +196,19 @@ jobs:
 
 
       - name: Deploy script
+        if: env.APP_NAME != ''
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
           if [ "$APP_NAME" = "all" ]; then
             echo "Deploying all apps"
+            chmod +x ./scripts/deploy-all.sh
             ./scripts/deploy-all.sh
           elif [ -f "./scripts/deploy-$APP_NAME.sh" ]; then
             echo "Deploying $APP_NAME"
-            ./scripts/deploy-$APP_NAME.sh
+            chmod +x "./scripts/deploy-$APP_NAME.sh"
+            "./scripts/deploy-$APP_NAME.sh"
           else
             echo "No deployment script found for $APP_NAME, skipping."
           fi
