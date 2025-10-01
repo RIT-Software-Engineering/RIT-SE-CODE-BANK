@@ -28,6 +28,7 @@ const db_router = require("./db_routes");
 
 // Import the Slack-specific routes from the `slack_routes.js` file.
 const slack_router = require("./slack_routes");
+const devNotifyRoutes = require('./dev_notify_routes');
 
 // =============================================================================
 // ROUTE MOUNTING
@@ -40,7 +41,7 @@ router.use("/db", db_router);
 // Mount the Slack router. All routes defined in `slack_routes.js` will now
 // be accessible under the `/api/slack` path.
 router.use("/slack", slack_router);
-
+router.use('/dev', devNotifyRoutes);
 // =============================================================================
 // EXPORTS
 // =============================================================================

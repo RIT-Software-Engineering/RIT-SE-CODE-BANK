@@ -916,6 +916,10 @@ router.put('/terminate-employee/:username', async (req, res) => {
  */
 router.post('/resume', upload.single('resumeFile'), async (req, res) => {
     try {
+
+      console.log("🔥 Incoming /resume request");
+      console.log("Body:", req.body);
+      console.log("File:", req.file);
       if (!req.file) {
         return res.status(400).json({ error: 'Resume file is required.' });
       }

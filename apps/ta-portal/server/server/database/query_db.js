@@ -8,8 +8,15 @@ const { PrismaClient } = require("@prisma/client");
 const path = require("path");
 const { gradetoNumericValue } = require("../constants/grade");
 const { locationMap } = require("../constants/location");
-const { applicationStatusStringToEnum, positionStatusStringToEnum } = require('../constants/status');
+const {
+  applicationStatusStringToEnum,
+  positionStatusStringToEnum,
+} = require("../constants/status");
 const { verifyPassword, hashPassword } = require("../config/passwordHashes");
+const { notifyEvent } = require(path.resolve(
+  __dirname,
+  "../../../../../libs/notifications/slack/src"
+));
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {
@@ -55,7 +62,11 @@ function buildPositionFilterClause(filters) {
   }
 
   // Filter by level of the course (passed in as a string array)
-  if (filters.level && Array.isArray(filters.level) && filters.level.length > 0) {
+  if (
+    filters.level &&
+    Array.isArray(filters.level) &&
+    filters.level.length > 0
+  ) {
     filterWhere.OR = filters.level.map((levelString) => ({
       courseCode: { contains: `-${levelString.charAt(0)}` },
     }));
@@ -72,8 +83,14 @@ function buildPositionFilterClause(filters) {
   }
 
   // Filter by status
-  if (filters.status && Array.isArray(filters.status) && filters.status.length > 0) {
-    const statusEnums = filters.status.map((s) => positionStatusStringToEnum[s]);
+  if (
+    filters.status &&
+    Array.isArray(filters.status) &&
+    filters.status.length > 0
+  ) {
+    const statusEnums = filters.status.map(
+      (s) => positionStatusStringToEnum[s]
+    );
     if (statusEnums.length > 0) {
       filterWhere.jobPositionStatus = { in: statusEnums };
     }
@@ -81,7 +98,6 @@ function buildPositionFilterClause(filters) {
 
   return filterWhere;
 }
-
 
 // --- Main Data Fetching Function ---
 
@@ -92,7 +108,11 @@ function buildPositionFilterClause(filters) {
  * @param {string|null} [candidateUsername=null] - The username of the logged-in user.
  * @returns {Promise<Array>} A promise that resolves to an array of filtered and processed job positions.
  */
-async function getOpenJobPositions(searchTerm = "", filters = {}, candidateUsername = null) {
+async function getOpenJobPositions(
+  searchTerm = "",
+  filters = {},
+  candidateUsername = null
+) {
   try {
     const searchClause = buildPositionSearchClause(searchTerm);
     const filterClause = buildPositionFilterClause(filters);
@@ -111,7 +131,10 @@ async function getOpenJobPositions(searchTerm = "", filters = {}, candidateUsern
 
       // Filter by applied status (candidate/employee-specific logic)
       if (filters.applied && filters.applied !== "Any" && candidateData) {
-        const appliedPositionIds = candidateData.jobPositionApplicationHistory.map(app => app.jobPositionId);
+        const appliedPositionIds =
+          candidateData.jobPositionApplicationHistory.map(
+            (app) => app.jobPositionId
+          );
         if (filters.applied === "Applied") {
           appliedClause = { id: { in: appliedPositionIds } };
         } else if (filters.applied === "Not Applied") {
@@ -122,7 +145,7 @@ async function getOpenJobPositions(searchTerm = "", filters = {}, candidateUsern
 
     const finalWhere = {
       AND: [
-        { jobPositionStatus: 'OPEN' },
+        { jobPositionStatus: "OPEN" },
         searchClause,
         filterClause,
         appliedClause,
@@ -141,10 +164,19 @@ async function getOpenJobPositions(searchTerm = "", filters = {}, candidateUsern
     // Filter by eligibility (candidate/employee-specific logic)
     if (filters.eligibility && filters.eligibility !== "Any" && candidateData) {
       positions = positions.filter((position) => {
-        const gradStatusMatch = !position.graduateStatusRequirement || position.graduateStatusRequirement === candidateData.graduateStatus;
-        const courseHistory = candidateData.courseHistory?.find((ch) => ch.courseCode === position.courseCode);
-        const courseTakenMatch = !position.courseTakenRequirement || !!courseHistory;
-        const gradeMatch = !position.gradeRequirement || (courseHistory?.grade && gradetoNumericValue[courseHistory.grade] >= gradetoNumericValue[position.gradeRequirement]);
+        const gradStatusMatch =
+          !position.graduateStatusRequirement ||
+          position.graduateStatusRequirement === candidateData.graduateStatus;
+        const courseHistory = candidateData.courseHistory?.find(
+          (ch) => ch.courseCode === position.courseCode
+        );
+        const courseTakenMatch =
+          !position.courseTakenRequirement || !!courseHistory;
+        const gradeMatch =
+          !position.gradeRequirement ||
+          (courseHistory?.grade &&
+            gradetoNumericValue[courseHistory.grade] >=
+              gradetoNumericValue[position.gradeRequirement]);
         const isEligible = gradStatusMatch && courseTakenMatch && gradeMatch;
         return filters.eligibility === "Eligible" ? isEligible : !isEligible;
       });
@@ -164,17 +196,17 @@ async function getOpenJobPositions(searchTerm = "", filters = {}, candidateUsern
  * @param {string} ownerUsername - The username of the owner of the job positions.
  * @returns {Promise<Array>} A promise that resolves to an array of filtered and processed job positions.
  */
-async function getJobPositionsByOwner(searchTerm = "", filters = {}, ownerUsername=null) {
+async function getJobPositionsByOwner(
+  searchTerm = "",
+  filters = {},
+  ownerUsername = null
+) {
   try {
     const searchClause = buildPositionSearchClause(searchTerm);
     const filterClause = buildPositionFilterClause(filters);
 
     const finalWhere = {
-      AND: [
-        { username: ownerUsername },
-        searchClause,
-        filterClause,
-      ],
+      AND: [{ username: ownerUsername }, searchClause, filterClause],
     };
 
     return await prisma.jobPosition.findMany({
@@ -203,10 +235,7 @@ async function getAllJobPositions(searchTerm = "", filters = {}) {
     const filterClause = buildPositionFilterClause(filters);
 
     const finalWhere = {
-      AND: [
-        searchClause,
-        filterClause,
-      ],
+      AND: [searchClause, filterClause],
     };
 
     return await prisma.jobPosition.findMany({
@@ -243,19 +272,14 @@ async function createJobPosition(positionData, employerData) {
     gradeRequirement,
     courseTakenRequirement,
     startDate,
-    endDate
+    endDate,
   } = positionData;
 
-  const {
-    username,
-    fname,
-    lname,
-  } = employerData;
+  const { username, fname, lname } = employerData;
 
   const newJobId = `${semesterCode}-${courseCode}-${sectionNumber}`;
 
   try {
-
     const newPosition = await prisma.$transaction(async (tx) => {
       // Create the new position
       const position = await tx.jobPosition.create({
@@ -291,11 +315,11 @@ async function createJobPosition(positionData, employerData) {
       // Create a comment for the new position
       await tx.comment.create({
         data: {
-          foreignTableName: 'JobPosition',
+          foreignTableName: "JobPosition",
           foreignKey: position.id,
           author: `${fname} ${lname}`,
           status: jobPositionStatus,
-          comment: 'New position has been created',
+          comment: "New position has been created",
           timestamp: new Date(),
         },
       });
@@ -334,11 +358,7 @@ async function updateJobPosition(jobId, positionData, commentData) {
     courseTakenRequirement,
   } = positionData;
 
-  const {
-    fname,
-    lname,
-    comment,
-  } = commentData;
+  const { fname, lname, comment } = commentData;
 
   try {
     const updatedPosition = await prisma.$transaction(async (tx) => {
@@ -373,7 +393,7 @@ async function updateJobPosition(jobId, positionData, commentData) {
       // Create a comment for the updated position
       await tx.comment.create({
         data: {
-          foreignTableName: 'JobPosition',
+          foreignTableName: "JobPosition",
           foreignKey: jobId,
           author: `${fname} ${lname}`,
           status: jobPositionStatus,
@@ -381,7 +401,7 @@ async function updateJobPosition(jobId, positionData, commentData) {
           timestamp: new Date(),
         },
       });
-      
+
       return position;
     });
 
@@ -397,14 +417,10 @@ async function updateJobPosition(jobId, positionData, commentData) {
  * @param {string} jobId - The ID of the job position to modify.
  * @param {string} status - The new status for the job position.
  * @param {object} commentData - The comment data for the job position (including the author and comment).
- * @returns 
+ * @returns
  */
 async function updateJobPositionStatus(jobId, status, commentData) {
-  const {
-    fname,
-    lname,
-    comment,
-  } = commentData;
+  const { fname, lname, comment } = commentData;
 
   try {
     const updatedPosition = await prisma.$transaction(async (tx) => {
@@ -423,7 +439,7 @@ async function updateJobPositionStatus(jobId, status, commentData) {
       // Create a comment for the updated position
       await tx.comment.create({
         data: {
-          foreignTableName: 'JobPosition',
+          foreignTableName: "JobPosition",
           foreignKey: jobId,
           author: `${fname} ${lname}`,
           status: status,
@@ -431,7 +447,7 @@ async function updateJobPositionStatus(jobId, status, commentData) {
           timestamp: new Date(),
         },
       });
-      
+
       return position;
     });
 
@@ -441,7 +457,6 @@ async function updateJobPositionStatus(jobId, status, commentData) {
     throw new Error(`Could not modify job position ${jobId}.`);
   }
 }
-
 
 // --- JOB APPLICATIONS ---
 /**
@@ -465,7 +480,6 @@ async function applyForJobPosition(applicationDetails) {
       coverLetterName,
     } = applicationDetails;
 
-    // 1. Validate required fields.
     if (
       !candidateUsername ||
       !jobPositionId ||
@@ -477,94 +491,116 @@ async function applyForJobPosition(applicationDetails) {
       );
     }
 
-    // 2. Verify that the candidate, job position, and resume exist.
+    // Validate candidate, job position, and resume exist
     const [candidate, jobPosition, resume] = await Promise.all([
       prisma.candidate.findUnique({ where: { username: candidateUsername } }),
-      prisma.jobPosition.findUnique({ where: { id: jobPositionId } }),
+      prisma.jobPosition.findUnique({
+        where: { id: jobPositionId },
+        include: {
+          course: true,
+          employer: { include: { user: true } },
+        },
+      }),
       prisma.resume.findFirst({
         where: { id: resumeId, username: candidateUsername },
       }),
     ]);
     if (!candidate)
-      throw new Error(`Candidate with username ${candidateUsername} not found.`);
+      throw new Error(`Candidate ${candidateUsername} not found.`);
     if (!jobPosition)
-      throw new Error(`Job Position with ID ${jobPositionId} not found.`);
+      throw new Error(`Job Position ${jobPositionId} not found.`);
     if (!resume)
-      throw new Error(
-        `Resume with ID ${resumeId} not found for this candidate.`
-      );
+      throw new Error(`Resume ${resumeId} not found for ${candidateUsername}.`);
 
-    // 3. Check if the candidate has already applied.
-    const existingApplication =
-      await prisma.jobPositionApplicationHistory.findFirst({
-        where: { username: candidateUsername, jobPositionId },
-      });
-    if (existingApplication) {
+    // Ensure no duplicate applications
+    const existing = await prisma.jobPositionApplicationHistory.findFirst({
+      where: { username: candidateUsername, jobPositionId },
+    });
+    if (existing)
       throw new Error(
         "This candidate has already applied for this job position."
       );
-    }
-    const applicationFormData = JSON.parse(jobPositionApplicationFormData);
 
-    // 4. Create the new application record.
-    const newApplication = await prisma.jobPositionApplicationHistory.create({
+    const formData = JSON.parse(jobPositionApplicationFormData);
+
+    // Create new application
+    const newApp = await prisma.jobPositionApplicationHistory.create({
       data: {
         username: candidateUsername,
-        candidateUID: applicationFormData.uid,
+        candidateUID: formData.uid,
         jobPositionId,
-        resumeId: resumeId,
-        candidateFName: applicationFormData.fname,
-        candidateLName: applicationFormData.lname,
-        candidatePronouns: applicationFormData.pronouns,
-        candidateEmail: applicationFormData.email,
-        candidateMajor: applicationFormData.major,
-        candidateYear: parseInt(applicationFormData.year, 10),
-        candidateGrade: applicationFormData.grade,
-        wasPriorEmployeeForThisCourse:
-          applicationFormData.wasPriorEmployeeForThisCourse,
+        resumeId,
+        jobApplicationStatus: "APPLIED",
+        candidateFName: formData.fname,
+        candidateLName: formData.lname,
+        candidatePronouns: formData.pronouns,
+        candidateEmail: formData.email,
+        candidateMajor: formData.major,
+        candidateYear: parseInt(formData.year, 10),
+        candidateGrade: formData.grade,
+        wasPriorEmployeeForThisCourse: formData.wasPriorEmployeeForThisCourse,
         wasPriorEmployeeForOtherCourses:
-          applicationFormData.wasPriorEmployeeForOtherCourses,
-        priorEmploymentHistory: applicationFormData.priorEmploymentHistory
-          ?.map((item) => item.courseCode)
+          formData.wasPriorEmployeeForOtherCourses,
+        priorEmploymentHistory: formData.priorEmploymentHistory
+          ?.map((i) => i.courseCode)
           .join(", "),
-        coverLetterName: coverLetterName,
-        coverLetterURL: coverLetterURL,
+        coverLetterName,
+        coverLetterURL,
       },
     });
 
-    // 5. Create a comment record for the new application.
+    // System comment
     await prisma.comment.create({
-        data: {
-          foreignTableName: 'JobPositionApplicationHistory',
-          foreignKey: String(newApplication.id), // Use the ID from the just-created application
-          author: applicationFormData.fname + ' ' + applicationFormData.lname,
-          status: 'APPLIED',                     // The initial status
-          comment: 'Candidate submitted application.', // A system-generated comment
-          timestamp: new Date(),
-        },
-      });
+      data: {
+        foreignTableName: "JobPositionApplicationHistory",
+        foreignKey: String(newApp.id),
+        author: `${formData.fname} ${formData.lname}`,
+        status: "APPLIED",
+        comment: "Candidate submitted application.",
+        timestamp: new Date(),
+      },
+    });
 
-    return newApplication;
-  } catch (error) {
-    console.error("Error in applyForJobPosition:", error);
-    throw error;
+    // Notify stakeholders + applicant
+    try {
+      const { emails } = await getCourseStakeholders(newApp.jobPositionId);
+      await notifyEvent(
+        "APPLICATION_RECEIVED",
+        {
+          applicantName: `${newApp.candidateFName} ${newApp.candidateLName}`,
+          courseCode: jobPosition.courseCode,
+          courseName: jobPosition.course.name,
+          instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+          instructorEmail: jobPosition.employer.user.email,
+          comment: "Candidate submitted application.",
+        },
+        { toEmails: [newApp.candidateEmail, ...emails] }
+      );
+    } catch (e) {
+      console.error("Notify APPLICATION_RECEIVED failed:", e.message);
+    }
+
+    return newApp;
+  } catch (err) {
+    console.error("Error in applyForJobPosition:", err);
+    throw err;
   }
 }
+
 
 /**
  * Helper function to get the application (current used for deletion of application and cover letter file specifically)
  * @param {string} candidateUsername - The username of the candidate.
  * @param {number} jobPositionId - The ID of the job position.
  * @returns {Promise<object>} A promise that resolves to the application record.
-*/
+ */
 async function getCandidateApplication(candidateUsername, jobPositionId) {
-  const application =
-    await prisma.jobPositionApplicationHistory.findFirst({
-      where: {
-        username: candidateUsername,
-        jobPositionId: jobPositionId,
-      },
-    });
+  const application = await prisma.jobPositionApplicationHistory.findFirst({
+    where: {
+      username: candidateUsername,
+      jobPositionId: jobPositionId,
+    },
+  });
 
   if (!application) {
     throw new Error(
@@ -606,7 +642,7 @@ async function deleteCandidateApplication(applicationId) {
 }
 
 /**
- * Checks if a candidate has already been hired or has at least accepted an offer for another job position. 
+ * Checks if a candidate has already been hired or has at least accepted an offer for another job position.
  * This is used to prevent candidates from applying for multiple positions by notifing employers and administrators that this candidate has already been hired for this semester.
  * @param {string} candidateUsername - The username of the candidate.
  * @param (number} semestercode - The semester code that the employer is hiring for.
@@ -616,7 +652,7 @@ async function getCandidateHiredStatus(candidateUsername, semestercode) {
   const application = await prisma.jobPositionApplicationHistory.findFirst({
     where: {
       username: candidateUsername,
-      jobApplicationStatus: { in: ['ACCEPTED_OFFER', 'HIRED'] },
+      jobApplicationStatus: { in: ["ACCEPTED_OFFER", "HIRED"] },
       jobPosition: {
         semesterCode: semestercode,
       },
@@ -625,86 +661,147 @@ async function getCandidateHiredStatus(candidateUsername, semestercode) {
   return !!application;
 }
 
-
-
 /**
- * Updates an application's status and creates a new comment record in a transaction.
- * @param {string} author - The full name of the user who is changing the application status.
- * @param {string} applicationId - The ID of the JobPositionApplicationHistory record.
- * @param {string} status - The new status for the application (e.g., 'Rejected', 'Accepted').
- * @param {string} comments - The text for the new comment record.
- * @returns {Promise<object>} The updated application record.
+ * Updates an application's status and creates a new comment record in a transaction,
+ * then sends Slack notifications to the applicant + stakeholders (employer + active TAs).
  */
-async function changeCandidateApplicationStatus(author, applicationId, status, comments) {
+/**
+ * Updates a candidate's job application status, logs the change, and notifies stakeholders.
+ *
+ * Workflow:
+ * 1. Update the application's status inside a DB transaction.
+ *    - Also create a comment log entry.
+ *    - If status is ACCEPTED_OFFER, mark the job position as FILLED if capacity is reached.
+ * 2. After a successful transaction, send Slack notifications to the applicant and stakeholders.
+ * 3. Return the updated application record.
+ *
+ * @param {string} author - Name of the user making the status change.
+ * @param {number} applicationId - The ID of the application record to update.
+ * @param {string} status - New status for the application (must match JobApplicationStatus enum).
+ * @param {string} comments - Additional context or comments for the status change.
+ * @returns {Promise<Object>} - The updated job application record.
+ *
+ * @throws {Error} If the application/job position is not found or Prisma transaction fails.
+ */
+async function changeCandidateApplicationStatus(
+  author,
+  applicationId,
+  status,
+  comments
+) {
+  const VALID_STATUSES = [
+    "APPLIED",
+    "INTERVIEW",
+    "ONHOLD",
+    "REJECTED",
+    "PENDING_OFFER",
+    "ACCEPTED_OFFER",
+    "DECLINED_OFFER",
+    "HIRED",
+    "INACTIVE",
+  ];
+
+  if (!VALID_STATUSES.includes(status)) {
+    throw new Error(
+      `Invalid status: ${status}. Must be one of ${VALID_STATUSES.join(", ")}`
+    );
+  }
+
+  let updatedApp;
   try {
-    // Use a transaction to ensure both the update and create operations succeed or fail together.
-    const updatedApplication = await prisma.$transaction(async (tx) => {
-      // 1. Update the status on the main application record.
-      const applicationUpdate = await tx.jobPositionApplicationHistory.update({
+    updatedApp = await prisma.$transaction(async (tx) => {
+      const appUpdate = await tx.jobPositionApplicationHistory.update({
         where: { id: applicationId },
         data: { jobApplicationStatus: status },
       });
+      if (!appUpdate)
+        throw new Error(`Application ${applicationId} not found.`);
 
-      // It's good practice to ensure the record existed before proceeding.
-      if (!applicationUpdate) {
-        throw new Error(`Application with ID ${applicationId} not found.`);
-      }
-
-      // 2. Create a new, separate record in the Comment table to log the change.
       await tx.comment.create({
         data: {
-          foreignTableName: 'JobPositionApplicationHistory', // The table this comment relates to
-          author: author,                                 // The user who made the change
-          foreignKey: String(applicationId),              // The specific record ID
-          status: status,                                 // The new status being set
-          comment: comments,                              // The comment text
-          timestamp: new Date(),                          // The current timestamp
+          foreignTableName: "JobPositionApplicationHistory",
+          author,
+          foreignKey: String(applicationId),
+          status,
+          comment: comments || `Status changed to ${status}`,
+          timestamp: new Date(),
         },
       });
 
-      // If the status is ACCEPTED_OFFER, update the corresponding job positions record if neccessary
-      if (status === 'ACCEPTED_OFFER') {
-        const jobPosition = await tx.jobPosition.findUnique({
-          where: {
-            id: applicationUpdate.jobPositionId,
-          },
-        });
-
-        if (!jobPosition) {
-          throw new Error(`Job position with ID ${applicationUpdate.jobPositionId} not found.`);
+      // Handle filled job positions if accepted offer
+      if (status === "ACCEPTED_OFFER") {
+        const jobPos = await tx.jobPosition.findUnique({
+          where: { id: appUpdate.jobPositionId },
+          include: {
+            course: true,
+            employer: { include: { user: true } 
+          }
         }
-
-        const acceptedOfferCount = await tx.jobPositionApplicationHistory.count({
-          where: {
-            jobPositionId: applicationUpdate.jobPositionId,
-            jobApplicationStatus: {
-              in: ['ACCEPTED_OFFER', 'HIRED'],
-            },
-          },
         });
-        
-        if (acceptedOfferCount >= jobPosition.maxTAs) {
-          await tx.jobPosition.update({
+        if (jobPos) {
+          const acceptedCount = await tx.jobPositionApplicationHistory.count({
             where: {
-              id: applicationUpdate.jobPositionId,
-            },
-            data: {
-              jobPositionStatus: 'FILLED',
+              jobPositionId: jobPos.id,
+              jobApplicationStatus: { in: ["ACCEPTED_OFFER", "HIRED"] },
             },
           });
+          if (acceptedCount >= jobPos.maxTAs) {
+            await tx.jobPosition.update({
+              where: { id: jobPos.id },
+              data: { jobPositionStatus: "FILLED" },
+            });
+          }
         }
       }
 
-      // Return the updated application record from the transaction.
-      return applicationUpdate;
+      return appUpdate;
     });
-
-    return updatedApplication;
-  } catch (error) {
-    console.error("Error in changeCandidateApplicationStatus:", error);
-    // Re-throw the error so the calling function can handle it (e.g., show an error to the user).
-    throw error;
+  } catch (err) {
+    console.error("Error in changeCandidateApplicationStatus:", err);
+    throw err;
   }
+
+  // Notifications
+try {
+  const details = await getApplicationDetailsForNotify(applicationId);
+  console.log("🔥 Application details for notify:", details);
+  if (!details) throw new Error("Application not found for notify");
+
+  const { applicantName, applicantEmail, jobPositionId } = details;
+  const { emails: stakeholders } = await getCourseStakeholders(jobPositionId);
+
+  const eventTypeMap = {
+    INTERVIEW: "MOVED_TO_INTERVIEW",
+    REJECTED: "REJECTED",
+    PENDING_OFFER: "STATUS_CHANGED",
+    ACCEPTED_OFFER: "ACCEPTED_OFFER",
+    DECLINED_OFFER: "STATUS_CHANGED",
+    HIRED: "HIRED",
+    ONHOLD: "STATUS_CHANGED",
+    INACTIVE: "STATUS_CHANGED",
+    APPLIED: "APPLICATION_RECEIVED",
+  };
+  const eventType = eventTypeMap[status] || "STATUS_CHANGED";
+
+  await notifyEvent(
+    eventType,
+    {
+      applicantName,
+      courseCode: details.courseCode,
+      courseName: details.courseName,
+      section: details.section,
+      instructorName: details.instructorName,
+      instructorEmail: details.instructorEmail,
+      status,
+      comment: comments, // 👈 include reason/comment
+    },
+    { toEmails: [applicantEmail, ...stakeholders] }
+  );
+} catch (e) {
+  console.error("Slack notify (status change) failed:", e.message);
+}
+
+  return updatedApp;
 }
 
 /**
@@ -715,19 +812,49 @@ async function changeCandidateApplicationStatus(author, applicationId, status, c
  * @param {number} employeeId - The ID for the candidate to be hired.
  * @returns {Promise<object>} A promise that resolves to the updated application record.
  */
-async function hireCandidateForJobPosition(candidateUsername, applicationId, jobPositionId, employeeId, commentData) {
+/**
+ * Hires a candidate for a specific job position.
+ *
+ * Workflow:
+ * 1. Update the candidate's application status to "HIRED".
+ * 2. Log a comment record for the hiring action.
+ * 3. Promote the candidate's user role to "EMPLOYEE".
+ * 4. Upsert an Employee record (create or activate if exists).
+ * 5. Add a JobPositionHistory record to track employment.
+ * 6. If the position reaches max TAs, mark it as ACTIVE and log a comment.
+ * 7. Send Slack notification to the candidate and stakeholders.
+ *
+ * @param {string} candidateUsername - The username of the candidate being hired.
+ * @param {number} applicationId - The ID of the candidate's job application.
+ * @param {string} jobPositionId - The ID of the job position being filled.
+ * @param {number} employeeId - The unique ID for the employee record.
+ * @param {Object} commentData - Metadata for the hiring comment.
+ * @param {string} commentData.author - Who performed the hiring action.
+ * @param {string} commentData.comment - Context about the hiring action.
+ * @returns {Promise<Object>} - The updated job application record.
+ *
+ * @throws {Error} If any DB operation fails (e.g., application/position not found).
+ */
+async function hireCandidateForJobPosition(
+  candidateUsername,
+  applicationId,
+  jobPositionId,
+  employeeId,
+  commentData
+) {
   try {
-    // Update the candidate's application status to "HIRED".
-    const updatedApplication = await prisma.jobPositionApplicationHistory.update({
-      where: {
-        id: applicationId,
-      },
-      data: {
-        jobApplicationStatus: "HIRED",
-      }
-    })
+    // =====================================================
+    // 1) Update application status to HIRED
+    // =====================================================
+    const updatedApplication =
+      await prisma.jobPositionApplicationHistory.update({
+        where: { id: applicationId },
+        data: { jobApplicationStatus: "HIRED" },
+      });
 
-    // Create a new comment record for the hiring action.
+    // =====================================================
+    // 2) Log hiring comment
+    // =====================================================
     await prisma.comment.create({
       data: {
         foreignTableName: "JobPositionApplicationHistory",
@@ -736,24 +863,22 @@ async function hireCandidateForJobPosition(candidateUsername, applicationId, job
         status: "HIRED",
         comment: commentData.comment,
         timestamp: new Date(),
-      }
-    })
+      },
+    });
 
-    // Update the candidate's role to 'EMPLOYEE'.
+    // =====================================================
+    // 3) Promote candidate to EMPLOYEE role
+    // =====================================================
     await prisma.user.update({
-      where: {
-        username: candidateUsername,
-      },
-      data: {
-        role: "EMPLOYEE",
-      }
-    })
+      where: { username: candidateUsername },
+      data: { role: "EMPLOYEE" },
+    });
 
-    // Create new employee record or update existing one to ACTIVE status
+    // =====================================================
+    // 4) Ensure Employee record exists & is ACTIVE
+    // =====================================================
     await prisma.employee.upsert({
-      where: {
-        id: employeeId,
-      },
+      where: { id: employeeId },
       update: {
         employeeStatus: "ACTIVE",
         username: candidateUsername,
@@ -762,63 +887,91 @@ async function hireCandidateForJobPosition(candidateUsername, applicationId, job
         id: employeeId,
         username: candidateUsername,
         employeeStatus: "ACTIVE",
-      }
-    })
+      },
+    });
 
-    // Add the job position record to the JobPositionHistory table.
+    // =====================================================
+    // 5) Add JobPositionHistory record
+    // =====================================================
     await prisma.jobPositionHistory.create({
       data: {
-        jobPositionId: jobPositionId,
-        employeeId: employeeId,
+        jobPositionId,
+        employeeId,
         jobPositionHistoryStatus: "ACTIVE",
-      }
-    })
+      },
+    });
 
-    // Get the job position to check maxTAs
+    // =====================================================
+    // 6) Check if position is full (max TAs reached)
+    // =====================================================
     const jobPosition = await prisma.jobPosition.findUnique({
-      where: {
-        id: jobPositionId,
+      where: { id: jobPositionId },
+      include: {
+        course: true,
+        employer: { include: { user: true } }
       }
-    })
+    });
 
     if (!jobPosition) {
       throw new Error(`Job position with ID ${jobPositionId} not found`);
     }
 
-    // Count the number of ACTIVE job position history records for this job position
-    const activeJobPositionHistoryCount = await prisma.jobPositionHistory.count({
-      where: {
-        jobPositionId: jobPositionId,
-        jobPositionHistoryStatus: "ACTIVE",
+    const activeJobPositionHistoryCount = await prisma.jobPositionHistory.count(
+      {
+        where: { jobPositionId, jobPositionHistoryStatus: "ACTIVE" },
       }
-    })
+    );
 
-    // Update job position status to 'ACTIVE' if we've reached the maximum TAs
     if (activeJobPositionHistoryCount >= jobPosition.maxTAs) {
+      // Mark the job as ACTIVE
       await prisma.jobPosition.update({
-        where: {
-          id: jobPositionId,
-        },
-        data: {
-          jobPositionStatus: "ACTIVE",
-        }
-      })
-      // Add comment
+        where: { id: jobPositionId },
+        data: { jobPositionStatus: "ACTIVE" },
+      });
+
+      // Log comment for job position activation
       await prisma.comment.create({
         data: {
           foreignTableName: "JobPosition",
           author: commentData.author,
           foreignKey: String(jobPositionId),
           status: "ACTIVE",
-          comment: 'Position is now active as the all of the students who accepted the position have now been hired.',
+          comment:
+            "Position is now active as all accepted offers have been hired.",
           timestamp: new Date(),
-        }
-      })
+        },
+      });
     }
 
+    // =====================================================
+    // 7) Send notification (candidate + stakeholders)
+    // =====================================================
+    try {
+      const details = await getApplicationDetailsForNotify(applicationId);
+      if (`details:${details}`) {
+        const { applicantName, applicantEmail, jobPositionId } = details;
+        const { emails: stakeholderEmails } = await getCourseStakeholders(
+          jobPositionId
+        );
+
+        const toEmails = [applicantEmail, ...stakeholderEmails];
+
+        await notifyEvent(
+          "HIRED",
+          { applicantName, courseCode: jobPositionId },
+          { toEmails }
+        );
+      }
+    } catch (e) {
+      console.error("Slack notify (hiring) failed:", e.message);
+    }
+
+    // =====================================================
+    // 8) Return final updated application record
+    // =====================================================
     return updatedApplication;
   } catch (error) {
-    console.error('Error hiring candidate:', error);
+    console.error("Error in hireCandidateForJobPosition:", error);
     throw error;
   }
 }
@@ -845,6 +998,123 @@ async function getSemesterCodes(status, employer) {
   return positions.map((position) => position.semesterCode);
 }
 
+// === Recipients helpers ===
+
+/**
+ * Given a jobPositionId, return employer email(s) and active TA emails.
+ */
+async function getCourseStakeholders(jobPositionId) {
+  // Employer email
+  const pos = await prisma.jobPosition.findUnique({
+    where: { id: jobPositionId },
+    select: {
+      username: true,
+      employer: {
+        select: {
+          user: { select: { email: true } },
+        },
+      },
+    },
+  });
+
+  const employerEmail = pos?.employer?.user?.email || null;
+
+  // Active TAs on this position (via JobPositionHistory -> Employee -> Candidate -> User)
+  const taRecords = await prisma.jobPositionHistory.findMany({
+    where: {
+      jobPositionId,
+      jobPositionHistoryStatus: "ACTIVE",
+    },
+    select: {
+      employee: {
+        select: {
+          candidate: {
+            select: {
+              user: { select: { email: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const taEmails = taRecords
+    .map((r) => r.employee?.candidate?.user?.email)
+    .filter(Boolean);
+
+  const emails = [...new Set([employerEmail, ...taEmails].filter(Boolean))];
+  return { employerEmail, taEmails, emails };
+}
+
+/**
+ * Return applicant email for a given application record id.
+ */
+async function getApplicantEmailByApplicationId(applicationId) {
+  const app = await prisma.jobPositionApplicationHistory.findUnique({
+    where: { id: applicationId },
+    select: { candidateEmail: true, jobPositionId: true },
+  });
+  if (!app) return { applicantEmail: null, jobPositionId: null };
+  return {
+    applicantEmail: app.candidateEmail,
+    jobPositionId: app.jobPositionId,
+  };
+}
+
+// === Helper for notifications ===
+async function getApplicationDetailsForNotify(applicationId) {
+  const app = await prisma.jobPositionApplicationHistory.findUnique({
+    where: { id: applicationId },
+    select: {
+      id: true,
+      jobPositionId: true,
+      candidateFName: true,
+      candidateLName: true,
+      candidateEmail: true,
+      jobPosition: {
+        select: {
+          courseCode: true,
+          sectionNumber: true,
+          semesterCode: true,
+          course: {
+            select: {
+              name: true,
+            },
+          },
+          employer: {
+            select: {
+              user: {
+                select: {
+                  fname: true,
+                  lname: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!app) return null;
+  console.log("DEBUG app.jobPosition:", app.jobPosition);
+  console.log("DEBUG course relation:", app.jobPosition.course);
+
+  return {
+    applicantName: `${app.candidateFName} ${app.candidateLName}`,
+    applicantEmail: app.candidateEmail,
+    jobPositionId: app.jobPositionId,
+    courseCode: app.jobPosition.courseCode,
+    courseName: app.jobPosition.course.name, // ✅ now works
+    section: app.jobPosition.sectionNumber,
+    semester: app.jobPosition.semesterCode,
+    instructorName: `${app.jobPosition.employer.user.fname} ${app.jobPosition.employer.user.lname}`,
+    instructorEmail: app.jobPosition.employer.user.email,
+  };
+}
+
+
 // -- Private Helper Functions for Application Search --
 
 /**
@@ -869,7 +1139,7 @@ function buildJobPositionForApplicationFilterClause(filters) {
     where.OR = filters.level.map((levelString) => ({
       courseCode: {
         // Extracts the first digit (e.g., "1" from "100-level")
-        contains: `-${levelString.charAt(0)}`, 
+        contains: `-${levelString.charAt(0)}`,
       },
     }));
   }
@@ -925,7 +1195,11 @@ function buildApplicationFilterClause(filters) {
  * @param {string} candidateUsername - The unique identifier of the candidate.
  * @returns A promise that resolves to an array of Application objects.
  */
-async function getCandidateApplications(searchTerm, filters, candidateUsername) {
+async function getCandidateApplications(
+  searchTerm,
+  filters,
+  candidateUsername
+) {
   const jobPositionFilter = buildJobPositionForApplicationFilterClause(filters);
 
   if (searchTerm && searchTerm.trim()) {
@@ -998,14 +1272,14 @@ async function getCandidateApplicationsAsEmployer(
         { course: { name: { contains: trimmedSearchTerm } } },
         { course: { courseCode: { contains: trimmedSearchTerm } } },
       ];
-    } else if (searchBy === 'student') {
+    } else if (searchBy === "student") {
       // Split the search term by spaces to handle first and last names.
-      const nameParts = trimmedSearchTerm.split(' ').filter(part => part);
+      const nameParts = trimmedSearchTerm.split(" ").filter((part) => part);
 
       // Build a condition that requires each part of the name to be present in either the first or last name field.
       // This handles "Jane Doe", "Doe Jane", "Jane", and "Doe" searches gracefully.
       const studentNameCondition = {
-        AND: nameParts.map(part => ({
+        AND: nameParts.map((part) => ({
           OR: [
             { candidateFName: { contains: part } },
             { candidateLName: { contains: part } },
@@ -1050,10 +1324,10 @@ async function getCandidateApplicationsAsEmployer(
  * Gets all applications for hiring for admin
  * @returns retrieves all applications for hiring
  */
-async function getCandidateApplicationsAsAdmin(){
+async function getCandidateApplicationsAsAdmin() {
   return await prisma.jobPositionApplicationHistory.findMany({
-    where: { 
-      jobApplicationStatus: "ACCEPTED_OFFER"
+    where: {
+      jobApplicationStatus: "ACCEPTED_OFFER",
     },
     include: {
       jobPosition: {
@@ -1069,7 +1343,7 @@ async function getCandidateApplicationsAsAdmin(){
               user: {
                 select: {
                   fname: true,
-                  lname: true
+                  lname: true,
                 },
               },
             },
@@ -1083,7 +1357,6 @@ async function getCandidateApplicationsAsAdmin(){
   });
 }
 
-
 /**
  * Check if a job position is full based on its status
  * @param {string} jobPositionId - The ID of the job position to check
@@ -1091,19 +1364,21 @@ async function getCandidateApplicationsAsAdmin(){
  */
 async function isJobPositionFull(jobPositionId) {
   const jobPosition = await prisma.jobPosition.findUnique({
-    where: { 
-      id: jobPositionId 
-    },
-    select: {
-      jobPositionStatus: true
+    where: { id: jobPositionId },
+    include: {
+      course: true,
+      employer: { include: { user: true } }
     }
   });
 
   if (!jobPosition) {
-    return false; // Job position doesn't exist
+    throw new Error(`Job position ${jobPositionId} not found`);
   }
 
-  return jobPosition.jobPositionStatus === "FILLED" || jobPosition.jobPositionStatus === "ACTIVE";
+  return (
+    jobPosition.jobPositionStatus === "FILLED" ||
+    jobPosition.jobPositionStatus === "ACTIVE"
+  );
 }
 
 // =============================================================================
@@ -1129,7 +1404,9 @@ async function getAllUsers() {
  */
 async function getUser(username) {
   try {
-    const user = await prisma.user.findUnique({ where: { username: username } });
+    const user = await prisma.user.findUnique({
+      where: { username: username },
+    });
 
     if (!user) {
       return null;
@@ -1140,9 +1417,8 @@ async function getUser(username) {
 
     // Return the object containing all other fields
     return userWithoutPassword;
-
   } catch (error) {
-    console.error('Error retrieving user:', error);
+    console.error("Error retrieving user:", error);
     throw error;
   }
 }
@@ -1156,7 +1432,7 @@ async function getUser(username) {
 async function authenticateUser(username, password) {
   try {
     const user = await prisma.user.findFirst({
-      where: { username: username }
+      where: { username: username },
     });
 
     if (!user) {
@@ -1168,12 +1444,12 @@ async function authenticateUser(username, password) {
     const isPasswordCorrect = await verifyPassword(password, user.password);
 
     if (isPasswordCorrect) {
-      const { password,...userWithoutPassword } = user;
+      const { password, ...userWithoutPassword } = user;
       return userWithoutPassword;
     }
     return null;
   } catch (error) {
-    console.error('Error authenticating user:', error);
+    console.error("Error authenticating user:", error);
     throw error;
   }
 }
@@ -1201,11 +1477,11 @@ async function resetPassword(username, newPassword) {
         username: true,
         email: true,
         pronouns: true,
-        role: true
-      }
+        role: true,
+      },
     });
   }
-  
+
   // If user doesn't exist, do nothing. This prevents username discovery.
   return null;
 }
@@ -1216,7 +1492,7 @@ async function resetPassword(username, newPassword) {
  * @returns {Promise<object|null>} A promise that resolves to the user's complete profile, or null if not found.
  */
 async function getUserProfile(username) {
-   try {
+  try {
     const userRoleInfo = await prisma.user.findUnique({
       where: { username: username },
       select: { role: true },
@@ -1239,15 +1515,18 @@ async function getUserProfile(username) {
               employee: {
                 include: {
                   jobPositionHistory: true,
-                }
-              }
+                },
+              },
             },
           },
         },
       });
     }
     // If the user is an Employer or Admin, fetch their detailed employer profile.
-    else if (userRoleInfo.role === "EMPLOYER" || userRoleInfo.role === "ADMIN") {
+    else if (
+      userRoleInfo.role === "EMPLOYER" ||
+      userRoleInfo.role === "ADMIN"
+    ) {
       fullProfile = await prisma.user.findUnique({
         where: { username: username },
         include: {
@@ -1270,7 +1549,6 @@ async function getUserProfile(username) {
     // Before returning, remove the password from the final object.
     const { password, ...profileWithoutPassword } = fullProfile;
     return profileWithoutPassword;
-
   } catch (error) {
     console.error("Error finding user profile:", error);
     throw error;
@@ -1314,7 +1592,10 @@ async function createCandidateProfile(candidateData) {
       });
 
       // 3. Create Course History entries, if provided.
-      if (candidateData.courseHistory && candidateData.courseHistory.length > 0) {
+      if (
+        candidateData.courseHistory &&
+        candidateData.courseHistory.length > 0
+      ) {
         await tx.courseHistory.createMany({
           data: candidateData.courseHistory.map((course) => ({
             username: candidateData.username,
@@ -1339,7 +1620,6 @@ async function createCandidateProfile(candidateData) {
     if (!profile) return null;
     const { password, ...profileWithoutPassword } = profile;
     return profileWithoutPassword;
-
   } catch (error) {
     console.error("Error in createCandidateProfile:", error);
     throw error;
@@ -1389,7 +1669,9 @@ async function updateCandidateProfile(candidateData) {
 
       // 3. Handle Course History (replace all existing entries).
       if (updatePayload.courseHistory) {
-        await tx.courseHistory.deleteMany({ where: { username: updatePayload.username } });
+        await tx.courseHistory.deleteMany({
+          where: { username: updatePayload.username },
+        });
         if (updatePayload.courseHistory.length > 0) {
           await tx.courseHistory.createMany({
             data: updatePayload.courseHistory.map((course) => ({
@@ -1402,7 +1684,7 @@ async function updateCandidateProfile(candidateData) {
           });
         }
       }
-      
+
       // 4. Return the complete profile.
       return tx.user.findUnique({
         where: { username: updatePayload.username },
@@ -1416,7 +1698,6 @@ async function updateCandidateProfile(candidateData) {
     if (!profile) return null;
     const { password, ...profileWithoutPassword } = profile;
     return profileWithoutPassword;
-
   } catch (error) {
     console.error("Error in updateCandidateProfile:", error);
     throw error;
@@ -1463,13 +1744,11 @@ async function createEmployerProfile(employerData) {
     if (!profile) return null;
     const { password, ...profileWithoutPassword } = profile;
     return profileWithoutPassword;
-
   } catch (error) {
     console.error("Error in createEmployerProfile:", error);
     throw error;
   }
 }
-
 
 /**
  * Updates an existing employer's profile in a single transaction.
@@ -1479,7 +1758,7 @@ async function createEmployerProfile(employerData) {
 async function updateEmployerProfile(employerData) {
   try {
     const updatePayload = { ...employerData };
-    
+
     // Conditionally hash a new password only if one is provided.
     if (updatePayload.password) {
       updatePayload.password = await hashPassword(updatePayload.password);
@@ -1507,14 +1786,15 @@ async function updateEmployerProfile(employerData) {
       });
 
       // 3. Return the complete profile.
-      return tx.user.findUnique({ where: { username: updatePayload.username } });
+      return tx.user.findUnique({
+        where: { username: updatePayload.username },
+      });
     });
 
     // 4. Securely remove the password before returning.
     if (!profile) return null;
     const { password, ...profileWithoutPassword } = profile;
     return profileWithoutPassword;
-
   } catch (error) {
     console.error("Error in updateEmployerProfile:", error);
     throw error;
@@ -1538,15 +1818,15 @@ async function terminateEmployee(username) {
       if (employeeRecords.length === 0) {
         throw new Error(`No employee records found for username ${username}`);
       }
-      
+
       // Get a list of all internal employee IDs for this user
-      const employeeDbIds = employeeRecords.map(emp => emp.id);
+      const employeeDbIds = employeeRecords.map((emp) => emp.id);
 
       // 2. Update all associated JobPositionHistory entries to TERMINATED.
       await tx.jobPositionHistory.updateMany({
         where: {
           employeeId: { in: employeeDbIds },
-          jobPositionHistoryStatus: { in: ['ACTIVE', 'INACTIVE'] }
+          jobPositionHistoryStatus: { in: ["ACTIVE", "INACTIVE"] },
         },
         data: {
           jobPositionHistoryStatus: "TERMINATED",
@@ -1834,7 +2114,8 @@ async function getComments(tableName, foreignKey) {
  * @param {object} timecardData - The data submitted from the frontend.
  */
 async function upsertTimecard(timecardData) {
-  const { jobPositionHistoryId, entries, weekStartDate, isCurrentWeek } = timecardData;
+  const { jobPositionHistoryId, entries, weekStartDate, isCurrentWeek } =
+    timecardData;
 
   return prisma.$transaction(async (tx) => {
     const jobHistory = await tx.jobPositionHistory.findUnique({
@@ -1842,57 +2123,60 @@ async function upsertTimecard(timecardData) {
       select: { employeeId: true },
     });
     if (!jobHistory) {
-      throw new Error(`JobPositionHistory with ID ${jobPositionHistoryId} not found.`);
+      throw new Error(
+        `JobPositionHistory with ID ${jobPositionHistoryId} not found.`
+      );
     }
     const { employeeId } = jobHistory;
 
     // Find or create the weekly container
     let weeklyHistory = await tx.timecardWeeklyHistory.findFirst({
-        where: { jobPositionHistoryId, weekStartDate }
+      where: { jobPositionHistoryId, weekStartDate },
     });
 
     if (!weeklyHistory) {
-        weeklyHistory = await tx.timecardWeeklyHistory.create({
-            data: { jobPositionHistoryId, weekStartDate, isCurrentWeek: true }
-        });
+      weeklyHistory = await tx.timecardWeeklyHistory.create({
+        data: { jobPositionHistoryId, weekStartDate, isCurrentWeek: true },
+      });
     } else if (isCurrentWeek) {
-        // Ensure this week is marked as current if it's being submitted
-        await tx.timecardWeeklyHistory.update({
-            where: { id: weeklyHistory.id },
-            data: { isCurrentWeek: true },
-        });
+      // Ensure this week is marked as current if it's being submitted
+      await tx.timecardWeeklyHistory.update({
+        where: { id: weeklyHistory.id },
+        data: { isCurrentWeek: true },
+      });
     }
 
     // Helper to convert time strings to Date objects
-    const createDate = (d, time) => time ? new Date(`${d}T${time}:00Z`) : null;
+    const createDate = (d, time) =>
+      time ? new Date(`${d}T${time}:00Z`) : null;
 
     // Loop through each day and upsert it individually
     for (const entry of entries) {
-        const dayId = `${employeeId}-${entry.date}`;
-        const dataToUpsert = {
-            notes: entry.notes,
-            duration: entry.duration,
-            timeIn1: createDate(entry.date, entry.timeIn1),
-            timeOut1: createDate(entry.date, entry.timeOut1),
-            timeIn2: createDate(entry.date, entry.timeIn2),
-            timeOut2: createDate(entry.date, entry.timeOut2),
-            timeIn3: createDate(entry.date, entry.timeIn3),
-            timeOut3: createDate(entry.date, entry.timeOut3),
-        };
+      const dayId = `${employeeId}-${entry.date}`;
+      const dataToUpsert = {
+        notes: entry.notes,
+        duration: entry.duration,
+        timeIn1: createDate(entry.date, entry.timeIn1),
+        timeOut1: createDate(entry.date, entry.timeOut1),
+        timeIn2: createDate(entry.date, entry.timeIn2),
+        timeOut2: createDate(entry.date, entry.timeOut2),
+        timeIn3: createDate(entry.date, entry.timeIn3),
+        timeOut3: createDate(entry.date, entry.timeOut3),
+      };
 
-        await tx.timecardDay.upsert({
-            where: { id: dayId },
-            update: dataToUpsert,
-            create: {
-                id: dayId,
-                day: new Date(entry.date),
-                timecardWeeklyHistoryId: weeklyHistory.id,
-                ...dataToUpsert
-            },
-        });
+      await tx.timecardDay.upsert({
+        where: { id: dayId },
+        update: dataToUpsert,
+        create: {
+          id: dayId,
+          day: new Date(entry.date),
+          timecardWeeklyHistoryId: weeklyHistory.id,
+          ...dataToUpsert,
+        },
+      });
     }
 
-    return { success: true, message: 'Timecard saved successfully.' };
+    return { success: true, message: "Timecard saved successfully." };
   });
 }
 
@@ -1910,16 +2194,19 @@ async function getAllTimecardsForJob(jobPositionHistoryId) {
       include: {
         dailyEntries: {
           orderBy: {
-            day: 'asc',
+            day: "asc",
           },
         },
       },
       orderBy: {
-        weekStartDate: 'desc',
+        weekStartDate: "desc",
       },
     });
   } catch (error) {
-    console.error(`Error fetching all timecards for job ${jobPositionHistoryId}:`, error);
+    console.error(
+      `Error fetching all timecards for job ${jobPositionHistoryId}:`,
+      error
+    );
     throw error;
   }
 }
@@ -1934,7 +2221,7 @@ async function fetchAdminViewData() {
     return await prisma.timecardWeeklyHistory.findMany({
       include: {
         dailyEntries: {
-          orderBy: { day: 'asc' },
+          orderBy: { day: "asc" },
         },
         jobPositionHistory: {
           include: {
@@ -1946,18 +2233,18 @@ async function fetchAdminViewData() {
                       select: {
                         username: true,
                         fname: true,
-                        lname: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                        lname: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        weekStartDate: 'desc',
+        weekStartDate: "desc",
       },
     });
   } catch (error) {
@@ -1980,13 +2267,13 @@ async function fetchEmployerViewData(employerUsername) {
             username: employerUsername,
           },
           employee: {
-            employeeStatus: 'ACTIVE',
+            employeeStatus: "ACTIVE",
           },
         },
       },
       include: {
         dailyEntries: {
-          orderBy: { day: 'asc' },
+          orderBy: { day: "asc" },
         },
         jobPositionHistory: {
           include: {
@@ -1999,23 +2286,25 @@ async function fetchEmployerViewData(employerUsername) {
                       select: {
                         username: true,
                         fname: true,
-                        lname: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                        lname: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        weekStartDate: 'desc',
+        weekStartDate: "desc",
       },
     });
-  } catch (error)
-  {
-    console.error(`Error fetching employer timecard data for employer ${employerUsername}:`, error);
+  } catch (error) {
+    console.error(
+      `Error fetching employer timecard data for employer ${employerUsername}:`,
+      error
+    );
     throw error;
   }
 }
@@ -2064,6 +2353,9 @@ module.exports = {
   getAllTimecardsForJob,
   fetchAdminViewData,
   fetchEmployerViewData,
+  getCourseStakeholders,
+  getApplicantEmailByApplicationId,
+  getApplicationDetailsForNotify,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.
