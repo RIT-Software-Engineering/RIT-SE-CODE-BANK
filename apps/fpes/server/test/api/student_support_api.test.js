@@ -1,0 +1,61 @@
+/*const mariadb = require('mariadb');
+const studentSupportApi = require('../api/student_support_api');
+
+const mockQuery = jest.fn();
+const mockConn = { query: mockQuery, release: jest.fn() };
+const mockPool = { getConnection: jest.fn(() => mockConn) };
+
+jest.mock('mariadb', () => ({
+  createPool: jest.fn(() => mockPool)
+}));
+
+describe("studentSupportApi", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("getAllStudentSupport should return rows", async () => {
+    mockQuery.mockResolvedValueOnce([{ id: 1, independent_studies_supervised: 3 }]);
+    const rows = await studentSupportApi.getAllStudentSupport();
+    expect(rows).toEqual([{ id: 1, independent_studies_supervised: 3 }]);
+    expect(mockQuery).toHaveBeenCalledWith("SELECT * FROM student_support");
+  });
+
+  test("getStudentSupportById should return one row", async () => {
+    mockQuery.mockResolvedValueOnce([{ id: 2, bs_cs_students_supervised: 5 }]);
+    const row = await studentSupportApi.getStudentSupportById(2);
+    expect(row).toEqual({ id: 2, bs_cs_students_supervised: 5 });
+    expect(mockQuery).toHaveBeenCalledWith("SELECT * FROM student_support WHERE id = ?", [2]);
+  });
+
+  test("addStudentSupport should return insertId", async () => {
+    mockQuery.mockResolvedValueOnce({ insertId: 99 });
+    const result = await studentSupportApi.addStudentSupport({
+      independent_studies_supervised: 1,
+      bs_cs_students_supervised: 2,
+      ms_defence_chair: 0,
+      ms_defence_member: 0,
+      active_ms_cs_as_chair: 0,
+      other_bs_projects: 0,
+      other_ms_projects: 0,
+      current_phd_advisees: 0,
+      phd_passed_rpa_as_chair: 0,
+      phd_passed_pro_as_chair: 0,
+      phd_passed_def_as_chair: 0,
+      phd_rpa_def_pro_as_member: 0
+    });
+    expect(result).toEqual({ id: 99 });
+  });
+
+  test("updateStudentSupport should return true if row updated", async () => {
+    mockQuery.mockResolvedValueOnce({ affectedRows: 1 });
+    const result = await studentSupportApi.updateStudentSupport(1, {});
+    expect(result).toBe(true);
+  });
+
+  test("deleteStudentSupport should return false if no row deleted", async () => {
+    mockQuery.mockResolvedValueOnce({ affectedRows: 0 });
+    const result = await studentSupportApi.deleteStudentSupport(1);
+    expect(result).toBe(false);
+  });
+});*/
