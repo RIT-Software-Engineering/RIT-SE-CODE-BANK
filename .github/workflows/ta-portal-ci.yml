@@ -175,11 +175,13 @@ jobs:
       - name: Extract App Name from Branch
         id: parse
         run: |
-          BRANCH=${GITHUB_REF##*/}
+          BRANCH="${GITHUB_REF_NAME}"
           if [[ "$BRANCH" == *-dev ]]; then
-            APP_NAME="${BRANCH%-dev}"
+            # Extract base app name (e.g., ta-portal from ta-portal-*-dev)
+            APP_NAME="${BRANCH%%-dev*}"  # Get everything before first -dev
+            APP_NAME="${APP_NAME%%-*}"   # Get first part (ta-portal)
           elif [[ "$BRANCH" == "dev" || "$BRANCH" == "main" ]]; then
-            APP_NAME="all"  # fallback or global deploy logic
+            APP_NAME="all"
           else
             APP_NAME=""
           fi
