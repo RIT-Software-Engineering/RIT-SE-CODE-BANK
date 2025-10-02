@@ -1,27 +1,44 @@
 const pool = require('../db')
 const mariadb = require('mariadb');
-require('dotenv').config();
 const fs = require('fs')
 
 
 
-async function getAllGrants(connection){ //Read
+async function getAllGrants(){ //Read
+  let connection
+  try {
+    connection = await pool.getConnection();
     const results = await connection.query("SELECT * FROM grants");
     return results;
+  }
+  finally {
+    if (connection) connection.release();
+  }
 }
 
 async function getGrantsById(id){
-    conn = await pool.getConnection();
-    const results = await connection.query("SELECT * FROM service WHERE id = ?", [id]);
-    if (connection) connection.release();
-    return results;
+    let connection;
+    try {
+      connection = await pool.getConnection();
+      const results = await connection.query("SELECT * FROM service WHERE id = ?", [id]);
+      return results;
+    }
+    finally {
+      if (connection) connection.release();
+    }
+
 }
 
 async function getGrantsByFormId(form_id){
-    conn = await pool.getConnection();
-    const results = await connection.query("SELECT * FROM service WHERE form_id = ?", [form_id]);
-    if (connection) connection.release();
-    return results;
+    let connection;
+    try {
+      conn = await pool.getConnection();
+      const results = await connection.query("SELECT * FROM service WHERE form_id = ?", [form_id]);
+      return results;
+    }
+    finally {
+      if (connection) connection.release();
+    }
 }
 
 async function addGrant(grantData){ //Create

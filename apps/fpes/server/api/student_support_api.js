@@ -1,6 +1,5 @@
 const pool = require('../db');
 const mariadb = require('mariadb');
-require('dotenv').config();
 
 
 async function getAllStudentSupport() { //Read
