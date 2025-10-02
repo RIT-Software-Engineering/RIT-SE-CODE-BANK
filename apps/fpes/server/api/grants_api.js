@@ -20,7 +20,7 @@ async function getGrantsById(id){
     let connection;
     try {
       connection = await pool.getConnection();
-      const results = await connection.query("SELECT * FROM service WHERE id = ?", [id]);
+      const results = await connection.query("SELECT * FROM grants WHERE id = ?", [id]);
       return results;
     }
     finally {
@@ -33,7 +33,7 @@ async function getGrantsByFormId(form_id){
     let connection;
     try {
       conn = await pool.getConnection();
-      const results = await connection.query("SELECT * FROM service WHERE form_id = ?", [form_id]);
+      const results = await connection.query("SELECT * FROM grants WHERE form_id = ?", [form_id]);
       return results;
     }
     finally {

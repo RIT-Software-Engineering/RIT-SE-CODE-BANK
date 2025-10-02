@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const grant = await grantsApi.getGrantById(req.params.id);
+    const grant = await grantsApi.getGrantsById(req.params.id);
     if (!grant) return res.status(404).json({ error: "Grant not found" });
     res.json(grant);
   } catch (err) {
@@ -28,7 +28,7 @@ router.get('/:id', async (req, res) => {
 
 router.get('/:form_id', async (req, res) => {
   try {
-    const grant = await grantsApi.getGrantByFormId(req.params.fomrm_id);
+    const grant = await grantsApi.getGrantsByFormId(req.params.fomrm_id);
     if (!grant) return res.status(404).json({ error: "Grant not found" });
     res.json(grant);
   } catch (err) {
