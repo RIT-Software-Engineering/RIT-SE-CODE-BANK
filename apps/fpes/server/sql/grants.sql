@@ -12,7 +12,7 @@ CREATE TABLE grants (
     comments TEXT
 );
 
-INSERT INTO grants (form_id, title, funder, amount, est_amount, time_period, faculty_role, faculty_share, grant_status) VALUES 
+INSERT INTO grants (form_id, title, funder, amount, est_amount, time_period, faculty_role, faculty_share, grant_status, comments) VALUES 
 (0, 'Title', 'test', 50, 51, 'test', 'test', 52,'Funded', 'test' );
 (1, 'Education', 'NSF', 50000, NULL, '2024-2025', 'Principal Investigator', 30000, 'Funded', 'National Science Foundation grant on AI tools for education'),
 (2, 'Sustainable Energy Systems', 'DOE', 75000, NULL, '2025-2027', 'Co-PI', 25000, 'Funded', 'Research on renewable energy integration'),

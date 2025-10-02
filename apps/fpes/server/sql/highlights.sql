@@ -1,14 +1,17 @@
 CREATE TABLE IF NOT EXISTS highlights (
-  id                       INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  id                         INT AUTO_INCREMENT PRIMARY KEY,
 
-  faculty_information_id   INT UNSIGNED NOT NULL,
-  supervisor_id            INT UNSIGNED NULL,
-  student_support_id       INT UNSIGNED NULL,
+  faculty_information_id     INT NOT NULL,
+  supervisor_id              INT NULL,
+  student_support_id         INT NULL,
 
-  collaborations_section   TEXT NULL,
-  professional_development TEXT NULL,
+  collaborations_section     TEXT NULL,
+  professional_development   TEXT NULL,
 
-  FOREIGN KEY (faculty_information_id) REFERENCES faculty_information(id),
-  FOREIGN KEY (supervisor_id)          REFERENCES faculty_information(id),
+  FOREIGN KEY (faculty_information_id) REFERENCES faculty_information(faculty_id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (supervisor_id)          REFERENCES faculty_information(faculty_id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
   FOREIGN KEY (student_support_id)     REFERENCES student_support(id)
-) 
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

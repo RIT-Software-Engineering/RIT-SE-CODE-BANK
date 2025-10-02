@@ -1,4 +1,4 @@
-DROP TABLE service;
+DROP TABLE services;
 
 CREATE TABLE IF NOT EXISTS services (
     id INT UNSIGNED auto_increment PRIMARY KEY,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS services (
     other_contributions VARCHAR(255) NOT NULL
 );
 
-INSERT INTO service (form_id, service_type, title, hours_worked, other_contributions) VALUES
+INSERT INTO services (form_id, service_type, title, hours_worked, other_contributions) VALUES
 (2, 'internal', 'Student Mentorship Program', 85, 'Met weekly with mentees'),
 (4, 'external', 'Local Community Health Fair', 112, 'Helped organize logistics'),
 (1, 'internal', 'Faculty Diversity Committee', 76, 'Drafted annual diversity report'),
