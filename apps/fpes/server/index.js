@@ -25,6 +25,9 @@ app.use('/courses', coursesRoutes);
 const departmentRoutes = require('./routes/departments_routes.js');
 app.use('/departments', departmentRoutes);
 
+const publicationsRoutes = require('./routes/publications_routes.js');
+app.use('/publications', publicationsRoutes)
+
 // Test route (just to confirm server is alive)
 app.get('/', (req, res) => {
   res.send('Server is running...');
