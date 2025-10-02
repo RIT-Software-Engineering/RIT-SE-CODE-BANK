@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS departments (
 
 INSERT INTO departments (department_name, college)
 VALUES ('Software Engineering', 'GCCIS');
--- //Drop courses table before readding departments table, due to FK dependency
+-- //Drop courses table before reading departments table, due to FK dependency

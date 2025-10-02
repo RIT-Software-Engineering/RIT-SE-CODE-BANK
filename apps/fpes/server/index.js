@@ -28,6 +28,10 @@ app.use('/departments', departmentRoutes);
 const publicationsRoutes = require('./routes/publications_routes.js');
 app.use('/publications', publicationsRoutes)
 
+const highlightsRoutes = require('./routes/highlights_routes.js');
+app.use('/highlights', highlightsRoutes);
+
+
 // Test route (just to confirm server is alive)
 app.get('/', (req, res) => {
   res.send('Server is running...');
