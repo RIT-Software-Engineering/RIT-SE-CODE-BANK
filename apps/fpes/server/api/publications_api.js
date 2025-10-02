@@ -1,71 +1,71 @@
-const pool = require('../db')
+const pool = require("../db");
 
-async function getAllDepartments() {
+async function getAllPublications() {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("SELECT * FROM departments");
+        const results = connection.query("SELECT * FROM publications");
         return results;
     } finally {
         if (connection) connection.release();
     }
 }
 
-async function getDepartmentByID(id) {
+async function getPublicationByID(id) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("SELECT * FROM departments WHERE id = ?", [id]);
+        const results = connection.query("SELECT * FROM publications WHERE id = ?", [id]);
         return results;
     } finally {
         if (connection) connection.release();
     }
 }
 
-async function createDepartment(body) {
+async function createPublication(body) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const {department_name, college} = body;
+        const {form_id, publication_name, venue, proof_of_significance} = body;
         const results = connection.query(
-            `INSERT INTO departments (department_name, college)
-             VALUES (?,?)`, [department_name, college]);
+            `INSERT INTO publications (form_id, publication_name, venue, proof_of_significance)
+             VALUES (?,?,?,?)`, [form_id, publication_name, venue, proof_of_significance]);
         return results;
     } finally {
         if (connection) connection.release();
     }
 }
 
-async function updateDepartment(id, body) {
+async function updatePublication(id, body) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const {department_name, college} = body;
+        const {form_id, publication_name, venue, proof_of_significance} = body;
         const results = connection.query(
-            `UPDATE departments SET department_name = ?, college = ?
-            WHERE id = ?`, [department_name, college, id]);
+            `UPDATE publications SET form_id = ?, publication_name = ?, venue = ?, proof_of_significance = ?
+            WHERE id = ?`, [form_id, publication_name, venue, proof_of_significance, id]);
         return results;
     } finally {
         if (connection) connection.release();
     }
 }
 
-async function deleteDepartment(id) {
+async function deletePublication(id) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = await connection.query("DELETE FROM departments WHERE id = ?", [id])
+        const results = await connection.query("DELETE FROM publications WHERE id = ?", [id])
         return results;
     } finally {
         if (connection) connection.release();
     }
 }
 
-async function initDepartmentsTable(){
+async function initPublicationsTable(){
     let connection;
     try {
         // Read sql file that rebuilds course_sections table and inserts test data
-        const resetQuery = await fs.readFileSync("sql/departments.sql", 'utf-8');
+        const resetQuery = await fs.readFileSync("sql/course_sections.sql", 'utf-8');
         // Splits file into multiple queries
         let queries = resetQuery.split(';');
         // Removes the empty query at the end
@@ -83,13 +83,11 @@ async function initDepartmentsTable(){
     } 
 }
 
-
-
 module.exports = {
-    getAllDepartments,
-    getDepartmentByID,
-    createDepartment,
-    updateDepartment,
-    deleteDepartment,
-    initDepartmentsTable
+    getAllPublications,
+    getPublicationByID,
+    createPublication,
+    updatePublication,
+    deletePublication,
+    initPublicationsTable
 }
