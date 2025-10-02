@@ -33,10 +33,12 @@ router.post("/", async (req, res) => {
     date,
     contactee_fname,
     contactee_lname,
+    contactee_id,
     notes,
     journal_owner_fname,
     journal_owner_lname,
     journal_owner_type,
+    journal_owner_id,
     semester_GroupId,
   } = req.body;
   try {
@@ -45,10 +47,12 @@ router.post("/", async (req, res) => {
         date: new Date(date),
         contactee_fname,
         contactee_lname,
+        contactee_id,
         notes,
         journal_owner_fname,
         journal_owner_lname,
         journal_owner_type,
+        journal_owner_id,
         semester_GroupId: semester_GroupId ? Number(semester_GroupId) : null,
       },
     });

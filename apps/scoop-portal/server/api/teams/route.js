@@ -92,7 +92,7 @@ router.get("/:memberid", async (req, res) => {
         const teams = await prisma.teams.findMany({
         where: {
           members: {
-            some: { id: memberid },
+            some: { id: parseInt(memberid) },
             },
         },
         include: { 

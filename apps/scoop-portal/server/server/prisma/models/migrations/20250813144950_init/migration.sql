@@ -34,7 +34,7 @@ CREATE TABLE `Project` (
 
 -- CreateTable
 CREATE TABLE `users` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `fname` VARCHAR(191) NOT NULL,
     `lname` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
@@ -104,7 +104,7 @@ CREATE TABLE `Teams` (
 -- CreateTable
 CREATE TABLE `_TeamMembers` (
     `A` INTEGER NOT NULL,
-    `B` VARCHAR(191) NOT NULL,
+    `B` INTEGER NOT NULL,
 
     UNIQUE INDEX `_TeamMembers_AB_unique`(`A`, `B`),
     INDEX `_TeamMembers_B_index`(`B`)

@@ -38,7 +38,7 @@ model Project {
 }
 
 model users {
-  id             String @id @default(uuid())
+  id             Int @id
   fname          String
   lname          String
   email          String @unique
