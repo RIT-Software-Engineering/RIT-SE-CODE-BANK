@@ -11,7 +11,7 @@ datasource db {
 }
 
 model Course {
-  id          String
+  id          String @unique
   name        String
   semester    String
   color       String
@@ -81,7 +81,7 @@ model Professor {
 
 model TBEnrollment {
   id         Int       @id @default(autoincrement())
-  sectionId  Int
+  courseId   String
   studentId  String?   // or Int? if you prefer; keep consistent everywhere
   email      String?
   firstName  String?
@@ -90,20 +90,20 @@ model TBEnrollment {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  section    Section   @relation(fields: [sectionId], references: [id])
+  Course   Course   @relation(fields: [courseId], references: [id])
 
   // opposite side of TBMember.enrollment
   members    TBMember[]
 
-  @@unique([sectionId, email])
-  @@unique([sectionId, studentId])
-  @@index([sectionId])
+  @@unique([courseId, email])
+  @@unique([courseId, studentId])
+  @@index([courseId])
 }
 
 // A snapshot of teams for a specific section
 model TBTeamSet {
   id                   Int             @id @default(autoincrement())
-  sectionId            Int
+  courseId             String
   name                 String
   status               TBTeamSetStatus @default(DRAFT)
   teamSize             Int?
@@ -115,12 +115,12 @@ model TBTeamSet {
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
 
-  section            Section   @relation(fields: [sectionId], references: [id])
+  Course               Course   @relation(fields: [courseId], references: [id])
   createdByProfessor Professor @relation(name: "CreatedByProfessor", fields: [createdByProfessorId], references: [id])
   teams              TBTeam[]
 
-  @@unique([sectionId, name])
-  @@index([sectionId, status])
+  @@unique([courseId, name])
+  @@index([courseId, status])
 }
 
 enum TBTeamSetStatus{
