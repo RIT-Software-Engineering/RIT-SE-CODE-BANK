@@ -12,7 +12,7 @@ console.log("pages seen:", require.context("./pages", false, /\.jsx$/).keys());
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/cmt">
       <Routes>
         <Route path="/" element={<App />}>
           <Route path="teambuilder" element={<TeamBuilderPage />} />
@@ -23,5 +23,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </BrowserRouter>
   </React.StrictMode>
 );
-
-

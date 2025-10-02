@@ -2,6 +2,7 @@
   "name": "cmt-project",
   "version": "0.1.0",
   "private": true,
+  "homepage": "/cmt",
   "dependencies": {
     "@prisma/client": "^5.19.1",
     "@testing-library/dom": "^10.4.1",
