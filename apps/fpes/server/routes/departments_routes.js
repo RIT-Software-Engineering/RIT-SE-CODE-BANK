@@ -14,6 +14,18 @@ router.get("/:id", async (req,res) => {
     }
 });
 
+// Updates an existing department
+router.put("/:id", async (req,res) => {
+    try {
+        const results = await api.updateDepartment(req.params.id, req.body);
+        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
+        res.json({affectedRows : results.affectedRows});
+    } catch {
+        console.log(err);
+        res.status(500).send(err);
+    }
+});
+
 // Gets all departments
 router.get("/", async (req,res) => {
     try {

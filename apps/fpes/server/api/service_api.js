@@ -30,7 +30,7 @@ async function deleteService(id){
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("DELETE FROM services WHERE id = ?", [id])
+        const results = await connection.query("DELETE FROM services WHERE id = ?", [id])
         return results
     } finally {
         if (connection) connection.release();
@@ -61,7 +61,7 @@ async function resetServiceTable(){
         connection = await pool.getConnection();
         let results = [];
         for (const query of queries){
-            results += await connection.query(query);
+            results.push(await connection.query(query));
         }
 
         return results;
@@ -89,11 +89,11 @@ async function createService(body){
     }
 }
 
-async function updateService(body){
+async function updateService(id, body){
     try {
         // Get Connection from Pool
         connection = await pool.getConnection();
-        const { id, form_id, service_type, title, hours_worked, other_contributions} = body;
+        const {form_id, service_type, title, hours_worked, other_contributions} = body;
 
         const results = await connection.query(
             `UPDATE services SET form_id = ?, service_type = ?, title = ?, hours_worked = ?, other_contributions = ?

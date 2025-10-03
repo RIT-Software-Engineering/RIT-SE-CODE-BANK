@@ -17,10 +17,22 @@ router.get("/:id", async (req,res) => {
 // Deletes a service given its primary key
 router.delete("/:id", async (req,res) => {
     try {
-        const results = await api.deleteService(req.params.id);
+        const results = await api.deleteService(req.params.id, req.params.id);
         console.log({affectedRows : results.affectedRows});
         res.json({affectedRows : results.affectedRows});
     } catch (err) {
+        console.log(err);
+        res.status(500).send(err);
+    }
+});
+
+// Updates an existing service
+router.put("/:id", async (req,res) => {
+    try {
+        const results = await api.updateService(req.params.id, req.body);
+        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
+        res.json({affectedRows : results.affectedRows});
+    } catch {
         console.log(err);
         res.status(500).send(err);
     }
@@ -75,16 +87,6 @@ router.post("/", async (req,res) => {
     }
 });
 
-// Updates an existing service
-router.put("/", async (req,res) => {
-    try {
-        const results = await api.updateService(req.body);
-        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
-        res.json({affectedRows : results.affectedRows});
-    } catch {
-        console.log(err);
-        res.status(500).send(err);
-    }
-});
+
 
 module.exports = router;
