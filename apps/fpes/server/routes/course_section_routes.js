@@ -39,7 +39,7 @@ router.get("/:id", async (req,res) => {
 router.put("/:id", async (req,res) => {
     try {
         const results = await api.updateCourseSection(req.params.id, req.body);
-        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
+        console.log({affectedRows : results.affectedRows, insertedId : results.insertId}); //insertId logged
         res.json({affectedRows : results.affectedRows});
     } catch (err) {
         console.log(err);

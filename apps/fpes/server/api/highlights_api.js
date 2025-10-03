@@ -17,7 +17,7 @@ async function getHighlightById(id) {
   try {
     connection = await pool.getConnection();
     const rows = await connection.query('SELECT * FROM highlights WHERE id = ?', [id]);
-    return rows[0] || null;
+    return rows[0] || null; //retuns either single row or null
   } finally {
     if (connection) connection.release();
   }
@@ -52,7 +52,7 @@ async function updateHighlight(id, data = {}) {
   try {
     connection = await pool.getConnection();
 
-    const allowed = [
+    const allowed = [ //Only these fields can be updated
       'faculty_information_id',
       'supervisor_id',
       'student_support_id',
@@ -69,7 +69,7 @@ async function updateHighlight(id, data = {}) {
       }
     }
 
-    if (set.length === 0) return { affectedRows: 0 };
+    if (set.length === 0) return { affectedRows: 0 }; //change 0 to number?
 
     params.push(id);
     return await connection.query(

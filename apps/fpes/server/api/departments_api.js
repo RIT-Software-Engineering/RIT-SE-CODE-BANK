@@ -5,7 +5,7 @@ async function getAllDepartments() {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("SELECT * FROM departments");
+        const results = /*await*/ connection.query("SELECT * FROM departments");
         return results;
     } finally {
         if (connection) connection.release();
@@ -65,7 +65,7 @@ async function deleteDepartment(id) {
 async function initDepartmentsTable(){
     let connection;
     try {
-        // Read sql file that rebuilds course_sections table and inserts test data
+        // Read sql file that rebuilds departments table and inserts test data
         const resetQuery = fs.readFileSync("sql/departments.sql", 'utf-8');
         // Splits file into multiple queries
         let queries = resetQuery.split(';');
@@ -75,7 +75,7 @@ async function initDepartmentsTable(){
         connection = await pool.getConnection();
         let results = [];
         for (const query of queries){
-            results += await connection.query(query);
+            results += await connection.query(query); //results.push(await connection.query(query));
         }
 
         return results;
