@@ -1,4 +1,4 @@
-DROP TABLE departments;
+DROP TABLE departments; --DROP TABLE IF EXISTS departments;
 
 CREATE TABLE IF NOT EXISTS departments (
     id INT UNSIGNED UNIQUE auto_increment PRIMARY KEY,

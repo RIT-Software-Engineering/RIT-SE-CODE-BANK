@@ -2,11 +2,11 @@ DROP TABLE IF EXISTS course_sections;
 
 CREATE TABLE IF NOT EXISTS course_sections (
     id INT UNSIGNED UNIQUE auto_increment PRIMARY KEY,
-    room_location VARCHAR(60),
+    room_location VARCHAR(60), --VARCHAR(100)
     days_of_the_week VARCHAR(20) NOT NULL,
     number_of_students INT UNSIGNED NOT NULL,
     semester ENUM('FALL', 'SPRING', 'SUMMER') NOT NULL,
-    scholastic_year VARCHAR(40) NOT NULL,
+    scholastic_year VARCHAR(40) NOT NULL, 
     course_id INT UNSIGNED,
     FOREIGN KEY (course_id) REFERENCES courses(id)
 );

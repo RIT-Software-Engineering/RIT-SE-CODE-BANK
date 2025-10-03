@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS highlights (
   collaborations_section     TEXT NULL,
   professional_development   TEXT NULL,
 
+-- Requires faculty_information and student_support tables to exist first
+
   FOREIGN KEY (faculty_information_id) REFERENCES faculty_information(faculty_id)
     ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (supervisor_id)          REFERENCES faculty_information(faculty_id)

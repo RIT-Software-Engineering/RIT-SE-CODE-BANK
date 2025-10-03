@@ -2,7 +2,7 @@ const pool = require('../db')
 const fs = require('fs')
 
 async function getAllCourseSections(){
-    let connection;
+    let connection; 
     try {
         connection = await pool.getConnection();
         const results = await connection.query("SELECT * FROM course_sections");
@@ -69,7 +69,7 @@ async function initCourseSectionsTable(){
         connection = await pool.getConnection();
         let results = [];
         for (const query of queries){
-            results += await connection.query(query);
+            results += await connection.query(query); //results.push(await connection.query(query));
         }
 
         return results;

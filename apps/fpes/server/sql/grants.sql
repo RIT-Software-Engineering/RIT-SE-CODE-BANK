@@ -1,11 +1,11 @@
 CREATE TABLE IF NOT EXISTS grants (
-    id INT UNSIGNED UNIQUE AUTO_INCREMENT PRIMARY KEY,
+    grant_id INT UNSIGNED UNIQUE AUTO_INCREMENT PRIMARY KEY,
     form_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
-    funder VARCHAR(255) NOT NULL,
+    funder VARCHAR(255) NOT NULL, --multiple people can be selecting grants. add new table
     amount INT DEFAULT NULL,              
     est_amount INT DEFAULT NULL,          
-    time_period VARCHAR(100) NOT NULL,              
+    time_period VARCHAR(100) NOT NULL,   --split into start and end date (month/year)           
     faculty_role VARCHAR(100) NOT NULL,             
     faculty_share INT DEFAULT NULL,       
     grant_status ENUM('Funded', 'In Submission', 'Declined', 'In Development') NOT NULL,

@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const pool = require('../db'); 
 
 // GET all
 router.get('/', async (_req, res) => {
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await pool.getConnection(); //necessary to call db instead of api functions?
     const rows = await conn.query('SELECT * FROM highlights');
     res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch highlights' });
   } finally {
-    if (conn) conn.end();
+    if (conn) conn.end(); //release
   }
 });
 
@@ -75,7 +75,7 @@ router.put('/:id', async (req, res) => {
     professional_development = null
   } = req.body;
 
-  if (!faculty_information_id) {
+  if (!faculty_information_id) { //Requires faculty info id for full replacement of table
     return res.status(400).json({ error: 'faculty_information_id is required' });
   }
 

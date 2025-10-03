@@ -51,12 +51,12 @@ router.post("/", async (req,res) =>{
 });
 
 // Updates an existing department
-router.put("/", async (req,res) => {
+router.put("/", async (req,res) => { //make it so that id is a parameter
     try {
         const results = await api.updateDepartment(req.body);
         console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
         res.json({affectedRows : results.affectedRows});
-    } catch {
+    } catch /*(err)*/ {
         console.log(err);
         res.status(500).send(err);
     }
