@@ -3,6 +3,7 @@ const app = express();
 
 require('dotenv').config();
 // app.use(express.json()); // <-- needed for POST/PUT JSON bodies
+app.use(express.json());
 
 const facultyRoutes = require('./routes/faculty_routes.js');
 app.use('/faculty', facultyRoutes);
