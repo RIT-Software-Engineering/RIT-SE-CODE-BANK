@@ -14,6 +14,18 @@ router.get("/:id", async (req,res) => {
     }
 });
 
+// Updates an existing publication
+router.put("/:id", async (req,res) => {
+    try {
+        const results = await api.updatePublication(req.params.id, req.body);
+        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
+        res.json({affectedRows : results.affectedRows});
+    } catch {
+        console.log(err);
+        res.status(500).send(err);
+    }
+});
+
 // Deletes a publication by a given id
 router.delete("/:id", async (req,res) => {
     try {
@@ -63,17 +75,7 @@ router.post("/", async (req,res) =>{
         }
 });
 
-// Updates an existing publication
-router.put("/", async (req,res) => {
-    try {
-        const results = await api.updatePublication(req.body);
-        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
-        res.json({affectedRows : results.affectedRows});
-    } catch {
-        console.log(err);
-        res.status(500).send(err);
-    }
-});
+
 
 module.exports = router;
 
