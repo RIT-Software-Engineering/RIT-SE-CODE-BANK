@@ -117,9 +117,9 @@ model WorkflowState {
   userId            String @db.Char(36)
   workflowId        String @db.Char(36)
   baseActionStateId String @db.Char(36) @unique
-
   workflow        WorkflowAttributes @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  baseActionState ActionState        @relation(fields: [baseActionStateId], references: [id], onDelete: Cascade)
+  actionStates      ActionState[] @relation("ActionStates")
+  baseActionState ActionState        @relation("BaseActionState", fields: [baseActionStateId], references: [id], onDelete: Cascade)
 }
 
 model ActionState {
@@ -132,7 +132,8 @@ model ActionState {
   action        Action          @relation(fields: [actionId], references: [id], onDelete: Cascade)
   parent        ActionState?     @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
   children      ActionState[]   @relation("ParentChild")
-  workflowState WorkflowState?
+  workflowStates      WorkflowState[]  @relation("ActionStates")
+  workflowState WorkflowState? @relation("BaseActionState")
 }
 
 enum StateType {

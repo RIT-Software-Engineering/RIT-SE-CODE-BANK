@@ -5,57 +5,65 @@ import {
   Box, Typography, Container, Button, Grid, Paper, Chip, Modal,
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { useUser } from "../utils/user-context/page";
 
 
 
 export default function bubbled(){
   
-  const [actions, setActions] = useState([]);
+  const [workflowStates, setWorkflowStates] = useState([]);
+  const [actionStates, setActionStates] = useState([]);
   const [open, setOpen] = useState(false);
-  const [openWorkflow, setOpenWorkflow] = useState([]);
+  const [openActionState, setOpenActionState] = useState([]);
+  const [openAction, setOpenAction] = useState([]);
   const [refresh, forceRefresh] = useState(0);
+  const {user} = useUser();
 
   useEffect(() => {
     async function getActions() {
-
-      const res = await fetch(`http://localhost:5001/actions`);
+      if(user == null || user.id == null){
+        return;
+      }
+      const res = await fetch(`http://localhost:5001/states/workflow?userId=${user.id}`);
       const data = await res.json();
-      setActions(data);
+      setWorkflowStates(data);
+      setActionStates(data.flatMap(workflowState => workflowState.actionStates));
+      
     }
     getActions();
-  },[refresh]);
+  },[refresh, user]);
 
-  const handleOpen = (workflow) => {
-    setOpenWorkflow(workflow);
+  const handleOpen = (actionState) => {
+    setOpenActionState(actionState);
+    setOpenAction(actionState.action)
     setOpen(true);
   };
 
   const handleClose = () => {
-    setOpenWorkflow([]);
+    setOpenAction([]);
     setOpen(false);
   };
 
 
   const submitAction = async () => {
     try {
-      const response = await fetch('http://localhost:5001/states/handleSubmit', {
+      const res = await fetch('http://localhost:5001/states/handleSubmit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          actionStateId: openWorkflow.actionStates[0].id,
+          actionStateId: openActionState.id,
         }),
       });
-      forceRefresh(prevKey => prevKey + 1);
+      forceRefresh(previous => previous + 1);
     } catch (e) {console.error('Error handling submit:', e);}
+    handleClose();
 
   };
 
   const bubbleColor = (actionState) => {
-    if(actionState != null && actionState.length >= 1){
-      const firstState = actionState[0];
-      switch(firstState.stateType){
+      switch(actionState.stateType){
         case "completed":
           return { backgroundColor: '#4caf50', color: '#fff' };
         case "inProgress":
@@ -63,23 +71,18 @@ export default function bubbled(){
         default:
           return { backgroundColor: '#9e9e9e', color: '#fff' };
       }
-    }
-    else{
-      return { backgroundColor: '#9e9e9e', color: '#fff' };
-    }
   };
-  //displaying first 30 actions for now
   return (
     <>
         <Header />
         <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
           <Grid container spacing={4}>
-            {actions.filter(action => action.actionType != "workflow").map((action) => (
+            {actionStates.map((actionState) => (
               <Chip
-                key={action.id}
-                label={action.name}
-                sx={bubbleColor(action.actionStates)}
-                onClick={() => handleOpen(action)}
+                key={actionState.id}
+                label={actionState.action.name}
+                sx={bubbleColor(actionState)}
+                onClick={() => handleOpen(actionState)}
                 />
             ))}
           </Grid>
@@ -95,7 +98,7 @@ export default function bubbled(){
               boxShadow: 24,
               p: 4,
               }}>
-              <Typography variant="h6">{openWorkflow.description}</Typography>
+              <Typography variant="h6">{openAction.description}</Typography>
               <Button onClick={submitAction}>Submit</Button>
 
             </Box>

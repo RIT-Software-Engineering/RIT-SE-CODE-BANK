@@ -84,6 +84,12 @@ router.get("/workflow", async (req, res) => {
     where: where,
     include: {
       baseActionState: true,
+      actionStates: {
+      include: {
+        action: true, 
+      },
+    },
+
     },
   });
 
