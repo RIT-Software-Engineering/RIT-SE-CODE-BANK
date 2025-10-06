@@ -74,7 +74,7 @@ export default function bubbled(){
         <Header />
         <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
           <Grid container spacing={4}>
-            {actions.slice(0, 30).map((action) => (
+            {actions.filter(action => action.actionType != "workflow").map((action) => (
               <Chip
                 key={action.id}
                 label={action.name}

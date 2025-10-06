@@ -131,6 +131,17 @@ async function createAction(actionData) {
       data: data,
     });
 
+    //make an action state for this actiony
+    await prisma.actionState.create({
+    data: {
+      stateType: 'notStarted',
+      actionId: action.id,
+      index: 0
+    },
+    });
+
+
+
     // Create any child actions for this action
     if (actionData.childActions?.length > 0) {
       for (let i = 0; i < actionData.childActions.length; i++) {
@@ -167,26 +178,20 @@ async function main() {
 
   const workflowData = [
     {
-      name: "Empty Workflow",
-      description: "This is a workflow with no root action.",
-      userId: users[0].id,
-    },
-    {
-      name: "Workflow with three actions",
-      description:
-        "A workflow that points to a root action, which is then connected to 2 other actions in sequence.",
-      userId: users[0].id,
+      name: "Onboarding Workflow",
+      description: "The set of actions Scooployees go through during onboarding",
+      userId: users[2].id,
       actions: [
         {
-          name: "Action 1",
-          description: "This is the first action in this workflow.",
+          name: "Drop Classes",
+          description: "Drop all classes you are currently enrolled in",
           metadata: {
             key: "value",
           },
         },
         {
-          name: "Action 2",
-          description: "This is the second action in this workflow.",
+          name: "Report Co-op",
+          description: "Report Scoop as a Co-op in career connect",
           metadata: {
             key1: "value1",
             key2: "value2",
@@ -194,189 +199,15 @@ async function main() {
           },
         },
         {
-          name: "Action 3",
-          description: "This is the third action in this workflow.",
+          name: "Warmup",
+          description: "Complete the Scoop warmup",
+        },
+        {
+          name: "Join Slack",
+          description: "Join the Scoop slack channels",
         },
       ],
-    },
-    {
-      name: "User2's Workflow",
-      description:
-        "This workflow was created to show the difference between workflows being owned by different people",
-      userId: users[1].id,
-    },
-    {
-      name: "Workflow with all action types",
-      description:
-        "A workflow that points to a root action, which is then connected to 3 other actions each with a different actionType.",
-      userId: users[0].id,
-      actions: [
-        {
-          name: "Simple action",
-          description: "This is the simple action in this workflow.",
-          actionType: "simple",
-        },
-        {
-          name: "Complex action",
-          description: "This is the complex action in this workflow.",
-          actionType: "complex",
-          childActions: [
-            {
-              name: "Complex Action 1",
-              description: "This is the first action in this complex action.",
-            },
-            {
-              name: "Complex Action 2",
-              description: "This is the second action in this complex action.",
-            },
-            {
-              name: "Complex Action 3",
-              description: "This is the third action in this complex action.",
-            },
-          ],
-        },
-        {
-          name: "Branching action",
-          description: "This is the branching action in this workflow.",
-          actionType: "branching",
-          childActions: [
-            {
-              name: "Branching Action 1",
-              description: "This is the first action in this branching action.",
-            },
-            {
-              name: "Branching Action 2",
-              description:
-                "This is the second action in this branching action.",
-            },
-            {
-              name: "Branching Action 3",
-              description: "This is the third action in this branching action.",
-            },
-          ],
-        },
-        {
-          name: "Workflow action",
-          description: "This is the workflow action in this workflow.",
-          actionType: "workflow",
-          userId: users[0].id,
-          actions: [
-            {
-              name: "Action 1",
-              description: "This is the first action in this workflow.",
-            },
-            {
-              name: "Action 2",
-              description: "This is the second action in this workflow.",
-            },
-            {
-              name: "Action 3",
-              description: "This is the third action in this workflow.",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: "Workflow with deep nesting complex actions",
-      description:
-        "A workflow that contains complex actions where some contain further complex actions.",
-      userId: users[0].id,
-      actions: [
-        {
-          name: "Complex action 1",
-          description: "This is the simple action in this workflow.",
-          actionType: "complex",
-          childActions: [
-            {
-              name: "Complex Action 1",
-              description: "This is the first action in this complex action.",
-            },
-            {
-              name: "Complex Action 2",
-              description: "This is the second action in this complex action.",
-            },
-            {
-              name: "Complex Action 3",
-              description: "This is the third action in this complex action.",
-            },
-          ],
-        },
-        {
-          name: "Complex action 2",
-          description: "This is the complex action in this workflow.",
-          actionType: "complex",
-          childActions: [
-            {
-              name: "Complex action 1",
-              description: "This is the complex action in this workflow.",
-              actionType: "complex",
-              childActions: [
-                {
-                  name: "Complex Action 1.1",
-                  description:
-                    "This is the first action in this complex action.",
-                },
-                {
-                  name: "Complex Action 1.2",
-                  description:
-                    "This is the second action in this complex action.",
-                },
-                {
-                  name: "Complex Action 1.3",
-                  description:
-                    "This is the third action in this complex action.",
-                },
-              ],
-            },
-            {
-              name: "Complex action 2",
-              description: "This is the complex action in this workflow.",
-              actionType: "complex",
-              childActions: [
-                {
-                  name: "Complex Action 2.1",
-                  description:
-                    "This is the first action in this complex action.",
-                },
-                {
-                  name: "Complex Action 2.2",
-                  description:
-                    "This is the second action in this complex action.",
-                },
-                {
-                  name: "Complex Action 2.3",
-                  description:
-                    "This is the third action in this complex action.",
-                },
-              ],
-            },
-            {
-              name: "Complex action 3",
-              description: "This is the complex action in this workflow.",
-              actionType: "complex",
-              childActions: [
-                {
-                  name: "Complex Action 3.1",
-                  description:
-                    "This is the first action in this complex action.",
-                },
-                {
-                  name: "Complex Action 3.2",
-                  description:
-                    "This is the second action in this complex action.",
-                },
-                {
-                  name: "Complex Action 3.3",
-                  description:
-                    "This is the third action in this complex action.",
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
+    }, 
   ];
 
   // Create all workflows from workflowData
