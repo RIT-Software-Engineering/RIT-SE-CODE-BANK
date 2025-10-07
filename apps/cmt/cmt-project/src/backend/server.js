@@ -11,6 +11,11 @@ const PORT = process.env.PORT || 5000;
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const makeTeamBuilderRouter = require('./routes/teamBuilder');
+const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
+
+app.use('/api', teamBuilderRoutes);
+
 app.use(cors({
   origin: /^http:\/\/localhost:\d+$/,  // allows any localhost port
   credentials: true
