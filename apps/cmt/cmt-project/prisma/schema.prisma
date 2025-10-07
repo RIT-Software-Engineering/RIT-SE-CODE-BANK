@@ -66,7 +66,7 @@ model Professor {
     lname   String
     email   String
     courses CourseCreation[]
-    // createdTeamSets TBTeamSet[] @relation("CreatedByProfessor")
+    createdTeamSets TBTeamSet[] @relation("CreatedByProfessor")
 }
 
 // Defines an individual course
@@ -93,7 +93,6 @@ model Section {
 // Indicates what days and times
 model ClassTime {
     id          Int @id @default(autoincrement())
-    dayOfWeek   DayOfWeek
     startTime   String
     endTime     String
     sectionId   Int
@@ -112,8 +111,8 @@ model TBEnrollment {
   firstName  String?
   lastName   String?
 
-//   createdAt  DateTime  @default(now())
-//   updatedAt  DateTime  @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   course     Course    @relation(fields: [courseId], references: [id])
   members    TBMember[]
@@ -134,9 +133,9 @@ model TBTeamSet {
   publishedAt          DateTime?
   archivedAt           DateTime?
 
-//   createdByProfessorId Int
-//   createdAt            DateTime        @default(now())
-//   updatedAt            DateTime        @updatedAt
+  createdByProfessorId Int
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
   course               Course          @relation(fields: [courseId], references: [id])
   createdByProfessor   Professor       @relation(name: "CreatedByProfessor", fields: [createdByProfessorId], references: [id])
@@ -163,8 +162,8 @@ model TBTeam {
   teamSet     TBTeamSet  @relation(fields: [teamSetId], references: [id])
   members     TBMember[]
 
-//   @@unique([teamSetId, name])
-// }
+   @@unique([teamSetId, name])
+}
 
 model TBMember {
   id            Int          @id @default(autoincrement())
@@ -177,6 +176,6 @@ model TBMember {
   team          TBTeam       @relation(fields: [teamId], references: [id])
   enrollment    TBEnrollment @relation(fields: [enrollmentId], references: [id])
 
-//   @@unique([teamId, enrollmentId])
-//   @@index([enrollmentId])
-// }
+   @@unique([teamId, enrollmentId])
+   @@index([enrollmentId])
+}
