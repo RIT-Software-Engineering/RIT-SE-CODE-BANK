@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,35 +7,113 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Course {
-  id       String  @id
-  name     String
-  color    String
-  students Int
-  events   Event[]
-
-  // Team Builder back-relations
-  tbEnrollments TBEnrollment[]
-  tbTeamSets    TBTeamSet[]
-
-  @@map("courses")
-}
-
 model Event {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   title       String
-  courseId    String?  // Optional for events that apply to all courses or admin events
+  courseId    String?
   type        EventType
   time        String
   date        DateTime
   location    String
   description String?
   importance  Importance
-  preparation Json? // JSON field to store preparation items array
-  
-  course      Course?  @relation(fields: [courseId], references: [id])
+  preparation String?    @db.LongText
+  course      course?    @relation(fields: [courseId], references: [id])
 
+  @@index([courseId], map: "events_courseId_fkey")
   @@map("events")
+}
+
+model Professor {
+  id        Int         @id @default(autoincrement())
+  fname     String
+  lname     String
+  email     String
+  course    course[]
+  tbteamset tbteamset[]
+
+  @@map("professors")
+}
+
+model course {
+  id           String         @unique(map: "Course_id_key")
+  name         String
+  semester     String
+  color        String
+  students     Int
+  professorId  Int
+  professors   Professor      @relation(fields: [professorId], references: [id], map: "Course_professorId_fkey")
+  events       Event[]
+  tbenrollment tbenrollment[]
+  tbteamset    tbteamset[]
+
+  @@id([id, professorId])
+  @@index([professorId], map: "Course_professorId_fkey")
+}
+
+model tbenrollment {
+  id        Int        @id @default(autoincrement())
+  courseId  String
+  studentId String?
+  email     String?
+  firstName String?
+  lastName  String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime
+  course    course     @relation(fields: [courseId], references: [id], map: "TBEnrollment_courseId_fkey")
+  tbmember  tbmember[]
+
+  @@unique([courseId, email], map: "TBEnrollment_courseId_email_key")
+  @@unique([courseId, studentId], map: "TBEnrollment_courseId_studentId_key")
+  @@index([courseId], map: "TBEnrollment_courseId_idx")
+}
+
+model tbmember {
+  id           Int          @id @default(autoincrement())
+  teamId       Int
+  enrollmentId Int
+  role         String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime
+  tbenrollment tbenrollment @relation(fields: [enrollmentId], references: [id], map: "TBMember_enrollmentId_fkey")
+  tbteam       tbteam       @relation(fields: [teamId], references: [id], map: "TBMember_teamId_fkey")
+
+  @@unique([teamId, enrollmentId], map: "TBMember_teamId_enrollmentId_key")
+  @@index([enrollmentId], map: "TBMember_enrollmentId_idx")
+}
+
+model tbteam {
+  id        Int        @id @default(autoincrement())
+  teamSetId Int
+  name      String
+  maxSize   Int?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime
+  tbmember  tbmember[]
+  tbteamset tbteamset  @relation(fields: [teamSetId], references: [id], map: "TBTeam_teamSetId_fkey")
+
+  @@unique([teamSetId, name], map: "TBTeam_teamSetId_name_key")
+}
+
+model tbteamset {
+  id                   Int              @id @default(autoincrement())
+  courseId             String
+  name                 String
+  status               tbteamset_status @default(DRAFT)
+  teamSize             Int?
+  constraints          String?          @db.LongText
+  publishedAt          DateTime?
+  archivedAt           DateTime?
+  createdByProfessorId Int
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime
+  tbteam               tbteam[]
+  course               course           @relation(fields: [courseId], references: [id], map: "TBTeamSet_courseId_fkey")
+  professors           Professor        @relation(fields: [createdByProfessorId], references: [id], map: "TBTeamSet_createdByProfessorId_fkey")
+
+  @@unique([courseId, name], map: "TBTeamSet_courseId_name_key")
+  @@index([courseId, status], map: "TBTeamSet_courseId_status_idx")
+  @@index([createdByProfessorId], map: "TBTeamSet_createdByProfessorId_fkey")
 }
 
 enum EventType {
@@ -48,7 +123,7 @@ enum EventType {
   lab
   office_hours
   meeting
-  
+
   @@map("event_types")
 }
 
@@ -56,126 +131,12 @@ enum Importance {
   Low
   Medium
   High
-  
+
   @@map("importance_levels")
 }
 
-model Professor {
-    id      Int @id @default(autoincrement()) // default ids, can change to use uids or something
-    fname   String
-    lname   String
-    email   String
-    courses CourseCreation[]
-    createdTeamSets TBTeamSet[] @relation("CreatedByProfessor")
-}
-
-// Defines an individual course
-model CourseCreation{
-    id          String
-    name        String
-    semester    String
-    professorId Int
-    professor   Professor @relation(fields: [professorId], references: [id])
-    sections    Section[]
-    @@id([id, professorId])
-}
-
-// Represents how a course can have multiple sections
-model Section {
-    id              Int @id @default(autoincrement())
-    sectionNum      Int // ex. '1' for section 1
-    courseId        String
-    professorId     Int
-    course          CourseCreation @relation(fields: [courseId, professorId], references: [id, professorId])
-    classTimes      ClassTime[]
-}
-
-// Indicates what days and times
-model ClassTime {
-    id          Int @id @default(autoincrement())
-    startTime   String
-    endTime     String
-    sectionId   Int
-    section     Section @relation(fields: [sectionId], references: [id])
-}
-
-// =========================
-// Team Builder (COURSE-scoped)
-// =========================
-
-model TBEnrollment {
-  id         Int       @id @default(autoincrement())
-  courseId   String
-  studentId  String?   // CSV "ID" or a synthetic stable ID
-  email      String?   // not used by your RIT CSV, but okay to keep
-  firstName  String?
-  lastName   String?
-
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  course     Course    @relation(fields: [courseId], references: [id])
-  members    TBMember[]
-
-  // Choose keys you want; both allow multiple NULLs
-  @@unique([courseId, studentId])
-  @@unique([courseId, email])
-  @@index([courseId])
-}
-
-model TBTeamSet {
-  id                   Int             @id @default(autoincrement())
-  courseId             String
-  name                 String          // e.g., "Project 1"
-  status               TBTeamSetStatus @default(DRAFT)
-  teamSize             Int?
-  constraints          Json?
-  publishedAt          DateTime?
-  archivedAt           DateTime?
-
-  createdByProfessorId Int
-  createdAt            DateTime        @default(now())
-  updatedAt            DateTime        @updatedAt
-
-  course               Course          @relation(fields: [courseId], references: [id])
-  createdByProfessor   Professor       @relation(name: "CreatedByProfessor", fields: [createdByProfessorId], references: [id])
-  teams                TBTeam[]
-
-  @@unique([courseId, name])   // no duplicate run names within a course
-  @@index([courseId, status])
-}
-
-enum TBTeamSetStatus {
+enum tbteamset_status {
   DRAFT
   PUBLISHED
   ARCHIVED
-}
-
-model TBTeam {
-  id          Int        @id @default(autoincrement())
-  teamSetId   Int
-  name        String
-  maxSize     Int?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  teamSet     TBTeamSet  @relation(fields: [teamSetId], references: [id])
-  members     TBMember[]
-
-   @@unique([teamSetId, name])
-}
-
-model TBMember {
-  id            Int          @id @default(autoincrement())
-  teamId        Int
-  enrollmentId  Int
-  role          String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  team          TBTeam       @relation(fields: [teamId], references: [id])
-  enrollment    TBEnrollment @relation(fields: [enrollmentId], references: [id])
-
-   @@unique([teamId, enrollmentId])
-   @@index([enrollmentId])
 }
