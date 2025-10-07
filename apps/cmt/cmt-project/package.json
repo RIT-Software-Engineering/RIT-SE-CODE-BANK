@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@prisma/client": "^5.19.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
@@ -12,7 +11,6 @@
     "ajv-keywords": "^5.1.0",
     "bootstrap": "^5.3.8",
     "lucide-react": "^0.544.0",
-    "prisma": "^5.19.1",
     "react": "^19.1.1",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.1",
@@ -46,6 +44,8 @@
     ]
   },
   "devDependencies": {
-    "mysql2": "^3.15.0"
+    "@prisma/client": "^6.16.3",
+    "mysql2": "^3.15.1",
+    "prisma": "^6.16.3"
   }
 }
