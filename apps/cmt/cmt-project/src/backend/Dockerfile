@@ -5,7 +5,7 @@ WORKDIR /app
 COPY src/backend/package*.json ./
 
 # Copy prisma schema from project root
-COPY prisma ./prisma/
+COPY prisma ./prisma/  
 
 # Install dependencies
 RUN npm ci
@@ -16,6 +16,6 @@ RUN npx prisma generate
 # Copy rest of backend application
 COPY src/backend/ .
 
-EXPOSE 5010
+EXPOSE 5010 
 
-CMD ["sh", "-c", "PORT=5010 node server.js"]
+CMD ["sh", "-c", "PORT=5010 node server.js"]  # ← CHANGED: Set PORT=5010
