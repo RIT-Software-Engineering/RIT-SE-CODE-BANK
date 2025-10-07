@@ -61,7 +61,7 @@ function CoursePage(){
       <h1>Create a course</h1>
 
       {showAlert && (<Alert variant="success" onClose={() => setShowAlert(false)} dismissible>
-        ✅ Course and section(s) created successfully!
+        ✅ Course created successfully!
       </Alert>)}
       <Form className="course-form" onSubmit={handleSubmit}>
         <Row>

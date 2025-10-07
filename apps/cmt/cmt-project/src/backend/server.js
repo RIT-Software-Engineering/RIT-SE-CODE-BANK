@@ -62,7 +62,7 @@ app.use((err, req, res, next) => {
 // TODO: CHANGE IT SO IT'S BASED ON THE PROFESSOR ID THAT'S CURRENTLY LOGGED IN
 app.get('/api/course', async (req, res) => {
     try {
-        const courses = await prisma.courseCreation.findMany({
+        const courses = await prisma.course.findMany({
             include: {professor: true},
         });
         res.json(courses);
@@ -74,8 +74,9 @@ app.get('/api/course', async (req, res) => {
 // create a course
 app.post('/api/course', async (req, res) => {
     try {
-        const {id, name, semester, color, students, professorId} = req.body;
-        const course = await prisma.courseCreation.create({
+        let {id, name, semester, color, students, professorId} = req.body;
+        students = parseInt(students, 10)
+        const course = await prisma.course.create({
             data: {id, name, semester, color, students, professorId},
         });
         res.json(course);

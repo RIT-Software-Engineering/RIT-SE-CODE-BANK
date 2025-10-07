@@ -23,7 +23,6 @@ model Course {
   tbTeamSets      TBTeamSet[]
 
   @@id([id, professorId])
-  @@map("courses")
 }
 
 model Event {
@@ -69,13 +68,14 @@ model Professor {
   email   String
   courses Course[]
   createdTeamSets TBTeamSet[] @relation("CreatedByProfessor")
-}
 
+  @@map("professors")
+}
 
 // =========================
 // Team Builder (NEW)
 // =========================
-// - Instructor selects a Section, imports roster rows (TBEnrollment)
+// - Instructor selects a course, imports roster rows (TBEnrollment)
 // - Generates a TeamSet (snapshot) per assignment/run
 // - Teams + Members live under the TeamSet
 
@@ -100,7 +100,7 @@ model TBEnrollment {
   @@index([courseId])
 }
 
-// A snapshot of teams for a specific section
+// A snapshot of teams for a specific course
 model TBTeamSet {
   id                   Int             @id @default(autoincrement())
   courseId             String
@@ -131,7 +131,7 @@ enum TBTeamSetStatus{
 
 // A single team within a teamset
 model TBTeam{
-  id      Int     @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   teamSetId   Int
   name        String
   maxSize     Int?
