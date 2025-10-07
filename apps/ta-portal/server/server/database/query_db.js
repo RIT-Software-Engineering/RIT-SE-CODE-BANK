@@ -134,6 +134,11 @@ async function getOpenJobPositions(searchTerm = "", filters = {}, candidateUsern
       include: {
         course: true,
         jobSchedules: true,
+        employer:{
+          include:{
+            user:true,
+          }
+        }
       },
       orderBy: { course: { name: "asc" } },
     });

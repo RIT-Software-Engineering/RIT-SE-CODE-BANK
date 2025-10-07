@@ -2,12 +2,12 @@
 SETLOCAL
 
 REM --- TA-Portal Configuration (MODIFY THESE IF NEEDED) ---
-SET "DB_ROOT_PASSWORD=newPassword"
+SET "DB_ROOT_PASSWORD=FieryMoth91810"
 SET "DB_HOST=127.0.0.1"
 SET "DB_PORT=8000"
 SET "DB_NAME_TAPORTAL=ta_portal"
-SET "DB_APP_USER=app_user"
-SET "DB_APP_PASSWORD=app_password"
+SET "DB_APP_USER=Kenny Caseyr"
+SET "DB_APP_PASSWORD=FieryMoth91810"
 
 SET "APP_BACKEND_URL=https://localhost:3300"
 SET "APP_FRONTEND_URL=http://localhost:3000"
