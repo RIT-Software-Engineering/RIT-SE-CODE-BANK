@@ -11,12 +11,18 @@ datasource db {
 }
 
 model Course {
-  id       String  @id
-  name     String
-  color    String
-  students Int
-  events   Event[]
+  id          String
+  name        String
+  semester    String
+  color       String
+  students    Int
+  professorId Int
+  professor   Professor @relation(fields: [professorId], references: [id])
+  events      Event[]
+  tbEnrollments   TBEnrollment[]
+  tbTeamSets      TBTeamSet[]
 
+  @@id([id, professorId])
   @@map("courses")
 }
 
@@ -54,18 +60,6 @@ enum Importance {
   High
   
   @@map("importance_levels")
-}
-
-// =========================
-// Course Builder
-// =========================
-
-enum DayOfWeek {
-    MON
-    TUE
-    WED
-    THU
-    FRI
 }
 
 model Professor {
@@ -113,7 +107,7 @@ model ClassTime {
 // =========================
 // Team Builder (NEW)
 // =========================
-// - Instructor selects a Section, imports roster rows (TBEnrollment)
+// - Instructor selects a course, imports roster rows (TBEnrollment)
 // - Generates a TeamSet (snapshot) per assignment/run
 // - Teams + Members live under the TeamSet
 
