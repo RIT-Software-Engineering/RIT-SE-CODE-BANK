@@ -29,6 +29,9 @@ const db_router = require("./db_routes");
 // Import the Slack-specific routes from the `slack_routes.js` file.
 const slack_router = require("./slack_routes");
 
+// Import the Workflow-specific routes from the `wf_routes.js` file.
+const wf_router = require("./wf_routes");
+
 // =============================================================================
 // ROUTE MOUNTING
 // =============================================================================
@@ -40,6 +43,11 @@ router.use("/db", db_router);
 // Mount the Slack router. All routes defined in `slack_routes.js` will now
 // be accessible under the `/api/slack` path.
 router.use("/slack", slack_router);
+
+// Mount the Workflow router. All routes defined in `wf_routes.js` will now
+// be accessible under the `/api/workflows` path.
+console.log("Mounting workflow router at /api/workflows");
+router.use("/workflows", wf_router);
 
 // =============================================================================
 // EXPORTS
