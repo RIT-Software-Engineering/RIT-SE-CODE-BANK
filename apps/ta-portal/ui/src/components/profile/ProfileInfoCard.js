@@ -27,6 +27,7 @@ const InfoItem = ({ label, value }) => (
   </Box>
 );
 
+
 /**
  * A component that displays a user's profile information.
  * @param {object} profileData The user's profile data, as returned by the API.
@@ -44,7 +45,30 @@ export default function ProfileInfoCard({
   if (!profileData) return null;
 
   const yearLevel = profileData.candidate?.graduateStatus === "GRADUATE" ? "Graduate" : profileData.candidate?.year;
-
+  const getTotalOffers=(data)=>{
+    let offers=0;
+    const positions=data.employer.jobPostions
+    positions.map((position) => {
+      if(position.jobPositionStatus!="INACTIVE"&&position.jobPositionStatus!="ONHOLD"){
+        offers=offers+position.maxTAs
+      };
+    });
+    return offers;
+  };
+  const getMadeOffers=(data)=>{
+    let offers=0;
+    const positions=data.employer.jobPostions
+    positions.map((position) => {
+      if(position.jobPositionApplicationHistory.length!=0){
+        position.jobPositionApplicationHistory.map((application) => {
+          if(application.jobApplicationStatus=="HIRED"||application.jobApplicationStatus=="ACCEPTED_OFFER"||application.jobApplicationStatus=="PENDING_OFFER"){
+            offers=offers+1;
+          }
+        });
+      }
+    });
+    return offers;
+  }
   return (
     <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -66,6 +90,13 @@ export default function ProfileInfoCard({
         )}
         {isEmployerOrAdmin && (
           <InfoItem label="Department" value={profileData.employer?.department} />
+        )}
+        {profileData.role=="EMPLOYER"&&(
+          <Box>
+            <InfoItem label="Offers Made" value={getMadeOffers(profileData)} />
+            <InfoItem label="Total Offers" value={getTotalOffers(profileData)} />
+          </Box>
+          
         )}
       </Box>
     </Paper>

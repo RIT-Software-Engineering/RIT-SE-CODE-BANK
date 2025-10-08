@@ -139,6 +139,7 @@ export default function AdminUsersPage() {
    * @returns {React.ReactNode} The JSX for the main content area.
    */
   const renderContent = () => {
+    console.log(groupedUsers)
     // Show a loading spinner while data is being fetched.
     if (isLoading) {
       return (
@@ -186,6 +187,18 @@ export default function AdminUsersPage() {
             users={groupedByStatus}
             onEditUser={handleEditClick}
             isEmployeeGroup
+          />
+        );
+      }
+
+      if (role === 'EMPLOYER') {
+      
+        return (
+          <UserGroup
+            key={role}
+            title={role}
+            users={filtered}
+            onEditUser={handleEditClick}
           />
         );
       }
