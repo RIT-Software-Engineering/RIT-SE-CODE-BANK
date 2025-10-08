@@ -1,0 +1,39 @@
+#formCourseCode {
+    width: 200px;
+}
+
+#formCourseName {
+    width: 320px;
+}
+
+#formCourseSemester {
+    width: 320px;
+}
+
+#formCourseSections {
+    width: 200px;
+}
+
+#formFile {
+    padding-top: 15px;
+}
+
+#button-wrapper {
+    display: flex;
+    justify-content: center;;
+}
+
+#form-button {
+    background-color: #F76902;
+    border: none;
+    margin-top: 30px;
+}
+
+.course-form {
+    width: 600px;
+    margin: auto;
+}
+
+.row {
+    padding-top: 15px;
+}
