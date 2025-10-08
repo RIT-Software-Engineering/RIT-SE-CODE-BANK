@@ -40,6 +40,20 @@ export default function SelectionCard({ text, icon, link }) {
           justifyContent: "center",
           alignItems: "center",
           borderRadius: 1,
+          border: 'none',
+          outline: 'none',
+          '&:focus': {
+            outline: 'none',
+            border: 'none',
+          },
+          '&:active': {
+            outline: 'none',
+            border: 'none',
+          },
+          '&:focus-visible': {
+            outline: 'none',
+            border: 'none',
+          },
         }}
       >
         {icon && (

@@ -1,8 +1,10 @@
 // ui/src/services/slack-apis.js
 
 // --- API Configuration ---
-const BASE_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
-const SLACK_API_EXTENSION = process.env.NEXT_PUBLIC_SLACK_API_EXTENSION;
+const BASE_API_URL = 
+  (process.env.NEXT_PUBLIC_BACKEND_URL || 'https://localhost:3300') + 
+  (process.env.NEXT_PUBLIC_API_EXTENSION || '/api');
+const SLACK_API_EXTENSION = process.env.NEXT_PUBLIC_SLACK_API_EXTENSION || '/slack';
 
 /**
  * A centralized handler for processing API fetch responses.

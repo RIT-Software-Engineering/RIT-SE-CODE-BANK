@@ -5,8 +5,11 @@ import SelectionCard from "@/components/dashboard/SelectionCard";
 import { DASHBOARD_OPTIONS } from "@/configuration/dashboard.config";
 import Link from "next/link";
 import { Box, Container, Grid, Paper, Typography } from "@mui/material";
+import { Assignment as WorkflowIcon } from "@mui/icons-material";
 
 export default function LandingDashboard({ user }) {
+  console.log('User data in LandingDashboard:', user);
+  
   // filter options based on user role
   const userRole = user?.role;
   const PersonalOptions = DASHBOARD_OPTIONS.filter(
@@ -35,6 +38,14 @@ export default function LandingDashboard({ user }) {
               </Grid>
             );
           })}
+          
+          {/* Add Workflows Card to Personal Section */}
+          <Grid xs={12} sm={6} md={3}>
+            <SelectionCard 
+              text="View Workflows" 
+              link={`/Workflows/${user?.username || 'guest'}`} 
+            />
+          </Grid>
         </Grid>
       </Box>
 
