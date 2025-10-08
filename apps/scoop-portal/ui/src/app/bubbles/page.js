@@ -39,8 +39,24 @@ export default function bubbled(){
     setOpen(true);
   };
 
-  const handleClose = () => {
+  const handleClose = async() => {
+    if(openActionState.stateType != "completed"){
+      try {
+      const res = await fetch('http://localhost:5001/states/handleSubmit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          actionStateId: openActionState.id,
+          stateType: "inProgress",
+        }),
+      });
+      forceRefresh(previous => previous + 1);
+    } catch (e) {console.error('Error handling submit:', e);}
+    }
     setOpenAction([]);
+    setOpenActionState([]);
     setOpen(false);
   };
 
@@ -56,6 +72,7 @@ export default function bubbled(){
           actionStateId: openActionState.id,
         }),
       });
+      openActionState.stateType = "completed"
       forceRefresh(previous => previous + 1);
     } catch (e) {console.error('Error handling submit:', e);}
     handleClose();
