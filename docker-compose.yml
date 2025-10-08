@@ -20,6 +20,9 @@ services:
       - "3307:3306"
     volumes:
       - mariadb_workflows_data:/var/lib/mysql
+  
+  scoop-portal-frontend:
+    
 
 volumes:
   mariadb_scoop_portal_data:
