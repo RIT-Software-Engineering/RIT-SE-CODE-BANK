@@ -13,10 +13,10 @@ const {
   positionStatusStringToEnum,
 } = require("../constants/status");
 const { verifyPassword, hashPassword } = require("../config/passwordHashes");
-const { notifyEvent } = require(path.resolve(
-  __dirname,
-  "../../../../../libs/notifications/slack/src"
-));
+// const { notifyEvent } = require(path.resolve(
+//   __dirname,
+//   "../../../../../libs/notifications/slack/src"
+// ));
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {

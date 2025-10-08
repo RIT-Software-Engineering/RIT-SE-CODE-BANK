@@ -2,7 +2,7 @@
 const axios = require('axios');
 
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
-
+console.log(SLACK_BOT_TOKEN);
 async function sendSlackDMByEmail(email, text) {
   try {
     // Step 1: Lookup Slack user ID by email
