@@ -2,17 +2,17 @@ CREATE TABLE IF NOT EXISTS grants (
     grant_id INT UNSIGNED UNIQUE AUTO_INCREMENT PRIMARY KEY,
     form_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
-    funder VARCHAR(255) NOT NULL, --multiple people can be selecting grants. add new table
-    amount INT DEFAULT NULL,              
-    est_amount INT DEFAULT NULL,          
-    time_period VARCHAR(100) NOT NULL,   --split into start and end date (month/year)           
-    faculty_role VARCHAR(100) NOT NULL,             
+    funder VARCHAR(255) NOT NULL,
+    amount INT DEFAULT NULL,                     
+    start_date DATE, 
+    end_date DATE,           
+    faculty_role VARCHAR(255) NOT NULL,             
     faculty_share INT DEFAULT NULL,       
     grant_status ENUM('Funded', 'In Submission', 'Declined', 'In Development') NOT NULL,
     comments TEXT
 );
 
-INSERT INTO grants (form_id, title, funder, amount, est_amount, time_period, faculty_role, faculty_share, grant_status, comments) VALUES 
+INSERT INTO grants (form_id, title, funder, amount, est_amount, start_date, end_date, faculty_role, faculty_share, grant_status, comments) VALUES 
 (0, 'Title', 'test', 50, 51, 'test', 'test', 52,'Funded', 'test' ),
 (1, 'Education', 'NSF', 50000, NULL, '2024-2025', 'Principal Investigator', 30000, 'Funded', 'National Science Foundation grant on AI tools for education'),
 (2, 'Sustainable Energy Systems', 'DOE', 75000, NULL, '2025-2027', 'Co-PI', 25000, 'Funded', 'Research on renewable energy integration'),

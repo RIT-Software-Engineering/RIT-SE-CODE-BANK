@@ -44,11 +44,11 @@ async function getGrantsByFormId(form_id){
 async function addGrant(grantData){ //Create
   try {
     conn = await pool.getConnection();
-    const { title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status } = grantData;
+    const { title, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
     const result = await conn.query(
-      `INSERT INTO grants (form_id, title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status) 
+      `INSERT INTO grants (form_id, title, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status]
+      [title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status]
     );
     return { grant_id: result.insertId };
   } finally {
@@ -60,12 +60,12 @@ async function addGrant(grantData){ //Create
 async function updateGrant(id, grantData) {
   try {
     conn = await pool.getConnection();
-    const { title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status } = grantData;
+    const { title, amount, start_date,  end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
     const result = await conn.query(
       `UPDATE grants 
-       SET title = ?, funder = ?, amount = ?, time_period = ?, faculty_role = ?, faculty_share = ?, comments = ?, grant_status = ?
+       SET title = ?, amount = ?, start_date = ?, end_date, faculty_role = ?, faculty_share = ?, comments = ?, grant_status = ?
        WHERE grant_id = ?`,
-      [title, funder, amount, time_period, faculty_role, faculty_share, comments, grant_status]
+      [title, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status]
     );
     return result.affectedRows > 0;
   } finally {
