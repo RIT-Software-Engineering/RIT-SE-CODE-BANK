@@ -93,15 +93,27 @@ async function updateService(id, body){
     try {
         // Get Connection from Pool
         connection = await pool.getConnection();
-        const {form_id, service_type, title, hours_worked, other_contributions} = body;
+        const allowed = ["form_id", "service_type", "title", "hours_worked", "other_contributions"];
+        sets = []
+        params = []
+
+        for (const key of allowed) {
+            if (key in body) {
+            sets.push(`${key} = ?`);
+            params.push(body[key]);
+            }
+        }
+        if (sets.length === 0) return { changedRows: 0 };
+        params.push(id)
 
         const results = await connection.query(
-            `UPDATE services SET form_id = ?, service_type = ?, title = ?, hours_worked = ?, other_contributions = ?
+            `UPDATE services SET 
+            ${sets.join(", ")}
             WHERE id = ?`,
-            [form_id, service_type, title, hours_worked, other_contributions, id]
+            params
         );
         
-        return results
+        return {changedRows : results.changedRows};
     } finally {
         if (connection) connection.release();
     }

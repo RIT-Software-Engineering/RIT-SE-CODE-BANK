@@ -18,7 +18,7 @@ router.get("/:id", async (req,res) => {
 router.put("/:id", async (req,res) => {
     try {
         const results = await api.updateDepartment(req.params.id, req.body);
-        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
+        console.log({affectedRows : results.affectedRows});
         res.json({affectedRows : results.affectedRows});
     } catch {
         console.log(err);
@@ -39,7 +39,7 @@ router.get("/", async (req,res) => {
 });
 
 // Creates a new department
-router.post("/", async (req,res) =>{
+router.post("/", async (req,res) => {
     try {
             const results = await api.createDepartment(req.body);
             console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
@@ -54,7 +54,7 @@ router.post("/", async (req,res) =>{
 router.put("/", async (req,res) => { //make it so that id is a parameter
     try {
         const results = await api.updateDepartment(req.body);
-        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
+        console.log({affectedRows : results.affectedRows});
         res.json({affectedRows : results.affectedRows});
     } catch /*(err)*/ {
         console.log(err);

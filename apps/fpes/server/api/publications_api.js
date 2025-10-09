@@ -12,11 +12,11 @@ async function getAllPublications() {
     }
 }
 
-async function getPublicationByID(id) {
+async function getPublicationByTitle(title) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("SELECT * FROM publications WHERE id = ?", [id]);
+        const results = connection.query("SELECT * FROM publications WHERE title = ?", [title]);
         return results;
     } finally {
         if (connection) connection.release();
@@ -37,25 +37,40 @@ async function createPublication(body) {
     }
 }
 
-async function updatePublication(id, body) {
+async function updatePublication(title, body) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const {form_id, publication_name, venue, proof_of_significance} = body;
-        const results = connection.query(
-            `UPDATE publications SET form_id = ?, publication_name = ?, venue = ?, proof_of_significance = ?
-            WHERE id = ?`, [form_id, publication_name, venue, proof_of_significance, id]);
-        return results;
+        const allowed = ["form_id", "publication_name", "venue", "proof_of_significance", "date_accepted", "status"];
+        sets = []
+        params = []
+
+        for (const key of allowed) {
+            if (key in body) {
+            sets.push(`${key} = ?`);
+            params.push(body[key]);
+            }
+        }
+        if (sets.length === 0) return { changedRows: 0 };
+        params.push(title)
+
+        const results = await connection.query(
+            `UPDATE publications SET 
+            ${sets.join(", ")}
+            WHERE title = ?`,
+            params
+        );
+        return {changedRows : results.changedRows};
     } finally {
         if (connection) connection.release();
     }
 }
 
-async function deletePublication(id) {
+async function deletePublication(title) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = await connection.query("DELETE FROM publications WHERE id = ?", [id])
+        const results = await connection.query("DELETE FROM publications WHERE title = ?", [title])
         return results;
     } finally {
         if (connection) connection.release();
@@ -75,10 +90,10 @@ async function initPublicationsTable(){
         connection = await pool.getConnection();
         let results = [];
         for (const query of queries){
-            results += await connection.query(query);
+            await connection.query(query);
         }
 
-        return results;
+        return;
     } finally {
         if (connection) connection.release();
     } 
@@ -86,7 +101,7 @@ async function initPublicationsTable(){
 
 module.exports = {
     getAllPublications,
-    getPublicationByID,
+    getPublicationByTitle,
     createPublication,
     updatePublication,
     deletePublication,

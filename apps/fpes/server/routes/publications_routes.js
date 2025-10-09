@@ -2,12 +2,18 @@ const express = require('express');
 const router = express.Router();
 const api = require('../api/publications_api');
 
-// Gets publication of a specified id
-router.get("/:id", async (req,res) => {
+// Gets publication of a specified title
+router.get("/:title", async (req,res) => {
     try {
-        const results = await api.getPublicationByID(req.params.id);
-        console.log(results)
-        res.json(results);
+        const results = await api.getPublicationByTitle(req.params.title);
+        if(results.length === 0){
+            console.log("Publication not found")
+            res.status(404).send("Publication not found")
+        }else{
+            console.log(results)
+            res.json(results);
+        }
+        
     } catch (err) {
         console.log(err);
         res.status(500).send(err);
@@ -15,10 +21,13 @@ router.get("/:id", async (req,res) => {
 });
 
 // Updates an existing publication
-router.put("/:id", async (req,res) => {
+router.put("/:title", async (req,res) => {
     try {
-        const results = await api.updatePublication(req.params.id, req.body);
-        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
+        const results = await api.updatePublication(req.params.title, req.body);
+        if(results.length === 0){
+            res.status(404).send("Publication user attempted to update does not exist")
+        }
+        console.log({affectedRows : results.affectedRows});
         res.json({affectedRows : results.affectedRows});
     } catch {
         console.log(err);
@@ -26,12 +35,17 @@ router.put("/:id", async (req,res) => {
     }
 });
 
-// Deletes a publication by a given id
-router.delete("/:id", async (req,res) => {
+// Deletes a publication by a given title
+router.delete("/:title", async (req,res) => {
     try {
-        const results = await api.deletePublication(req.params.id);
-        console.log({affectedRows : results.affectedRows});
-        res.json({affectedRows : results.affectedRows});
+        const results = await api.deletePublication(req.params.title);
+        if(results.length === 0){
+            console.log("Publication not found")
+            res.status(404).send("Publication not found")
+        }else{
+            console.log({affectedRows : results.affectedRows});
+            res.json({affectedRows : results.affectedRows});
+        }
     } catch (err) {
         console.log(err);
         res.status(500).send(err);
@@ -43,8 +57,8 @@ router.delete("/:id", async (req,res) => {
 router.post("/init", async (req,res) =>{
     try {
         const results = await api.initPublicationsTable();
-        console.log(results);
-        res.json(results);
+        console.log("Successfully initialized publications table");
+        res.send("Successfully initialized publications table");
     } catch (err) {
         console.log(err);
         res.status(500).send(err);

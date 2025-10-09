@@ -41,11 +41,28 @@ async function updateDepartment(id, body) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const {department_name, college} = body;
-        const results = connection.query(
-            `UPDATE departments SET department_name = ?, college = ?
-            WHERE id = ?`, [department_name, college, id]);
-        return results;
+
+        allowed = ["department_name", "college"]
+        sets = []
+        params = []
+
+        for (const key of allowed) {
+            if (key in body) {
+            sets.push(`${key} = ?`);
+            params.push(body[key]);
+            }
+        }
+        if (sets.length === 0) return { affectedRows: 0 };
+        params.push(id)
+
+        const results = await connection.query(
+            `UPDATE departments SET 
+            ${sets.join(", ")}
+            WHERE id = ?`,
+            params
+        );
+
+        return {affectedRows : results.affectedRows}
     } finally {
         if (connection) connection.release();
     }

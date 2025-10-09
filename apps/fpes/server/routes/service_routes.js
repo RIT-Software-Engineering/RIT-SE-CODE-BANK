@@ -30,7 +30,7 @@ router.delete("/:id", async (req,res) => {
 router.put("/:id", async (req,res) => {
     try {
         const results = await api.updateService(req.params.id, req.body);
-        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
+        console.log({affectedRows : results.affectedRows});
         res.json({affectedRows : results.affectedRows});
     } catch {
         console.log(err);

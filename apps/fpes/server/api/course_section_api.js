@@ -100,16 +100,28 @@ async function updateCourseSection(id, body){
     let connection;
     try {
         connection = await pool.getConnection();
-        const {course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year} = body;
+        allowed = ["course_id", "room_location", "days_of_the_week", "number_of_students", "semester", "scholastic_year"];
+
+        sets = []
+        params = []
+
+        for (const key of allowed) {
+            if (key in body) {
+            sets.push(`${key} = ?`);
+            params.push(body[key]);
+            }
+        }
+        if (sets.length === 0) return { changedRows: 0 };
+        params.push(id)
 
         const results = await connection.query(
             `UPDATE course_sections SET 
-            course_id = ?, room_location = ?, days_of_the_week = ?, number_of_students = ?, semester = ?, scholastic_year = ?
+            ${sets.join(", ")}
             WHERE id = ?`,
-            [course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year, id]
+            params
         );
 
-        return results;
+        return {changedRows : results.changedRows};
     } finally {
         if (connection) connection.release();
     }
