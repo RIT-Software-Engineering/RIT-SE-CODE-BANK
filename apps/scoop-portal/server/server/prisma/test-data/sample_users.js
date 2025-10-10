@@ -1,6 +1,5 @@
 export const sampleUsers = [
   {
-    "id": 1,
     "fname": "John",
     "lname": "Smith",
     "email": "abc123@rit.edu",
@@ -12,7 +11,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 2,
     "fname": "2019Spring",
     "lname": "Coach",
     "email": "coachC@rit.edu",
@@ -24,7 +22,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 3,
     "fname": "SUPER DUPER",
     "lname": "ADMIN",
     "email": "adminB@rit.edu",
@@ -36,7 +33,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 4,
     "fname": "Dude",
     "lname": "Bro",
     "email": "def123@rit.edu",
@@ -48,7 +44,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 5,
     "fname": "Jack",
     "lname": "James",
     "email": "hij123@rit.edu",
@@ -60,8 +55,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    
-    "id": 6,
     "fname": "Gal",
     "lname": "Girl",
     "email": "klm123@rit.edu",
@@ -73,8 +66,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    
-    "id": 7,
     "fname": "Tom",
     "lname": "Amaral",
     "email": "bp123@rit.edu",
@@ -86,7 +77,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 8,
     "fname": "Jeffery",
     "lname": "Beril",
     "email": "qrs123@rit.edu",
@@ -98,7 +88,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 9,
     "fname": "Steven",
     "lname": "Jobe",
     "email": "tuv123@rit.edu",
@@ -110,7 +99,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 10,
     "fname": "Brimstone",
     "lname": "Obadia",
     "email": "wxy123@rit.edu",
@@ -122,7 +110,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 11,
     "fname": "Samuel",
     "lname": "Sangsong",
     "email": "adminA@rit.edu",
@@ -134,7 +121,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 12,
     "fname": "SomeCoach",
     "lname": "AAA",
     "email": "coachA@rit.edu",
@@ -146,7 +132,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 13,
     "fname": "SomeCoach",
     "lname": "BBB",
     "email": "coachB@rit.edu",
@@ -158,7 +143,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 14,
     "fname": "Cameron",
     "lname": "Smith",
     "email": "cds123@rit.edu",
@@ -170,7 +154,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 15,
     "fname": "Marianna",
     "lname": "Gardner",
     "email": "mlg123@rit.edu",
@@ -182,7 +165,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 16,
     "fname": "Moss",
     "lname": "Hooper",
     "email": "mjh123@rit.edu",
@@ -194,7 +176,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 17,
     "fname": "Jimmy",
     "lname": "Post",
     "email": "jlp123@rit.edu",
@@ -206,7 +187,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 18,
     "fname": "Jacob",
     "lname": "Garnett",
     "email": "jkg123@rit.edu",
@@ -218,7 +198,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 19,
     "fname": "Desiree",
     "lname": "Curtis",
     "email": "dpc123@rit.edu",
@@ -230,7 +209,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 20,
     "fname": "Doretta",
     "lname": "Lee",
     "email": "dcl123@rit.edu",
@@ -242,7 +220,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 21,
     "fname": "Marcy",
     "lname": "Gibb",
     "email": "mjg123@rit.edu",
@@ -254,7 +231,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 22,
     "fname": "Roman",
     "lname": "Rollins",
     "email": "rmr123@rit.edu",
@@ -266,7 +242,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 23,
     "fname": "Jimmy",
     "lname": "Brewer",
     "email": "jrb123@rit.edu",
@@ -278,7 +253,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 24,
     "fname": "Edison",
     "lname": "Hancock",
     "email": "emh123@rit.edu",
@@ -290,7 +264,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 25,
     "fname": "Jaylin",
     "lname": "Peters",
     "email": "jjp123@rit.edu",
@@ -302,7 +275,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 26,
     "fname": "Alexis",
     "lname": "Endicott",
     "email": "ade123@rit.edu",
@@ -314,7 +286,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 27,
     "fname": "Brennan",
     "lname": "Reed",
     "email": "blr123@rit.edu",
@@ -326,7 +297,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 28,
     "fname": "Emery",
     "lname": "Foster",
     "email": "ecf123@rit.edu",
@@ -338,7 +308,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 29,
     "fname": "Tori",
     "lname": "Waterman",
     "email": "tww123@rit.edu",
@@ -350,7 +319,6 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 30,
     "fname": "Beth",
     "lname": "Thorn",
     "email": "bmt123@rit.edu",
@@ -362,7 +330,7 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 31,
+    "id": "vcl123",
     "fname": "Vicki",
     "lname": "Leigh",
     "email": "vcl123@rit.edu",
@@ -374,7 +342,7 @@ export const sampleUsers = [
     "prev_login": "null"
   },
   {
-    "id": 32,
+    "id": "kjs123",
     "fname": "Kelly",
     "lname": "Simon",
     "email": "kjs123@rit.edu",

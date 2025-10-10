@@ -38,7 +38,7 @@ model Project {
 }
 
 model users {
-  id             Int @id
+  id             String @id @default(uuid())
   fname          String
   lname          String
   email          String @unique
@@ -57,15 +57,11 @@ model users {
 model JournalEntry {
   id                  Int      @id @default(autoincrement())
   date                DateTime
-  contactee_fname     String
-  contactee_lname     String
-  contactee_id        Int
+  recipient_id        String
   notes               String?  @db.VarChar(500)
-  journal_owner_fname String
-  journal_owner_lname String
-  journal_owner_type  String?
-  journal_owner_id    Int
-
+  sender_id           String
+  topic_id            String
+  
   Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
   semester_GroupId Int?
 }

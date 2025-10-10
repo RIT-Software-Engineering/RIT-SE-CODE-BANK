@@ -34,7 +34,7 @@ CREATE TABLE `Project` (
 
 -- CreateTable
 CREATE TABLE `users` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `id` VARCHAR(191) NOT NULL,
     `fname` VARCHAR(191) NOT NULL,
     `lname` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
@@ -53,14 +53,10 @@ CREATE TABLE `users` (
 CREATE TABLE `JournalEntry` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `date` DATETIME(3) NOT NULL,
-    `contactee_fname` VARCHAR(191) NOT NULL,
-    `contactee_lname` VARCHAR(191) NOT NULL,
-    `contactee_id` INTEGER NOT NULL,
+    `recipient_id` VARCHAR(191) NOT NULL,
     `notes` VARCHAR(500) NULL,
-    `journal_owner_fname` VARCHAR(191) NOT NULL,
-    `journal_owner_lname` VARCHAR(191) NOT NULL,
-    `journal_owner_type` VARCHAR(191) NULL,
-    `journal_owner_id` INTEGER NOT NULL,
+    `sender_id` VARCHAR(191) NOT NULL,
+    `topic_id` VARCHAR(191) NOT NULL,
     `semester_GroupId` INTEGER NULL,
 
     PRIMARY KEY (`id`)
@@ -104,7 +100,7 @@ CREATE TABLE `Teams` (
 -- CreateTable
 CREATE TABLE `_TeamMembers` (
     `A` INTEGER NOT NULL,
-    `B` INTEGER NOT NULL,
+    `B` VARCHAR(191) NOT NULL,
 
     UNIQUE INDEX `_TeamMembers_AB_unique`(`A`, `B`),
     INDEX `_TeamMembers_B_index`(`B`)

@@ -259,14 +259,10 @@ export default function Journal() {
 
     const entry = {
       date: new Date().toISOString(), // Add this to match existing entries
-      contactee_fname,
-      contactee_lname,
-      contactee_id: parseInt(newEntryContacteeId),
+      sender_id: newEntryContacteeId,
       notes: editValue,
-      journal_owner_fname: "Demo",
-      journal_owner_lname: "Owner",
-      journal_owner_type: "admin",
-      journal_owner_id: parseInt(user.id),
+      recipient_id: user.id,
+      topic_id: user.id,
       semester_GroupId: Number(newEntrySemester),
     };
 
@@ -365,7 +361,13 @@ export default function Journal() {
                 </Button>
               </Box>
               <Typography variant="h3">
-                with {entry.contactee_fname} {entry.contactee_lname}
+                To: {entry.recipient_id}
+              </Typography>
+              <Typography variant="h3">
+                From: {entry.sender_id}
+              </Typography>
+              <Typography variant="h3">
+                About: {entry.topic_id}
               </Typography>
               <Typography>
                 Semester: {semesterGroups[entry.semester_GroupId] || "Unknown"}
