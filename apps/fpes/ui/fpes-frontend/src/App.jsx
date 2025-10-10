@@ -4,17 +4,24 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import ServicesTable from './pages/services';
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
-    <BrowserRouter>
-      <Routes>
-        
-      </Routes>
-    </BrowserRouter>
+    <div>
+      <h1>HEADER</h1>
+      <BrowserRouter>
+        <nav>
+          <Link to="/services">Services</Link>
+        </nav>
 
+        <Routes>
+          <Route path="/services" element={<ServicesTable />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
   )
 }
 

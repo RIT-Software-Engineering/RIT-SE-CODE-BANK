@@ -1,4 +1,4 @@
-DROP TABLE services;
+DROP TABLE IF EXISTS services;
 
 CREATE TABLE IF NOT EXISTS services (
     id INT UNSIGNED auto_increment PRIMARY KEY,
