@@ -2,8 +2,6 @@ const pool = require('../db')
 const mariadb = require('mariadb');
 const fs = require('fs')
 
-
-
 async function getAllGrants(){ //Read
   let connection
   try {
