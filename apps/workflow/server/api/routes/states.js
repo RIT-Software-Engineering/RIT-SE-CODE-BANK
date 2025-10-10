@@ -84,6 +84,11 @@ router.get("/workflow", async (req, res) => {
     where: where,
     include: {
       baseActionState: true,
+      actionStates: {
+        include: {
+          action: true, 
+        },
+      },
     },
   });
 
@@ -599,6 +604,7 @@ async function cascadeSubmission(actionStateId) {
  */
 router.post("/handleSubmit", async (req, res) => {
   const { actionStateId } = req.body;
+  const stateType = req.body.stateType ?? "completed";
 
   // Find the type of the action, and determine whether or not it can be completed this way.
   const actionState = await prisma.actionState.findUnique({
@@ -622,7 +628,7 @@ router.post("/handleSubmit", async (req, res) => {
     const actionState = await prisma.actionState.update({
       where: { id: actionStateId },
       data: {
-        stateType: "completed",
+        stateType: stateType,
       },
       include: {
         action: true,
