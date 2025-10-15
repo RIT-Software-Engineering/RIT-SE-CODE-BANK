@@ -5,6 +5,7 @@ import './App.css'
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import ServicesTable from './pages/services';
+import GrantsTable from './pages/grants';
 
 function App() {
   const [count, setCount] = useState(0)
@@ -16,9 +17,13 @@ function App() {
         <nav>
           <Link to="/services">Services</Link>
         </nav>
+        <nav>
+          <Link to="/grants">Grants</Link>
+        </nav>
 
         <Routes>
           <Route path="/services" element={<ServicesTable />} />
+          <Route path="/grants" element={<GrantsTable />} />
         </Routes>
       </BrowserRouter>
     </div>
