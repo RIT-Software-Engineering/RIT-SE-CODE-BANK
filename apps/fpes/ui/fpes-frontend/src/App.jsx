@@ -4,7 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import ServicesTable from './pages/services';
+import ServicesPage from './pages/services_page';
 
 function App() {
   const [count, setCount] = useState(0)
@@ -18,7 +18,7 @@ function App() {
         </nav>
 
         <Routes>
-          <Route path="/services" element={<ServicesTable />} />
+          <Route path="/services" element={<ServicesPage/>} />
         </Routes>
       </BrowserRouter>
     </div>
