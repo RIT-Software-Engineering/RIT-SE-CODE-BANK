@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { DataGrid, renderActionsCell} from '@mui/x-data-grid';
 import {Paper, Button, IconButton, Modal, Box, Typography} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getServices } from '../api/services_api_imports';
+import { getServices } from '../../api/services_api_imports';
 import axios from 'axios';
 
 

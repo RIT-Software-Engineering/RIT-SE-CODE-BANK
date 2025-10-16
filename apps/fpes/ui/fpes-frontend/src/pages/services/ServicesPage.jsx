@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ServicesForm from "./ServiceForm";
 import ServicesTable from "./ServicesTable";
-import { getServices } from '../api/services_api_imports';
+import { getServices } from '../../api/services_api_imports.js';
 
 export default function ServicesPage() {
     const [services, setServices] = useState([]);

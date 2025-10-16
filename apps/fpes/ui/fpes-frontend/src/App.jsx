@@ -4,7 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import ServicesPage from './pages/services_page';
+import ServicesPage from './pages/services/ServicesPage.jsx';
 import GrantsTable from './pages/grants';
 
 function App() {
