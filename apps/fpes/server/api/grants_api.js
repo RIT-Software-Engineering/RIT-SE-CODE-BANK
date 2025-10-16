@@ -83,8 +83,6 @@ async function deleteGrant(id) {
   }
 }
 
-
-
 module.exports = {
     getAllGrants,
     getGrantsById,
