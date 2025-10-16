@@ -79,8 +79,8 @@ router.get("/", async (req,res) => {
 router.post("/", async (req,res) => {
     try {
         const results = await api.createService(req.body);
-        console.log({affectedRows : results.affectedRows, insertedId : results.insertId});
-        res.json({affectedRows : results.affectedRows});
+        console.log(results);
+        res.json(results);
     } catch (err) {
         console.log(err);
         res.status(500).send(err);

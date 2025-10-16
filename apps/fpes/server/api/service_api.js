@@ -79,7 +79,7 @@ async function createService(body){
 
         const results = await connection.query(
             `INSERT INTO services (form_id, service_type, title, hours_worked, other_contributions) 
-            VALUES (?, ?, ?, ?, ?)`,
+            VALUES (?, ?, ?, ?, ?) RETURNING id`,
             [form_id, service_type, title, hours_worked, other_contributions]
         );
         

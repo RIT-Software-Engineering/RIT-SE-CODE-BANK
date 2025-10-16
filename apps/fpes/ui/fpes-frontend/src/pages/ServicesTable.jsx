@@ -7,48 +7,49 @@ import axios from 'axios';
 
 
 
-export default function ServicesTable() {
-    const [services, setServices] = useState([]);
-    const [deleteModalOpen, setDeleteModal] = useState(false);
+export default function ServicesTable({services, setServices}) {
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteModalId, setDeleteModalId] = useState(-1);
+
+    const modal_box_style = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 400,
+        bgcolor: 'background.paper',
+        border: '2px solid #000',
+        boxShadow: 24,
+        p: 4,
+    };
 
     // Sends the delete call to database
     const onDeleteClick = (params) => {
         console.log("delete clicked")
-        setDeleteModal(true);
+        setDeleteModalOpen(true);
         setDeleteModalId(params.id);
     }
 
     // Updates state to remove record
     const removeRecord = (id) => {
-        axios.delete("http://localhost:3000/services" + `/${params.id}`)
+        axios.delete("http://localhost:3000/services" + `/${id}`)
         const newServices = services.filter(record => record.id != (id));
         setServices(newServices);
+        setDeleteModalOpen(false);
     }
-
-    // Gets all services from the database
-    const getAllServices = () => {
-        useEffect(() => {
-            getServices()
-            .then((response) => {
-                setServices(response.data);
-            })
-        }, []);
-    }
-
-    getAllServices();
 
     const columns = [
-        {field : "title", headerName : "Service", width : 130},
-        {field : "hours_worked", headerName : "Hours Worked", width : 130},
-        {field : "service_type", headerName : "Service Type", width : 130},
-        {field : "other_contributions", headerName : "Comments", width : 130},
-        {field : "delete", headerName : "", width: 130, renderCell:(params) => {
+        {field : "title", headerName : "Service", flex:1},
+        {field : "hours_worked", headerName : "Hours Worked", flex:.8},
+        {field : "service_type", headerName : "Service Type", flex:1},
+        {field : "other_contributions", headerName : "Comments", flex:1},
+        {field : "delete", headerName : "", width: 40, renderCell:(params) => {
         return (
           <IconButton
             onClick={(e) => onDeleteClick(params.row)}
             variant="contained"
             color="text.primary"
+            sx={{left:"50%", transform:"translate(-50%, 0%)"}}
           >
             <DeleteIcon/>
           </IconButton>
@@ -57,10 +58,11 @@ export default function ServicesTable() {
     ]
     
     const paginationModel = { page: 0, pageSize: 5 };
+    console.log(services);
 
     return (
-        <div>
-            <Paper sx={{ height: 400, width: '100%' }}>
+        <span>
+            <Paper sx={{ height: 400, width: '50%', display:"inline-block"}}>
             <DataGrid
                 rows={services}
                 columns={columns}
@@ -70,16 +72,18 @@ export default function ServicesTable() {
             />
             </Paper>
             <Modal open={deleteModalOpen}>        
-            <Box>
+            <Box sx={modal_box_style}>
                 <Typography id="modal-modal-title" variant="h6" component="h2">
-                    Text in a modal
+                    Are you sure you want to delete this service?
                 </Typography>
                 <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-                    Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
+                    This cannot be undone...
                 </Typography>
+                <Button variant="outlined" onClick={(e) => setDeleteModalOpen(false)}>Cancel</Button>
+                <Button sx={{left: '65%', transform: 'translate(-50%, 0%)'}} variant="contained" color="error" onClick={() => removeRecord(deleteModalId)}>Delete</Button>
             </Box>
             </Modal>
-        </div>
+        </span>
     );
 }
 
