@@ -54,9 +54,11 @@ export default function Journal() {
   // For creating new journal entries
   const [newEntrySemester, setNewEntrySemester] = useState("");
   const [newEntryContacteeId, setNewEntryContacteeId] = useState("");
+  const [newEntryTopicId, setNewEntryTopicId] = useState("");
   // For editing journal entry notes
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
+
   const { user } = useUser();
   
     useEffect(() => {
@@ -254,15 +256,13 @@ export default function Journal() {
   };
 
   const postNewEntry = async () => {
-    const [contactee_fname, contactee_lname] =
-      contactees[newEntryContacteeId]?.split(" ") || ["", ""];
 
     const entry = {
       date: new Date().toISOString(), // Add this to match existing entries
-      sender_id: newEntryContacteeId,
+      sender_id: user.id,
       notes: editValue,
-      recipient_id: user.id,
-      topic_id: user.id,
+      recipient_id: newEntryContacteeId,
+      topic_id: newEntryTopicId,
       semester_GroupId: Number(newEntrySemester),
     };
 
@@ -291,6 +291,7 @@ export default function Journal() {
       setEditValue("");
       setNewEntrySemester("");
       setNewEntryContacteeId("");
+      setNewEntryTopicId("");
       return { message: "Journal entry created!" };
     } catch (error) {
       console.error("Failed to create a new journal entry: ", error);
@@ -304,7 +305,7 @@ export default function Journal() {
    * @returns {void}
    */
   const handleCreateNewEntry = () => {
-    if (!newEntrySemester || !newEntryContacteeId) {
+    if (!newEntrySemester || !newEntryContacteeId || !newEntryTopicId) {
       toast.error("Please fill out all fields.");
       return;
     }
@@ -361,13 +362,13 @@ export default function Journal() {
                 </Button>
               </Box>
               <Typography variant="h3">
-                To: {entry.recipient_id}
+                To: {entry.recipient.fname} {entry.recipient.lname}
               </Typography>
               <Typography variant="h3">
-                From: {entry.sender_id}
+                From: {entry.sender.fname} {entry.sender.lname}
               </Typography>
               <Typography variant="h3">
-                About: {entry.topic_id}
+                About: {entry.topic.fname} {entry.topic.lname}
               </Typography>
               <Typography>
                 Semester: {semesterGroups[entry.semester_GroupId] || "Unknown"}
@@ -444,6 +445,28 @@ export default function Journal() {
                   <TextField
                     {...params}
                     label="Contactee"
+                    variant="outlined"
+                    fullWidth
+                    required
+                  />
+                )}
+              />
+            </FormControl>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Autocomplete
+                options={Object.entries(contactees).map(([id, name]) => ({
+                  label: name,
+                  value: id,
+                }))}
+                getOptionLabel={(option) => option.label}
+                onChange={(event, newValue) =>
+                  setNewEntryTopicId(newValue ? newValue.value : "")
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Topic"
                     variant="outlined"
                     fullWidth
                     required

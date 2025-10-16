@@ -52,6 +52,10 @@ model users {
   teams Teams[] @relation("TeamMembers")
   login Login? @relation(fields: [loginId], references: [id])
   loginId Int? @unique
+
+  sentEntries     JournalEntry[] @relation("SentUserEntries")
+  receivedEntries JournalEntry[] @relation("ReceivedUserEntries")
+  topicEntries    JournalEntry[] @relation("TopicUserEntries")
 }
 
 model JournalEntry {
@@ -61,6 +65,9 @@ model JournalEntry {
   notes               String?  @db.VarChar(500)
   sender_id           String
   topic_id            String
+  recipient     users     @relation("ReceivedUserEntries", fields: [recipient_id], references: [id])
+  sender        users     @relation("SentUserEntries", fields: [sender_id], references: [id])
+  topic         users     @relation("TopicUserEntries", fields: [topic_id], references: [id])
   
   Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
   semester_GroupId Int?

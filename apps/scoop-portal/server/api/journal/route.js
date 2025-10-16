@@ -170,20 +170,32 @@ router.get("/:id", async (req, res) => {
     const user = await prisma.users.findUnique({
       where: { id: id },
     });
+
     if(user.type == "scooployee"){
-      const idEntries = await prisma.journalEntry.findMany({
+      const scooployeeEntries = await prisma.journalEntry.findMany({
         where: {
           OR: [
             {sender_id: id},
             {recipient_id: id},
           ]
-        }
+        },
+        include: {
+          sender: true,
+          recipient: true,
+          topic: true,
+        },
         })
-      res.status(200).json(idEntries);
+      res.status(200).json(scooployeeEntries);
     }
     else if(user.type == "scoopdinator"){
-      const entries = await prisma.journalEntry.findMany();
-      res.status(200).json(entries); 
+      const dinatorEntries = await prisma.journalEntry.findMany({
+        include: {
+          sender: true,
+          recipient: true,
+          topic: true,
+        },
+      });
+      res.status(200).json(dinatorEntries); 
     }
     else if(user.type == "scoopervisor"){
       let visorentries = [];
@@ -206,6 +218,11 @@ router.get("/:id", async (req, res) => {
                 { recipient_id: member.id },
                 { topic_id: member.id },
                 ],
+              },
+              include: {
+                sender: true,
+                recipient: true,
+                topic: true,
               },
               });
             visorentries = visorentries.concat(memberEntries);
