@@ -60,10 +60,10 @@ export default function GrantsTable() {
   }
 };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (grant_id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      await axios.delete(`http://localhost:5173/grants/${id}`);
+      await axios.delete(`http://localhost:5173/grants/${grant_id}`);
       fetchGrants();
     } catch (err) {
       console.error(err);
@@ -87,7 +87,7 @@ export default function GrantsTable() {
 
   const handleEditSave = async () => {
     try {
-      await axios.put(`http://localhost:5173/grants/${editData.id}`, editData);
+      await axios.put(`http://localhost:5173/grants/${editData.grant_id}`, editData);
       handleEditClose();
       fetchGrants();
     } catch (err) {
@@ -115,7 +115,7 @@ export default function GrantsTable() {
           </IconButton>
           <IconButton
             color="error"
-            onClick={() => handleDelete(params.row.id)}
+            onClick={() => handleDelete(params.row.grant_id)}
           >
             <DeleteIcon />
           </IconButton>
@@ -190,7 +190,7 @@ export default function GrantsTable() {
         <DataGrid
           rows={grants}
           columns={columns}
-          getRowId={(row) => row.id}
+          getRowId={(row) => row.grant_id}
           initialState={{ pagination: { paginationModel } }}
           pageSizeOptions={[5]}
           sx={{ border: 0 }} />
