@@ -198,7 +198,6 @@ router.get("/:id", async (req, res) => {
       res.status(200).json(dinatorEntries); 
     }
     else if(user.type == "scoopervisor"){
-      let visorentries = [];
       const scoopervisorTeams = await prisma.teams.findMany({
         where: {
           members: {
@@ -209,26 +208,31 @@ router.get("/:id", async (req, res) => {
           members: true,
         } 
         });
+
+        const memberSet = new Set();
+
         for (const team of scoopervisorTeams) {
           for (const member of team.members) {
-            const memberEntries = await prisma.journalEntry.findMany({
-            where: {
-              OR: [
-                { sender_id: member.id },
-                { recipient_id: member.id },
-                { topic_id: member.id },
-                ],
-              },
-              include: {
-                sender: true,
-                recipient: true,
-                topic: true,
-              },
-              });
-            visorentries = visorentries.concat(memberEntries);
+              memberSet.add(member.id)
             }
           }
-          res.status(200).json(visorentries);       
+        const memberArray = Array.from(memberSet);
+        //this currently allows Scoopervisors to see entries in which they are the topic 
+        const visorEntries = await prisma.journalEntry.findMany({
+            where: {
+              OR: memberArray.flatMap(memberId => [
+                { sender_id: memberId },
+                { recipient_id: memberId },
+                { topic_id: memberId },
+                ]),
+              },
+            include: {
+              sender: true,
+              recipient: true,
+              topic: true,
+            },
+        });
+        res.status(200).json(visorEntries);       
       }
   } catch (error) {
     console.error("Error fetching the users journal entries: ", error);
