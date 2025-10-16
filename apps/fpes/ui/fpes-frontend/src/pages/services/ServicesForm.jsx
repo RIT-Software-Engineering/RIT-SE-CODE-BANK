@@ -21,7 +21,7 @@ const text_field_style = {
 }
 
 export default function ServicesForm({services, setServices, defaultValues, isUpdate}) {
-    const {register, handleSubmit, getValues, formState:{errors}} = useForm();
+    const {register, handleSubmit, reset, formState:{errors}} = useForm();
 
     const [addModalOpen, setAddModalOpen] = useState(false);
 
@@ -36,8 +36,8 @@ export default function ServicesForm({services, setServices, defaultValues, isUp
 
     return (
         <Box sx={{ height: 400, width: '50%', display:"inline-block"}}>
-        <Typography variant="h4">Create Service</Typography>
-        <form onSubmit={handleSubmit((data) => {console.log(data); addService(data)})}>
+        <h3>Create Service</h3>
+        <form onSubmit={handleSubmit((data) => {console.log(data); addService(data); reset();})}>
             <Grid container spacing={2}>
             <Grid size={6}>
             <TextField 
@@ -84,8 +84,9 @@ export default function ServicesForm({services, setServices, defaultValues, isUp
             <Grid size={6}/>
 
             <Grid item  size={4}>
-            <Button variant="contained" type="reset">Clear</Button>
+            <Button variant="outlined" type="reset">Clear</Button>
             </Grid>
+            <Grid size={4}/>
             <Grid item  size={4}>
             <Button variant="contained" type="submit">Submit</Button>
             </Grid>

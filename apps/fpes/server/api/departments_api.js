@@ -30,7 +30,7 @@ async function createDepartment(body) {
         const {department_name, college} = body;
         const results = connection.query(
             `INSERT INTO departments (department_name, college)
-             VALUES (?,?)`, [department_name, college]);
+             VALUES (?,?) RETURNING id`, [department_name, college]);
         return results;
     } finally {
         if (connection) connection.release();

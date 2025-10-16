@@ -5,7 +5,14 @@ async function getAllCourseSections(){
     let connection; 
     try {
         connection = await pool.getConnection();
-        const results = await connection.query("SELECT * FROM course_sections");
+        const results = await connection.query(
+            `SELECT cs.id, c.course_name, c.course_code,
+            cs.days_of_the_week, cs.room_location, cs.semester,
+            cs.scholastic_year
+            FROM course_sections cs
+            INNER JOIN courses c
+                ON c.id = cs.course_id;
+            `);
         return results;
     } finally {
         if (connection) connection.release();
@@ -16,7 +23,15 @@ async function getSectionByID(id){
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = await connection.query("SELECT * FROM course_sections WHERE id = ?", [id]);
+        const results = await connection.query(
+            `SELECT cs.id, c.course_name, c.course_code,
+            cs.days_of_the_week, cs.room_location, cs.semester,
+            cs.scholastic_year
+            FROM course_sections cs
+            INNER JOIN courses c
+                ON c.id = cs.course_id
+            WHERE cs.id = ?;
+            `, [id]);
         return results;
     } finally {
         if (connection) connection.release();

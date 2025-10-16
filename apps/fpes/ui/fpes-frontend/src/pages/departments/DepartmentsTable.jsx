@@ -6,7 +6,7 @@ import axios from 'axios';
 
 
 
-export default function ServicesTable({services, setServices}) {
+export default function DepartmentsTable({departments, setDepartments}) {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [deleteModalId, setDeleteModalId] = useState(-1);
 
@@ -31,17 +31,16 @@ export default function ServicesTable({services, setServices}) {
 
     // Updates state to remove record
     const removeRecord = (id) => {
-        axios.delete("http://localhost:3000/services" + `/${id}`)
-        const newServices = services.filter(record => record.id != (id));
-        setServices(newServices);
+        axios.delete("http://localhost:3000/departments" + `/${id}`)
+        const newDepartments = departments.filter(record => record.id != (id));
+        setDepartments(newDepartments);
         setDeleteModalOpen(false);
     }
 
     const columns = [
-        {field : "title", headerName : "Service", flex:1},
-        {field : "hours_worked", headerName : "Hours Worked", flex:.8},
-        {field : "service_type", headerName : "Service Type", flex:1},
-        {field : "other_contributions", headerName : "Comments", flex:1},
+        {field : "id", headerName : "ID", flex:.2},
+        {field : "department_name", headerName : "Name", flex:1},
+        {field : "college", headerName : "College", flex:1},
         {field : "delete", headerName : "", width: 40, renderCell:(params) => {
         return (
           <IconButton
@@ -57,13 +56,13 @@ export default function ServicesTable({services, setServices}) {
     ]
     
     const paginationModel = { page: 0, pageSize: 5 };
-    console.log(services);
+    console.log(departments);
 
     return (
         <span>
-            <Paper sx={{ height: 400, width: '50%', display:"inline-block"}}>
+            <Paper sx={{ height: 400, width: 400, display:"inline-block"}}>
             <DataGrid
-                rows={services}
+                rows={departments}
                 columns={columns}
                 initialState={{ pagination: { paginationModel } }}
                 pageSizeOptions={[5]}
