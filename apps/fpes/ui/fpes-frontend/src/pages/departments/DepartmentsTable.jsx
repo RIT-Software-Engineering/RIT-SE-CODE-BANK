@@ -89,6 +89,7 @@ export default function DepartmentsTable({departments, setDepartments}) {
                 <Button sx={{left: '65%', transform: 'translate(-50%, 0%)'}} variant="contained" color="error" onClick={() => removeRecord(deleteModalId)}>Delete</Button>
             </Box>
             </Modal>
+            {}
         </span>
     );
 }
