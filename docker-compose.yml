@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   mariadb_main:
-    image: mariadb:11
+    image: mariadb:latest
     container_name: mariadb_scoop_portal
     environment:
       MARIADB_ROOT_PASSWORD: password
@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
 
   mariadb_workflows:
-    image: mariadb:11
+    image: mariadb:latest
     container_name: mariadb_workflows
     environment:
       MARIADB_ROOT_PASSWORD: password
@@ -43,7 +43,7 @@ services:
 
   scoop-portal-frontend:
     build:
-      context: ./apps/scoop-porta/ui
+      context: ./apps/scoop-portal/ui
       dockerfile: Dockerfile
     ports:
       - "3020:3020"
