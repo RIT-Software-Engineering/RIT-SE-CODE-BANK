@@ -3,9 +3,12 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package*.json ./
-COPY server/server/prisma ./server/server/prisma
+COPY server/prisma/models ./server/server/prisma/models/
 
 RUN npm ci 
+
+RUN npx prisma generate 
+--schema=./server/prisma/models/schema.prisma
 
 COPY . .
 
@@ -13,4 +16,4 @@ RUN npm run build
 
 EXPOSE 5020
 
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
