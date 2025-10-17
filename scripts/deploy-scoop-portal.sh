@@ -1,7 +1,7 @@
 set -e
 
 APP_DIR="/opt/scoop-portal"
-BRANCH="scoop-portal-cicd"
+BRANCH="scoop-portal-cicd-dev"
 
 echo "Deploying Scoop Portal application..."
 
