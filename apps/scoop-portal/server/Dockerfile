@@ -11,8 +11,6 @@ RUN npx prisma generate --schema=./server/server/prisma/models/schema.prisma
 
 COPY . .
 
-RUN npm run build  
-
 EXPOSE 5020
 
 CMD ["node", "server.js"]
