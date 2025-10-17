@@ -38,7 +38,8 @@ export default function Journal() {
    * are a part of.
    */
   const [journalEntries, setJournalEntries] = useState([]);
-  const [contactees, setContactees] = useState({});
+  const [filteredJournalEntries, setFilteredJournalEntries] = useState([]);
+  const [users, setUsers] = useState({});
   const [semesterGroups, setSemesterGroups] = useState({});
 
   /**
@@ -50,7 +51,9 @@ export default function Journal() {
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   // For filtering journal entries
   const [filterSemesterValue, setFilterSemesterValue] = useState("");
-  const [filterContacteeValue, setFilterContacteeValue] = useState("");
+  const [filterSenderValue, setFilterSenderValue] = useState("");
+  const [filterRecipientValue, setFilterRecipientValue] = useState("");
+  const [filterTopicValue, setFilterTopicValue] = useState("");
   // For creating new journal entries
   const [newEntrySemester, setNewEntrySemester] = useState("");
   const [newEntryContacteeId, setNewEntryContacteeId] = useState("");
@@ -63,17 +66,17 @@ export default function Journal() {
   
     useEffect(() => {
       async function fetchEntries () {
-        if (user == null || user.fname == null){
+        if (user == null || user.id == null){
           return;
         }
         try {
         const [entriesRes, usersRes, semestersRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal/${user.id}`), //changed admin to scoopdinator
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal/${user.id}`), 
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`),
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup`),
         ]);
 
-        const [entries, users, semesterGroups] = await Promise.all([
+        const [entries, loadedUsers, semesterGroups] = await Promise.all([
           entriesRes.json(),
           usersRes.json(),
           semestersRes.json(),
@@ -81,13 +84,14 @@ export default function Journal() {
 
         // Ensure entries is an array before setting it
         setJournalEntries(Array.isArray(entries) ? entries : []);
+        setFilteredJournalEntries(Array.isArray(entries) ? entries : []);
 
         const contacteeMap = {};
-        users.forEach((tuser) => {
-          const fullName = `${tuser.fname} ${tuser.lname}`;
-          contacteeMap[tuser.id] = fullName;
+        loadedUsers.forEach((loadedUser) => {
+          const fullName = `${loadedUser.fname} ${loadedUser.lname}`;
+          contacteeMap[loadedUser.id] = fullName;
         });
-        setContactees(contacteeMap);
+        setUsers(contacteeMap);
 
         const semesterGroupMap = {};
         semesterGroups.forEach((group) => {
@@ -125,8 +129,14 @@ export default function Journal() {
    * @param {*} event
    * @returns {void}
    */
-  const handleFilterContacteeChange = (event) => {
-    setFilterContacteeValue(event.target.value || "");
+  const handleFilterRecipientChange = (event) => {
+    setFilterRecipientValue(event.target.value || "");
+  };
+  const handleFilterSenderChange = (event) => {
+    setFilterSenderValue(event.target.value || "");
+  };
+  const handleFilterTopicChange = (event) => {
+    setFilterTopicValue(event.target.value || "");
   };
 
   /**
@@ -139,39 +149,26 @@ export default function Journal() {
    * @returns {void}
    */
   const handleApplyFilter = async () => {
-
-    // Build the API url for fetching the data
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/journal/`; //changed to scoopdinator
-    if (filterSemesterValue != "" || filterContacteeValue != "") {
-      url += "?";
+    if(filterSemesterValue != "" || filterRecipientValue != "" || filterSenderValue != "" || filterTopicValue != ""){
+      let baseArray = Array.from(journalEntries)
       if (filterSemesterValue) {
-        url += `semester_GroupId=${filterSemesterValue}`;
+        baseArray = baseArray.filter((entry) => entry.semester_GroupId == filterSemesterValue);
+      }  
+      if(filterRecipientValue){
+        baseArray = baseArray.filter((entry) => entry.recipient_id == filterRecipientValue);
       }
-      if (filterSemesterValue != "" && filterContacteeValue != "") {
-        url += `&`;
+      if(filterSenderValue){
+        baseArray = baseArray.filter((entry) => entry.sender_id == filterSenderValue);
       }
-      if (filterContacteeValue) {
-        // For demo purposes and this bit of code,
-        // Don't use "SUPER DUPER ADMIN" in test data.
-        const [fname, lname] = filterContacteeValue.split(" ");
-        url += `contactee_fname=${encodeURIComponent(fname)}&contactee_lname=${encodeURIComponent(lname)}`;
+      if(filterTopicValue){
+        baseArray = baseArray.filter((entry) => entry.topic_id == filterTopicValue);
       }
+      setFilteredJournalEntries(baseArray)
+    }
+    else{
+      setFilteredJournalEntries(Array.from(journalEntries));
     }
 
-    // Fetch filtered journal entries
-    try {
-      console.log(url);
-      const res = await fetch(url);
-      const data = await res.json();
-      console.log(data);
-      // Ensure data is an array before setting it
-      setJournalEntries(Array.isArray(data) ? data : []);
-    } catch (error) { 
-      console.error("Failed to apply filter:", error);
-      setJournalEntries([]); // Set to empty array on error
-    } finally {
-      setFilterDialogOpen(false); // Close the dialog after applying
-    }
   };
 
   // Functions for editing journal entry notes
@@ -325,12 +322,12 @@ export default function Journal() {
           setFilterDialogOpen={setFilterDialogOpen}
           setNewEntryOpen={setNewEntryOpen}
         />
-        {journalEntries.length === 0 ? (
+        {filteredJournalEntries.length === 0 ? (
           <Typography variant="body1">
             No journal entries found. Please check back later.
           </Typography>
         ) : (
-          journalEntries.map((entry) => (
+          filteredJournalEntries.map((entry) => (
             <Card
               key={entry.id}
               square
@@ -433,7 +430,7 @@ export default function Journal() {
 
             <FormControl fullWidth sx={{ mb: 2 }}>
               <Autocomplete
-                options={Object.entries(contactees).map(([id, name]) => ({
+                options={Object.entries(users).map(([id, name]) => ({
                   label: name,
                   value: id,
                 }))}
@@ -444,7 +441,7 @@ export default function Journal() {
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Contactee"
+                    label="Recipient"
                     variant="outlined"
                     fullWidth
                     required
@@ -455,7 +452,7 @@ export default function Journal() {
 
             <FormControl fullWidth sx={{ mb: 2 }}>
               <Autocomplete
-                options={Object.entries(contactees).map(([id, name]) => ({
+                options={Object.entries(users).map(([id, name]) => ({
                   label: name,
                   value: id,
                 }))}
@@ -528,17 +525,51 @@ export default function Journal() {
           </Select>
         </FormControl>
 
-        <Typography>Filter by contactee</Typography>
+        <Typography>Filter by sender</Typography>
+          <FormControl>
+            <Select
+              value={filterSenderValue}
+              onChange={handleFilterSenderChange}
+            >
+              <MenuItem key="none" value="">
+                <em>None</em>
+              </MenuItem>
+              {Object.entries(users).map(([id, name]) => (
+                <MenuItem key={id} value={id}>
+                  {name}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+
+        <Typography>Filter by recipient</Typography>
         <FormControl>
           <Select
-            value={filterContacteeValue}
-            onChange={handleFilterContacteeChange}
+            value={filterRecipientValue}
+            onChange={handleFilterRecipientChange}
           >
             <MenuItem key="none" value="">
               <em>None</em>
             </MenuItem>
-            {Object.entries(contactees).map(([id, name]) => (
-              <MenuItem key={id} value={name}>
+            {Object.entries(users).map(([id, name]) => (
+              <MenuItem key={id} value={id}>
+                {name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Typography>Filter by topic</Typography>
+        <FormControl>
+          <Select
+            value={filterTopicValue}
+            onChange={handleFilterTopicChange}
+          >
+            <MenuItem key="none" value="">
+              <em>None</em>
+            </MenuItem>
+            {Object.entries(users).map(([id, name]) => (
+              <MenuItem key={id} value={id}>
                 {name}
               </MenuItem>
             ))}
@@ -566,7 +597,7 @@ export default function Journal() {
               })}
               <br />
               with{" "}
-              {`${editingEntry.contactee_fname} ${editingEntry.contactee_lname}`}
+              {`${editingEntry.recipient.fname} ${editingEntry.recipient.lname}`}
             </DialogTitle>
             <DialogContent>
               <Box>
