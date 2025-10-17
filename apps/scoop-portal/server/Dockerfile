@@ -7,7 +7,7 @@ COPY server/prisma/models ./server/server/prisma/models/
 
 RUN npm ci 
 
-RUN npx prisma generate --schema=./server/prisma/models/schema.prisma
+RUN npx prisma generate --schema=./server/server/prisma/models/schema.prisma
 
 COPY . .
 
