@@ -8,7 +8,7 @@ import ServicesPage from './pages/services/ServicesPage.jsx';
 import GrantsTable from './pages/grants/grantsPage.jsx';
 import DepartmentsPage from './pages/departments/DepartmentsPage.jsx';
 import CourseSectionsPage from './pages/course_sections/CourseSectionsPage.jsx';
-import StudentSupportPages from './pages/student_support/StudentSupportPage.jsx';
+import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';
 
 function App() {
   const [count, setCount] = useState(0)
