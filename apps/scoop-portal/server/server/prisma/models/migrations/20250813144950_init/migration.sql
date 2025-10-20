@@ -53,12 +53,10 @@ CREATE TABLE `users` (
 CREATE TABLE `JournalEntry` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `date` DATETIME(3) NOT NULL,
-    `contactee_fname` VARCHAR(191) NOT NULL,
-    `contactee_lname` VARCHAR(191) NOT NULL,
+    `recipient_id` VARCHAR(191) NOT NULL,
     `notes` VARCHAR(500) NULL,
-    `journal_owner_fname` VARCHAR(191) NOT NULL,
-    `journal_owner_lname` VARCHAR(191) NOT NULL,
-    `journal_owner_type` VARCHAR(191) NULL,
+    `sender_id` VARCHAR(191) NOT NULL,
+    `topic_id` VARCHAR(191) NOT NULL,
     `semester_GroupId` INTEGER NULL,
 
     PRIMARY KEY (`id`)

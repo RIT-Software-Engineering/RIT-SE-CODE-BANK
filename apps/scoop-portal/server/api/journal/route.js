@@ -31,25 +31,26 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const {
     date,
-    contactee_fname,
-    contactee_lname,
     notes,
-    journal_owner_fname,
-    journal_owner_lname,
-    journal_owner_type,
+    recipient_id,
+    sender_id,
+    topic_id,
     semester_GroupId,
   } = req.body;
   try {
     const newEntry = await prisma.journalEntry.create({
       data: {
         date: new Date(date),
-        contactee_fname,
-        contactee_lname,
         notes,
-        journal_owner_fname,
-        journal_owner_lname,
-        journal_owner_type,
+        recipient_id,
+        sender_id,
+        topic_id,
         semester_GroupId: semester_GroupId ? Number(semester_GroupId) : null,
+      },
+      include:{
+        sender: true,
+        recipient: true,
+        topic: true,
       },
     });
     res
@@ -163,5 +164,88 @@ router.get("/scooployee", async (req, res) => {
     });
   }
 });
+
+/**
+ * GET journal entries for user with id
+ */
+router.get("/:id", async (req, res) => {
+  const {id} = req.params;
+  
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id: id },
+    });
+
+    if(user.type == "scooployee"){
+      const scooployeeEntries = await prisma.journalEntry.findMany({
+        where: {
+          OR: [
+            {sender_id: id},
+            {recipient_id: id},
+          ]
+        },
+        include: {
+          sender: true,
+          recipient: true,
+          topic: true,
+        },
+        })
+      res.status(200).json(scooployeeEntries);
+    }
+    else if(user.type == "scoopdinator"){
+      const dinatorEntries = await prisma.journalEntry.findMany({
+        include: {
+          sender: true,
+          recipient: true,
+          topic: true,
+        },
+      });
+      res.status(200).json(dinatorEntries); 
+    }
+    else if(user.type == "scoopervisor"){
+      const scoopervisorTeams = await prisma.teams.findMany({
+        where: {
+          members: {
+            some: { id: user.id },
+            },
+        },
+        include: { 
+          members: true,
+        } 
+        });
+
+        const memberSet = new Set();
+
+        for (const team of scoopervisorTeams) {
+          for (const member of team.members) {
+              memberSet.add(member.id)
+            }
+          }
+        const memberArray = Array.from(memberSet);
+        //this currently allows Scoopervisors to see entries in which they are the topic 
+        const visorEntries = await prisma.journalEntry.findMany({
+            where: {
+              OR: memberArray.flatMap(memberId => [
+                { sender_id: memberId },
+                { recipient_id: memberId },
+                { topic_id: memberId },
+                ]),
+              },
+            include: {
+              sender: true,
+              recipient: true,
+              topic: true,
+            },
+        });
+        res.status(200).json(visorEntries);       
+      }
+  } catch (error) {
+    console.error("Error fetching the users journal entries: ", error);
+    res.status(500).json({
+      message: "Error fetching users journal entries",
+      error: error.message,
+    });
+  }
+})
 
 export default router;
