@@ -8,26 +8,48 @@ import ServicesPage from './pages/services/ServicesPage.jsx';
 import GrantsTable from './pages/grants';
 import DepartmentsPage from './pages/departments/DepartmentsPage.jsx';
 import CourseSectionsPage from './pages/course_sections/CourseSectionsPage.jsx';
+import { FormControl, FormLabel, InputLabel, MenuItem, Select } from '@mui/material';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [role, setRole] = useState("guest")
+
+  const adminLinks = (
+    <>
+    <Link to="/departments">Departments   </Link>
+    <Link to="/course_sections">Course Sections</Link>
+    </>
+  )
+
+  const adminRoutes = (
+    <>
+    <Route path="/departments" element={<DepartmentsPage/>} />
+    <Route path="/course_sections" element={<CourseSectionsPage/>} />
+    </>
+  )
 
   return (
     <div>
+      <div>
+        <FormControl sx={{display:'grid', justifyItems:'left'}}>
+          <InputLabel id="role_view_label">View</InputLabel>
+          <Select labelId="role_view_label" label="View" defaultValue={"guest"} onChange={(e) => setRole(e.target.value)}>
+            <MenuItem value="admin">Admin</MenuItem>
+            <MenuItem value="guest">Guest</MenuItem>
+          </Select>
+        </FormControl>
+      </div>
       <h1>FPES Portal</h1>
       <BrowserRouter>
         <nav>
           <Link to="/services">Services   </Link>
           <Link to="/grants">Grants   </Link>
-          <Link to="/departments">Departments   </Link>
-          <Link to="/course_sections">Course Sections</Link>
+          {role === 'admin' ? adminLinks : null}
         </nav>
 
         <Routes>
           <Route path="/services" element={<ServicesPage/>} />
           <Route path="/grants" element={<GrantsTable />} />
-          <Route path="/departments" element={<DepartmentsPage/>} />
-          <Route path="/course_sections" element={<CourseSectionsPage/>} />
+          {role === 'admin' ? adminRoutes : null}
         </Routes>
       </BrowserRouter>
     </div>
