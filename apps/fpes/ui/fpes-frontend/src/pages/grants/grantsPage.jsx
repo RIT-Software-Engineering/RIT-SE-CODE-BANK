@@ -3,7 +3,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
 import axios from "axios";
 import { TextField, Button, Box, Typography, Stack, IconButton, Dialog, DialogTitle, DialogContent, DialogActions} from "@mui/material";
-import { getGrants } from '../api/grants_api_imports';
+import { getGrants } from '../../api/grants_api_imports';
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 
@@ -25,10 +25,13 @@ export default function GrantsTable() {
   const [openEditDialog, setOpenEditDialog] = useState(false); 
 
   const fetchGrants = async () => {
-      getGrants()
-      .then((response) => {
-          setGrants(response.data);
-      })
+     try {
+      const response = await getGrants()
+      console.log(response.data); 
+      setGrants(response.data);
+      } catch (err) {
+        console.error(err);
+      }
   }
 
   useEffect(() => {
@@ -43,7 +46,7 @@ export default function GrantsTable() {
   const handleSubmit = async (e) => {
   e.preventDefault();
   try {
-    await axios.post("http://localhost:5173/grants", formData);
+    await axios.post("http://localhost:3000/grants", formData);
     setFormData({
       title: "",
       funder: "",
@@ -60,10 +63,10 @@ export default function GrantsTable() {
   }
 };
 
-  const handleDelete = async (grant_id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm("Are you sure?")) return;
     try {
-      await axios.delete(`http://localhost:5173/grants/${grant_id}`);
+      await axios.delete(`http://localhost:3000/grants/${id}`);
       fetchGrants();
     } catch (err) {
       console.error(err);
@@ -87,7 +90,7 @@ export default function GrantsTable() {
 
   const handleEditSave = async () => {
     try {
-      await axios.put(`http://localhost:5173/grants/${editData.grant_id}`, editData);
+      await axios.put(`http://localhost:3000/grants/${editData.id}`, editData);
       handleEditClose();
       fetchGrants();
     } catch (err) {
@@ -115,7 +118,7 @@ export default function GrantsTable() {
           </IconButton>
           <IconButton
             color="error"
-            onClick={() => handleDelete(params.row.grant_id)}
+            onClick={() => handleDelete(params.row.id)}
           >
             <DeleteIcon />
           </IconButton>
@@ -190,7 +193,7 @@ export default function GrantsTable() {
         <DataGrid
           rows={grants}
           columns={columns}
-          getRowId={(row) => row.grant_id}
+          getRowId={(row) => row.id}
           initialState={{ pagination: { paginationModel } }}
           pageSizeOptions={[5]}
           sx={{ border: 0 }} />
