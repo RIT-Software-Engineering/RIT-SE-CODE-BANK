@@ -31,8 +31,26 @@ model Professor {
   email     String
   course    course[]
   tbteamset tbteamset[]
+  courseTemplates CourseTemplate[]
 
   @@map("professors")
+}
+model CourseTemplate {
+  id           Int       @id @default(autoincrement())
+  name         String
+  semester     String
+  weeks        Int
+  assignments  Int
+  exams        Int
+  labs         Int
+  projects     Int
+  professorId  Int
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  professor    Professor @relation(fields: [professorId], references: [id])
+
+  @@index([professorId], map: "CourseTemplate_professorId_fkey")
+  @@map("course_templates")
 }
 
 model course {
