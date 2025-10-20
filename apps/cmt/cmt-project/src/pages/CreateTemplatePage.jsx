@@ -6,6 +6,7 @@ import "../styles/course.css";
 function CreateTemplatePage() {
   const [showForm, setShowForm] = useState(false);
   const [templates, setTemplates] = useState([]);
+  const [editingTemplate, setEditingTemplate] = useState(null);
   const [templateName, setTemplateName] = useState("");
   const [semester, setSemester] = useState("");
   const [numWeeks, setNumWeeks] = useState("");
@@ -14,6 +15,7 @@ function CreateTemplatePage() {
   const [numLabs, setNumLabs] = useState("");
   const [numProjects, setNumProjects] = useState("");
   const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
 
   const API_BASE = "http://localhost:5000/api";
 
@@ -35,31 +37,87 @@ function CreateTemplatePage() {
     }
   };
 
+  const handleEdit = (template) => {
+    setEditingTemplate(template);
+    setTemplateName(template.name);
+    setSemester(template.semester);
+    setNumWeeks(template.weeks.toString());
+    setNumAssignments(template.assignments.toString());
+    setNumExams(template.exams.toString());
+    setNumLabs(template.labs.toString());
+    setNumProjects(template.projects.toString());
+    setShowForm(true);
+  };
+
+  const handleDelete = async (templateId) => {
+    if (!window.confirm("Are you sure you want to delete this template?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/template/${templateId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete template");
+      }
+
+      setAlertMessage("Template deleted successfully!");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 6000);
+
+      // Refresh the templates list
+      fetchTemplates();
+    } catch (err) {
+      console.error(err.message);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const templateResponse = await fetch(`${API_BASE}/template`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: templateName,
-          semester: semester,
-          weeks: numWeeks,
-          assignments: numAssignments,
-          exams: numExams,
-          labs: numLabs,
-          projects: numProjects,
-          professorId: 1, // TODO: REPLACE WITH REAL PROFESSORID
-        }),
-      });
+      const templateData = {
+        name: templateName,
+        semester: semester,
+        weeks: numWeeks,
+        assignments: numAssignments,
+        exams: numExams,
+        labs: numLabs,
+        projects: numProjects,
+        professorId: 1, // TODO: REPLACE WITH REAL PROFESSORID
+      };
 
-      if (!templateResponse.ok) {
-        throw new Error("Failed to create template");
+      let templateResponse;
+
+      if (editingTemplate) {
+        // Update existing template
+        templateResponse = await fetch(
+          `${API_BASE}/template/${editingTemplate.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(templateData),
+          }
+        );
+        setAlertMessage("Template updated successfully!");
+      } else {
+        // Create new template
+        templateResponse = await fetch(`${API_BASE}/template`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(templateData),
+        });
+        setAlertMessage("Template created successfully!");
       }
 
-      const templateData = await templateResponse.json();
-      console.log("New template created: ", templateData);
+      if (!templateResponse.ok) {
+        throw new Error("Failed to save template");
+      }
+
+      const responseData = await templateResponse.json();
+      console.log("Template saved: ", responseData);
 
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 6000);
@@ -72,6 +130,7 @@ function CreateTemplatePage() {
       setNumExams("");
       setNumLabs("");
       setNumProjects("");
+      setEditingTemplate(null);
 
       // Refresh templates list and hide form
       fetchTemplates();
@@ -79,6 +138,19 @@ function CreateTemplatePage() {
     } catch (err) {
       console.error(err.message);
     }
+  };
+
+  const handleCancel = () => {
+    // Clear form fields
+    setTemplateName("");
+    setSemester("");
+    setNumWeeks("");
+    setNumAssignments("");
+    setNumExams("");
+    setNumLabs("");
+    setNumProjects("");
+    setEditingTemplate(null);
+    setShowForm(false);
   };
 
   // Template list view
@@ -94,7 +166,7 @@ function CreateTemplatePage() {
             onClose={() => setShowAlert(false)}
             dismissible
           >
-            ✅ Template created successfully!
+            ✅ {alertMessage}
           </Alert>
         )}
 
@@ -132,8 +204,20 @@ function CreateTemplatePage() {
                       <br />
                       <strong>Projects:</strong> {template.projects}
                     </Card.Text>
-                    <Button variant="outline-primary" size="sm">
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => handleEdit(template)}
+                    >
                       Edit Template
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleDelete(template.id)}
+                    >
+                      Delete
                     </Button>
                   </Card.Body>
                 </Card>
@@ -148,15 +232,11 @@ function CreateTemplatePage() {
   // Form view
   return (
     <>
-      <Button
-        variant="secondary"
-        className="mb-3"
-        onClick={() => setShowForm(false)}
-      >
+      <Button variant="secondary" className="mb-3" onClick={handleCancel}>
         ← Back to Templates
       </Button>
 
-      <h1>Create a Course Template</h1>
+      <h1>{editingTemplate ? "Edit Template" : "Create a Course Template"}</h1>
 
       {showAlert && (
         <Alert
@@ -164,7 +244,7 @@ function CreateTemplatePage() {
           onClose={() => setShowAlert(false)}
           dismissible
         >
-          ✅ Template created successfully!
+          ✅ {alertMessage}
         </Alert>
       )}
 
@@ -270,7 +350,7 @@ function CreateTemplatePage() {
 
         <div id="button-wrapper">
           <Button id="form-button" type="submit">
-            Create Template
+            {editingTemplate ? "Update Template" : "Create Template"}
           </Button>
         </div>
       </Form>

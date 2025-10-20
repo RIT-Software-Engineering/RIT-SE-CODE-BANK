@@ -35,6 +35,7 @@ model Professor {
 
   @@map("professors")
 }
+
 model CourseTemplate {
   id           Int       @id @default(autoincrement())
   name         String
