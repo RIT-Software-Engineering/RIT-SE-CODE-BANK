@@ -5,10 +5,11 @@ import './App.css'
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import ServicesPage from './pages/services/ServicesPage.jsx';
-import GrantsTable from './pages/grants';
+import GrantsTable from './pages/grants/grantsPage.jsx';
 import DepartmentsPage from './pages/departments/DepartmentsPage.jsx';
 import CourseSectionsPage from './pages/course_sections/CourseSectionsPage.jsx';
 import { FormControl, FormLabel, InputLabel, MenuItem, Select } from '@mui/material';
+import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';
 
 function App() {
   const [role, setRole] = useState("guest")
@@ -44,12 +45,14 @@ function App() {
           <Link to="/services">Services   </Link>
           <Link to="/grants">Grants   </Link>
           {role === 'admin' ? adminLinks : null}
+          <Link to="/student_support"> Student Support</Link>
         </nav>
 
         <Routes>
           <Route path="/services" element={<ServicesPage/>} />
           <Route path="/grants" element={<GrantsTable />} />
           {role === 'admin' ? adminRoutes : null}
+          <Route path="/student_support" element={<StudentSupportPage/>} />
         </Routes>
       </BrowserRouter>
     </div>
