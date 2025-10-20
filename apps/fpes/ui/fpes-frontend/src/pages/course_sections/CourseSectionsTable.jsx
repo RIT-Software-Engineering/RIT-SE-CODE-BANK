@@ -32,7 +32,7 @@ export default function CourseSectionsTable({course_sections, setCourseSections}
     // Updates state to remove record
     const removeRecord = (id) => {
         axios.delete("http://localhost:3000/course_sections" + `/${id}`)
-        const news = course_sections.filter(record => record.id != (id));
+        const newCourseSections = course_sections.filter(record => record.id != (id));
         setCourseSections(newCourseSections);
         setDeleteModalOpen(false);
     }
@@ -42,6 +42,7 @@ export default function CourseSectionsTable({course_sections, setCourseSections}
         {field : "course_code", headerName : "Course", flex:1},
         {field : "days_of_the_week", headerName : "Class Days", flex:1},
         {field : "room_location", headerName : "Location", flex:1},
+        {field : "number_of_students", headerName : "Number of Students", flex:1},
         {field : "semester", headerName : "Semester", flex:1},
         {field : "scholastic_year", headerName : "Scholastic Year", flex:1},
         {field : "delete", headerName : "", width: 40, renderCell:(params) => {

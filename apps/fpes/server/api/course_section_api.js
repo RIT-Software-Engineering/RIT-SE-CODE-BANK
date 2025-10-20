@@ -7,7 +7,7 @@ async function getAllCourseSections(){
         connection = await pool.getConnection();
         const results = await connection.query(
             `SELECT cs.id, c.course_name, c.course_code,
-            cs.days_of_the_week, cs.room_location, cs.semester,
+            cs.days_of_the_week, cs.number_of_students, cs.room_location, cs.semester,
             cs.scholastic_year
             FROM course_sections cs
             INNER JOIN courses c
@@ -101,7 +101,7 @@ async function createCourseSection(body){
 
         const results = await connection.query(
             `INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year)
-            VALUES (?,?,?,?,?,?)`,
+            VALUES (?,?,?,?,?,?) RETURNING id`,
             [course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year]
         );
 
