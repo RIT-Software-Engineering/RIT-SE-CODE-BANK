@@ -139,7 +139,6 @@ export default function AdminUsersPage() {
    * @returns {React.ReactNode} The JSX for the main content area.
    */
   const renderContent = () => {
-    console.log(groupedUsers)
     // Show a loading spinner while data is being fetched.
     if (isLoading) {
       return (

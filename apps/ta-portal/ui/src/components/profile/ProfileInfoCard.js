@@ -1,14 +1,21 @@
 // components/Profile/ProfileInfoCard.js
 'use client';
 
-import React from 'react';
+import React, {useState} from 'react';
 import EditButton from '../common/buttons/EditButton';
 import {
   Box,
   Paper,
   Typography,
   Divider,
+  Button,
+  Modal,
+  Dialog,
+  DialogContent,
 } from '@mui/material';
+import ConfirmationModal from '../common/models/ConfirmationModal';
+import ApplicationCard from '../applications/EmployerAndAdmin/ApplicationCard';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * A component that displays a label and a value
@@ -43,14 +50,25 @@ export default function ProfileInfoCard({
   onEdit,
 }) {
   if (!profileData) return null;
+  const { currentUser } = useAuth();
+  const [isMadeOffersModalOpen, setIsMadeOffersModalOpen] = useState(false);
+  const [isToMakeOffersModalOpen, setIsToMakeOffersModalOpen] = useState(false);
+
 
   const yearLevel = profileData.candidate?.graduateStatus === "GRADUATE" ? "Graduate" : profileData.candidate?.year;
-  const getTotalOffers=(data)=>{
+  const getOffersToMake=(data)=>{
     let offers=0;
     const positions=data.employer.jobPostions
     positions.map((position) => {
-      if(position.jobPositionStatus!="INACTIVE"&&position.jobPositionStatus!="ONHOLD"){
+      if(position.jobPositionStatus=="OPEN"||position.jobPositionStatus=="FILLED"){
         offers=offers+position.maxTAs
+        if(position.jobPositionApplicationHistory.length!=0){
+          position.jobPositionApplicationHistory.map((application) => {
+            if(application.jobApplicationStatus=="HIRED"||application.jobApplicationStatus=="ACCEPTED_OFFER"||application.jobApplicationStatus=="PENDING_OFFER"){
+              offers=offers-1;
+            }
+          });
+        }
       };
     });
     return offers;
@@ -59,7 +77,7 @@ export default function ProfileInfoCard({
     let offers=0;
     const positions=data.employer.jobPostions
     positions.map((position) => {
-      if(position.jobPositionApplicationHistory.length!=0){
+      if(position.jobPositionApplicationHistory.length>0){
         position.jobPositionApplicationHistory.map((application) => {
           if(application.jobApplicationStatus=="HIRED"||application.jobApplicationStatus=="ACCEPTED_OFFER"||application.jobApplicationStatus=="PENDING_OFFER"){
             offers=offers+1;
@@ -68,7 +86,39 @@ export default function ProfileInfoCard({
       }
     });
     return offers;
-  }
+  };
+
+  const renderMadeOffersModalContent=(positions)=> {
+    return positions.map((position) => {
+      if(position.jobPositionApplicationHistory.length>0){
+        // return(
+        //   <p key={position.id}> {position.courseCode}.</p>
+        // );
+        return position.jobPositionApplicationHistory.map((application) => {
+          console.log(application)
+          if(application.jobApplicationStatus=="HIRED"||application.jobApplicationStatus=="ACCEPTED_OFFER"||application.jobApplicationStatus=="PENDING_OFFER"){
+            return (
+              <ApplicationCard
+                currentUser={currentUser}
+                key={application.username+application.jobPositionId}
+                jobPosition={position}
+                application={application}
+              />
+            );
+          }
+        });
+      }
+    });
+  };
+  const handleMadeOffersModal=()=>{
+    setIsToMakeOffersModalOpen(false);
+    if(isMadeOffersModalOpen==true){
+      setIsMadeOffersModalOpen(false);
+    }
+    else{
+      setIsMadeOffersModalOpen(true);
+    }
+  };
   return (
     <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -93,12 +143,40 @@ export default function ProfileInfoCard({
         )}
         {profileData.role=="EMPLOYER"&&(
           <Box>
-            <InfoItem label="Offers Made" value={getMadeOffers(profileData)} />
-            <InfoItem label="Total Offers" value={getTotalOffers(profileData)} />
+            <Typography variant="body2" color="text.secondary">
+              Offers Made:
+            </Typography> 
+            <Button onClick={() => handleMadeOffersModal()}>{getMadeOffers(profileData)} </Button>
+            <Modal
+              open={isMadeOffersModalOpen}
+              onClose={handleMadeOffersModal}
+              aria-labelledby="made-offers-modal-title"
+              sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+              }}
+            >
+              <Paper sx={{
+                  p: {xs: 2, md: 4},
+                  width: '90%',
+                  maxWidth: '800px',
+                  maxHeight: '90vh',
+                  overflowY: 'auto'
+              }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {renderMadeOffersModalContent(profileData.employer.jobPostions)}
+                </Box>
+                <Button onClick={() => handleMadeOffersModal()}>close </Button>
+              </Paper>
+            </Modal>
+            <Typography variant="body2" color="text.secondary">
+              Offers To Make:
+            </Typography> 
+            <Button>{getOffersToMake(profileData)} </Button>
           </Box>
-          
         )}
-      </Box>
+      </Box>  
     </Paper>
   );
 }

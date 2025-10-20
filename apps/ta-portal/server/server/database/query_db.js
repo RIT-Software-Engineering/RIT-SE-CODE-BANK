@@ -1255,7 +1255,9 @@ async function getUserProfile(username) {
             include: {
               resumes: true,
               courseHistory: { include: { course: true } },
-              jobPositionApplicationHistory: { include: { jobPosition: true } },
+              jobPositionApplicationHistory: { 
+                include: { jobPosition: true }
+              },
               employee: {
                 include: {
                   jobPositionHistory: true,
@@ -1273,7 +1275,17 @@ async function getUserProfile(username) {
         include: {
           employer: {
             include: {
-              jobPostions: { include: { course: true, jobSchedules: true, jobPositionApplicationHistory:true } },
+              jobPostions: { 
+                include: { 
+                  course: true, 
+                  jobSchedules: true, 
+                  jobPositionApplicationHistory: {
+                    include: {
+                      resume: true,
+                    }
+                  }
+                } 
+              },
             },
           },
         },
