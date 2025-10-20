@@ -225,6 +225,9 @@ export default function Journal() {
       setJournalEntries((prev) =>
         prev.map((e) => (e.id === entry.id ? { ...e, notes: editValue } : e))
       );
+      setFilteredJournalEntries((prev) =>
+        prev.map((e) => (e.id === entry.id ? { ...e, notes: editValue } : e))
+      );
 
       return { message: "Notes saved successfully." };
     } catch (error) {
@@ -278,7 +281,9 @@ export default function Journal() {
 
       const data = await res.json();
       if (data.entry) {
-        setJournalEntries((prev) => [data.entry, ...prev]);
+        setJournalEntries((prev) => [...prev, data.entry]);
+        setFilteredJournalEntries((prev) => [...prev, data.entry]);
+        handleApplyFilter();
       } else {
         console.warn("No entry returned from API, or unexpected structure.");
         throw new Error("API did not return the expected entry object.");

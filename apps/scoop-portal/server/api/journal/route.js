@@ -47,6 +47,11 @@ router.post("/", async (req, res) => {
         topic_id,
         semester_GroupId: semester_GroupId ? Number(semester_GroupId) : null,
       },
+      include:{
+        sender: true,
+        recipient: true,
+        topic: true,
+      },
     });
     res
       .status(200)
