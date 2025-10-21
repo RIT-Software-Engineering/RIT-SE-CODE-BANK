@@ -18,14 +18,13 @@ function App() {
   const adminLinks = (
     <>
     <Link to="/departments">Departments   </Link>
-    <Link to="/course_sections">Course Sections   </Link>
+    <Link to="/courses">Courses</Link>
     </>
   )
 
   const adminRoutes = (
     <>
     <Route path="/departments" element={<DepartmentsPage/>} />
-    <Route path="/course_sections" element={<CourseSectionsPage/>} />
     <Route path="/courses" element={<CoursesPage />} />
     </>
   )
@@ -47,6 +46,7 @@ function App() {
           <Link to="/services">Services   </Link>
           <Link to="/grants">Grants   </Link>
           {role === 'admin' ? adminLinks : null}
+          <Link to="/course_sections">Course Sections   </Link>
           <Link to="/student_support">Student Support   </Link>
           <Link to="/courses">Courses   </Link>
         </nav>
@@ -55,6 +55,7 @@ function App() {
           <Route path="/services" element={<ServicesPage/>} />
           <Route path="/grants" element={<GrantsTable />} />
           {role === 'admin' ? adminRoutes : null}
+          <Route path="/course_sections" element={<CourseSectionsPage/>} />
           <Route path="/student_support" element={<StudentSupportPage/>} />
           <Route path="/courses" element={<CoursesPage />} />
         </Routes>
