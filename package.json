@@ -8,6 +8,7 @@
     "stopportal": "node ./scripts/stopportal.js"
   },
   "dependencies": {
+    "axios": "^1.12.2",
     "cors": "^2.8.5"
   }
 }
