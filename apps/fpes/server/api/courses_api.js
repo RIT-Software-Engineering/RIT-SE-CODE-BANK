@@ -6,7 +6,9 @@ async function getAllCourses() {
   let conn;
   try {
     conn = await pool.getConnection();
-    const rows = await conn.query('SELECT * FROM courses');
+    const rows = await conn.query(
+      'SELECT CAST(id AS CHAR) AS id, course_code, course_name, credits, department_id FROM courses'
+    );
     return rows;
   } finally {
     if (conn) conn.release();
@@ -18,7 +20,10 @@ async function getCourseById(id) {
   let conn;
   try {
     conn = await pool.getConnection();
-    const rows = await conn.query('SELECT * FROM courses WHERE id = ?', [id]);
+    const rows = await conn.query(
+      'SELECT CAST(id AS CHAR) AS id, course_code, course_name, credits, department_id FROM courses WHERE id = ?',
+      [id]
+    );
     return rows[0] || null;
   } finally {
     if (conn) conn.release();
@@ -33,9 +38,14 @@ async function addCourse({ course_code, course_name, credits, department_id }) {
     const result = await conn.query(
       `INSERT INTO courses (course_code, course_name, credits, department_id)
        VALUES (?, ?, ?, ?)`,
-      [course_code, course_name, credits, department_id]
+      [
+        course_code,
+        course_name,
+        Number(credits),            // <-- ensure number
+        department_id ?? null       // <-- allow null if not provided
+      ]
     );
-    return { id: result.insertId };
+    return { id: String(result.insertId) }; // <-- avoid BigInt JSON issue
   } finally {
     if (conn) conn.release();
   }
@@ -49,8 +59,17 @@ async function updateCourse(id, data = {}) {
 
   for (const key of allowed) {
     if (data[key] !== undefined) {
+      let val = data[key];
+
+      if (key === 'credits' && val !== null) {
+        val = Number(val);          // <-- normalize to number
+      }
+      if (key === 'department_id' && (val === '' || val === undefined)) {
+        val = null;                 // <-- empty => null
+      }
+
       sets.push(`${key} = ?`);
-      params.push(data[key]);
+      params.push(val);
     }
   }
   if (sets.length === 0) return { changedRows: 0 };
