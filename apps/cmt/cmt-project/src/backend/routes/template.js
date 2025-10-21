@@ -58,7 +58,7 @@ router.get("/professor/:professorId", async (req, res) => {
   }
 });
 
-// GET: Get a single template by ID
+// GET: Get a single template by ID with its items
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -66,6 +66,9 @@ router.get("/:id", async (req, res) => {
     const template = await prisma.courseTemplate.findUnique({
       where: {
         id: parseInt(id),
+      },
+      include: {
+        templateItems: true,
       },
     });
 
@@ -124,6 +127,59 @@ router.delete("/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting template:", error);
     res.status(500).json({ error: "Failed to delete template" });
+  }
+});
+
+// POST: Create or update template items (assignments, exams, labs, projects)
+router.post("/:id/items", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { items } = req.body; // Array of items with type, name, dueDate, description
+
+    // Delete existing items for this template
+    await prisma.templateItem.deleteMany({
+      where: {
+        templateId: parseInt(id),
+      },
+    });
+
+    // Create new items
+    const createdItems = await prisma.templateItem.createMany({
+      data: items.map((item) => ({
+        templateId: parseInt(id),
+        type: item.type,
+        name: item.name,
+        dueDate: item.dueDate ? new Date(item.dueDate) : null,
+        description: item.description || null,
+      })),
+    });
+
+    res.json({
+      message: "Template items saved successfully",
+      count: createdItems.count,
+    });
+  } catch (error) {
+    console.error("Error saving template items:", error);
+    res.status(500).json({ error: "Failed to save template items" });
+  }
+});
+
+// GET: Get all items for a template
+router.get("/:id/items", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const items = await prisma.templateItem.findMany({
+      where: {
+        templateId: parseInt(id),
+      },
+      orderBy: [{ type: "asc" }, { dueDate: "asc" }],
+    });
+
+    res.json(items);
+  } catch (error) {
+    console.error("Error fetching template items:", error);
+    res.status(500).json({ error: "Failed to fetch template items" });
   }
 });
 

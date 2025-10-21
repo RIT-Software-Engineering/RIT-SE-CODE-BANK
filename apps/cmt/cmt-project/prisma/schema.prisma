@@ -49,11 +49,26 @@ model CourseTemplate {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   professor    Professor @relation(fields: [professorId], references: [id])
+  templateItems TemplateItem[]
 
   @@index([professorId], map: "CourseTemplate_professorId_fkey")
   @@map("course_templates")
 }
 
+model TemplateItem {
+  id         Int            @id @default(autoincrement())
+  templateId Int
+  type       String         // "assignment", "exam", "lab", "project"
+  name       String
+  dueDate    DateTime?
+  description String?
+  template   CourseTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([templateId], map: "TemplateItem_templateId_fkey")
+  @@map("template_items")
+}
 model course {
   id           String         @unique(map: "Course_id_key")
   name         String

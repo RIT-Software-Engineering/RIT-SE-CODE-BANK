@@ -5,6 +5,8 @@ import "../styles/course.css";
 
 function CreateTemplatePage() {
   const [showForm, setShowForm] = useState(false);
+  const [showDateConfig, setShowDateConfig] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [templates, setTemplates] = useState([]);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [templateName, setTemplateName] = useState("");
@@ -26,7 +28,7 @@ function CreateTemplatePage() {
 
   const fetchTemplates = async () => {
     try {
-      const response = await fetch(`${API_BASE}/template/professor/1`); // TODO: REPLACE WITH REAL PROFESSORID
+      const response = await fetch(`${API_BASE}/template/professor/1`);
       if (!response.ok) {
         throw new Error("Failed to fetch templates");
       }
@@ -49,6 +51,11 @@ function CreateTemplatePage() {
     setShowForm(true);
   };
 
+  const handleConfigureDates = (template) => {
+    setSelectedTemplate(template);
+    setShowDateConfig(true);
+  };
+
   const handleDelete = async (templateId) => {
     if (!window.confirm("Are you sure you want to delete this template?")) {
       return;
@@ -67,7 +74,6 @@ function CreateTemplatePage() {
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 6000);
 
-      // Refresh the templates list
       fetchTemplates();
     } catch (err) {
       console.error(err.message);
@@ -86,13 +92,12 @@ function CreateTemplatePage() {
         exams: numExams,
         labs: numLabs,
         projects: numProjects,
-        professorId: 1, // TODO: REPLACE WITH REAL PROFESSORID
+        professorId: 1,
       };
 
       let templateResponse;
 
       if (editingTemplate) {
-        // Update existing template
         templateResponse = await fetch(
           `${API_BASE}/template/${editingTemplate.id}`,
           {
@@ -103,7 +108,6 @@ function CreateTemplatePage() {
         );
         setAlertMessage("Template updated successfully!");
       } else {
-        // Create new template
         templateResponse = await fetch(`${API_BASE}/template`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -122,7 +126,6 @@ function CreateTemplatePage() {
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 6000);
 
-      // Clear form fields
       setTemplateName("");
       setSemester("");
       setNumWeeks("");
@@ -132,7 +135,6 @@ function CreateTemplatePage() {
       setNumProjects("");
       setEditingTemplate(null);
 
-      // Refresh templates list and hide form
       fetchTemplates();
       setShowForm(false);
     } catch (err) {
@@ -141,7 +143,6 @@ function CreateTemplatePage() {
   };
 
   const handleCancel = () => {
-    // Clear form fields
     setTemplateName("");
     setSemester("");
     setNumWeeks("");
@@ -152,6 +153,27 @@ function CreateTemplatePage() {
     setEditingTemplate(null);
     setShowForm(false);
   };
+
+  // Date Configuration View
+  if (showDateConfig && selectedTemplate) {
+    return (
+      <DateConfigView
+        template={selectedTemplate}
+        onBack={() => {
+          setShowDateConfig(false);
+          setSelectedTemplate(null);
+        }}
+        onSave={() => {
+          setAlertMessage("Dates configured successfully!");
+          setShowAlert(true);
+          setTimeout(() => setShowAlert(false), 6000);
+          setShowDateConfig(false);
+          setSelectedTemplate(null);
+        }}
+        apiBase={API_BASE}
+      />
+    );
+  }
 
   // Template list view
   if (!showForm) {
@@ -204,21 +226,29 @@ function CreateTemplatePage() {
                       <br />
                       <strong>Projects:</strong> {template.projects}
                     </Card.Text>
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleEdit(template)}
-                    >
-                      Edit Template
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleDelete(template.id)}
-                    >
-                      Delete
-                    </Button>
+                    <div className="d-flex gap-2 flex-wrap">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleConfigureDates(template)}
+                      >
+                        Configure Dates
+                      </Button>
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={() => handleEdit(template)}
+                      >
+                        Edit Template
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => handleDelete(template.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </Card.Body>
                 </Card>
               </Col>
@@ -351,6 +381,203 @@ function CreateTemplatePage() {
         <div id="button-wrapper">
           <Button id="form-button" type="submit">
             {editingTemplate ? "Update Template" : "Create Template"}
+          </Button>
+        </div>
+      </Form>
+    </>
+  );
+}
+
+// Date Configuration Component
+function DateConfigView({ template, onBack, onSave, apiBase }) {
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    initializeItems();
+    loadExistingItems();
+  }, []);
+
+  const initializeItems = () => {
+    const newItems = [];
+
+    // Create assignment items
+    for (let i = 1; i <= template.assignments; i++) {
+      newItems.push({
+        type: "assignment",
+        name: `Assignment ${i}`,
+        dueDate: "",
+        description: "",
+      });
+    }
+
+    // Create exam items
+    for (let i = 1; i <= template.exams; i++) {
+      newItems.push({
+        type: "exam",
+        name: `Exam ${i}`,
+        dueDate: "",
+        description: "",
+      });
+    }
+
+    // Create lab items
+    for (let i = 1; i <= template.labs; i++) {
+      newItems.push({
+        type: "lab",
+        name: `Lab ${i}`,
+        dueDate: "",
+        description: "",
+      });
+    }
+
+    // Create project items
+    for (let i = 1; i <= template.projects; i++) {
+      newItems.push({
+        type: "project",
+        name: `Project ${i}`,
+        dueDate: "",
+        description: "",
+      });
+    }
+
+    setItems(newItems);
+  };
+
+  const loadExistingItems = async () => {
+    try {
+      const response = await fetch(`${apiBase}/template/${template.id}/items`);
+      if (response.ok) {
+        const existingItems = await response.json();
+        if (existingItems.length > 0) {
+          setItems(
+            existingItems.map((item) => ({
+              ...item,
+              dueDate: item.dueDate
+                ? new Date(item.dueDate).toISOString().split("T")[0]
+                : "",
+            }))
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Error loading existing items:", err);
+    }
+  };
+
+  const updateItem = (index, field, value) => {
+    const updatedItems = [...items];
+    updatedItems[index][field] = value;
+    setItems(updatedItems);
+  };
+
+  const handleSave = async () => {
+    try {
+      const response = await fetch(`${apiBase}/template/${template.id}/items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save dates");
+      }
+
+      onSave();
+    } catch (err) {
+      console.error("Error saving dates:", err);
+      alert("Failed to save dates. Please try again.");
+    }
+  };
+
+  const groupedItems = {
+    assignment: items.filter((item) => item.type === "assignment"),
+    exam: items.filter((item) => item.type === "exam"),
+    lab: items.filter((item) => item.type === "lab"),
+    project: items.filter((item) => item.type === "project"),
+  };
+
+  return (
+    <>
+      <Button variant="secondary" className="mb-3" onClick={onBack}>
+        ← Back to Templates
+      </Button>
+
+      <h1>Configure Dates for {template.name}</h1>
+      <p className="text-muted">Set due dates and descriptions for each item</p>
+
+      <Form>
+        {Object.entries(groupedItems).map(([type, typeItems]) =>
+          typeItems.length > 0 ? (
+            <div key={type} className="mb-4">
+              <h3 className="text-capitalize">{type}s</h3>
+              {typeItems.map((item, idx) => {
+                const globalIndex = items.findIndex(
+                  (i) => i.type === type && i.name === item.name
+                );
+                return (
+                  <Card key={idx} className="mb-3">
+                    <Card.Body>
+                      <Row>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Name</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={item.name}
+                              onChange={(e) =>
+                                updateItem(globalIndex, "name", e.target.value)
+                              }
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Due Date</Form.Label>
+                            <Form.Control
+                              type="date"
+                              value={item.dueDate}
+                              onChange={(e) =>
+                                updateItem(
+                                  globalIndex,
+                                  "dueDate",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Description (Optional)</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={item.description}
+                              onChange={(e) =>
+                                updateItem(
+                                  globalIndex,
+                                  "description",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Brief description..."
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : null
+        )}
+
+        <div className="d-flex gap-2">
+          <Button variant="primary" onClick={handleSave}>
+            Save Dates
+          </Button>
+          <Button variant="secondary" onClick={onBack}>
+            Cancel
           </Button>
         </div>
       </Form>
