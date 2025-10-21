@@ -57,7 +57,6 @@ function App() {
           {role === 'admin' ? adminRoutes : null}
           <Route path="/course_sections" element={<CourseSectionsPage/>} />
           <Route path="/student_support" element={<StudentSupportPage/>} />
-          <Route path="/courses" element={<CoursesPage />} />
         </Routes>
       </BrowserRouter>
     </div>
