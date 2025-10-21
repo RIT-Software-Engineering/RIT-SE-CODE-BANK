@@ -48,7 +48,6 @@ function App() {
           {role === 'admin' ? adminLinks : null}
           <Link to="/course_sections">Course Sections   </Link>
           <Link to="/student_support">Student Support   </Link>
-          <Link to="/courses">Courses   </Link>
         </nav>
 
         <Routes>
