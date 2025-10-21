@@ -46,40 +46,55 @@ export default function ServicesForm({services, setServices, defaultValues, isUp
             error={errors.title} 
             helperText={errors.title?.message} 
             placeholder="Service Title" 
+            sx={{width:"80%"}}
             />
             </Grid>
             <Grid size={6}>
             <TextField 
-            {...register("hours_worked", {required: {value: true, message:"Hours Worked is required", min: {value : 5, message : "Must be greater than 5 hours worked"}}})} 
-            type="number" 
+            {...register("hours_worked", {
+                required: {value: true, message:"Hours Worked is required"}, 
+                min: {value : 5, message : "Must be greater than 5 hours worked"}, 
+                valueAsNumber: {value:true, message:"Must be a number"}
+                })
+            } 
             label="Hours Worked" 
             error={errors.hours_worked} 
             helperText={errors.hours_worked?.message} 
             placeholder="Hours Worked"
+            sx={{width:"80%"}}
             />
             </Grid>
             <Grid size={6}>
             <TextField 
-            {...register("form_id", {required:{value : true, message : "Form ID is required"}, min: {value : 1, message : "Must be >= 1"}, type : {value : "number", message : "Must be a number"}})} 
-            type="number" 
+            {...register("form_id", {
+                required:{value : true, message : "Form ID is required"}, 
+                min: {value : 1, message : "Must be >= 1"}, 
+                valueAsNumber:true,
+                pattern: {
+                    value: /^[0-9]+$/,
+                    message: 'Please enter a number',
+                }
+            })
+            }
             label="Form ID" 
             error={errors.form_id} 
             helperText={errors.form_id?.message} 
             placeholder="Form ID"
+            sx={{width:"80%"}}
             />
             </Grid>
 
             <Grid size={6}>
-            <Select {...register("service_type")} defaultValue={"internal"} >
-                <MenuItem value="internal">Internal</MenuItem>
-                <MenuItem value="external">External</MenuItem>
-            </Select>
-            </Grid>
+                <TextField sx={{width:"80%"}} {...register("service_type")} select defaultValue={"internal"} >
+                    <MenuItem value="internal">Internal</MenuItem>
+                    <MenuItem value="external">External</MenuItem>
+                </TextField>
+                </Grid>
 
             
 
             <Grid item sx={{justifySelf:"left"}} size={6}>
-            <TextField {...register("other_contributions")} label="Other Comments" placeholder="Other Comments" multiline minRows={4} maxRows={10}/>
+            <TextField sx={{width:"80%"}} {...register("other_contributions")} label="Other Comments" placeholder="Other Comments" multiline minRows={4} maxRows={10}/>
             </Grid>
             <Grid size={6}/>
 
