@@ -14,15 +14,15 @@ const prisma = new PrismaClient();
 const makeTeamBuilderRouter = require('./routes/teamBuilder');
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 
-app.use('/api', teamBuilderRoutes);
+// app.use(cors({
+//   origin: /^http:\/\/localhost:\d+$/,  // allows any localhost port
+//   credentials: true
+// }));
 
-app.use(cors({
-  origin: /^http:\/\/localhost:\d+$/,  // allows any localhost port
-  credentials: true
-}));
+app.use(cors());
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
 
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -30,6 +30,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use('/api/team-builder', makeTeamBuilderRouter(prisma));
 app.use('/api/events', eventRoutes);
 
 // Health check endpoint
