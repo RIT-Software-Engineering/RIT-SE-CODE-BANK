@@ -20,8 +20,13 @@ const text_field_style = {
     left: '0%'
 }
 
-export default function DepartmentsForm({departments, setDepartments, defaultValues, isUpdate}) {
-    const {register, handleSubmit, reset, formState:{errors}} = useForm();
+export default function DepartmentsForm({departments, setDepartments, defaultValues, isUpdate, onSubmit}) {
+    const {register, handleSubmit, reset, formState:{errors}} = useForm({defaultValues : isUpdate ? defaultValues : 
+        {
+            department_name:"",
+            college: ""
+        }
+    });
 
     const [addModalOpen, setAddModalOpen] = useState(false);
 
@@ -35,9 +40,9 @@ export default function DepartmentsForm({departments, setDepartments, defaultVal
     }
 
     return (
-        <Box sx={{ height: 400, width: '50%', display:"inline-block"}}>
+        <Box sx={{ height: 400, display:"inline-block"}}>
         <h3>Create Department</h3>
-        <form onSubmit={handleSubmit((data) => {console.log(data); addDepartment(data); reset()})}>
+        <form onSubmit={handleSubmit((data) => {console.log(data); onSubmit(data); reset()})}>
             <Grid container spacing={2}>
             <Grid size={6}>
             <TextField 
@@ -59,11 +64,13 @@ export default function DepartmentsForm({departments, setDepartments, defaultVal
             </Grid>
 
             <Grid item size={4}>
-            <Button variant="outlined" type="reset">Clear</Button>
+            <Button variant="outlined" onClick={() => reset()}>
+                {isUpdate ? "Reset" : "Clear"}
+            </Button>
             </Grid>
             <Grid size={4}/>
             <Grid item  size={4}>
-            <Button variant="contained" type="submit">Submit</Button>
+            <Button variant="contained" type="submit">{isUpdate ? "Update" : "Submit"}</Button>
             </Grid>
         </Grid>
         </form>
