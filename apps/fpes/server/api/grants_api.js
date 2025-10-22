@@ -44,7 +44,7 @@ async function addGrant(grantData){ //Create
     conn = await pool.getConnection();
     const { title, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
     const result = await conn.query(
-      `INSERT INTO grants (form_id, title, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status) 
+      `INSERT INTO grants (form_id, title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status]
     );
@@ -61,9 +61,9 @@ async function updateGrant(id, grantData) {
     const { title, amount, start_date,  end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
     const result = await conn.query(
       `UPDATE grants 
-       SET title = ?, amount = ?, start_date = ?, end_date, faculty_role = ?, faculty_share = ?, comments = ?, grant_status = ?
+       SET title = ?, funder = ?, amount = ?, start_date = ?, end_date, faculty_role = ?, faculty_share = ?, comments = ?, grant_status = ?
        WHERE grant_id = ?`,
-      [title, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status]
+      [title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status]
     );
     return result.affectedRows > 0;
   } finally {
