@@ -5,6 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
 import DepartmentsForm from "./DepartmentsForm";
+import { editingStateInitializer } from "@mui/x-data-grid/internals";
 
 
 
@@ -59,7 +60,14 @@ export default function DepartmentsTable({departments, setDepartments}) {
     const updateDepartment = (data) => {
         axios.put("http://localhost:3000/departments" + `/${editModalValues.id}`, data)
         .then((res) => {
-            setDepartments(prevDepartments => [...prevDepartments]);
+            setDepartments(prevDepartments => prevDepartments.map((department) => {
+                if(department.id == editModalValues.id){
+                    data.id = editModalValues.id;
+                    return data
+                }else{
+                    return department
+                }
+            }));
             setEditModalOpen(false);
         });
     }

@@ -21,7 +21,15 @@ const text_field_style = {
 }
 
 export default function ServicesForm({services, setServices, defaultValues, isUpdate}) {
-    const {register, handleSubmit, reset, formState:{errors}} = useForm();
+    const {register, handleSubmit, reset, formState:{errors}} = useForm({defaultValues : isUpdate ? defaultValues : 
+        {
+            title : "",
+            hours_worked : "",
+            form_id : "",
+            service_type : "internal",
+            other_contributions : ""
+        }
+    });
 
     const [addModalOpen, setAddModalOpen] = useState(false);
 
@@ -85,7 +93,7 @@ export default function ServicesForm({services, setServices, defaultValues, isUp
             </Grid>
 
             <Grid size={6}>
-                <TextField sx={{width:"80%"}} {...register("service_type")} select defaultValue={"internal"} >
+                <TextField sx={{width:"80%"}} {...register("service_type")} select defaultValue={"internal"}>
                     <MenuItem value="internal">Internal</MenuItem>
                     <MenuItem value="external">External</MenuItem>
                 </TextField>

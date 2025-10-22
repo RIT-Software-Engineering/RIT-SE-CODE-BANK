@@ -11,54 +11,64 @@ import CourseSectionsPage from './pages/course_sections/CourseSectionsPage.jsx';
 import { FormControl, FormLabel, InputLabel, MenuItem, Select } from '@mui/material';
 import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';
 import CoursesPage from './pages/courses/CoursePage.jsx'
+import Header from './pages/Header.jsx';
 
 function App() {
   const [role, setRole] = useState("guest")
 
-  const adminLinks = (
-    <>
-    <Link to="/departments">Departments   </Link>
-    <Link to="/courses">Courses</Link>
-    </>
-  )
+  const pages = [
+    {
+        name : "Serivces",
+        route : "/services",
+        adminOnly : false
+    },
+    {
+        name : "Grants",
+        route : "/grants",
+        adminOnly : false
+    },
+    {
+        name : "Course Sections",
+        route : "/course_sections",
+        adminOnly : false,
+    },
+    {
+        name : "Student Support",
+        route : "/student_support",
+        adminOnly : false
+    },
+    {
+        name : "Departments",
+        route : "/departments",
+        adminOnly : true
+    },
+    {
+        name : "Courses",
+        route : "/courses",
+        adminOnly : true
+    }
+  ]
 
   const adminRoutes = (
     <>
-    <Route path="/departments" element={<DepartmentsPage/>} />
-    <Route path="/courses" element={<CoursesPage />} />
+      <Route path='/departments' element={<DepartmentsPage/>}/>
+      <Route path='/courses' element={<CoursesPage/>}/>
     </>
   )
 
   return (
-    <div>
-      <div>
-        <FormControl sx={{display:'grid', justifyItems:'left'}}>
-          <InputLabel id="role_view_label">View</InputLabel>
-          <Select labelId="role_view_label" label="View" defaultValue={"guest"} onChange={(e) => setRole(e.target.value)}>
-            <MenuItem value="admin">Admin   </MenuItem>
-            <MenuItem value="guest">Guest   </MenuItem>
-          </Select>
-        </FormControl>
-      </div>
+    <BrowserRouter>
+      <Header pages={pages} adminView={role === "admin"} setRole={setRole}/>
       <h1>FPES Portal</h1>
-      <BrowserRouter>
-        <nav>
-          <Link to="/services">Services   </Link>
-          <Link to="/grants">Grants   </Link>
-          {role === 'admin' ? adminLinks : null}
-          <Link to="/course_sections">Course Sections   </Link>
-          <Link to="/student_support">Student Support   </Link>
-        </nav>
-
-        <Routes>
-          <Route path="/services" element={<ServicesPage/>} />
-          <Route path="/grants" element={<GrantsTable />} />
-          {role === 'admin' ? adminRoutes : null}
-          <Route path="/course_sections" element={<CourseSectionsPage/>} />
-          <Route path="/student_support" element={<StudentSupportPage/>} />
-        </Routes>
-      </BrowserRouter>
-    </div>
+      
+      <Routes>
+        <Route path="/services" element={<ServicesPage/>} />
+        <Route path="/grants" element={<GrantsTable />} />
+        {role === 'admin' ? adminRoutes : null}
+        <Route path="/course_sections" element={<CourseSectionsPage/>} />
+        <Route path="/student_support" element={<StudentSupportPage/>} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
