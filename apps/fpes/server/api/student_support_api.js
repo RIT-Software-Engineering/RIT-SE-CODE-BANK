@@ -44,7 +44,7 @@ async function addStudentSupport(studentSupportData) {  //Create
        (independent_studies_supervised, bs_cs_students_supervised, ms_defence_chair, ms_defence_member,
         active_ms_cs_as_chair, other_bs_projects, other_ms_projects, current_phd_advisees,
         phd_passed_rpa_as_chair, phd_passed_pro_as_chair, phd_passed_def_as_chair, phd_rpa_def_pro_as_member)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
         independent_studies_supervised,
         bs_cs_students_supervised,

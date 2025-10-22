@@ -4,7 +4,7 @@ const studentSupportApi = require('../api/student_support_api');
 
 router.get('/', async (req, res) => {
   try {
-    const rows = await api.getAllStudentSupport(req.params.id);
+    const rows = await api.getAllStudentSupport();
     res.json(rows);
   } catch (err) {
     console.error(err);
