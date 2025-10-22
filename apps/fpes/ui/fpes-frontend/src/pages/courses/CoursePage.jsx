@@ -85,7 +85,7 @@ export default function CoursesPage() {
       flex: 1,
       minWidth: 150,
       valueGetter: (params) => {
-        const id = params.row?.department_id;
+        const id = params;
         return id ? deptNameById.get(id) || `Dept #${id}` : "—";
       },
       renderCell: (params) => (
