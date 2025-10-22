@@ -49,7 +49,7 @@ INSERT INTO `Comment` (`author`, `foreignTableName`, `foreignKey`, `status`, `co
 
 -- App ID 10: Sally Student for SWEN-344-1 (Status: REJECTED)
 ('Sally Student', 'JobPositionApplicationHistory', '10', 'APPLIED', 'Initial application submitted by candidate.', '2025-07-20T12:00:00Z'),
-('Dr. John Doe', 'JobPositionApplicationHistory', '10', 'REJECTED', 'While the candidate has a good grade, we have decided to move forward with other applicants who have more relevant prior TA experience.', '2025-07-21T13:45:00Z'),
+('Dr. John Doe', 'JobPositionApplicationHistory', '10', 'REJECTED', 'While the candidate has a good grade, we have decided to move forward with other candidates who have more relevant prior TA experience.', '2025-07-21T13:45:00Z'),
 
 -- App ID 11: Sally Student for SWEN-261-1 (Status: APPLIED)
 ('Sally Student', 'JobPositionApplicationHistory', '11', 'APPLIED', 'Initial application submitted by candidate.', '2025-08-05T09:30:00Z');

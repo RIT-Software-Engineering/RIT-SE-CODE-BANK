@@ -33,6 +33,7 @@ import {
   People,
   AccountCircle,
 } from "@mui/icons-material";
+import NotificationsPanel from '@/components/NotificationsPanel';
 import { ROLES } from "@/configuration/dashboard.config";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeContext } from "@/styles/ThemeRegistry";
@@ -264,6 +265,11 @@ export default function Header() {
                   <MenuIcon />
                 </IconButton>
               )}
+              {currentUser && (
+                <Box sx={{ ml: 1 }}>
+                  <NotificationsPanel appId="ta-portal" identifier={currentUser.username} />
+                </Box>
+              )}
             </Box>
           ) : (
             // Desktop View: Full Navigation
@@ -292,6 +298,11 @@ export default function Header() {
                   );
                 })}
               </nav>
+                    {currentUser && (
+                      <Box sx={{ ml: 1, mr: 1 }}>
+                        <NotificationsPanel appId="ta-portal" identifier={currentUser.username} />
+                      </Box>
+                    )}
               <Tooltip
                 title={
                   mode === "dark"

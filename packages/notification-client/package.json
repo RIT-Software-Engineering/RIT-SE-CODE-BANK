@@ -1,0 +1,13 @@
+{
+  "name": "@rit/notification-client",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'no build'",
+    "test": "echo 'no tests'"
+  },
+  "dependencies": {
+    "node-fetch": "^3.4.0"
+  }
+}

@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model NotificationPreference {
+  appId     String
+  userEmail String
+  username  String?      
+  notifyEmail Boolean  @default(true)
+  notifySlack Boolean  @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@id([appId, userEmail])
+  @@index([username])
+  @@map("notification_preferences")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  appId     String
+  username  String
+  title     String?
+  body      String?   @map("message")
+  channel   String?   @default("email")
+  read      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  @@index([appId, username])
+  @@map("notifications")
+}

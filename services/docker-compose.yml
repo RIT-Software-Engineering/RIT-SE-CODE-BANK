@@ -10,9 +10,8 @@ services:
     environment:
       - SMTP_HOST=smtp4dev
       - SMTP_PORT=25
-      - SMTP_FROM=se-apps@rit.edu
+      - SMTP_FROM=se_svc_apps@rit.edu
       - PORT=4000
-      # Optional Slack
       - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
     ports:
       - "4000:4000"

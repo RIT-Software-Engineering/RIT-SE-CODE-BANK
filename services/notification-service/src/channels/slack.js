@@ -17,7 +17,7 @@ function headers() {
 //   - or pass { email: "user@rit.edu" } to DM by email via lookup
 export async function resolveDmChannel({ slack, email }) {
   // If a channel ID is provided, use it
-  if (slack && (slack.startswith?.("C") || slack.startswith?.("D"))) {
+  if (slack && (slack.startsWith?.("C") || slack.startsWith?.("D"))) {
     return slack;
   }
 
@@ -75,3 +75,6 @@ export async function sendSlackMessage({ channel, text, blocks }) {
   }
   return resp.data;
 }
+
+// Exports for testing
+export { headers };

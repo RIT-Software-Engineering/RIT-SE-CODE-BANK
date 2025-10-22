@@ -1,0 +1,73 @@
+{{> header}}
+
+<table width="100%" cellpadding="24"
+  style="font-family:'Helvetica Neue','Helvetica','Roboto','Arial',sans-serif;
+         color:#000000;
+         background-color:#FFFFFF;
+         line-height:1.5;
+         max-width:600px;
+         margin:0 auto;">
+  <tr>
+    <td>
+      <h2 style="font-size:24px;line-height:32px;font-weight:700;margin-bottom:16px;">
+        Application Status Update
+      </h2>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        {{#if recipient.name}}
+          Hi {{recipient.name}},
+        {{else if candidate_name}}
+          Hi {{candidate_name}},
+        {{else if candidateName}}
+          Hi {{candidateName}},
+        {{else if applicant_name}}
+          Hi {{applicant_name}},
+        {{else if applicantName}}
+          Hi {{applicantName}},
+        {{else}}
+          Hi Candidate,
+        {{/if}}
+      </p>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+  Great news, your application for
+        <strong>
+          {{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}
+        </strong>
+        has moved to
+        <strong>
+          {{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}an updated status{{/if}}
+        </strong>.
+      </p>
+
+  {{#if professor}}
+  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{professor}}</strong></p>
+  {{else if hiring_manager}}
+  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{hiring_manager}}</strong></p>
+  {{/if}}
+
+      {{#if app_link}}
+      <p style="margin-top:24px;margin-bottom:24px;">
+        <a href="{{app_link}}"
+           style="display:inline-block;
+                  background-color:#F76902;
+                  color:#FFFFFF;
+                  padding:12px 20px;
+                  border-radius:4px;
+                  text-decoration:none;
+                  font-size:16px;
+                  font-weight:500;">
+          View Details
+        </a>
+      </p>
+      {{/if}}
+
+      <p style="font-size:16px;line-height:24px;margin-top:24px;">
+        Thanks,<br>
+        <strong>RIT Software Engineering Department</strong>
+      </p>
+    </td>
+  </tr>
+</table>
+
+{{> footer}}

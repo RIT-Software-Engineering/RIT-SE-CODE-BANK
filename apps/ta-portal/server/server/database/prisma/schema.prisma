@@ -18,6 +18,7 @@ model User {
   role      Role       @default(GUEST)
   candidate Candidate?
   employer  Employer?
+  
 }
 
 model Candidate {
@@ -198,6 +199,8 @@ model TimecardDay {
 
   @@index([timecardWeeklyHistoryId])
 }
+
+
 
 enum Role {
   GUEST

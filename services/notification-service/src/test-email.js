@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const run = async () => {
-  // 1️⃣ Ethereal account
+  // Create an Ethereal test account for previewing messages
   const testAccount = await nodemailer.createTestAccount();
 
   const transporter = nodemailer.createTransport({
@@ -22,7 +22,7 @@ const run = async () => {
     },
   });
 
-  // 2️⃣ Register partials (header, footer, etc.)
+  // Register template partials (header, footer, etc.)
   const partialsDir = path.join(__dirname, "./templates/partials");
   if (fs.existsSync(partialsDir)) {
     for (const file of fs.readdirSync(partialsDir)) {
@@ -32,15 +32,15 @@ const run = async () => {
     }
   }
 
-  // 3️⃣ Load main template (applicant_email.hbs for example)
+  // Load main template (candidate_email.hbs for example) - try app-scoped
   const templatePath = path.join(
     __dirname,
-    "./templates/application_status_changed/applicant_email.hbs"
+    "./templates/ta-portal/application_status_changed/candidate_email.hbs"
   );
   const source = fs.readFileSync(templatePath, "utf8");
   const template = Handlebars.compile(source);
 
-  // 4️⃣ Provide realistic sample data
+  // Provide realistic sample data
   const context = {
     recipient: { name: "Ben Griffin" },
     job_title: "TA for SWEN-352",
@@ -49,7 +49,7 @@ const run = async () => {
     year: new Date().getFullYear(),
   };
 
-  // 5️⃣ Render + send
+  // Render and send
   const html = template(context);
   const info = await transporter.sendMail({
     from: '"SE Notifications" <no-reply@se.rit.edu>',

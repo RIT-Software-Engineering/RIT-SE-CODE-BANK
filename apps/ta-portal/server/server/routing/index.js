@@ -20,8 +20,11 @@
 // IMPORTS & SETUP
 // =============================================================================
 
-// Import the Express Router to create modular, mountable route handlers.
-const router = require("express").Router();
+// Import Express to create an app and router for mounting routes. Export an
+// Express application so tests (and Supertest) can require this module and
+// exercise the routes directly.
+const express = require("express");
+const router = express.Router();
 
 // Import the database-specific routes from the `db_routes.js` file.
 const db_router = require("./db_routes");
@@ -29,6 +32,7 @@ const db_router = require("./db_routes");
 // Import the Slack-specific routes from the `slack_routes.js` file.
 const slack_router = require("./slack_routes");
 const devNotifyRoutes = require('./dev_notify_routes');
+const notificationsApi = require('./notifications_api');
 
 // =============================================================================
 // ROUTE MOUNTING
@@ -42,9 +46,16 @@ router.use("/db", db_router);
 // be accessible under the `/api/slack` path.
 router.use("/slack", slack_router);
 router.use('/dev', devNotifyRoutes);
+router.use('/notifications', notificationsApi);
 // =============================================================================
 // EXPORTS
 // =============================================================================
 
-// Export the configured main router to be used by the main server file (e.g., server.js).
-module.exports = router;
+// Create a small Express app and mount the API router at `/api` so tests can
+// `require('@server/routing/index')` and pass the returned value directly to
+// Supertest (which expects an app or server).
+const app = express();
+app.use(express.json());
+app.use('/api', router);
+
+module.exports = app;

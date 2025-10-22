@@ -13,10 +13,9 @@ const {
   positionStatusStringToEnum,
 } = require("../constants/status");
 const { verifyPassword, hashPassword } = require("../config/passwordHashes");
-// const { notifyEvent } = require(path.resolve(
-//   __dirname,
-//   "../../../../../libs/notifications/slack/src"
-// ));
+// Notification helper - use the shared notification-client to call the notification service
+const notificationClient = require(path.resolve(__dirname, '../../../../../packages/notification-client/index.cjs'));
+const notifyEvent = notificationClient && notificationClient.notifyEvent ? notificationClient.notifyEvent : null;
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {
@@ -25,6 +24,19 @@ if (!process.env.DATABASE_URL) {
 
 // Initialize Prisma Client for database interaction.
 const prisma = new PrismaClient();
+
+// Helper: normalize various input strings to the Prisma GraduateStatus enum values.
+// Accepts values like 'UNDERGRAD', 'UNDERGRADUATE', 'GRAD', 'GRADUATE', etc.
+function normalizeGraduateStatus(val) {
+  if (val === undefined || val === null) return undefined;
+  const s = String(val).trim().toUpperCase();
+  if (!s) return undefined;
+  if (s.startsWith('UNDER') || s === 'UG' || s === 'UNDERGRAD') return 'UNDERGRADUATE';
+  if (s.startsWith('GRAD') || s === 'G') return 'GRADUATE';
+  // fallback: if it already matches Prisma enum names, return as-is
+  if (s === 'UNDERGRADUATE' || s === 'GRADUATE') return s;
+  return undefined; // let Prisma use its default if provided
+}
 
 // =============================================================================
 // JOB POSITION & APPLICATION QUERIES
@@ -521,7 +533,22 @@ async function applyForJobPosition(applicationDetails) {
         "This candidate has already applied for this job position."
       );
 
-    const formData = JSON.parse(jobPositionApplicationFormData);
+    let formData;
+    try {
+      formData = typeof jobPositionApplicationFormData === 'string' ? JSON.parse(jobPositionApplicationFormData) : jobPositionApplicationFormData;
+    } catch (e) {
+      throw new Error('Invalid jobPositionApplicationFormData: JSON parse failed');
+    }
+
+    // Basic validation for required form fields
+    if (!formData || !formData.fname || !formData.lname || !formData.email || !formData.uid) {
+      throw new Error('Missing required form fields (fname, lname, email, uid)');
+    }
+    // Ensure year parses to an integer or is undefined
+    const parsedYear = formData.year !== undefined && formData.year !== null && formData.year !== '' ? parseInt(formData.year, 10) : undefined;
+    if (formData.year !== undefined && (isNaN(parsedYear) || parsedYear <= 0)) {
+      throw new Error('Invalid year value in application form');
+    }
 
     // Create new application
     const newApp = await prisma.jobPositionApplicationHistory.create({
@@ -536,7 +563,7 @@ async function applyForJobPosition(applicationDetails) {
         candidatePronouns: formData.pronouns,
         candidateEmail: formData.email,
         candidateMajor: formData.major,
-        candidateYear: parseInt(formData.year, 10),
+  candidateYear: parsedYear,
         candidateGrade: formData.grade,
         wasPriorEmployeeForThisCourse: formData.wasPriorEmployeeForThisCourse,
         wasPriorEmployeeForOtherCourses:
@@ -561,13 +588,13 @@ async function applyForJobPosition(applicationDetails) {
       },
     });
 
-    // Notify stakeholders + applicant
+  // Notify stakeholders + candidate
     try {
       const { emails } = await getCourseStakeholders(newApp.jobPositionId);
       await notifyEvent(
         "APPLICATION_RECEIVED",
         {
-          applicantName: `${newApp.candidateFName} ${newApp.candidateLName}`,
+          candidateName: `${newApp.candidateFName} ${newApp.candidateLName}`,
           courseCode: jobPosition.courseCode,
           courseName: jobPosition.course.name,
           instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
@@ -663,7 +690,7 @@ async function getCandidateHiredStatus(candidateUsername, semestercode) {
 
 /**
  * Updates an application's status and creates a new comment record in a transaction,
- * then sends Slack notifications to the applicant + stakeholders (employer + active TAs).
+ * then sends Slack notifications to the candidate + stakeholders (employer + active TAs).
  */
 /**
  * Updates a candidate's job application status, logs the change, and notifies stakeholders.
@@ -672,7 +699,7 @@ async function getCandidateHiredStatus(candidateUsername, semestercode) {
  * 1. Update the application's status inside a DB transaction.
  *    - Also create a comment log entry.
  *    - If status is ACCEPTED_OFFER, mark the job position as FILLED if capacity is reached.
- * 2. After a successful transaction, send Slack notifications to the applicant and stakeholders.
+ * 2. After a successful transaction, send Slack notifications to the candidate and stakeholders.
  * 3. Return the updated application record.
  *
  * @param {string} author - Name of the user making the status change.
@@ -767,7 +794,7 @@ try {
   console.log("🔥 Application details for notify:", details);
   if (!details) throw new Error("Application not found for notify");
 
-  const { applicantName, applicantEmail, jobPositionId } = details;
+  const { candidateName, candidateEmail, jobPositionId } = details;
   const { emails: stakeholders } = await getCourseStakeholders(jobPositionId);
 
   const eventTypeMap = {
@@ -786,7 +813,7 @@ try {
   await notifyEvent(
     eventType,
     {
-      applicantName,
+  candidateName,
       courseCode: details.courseCode,
       courseName: details.courseName,
       section: details.section,
@@ -795,7 +822,7 @@ try {
       status,
       comment: comments, // 👈 include reason/comment
     },
-    { toEmails: [applicantEmail, ...stakeholders] }
+  { toEmails: [candidateEmail, ...stakeholders] }
   );
 } catch (e) {
   console.error("Slack notify (status change) failed:", e.message);
@@ -949,16 +976,16 @@ async function hireCandidateForJobPosition(
     try {
       const details = await getApplicationDetailsForNotify(applicationId);
       if (`details:${details}`) {
-        const { applicantName, applicantEmail, jobPositionId } = details;
+  const { candidateName, candidateEmail, jobPositionId } = details;
         const { emails: stakeholderEmails } = await getCourseStakeholders(
           jobPositionId
         );
 
-        const toEmails = [applicantEmail, ...stakeholderEmails];
+  const toEmails = [candidateEmail, ...stakeholderEmails];
 
         await notifyEvent(
           "HIRED",
-          { applicantName, courseCode: jobPositionId },
+          { candidateName, courseCode: jobPositionId },
           { toEmails }
         );
       }
@@ -1047,18 +1074,24 @@ async function getCourseStakeholders(jobPositionId) {
 }
 
 /**
- * Return applicant email for a given application record id.
+ * Return candidate email for a given application record id.
  */
-async function getApplicantEmailByApplicationId(applicationId) {
+async function getCandidateEmailByApplicationId(applicationId) {
   const app = await prisma.jobPositionApplicationHistory.findUnique({
     where: { id: applicationId },
     select: { candidateEmail: true, jobPositionId: true },
   });
-  if (!app) return { applicantEmail: null, jobPositionId: null };
+  if (!app) return { candidateEmail: null, jobPositionId: null };
   return {
-    applicantEmail: app.candidateEmail,
+    candidateEmail: app.candidateEmail,
     jobPositionId: app.jobPositionId,
   };
+}
+
+// Backwards-compat wrapper for older callers
+async function getApplicantEmailByApplicationId(applicationId) {
+  const r = await getCandidateEmailByApplicationId(applicationId);
+  return { applicantEmail: r.candidateEmail, jobPositionId: r.jobPositionId };
 }
 
 // === Helper for notifications ===
@@ -1101,9 +1134,12 @@ async function getApplicationDetailsForNotify(applicationId) {
   console.log("DEBUG app.jobPosition:", app.jobPosition);
   console.log("DEBUG course relation:", app.jobPosition.course);
 
-  return {
-    applicantName: `${app.candidateFName} ${app.candidateLName}`,
-    applicantEmail: app.candidateEmail,
+  const candidateName = `${app.candidateFName} ${app.candidateLName}`;
+  const candidateEmail = app.candidateEmail;
+  const out = {
+    // primary keys (preferred)
+    candidateName,
+    candidateEmail,
     jobPositionId: app.jobPositionId,
     courseCode: app.jobPosition.courseCode,
     courseName: app.jobPosition.course.name, // ✅ now works
@@ -1112,6 +1148,11 @@ async function getApplicationDetailsForNotify(applicationId) {
     instructorName: `${app.jobPosition.employer.user.fname} ${app.jobPosition.employer.user.lname}`,
     instructorEmail: app.jobPosition.employer.user.email,
   };
+
+  // keep legacy keys for callers that still expect 'applicant*'
+  out.applicantName = out.candidateName;
+  out.applicantEmail = out.candidateEmail;
+  return out;
 }
 
 
@@ -1586,7 +1627,7 @@ async function createCandidateProfile(candidateData) {
           username: candidateData.username,
           year: candidateData.year,
           major: candidateData.major,
-          graduateStatus: candidateData.graduateStatus,
+          graduateStatus: normalizeGraduateStatus(candidateData.graduateStatus),
           wasPriorEmployee: candidateData.wasPriorEmployee || false,
         },
       });
@@ -1662,7 +1703,7 @@ async function updateCandidateProfile(candidateData) {
         data: {
           year: updatePayload.year,
           major: updatePayload.major,
-          graduateStatus: updatePayload.graduateStatus,
+          graduateStatus: normalizeGraduateStatus(updatePayload.graduateStatus),
           wasPriorEmployee: updatePayload.wasPriorEmployee,
         },
       });
@@ -2310,6 +2351,24 @@ async function fetchEmployerViewData(employerUsername) {
 }
 
 // =============================================================================
+// NOTIFICATION PREFERENCES
+// =============================================================================
+async function getUserNotificationPreferences(username) {
+  // Use centralized notification service exclusively
+  const client = require("../../../../../packages/notification-client/index.cjs");
+  const res = await client.getPreferences(username);
+  return { notifyEmail: res.notifyEmail ?? true, notifySlack: res.notifySlack ?? false };
+}
+
+async function upsertUserNotificationPreferences(username, notifyEmail, notifySlack) {
+  const client = require("../../../../../packages/notification-client/index.cjs");
+  const identifier = username;
+  const body = { username, notifyEmail: !!notifyEmail, notifySlack: !!notifySlack };
+  return await client.setPreferences(identifier, body);
+}
+
+
+// =============================================================================
 // EXPORTS & PROCESS HANDLING
 // =============================================================================
 
@@ -2356,6 +2415,8 @@ module.exports = {
   getCourseStakeholders,
   getApplicantEmailByApplicationId,
   getApplicationDetailsForNotify,
+  getUserNotificationPreferences,
+  upsertUserNotificationPreferences,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.
