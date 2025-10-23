@@ -2,10 +2,17 @@ import { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import Paper from "@mui/material/Paper";
 import axios from "axios";
-import { TextField, Button, Box, Typography, Stack, IconButton, Dialog, DialogTitle, DialogContent, DialogActions} from "@mui/material";
+import { TextField, Button, Box, Typography, Stack, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, MenuItem,
+  Select,
+  InputLabel,
+  FormControl,} from "@mui/material";
 import { getGrants } from '../../api/grants_api_imports';
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import dayjs from "dayjs";
 
 export default function GrantsTable() {
   const [grants, setGrants] = useState([]);
@@ -13,13 +20,14 @@ export default function GrantsTable() {
     title: "",
     funder: "",
     amount: "",
-    start_date: "",
-    end_date: "",
+    start_date: null,
+    end_date: null,
     faculty_role: "",
     faculty_share: "",
     other_comments: "",
     grant_status: "Funded",
   });
+  
   
   const [editData, setEditData] = useState(null); 
   const [openEditDialog, setOpenEditDialog] = useState(false); 
@@ -43,6 +51,13 @@ export default function GrantsTable() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleDateChange = (name, date) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: date ? dayjs(date).format("YYYY-MM-DD") : "",
+    }));
+  };
+
   const handleSubmit = async (e) => {
   e.preventDefault();
   try {
@@ -51,7 +66,8 @@ export default function GrantsTable() {
       title: "",
       funder: "",
       amount: "",
-      time_period: "",
+      start_date: null,
+      end_date: null,
       faculty_role: "",
       faculty_share: "",
       other_comments: "",
@@ -86,6 +102,13 @@ export default function GrantsTable() {
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditData((prev) => ({ ...prev, [name]: value }));
+  };
+
+    const handleEditDateChange = (name, date) => {
+    setEditData((prev) => ({
+      ...prev,
+      [name]: date ? dayjs(date).format("YYYY-MM-DD") : "",
+    }));
   };
 
   const handleEditSave = async () => {
@@ -140,6 +163,7 @@ export default function GrantsTable() {
       <Typography variant="h6" gutterBottom>
           Add New Grant
       </Typography>
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Stack spacing={2} direction="row" flexWrap="wrap" useFlexGap>
         <TextField
           label="Title"
@@ -157,16 +181,14 @@ export default function GrantsTable() {
           type="number"
           value={formData.amount}
           onChange={handleChange} />
-        <TextField
+        <DatePicker
           label="Start Date"
-          name="start_date"
-          value={formData.time_period}
-          onChange={handleChange} />
-        <TextField
+          value={formData.start_date ? dayjs(formData.start_date) : null}
+          onChange={(date) => handleDateChange("start_date", date)}/>
+        <DatePicker
           label="End Date"
-          name="end_date"
-          value={formData.time_period}
-          onChange={handleChange} />
+          value={formData.end_date ? dayjs(formData.end_date) : null}
+          onChange={(date) => handleDateChange("end_date", date)}/>
         <TextField
           label="Faculty Role"
           name="faculty_role"
@@ -183,10 +205,25 @@ export default function GrantsTable() {
           name="other_comments"
           value={formData.other_comments}
           onChange={handleChange} />
+          <FormControl sx={{ minWidth: 150 }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                name="grant_status"
+                value={formData.grant_status}
+                label="Status"
+                onChange={handleChange}
+              >
+                <MenuItem value="Funded">Funded</MenuItem>
+                <MenuItem value="In Submission">Pending</MenuItem>
+                <MenuItem value="Declined">Declined</MenuItem>
+                <MenuItem value="In Development">Declined</MenuItem>
+              </Select>
+            </FormControl>
         <Button variant="contained" color="primary" onClick={handleSubmit}>
           Add Grant
         </Button>
       </Stack>
+      </LocalizationProvider>
       </Paper>
     {/*Table*/}
     <Paper sx={{ height: 400, width: "100%" }}>
@@ -203,6 +240,7 @@ export default function GrantsTable() {
         <DialogTitle>Edit Grant</DialogTitle>
         <DialogContent>
           {editData && (
+             <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Stack spacing={2} sx={{ mt: 2 }}>
               <TextField
                 label="Title"
@@ -223,17 +261,15 @@ export default function GrantsTable() {
                 value={editData.amount}
                 onChange={handleEditChange}
               />
-              <TextField
+              <DatePicker
                 label="Start Date"
-                name="Start Date"
-                value={editData.start_date}
-                onChange={handleEditChange}
-              />
-              <TextField
+                value={dayjs(editData.start_date)}
+                onChange={(date) =>handleEditDateChange("start_date", date)}
+                />
+              <DatePicker
                 label="End Date"
-                name="End Date"
-                value={editData.start_date}
-                onChange={handleEditChange}
+                value={dayjs(editData.end_date)}
+                onChange={(date) => handleEditDateChange("end_date", date)}
               />
               <TextField
                 label="Faculty Role"
@@ -255,6 +291,7 @@ export default function GrantsTable() {
                 onChange={handleEditChange}
               />
             </Stack>
+            </LocalizationProvider>
           )}
         </DialogContent>
         <DialogActions>
