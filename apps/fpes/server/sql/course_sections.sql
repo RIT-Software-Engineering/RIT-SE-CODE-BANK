@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS course_sections (
     semester ENUM('FALL', 'SPRING', 'SUMMER') NOT NULL,
     scholastic_year VARCHAR(40) NOT NULL, 
     course_id INT UNSIGNED,
+    form_id INT UNSIGNED,
     FOREIGN KEY (course_id) REFERENCES courses(id)
+    FOREIGN KEY (form_id) REFERENCES highlights(id)
 );
 
 INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year)

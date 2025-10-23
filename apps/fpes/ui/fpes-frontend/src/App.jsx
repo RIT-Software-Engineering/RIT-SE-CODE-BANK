@@ -14,7 +14,7 @@ import CoursesPage from './pages/courses/CoursePage.jsx'
 import Header from './pages/Header.jsx';
 
 function App() {
-  const [role, setRole] = useState("guest")
+  const [role, setRole] = useState("faculty")
 
   const pages = [
     {

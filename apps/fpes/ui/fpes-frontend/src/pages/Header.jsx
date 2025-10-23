@@ -15,9 +15,9 @@ export default function Header({pages, adminView, setRole}){
                 </Box>
                 <FormControl sx={{backgroundColor:"white", borderRadius:"5%"}} variant='filled'>
                     <InputLabel id="role_view_label">View</InputLabel>
-                    <Select labelId="role_view_label" label="View" defaultValue={"guest"}onChange={(e) => setRole(e.target.value)}>
-                        <MenuItem value="admin">Admin   </MenuItem>
-                        <MenuItem value="guest">Guest   </MenuItem>
+                    <Select labelId="role_view_label" label="View" defaultValue={"faculty"} onChange={(e) => setRole(e.target.value)}>
+                        <MenuItem value="admin">Admin</MenuItem>
+                        <MenuItem value="faculty">Faculty</MenuItem>
                     </Select>
                 </FormControl>
             </Toolbar>
