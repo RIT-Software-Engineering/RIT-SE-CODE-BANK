@@ -61,11 +61,10 @@ model users {
 model JournalEntry {
   id                  Int      @id @default(autoincrement())
   date                DateTime
-  recipient_id        String
   notes               String?  @db.VarChar(500)
   sender_id           String
   topic_id            String
-  recipient     users     @relation("ReceivedUserEntries", fields: [recipient_id], references: [id])
+  recipients    users[]     @relation("ReceivedUserEntries")
   sender        users     @relation("SentUserEntries", fields: [sender_id], references: [id])
   topic         users     @relation("TopicUserEntries", fields: [topic_id], references: [id])
   

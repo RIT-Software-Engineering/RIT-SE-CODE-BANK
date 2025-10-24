@@ -10,6 +10,7 @@ import {
   Box,
   Button,
   Card,
+  Chip,
   Container,
   Dialog,
   DialogActions,
@@ -56,7 +57,7 @@ export default function Journal() {
   const [filterTopicValue, setFilterTopicValue] = useState("");
   // For creating new journal entries
   const [newEntrySemester, setNewEntrySemester] = useState("");
-  const [newEntryContacteeId, setNewEntryContacteeId] = useState("");
+  const [newEntryRecipientIds, setNewEntryRecipientIds] = useState([]);
   const [newEntryTopicId, setNewEntryTopicId] = useState("");
   // For editing journal entry notes
   const [editingEntry, setEditingEntry] = useState(null);
@@ -155,7 +156,7 @@ export default function Journal() {
         baseArray = baseArray.filter((entry) => entry.semester_GroupId == filterSemesterValue);
       }  
       if(filterRecipientValue){
-        baseArray = baseArray.filter((entry) => entry.recipient_id == filterRecipientValue);
+        baseArray = baseArray.filter(entry => entry.recipients.some(recipient => recipient.id === filterRecipientValue));
       }
       if(filterSenderValue){
         baseArray = baseArray.filter((entry) => entry.sender_id == filterSenderValue);
@@ -261,7 +262,7 @@ export default function Journal() {
       date: new Date().toISOString(), // Add this to match existing entries
       sender_id: user.id,
       notes: editValue,
-      recipient_id: newEntryContacteeId,
+      recipient_ids: newEntryRecipientIds,
       topic_id: newEntryTopicId,
       semester_GroupId: Number(newEntrySemester),
     };
@@ -283,7 +284,7 @@ export default function Journal() {
       if (data.entry) {
         setJournalEntries((prev) => [...prev, data.entry]);
         setFilteredJournalEntries((prev) => [...prev, data.entry]);
-        handleApplyFilter();
+        //handleApplyFilter();
       } else {
         console.warn("No entry returned from API, or unexpected structure.");
         throw new Error("API did not return the expected entry object.");
@@ -292,7 +293,7 @@ export default function Journal() {
       setNewEntryOpen(false);
       setEditValue("");
       setNewEntrySemester("");
-      setNewEntryContacteeId("");
+      setNewEntryRecipientIds([]);
       setNewEntryTopicId("");
       return { message: "Journal entry created!" };
     } catch (error) {
@@ -307,7 +308,7 @@ export default function Journal() {
    * @returns {void}
    */
   const handleCreateNewEntry = () => {
-    if (!newEntrySemester || !newEntryContacteeId || !newEntryTopicId) {
+    if (!newEntrySemester || !newEntryRecipientIds || !newEntryTopicId) {
       toast.error("Please fill out all fields.");
       return;
     }
@@ -364,7 +365,7 @@ export default function Journal() {
                 </Button>
               </Box>
               <Typography variant="h3">
-                To: {entry.recipient.fname} {entry.recipient.lname}
+                To: {entry.recipients.map(rec => rec.fname + " " + rec.lname).join(", ")}
               </Typography>
               <Typography variant="h3">
                 From: {entry.sender.fname} {entry.sender.lname}
@@ -435,13 +436,16 @@ export default function Journal() {
 
             <FormControl fullWidth sx={{ mb: 2 }}>
               <Autocomplete
+                multiple
                 options={Object.entries(users).map(([id, name]) => ({
                   label: name,
                   value: id,
                 }))}
                 getOptionLabel={(option) => option.label}
-                onChange={(event, newValue) =>
-                  setNewEntryContacteeId(newValue ? newValue.value : "")
+                onChange={(event, selected) =>
+                  //setNewEntryRecipientIds(newValue ? newValue.value : "")
+                  //setNewEntryRecipientIds((prev) => [...prev, newValue.value])
+                  setNewEntryRecipientIds(selected.map(selectedName => selectedName.value))
                 }
                 renderInput={(params) => (
                   <TextField

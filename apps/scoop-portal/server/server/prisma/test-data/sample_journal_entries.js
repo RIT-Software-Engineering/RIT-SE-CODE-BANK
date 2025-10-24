@@ -18,7 +18,7 @@ export const sampleJournalEntries = [
     id: 1,
     date: new Date("2025-06-13T12:00:00Z"), // in UTC
     notes: "Edit this note for testing.",
-    recipient_id: "vcl123",
+    recipient_ids: ["vcl123","abc123"],
     sender_id: "kjs123",
     topic_id: "vcl123",
     semester_GroupId: 8,

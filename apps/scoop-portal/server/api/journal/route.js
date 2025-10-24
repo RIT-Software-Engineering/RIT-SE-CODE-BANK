@@ -32,7 +32,7 @@ router.post("/", async (req, res) => {
   const {
     date,
     notes,
-    recipient_id,
+    recipient_ids,
     sender_id,
     topic_id,
     semester_GroupId,
@@ -42,14 +42,14 @@ router.post("/", async (req, res) => {
       data: {
         date: new Date(date),
         notes,
-        recipient_id,
+        recipients: { connect: recipient_ids.map(id => ({ id })) },
         sender_id,
         topic_id,
         semester_GroupId: semester_GroupId ? Number(semester_GroupId) : null,
       },
       include:{
         sender: true,
-        recipient: true,
+        recipients: true,
         topic: true,
       },
     });
@@ -89,7 +89,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// HACK: Temporary Routes
 /**
  * GET journal entries for scoopdinator
  */
@@ -181,12 +180,15 @@ router.get("/:id", async (req, res) => {
         where: {
           OR: [
             {sender_id: id},
-            {recipient_id: id},
+            { recipients: {
+                    some: {
+                      id: id,
+                },},},
           ]
         },
         include: {
           sender: true,
-          recipient: true,
+          recipients: true,
           topic: true,
         },
         })
@@ -196,7 +198,7 @@ router.get("/:id", async (req, res) => {
       const dinatorEntries = await prisma.journalEntry.findMany({
         include: {
           sender: true,
-          recipient: true,
+          recipients: true,
           topic: true,
         },
       });
@@ -227,13 +229,16 @@ router.get("/:id", async (req, res) => {
             where: {
               OR: memberArray.flatMap(memberId => [
                 { sender_id: memberId },
-                { recipient_id: memberId },
+                { recipients: {
+                    some: {
+                      id: memberId,
+                },},},
                 { topic_id: memberId },
                 ]),
               },
             include: {
               sender: true,
-              recipient: true,
+              recipients: true,
               topic: true,
             },
         });
