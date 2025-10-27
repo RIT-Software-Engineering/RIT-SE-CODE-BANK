@@ -19,10 +19,9 @@ export default function ServicesPage() {
     getAllServices();
     return(
         <div>
-            {/* <h2>Services Page</h2>
+            <h2>Services Page</h2>
             <ServicesTable services={services} setServices={setServices}/>
-            <ServicesForm services={services} setServices={setServices}/> */}
-            <ServicesFormStep/>
+            <ServicesFormStep form_id={2}/>
         </div>
     );
 }
