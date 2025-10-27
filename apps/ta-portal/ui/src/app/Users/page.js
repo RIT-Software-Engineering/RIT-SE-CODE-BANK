@@ -190,6 +190,18 @@ export default function AdminUsersPage() {
         );
       }
 
+      if (role === 'EMPLOYER') {
+      
+        return (
+          <UserGroup
+            key={role}
+            title={role}
+            users={filtered}
+            onEditUser={handleEditClick}
+          />
+        );
+      }
+
       // Render a standard UserGroup for all other roles.
       return (
         <UserGroup

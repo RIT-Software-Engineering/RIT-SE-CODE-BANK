@@ -5,3 +5,4 @@ node_modules
 .pem
 /resources
 /server/database/prisma/migrations
+config_backend.*
