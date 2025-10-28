@@ -216,5 +216,25 @@ module.exports = function makeTeamBuilderRouter(prisma) {
     res.json(updated);
   });
 
+  router.get('/courses', async (req, res) => {
+    try {
+      const prof = await prisma.professor.findUnique({
+        where: { email: (req.me.email || '').toLowerCase() }
+      });
+      if (!prof) return res.status(403).json({ error: 'No professor record' });
+
+      const courses = await prisma.courseCreation.findMany({
+        where: { professorId: prof.id },
+        include: { sections: true }
+      });
+
+      res.json(courses);
+    } catch (err) {
+      console.error('courses fetch failed:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+
   return router;
 };

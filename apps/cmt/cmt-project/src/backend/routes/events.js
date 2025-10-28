@@ -295,6 +295,62 @@ module.exports = function makeEventsRouter(prisma) {
     }
   });
 
+  router.get('/me', (req, res) => {
+    res.json({ me: req.me });
+  });
+
+  // list events (scoped example — adjust for your schema)
+  router.get('/', async (req, res) => {
+    try {
+      // example: all events for this professor's courses
+      // tweak to your actual Prisma models/relations
+      const prof = await prisma.professor.findUnique({
+        where: { email: (req.me.email || '').toLowerCase() }
+      });
+      if (!prof) return res.status(403).json({ error: 'No professor record' });
+
+      const events = await prisma.event.findMany({
+        where: { professorId: prof.id },
+        orderBy: [{ date: 'asc' }, { time: 'asc' }]
+      });
+
+      res.json(events);
+    } catch (err) {
+      console.error('events list failed:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // create event (example)
+  router.post('/', async (req, res) => {
+    try {
+      const prof = await prisma.professor.findUnique({
+        where: { email: (req.me.email || '').toLowerCase() }
+      });
+      if (!prof) return res.status(403).json({ error: 'No professor record' });
+
+      const { title, date, time, location, description, courseId, type, importance } = req.body;
+
+      const event = await prisma.event.create({
+        data: {
+          title,
+          date: new Date(date),
+          time,
+          location,
+          description,
+          type,
+          importance,
+          courseId,
+          professorId: prof.id
+        }
+      });
+      res.status(201).json(event);
+    } catch (err) {
+      console.error('event create failed:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   return router;
 };
 
