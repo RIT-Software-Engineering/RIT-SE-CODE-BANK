@@ -179,7 +179,14 @@ jobs:
           if [[ "$BRANCH" == *-dev ]]; then
             # Extract base app name (e.g., ta-portal from ta-portal-*-dev)
             APP_NAME="${BRANCH%%-dev*}"  # Get everything before first -dev
-            APP_NAME="${APP_NAME%%-*}"   # Get first part (ta-portal)
+            FIRST_PART="${APP_NAME%%-*}"   # Get first part (ta-portal)
+            SECOND_PART="${APP_NAME#*-}"
+            SECOND_PART="${SECOND_PART%%-*}"
+            if [[ "$FIRST_PART" == "$SECOND_PART" ]]; then
+                APP_NAME="${FIRST_PART}"
+            else
+                APP_NAME="${FIRST_PART}-${SECOND_PART}"
+            fi        
           elif [[ "$BRANCH" == "dev" || "$BRANCH" == "main" ]]; then
             APP_NAME="all"
           else
