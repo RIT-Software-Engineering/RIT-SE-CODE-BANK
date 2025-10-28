@@ -12,6 +12,7 @@ import { FormControl, FormLabel, InputLabel, MenuItem, Select } from '@mui/mater
 import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';
 import CoursesPage from './pages/courses/CoursePage.jsx'
 import Header from './pages/Header.jsx';
+import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
 
 function App() {
   const [role, setRole] = useState("faculty")
@@ -46,6 +47,11 @@ function App() {
         name : "Courses",
         route : "/courses",
         adminOnly : true
+    },
+    {
+      name : "Highlights",
+      route : "/highlights_form",
+      adminOnly : false
     }
   ]
 
@@ -67,6 +73,7 @@ function App() {
         {role === 'admin' ? adminRoutes : null}
         <Route path="/course_sections" element={<CourseSectionsPage/>} />
         <Route path="/student_support" element={<StudentSupportPage/>} />
+        <Route path="/highlights_form" element={<HighlightsFormPage/>} />
       </Routes>
     </BrowserRouter>
   )

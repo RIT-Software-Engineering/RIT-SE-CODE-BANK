@@ -3,7 +3,7 @@ import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Ale
 import ServiceForm from "./ServiceForm";
 import { useFieldArray, useForm } from "react-hook-form";
 
-export default function ServicesFormStep({form_id}){
+export default function ServicesFormStep({form_id, control, errors, handle}){
     const [number_of_services, setNumberOfServices] = useState(0);
 
     function Service(form_id){
@@ -14,13 +14,6 @@ export default function ServicesFormStep({form_id}){
         this.other_contributions = "";
         this.form_id = form_id;
     }
-
-    const {control, handleSubmit, reset, formState:{errors}} = useForm({defaultValues :
-        {
-            services : []
-        },
-        mode:"onChange"
-    });
 
     const {fields, append, remove} = useFieldArray(
         {
@@ -36,7 +29,6 @@ export default function ServicesFormStep({form_id}){
 
     return (
         <div>
-        <form onSubmit={handleSubmit((data) => console.log(data))}>
         <Grid container rowSpacing={0} columns={12}>
         {fields.map((service, index) => 
         (
@@ -60,9 +52,7 @@ export default function ServicesFormStep({form_id}){
             
         ))}
         </Grid>
-        <Button type="submit">Submit</Button>
         <Button onClick={() => {append(new Service(form_id)); setNumberOfServices(number_of_services + 1)}}>Add Service</Button>
-        </form>
         </div>
     )
 

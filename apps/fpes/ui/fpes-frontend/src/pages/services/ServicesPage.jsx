@@ -21,7 +21,7 @@ export default function ServicesPage() {
         <div>
             <h2>Services Page</h2>
             <ServicesTable services={services} setServices={setServices}/>
-            <ServicesFormStep form_id={2}/>
+            <ServicesForm/>
         </div>
     );
 }
