@@ -31,19 +31,22 @@ export default function HighlightsFormPage() {
         this.form_id = form_id;
     }
 
-    function handleNext(){
-        trigger();
+    async function handleStepperChange(newIndex){
+        await trigger();
 
         if(Object.keys(errors).length === 0){
-            setActiveStep(prev => prev+1);
+            setActiveStep(newIndex);
         }
     }
+
+
     
     const {control, handleSubmit, reset, trigger, formState:{errors}} = useForm({defaultValues :
         {
-            services : []
+            services : [],
+            course_sections : [],
         },
-        mode:"onChange"
+        mode:"onTouched"
     });
 
     return (
@@ -63,16 +66,15 @@ export default function HighlightsFormPage() {
             {
                 isOnFirstStep() ? 
                 <Button component={Link} to="/services">Cancel</Button> :
-                <Button onClick={() => setActiveStep(prev => prev - 1)}>Back</Button>
+                <Button onClick={() => handleStepperChange(activeStep - 1)}>Back</Button>
             }
 
             {/* Forward Button */}
             {
                 isOnLastStep() ? 
                 <Button variant="contained" onClick={handleSubmit(data => console.log(data))}>Submit</Button> : 
-                <Button onClick={() => handleNext()}>Next</Button>
+                <Button onClick={() => handleStepperChange(activeStep + 1)}>Next</Button>
             }
-
             </form>
             
             
