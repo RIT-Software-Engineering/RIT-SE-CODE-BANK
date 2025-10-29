@@ -206,6 +206,22 @@ async function main() {
           name: "Join Slack",
           description: "Join the Scoop slack channels",
         },
+        {
+          name: "Complete Scoop Promise",
+          description: "Scooployees complete their Scoop promise and send it to the Scoodinator",
+        },
+        {
+          name: "Team Skills Grid",
+          description: "Team will navigate the repository and find any necessary skills and rate their expertise and knowledge from 0-5",
+        },
+        {
+          name: "Make Individual Domain Models",
+          description: "After being briefed on the basics of their project each Scooployee will complete an individual domain model to level set their Mental Model.",
+        },
+        {
+          name: "Midterm Presentation",
+          description: "Each SCOOP team will give a presentation near the halfway point of the term to reflect on and share their progress",
+        },
       ],
     }, 
   ];

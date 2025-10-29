@@ -6,12 +6,12 @@ info:
 paths:
   /states/workflow:
     get:
-      summary: Get multiple workflow states filtered by userId and/or workflowId
-      description: Returns all workflow states that pass the filters specified in the query params
+      summary: Get workflow states filtered by userId and/or workflowId
+      description: Returns workflow states that match the provided filters. When filtering by userId this includes workflow states directly assigned to the user as well as those the user participates in via a team assignment.
       operationId: getWorkflowStates
       tags:
         - States
-          - Workflow
+        - Workflow
       parameters:
         - name: userId
           in: query
@@ -33,18 +33,22 @@ paths:
                     - $ref: "./schemas.yaml#/components/schemas/WorkflowState"
                     - type: object
                       properties:
+                        participants:
+                          type: array
+                          items:
+                            $ref: "./schemas.yaml#/components/schemas/WorkflowStateParticipant"
                         actionStates:
                           type: array
                           items:
                             $ref: "./schemas.yaml#/components/schemas/ActionState"
 
     post:
-      summary: Create a new workflow state
-      description: Creates a workflow state based on the data passed in the body and the workflow that it's associated with
+      summary: Create a new workflow state (individual or team)
+      description: Creates a workflow state based on the supplied data. Provide userId to create an individual assignment, or participantUserIds (and optionally teamId) to create a shared team assignment.
       operationId: createWorkflowState
       tags:
         - States
-          - Workflow
+        - Workflow
       requestBody:
         required: true
         content:
@@ -54,10 +58,20 @@ paths:
               properties:
                 userId:
                   type: string
+                  description: Primary user assigned to the workflow state. Optional when using participantUserIds.
                 workflowId:
                   type: string
+                  description: Workflow this state tracks.
+                  minLength: 1
+                participantUserIds:
+                  type: array
+                  description: Additional users that share the workflow state (team participants).
+                  items:
+                    type: string
+                teamId:
+                  type: string
+                  description: Identifier of the team that shares this workflow state.
               required:
-                - userId
                 - workflowId
       responses:
         "200":
@@ -74,7 +88,7 @@ paths:
       operationId: getWorkflowStateById
       tags:
         - States
-          - Workflow
+        - Workflow
       parameters:
         - name: id
           in: path
@@ -102,7 +116,7 @@ paths:
       operationId: updateWorkflowState
       tags:
         - States
-          - Workflow
+        - Workflow
       parameters:
         - name: id
           in: path
@@ -123,7 +137,7 @@ paths:
       operationId: deleteWorkflowState
       tags:
         - States
-          - Workflow
+        - Workflow
       parameters:
         - name: id
           in: path
@@ -149,7 +163,7 @@ paths:
       operationId: getActionStates
       tags:
         - States
-          - Action
+        - Action
       parameters:
         - name: userId
           in: query
@@ -184,7 +198,7 @@ paths:
       operationId: getActionStateById
       tags:
         - States
-          - Action
+        - Action
       parameters:
         - name: id
           in: path
@@ -205,7 +219,7 @@ paths:
       operationId: updateActionState
       tags:
         - States
-          - Action
+        - Action
       parameters:
         - name: id
           in: path
@@ -237,7 +251,7 @@ paths:
       operationId: findStep
       tags:
         - States
-          - Workflow
+        - Workflow
       parameters:
         - name: workflowStateId
           in: path

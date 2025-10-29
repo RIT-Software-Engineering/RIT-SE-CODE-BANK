@@ -101,10 +101,35 @@ components:
         userId:
           type: string
           format: uuid
+          nullable: true
+        teamId:
+          type: string
+          nullable: true
         workflowId:
           type: string
           format: uuid
-      required: [id, userId, workflowId]
+        baseActionStateId:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowStateParticipant'
+      required: [id, workflowId, baseActionStateId]
+
+    WorkflowStateParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflowStateId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+      required: [id, workflowStateId, userId]
 
     ActionState:
       type: object
