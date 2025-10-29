@@ -15,6 +15,19 @@ const {
 const { verifyPassword, hashPassword } = require("../config/passwordHashes");
 // Notifications: call the notification service directly (no shared client)
 const { dispatchTemplated } = require('../utils/notifications');
+
+// Build a stable deep link back into the TA Portal UI for CTAs in notifications.
+// Uses TA_PORTAL_BASE_URL or defaults to http://localhost:3000 for dev.
+// Universal landing: always send to /Applications (UI will redirect based on the logged-in user's role).
+// This avoids stale links when a candidate becomes an employee, etc.
+async function buildAppLink({ jobPositionId, applicationId }) {
+  const base = (process.env.TA_PORTAL_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
+  const qp = new URLSearchParams();
+  if (jobPositionId) qp.set('jobPositionId', String(jobPositionId));
+  if (applicationId) qp.set('applicationId', String(applicationId));
+  const qs = qp.toString();
+  return `${base}/Applications${qs ? `?${qs}` : ''}`;
+}
 // Back-compat shim: notifyEvent(event, context, { ... }) — best-effort templated dispatch to the candidate by username inferred from email
 async function notifyEvent(event, context = {}, _opts = {}) {
   try {
@@ -628,6 +641,7 @@ async function applyForJobPosition(applicationDetails) {
           new_status: "APPLIED",
           hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
           is_applied: true,
+          app_link: await buildAppLink({ jobPositionId: jobPositionId, applicationId: newApp.id }),
         },
         { toEmails: [newApp.candidateEmail, ...emails], userEmail: newApp.candidateEmail, subject: 'TA Application Status Update' }
       );
@@ -653,6 +667,7 @@ async function applyForJobPosition(applicationDetails) {
               courseName: jobPosition.course.name,
               status: 'APPLIED',
               instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+              app_link: await buildAppLink({ jobPositionId: jobPositionId, applicationId: newApp.id }),
             },
           });
         } catch (e) {
@@ -886,6 +901,7 @@ try {
       hiring_manager: details.instructorName,
       is_hired: status === 'HIRED',
       is_accepted_offer: status === 'ACCEPTED_OFFER',
+  app_link: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }),
     },
     { toEmails: [candidateEmail, ...stakeholders], userEmail: candidateEmail, subject: 'TA Application Status Update' }
   );
@@ -913,6 +929,7 @@ try {
           comment: comments,
           is_hired: status === 'HIRED',
           is_accepted_offer: status === 'ACCEPTED_OFFER',
+          app_link: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }),
         },
       });
     }
@@ -946,6 +963,7 @@ try {
             courseName: details.courseName,
             status,
             instructorName: details.instructorName,
+            app_link: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }),
           },
         });
       }
@@ -1128,6 +1146,7 @@ async function hireCandidateForJobPosition(
             new_status: "HIRED",
             hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
             is_hired: true,
+            app_link: await buildAppLink({ jobPositionId, applicationId }),
           },
           { toEmails, userEmail: candidateEmail, subject: 'TA Application Status Update' }
         );
@@ -1154,6 +1173,7 @@ async function hireCandidateForJobPosition(
                 status: 'HIRED',
                 instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
                 is_hired: true,
+                app_link: await buildAppLink({ jobPositionId, applicationId }),
               },
             });
           } catch (e) {
@@ -1186,6 +1206,7 @@ async function hireCandidateForJobPosition(
                 comment: commentData?.comment,
                 // flags for template branching
                 is_hired: true,
+                app_link: await buildAppLink({ jobPositionId, applicationId }),
               },
             });
           }

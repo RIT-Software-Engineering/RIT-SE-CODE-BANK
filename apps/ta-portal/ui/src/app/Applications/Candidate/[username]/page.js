@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { getCandidateApplicationsAsCandidate } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
 import { gradeEnumToStringValue } from '@/constants/gradeConstants';
@@ -33,6 +34,8 @@ export default function CandidateApplicationsPage() {
   // Core hooks for authentication context and component references.
   const { currentUser, refreshUserProfile } = useAuth();
   const filterRef = useRef();
+  const searchParams = useSearchParams();
+  const scrolledRef = useRef(false);
 
   // State for managing application data, loading, and errors.
   const [displayData, setDisplayData] = useState({});
@@ -139,6 +142,24 @@ export default function CandidateApplicationsPage() {
     }
   }, [currentUser, updateApplicationsView]);
 
+  // Auto-scroll to focused application when deep-linked
+  useEffect(() => {
+    if (loading || scrolledRef.current) return;
+    const appId = searchParams.get('applicationId');
+    if (!appId) return;
+    const el = document.getElementById(`app-${appId}`);
+    if (el) {
+      scrolledRef.current = true;
+      try {
+        el.closest('[role="region"]')?.previousElementSibling?.click?.();
+      } catch (_) {}
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
+      }, 50);
+    }
+  }, [loading, displayData, searchParams]);
+
   /**
    * Callback function passed to child ApplicationCard components.
    * Triggers a refresh of the applications view when a status is changed (e.g., application withdrawn).
@@ -233,6 +254,8 @@ export default function CandidateApplicationsPage() {
                     application={app}
                     onStatusChange={handleStatusChange}
                     refreshUserProfile={refreshUserProfile}
+                    cardId={`app-${app.id}`}
+                    isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
                   />
                 ))}
               </Box>

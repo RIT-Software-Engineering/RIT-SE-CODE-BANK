@@ -49,6 +49,9 @@ export default function CandidateApplicationCard({
   application,
   refreshUserProfile,
   onStatusChange,
+  // Optional deep-link highlighting support
+  cardId,
+  isHighlighted = false,
 }) {
   const { id } = application;
   const { showNotification } = useNotification();
@@ -172,7 +175,24 @@ export default function CandidateApplicationCard({
 
   return (
     <>
-      <Paper elevation={3} sx={{ overflow: 'hidden' }}>
+      <Paper
+        id={cardId}
+        tabIndex={-1}
+        elevation={3}
+        sx={{
+          overflow: 'hidden',
+          outline: isHighlighted ? '3px solid #F76902' : 'none',
+          boxShadow: isHighlighted ? '0 0 0 4px rgba(247,105,2,0.18)' : undefined,
+          backgroundColor: isHighlighted ? '#FFF8F1' : undefined,
+          transition: 'background-color 600ms, box-shadow 600ms, outline 600ms',
+          '@keyframes flashPulse': {
+            '0%': { backgroundColor: '#FFF8F1' },
+            '50%': { backgroundColor: '#FFEAD9' },
+            '100%': { backgroundColor: '#FFF8F1' },
+          },
+          animation: isHighlighted ? 'flashPulse 1.2s ease-in-out 2' : 'none',
+        }}
+      >
         <Box sx={{ p: { xs: 2, md: 3 } }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
             <Box>

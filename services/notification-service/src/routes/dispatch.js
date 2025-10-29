@@ -37,7 +37,12 @@ router.post("/:appId", async (req, res) => {
     // Default behavior: if no preferences exist, default to email-only BUT requires a stored email
     const notifyEmail = pref ? !!pref.notifyEmail : true;
     const notifySlack = pref ? !!pref.notifySlack : false;
+    // Prefer explicitly provided email; then stored preference; then email embedded in context
     let userEmail = providedEmail || pref?.userEmail || null;
+    if (!userEmail && context) {
+      const ctxEmail = (context.candidateEmail || context.applicantEmail || context.recipient?.email || '').trim().toLowerCase();
+      if (ctxEmail.includes('@')) userEmail = ctxEmail;
+    }
     const slackUsername = pref?.slackUsername || null;
 
     // If email not stored, try to resolve from app backend (ta-portal)
