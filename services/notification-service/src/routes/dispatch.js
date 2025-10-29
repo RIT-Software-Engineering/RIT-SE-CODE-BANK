@@ -45,13 +45,23 @@ router.post("/:appId", async (req, res) => {
       userEmail = await resolveUserEmail({ appId, userId });
     }
 
-    const results = [];
-    const errors = [];
+  const results = [];
+  const errors = [];
+  // Summary trackers
+  let emailAttempted = notifyEmail;
+  let emailSent = false;
+  let emailToSummary = null;
+  let emailErrorSummary = null;
+  let slackAttempted = notifySlack;
+  let slackSent = false;
+  let slackToSummary = null;
+  let slackErrorSummary = null;
 
     // EMAIL
     if (notifyEmail) {
       if (!userEmail) {
-        errors.push({ channel: "email", error: "No userEmail on preference record" });
+        emailErrorSummary = "No userEmail on preference record";
+        errors.push({ channel: "email", error: emailErrorSummary });
       } else {
         try {
           let subjectToSend = providedSubject || (event ? defaultSubject(role, context) : undefined);
@@ -70,9 +80,12 @@ router.post("/:appId", async (req, res) => {
 
           const info = await sendEmail({ to: userEmail, subject: subjectToSend, text, html });
           results.push({ channel: "email", messageId: info.messageId });
+          emailSent = true;
+          emailToSummary = userEmail;
           console.log(`[dispatch][${ts()}] app=${appId} userId=${userId} email=ok to=${userEmail}`);
         } catch (e) {
           const err = e?.message || String(e);
+          emailErrorSummary = err;
           errors.push({ channel: "email", error: err });
           console.warn(`[dispatch][${ts()}] app=${appId} userId=${userId} email=fail ${err}`);
         }
@@ -82,7 +95,8 @@ router.post("/:appId", async (req, res) => {
     // SLACK
     if (notifySlack) {
       if (!process.env.SLACK_BOT_TOKEN) {
-        errors.push({ channel: "slack", error: "SLACK_BOT_TOKEN not configured" });
+        slackErrorSummary = "SLACK_BOT_TOKEN not configured";
+        errors.push({ channel: "slack", error: slackErrorSummary });
       } else {
         try {
           // Prefer direct handle when provided; otherwise resolve by email
@@ -97,17 +111,31 @@ router.post("/:appId", async (req, res) => {
           }
           const resp = await sendSlackMessage({ channel: channelId, text: textToSend });
           results.push({ channel: "slack", ts: resp.ts, channelId });
+          slackSent = true;
+          slackToSummary = handle || channelId;
           console.log(`[dispatch][${ts()}] app=${appId} userId=${userId} slack=ok to=${handle}`);
         } catch (e) {
           const err = e?.message || String(e);
+          slackErrorSummary = err;
           errors.push({ channel: "slack", error: err });
           console.warn(`[dispatch][${ts()}] app=${appId} userId=${userId} slack=fail ${err}`);
         }
       }
     }
 
+    // Dispatch summary log (what was enabled, sent, failed)
+    const enabled = [ ...(notifyEmail ? ['email'] : []), ...(notifySlack ? ['slack'] : []) ];
+    const sent = results.map(r => r.channel);
+    const failed = errors.map(e => e.channel);
+    console.log(
+      `[dispatch][${ts()}] app=${appId} userId=${userId} event=${event || 'plain'} role=${role} ` +
+      `email(attempted=${emailAttempted} sent=${emailSent} to=${emailToSummary || '-'}${emailErrorSummary ? ` error="${emailErrorSummary}"` : ''}) ` +
+      `slack(attempted=${slackAttempted} sent=${slackSent} to=${slackToSummary || '-'}${slackErrorSummary ? ` error="${slackErrorSummary}"` : ''}) ` +
+      `enabled=[${enabled.join(',') || '-'}] sent=[${sent.join(',') || '-'}] failed=[${failed.join(',') || '-'}]`
+    );
+
     // Determine overall outcome: if any enabled channel failed, return 502. If none enabled, 422.
-    const enabledCount = (notifyEmail ? 1 : 0) + (notifySlack ? 1 : 0);
+    const enabledCount = enabled.length;
     if (enabledCount === 0) {
       return res.status(422).json({ error: "No enabled channels for this user", results, errors });
     }
