@@ -26,15 +26,7 @@ export default function SelectUserPage() {
       setUser(user); // set user
       console.log(user.type)
       
-      router.push("new-dashboards");
-      // OLD DASHBOARDS
-      // if (user.type === "scoopdinator") { //renamed to scoopdinator 
-      //   router.push("scoopdinator/dashboard"); 
-      // } else if (user.type === "scoopervisor") { //renamed to scoopervisor
-      //   router.push("scoopervisor/dashboard"); 
-      // } else {
-      //   router.push("scooployee/dashboard");
-      // }
+      router.push("dashboard");
     }
   };
 

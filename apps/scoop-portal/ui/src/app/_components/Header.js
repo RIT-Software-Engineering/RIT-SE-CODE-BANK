@@ -27,12 +27,8 @@ import { useUser } from "../utils/user-context/page";
 const navItems = [
   {
     label: "Dashboard",
-    submenu: [
-      { label: "Scooployee", path: "/scooployee/dashboard" },
-      { label: "Scoopervisor", path: "/scoopervisor/dashboard" },
-      { label: "Scoopdinator", path: "/scoopdinator/dashboard" },
-      { label: "Unified", path: "/new-dashboards" },
-    ],
+    path: "/dashboard",
+    submenu: []
   },
   {
     label: "Workflows",
@@ -151,7 +147,7 @@ export default function Header() {
           }}
         >
           <Box display="flex" alignItems="center">
-            <Link href={"/new-dashboards"} passHref>
+            <Link href={"/dashboard"} passHref>
               <Box
                 sx={{
                   display: "inline-flex",
@@ -172,22 +168,36 @@ export default function Header() {
               </Box>
             </Link>
 
-            {navItems.map(({ label, submenu }) => (
+            {navItems.map(({ label, submenu, path }) => (
               <Box key={label} sx={{ position: "relative", mr: 3 }}>
-                <Button
-                  aria-controls={anchorEls[label] ? `${label}-menu` : undefined}
-                  aria-haspopup="true"
-                  aria-expanded={anchorEls[label] ? "true" : undefined}
-                  onClick={(e) => handleMenuOpen(e, label)}
-                  endIcon={<ArrowDropDownIcon />}
-                  sx={{
-                    color: "#212121",
-                    fontWeight: 600,
-                    textTransform: "none",
-                  }}
-                >
-                  {label}
-                </Button>
+                {path ? (
+                  <Button
+                    component={Link}
+                    href={path}
+                    sx={{
+                      color: "#212121",
+                      fontWeight: 600,
+                      textTransform: "none",
+                    }}
+                  >
+                    {label}
+                  </Button>
+                ) : (
+                  <Button
+                    aria-controls={anchorEls[label] ? `${label}-menu` : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={anchorEls[label] ? "true" : undefined}
+                    onClick={(e) => handleMenuOpen(e, label)}
+                    endIcon={<ArrowDropDownIcon />}
+                    sx={{
+                      color: "#212121",
+                      fontWeight: 600,
+                      textTransform: "none",
+                    }}
+                  >
+                    {label}
+                  </Button>
+                )}
                 <Menu
                   id={`${label}-menu`}
                   anchorEl={anchorEls[label]}
