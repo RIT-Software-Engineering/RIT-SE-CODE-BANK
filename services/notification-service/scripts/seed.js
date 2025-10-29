@@ -5,52 +5,58 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding notification preferences...');
+  console.log('Seeding user preferences...');
 
   const samples = [
     {
       appId: 'ta-portal',
-      userEmail: 'alice@example.com',
-      username: 'alice',
+      userEmail: 'alice@rit.edu',
+      userId: 'alice',
+      slackUsername: 'alice',
       notifyEmail: true,
       notifySlack: false,
     },
     {
       appId: 'ta-portal',
-      userEmail: 'bob@example.com',
-      username: 'bob',
+      userEmail: 'bob@rit.edu',
+      userId: 'bob',
+      slackUsername: 'bob',
       notifyEmail: false,
       notifySlack: true,
     },
     {
       appId: 'scoop-portal',
-      userEmail: 'carol@example.com',
-      username: 'carol',
+      userEmail: 'carol@rit.edu',
+      userId: 'carol',
+      slackUsername: 'carol',
       notifyEmail: true,
       notifySlack: true,
     },
     {
       appId: 'ta-portal',
       userEmail: 'bgg6007@rit.edu',
-      username: 'bgg6007',
+      userId: 'bgg6007',
+      slackUsername: 'bgg6007',
       notifyEmail: false,
       notifySlack: true,
     },
   ];
 
   for (const s of samples) {
-    console.log('Upserting', s.appId, s.userEmail);
-    await prisma.notificationPreference.upsert({
-      where: { appId_userEmail: { appId: s.appId, userEmail: s.userEmail } },
+    console.log('Upserting', s.appId, s.userId);
+    await prisma.userPreference.upsert({
+      where: { appId_userId: { appId: s.appId, userId: s.userId } },
       update: {
-        username: s.username,
+        userEmail: s.userEmail,
+        slackUsername: s.slackUsername,
         notifyEmail: s.notifyEmail,
         notifySlack: s.notifySlack,
       },
       create: {
         appId: s.appId,
+        userId: s.userId,
         userEmail: s.userEmail,
-        username: s.username,
+        slackUsername: s.slackUsername,
         notifyEmail: s.notifyEmail,
         notifySlack: s.notifySlack,
       },

@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-// notification-client (CJS build)
-const notificationClient = require('../../../../../packages/notification-client/index.cjs');
+// Local notifications util that calls the service directly
+const notificationClient = require('../utils/notifications');
 
 // GET /api/notifications/preferences/:appId/:identifier
 router.get('/preferences/:appId/:identifier', async (req, res) => {
   const { appId, identifier } = req.params;
   try {
-    const prefs = await notificationClient.getPreferences(identifier);
+    console.log(`[notifications_api] GET prefs appId=${appId} id=${identifier}`);
+    const prefs = await notificationClient.getPreferences(identifier, appId);
+    console.log(`[notifications_api] GET prefs ->`, prefs);
     return res.json(prefs);
   } catch (err) {
     console.error('Failed to fetch preferences from notification service:', err && err.message);
@@ -21,35 +23,17 @@ router.put('/preferences/:appId/:identifier', async (req, res) => {
   const { appId, identifier } = req.params;
   const body = req.body || {};
   try {
-    // Ensure the service has a username to canonicalize identity when userEmail
-    // is not provided. Try to fetch existing prefs to see if a canonical email
-    // is already known for this identifier (helps avoid 400 from the service).
-    const payload = { ...body };
-    if (!payload.userEmail && !payload.username && identifier && !identifier.includes('@')) {
-      payload.username = identifier;
-    }
+    // Only forward toggles from the UI to avoid overwriting contact fields.
+    // Contact details are managed by the system (seed, admin tools, or future SSO sync).
+    const payload = {
+      ...(Object.prototype.hasOwnProperty.call(body, 'notifyEmail') ? { notifyEmail: !!body.notifyEmail } : {}),
+      ...(Object.prototype.hasOwnProperty.call(body, 'notifySlack') ? { notifySlack: !!body.notifySlack } : {}),
+    };
 
     try {
-      const existing = await notificationClient.getPreferences(identifier);
-      if (existing && existing.userEmail && !payload.userEmail) {
-        payload.userEmail = existing.userEmail;
-      }
-    } catch (e) {
-      // ignore — we'll still attempt the upsert and the service may accept username
-    }
-
-    // If still no canonical email, synthesize a placeholder email from the username
-    // (matches the notification-service in-memory fallback behavior).
-    if (!payload.userEmail && payload.username) {
-      try {
-        payload.userEmail = String(payload.username).trim().toLowerCase() + '@example.invalid';
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    try {
-      const result = await notificationClient.setPreferences(identifier, payload);
+      console.log(`[notifications_api] PUT prefs appId=${appId} id=${identifier} payload=`, payload);
+      const result = await notificationClient.setPreferences(identifier, payload, appId);
+      console.log(`[notifications_api] PUT prefs ->`, result);
       return res.json(result);
     } catch (err) {
       // Log payload and error detail to help debugging
@@ -63,41 +47,59 @@ router.put('/preferences/:appId/:identifier', async (req, res) => {
   }
 });
 
+// Dev-only helper to reset contact fields. Do NOT enable in production.
+if (process.env.NODE_ENV !== 'production') {
+  router.post('/preferences/:appId/:identifier/reset-contacts', async (req, res) => {
+    const { appId, identifier } = req.params;
+    try {
+      const result = await notificationClient.setPreferences(identifier, { userEmail: null, slackUsername: null }, appId);
+      return res.json({ ok: true, result });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: String(e && e.message || e) });
+    }
+  });
+}
+
 // GET /api/notifications/recent/:appId/:identifier
+// Recent notifications removed — return empty list to maintain compatibility
 router.get('/recent/:appId/:identifier', async (req, res) => {
-  const { appId, identifier } = req.params;
-  const { limit = 5, page = 0 } = req.query || {};
+  return res.json([]);
+});
+
+// POST /api/notifications/dispatch/:appId
+// Proxies dispatch to the notification service. Supports simple and templated payloads.
+router.post('/dispatch/:appId', async (req, res) => {
+  const { appId } = req.params;
+  const body = req.body || {};
+  const { userId, userEmail } = body;
+
+  if (!userId && !userEmail) {
+    return res.status(400).json({ error: 'userId or userEmail is required' });
+  }
+
   try {
-    // Try the identifier as provided first (frontend typically passes username)
-    let data = await notificationClient.getRecent(identifier, { limit: Number(limit), page: Number(page) });
-
-    // If nothing found and identifier looks like a username (no '@'), try email variant
-    // Many callers store notifications under email (r.email) while the frontend requests by username.
-    if ((!Array.isArray(data) || data.length === 0) && identifier && !identifier.includes('@')) {
-      try {
-        const alt = `${identifier}@rit.edu`;
-        const altData = await notificationClient.getRecent(alt, { limit: Number(limit), page: Number(page) });
-        if (Array.isArray(altData) && altData.length > 0) data = altData;
-      } catch (e) {
-        // ignore and keep original data
-      }
+    let result;
+    if (body.event) {
+      const { event, context = {}, role, subject } = body;
+      console.log(`[notifications_api] POST dispatch (templated) appId=${appId} id=${userId || userEmail}`);
+      result = await notificationClient.dispatchTemplated(
+        userId || null,
+        { event, context, role, subject, userEmail: userEmail || null },
+        appId
+      );
+    } else {
+      const { subject, message } = body;
+      console.log(`[notifications_api] POST dispatch (simple) appId=${appId} id=${userId || userEmail}`);
+      result = await notificationClient.dispatchNotification(
+        userId || null,
+        { subject, message, userEmail: userEmail || null },
+        appId
+      );
     }
-
-    // If identifier was an email but no results, try username fallback (strip domain)
-    if ((!Array.isArray(data) || data.length === 0) && identifier && identifier.includes('@')) {
-      try {
-        const username = String(identifier.split('@', 1)[0]).toLowerCase();
-        const altData = await notificationClient.getRecent(username, { limit: Number(limit), page: Number(page) });
-        if (Array.isArray(altData) && altData.length > 0) data = altData;
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    return res.json(data || []);
+    return res.json(result);
   } catch (err) {
-    console.error('Failed to fetch recent notifications:', err && err.message);
-    return res.status(502).json({ error: 'Failed to fetch recent notifications', detail: String(err) });
+    console.error('Failed to dispatch via notification service:', err && err.message);
+    return res.status(502).json({ error: 'Failed to dispatch', detail: String(err) });
   }
 });
 

@@ -10,12 +10,8 @@ export function getPrisma() {
 }
 
 export async function ensurePrisma() {
-  try {
-    const p = getPrisma();
-    await p.$connect();
-    return p;
-  } catch (e) {
-    console.warn("Prisma not configured or cannot connect; preferences endpoints will fail until DATABASE_URL is set.", e.message);
-    throw e;
-  }
+  const p = getPrisma();
+  // Attempt to connect; let errors propagate so callers can handle them.
+  await p.$connect();
+  return p;
 }

@@ -10,19 +10,36 @@
   <tr>
     <td>
       <h2 style="font-size:24px;line-height:32px;font-weight:700;margin-bottom:16px;">
-        Administrative Update
+        Application Status Update
       </h2>
 
       <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-        Candidate <strong>{{candidate_name}}</strong> has moved to <strong>{{new_status}}</strong>
-        for <strong>{{#if job_title}}{{job_title}}{{else if course_name}}{{course_name}}{{else}}the position{{/if}}</strong>.
+        Hi {{#if recipient.name}}{{recipient.name}}{{else}}Administrator{{/if}},
       </p>
 
-  {{#if professor}}
-  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{professor}}</strong></p>
-  {{else if hiring_manager}}
-  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{hiring_manager}}</strong></p>
-  {{/if}}
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        Candidate <strong>{{candidate_name}}</strong> is now at status
+        <strong>{{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}Updated{{/if}}</strong>
+        for <strong>{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}this position{{/if}}</strong>.
+      </p>
+
+      {{#if is_hired}}
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        Please log in to the Portal to complete any remaining administrative steps related to this hire.
+      </p>
+      {{/if}}
+
+      {{#if comment}}
+      <p style="font-size:14px;color:#555;margin-top:8px;">
+        <strong>Note:</strong> {{comment}}
+      </p>
+      {{/if}}
+
+      {{#if professor}}
+      <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{professor}}</strong></p>
+      {{else if hiring_manager}}
+      <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{hiring_manager}}</strong></p>
+      {{/if}}
 
       {{#if app_link}}
       <p style="margin-top:24px;margin-bottom:24px;">
@@ -35,7 +52,7 @@
                   text-decoration:none;
                   font-size:16px;
                   font-weight:500;">
-          Open in Portal
+          {{#if is_hired}}Open Portal to Finalize Hire{{else}}Open in Portal{{/if}}
         </a>
       </p>
       {{/if}}

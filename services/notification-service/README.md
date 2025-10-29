@@ -1,3 +1,164 @@
+````markdown
+# Notification Service (preferences + real-time dispatch)
+
+This service now focuses on two things only:
+- Manage per-user notification preferences (email and Slack)
+- Dispatch notifications in real time via Email (SMTP) and Slack (Web API)
+
+No notification history is stored anymore. There are no retrieval or pagination endpoints.
+
+## Quick start (dev)
+
+1) Copy environment file and set connection details
+
+```powershell
+cd services/notification-service
+Copy-Item .env.example .env
+# Optional: set Slack bot token in .env (SLACK_BOT_TOKEN)
+```
+
+2) Start dependencies and the service
+
+```powershell
+docker compose up --build
+```
+
+Defaults in dev:
+- smtp4dev web UI: http://localhost:3005
+- notification service: http://localhost:4000
+
+3) Apply Prisma schema and seed example preferences (optional)
+
+```powershell
+npx prisma generate
+npx prisma db push
+npm run seed
+```
+
+## Environment variables
+
+- PORT — HTTP port (default 4000)
+- DATABASE_URL — Prisma connection string to MySQL/MariaDB
+- SMTP_HOST — SMTP host (e.g., 127.0.0.1)
+- SMTP_PORT — SMTP port (e.g., 2525)
+- SMTP_FROM — Sender address (default se-apps@rit.edu)
+- SLACK_BOT_TOKEN — Slack bot token for DMs (optional)
+
+See `.env.example` for a ready-to-copy template.
+
+## API
+
+Base path: `/api/notifications`
+
+1) GET /api/notifications/preferences/:appId/:userId
+- Returns stored preferences or sensible defaults when missing.
+- 200 body:
+  `{ appId, userId, notifyEmail, notifySlack, userEmail, slackUsername }`
+
+2) PUT /api/notifications/preferences/:appId/:userId
+- Upserts a user preference record for the given app.
+- Body fields: `notifyEmail?`, `notifySlack?`, `userEmail?`, `slackUsername?`
+- 200 body: `{ ok: true, preference: { ... } }`
+
+3) POST /api/notifications/dispatch/:appId
+- Dispatches a notification immediately based on stored preferences.
+- Two ways to call:
+  - Simple: subject/message
+  - Templated: event/context (+ optional role)
+- Simple body:
+```json
+{
+  "userId": "bgg6007",
+  "subject": "TA Application Submitted",
+  "message": "Your application was successfully submitted."
+}
+```
+- Templated body:
+```json
+{
+  "userId": "bgg6007",
+  "event": "application_status_changed",
+  "context": { "candidate_name": "Ben", "job_title": "TA", "new_status": "Interview" },
+  "role": "candidate"
+}
+```
+- Behavior: looks up preferences, sends via each enabled channel. Returns 200 when all enabled channels succeed, 502 when any enabled channel fails, and 422 when no channels are enabled.
+
+## Notes
+
+- Only the `UserPreference` model remains in the database. Notification history was removed.
+- Logging includes timestamp, appId, userId, and per-channel success/failure.
+- You can extend later with a queue, retries, or a persistence layer without changing the external API.
+
+
+Run a local MySQL (Docker) for Prisma
+------------------------------------
+
+If you don't have a development database running, you can start a local MySQL container for the notification service and Prisma to use. The examples below are PowerShell-ready.
+
+1) Quick single-container start (MySQL 8):
+
+```powershell
+# start a MySQL container (detached)
+docker run -d --name rit-mysql \
+  -e MYSQL_ROOT_PASSWORD=changeme \
+  -e MYSQL_DATABASE=rit_notifications \
+  -e MYSQL_USER=rit \
+  -e MYSQL_PASSWORD=ritpass \
+  -p 3306:3306 \
+  -v rit_mysql_data:/var/lib/mysql \
+  mysql:8.0
+
+# Example DATABASE_URL (use this to run Prisma commands locally):
+$env:DATABASE_URL = 'mysql://rit:ritpass@127.0.0.1:3306/rit_notifications'
+```
+
+2) Docker Compose example (recommended for dev):
+
+Create a small `docker-compose.db.yml` next to this README or use your existing compose file:
+
+```yaml
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme
+      MYSQL_DATABASE: rit_notifications
+      MYSQL_USER: rit
+      MYSQL_PASSWORD: ritpass
+    ports:
+      - '3306:3306'
+    volumes:
+      - rit_mysql_data:/var/lib/mysql
+
+volumes:
+  rit_mysql_data:
+```
+
+Start it with:
+
+```powershell
+docker compose -f docker-compose.db.yml up -d
+$env:DATABASE_URL = 'mysql://rit:ritpass@127.0.0.1:3306/rit_notifications'
+```
+
+## Generate Prisma client and apply schema
+
+From the `services/notification-service` folder run:
+
+```powershell
+npm install
+npx prisma generate
+npx prisma db push
+```
+
+Notes & troubleshooting
+- If the port 3306 is already in use, change the host port in the docker command/compose and update `DATABASE_URL` accordingly.
+- If Prisma cannot connect, confirm the container is healthy and the `DATABASE_URL` matches the container's credentials and host (use `127.0.0.1` instead of `localhost` on some Windows setups).
+- Back up any important data before running schema-altering commands like `migrate`.
+
+````
 # Notification Service
 
 Centralized notification service for the RIT-SE monorepo. This service renders role- and app-scoped Handlebars templates and dispatches notifications over SMTP (email) and Slack.
@@ -81,69 +242,7 @@ Create `.env` (or set environment variables) with these keys. Values shown are e
 
 ---
 
-## API reference
-
-Base path: `/`
-
-1) GET /api/v1/preferences/:appId/:identifier
-- Purpose: Read notification prefs for a user within an app
-- Params: `appId` (string), `identifier` (email or username)
-- Response 200: `{ notifyEmail: boolean, notifySlack: boolean, username?:string, userEmail?:string }`
-- When missing, returns defaults `{ notifyEmail: true, notifySlack: false }`
-
-2) PUT /api/v1/preferences/:appId/:identifier
-- Purpose: Upsert preferences
-- Body: `{ userEmail?: string, username?: string, notifyEmail?: boolean, notifySlack?: boolean }`
-- Behavior: `userEmail` is canonical identity (lowercased). If missing, service may attempt to resolve by username and return `400` if it cannot.
-- Response 200: `{ ok: true, preference: { ... } }`
-
-3) POST /send
-- Purpose: Dispatch a templated notification to multiple recipients
-- Body shape example:
-
-```json
-{
-  "event": "application_status_changed",
-  "context": { /* arbitrary context keys; normalized server-side */ },
-  "recipients": [
-    { "role": "candidate", "email": "..." },
-    { "role": "employer", "email": "...", "slack": "@user" }
-  ]
-}
-```
-
-- Response: `{ ok: true, results: [ { type: 'email'|'slack', to/channel, messageId|ts, error? } ] }`
-
-Notes & examples: templating details are covered in the Templates section.
-
----
-
-## Templates: naming & resolution rules
-
-Location: `src/templates/`
-
-- App-scoped templates (preferred): `src/templates/<appId>/<event>/<role>_<kind>.hbs`
-- Global templates (fallback): `src/templates/<event>/<role>_<kind>.hbs`
-- Partials: `src/templates/partials/*` (header/footer etc.)
-- Role names: `candidate`, `applicant` (treated like candidate), `employer`, `admin`, `recipient` (generic)
-- Kinds: `email`, `slack`
-
-Resolution algorithm (high level):
-1. If `appId` provided, try `src/templates/<appId>/<event>/<role>_<kind>.hbs`
-2. If not found, try `src/templates/<event>/<role>_<kind>.hbs`
-3. For non-admin roles, try aliases (e.g. `applicant` -> `candidate`) then fall back to `src/templates/<event>/<kind>.hbs` (generic)
-4. Admins: the service prefers admin-specific templates only — ensure `admin_email.hbs` exists app-scoped or globally to avoid admin receiving employer/candidate templates.
-
-Template context available to templates:
-- All keys in the `context` object passed to `/send` (normalizeContext maps aliases: `course_name`, `job_title`, `professor`, `candidate_name`, `app_link`)
-- `recipient` object with recipient-specific fields (e.g. `recipient.name`)
-
----
-
-## Testing & CI notes
-
-Unit tests
-- Run from service folder:
+## Testing
 
 ```powershell
 cd services\notification-service
@@ -153,7 +252,7 @@ npm test
 
 ## Troubleshooting
 
-- If templates are not selected as expected: set `DEBUG_NOTIFY=1` and look for `using template` debug lines in logs.
-- DB connection: verify `DATABASE_URL` and that the DB is reachable on the configured host/port.
-- Prisma Windows issues: if `prisma generate` errors with EPERM try closing editors or restarting shell.
+- DB connection: verify `DATABASE_URL` and the DB container is running.
+- Email: check smtp4dev UI and SMTP_HOST/SMTP_PORT values.
+- Slack: ensure SLACK_BOT_TOKEN is set for your workspace and the bot has chat:write,user:read.email scopes.
 

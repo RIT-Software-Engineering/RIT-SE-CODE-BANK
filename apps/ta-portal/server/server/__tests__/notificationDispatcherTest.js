@@ -10,7 +10,7 @@ jest.mock('@services/notification-service/src/channels/slack', () => ({
 // Mock the notification-client used by the dispatcher
 jest.mock('../../../../../packages/notification-client/index.cjs', () => ({
   getPreferences: jest.fn(),
-}));
+}), { virtual: true });
 
 // Pull the mocked functions into the test scope so the `expect(sendEmail)`
 // and `expect(sendSlackDM)` assertions work as written.

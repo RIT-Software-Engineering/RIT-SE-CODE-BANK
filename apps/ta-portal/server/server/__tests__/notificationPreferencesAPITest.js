@@ -1,11 +1,12 @@
 // __tests__/notificationPreferencesAPI.test.js
 const request = require('supertest');
 const app = require('@server/routing/index');
-jest.mock('../../../../../packages/notification-client/index.cjs', () => ({
+// Mock the new local notifications util used by the API routes
+jest.mock('@server/utils/notifications', () => ({
   getPreferences: jest.fn(),
   setPreferences: jest.fn(),
 }));
-const client = require('../../../../../packages/notification-client/index.cjs');
+const client = require('@server/utils/notifications');
 
 
 describe('Notification Preferences API', () => {

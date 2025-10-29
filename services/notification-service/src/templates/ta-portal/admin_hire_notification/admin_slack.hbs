@@ -1,10 +1,15 @@
-🟧 *Hire Confirmation Needed*  
-Candidate *{{candidate_name}}* has accepted their offer for _{{job_title}}_.  
+🟧 *Hire Confirmation Required*  
 
-Please confirm the hire and complete the administrative actions in the SE Portal.  
+Candidate *{{candidate_name}}* has *ACCEPTED* the offer for _{{#if job_title}}{{job_title}}{{else if course_name}}{{course_name}}{{else}}the position{{/if}}_.
+
+Please log in to the Portal to confirm the hire and complete the required administrative steps.
+
+{{#if comment}}
+_Note_: {{comment}}
+{{/if}}
 
 {{#if app_link}}
-👉 <{{app_link}}|Open in Portal>
+👉 <{{app_link}}|Confirm Hire>
 {{/if}}
 
 _Thank you for keeping the department’s hiring process on track._

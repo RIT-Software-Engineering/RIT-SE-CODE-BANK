@@ -59,6 +59,77 @@ npm install
 npm test
 ```
 
+Run a local MySQL (Docker) for Prisma
+------------------------------------
+
+If you don't have a development database running, you can start a local MySQL container for the notification service and Prisma to use. The examples below are PowerShell-ready.
+
+1) Quick single-container start (MySQL 8):
+
+```powershell
+# start a MySQL container (detached)
+docker run -d --name rit-mysql \
+  -e MYSQL_ROOT_PASSWORD=changeme \
+  -e MYSQL_DATABASE=rit_notifications \
+  -e MYSQL_USER=rit \
+  -e MYSQL_PASSWORD=ritpass \
+  -p 3306:3306 \
+  -v rit_mysql_data:/var/lib/mysql \
+  mysql:8.0
+
+# Example DATABASE_URL (use this to run Prisma commands locally):
+$env:DATABASE_URL = 'mysql://rit:ritpass@127.0.0.1:3306/rit_notifications'
+```
+
+2) Docker Compose example (recommended for dev):
+
+Create a small `docker-compose.db.yml` next to this README or use your existing compose file:
+
+```yaml
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme
+      MYSQL_DATABASE: rit_notifications
+      MYSQL_USER: rit
+      MYSQL_PASSWORD: ritpass
+    ports:
+      - '3306:3306'
+    volumes:
+      - rit_mysql_data:/var/lib/mysql
+
+volumes:
+  rit_mysql_data:
+```
+
+Start it with:
+
+```powershell
+docker compose -f docker-compose.db.yml up -d
+$env:DATABASE_URL = 'mysql://rit:ritpass@127.0.0.1:3306/rit_notifications'
+```
+
+3) Generate Prisma client and apply schema
+
+From the `services/notification-service` folder run:
+
+```powershell
+npm install
+npx prisma generate
+# Use db push to sync the schema without creating migration files:
+npx prisma db push
+
+# Or create a migration (recommended for tracked schema changes):
+npx prisma migrate dev --name init
+```
+
+Notes & troubleshooting
+- If the port 3306 is already in use, change the host port in the docker command/compose and update `DATABASE_URL` accordingly.
+- If Prisma cannot connect, confirm the container is healthy and the `DATABASE_URL` matches the container's credentials and host (use `127.0.0.1` instead of `localhost` on some Windows setups).
+- Back up any important data before running schema-altering commands like `migrate`.
+
 Cleanup notes
 
 This repository has been simplified: duplicate helper definitions and development-only debug

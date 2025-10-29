@@ -7,30 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model NotificationPreference {
-  appId     String
-  userEmail String
-  username  String?      
-  notifyEmail Boolean  @default(true)
-  notifySlack Boolean  @default(false)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+model UserPreference {
+  appId         String
+  userId        String
+  userEmail     String?
+  slackUsername String?
+  notifyEmail   Boolean   @default(true)
+  notifySlack   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  @@id([appId, userEmail])
-  @@index([username])
-  @@map("notification_preferences")
-}
-
-model Notification {
-  id        Int      @id @default(autoincrement())
-  appId     String
-  username  String
-  title     String?
-  body      String?   @map("message")
-  channel   String?   @default("email")
-  read      Boolean   @default(false)
-  createdAt DateTime  @default(now())
-
-  @@index([appId, username])
-  @@map("notifications")
+  @@id([appId, userId])
+  @@index([userEmail])
+  @@index([slackUsername])
+  @@map("user_preferences")
 }

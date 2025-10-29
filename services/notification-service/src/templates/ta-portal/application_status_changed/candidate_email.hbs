@@ -29,16 +29,41 @@
         {{/if}}
       </p>
 
-      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-  Great news, your application for
-        <strong>
-          {{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}
-        </strong>
-        has moved to
-        <strong>
-          {{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}an updated status{{/if}}
-        </strong>.
+      {{!-- Tailored messaging for key scenarios; default to generic status move wording --}}
+      {{#if is_applied}}
+        <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+          Thanks for applying! We've received your application for
+          <strong>{{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}</strong>.
+        </p>
+      {{else if is_hired}}
+        <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+          Congratulations! You've been <strong>HIRED</strong> for
+          <strong>{{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}</strong>!
+        </p>
+      {{else if is_accepted_offer}}
+        <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+          Thanks for confirming. Your offer acceptance for
+          <strong>{{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}</strong>
+          has been recorded. We'll be in touch with next steps.
+        </p>
+      {{else}}
+        <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+          Your application for
+          <strong>
+            {{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}
+          </strong>
+          is now at status
+          <strong>
+            {{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}Updated{{/if}}
+          </strong>.
+        </p>
+      {{/if}}
+
+      {{#if comment}}
+      <p style="font-size:14px;color:#555;margin-top:8px;">
+        <strong>Note:</strong> {{comment}}
       </p>
+      {{/if}}
 
   {{#if professor}}
   <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{professor}}</strong></p>

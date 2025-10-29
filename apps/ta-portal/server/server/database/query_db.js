@@ -13,9 +13,29 @@ const {
   positionStatusStringToEnum,
 } = require("../constants/status");
 const { verifyPassword, hashPassword } = require("../config/passwordHashes");
-// Notification helper - use the shared notification-client to call the notification service
-const notificationClient = require(path.resolve(__dirname, '../../../../../packages/notification-client/index.cjs'));
-const notifyEvent = notificationClient && notificationClient.notifyEvent ? notificationClient.notifyEvent : null;
+// Notifications: call the notification service directly (no shared client)
+const { dispatchTemplated } = require('../utils/notifications');
+// Back-compat shim: notifyEvent(event, context, { ... }) — best-effort templated dispatch to the candidate by username inferred from email
+async function notifyEvent(event, context = {}, _opts = {}) {
+  try {
+    // Try to infer a candidate username from email fields when not provided directly
+    const email =
+      context.candidateEmail ||
+      context.applicantEmail ||
+      _opts.userEmail ||
+      (Array.isArray(_opts.toEmails) && _opts.toEmails.length > 0 ? _opts.toEmails[0] : null);
+    if (!email) {
+      console.warn('[notifyEvent] no candidate email in context; skipping dispatch');
+      return { ok: true, skipped: true };
+    }
+    const userId = String(email).split('@', 1)[0].toLowerCase();
+  await dispatchTemplated(userId, { event, context: { ...context, candidateEmail: context.candidateEmail || email }, role: 'candidate', userEmail: email, ...(_opts.subject ? { subject: _opts.subject } : {}) });
+    return { ok: true };
+  } catch (e) {
+    console.error('[notifyEvent] dispatch failed', e && e.message);
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+}
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {
@@ -590,19 +610,55 @@ async function applyForJobPosition(applicationDetails) {
 
   // Notify stakeholders + candidate
     try {
-      const { emails } = await getCourseStakeholders(newApp.jobPositionId);
+      const { emails, employerEmail } = await getCourseStakeholders(newApp.jobPositionId);
       await notifyEvent(
         "APPLICATION_RECEIVED",
         {
+          // canonical (camelCase)
           candidateName: `${newApp.candidateFName} ${newApp.candidateLName}`,
+          candidateEmail: newApp.candidateEmail,
           courseCode: jobPosition.courseCode,
           courseName: jobPosition.course.name,
           instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
           instructorEmail: jobPosition.employer.user.email,
-          comment: "Candidate submitted application.",
+          status: "APPLIED",
+          // snake_case aliases for templates
+          candidate_name: `${newApp.candidateFName} ${newApp.candidateLName}`,
+          course_name: jobPosition.course.name,
+          new_status: "APPLIED",
+          hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+          is_applied: true,
         },
-        { toEmails: [newApp.candidateEmail, ...emails] }
+        { toEmails: [newApp.candidateEmail, ...emails], userEmail: newApp.candidateEmail, subject: 'TA Application Status Update' }
       );
+
+      // Best-effort employer confirmation
+      if (employerEmail) {
+        const employerUserId = String(employerEmail).split('@', 1)[0].toLowerCase();
+        try {
+          await dispatchTemplated(employerUserId, {
+            event: 'APPLICATION_RECEIVED',
+            role: 'employer',
+            userEmail: employerEmail,
+            subject: 'TA Application Status Update',
+            context: {
+              // minimal fields for employer templates
+              candidate_name: `${newApp.candidateFName} ${newApp.candidateLName}`,
+              new_status: 'APPLIED',
+              course_name: jobPosition.course.name,
+              hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+              is_applied: true,
+              // keep camelCase too
+              candidateName: `${newApp.candidateFName} ${newApp.candidateLName}`,
+              courseName: jobPosition.course.name,
+              status: 'APPLIED',
+              instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+            },
+          });
+        } catch (e) {
+          console.error('Employer notify (APPLICATION_RECEIVED) failed:', e && e.message);
+        }
+      }
     } catch (e) {
       console.error("Notify APPLICATION_RECEIVED failed:", e.message);
     }
@@ -813,7 +869,9 @@ try {
   await notifyEvent(
     eventType,
     {
-  candidateName,
+      // canonical (camelCase)
+      candidateName,
+      candidateEmail,
       courseCode: details.courseCode,
       courseName: details.courseName,
       section: details.section,
@@ -821,9 +879,80 @@ try {
       instructorEmail: details.instructorEmail,
       status,
       comment: comments, // 👈 include reason/comment
+      // snake_case aliases for templates
+      candidate_name: candidateName,
+      course_name: details.courseName,
+      new_status: status,
+      hiring_manager: details.instructorName,
+      is_hired: status === 'HIRED',
+      is_accepted_offer: status === 'ACCEPTED_OFFER',
     },
-  { toEmails: [candidateEmail, ...stakeholders] }
+    { toEmails: [candidateEmail, ...stakeholders], userEmail: candidateEmail, subject: 'TA Application Status Update' }
   );
+
+  // Employer confirmation (status change)
+  try {
+    const employerEmail = details.instructorEmail;
+    if (employerEmail) {
+      const employerUserId = String(employerEmail).split('@', 1)[0].toLowerCase();
+      await dispatchTemplated(employerUserId, {
+        event: eventType,
+        role: 'employer',
+        userEmail: employerEmail,
+        subject: 'TA Application Status Update',
+        context: {
+          candidate_name: candidateName,
+          new_status: status,
+          course_name: details.courseName,
+          hiring_manager: details.instructorName,
+          // camelCase too
+          candidateName,
+          courseName: details.courseName,
+          status,
+          instructorName: details.instructorName,
+          comment: comments,
+          is_hired: status === 'HIRED',
+          is_accepted_offer: status === 'ACCEPTED_OFFER',
+        },
+      });
+    }
+  } catch (e) {
+    console.error('Employer notify (status change) failed:', e && e.message);
+  }
+
+  // Admins should be notified when a candidate accepts an offer
+  if (status === 'ACCEPTED_OFFER') {
+    try {
+      const adminEmails = (await getAdminEmails()) || [];
+      // Do not send admin emails to the instructor/employer
+      const adminList = adminEmails.filter(e => e && e.toLowerCase() !== String(details.instructorEmail || '').toLowerCase());
+      for (const adminEmail of adminList) {
+        const adminUserId = String(adminEmail).split('@', 1)[0].toLowerCase();
+        await dispatchTemplated(adminUserId, {
+          event: 'admin_hire_notification',
+          role: 'admin',
+          userEmail: adminEmail,
+          subject: 'TA Application Status Update',
+          context: {
+            candidate_name: candidateName,
+            job_title: details.courseName,
+            course_name: details.courseName,
+            new_status: status,
+            hiring_manager: details.instructorName,
+            comment: comments,
+            // camelCase mirrors
+            candidateName,
+            jobTitle: details.courseName,
+            courseName: details.courseName,
+            status,
+            instructorName: details.instructorName,
+          },
+        });
+      }
+    } catch (e) {
+      console.error('Admin notify (ACCEPTED_OFFER) failed:', e && e.message);
+    }
+  }
 } catch (e) {
   console.error("Slack notify (status change) failed:", e.message);
 }
@@ -985,9 +1114,84 @@ async function hireCandidateForJobPosition(
 
         await notifyEvent(
           "HIRED",
-          { candidateName, courseCode: jobPositionId },
-          { toEmails }
+          {
+            // canonical (camelCase)
+            candidateName,
+            candidateEmail,
+            courseCode: jobPositionId,
+            courseName: jobPosition.course?.name,
+            status: "HIRED",
+            comment: commentData?.comment,
+            // snake_case aliases
+            candidate_name: candidateName,
+            course_name: jobPosition.course?.name,
+            new_status: "HIRED",
+            hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+            is_hired: true,
+          },
+          { toEmails, userEmail: candidateEmail, subject: 'TA Application Status Update' }
         );
+
+        // Employer confirmation for hire event
+        const employerEmail = jobPosition.employer?.user?.email;
+        if (employerEmail) {
+          const employerUserId = String(employerEmail).split('@', 1)[0].toLowerCase();
+          try {
+            await dispatchTemplated(employerUserId, {
+              event: 'HIRED',
+              role: 'employer',
+              userEmail: employerEmail,
+              subject: 'TA Application Status Update',
+              context: {
+                candidate_name: candidateName,
+                new_status: 'HIRED',
+                course_name: jobPosition.course?.name,
+                hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                comment: commentData?.comment,
+                // camelCase too
+                candidateName,
+                courseName: jobPosition.course?.name,
+                status: 'HIRED',
+                instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                is_hired: true,
+              },
+            });
+          } catch (e) {
+            console.error('Employer notify (HIRED) failed:', e && e.message);
+          }
+        }
+
+        // Admin notification for completed hire (informational)
+        try {
+          const adminEmails = (await getAdminEmails()) || [];
+          // Exclude employer address from admin list
+          const adminList = adminEmails.filter(e => e && e.toLowerCase() !== String(employerEmail || '').toLowerCase());
+          for (const adminEmail of adminList) {
+            const adminUserId = String(adminEmail).split('@', 1)[0].toLowerCase();
+            await dispatchTemplated(adminUserId, {
+              event: 'HIRED',
+              role: 'admin',
+              userEmail: adminEmail,
+              subject: 'TA Application Status Update',
+              context: {
+                candidate_name: candidateName,
+                new_status: 'HIRED',
+                course_name: jobPosition.course?.name,
+                hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                // camelCase
+                candidateName,
+                courseName: jobPosition.course?.name,
+                status: 'HIRED',
+                instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                comment: commentData?.comment,
+                // flags for template branching
+                is_hired: true,
+              },
+            });
+          }
+        } catch (e) {
+          console.error('Admin notify (HIRED) failed:', e && e.message);
+        }
       }
     } catch (e) {
       console.error("Slack notify (hiring) failed:", e.message);
@@ -1071,6 +1275,14 @@ async function getCourseStakeholders(jobPositionId) {
 
   const emails = [...new Set([employerEmail, ...taEmails].filter(Boolean))];
   return { employerEmail, taEmails, emails };
+}
+
+/**
+ * Return all admin emails.
+ */
+async function getAdminEmails() {
+  const admins = await prisma.user.findMany({ where: { role: 'ADMIN' }, select: { email: true } });
+  return admins.map(a => a.email).filter(Boolean);
 }
 
 /**
@@ -2355,16 +2567,15 @@ async function fetchEmployerViewData(employerUsername) {
 // =============================================================================
 async function getUserNotificationPreferences(username) {
   // Use centralized notification service exclusively
-  const client = require("../../../../../packages/notification-client/index.cjs");
-  const res = await client.getPreferences(username);
+  const { getPreferences } = require("../utils/notifications");
+  const res = await getPreferences(username);
   return { notifyEmail: res.notifyEmail ?? true, notifySlack: res.notifySlack ?? false };
 }
 
 async function upsertUserNotificationPreferences(username, notifyEmail, notifySlack) {
-  const client = require("../../../../../packages/notification-client/index.cjs");
-  const identifier = username;
+  const { setPreferences } = require("../utils/notifications");
   const body = { username, notifyEmail: !!notifyEmail, notifySlack: !!notifySlack };
-  return await client.setPreferences(identifier, body);
+  return await setPreferences(username, body);
 }
 
 

@@ -1,8 +1,21 @@
 🟧 *Application Update*  
-Hi *{{candidate_name}}*, your application for _{{#if job_title}}{{job_title}}{{else if course_name}}{{course_name}}{{else}}the position{{/if}}_ has been moved to *{{new_status}}*.  
+Hi *{{#if candidate_name}}{{candidate_name}}{{else}}Candidate{{/if}}*,
 
-{{#if professor}}
-{{else if hiring_manager}}
+{{#if is_applied}}
+We've received your application for _{{#if job_title}}{{job_title}}{{else if course_name}}{{course_name}}{{else}}the position{{/if}}_.
+{{else if is_hired}}
+🎉 Congratulations! You've been *HIRED* for _{{#if job_title}}{{job_title}}{{else if course_name}}{{course_name}}{{else}}the position{{/if}}_!
+{{else if is_accepted_offer}}
+Thanks for confirming. Your offer acceptance for _{{#if job_title}}{{job_title}}{{else if course_name}}{{course_name}}{{else}}the position{{/if}}_ has been recorded.
+{{else}}
+Your application for _{{#if job_title}}{{job_title}}{{else if course_name}}{{course_name}}{{else}}the position{{/if}}_ is now at status *{{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}Updated{{/if}}*.
+{{/if}}
+
+{{#if comment}}
+_Note_: {{comment}}
+{{/if}}
+
+{{#if hiring_manager}}
 Instructor: *{{hiring_manager}}*
 {{/if}}
 

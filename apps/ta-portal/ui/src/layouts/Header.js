@@ -32,8 +32,8 @@ import {
   Description,
   People,
   AccountCircle,
+  Settings as SettingsIcon,
 } from "@mui/icons-material";
-import NotificationsPanel from '@/components/NotificationsPanel';
 import { ROLES } from "@/configuration/dashboard.config";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeContext } from "@/styles/ThemeRegistry";
@@ -266,9 +266,11 @@ export default function Header() {
                 </IconButton>
               )}
               {currentUser && (
-                <Box sx={{ ml: 1 }}>
-                  <NotificationsPanel appId="ta-portal" identifier={currentUser.username} />
-                </Box>
+                <Tooltip title="Settings">
+                  <IconButton color="inherit" component={Link} href="/Settings" sx={{ ml: 1 }} aria-label="Settings">
+                    <SettingsIcon />
+                  </IconButton>
+                </Tooltip>
               )}
             </Box>
           ) : (
@@ -298,11 +300,13 @@ export default function Header() {
                   );
                 })}
               </nav>
-                    {currentUser && (
-                      <Box sx={{ ml: 1, mr: 1 }}>
-                        <NotificationsPanel appId="ta-portal" identifier={currentUser.username} />
-                      </Box>
-                    )}
+              {currentUser && (
+                <Tooltip title="Settings">
+                  <IconButton color="inherit" component={Link} href="/Settings" sx={{ ml: 1, mr: 1 }} aria-label="Settings">
+                    <SettingsIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
               <Tooltip
                 title={
                   mode === "dark"

@@ -61,7 +61,7 @@ function mockPutPreferences(appId, identifier, prefs) {
 export default function useNotifications({ appId = 'ta-portal', identifier = 'current-user' } = {}) {
   // API base for ta-portal server. In dev your server runs on 3300; the Next.js UI runs on 3000.
   // Set NEXT_PUBLIC_TAPORTAL_API_URL in your .env (e.g. http://127.0.0.1:3300) to override.
-  const API_BASE = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_TAPORTAL_API_URL) || 'https://127.0.0.1:3300';
+  const API_BASE = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_TAPORTAL_API_URL) || 'https://localhost:3300';
   const [recent, setRecent] = useState([]); // recent 5 for popup
   const [history, setHistory] = useState([]); // full history
   const [prefs, setPrefs] = useState({ notifyEmail: true, notifySlack: true });
@@ -121,11 +121,13 @@ export default function useNotifications({ appId = 'ta-portal', identifier = 'cu
       // queueing not implemented - for demo we'll ignore concurrent requests
     }
     inFlightUpdate.current = true;
-    const next = { ...prefs, ...patch };
-    setPrefs(next);
+  const next = { ...prefs, ...patch };
+  setPrefs(next);
     try {
       try {
-  const r = await fetch(`${API_BASE}/api/notifications/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) });
+    // Only send toggles to the backend; contact fields are managed server-side.
+    const body = { notifyEmail: !!next.notifyEmail, notifySlack: !!next.notifySlack };
+    const r = await fetch(`${API_BASE}/api/notifications/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (!r.ok) throw new Error(`status ${r.status}`);
         const resp = await r.json();
         // notification-service returns { ok: true, preference: { ... } }
@@ -188,12 +190,24 @@ export default function useNotifications({ appId = 'ta-portal', identifier = 'cu
   async function loadHistory(pageToLoad = 0, pageSize = 20, filters = {}, search = '') {
     setLoadingHistory(true);
     try {
-      // TODO: Replace with the real paginated API call. Here we reuse mockFetchRecent to generate data
-      const items = await mockFetchRecent(appId, identifier, pageSize, pageToLoad);
-      if (pageToLoad === 0) setHistory(items);
-      else setHistory((prev) => [...prev, ...items]);
-      setPage(pageToLoad);
-      return items;
+      try {
+        const r = await fetch(`${API_BASE}/api/notifications/recent/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}?limit=${encodeURIComponent(pageSize)}&page=${encodeURIComponent(pageToLoad)}`);
+        if (!r.ok) throw new Error(`status ${r.status}`);
+        const items = await r.json();
+        if (pageToLoad === 0) setHistory(items);
+        else setHistory((prev) => [...prev, ...items]);
+        setPage(pageToLoad);
+        return items;
+      } catch (e) {
+        // fallback to mock for dev/offline
+        // eslint-disable-next-line no-console
+        console.warn('useNotifications: failed to load history from', `${API_BASE}/api/notifications/recent/${appId}/${identifier}`, e?.message || e);
+        const items = await mockFetchRecent(appId, identifier, pageSize, pageToLoad);
+        if (pageToLoad === 0) setHistory(items);
+        else setHistory((prev) => [...prev, ...items]);
+        setPage(pageToLoad);
+        return items;
+      }
     } finally {
       setLoadingHistory(false);
     }

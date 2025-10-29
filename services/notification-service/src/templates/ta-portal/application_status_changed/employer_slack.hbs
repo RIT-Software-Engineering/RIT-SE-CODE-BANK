@@ -1,5 +1,18 @@
 🟧 *Application Update*  
-You moved *{{candidate_name}}* to *{{new_status}}* for _{{#if job_title}}{{job_title}}{{else if course_name}}{{course_name}}{{else}}the position{{/if}}_.
+
+{{#if is_hired}}
+Candidate *{{candidate_name}}* has been *HIRED* for _{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}the position{{/if}}_.
+{{else if is_accepted_offer}}
+Candidate *{{candidate_name}}* has *ACCEPTED* the offer for _{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}the position{{/if}}_.
+{{else if is_applied}}
+Candidate *{{candidate_name}}* has *APPLIED* for _{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}the position{{/if}}_.
+{{else}}
+Candidate *{{candidate_name}}* moved to *{{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}Updated{{/if}}* for _{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}the position{{/if}}_.
+{{/if}}
+
+{{#if comment}}
+_Note_: {{comment}}
+{{/if}}
 
 {{#if professor}}
 Instructor: *{{professor}}*

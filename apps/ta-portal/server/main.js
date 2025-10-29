@@ -43,7 +43,23 @@ const port = process.env.PORT;
 // =============================================================================
 
 // Enable Cross-Origin Resource Sharing for all routes, allowing the frontend to communicate with this backend.
-app.use(cors());
+// Be explicit to ensure PUT preflight (OPTIONS) succeeds with the right headers and methods.
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  'http://localhost:3000',
+  'https://localhost:3000',
+];
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl) or allowed origins
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, false);
+  },
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
+  optionsSuccessStatus: 204,
+}));
 // Enable the Express JSON middleware to parse incoming request bodies with JSON payloads.
 // Add a JSON parse error handler so malformed JSON returns 400 instead of a crash.
 const jsonParser = express.json();
