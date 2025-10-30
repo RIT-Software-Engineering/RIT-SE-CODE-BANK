@@ -1,6 +1,5 @@
 import {useState} from "react";
 import { Form, Button, Row, Col } from "react-bootstrap";
-import "bootstrap/dist/css/bootstrap.min.css";
 import Alert from 'react-bootstrap/Alert';
 import "../styles/course.css";
 
@@ -8,7 +7,8 @@ function CoursePage(){
   const [courseId, setCourseId] = useState("");
   const [courseName, setCourseName] = useState("");
   const [semester, setSemester] = useState("");
-  const [numOfSections, setNumOfSections] = useState("");
+  const [color, setColor] = useState("");
+  const [numOfStudents, setStudents] = useState("");
   const [showAlert, setShowAlert] = useState(false);
 
   const API_BASE = "http://localhost:5000/api";
@@ -19,13 +19,15 @@ function CoursePage(){
 
     // add the course
     try {
-      const courseResponse = await fetch(`${API_BASE}/courseCreation`, {
+      const courseResponse = await fetch(`${API_BASE}/course`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify ({
           id: courseId,
           name: courseName,
           semester: semester,
+          color: color,
+          students: numOfStudents,
           professorId: 1  // TODO: REPLACE WITH REAL PROFESSORID
         })
       });
@@ -37,27 +39,6 @@ function CoursePage(){
       const courseData = await courseResponse.json();
       console.log("New course created: ", courseData);
 
-      // create the # of sections
-      for (let i = 1; i <= parseInt(numOfSections); i++) {
-        const sectionResponse = await fetch(`${API_BASE}/sections`, {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({
-            sectionNum: i,
-            courseId: courseId,
-            professorId: 1, // TODO: REPLACE WITH REAL PROFESSORID
-            classTimes: []
-          }),
-        });
-
-        if (!sectionResponse.ok) {
-        throw new Error(`Failed to create section ${i}`);
-      }
-
-        const sectionData = await sectionResponse.json();
-        console.log(`Section ${i} created: `, sectionData);
-      }
-
       setShowAlert(true);
       // hides the alert after 6 secs
       setTimeout(() => setShowAlert(false), 6000);
@@ -65,7 +46,8 @@ function CoursePage(){
       // clear the form fields
       setCourseId("");
       setCourseName("");
-      setNumOfSections("");
+      setColor("");
+      setStudents("");
       setSemester("");
 
     } catch (err) {
@@ -79,7 +61,7 @@ function CoursePage(){
       <h1>Create a course</h1>
 
       {showAlert && (<Alert variant="success" onClose={() => setShowAlert(false)} dismissible>
-        ✅ Course and section(s) created successfully!
+        ✅ Course created successfully!
       </Alert>)}
       <Form className="course-form" onSubmit={handleSubmit}>
         <Row>
@@ -102,10 +84,10 @@ function CoursePage(){
 
         <Row>
           <Col>
-            <Form.Group id="formCourseSections">
-              <Form.Label>Number of sections: </Form.Label>
-              <Form.Control type="number" required value={numOfSections} onChange={(e) => setNumOfSections(e.target.value)}
-                placeholder="ex. 2"></Form.Control>
+            <Form.Group id="formNumOfStudents">
+              <Form.Label>Number of students: </Form.Label>
+              <Form.Control type="number" required value={numOfStudents} onChange={(e) => setStudents(e.target.value)}
+                placeholder="ex. 15"></Form.Control>
             </Form.Group>
           </Col>
 
@@ -118,10 +100,31 @@ function CoursePage(){
           </Col>
         </Row>
 
-        <Form.Group id="formFile">
-          <Form.Label>Upload Syllabus</Form.Label>
-          <Form.Control type ="file"></Form.Control>
-        </Form.Group>
+        <Row>
+          <Form.Group id="formCourseColor">
+            <Form.Label>Select a color: </Form.Label>
+            <Form.Select requried value={color} onChange={(e) => setColor(e.target.value)}>
+              <option value=""></option>
+              <option value="red">Red</option>
+              <option value="orange">Orange</option>
+              <option value="yellow">Yellow</option>
+              <option value="green">Green</option>
+              <option value="blue">Blue</option>
+              <option value="purple">Purple</option>
+              <option value="pink">Pink</option>
+              <option value="brown">Brown</option>
+              <option value="gray">Gray</option>
+            </Form.Select>
+          </Form.Group>
+        </Row>
+
+        <Row>
+          <Form.Group id="formFile">
+            <Form.Label>Upload Syllabus</Form.Label>
+            <Form.Control type ="file"></Form.Control>
+          </Form.Group>
+        </Row>
+        
         <div id="button-wrapper">
           <Button id="form-button" type="submit">Create Course</Button>
         </div>
