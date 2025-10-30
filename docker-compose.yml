@@ -10,6 +10,8 @@ services:
       MARIADB_PASSWORD: scoop_portal_password
     ports:
       - "3308:3308"
+    expose:
+      - "3308"
     volumes:
       - mariadb_scoop_portal_data:/var/lib/mysql
     restart: unless-stopped
