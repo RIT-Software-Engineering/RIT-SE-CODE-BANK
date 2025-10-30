@@ -50,13 +50,13 @@ docker compose up -d --build
 echo "we made it"
 cd ./apps/scoop-portal/server
 echo $(pwd)
-npx prisma migrate dev --name init
-npx prisma db seed
-cd $APP_DIR
+
 
 echo "Waiting for services to start..."
 sleep 15
-
+npx prisma migrate dev --name init
+npx prisma db seed
+cd $APP_DIR
 docker compose ps
 
 echo "SCOOP Portal deployment complete!"
