@@ -1,4 +1,4 @@
-const { spawn, exec } = require("child_process");
+const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
@@ -21,7 +21,7 @@ function runCommand(command, args = [], options = {}) {
     log(`Running: ${command} ${args.join(" ")}`, colors.blue);
 
     const child = spawn(command, args, {
-      stdio: "inherit", // Show output in our terminal
+      stdio: "inherit",
       shell: true,
       cwd: process.cwd(),
       ...options,
@@ -53,7 +53,6 @@ function checkPrismaInstalled() {
         ...packageJson.devDependencies,
       };
 
-      // Check for all three required packages
       const hasPrisma = deps.prisma;
       const hasPrismaClient = deps["@prisma/client"];
       const hasMysql2 = deps.mysql2;
@@ -81,7 +80,6 @@ async function main() {
 
     if (!prismaInstalled) {
       log("Installing Prisma dependencies...", colors.blue);
-      // Using legacy-peer-deps to avoid version conflicts
       await runCommand("npm", [
         "install",
         "prisma",
@@ -96,50 +94,8 @@ async function main() {
 
     // Set up the database schema
     log("Running Prisma setup...", colors.blue);
-
-    // Try multiple ways to run Prisma commands - different systems handle paths differently
-    const isWindows = process.platform === "win32";
-
-    try {
-      if (isWindows) {
-        // Windows: try the .cmd version first
-        await runCommand("node_modules\\.bin\\prisma.cmd", ["generate"]);
-        // Use db push with skip-generate flag - it won't prompt and preserves data when possible
-        await runCommand("node_modules\\.bin\\prisma.cmd", [
-          "db",
-          "push",
-          "--skip-generate",
-        ]);
-      } else {
-        // Unix/Mac: use the regular version
-        await runCommand("node_modules/.bin/prisma", ["generate"]);
-        await runCommand("node_modules/.bin/prisma", [
-          "db",
-          "push",
-          "--skip-generate",
-        ]);
-      }
-    } catch (error) {
-      // Fallback: try using npx if direct path fails
-      log("Direct path failed, trying npx fallback...", colors.yellow);
-      try {
-        await runCommand("npx", ["prisma", "generate"]);
-        await runCommand("npx", ["prisma", "db", "push", "--skip-generate"]);
-      } catch (npxError) {
-        // Last resort: try running with node directly
-        log("npx failed, trying node fallback...", colors.yellow);
-        await runCommand("node", [
-          "./node_modules/prisma/build/index.js",
-          "generate",
-        ]);
-        await runCommand("node", [
-          "./node_modules/prisma/build/index.js",
-          "db",
-          "push",
-          "--skip-generate",
-        ]);
-      }
-    }
+    await runCommand("npx", ["prisma", "generate"]);
+    await runCommand("npx", ["prisma", "db", "push", "--skip-generate"]);
 
     // Install dependencies for both frontend and backend
     const backendPath = path.join(process.cwd(), "src", "backend");
@@ -166,7 +122,7 @@ async function main() {
         cwd: backendPath,
         stdio: "inherit",
         shell: true,
-        detached: true, // Run independently
+        detached: true,
       });
       backendPid = backendProcess.pid;
 
@@ -179,7 +135,7 @@ async function main() {
     const frontendProcess = spawn("npm", ["start"], {
       stdio: "inherit",
       shell: true,
-      detached: true, // Run independently
+      detached: true,
     });
     frontendPid = frontendProcess.pid;
 
