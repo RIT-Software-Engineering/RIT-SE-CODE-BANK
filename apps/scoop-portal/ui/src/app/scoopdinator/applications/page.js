@@ -515,7 +515,7 @@ export default function SupervisorApplicationsPage() {
                 </Typography>
                 <Typography margin={2}>
                   <strong>
-                    Is there anything else you'd like to share with us about
+                    Is there anything else you&apos;d like to share with us about
                     your search efforts or about your summer availability?
                   </strong>{" "}
                   <br />
