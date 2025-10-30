@@ -82,7 +82,7 @@ const LandingPage = () => {
                     Software Coop Program SCOOP
                 </h1>
                 <p style={{ fontSize: "1.2rem", marginBottom: "40px" }}>
-                    The Software Engineering department's SCOOP Program connects
+                    The Software Engineering department&apos;s SCOOP Program connects
                     students with real-world software development experiences,
                     interdisciplinary teams, and mentorship from faculty.
                 </p>

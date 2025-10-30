@@ -15,6 +15,11 @@ docker compose down
 
 docker compose up -d --build
 
+cd ./apps/scoop-portal/server
+npx prisma migrate dev --name init
+npx prisma db seed
+cd $APP_DIR
+
 echo "Waiting for services to start..."
 sleep 15
 
