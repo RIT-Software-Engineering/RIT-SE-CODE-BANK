@@ -21,7 +21,7 @@ function runCommand(command, args = [], options = {}) {
     log(`Running: ${command} ${args.join(" ")}`, colors.blue);
 
     const child = spawn(command, args, {
-      stdio: "inherit", // Show output in our terminal
+      stdio: "inherit",
       shell: true,
       cwd: process.cwd(),
       ...options,
@@ -53,7 +53,6 @@ function checkPrismaInstalled() {
         ...packageJson.devDependencies,
       };
 
-      // Check for all three required packages
       const hasPrisma = deps.prisma;
       const hasPrismaClient = deps["@prisma/client"];
       const hasMysql2 = deps.mysql2;
@@ -88,7 +87,6 @@ function waitForService(port, serviceName, timeout = 30000) {
               new Error(`${serviceName} failed to start within ${timeout}ms`)
             );
           } else {
-            // Check again in 1 second
             setTimeout(checkService, 1000);
           }
         }
@@ -96,42 +94,6 @@ function waitForService(port, serviceName, timeout = 30000) {
     };
 
     checkService();
-  });
-}
-
-// Run servers in foreground for CI/CD
-function startServerForCI(command, args, options = {}) {
-  return new Promise((resolve, reject) => {
-    log(`Starting: ${command} ${args.join(" ")}`, colors.blue);
-
-    const child = spawn(command, args, {
-      stdio: ["pipe", "pipe", "pipe"], // Capture output for CI logs
-      shell: true,
-      cwd: process.cwd(),
-      ...options,
-    });
-
-    // Forward output to console with service labels
-    const serviceName = options.serviceName || "service";
-    child.stdout.on("data", (data) => {
-      process.stdout.write(`[${serviceName.toUpperCase()}] ${data}`);
-    });
-
-    child.stderr.on("data", (data) => {
-      process.stderr.write(`[${serviceName.toUpperCase()}] ${data}`);
-    });
-
-    child.on("close", (code) => {
-      if (code !== 0) {
-        reject(new Error(`${serviceName} exited with code ${code}`));
-      }
-    });
-
-    child.on("error", (error) => {
-      reject(error);
-    });
-
-    // In CI, this will keep the container alive
   });
 }
 
@@ -150,7 +112,6 @@ async function main() {
 
     if (!prismaInstalled) {
       log("Installing Prisma dependencies...", colors.blue);
-      // Using legacy-peer-deps to avoid version conflicts
       await runCommand("npm", [
         "install",
         "prisma",
@@ -165,40 +126,8 @@ async function main() {
 
     // Set up the database schema
     log("Running Prisma setup...", colors.blue);
-
-    // Try multiple ways to run Prisma commands - different systems handle paths differently
-    const isWindows = process.platform === "win32";
-
-    try {
-      if (isWindows) {
-        // Windows: try the .cmd version first
-        await runCommand("node_modules\\.bin\\prisma.cmd", ["generate"]);
-        await runCommand("node_modules\\.bin\\prisma.cmd", ["db", "push"]);
-      } else {
-        // Unix/Mac: use the regular version
-        await runCommand("node_modules/.bin/prisma", ["generate"]);
-        await runCommand("node_modules/.bin/prisma", ["db", "push"]);
-      }
-    } catch (error) {
-      // Fallback: try using npx if direct path fails
-      log("Direct path failed, trying npx fallback...", colors.yellow);
-      try {
-        await runCommand("npx", ["prisma", "generate"]);
-        await runCommand("npx", ["prisma", "db", "push"]);
-      } catch (npxError) {
-        // Last resort: try running with node directly
-        log("npx failed, trying node fallback...", colors.yellow);
-        await runCommand("node", [
-          "./node_modules/prisma/build/index.js",
-          "generate",
-        ]);
-        await runCommand("node", [
-          "./node_modules/prisma/build/index.js",
-          "db",
-          "push",
-        ]);
-      }
-    }
+    await runCommand("npx", ["prisma", "generate"]);
+    await runCommand("npx", ["prisma", "db", "push"]);
 
     // Install dependencies for both frontend and backend
     const backendPath = path.join(process.cwd(), "src", "backend");
@@ -214,11 +143,10 @@ async function main() {
     await runCommand("npm", ["install", "--legacy-peer-deps"]);
 
     if (isCI) {
-      // CI/CD mode: Start services and wait for them to be ready
+      // CI/CD mode: Start services and keep them running
       log("Starting services for CI/CD...", colors.yellow);
 
       if (fs.existsSync(backendPath)) {
-        // Start backend in background but capture output
         log("Starting backend server...", colors.blue);
         const backendProcess = spawn("npm", ["start"], {
           cwd: backendPath,
@@ -235,17 +163,15 @@ async function main() {
           process.stderr.write(`[BACKEND] ${data}`);
         });
 
-        // Wait for backend to be ready
         await waitForService(5000, "Backend", 60000);
       }
 
-      // Start frontend server
       log("Starting frontend server...", colors.blue);
       const frontendProcess = spawn("npm", ["start"], {
         stdio: ["pipe", "pipe", "pipe"],
         shell: true,
         detached: false,
-        env: { ...process.env, BROWSER: "none" }, // Prevent browser opening in CI
+        env: { ...process.env, BROWSER: "none" },
       });
 
       frontendProcess.stdout.on("data", (data) => {
@@ -256,7 +182,6 @@ async function main() {
         process.stderr.write(`[FRONTEND] ${data}`);
       });
 
-      // Wait for frontend to be ready
       await waitForService(3000, "Frontend", 60000);
 
       log("All services are ready!", colors.green);
@@ -276,7 +201,6 @@ async function main() {
         process.exit(0);
       });
 
-      // Wait indefinitely - CI will kill when needed
       await new Promise(() => {});
     } else {
       // Development mode
@@ -291,20 +215,18 @@ async function main() {
           cwd: backendPath,
           stdio: "inherit",
           shell: true,
-          detached: true, // Run independently
+          detached: true,
         });
         backendPid = backendProcess.pid;
 
-        // Give the backend time to start up
         await new Promise((resolve) => setTimeout(resolve, 3000));
       }
 
-      // Start frontend server
       log("Starting frontend in background...", colors.blue);
       const frontendProcess = spawn("npm", ["start"], {
         stdio: "inherit",
         shell: true,
-        detached: true, // Run independently
+        detached: true,
       });
       frontendPid = frontendProcess.pid;
 
@@ -326,7 +248,6 @@ async function main() {
       log("Your terminal is now free to use.", colors.yellow);
       log("To stop servers, run: node stop_app.js", colors.blue);
 
-      // Exit this script but leave the servers running
       setTimeout(() => {
         log("Setup complete! Script exiting...", colors.green);
         process.exit(0);
