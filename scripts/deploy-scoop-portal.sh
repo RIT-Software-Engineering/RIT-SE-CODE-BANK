@@ -49,6 +49,7 @@ NODE_ENV=development'
 docker compose up -d --build
 echo "we made it"
 cd ./apps/scoop-portal/server
+echo $(pwd)
 npx prisma migrate dev --name init
 npx prisma db seed
 cd $APP_DIR
