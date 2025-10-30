@@ -1,18 +1,41 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper, IconButton, Icon} from "@mui/material";
 import { useFieldArray } from "react-hook-form";
+import CourseSectionForm from "./CourseSectionForm";
+import axios from "axios";
 
 export default function CourseSectionFormStep({form_id, control, errors}){
     const [numberOfSections, setNumberOfSections] = useState(0);
+    const [courses, setCourses] = useState([]);
 
-    function CourseSection(){
-        this.course = "";
+    const getAllCourses = () => {
+        useEffect(() => {
+            axios.get("http://localhost:3000/courses")
+            .then((response) => {
+                let sanitized_courses = [];
+                response.data.forEach(course => {
+                    sanitized_courses.push(
+                            {
+                                label : course.course_code,
+                                value : course.id
+                            }
+                    )
+                });
+                setCourses(sanitized_courses);
+            })
+        }, []);
+    }
+
+    getAllCourses();
+
+    function CourseSection(form_id){
         this.room_location = "";
-        this.days_of_the_week = "";
+        this.days_of_the_week = [];
         this.number_of_students = "";
         this.semester = "";
         this.scholastic_year = "";
         this.first_time_teaching_course = false;
-        this.course_id = 0;
+        this.course = null;
         this.form_id = form_id;
     }
 
@@ -33,20 +56,21 @@ export default function CourseSectionFormStep({form_id, control, errors}){
         <Grid container rowSpacing={0} columns={12}>
         {fields.map((section, index) => 
         (
-            <Paper sx={{padding:"4% 4%", marginTop:"4%", width:"600px"
-            }}>
+            
+            <Paper sx={{padding:"4% 4%", margin:"4% auto", width:"600px"}} key={section.id}>
                 <CourseSectionForm
                 key={section.id} 
                 control={control} 
-                register_service={`course_sections[${index}].`} 
+                section={`course_sections[${index}].`} 
                 errors={errors} 
                 index={index}
+                courses={courses}
                 handleRemoveSection={removeCourseSection}
                 />
             </Paper>
         ))}
         </Grid>
-        <Button onClick={() => {append(new Service(form_id)); setNumberOfSections(number_of_services + 1)}}>Add Service</Button>
+        <Button onClick={() => {append(new CourseSection(form_id)); setNumberOfSections(numberOfSections + 1)}}>Add Course Section</Button>
         </div>
     )
 }

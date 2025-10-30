@@ -9,7 +9,6 @@ export default function ServicesFormStep({form_id, control, errors, handle}){
     function Service(form_id){
         this.title = "";
         this.hours_worked = "";
-        this.form_id = "";
         this.service_type = "";
         this.other_contributions = "";
         this.form_id = form_id;
@@ -32,8 +31,7 @@ export default function ServicesFormStep({form_id, control, errors, handle}){
         <Grid container rowSpacing={0} columns={12}>
         {fields.map((service, index) => 
         (
-            <Paper sx={{padding:"4% 4%", marginTop:"4%", width:"600px"
-            }}>
+            <Paper sx={{padding:"4% 4%", margin:"4% auto", width:"600px"}} key={service.id}>
                 <ServiceForm
                 key={service.id} 
                 control={control} 

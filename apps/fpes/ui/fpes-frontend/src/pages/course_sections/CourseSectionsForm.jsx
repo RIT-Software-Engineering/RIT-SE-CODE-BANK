@@ -84,7 +84,6 @@ export default function CourseSectionsForm({setCourseSections, courses}){
                         <FormControl sx={{width:"80%"}}>
                         <InputLabel id="days_of_the_week" error={errors.days_of_the_week}>Class Days</InputLabel>
                         <Select {...register("days_of_the_week", {required:{value:true, message:"Class Days are required"}})} 
-                        labelId="days_of_the_week" 
                         label="Class Days" 
                         multiple 
                         defaultValue={[]}

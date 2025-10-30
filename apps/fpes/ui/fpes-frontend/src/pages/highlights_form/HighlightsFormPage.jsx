@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import ServicesFormStep from "../services/ServicesFormStep";
 import { Link } from "react-router-dom";
 import { validateProps } from "@mui/x-data-grid/internals";
+import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
 
 export default function HighlightsFormPage() {
     const [activeStep, setActiveStep] = useState(0);
@@ -61,6 +62,7 @@ export default function HighlightsFormPage() {
 
             <form>
             {isOnFirstStep() ? <ServicesFormStep form_id={1} control={control} errors={errors} /> : null}
+            {isOnLastStep() ? <CourseSectionFormStep form_id={1} control={control} errors={errors} /> : null}
 
             {/* Back or Cancel Button */}
             {
