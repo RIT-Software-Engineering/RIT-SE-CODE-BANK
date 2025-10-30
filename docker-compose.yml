@@ -9,7 +9,7 @@ services:
       MARIADB_USER: scoop_portal_user
       MARIADB_PASSWORD: scoop_portal_password
     ports:
-      - "3308:3308"
+      - "3308:3306"
     expose:
       - "3308"
     volumes:
