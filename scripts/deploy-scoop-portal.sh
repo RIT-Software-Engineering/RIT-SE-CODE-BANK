@@ -1,7 +1,7 @@
 set -e
 
 APP_DIR="/opt/scoop-portal"
-BRANCH="scoop-portal-cicd-dev"
+BRANCH="scoop-portal-cicd-1"
 PORTAL_SERVER_DIR="$APP_DIR/apps/scoop-portal/server"
 PORTAL_UI_DIR="$APP_DIR/apps/scoop-portal/ui"
 WORKFLOW_SERVER_DIR="$APP_DIR/apps/workflow/server"
@@ -26,7 +26,7 @@ create_env_file() {
 }
 
 create_env_file "$PORTAL_SERVER_DIR/.env" \
-'DATABASE_URL="mysql://scoop_portal_user:scoop_portal_password@mariadb_main:3306/scoop_portal_demo"
+'DATABASE_URL="mysql://scoop_portal_user:scoop_portal_password@mariadb_main:3308/scoop_portal_demo"
 WORKFLOWS_URL="mysql://root:password@127.0.0.1:3307/scoop_portal_demo"
 PORT=5000'
 

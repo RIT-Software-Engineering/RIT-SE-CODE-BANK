@@ -9,7 +9,7 @@ services:
       MARIADB_USER: scoop_portal_user
       MARIADB_PASSWORD: scoop_portal_password
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - mariadb_scoop_portal_data:/var/lib/mysql
     restart: unless-stopped
@@ -36,7 +36,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5020
-      DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_main:3306/scoop_portal_demo
+      DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_main:3308/scoop_portal_demo
     depends_on:
       - mariadb_main
     restart: unless-stopped
