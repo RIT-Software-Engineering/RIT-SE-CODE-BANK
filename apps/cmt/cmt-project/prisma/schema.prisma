@@ -15,9 +15,8 @@ model Event {
   time        String
   date        DateTime
   location    String
-  description String?
+  description String?   @db.LongText
   importance  Importance
-  preparation String?    @db.LongText
   course      course?    @relation(fields: [courseId], references: [id])
 
   @@index([courseId], map: "events_courseId_fkey")
