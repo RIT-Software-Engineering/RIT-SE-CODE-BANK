@@ -1275,7 +1275,7 @@ async function getUserProfile(username) {
         include: {
           employer: {
             include: {
-              jobPostions: { 
+              jobPositions: { 
                 include: { 
                   course: true, 
                   jobSchedules: true, 
