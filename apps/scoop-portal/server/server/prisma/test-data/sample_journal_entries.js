@@ -23,4 +23,14 @@ export const sampleJournalEntries = [
     topic_id: "vcl123",
     semester_GroupId: 8,
   },
+  {
+    id: 2,
+    previous_entryid: 1,
+    date: new Date("2025-06-13T12:00:00Z"), // in UTC
+    notes: "This not is in responce to another note",
+    recipient_ids: ["kjs123","abc123"],
+    sender_id: "vcl123",
+    topic_id: "vcl123",
+    semester_GroupId: 8,
+  },
 ];

@@ -67,6 +67,10 @@ model JournalEntry {
   recipients    users[]     @relation("ReceivedUserEntries")
   sender        users     @relation("SentUserEntries", fields: [sender_id], references: [id])
   topic         users     @relation("TopicUserEntries", fields: [topic_id], references: [id])
+
+  previous_entryid Int?
+  previos_entry    JournalEntry? @relation("PreviousEntry", fields: [previous_entryid], references: [id])
+  next_entries      JournalEntry[] @relation("PreviousEntry")
   
   Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
   semester_GroupId Int?

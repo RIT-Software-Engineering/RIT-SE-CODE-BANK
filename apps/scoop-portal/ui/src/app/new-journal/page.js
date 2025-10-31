@@ -606,7 +606,7 @@ export default function Journal() {
               })}
               <br />
               with{" "}
-              {`${editingEntry.recipient.fname} ${editingEntry.recipient.lname}`}
+              {editingEntry.recipients.map(rec => rec.fname + " " + rec.lname).join(", ")}
             </DialogTitle>
             <DialogContent>
               <Box>

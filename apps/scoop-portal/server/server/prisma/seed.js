@@ -50,6 +50,7 @@ async function main() {
       prisma.journalEntry.create({
         data:{
           id: journalEntry.id,
+          previous_entryid: journalEntry.previous_entryid,
           notes : journalEntry.notes,
           date: journalEntry.date,
           sender_id: journalEntry.sender_id,
