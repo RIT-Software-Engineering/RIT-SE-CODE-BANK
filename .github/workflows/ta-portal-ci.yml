@@ -219,5 +219,6 @@ jobs:
             chmod +x "./scripts/deploy-$APP_NAME.sh"
             "./scripts/deploy-$APP_NAME.sh"
           else
+
             echo "No deployment script found for $APP_NAME, skipping."
           fi
