@@ -216,6 +216,7 @@ jobs:
             ./scripts/deploy-all.sh
           elif [ -f "./scripts/deploy-$APP_NAME.sh" ]; then
             echo "Deploying $APP_NAME"
+            echo "${{ secrets.DEPLOY_HOST }}"
             chmod +x "./scripts/deploy-$APP_NAME.sh"
             "./scripts/deploy-$APP_NAME.sh"
           else
