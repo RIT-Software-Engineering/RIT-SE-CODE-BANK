@@ -23,7 +23,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CloseIcon from "@mui/icons-material/Close";
 import { useUser } from "../utils/user-context/page";
-import RIT_RGB_hor from "../../../public/RIT_RGB_hor.png";
 
 const navItems = [
   {
@@ -152,7 +151,7 @@ export default function Header() {
           }}
         >
           <Box display="flex" alignItems="center">
-            <Link href={"/new-dashboards"} passHref>
+            <Link href={process.env.NEXT_PUBLIC_URL_BASE_PATH+"/new-dashboards"} passHref>
               <Box
                 sx={{
                   display: "inline-flex",
@@ -162,7 +161,7 @@ export default function Header() {
               >
                 <Box
                   component="img"
-                  src={RIT_RGB_hor}
+                  src={process.env.NEXT_PUBLIC_URL_BASE_PATH+"/RIT_RGB_hor.png"}
                   alt="RIT Logo"
                   sx={{
                     height: 48,
@@ -319,7 +318,7 @@ export default function Header() {
                             )}                 
             </Modal>
             <Button
-              href="/"
+              href={process.env.NEXT_PUBLIC_URL_BASE_PATH}
               variant="solid-orange"
               sx={{
                 textTransform: "none",
