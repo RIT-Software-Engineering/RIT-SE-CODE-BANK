@@ -26,7 +26,7 @@ create_env_file() {
 }
 
 create_env_file "$PORTAL_SERVER_DIR/.env" \
-'DATABASE_URL="mysql://scoop_portal_user:scoop_portal_password@mariadb_main:3308/scoop_portal_demo"
+'DATABASE_URL="mysql://root:password@localhost:3308/scoop_portal_demo"
 WORKFLOWS_URL="mysql://root:password@127.0.0.1:3307/scoop_portal_demo"
 PORT=5000'
 
