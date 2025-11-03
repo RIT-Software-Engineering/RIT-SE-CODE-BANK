@@ -4,6 +4,7 @@ import {
   Box, Typography, Container, Button, Grid, Paper,
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { Link } from 'next/link';
 import { useUser } from "../utils/user-context/page";
 
 import Header from '@components/Header';
