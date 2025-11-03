@@ -23,6 +23,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CloseIcon from "@mui/icons-material/Close";
 import { useUser } from "../utils/user-context/page";
+import RIT_RGB_hor from "../../../public/RIT_RGB_hor.png";
 
 const navItems = [
   {
@@ -161,7 +162,7 @@ export default function Header() {
               >
                 <Box
                   component="img"
-                  src="/ui/public/RIT_RGB_hor.png"
+                  src={RIT_RGB_hor}
                   alt="RIT Logo"
                   sx={{
                     height: 48,

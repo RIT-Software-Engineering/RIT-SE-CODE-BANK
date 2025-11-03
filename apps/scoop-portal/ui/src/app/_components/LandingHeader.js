@@ -13,6 +13,7 @@ import {
   Paper,
   ClickAwayListener,
 } from "@mui/material";
+import RIT_RGB_hor from "../../../public/RIT_RGB_hor.png";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CloseIcon from "@mui/icons-material/Close";
@@ -101,7 +102,7 @@ export default function LandingHeader() {
             <Link href="/" passHref>
               <Box
                 component="img"
-                src="/ui/public/RIT_RGB_hor.png"
+                src={RIT_RGB_hor}
                 alt="RIT Logo"
                 sx={{
                   height: 48,

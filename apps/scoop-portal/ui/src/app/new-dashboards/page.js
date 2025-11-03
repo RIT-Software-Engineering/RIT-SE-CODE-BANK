@@ -4,7 +4,6 @@ import {
   Box, Typography, Container, Button, Grid, Paper,
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import { Link } from 'next/link';
 import { useUser } from "../utils/user-context/page";
 
 import Header from '@components/Header';
@@ -328,19 +327,19 @@ export default function WorkflowDashboard() {
                           {step.description}
                         </Typography>
                       </Box>
-                      <Link href={step.link}>
-                          <Button
-                            variant="solid-orange"
-                            sx={{
-                              textTransform: "none",
-                              ml: 2,
-                              flexShrink: 0,
-                            }}
-                            endIcon={<ArrowForwardIosIcon fontSize="small" />}
-                         >
-                            Go
+
+                      <Button
+                        href={step.link}
+                        variant="solid-orange"
+                        sx={{
+                          textTransform: "none",
+                          ml: 2,
+                          flexShrink: 0,
+                        }}
+                        endIcon={<ArrowForwardIosIcon fontSize="small" />}
+                      >
+                        Go
                       </Button>
-                    </Link>
                     </Box>
                   ))}
                 </Box>
