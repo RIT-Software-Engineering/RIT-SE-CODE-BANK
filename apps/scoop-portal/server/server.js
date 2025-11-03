@@ -27,15 +27,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/project", projectRoutes);
 
 (async () => {
-  const workflowsRoutesModule = await import('../../workflow/server/api/routes/workflows.js');
-  const actionsRoutesModule = await import('../../workflow/server/api/routes/actions.js');
-  const statesRoutesModule = await import('../../workflow/server/api/routes/states.js');
-  const permissionsRoutesModule = await import('../../workflow/server/api/routes/permissions.js');
+  // // const workflowsRoutesModule = await import('../../workflow/server/api/routes/workflows.js');
+  // // const actionsRoutesModule = await import('../../workflow/server/api/routes/actions.js');
+  // // const statesRoutesModule = await import('../../workflow/server/api/routes/states.js');
+  // const permissionsRoutesModule = await import('../../workflow/server/api/routes/permissions.js');
 
-  app.use("/workflows", workflowsRoutesModule.default);
-  app.use("/actions", actionsRoutesModule.default);
-  app.use("/states", statesRoutesModule.default);
-  app.use("/permissions", permissionsRoutesModule.default);
+  // // app.use("/workflows", workflowsRoutesModule.default);
+  // app.use("/actions", actionsRoutesModule.default);
+  // app.use("/states", statesRoutesModule.default);
+  // app.use("/permissions", permissionsRoutesModule.default);
 
   app.listen(PORT, () => {
     console.log(`Express server is running on port ${PORT}`);
