@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react"
-import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper, IconButton, Icon, Autocomplete, FormLabel, InputLabel, FormHelperText} from "@mui/material";
+import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper, IconButton, Icon, Autocomplete, FormLabel, InputLabel, FormHelperText, filledInputClasses} from "@mui/material";
 import { Controller } from "react-hook-form";
 import CloseIcon from '@mui/icons-material/Close';
 
 
 export default function CourseSectionForm({courses, control, section, handleRemoveSection, index, errors}){
     return (
-        <Grid container spacing={2} columnSpacing={2}>
+        <Grid container spacing={2} columnSpacing={8}>
             <Grid item size={10}>
                 <Typography variant="h5" textAlign="left">New Section</Typography>
             </Grid>
@@ -28,7 +28,7 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                     }
                 }
                 render={({field}) => <Autocomplete
-                    sx={{width:"80%"}}
+                    sx={{width:"100%"}}
                     {...field}
                     disablePortal
                     options={courses}
@@ -53,7 +53,7 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                         }
                     }
                     render={({field}) =>
-                        <FormControl sx={{width:"80%"}}>
+                        <FormControl sx={{width:"100%"}}>
                         <InputLabel error={errors.course_sections?.[index]?.days_of_the_week} id="days_of_the_week">Class Days</InputLabel>
                         <Select
                         {...field}
@@ -86,7 +86,7 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                     render={({field}) => 
                         <TextField
                         {...field}
-                        sx={{width:"80%"}}
+                        sx={{width:"100%"}}
                         label="Location"
                         error={errors.course_sections?.[index]?.room_location} 
                         helperText={errors.course_sections?.[index]?.room_location?.message}
@@ -95,9 +95,61 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                 />
             </Grid>
             <Grid size={6}>
-                
+                <Controller
+                    name={section + "semester"}
+                    control={control}
+                    rules={{required:"Semester is required"}}
+                    render={({field}) => 
+                        <FormControl sx={{width:"100%"}} >
+                        <InputLabel error={errors.course_sections?.[index]?.semester}id="semester_label">Semester</InputLabel>
+                        <Select 
+                        {...field} 
+                        labelId="semester_label" 
+                        label="Semester"
+                        error={errors.course_sections?.[index]?.semester} 
+                        >
+                            <MenuItem value="FALL">Fall</MenuItem>
+                            <MenuItem value="SPRING">Spring</MenuItem>
+                            <MenuItem value="SUMMER">Summer</MenuItem>
+                        </Select>
+                        <FormHelperText error={errors.course_sections?.[index]?.semester}>{errors.course_sections?.[index]?.semester?.message}</FormHelperText>
+                        </FormControl>
+                    }
+                />
+            </Grid>
+            <Grid size={6}>
+                <Controller
+                    control={control}
+                    name={section + "scholastic_year"}
+                    rules={{required:"Year is required"}}
+                    render={({field}) =>
+                        <TextField
+                        {...field} 
+                        sx={{width:"100%"}}
+                        label="Scholastic Year"
+                        error={errors.course_sections?.[index]?.scholastic_year} 
+                        helperText={errors.course_sections?.[index]?.scholastic_year?.message}
+                        />
+                    }
+                />
             </Grid>
 
+            <Grid size={6}>
+                <Controller 
+                    control={control}
+                    name={section + "number_of_students"}
+                    rules={{required:{value:true, message:"Students is required"}}}
+                    render={({field}) =>
+                    <TextField 
+                        {...field}
+                        sx={{width:"100%"}}
+                        label="Number of Students"
+                        error={errors.course_sections?.[index]?.number_of_students} 
+                        helperText={errors.course_sections?.[index]?.number_of_students?.message}
+                        />
+                    }
+                />
+            </Grid>
         </Grid>
     )
 }
