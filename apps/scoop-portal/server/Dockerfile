@@ -3,7 +3,6 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package*.json ./apps/scoop-portal/server
-COPY server/prisma/models ./apps/scoop-portal/server/server/prisma/models/
 
 RUN npm ci 
 
