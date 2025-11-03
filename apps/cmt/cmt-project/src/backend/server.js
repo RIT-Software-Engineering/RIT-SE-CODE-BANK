@@ -8,7 +8,7 @@ const eventRoutes = require("./routes/events");
 const templateRoutes = require("./routes/template");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5010;
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
