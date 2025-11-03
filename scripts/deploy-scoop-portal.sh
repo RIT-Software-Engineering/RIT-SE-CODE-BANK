@@ -32,7 +32,8 @@ PORT=5000'
 
 create_env_file "$PORTAL_UI_DIR/.env" \
 'PORT=3020
-API_PORT=5020'
+API_PORT=5020
+URL_BASE_PATH=/scoop-portal'
 
 create_env_file "$PORTAL_UI_DIR/.env.development" \
 'NEXT_PUBLIC_API_URL=http://localhost:5020

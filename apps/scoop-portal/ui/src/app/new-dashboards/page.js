@@ -30,7 +30,7 @@ const workflows = [
         roles: ["scooployee"],
         description:
           "Team resources, including scoopervisor and scooployee contact information.",
-        link: "/scooployee/team/members",
+        link: process.env.URL_BASE_PATH+"/scooployee/team/members",
       },
       {
         title: "View My Project",
