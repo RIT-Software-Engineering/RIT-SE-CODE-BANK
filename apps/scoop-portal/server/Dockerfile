@@ -2,12 +2,12 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-COPY server/prisma/models ./server/server/prisma/models/
+COPY package*.json ./apps/scoop-portal/server
+COPY server/prisma/models ./apps/scoop-portal/server/server/prisma/models/
 
 RUN npm ci 
 
-RUN npx prisma generate --schema=./server/server/prisma/models/schema.prisma
+RUN npx prisma generate --schema=./apps/scoop-portal/server/server/prisma/models/schema.prisma
 
 COPY . .
 
