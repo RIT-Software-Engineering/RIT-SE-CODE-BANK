@@ -216,7 +216,7 @@ export default function WorkflowDashboard() {
       if (user == null || user.fname == null){
         return;
       }
-
+      console.log(process.env.URL_BASE_PATH)
       const filteredWorkflows = workflows.map((workflow) => {
       const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
       if (filteredSteps.length > 0) {
