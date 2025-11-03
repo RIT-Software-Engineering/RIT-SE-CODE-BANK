@@ -327,19 +327,19 @@ export default function WorkflowDashboard() {
                           {step.description}
                         </Typography>
                       </Box>
-
-                      <Button
-                        href={step.link}
-                        variant="solid-orange"
-                        sx={{
-                          textTransform: "none",
-                          ml: 2,
-                          flexShrink: 0,
-                        }}
-                        endIcon={<ArrowForwardIosIcon fontSize="small" />}
-                      >
-                        Go
+                      <Link href={step.link}>
+                          <Button
+                            variant="solid-orange"
+                            sx={{
+                              textTransform: "none",
+                              ml: 2,
+                              flexShrink: 0,
+                            }}
+                            endIcon={<ArrowForwardIosIcon fontSize="small" />}
+                         >
+                            Go
                       </Button>
+                    </Link>
                     </Box>
                   ))}
                 </Box>

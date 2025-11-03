@@ -161,7 +161,7 @@ export default function Header() {
               >
                 <Box
                   component="img"
-                  src="/RIT_RGB_hor.png"
+                  src="/ui/public/RIT_RGB_hor.png"
                   alt="RIT Logo"
                   sx={{
                     height: 48,
