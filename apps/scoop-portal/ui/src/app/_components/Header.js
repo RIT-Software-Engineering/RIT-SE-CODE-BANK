@@ -151,7 +151,7 @@ export default function Header() {
           }}
         >
           <Box display="flex" alignItems="center">
-            <Link href={process.env.NEXT_PUBLIC_URL_BASE_PATH+"/new-dashboards"} passHref>
+            <Link href="/new-dashboards" passHref>
               <Box
                 sx={{
                   display: "inline-flex",
