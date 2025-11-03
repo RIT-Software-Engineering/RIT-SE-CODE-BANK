@@ -31,8 +31,8 @@ services:
 
   scoop-portal-backend:
     build:
-      context: /
-      dockerfile: ./apps/scoop-portal/server/Dockerfile
+      context: .
+      dockerfile: apps/scoop-portal/server/Dockerfile
     ports:
       - "5020:5020"
     environment:
