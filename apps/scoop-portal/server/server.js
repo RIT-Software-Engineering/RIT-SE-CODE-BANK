@@ -18,13 +18,13 @@ app.use(cors());
 // Increase payload size limit to 10MB for JSON and URL-encoded data
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-app.use("/api/semestergroup", semesterGroupRoutes);
-app.use("/api/application", applicationRoutes);
-app.use("/api/scoop-portal/users", userRoutes);
-app.use("/api/journal", journalRoutes);
-app.use("/api/teams", teamRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/project", projectRoutes);
+app.use("/scoop-portal/api/semestergroup", semesterGroupRoutes);
+app.use("/scoop-portal/api/application", applicationRoutes);
+app.use("/scoop-portal/api/users", userRoutes);
+app.use("/scoop-portal/api/journal", journalRoutes);
+app.use("/scoop-portal/api/teams", teamRoutes);
+app.use("/scoop-portal/api/auth", authRoutes);
+app.use("/scoop-portal/api/project", projectRoutes);
 
 (async () => {
   // // const workflowsRoutesModule = await import('../../workflow/server/api/routes/workflows.js');
