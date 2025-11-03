@@ -197,7 +197,7 @@ const workflows = [
         roles: ["scoopdinator","scoopervisor","scooployee"],
         description:
           "View your past communications with others and leave notes.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/administrative/journal",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/new-journal",
       },
     ],
   },

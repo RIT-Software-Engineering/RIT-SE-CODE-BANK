@@ -52,18 +52,23 @@ model users {
   teams Teams[] @relation("TeamMembers")
   login Login? @relation(fields: [loginId], references: [id])
   loginId Int? @unique
+
+  sentEntries     JournalEntry[] @relation("SentUserEntries")
+  receivedEntries JournalEntry[] @relation("ReceivedUserEntries")
+  topicEntries    JournalEntry[] @relation("TopicUserEntries")
 }
 
 model JournalEntry {
   id                  Int      @id @default(autoincrement())
   date                DateTime
-  contactee_fname     String
-  contactee_lname     String
+  recipient_id        String
   notes               String?  @db.VarChar(500)
-  journal_owner_fname String
-  journal_owner_lname String
-  journal_owner_type  String?
-
+  sender_id           String
+  topic_id            String
+  recipient     users     @relation("ReceivedUserEntries", fields: [recipient_id], references: [id])
+  sender        users     @relation("SentUserEntries", fields: [sender_id], references: [id])
+  topic         users     @relation("TopicUserEntries", fields: [topic_id], references: [id])
+  
   Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
   semester_GroupId Int?
 }
