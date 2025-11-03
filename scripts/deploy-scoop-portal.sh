@@ -1,7 +1,7 @@
 set -e
 
 APP_DIR="/opt/scoop-portal"
-BRANCH="scoop-portal-cicd-1"
+BRANCH="scoop-portal-staging-dev"
 PORTAL_SERVER_DIR="$APP_DIR/apps/scoop-portal/server"
 PORTAL_UI_DIR="$APP_DIR/apps/scoop-portal/ui"
 WORKFLOW_SERVER_DIR="$APP_DIR/apps/workflow/server"
