@@ -42,6 +42,16 @@ export default function SiteNav() {
                 Course Builder
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/Workflows"
+                className={({ isActive }) =>
+                  "site-nav__tab" + (isActive ? " is-active" : "")
+                }
+              >
+                Workflows
+              </NavLink>
+            </li>
           </ul>
         </nav>
       </div>
