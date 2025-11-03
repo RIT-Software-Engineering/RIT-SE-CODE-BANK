@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useState } from "react";
  *
  * For now we’ll call absolute URLs to avoid proxy setup.
  */
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = `${process.env.REACT_APP_BACKEND_URL}`;
 
 export default function TeamBuilderPage() {
   const [loading, setLoading] = useState(false);
