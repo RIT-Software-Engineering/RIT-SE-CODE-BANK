@@ -30,7 +30,7 @@ const workflows = [
         roles: ["scooployee"],
         description:
           "Team resources, including scoopervisor and scooployee contact information.",
-        link: process.env.URL_BASE_PATH+"/scooployee/team/members",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scooployee/team/members",
       },
       {
         title: "View My Project",
@@ -216,7 +216,6 @@ export default function WorkflowDashboard() {
       if (user == null || user.fname == null){
         return;
       }
-      console.log(process.env.URL_BASE_PATH)
       const filteredWorkflows = workflows.map((workflow) => {
       const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
       if (filteredSteps.length > 0) {
