@@ -29,11 +29,11 @@ router.get('/:id', async (req, res) => {
 // POST /faculty
 router.post('/', async (req, res) => {
   try {
-    const { name, rank, unit, affiliations } = req.body || {};
-    if (!name || !rank || !unit) {
-      return res.status(400).json({ error: 'name, rank, and unit are required' });
+    const { name, rank, unit, affiliations, user_role } = req.body || {};
+    if (!name || !rank || !unit || !user_role) {
+      return res.status(400).json({ error: 'name, rank, unit and user_role are required' });
     }
-    const result = await faculty.addFaculty({ name, rank, unit, affiliations });
+    const result = await faculty.addFaculty({ name, rank, unit, affiliations, user_role });
     res.status(201).json(result); // { faculty_id: ... }
   } catch (e) {
     console.error(e);

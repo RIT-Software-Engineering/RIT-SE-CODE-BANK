@@ -31,14 +31,14 @@ async function getFacultyById(facultyId) {
 }
 
 // CREATE
-async function addFaculty({ name, rank, unit, affiliations = null }) {
+async function addFaculty({ name, rank, unit, affiliations = null, user_role }) {
   let conn;
   try {
     conn = await pool.getConnection();
     const result = await conn.query(
-      `INSERT INTO faculty_information (name, rank, unit, affiliations)
-       VALUES (?, ?, ?, ?)`,
-      [name, rank, unit, affiliations]
+      `INSERT INTO faculty_information (name, rank, unit, affiliations, user_role)
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, rank, unit, affiliations, user_role]
     );
     return { faculty_id: result.insertId };
   } finally {
@@ -48,7 +48,7 @@ async function addFaculty({ name, rank, unit, affiliations = null }) {
 
 // UPDATE (partial)
 async function updateFaculty(facultyId, data = {}) {
-  const allowed = ['name', 'rank', 'unit', 'affiliations'];
+  const allowed = ['name', 'rank', 'unit', 'affiliations', 'user_role'];
   const sets = [];
   const params = [];
 
