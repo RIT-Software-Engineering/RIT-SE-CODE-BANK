@@ -1,69 +1,45 @@
-version: '3.8'
-
 services:
   mariadb:
     image: mariadb:latest
-    container_name: mariadb
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ta_root_password
       MYSQL_DATABASE: ta_portal_db
-      MYSQL_USER: ${DB_USER:-TA_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-TA_PASSWORD}
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro  # Create multiple schemas
-    healthcheck: 
-      test: ["CMD-SHELL", "healthcheck.sh --connect || exit 1"]
+      MYSQL_USER: ta_user
+      MYSQL_PASSWORD: ta_password
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
-      retries: 5
-    restart: unless-stopped # This flag ensures the container restarts on failure
-
-  workflow-api:
-    build: ./apps/workflow/server
-    environment:
-      DATABASE_URL: mysql://ta_user:ta_password@mariadb:3306/workflow_db
-      PORT: 3001
-      BASE_URL: http://apps-staging.se.rit.edu/
-      NODE_ENV: production
-    depends_on:
-      mariadb:
-        condition: service_healthy
+      retries: 10
+      start_period: 10s
+    volumes:
+      - mariadb_data:/var/lib/mysql
     restart: unless-stopped
 
   ta-portal-backend:
-    build: ./apps/ta-portal/server
-    container_name: ta-portal-backend
-    environment:
-      DATABASE_URL: mysql://${DB_USER:-ta_user}:${DB_PASSWORD:-ta_password}@mariadb:3306/ta_portal_db
-      WORKFLOWS_URL: http://workflow-api:3001
-      PORT: 3300
-      NODE_ENV: production
-
+    build:
+      context: ./apps/ta-portal/server
+      dockerfile: Dockerfile
     ports:
-      - "3300:3300"
-    depends_on:
-      mariadb:
-        condition: service_healthy
-      workflow-api:
-        condition: service_started
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: mysql://ta_user:ta_password@mariadb:3306/ta_portal_db
     restart: unless-stopped
 
   ta-portal-frontend:
-    build: ./apps/ta-portal/ui
-    container_name: ta-portal-frontend
-    environment:
-      NEXT_PUBLIC_BACKEND_URL: http://apps-staging.se.rit.edu
-      NEXT_PUBLIC_API_EXTENSION: /api
+    build:
+      context: ./apps/ta-portal/ui
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:5000
     depends_on:
       - ta-portal-backend
     restart: unless-stopped
 
-
 volumes:
-  db_data: {}
-
-    
-    
+  mariadb_data:
