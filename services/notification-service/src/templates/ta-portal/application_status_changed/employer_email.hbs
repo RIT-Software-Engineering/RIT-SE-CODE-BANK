@@ -1,0 +1,81 @@
+{{> header}}
+
+<table width="100%" cellpadding="24"
+  style="font-family:'Helvetica Neue','Helvetica','Roboto','Arial',sans-serif;
+         color:#000000;
+         background-color:#FFFFFF;
+         line-height:1.5;
+         max-width:600px;
+         margin:0 auto;">
+  <tr>
+    <td>
+      <h2 style="font-size:24px;line-height:32px;font-weight:700;margin-bottom:16px;">
+        Application Status Update
+      </h2>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        {{#if recipient.name}}
+          Hi {{recipient.name}},
+        {{else}}
+          Hi Team,
+        {{/if}}
+      </p>
+
+      {{#if flags.hired}}
+        <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+          Candidate <strong>{{recipient.name}}</strong> has been <strong>HIRED</strong>
+          for <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
+        </p>
+      {{else if flags.acceptedOffer}}
+        <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+          Candidate <strong>{{recipient.name}}</strong> has <strong>ACCEPTED</strong> the offer for
+          <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
+        </p>
+      {{else if flags.applied}}
+        <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+          Candidate <strong>{{recipient.name}}</strong> has <strong>APPLIED</strong> to
+          <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
+        </p>
+      {{else}}
+        <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+          Candidate <strong>{{recipient.name}}</strong> moved to status
+          <strong>{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}</strong>
+          for <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
+        </p>
+      {{/if}}
+
+      {{#if comment}}
+      <p style="font-size:14px;color:#555;margin-top:8px;">
+        <strong>Note:</strong> {{comment}}
+      </p>
+      {{/if}}
+
+  {{#if item.ownerName}}
+  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{item.ownerName}}</strong></p>
+  {{/if}}
+
+      {{#if cta.url}}
+      <p style="margin-top:24px;margin-bottom:24px;">
+        <a href="{{cta.url}}"
+           style="display:inline-block;
+                  background-color:#F76902;
+                  color:#FFFFFF;
+                  padding:12px 20px;
+                  border-radius:4px;
+                  text-decoration:none;
+                  font-size:16px;
+                  font-weight:500;">
+          Open in Portal
+        </a>
+      </p>
+      {{/if}}
+
+      <p style="font-size:16px;line-height:24px;margin-top:24px;">
+        Thanks,<br>
+        <strong>RIT Software Engineering Department</strong>
+      </p>
+    </td>
+  </tr>
+</table>
+
+{{> footer}}
