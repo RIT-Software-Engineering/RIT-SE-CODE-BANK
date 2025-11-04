@@ -16,8 +16,6 @@ const prisma = new PrismaClient();
 const makeTeamBuilderRouter = require("./routes/teamBuilder");
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 
-app.use("/api", teamBuilderRoutes);
-
 app.use(
   cors({
     origin: /^http:\/\/localhost:\d+$/, // allows any localhost port
@@ -35,6 +33,7 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/events", eventRoutes);
 app.use("/api/template", templateRoutes);
+app.use('/api/team-builder', teamBuilderRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

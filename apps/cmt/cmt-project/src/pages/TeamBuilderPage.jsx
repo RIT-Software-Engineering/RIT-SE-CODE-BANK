@@ -402,8 +402,8 @@ export default function TeamBuilderPage() {
                       }}
                     >
                       <span style={{ fontSize: 14 }}>
-                        {m.enrollment?.firstName} {m.enrollment?.lastName}
-                        {m.enrollment?.email ? ` — ${m.enrollment.email}` : ""}
+                        {m.tbenrollment?.firstName} {m.tbenrollment?.lastName}
+                        {m.tbenrollment?.email ? ` — ${m.tbenrollment.email}` : ""}
                       </span>
 
                       {/* Only show move dropdown if NOT published */}
