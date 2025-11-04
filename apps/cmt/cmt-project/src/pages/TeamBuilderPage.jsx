@@ -32,7 +32,7 @@ export default function TeamBuilderPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API}/api/team-builder`);
+        const res = await fetch(`${API}/team-builder`);
         const data = await res.json();
         console.log("API response:", data, Array.isArray(data));
         setCourses(data || []);
@@ -55,7 +55,7 @@ export default function TeamBuilderPage() {
     (async () => {
       try {
         const res = await fetch(
-          `${API}/api/team-builder/courses/${courseId}/teamsets`
+          `${API}/team-builder/courses/${courseId}/teamsets`
         );
         const sets = await res.json();
         setTeamSets(sets || []);
@@ -82,7 +82,7 @@ export default function TeamBuilderPage() {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch(
-        `${API}/api/team-builder/courses/${courseId}/roster`,
+        `${API}/team-builder/courses/${courseId}/roster`,
         {
           method: "POST",
           body: fd,
@@ -112,7 +112,7 @@ export default function TeamBuilderPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${API}/api/team-builder/courses/${courseId}/teamsets`,
+        `${API}/team-builder/courses/${courseId}/teamsets`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -139,9 +139,7 @@ export default function TeamBuilderPage() {
     const found = teamSets.find((t) => String(t.id) === String(id));
     if (found) return setActiveSet(found);
     // fallback re-fetch
-    const res = await fetch(
-      `${API}/api/team-builder/courses/${courseId}/teamsets`
-    );
+    const res = await fetch(`${API}/team-builder/courses/${courseId}/teamsets`);
     const sets = await res.json();
     setTeamSets(sets || []);
     setActiveSet(sets?.find((s) => String(s.id) === String(id)) || null);
@@ -153,7 +151,7 @@ export default function TeamBuilderPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${API}/api/team-builder/teamsets/${activeSet.id}/publish`,
+        `${API}/team-builder/teamsets/${activeSet.id}/publish`,
         { method: "PATCH" }
       );
       const data = await res.json();
@@ -174,7 +172,7 @@ export default function TeamBuilderPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${API}/api/team-builder/teamsets/${activeSet.id}/edit`,
+        `${API}/team-builder/teamsets/${activeSet.id}/edit`,
         { method: "PUT", headers: { "Content-Type": "application/json" } }
       );
       const data = await res.json();
@@ -194,7 +192,7 @@ export default function TeamBuilderPage() {
     if (!activeSet) return;
     try {
       const res = await fetch(
-        `${API}/api/team-builder/teamsets/${activeSet.id}/move`,
+        `${API}/team-builder/teamsets/${activeSet.id}/move`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -403,7 +401,9 @@ export default function TeamBuilderPage() {
                     >
                       <span style={{ fontSize: 14 }}>
                         {m.tbenrollment?.firstName} {m.tbenrollment?.lastName}
-                        {m.tbenrollment?.email ? ` — ${m.tbenrollment.email}` : ""}
+                        {m.tbenrollment?.email
+                          ? ` — ${m.tbenrollment.email}`
+                          : ""}
                       </span>
 
                       {/* Only show move dropdown if NOT published */}

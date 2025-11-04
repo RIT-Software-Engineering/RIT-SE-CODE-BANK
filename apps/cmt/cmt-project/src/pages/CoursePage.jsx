@@ -11,7 +11,7 @@ function CoursePage() {
   const [numOfStudents, setStudents] = useState("");
   const [showAlert, setShowAlert] = useState(false);
 
-  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/api`;
+  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
 
   // add the event
   const handleSubmit = async (e) => {
