@@ -1,28 +1,29 @@
 # Integrating with the Notification Service
 
-This guide shows how to add notifications (email + Slack) to any app in this monorepo or to an external service. You’ll learn how to define events and templates, set user preferences, and dispatch messages reliably with robust CTAs.
+This guide shows how to add notifications (email + Slack) to any app in this monorepo or to an external service. You'll learn how to define events and templates, set user preferences, and dispatch messages reliably with robust CTAs.
 
-If you need a conceptual overview of how the whole system fits together, read docs/Notifications-System.md.
+> For a conceptual overview of how the whole system fits together, see [`../../docs/Notifications-System.md`](../../docs/Notifications-System.md)  
+> For service setup and development, see [`README.md`](README.md)
 
 ## What you get
 
-- Role‑aware templates using Handlebars
-- Email via SMTP and Slack DMs via Slack Web API
-- Per‑user, per‑app preferences (enable email/Slack, email address, Slack username)
-- Universal, robust CTAs that survive login/role changes
-- Helpful per‑channel dispatch logs in responses
+- **Role-aware templates** using Handlebars
+- **Email delivery** via SMTP and **Slack DMs** via Slack Web API
+- **Per-user, per-app preferences** (enable email/Slack, email address, Slack username)
+- **Universal, robust CTAs** that survive login/role changes
+- **Detailed dispatch logs** with per-channel success/failure reporting
 
 ## Quick start
 
-1) Pick an app ID for your producer app, e.g., `ta-portal`.
-2) Ensure the Notification Service is running (example uses port 4000). See its README for Docker/dev instructions.
-3) Create templates for your events (see Template resolution below).
-4) In your app, capture the recipient’s `userId` and prepare an event `context`.
-5) Call `POST /api/notifications/dispatch/:appId` with your `appId` and payload.
+1. **Pick an app ID** for your producer app, e.g., `ta-portal`
+2. **Ensure the Notification Service is running** (default port 4000). See [`README.md`](README.md) for Docker/dev setup
+3. **Create templates** for your events (see [Template resolution](#template-resolution) below)
+4. **In your app**, capture the recipient's `userId` and prepare an event `context`
+5. **Call the dispatch API**: `POST /api/notifications/dispatch/:appId` with your `appId` and payload
 
-### Minimal curl examples
+### Examples
 
-- Save preferences for a user:
+**Save preferences for a user:**
 
 ```powershell
 curl -s -X PUT http://localhost:4000/api/notifications/preferences/ta-portal/jdoe1234 -H "Content-Type: application/json" -d '{
@@ -33,23 +34,25 @@ curl -s -X PUT http://localhost:4000/api/notifications/preferences/ta-portal/jdo
 }'
 ```
 
-- Send a templated event to a candidate:
+**Send a templated event to a candidate:**
 
 ```bash
-curl -s -X POST http://localhost:4000/api/notifications/dispatch/ta-portal -H "Content-Type: application/json" -d '{
-  "userId": "jdoe",
-  "event": "application_status_changed",
-  "role": "candidate",
-  "context": {
-    "recipient": { "name": "Jane Doe", "email": "jdoe@rit.edu" },
-    "item": { "title": "Teaching Assistant" },
-    "status": { "new": "Interview" },
-    "cta": { "url": "https://apps.se.rit.edu/Applications?jobPositionId=123&applicationId=456" }
-  }
-}'
+curl -X POST http://localhost:4000/api/notifications/dispatch/ta-portal \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "jdoe",
+    "event": "application_status_changed",
+    "role": "candidate",
+    "context": {
+      "recipient": { "name": "Jane Doe", "email": "jdoe@rit.edu" },
+      "item": { "title": "Teaching Assistant" },
+      "status": { "new": "Interview" },
+      "cta": { "url": "https://apps.se.rit.edu/Applications?jobPositionId=123&applicationId=456" }
+    }
+  }'
 ```
 
-The response includes a per‑channel summary like:
+**Response includes per-channel summary:**
 
 ```json
 {
@@ -61,23 +64,25 @@ The response includes a per‑channel summary like:
 }
 ```
 
-## API reference
+## API Reference
 
 Base path: `/api/notifications`
 
-1) GET `/preferences/:appId/:userId`
-- Returns stored preferences or defaults `{ notifyEmail: true, notifySlack: false }` when missing.
+### GET `/preferences/:appId/:userId`
+Returns stored preferences or defaults `{ notifyEmail: true, notifySlack: false }` when missing.
 
-2) PUT `/preferences/:appId/:userId`
-- Upserts a preference record.
-- Body fields: `notifyEmail?`, `notifySlack?`, `userEmail?`, `slackUsername?`
+### PUT `/preferences/:appId/:userId`
+Upserts a preference record.  
+**Body fields**: `notifyEmail?`, `notifySlack?`, `userEmail?`, `slackUsername?`
 
-3) POST `/dispatch/:appId`
-- Dispatch a notification immediately.
-- Usage modes:
-  - Simple: `subject` + `message` (plaintext) when you don’t need templating.
-  - Templated: `event` + `context` (+ optional `role`) to render Handlebars templates.
-- Request body (templated):
+### POST `/dispatch/:appId`
+Dispatch a notification immediately.
+
+**Usage modes:**
+- **Simple**: `subject` + `message` (plaintext) when you don't need templating
+- **Templated**: `event` + `context` (+ optional `role`) to render Handlebars templates
+
+**Request body (templated):**
 
 ```json
 {
@@ -89,70 +94,78 @@ Base path: `/api/notifications`
 }
 ```
 
-- Response codes:
-  - 200: all enabled channels succeeded
-  - 502: one or more enabled channels failed (see `summary`)
-  - 422: no channels are enabled for this user
+**Response codes:**
+- `200`: All enabled channels succeeded
+- `502`: One or more enabled channels failed (see `summary`)
+- `422`: No channels are enabled for this user
 
-## Template resolution
+## Template Resolution
 
 Templates live under `services/notification-service/src/templates/<appId>/<eventKey>/` with this naming pattern:
 
-- `<role>_email.hbs` – HTML email
-- `<role>_slack.hbs` – Slack message (plain text)
+- `<role>_email.hbs` – HTML email template
+- `<role>_slack.hbs` – Slack message template (plain text)
 
-Examples:
-
+**Example structure:**
 ```
 services/notification-service/src/templates/my-app/application_status_changed/
-  candidate_email.hbs
-  candidate_slack.hbs
-  employer_email.hbs
+├── candidate_email.hbs
+├── candidate_slack.hbs
+└── employer_email.hbs
 ```
 
-Note:
-- Register shared partials (header/footer) per render;
-- Slack templates must use triple brackets for URLs: use `{{{cta.url}}}` to preserve query strings.
+**Important notes:**
+- Shared partials (header/footer) are registered per render
+- **Slack templates**: Use triple brackets for URLs `{{{cta.url}}}` to preserve query strings
 
-## Context contract (what your templates can expect)
+## Context Contract
 
-Context is app‑defined, but the service now uses an app‑agnostic structure:
+Context is app-defined, but the service uses a standardized app-agnostic structure:
 
-- `recipient`: `{ name?, email?, slackUsername? }`
-- `item`: `{ id?, title?, ownerName?, ownerEmail? }`  // the entity this message is about
-- `status`: `{ new?, previous? }`
-- `comment`: `string?`
-- `flags`: `{ applied?: boolean, hired?: boolean, acceptedOffer?: boolean }`
-- `cta`: `{ url: string }`
-- `appName`: `string?`
+| Field | Type | Description |
+|-------|------|-------------|
+| `recipient` | `{ name?, email?, slackUsername? }` | Target user information |
+| `item` | `{ id?, title?, ownerName?, ownerEmail? }` | The entity this message is about |
+| `status` | `{ new?, previous? }` | Status change information |
+| `comment` | `string?` | Optional comment or message |
+| `flags` | `{ applied?, hired?, acceptedOffer? }` | Boolean flags for state |
+| `cta` | `{ url: string }` | Call-to-action URL |
+| `appName` | `string?` | Application name |
 
-Legacy fields are no longer supported. Remove old aliases like `candidate_name`, `job_title`, `new_status`, `is_*`, and `app_link` from your producers and templates.
+> ⚠️ **Legacy fields removed**: Old aliases like `candidate_name`, `job_title`, `new_status`, `is_*`, and `app_link` are no longer supported. Update your producers and templates to use the standardized fields above.
 
-### Building robust CTAs
+### Building Robust CTAs
 
-- Prefer a single universal route (like TA Portal’s `/Applications`) with query params that identify the target item (e.g., `jobPositionId` and `applicationId`). Put this in `cta.url`.
-- Your UI should:
-  - Determine the current user’s role at runtime
-  - Redirect to the correct destination page
-  - Optionally auto‑open modals or scroll/focus/highlight the target element
+**Best practice**: Use a single universal route (like TA Portal's `/Applications`) with query params that identify the target item (e.g., `jobPositionId` and `applicationId`).
 
-## Recipient resolution and fallbacks
+**Your UI should:**
+- Determine the current user's role at runtime
+- Redirect to the correct destination page  
+- Optionally auto-open modals or scroll/focus/highlight the target element
 
-- Primary recipient info comes from user preferences for your `appId`.
-- Email fallback: the service will use `context.recipient.email` if preferences don’t have an email set. This avoids the “No recipients defined” error.
-- Slack: we recommend setting `slackUsername` in preferences; lookup by email is possible if you provide it in `context`.
+## Recipient Resolution and Fallbacks
 
-## Environment variables (service)
+- **Primary**: Recipient info comes from user preferences for your `appId`
+- **Email fallback**: Service uses `context.recipient.email` if preferences don't have an email set (avoids "No recipients defined" errors)
+- **Slack**: Set `slackUsername` in preferences (recommended) or provide email in `context` for lookup
 
-- `PORT` – service port (default 4000)
-- `DATABASE_URL` – Prisma DB connection string
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`, `SMTP_USER`, `SMTP_PASS` – SMTP settings
-- `SLACK_BOT_TOKEN` – Slack bot token with `chat:write` and `users:read.email` scopes
-- `CID_LOGO_PATH` – Optional logo image to embed via CID in emails
+## Environment Variables
 
-See `services/notification-service/README.md` for full local dev instructions (Docker smtp4dev, Prisma setup, etc.).
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Service port | 4000 |
+| `DATABASE_URL` | Prisma DB connection string | - |
+| `SMTP_HOST` | SMTP server host | - |
+| `SMTP_PORT` | SMTP server port | - |
+| `SMTP_FROM` | Sender email address | - |
+| `SMTP_USER` | SMTP authentication user | - |
+| `SMTP_PASS` | SMTP authentication password | - |
+| `SLACK_BOT_TOKEN` | Slack bot token (`chat:write`, `users:read.email` scopes) | - |
+| `CID_LOGO_PATH` | Optional logo image path for email embedding | - |
 
-## Node usage example
+> See [`README.md`](README.md) for full local development setup instructions.
+
+## Node.js Usage Example
 
 ```js
 // server/notify.js (in your app)
@@ -173,23 +186,25 @@ export async function notifyApplicationStatusChanged({ userId, context }) {
 }
 ```
 
-## Testing your integration
+## Testing Your Integration
 
-- Use smtp4dev (port 3005) to view and inspect email output in dev.
-- Add basic templates first, then iterate on context and copy.
-- Verify the dispatch response’s per‑channel summary to catch configuration issues early.
-- Click CTAs from email/Slack and ensure your UI resolves deep links correctly post‑login.
+1. **Use smtp4dev** (port 3005) to view and inspect email output in development
+2. **Start simple**: Add basic templates first, then iterate on context and copy
+3. **Check responses**: Verify dispatch response's per-channel summary to catch configuration issues early  
+4. **Test CTAs**: Click links from email/Slack and ensure your UI resolves deep links correctly post-login
 
-## Security and deployment notes
+## Security and Deployment Notes
 
-- Don’t expose the service publicly without proper auth. In internal environments, restrict by network or gateway.
-- For production email, set real SMTP credentials and a verified sender domain.
-- For Slack, use a dedicated bot and workspace app with minimum scopes.
-- Consider adding a queue and retry strategy before Internet‑facing SMTP/Slack.
+- **Don't expose publicly** without proper auth - restrict by network or gateway in internal environments
+- **Production email**: Set real SMTP credentials and use a verified sender domain
+- **Slack setup**: Use a dedicated bot and workspace app with minimum required scopes
+- **Consider resilience**: Add queue and retry strategy before Internet-facing SMTP/Slack deployment
 
 ## Troubleshooting
 
-- 422: No channels enabled – confirm user preferences are set for your `appId`.
-- 502: Partial failure – inspect `summary.email.error` or `summary.slack.error` for root cause (SMTP credentials, Slack token, invalid username).
--- Slack URLs lose query params – use `{{{cta.url}}}` in Slack templates.
-- UI build error related to `useSearchParams` – wrap landing page handler in `Suspense` (see TA Portal’s `/Applications`).
+| Issue | Solution |
+|-------|----------|
+| **422: No channels enabled** | Confirm user preferences are set for your `appId` |
+| **502: Partial failure** | Inspect `summary.email.error` or `summary.slack.error` for root cause (SMTP credentials, Slack token, invalid username) |
+| **Slack URLs lose query params** | Use `{{{cta.url}}}` (triple brackets) in Slack templates |
+| **UI build error with `useSearchParams`** | Wrap landing page handler in `Suspense` (see TA Portal's `/Applications`) |

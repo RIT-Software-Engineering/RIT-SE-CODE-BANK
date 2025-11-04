@@ -2,8 +2,11 @@
 
 This document explains how notifications work across the repo today, end to end. It covers the Notification Service (email/Slack dispatch and user preferences), the TA Portal server components that prepare context and trigger events, and the UI deep-linking behavior that makes CTAs reliable across environments and authentication states.
 
-If you want to integrate notifications in another app, see the companion guide:
-- services/notification-service/INTEGRATION.md
+## Related Documentation
+
+- **Integration Guide**: [`../services/notification-service/INTEGRATION.md`](../services/notification-service/INTEGRATION.md) - How to integrate notifications into your app
+- **Service Setup**: [`../services/notification-service/README.md`](../services/notification-service/README.md) - Development setup and API reference  
+- **Services Overview**: [`../services/README.md`](../services/README.md) - All microservices in the monorepo
 
 ## High‑level architecture
 
@@ -99,15 +102,18 @@ See `services/notification-service/README.md` for full dev quickstart.
 3) Open the email/Slack in dev (smtp4dev web UI at :3005, Slack test workspace) and click the CTA.
 4) Confirm the UI route lands correctly, opens modals for Admin deep links, and focuses/highlights target cards for other roles.
 
-## Where to look in the repo
+## Key Files in the Repository
 
-- Notification Service
-  - `services/notification-service/src/routes/dispatch.js` – dispatch logic, recipient fallbacks, response summary
-  - `services/notification-service/src/templates/ta-portal/...` – email and Slack templates per role/event
-- TA Portal
-  - `apps/ta-portal/server/server/database/query_db.js` – context builder + event emitters
-  - `apps/ta-portal/ui/src/app/Applications/page.js` – universal landing + role redirect
-  - `apps/ta-portal/ui/src/components/...ApplicationCard.js` – card highlighting/focus behavior
+### Notification Service
+- `services/notification-service/src/routes/dispatch.js` – Dispatch logic, recipient fallbacks, response summary
+- `services/notification-service/src/templates/ta-portal/...` – Email and Slack templates per role/event
+- `services/notification-service/INTEGRATION.md` – Integration guide for developers
+- `services/notification-service/README.md` – Setup and API documentation
+
+### TA Portal Integration  
+- `apps/ta-portal/server/server/database/query_db.js` – Context builder + event emitters
+- `apps/ta-portal/ui/src/app/Applications/page.js` – Universal landing + role redirect
+- `apps/ta-portal/ui/src/components/...ApplicationCard.js` – Card highlighting/focus behavior
 
 ## Roadmap / optional improvements
 
