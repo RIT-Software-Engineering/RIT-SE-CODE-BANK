@@ -65,16 +65,7 @@ export default function bubbled(){
       return;
     }
 
-    const teamStates = workflowStates.filter((state) => state.teamId);
-    if (teamStates.length === 0) {
-      return;
-    }
-
-    const missingTeamIds = teamStates
-      .map((state) => state.teamId)
-      .filter((teamId) => teamId && !teamsById[teamId]);
-
-    if (missingTeamIds.length === 0) {
+    if (!workflowStates.some((state) => state.teamId)) {
       return;
     }
 
@@ -116,7 +107,7 @@ export default function bubbled(){
     return () => {
       cancelled = true;
     };
-  }, [workflowStates, user, apiBaseUrl, teamsById]);
+  }, [workflowStates, user, apiBaseUrl]);
 
   useEffect(() => {
     if (!apiBaseUrl) {
