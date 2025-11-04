@@ -7,6 +7,8 @@ This service now focuses on two things only:
 
 No notification history is stored anymore. There are no retrieval or pagination endpoints.
 
+> New: See also `INTEGRATION.md` in this folder for a practical guide to using this service from any app, and `docs/Notifications-System.md` at the repo root for an end-to-end overview.
+
 ## Quick start (dev)
 
 1) Copy environment file and set connection details
@@ -73,12 +75,18 @@ Base path: `/api/notifications`
   "message": "Your application was successfully submitted."
 }
 ```
-- Templated body:
+- Templated body (agnostic context):
 ```json
 {
   "userId": "bgg6007",
   "event": "application_status_changed",
-  "context": { "candidate_name": "Ben", "job_title": "TA", "new_status": "Interview" },
+  "context": {
+    "appName": "TA Portal",
+    "recipient": { "name": "Ben G", "email": "bgg6007@rit.edu" },
+    "item": { "title": "TA" },
+    "status": { "new": "Interview" },
+    "cta": { "url": "https://portal.example.com/apps/123" }
+  },
   "role": "candidate"
 }
 ```
@@ -203,22 +211,17 @@ npm run dev
 4) Test sending a notification (example):
 
 ```powershell
-curl -X POST http://localhost:4000/send -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:4000/api/notifications/dispatch/ta-portal -H "Content-Type: application/json" -d '{
+  "userId": "bgg6007",
   "event": "application_status_changed",
+  "role": "candidate",
   "context": {
     "appName": "TA Portal",
-    "new_status": "approved",
-    "candidate_name": "Ben G",
-    "job_title": "TA",
-    "course_name": "CS 101",
-    "professor": "Dr. Ada Lovelace",
-    "app_link": "https://portal.example.com/apps/123"
-  },
-  "recipients": [
-    {"role":"candidate","email":"bgg6007@rit.edu"},
-    {"role":"employer","email":"prof@example.com"},
-    {"role":"admin","email":"alice@example.com"}
-  ]
+    "recipient": { "name": "Ben G", "email": "bgg6007@rit.edu" },
+    "item": { "title": "TA" },
+    "status": { "new": "Approved" },
+    "cta": { "url": "https://portal.example.com/apps/123?from=email" }
+  }
 }'
 ```
 

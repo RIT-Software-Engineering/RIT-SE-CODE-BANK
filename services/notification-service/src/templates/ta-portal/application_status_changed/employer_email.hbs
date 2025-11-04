@@ -16,37 +16,31 @@
       <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
         {{#if recipient.name}}
           Hi {{recipient.name}},
-        {{else if hiring_manager}}
-          Hi {{hiring_manager}},
-        {{else if instructorName}}
-          Hi {{instructorName}},
-        {{else if professor}}
-          Hi {{professor}},
         {{else}}
           Hi Team,
         {{/if}}
       </p>
 
-      {{#if is_hired}}
+      {{#if flags.hired}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-          Candidate <strong>{{candidate_name}}</strong> has been <strong>HIRED</strong>
-          for <strong>{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}this position{{/if}}</strong>.
+          Candidate <strong>{{recipient.name}}</strong> has been <strong>HIRED</strong>
+          for <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
         </p>
-      {{else if is_accepted_offer}}
+      {{else if flags.acceptedOffer}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-          Candidate <strong>{{candidate_name}}</strong> has <strong>ACCEPTED</strong> the offer for
-          <strong>{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}this position{{/if}}</strong>.
+          Candidate <strong>{{recipient.name}}</strong> has <strong>ACCEPTED</strong> the offer for
+          <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
         </p>
-      {{else if is_applied}}
+      {{else if flags.applied}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-          Candidate <strong>{{candidate_name}}</strong> has <strong>APPLIED</strong> to
-          <strong>{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}this position{{/if}}</strong>.
+          Candidate <strong>{{recipient.name}}</strong> has <strong>APPLIED</strong> to
+          <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
         </p>
       {{else}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-          Candidate <strong>{{candidate_name}}</strong> moved to status
-          <strong>{{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}Updated{{/if}}</strong>
-          for <strong>{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}this position{{/if}}</strong>.
+          Candidate <strong>{{recipient.name}}</strong> moved to status
+          <strong>{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}</strong>
+          for <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
         </p>
       {{/if}}
 
@@ -56,15 +50,13 @@
       </p>
       {{/if}}
 
-      {{#if professor}}
-      <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{professor}}</strong></p>
-      {{else if hiring_manager}}
-      <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{hiring_manager}}</strong></p>
-      {{/if}}
+  {{#if item.ownerName}}
+  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{item.ownerName}}</strong></p>
+  {{/if}}
 
-      {{#if app_link}}
+      {{#if cta.url}}
       <p style="margin-top:24px;margin-bottom:24px;">
-        <a href="{{app_link}}"
+        <a href="{{cta.url}}"
            style="display:inline-block;
                   background-color:#F76902;
                   color:#FFFFFF;

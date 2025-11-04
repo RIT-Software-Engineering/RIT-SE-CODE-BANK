@@ -42,12 +42,12 @@ function normalizeEventKey(raw) {
 
 export function defaultSubject(role, context) {
   const ctx = context || {};
-  const job = ctx.job_title || ctx.jobTitle || ctx.position || 'Position';
-  const status = ctx.new_status || ctx.status || 'Update';
+  const job = (ctx.item && ctx.item.title) || 'Position';
+  const status = (ctx.status && ctx.status.new) || 'Update';
   if ((role || '').toLowerCase() === 'candidate' || (role || '').toLowerCase() === 'applicant') {
     return `Application Update: ${job} → ${status}`;
   }
-  const person = ctx.candidate_name || ctx.candidateName || ctx.applicant_name || ctx.applicantName || 'Candidate';
+  const person = (ctx.recipient && ctx.recipient.name) || 'Candidate';
   return `${person} → ${status} (${job})`;
 }
 

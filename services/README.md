@@ -26,28 +26,27 @@ Defaults used in dev:
 Test a notification (example):
 
 ```powershell
-curl -X POST http://localhost:4000/send \
+curl -X POST http://localhost:4000/api/notifications/dispatch/ta-portal \
   -H "Content-Type: application/json" \
   -d '{
+    "userId": "bgg6007",
     "event": "application_status_changed",
+    "role": "candidate",
     "context": {
-      "job_title": "TA for SWEN-352",
-      "new_status": "Interview",
-      "app_link": "https://ta.se.rit.edu/applications/102",
-      "candidate_name": "Ben Griffin"
-    },
-    "recipients": [
-      { "role": "candidate", "email": "bgg6007@rit.edu" },
-      { "role": "employer", "email": "prof.jones@rit.edu", "slack": "@profjones" }
-    ]
+      "appName": "TA Portal",
+      "recipient": { "name": "Ben Griffin", "email": "bgg6007@rit.edu" },
+      "item": { "title": "TA for SWEN-352" },
+      "status": { "new": "Interview" },
+      "cta": { "url": "https://ta.se.rit.edu/applications/102?from=seed" }
+    }
   }'
 ```
 
 Files and behavior
 - Templates: `src/templates/<event>/<role>_(email|slack).hbs`. The service prefers app-scoped
   templates at `src/templates/<appId>/<event>/...` and falls back to global templates.
-- Common context keys normalized server-side: `course_name`, `job_title`, `professor`, `candidate_name`, `app_link`.
-- If no template exists, the service sends a compact HTML summary of the normalized context.
+- Agnostic context contract: `recipient`, `item`, `status`, `cta`, plus optional `appName`, `comment`, and `flags`.
+- If no template exists, the service sends a compact HTML summary of the context.
 
 Testing
 

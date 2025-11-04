@@ -16,45 +16,37 @@
       <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
         {{#if recipient.name}}
           Hi {{recipient.name}},
-        {{else if candidate_name}}
-          Hi {{candidate_name}},
-        {{else if candidateName}}
-          Hi {{candidateName}},
-        {{else if applicant_name}}
-          Hi {{applicant_name}},
-        {{else if applicantName}}
-          Hi {{applicantName}},
         {{else}}
           Hi Candidate,
         {{/if}}
       </p>
 
       {{!-- Tailored messaging for key scenarios; default to generic status move wording --}}
-      {{#if is_applied}}
+      {{#if flags.applied}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
           Thanks for applying! We've received your application for
-          <strong>{{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}</strong>.
+          <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
         </p>
-      {{else if is_hired}}
+      {{else if flags.hired}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
           Congratulations! You've been <strong>HIRED</strong> for
-          <strong>{{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}</strong>!
+          <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>!
         </p>
-      {{else if is_accepted_offer}}
+      {{else if flags.acceptedOffer}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
           Thanks for confirming. Your offer acceptance for
-          <strong>{{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}</strong>
+          <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>
           has been recorded. We'll be in touch with next steps.
         </p>
       {{else}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
           Your application for
           <strong>
-            {{#if job_title}}{{job_title}}{{else if jobTitle}}{{jobTitle}}{{else if course_name}}{{course_name}}{{else}}this position{{/if}}
+            {{#if item.title}}{{item.title}}{{else}}this position{{/if}}
           </strong>
           is now at status
           <strong>
-            {{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}Updated{{/if}}
+            {{#if status.new}}{{status.new}}{{else}}Updated{{/if}}
           </strong>.
         </p>
       {{/if}}
@@ -65,15 +57,13 @@
       </p>
       {{/if}}
 
-  {{#if professor}}
-  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{professor}}</strong></p>
-  {{else if hiring_manager}}
-  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{hiring_manager}}</strong></p>
+  {{#if item.ownerName}}
+  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{item.ownerName}}</strong></p>
   {{/if}}
 
-      {{#if app_link}}
+      {{#if cta.url}}
       <p style="margin-top:24px;margin-bottom:24px;">
-        <a href="{{app_link}}"
+        <a href="{{cta.url}}"
            style="display:inline-block;
                   background-color:#F76902;
                   color:#FFFFFF;

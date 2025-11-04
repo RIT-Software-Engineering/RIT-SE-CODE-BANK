@@ -17,13 +17,13 @@
         Hi {{#if recipient.name}}{{recipient.name}}{{else}}Administrator{{/if}},
       </p>
 
-      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-        Candidate <strong>{{candidate_name}}</strong> is now at status
-        <strong>{{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}Updated{{/if}}</strong>
-        for <strong>{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}this position{{/if}}</strong>.
-      </p>
+    <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+  Candidate <strong>{{recipient.name}}</strong> is now at status
+  <strong>{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}</strong>
+  for <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
+    </p>
 
-      {{#if is_hired}}
+      {{#if flags.hired}}
       <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
         Please log in to the Portal to complete any remaining administrative steps related to this hire.
       </p>
@@ -35,15 +35,13 @@
       </p>
       {{/if}}
 
-      {{#if professor}}
-      <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{professor}}</strong></p>
-      {{else if hiring_manager}}
-      <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{hiring_manager}}</strong></p>
-      {{/if}}
+  {{#if item.ownerName}}
+  <p style="font-size:14px;color:#555;margin-top:8px;">Instructor: <strong>{{item.ownerName}}</strong></p>
+  {{/if}}
 
-      {{#if app_link}}
+      {{#if cta.url}}
       <p style="margin-top:24px;margin-bottom:24px;">
-        <a href="{{app_link}}"
+        <a href="{{cta.url}}"
            style="display:inline-block;
                   background-color:#F76902;
                   color:#FFFFFF;
@@ -52,7 +50,7 @@
                   text-decoration:none;
                   font-size:16px;
                   font-weight:500;">
-          {{#if is_hired}}Open Portal to Finalize Hire{{else}}Open in Portal{{/if}}
+          {{#if flags.hired}}Open Portal to Finalize Hire{{else}}Open in Portal{{/if}}
         </a>
       </p>
       {{/if}}

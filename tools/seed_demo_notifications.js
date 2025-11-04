@@ -11,15 +11,15 @@ async function main() {
   try {
     console.log('Sending demo notifications for', username, email);
     const events = [
-      { event: 'APPLICATION_RECEIVED', context: { candidateName: username, courseName: 'CS 101' } },
-      { event: 'STATUS_CHANGED', context: { candidateName: username, new_status: 'interview' } },
-      { event: 'HIRED', context: { candidateName: username, courseName: 'CS 101' } },
+      { event: 'APPLICATION_RECEIVED', context: { recipient: { name: username, email }, item: { title: 'CS 101' }, status: { new: 'APPLIED' }, flags: { applied: true }, cta: { url: 'https://example.com/Applications?jobPositionId=1&applicationId=2' } } },
+      { event: 'STATUS_CHANGED', context: { recipient: { name: username, email }, item: { title: 'CS 101' }, status: { new: 'INTERVIEW' }, cta: { url: 'https://example.com/Applications?jobPositionId=1&applicationId=2' } } },
+      { event: 'HIRED', context: { recipient: { name: username, email }, item: { title: 'CS 101' }, status: { new: 'HIRED' }, flags: { hired: true }, cta: { url: 'https://example.com/Applications?jobPositionId=1&applicationId=2' } } },
     ];
 
     for (const e of events) {
       try {
         const url = `${DEFAULT_SERVICE_URL}/api/notifications/dispatch/${encodeURIComponent(APP_ID)}`;
-        const body = { userId: username, event: e.event, context: { ...e.context, candidateEmail: email }, role: 'candidate' };
+  const body = { userId: username, event: e.event, context: { ...e.context }, role: 'candidate' };
         const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         const data = await res.json().catch(() => ({}));
         console.log('Sent', e.event, '=>', res.ok ? 'ok' : `${res.status}`, data);

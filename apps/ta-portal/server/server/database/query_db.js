@@ -28,27 +28,7 @@ async function buildAppLink({ jobPositionId, applicationId }) {
   const qs = qp.toString();
   return `${base}/Applications${qs ? `?${qs}` : ''}`;
 }
-// Back-compat shim: notifyEvent(event, context, { ... }) — best-effort templated dispatch to the candidate by username inferred from email
-async function notifyEvent(event, context = {}, _opts = {}) {
-  try {
-    // Try to infer a candidate username from email fields when not provided directly
-    const email =
-      context.candidateEmail ||
-      context.applicantEmail ||
-      _opts.userEmail ||
-      (Array.isArray(_opts.toEmails) && _opts.toEmails.length > 0 ? _opts.toEmails[0] : null);
-    if (!email) {
-      console.warn('[notifyEvent] no candidate email in context; skipping dispatch');
-      return { ok: true, skipped: true };
-    }
-    const userId = String(email).split('@', 1)[0].toLowerCase();
-  await dispatchTemplated(userId, { event, context: { ...context, candidateEmail: context.candidateEmail || email }, role: 'candidate', userEmail: email, ...(_opts.subject ? { subject: _opts.subject } : {}) });
-    return { ok: true };
-  } catch (e) {
-    console.error('[notifyEvent] dispatch failed', e && e.message);
-    return { ok: false, error: String((e && e.message) || e) };
-  }
-}
+// Note: legacy notifyEvent shim removed — use dispatchTemplated with agnostic context exclusively.
 
 // Ensure dotenv is loaded for DATABASE_URL if this file is ever run directly.
 if (!process.env.DATABASE_URL) {
@@ -624,27 +604,26 @@ async function applyForJobPosition(applicationDetails) {
   // Notify stakeholders + candidate
     try {
       const { emails, employerEmail } = await getCourseStakeholders(newApp.jobPositionId);
-      await notifyEvent(
-        "APPLICATION_RECEIVED",
-        {
-          // canonical (camelCase)
-          candidateName: `${newApp.candidateFName} ${newApp.candidateLName}`,
-          candidateEmail: newApp.candidateEmail,
-          courseCode: jobPosition.courseCode,
-          courseName: jobPosition.course.name,
-          instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
-          instructorEmail: jobPosition.employer.user.email,
-          status: "APPLIED",
-          // snake_case aliases for templates
-          candidate_name: `${newApp.candidateFName} ${newApp.candidateLName}`,
-          course_name: jobPosition.course.name,
-          new_status: "APPLIED",
-          hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
-          is_applied: true,
-          app_link: await buildAppLink({ jobPositionId: jobPositionId, applicationId: newApp.id }),
-        },
-        { toEmails: [newApp.candidateEmail, ...emails], userEmail: newApp.candidateEmail, subject: 'TA Application Status Update' }
-      );
+      const candidateUserId = String(newApp.candidateEmail).split('@', 1)[0].toLowerCase();
+      await dispatchTemplated(candidateUserId, {
+        event: 'APPLICATION_RECEIVED',
+        role: 'candidate',
+        userEmail: newApp.candidateEmail,
+        subject: 'TA Application Status Update',
+        context: {
+          recipient: { name: `${newApp.candidateFName} ${newApp.candidateLName}` , email: newApp.candidateEmail },
+          item: {
+            id: jobPositionId,
+            title: jobPosition.course.name,
+            ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+            ownerEmail: jobPosition.employer.user.email,
+          },
+          status: { new: 'APPLIED' },
+          flags: { applied: true },
+          cta: { url: await buildAppLink({ jobPositionId: jobPositionId, applicationId: newApp.id }) },
+          appName: 'TA Portal',
+        }
+      });
 
       // Best-effort employer confirmation
       if (employerEmail) {
@@ -656,18 +635,21 @@ async function applyForJobPosition(applicationDetails) {
             userEmail: employerEmail,
             subject: 'TA Application Status Update',
             context: {
-              // minimal fields for employer templates
-              candidate_name: `${newApp.candidateFName} ${newApp.candidateLName}`,
-              new_status: 'APPLIED',
-              course_name: jobPosition.course.name,
-              hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
-              is_applied: true,
-              // keep camelCase too
-              candidateName: `${newApp.candidateFName} ${newApp.candidateLName}`,
-              courseName: jobPosition.course.name,
-              status: 'APPLIED',
-              instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
-              app_link: await buildAppLink({ jobPositionId: jobPositionId, applicationId: newApp.id }),
+              // generic structure
+              recipient: {
+                name: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                email: employerEmail,
+              },
+              item: {
+                id: jobPositionId,
+                title: jobPosition.course.name,
+                ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                ownerEmail: employerEmail,
+              },
+              status: { new: 'APPLIED' },
+              flags: { applied: true },
+              cta: { url: await buildAppLink({ jobPositionId: jobPositionId, applicationId: newApp.id }) },
+              appName: 'TA Portal',
             },
           });
         } catch (e) {
@@ -881,30 +863,24 @@ try {
   };
   const eventType = eventTypeMap[status] || "STATUS_CHANGED";
 
-  await notifyEvent(
-    eventType,
-    {
-      // canonical (camelCase)
-      candidateName,
-      candidateEmail,
-      courseCode: details.courseCode,
-      courseName: details.courseName,
-      section: details.section,
-      instructorName: details.instructorName,
-      instructorEmail: details.instructorEmail,
-      status,
-      comment: comments, // 👈 include reason/comment
-      // snake_case aliases for templates
-      candidate_name: candidateName,
-      course_name: details.courseName,
-      new_status: status,
-      hiring_manager: details.instructorName,
-      is_hired: status === 'HIRED',
-      is_accepted_offer: status === 'ACCEPTED_OFFER',
-  app_link: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }),
-    },
-    { toEmails: [candidateEmail, ...stakeholders], userEmail: candidateEmail, subject: 'TA Application Status Update' }
-  );
+  {
+    const candidateUserId = String(candidateEmail).split('@', 1)[0].toLowerCase();
+    await dispatchTemplated(candidateUserId, {
+      event: eventType,
+      role: 'candidate',
+      userEmail: candidateEmail,
+      subject: 'TA Application Status Update',
+      context: {
+        recipient: { name: candidateName, email: candidateEmail },
+        item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName, ownerEmail: details.instructorEmail },
+        status: { new: status },
+        comment: comments,
+        flags: { hired: status === 'HIRED', acceptedOffer: status === 'ACCEPTED_OFFER' },
+        cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
+        appName: 'TA Portal',
+      }
+    });
+  }
 
   // Employer confirmation (status change)
   try {
@@ -917,19 +893,14 @@ try {
         userEmail: employerEmail,
         subject: 'TA Application Status Update',
         context: {
-          candidate_name: candidateName,
-          new_status: status,
-          course_name: details.courseName,
-          hiring_manager: details.instructorName,
-          // camelCase too
-          candidateName,
-          courseName: details.courseName,
-          status,
-          instructorName: details.instructorName,
+          // generic
+          recipient: { name: details.instructorName, email: employerEmail },
+          item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName, ownerEmail: employerEmail },
+          status: { new: status },
           comment: comments,
-          is_hired: status === 'HIRED',
-          is_accepted_offer: status === 'ACCEPTED_OFFER',
-          app_link: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }),
+          flags: { hired: status === 'HIRED', acceptedOffer: status === 'ACCEPTED_OFFER' },
+          cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
+          appName: 'TA Portal',
         },
       });
     }
@@ -951,19 +922,14 @@ try {
           userEmail: adminEmail,
           subject: 'TA Application Status Update',
           context: {
-            candidate_name: candidateName,
-            job_title: details.courseName,
-            course_name: details.courseName,
-            new_status: status,
-            hiring_manager: details.instructorName,
+            // generic
+            recipient: { email: adminEmail },
+            item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName },
+            status: { new: status },
             comment: comments,
-            // camelCase mirrors
-            candidateName,
-            jobTitle: details.courseName,
-            courseName: details.courseName,
-            status,
-            instructorName: details.instructorName,
-            app_link: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }),
+            flags: { acceptedOffer: true },
+            cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
+            appName: 'TA Portal',
           },
         });
       }
@@ -1130,26 +1096,24 @@ async function hireCandidateForJobPosition(
 
   const toEmails = [candidateEmail, ...stakeholderEmails];
 
-        await notifyEvent(
-          "HIRED",
-          {
-            // canonical (camelCase)
-            candidateName,
-            candidateEmail,
-            courseCode: jobPositionId,
-            courseName: jobPosition.course?.name,
-            status: "HIRED",
-            comment: commentData?.comment,
-            // snake_case aliases
-            candidate_name: candidateName,
-            course_name: jobPosition.course?.name,
-            new_status: "HIRED",
-            hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
-            is_hired: true,
-            app_link: await buildAppLink({ jobPositionId, applicationId }),
-          },
-          { toEmails, userEmail: candidateEmail, subject: 'TA Application Status Update' }
-        );
+        {
+          const candidateUserId = String(candidateEmail).split('@', 1)[0].toLowerCase();
+          await dispatchTemplated(candidateUserId, {
+            event: 'HIRED',
+            role: 'candidate',
+            userEmail: candidateEmail,
+            subject: 'TA Application Status Update',
+            context: {
+              recipient: { name: candidateName, email: candidateEmail },
+              item: { id: jobPositionId, title: jobPosition.course?.name, ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}` },
+              status: { new: 'HIRED' },
+              comment: commentData?.comment,
+              flags: { hired: true },
+              cta: { url: await buildAppLink({ jobPositionId, applicationId }) },
+              appName: 'TA Portal',
+            },
+          });
+        }
 
         // Employer confirmation for hire event
         const employerEmail = jobPosition.employer?.user?.email;
@@ -1162,18 +1126,14 @@ async function hireCandidateForJobPosition(
               userEmail: employerEmail,
               subject: 'TA Application Status Update',
               context: {
-                candidate_name: candidateName,
-                new_status: 'HIRED',
-                course_name: jobPosition.course?.name,
-                hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                // generic
+                recipient: { name: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}` , email: employerEmail },
+                item: { id: jobPositionId, title: jobPosition.course?.name, ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}` },
+                status: { new: 'HIRED' },
                 comment: commentData?.comment,
-                // camelCase too
-                candidateName,
-                courseName: jobPosition.course?.name,
-                status: 'HIRED',
-                instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
-                is_hired: true,
-                app_link: await buildAppLink({ jobPositionId, applicationId }),
+                flags: { hired: true },
+                cta: { url: await buildAppLink({ jobPositionId, applicationId }) },
+                appName: 'TA Portal',
               },
             });
           } catch (e) {
@@ -1194,19 +1154,14 @@ async function hireCandidateForJobPosition(
               userEmail: adminEmail,
               subject: 'TA Application Status Update',
               context: {
-                candidate_name: candidateName,
-                new_status: 'HIRED',
-                course_name: jobPosition.course?.name,
-                hiring_manager: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
-                // camelCase
-                candidateName,
-                courseName: jobPosition.course?.name,
-                status: 'HIRED',
-                instructorName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                // generic
+                recipient: { email: adminEmail },
+                item: { id: jobPositionId, title: jobPosition.course?.name, ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}` },
+                status: { new: 'HIRED' },
                 comment: commentData?.comment,
-                // flags for template branching
-                is_hired: true,
-                app_link: await buildAppLink({ jobPositionId, applicationId }),
+                flags: { hired: true },
+                cta: { url: await buildAppLink({ jobPositionId, applicationId }) },
+                appName: 'TA Portal',
               },
             });
           }

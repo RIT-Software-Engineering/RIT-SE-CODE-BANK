@@ -1,56 +1,51 @@
 // __tests__/notificationDispatcher.test.js
 
-jest.mock('@services/notification-service/src/channels/email', () => ({
-  sendEmail: jest.fn(),
-}));
-jest.mock('@services/notification-service/src/channels/slack', () => ({
-  sendSlackDM: jest.fn(),
-}));
+// The server no longer dispatches channels directly; it proxies to the
+// notification-service. Update the test to validate the proxy POST payload
+// instead of mocking channel senders.
 
-// Mock the notification-client used by the dispatcher
-jest.mock('../../../../../packages/notification-client/index.cjs', () => ({
-  getPreferences: jest.fn(),
-}), { virtual: true });
+let dispatchNotification;
 
-// Pull the mocked functions into the test scope so the `expect(sendEmail)`
-// and `expect(sendSlackDM)` assertions work as written.
-const { sendEmail } = require('@services/notification-service/src/channels/email');
-const { sendSlackDM } = require('@services/notification-service/src/channels/slack');
+describe('dispatchNotification (proxy to notification-service)', () => {
+  let originalFetch;
+  let calls;
 
-const { prisma } = require('@server/database/prisma');
-const { dispatchNotification } = require('@server/routing/notifications');
-const client = require('../../../../../packages/notification-client/index.cjs');
-
-describe('dispatchNotification', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    // stub global fetch
+    originalFetch = global.fetch;
+    calls = [];
+    global.fetch = jest.fn(async (url, opts = {}) => {
+      calls.push({ url, opts });
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, dispatched: true }),
+        text: async () => 'ok',
+      };
+    });
+    // ensure module picks up the stubbed fetch
+    jest.resetModules();
+    ({ dispatchNotification } = require('@server/utils/notifications'));
   });
 
-  test('both enabled → calls both email and slack', async () => {
-    client.getPreferences.mockResolvedValue({ notifyEmail: true, notifySlack: true });
-    await dispatchNotification('bgg6007', { subject: 'Hello', body: 'Test' });
-    expect(sendEmail).toHaveBeenCalledTimes(1);
-    expect(sendSlackDM).toHaveBeenCalledTimes(1);
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
-  test('email off → only Slack called', async () => {
-    client.getPreferences.mockResolvedValue({ notifyEmail: false, notifySlack: true });
-    await dispatchNotification('bgg6007', { subject: 'Hello', body: 'Test' });
-    expect(sendEmail).not.toHaveBeenCalled();
-    expect(sendSlackDM).toHaveBeenCalledTimes(1);
-  });
-
-  test('slack off → only Email called', async () => {
-    client.getPreferences.mockResolvedValue({ notifyEmail: true, notifySlack: false });
-    await dispatchNotification('bgg6007', { subject: 'Hello', body: 'Test' });
-    expect(sendEmail).toHaveBeenCalledTimes(1);
-    expect(sendSlackDM).not.toHaveBeenCalled();
-  });
-
-  test('both off → neither called', async () => {
-    client.getPreferences.mockResolvedValue({ notifyEmail: false, notifySlack: false });
-    await dispatchNotification('bgg6007', { subject: 'Hello', body: 'Test' });
-    expect(sendEmail).not.toHaveBeenCalled();
-    expect(sendSlackDM).not.toHaveBeenCalled();
+  test('posts to notification service with expected payload', async () => {
+    const res = await dispatchNotification('bgg6007', { subject: 'Hello', message: 'Test', userEmail: 'bgg6007@rit.edu' });
+    expect(res).toEqual(expect.objectContaining({ ok: true }));
+    expect(calls.length).toBe(1);
+    const { url, opts } = calls[0];
+    expect(url).toMatch(/\/api\/notifications\/dispatch\//);
+    expect(opts.method).toBe('POST');
+    expect(opts.headers['Content-Type']).toBe('application/json');
+    const body = JSON.parse(opts.body);
+    expect(body).toEqual(expect.objectContaining({
+      userId: 'bgg6007',
+      subject: 'Hello',
+      message: 'Test',
+      userEmail: 'bgg6007@rit.edu',
+    }));
   });
 });

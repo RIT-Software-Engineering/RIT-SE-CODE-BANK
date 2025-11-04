@@ -31,19 +31,30 @@ router.post("/:appId", async (req, res) => {
   const role = req.body?.role || 'recipient';
 
   try {
+    // Preferences are optional at runtime; if the DB is unavailable, fall back to sensible defaults.
     const prisma = getPrisma();
-    const pref = await prisma.userPreference.findUnique({ where: { appId_userId: { appId, userId } } });
+    let pref = null;
+    try {
+      pref = await prisma.userPreference.findUnique({ where: { appId_userId: { appId, userId } } });
+    } catch (e) {
+      console.warn(`[dispatch][${ts()}] app=${appId} userId=${userId} prefs=unavailable (${e?.message || e}) — using defaults`);
+      pref = null;
+    }
 
     // Default behavior: if no preferences exist, default to email-only BUT requires a stored email
-    const notifyEmail = pref ? !!pref.notifyEmail : true;
-    const notifySlack = pref ? !!pref.notifySlack : false;
+  const notifyEmail = pref ? !!pref.notifyEmail : true;
+  const notifySlack = pref ? !!pref.notifySlack : false;
     // Prefer explicitly provided email; then stored preference; then email embedded in context
     let userEmail = providedEmail || pref?.userEmail || null;
     if (!userEmail && context) {
-      const ctxEmail = (context.candidateEmail || context.applicantEmail || context.recipient?.email || '').trim().toLowerCase();
+      const ctxEmail = (
+        // agnostic field only
+        (context.recipient && context.recipient.email) ||
+        ''
+      ).trim().toLowerCase();
       if (ctxEmail.includes('@')) userEmail = ctxEmail;
     }
-    const slackUsername = pref?.slackUsername || null;
+    const slackUsername = pref?.slackUsername || (context?.recipient && context.recipient.slackUsername) || null;
 
     // If email not stored, try to resolve from app backend (ta-portal)
     if (!userEmail && (notifyEmail || (notifySlack && process.env.SLACK_BOT_TOKEN))) {

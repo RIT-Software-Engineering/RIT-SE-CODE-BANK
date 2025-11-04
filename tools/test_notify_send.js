@@ -15,10 +15,11 @@ try {
     event: 'application_status_changed',
     role: 'candidate',
     context: {
-      applicationId: 1234,
-      oldStatus: 'submitted',
-      newStatus: 'under_review',
-      positionTitle: 'Graduate TA - SE'
+      appName: 'TA Portal',
+      recipient: { name: 'Ben Griffin' },
+      item: { title: 'Graduate TA - SE' },
+      status: { new: 'Under Review' },
+      cta: { url: 'https://ta.se.rit.edu/applications/1234' }
     }
   };
   const res = await fetchImpl(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

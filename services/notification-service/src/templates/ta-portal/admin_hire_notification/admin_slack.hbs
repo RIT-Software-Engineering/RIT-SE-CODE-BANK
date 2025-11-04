@@ -1,6 +1,6 @@
 🟧 *Hire Confirmation Required*  
 
-Candidate *{{candidate_name}}* has *ACCEPTED* the offer for _{{#if job_title}}{{job_title}}{{else if course_name}}{{course_name}}{{else}}the position{{/if}}_.
+A candidate has *ACCEPTED* the offer for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
 
 Please log in to the Portal to confirm the hire and complete the required administrative steps.
 
@@ -8,8 +8,8 @@ Please log in to the Portal to confirm the hire and complete the required admini
 _Note_: {{comment}}
 {{/if}}
 
-{{#if app_link}}
-👉 <{{{app_link}}}|Confirm Hire>
+{{#if cta.url}}
+👉 <{{{cta.url}}}|Confirm Hire>
 {{/if}}
 
 _Thank you for keeping the department’s hiring process on track._

@@ -1,17 +1,15 @@
  *Administrative Update*  
 
-Candidate *{{candidate_name}}* is now at status *{{#if new_status}}{{new_status}}{{else if status}}{{status}}{{else}}Updated{{/if}}* for _{{#if course_name}}{{course_name}}{{else if job_title}}{{job_title}}{{else}}the position{{/if}}_.
+Candidate *{{recipient.name}}* is now at status *{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
 
 {{#if comment}}
 _Note_: {{comment}}
 {{/if}}
 
-{{#if professor}}
-Instructor: *{{professor}}*
-{{else if hiring_manager}}
-Instructor: *{{hiring_manager}}*
+{{#if item.ownerName}}
+Instructor: *{{item.ownerName}}*
 {{/if}}
 
-{{#if app_link}}
-👉 <{{app_link}}|Open in Portal>
+{{#if cta.url}}
+👉 <{{{cta.url}}}|Open in Portal>
 {{/if}}
