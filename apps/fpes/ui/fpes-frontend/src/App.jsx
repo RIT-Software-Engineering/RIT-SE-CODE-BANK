@@ -11,6 +11,7 @@ import CourseSectionsPage from './pages/course_sections/CourseSectionsPage.jsx';
 import { FormControl, FormLabel, InputLabel, MenuItem, Select } from '@mui/material';
 import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';
 import CoursesPage from './pages/courses/CoursePage.jsx'
+import ProfilePage from './pages/profile/ProfilePage.jsx';
 import Header from './pages/Header.jsx';
 
 function App() {
@@ -46,6 +47,11 @@ function App() {
         name : "Courses",
         route : "/courses",
         adminOnly : true
+    },
+    {
+      name: "Profile",
+      route: "/profile",
+      adminOnly: false
     }
   ]
 
@@ -67,6 +73,7 @@ function App() {
         {role === 'admin' ? adminRoutes : null}
         <Route path="/course_sections" element={<CourseSectionsPage/>} />
         <Route path="/student_support" element={<StudentSupportPage/>} />
+        <Route path="/profile" element={<ProfilePage/>} />
       </Routes>
     </BrowserRouter>
   )
