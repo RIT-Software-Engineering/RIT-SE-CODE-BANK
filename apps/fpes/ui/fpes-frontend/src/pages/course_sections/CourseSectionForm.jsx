@@ -4,7 +4,7 @@ import { Controller } from "react-hook-form";
 import CloseIcon from '@mui/icons-material/Close';
 
 
-export default function CourseSectionForm({courses, control, section, handleRemoveSection, index, errors}){
+export default function CourseSectionForm({courses, control, section, handleRemoveSection, handleDuplicateSection, index, errors}){
     return (
         <Grid container spacing={2} columnSpacing={8}>
             <Grid item size={10}>
@@ -149,6 +149,10 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                         />
                     }
                 />
+            </Grid>
+
+            <Grid>
+                <Button onClick={() => handleDuplicateSection(index)}>Duplicate</Button>
             </Grid>
         </Grid>
     )

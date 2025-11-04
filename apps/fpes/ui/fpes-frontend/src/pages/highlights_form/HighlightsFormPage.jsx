@@ -42,7 +42,7 @@ export default function HighlightsFormPage() {
 
 
     
-    const {control, handleSubmit, reset, trigger, formState:{errors}} = useForm({defaultValues :
+    const {control, handleSubmit, getValues, reset, trigger, formState:{errors}} = useForm({defaultValues :
         {
             services : [],
             course_sections : [],
@@ -62,7 +62,7 @@ export default function HighlightsFormPage() {
 
             <form>
             {isOnFirstStep() ? <ServicesFormStep form_id={1} control={control} errors={errors} /> : null}
-            {isOnLastStep() ? <CourseSectionFormStep form_id={1} control={control} errors={errors} /> : null}
+            {isOnLastStep() ? <CourseSectionFormStep form_id={1} control={control} errors={errors}  getValues={getValues}/> : null}
 
             {/* Back or Cancel Button */}
             {

@@ -4,7 +4,7 @@ import { useFieldArray } from "react-hook-form";
 import CourseSectionForm from "./CourseSectionForm";
 import axios from "axios";
 
-export default function CourseSectionFormStep({form_id, control, errors}){
+export default function CourseSectionFormStep({form_id, control, errors, getValues}){
     const [numberOfSections, setNumberOfSections] = useState(0);
     const [courses, setCourses] = useState([]);
 
@@ -39,12 +39,17 @@ export default function CourseSectionFormStep({form_id, control, errors}){
         this.form_id = form_id;
     }
 
-    const {fields, append, remove} = useFieldArray(
+    const {fields, append, insert, remove} = useFieldArray(
         {
             control,
             name : "course_sections"
         }
     )
+
+    function duplicateCourseSection(index){
+        const sectionToDuplicate = getValues(`course_sections[${index}]`);
+        insert(index + 1, sectionToDuplicate);
+    }
 
     function removeCourseSection(index) {
         remove(index);
@@ -66,6 +71,7 @@ export default function CourseSectionFormStep({form_id, control, errors}){
                 index={index}
                 courses={courses}
                 handleRemoveSection={removeCourseSection}
+                handleDuplicateSection={duplicateCourseSection}
                 />
             </Paper>
         ))}
