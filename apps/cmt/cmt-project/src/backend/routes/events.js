@@ -293,7 +293,7 @@ router.post("/", validateEvent, async (req, res) => {
         location: eventData.location || "TBD",
         description: eventData.description || "",
         importance: eventData.importance || "Medium",
-        preparation: eventData.preparation || [],
+
       },
       include: {
         course: true,

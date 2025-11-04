@@ -7,7 +7,9 @@ export default function SiteNav() {
       <div className="site-nav__inner">
         <div className="site-nav__brand">
           <h1 className="site-nav__title">Course Management Tool</h1>
-          <p className="site-nav__subtitle">RIT Department of Software Engineering</p>
+          <p className="site-nav__subtitle">
+            RIT Department of Software Engineering
+          </p>
         </div>
 
         <nav aria-label="Primary" className="site-nav__nav">
@@ -42,10 +44,19 @@ export default function SiteNav() {
                 Course Builder
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/createtemplate"
+                className={({ isActive }) =>
+                  "site-nav__tab" + (isActive ? " is-active" : "")
+                }
+              >
+                Create Template
+              </NavLink>
+            </li>
           </ul>
         </nav>
       </div>
     </header>
   );
 }
-
