@@ -119,7 +119,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
         console.log("fetching full teamset...")
         return tx.TBTeamSet.findUnique({
           where: { id: teamSet.id },
-          include: { teams: { include: { members: { include: { enrollment: true } } } } },
+          include: { teams: { include: { members: { include: { tbenrollment: true } } } } },
         });
       });
 
@@ -137,10 +137,10 @@ module.exports = function makeTeamBuilderRouter(prisma) {
     if (status) where.status = status;
 
     try {
-      const sets = await prisma.tBTeamSet.findMany({
+      const sets = await prisma.TBTeamSet.findMany({
         where,
         orderBy: [{ createdAt: 'desc' }],
-        include: { teams: { include: { members: { include: { enrollment: true } } } } },
+        include: { teams: { include: { members: { include: { tbenrollment: true } } } } },
       });
       res.json(sets);
     } catch (e) {
@@ -218,7 +218,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
 
     const updated = await prisma.TBTeamSet.findUnique({
       where: { id: teamSetId },
-      include: { teams: { include: { members: { include: { enrollment: true } } } } },
+      include: { teams: { include: { members: { include: { tbenrollment: true } } } } },
     });
     res.json(updated);
   });

@@ -18,4 +18,4 @@ COPY src/backend/ .
 
 EXPOSE 5010 
 
-CMD ["sh", "-c", "PORT=5010 node server.js"]  # ← CHANGED: Set PORT=5010
+CMD node server.js

@@ -8,15 +8,13 @@ const eventRoutes = require("./routes/events");
 const templateRoutes = require("./routes/template");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5010;
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const makeTeamBuilderRouter = require("./routes/teamBuilder");
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
-
-app.use("/api", teamBuilderRoutes);
 
 app.use(
   cors({
@@ -35,6 +33,7 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/events", eventRoutes);
 app.use("/api/template", templateRoutes);
+app.use('/api/team-builder', teamBuilderRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

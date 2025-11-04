@@ -93,7 +93,6 @@ model TBEnrollment {
   firstName String?
   lastName  String?
   createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
   course    Course     @relation(fields: [courseId], references: [id])
   members   TBMember[]
 
@@ -108,7 +107,6 @@ model TBMember {
   enrollmentId Int
   role         String?
   createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
   enrollment   TBEnrollment @relation(fields: [enrollmentId], references: [id])
   tbteam       TBTeam       @relation(fields: [teamId], references: [id])
 
@@ -122,7 +120,6 @@ model TBTeam {
   name      String
   maxSize   Int?
   createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
   members   TBMember[]
   teamSet   TBTeamSet @relation(fields: [teamSetId], references: [id])
 
@@ -140,7 +137,6 @@ model TBTeamSet {
   archivedAt           DateTime?
   createdByProfessorId Int
   createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
   teams                TBTeam[]
   course               Course           @relation(fields: [courseId], references: [id])
   professors           Professor        @relation(fields: [createdByProfessorId], references: [id])
