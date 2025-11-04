@@ -64,7 +64,13 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Header pages={pages} adminView={role === "admin"} setRole={setRole}/>
+      <Header 
+        pages={pages} 
+        adminView={role === "admin"} 
+        setRole={setRole}
+        profileRoute="/profile"
+      />
+        
       <h1>FPES Portal</h1>
       
       <Routes>
