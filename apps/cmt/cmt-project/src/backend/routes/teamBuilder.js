@@ -19,7 +19,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
   // List courses
   router.get('/', async (_req, res) => {
     try {
-      const courses = await prisma.course.findMany({
+      const courses = await prisma.Course.findMany({
         orderBy: [{ id: 'asc' }],
         select: { id: true, professorId: true },
       });
@@ -67,7 +67,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
           continue;
         }
 
-        await tx.tbenrollment.upsert({
+        await tx.TBEnrollment.upsert({
           where: { courseId_studentId: { courseId, studentId } },
           update: { firstName: firstName || undefined, lastName: lastName || undefined, email: email || undefined },
           create: { courseId, studentId, firstName: firstName || null, lastName: lastName || null, email: email || null },
@@ -75,7 +75,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
       }
     });
 
-    const roster = await prisma.tbenrollment.findMany({ where: { courseId }, orderBy: { id: 'asc' } });
+    const roster = await prisma.TBEnrollment.findMany({ where: { courseId }, orderBy: { id: 'asc' } });
     res.json({ count: roster.length, roster });
   } catch (e) {
     console.error("Roster import failed:", e);
@@ -91,7 +91,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
     if (!createdByProfessorId) return res.status(400).json({ error: 'createdByProfessorId required' });
 
     try {
-      const enrollments = await prisma.tbenrollment.findMany({ where: { courseId } });
+      const enrollments = await prisma.TBEnrollment.findMany({ where: { courseId } });
       if (!enrollments.length) return res.status(400).json({ error: 'No enrollments for this course' });
 
       const students = shuffleDeterministic(enrollments);
@@ -99,25 +99,25 @@ module.exports = function makeTeamBuilderRouter(prisma) {
 
       console.log("creating teamset...")
       const data = await prisma.$transaction(async (tx) => {
-        const teamSet = await tx.tbteamset.create({
+        const teamSet = await tx.TBTeamSet.create({
           data: { courseId, name, status: 'DRAFT', teamSize: Number(teamSize), createdByProfessorId: Number(createdByProfessorId) },
         });
 
         console.log("creating teams..")
         const teams = await Promise.all(
           Array.from({ length: teamCount }).map((_, i) =>
-            tx.tbteam.create({ data: { teamSetId: teamSet.id, name: `Team ${i + 1}`, maxSize: Number(teamSize) } })
+            tx.TBTeam.create({ data: { teamSetId: teamSet.id, name: `Team ${i + 1}`, maxSize: Number(teamSize) } })
           )
         );
 
         console.log("assigning members...")
         for (let i = 0; i < students.length; i++) {
           const t = teams[i % teamCount];
-          await tx.tbmember.create({ data: { teamId: t.id, enrollmentId: students[i].id } });
+          await tx.TBMember.create({ data: { teamId: t.id, enrollmentId: students[i].id } });
         }
 
         console.log("fetching full teamset...")
-        return tx.tbteamset.findUnique({
+        return tx.TBTeamSet.findUnique({
           where: { id: teamSet.id },
           include: { teams: { include: { members: { include: { tbenrollment: true } } } } },
         });
@@ -137,7 +137,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
     if (status) where.status = status;
 
     try {
-      const sets = await prisma.tbteamset.findMany({
+      const sets = await prisma.TBTeamSet.findMany({
         where,
         orderBy: [{ createdAt: 'desc' }],
         include: { teams: { include: { members: { include: { tbenrollment: true } } } } },
@@ -151,7 +151,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
   // Publish / Unpublish / Archive
   router.patch('/teamsets/:id/publish', async (req, res) => {
     const id = Number(req.params.id);
-    const set = await prisma.tbteamset.update({
+    const set = await prisma.TBTeamSet.update({
       where: { id },
       data: { status: 'PUBLISHED', publishedAt: new Date(), archivedAt: null },
       include: {
@@ -169,7 +169,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
 
   router.patch('/teamsets/:id/unpublish', async (req, res) => {
     const id = Number(req.params.id);
-    const set = await prisma.tbteamset.update({
+    const set = await prisma.TBTeamSet.update({
       where: { id },
       data: { status: 'DRAFT', publishedAt: null },
     });
@@ -178,7 +178,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
   
   router.patch('/teamsets/:id/archive', async (req, res) => {
     const id = Number(req.params.id);
-    const set = await prisma.tbteamset.update({
+    const set = await prisma.TBTeamSet.update({
       where: { id },
       data: { status: 'ARCHIVED', archivedAt: new Date() },
     });
@@ -188,7 +188,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
   router.put("/teamsets/:id/edit", async (req, res) => {
     const { id } = req.params;
     try {
-      const updated = await prisma.tbteamset.update({
+      const updated = await prisma.TBTeamSet.update({
         where: { id: Number(id) },
         data: { status: "DRAFT" },
         include: { teams: { include: { members: { include: { tbenrollment: true } } } } },
@@ -206,17 +206,17 @@ module.exports = function makeTeamBuilderRouter(prisma) {
     const { enrollmentId, toTeamId } = req.body || {};
     if (!enrollmentId || !toTeamId) return res.status(400).json({ error: 'enrollmentId and toTeamId required' });
 
-    const toTeam = await prisma.tbteam.findFirst({ where: { id: Number(toTeamId), teamSetId } });
+    const toTeam = await prisma.TBTeam.findFirst({ where: { id: Number(toTeamId), teamSetId } });
     if (!toTeam) return res.status(400).json({ error: 'Target team not in this TeamSet' });
 
-    const teamIds = (await prisma.tbteam.findMany({ where: { teamSetId }, select: { id: true } })).map(t => t.id);
+    const teamIds = (await prisma.TBTeam.findMany({ where: { teamSetId }, select: { id: true } })).map(t => t.id);
 
     await prisma.$transaction(async (tx) => {
-      await tx.tbmember.deleteMany({ where: { enrollmentId: Number(enrollmentId), teamId: { in: teamIds } } });
-      await tx.tbmember.create({ data: { teamId: Number(toTeamId), enrollmentId: Number(enrollmentId) } });
+      await tx.TBMember.deleteMany({ where: { enrollmentId: Number(enrollmentId), teamId: { in: teamIds } } });
+      await tx.TBMember.create({ data: { teamId: Number(toTeamId), enrollmentId: Number(enrollmentId) } });
     });
 
-    const updated = await prisma.tbteamset.findUnique({
+    const updated = await prisma.TBTeamSet.findUnique({
       where: { id: teamSetId },
       include: { teams: { include: { members: { include: { tbenrollment: true } } } } },
     });
