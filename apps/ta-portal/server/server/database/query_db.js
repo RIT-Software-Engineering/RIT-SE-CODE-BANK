@@ -1094,8 +1094,6 @@ async function hireCandidateForJobPosition(
           jobPositionId
         );
 
-  const toEmails = [candidateEmail, ...stakeholderEmails];
-
         {
           const candidateUserId = String(candidateEmail).split('@', 1)[0].toLowerCase();
           await dispatchTemplated(candidateUserId, {
