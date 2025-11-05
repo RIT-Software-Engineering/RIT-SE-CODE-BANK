@@ -603,7 +603,7 @@ async function applyForJobPosition(applicationDetails) {
 
   // Notify stakeholders + candidate
     try {
-      const { emails, employerEmail } = await getCourseStakeholders(newApp.jobPositionId);
+      const { employerEmail } = await getCourseStakeholders(newApp.jobPositionId);
       const candidateUserId = String(newApp.candidateEmail).split('@', 1)[0].toLowerCase();
       await dispatchTemplated(candidateUserId, {
         event: 'APPLICATION_RECEIVED',
