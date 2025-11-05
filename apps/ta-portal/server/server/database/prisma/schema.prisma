@@ -80,7 +80,7 @@ model Employer {
 
   //Relationships
   user        User          @relation(fields: [username], references: [username])
-  jobPostions JobPosition[]
+  jobPositions JobPosition[]
 }
 
 model Employee {

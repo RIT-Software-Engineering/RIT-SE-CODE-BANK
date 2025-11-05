@@ -40,6 +40,7 @@ import {
   CalendarMonth as CalendarIcon,
   AccessTime as ClockIcon,
   LocationOn as LocationIcon,
+  Person,
 } from '@mui/icons-material';
 
 /**
@@ -241,6 +242,12 @@ export default function PositionsCard({
           <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
             <LocationIcon sx={{ mr: 1 }} />
             <Typography variant="body2">{position.location}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+            <Person sx={{ mr: 1 }}/>
+            <Typography variant="body2">
+              {position.employer.user.fname} {position.employer.user.lname} ({position.employer.user.email})
+            </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
             <ClockIcon sx={{ mr: 1 }} />
