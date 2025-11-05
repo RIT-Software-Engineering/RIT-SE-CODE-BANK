@@ -54,6 +54,16 @@ export default function SiteNav() {
                 Create Template
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/coursewebsite"
+                className={({ isActive }) =>
+                  "site-nav__tab" + (isActive ? " is-active" : "")
+                }
+              >
+                Course Website
+              </NavLink>
+            </li>
           </ul>
         </nav>
       </div>
