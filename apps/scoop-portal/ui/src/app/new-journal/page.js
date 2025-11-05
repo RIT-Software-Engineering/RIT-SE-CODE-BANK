@@ -16,6 +16,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   FormControl,
   InputLabel,
   MenuItem,
@@ -62,6 +63,8 @@ export default function Journal() {
   // For editing journal entry notes
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
+
+  const [replyEntry, setReplyEntry] = useState(null);
 
   const { user } = useUser();
   
@@ -395,6 +398,13 @@ export default function Journal() {
                   {entry.notes}
                 </pre>
               </Box>
+              <Divider sx={{ my: 2 }} />
+              <Button
+                  variant="solid-orange"
+                  onClick={() => setReplyEntry(entry)}
+                >
+                  Show Replies
+                </Button>
             </Card>
           ))
         )}
@@ -443,8 +453,6 @@ export default function Journal() {
                 }))}
                 getOptionLabel={(option) => option.label}
                 onChange={(event, selected) =>
-                  //setNewEntryRecipientIds(newValue ? newValue.value : "")
-                  //setNewEntryRecipientIds((prev) => [...prev, newValue.value])
                   setNewEntryRecipientIds(selected.map(selectedName => selectedName.value))
                 }
                 renderInput={(params) => (
@@ -639,6 +647,18 @@ export default function Journal() {
               </Button>
             </DialogActions>
           </>
+        )}
+      </Dialog>
+      <Dialog
+        open={replyEntry != null}
+        onClose={() => setReplyEntry(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        {replyEntry && (
+        <DialogContent>
+          <Typography>{JSON.stringify(replyEntry.next_entries)}</Typography>
+        </DialogContent>
         )}
       </Dialog>
 
