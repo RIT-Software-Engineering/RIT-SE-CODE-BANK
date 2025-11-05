@@ -51,11 +51,6 @@ router.use('/notifications', notificationsApi);
 // EXPORTS
 // =============================================================================
 
-// Create a small Express app and mount the API router at `/api` so tests can
-// `require('@server/routing/index')` and pass the returned value directly to
-// Supertest (which expects an app or server).
-const app = express();
-app.use(express.json());
-app.use('/api', router);
-
-module.exports = app;
+// Export the router directly so it can be mounted at `/api` in main.js
+// For tests, create a separate app instance when needed
+module.exports = router;
