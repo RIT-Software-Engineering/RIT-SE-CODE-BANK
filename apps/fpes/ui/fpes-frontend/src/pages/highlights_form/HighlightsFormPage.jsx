@@ -5,6 +5,7 @@ import ServicesFormStep from "../services/ServicesFormStep";
 import { Link } from "react-router-dom";
 import { validateProps } from "@mui/x-data-grid/internals";
 import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
+import PublicationsFormStep from "../publications/PublicationsFormStep";
 
 export default function HighlightsFormPage() {
     const [activeStep, setActiveStep] = useState(0);
@@ -46,6 +47,7 @@ export default function HighlightsFormPage() {
         {
             services : [],
             course_sections : [],
+            publications : [],
         },
         mode:"onTouched"
     });
@@ -62,6 +64,7 @@ export default function HighlightsFormPage() {
 
             <form>
             {isOnFirstStep() ? <ServicesFormStep form_id={1} control={control} errors={errors} /> : null}
+            {activeStep === 1 ? <PublicationsFormStep form_id={1} control={control} errors={errors}/> : null}
             {isOnLastStep() ? <CourseSectionFormStep form_id={1} control={control} errors={errors}  getValues={getValues}/> : null}
 
             {/* Back or Cancel Button */}

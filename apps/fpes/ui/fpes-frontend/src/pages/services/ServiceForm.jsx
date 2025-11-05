@@ -6,7 +6,7 @@ import CloseIcon from '@mui/icons-material/Close';
 
 export default function ServiceForm({control, register_service, handleRemoveService, index, errors}){
     return (
-        <Grid container spacing={2} columnSpacing={2}>
+        <Grid container spacing={2} columnSpacing={8}>
             <Grid item size={10}>
                 <Typography variant="h5" textAlign="left">New Service</Typography>
             </Grid>
@@ -17,7 +17,7 @@ export default function ServiceForm({control, register_service, handleRemoveServ
                 </IconButton>
             </Grid>
 
-            <Grid item size={5}>
+            <Grid item size={6}>
                 <Controller
                     name={register_service + "title"}
                     control={control}
@@ -40,7 +40,7 @@ export default function ServiceForm({control, register_service, handleRemoveServ
                 />
             </Grid>
 
-            <Grid item size={5}>
+            <Grid item size={6}>
                 <Controller
                     name={register_service + "hours_worked"}
                     control={control}
@@ -68,7 +68,7 @@ export default function ServiceForm({control, register_service, handleRemoveServ
                 />
             </Grid>
         
-            <Grid item size={5}>
+            <Grid item size={6}>
                 <Controller
                     name={register_service + "service_type"}
                     control={control}

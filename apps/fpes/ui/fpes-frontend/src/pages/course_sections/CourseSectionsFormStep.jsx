@@ -58,7 +58,6 @@ export default function CourseSectionFormStep({form_id, control, errors, getValu
 
     return (
         <div>
-        <Grid container rowSpacing={0} columns={12}>
         {fields.map((section, index) => 
         (
             
@@ -75,7 +74,6 @@ export default function CourseSectionFormStep({form_id, control, errors, getValu
                 />
             </Paper>
         ))}
-        </Grid>
         <Button onClick={() => {append(new CourseSection(form_id)); setNumberOfSections(numberOfSections + 1)}}>Add Course Section</Button>
         </div>
     )
