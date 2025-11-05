@@ -6,7 +6,7 @@ try {
 }
 
 (async () => {
-  const base = process.env.NOTIFICATION_SERVICE_URL || 'http://127.0.0.1:4000';
+  const base = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4000';
   const appId = process.env.APP_ID || 'ta-portal';
   const userId = process.env.USER_ID || 'bgg6007';
   const url = `${base}/api/notifications/dispatch/${encodeURIComponent(appId)}`;

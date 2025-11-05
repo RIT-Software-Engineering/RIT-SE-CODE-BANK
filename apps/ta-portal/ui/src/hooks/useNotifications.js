@@ -60,7 +60,7 @@ function mockPutPreferences(appId, identifier, prefs) {
 
 export default function useNotifications({ appId = 'ta-portal', identifier = 'current-user' } = {}) {
   // API base for ta-portal server. In dev your server runs on 3300; the Next.js UI runs on 3000.
-  // Set NEXT_PUBLIC_TAPORTAL_API_URL in your .env (e.g. http://127.0.0.1:3300) to override.
+  // Set NEXT_PUBLIC_TAPORTAL_API_URL in your .env (e.g. http://localhost:3300) to override.
   const API_BASE = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_TAPORTAL_API_URL) || 'https://localhost:3300';
   const [recent, setRecent] = useState([]); // recent 5 for popup
   const [history, setHistory] = useState([]); // full history

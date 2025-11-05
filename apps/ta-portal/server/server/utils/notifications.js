@@ -1,4 +1,4 @@
-const DEFAULT_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://127.0.0.1:4000';
+const DEFAULT_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4000';
 if (process.env.NODE_ENV !== 'test') {
   // One-time debug log to aid diagnosing proxy target
   // eslint-disable-next-line no-console

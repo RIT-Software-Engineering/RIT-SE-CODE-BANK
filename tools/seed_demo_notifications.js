@@ -1,6 +1,6 @@
 // Simple seed script to POST demo notifications directly to the notification service
 // Usage: node tools/seed_demo_notifications.js <username> <email>
-const DEFAULT_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://127.0.0.1:4000';
+const DEFAULT_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4000';
 const APP_ID = process.env.NOTIFICATION_CLIENT_APP_ID || 'ta-portal';
 const fetch = (globalThis.fetch) || require('node-fetch');
 
