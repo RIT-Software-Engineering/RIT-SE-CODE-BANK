@@ -182,6 +182,11 @@ async function getOpenJobPositions(
       include: {
         course: true,
         jobSchedules: true,
+        employer:{
+          include:{
+            user:true,
+          }
+        }
       },
       orderBy: { course: { name: "asc" } },
     });
@@ -239,6 +244,11 @@ async function getJobPositionsByOwner(
       include: {
         course: true,
         jobSchedules: true,
+        employer:{
+          include:{
+            user:true,
+          }
+        }
       },
       orderBy: { course: { name: "asc" } },
     });
@@ -268,6 +278,11 @@ async function getAllJobPositions(searchTerm = "", filters = {}) {
       include: {
         course: true,
         jobSchedules: true,
+        employer:{
+          include:{
+            user:true,
+          }
+        }
       },
       orderBy: { course: { name: "asc" } },
     });
@@ -1455,6 +1470,11 @@ async function getCandidateApplications(
           jobSchedules: {
             select: { dayOfWeek: true, startTime: true, endTime: true },
           },
+          employer:{
+            include:{
+              user: true
+            },
+          },
         },
       },
       resume: {
@@ -1738,7 +1758,9 @@ async function getUserProfile(username) {
             include: {
               resumes: true,
               courseHistory: { include: { course: true } },
-              jobPositionApplicationHistory: { include: { jobPosition: true } },
+              jobPositionApplicationHistory: { 
+                include: { jobPosition: true }
+              },
               employee: {
                 include: {
                   jobPositionHistory: true,
@@ -1759,7 +1781,17 @@ async function getUserProfile(username) {
         include: {
           employer: {
             include: {
-              jobPostions: { include: { course: true, jobSchedules: true } },
+              jobPositions: { 
+                include: { 
+                  course: true, 
+                  jobSchedules: true, 
+                  jobPositionApplicationHistory: {
+                    include: {
+                      resume: true,
+                    }
+                  }
+                } 
+              },
             },
           },
         },

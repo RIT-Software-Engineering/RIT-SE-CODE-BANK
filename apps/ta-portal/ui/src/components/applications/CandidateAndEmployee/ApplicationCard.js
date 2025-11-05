@@ -32,6 +32,7 @@ import {
   AccessTime as ClockIcon,
   MoreVert as EllipsisVerticalIcon,
   LocationOn as LocationIcon,
+  Person,
 } from '@mui/icons-material';
 
 /**
@@ -241,6 +242,12 @@ export default function CandidateApplicationCard({
             <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
               <LocationIcon sx={{ mr: 1, fontSize: '1.25rem' }} />
               <Typography variant="body2">{jobPosition.location}</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+              <Person sx={{ mr: 1 }}/>
+              <Typography variant="body2">
+                {jobPosition.employer.user.fname} {jobPosition.employer.user.lname} ({jobPosition.employer.user.email})
+              </Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
               <ClockIcon sx={{ mr: 1, fontSize: '1.25rem' }} />
