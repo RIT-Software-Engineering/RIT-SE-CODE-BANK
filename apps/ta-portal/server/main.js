@@ -67,7 +67,7 @@ app.use((req, res, next) => {
   // Use the json parser but catch parse errors and return 400
   jsonParser(req, res, (err) => {
     if (err) {
-      console.error('Invalid JSON payload:', err && err.message);
+      console.error('Invalid JSON payload:', err.message);
       return res.status(400).json({ error: 'Invalid JSON payload.' });
     }
     next();
