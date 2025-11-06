@@ -27,12 +27,12 @@ export default function GrantsTable({ grants, setGrants }) {
   };
 
   const columns = [
-    { field: "title", headerName: "Title", flex: 1 },
-    { field: "sponsor", headerName: "Sponsor", flex: 1 },
-    { field: "amount", headerName: "Amount", flex: 0.5 },
-    { field: "grant_status", headerName: "Status", flex: 0.5 },
-    { field: "start_date", headerName: "Start Date", flex: 0.7 },
-    { field: "end_date", headerName: "End Date", flex: 0.7 },
+    { field: "title", headerName: "Title", width: 60 },
+    { field: "sponsor", headerName: "Sponsor", width: 80 },
+    { field: "amount", headerName: "Amount", width: 80 },
+    { field: "grant_status", headerName: "Status", width: 80 },
+    { field: "start_date", headerName: "Start Date", width: 100 },
+    { field: "end_date", headerName: "End Date", width: 120 },
     {
       field: "delete",
       headerName: "",
