@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper, IconButton, Icon, Autocomplete, FormLabel, InputLabel, FormHelperText, filledInputClasses} from "@mui/material";
 import { Controller } from "react-hook-form";
 import CloseIcon from '@mui/icons-material/Close';
@@ -34,6 +34,7 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                     options={courses}
                     error={errors.course}
                     getOptionLabel={(option) => option.label}
+                    
                     renderInput={(params) => 
                     <TextField 
                     {...params} error={errors.course_sections?.[index]?.course} helperText={errors.course_sections?.[index]?.course?.message} label="Course" />
