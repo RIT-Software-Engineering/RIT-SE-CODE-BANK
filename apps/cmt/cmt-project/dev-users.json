@@ -1,0 +1,29 @@
+[
+  {
+    "id": "0001",
+    "uid": "abc1234",
+    "email": "faculty@rit.edu",
+    "givenName": "Ada",
+    "sn": "Lovelace",
+    "affiliations": ["Employee", "Faculty"],
+    "password": "test123"          
+  },
+  {
+    "id": "0002",
+    "uid": "xyz5678",
+    "email": "student1@rit.edu",
+    "givenName": "Grace",
+    "sn": "Hopper",
+    "affiliations": ["Student"],
+    "password": "[password]"
+  },
+  {
+    "id": "0003",
+    "uid": "ta1717",
+    "email": "ta1@rit.edu",
+    "givenName": "Katherine",
+    "sn": "Johnson",
+    "affiliations": ["Employee", "TA"],
+    "password": "letmein"
+  }
+]

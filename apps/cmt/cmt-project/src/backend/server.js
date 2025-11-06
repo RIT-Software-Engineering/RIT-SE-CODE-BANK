@@ -3,7 +3,7 @@ require('dotenv').config();
 
 if (!process.env.JWT_SECRET) {
   if (process.env.NODE_ENV !== 'production') {
-    console.warn('⚠️  JWT_SECRET is missing. Using a temporary dev secret. Add JWT_SECRET to your .env.');
+    console.warn('!  JWT_SECRET is missing. Using a temporary dev secret. Add JWT_SECRET to your .env.');
     process.env.JWT_SECRET = 'dev-temp-' + Math.random().toString(36).slice(2) + Date.now();
   } else {
     throw new Error('JWT_SECRET is required in production');
@@ -23,8 +23,8 @@ const PORT = process.env.PORT || 5000;
 
 /* ---------- Core middleware ---------- */
 app.use(cors({
-  origin: /^http:\/\/localhost:\d+$/, // allow any localhost port
-  credentials: true
+   origin: [/^http:\/\/localhost:\d+$/], // CRA (3000/5001/etc.)
+   credentials: true
 }));
 app.use(cookieParser());
 app.use(bodyParser.json());
@@ -35,66 +35,89 @@ app.use((req, _res, next) => {
   next();
 });
 
-/* ---------- Dev login (temp) ---------- */
+/* ---------- Dev login (Shibboleth-mimicking) ---------- */
+const fs = require('fs');
+const path = require('path');
+// const bcrypt = require('bcrypt'); // optional if you later hash passwords
+
+const DEV_USERS_FILE = process.env.DEV_USERS_FILE ||
+  path.join(__dirname, '..', '..', 'dev-users.json');
+
+function loadDevUsers() {
+  try {
+    const raw = fs.readFileSync(DEV_USERS_FILE, 'utf8');
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('Failed to load dev users:', e.message);
+    return [];
+  }
+}
+
+function inferRoleFromAffiliations(affs = []) {
+  if (affs.includes('Faculty')) return 'professor';
+  if (affs.includes('TA')) return 'ta';
+  if (affs.includes('Employee')) return 'staff';
+  if (affs.includes('Student')) return 'student';
+  return 'guest';
+}
+
 if (process.env.NODE_ENV !== 'production') {
-  // Quick GET for manual testing: /dev/login/:email
-  app.get('/dev/login/:email', (req, res) => {
-    const email = String(req.params.email || '').toLowerCase();
-    let role = 'student';
-    if (email.includes('faculty')) role = 'professor';
-    else if (email.includes('ta')) role = 'ta';
-
-    const token = jwt.sign(
-      { sub: email, email, name: email.split('@')[0], role },
-      process.env.JWT_SECRET,
-      { issuer: 'cmt-auth', expiresIn: '8h' }
-    );
-
-    res.cookie('cmt_id', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false, // true in prod behind HTTPS
-      path: '/',
-      maxAge: 8 * 60 * 60 * 1000
-    });
-
-    res.json({ ok: true, who: email, role });
-  });
-
-  // Form-based POST for your /pages/DevLogin.jsx
+  // POST /dev/login  (email/uid + password)
   app.post('/dev/login', (req, res) => {
-    const { email, role } = req.body || {};
-    if (!email) return res.status(400).json({ error: 'email required' });
+    const { uid, email, password } = req.body || {};
+    if (!password || (!uid && !email))
+      return res.status(400).json({ error: 'uid or email and password required' });
 
-    const _email = String(email).toLowerCase();
-    const _role =
-      role ||
-      (_email.includes('faculty') ? 'professor' :
-       _email.includes('ta') ? 'ta' : 'student');
+    const users = loadDevUsers();
+    const needle = String((uid || email)).toLowerCase();
+    const user = users.find(u =>
+      (u.uid && String(u.uid).toLowerCase() === needle) ||
+      (u.email && String(u.email).toLowerCase() === needle)
+    );
+
+    if (!user) return res.status(401).json({ error: 'invalid credentials' });
+
+    const ok = user.password && password === user.password;
+    // const ok = user.passwordHash && bcrypt.compareSync(password, user.passwordHash);
+
+    if (!ok) return res.status(401).json({ error: 'invalid credentials' });
+
+    const claims = {
+      sub: user.id,
+      id: user.id,
+      uid: user.uid,
+      email: user.email,
+      givenName: user.givenName,
+      sn: user.sn,
+      affiliations: user.affiliations,
+      role: inferRoleFromAffiliations(user.affiliations),
+      name: `${user.givenName} ${user.sn}`.trim()
+    };
 
     const token = jwt.sign(
-      { sub: _email, email: _email, name: _email.split('@')[0], role: _role },
+      claims,
       process.env.JWT_SECRET,
       { issuer: 'cmt-auth', expiresIn: '8h' }
     );
 
     res.cookie('cmt_id', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false, // true in prod behind HTTPS
-      path: '/',
-      maxAge: 8 * 60 * 60 * 1000
-    });
-
-    res.json({ ok: true, role: _role });
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 8 * 60 * 60 * 1000
   });
 
-  // Logout clears cookie
+    res.json({ ok: true, me: claims });
+  });
+
+  // POST /dev/logout  (clears cookie)
   app.post('/dev/logout', (_req, res) => {
     res.clearCookie('cmt_id', { path: '/' });
     res.json({ ok: true });
   });
 }
+
 
 /* ---------- Auth middleware ---------- */
 function requireAuth(req, res, next) {
@@ -102,12 +125,63 @@ function requireAuth(req, res, next) {
   if (!token) return res.sendStatus(401);
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET, { issuer: 'cmt-auth' });
-    req.me = { id: payload.sub, email: payload.email, name: payload.name, role: payload.role };
+    // keep ALL claims so downstream code can use them
+    req.me = {
+      id: payload.sub,
+      uid: payload.uid,
+      email: payload.email,
+      givenName: payload.givenName,
+      sn: payload.sn,
+      name: payload.name,
+      role: payload.role,
+      affiliations: payload.affiliations || []
+    };
     next();
   } catch {
     return res.sendStatus(401);
   }
 }
+
+/* ---------- Attach DB actor (derived identity) ---------- */
+async function attachActor(req, res, next) {
+  try {
+    const email = (req.me?.email || '').toLowerCase();
+
+    // Safe helper: only call if the delegate exists
+    const findFirstIf = (delegate, where) =>
+      delegate && typeof delegate.findFirst === 'function'
+        ? delegate.findFirst({ where })
+        : Promise.resolve(null);
+    const findUniqueIf = (delegate, where) =>
+      delegate && typeof delegate.findUnique === 'function'
+        ? delegate.findUnique({ where })
+        : Promise.resolve(null);
+
+    // Your schema has User and Professor — no Student, no TA
+    const [user, prof] = await Promise.all([
+      // User.email is @unique, so findUnique is ideal
+      findUniqueIf(prisma.user, { email }),
+      // Professor.email is NOT unique, so use findFirst
+      findFirstIf(prisma.professor, { email }),
+    ]);
+
+    req.actor = {
+      email,
+      user,
+      prof,
+      student: null,
+      ta: null,
+      affiliations: req.me?.affiliations || []
+    };
+    next();
+  } catch (e) {
+    next(e);
+  }
+}
+
+
+
+
 
 /* ---------- PUBLIC routes (must be BEFORE protected mounts) ---------- */
 app.get('/api/health', (_req, res) => {
@@ -141,21 +215,25 @@ const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 const makeEventsRouter = require('./routes/events');
 const eventRoutes = makeEventsRouter(prisma);
 
-/* ---------- Protected mounts (scoped paths) ---------- */
-// NOTE: mount under specific prefixes so /api/health remains public
-app.use('/api/team', requireAuth, teamBuilderRoutes);
-app.use('/api/events', requireAuth, eventRoutes);
+/* ---------- Protected mounts (one gateway) ---------- */
+// Everything under /api (except the explicit public routes you defined above)
+// will now have req.me and req.actor available
+app.use('/api', requireAuth, attachActor);
+
+app.use('/api/team', teamBuilderRoutes);
+app.use('/api/events', eventRoutes);
 
 /* ---------- Example: professor-scoped endpoints ---------- */
-app.get('/api/courseCreation', requireAuth, async (req, res) => {
+// NOTE: These are already behind the /api gateway (requireAuth, attachActor)
+// so we can rely on req.me and req.actor here.
+
+app.get('/api/courseCreation', async (req, res) => {
   try {
-    const prof = await prisma.professor.findUnique({
-      where: { email: (req.me.email || '').toLowerCase() }
-    });
+    const prof = req.actor?.prof;
     if (!prof) return res.status(403).json({ error: 'No professor record for this account' });
 
     const courses = await prisma.courseCreation.findMany({
-      where: { professorId: prof.id },
+      where: { professorId: prof.id },               // ← scoped by logged-in professor
       include: { professor: true, sections: true }
     });
 
@@ -166,16 +244,14 @@ app.get('/api/courseCreation', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/courseCreation', requireAuth, async (req, res) => {
+app.post('/api/courseCreation', async (req, res) => {
   try {
-    const prof = await prisma.professor.findUnique({
-      where: { email: (req.me.email || '').toLowerCase() }
-    });
+    const prof = req.actor?.prof;
     if (!prof) return res.status(403).json({ error: 'No professor record for this account' });
 
-    const { id, name, semester } = req.body;
+    const { id, name, semester } = req.body;         // no professorId from client
     const course = await prisma.courseCreation.create({
-      data: { id, name, semester, professorId: prof.id }
+      data: { id, name, semester, professorId: prof.id }  // ← inject owner from actor
     });
     res.json(course);
   } catch (err) {
@@ -184,20 +260,19 @@ app.post('/api/courseCreation', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/sections', requireAuth, async (req, res) => {
+app.post('/api/sections', async (req, res) => {
   try {
-    const prof = await prisma.professor.findUnique({
-      where: { email: (req.me.email || '').toLowerCase() }
-    });
+    const prof = req.actor?.prof;
     if (!prof) return res.status(403).json({ error: 'No professor record for this account' });
 
     const { sectionNum, courseId } = req.body;
 
-    // ensure the course belongs to this professor
-    const cc = await prisma.courseCreation.findUnique({
-      where: { id_professorId: { id: courseId, professorId: prof.id } }
+    // Ensure the course belongs to this professor
+    const owns = await prisma.courseCreation.findUnique({
+      where: { id_professorId: { id: courseId, professorId: prof.id } },
+      select: { id: true }
     });
-    if (!cc) return res.status(403).json({ error: 'Not permitted for this course' });
+    if (!owns) return res.status(403).json({ error: 'Not permitted for this course' });
 
     const section = await prisma.section.create({
       data: { sectionNum, courseId, professorId: prof.id }
@@ -215,7 +290,7 @@ app.use('*', (req, res) => {
 });
 
 app.use((err, _req, res, _next) => {
-  console.error('Error:', err.stack);
+  console.error('Error:', err.stack || err);
   res.status(500).json({ error: 'Something went wrong!', message: err.message });
 });
 

@@ -78,6 +78,44 @@
   outline-offset: 2px;
 }
 
+.site-nav__profile {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.profile-name {
+  font-weight: 600;
+}
+
+.profile-email {
+  opacity: 0.75;
+}
+
+.profile-login,
+.profile-logout {
+  background: none;
+  border: none;
+  color: #0057b8;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-left: 0.25rem;
+}
+
+.profile-login:hover,
+.profile-logout:hover {
+  color: #003e82;
+}
+
 /* Stack on small screens */
 @media (max-width: 720px) {
   .site-nav__inner { grid-template-columns: 1fr; gap: 12px; }

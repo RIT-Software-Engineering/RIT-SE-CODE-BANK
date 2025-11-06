@@ -17,6 +17,8 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.544.0",
+    "mysql2": "^3.15.1",
+    "@prisma/client": "^6.16.3",
     "react": "^19.1.1",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.1",
@@ -25,33 +27,24 @@
     "typescript": "^5.9.2",
     "web-vitals": "^2.1.4"
   },
+  "devDependencies": {
+    "prisma": "^6.16.3"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "backend:start": "node src/backend/server.js",
+    "backend:dev": "nodemon src/backend/server.js",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "extends": ["react-app", "react-app/jest"]
   },
   "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "devDependencies": {
-    "@prisma/client": "^6.16.3",
-    "mysql2": "^3.15.1",
-    "prisma": "^6.16.3"
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
   }
 }
+

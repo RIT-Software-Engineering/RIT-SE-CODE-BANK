@@ -1,104 +1,96 @@
+// stop_app.js
 const { exec } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 
-// Console colors to make the output more readable
-const colors = {
+const C = {
   reset: "\x1b[0m",
   green: "\x1b[32m",
   blue: "\x1b[34m",
   red: "\x1b[31m",
   yellow: "\x1b[33m",
 };
+const log = (m, c = C.reset) => console.log(`${c}${m}${C.reset}`);
 
-function log(message, color = colors.reset) {
-  console.log(`${color}${message}${colors.reset}`);
+function isPid(v) {
+  return Number.isInteger(v) && v > 0;
 }
 
-// Kill a specific process by its ID - this is the most reliable method
 function killProcessById(pid, name) {
   return new Promise((resolve) => {
-    if (!pid) {
-      log(`No PID found for ${name}`, colors.yellow);
-      resolve();
-      return;
+    if (!isPid(pid)) {
+      log(`No valid PID for ${name}`, C.yellow);
+      return resolve();
     }
+    const isWin = process.platform === "win32";
+    log(`Stopping ${name} (PID ${pid})...`, C.blue);
 
-    log(`Killing ${name} process (PID: ${pid})...`, colors.blue);
-
-    const isWindows = process.platform === "win32";
-    // /F = force kill, /T = kill child processes too
-    const killCommand = isWindows
-      ? `taskkill /PID ${pid} /F /T`
-      : `kill -9 ${pid}`;
-
-    exec(killCommand, (error, stdout, stderr) => {
-      if (error) {
-        log(
-          `Could not kill ${name} process ${pid} (may already be stopped)`,
-          colors.yellow
-        );
-      } else {
-        log(`Successfully stopped ${name} (PID: ${pid})`, colors.green);
-      }
-      resolve();
-    });
+    if (isWin) {
+      // Force + children on Windows
+      exec(`taskkill /PID ${pid} /F /T`, (err) => {
+        if (err) log(`Could not kill ${name} ${pid} (maybe already stopped)`, C.yellow);
+        else log(`Stopped ${name} (PID ${pid})`, C.green);
+        resolve();
+      });
+    } else {
+      // Try SIGTERM, then SIGKILL if needed
+      try {
+        process.kill(pid, "SIGTERM");
+      } catch (_) { /* ignore */ }
+      setTimeout(() => {
+        try {
+          process.kill(pid, 0); // still alive?
+          try { process.kill(pid, "SIGKILL"); } catch (_) {}
+        } catch (_) { /* already dead */ }
+        log(`Stopped ${name} (PID ${pid})`, C.green);
+        resolve();
+      }, 500);
+    }
   });
 }
 
-// Read the process IDs that were saved when we started the servers
 function loadSavedPids() {
   const pidFile = path.join(process.cwd(), ".dev-pids.json");
-
   if (!fs.existsSync(pidFile)) {
-    log("No saved process IDs found (.dev-pids.json not found)", colors.yellow);
+    log("No .dev-pids.json found", C.yellow);
     return null;
   }
-
   try {
     const pids = JSON.parse(fs.readFileSync(pidFile, "utf8"));
-    log("Found saved process IDs:", colors.blue);
-    log(`  Backend PID: ${pids.backend}`, colors.reset);
-    log(`  Frontend PID: ${pids.frontend}`, colors.reset);
+    // normalize to integers
+    pids.backend = Number(pids.backend);
+    pids.frontend = Number(pids.frontend);
+    log("Found saved PIDs:", C.blue);
+    log(`  Backend PID: ${pids.backend}`, C.reset);
+    log(`  Frontend PID: ${pids.frontend}`, C.reset);
     return pids;
-  } catch (error) {
-    log("Could not read saved process IDs", colors.red);
+  } catch {
+    log("Could not read .dev-pids.json", C.red);
     return null;
   }
 }
 
-async function main() {
+(async function main() {
   try {
-    log("Stopping development servers using saved process IDs...", colors.blue);
-
-    // Use the saved process IDs (most reliable method)
+    log("Stopping development servers...", C.blue);
     const pids = loadSavedPids();
-
-    if (pids) {
-      // Kill the exact processes we started
-      await killProcessById(pids.backend, "backend");
-      await killProcessById(pids.frontend, "frontend");
-
-      // Clean up the file so it doesn't confuse us later
-      fs.unlinkSync(".dev-pids.json");
-      log("Cleaned up process ID file", colors.blue);
-
-      // Give processes a moment to actually terminate
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      log("Development servers stopped!", colors.green);
-    } else {
-      log("Cannot stop servers - no saved process IDs found", colors.red);
-      log(
-        "Servers may have been started manually or already stopped",
-        colors.yellow
-      );
-      process.exit(1);
+    if (!pids) {
+      log("Nothing to stop (maybe already stopped).", C.yellow);
+      process.exit(0);
     }
-  } catch (error) {
-    log(`Error: ${error.message}`, colors.red);
+
+    await killProcessById(pids.backend, "backend");
+    await killProcessById(pids.frontend, "frontend");
+
+    try {
+      fs.unlinkSync(".dev-pids.json");
+      log("Removed .dev-pids.json", C.blue);
+    } catch { /* ignore */ }
+
+    log("All done. ✅", C.green);
+  } catch (e) {
+    log(`Error: ${e.message}`, C.red);
     process.exit(1);
   }
-}
+})();
 
-main();
