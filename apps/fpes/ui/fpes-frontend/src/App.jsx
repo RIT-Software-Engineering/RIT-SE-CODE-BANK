@@ -6,7 +6,7 @@ import './App.css'
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import LoginPage from './pages/login/LoginPage.jsx';
 import ServicesPage from './pages/services/ServicesPage.jsx';
-import GrantsTable from './pages/grants/GrantsPage.jsx';
+import GrantsPage from './pages/grants/GrantsPage.jsx';
 import DepartmentsPage from './pages/departments/DepartmentsPage.jsx';
 import CourseSectionsPage from './pages/course_sections/CourseSectionsPage.jsx';
 import { FormControl, FormLabel, InputLabel, MenuItem, Select } from '@mui/material';
@@ -70,7 +70,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage/>} />
         <Route path="/services" element={<ServicesPage/>} />
-        <Route path="/grants" element={<GrantsTable />} />
+        <Route path="/grants" element={<GrantsPage/>} />
         {role === 'admin' ? adminRoutes : null}
         <Route path="/course_sections" element={<CourseSectionsPage/>} />
         <Route path="/student_support" element={<StudentSupportPage/>} />
