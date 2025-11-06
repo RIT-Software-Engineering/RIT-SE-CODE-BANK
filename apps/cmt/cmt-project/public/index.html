@@ -1,6 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+
+    <script>
+      (function () {
+        var MSG1 = "ResizeObserver loop limit exceeded";
+        var MSG2 = "ResizeObserver loop completed with undelivered notifications";
+        var matches = function (s) {
+          s = String(s || "");
+          return s.includes(MSG1) || s.includes(MSG2);
+        };
+
+        // 1) Swallow the specific error before CRA overlay sees it
+        window.addEventListener("error", function (e) {
+          var msg = String(e && e.message || "");
+          if (matches(msg)) {
+            e.stopImmediatePropagation && e.stopImmediatePropagation();
+            e.preventDefault && e.preventDefault();
+            return false;
+          }
+        }, true);
+
+        window.addEventListener("unhandledrejection", function (e) {
+          var msg = String((e && e.reason && (e.reason.message || e.reason)) || "");
+          if (matches(msg)) {
+            e.stopImmediatePropagation && e.stopImmediatePropagation();
+            e.preventDefault && e.preventDefault();
+            return false;
+          }
+        }, true);
+
+        // 2) Also filter console.error path some CRA versions use
+        var origErr = console.error;
+        console.error = function () {
+          try {
+            var s = Array.prototype.map.call(arguments, function (a) {
+              return a && a.message ? a.message : String(a);
+            }).join(" ");
+            if (matches(s)) return;
+          } catch (_) {}
+          return origErr.apply(this, arguments);
+        };
+
+        // 3) Lightweight shim to defer RO callbacks a frame (avoids the loop warning)
+        // This keeps native ResizeObserver, but schedules callbacks next frame.
+        // (If you later install a real polyfill, you can remove this.)
+        (function () {
+          var NativeRO = window.ResizeObserver;
+          if (!NativeRO) return;
+          function SafeRO(cb) {
+            var ro = new NativeRO(function (entries, obs) {
+              requestAnimationFrame(function () {
+                try { cb(entries, obs); } catch (_) {}
+              });
+            });
+            this.__ro = ro;
+          }
+          SafeRO.prototype.observe = function (el, opts) { this.__ro.observe(el, opts); };
+          SafeRO.prototype.unobserve = function (el) { this.__ro.unobserve(el); };
+          SafeRO.prototype.disconnect = function () { this.__ro.disconnect(); };
+          window.ResizeObserver = SafeRO;
+        })();
+      })();
+      </script>
     <meta charset="utf-8" />
     
     <meta name="viewport" content="width=device-width, initial-scale=1" />

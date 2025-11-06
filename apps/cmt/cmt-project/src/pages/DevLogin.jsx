@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../auth/AuthProvider'; // if you added the provider
 
 const API = import.meta?.env?.VITE_API_BASE ?? 'http://localhost:5000';
 
@@ -7,6 +9,10 @@ export default function DevLogin() {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { refresh } = useAuth?.() ?? { refresh: async () => {} }; // safe if provider not wired yet
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -28,14 +34,12 @@ export default function DevLogin() {
         throw new Error(data?.error || `Login failed (${resp.status})`);
       }
 
-      // Option A: use response to route immediately
-      // const { me } = await resp.json();
+      // make sure global auth state is updated (if using AuthProvider)
+      await refresh();
 
-      // Option B (safer): read canonical claims from /api/me
-      const meResp = await fetch(`${API}/api/me`, { credentials: 'include' });
-      const { me } = meResp.ok ? await meResp.json() : { me: null };
-      const next = pickLanding(me);
-      window.location.assign(next);
+      // preferred: if guard stored where we came from, go back there; else go to /calendar
+      const to = location.state?.from?.pathname ?? '/calendar';
+      navigate(to, { replace: true });
     } catch (e) {
       setErr(e.message || String(e));
     } finally {
@@ -80,16 +84,6 @@ export default function DevLogin() {
   );
 }
 
-function pickLanding(me) {
-  const affs = (me?.affiliations || []).map(String);
-  if (affs.includes('Faculty')) return '/professor';
-  if (affs.includes('TA'))      return '/ta';
-  if (affs.includes('Student')) return '/student';
-  if (affs.includes('Employee'))return '/staff';
-  return '/';
-}
-
 async function safeJson(resp) {
   try { return await resp.json(); } catch { return null; }
 }
-

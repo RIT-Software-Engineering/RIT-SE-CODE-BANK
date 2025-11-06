@@ -1,3 +1,6 @@
+import "./dev-silence-resizeobserver.js";
+import "./setup-resize-observer.js";
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -10,10 +13,6 @@ import "./styles/global.css";
 import "./styles/index.css";
 import AuthProvider from "./auth/AuthProvider";
 import RequireAuth from "./auth/RequireAuth";
-
-if (process.env.NODE_ENV === "development") {
-  import("./dev-silence-resizeobserver.js");
-}
 
 console.log("pages seen:", require.context("./pages", false, /\.jsx$/).keys());
 
