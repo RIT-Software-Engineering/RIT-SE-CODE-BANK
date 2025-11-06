@@ -1,129 +1,116 @@
-import { useState } from "react";
 import {
   TextField,
   Button,
-  Stack,
-  Typography,
+  Grid,
   MenuItem,
+  Box,
 } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import dayjs from "dayjs";
+import { useForm } from "react-hook-form";
+import axios from "axios";
 
-export default function GrantsForm({ onAddGrant }) {
-  const [formData, setFormData] = useState({
-    title: "",
-    funder: "",
-    amount: "",
-    start_date: null,
-    end_date: null,
-    faculty_role: "",
-    faculty_share: "",
-    other_comments: "",
-    grant_status: "Funded",
+export default function GrantsForm({setGrants, defaultValues, isUpdate }) {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: isUpdate
+      ? defaultValues
+      : {
+          title: "",
+          sponsor: "",
+          amount: "",
+          start_date: "",
+          end_date: "",
+          grant_status: "Pending",
+        },
   });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleDateChange = (name, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value ? dayjs(value).format("YYYY-MM-DD") : "",
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onAddGrant(formData);
-    setFormData({
-      title: "",
-      funder: "",
-      amount: "",
-      start_date: null,
-      end_date: null,
-      faculty_role: "",
-      faculty_share: "",
-      other_comments: "",
-      grant_status: "Funded",
-    });
+  const addGrant = (data) => {
+    axios.post("http://localhost:3000/grants", data)
+      .then((res) => {
+        const newGrant = { ...data, id: res.data[0]?.id ?? Math.random() };
+        setGrants((prev) => [...prev, newGrant]);
+        reset();
+      })
+      .catch((err) => console.error("Error adding grant:", err));
   };
 
   return (
-    <>
-      <Typography variant="h6" gutterBottom>
-        Add New Grant
-      </Typography>
-
-      <form onSubmit={handleSubmit}>
-        <Stack spacing={2} direction="row" flexWrap="wrap" useFlexGap>
-          <TextField
-            label="Title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-          />
-          <TextField
-            label="Funder"
-            name="funder"
-            value={formData.funder}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Amount"
-            name="amount"
-            type="number"
-            value={formData.amount}
-            onChange={handleChange}
-          />
-          <DatePicker
-            label="Start Date"
-            value={formData.start_date ? dayjs(formData.start_date) : null}
-            onChange={(date) => handleDateChange("start_date", date)}
-          />
-          <DatePicker
-            label="End Date"
-            value={formData.end_date ? dayjs(formData.end_date) : null}
-            onChange={(date) => handleDateChange("end_date", date)}
-          />
-          <TextField
-            label="Faculty Role"
-            name="faculty_role"
-            value={formData.faculty_role}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Faculty Share"
-            name="faculty_share"
-            type="number"
-            value={formData.faculty_share}
-            onChange={handleChange}
-          />
-          <TextField
-            label="Comments"
-            name="other_comments"
-            value={formData.other_comments}
-            onChange={handleChange}
-          />
-          <TextField
-            select
-            label="Grant Status"
-            name="grant_status"
-            value={formData.grant_status}
-            onChange={handleChange}
-          >
-            <MenuItem value="Funded">Funded</MenuItem>
-            <MenuItem value="Pending">Pending</MenuItem>
-            <MenuItem value="Rejected">Rejected</MenuItem>
-          </TextField>
-
-          <Button variant="contained" color="primary" type="submit">
-            Add Grant
-          </Button>
-        </Stack>
+    <Box sx={{ width: "60%", marginTop: 4 }}>
+      <h3>Create Grant</h3>
+      <form onSubmit={handleSubmit(addGrant)}>
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <TextField
+              {...register("title", { required: "Title is required" })}
+              label="Grant Title"
+              fullWidth
+              error={!!errors.title}
+              helperText={errors.title?.message}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              {...register("sponsor", { required: "Sponsor is required" })}
+              label="Sponsor"
+              fullWidth
+              error={!!errors.sponsor}
+              helperText={errors.sponsor?.message}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              {...register("amount", {
+                required: "Amount is required",
+                pattern: {
+                  value: /^[0-9]+$/,
+                  message: "Amount must be a number",
+                },
+              })}
+              label="Amount"
+              fullWidth
+              error={!!errors.amount}
+              helperText={errors.amount?.message}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              {...register("grant_status")}
+              select
+              label="Status"
+              defaultValue="Pending"
+              fullWidth
+            >
+              <MenuItem value="Pending">Pending</MenuItem>
+              <MenuItem value="Approved">Approved</MenuItem>
+              <MenuItem value="Denied">Denied</MenuItem>
+            </TextField>
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              {...register("start_date", { required: "Start date required" })}
+              label="Start Date"
+              type="date"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            <TextField
+              {...register("end_date", { required: "End date required" })}
+              label="End Date"
+              type="date"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Button variant="contained" type="submit">
+              Submit
+            </Button>
+            <Button variant="outlined" type="reset" onClick={() => reset()} sx={{ ml: 2 }}>
+              Clear
+            </Button>
+          </Grid>
+        </Grid>
       </form>
-    </>
+    </Box>
   );
 }

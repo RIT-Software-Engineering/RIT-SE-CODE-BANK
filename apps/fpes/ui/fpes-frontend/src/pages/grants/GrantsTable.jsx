@@ -1,125 +1,91 @@
+import { useState } from "react";
+import { DataGrid } from "@mui/x-data-grid";
 import {
-  DataGrid,
-} from "@mui/x-data-grid";
-import {
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
+  Paper,
   Button,
-  Stack,
+  IconButton,
+  Modal,
+  Box,
+  Typography,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import { useState } from "react";
+import axios from "axios";
 
-export default function GrantsTable({ grants, onDelete, onEditSave }) {
-  const [editData, setEditData] = useState(null);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
+export default function GrantsTable({ grants, setGrants }) {
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
-  const handleEditOpen = (grant) => {
-    setEditData(grant);
-    setOpenEditDialog(true);
+  const onDeleteClick = (id) => {
+    setDeleteId(id);
+    setDeleteModalOpen(true);
   };
 
-  const handleEditClose = () => {
-    setOpenEditDialog(false);
-    setEditData(null);
-  };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = () => {
-    onEditSave(editData);
-    handleEditClose();
+  const removeGrant = (id) => {
+    axios.delete(`http://localhost:3000/grants/${id}`);
+    setGrants((prev) => prev.filter((g) => g.id !== id));
+    setDeleteModalOpen(false);
   };
 
   const columns = [
-    { field: "title", headerName: "Title", width: 150 },
-    { field: "funder", headerName: "Funder", width: 130 },
-    { field: "amount", headerName: "Amount", width: 120 },
-    { field: "start_date", headerName: "Start Date", width: 120 },
-    { field: "end_date", headerName: "End Date", width: 120 },
-    { field: "faculty_role", headerName: "Role", width: 120 },
-    { field: "faculty_share", headerName: "Faculty Share", width: 150 },
-    { field: "grant_status", headerName: "Status", width: 120 },
+    { field: "title", headerName: "Title", flex: 1 },
+    { field: "sponsor", headerName: "Sponsor", flex: 1 },
+    { field: "amount", headerName: "Amount", flex: 0.5 },
+    { field: "grant_status", headerName: "Status", flex: 0.5 },
+    { field: "start_date", headerName: "Start Date", flex: 0.7 },
+    { field: "end_date", headerName: "End Date", flex: 0.7 },
     {
-      field: "actions",
-      headerName: "Actions",
-      width: 120,
+      field: "delete",
+      headerName: "",
+      width: 60,
       renderCell: (params) => (
-        <>
-          <IconButton color="primary" onClick={() => handleEditOpen(params.row)}>
-            <EditIcon />
-          </IconButton>
-          <IconButton color="error" onClick={() => onDelete(params.row.grant_id)}>
-            <DeleteIcon />
-          </IconButton>
-        </>
+        <IconButton color="error" onClick={() => onDeleteClick(params.row.id)}>
+          <DeleteIcon />
+        </IconButton>
       ),
     },
   ];
 
   return (
     <>
-      <DataGrid
-        rows={grants}
-        columns={columns}
-        getRowId={(row) => row.grant_id}
-        pageSizeOptions={[5]}
-        sx={{ border: 0, height: 400 }}
-      />
+      <Paper sx={{ height: 400, width: "90%", mb: 3 }}>
+        <DataGrid
+          rows={grants}
+          columns={columns}
+          getRowId={(row) => row.id}
+          pageSizeOptions={[5]}
+        />
+      </Paper>
 
-      <Dialog open={openEditDialog} onClose={handleEditClose}>
-        <DialogTitle>Edit Grant</DialogTitle>
-        <DialogContent>
-          {editData && (
-            <Stack spacing={2} sx={{ mt: 2 }}>
-              <TextField
-                label="Title"
-                name="title"
-                value={editData.title}
-                onChange={handleEditChange}
-              />
-              <TextField
-                label="Funder"
-                name="funder"
-                value={editData.funder}
-                onChange={handleEditChange}
-              />
-              <TextField
-                label="Amount"
-                name="amount"
-                value={editData.amount}
-                onChange={handleEditChange}
-              />
-              <TextField
-                label="Faculty Role"
-                name="faculty_role"
-                value={editData.faculty_role}
-                onChange={handleEditChange}
-              />
-              <TextField
-                label="Grant Status"
-                name="grant_status"
-                value={editData.grant_status}
-                onChange={handleEditChange}
-              />
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleEditClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleSave}>
-            Save Changes
+      <Modal open={deleteModalOpen} onClose={() => setDeleteModalOpen(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            bgcolor: "background.paper",
+            border: "2px solid #000",
+            boxShadow: 24,
+            p: 4,
+          }}
+        >
+          <Typography variant="h6">
+            Are you sure you want to delete this grant?
+          </Typography>
+          <Button onClick={() => setDeleteModalOpen(false)} sx={{ mt: 2 }}>
+            Cancel
           </Button>
-        </DialogActions>
-      </Dialog>
+          <Button
+            variant="contained"
+            color="error"
+            sx={{ ml: 2 }}
+            onClick={() => removeGrant(deleteId)}
+          >
+            Delete
+          </Button>
+        </Box>
+      </Modal>
     </>
   );
 }
