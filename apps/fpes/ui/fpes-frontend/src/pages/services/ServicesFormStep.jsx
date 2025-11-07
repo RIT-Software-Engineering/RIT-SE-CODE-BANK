@@ -28,7 +28,6 @@ export default function ServicesFormStep({form_id, control, errors, handle}){
 
     return (
         <div>
-        <Grid container rowSpacing={0} columns={12}>
         {fields.map((service, index) => 
         (
             <Paper sx={{padding:"4% 4%", margin:"4% auto", width:"600px"}} key={service.id}>
@@ -42,7 +41,6 @@ export default function ServicesFormStep({form_id, control, errors, handle}){
                 />
             </Paper>
         ))}
-        </Grid>
         <Button onClick={() => {append(new Service(form_id)); setNumberOfServices(number_of_services + 1)}}>Add Service</Button>
         </div>
     )

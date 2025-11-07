@@ -13,12 +13,21 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.4",
+    "@mui/lab": "^7.0.1-beta.19",
     "@mui/material": "^7.3.4",
+<<<<<<< HEAD
     "@mui/x-data-grid": "^8.15.0",
     "@mui/x-date-pickers": "^8.15.0",
     "axios": "^1.12.2",
     "cors": "^2.8.5",
     "dayjs": "^1.11.18",
+=======
+    "@mui/x-data-grid": "^8.14.0",
+    "@mui/x-date-pickers": "^8.16.0",
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.19",
+>>>>>>> fpes-publications-step
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.65.0",
