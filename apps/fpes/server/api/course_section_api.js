@@ -26,7 +26,7 @@ async function getSectionByID(id){
         const results = await connection.query(
             `SELECT cs.id, c.course_name, c.course_code,
             cs.days_of_the_week, cs.room_location, cs.semester,
-            cs.scholastic_year
+            cs.year, cs.number_of_sections, cs.taught_for_the_first_time
             FROM course_sections cs
             INNER JOIN courses c
                 ON c.id = cs.course_id
@@ -97,12 +97,12 @@ async function createCourseSection(body){
     let connection;
     try {
         connection = await pool.getConnection();
-        const {course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year} = body;
+        const {course_id, room_location, days_of_the_week, number_of_students, semester, year, taught_for_the_first_time, number_of_sections, curriculum_development} = body;
 
         const results = await connection.query(
-            `INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year)
-            VALUES (?,?,?,?,?,?) RETURNING id`,
-            [course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year]
+            `INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, year, taught_for_the_first_time, number_of_sections, curriculum_development)
+            VALUES (?,?,?,?,?,?,?,?,?) RETURNING id`,
+            [course_id, room_location, days_of_the_week, number_of_students, semester, year, taught_for_the_first_time, number_of_sections, curriculum_development]
         );
 
         return results;
@@ -115,7 +115,7 @@ async function updateCourseSection(id, body){
     let connection;
     try {
         connection = await pool.getConnection();
-        allowed = ["course_id", "room_location", "days_of_the_week", "number_of_students", "semester", "scholastic_year"];
+        allowed = ["course_id", "room_location", "days_of_the_week", "number_of_students", "semester", "year", "taught_for_the_first_time", "number_of_sections", "curriculum_development"];
 
         sets = []
         params = []
