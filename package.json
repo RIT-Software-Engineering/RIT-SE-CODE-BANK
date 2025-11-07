@@ -2,5 +2,9 @@
   "devDependencies": {
     "jest": "^30.2.0",
     "supertest": "^7.1.4"
+  },
+  "dependencies": {
+    "@mui/x-date-pickers": "^8.17.0",
+    "dayjs": "^1.11.19"
   }
 }

@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react"
-import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper, IconButton, Icon, Autocomplete, FormLabel, InputLabel, FormHelperText, filledInputClasses} from "@mui/material";
+import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper, IconButton, Icon, Autocomplete, FormControlLabel, InputLabel, FormHelperText, filledInputClasses, Checkbox} from "@mui/material";
 import { Controller } from "react-hook-form";
 import CloseIcon from '@mui/icons-material/Close';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from "dayjs";
 
 
 export default function CourseSectionForm({courses, control, section, handleRemoveSection, handleDuplicateSection, index, errors}){
@@ -120,16 +124,24 @@ export default function CourseSectionForm({courses, control, section, handleRemo
             <Grid size={6}>
                 <Controller
                     control={control}
-                    name={section + "scholastic_year"}
+                    name={section + "year"}
                     rules={{required:"Year is required"}}
                     render={({field}) =>
-                        <TextField
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
                         {...field} 
+                        defaultValue={dayjs('2024')}
+                        views={["year"]}
                         sx={{width:"100%"}}
-                        label="Scholastic Year"
-                        error={errors.course_sections?.[index]?.scholastic_year} 
-                        helperText={errors.course_sections?.[index]?.scholastic_year?.message}
+                        label="Year"
+                        slotProps={{
+                            textField: {
+                                helperText: errors.course_sections?.[index]?.year?.message,
+                                error: errors.course_sections?.[index]?.year
+                            }
+                        }}
                         />
+                        </LocalizationProvider>
                     }
                 />
             </Grid>
@@ -138,7 +150,17 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                 <Controller 
                     control={control}
                     name={section + "number_of_students"}
-                    rules={{required:{value:true, message:"Students is required"}}}
+                    rules={
+                        {
+                            required:{value:true, message:"Number of Students is required"},
+                            min : {value : 0, message:"Number of Students must be > 0"},
+                            pattern: {
+                                value: /^[0-9]+$/i,
+                                message: 'Must only contain numbers',
+                            },
+                            valueAsNumber : true
+                        }
+                    }
                     render={({field}) =>
                     <TextField 
                         {...field}
@@ -146,6 +168,60 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                         label="Number of Students"
                         error={errors.course_sections?.[index]?.number_of_students} 
                         helperText={errors.course_sections?.[index]?.number_of_students?.message}
+                        />
+                    }
+                />
+            </Grid>
+
+            <Grid size={6}>
+                <Controller 
+                    control={control}
+                    name={section + "number_of_sections"}
+                    rules={
+                        {
+                            required:{value:true, message:"Number of Sections is required"},
+                            min : {value : 0, message:"Number of Sections must be > 0"},
+                            pattern: {
+                                value: /^[0-9]+$/i,
+                                message: 'Must only contain numbers',
+                            },
+                            valueAsNumber : true
+                        }
+                    }
+                    render={({field}) =>
+                    <TextField 
+                        {...field}
+                        sx={{width:"100%"}}
+                        label="Number of Sections"
+                        error={errors.course_sections?.[index]?.number_of_sections} 
+                        helperText={errors.course_sections?.[index]?.number_of_sections?.message}
+                        />
+                    }
+                />
+            </Grid>
+
+            <Grid size={6}>
+                <Controller 
+                    control={control}
+                    name={section + "taught_for_first_time"}
+                    render={({field}) =>
+                    <FormControlLabel control={<Checkbox {...field}/>} label="Taught For First Time"/>
+                    }
+                />
+            </Grid>
+
+            <Grid size={12}>
+                <Controller
+                    control={control}
+                    name={section + "curriculum_development"}
+                    render={({field}) =>
+                        <TextField
+                            {...field}
+                            sx={{width:"100%"}}
+                            multiline
+                            rows={6}
+                            maxRows={10}
+                            label="Curriculum Development"
                         />
                     }
                 />
