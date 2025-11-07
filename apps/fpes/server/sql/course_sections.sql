@@ -8,10 +8,10 @@ CREATE TABLE IF NOT EXISTS course_sections (
     semester ENUM('FALL', 'SPRING', 'SUMMER') NOT NULL,
     year YEAR NOT NULL, 
     first_time_teaching_course BOOLEAN DEFAULT FALSE,
-    number_of_sections UINT NOT NULL,
+    number_of_sections INT UNSIGNED  NOT NULL,
     curriculum_development TEXT,
     course_id INT UNSIGNED,
-    form_id INT UNSIGNED,
+    form_id INT,
     FOREIGN KEY (course_id) REFERENCES courses(id),
     FOREIGN KEY (form_id) REFERENCES highlights(id)
 );
