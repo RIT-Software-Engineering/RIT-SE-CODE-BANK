@@ -150,10 +150,6 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                     }
                 />
             </Grid>
-
-            <Grid>
-                <Button onClick={() => handleDuplicateSection(index)}>Duplicate</Button>
-            </Grid>
         </Grid>
     )
 }
