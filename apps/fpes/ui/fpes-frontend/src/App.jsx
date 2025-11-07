@@ -14,6 +14,7 @@ import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';
 import CoursesPage from './pages/courses/CoursePage.jsx'
 import ProfilePage from './pages/profile/ProfilePage.jsx';
 import Header from './pages/Header.jsx';
+import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
 
 function App() {
   const [role, setRole] = useState("faculty")
@@ -58,6 +59,11 @@ function App() {
       name: "Profile",
       route: "/profile",
       adminOnly: false
+    },
+    {
+      name : "Highlights",
+      route : "/highlights_form",
+      adminOnly : false
     }
   ]
 
@@ -87,6 +93,7 @@ function App() {
         <Route path="/course_sections" element={<CourseSectionsPage/>} />
         <Route path="/student_support" element={<StudentSupportPage/>} />
         <Route path="/profile" element={<ProfilePage/>} />
+        <Route path="/highlights_form" element={<HighlightsFormPage/>} />
       </Routes>
     </BrowserRouter>
   )
