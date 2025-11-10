@@ -1,116 +1,129 @@
-import {
-  TextField,
-  Button,
-  Grid,
-  MenuItem,
-  Box,
-} from "@mui/material";
-import { useForm } from "react-hook-form";
-import axios from "axios";
+import { Grid, Typography, IconButton, TextField, MenuItem } from "@mui/material";
+import { Controller } from "react-hook-form";
+import CloseIcon from "@mui/icons-material/Close";
 
-export default function GrantsForm({setGrants, defaultValues, isUpdate }) {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
-    defaultValues: isUpdate
-      ? defaultValues
-      : {
-          title: "",
-          sponsor: "",
-          amount: "",
-          start_date: "",
-          end_date: "",
-          grant_status: "Pending",
-        },
-  });
+export default function GrantForm({ control, register_grant, handleRemoveGrant, index, errors }) {
+    return (
+        <Grid container spacing={2} columnSpacing={2}>
+            <Grid item size={10}>
+                <Typography variant="h5" textAlign="left">New Grant</Typography>
+            </Grid>
 
-  const addGrant = (data) => {
-    axios.post("http://localhost:3000/grants", data)
-      .then((res) => {
-        const newGrant = { ...data, id: res.data[0]?.id ?? Math.random() };
-        setGrants((prev) => [...prev, newGrant]);
-        reset();
-      })
-      .catch((err) => console.error("Error adding grant:", err));
-  };
+            <Grid item size={2}>
+                <IconButton onClick={() => handleRemoveGrant(index)}>
+                    <CloseIcon/>
+                </IconButton>
+            </Grid>
 
-  return (
-    <Box sx={{ width: "60%", marginTop: 4 }}>
-      <h3>Create Grant</h3>
-      <form onSubmit={handleSubmit(addGrant)}>
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <TextField
-              {...register("title", { required: "Title is required" })}
-              label="Grant Title"
-              fullWidth
-              error={!!errors.title}
-              helperText={errors.title?.message}
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              {...register("sponsor", { required: "Sponsor is required" })}
-              label="Sponsor"
-              fullWidth
-              error={!!errors.sponsor}
-              helperText={errors.sponsor?.message}
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              {...register("amount", {
-                required: "Amount is required",
-                pattern: {
-                  value: /^[0-9]+$/,
-                  message: "Amount must be a number",
-                },
-              })}
-              label="Amount"
-              fullWidth
-              error={!!errors.amount}
-              helperText={errors.amount?.message}
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              {...register("grant_status")}
-              select
-              label="Status"
-              defaultValue="Pending"
-              fullWidth
-            >
-              <MenuItem value="Pending">Pending</MenuItem>
-              <MenuItem value="Approved">Approved</MenuItem>
-              <MenuItem value="Denied">Denied</MenuItem>
-            </TextField>
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              {...register("start_date", { required: "Start date required" })}
-              label="Start Date"
-              type="date"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              {...register("end_date", { required: "End date required" })}
-              label="End Date"
-              type="date"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Button variant="contained" type="submit">
-              Submit
-            </Button>
-            <Button variant="outlined" type="reset" onClick={() => reset()} sx={{ ml: 2 }}>
-              Clear
-            </Button>
-          </Grid>
+            <Grid item size={5}>
+                <Controller
+                    name={register_grant + "title"}
+                    control={control}
+                    rules={{
+                        required: {value: true, message: "Title is required"},
+                        maxLength: {value: 255, message: "Title cannot exceed 255 characters"}
+                    }}
+                    render={({field}) =>
+                        <TextField {...field} 
+                            label="Title"
+                            error={errors.grants?.[index]?.title}
+                            helperText={errors.grants?.[index]?.title?.message}
+                            placeholder="Grant Title"
+                            sx={{width:"100%"}}
+                        />
+                    }
+                />
+            </Grid>
+
+            <Grid item size={5}>
+                <Controller
+                    name={register_grant + "sponsor"}
+                    control={control}
+                    rules={{required:"Sponsor is required"}}
+                    render={({field}) =>
+                        <TextField {...field}
+                            label="Sponsor"
+                            error={errors.grants?.[index]?.sponsor}
+                            helperText={errors.grants?.[index]?.sponsor?.message}
+                            placeholder="Sponsor"
+                            sx={{width:"100%"}}
+                        />
+                    }
+                />
+            </Grid>
+
+            <Grid item size={5}>
+                <Controller
+                    name={register_grant + "amount"}
+                    control={control}
+                    rules={{
+                        required: "Amount is required",
+                        pattern: {
+                            value: /^[0-9]+$/,
+                            message: "Amount must be numeric"
+                        }
+                    }}
+                    render={({field}) =>
+                        <TextField {...field}
+                            label="Amount"
+                            error={errors.grants?.[index]?.amount}
+                            helperText={errors.grants?.[index]?.amount?.message}
+                            placeholder="Grant Amount"
+                            sx={{width:"100%"}}
+                        />
+                    }
+                />
+            </Grid>
+
+            <Grid item size={5}>
+                <Controller
+                    name={register_grant + "grant_status"}
+                    control={control}
+                    render={({field}) =>
+                        <TextField {...field}
+                            select
+                            label="Status"
+                            sx={{width:"100%"}}
+                        >
+                            <MenuItem value="Pending">Pending</MenuItem>
+                            <MenuItem value="Approved">Approved</MenuItem>
+                            <MenuItem value="Denied">Denied</MenuItem>
+                        </TextField>
+                    }
+                />
+            </Grid>
+
+            <Grid item size={5}>
+                <Controller
+                    name={register_grant + "start_date"}
+                    control={control}
+                    rules={{required:"Start date required"}}
+                    render={({field}) =>
+                        <TextField {...field}
+                            label="Start Date"
+                            type="date"
+                            InputLabelProps={{ shrink: true }}
+                            sx={{width:"100%"}}
+                        />
+                    }
+                />
+            </Grid>
+
+            <Grid item size={5}>
+                <Controller
+                    name={register_grant + "end_date"}
+                    control={control}
+                    rules={{required:"End date required"}}
+                    render={({field}) =>
+                        <TextField {...field}
+                            label="End Date"
+                            type="date"
+                            InputLabelProps={{ shrink: true }}
+                            sx={{width:"100%"}}
+                        />
+                    }
+                />
+            </Grid>
         </Grid>
-      </form>
-    </Box>
-  );
+    );
 }
