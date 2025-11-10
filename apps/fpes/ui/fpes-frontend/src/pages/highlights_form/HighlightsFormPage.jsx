@@ -6,13 +6,18 @@ import { Link } from "react-router-dom";
 import { validateProps } from "@mui/x-data-grid/internals";
 import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
 import PublicationsFormStep from "../publications/PublicationsFormStep";
+import StudentSupportFormStep from "../student_support/StudentSupportFormStep";
+import GrantsFormStep from "../grants/GrantsFormStep";
 
 export default function HighlightsFormPage() {
     const [activeStep, setActiveStep] = useState(0);
 
     const steps = [
+
         "Services",
+        "Grants",
         "Publications",
+        "Student Support",
         "Course Sections"
     ]
 
@@ -48,6 +53,8 @@ export default function HighlightsFormPage() {
             services : [],
             course_sections : [],
             publications : [],
+            grants : [],
+            student_support : []
         },
         mode:"onTouched"
     });
@@ -64,7 +71,9 @@ export default function HighlightsFormPage() {
 
             <form>
             {isOnFirstStep() ? <ServicesFormStep form_id={1} control={control} errors={errors} /> : null}
-            {activeStep === 1 ? <PublicationsFormStep form_id={1} control={control} errors={errors}/> : null}
+            {activeStep === 1 ? <GrantsFormStep form_id={1} control={control} errors={errors}/> : null}
+            {activeStep === 2 ? <PublicationsFormStep form_id={1} control={control} errors={errors}/> : null}
+            {activeStep === 3 ? <StudentSupportFormStep form_id={1} control={control} errors={errors}/> : null}
             {isOnLastStep() ? <CourseSectionFormStep form_id={1} control={control} errors={errors}  getValues={getValues}/> : null}
 
             {/* Back or Cancel Button */}
