@@ -1,23 +1,65 @@
-import { useState } from "react";
-import { Form, Button, Row, Col } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import { Form, Button, Row, Col, Card, Modal } from "react-bootstrap";
 import Alert from "react-bootstrap/Alert";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  List as ListIcon,
+  CheckSquare,
+} from "lucide-react";
 import "../styles/course.css";
 
 function CoursePage() {
+  // View state
+  const [view, setView] = useState("list"); // 'list' or 'create'
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Form state
   const [courseId, setCourseId] = useState("");
   const [courseName, setCourseName] = useState("");
   const [semester, setSemester] = useState("");
   const [color, setColor] = useState("");
   const [numOfStudents, setStudents] = useState("");
   const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertVariant, setAlertVariant] = useState("success");
+
+  // Onboarding modal state
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
 
-  // add the event
+  // Fetch courses on mount
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/events/courses`);
+      if (!response.ok) throw new Error("Failed to fetch courses");
+      const result = await response.json();
+
+      // Handle the response format: { success: true, data: [...] }
+      if (result.success && result.data) {
+        setCourses(result.data);
+      } else {
+        setCourses([]);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      setLoading(false);
+    }
+  };
+
+  // Handle course creation
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // add the course
     try {
       const courseResponse = await fetch(`${API_BASE}/course`, {
         method: "POST",
@@ -39,128 +81,376 @@ function CoursePage() {
       const courseData = await courseResponse.json();
       console.log("New course created: ", courseData);
 
+      setAlertVariant("success");
+      setAlertMessage("✅ Course created successfully!");
       setShowAlert(true);
-      // hides the alert after 6 secs
       setTimeout(() => setShowAlert(false), 6000);
 
-      // clear the form fields
+      // Clear form and refresh courses
       setCourseId("");
       setCourseName("");
       setColor("");
       setStudents("");
       setSemester("");
+
+      fetchCourses();
+      setView("list"); // Return to list view
     } catch (err) {
       console.error(err.message);
+      setAlertVariant("danger");
+      setAlertMessage("❌ Failed to create course");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 6000);
     }
   };
 
-  // TODO nothing happens with the syllabus upload yet
-  return (
-    <>
-      <h1>Create a course</h1>
+  // Handle course deletion
+  const handleDeleteCourse = async (courseId) => {
+    if (!window.confirm("Are you sure you want to delete this course?")) return;
 
-      {showAlert && (
-        <Alert
-          variant="success"
-          onClose={() => setShowAlert(false)}
-          dismissible
-        >
-          ✅ Course created successfully!
-        </Alert>
-      )}
-      <Form className="course-form" onSubmit={handleSubmit}>
-        <Row>
-          <Col>
-            <Form.Group id="formCourseCode">
-              <Form.Label>Course ID: </Form.Label>
-              <Form.Control
-                type="text"
-                required
-                value={courseId}
-                onChange={(e) => setCourseId(e.target.value)}
-                placeholder="ex. Swen101"
-              ></Form.Control>
-            </Form.Group>
-          </Col>
+    try {
+      const response = await fetch(`${API_BASE}/course/${courseId}`, {
+        method: "DELETE",
+      });
 
-          <Col>
-            <Form.Group id="formCourseName">
-              <Form.Label>Course Name: </Form.Label>
-              <Form.Control
-                type="text"
-                required
-                value={courseName}
-                onChange={(e) => setCourseName(e.target.value)}
-                placeholder="ex. Freshmen Seminar"
-              ></Form.Control>
-            </Form.Group>
-          </Col>
-        </Row>
+      if (!response.ok) throw new Error("Failed to delete course");
 
-        <Row>
-          <Col>
-            <Form.Group id="formNumOfStudents">
-              <Form.Label>Number of students: </Form.Label>
-              <Form.Control
-                type="number"
-                required
-                value={numOfStudents}
-                onChange={(e) => setStudents(e.target.value)}
-                placeholder="ex. 15"
-              ></Form.Control>
-            </Form.Group>
-          </Col>
+      setAlertVariant("success");
+      setAlertMessage("✅ Course deleted successfully!");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 6000);
 
-          <Col>
-            <Form.Group id="formCourseSemester">
-              <Form.Label>Semester: </Form.Label>
-              <Form.Control
-                type="text"
-                required
-                value={semester}
-                onChange={(e) => setSemester(e.target.value)}
-                placeholder="ex. Fall"
-              ></Form.Control>
-            </Form.Group>
-          </Col>
-        </Row>
+      fetchCourses();
+    } catch (error) {
+      console.error("Error deleting course:", error);
+      setAlertVariant("danger");
+      setAlertMessage("❌ Failed to delete course");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 6000);
+    }
+  };
 
-        <Row>
-          <Form.Group id="formCourseColor">
-            <Form.Label>Select a color: </Form.Label>
-            <Form.Select
-              requried
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-            >
-              <option value=""></option>
-              <option value="red">Red</option>
-              <option value="orange">Orange</option>
-              <option value="yellow">Yellow</option>
-              <option value="green">Green</option>
-              <option value="blue">Blue</option>
-              <option value="purple">Purple</option>
-              <option value="pink">Pink</option>
-              <option value="brown">Brown</option>
-              <option value="gray">Gray</option>
-            </Form.Select>
-          </Form.Group>
-        </Row>
+  // Open onboarding editor
+  const handleEditOnboarding = (course) => {
+    setSelectedCourse(course);
+    setShowOnboardingModal(true);
+  };
 
-        <Row>
-          <Form.Group id="formFile">
-            <Form.Label>Upload Syllabus</Form.Label>
-            <Form.Control type="file"></Form.Control>
-          </Form.Group>
-        </Row>
+  // Get color class for course badge
+  const getColorClass = (color) => {
+    return `course-badge-${color}`;
+  };
 
-        <div id="button-wrapper">
-          <Button id="form-button" type="submit">
-            Create Course
+  // Render course list view
+  const renderCourseList = () => {
+    if (loading) {
+      return <div className="loading">Loading courses...</div>;
+    }
+
+    if (courses.length === 0) {
+      return (
+        <div className="empty-state">
+          <ListIcon size={48} />
+          <h3>No Courses Yet</h3>
+          <p>Create your first course to get started!</p>
+          <Button variant="primary" onClick={() => setView("create")}>
+            <Plus size={20} /> Create First Course
           </Button>
         </div>
-      </Form>
-    </>
+      );
+    }
+
+    return (
+      <div className="courses-grid">
+        {courses.map((course) => (
+          <Card key={course.id} className="course-card">
+            <Card.Body>
+              <div className="course-header">
+                <span className={`course-badge ${getColorClass(course.color)}`}>
+                  {course.id}
+                </span>
+                <div className="course-actions">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => handleEditOnboarding(course)}
+                    title="Edit Onboarding Workflow"
+                  >
+                    <CheckSquare size={16} />
+                  </Button>
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => handleDeleteCourse(course.id)}
+                    title="Delete Course"
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+              </div>
+
+              <Card.Title>{course.name}</Card.Title>
+
+              <div className="course-details">
+                <div className="course-detail-item">
+                  <strong>Semester:</strong> {course.semester}
+                </div>
+                <div className="course-detail-item">
+                  <strong>Students:</strong> {course.students}
+                </div>
+              </div>
+
+              {course.workflowId && (
+                <div className="onboarding-status">✓ Onboarding Configured</div>
+              )}
+            </Card.Body>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
+  // Render create course form
+  const renderCreateForm = () => {
+    return (
+      <div className="create-course-container">
+        <div className="form-header">
+          <h1>Create a Course</h1>
+          <Button variant="outline-secondary" onClick={() => setView("list")}>
+            ← Back to Courses
+          </Button>
+        </div>
+
+        <Form className="course-form" onSubmit={handleSubmit}>
+          <Row>
+            <Col>
+              <Form.Group id="formCourseCode">
+                <Form.Label>Course ID: </Form.Label>
+                <Form.Control
+                  type="text"
+                  required
+                  value={courseId}
+                  onChange={(e) => setCourseId(e.target.value)}
+                  placeholder="ex. Swen101"
+                />
+              </Form.Group>
+            </Col>
+
+            <Col>
+              <Form.Group id="formCourseName">
+                <Form.Label>Course Name: </Form.Label>
+                <Form.Control
+                  type="text"
+                  required
+                  value={courseName}
+                  onChange={(e) => setCourseName(e.target.value)}
+                  placeholder="ex. Freshmen Seminar"
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row>
+            <Col>
+              <Form.Group id="formNumOfStudents">
+                <Form.Label>Number of students: </Form.Label>
+                <Form.Control
+                  type="number"
+                  required
+                  value={numOfStudents}
+                  onChange={(e) => setStudents(e.target.value)}
+                  placeholder="ex. 15"
+                />
+              </Form.Group>
+            </Col>
+
+            <Col>
+              <Form.Group id="formCourseSemester">
+                <Form.Label>Semester: </Form.Label>
+                <Form.Control
+                  type="text"
+                  required
+                  value={semester}
+                  onChange={(e) => setSemester(e.target.value)}
+                  placeholder="ex. Fall"
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row>
+            <Form.Group id="formCourseColor">
+              <Form.Label>Select a color: </Form.Label>
+              <Form.Select
+                required
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+              >
+                <option value=""></option>
+                <option value="red">Red</option>
+                <option value="orange">Orange</option>
+                <option value="yellow">Yellow</option>
+                <option value="green">Green</option>
+                <option value="blue">Blue</option>
+                <option value="purple">Purple</option>
+                <option value="pink">Pink</option>
+                <option value="brown">Brown</option>
+                <option value="gray">Gray</option>
+              </Form.Select>
+            </Form.Group>
+          </Row>
+
+          <Row>
+            <Form.Group id="formFile">
+              <Form.Label>Upload Syllabus</Form.Label>
+              <Form.Control type="file" />
+            </Form.Group>
+          </Row>
+
+          <div id="button-wrapper">
+            <Button id="form-button" type="submit">
+              Create Course
+            </Button>
+          </div>
+        </Form>
+      </div>
+    );
+  };
+
+  return (
+    <div className="course-page">
+      {showAlert && (
+        <Alert
+          variant={alertVariant}
+          onClose={() => setShowAlert(false)}
+          dismissible
+          className="course-alert"
+        >
+          {alertMessage}
+        </Alert>
+      )}
+
+      {view === "list" ? (
+        <div className="course-list-view">
+          <div className="list-header">
+            <h1>My Courses</h1>
+            <Button variant="primary" onClick={() => setView("create")}>
+              <Plus size={20} /> Create New Course
+            </Button>
+          </div>
+          {renderCourseList()}
+        </div>
+      ) : (
+        renderCreateForm()
+      )}
+
+      {/* Onboarding Workflow Editor Modal */}
+      <Modal
+        show={showOnboardingModal}
+        onHide={() => setShowOnboardingModal(false)}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Student Onboarding: {selectedCourse?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <OnboardingWorkflowEditor
+            course={selectedCourse}
+            onSave={() => {
+              setShowOnboardingModal(false);
+              fetchCourses();
+              setAlertVariant("success");
+              setAlertMessage("✅ Onboarding workflow saved!");
+              setShowAlert(true);
+              setTimeout(() => setShowAlert(false), 6000);
+            }}
+            onCancel={() => setShowOnboardingModal(false)}
+          />
+        </Modal.Body>
+      </Modal>
+    </div>
+  );
+}
+
+// Placeholder component for onboarding editor (we'll build this next)
+function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
+  const [actions, setActions] = useState([
+    { id: 1, title: "Review Syllabus", description: "", order: 1 },
+    {
+      id: 2,
+      title: "Add Important Dates to Calendar",
+      description: "",
+      order: 2,
+    },
+    {
+      id: 3,
+      title: "Join Course Communication Channel",
+      description: "",
+      order: 3,
+    },
+    { id: 4, title: "Complete Intro Assignment", description: "", order: 4 },
+  ]);
+
+  const handleSave = async () => {
+    // TODO: Connect to Workflows API
+    console.log("Saving workflow for course:", course.id);
+    console.log("Actions:", actions);
+    onSave();
+  };
+
+  return (
+    <div className="onboarding-editor">
+      <p className="editor-description">
+        Create a checklist of tasks that students should complete when they
+        first enroll in this course.
+      </p>
+
+      <div className="actions-list">
+        {actions.map((action, index) => (
+          <div key={action.id} className="action-item">
+            <span className="action-number">{index + 1}</span>
+            <input
+              type="text"
+              className="action-title"
+              value={action.title}
+              onChange={(e) => {
+                const updated = [...actions];
+                updated[index].title = e.target.value;
+                setActions(updated);
+              }}
+              placeholder="Action title..."
+            />
+          </div>
+        ))}
+      </div>
+
+      <Button
+        variant="outline-primary"
+        onClick={() => {
+          setActions([
+            ...actions,
+            {
+              id: actions.length + 1,
+              title: "",
+              description: "",
+              order: actions.length + 1,
+            },
+          ]);
+        }}
+      >
+        <Plus size={16} /> Add Action
+      </Button>
+
+      <div className="editor-actions">
+        <Button variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={handleSave}>
+          Save Workflow
+        </Button>
+      </div>
+    </div>
   );
 }
 
