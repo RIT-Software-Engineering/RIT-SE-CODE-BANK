@@ -1,0 +1,154 @@
+components:
+  schemas:
+    Action:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        form:
+          type: string
+          nullable: true
+        actionType:
+          $ref: '#/components/schemas/ActionType'
+        isFrozen:
+          type: boolean
+        nextActionId:
+          type: string
+          format: uuid
+          nullable: true
+        parentActionId:
+          type: string
+          format: uuid
+          nullable: true
+      required: [id, name, actionType, isFrozen]
+
+    ActionType:
+      type: string
+      enum: [simple, workflow, complex, branching]
+
+    Metadata:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        value:
+          type: string
+        actionId:
+          type: string
+          format: uuid
+      required: [id, key, value, actionId]
+
+    WorkflowAttributes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        baseActionId:
+          type: string
+          format: uuid
+        rootActionId:
+          type: string
+          format: uuid
+          nullable: true
+      required: [id, baseActionId]
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required: [id, name]
+
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        actionId:
+          type: string
+          format: uuid
+        permissionType:
+          $ref: '#/components/schemas/PermissionType'
+      required: [id, userId, actionId, permissionType]
+
+    PermissionType:
+      type: string
+      enum: [creator, sharer, editor, viewer]
+
+    WorkflowState:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+        teamId:
+          type: string
+          nullable: true
+        workflowId:
+          type: string
+          format: uuid
+        baseActionStateId:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowStateParticipant'
+      required: [id, workflowId, baseActionStateId]
+
+    WorkflowStateParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflowStateId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+      required: [id, workflowStateId, userId]
+
+    ActionState:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflowStateId:
+          type: string
+          format: uuid
+        actionId:
+          type: string
+          format: uuid
+        stateType:
+          $ref: '#/components/schemas/StateType'
+        index:
+          type: integer
+      required: [id, workflowStateId, actionId, stateType, index]
+
+    StateType:
+      type: string
+      enum: [completed, inProgress, notStarted, hidden]
