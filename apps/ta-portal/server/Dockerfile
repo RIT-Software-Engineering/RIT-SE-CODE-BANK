@@ -10,6 +10,8 @@ COPY server/database/prisma ./server/database/prisma/
 RUN npm ci
 
 # Generate Prisma client
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate --schema=./server/database/prisma/schema.prisma
 
 # Copy rest of application

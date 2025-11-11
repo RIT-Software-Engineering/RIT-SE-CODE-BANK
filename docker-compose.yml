@@ -1,45 +1,54 @@
 services:
   mariadb:
     image: mariadb:latest
+    ports:
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ta_root_password
       MYSQL_DATABASE: ta_portal_db
       MYSQL_USER: ta_user
       MYSQL_PASSWORD: ta_password
+    volumes:
+      - mariadb_prod_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
-    volumes:
-      - mariadb_data:/var/lib/mysql
     restart: unless-stopped
-
   ta-portal-backend:
     build:
-      context: ./apps/ta-portal/server
-      dockerfile: Dockerfile
+     context: ./apps/ta-portal/server
+     dockerfile: Dockerfile
+     args:
+       DATABASE_URL: mysql://root:ta_root_password@mariadb:3306/ta_portal_db
+    environment:
+      DATABASE_URL: mysql://root:ta_root_password@mariadb:3306/ta_portal_db
+      PORT: 5000
+      NODE_ENV: production
     ports:
       - "5000:5000"
-    environment:
-      NODE_ENV: production
-      PORT: 5000
-      DATABASE_URL: mysql://ta_user:ta_password@mariadb:3306/ta_portal_db
     restart: unless-stopped
 
   ta-portal-frontend:
     build:
       context: ./apps/ta-portal/ui
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_NODE_ENV: PROD
+        NEXT_PUBLIC_BACKEND_URL: http://apps-staging.se.rit.edu
+        NEXT_PUBLIC_API_EXTENSION: /api
+        NEXT_PUBLIC_DATABASE_API_EXTENSION: /db
+    environment:
+      NEXT_PUBLIC_BACKEND_URL: http://apps-staging.se.rit.edu
+      NEXT_PUBLIC_API_EXTENSION: /api
     ports:
       - "3000:3000"
-    environment:
-      NODE_ENV: production
-      NEXT_PUBLIC_BACKEND_URL: http://localhost:5000
     depends_on:
       - ta-portal-backend
     restart: unless-stopped
 
+
 volumes:
-  mariadb_data:
+  mariadb_prod_data:

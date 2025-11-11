@@ -1,0 +1,21 @@
+services:
+  mariadb:
+    container_name: ta-portal-mariadb-dev-1
+    volumes:
+      - mariadb_dev_data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ta_portal_db_dev
+
+  ta-portal-backend:
+    build:
+      args:
+        DATABASE_URL: mysql://root:ta_root_password@mariadb:3306/ta_portal_db_dev
+    environment:
+        DATABASE_URL: mysql://root:ta_root_password@mariadb:3306/ta_portal_db_dev
+
+  ta-portal-frontend:
+    build:
+      args:
+        NEXT_PUBLIC_NODE_ENV: DEV
+volumes:
+  mariadb_dev_data:
