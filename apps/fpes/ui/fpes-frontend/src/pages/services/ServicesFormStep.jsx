@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper} from "@mui/material";
 import ServiceForm from "./ServiceForm";
-import { useFieldArray } from "react-hook-form";
+import { Controller, useFieldArray } from "react-hook-form";
 
 export default function ServicesFormStep({form_id, control, errors, handle}){
     const [number_of_services, setNumberOfServices] = useState(0);
@@ -41,7 +41,28 @@ export default function ServicesFormStep({form_id, control, errors, handle}){
                 />
             </Paper>
         ))}
-        <Button onClick={() => {append(new Service(form_id)); setNumberOfServices(number_of_services + 1)}}>Add Service</Button>
+
+        <Button variant="contained" sx={{margin:"4%"}} onClick={() => {append(new Service(form_id)); setNumberOfServices(number_of_services + 1)}}>Add Service</Button>
+
+        <Grid container rowSpacing={2} spacing={8}>
+                <Grid size={12}>
+                <Controller
+                    control={control}
+                    name="professional_development"
+                    render={({field}) =>
+                        <TextField
+                            {...field}
+                            sx={{width:"60%", margin:"auto"}}
+                            multiline
+                            rows={4}
+                            label="Professional Development"
+                            helperText="(ex. Conferences Attended, Training, etc.)
+"
+                        />
+                    }
+                />
+                </Grid>
+        </Grid>
         </div>
     )
 
