@@ -17,6 +17,7 @@ import Header from './pages/Header.jsx';
 import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState("faculty")
 
   const pages = [
@@ -86,7 +87,7 @@ function App() {
       <h1>FPES Portal</h1>
       
       <Routes>
-        <Route path="/login" element={<LoginPage/>} />
+        <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/services" element={<ServicesPage/>} />
         <Route path="/grants" element={<GrantsPage/>} />
         {role === 'admin' ? adminRoutes : null}
