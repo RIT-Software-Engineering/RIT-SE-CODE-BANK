@@ -54,7 +54,7 @@ export default function LandingDashboard({ user }) {
               fontSize: { xs: "0.95rem", sm: "1.05rem", md: "1.1rem" },
             }}
           >
-            Find opportunities to be a teaching assistant for the Software Engineering Department and manage your teaching assistant responsibilities
+            Find opportunities as a teaching assistant for the Software Engineering Department and manage your teaching assistant responsibilities
           </Typography>
         </Box>
 
