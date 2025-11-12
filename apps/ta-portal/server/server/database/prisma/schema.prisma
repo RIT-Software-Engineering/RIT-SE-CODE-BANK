@@ -60,7 +60,7 @@ model Employer {
   username    String        @id
   department  String        @db.Text
   user        User          @relation(fields: [username], references: [username])
-  jobPostions JobPosition[]
+  jobPositions JobPosition[]
 }
 
 model Employee {
