@@ -325,7 +325,7 @@ export default function Header() {
                 />
               </ListItemButton>
             </ListItem>
-            {/* Future: Notif Preferences will be added here - placeholder for easy merging */}
+            {/* Future: Notification Preferences will be added here - placeholder for easy merging */}
             {/* 
             <ListItem disablePadding sx={{ pl: 4 }}>
               <ListItemButton
