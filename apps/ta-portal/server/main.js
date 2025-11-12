@@ -29,6 +29,7 @@ const fs = require('fs');
 const path = require('path');
 // Import CORS middleware to enable cross-origin requests from the frontend.
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 // Import custom modules from the application's codebase.
 const apiRoutes = require('./server/routing/index'); // The main API router.
@@ -53,13 +54,15 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl) or allowed origins
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(null, false);
+    return callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false,
+  credentials: true, // allow cookies / auth headers
   optionsSuccessStatus: 204,
 }));
+// Cookie parser BEFORE routes so we can read cookies in handlers
+app.use(cookieParser());
 // Enable the Express JSON middleware to parse incoming request bodies with JSON payloads.
 // Add a JSON parse error handler so malformed JSON returns 400 instead of a crash.
 const jsonParser = express.json();

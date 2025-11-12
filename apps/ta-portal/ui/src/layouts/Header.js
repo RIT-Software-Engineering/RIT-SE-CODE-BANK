@@ -155,9 +155,9 @@ export default function Header() {
     link.roles.includes(userRole)
   );
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
   };
 
   const handleDrawerToggle = () => {
