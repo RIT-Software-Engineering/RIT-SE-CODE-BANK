@@ -861,7 +861,6 @@ async function changeCandidateApplicationStatus(
   // Notifications
 try {
   const details = await getApplicationDetailsForNotify(applicationId);
-  console.log("🔥 Application details for notify:", details);
   if (!details) throw new Error("Application not found for notify");
 
   const { candidateName, candidateEmail, jobPositionId } = details;
@@ -1346,8 +1345,6 @@ async function getApplicationDetailsForNotify(applicationId) {
   });
 
   if (!app) return null;
-  console.log("DEBUG app.jobPosition:", app.jobPosition);
-  console.log("DEBUG course relation:", app.jobPosition.course);
 
   const candidateName = `${app.candidateFName} ${app.candidateLName}`;
   const candidateEmail = app.candidateEmail;
