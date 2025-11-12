@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   getSemesterCodesForEmployer,
   getCandidateApplicationsAsEmployer,
@@ -51,11 +51,19 @@ export default function AdminApplicationsPage() {
   const { showNotification } = useNotification();
   const filterRef = useRef();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Initialize active tab based on URL search parameter for linkability.
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
-    return tabParam === 'hiring' ? 1 : 0;
+    if (tabParam === 'hiring') return 1;
+    // If we arrive via a deep link that includes application identifiers but
+    // no explicit tab, prefer landing on the "Ready to Hire" tab which is the
+    // typical admin action surface for notifications.
+    const hasDeepLink = !!(
+      searchParams.get('jobPositionId') || searchParams.get('applicationId')
+    );
+    return hasDeepLink ? 1 : 0;
   });
 
   // State for the "My Applications" tab.
@@ -81,6 +89,8 @@ export default function AdminApplicationsPage() {
   const [isHireModalOpen, setIsHireModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  // Track whether we've auto-opened a modal from a deep link to avoid repeats.
+  const didAutoOpenFromLink = useRef(false);
 
   // Effect to fetch and configure filters on component mount or when the user changes.
   useEffect(() => {
@@ -210,6 +220,45 @@ export default function AdminApplicationsPage() {
     // not on every change to search/filter state, which are handled by their own callbacks.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, activeTab]);
+
+  // If a user lands on the Admin route but is not an ADMIN, reroute them to
+  // their role-correct Applications path while preserving query params.
+  useEffect(() => {
+    if (!currentUser) return;
+    if (currentUser.role !== 'ADMIN') {
+      const params = searchParams.toString();
+      const query = params ? `?${params}` : '';
+      const roleMap = {
+        CANDIDATE: 'Candidate',
+        EMPLOYEE: 'Employee',
+        EMPLOYER: 'Employer',
+        ADMIN: 'Admin',
+      };
+      const roleSeg = roleMap[currentUser.role] || 'Candidate';
+      router.replace(`/Applications/${roleSeg}/${currentUser.username}${query}`);
+    }
+  }, [currentUser, router, searchParams]);
+
+  // Auto-open the Hire modal if we were deep-linked with application identifiers
+  // and we're on the Ready to Hire tab and the application is present.
+  useEffect(() => {
+    if (didAutoOpenFromLink.current) return;
+    if (activeTab !== 1) return; // Only makes sense on Ready to Hire
+
+    const appIdParam = searchParams.get('applicationId');
+    if (!appIdParam) return;
+
+    // Wait until hiring data is loaded
+    if (hiringLoading) return;
+
+    const target = hiringApplications.find(
+      (a) => String(a.id) === String(appIdParam)
+    );
+    if (target) {
+      didAutoOpenFromLink.current = true;
+      handleOpenHireModal(target);
+    }
+  }, [activeTab, searchParams, hiringApplications, hiringLoading]);
 
   /**
    * Handles the user switching between the "My Applications" and "Ready to Hire" tabs.

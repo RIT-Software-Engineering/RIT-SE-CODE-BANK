@@ -32,6 +32,7 @@ import {
   Description,
   People,
   AccountCircle,
+  Settings as SettingsIcon,
 } from "@mui/icons-material";
 import { ROLES } from "@/configuration/dashboard.config";
 import { useAuth } from "@/contexts/AuthContext";
@@ -154,9 +155,9 @@ export default function Header() {
     link.roles.includes(userRole)
   );
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
   };
 
   const handleDrawerToggle = () => {
@@ -264,6 +265,13 @@ export default function Header() {
                   <MenuIcon />
                 </IconButton>
               )}
+              {currentUser && (
+                <Tooltip title="Settings">
+                  <IconButton color="inherit" component={Link} href="/Settings" sx={{ ml: 1 }} aria-label="Settings">
+                    <SettingsIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
           ) : (
             // Desktop View: Full Navigation
@@ -292,6 +300,13 @@ export default function Header() {
                   );
                 })}
               </nav>
+              {currentUser && (
+                <Tooltip title="Settings">
+                  <IconButton color="inherit" component={Link} href="/Settings" sx={{ ml: 1, mr: 1 }} aria-label="Settings">
+                    <SettingsIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
               <Tooltip
                 title={
                   mode === "dark"

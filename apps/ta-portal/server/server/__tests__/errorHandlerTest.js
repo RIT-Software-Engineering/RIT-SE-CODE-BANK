@@ -1,4 +1,4 @@
-const errorHandler = require("../errorHandler");
+const errorHandler = require("../middleware/errorHandler");
 
 describe("Express errorHandler middleware", () => {
   let req, res, next;

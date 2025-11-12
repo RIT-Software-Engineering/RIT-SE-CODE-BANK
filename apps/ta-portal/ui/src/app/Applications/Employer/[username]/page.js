@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   getSemesterCodesForEmployer,
   getCandidateApplicationsAsEmployer,
@@ -40,6 +41,8 @@ export default function EmployerApplicationsPage() {
   // Core hooks for authentication context and component references.
   const { currentUser } = useAuth();
   const filterRef = useRef();
+  const searchParams = useSearchParams();
+  const scrolledRef = useRef(false);
 
   // State for managing application data, loading, and errors.
   const [displayData, setDisplayData] = useState({});
@@ -157,6 +160,25 @@ export default function EmployerApplicationsPage() {
     }
   }, [currentUser, updateApplicationsView]);
 
+  // After data loads, if applicationId is in the query, scroll to and focus that card
+  useEffect(() => {
+    if (loading || scrolledRef.current) return;
+    const appId = searchParams.get('applicationId');
+    if (!appId) return;
+    const el = document.getElementById(`app-${appId}`);
+    if (el) {
+      scrolledRef.current = true;
+      // Expand any parent accordions by clicking summaries if needed
+      try {
+        el.closest('[role="region"]')?.previousElementSibling?.click?.();
+      } catch (_) {}
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
+      }, 50);
+    }
+  }, [loading, searchParams, displayData]);
+
   /**
    * Callback function passed to child ApplicationCard components.
    * Triggers a refresh of the applications view when a status is changed.
@@ -272,6 +294,8 @@ export default function EmployerApplicationsPage() {
                       jobPosition={position}
                       application={app}
                       onStatusChange={handleStatusChange}
+                      cardId={`app-${app.id}`}
+                      isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
                     />
                   ))
                 ) : (

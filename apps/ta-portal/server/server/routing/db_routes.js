@@ -50,6 +50,8 @@ const {
   getAllTimecardsForJob,
   fetchAdminViewData,
   fetchEmployerViewData,
+  getUserNotificationPreferences,
+  upsertUserNotificationPreferences,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -812,14 +814,22 @@ router.get('/user-profile/:username', async (req, res) => {
  */
 router.post('/candidate-profile', async (req, res) => {
   try {
-    // The complete data, including username, username, etc., comes from the request body.
-    const newProfile = await createCandidateProfile(req.body);
+    // Validate incoming payload for required candidate fields before calling DB layer.
+    const candidateData = req.body || {};
+    const required = ['username', 'password', 'fname', 'lname', 'email', 'year'];
+    const missing = required.filter((k) => !(k in candidateData) || candidateData[k] === undefined || candidateData[k] === null || candidateData[k] === '');
+    if (missing.length > 0) {
+      return res.status(400).json({ error: `Missing required fields: ${missing.join(', ')}` });
+    }
+
+    const newProfile = await createCandidateProfile(candidateData);
     res.status(201).json(newProfile); // 201 Created is the standard status for success
   } catch (error) {
     console.error("Error in POST /candidate-profile route:", error);
     // Check for specific Prisma error for unique constraints (e.g., username taken)
-    if (error.code === 'P2002') {
-      return res.status(409).json({ error: `A user with this ${error.meta.target.join(', ')} already exists.` });
+    if (error && error.code === 'P2002') {
+      const target = error.meta && Array.isArray(error.meta.target) ? error.meta.target.join(', ') : (error.meta ? JSON.stringify(error.meta) : 'unique field');
+      return res.status(409).json({ error: `A user with this ${target} already exists.` });
     }
     res.status(500).json({ error: "Failed to create candidate profile." });
   }
@@ -857,8 +867,9 @@ router.post("/employer-profile", async (req, res) => {
     res.status(201).json(newProfile);
   } catch (error) {
     console.error("Error in POST /employer-profile route:", error);
-    if (error.code === 'P2002') {
-      return res.status(409).json({ error: `A user with this ${error.meta.target.join(', ')} already exists.` });
+    if (error && error.code === 'P2002') {
+      const target = error.meta && Array.isArray(error.meta.target) ? error.meta.target.join(', ') : (error.meta ? JSON.stringify(error.meta) : 'unique field');
+      return res.status(409).json({ error: `A user with this ${target} already exists.` });
     }
     res.status(500).json({ error: "Failed to create employer profile." });
   }
@@ -916,6 +927,10 @@ router.put('/terminate-employee/:username', async (req, res) => {
  */
 router.post('/resume', upload.single('resumeFile'), async (req, res) => {
     try {
+
+      console.log("🔥 Incoming /resume request");
+      console.log("Body:", req.body);
+      console.log("File:", req.file);
       if (!req.file) {
         return res.status(400).json({ error: 'Resume file is required.' });
       }
@@ -1170,6 +1185,40 @@ router.get("/timecard/employer/:employerUsername", async (req, res) => {
       console.error(`Error in /timecard/employer/${req.params.employerUsername} route:`, error);
       res.status(500).json({ error: "Failed to retrieve employer timecard data." });
     }
+});
+
+/**
+ * @route   GET /api/db/notifications/preferences
+ * @desc    Returns the current user's notification preferences.
+ * @access  Public (replace with auth middleware when available)
+ */
+router.get("/notifications/preferences", async (req, res) => {
+  const { username } = req.query;
+  if (!username) return res.status(400).json({ error: "Username required" });
+  try {
+    const prefs = await getUserNotificationPreferences(username);
+    res.json(prefs);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * @route   PUT /api/db/notifications/preferences
+ * @desc    Creates or updates the user's notification preferences.
+ * @body    {string} username - The user’s username.
+ * @body    {boolean} notifyEmail
+ * @body    {boolean} notifySlack
+ */
+router.put("/notifications/preferences", async (req, res) => {
+  const { username, notifyEmail, notifySlack } = req.body;
+  if (!username) return res.status(400).json({ error: "Username required" });
+  try {
+    await upsertUserNotificationPreferences(username, notifyEmail, notifySlack);
+    res.sendStatus(204); //success with no response body
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // =============================================================================
