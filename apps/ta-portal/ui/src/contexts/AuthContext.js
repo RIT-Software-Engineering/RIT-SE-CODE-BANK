@@ -58,6 +58,9 @@ export default function AuthProvider({ children }) {
   // the logout function to clear the session
   const logout = useCallback(() => {
     localStorage.removeItem('username');
+    // Also clear Slack authentication when logging out
+    localStorage.removeItem('slackToken');
+    localStorage.removeItem('slackTeamId');
     setCurrentUser(null);
   }, []);
 

@@ -32,6 +32,16 @@ export default function MessagingClient({ initialEmail = "" }) {
   const [feedback, setFeedback] = useState({ type: "", message: "" });
 
   useEffect(() => {
+    // Try to restore from localStorage first
+    const storedToken = localStorage.getItem('slackToken');
+    const storedTeamId = localStorage.getItem('slackTeamId');
+    
+    if (storedToken && storedTeamId) {
+      setSlackToken(storedToken);
+      setTeamId(storedTeamId);
+    }
+
+    // Check URL params (for OAuth callback)
     const queryParams = new URLSearchParams(window.location.search);
     const token = queryParams.get("token");
     const team = queryParams.get("teamId");
@@ -40,6 +50,9 @@ export default function MessagingClient({ initialEmail = "" }) {
     if (token && team) {
       setSlackToken(token);
       setTeamId(team);
+      // Persist to localStorage
+      localStorage.setItem('slackToken', token);
+      localStorage.setItem('slackTeamId', team);
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     if (error) {
@@ -88,6 +101,14 @@ export default function MessagingClient({ initialEmail = "" }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDisconnectSlack = () => {
+    setSlackToken(null);
+    setTeamId(null);
+    localStorage.removeItem('slackToken');
+    localStorage.removeItem('slackTeamId');
+    setFeedback({ type: "success", message: "Disconnected from Slack successfully." });
   };
 
   return (
@@ -150,7 +171,7 @@ export default function MessagingClient({ initialEmail = "" }) {
               rows={6}
               required
             />
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3, gap: 2 }}>
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -163,6 +184,14 @@ export default function MessagingClient({ initialEmail = "" }) {
                 ) : (
                   "Send Message"
                 )}
+              </Button>
+              <Button
+                onClick={handleDisconnectSlack}
+                variant="outlined"
+                color="error"
+                size="large"
+              >
+                Disconnect Slack
               </Button>
             </Box>
           </Box>
