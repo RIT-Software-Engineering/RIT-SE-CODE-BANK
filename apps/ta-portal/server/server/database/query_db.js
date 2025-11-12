@@ -1110,7 +1110,7 @@ async function hireCandidateForJobPosition(
     // =====================================================
     try {
       const details = await getApplicationDetailsForNotify(applicationId);
-      if (`details:${details}`) {
+      if (details) {
   const { candidateName, candidateEmail, jobPositionId } = details;
         const { emails: stakeholderEmails } = await getCourseStakeholders(
           jobPositionId
