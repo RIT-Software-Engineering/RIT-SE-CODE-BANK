@@ -36,7 +36,7 @@ export async function sendEmail({ to, subject, text, html, attachCidLogo = false
     }
   }
 
-  const from = process.env.SMTP_FROM || "se-apps@rit.edu";
+  const from = process.env.SMTP_FROM || "se_svc_apps@rit.edu";
   const info = await getTransport().sendMail({
     from,
     to,

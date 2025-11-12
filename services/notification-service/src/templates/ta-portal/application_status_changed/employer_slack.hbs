@@ -1,13 +1,13 @@
 🟧 *Application Update*  
 
 {{#if flags.hired}}
-Candidate *{{recipient.name}}* has been *HIRED* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+Candidate *{{#if item.candidateName}}{{item.candidateName}}{{else}}(candidate){{/if}}* has been *HIRED* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
 {{else if flags.acceptedOffer}}
-Candidate *{{recipient.name}}* has *ACCEPTED* the offer for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+Candidate *{{#if item.candidateName}}{{item.candidateName}}{{else}}(candidate){{/if}}* has *ACCEPTED* the offer for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
 {{else if flags.applied}}
-Candidate *{{recipient.name}}* has *APPLIED* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+New application submitted by *{{#if item.candidateName}}{{item.candidateName}}{{else}}a candidate{{/if}}* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
 {{else}}
-Candidate *{{recipient.name}}* moved to *{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+Candidate *{{#if item.candidateName}}{{item.candidateName}}{{else}}(candidate){{/if}}* moved to *{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
 {{/if}}
 
 {{#if comment}}

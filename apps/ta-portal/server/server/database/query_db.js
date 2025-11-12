@@ -645,6 +645,8 @@ async function applyForJobPosition(applicationDetails) {
                 title: jobPosition.course.name,
                 ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
                 ownerEmail: employerEmail,
+                candidateName: `${newApp.candidateFName} ${newApp.candidateLName}`,
+                candidateEmail: newApp.candidateEmail,
               },
               status: { new: 'APPLIED' },
               flags: { applied: true },
@@ -848,7 +850,6 @@ try {
   if (!details) throw new Error("Application not found for notify");
 
   const { candidateName, candidateEmail, jobPositionId } = details;
-  const { emails: stakeholders } = await getCourseStakeholders(jobPositionId);
 
   const eventTypeMap = {
     INTERVIEW: "MOVED_TO_INTERVIEW",
@@ -895,7 +896,14 @@ try {
         context: {
           // generic
           recipient: { name: details.instructorName, email: employerEmail },
-          item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName, ownerEmail: employerEmail },
+          item: {
+            id: details.jobPositionId,
+            title: details.courseName,
+            ownerName: details.instructorName,
+            ownerEmail: employerEmail,
+            candidateName: details.candidateName,
+            candidateEmail: details.candidateEmail,
+          },
           status: { new: status },
           comment: comments,
           flags: { hired: status === 'HIRED', acceptedOffer: status === 'ACCEPTED_OFFER' },
@@ -1126,7 +1134,13 @@ async function hireCandidateForJobPosition(
               context: {
                 // generic
                 recipient: { name: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}` , email: employerEmail },
-                item: { id: jobPositionId, title: jobPosition.course?.name, ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}` },
+                item: {
+                  id: jobPositionId,
+                  title: jobPosition.course?.name,
+                  ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                  candidateName: candidateName,
+                  candidateEmail: candidateEmail,
+                },
                 status: { new: 'HIRED' },
                 comment: commentData?.comment,
                 flags: { hired: true },

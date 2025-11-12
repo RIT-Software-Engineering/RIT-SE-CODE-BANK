@@ -1215,7 +1215,7 @@ router.put("/notifications/preferences", async (req, res) => {
   if (!username) return res.status(400).json({ error: "Username required" });
   try {
     await upsertUserNotificationPreferences(username, notifyEmail, notifySlack);
-    res.sendStatus(204); //sucess with no response body
+    res.sendStatus(204); //success with no response body
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
