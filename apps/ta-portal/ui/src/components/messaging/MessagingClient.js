@@ -395,8 +395,8 @@ export default function MessagingClient({ initialEmail = "" }) {
                 ) : (
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     {messageHistory.map((msg, idx) => {
-                      const showTimestamp = idx === 0 || 
-                        (messageHistory[idx - 1].ts && Math.abs(msg.ts - messageHistory[idx - 1].ts) > 300); // 5 min gap
+                      const showTimestamp = idx === 0 ||
+                        (idx > 0 && messageHistory[idx - 1].ts && Math.abs(msg.ts - messageHistory[idx - 1].ts) > 300); // 5 min gap
                       
                       return (
                         <Box key={idx}>
