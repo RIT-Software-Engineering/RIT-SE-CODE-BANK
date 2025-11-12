@@ -8,6 +8,12 @@ import {
   List as ListIcon,
   CheckSquare,
 } from "lucide-react";
+import {
+  createOnboardingWorkflow,
+  updateOnboardingWorkflow,
+  getWorkflowActions,
+  deleteWorkflow,
+} from "../services/workflowService";
 import "../styles/course.css";
 
 function CoursePage() {
@@ -373,31 +379,125 @@ function CoursePage() {
   );
 }
 
-// Placeholder component for onboarding editor (we'll build this next)
+// Onboarding Workflow Editor Component
 function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
   const [actions, setActions] = useState([
-    { id: 1, title: "Review Syllabus", description: "", order: 1 },
+    { id: "temp-1", title: "Review Syllabus", description: "", order: 1 },
     {
-      id: 2,
+      id: "temp-2",
       title: "Add Important Dates to Calendar",
       description: "",
       order: 2,
     },
     {
-      id: 3,
+      id: "temp-3",
       title: "Join Course Communication Channel",
       description: "",
       order: 3,
     },
-    { id: 4, title: "Complete Intro Assignment", description: "", order: 4 },
+    {
+      id: "temp-4",
+      title: "Complete Intro Assignment",
+      description: "",
+      order: 4,
+    },
   ]);
+  const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
+  const [error, setError] = useState(null);
+
+  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
+
+  // Load existing workflow actions if course has a workflow
+  useEffect(() => {
+    if (course?.workflowId) {
+      loadExistingWorkflow();
+    }
+  }, [course]);
+
+  const loadExistingWorkflow = async () => {
+    setLoadingData(true);
+    try {
+      const workflowActions = await getWorkflowActions(course.workflowId);
+      if (workflowActions.length > 0) {
+        setActions(workflowActions);
+      }
+    } catch (error) {
+      console.error("Error loading workflow:", error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const handleAddAction = () => {
+    setActions([
+      ...actions,
+      {
+        id: `temp-${Date.now()}`,
+        title: "",
+        description: "",
+        order: actions.length + 1,
+      },
+    ]);
+  };
+
+  const handleRemoveAction = (index) => {
+    const updated = actions.filter((_, i) => i !== index);
+    setActions(updated);
+  };
+
+  const handleActionChange = (index, field, value) => {
+    const updated = [...actions];
+    updated[index][field] = value;
+    setActions(updated);
+  };
 
   const handleSave = async () => {
-    // TODO: Connect to Workflows API
-    console.log("Saving workflow for course:", course.id);
-    console.log("Actions:", actions);
-    onSave();
+    // Validate actions
+    const validActions = actions.filter((a) => a.title.trim() !== "");
+
+    if (validActions.length === 0) {
+      setError("Please add at least one action");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // For now, always create a new workflow (simpler)
+      // TODO: Implement proper update logic later
+      const result = await createOnboardingWorkflow(course, validActions);
+
+      // Save workflow ID back to course
+      if (result.success) {
+        await fetch(`${API_BASE}/course/${course.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workflowId: result.workflowId,
+          }),
+        });
+
+        onSave();
+      } else {
+        setError(result.error || "Failed to save workflow");
+      }
+    } catch (error) {
+      console.error("Error saving workflow:", error);
+      setError("Failed to save workflow. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (loadingData) {
+    return (
+      <div className="onboarding-editor">
+        <div className="loading-state">Loading workflow...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="onboarding-editor">
@@ -406,48 +506,52 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
         first enroll in this course.
       </p>
 
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
       <div className="actions-list">
         {actions.map((action, index) => (
-          <div key={action.id} className="action-item">
+          <div key={action.id || index} className="action-item">
             <span className="action-number">{index + 1}</span>
             <input
               type="text"
               className="action-title"
               value={action.title}
-              onChange={(e) => {
-                const updated = [...actions];
-                updated[index].title = e.target.value;
-                setActions(updated);
-              }}
+              onChange={(e) =>
+                handleActionChange(index, "title", e.target.value)
+              }
               placeholder="Action title..."
             />
+            <Button
+              variant="outline-danger"
+              size="sm"
+              onClick={() => handleRemoveAction(index)}
+              disabled={actions.length === 1}
+              title="Remove action"
+            >
+              <Trash2 size={16} />
+            </Button>
           </div>
         ))}
       </div>
 
       <Button
         variant="outline-primary"
-        onClick={() => {
-          setActions([
-            ...actions,
-            {
-              id: actions.length + 1,
-              title: "",
-              description: "",
-              order: actions.length + 1,
-            },
-          ]);
-        }}
+        onClick={handleAddAction}
+        disabled={loading}
       >
         <Plus size={16} /> Add Action
       </Button>
 
       <div className="editor-actions">
-        <Button variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel} disabled={loading}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={handleSave}>
-          Save Workflow
+        <Button variant="primary" onClick={handleSave} disabled={loading}>
+          {loading ? "Saving..." : "Save Workflow"}
         </Button>
       </div>
     </div>

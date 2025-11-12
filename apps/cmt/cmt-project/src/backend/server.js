@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 const path = require("path");
 
 const eventRoutes = require("./routes/events");
-
 const templateRoutes = require("./routes/template");
 
 const app = express();
@@ -33,7 +32,7 @@ app.use((req, res, next) => {
 // Routes
 app.use("/api/events", eventRoutes);
 app.use("/api/template", templateRoutes);
-app.use('/api/team-builder', teamBuilderRoutes);
+app.use("/api/team-builder", teamBuilderRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -54,15 +53,6 @@ app.get("/", (req, res) => {
       events: "/api/events",
       courses: "/api/events/courses",
     },
-  });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("Error:", err.stack);
-  res.status(500).json({
-    error: "Something went wrong!",
-    message: err.message,
   });
 });
 
@@ -94,7 +84,45 @@ app.post("/api/course", async (req, res) => {
   }
 });
 
-// 404 handler
+// UPDATE course - add workflowId
+// IMPORTANT: This MUST be BEFORE the 404 handler!
+app.put("/api/course/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    console.log("PUT /api/course/:id called with:", id, updateData);
+
+    const updatedCourse = await prisma.course.update({
+      where: { id },
+      data: updateData,
+    });
+
+    console.log("Course updated successfully:", updatedCourse);
+
+    res.json({
+      success: true,
+      data: updatedCourse,
+    });
+  } catch (error) {
+    console.error("Error updating course:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err.stack);
+  res.status(500).json({
+    error: "Something went wrong!",
+    message: err.message,
+  });
+});
+
+// 404 handler - MUST BE LAST!
 app.use("*", (req, res) => {
   res.status(404).json({
     error: "Route not found",

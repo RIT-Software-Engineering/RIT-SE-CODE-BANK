@@ -80,6 +80,7 @@ model Course {
   events       Event[]
   tbenrollment TBEnrollment[]
   tbteamset    TBTeamSet[]
+  workflowId    String?
 
   @@id([id, professorId])
   @@index([professorId])
