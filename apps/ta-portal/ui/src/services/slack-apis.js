@@ -15,10 +15,10 @@ export async function getSlackOAuthURL(email = "") {
   }
 
   const response = await fetch(url.toString(), { credentials: 'include' });
-  if (!response.ok) {
-    throw new Error('Failed to get OAuth URL');
-  }
   const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to get OAuth URL');
+  }
   return data.url;
 }
 
@@ -39,10 +39,11 @@ export async function sendMessageToSlack({ email, text }) {
     credentials: 'include',
   });
 
+  const data = await response.json();
   if (!response.ok) {
-    throw new Error('Failed to send message');
+    throw new Error(data.message || 'Failed to send message');
   }
-  return response.json();
+  return data;
 }
 
 // Get message history with a specific user
@@ -62,10 +63,11 @@ export async function getSlackMessageHistory({ email, limit = 50 }) {
     credentials: 'include',
   });
 
+  const data = await response.json();
   if (!response.ok) {
-    throw new Error('Failed to fetch message history');
+    throw new Error(data.message || 'Failed to fetch message history');
   }
-  return response.json();
+  return data;
 }
 
 // Check if there's an active Slack session
@@ -75,10 +77,11 @@ export async function getSlackSession() {
   }
   const url = `${BASE_API_URL}${SLACK_API_EXTENSION}/session`;
   const res = await fetch(url, { credentials: 'include' });
+  const data = await res.json();
   if (!res.ok) {
-    throw new Error('Failed to check session');
+    throw new Error(data.message || 'Failed to check session');
   }
-  return res.json();
+  return data;
 }
 
 // Logout and clear Slack cookies
@@ -88,10 +91,11 @@ export async function slackLogout() {
   }
   const url = `${BASE_API_URL}${SLACK_API_EXTENSION}/logout`;
   const res = await fetch(url, { method: 'POST', credentials: 'include' });
+  const data = await res.json();
   if (!res.ok) {
-    throw new Error('Failed to logout');
+    throw new Error(data.message || 'Failed to logout');
   }
-  return res.json();
+  return data;
 }
 
 // Get list of recent DM conversations
@@ -101,8 +105,9 @@ export async function getRecentDMs() {
   }
   const url = `${BASE_API_URL}${SLACK_API_EXTENSION}/recent-dms`;
   const res = await fetch(url, { credentials: 'include' });
+  const data = await res.json();
   if (!res.ok) {
-    throw new Error('Failed to fetch recent DMs');
+    throw new Error(data.message || 'Failed to fetch recent DMs');
   }
-  return res.json();
+  return data;
 }

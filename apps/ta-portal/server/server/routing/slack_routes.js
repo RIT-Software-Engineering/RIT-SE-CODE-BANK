@@ -7,7 +7,7 @@ router.get('/oauth-url', (req, res) => {
     const { state } = req.query;
     const clientId = process.env.SLACK_CLIENT_ID;
     const redirectUri = encodeURIComponent(process.env.SLACK_REDIRECT_URI);
-    const scope = encodeURIComponent('users:read.email,chat:write,im:write,users:read,im:history');
+    const scope = encodeURIComponent('users:read.email,chat:write,im:write,users:read,im:history,im:read');
     const oauthUrl = `https://slack.com/oauth/v2/authorize?client_id=${clientId}&user_scope=${scope}&redirect_uri=${redirectUri}&state=${
       state || ""
     }`;
