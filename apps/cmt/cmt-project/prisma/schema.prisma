@@ -148,8 +148,11 @@ model TBTeamSet {
 
 enum EventType {
   exam
+  quiz
   assignment
   lecture
+  project
+  class_activity
   lab
   office_hours
   meeting

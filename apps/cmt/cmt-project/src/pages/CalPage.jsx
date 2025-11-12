@@ -40,7 +40,7 @@ export default function CalPage() {
   });
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
 
-  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/api/events`;
+  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/events`;
 
   const loadCourses = async () => {
     try {

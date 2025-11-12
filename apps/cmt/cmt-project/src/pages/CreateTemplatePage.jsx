@@ -19,7 +19,7 @@ function CreateTemplatePage() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 
-  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/api`;
+  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
 
   // Fetch existing templates when component loads
   useEffect(() => {

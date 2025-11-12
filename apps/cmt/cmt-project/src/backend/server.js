@@ -16,6 +16,9 @@ const prisma = new PrismaClient();
 const makeTeamBuilderRouter = require("./routes/teamBuilder");
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 
+const makeCourseWebsiteRouter = require("./routes/courseWebsite");
+const courseWebsiteRoutes = makeCourseWebsiteRouter(prisma);
+
 app.use(
   cors({
     origin: /^http:\/\/localhost:\d+$/, // allows any localhost port
@@ -34,6 +37,7 @@ app.use((req, res, next) => {
 app.use("/api/events", eventRoutes);
 app.use("/api/template", templateRoutes);
 app.use("/api/team-builder", teamBuilderRoutes);
+app.use("/api/course-website", courseWebsiteRoutes)
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
