@@ -6,7 +6,7 @@ export async function resolveUserEmail({ appId, userId }) {
   if (!appId || !userId) return null;
   try {
     if (appId === 'ta-portal') {
-      const base = process.env.TAPORTAL_API_URL || 'http://127.0.0.1:3300';
+      const base = process.env.TAPORTAL_API_URL || 'http://localhost:3300';
       const url = `${base.replace(/\/$/, '')}/api/db/user/${encodeURIComponent(userId)}`;
       const resp = await axios.get(url, { validateStatus: () => true });
       if (resp.status === 200 && resp.data && resp.data.email) {

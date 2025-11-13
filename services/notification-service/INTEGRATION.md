@@ -120,7 +120,7 @@ services/notification-service/src/templates/my-app/application_status_changed/
 
 ## Context Contract
 
-Context is app-defined, but the service uses a standardized app-agnostic structure:
+Context is app-defined, but the service uses a standardized generic structure:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -132,9 +132,8 @@ Context is app-defined, but the service uses a standardized app-agnostic structu
 | `cta` | `{ url: string }` | Call-to-action URL |
 | `appName` | `string?` | Application name |
 
-> ⚠️ **Legacy fields removed**: Old aliases like `candidate_name`, `job_title`, `new_status`, `is_*`, and `app_link` are no longer supported. Update your producers and templates to use the standardized fields above.
 
-### Building Robust CTAs
+### Building Robust CTAs (Call To Action links)
 
 **Best practice**: Use a single universal route (like TA Portal's `/Applications`) with query params that identify the target item (e.g., `jobPositionId` and `applicationId`).
 

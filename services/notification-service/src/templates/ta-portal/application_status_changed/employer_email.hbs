@@ -21,24 +21,25 @@
         {{/if}}
       </p>
 
+      {{!-- For employer notifications, recipient is the employer. Use item.candidateName when available. --}}
       {{#if flags.hired}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-          Candidate <strong>{{recipient.name}}</strong> has been <strong>HIRED</strong>
+          Candidate <strong>{{#if item.candidateName}}{{item.candidateName}}{{else}}(candidate){{/if}}</strong> has been <strong>HIRED</strong>
           for <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
         </p>
       {{else if flags.acceptedOffer}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-          Candidate <strong>{{recipient.name}}</strong> has <strong>ACCEPTED</strong> the offer for
+          Candidate <strong>{{#if item.candidateName}}{{item.candidateName}}{{else}}(candidate){{/if}}</strong> has <strong>ACCEPTED</strong> the offer for
           <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
         </p>
       {{else if flags.applied}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-          Candidate <strong>{{recipient.name}}</strong> has <strong>APPLIED</strong> to
-          <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
+          A new application was submitted by <strong>{{#if item.candidateName}}{{item.candidateName}}{{else}}a candidate{{/if}}</strong>
+          for <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
         </p>
       {{else}}
         <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-          Candidate <strong>{{recipient.name}}</strong> moved to status
+          Candidate <strong>{{#if item.candidateName}}{{item.candidateName}}{{else}}(candidate){{/if}}</strong> moved to status
           <strong>{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}</strong>
           for <strong>{{#if item.title}}{{item.title}}{{else}}this position{{/if}}</strong>.
         </p>
