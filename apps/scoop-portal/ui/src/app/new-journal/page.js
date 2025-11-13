@@ -305,38 +305,16 @@ export default function Journal() {
     }
   };
 
-  /**
-   * A stubbed function for creating a new journal entry.
-   * Currently, an alert is produced.
-   * @returns {void}
-   */
-  const handleCreateNewEntry = () => {
-    if (!newEntrySemester || !newEntryRecipientIds || !newEntryTopicId) {
-      toast.error("Please fill out all fields.");
-      return;
+  function EntriesList({entries}){
+    if(entries == null || entries.length === 0){
+      return(
+        <Typography variant="body1">
+          No journal entries found. Please check back later.
+        </Typography>
+      );
     }
-
-    toast.promise(postNewEntry(), {
-      loading: "Creating new journal entry...",
-      success: "Journal entry created!",
-      error: "Failed to create a new journal entry.",
-    });
-  };
-
-  return (
-    <>
-      <Header />
-      <Container maxWidth="lg" sx={{ py: 4, "& > *:last-child": { mb: "0" } }}>
-        <JournalHeader
-          setFilterDialogOpen={setFilterDialogOpen}
-          setNewEntryOpen={setNewEntryOpen}
-        />
-        {filteredJournalEntries.length === 0 ? (
-          <Typography variant="body1">
-            No journal entries found. Please check back later.
-          </Typography>
-        ) : (
-          filteredJournalEntries.map((entry) => (
+    return(
+        <>{entries.map((entry) => (
             <Card
               key={entry.id}
               square
@@ -406,8 +384,38 @@ export default function Journal() {
                   Show Replies
                 </Button>
             </Card>
-          ))
-        )}
+          ))}
+    </>);
+  }
+
+
+  /**
+   * A stubbed function for creating a new journal entry.
+   * Currently, an alert is produced.
+   * @returns {void}
+   */
+  const handleCreateNewEntry = () => {
+    if (!newEntrySemester || !newEntryRecipientIds || !newEntryTopicId) {
+      toast.error("Please fill out all fields.");
+      return;
+    }
+
+    toast.promise(postNewEntry(), {
+      loading: "Creating new journal entry...",
+      success: "Journal entry created!",
+      error: "Failed to create a new journal entry.",
+    });
+  };
+
+  return (
+    <>
+      <Header />
+      <Container maxWidth="lg" sx={{ py: 4, "& > *:last-child": { mb: "0" } }}>
+        <JournalHeader
+          setFilterDialogOpen={setFilterDialogOpen}
+          setNewEntryOpen={setNewEntryOpen}
+        />
+      <EntriesList entries={filteredJournalEntries}></EntriesList>
       </Container>
       {/* Add Entry */}
       <Dialog
@@ -657,7 +665,7 @@ export default function Journal() {
       >
         {replyEntry && (
         <DialogContent>
-          <Typography>{JSON.stringify(replyEntry.next_entries)}</Typography>
+          <EntriesList entries={replyEntry.next_entries}></EntriesList>
         </DialogContent>
         )}
       </Dialog>

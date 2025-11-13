@@ -190,7 +190,13 @@ router.get("/:id", async (req, res) => {
           sender: true,
           recipients: true,
           topic: true,
-          next_entries: true,
+          next_entries: {
+            include:{
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
         },
         })
       res.status(200).json(scooployeeEntries);
@@ -201,7 +207,13 @@ router.get("/:id", async (req, res) => {
           sender: true,
           recipients: true,
           topic: true,
-          next_entries: true,
+          next_entries: {
+            include: {
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
         },
       });
       res.status(200).json(dinatorEntries); 
@@ -242,7 +254,13 @@ router.get("/:id", async (req, res) => {
               sender: true,
               recipients: true,
               topic: true,
-              next_entries: true,
+              next_entries: {
+                include:{
+                  sender: true,
+                  recipients: true,
+                  topic: true,
+                },
+              },
             },
         });
         res.status(200).json(visorEntries);       
