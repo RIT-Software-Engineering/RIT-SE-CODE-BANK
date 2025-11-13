@@ -19,14 +19,14 @@ import "../styles/calendar.css";
 export default function CalPage() {
   console.log("Loaded CalPage.jsx");
 
-  // State management
+  // ---------- State ----------
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState("all");
   const [courses, setCourses] = useState([]);
-  const [events, setEvents] = useState([]); // Changed from {} to []
+  const [events, setEvents] = useState({}); // object keyed by yyyy-mm-dd
   const [selectedDate, setSelectedDate] = useState(null);
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -40,12 +40,48 @@ export default function CalPage() {
   });
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
 
-  const API_BASE = "http://localhost:5000/api/events";
+  // Use CRA proxy -> goes to http://localhost:5000
+  const API_BASE = "/api/events";
 
+  // Small helper so we always send cookies
+  async function fetchJSON(url, opts = {}) {
+    const resp = await fetch(url, { credentials: "include", ...opts });
+    // Guard against 401/other non-JSON responses
+    const text = await resp.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { /* leave as text */ }
+    if (!resp.ok) {
+      const msg = (data && (data.error || data.message)) || text || resp.statusText;
+      throw new Error(msg);
+    }
+    return data ?? {};
+  }
+
+  function toYMD(value, baseMonthDate) {
+  // already YYYY-MM-DD
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+  // Date object
+  if (value instanceof Date && !isNaN(value)) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  // Day number (1..31) -> combine with the currently viewed month
+  if (Number.isInteger(value)) {
+    const y = baseMonthDate.getFullYear();
+    const m = baseMonthDate.getMonth(); // 0-based
+    const d = new Date(y, m, value);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Fallback: use the current month view’s “today”
+  return baseMonthDate.toISOString().slice(0, 10);
+}
+
+  // ---------- Loads ----------
   const loadCourses = async () => {
     try {
-      const response = await fetch(`${API_BASE}/courses`);
-      const result = await response.json();
+      const result = await fetchJSON(`${API_BASE}/courses`);
       if (result.success) setCourses(result.data);
     } catch (error) {
       console.error("Error loading courses:", error);
@@ -54,22 +90,28 @@ export default function CalPage() {
 
   const loadEvents = async () => {
     try {
-      const response = await fetch(API_BASE);
-      const result = await response.json();
+      const result = await fetchJSON(API_BASE);
       if (result.success) {
-        // Transform the array of events into date-grouped object for calendar display
-        const eventsByDate = {};
-        result.data.forEach((event) => {
-          const dateKey = new Date(event.date).toISOString().split("T")[0];
-          if (!eventsByDate[dateKey]) {
-            eventsByDate[dateKey] = [];
-          }
-          eventsByDate[dateKey].push(event);
-        });
-        setEvents(eventsByDate);
+        // group by yyyy-mm-dd
+        const byDate = {};
+        for (const ev of result.data) {
+          const key = new Date(ev.date).toISOString().split("T")[0];
+          (byDate[key] ||= []).push(ev);
+        }
+        setEvents(byDate);
       }
     } catch (error) {
       console.error("Error loading events:", error);
+    }
+  };
+
+  const loadUpcomingDeadlines = async () => {
+    try {
+      const result = await fetchJSON(`${API_BASE}/deadlines?days=7`);
+      if (result.success) setUpcomingDeadlines(result.data);
+    } catch (error) {
+      console.error("Error loading deadlines:", error);
+      setUpcomingDeadlines([]);
     }
   };
 
@@ -79,20 +121,7 @@ export default function CalPage() {
     loadUpcomingDeadlines();
   }, []);
 
-  const loadUpcomingDeadlines = async () => {
-    try {
-      const response = await fetch(`${API_BASE}/deadlines?days=7`);
-      const result = await response.json();
-      if (result.success) {
-        setUpcomingDeadlines(result.data);
-      }
-    } catch (error) {
-      console.error("Error loading deadlines:", error);
-      setUpcomingDeadlines([]);
-    }
-  };
-
-  // Button handler functions
+  // ---------- Actions ----------
   const handleAddEvent = (date = null) => {
     setSelectedDate(date);
     setNewEvent({
@@ -109,30 +138,36 @@ export default function CalPage() {
   };
 
   const handleSaveNewEvent = async () => {
-    if (!newEvent.title || !newEvent.courseId) {
-      alert("Please fill in required fields: Title and Course");
-      return;
-    }
+  if (!newEvent.title || !newEvent.courseId) {
+    alert("Please fill in required fields: Title and Course");
+    return;
+  }
 
-    try {
-      const response = await fetch(API_BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...newEvent, date: selectedDate }),
-      });
-      const result = await response.json();
+  // normalize to YYYY-MM-DD for the backend
+  const dateYMD = toYMD(
+    selectedDate ?? new Date(),   // raw selected (number or Date) or now
+    new Date(currentDate)         // the month the user is viewing
+  );
 
-      if (result.success) {
-        await loadEvents();
-        await loadUpcomingDeadlines();
-        setShowAddEventModal(false);
-        alert("Event added successfully!");
-      } else {
-        alert(`Error: ${result.error}`);
-      }
-    } catch (error) {
-      alert("Failed to save event");
+  try {
+    const result = await fetchJSON(API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // fetchJSON already sets credentials: 'include'
+      body: JSON.stringify({ ...newEvent, date: dateYMD }),
+    });
+
+    if (result.success) {
+      await loadEvents();
+      await loadUpcomingDeadlines();
+      setShowAddEventModal(false);
+      alert("Event added successfully!");
+    } else {
+      alert(`Error: ${result.error || "Unknown error"}`);
     }
+  } catch (error) {
+    alert(`Failed to save event: ${error.message}`);
+  }
   };
 
   const handleEditEvent = () => {
@@ -141,23 +176,23 @@ export default function CalPage() {
   };
 
   const handleDeleteEvent = async () => {
-    if (!selectedEvent || !window.confirm(`Delete "${selectedEvent.title}"?`))
-      return;
+    if (!selectedEvent || !window.confirm(`Delete "${selectedEvent.title}"?`)) return;
 
     try {
-      const response = await fetch(`${API_BASE}/${selectedEvent.id}`, {
+      const result = await fetchJSON(`${API_BASE}/${selectedEvent.id}`, {
         method: "DELETE",
+        credentials: "include",
       });
-      const result = await response.json();
-
       if (result.success) {
         await loadEvents();
         await loadUpcomingDeadlines();
         setShowEventModal(false);
         alert("Event deleted successfully!");
+      } else {
+        alert(`Error: ${result.error || "Unknown error"}`);
       }
     } catch (error) {
-      alert("Failed to delete event");
+      alert(`Failed to delete event: ${error.message}`);
     }
   };
 
@@ -171,19 +206,10 @@ export default function CalPage() {
     setSelectedDate(null);
   };
 
+  // ---------- Helpers ----------
   const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "January","February","March","April","May","June",
+    "July","August","September","October","November","December",
   ];
 
   const eventTypes = {
@@ -195,41 +221,26 @@ export default function CalPage() {
     meeting: { icon: Users },
   };
 
-  // Calendar utilities
-  const getDaysInMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
+  const getDaysInMonth = (date) =>
+    new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
-  const getFirstDayOfMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
+  const getFirstDayOfMonth = (date) =>
+    new Date(date.getFullYear(), date.getMonth(), 1).getDay();
 
   const generateCalendarDays = () => {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
     const days = [];
-
-    for (let i = 0; i < firstDay; i++) {
-      days.push(0);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
-    }
+    for (let i = 0; i < firstDay; i++) days.push(0);
+    for (let d = 1; d <= daysInMonth; d++) days.push(d);
 
     const weeks = [];
-    for (let i = 0; i < days.length; i += 7) {
-      weeks.push(days.slice(i, i + 7));
-    }
-
+    for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
     return weeks;
   };
 
-  const formatDate = (year, month, day) => {
-    return `${year}-${String(month + 1).padStart(2, "0")}-${String(
-      day
-    ).padStart(2, "0")}`;
-  };
+  const formatDate = (year, month, day) =>
+    `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
   const isToday = (day) => {
     if (day === 0) return false;
@@ -242,9 +253,9 @@ export default function CalPage() {
   };
 
   const navigateMonth = (direction) => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + direction);
-    setCurrentDate(newDate);
+    const next = new Date(currentDate);
+    next.setMonth(currentDate.getMonth() + direction);
+    setCurrentDate(next);
   };
 
   const showEventDetails = (event) => {
@@ -253,25 +264,16 @@ export default function CalPage() {
   };
 
   const getCourseInfo = (courseId) => {
-    // Handle null courseId for admin events
-    if (!courseId) {
-      return { name: "Administrative", color: "gray" };
-    }
-
+    if (!courseId) return { name: "Administrative", color: "gray" };
     return (
-      courses.find((course) => course.id === courseId) || {
-        name: "Administrative",
-        color: "gray",
-      }
+      courses.find((c) => c.id === courseId) || { name: "Administrative", color: "gray" }
     );
   };
 
   const filterEventsByCourse = (dayEvents) => {
     if (selectedCourse === "all") return dayEvents;
     return dayEvents.filter(
-      (event) =>
-        event.courseId === selectedCourse ||
-        (!event.courseId && selectedCourse === "admin")
+      (ev) => ev.courseId === selectedCourse || (!ev.courseId && selectedCourse === "admin")
     );
   };
 
