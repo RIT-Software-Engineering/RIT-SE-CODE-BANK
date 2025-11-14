@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 const path = require("path");
 
 const eventRoutes = require("./routes/events");
-
 const templateRoutes = require("./routes/template");
 
 const app = express();
@@ -15,6 +14,17 @@ const prisma = new PrismaClient();
 
 const makeTeamBuilderRouter = require("./routes/teamBuilder");
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
+
+// ---- DEV USERS JSON (only in dev) ----
+let devUsers = [];
+if (process.env.NODE_ENV !== "production") {
+  try {
+    devUsers = require(path.join(__dirname, "dev-users.json"));
+    console.log("Loaded dev users:", devUsers.length);
+  } catch (e) {
+    console.error("Could not load dev-users.json:", e.message);
+  }
+}
 
 app.use(
   cors({
@@ -56,6 +66,63 @@ app.get("/", (req, res) => {
     },
   });
 });
+
+// ---------------- Dev Temporary Login (JSON-based) ----------------
+if (process.env.NODE_ENV !== "production") {
+  const jwt = require("jsonwebtoken");
+
+  // List of users for the React DevLoginPage
+  app.get("/dev/users", (req, res) => {
+    const publicUsers = devUsers.map(({ id, email, name, roles }) => ({
+      id,
+      email,
+      name,
+      roles,
+    }));
+    res.json(publicUsers);
+  });
+
+  // Helper: map dev user to JWT payload (match your future Shib claims)
+  function buildClaimsFromDevUser(user) {
+    return {
+      sub: user.uid || user.email,
+      email: user.email,
+      name: user.name,
+      givenName: user.givenName,
+      sn: user.sn,
+      affiliations: user.affiliations || [],
+      roles: user.roles || [],
+      uid: user.uid,
+    };
+  }
+
+  // POST /dev/login { id } -> set cmt_id cookie
+  app.post("/dev/login", (req, res) => {
+    const { id } = req.body;
+    const user = devUsers.find((u) => u.id === id);
+
+    if (!user) {
+      return res.status(404).json({ error: "Unknown dev user" });
+    }
+
+    const claims = buildClaimsFromDevUser(user);
+
+    const token = jwt.sign(claims, process.env.JWT_SECRET, {
+      issuer: "cmt-auth",
+      expiresIn: "8h",
+    });
+
+    res.cookie("cmt_id", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false, // ok for localhost
+      path: "/",
+      maxAge: 8 * 60 * 60 * 1000,
+    });
+
+    res.json({ ok: true, user: claims });
+  });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {

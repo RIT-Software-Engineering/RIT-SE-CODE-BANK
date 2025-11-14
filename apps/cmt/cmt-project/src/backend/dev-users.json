@@ -1,0 +1,32 @@
+[
+  {
+    "id": "prof1",
+    "email": "prof1@rit.edu",
+    "name": "Professor One",
+    "givenName": "Professor",
+    "sn": "One",
+    "uid": "pao1234",
+    "affiliations": ["employee", "faculty"],
+    "roles": ["instructor"]
+  },
+  {
+    "id": "ta1",
+    "email": "ta1@rit.edu",
+    "name": "TA One",
+    "givenName": "TA",
+    "sn": "One",
+    "uid": "tto5678",
+    "affiliations": ["employee"],
+    "roles": ["ta"]
+  },
+  {
+    "id": "student1",
+    "email": "student1@rit.edu",
+    "name": "Student One",
+    "givenName": "Student",
+    "sn": "One",
+    "uid": "sso9999",
+    "affiliations": ["student"],
+    "roles": ["student"]
+  }
+]
