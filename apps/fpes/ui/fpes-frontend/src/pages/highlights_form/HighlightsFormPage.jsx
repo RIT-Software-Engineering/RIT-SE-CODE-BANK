@@ -46,8 +46,6 @@ export default function HighlightsFormPage() {
         mode:"onChange"
     });
 
-    console.log(errors)
-
     return (
         <div>
             <Stepper sx={{minWidth:"800px"}} activeStep={activeStep}>
