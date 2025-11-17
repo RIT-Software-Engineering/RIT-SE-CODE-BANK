@@ -29,18 +29,19 @@ async function addHighlight({
   supervisor_id = null,
   student_support_id = null,
   collaborations_section = null,
-  professional_development = null
+  professional_development = null,
+  significant_outcomes = null
 }) {
   let connection;
   try {
     connection = await pool.getConnection();
     const result = await connection.query(
       `INSERT INTO highlights
-       (faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development)
-       VALUES (?, ?, ?, ?, ?)`,
-      [faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development]
+       (faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development, significant_outcomes)
+       VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
+      [faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development, significant_outcomes]
     );
-    return result; // contains insertId, affectedRows, etc.
+    return result; // contains just the id of the inserted form.
   } finally {
     if (connection) connection.release();
   }
@@ -92,10 +93,34 @@ async function deleteHighlight(id) {
   }
 }
 
+// SUBMISSION
+// This is the function that handles the logic for the highlights form submission
+// It converts the data into the expected format for the database as well as performs the creation of
+// the dynamic elements of the form (ie. services, publications, etc.)
+async function submitHighlightsForm(formData){
+  console.log(formData)
+  // Add record for student support
+
+  // Create Highlights Form Record
+  addHighlight(formData);
+  console.log("Succesfully Created Form");
+  // Create Course Sections Records
+  formData.course_sections.forEach(course_section => {
+    
+  });
+  // Create Services Records
+
+  // Create Grants Records
+
+  // Create Publications Records
+
+}
+
 module.exports = {
   getAllHighlights,
   getHighlightById,
   addHighlight,
   updateHighlight,
   deleteHighlight,
+  submitHighlightsForm,
 };

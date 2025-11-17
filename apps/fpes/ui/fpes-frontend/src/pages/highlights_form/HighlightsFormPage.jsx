@@ -4,10 +4,11 @@ import { useForm } from "react-hook-form";
 import ServicesFormStep from "../services/ServicesFormStep";
 import { Link } from "react-router-dom";
 import { validateProps } from "@mui/x-data-grid/internals";
+import axios from "axios";
 import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
 import PublicationsFormStep from "../publications/PublicationsFormStep";
 
-export default function HighlightsFormPage() {
+export default function HighlightsFormPage({facultyID}) {
     const [activeStep, setActiveStep] = useState(0);
 
     const steps = [
@@ -32,8 +33,6 @@ export default function HighlightsFormPage() {
         }
     }
 
-
-    
     const {control, handleSubmit, getValues, reset, trigger, formState:{errors}} = useForm({defaultValues :
         {
             services : [],
@@ -45,6 +44,12 @@ export default function HighlightsFormPage() {
         },
         mode:"onChange"
     });
+
+    function handleFormSubmission(data){
+        console.log(data)
+        data.faculty_information_id = 1;
+        axios.post("http://localhost:3000/highlights/submit", data);
+    }
 
     return (
         <div>
@@ -71,7 +76,7 @@ export default function HighlightsFormPage() {
             {/* Forward Button */}
             {
                 isOnLastStep() ? 
-                <Button variant="contained" onClick={handleSubmit(data => console.log(data))}>Submit</Button> : 
+                <Button variant="contained" onClick={handleSubmit((data) => handleFormSubmission(data))}>Submit</Button> : 
                 <Button onClick={() => handleStepperChange(activeStep + 1)}>Next</Button>
             }
             </form>
