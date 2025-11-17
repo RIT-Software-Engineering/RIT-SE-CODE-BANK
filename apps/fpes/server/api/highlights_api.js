@@ -1,6 +1,7 @@
 const pool = require('../db');
 
 const course_sections_api = require('./course_section_api')
+const services_api = require('./service_api')
 
 // READ: all
 async function getAllHighlights() {
@@ -104,10 +105,11 @@ async function submitHighlightsForm(formData){
   // Add record for student support
 
   // Create Highlights Form Record
-  // addHighlight(formData);
-  // console.log("Succesfully Created Form");
+  const form_id = await addHighlight(formData);
+  console.log("Succesfully Created Form");
   // Create Course Sections Records
   formData.course_sections.forEach(course_section => {
+    course_section.form_id = form_id;
     course_section.days_of_the_week = course_sections_api.getDaysOfTheWeek(course_section.days_of_the_week);
     course_section.course_id = course_section.course.value;
     course_section.year = course_section.year.match(/^\d{4}/)[0]; //Extracts the year from the timestamp object
@@ -115,11 +117,23 @@ async function submitHighlightsForm(formData){
   });
 
   console.log("Successfully Added Course Sections")
-  // Create Services Records
-  // formData.course_sections.forEach
-  // Create Grants Records
 
+  // Create Services Records
+  formData.services.forEach(service => {
+    service.form_id = form_id;
+    services_api.createService(service);
+  });
+
+  console.log("Successfully Added Services")
+
+  // Create Grants Records
+  
   // Create Publications Records
+  formData.publications.forEach(publication => {
+
+  });
+
+  console.log("Successfully Added Publications")
 
 }
 
