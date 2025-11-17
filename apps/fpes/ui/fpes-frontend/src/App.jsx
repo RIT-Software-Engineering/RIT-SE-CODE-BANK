@@ -3,7 +3,8 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate  } from 'react-router-dom';
+import ProtectedRoute from "./ProtectedRoute.jsx";
 import LoginPage from './pages/login/LoginPage.jsx';
 import ServicesPage from './pages/services/ServicesPage.jsx';
 import GrantsPage from './pages/grants/GrantsPage.jsx';
@@ -19,7 +20,6 @@ import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState("faculty")
-
   const pages = [
         {
         name : "login",
@@ -81,20 +81,38 @@ function App() {
         pages={pages} 
         adminView={role === "admin"} 
         setRole={setRole}
+        isAuthenticated={isAuthenticated} 
         profileRoute="/profile"
       />
         
-      <h1>FPES Portal</h1>
-      
+      <h1> FPES Portal</h1>
+
+      {!isAuthenticated && (
+        <div style={{ textAlign: "center", marginTop: "20px" }}>
+
+          <Link to="/login">
+            <button style={{ mt: 2, backgroundColor: "#1976d2", color: "white",}}  >
+              Login
+            </button>
+          </Link>
+
+          <button style={{ mt: 2, backgroundColor: "#555", color: "white", }} >
+              Register
+          </button>
+          
+        </div>
+      )}
+            
+              
       <Routes>
         <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} />} />
-        <Route path="/services" element={<ServicesPage/>} />
-        <Route path="/grants" element={<GrantsPage/>} />
+        <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
+        <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
         {role === 'admin' ? adminRoutes : null}
-        <Route path="/course_sections" element={<CourseSectionsPage/>} />
-        <Route path="/student_support" element={<StudentSupportPage/>} />
-        <Route path="/profile" element={<ProfilePage/>} />
-        <Route path="/highlights_form" element={<HighlightsFormPage/>} />
+        <Route path="/course_sections" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <CourseSectionsPage/> </ProtectedRoute>} />
+        <Route path="/student_support" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <StudentSupportPage/> </ProtectedRoute> } />
+        <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage/> </ProtectedRoute> } />
+        <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage/> </ProtectedRoute> } />
       </Routes>
     </BrowserRouter>
   )

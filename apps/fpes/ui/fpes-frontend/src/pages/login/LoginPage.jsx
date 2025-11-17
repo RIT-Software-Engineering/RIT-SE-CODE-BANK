@@ -48,13 +48,14 @@ export default function LoginPage({ setRole, setIsAuthenticated }) {
             required 
           />
 
-            <Button 
+          <Button 
               onClick={handleLogin}
               sx={{ mt: 2 }}
               variant="contained"
             >
-            Login
+           Login
           </Button>
+          
     </Box>
   );
 }
