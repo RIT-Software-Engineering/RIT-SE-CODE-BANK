@@ -1,5 +1,7 @@
 const pool = require('../db');
 
+const course_sections_api = require('./course_section_api')
+
 // READ: all
 async function getAllHighlights() {
   let connection;
@@ -102,14 +104,19 @@ async function submitHighlightsForm(formData){
   // Add record for student support
 
   // Create Highlights Form Record
-  addHighlight(formData);
-  console.log("Succesfully Created Form");
+  // addHighlight(formData);
+  // console.log("Succesfully Created Form");
   // Create Course Sections Records
   formData.course_sections.forEach(course_section => {
-    
+    course_section.days_of_the_week = course_sections_api.getDaysOfTheWeek(course_section.days_of_the_week);
+    course_section.course_id = course_section.course.value;
+    course_section.year = course_section.year.match(/^\d{4}/)[0]; //Extracts the year from the timestamp object
+    course_sections_api.createCourseSection(course_section);
   });
-  // Create Services Records
 
+  console.log("Successfully Added Course Sections")
+  // Create Services Records
+  // formData.course_sections.forEach
   // Create Grants Records
 
   // Create Publications Records
