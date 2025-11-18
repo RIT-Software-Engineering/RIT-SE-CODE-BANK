@@ -29,15 +29,6 @@ export default function HighlightsFormPage() {
         return activeStep === steps.length - 1;
     }
 
-    function Service(form_id){
-        this.title = "";
-        this.hours_worked = "";
-        this.form_id = "";
-        this.service_type = "";
-        this.other_contributions = "";
-        this.form_id = form_id;
-    }
-
     async function handleStepperChange(newIndex){
         await trigger();
 
@@ -51,17 +42,20 @@ export default function HighlightsFormPage() {
     const {control, handleSubmit, getValues, reset, trigger, formState:{errors}} = useForm({defaultValues :
         {
             services : [],
+            professional_development : "",
             course_sections : [],
             publications : [],
+            significant_outcomes : "",
+            other_collaborations : "",
             grants : [],
             student_support : []
         },
-        mode:"onTouched"
+        mode:"onChange"
     });
 
     return (
         <div>
-            <Stepper activeStep={activeStep}>
+            <Stepper sx={{minWidth:"800px"}} activeStep={activeStep}>
                 {steps.map((step,index) => (
                     <Step key={index}>
                         <StepLabel>{step}</StepLabel>

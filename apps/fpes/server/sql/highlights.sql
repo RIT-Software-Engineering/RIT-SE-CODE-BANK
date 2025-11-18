@@ -5,8 +5,10 @@ CREATE TABLE IF NOT EXISTS highlights (
   supervisor_id              INT NULL,
   student_support_id         INT NULL,
 
+  significant_outcomes       TEXT NULL,
   collaborations_section     TEXT NULL,
   professional_development   TEXT NULL,
+  administrative_responsibilities TEXT NULL,
 
 -- Requires faculty_information and student_support tables to exist first
 

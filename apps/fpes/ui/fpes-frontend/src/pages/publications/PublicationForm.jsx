@@ -104,9 +104,14 @@ export default function PublicationForm({control, publication, handleRemovePubli
                             {...field}
                             label="Date"
                             placeholder="Proof of Significance"
-                            error={errors.publications?.[index]?.proof_of_significance}
-                            helperText={errors.publications?.[index]?.proof_of_significance?.message}
+                            error={errors.publications?.[index]?.date_published}
+                            helperText={errors.publications?.[index]?.date_published?.message}
                             sx={{width:"100%"}}
+                            slotProps={{
+                            textField: {
+                                error: errors.publications?.[index]?.date_published,
+                                helperText: errors.publications?.[index]?.date_published?.message,
+                            },}}
                         />
                     }
                 />
