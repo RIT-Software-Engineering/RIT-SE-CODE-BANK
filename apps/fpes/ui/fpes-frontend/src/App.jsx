@@ -14,6 +14,7 @@ import { FormControl, FormLabel, InputLabel, MenuItem, Select } from '@mui/mater
 import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';
 import CoursesPage from './pages/courses/CoursePage.jsx'
 import ProfilePage from './pages/profile/ProfilePage.jsx';
+import UsersPage from './pages/users/UsersPage.jsx';
 import Header from './pages/Header.jsx';
 import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
 
@@ -21,11 +22,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState("faculty")
   const pages = [
-        {
-        name : "login",
-        route : "/login",
-        adminOnly : false
-    },
     {
         name : "Serivces",
         route : "/services",
@@ -52,6 +48,11 @@ function App() {
         adminOnly : true
     },
     {
+        name : "users",
+        route : "/users",
+        adminOnly : true
+    },
+    {
         name : "Courses",
         route : "/courses",
         adminOnly : true
@@ -72,6 +73,7 @@ function App() {
     <>
       <Route path='/departments' element={<DepartmentsPage/>}/>
       <Route path='/courses' element={<CoursesPage/>}/>
+       <Route path="/users" element={<UsersPage />} />
     </>
   )
 
@@ -82,6 +84,10 @@ function App() {
         adminView={role === "admin"} 
         setRole={setRole}
         isAuthenticated={isAuthenticated} 
+        onLogout={() => {
+          setIsAuthenticated(false);
+          setRole(null);
+        }}
         profileRoute="/profile"
       />
         
@@ -113,6 +119,7 @@ function App() {
         <Route path="/student_support" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <StudentSupportPage/> </ProtectedRoute> } />
         <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage/> </ProtectedRoute> } />
         <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage/> </ProtectedRoute> } />
+        <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } />
       </Routes>
     </BrowserRouter>
   )

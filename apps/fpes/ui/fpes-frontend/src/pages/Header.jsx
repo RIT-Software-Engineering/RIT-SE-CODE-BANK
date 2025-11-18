@@ -2,7 +2,7 @@ import { AppBar, Box, Button, FormControl, InputLabel, MenuItem, Select, Toolbar
 import react from 'react'
 import { Link } from 'react-router-dom'
 
-export default function Header({ pages, adminView, setRole, isAuthenticated }) {
+export default function Header({ pages, adminView, setRole, isAuthenticated, onLogout }) {
     
     const profilePage = pages.find(page => page.name === "Profile");
 
@@ -26,6 +26,7 @@ export default function Header({ pages, adminView, setRole, isAuthenticated }) {
                     ))}
                 </Box>
 
+
                 {isAuthenticated && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         
@@ -42,6 +43,13 @@ export default function Header({ pages, adminView, setRole, isAuthenticated }) {
                                 <MenuItem value="faculty">Faculty</MenuItem>
                             </Select>
                         </FormControl>
+                        
+                        <Button 
+                            color="inherit"
+                            onClick={onLogout}
+                        >
+                            Logout
+                        </Button>
                     </Box>
                 )}
 

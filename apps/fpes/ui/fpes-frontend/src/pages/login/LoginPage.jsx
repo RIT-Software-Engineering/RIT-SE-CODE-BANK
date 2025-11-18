@@ -14,11 +14,11 @@ export default function LoginPage({ setRole, setIsAuthenticated }) {
   }, []);
 
   const handleLogin = () => {
-    if (selectedUser) {
-      const user = users.find(u => u.faculty_id === selectedUser);
-      setRole(user.user_role); 
+    //if (selectedUser) {
+      //const user = users.find(u => u.faculty_id === selectedUser);
+      //setRole(user.user_role); 
       setIsAuthenticated(true);
-    }
+    //}
   };
 
   return (
