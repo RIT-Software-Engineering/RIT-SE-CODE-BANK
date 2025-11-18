@@ -141,9 +141,10 @@ async function submitHighlightsForm(formData){
   // Create Grants Records
   for(let grant of formData.grants){
     grant.form_id = form_id;
-    console.log(grant);
     await grants_api.addGrant(grant);
   }
+
+  console.log("Successfully Added Grants")
   
   // Create Publications Records
   for(let publication of formData.publications){
