@@ -1,7 +1,8 @@
 const pool = require('../db');
 
-const course_sections_api = require('./course_section_api')
-const services_api = require('./service_api')
+const course_sections_api = require('./course_section_api');
+const services_api = require('./service_api');
+const publications_api = require('./publications_api');
 
 // READ: all
 async function getAllHighlights() {
@@ -105,7 +106,9 @@ async function submitHighlightsForm(formData){
   // Add record for student support
 
   // Create Highlights Form Record
-  const form_id = await addHighlight(formData);
+  const highlights_response = await addHighlight(formData);
+  const form_id = highlights_response[0].id;
+  console.log(form_id);
   console.log("Succesfully Created Form");
   // Create Course Sections Records
   formData.course_sections.forEach(course_section => {
@@ -130,11 +133,12 @@ async function submitHighlightsForm(formData){
   
   // Create Publications Records
   formData.publications.forEach(publication => {
-
+    publication.form_id = form_id;
+    publication.date_published = publication.date_published.match(/^\d{4}-\d{2}-\d{2}/)[0];
+    publications_api.createPublication(publication);
   });
 
   console.log("Successfully Added Publications")
-
 }
 
 module.exports = {
