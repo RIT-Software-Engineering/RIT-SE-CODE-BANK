@@ -1,8 +1,10 @@
 const pool = require('../db');
 
+const student_support_api = require('./student_support_api');
 const course_sections_api = require('./course_section_api');
 const services_api = require('./service_api');
 const publications_api = require('./publications_api');
+const grants_api = require('./grants_api');
 
 // READ: all
 async function getAllHighlights() {
@@ -103,42 +105,51 @@ async function deleteHighlight(id) {
 // the dynamic elements of the form (ie. services, publications, etc.)
 async function submitHighlightsForm(formData){
   console.log(formData)
+
   // Add record for student support
+  const student_support_id = await student_support_api.addStudentSupport(formData.student_support[0]);
+  formData.student_support_id = student_support_id;
 
   // Create Highlights Form Record
   const highlights_response = await addHighlight(formData);
   const form_id = highlights_response[0].id;
-  console.log(form_id);
   console.log("Succesfully Created Form");
+
   // Create Course Sections Records
-  formData.course_sections.forEach(course_section => {
+  for(let course_section of formData.course_sections){
     course_section.form_id = form_id;
     course_section.days_of_the_week = course_sections_api.getDaysOfTheWeek(course_section.days_of_the_week);
     course_section.course_id = course_section.course.value;
     course_section.year = course_section.year.match(/^\d{4}/)[0]; //Extracts the year from the timestamp object
     course_sections_api.createCourseSection(course_section);
-  });
+  }
 
   console.log("Successfully Added Course Sections")
 
   // Create Services Records
-  formData.services.forEach(service => {
+  for(let service of formData.services){
     service.form_id = form_id;
-    services_api.createService(service);
-  });
+    await services_api.createService(service);
+  }
 
   console.log("Successfully Added Services")
 
   // Create Grants Records
+  for(let grant of formData.grants){
+    grant.form_id = form_id;
+    await grants_api.addGrant(grant);
+  }
   
   // Create Publications Records
-  formData.publications.forEach(publication => {
+  for(let publication of formData.publications){
     publication.form_id = form_id;
     publication.date_published = publication.date_published.match(/^\d{4}-\d{2}-\d{2}/)[0];
-    publications_api.createPublication(publication);
-  });
-
+    await publications_api.createPublication(publication);
+  }
+  
   console.log("Successfully Added Publications")
+
+  return;
 }
 
 module.exports = {
