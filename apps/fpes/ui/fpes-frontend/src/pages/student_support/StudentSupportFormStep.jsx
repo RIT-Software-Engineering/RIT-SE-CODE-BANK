@@ -1,8 +1,8 @@
 import { Grid, TextField, Button, Paper, Typography, Box, IconButton } from "@mui/material";
-import { useFieldArray, useForm, Controller } from "react-hook-form";
+import { useFieldArray, Controller } from "react-hook-form";
 import StudentSupportForm from "./StudentSupportForm";
 
-export default function StudentSupportFormStep({ form_id }) {
+export default function StudentSupportFormStep({ form_id, control, errors }) {
 
   function StudentSupport() {
     this.independent_studies_supervised = 0;
@@ -20,11 +20,6 @@ export default function StudentSupportFormStep({ form_id }) {
     this.form_id = form_id;
   }
 
-  const { control, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: { student_support: [] },
-    mode: "onChange",
-  });
-
   const { fields, append, remove } = useFieldArray({
     control,
     name: "student_support",
@@ -32,7 +27,6 @@ export default function StudentSupportFormStep({ form_id }) {
 
   return (
   <Box sx={{ width: "60%", margin: "auto"}}>
-    <form onSubmit={handleSubmit((data) => console.log(data))}>
       <Grid container spacing={2}>
         {fields.map((support, index) => (
           <Grid item xs={12} key={support.id}>
@@ -51,7 +45,6 @@ export default function StudentSupportFormStep({ form_id }) {
           Add Record
         </Button>
       </Box>
-    </form>
   </Box>
   );
 }

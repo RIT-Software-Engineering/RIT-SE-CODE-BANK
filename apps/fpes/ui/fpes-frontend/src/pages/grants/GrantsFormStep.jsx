@@ -3,7 +3,7 @@ import { Button, Grid, Paper } from "@mui/material";
 import { useForm, useFieldArray } from "react-hook-form";
 import GrantForm from "./GrantsForm.jsx";
 
-export default function GrantsFormStep({ form_id }) {
+export default function GrantsFormStep({ form_id, control, errors }) {
     const [number_of_grants, setNumberOfGrants] = useState(0);
 
     function Grant(form_id){
@@ -15,11 +15,6 @@ export default function GrantsFormStep({ form_id }) {
         this.grant_status = "Pending";
         this.form_id = form_id;
     }
-
-    const {control, handleSubmit, formState:{errors}} = useForm({
-        defaultValues : { grants : [] },
-        mode: "onChange"
-    });
 
     const {fields, append, remove} = useFieldArray({
         control,
@@ -33,7 +28,6 @@ export default function GrantsFormStep({ form_id }) {
 
     return (
         <div>
-            <form onSubmit={handleSubmit((data) => console.log(data))}>
                 <Grid container rowSpacing={0} columns={12}>
                     {fields.map((grant, index) => (
                         <Paper sx={{padding:"4% 4%", margin:"4% auto", width:"700px"}}>
@@ -49,7 +43,7 @@ export default function GrantsFormStep({ form_id }) {
                         ))}
                 </Grid>
                 <Button onClick={() => {append(new Grant(form_id)); setNumberOfGrants(number_of_grants + 1)}}>Add Grant</Button>
-            </form>
+
         </div>
     );
 }
