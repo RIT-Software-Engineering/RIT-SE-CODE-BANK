@@ -78,6 +78,196 @@
   outline-offset: 2px;
 }
 
+/* Right side container: tabs + profile */
+.site-nav__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Profile area */
+.site-nav__profile {
+  display: flex;
+  align-items: center;
+}
+
+.site-nav__profile-wrapper {
+  position: relative;
+}
+
+.site-nav__profile-button {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink, #111);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.site-nav__profile-button:hover {
+  background: #fff;
+}
+
+/* Dropdown */
+.site-nav__profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: 120%;
+  width: 240px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  padding: 10px 12px;
+  z-index: 1100;
+}
+
+.site-nav__profile-info {
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.9rem;
+}
+
+.site-nav__profile-email {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* Logout button */
+.site-nav__logout-button {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #b00000;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.site-nav__logout-button:hover {
+  background: #cc0000;
+}
+
+/* Login link when not authenticated */
+.site-nav__login-link {
+  margin-left: 4px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  text-decoration: none;
+  color: var(--ink, #111);
+  font-weight: 550;
+  font-size: 0.9rem;
+}
+
+.site-nav__login-link:hover {
+  background: #fff;
+}
+
+/* Right side container: tabs + profile */
+.site-nav__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Profile area */
+.site-nav__profile {
+  display: flex;
+  align-items: center;
+}
+
+.site-nav__profile-wrapper {
+  position: relative;
+}
+
+.site-nav__profile-button {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink, #111);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.site-nav__profile-button:hover {
+  background: #fff;
+}
+
+/* Dropdown */
+.site-nav__profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: 120%;
+  width: 240px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  padding: 10px 12px;
+  z-index: 1100;
+}
+
+.site-nav__profile-info {
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.9rem;
+}
+
+.site-nav__profile-email {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* Logout button */
+.site-nav__logout-button {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: #b00000;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.site-nav__logout-button:hover {
+  background: #cc0000;
+}
+
+/* Small screens adjustments */
+@media (max-width: 720px) {
+  .site-nav__right {
+    justify-content: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
+
+
+/* Small screens: keep things from wrapping weirdly */
+@media (max-width: 720px) {
+  .site-nav__right {
+    justify-content: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
+
 /* Stack on small screens */
 @media (max-width: 720px) {
   .site-nav__inner { grid-template-columns: 1fr; gap: 12px; }

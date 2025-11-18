@@ -6,7 +6,8 @@ import TeamBuilderPage from "./pages/TeamBuilderPage.jsx";
 import CalPage from "./pages/CalPage.jsx";
 import CoursePage from "./pages/CoursePage.jsx";
 import CreateTemplatePage from "./pages/CreateTemplatePage.jsx";
-import DevLoginPage from "./pages/DevLoginPage.jsx";   // <-- ADD THIS LINE
+import DevLoginPage from "./pages/DevLoginPage.jsx";
+import RequireAuth from "./components/RequireAuth.jsx";   // <-- add this
 import "./styles/global.css";
 import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -17,18 +18,23 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter basename="/cmt">
       <Routes>
+        {/* Public route: login page */}
+        <Route path="/login" element={<DevLoginPage />} />
 
-        {/* ---------- DEV LOGIN PAGE ROUTE ---------- */}
-        <Route path="/dev-login" element={<DevLoginPage />} />
-        {/* ------------------------------------------- */}
-
-        <Route path="/" element={<App />}>
+        {/* Protected routes: everything under "/" */}
+        <Route
+          path="/"
+          element={
+            <RequireAuth>
+              <App />
+            </RequireAuth>
+          }
+        >
           <Route path="teambuilder" element={<TeamBuilderPage />} />
           <Route path="calendar" element={<CalPage />} />
           <Route path="coursebuilder" element={<CoursePage />} />
           <Route path="createtemplate" element={<CreateTemplatePage />} />
         </Route>
-
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

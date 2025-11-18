@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../styles/devLogin.css";
 
-const AUTH_BASE = "http://localhost:5010"; // <-- backend server
+const AUTH_BASE = "http://localhost:5010"; // backend server
 
 export default function DevLoginPage() {
   const [users, setUsers] = useState([]);
@@ -49,14 +49,15 @@ export default function DevLoginPage() {
       });
 
       if (!res.ok) {
-        throw new Error(`Login failed (${res.status})`);
+        const text = await res.text();
+        throw new Error(`Login failed (${res.status}): ${text}`);
       }
 
-      // Cookie is now set by the backend
-      window.location.href = "/cmt/"; // or "/" depending on your setup
+      // cookie set – now go into the main app
+      window.location.href = "/cmt/";
     } catch (err) {
       console.error(err);
-      setError("Login failed. Check console / dev server logs.");
+      setError("Login failed. Check console / backend logs.");
     } finally {
       setLoggingInId(null);
     }
@@ -94,8 +95,7 @@ export default function DevLoginPage() {
             <div className="dev-login-user-email">{user.email}</div>
             {user.roles?.length > 0 && (
               <div className="dev-login-user-roles">
-                Roles: {user.roles.join(", ")}
-              </div>
+                Roles: {user.roles.join(", ")}</div>
             )}
           </button>
         ))}

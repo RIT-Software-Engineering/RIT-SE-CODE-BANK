@@ -26,12 +26,14 @@ if (process.env.NODE_ENV !== "production") {
   }
 }
 
+// ---- Middleware ----
 app.use(
   cors({
     origin: /^http:\/\/localhost:\d+$/, // allows any localhost port
     credentials: true,
   })
 );
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -40,10 +42,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
+// ---- Routes ----
 app.use("/api/events", eventRoutes);
 app.use("/api/template", templateRoutes);
-app.use('/api/team-builder', teamBuilderRoutes);
+app.use("/api/team-builder", teamBuilderRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -98,7 +100,7 @@ if (process.env.NODE_ENV !== "production") {
 
   // POST /dev/login { id } -> set cmt_id cookie
   app.post("/dev/login", (req, res) => {
-    const { id } = req.body;
+    const { id } = req.body || {};
     const user = devUsers.find((u) => u.id === id);
 
     if (!user) {
@@ -107,15 +109,20 @@ if (process.env.NODE_ENV !== "production") {
 
     const claims = buildClaimsFromDevUser(user);
 
-    const token = jwt.sign(claims, process.env.JWT_SECRET, {
-      issuer: "cmt-auth",
-      expiresIn: "8h",
-    });
+    const token = jwt.sign(
+      claims,
+      process.env.JWT_SECRET || "dev-secret",
+      {
+        issuer: "cmt-auth",
+        expiresIn: "8h",
+      }
+    );
 
+    // Important for dev: httpOnly: false so frontend can read the cookie
     res.cookie("cmt_id", token, {
-      httpOnly: true,
+      httpOnly: false,       // <-- allow JS to read in dev for RequireAuth
       sameSite: "lax",
-      secure: false, // ok for localhost
+      secure: false,         // ok for http://localhost
       path: "/",
       maxAge: 8 * 60 * 60 * 1000,
     });
@@ -124,7 +131,7 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
-// Error handling middleware
+// ---- Error handling middleware ----
 app.use((err, req, res, next) => {
   console.error("Error:", err.stack);
   res.status(500).json({
