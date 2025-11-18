@@ -85,9 +85,10 @@ export default function GrantForm({ control, register_grant, handleRemoveGrant, 
                             label="Status"
                             sx={{width:"100%"}}
                         >
-                            <MenuItem value="Pending">Pending</MenuItem>
-                            <MenuItem value="Approved">Approved</MenuItem>
-                            <MenuItem value="Denied">Denied</MenuItem>
+                            <MenuItem value="In Development">In Development</MenuItem>
+                            <MenuItem value="In Submission">In Submission</MenuItem>
+                            <MenuItem value="Funded">Funded</MenuItem>
+                            <MenuItem value="Declined">Declined</MenuItem>
                         </TextField>
                     }
                 />
