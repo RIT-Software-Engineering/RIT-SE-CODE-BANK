@@ -21,6 +21,7 @@ import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState("faculty")
+  const [facultyId, setFacultyId] = useState(-1);
   const pages = [
     {
         name : "Serivces",
@@ -77,6 +78,10 @@ function App() {
     </>
   )
 
+  function updateFacultyId(id) {
+    setFacultyId(id !== undefined ? id : -1);
+  } 
+
   return (
     <BrowserRouter>
       <Header 
@@ -87,6 +92,7 @@ function App() {
         onLogout={() => {
           setIsAuthenticated(false);
           setRole(null);
+          setFacultyId(-1);
         }}
         profileRoute="/profile"
       />
@@ -111,7 +117,7 @@ function App() {
             
               
       <Routes>
-        <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} />} />
+        <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
         <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
         <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
         {role === 'admin' ? adminRoutes : null}

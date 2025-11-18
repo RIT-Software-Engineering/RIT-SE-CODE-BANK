@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import axios from "axios";
 
-export default function LoginPage({ setRole, setIsAuthenticated }) {
+export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId}) {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
   const [password, setPassword] = useState("");
@@ -17,6 +17,7 @@ export default function LoginPage({ setRole, setIsAuthenticated }) {
     //if (selectedUser) {
       //const user = users.find(u => u.faculty_id === selectedUser);
       //setRole(user.user_role); 
+      updateFacultyId(users.faculty_id);
       setIsAuthenticated(true);
     //}
   };
