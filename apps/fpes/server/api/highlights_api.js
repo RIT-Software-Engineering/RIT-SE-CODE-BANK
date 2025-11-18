@@ -107,8 +107,12 @@ async function submitHighlightsForm(formData){
   console.log(formData)
 
   // Add record for student support
-  const student_support_id = await student_support_api.addStudentSupport(formData.student_support[0]);
+  if(formData.student_support.length > 0){
+  const result = await student_support_api.addStudentSupport(formData.student_support[0]);
+  const student_support_id = result.id;
+  console.log(formData.student_support[0]);
   formData.student_support_id = student_support_id;
+  }
 
   // Create Highlights Form Record
   const highlights_response = await addHighlight(formData);
@@ -137,6 +141,7 @@ async function submitHighlightsForm(formData){
   // Create Grants Records
   for(let grant of formData.grants){
     grant.form_id = form_id;
+    console.log(grant);
     await grants_api.addGrant(grant);
   }
   

@@ -37,15 +37,15 @@ export default function GrantForm({ control, register_grant, handleRemoveGrant, 
 
             <Grid item size={5}>
                 <Controller
-                    name={register_grant + "sponsor"}
+                    name={register_grant + "funder"}
                     control={control}
-                    rules={{required:"Sponsor is required"}}
+                    rules={{required:"Funder is required"}}
                     render={({field}) =>
                         <TextField {...field}
-                            label="Sponsor"
-                            error={errors.grants?.[index]?.sponsor}
-                            helperText={errors.grants?.[index]?.sponsor?.message}
-                            placeholder="Sponsor"
+                            label="Funder"
+                            error={errors.grants?.[index]?.funder}
+                            helperText={errors.grants?.[index]?.funder?.message}
+                            placeholder="Funder"
                             sx={{width:"100%"}}
                         />
                     }
