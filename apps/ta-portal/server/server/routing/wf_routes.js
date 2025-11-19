@@ -19,21 +19,14 @@ const prisma = new PrismaClient();
 
 // Configuration for workflow service
 const WORKFLOW_SERVICE_URL = process.env.WORKFLOWS_URL || "http://localhost:3001";
-const WORKFLOW_API_BASE = `${WORKFLOW_SERVICE_URL}/api`;
-
-console.log('=== WORKFLOW SERVICE CONFIG ===');
-console.log('WORKFLOW_SERVICE_URL:', WORKFLOW_SERVICE_URL);
-console.log('WORKFLOWS_URL env var:', process.env.WORKFLOWS_URL);
-console.log('================================');
+const WORKFLOW_API_BASE = WORKFLOW_SERVICE_URL;
 
 // Middleware to handle workflow service errors
 const handleWorkflowError = (error, res) => {
   console.error("Workflow service error:", {
     message: error.message,
     status: error.response?.status,
-    data: error.response?.data,
-    url: error.config?.url,
-    method: error.config?.method
+    url: error.config?.url
   });
   
   if (error.response) {
@@ -59,26 +52,12 @@ const handleWorkflowError = (error, res) => {
 
 // Middleware to transform username to userId
 const transformUsernameToId = async (req, res, next) => {
-  // Store original username before we modify the request object
   const originalUsername = (req.query && req.query.username) || (req.body && req.body.username);
   
   try {
-    // Debug logging for request object
-    console.log("Request debugging:", {
-      hasQuery: !!req.query,
-      hasBody: !!req.body,
-      queryUsername: req.query?.username,
-      bodyUsername: req.body?.username,
-      originalUsername: originalUsername
-    });
-    
-    // Check both query parameters and body for username
     const username = originalUsername;
     
     if (username) {
-      console.log("Transforming username to ID for:", username);
-      
-      // Add database connection check
       if (!prisma) {
         console.error("Prisma client is not initialized");
         return res.status(500).json({
@@ -86,30 +65,18 @@ const transformUsernameToId = async (req, res, next) => {
           details: "Database client not available"
         });
       }
-
-      console.log("Attempting to find user in database...");
-      console.log("Prisma client status:", typeof prisma, !!prisma.user);
       
       let user;
       try {
-        // First check if we can connect to the database at all
         await prisma.$connect();
-        console.log("Database connection successful");
         
         user = await prisma.user.findUnique({
           where: { username: username },
           select: { uid: true, username: true }
         });
-        console.log("Database query result:", user);
       } catch (dbError) {
-        console.error("Database query failed:", {
-          error: dbError.message,
-          code: dbError.code,
-          stack: dbError.stack,
-          prismaVersion: dbError.clientVersion
-        });
+        console.error("Database query failed:", dbError.message);
         
-        // Provide more specific error handling
         if (dbError.code === 'P1001') {
           return res.status(500).json({
             message: "Database connection failed",
@@ -129,55 +96,31 @@ const transformUsernameToId = async (req, res, next) => {
       }
       
       if (!user) {
-        console.warn(`User not found: ${username}`);
         return res.status(404).json({ 
           message: "User not found",
           details: `No user found with username: ${username}`
         });
       }
       
-      // Transform the request to use userId instead of username  
-      // The workflow service expects userId as the actual user identifier
-      // In TA Portal, the 'username' field is actually the userID (e.g., 'aa1234')
-      const transformedUserId = username; // Use the userID directly, don't transform it
-      
-      // Store transformed parameters for the route handler to use
-      // Since req.query is read-only, we'll attach the transformed params to req
+      const transformedUserId = String(user.uid);
       const transformedQuery = { ...req.query };
       const transformedBody = req.body ? { ...req.body } : {};
       
       if (req.query && req.query.username) {
         transformedQuery.userId = transformedUserId;
         delete transformedQuery.username;
-        console.log("Created transformed query params:", transformedQuery);
       }
       
       if (req.body && req.body.username) {
         transformedBody.userId = transformedUserId;
         delete transformedBody.username;
-        console.log("Created transformed body params:", transformedBody);
       }
       
-      // Attach transformed params to the request object for route handlers to use
       req.workflowParams = transformedQuery;
       req.workflowBody = transformedBody;
-      
-      console.log("Successfully transformed username to userId:", {
-        originalUsername: originalUsername || 'undefined',
-        userIdInWorkflowService: transformedUserId || 'undefined',
-        userDbId: user?.uid || 'undefined'
-      });
-      
-      console.log("Original req.query:", req.query);
-      console.log("Transformed workflow params:", req.workflowParams);
-      console.log("About to call next() - transformation complete");
     } else {
-      console.log("No username parameter found, checking if userId already provided");
-      
-      // Validate userId format if provided
       const userId = req.query.userId || req.body.userId;
       if (userId && !userId.match(/^user\d+$/)) {
-        console.warn(`Invalid userId format: ${userId}. Expected format: user<number>`);
         return res.status(400).json({
           message: "Invalid userId format",
           details: "userId should be in format 'user<number>' (e.g., 'user1', 'user123')"
@@ -185,24 +128,14 @@ const transformUsernameToId = async (req, res, next) => {
       }
     }
     
-    console.log("Calling next() to continue to next middleware");
     next();
   } catch (error) {
-    console.error("Error transforming username to ID:", {
-      error: error.message,
-      stack: error.stack,
-      username: originalUsername
-    });
+    console.error("Error transforming username to ID:", error.message);
     
-    // Provide a fallback transformation to prevent complete failure
     const username = originalUsername;
     if (username) {
-      console.log("Attempting fallback transformation for:", username);
-      
-      // Use the username directly as userId since in TA Portal, username IS the userID
       const fallbackUserId = username;
       
-      // Set userId based on where we originally found the username
       if (req.query && !req.query.userId) {
         req.query.userId = fallbackUserId;
       }
@@ -211,11 +144,6 @@ const transformUsernameToId = async (req, res, next) => {
         req.body.userId = fallbackUserId;
       }
       
-      console.log("Using fallback userId:", fallbackUserId);
-      console.log("⚠️  WARNING: Database connection issue - using fallback transformation");
-      console.log("   This may cause issues if the workflow service doesn't recognize this userId");
-      
-      // Continue with warning
       next();
     } else {
       res.status(500).json({ 
@@ -234,15 +162,7 @@ const transformUsernameToId = async (req, res, next) => {
 const proxyRequest = async (req, res, endpoint) => {
   try {
     const method = req.method.toLowerCase();
-    // Remove /api prefix as workflow service doesn't use it
     const url = `${WORKFLOW_SERVICE_URL}${endpoint}`;
-    
-    console.log(`Proxying ${method.toUpperCase()} request to:`, {
-      url,
-      method,
-      params: req.query,
-      body: req.body
-    });
     
     const response = await axios({
       method,
@@ -251,27 +171,15 @@ const proxyRequest = async (req, res, endpoint) => {
       data: req.body
     });
     
-    console.log('Workflow service response:', {
-      status: response.status,
-      data: response.data
-    });
-    
     res.json(response.data);
   } catch (error) {
-    console.error(`Error proxying ${req.method} ${endpoint}:`, {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      url: error.config?.url,
-      params: error.config?.params,
-      body: error.config?.data
-    });
+    console.error(`Error proxying ${req.method} ${endpoint}:`, error.message);
     handleWorkflowError(error, res);
   }
 };
 
 // =============================================================================
-// HEALTH CHECK AND DEBUG ROUTES
+// HEALTH CHECK ROUTES
 // =============================================================================
 
 // Health check route to test workflow service connectivity
@@ -279,26 +187,21 @@ router.get("/health", async (req, res) => {
   let dbStatus = 'unknown';
   let dbError = null;
   
-  // Test database connectivity
   try {
-    console.log('Testing database connectivity...');
     const testUser = await prisma.user.findFirst({
       select: { uid: true, username: true }
     });
     dbStatus = 'connected';
-    console.log('Database test result:', testUser ? 'Found users' : 'No users found');
   } catch (error) {
     console.error('Database connectivity test failed:', error.message);
     dbStatus = 'error';
     dbError = error.message;
   }
 
-  // Test workflow service connectivity
   try {
-    console.log('Testing workflow service connectivity...');
     const response = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows`, {
       timeout: 5000,
-      params: { userId: 'user1' } // Test with a sample user ID that matches the seed data
+      params: { userId: 'user1' }
     });
     
     res.json({
@@ -340,176 +243,176 @@ router.get("/health", async (req, res) => {
 // =============================================================================
 
 /**
- * Extract actions from the new workflow structure to match frontend expectations
- * @param {Object} workflow - The workflow object from the new API
- * @returns {Array} Array of actions with status information
+ * Synchronize action state changes across all users in a hiring workflow
  */
-const extractActionsFromWorkflow = (workflow) => {
-  const actions = [];
-  
-  // If workflow has a rootAction, traverse it to get all actions
-  if (workflow.rootAction) {
-    actions.push(...traverseActions(workflow.rootAction, 0));
-  }
-  
-
-  
-  return actions;
-};
-
-/**
- * Recursively traverse actions to build a flat list
- * @param {Object} action - The action object
- * @param {number} order - The order/index of the action
- * @returns {Array} Array of flattened actions
- */
-const traverseActions = (action, order = 0) => {
-  const actions = [];
-  
-  if (!action) return actions;
-  
-  // Add the current action
-  actions.push({
-    id: action.id,
-    name: action.name,
-    description: action.description || '',
-    status: getActionStatus(action),
-    order: order + 1,
-    actionType: action.actionType || 'simple'
-  });
-  
-  // Handle child actions (for complex/branching actions)
-  if (action.childActions && Array.isArray(action.childActions)) {
-    action.childActions.forEach((childAction, index) => {
-      actions.push(...traverseActions(childAction, order + index + 1));
+async function synchronizeHiringWorkflowAction(workflowId, actionId, newStateType) {
+  try {
+    const allStatesResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
+      params: { workflowId }
     });
+    
+    const allWorkflowStates = Array.isArray(allStatesResponse.data) ? allStatesResponse.data : [allStatesResponse.data];
+    
+    for (let i = 0; i < allWorkflowStates.length; i++) {
+      const workflowState = allWorkflowStates[i];
+      
+      if (!workflowState || !workflowState.id) {
+        continue;
+      }
+      
+      try {
+        const detailedStateResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow/${workflowState.id}`);
+        const detailedWorkflowState = detailedStateResponse.data;
+        
+        const targetActionState = detailedWorkflowState.actionStates?.find(as => as.actionId === actionId);
+        
+        if (!targetActionState) {
+          continue;
+        }
+        
+        if (targetActionState.stateType !== newStateType) {
+          await axios.put(`${WORKFLOW_SERVICE_URL}/states/action/${targetActionState.id}`, {
+            stateType: newStateType
+          });
+        }
+      } catch (updateError) {
+        console.error(`Could not update action state for workflow state ${workflowState.id}:`, updateError.message);
+      }
+    }
+  } catch (error) {
+    console.error('Error synchronizing hiring workflow action:', error.message);
+    throw error;
   }
+}
+
+/**
+ * Extract actions from the workflow structure to match frontend expectations
+ */
+const extractActionsFromWorkflow = async (workflow, userId = null) => {
+  const actions = [];
   
-  // Handle next action in sequence
-  if (action.nextAction) {
-    actions.push(...traverseActions(action.nextAction, order + 1));
+  try {
+    const actionsResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/actions`, {
+      params: { workflowId: workflow.id }
+    });
+    
+    if (actionsResponse.data && Array.isArray(actionsResponse.data)) {
+      const actionMap = new Map();
+      const metadata = workflow.metadata || workflow.baseAction?.metadata || {};
+      const completedActions = parseInt(metadata.completedActions) || 0;
+      const inProgressActionIndex = metadata.inProgressActionIndex ? parseInt(metadata.inProgressActionIndex) : null;
+      
+      const processAction = (actionData, index) => {
+        let status = 'pending';
+        if (index < completedActions) {
+          status = 'completed';
+        } else if (index === inProgressActionIndex - 1) {
+          status = 'in-progress';
+        }
+        
+        const action = {
+          id: actionData.id,
+          name: actionData.name,
+          description: actionData.description,
+          status: status,
+          actionType: actionData.actionType,
+          parentActionId: actionData.parentActionId,
+          childActions: [],
+          assignedUserId: actionData.assignedUserId || null,
+          order: index,
+          deadline: actionData.metadata?.deadline || metadata.deadline || null,
+          isTeamAction: actionData.metadata?.isTeamAction || false,
+          teamMembers: actionData.metadata?.teamMembers || []
+        };
+        
+        if (actionData.childActions && actionData.childActions.length > 0) {
+          action.childActions = actionData.childActions.map((childData, childIdx) => 
+            processAction(childData, index + childIdx + 1)
+          );
+        }
+        
+        return action;
+      };
+      
+      actionsResponse.data.forEach((actionData, index) => {
+        const action = processAction(actionData, index);
+        actionMap.set(action.id, action);
+        actions.push(action);
+      });
+      
+      actions.forEach(action => {
+        if (action.parentActionId) {
+          const parent = actionMap.get(action.parentActionId);
+          if (parent) {
+            parent.childActions.push(action);
+          }
+        }
+      });
+      
+      return actions.filter(action => !action.parentActionId);
+    }
+  } catch (error) {
+    // Actions not available
   }
   
   return actions;
-};
-
-/**
- * Determine the status of an action based on available information
- * @param {Object} action - The action object
- * @returns {string} The status of the action
- */
-const getActionStatus = (action) => {
-  // Check if the action has associated state information
-  if (action.actionStates && action.actionStates.length > 0) {
-    // Use the most recent state
-    const latestState = action.actionStates[action.actionStates.length - 1];
-    switch (latestState.stateType) {
-      case 'completed': return 'completed';
-      case 'inProgress': return 'in-progress';
-      case 'notStarted': return 'pending';
-      case 'hidden': return 'hidden';
-      default: return 'pending';
-    }
-  }
-  
-  // Check metadata for status
-  if (action.metadata && action.metadata.status) {
-    return action.metadata.status;
-  }
-  
-  // Default to pending if no state information available
-  return 'pending';
 };
 
 // =============================================================================
 // WORKFLOW ROUTES
 // =============================================================================
 
-console.log("Loading workflow routes...");
-
-// Test route without username transformation for debugging
-router.get("/test", async (req, res) => {
-  try {
-    console.log('=== TEST WORKFLOW REQUEST (NO USERNAME TRANSFORMATION) ===');
-    console.log('Request query params:', req.query);
-    
-    // Use a default test userId if none provided, or try several known userIds from seed data
-    const testUserIds = ['user1', 'user2', 'user3'];
-    const testUserId = req.query.userId || testUserIds[0];
-    console.log('Using test userId:', testUserId);
-    console.log('Available test userIds from seed data:', testUserIds);
-    
-    const response = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows`, {
-      params: { userId: testUserId },
-      timeout: 10000
-    });
-    
-    console.log('Workflow service response status:', response.status);
-    console.log('Workflow service response data:', response.data);
-    
-    res.json({
-      message: 'Test successful',
-      userId: testUserId,
-      workflows: response.data
-    });
-  } catch (error) {
-    console.error('Test workflow request failed:', error.message);
-    handleWorkflowError(error, res);
-  }
-});
-
 // Get all workflows or filtered by parameters
 router.get("/", transformUsernameToId, async (req, res) => {
   try {
-    console.log('=== WORKFLOW REQUEST DEBUG ===');
-    console.log('Original request params:', req.query);
-    console.log('Transformed workflow params:', req.workflowParams);
-    console.log('Workflow service URL:', WORKFLOW_SERVICE_URL);
-    console.log('Full request URL:', `${WORKFLOW_SERVICE_URL}/workflows`);
-    
-    // Use the transformed params from the middleware
     const workflowParams = req.workflowParams || req.query;
-    console.log('Params being sent to workflow service:', workflowParams);
     
     const response = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows`, {
       params: workflowParams,
-      timeout: 10000 // 10 second timeout
+      timeout: 10000
     });
     
-    console.log('Workflow service response status:', response.status);
-    console.log('Workflow service response data:', response.data);
+    const userWorkflows = [];
     
-    // Transform the new workflow structure to match frontend expectations
-    const transformedWorkflows = response.data.map(workflow => {
+    for (const workflow of response.data) {
+      const hasPermission = workflow.baseAction?.permissions?.some(permission => 
+        permission.userId === workflowParams.userId
+      );
+      
+      let hasWorkflowState = false;
+      try {
+        const stateResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
+          params: { 
+            userId: workflowParams.userId, 
+            workflowId: workflow.id 
+          },
+          timeout: 5000
+        });
+        hasWorkflowState = stateResponse.data && (
+          Array.isArray(stateResponse.data) ? stateResponse.data.length > 0 : !!stateResponse.data.id
+        );
+      } catch (stateError) {
+        // State check failed, rely on permissions only
+      }
+      
+      if (hasPermission || hasWorkflowState) {
+        userWorkflows.push(workflow);
+      }
+    }
+
+    const transformedWorkflows = await Promise.all(userWorkflows.map(async workflow => {
       return {
         id: workflow.id,
         name: workflow.baseAction?.name || 'Unnamed Workflow',
         description: workflow.baseAction?.description || '',
         tags: workflow.tags || [],
-        // Extract actions from the workflow structure
-        actions: extractActionsFromWorkflow(workflow)
+        actions: await extractActionsFromWorkflow(workflow, workflowParams.userId)
       };
-    });
-    
-    console.log('Transformed workflows:', transformedWorkflows);
-    console.log('=== END WORKFLOW REQUEST DEBUG ===');
+    }));
     
     res.json(transformedWorkflows);
   } catch (error) {
-    console.error('=== WORKFLOW ERROR DEBUG ===');
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      url: error.config?.url,
-      method: error.config?.method,
-      params: error.config?.params,
-      timeout: error.config?.timeout
-    });
-    console.error('=== END WORKFLOW ERROR DEBUG ===');
-    
+    console.error('Workflow request error:', error.message);
     handleWorkflowError(error, res);
   }
 });
@@ -519,14 +422,13 @@ router.get("/:id", async (req, res) => {
   try {
     const response = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows/${req.params.id}`);
     
-    // Transform the single workflow to match frontend expectations
     const workflow = response.data;
     const transformedWorkflow = {
       id: workflow.id,
       name: workflow.baseAction?.name || 'Unnamed Workflow',
       description: workflow.baseAction?.description || '',
       tags: workflow.tags || [],
-      actions: extractActionsFromWorkflow(workflow)
+      actions: await extractActionsFromWorkflow(workflow, null)
     };
     
     res.json(transformedWorkflow);
@@ -623,25 +525,20 @@ router.put("/states/:id", async (req, res) => {
 // ACTIONS ROUTES
 // =============================================================================
 
-// Get all actions for a user (flattened from all workflows)
+// Get all actions for a user
 router.get("/actions", transformUsernameToId, async (req, res) => {
   try {
-    console.log('Getting all actions for user:', req.query.userId);
-    
-    // First get all workflows for the user
     const workflowsResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows`, {
       params: req.query,
       timeout: 10000
     });
     
-    // Extract all actions from all workflows
     const allActions = [];
-    workflowsResponse.data.forEach(workflow => {
-      const workflowActions = extractActionsFromWorkflow(workflow);
+    for (const workflow of workflowsResponse.data) {
+      const workflowActions = await extractActionsFromWorkflow(workflow, req.query.userId);
       allActions.push(...workflowActions);
-    });
+    }
     
-    console.log(`Found ${allActions.length} actions for user:`, req.query.userId);
     res.json(allActions);
   } catch (error) {
     console.error('Error getting user actions:', error.message);
@@ -678,7 +575,7 @@ router.put("/actions/states/:id", async (req, res) => {
   }
 });
 
-// Handle action submission (complete action)
+// Handle action submission
 router.post("/actions/submit", async (req, res) => {
   try {
     const response = await axios.post(
@@ -763,29 +660,23 @@ router.post("/states/getOrCreate", transformUsernameToId, async (req, res) => {
       });
     }
 
-    console.log('Getting or creating workflow state:', { userId, workflowId });
-
-    // First, try to get existing workflow state
     try {
       const existingStatesResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
         params: { userId, workflowId }
       });
 
       if (existingStatesResponse.data && existingStatesResponse.data.length > 0) {
-        console.log('Found existing workflow state:', existingStatesResponse.data[0]);
         return res.json(existingStatesResponse.data[0]);
       }
     } catch (getError) {
-      console.log('No existing workflow state found, will create new one');
+      // No existing state, will create new
     }
 
-    // If no existing state, create a new one
     const createResponse = await axios.post(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
       userId,
       workflowId
     });
 
-    console.log('Created new workflow state:', createResponse.data);
     res.json(createResponse.data);
   } catch (error) {
     console.error('Error in getOrCreate workflow state:', error.message);
@@ -799,21 +690,18 @@ router.get("/states/:workflowStateId/full", async (req, res) => {
     const { workflowStateId } = req.params;
     
     const response = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow/${workflowStateId}`);
-    
-    // The response should include the full workflow state with nested action states
     res.json(response.data);
   } catch (error) {
     handleWorkflowError(error, res);
   }
 });
 
-// Update action state (mark as inProgress or completed)
+// Update action state
 router.put("/actions/states/:actionStateId/updateState", async (req, res) => {
   try {
     const { actionStateId } = req.params;
     const { stateType } = req.body;
 
-    // Validate stateType
     const validStates = ['notStarted', 'inProgress', 'completed', 'hidden'];
     if (!validStates.includes(stateType)) {
       return res.status(400).json({
@@ -828,6 +716,824 @@ router.put("/actions/states/:actionStateId/updateState", async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
+    handleWorkflowError(error, res);
+  }
+});
+
+// =============================================================================
+// RESTFUL URL PATTERNS
+// =============================================================================
+
+// Get or create workflow state
+router.post("/user/:username/workflows/:workflowId/state", async (req, res) => {
+  try {
+    const { username, workflowId } = req.params;
+
+    if (!username || !workflowId) {
+      return res.status(400).json({ 
+        message: "Missing required parameters",
+        details: "Both username and workflowId are required"
+      });
+    }
+
+    let userId;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { username: username },
+        select: { uid: true, username: true }
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+          details: `No user found with username: ${username}`
+        });
+      }
+
+      userId = String(user.uid);
+    } catch (dbError) {
+      console.error('Database error during user lookup:', dbError);
+      return res.status(500).json({
+        message: "Database error",
+        details: "Failed to lookup user"
+      });
+    }
+
+    try {
+      const existingStatesResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
+        params: { userId, workflowId }
+      });
+
+      if (existingStatesResponse.data && existingStatesResponse.data.length > 0) {
+        return res.json(existingStatesResponse.data[0]);
+      }
+    } catch (getError) {
+      // No existing state
+    }
+
+    const createResponse = await axios.post(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
+      userId,
+      workflowId
+    });
+
+    res.json(createResponse.data);
+  } catch (error) {
+    console.error('Error in getOrCreate workflow state (RESTful route):', error.message);
+    handleWorkflowError(error, res);
+  }
+});
+
+// Get workflow state
+router.get("/user/:username/workflows/:workflowId/state", async (req, res) => {
+  try {
+    const { username, workflowId } = req.params;
+
+    if (!username || !workflowId) {
+      return res.status(400).json({ 
+        message: "Missing required parameters",
+        details: "Both username and workflowId are required"
+      });
+    }
+
+    let userId;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { username: username },
+        select: { uid: true, username: true }
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+          details: `No user found with username: ${username}`
+        });
+      }
+
+      userId = String(user.uid);
+    } catch (dbError) {
+      console.error('Database error during user lookup:', dbError);
+      return res.status(500).json({
+        message: "Database error",
+        details: "Failed to lookup user"
+      });
+    }
+
+    const response = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
+      params: { userId, workflowId }
+    });
+
+    if (response.data && response.data.length > 0) {
+      res.json(response.data[0]);
+    } else {
+      res.status(404).json({ message: "Workflow state not found" });
+    }
+  } catch (error) {
+    console.error('Error getting workflow state (RESTful route):', error.message);
+    handleWorkflowError(error, res);
+  }
+});
+
+// Get workflow state with all associated actions
+router.get("/user/:username/workflows/:workflowId/state-with-actions", async (req, res) => {
+  try {
+    const { username, workflowId } = req.params;
+
+    if (!username || !workflowId) {
+      return res.status(400).json({ 
+        message: "Missing required parameters",
+        details: "Both username and workflowId are required"
+      });
+    }
+
+    let userId;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { username: username },
+        select: { uid: true, username: true }
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+          details: `No user found with username: ${username}`
+        });
+      }
+
+      userId = String(user.uid);
+    } catch (dbError) {
+      console.error('Database error during user lookup:', dbError);
+      return res.status(500).json({
+        message: "Database error",
+        details: "Failed to lookup user"
+      });
+    }
+
+    const statesResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
+      params: { userId, workflowId }
+    });
+
+    if (statesResponse.data && statesResponse.data.length > 0) {
+      const workflowState = statesResponse.data[0];
+      const detailedStateResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow/${workflowState.id}`);
+      res.json(detailedStateResponse.data);
+    } else {
+      res.status(404).json({ message: "Workflow state not found" });
+    }
+  } catch (error) {
+    console.error('Error getting workflow state with actions:', error.message);
+    handleWorkflowError(error, res);
+  }
+});
+
+// Complete an action
+router.post("/user/:username/actions/:actionStateId/complete", async (req, res) => {
+  try {
+    const { username, actionStateId } = req.params;
+    const actionData = req.body || {};
+
+    if (!username || !actionStateId) {
+      return res.status(400).json({ 
+        message: "Missing required parameters",
+        details: "Both username and actionStateId are required"
+      });
+    }
+
+    let userId;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { username: username },
+        select: { uid: true, username: true }
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+          details: `No user found with username: ${username}`
+        });
+      }
+
+      userId = String(user.uid);
+    } catch (dbError) {
+      console.error('Database error during user lookup:', dbError);
+      return res.status(500).json({
+        message: "Database error",
+        details: "Failed to lookup user"
+      });
+    }
+
+    const actionStateResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/action/${actionStateId}`);
+    const actionState = actionStateResponse.data;
+    
+    if (!actionState || !actionState.workflowState) {
+      return res.status(404).json({ message: "Action state not found" });
+    }
+    
+    const workflowId = actionState.workflowState.workflowId;
+    
+    const response = await axios.post(`${WORKFLOW_SERVICE_URL}/states/handleSubmit`, {
+      actionStateId: actionStateId
+    });
+    
+    // Check if this is a hiring workflow and synchronize
+    try {
+      const workflowResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows/${workflowId}`);
+      const workflow = workflowResponse.data;
+      const isHiringWorkflow = workflow.baseAction?.metadata?.workflowType === 'hiring_process';
+      
+      if (isHiringWorkflow) {
+        await synchronizeHiringWorkflowAction(workflowId, actionState.actionId, 'completed');
+      }
+    } catch (syncError) {
+      console.error('Could not synchronize hiring workflow action:', syncError.message);
+    }
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error completing action:', error.message);
+    handleWorkflowError(error, res);
+  }
+});
+
+// Start an action
+router.post("/user/:username/actions/:actionStateId/start", async (req, res) => {
+  try {
+    const { username, actionStateId } = req.params;
+    const actionData = req.body || {};
+
+    if (!username || !actionStateId) {
+      return res.status(400).json({ 
+        message: "Missing required parameters",
+        details: "Both username and actionStateId are required"
+      });
+    }
+
+    let userId;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { username: username },
+        select: { uid: true, username: true }
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+          details: `No user found with username: ${username}`
+        });
+      }
+
+      userId = String(user.uid);
+    } catch (dbError) {
+      console.error('Database error during user lookup:', dbError);
+      return res.status(500).json({
+        message: "Database error",
+        details: "Failed to lookup user"
+      });
+    }
+
+    const actionStateResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/action/${actionStateId}`);
+    const actionState = actionStateResponse.data;
+    
+    if (!actionState || !actionState.workflowState) {
+      return res.status(404).json({ message: "Action state not found" });
+    }
+    
+    const workflowId = actionState.workflowState.workflowId;
+    
+    const response = await axios.post(`${WORKFLOW_SERVICE_URL}/states/handleStart`, {
+      actionStateId: actionStateId
+    });
+    
+    // Check if this is a hiring workflow and synchronize
+    try {
+      const workflowResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows/${workflowId}`);
+      const workflow = workflowResponse.data;
+      const isHiringWorkflow = workflow.baseAction?.metadata?.workflowType === 'hiring_process';
+      
+      if (isHiringWorkflow) {
+        await synchronizeHiringWorkflowAction(workflowId, actionState.actionId, 'inProgress');
+      }
+    } catch (syncError) {
+      console.error('Could not synchronize hiring workflow action start:', syncError.message);
+    }
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error starting action:', error.message);
+    handleWorkflowError(error, res);
+  }
+});
+
+// =============================================================================
+// DYNAMIC WORKFLOW CREATION - HIRING PROCESS
+// =============================================================================
+
+/**
+ * POST /api/workflows/hiring/create
+ * Creates a new hiring process workflow
+ */
+router.post("/hiring/create", async (req, res) => {
+  try {
+    const { 
+      candidateUsername, 
+      employerUsername, 
+      adminUsername, 
+      jobTitle, 
+      applicationId 
+    } = req.body;
+
+    if (!candidateUsername || !employerUsername || !adminUsername || !jobTitle || !applicationId) {
+      return res.status(400).json({
+        message: "Missing required fields",
+        required: ["candidateUsername", "employerUsername", "adminUsername", "jobTitle", "applicationId"]
+      });
+    }
+
+    const [candidate, employer, admin] = await Promise.all([
+      prisma.user.findUnique({ where: { username: candidateUsername } }),
+      prisma.user.findUnique({ where: { username: employerUsername } }),
+      prisma.user.findUnique({ where: { username: adminUsername } })
+    ]);
+
+    if (!candidate) {
+      return res.status(404).json({ message: `Candidate user not found: ${candidateUsername}` });
+    }
+    if (!employer) {
+      return res.status(404).json({ message: `Employer user not found: ${employerUsername}` });
+    }
+    if (!admin) {
+      return res.status(404).json({ message: `Admin user not found: ${adminUsername}` });
+    }
+
+    const workflowTemplate = {
+      name: `Hiring Process - ${jobTitle}`,
+      description: `Complete hiring workflow for ${jobTitle} position (Application #${applicationId})`,
+      userId: employer.uid.toString(),
+      metadata: {
+        jobTitle: jobTitle,
+        applicationId: applicationId,
+        candidateUserId: candidate.uid.toString(),
+        employerUserId: employer.uid.toString(),
+        adminUserId: admin.uid.toString(),
+        workflowType: 'hiring_process',
+        createdAt: new Date().toISOString()
+      }
+    };
+
+    const response = await axios.post(`${WORKFLOW_API_BASE}/workflows`, workflowTemplate);
+    const createdWorkflow = response.data;
+
+    // Create hiring process actions
+    const createdActions = [];
+
+    const appliedAction = await axios.post(`${WORKFLOW_API_BASE}/actions`, {
+      name: "Applied",
+      description: "Candidate has submitted their job application",
+      actionType: "simple",
+      userId: candidate.uid.toString(),
+      metadata: {
+        requiredRole: 'CANDIDATE',
+        allowedUserIds: [candidate.uid.toString()],
+        autoComplete: true
+      }
+    });
+    createdActions.push(appliedAction.data);
+
+    const interviewAction = await axios.post(`${WORKFLOW_API_BASE}/actions`, {
+      name: "Interview", 
+      description: "Conduct technical and behavioral interviews with candidate",
+      actionType: "simple",
+      userId: employer.uid.toString(),
+      metadata: {
+        requiredRole: 'EMPLOYER',
+        allowedUserIds: [employer.uid.toString()]
+      }
+    });
+    createdActions.push(interviewAction.data);
+
+    await axios.put(`${WORKFLOW_API_BASE}/actions/${appliedAction.data.id}`, {
+      nextActionId: interviewAction.data.id
+    });
+
+    const offerAction = await axios.post(`${WORKFLOW_API_BASE}/actions`, {
+      name: "Offer",
+      description: "Extend job offer to successful candidate", 
+      actionType: "simple",
+      userId: employer.uid.toString(),
+      metadata: {
+        requiredRole: 'EMPLOYER',
+        allowedUserIds: [employer.uid.toString()]
+      }
+    });
+    createdActions.push(offerAction.data);
+
+    await axios.put(`${WORKFLOW_API_BASE}/actions/${interviewAction.data.id}`, {
+      nextActionId: offerAction.data.id
+    });
+
+    const acceptedAction = await axios.post(`${WORKFLOW_API_BASE}/actions`, {
+      name: "Accepted",
+      description: "Candidate has accepted the job offer",
+      actionType: "simple", 
+      userId: candidate.uid.toString(),
+      metadata: {
+        requiredRole: 'CANDIDATE',
+        allowedUserIds: [candidate.uid.toString()]
+      }
+    });
+    createdActions.push(acceptedAction.data);
+
+    await axios.put(`${WORKFLOW_API_BASE}/actions/${offerAction.data.id}`, {
+      nextActionId: acceptedAction.data.id
+    });
+
+    const hiredAction = await axios.post(`${WORKFLOW_API_BASE}/actions`, {
+      name: "Hired",
+      description: "Complete onboarding process and official hiring",
+      actionType: "simple",
+      userId: admin.uid.toString(),
+      metadata: {
+        requiredRole: 'ADMIN',
+        allowedUserIds: [admin.uid.toString()]
+      }
+    });
+    createdActions.push(hiredAction.data);
+
+    await axios.put(`${WORKFLOW_API_BASE}/actions/${acceptedAction.data.id}`, {
+      nextActionId: hiredAction.data.id
+    });
+
+    await axios.put(`${WORKFLOW_API_BASE}/workflows/${createdWorkflow.id}`, {
+      rootActionId: createdActions[0].id
+    });
+
+    createdWorkflow.actions = createdActions;
+
+    // Create workflow states for all users
+    const stateCreationPromises = [
+      axios.post(`${WORKFLOW_API_BASE}/states/workflow`, {
+        workflowId: createdWorkflow.id,
+        userId: candidate.uid.toString()
+      }),
+      axios.post(`${WORKFLOW_API_BASE}/states/workflow`, {
+        workflowId: createdWorkflow.id,
+        userId: employer.uid.toString()
+      }),
+      axios.post(`${WORKFLOW_API_BASE}/states/workflow`, {
+        workflowId: createdWorkflow.id,
+        userId: admin.uid.toString()
+      })
+    ];
+
+    const stateResponses = await Promise.all(stateCreationPromises);
+
+    // Auto-complete the "Applied" action
+    try {
+      await synchronizeHiringWorkflowAction(createdWorkflow.id, appliedAction.data.id, 'completed');
+    } catch (autoCompleteError) {
+      console.error('Could not auto-complete Applied action:', autoCompleteError.message);
+    }
+
+    res.status(201).json({
+      message: "Hiring workflow created successfully",
+      workflow: createdWorkflow,
+      states: stateResponses.map(r => r.data),
+      accessibleBy: [candidateUsername, employerUsername, adminUsername],
+      note: "Individual workflow states created for each user with automatic synchronization"
+    });
+
+  } catch (error) {
+    console.error('Error creating hiring workflow:', error);
+    handleWorkflowError(error, res);
+  }
+});
+
+/**
+ * GET /api/workflows/hiring/permissions
+ * Check what actions a user is allowed to perform on a hiring workflow
+ */
+router.get("/hiring/permissions", async (req, res) => {
+  try {
+    const { workflowId, username } = req.query;
+
+    if (!workflowId || !username) {
+      return res.status(400).json({ 
+        message: 'Missing required parameters',
+        required: ['workflowId', 'username']
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { username: username }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: `User not found: ${username}` });
+    }
+
+    const workflowResponse = await axios.get(`${WORKFLOW_API_BASE}/workflows/${workflowId}`);
+    const workflow = workflowResponse.data;
+
+    const actionsResponse = await axios.get(`${WORKFLOW_API_BASE}/actions?workflowId=${workflowId}`);
+    const workflowActions = actionsResponse.data || [];
+
+    const userRole = user.role;
+    const allowedActions = [];
+    const allowedActionIds = [];
+
+    const isHiringWorkflow = workflow.baseAction?.metadata?.workflowType === 'hiring_process' ||
+                            workflow.name?.includes('Hiring Process');
+
+    for (const action of workflowActions) {
+      let canPerform = false;
+
+      if (isHiringWorkflow) {
+        if (action.assignedUserId && action.assignedUserId === user.uid.toString()) {
+          canPerform = true;
+        }
+      } else {
+        if (userRole === 'ADMIN') {
+          canPerform = true;
+        }
+
+        if (!canPerform && action.assignedUserId && action.assignedUserId === user.uid.toString()) {
+          canPerform = true;
+        }
+
+        if (!canPerform && action.permissions && action.permissions.some(p => p.userId === user.uid.toString() && p.permissionType === 'creator')) {
+          canPerform = true;
+        }
+      }
+
+      if (action.metadata) {
+        let requiredRole, allowedUserIds;
+        if (Array.isArray(action.metadata)) {
+          const requiredRoleMetadata = action.metadata.find(m => m.key === 'requiredRole');
+          const allowedUserIdsMetadata = action.metadata.find(m => m.key === 'allowedUserIds');
+          requiredRole = requiredRoleMetadata?.value;
+          allowedUserIds = allowedUserIdsMetadata?.value;
+        } else {
+          requiredRole = action.metadata.requiredRole;
+          allowedUserIds = action.metadata.allowedUserIds;
+        }
+
+        if (requiredRole === userRole) canPerform = true;
+        if (allowedUserIds && !canPerform) {
+          const idList = typeof allowedUserIds === 'string' ? [allowedUserIds] : allowedUserIds;
+          if (idList && idList.includes(String(user.uid))) canPerform = true;
+        }
+        if (requiredRole === 'CANDIDATE' && !canPerform) {
+          const cand = await prisma.candidate.findUnique({ where: { username: user.username } });
+          if (cand) canPerform = true;
+        }
+      }
+
+      if (canPerform) {
+        allowedActions.push(action.name);
+        allowedActionIds.push(action.id);
+      }
+    }
+
+    res.json({
+      userRole,
+      allowedActions,
+      allowedActionIds,
+      username,
+      workflowId
+    });
+  } catch (error) {
+    console.error('Error checking hiring workflow permissions:', error);
+    res.status(500).json({ 
+      message: 'Failed to check permissions', 
+      error: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/workflows/hiring/permissions/:workflowId/:username
+ * Check permissions (path params version)
+ */
+router.get("/hiring/permissions/:workflowId/:username", async (req, res) => {
+  try {
+    const { workflowId, username } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { username: username }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: `User not found: ${username}` });
+    }
+
+    const workflowResponse = await axios.get(`${WORKFLOW_API_BASE}/workflows/${workflowId}`);
+    const workflow = workflowResponse.data;
+
+    const actionsResponse = await axios.get(`${WORKFLOW_API_BASE}/actions?workflowId=${workflowId}`);
+    const workflowActions = actionsResponse.data || [];
+
+    const userRole = user.role;
+    const allowedActions = [];
+    const allowedActionIds = [];
+
+    const isHiringWorkflow = workflow.baseAction?.metadata?.workflowType === 'hiring_process' ||
+                            workflow.name?.includes('Hiring Process');
+
+    for (const action of workflowActions) {
+      let canPerform = false;
+
+      if (isHiringWorkflow) {
+        if (action.assignedUserId && action.assignedUserId === user.uid.toString()) {
+          canPerform = true;
+        }
+      } else {
+        if (userRole === 'ADMIN') {
+          canPerform = true;
+        }
+
+        if (!canPerform && action.assignedUserId && action.assignedUserId === user.uid.toString()) {
+          canPerform = true;
+        }
+
+        if (!canPerform && action.permissions && action.permissions.some(p => p.userId === user.uid.toString() && p.permissionType === 'creator')) {
+          canPerform = true;
+        }
+      }
+
+      if (action.metadata) {
+        let requiredRole, allowedUserIds;
+        if (Array.isArray(action.metadata)) {
+          const requiredRoleMetadata = action.metadata.find(m => m.key === 'requiredRole');
+          const allowedUserIdsMetadata = action.metadata.find(m => m.key === 'allowedUserIds');
+          requiredRole = requiredRoleMetadata?.value;
+          allowedUserIds = allowedUserIdsMetadata?.value;
+        } else {
+          requiredRole = action.metadata.requiredRole;
+          allowedUserIds = action.metadata.allowedUserIds;
+        }
+
+        if (requiredRole === userRole) canPerform = true;
+        if (allowedUserIds && !canPerform) {
+          const idList = typeof allowedUserIds === 'string' ? [allowedUserIds] : allowedUserIds;
+          if (idList && idList.includes(String(user.uid))) canPerform = true;
+        }
+        if (requiredRole === 'CANDIDATE' && !canPerform) {
+          const cand = await prisma.candidate.findUnique({ where: { username: user.username } });
+          if (cand) canPerform = true;
+        }
+      }
+
+      if (canPerform) {
+        allowedActions.push(action.name);
+        allowedActionIds.push(action.id);
+      }
+    }
+
+    res.json({
+      userRole,
+      allowedActions,
+      allowedActionIds,
+      username,
+      workflowId
+    });
+
+  } catch (error) {
+    console.error('Error checking hiring workflow permissions (path params):', error);
+    res.status(500).json({ 
+      message: 'Failed to check permissions', 
+      error: error.message 
+    });
+  }
+});
+
+// =============================================================================
+// ROLE-BASED WORKFLOW VIEWING
+// =============================================================================
+
+/**
+ * GET /api/workflows/by-role/:username
+ * Get workflows based on user's role
+ */
+router.get("/by-role/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { username: username },
+      select: { uid: true, username: true, role: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: `User not found: ${username}` });
+    }
+
+    const userId = String(user.uid);
+    const userRole = user.role;
+
+    const allWorkflowsResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows`, {
+      timeout: 10000
+    });
+
+    const allWorkflows = allWorkflowsResponse.data || [];
+    let filteredWorkflows = [];
+
+    if (userRole === 'ADMIN') {
+      filteredWorkflows = allWorkflows;
+    } else if (userRole === 'EMPLOYER') {
+      for (const workflow of allWorkflows) {
+        const metadata = workflow.metadata || workflow.baseAction?.metadata || {};
+        const isHiringWorkflow = metadata.workflowType === 'hiring_process';
+        
+        if (isHiringWorkflow) {
+          const employerUserId = metadata.employerUserId;
+          if (employerUserId === userId) {
+            filteredWorkflows.push(workflow);
+            continue;
+          }
+        }
+
+        const hasPermission = workflow.baseAction?.permissions?.some(permission => 
+          permission.userId === userId
+        );
+
+        let hasWorkflowState = false;
+        try {
+          const stateResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
+            params: { 
+              userId: userId, 
+              workflowId: workflow.id 
+            },
+            timeout: 5000
+          });
+          hasWorkflowState = stateResponse.data && (
+            Array.isArray(stateResponse.data) ? stateResponse.data.length > 0 : !!stateResponse.data.id
+          );
+        } catch (stateError) {
+          // Continue without state check
+        }
+
+        if (hasPermission || hasWorkflowState) {
+          filteredWorkflows.push(workflow);
+        }
+      }
+    } else {
+      for (const workflow of allWorkflows) {
+        const metadata = workflow.metadata || workflow.baseAction?.metadata || {};
+        const isHiringWorkflow = metadata.workflowType === 'hiring_process';
+        
+        if (isHiringWorkflow) {
+          const candidateUserId = metadata.candidateUserId;
+          if (candidateUserId === userId) {
+            filteredWorkflows.push(workflow);
+            continue;
+          }
+        }
+
+        const hasPermission = workflow.baseAction?.permissions?.some(permission => 
+          permission.userId === userId
+        );
+
+        let hasWorkflowState = false;
+        try {
+          const stateResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
+            params: { 
+              userId: userId, 
+              workflowId: workflow.id 
+            },
+            timeout: 5000
+          });
+          hasWorkflowState = stateResponse.data && (
+            Array.isArray(stateResponse.data) ? stateResponse.data.length > 0 : !!stateResponse.data.id
+          );
+        } catch (stateError) {
+          // Continue without state check
+        }
+
+        if (hasPermission || hasWorkflowState) {
+          filteredWorkflows.push(workflow);
+        }
+      }
+    }
+
+    const transformedWorkflows = await Promise.all(filteredWorkflows.map(async workflow => {
+      return {
+        id: workflow.id,
+        name: workflow.baseAction?.name || 'Unnamed Workflow',
+        description: workflow.baseAction?.description || '',
+        tags: workflow.tags || [],
+        metadata: workflow.metadata || workflow.baseAction?.metadata || {},
+        actions: await extractActionsFromWorkflow(workflow, userId)
+      };
+    }));
+
+    res.json({
+      username,
+      userRole,
+      workflowCount: transformedWorkflows.length,
+      workflows: transformedWorkflows
+    });
+
+  } catch (error) {
+    console.error('Error getting workflows by role:', error);
     handleWorkflowError(error, res);
   }
 });

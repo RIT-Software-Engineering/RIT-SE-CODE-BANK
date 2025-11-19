@@ -32,6 +32,7 @@ import {
   Description,
   People,
   AccountCircle,
+  AccountTree,
 } from "@mui/icons-material";
 import { ROLES } from "@/configuration/dashboard.config";
 import { useAuth } from "@/contexts/AuthContext";
@@ -116,6 +117,12 @@ const HEADER_LINKS = [
     href: "/Applications/Admin/[username]",
     icon: <Description />,
     roles: [ROLES.ADMIN],
+  },
+  {
+    text: "Workflows",
+    href: "/Workflows/[username]",
+    icon: <AccountTree />,
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
   },
   {
     text: "Users",

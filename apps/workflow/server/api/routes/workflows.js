@@ -157,19 +157,25 @@ router.put("/:id", async (req, res) => {
 
   await prisma.$transaction(async () => {
     if (metadata) {
-      // Delete old metadata
-      const actionMd = (
-        await prisma.workflowAttributes.findUnique({
-          where: { id },
-          select: { baseAction: { select: { metadata: true } } },
-        })
-      ).baseAction.metadata;
-      await prisma.metadata.deleteMany({
-        where: { id: { in: actionMd.map((m) => m.id) } },
-      });
+      try {
+        // Delete old metadata
+        const actionMd = (
+          await prisma.workflowAttributes.findUnique({
+            where: { id },
+            select: { baseAction: { select: { metadata: true } } },
+          })
+        ).baseAction.metadata;
+        await prisma.metadata.deleteMany({
+          where: { id: { in: actionMd.map((m) => m.id) } },
+        });
 
-      // Update with new metadata
-      baseActionData.metadata = { create: importMetadata(metadata) };
+        // Update with new metadata
+        const importedMetadata = importMetadata(metadata);
+        baseActionData.metadata = { create: importedMetadata };
+      } catch (metadataError) {
+        console.error('Error processing metadata:', metadataError);
+        throw metadataError;
+      }
     }
 
     const workflow = await prisma.workflowAttributes.update({

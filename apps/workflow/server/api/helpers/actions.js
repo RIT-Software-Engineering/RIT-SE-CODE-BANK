@@ -46,20 +46,18 @@ async function getFullActionTree(rootActionId) {
 
         case "complex":
         case "branching":
-          // If the action is complex or branching, get the whole subtree of actions stemming from it and add it to the current action.
+          // If the action is complex or branching, get the child actions directly
           const childActions = await prisma.action.findMany({
             where: { parentActionId: action.id },
             include: {
               metadata: true,
             },
+            orderBy: {
+              id: 'asc' // Order by creation to maintain consistent ordering
+            }
           });
 
-          action.childActions = [];
-
-          for (let i = 0; i < childActions.length; i++) {
-            const childAction = childActions[i];
-            action.childActions.push(...(await getFullActionTree(childAction.id)));
-          }
+          action.childActions = childActions;
           break;
 
         case "simple":
@@ -82,10 +80,11 @@ async function getFullActionTree(rootActionId) {
 
 const exportAction = (action) => ({
   ...action,
-  metadata: action.metadata.reduce(
+  metadata: action.metadata?.reduce(
     (acc, m) => ({ ...acc, [m.key]: m.value }),
     {}
-  ),
+  ) || {},
+  childActions: action.childActions?.map(child => exportAction(child)) || [],
 });
 
 module.exports = {

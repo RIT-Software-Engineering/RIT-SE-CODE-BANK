@@ -106,6 +106,7 @@ async function createAction(actionData) {
   if (actionData.form) data.form = actionData.form;
   if (actionData.actionType) data.actionType = actionData.actionType;
   if (actionData.isFrozen) data.isFrozen = actionData.isFrozen;
+  if (actionData.assignedUserId) data.assignedUserId = actionData.assignedUserId;
   if (actionData.metadata) {
     data.metadata = {
       create: importMetadata(actionData.metadata),

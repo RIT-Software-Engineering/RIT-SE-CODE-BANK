@@ -1,10 +1,8 @@
 // ui/src/services/slack-apis.js
 
 // --- API Configuration ---
-const BASE_API_URL = 
-  (process.env.NEXT_PUBLIC_BACKEND_URL || 'https://localhost:3300') + 
-  (process.env.NEXT_PUBLIC_API_EXTENSION || '/api');
-const SLACK_API_EXTENSION = process.env.NEXT_PUBLIC_SLACK_API_EXTENSION || '/slack';
+const BASE_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
+const SLACK_API_EXTENSION = process.env.NEXT_PUBLIC_SLACK_API_EXTENSION;
 
 /**
  * A centralized handler for processing API fetch responses.
@@ -44,8 +42,6 @@ export async function getSlackOAuthURL(email = "") {
     url.searchParams.append("state", email);
   }
 
-  console.log(`Fetching from: ${url.toString()}`);
-
   const response = await fetch(url.toString());
   const data = await handleApiResponse(response);
   return data.url;
@@ -67,7 +63,6 @@ export async function sendMessageToSlack({ token, email, text, teamId }) {
   }
 
   const url = `${BASE_API_URL}${SLACK_API_EXTENSION}/send-message`;
-  console.log(`Posting to: ${url}`);
 
   const response = await fetch(url, {
     method: 'POST',

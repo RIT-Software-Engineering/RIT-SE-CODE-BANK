@@ -48,6 +48,7 @@ router.get("/", async (req, res) => {
             include: {
                 metadata: true,
                 previousAction: true,
+                childActions: true,
             },
         });
         const intersectionIds = intersection.map(action => action.id);
@@ -61,6 +62,7 @@ router.get("/", async (req, res) => {
         include: {
             metadata: true,
             previousAction: true,
+            childActions: true,
         },
     });
     return res.json(actions.map((a) => exportAction(a)));
@@ -68,7 +70,7 @@ router.get("/", async (req, res) => {
 
 // POST /actions
 router.post("/", async (req, res) => {
-    const { name, description, form, actionType, metadata, parentActionId } =
+    const { name, description, form, actionType, metadata, parentActionId, previousActionId, rootActionOfId, assignedUserId } =
         req.body;
     const { userId } = req.body; // TODO: make this work with req.user instead
 
@@ -85,8 +87,17 @@ router.post("/", async (req, res) => {
     if (actionType) {
         data.actionType = actionType;
     }
+    if (assignedUserId) {
+        data.assignedUserId = assignedUserId;
+    }
     if (parentActionId) {
         data.parentAction = { connect: { id: parentActionId } };
+    }
+    if (previousActionId) {
+        data.previousAction = { connect: { id: previousActionId } };
+    }
+    if (rootActionOfId) {
+        data.rootActionOf = { connect: { id: rootActionOfId } };
     }
 
     const action = await prisma.action.create({
@@ -101,9 +112,11 @@ router.post("/", async (req, res) => {
                     })),
                 },
             },
-            metadata: {
-                create: importMetadata(metadata),
-            },
+            ...(metadata && {
+                metadata: {
+                    create: importMetadata(metadata),
+                },
+            }),
         },
     });
 

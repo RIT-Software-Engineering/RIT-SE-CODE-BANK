@@ -544,6 +544,18 @@ async function applyForJobPosition(applicationDetails) {
         },
       });
 
+    // 6. Trigger workflow creation for the new application (async, don't wait for completion)
+    try {
+      const { updateWorkflowProgress } = require('../utils/workflow-sync');
+      setImmediate(() => {
+        updateWorkflowProgress(newApplication.id, 'APPLIED').catch(error => {
+          console.error('Failed to create workflow for new application:', error.message);
+        });
+      });
+    } catch (error) {
+      console.error('Error importing workflow sync for new application:', error.message);
+    }
+
     return newApplication;
   } catch (error) {
     console.error("Error in applyForJobPosition:", error);
@@ -699,6 +711,18 @@ async function changeCandidateApplicationStatus(author, applicationId, status, c
       return applicationUpdate;
     });
 
+    // Update corresponding workflow progress (async, don't wait for completion)
+    try {
+      const { updateWorkflowProgress } = require('../utils/workflow-sync');
+      setImmediate(() => {
+        updateWorkflowProgress(applicationId, status).catch(error => {
+          console.error('Failed to update workflow progress:', error.message);
+        });
+      });
+    } catch (error) {
+      console.error('Error importing workflow sync:', error.message);
+    }
+
     return updatedApplication;
   } catch (error) {
     console.error("Error in changeCandidateApplicationStatus:", error);
@@ -814,6 +838,18 @@ async function hireCandidateForJobPosition(candidateUsername, applicationId, job
           timestamp: new Date(),
         }
       })
+    }
+
+    // Update corresponding workflow progress (async, don't wait for completion)
+    try {
+      const { updateWorkflowProgress } = require('../utils/workflow-sync');
+      setImmediate(() => {
+        updateWorkflowProgress(applicationId, "HIRED").catch(error => {
+          console.error('Failed to update workflow progress after hiring:', error.message);
+        });
+      });
+    } catch (error) {
+      console.error('Error importing workflow sync for hiring:', error.message);
     }
 
     return updatedApplication;
@@ -1253,7 +1289,17 @@ async function getUserProfile(username) {
         include: {
           employer: {
             include: {
-              jobPostions: { include: { course: true, jobSchedules: true } },
+              jobPositions: { 
+                include: { 
+                  course: true, 
+                  jobSchedules: true, 
+                  jobPositionApplicationHistory: {
+                    include: {
+                      resume: true,
+                    }
+                  }
+                } 
+              },
             },
           },
         },
@@ -1897,6 +1943,58 @@ async function upsertTimecard(timecardData) {
 }
 
 /**
+ * Submits a timecard for review by creating a workflow (no database status change needed)
+ * @param {number} timecardWeeklyHistoryId - The ID of the timecard to submit
+ * @returns {Promise<object>} A promise that resolves to the submission result
+ */
+async function submitTimecard(timecardWeeklyHistoryId) {
+  const { createTimecardApprovalWorkflow } = require('../utils/workflow-sync');
+  
+  try {
+    // Get the timecard details
+    const timecard = await prisma.timecardWeeklyHistory.findUnique({
+      where: { id: timecardWeeklyHistoryId },
+      include: {
+        jobPositionHistory: {
+          include: {
+            employee: { 
+              include: { 
+                candidate: { 
+                  include: { user: true } 
+                } 
+              } 
+            },
+            jobPosition: { 
+              include: { 
+                course: true,
+                employer: { include: { user: true } }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!timecard) {
+      throw new Error(`Timecard with ID ${timecardWeeklyHistoryId} not found.`);
+    }
+
+    // Create the approval workflow
+    const workflow = await createTimecardApprovalWorkflow(timecardWeeklyHistoryId);
+
+    return {
+      success: true,
+      message: 'Timecard submitted for review successfully.',
+      timecard: timecard,
+      workflow: workflow
+    };
+  } catch (error) {
+    console.error(`Error submitting timecard ${timecardWeeklyHistoryId}:`, error);
+    throw error;
+  }
+}
+
+/**
  * Retrieves all weekly timecards for a specific job.
  * @param {number} jobPositionHistoryId - The ID of the employee's specific job history record.
  * @returns {Promise<Array>} A promise that resolves to an array of all timecard objects.
@@ -2061,6 +2159,7 @@ module.exports = {
   getComments,
   terminateEmployee,
   upsertTimecard,
+  submitTimecard,
   getAllTimecardsForJob,
   fetchAdminViewData,
   fetchEmployerViewData,

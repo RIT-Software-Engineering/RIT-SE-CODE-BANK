@@ -1,5 +1,5 @@
 // Workflow APIs Service - Frontend service layer for workflow operations
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:3300/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
 
 // Generic API request handler with error handling
 async function apiRequest(endpoint, options = {}) {
@@ -48,11 +48,22 @@ export async function getUserActions(username) {
 }
 
 // Complete a specific action
-export async function completeAction(username, actionId, actionData = {}) {
-  if (!username || !actionId) {
-    throw new Error('Username and actionId are required');
+export async function completeAction(username, actionStateId, actionData = {}) {
+  if (!username || !actionStateId) {
+    throw new Error('Username and actionStateId are required');
   }
-  return await apiRequest(`/workflows/user/${encodeURIComponent(username)}/actions/${actionId}/complete`, {
+  return await apiRequest(`/workflows/user/${encodeURIComponent(username)}/actions/${actionStateId}/complete`, {
+    method: 'POST',
+    body: JSON.stringify(actionData),
+  });
+}
+
+// Start a specific action
+export async function startAction(username, actionStateId, actionData = {}) {
+  if (!username || !actionStateId) {
+    throw new Error('Username and actionStateId are required');
+  }
+  return await apiRequest(`/workflows/user/${encodeURIComponent(username)}/actions/${actionStateId}/start`, {
     method: 'POST',
     body: JSON.stringify(actionData),
   });
@@ -172,3 +183,67 @@ export async function submitAction(username, actionData) {
     body: JSON.stringify(actionData),
   });
 }
+
+// =============================================================================
+// HIRING PROCESS WORKFLOW APIs
+// =============================================================================
+
+/**
+ * Create a new hiring process workflow for a job application
+ * @param {Object} hiringData - The hiring process data
+ * @param {string} hiringData.candidateUsername - Username of the candidate
+ * @param {string} hiringData.employerUsername - Username of the employer/professor
+ * @param {string} hiringData.adminUsername - Username of the admin
+ * @param {string} hiringData.jobTitle - Title of the job position
+ * @param {string|number} hiringData.applicationId - ID of the job application
+ * @returns {Promise<Object>} The created workflow and access information
+ */
+export async function createHiringWorkflow(hiringData) {
+  const { candidateUsername, employerUsername, adminUsername, jobTitle, applicationId } = hiringData;
+  
+  if (!candidateUsername || !employerUsername || !adminUsername || !jobTitle || !applicationId) {
+    throw new Error('All hiring workflow fields are required: candidateUsername, employerUsername, adminUsername, jobTitle, applicationId');
+  }
+
+  return await apiRequest('/workflows/hiring/create', {
+    method: 'POST',
+    body: JSON.stringify({
+      candidateUsername,
+      employerUsername, 
+      adminUsername,
+      jobTitle,
+      applicationId
+    }),
+  });
+}
+
+/**
+ * Get permissions for a user on a hiring workflow
+ * @param {string} workflowId - ID of the hiring workflow
+ * @param {string} username - Username to check permissions for
+ * @returns {Promise<Object>} User's role and allowed actions
+ */
+export async function getHiringWorkflowPermissions(workflowId, username) {
+  if (!workflowId || !username) {
+    throw new Error('WorkflowId and username are required');
+  }
+  
+  return await apiRequest(`/workflows/hiring/permissions?workflowId=${encodeURIComponent(workflowId)}&username=${encodeURIComponent(username)}`);
+}
+
+/**
+ * Get workflows based on user's role
+ * - ADMIN: Returns all workflows in the system
+ * - EMPLOYER/Professor: Returns workflows where they are involved
+ * - Others: Returns only their personal workflows
+ * @param {string} username - Username to get workflows for
+ * @returns {Promise<Object>} Object containing username, userRole, workflowCount, and workflows array
+ */
+export async function getWorkflowsByRole(username) {
+  if (!username) {
+    throw new Error('Username is required');
+  }
+  
+  return await apiRequest(`/workflows/by-role/${encodeURIComponent(username)}`);
+}
+

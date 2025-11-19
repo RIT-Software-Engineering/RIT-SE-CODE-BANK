@@ -52,22 +52,17 @@ async function getChildren(where, include = null, select = null) {
 router.get("/workflow/:id", async (req, res) => {
   const { id } = req.params;
 
-  // Get the workflowState
+  // Get the workflowState with all action states
   const state = await prisma.workflowState.findUnique({
     where: { id: id },
     include: {
-      baseActionState: true,
+      actionStates: {
+        include: { action: true },
+        orderBy: { index: 'asc' }
+      },
+      workflow: true,
     },
   });
-
-  // Add any actionStates stemming from the baseActionState as it's children
-  const children = await getChildren(
-    { parentId: state.baseActionStateId },
-    { action: true }
-  );
-  if (children?.length > 0) {
-    state.baseActionState.children = children;
-  }
 
   res.json(state);
 });
@@ -83,7 +78,11 @@ router.get("/workflow", async (req, res) => {
   const states = await prisma.workflowState.findMany({
     where: where,
     include: {
-      baseActionState: true,
+      actionStates: {
+        include: { action: true },
+        orderBy: { index: 'asc' }
+      },
+      workflow: true,
     },
   });
 
@@ -101,13 +100,7 @@ async function updateStateByChildren(actionStateId) {
   const actionState = await prisma.actionState.findUnique({
     where: { id: actionStateId },
     select: {
-      parentId: true,
       stateType: true,
-      children: {
-        select: {
-          stateType: true,
-        },
-      },
       action: {
         select: {
           actionType: true,
@@ -115,6 +108,9 @@ async function updateStateByChildren(actionStateId) {
       },
     },
   });
+  
+  // TODO: After migration, get children using the new parent-child relations
+  const children = []; // Temporarily empty until migration is complete
 
   // Updated stateType
   let newStateType = "notStarted";
@@ -124,8 +120,8 @@ async function updateStateByChildren(actionStateId) {
     // For workflow and complex actionTypes
     case "workflow":
     case "complex":
-      for (let i = 0; i < actionState.children.length; i++) {
-        const child = actionState.children[i];
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
 
         // Update the newActionState based on what it currently is, and the stateTypes of it's children
         switch (child.stateType) {
@@ -167,8 +163,8 @@ async function updateStateByChildren(actionStateId) {
 
     // For branching actions
     case "branching":
-      for (let i = 0; i < actionState.children.length; i++) {
-        const child = actionState.children[i];
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
 
         // Update the newActionState based on what it currently is, and the stateTypes of it's children
         switch (child.stateType) {
@@ -207,44 +203,46 @@ async function updateStateByChildren(actionStateId) {
 }
 
 /**
- * Recursive function used to create state for all of the actions and sub actions in a list of actions.
+ * Creates ActionStates for each action in the given actions array (flattened structure).
  *
  * @param {Array<Object>} actions
- * @param {String} parentActionStateId
+ * @param {String} workflowStateId
  * @param {() => void} [dataModifier=() => {}] A function reference for modifying the data object that is passed to the function.
  */
 async function createActionStates(
   actions,
-  parentActionStateId = null,
+  workflowStateId,
   dataModifier = () => {}
 ) {
-  for (let i = 0; i < actions.length; i++) {
-    const action = actions[i];
+  // Flatten the action tree and create ActionStates for all actions
+  const flatActions = [];
+  
+  function flattenActions(actionList, currentIndex = 0) {
+    for (const action of actionList) {
+      flatActions.push({ ...action, index: currentIndex++ });
+      if (action.childActions?.length > 0) {
+        currentIndex = flattenActions(action.childActions, currentIndex);
+      }
+    }
+    return currentIndex;
+  }
+  
+  flattenActions(actions);
 
+  for (const action of flatActions) {
     const data = {
       stateType: "notStarted",
       action: { connect: { id: action.id } },
-      index: i,
+      workflowState: { connect: { id: workflowStateId } },
+      index: action.index,
     };
-    if (parentActionStateId) {
-      data.parent = { connect: { id: parentActionStateId } };
-    }
 
     dataModifier(data);
 
-    const actionState = await prisma.actionState.create({
+    await prisma.actionState.create({
       data: data,
     });
-
-    if (action.childActions?.length > 0) {
-      await createActionStates(
-        action.childActions,
-        actionState.id,
-        dataModifier
-      ); // Recursively create child actions of the current action
-    }
   }
-  await updateStateByChildren(parentActionStateId);
 }
 
 // POST /states/workflow
@@ -272,19 +270,34 @@ router.post("/workflow", async (req, res) => {
       data: {
         userId: userId,
         workflow: { connect: { id: workflowId } },
-        baseActionState: {
-          create: {
-            stateType: "notStarted",
-            action: { connect: { id: workflow.baseActionId } },
-            index: 0,
-          },
-        },
+      },
+    });
+
+    // Create ActionState for the base action (workflow action)
+    await prisma.actionState.create({
+      data: {
+        stateType: "notStarted",
+        action: { connect: { id: workflow.baseActionId } },
+        workflowState: { connect: { id: state.id } },
+        index: 0,
       },
     });
 
     // Get all of the actions in the workflow and create ActionStates for them
     const actions = await getFullActionTree(workflow.rootActionId);
-    await createActionStates(actions, state.baseActionStateId);
+    await createActionStates(actions, state.id);
+
+    // Fetch the complete state with actionStates
+    state = await prisma.workflowState.findUnique({
+      where: { id: state.id },
+      include: {
+        actionStates: {
+          include: {
+            action: true
+          }
+        }
+      }
+    });
   });
 
   res.json(state);
@@ -371,7 +384,7 @@ router.put("/workflow/:id", async (req, res) => {
       where: { id: id },
       include: {
         workflow: true,
-        baseActionState: true,
+        actionStates: true,
       },
     });
 
@@ -388,10 +401,8 @@ router.put("/workflow/:id", async (req, res) => {
     const actionList = flattenActions(structuredClone(actions));
 
     // Collect a list of all actionSates in the workflowState with all data
-    // Flatten the list of all actionStates in the workflowState
-    const actionStateList = await flattenActionStates({
-      parentId: workflowState.baseActionStateId,
-    });
+    // Get the flat list of all actionStates in the workflowState
+    const actionStateList = workflowState.actionStates;
 
     // Filter out the actionStates that no longer have an associated action
     const actionIds = new Set(actionList.map((a) => a.id));
@@ -406,13 +417,13 @@ router.put("/workflow/:id", async (req, res) => {
 
     // Delete all of the actionStates in that WorkflowState
     await prisma.actionState.deleteMany({
-      where: { parentId: workflowState.baseActionStateId },
+      where: { workflowStateId: workflowState.id },
     });
 
     // Build the workflowState back out using specific data (id, stateType) from the map of actions to action states when available
     await createActionStates(
       actions,
-      workflowState.baseActionStateId,
+      workflowState.id,
       (data) => {
         const map = actionIdToStateMap;
 
@@ -429,18 +440,13 @@ router.put("/workflow/:id", async (req, res) => {
       where: { id: id },
       include: {
         workflow: true,
-        baseActionState: true,
+        actionStates: {
+          include: {
+            action: true
+          }
+        },
       },
     });
-
-    // Add any actionStates stemming from the baseActionState as it's children
-    const children = await getChildren(
-      { parentId: updated.baseActionStateId },
-      { action: true }
-    );
-    if (children?.length > 0) {
-      updated.baseActionState.children = children;
-    }
 
     res.json(updated);
   });
@@ -455,8 +461,14 @@ router.delete("/workflow/:id", async (req, res) => {
       where: { id: id },
     });
 
-    await prisma.actionState.delete({
-      where: { id: workflowState.baseActionStateId },
+    // Delete all action states for this workflow state
+    await prisma.actionState.deleteMany({
+      where: { workflowStateId: workflowState.id },
+    });
+    
+    // Delete the workflow state itself
+    await prisma.workflowState.delete({
+      where: { id: id },
     });
   });
 
@@ -472,6 +484,7 @@ router.get("/action/:id", async (req, res) => {
     where: { id: id },
     include: {
       action: true,
+      workflowState: true,
     },
   });
 
@@ -574,7 +587,17 @@ router.get("/workflow/:workflowStateId/findStep", async (req, res) => {
     where: { id: workflowStateId },
   });
 
-  const step = await findFirstSimpleIncomplete(workflowState.baseActionStateId);
+  // Find the first incomplete simple action in the workflow state
+  const step = await prisma.actionState.findFirst({
+    where: {
+      workflowStateId: workflowStateId,
+      stateType: { notIn: ["completed", "hidden"] },
+    },
+    include: {
+      action: true,
+    },
+    orderBy: { index: "asc" },
+  });
 
   res.json(step);
 });
@@ -595,6 +618,50 @@ async function cascadeSubmission(actionStateId) {
 }
 
 /**
+ * Update the state of actions to start progress.
+ */
+router.post("/handleStart", async (req, res) => {
+  const { actionStateId } = req.body;
+
+  // Find the action state and check if it can be started
+  const actionState = await prisma.actionState.findUnique({
+    where: { id: actionStateId },
+    include: {
+      action: true,
+    },
+  });
+
+  if (!actionState) {
+    return res.status(404).json({
+      message: "Action state not found.",
+    });
+  }
+
+  if (actionState.stateType !== "notStarted") {
+    return res.status(400).json({
+      message: "Action can only be started from notStarted state.",
+    });
+  }
+
+  // Update the action state to inProgress
+  await prisma.$transaction(async () => {
+    await prisma.actionState.update({
+      where: { id: actionStateId },
+      data: {
+        stateType: "inProgress",
+      },
+    });
+
+    // For complex actions, we might want to cascade the status upward as well
+    if (actionState.parentId) {
+      await cascadeSubmission(actionState.parentId);
+    }
+
+    res.status(200).json({ message: "Started" });
+  });
+});
+
+/**
  * Update the state of actions to track progress.
  */
 router.post("/handleSubmit", async (req, res) => {
@@ -611,10 +678,12 @@ router.post("/handleSubmit", async (req, res) => {
       },
     },
   });
-  if (actionState.action.actionType !== "simple") {
-    return res.status(400).json({
-      message: "This action will only be completed by completing sub actions.",
-    });
+  
+  // For now, allow complex actions to be completed manually
+  // TODO: After migration, add proper child checking logic
+  if (actionState.action.actionType === "complex") {
+    // Allow complex actions to be completed for now
+    // Will be enhanced after migration adds parent-child relationships
   }
 
   // If the action can be completed, complete the action and cascade the status updates

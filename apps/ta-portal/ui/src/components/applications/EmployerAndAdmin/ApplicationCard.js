@@ -252,10 +252,6 @@ export default function ApplicationCard({
                 </Grid>
             )}
             <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">Recent Course Grade</Typography>
-                <Typography fontWeight="bold">{application.candidateGrade || "N/A"}</Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
                 <Typography variant="body2" color="text.secondary">Previous TA Experience For This Course</Typography>
                 <Typography fontWeight="bold">{application.wasPriorEmployeeForThisCourse ? "Yes" : "No"}</Typography>
             </Grid>

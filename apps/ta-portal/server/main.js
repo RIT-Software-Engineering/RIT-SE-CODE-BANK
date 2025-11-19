@@ -32,6 +32,7 @@ const cors = require('cors');
 
 // Import custom modules from the application's codebase.
 const apiRoutes = require('./server/routing/index'); // The main API router.
+const { syncWorkflowsWithApplications } = require('./server/utils/workflow-sync'); // Workflow sync utility
 
 // Initialize the Express application.
 const app = express();
@@ -81,9 +82,19 @@ async function initializeApp() {
     app.use('/api', apiRoutes);
 
     // Create and start the HTTPS server using the provided SSL options and Express app.
-    https.createServer(httpsOptions, app).listen(port, () => {
+    https.createServer(httpsOptions, app).listen(port, async () => {
         console.log(`Server listening on ${process.env.BACKEND_URL}`);
         console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
+        
+        // Sync workflows with applications after a delay to ensure workflow service is ready
+        setTimeout(async () => {
+            try {
+                await syncWorkflowsWithApplications();
+            } catch (error) {
+                console.error('Workflow sync failed:', error.message);
+            }
+        }, 
+    ); 
     });
 }
 

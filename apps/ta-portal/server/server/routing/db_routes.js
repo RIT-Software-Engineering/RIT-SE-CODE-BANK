@@ -47,6 +47,7 @@ const {
   getComments,
   terminateEmployee,
   upsertTimecard,
+  submitTimecard,
   getAllTimecardsForJob,
   fetchAdminViewData,
   fetchEmployerViewData,
@@ -423,10 +424,6 @@ router.delete('/applications/:username', async (req, res) => {
         const filePath = path.join(serverRootPath, application.coverLetterURL);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
-          console.log(`Successfully deleted cover letter: ${filePath}`);
-        }
-        else{
-          console.log(`Cover letter file not found: ${filePath}`);
         }
       } catch (err) {
         console.error(`Failed to delete cover letter file for application ${application.id}:`, err);
@@ -1112,6 +1109,25 @@ router.post("/upsert-timecard", async (req, res) => {
   } catch (error) {
     console.error("Error in /upsert-timecard route:", error);
     res.status(500).json({ error: "Failed to save the timecard." });
+  }
+});
+
+/**
+ * @route   POST /submit-timecard
+ * @desc    Submits a timecard for review and creates an approval workflow.
+ * @access  Public
+ */
+router.post("/submit-timecard", async (req, res) => {
+  try {
+    const { timecardWeeklyHistoryId } = req.body;
+    if (!timecardWeeklyHistoryId) {
+      return res.status(400).json({ error: "Timecard Weekly History ID is required." });
+    }
+    const result = await submitTimecard(timecardWeeklyHistoryId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error in /submit-timecard route:", error);
+    res.status(500).json({ error: "Failed to submit timecard for review." });
   }
 });
 
