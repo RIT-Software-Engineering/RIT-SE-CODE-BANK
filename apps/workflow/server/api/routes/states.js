@@ -233,7 +233,7 @@ async function createActionStates(
     const data = {
       stateType: "notStarted",
       action: { connect: { id: action.id } },
-      workflowState: { connect: { id: workflowStateId } },
+      workflowStates: { connect: [{ id: workflowStateId }] },
       index: action.index,
     };
 
@@ -265,7 +265,7 @@ router.post("/workflow", async (req, res) => {
       throw new Error(`Workflow with ID ${workflowId} has no root action.`);
     }
 
-    // Create the workflowState
+    // Create the workflowState first
     state = await prisma.workflowState.create({
       data: {
         userId: userId,
@@ -273,15 +273,23 @@ router.post("/workflow", async (req, res) => {
       },
     });
 
-    // Create ActionState for the base action (workflow action)
-    await prisma.actionState.create({
+    // Create ActionState for the base action (workflow action) and connect to WorkflowState
+    const baseActionState = await prisma.actionState.create({
       data: {
         stateType: "notStarted",
         action: { connect: { id: workflow.baseActionId } },
-        workflowState: { connect: { id: state.id } },
+        workflowStates: { connect: [{ id: state.id }] },
         index: 0,
       },
     });
+
+    // Update the workflowState to set the baseActionStateId using raw SQL
+    // (Prisma doesn't expose scalar fields when they're used in a relation with fields: [...])
+    await prisma.$executeRaw`
+      UPDATE WorkflowState 
+      SET baseActionStateId = ${baseActionState.id} 
+      WHERE id = ${state.id}
+    `;
 
     // Get all of the actions in the workflow and create ActionStates for them
     const actions = await getFullActionTree(workflow.rootActionId);

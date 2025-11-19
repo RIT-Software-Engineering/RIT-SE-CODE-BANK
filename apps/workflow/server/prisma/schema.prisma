@@ -1,22 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-//////////////
-// Commands //
-//////////////
-
-// Initialize Prisma: npx prisma init
-// Migrate: npx prisma migrate dev --name init
-// Generate Client: npx prisma generate
-// Format: npx prisma format
-// Introspect: npx prisma db pull
-// Reset Database: npx prisma migrate reset
-// View Database: npx prisma studio
-// For more information on the Prisma CLI, visit: https://pris.ly/d/cli
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -27,25 +8,111 @@ datasource db {
 }
 
 model Action {
-  id             String     @id @default(uuid()) @db.Char(36)
-  name           String
-  description    String?    @db.Text
-  form           String?    @db.Text
-  actionType     ActionType @default(simple)
-  isFrozen       Boolean    @default(false) // Indicates if the action is frozen and cannot be modified (only the creator can change this)
-  nextActionId   String?    @unique @db.Char(36)
-  parentActionId String?    @db.Char(36)
-
-  metadata           Metadata[]
-  referenceEndpoints ReferenceEndpoint[]
-  childActions       Action[]             @relation("ParentChild") // List of child actions
-  parentAction       Action?              @relation("ParentChild", fields: [parentActionId], references: [id]) // Only one parent per Action
-  nextAction         Action?              @relation("NextAction", fields: [nextActionId], references: [id]) // Next action in a chain
+  id                 String               @id @default(uuid()) @db.Char(36)
+  name               String
+  description        String?              @db.Text
+  form               String?              @db.Text
+  actionType         ActionType           @default(simple)
+  isFrozen           Boolean              @default(false)
+  nextActionId       String?              @unique @db.Char(36)
+  parentActionId     String?              @db.Char(36)
+  nextAction         Action?              @relation("NextAction", fields: [nextActionId], references: [id])
   previousAction     Action?              @relation("NextAction")
+  parentAction       Action?              @relation("ParentChild", fields: [parentActionId], references: [id])
+  childActions       Action[]             @relation("ParentChild")
+  actionStates       ActionState[]
+  metadata           Metadata[]
+  permissions        Permission[]
+  referenceEndpoints ReferenceEndpoint[]
   baseActionOf       WorkflowAttributes?  @relation("baseAction")
   rootActionOf       WorkflowAttributes[] @relation("rootAction")
-  permissions        Permission[]
-  actionStates       ActionState[]
+
+  @@index([parentActionId], map: "Action_parentActionId_fkey")
+}
+
+model Metadata {
+  id       String @id @default(uuid()) @db.Char(36)
+  key      String
+  value    String @db.Text
+  actionId String @db.Char(36)
+  action   Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@unique([key, actionId])
+  @@index([actionId], map: "Metadata_actionId_fkey")
+}
+
+model ReferenceEndpoint {
+  id       String @id @default(uuid()) @db.Char(36)
+  name     String
+  url      String
+  method   String
+  actionId String @db.Char(36)
+  action   Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@index([actionId], map: "ReferenceEndpoint_actionId_fkey")
+}
+
+model WorkflowAttributes {
+  id             String          @id @default(uuid()) @db.Char(36)
+  baseActionId   String          @unique @db.Char(36)
+  rootActionId   String?         @db.Char(36)
+  baseAction     Action          @relation("baseAction", fields: [baseActionId], references: [id], onDelete: Cascade)
+  rootAction     Action?         @relation("rootAction", fields: [rootActionId], references: [id], onDelete: Cascade)
+  workflowStates WorkflowState[]
+  tags           Tag[]           @relation("TagToWorkflowAttributes")
+
+  @@index([rootActionId], map: "WorkflowAttributes_rootActionId_fkey")
+}
+
+model Tag {
+  id                 String               @id @default(uuid()) @db.Char(36)
+  name               String               @unique
+  workflowAttributes WorkflowAttributes[] @relation("TagToWorkflowAttributes")
+}
+
+model Permission {
+  id             String         @id @default(uuid()) @db.Char(36)
+  userId         String         @db.Char(36)
+  actionId       String         @db.Char(36)
+  permissionType PermissionType
+  action         Action         @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@index([actionId], map: "Permission_actionId_fkey")
+}
+
+model WorkflowState {
+  id           String                     @id @default(uuid()) @db.Char(36)
+  userId       String?                    @db.Char(36)
+  workflowId   String?                    @db.Char(36)
+  workflow     WorkflowAttributes?        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  participants WorkflowStateParticipant[]
+  actionStates ActionState[]              @relation("ActionStates")
+
+  @@index([workflowId], map: "WorkflowState_workflowId_fkey")
+}
+
+model ActionState {
+  id             String          @id @default(uuid()) @db.Char(36)
+  actionId       String          @db.Char(36)
+  stateType      StateType
+  index          Int
+  parentId       String?         @db.Char(36)
+  action         Action          @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  parent         ActionState?    @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
+  children       ActionState[]   @relation("ParentChild")
+  workflowStates WorkflowState[] @relation("ActionStates")
+
+  @@index([actionId], map: "ActionState_actionId_fkey")
+  @@index([parentId], map: "ActionState_parentId_fkey")
+}
+
+model WorkflowStateParticipant {
+  id              String        @id @default(uuid()) @db.Char(36)
+  workflowStateId String        @db.Char(36)
+  userId          String        @db.Char(36)
+  workflowState   WorkflowState @relation(fields: [workflowStateId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowStateId, userId])
 }
 
 enum ActionType {
@@ -55,94 +122,11 @@ enum ActionType {
   branching
 }
 
-model Metadata {
-  id       String @id @default(uuid()) @db.Char(36)
-  key      String
-  value    String @db.Text
-  actionId String @db.Char(36)
-
-  action Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
-
-  @@unique([key, actionId])
-}
-
-// CAUTION: This system could be very insecure if not properly managed. 
-// We may need to change to something different all together for security.
-model ReferenceEndpoint {
-  id       String @id @default(uuid()) @db.Char(36)
-  name     String
-  url      String
-  method   String
-  actionId String @db.Char(36)
-
-  action Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
-}
-
-model WorkflowAttributes {
-  id           String  @id @default(uuid()) @db.Char(36)
-  baseActionId String  @unique @db.Char(36) // The action that these attributes are added to
-  rootActionId String? @db.Char(36) // The root action of the workflow, which is the base action
-
-  baseAction     Action          @relation("baseAction", fields: [baseActionId], references: [id], onDelete: Cascade)
-  rootAction     Action?         @relation("rootAction", fields: [rootActionId], references: [id], onDelete: Cascade)
-  tags           Tag[]
-  workflowStates WorkflowState[]
-}
-
-model Tag {
-  id   String @id @default(uuid()) @db.Char(36)
-  name String @unique
-
-  workflowAttributes WorkflowAttributes[]
-}
-
-model Permission {
-  id             String         @id @default(uuid()) @db.Char(36)
-  userId         String         @db.Char(36)
-  actionId       String         @db.Char(36)
-  permissionType PermissionType
-
-  action Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
-}
-
 enum PermissionType {
   creator
   sharer
   editor
   viewer
-}
-
-model WorkflowState {
-  id                String @id @default(uuid()) @db.Char(36)
-  userId            String? @db.Char(36)
-  workflowId        String? @db.Char(36)
-  baseActionStateId String @db.Char(36) @unique
-  workflow        WorkflowAttributes @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  actionStates      ActionState[] @relation("ActionStates")
-  baseActionState ActionState        @relation("BaseActionState", fields: [baseActionStateId], references: [id], onDelete: Cascade)
-  participants WorkflowStateParticipant[]
-}
-
-model ActionState {
-  id        String    @id @default(uuid()) @db.Char(36)
-  actionId  String    @db.Char(36)
-  stateType StateType
-  index     Int
-  parentId  String?    @db.Char(36) // If this action has a parent action
-
-  action        Action          @relation(fields: [actionId], references: [id], onDelete: Cascade)
-  parent        ActionState?     @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
-  children      ActionState[]   @relation("ParentChild")
-  workflowStates      WorkflowState[]  @relation("ActionStates")
-  workflowState WorkflowState? @relation("BaseActionState")
-}
-
-model WorkflowStateParticipant {
-  id               String @id @default(uuid()) @db.Char(36)
-  workflowStateId  String @db.Char(36)
-  userId           String @db.Char(36)
-  workflowState WorkflowState @relation(fields: [workflowStateId], references: [id], onDelete: Cascade)
-  @@unique([workflowStateId, userId])
 }
 
 enum StateType {

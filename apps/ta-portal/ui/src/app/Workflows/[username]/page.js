@@ -1488,9 +1488,14 @@ function getActionNavigationUrl(action, workflow, username) {
         
       case 'accepted':
         // For "Accepted" action, candidate should go to their applications page to accept offer
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Accepted action navigation:', { candidateUsername, username, workflowMetadata: workflow.metadata });
+        }
         if (candidateUsername) {
           return `/Applications/Employee/${candidateUsername}`;
         }
+        // Fallback: use current username if it's the candidate viewing their own workflow
+        return `/Applications/Employee/${username}`;
         break;
         
       case 'hired':

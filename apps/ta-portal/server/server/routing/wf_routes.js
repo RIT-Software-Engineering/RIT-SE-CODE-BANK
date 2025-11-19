@@ -318,7 +318,7 @@ const extractActionsFromWorkflow = async (workflow, userId = null) => {
           actionType: actionData.actionType,
           parentActionId: actionData.parentActionId,
           childActions: [],
-          assignedUserId: actionData.assignedUserId || null,
+          assignedUserId: actionData.metadata?.assignedUserId || null,
           order: index,
           deadline: actionData.metadata?.deadline || metadata.deadline || null,
           isTeamAction: actionData.metadata?.isTeamAction || false,
@@ -1246,8 +1246,11 @@ router.get("/hiring/permissions", async (req, res) => {
     for (const action of workflowActions) {
       let canPerform = false;
 
+      // Check assignedUserId in metadata first, then fall back to direct field
+      const assignedUserId = action.metadata?.assignedUserId || action.assignedUserId;
+
       if (isHiringWorkflow) {
-        if (action.assignedUserId && action.assignedUserId === user.uid.toString()) {
+        if (assignedUserId && assignedUserId === user.uid.toString()) {
           canPerform = true;
         }
       } else {
@@ -1255,7 +1258,7 @@ router.get("/hiring/permissions", async (req, res) => {
           canPerform = true;
         }
 
-        if (!canPerform && action.assignedUserId && action.assignedUserId === user.uid.toString()) {
+        if (!canPerform && assignedUserId && assignedUserId === user.uid.toString()) {
           canPerform = true;
         }
 
@@ -1341,8 +1344,11 @@ router.get("/hiring/permissions/:workflowId/:username", async (req, res) => {
     for (const action of workflowActions) {
       let canPerform = false;
 
+      // Check assignedUserId in metadata first, then fall back to direct field
+      const assignedUserId = action.metadata?.assignedUserId || action.assignedUserId;
+
       if (isHiringWorkflow) {
-        if (action.assignedUserId && action.assignedUserId === user.uid.toString()) {
+        if (assignedUserId && assignedUserId === user.uid.toString()) {
           canPerform = true;
         }
       } else {
@@ -1350,7 +1356,7 @@ router.get("/hiring/permissions/:workflowId/:username", async (req, res) => {
           canPerform = true;
         }
 
-        if (!canPerform && action.assignedUserId && action.assignedUserId === user.uid.toString()) {
+        if (!canPerform && assignedUserId && assignedUserId === user.uid.toString()) {
           canPerform = true;
         }
 
