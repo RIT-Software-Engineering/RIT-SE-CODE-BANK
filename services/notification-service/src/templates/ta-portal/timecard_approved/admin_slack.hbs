@@ -1,0 +1,11 @@
+✅ *Timecard Approved*
+
+*{{employer.name}}* approved timecard for *{{employee.name}}*
+
+*Position*: {{job.courseCode}}-{{job.sectionNumber}} ({{job.title}})
+*Week*: {{timecard.weekStartDate}} to {{timecard.weekEndDate}}
+*Hours*: {{timecard.totalHours}}
+
+{{#if cta.url}}
+👉 <{{{cta.url}}}|View in Portal>
+{{/if}}
