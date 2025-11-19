@@ -27,7 +27,35 @@ export default function LandingDashboard({ user }) {
       }}
     >
       <Container maxWidth="lg" sx={{ width: "100%", overflow: "hidden" }}>
-        {/* Explore Section */}
+        {/* Hero Section */}
+        <Box sx={{ mb: 8, textAlign: "center", pt: 4 }}>
+          <Typography
+            variant="h3"
+            component="h1"
+            sx={{
+              fontWeight: 700,
+              mb: 2,
+              color: theme.palette.text.primary,
+              fontSize: { xs: "1.8rem", sm: "2.2rem", md: "2.8rem" },
+            }}
+          >
+            Welcome to TA Portal
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{
+              color: theme.palette.text.secondary,
+              fontWeight: 400,
+              maxWidth: "700px",
+              mx: "auto",
+              fontSize: { xs: "0.95rem", sm: "1.05rem", md: "1.1rem" },
+            }}
+          >
+            Find opportunities to be a teaching assistant for the Software Engineering Department and manage your teaching assistant responsibilities
+          </Typography>
+        </Box>
+
+        {/* Explore Section - NOW FIRST */}
         <Box
           sx={{
             mb: 10,
@@ -145,7 +173,7 @@ export default function LandingDashboard({ user }) {
                   xs={12}
                   sm={6}
                   md={4}
-                  lg={2.4}
+                  lg={2}
                   key={index}
                   sx={{ display: "flex", justifyContent: "center" }}
                 >
