@@ -64,10 +64,10 @@ export default function Home() {
         <Box
           sx={{
             textAlign: "center",
-            mt: { xs: 4, md: 5 },
-            mb: 6,
+            mt: { xs: 2, md: 3 },
+            mb: 3,
             px: 2,
-            py: 4,
+            py: 2,
           }}
         >
           <Box
