@@ -35,7 +35,6 @@ model Action {
   isFrozen       Boolean    @default(false) // Indicates if the action is frozen and cannot be modified (only the creator can change this)
   nextActionId   String?    @unique @db.Char(36)
   parentActionId String?    @db.Char(36)
-  assignedUserId String?    @db.Char(36) // User assigned to this action
 
   metadata           Metadata[]
   referenceEndpoints ReferenceEndpoint[]
@@ -114,26 +113,36 @@ enum PermissionType {
 }
 
 model WorkflowState {
-  id         String @id @default(uuid()) @db.Char(36)
-  userId     String @db.Char(36)
-  workflowId String @db.Char(36)
-
-  workflow     WorkflowAttributes @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  actionStates ActionState[]
+  id                String @id @default(uuid()) @db.Char(36)
+  userId            String? @db.Char(36)
+  workflowId        String? @db.Char(36)
+  baseActionStateId String @db.Char(36) @unique
+  workflow        WorkflowAttributes @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  actionStates      ActionState[] @relation("ActionStates")
+  baseActionState ActionState        @relation("BaseActionState", fields: [baseActionStateId], references: [id], onDelete: Cascade)
+  participants WorkflowStateParticipant[]
 }
 
 model ActionState {
-  id              String    @id @default(uuid()) @db.Char(36)
-  workflowStateId String    @db.Char(36)
-  actionId        String    @db.Char(36)
-  stateType       StateType
-  index           Int
-  parentId        String?   @db.Char(36) // Parent ActionState for hierarchical relationships
+  id        String    @id @default(uuid()) @db.Char(36)
+  actionId  String    @db.Char(36)
+  stateType StateType
+  index     Int
+  parentId  String?    @db.Char(36) // If this action has a parent action
 
-  workflowState WorkflowState   @relation(fields: [workflowStateId], references: [id], onDelete: Cascade)
   action        Action          @relation(fields: [actionId], references: [id], onDelete: Cascade)
-  parent        ActionState?    @relation("ActionStateHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children      ActionState[]   @relation("ActionStateHierarchy")
+  parent        ActionState?     @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
+  children      ActionState[]   @relation("ParentChild")
+  workflowStates      WorkflowState[]  @relation("ActionStates")
+  workflowState WorkflowState? @relation("BaseActionState")
+}
+
+model WorkflowStateParticipant {
+  id               String @id @default(uuid()) @db.Char(36)
+  workflowStateId  String @db.Char(36)
+  userId           String @db.Char(36)
+  workflowState WorkflowState @relation(fields: [workflowStateId], references: [id], onDelete: Cascade)
+  @@unique([workflowStateId, userId])
 }
 
 enum StateType {
