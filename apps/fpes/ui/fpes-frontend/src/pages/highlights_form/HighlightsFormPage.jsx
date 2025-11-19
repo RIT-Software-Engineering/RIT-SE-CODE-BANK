@@ -10,7 +10,7 @@ import PublicationsFormStep from "../publications/PublicationsFormStep";
 import StudentSupportFormStep from "../student_support/StudentSupportFormStep";
 import GrantsFormStep from "../grants/GrantsFormStep";
 
-export default function HighlightsFormPage({facultyID}) {
+export default function HighlightsFormPage({facultyId}) {
     const [activeStep, setActiveStep] = useState(0);
 
     const steps = [
@@ -53,8 +53,8 @@ export default function HighlightsFormPage({facultyID}) {
     });
 
     function handleFormSubmission(data){
-        console.log(data)
-        data.faculty_information_id = 1;
+        data.faculty_information_id = facultyId;
+        console.log(facultyId)
         axios.post("http://localhost:3000/highlights/submit", data);
     }
 
