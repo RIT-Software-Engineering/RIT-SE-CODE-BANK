@@ -1,124 +1,62 @@
-import { useState } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Alert,
-} from "@mui/material";
+import { useState, useEffect } from "react";
+import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import axios from "axios";
 
-export default function LoginPage(setRole, setIsAuthenticated) {
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-    role: "user", 
-  });
+export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId}) {
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState("");
+  const [password, setPassword] = useState("");
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  useEffect(() => {
+    axios.get("http://localhost:3000/faculty")
+      .then(res => setUsers(res.data))
+      .catch(console.error);
+  }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setError("");
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-  if (formData.username && formData.password) {
+  const handleLogin = () => {
+    //if (selectedUser) {
+      //const user = users.find(u => u.faculty_id === selectedUser);
+      //setRole(user.user_role); 
+      updateFacultyId(users.faculty_id);
       setIsAuthenticated(true);
-      setRole(formData.role);
-      setSuccess("Login successful!");
-      setError("");
-    } else {
-      setError("Please enter username and password");
-      setSuccess("");
-    }
+    //}
   };
 
   return (
-    <Box
-      className="flex justify-center items-center min-h-screen bg-gray-100"
-    >
-      <Paper
-        elevation={3}
-        sx={{
-          width: 400,
-          p: 4,
-          borderRadius: 3,
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
-        <Typography variant="h5" align="center" gutterBottom>
-          Login
-        </Typography>
+    <Box sx={{ width: 300, margin: "auto", mt: 10 }}>
+      <FormControl fullWidth>
+        <InputLabel>Select User</InputLabel>
+        <Select
+          value={selectedUser}
+          onChange={(e) => setSelectedUser(e.target.value)}
+        >
+          {users.map(user => (
+            <MenuItem key={user.faculty_id} value={user.faculty_id}>
+              {user.name} — {user.rank}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
-        {error && <Alert severity="error">{error}</Alert>}
-        {success && <Alert severity="success">{success}</Alert>}
 
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Username"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            margin="normal"
-            required
-          />
-
-          <TextField
+          <TextField 
             fullWidth
             label="Password"
             type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             margin="normal"
-            required
+            required 
           />
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel></InputLabel>
-            <Select
-              name="role"
-              value={formData.role}
-              //label=""
-              onChange={handleChange}
+          <Button 
+              onClick={handleLogin}
+              sx={{ mt: 2 }}
+              variant="contained"
             >
-              <MenuItem value="guest">Guest</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
-            </Select>
-          </FormControl>
-
-
-          <Button
-            fullWidth
-            type="submit"
-            variant="contained"
-            color="primary"
-            sx={{ mt: 2 }}
-          >
-            Login
+           Login
           </Button>
-        </form>
-
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          align="center"
-          sx={{ mt: 2 }}
-        >
-        </Typography>
-      </Paper>
+          
     </Box>
   );
 }
