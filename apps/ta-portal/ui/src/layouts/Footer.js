@@ -16,12 +16,20 @@ export default function Footer() {
     <Box
       component="footer"
       sx={{
-        backgroundColor: '#000000',
+        backgroundColor: theme.palette.mode === 'dark' 
+          ? '#0a0a0a'  // Slightly lighter than pure black for dark mode
+          : '#000000',
         color: '#ffffff',
         py: 4,
         px: 2,
         textAlign: 'center',
         mt: 'auto',
+        borderTop: theme.palette.mode === 'dark' 
+          ? '2px solid rgba(255, 255, 255, 0.12)'  // Subtle border in dark mode
+          : 'none',
+        boxShadow: theme.palette.mode === 'dark'
+          ? '0 -4px 12px rgba(0, 0, 0, 0.3)'  // Shadow to lift footer in dark mode
+          : 'none',
       }}
     >
       <Typography 

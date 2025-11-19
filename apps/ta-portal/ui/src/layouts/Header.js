@@ -597,6 +597,25 @@ export default function Header() {
               </IconButton>
             </Tooltip>
 
+            {/* Login Button - Show when not logged in */}
+            {!currentUser && (
+              <Button
+                component={Link}
+                href="/login"
+                variant="text"
+                sx={{
+                  color: "white",
+                  fontSize: "0.9rem",
+                  textTransform: "none",
+                  "&:hover": {
+                    color: theme.palette.primary.main,
+                  },
+                }}
+              >
+                Login
+              </Button>
+            )}
+
             {/* Mobile Hamburger Menu */}
             {currentUser && (
               <IconButton

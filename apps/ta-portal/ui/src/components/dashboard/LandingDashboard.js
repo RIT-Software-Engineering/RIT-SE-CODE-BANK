@@ -22,47 +22,19 @@ export default function LandingDashboard({ user }) {
     <Box
       sx={{
         minHeight: "100%",
-        background: theme.palette.mode === 'dark' 
-          ? "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)"
-          : "linear-gradient(135deg, #f5f5f5 0%, #efefef 100%)",
         py: { xs: 3, sm: 4, md: 6 },
         overflow: "hidden",
       }}
     >
       <Container maxWidth="lg" sx={{ width: "100%", overflow: "hidden" }}>
-        {/* Hero Section */}
-        <Box sx={{ mb: 8, textAlign: "center", pt: 4 }}>
-          <Typography
-            variant="h3"
-            component="h1"
-            sx={{
-              fontWeight: 700,
-              mb: 2,
-              color: theme.palette.text.primary,
-              fontSize: { xs: "1.8rem", sm: "2.2rem", md: "2.8rem" },
-            }}
-          >
-            Welcome to TA Portal
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              color: theme.palette.text.secondary,
-              fontWeight: 400,
-              maxWidth: "700px",
-              mx: "auto",
-              fontSize: { xs: "0.95rem", sm: "1.05rem", md: "1.1rem" },
-            }}
-          >
-            Find opportunities to be a teaching assistant for the Software Engineering Department and manage your teaching assistant responsibilities
-          </Typography>
-        </Box>
-
-        {/* Explore Section - NOW FIRST */}
+        {/* Explore Section */}
         <Box
           sx={{
             mb: 10,
             textAlign: "center",
+            pt: 4,
+            borderTop: "2px solid",
+            borderColor: "divider",
           }}
         >
           <Typography
