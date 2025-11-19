@@ -65,6 +65,23 @@ export default function StudentSupportForm({
         </Grid>
       ))}
         </Grid>
+
+          <Grid item size={10}>
+              <Controller
+                  name={register_support + "other_contributions"}
+                  control={control}
+                  render={({field}) =>
+                      <TextField 
+                      sx={{width:"100%"}} 
+                      {...field} 
+                      label="Other Contributions" 
+                      placeholder="Other Contributions" 
+                      multiline minRows={4} 
+                      maxRows={10}
+                      />
+                  }
+              />
+          </Grid>
       </Paper>
   );
 }

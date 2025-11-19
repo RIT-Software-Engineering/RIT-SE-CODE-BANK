@@ -125,6 +125,25 @@ export default function GrantForm({ control, register_grant, handleRemoveGrant, 
                     }
                 />
             </Grid>
+
+            <Grid item size={10}>
+                <Controller
+                    name={register_grant + "other_contributions"}
+                    control={control}
+                    render={({field}) =>
+                        <TextField 
+                        sx={{width:"100%"}} 
+                        {...field} 
+                        label="Other Contributions" 
+                        placeholder="Other Contributions" 
+                        multiline minRows={4} 
+                        maxRows={10}
+                        />
+                    }
+                />
+            </Grid>
+
         </Grid>
+        
     );
 }

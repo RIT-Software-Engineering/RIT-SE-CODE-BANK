@@ -11,6 +11,6 @@ CREATE TABLE student_support(
     phd_passed_rpa_as_chair INT,
     phd_passed_pro_as_chair INT,
     phd_passed_def_as_chair INT,
-    phd_rpa_def_pro_as_member INT
-    --add 'additional comments' textfiled
+    phd_rpa_def_pro_as_member INT,
+    other_contributions VARCHAR(255) NOT NULL
 );

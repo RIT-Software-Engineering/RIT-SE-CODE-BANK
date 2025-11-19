@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS grants (
     faculty_role VARCHAR(255) NOT NULL,             
     faculty_share INT DEFAULT NULL,       
     grant_status ENUM('Funded', 'In Submission', 'Declined', 'In Development') NOT NULL,
-    comments TEXT
+    other_contributions VARCHAR(255) NOT NULL
 );
 
 INSERT INTO grants (form_id, title, funder, amount, est_amount, start_date, end_date, faculty_role, faculty_share, grant_status, comments) VALUES 

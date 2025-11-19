@@ -17,6 +17,7 @@ export default function StudentSupportFormStep({ form_id, control, errors }) {
     this.phd_passed_pro_as_chair = 0;
     this.phd_passed_def_as_chair = 0;
     this.phd_rpa_def_pro_as_member = 0;
+    this.other_contributions = "";
     this.form_id = form_id;
   }
 
