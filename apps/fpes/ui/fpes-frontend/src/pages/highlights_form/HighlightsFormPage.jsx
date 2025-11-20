@@ -46,8 +46,7 @@ export default function HighlightsFormPage({facultyId}) {
             publications : [],
             significant_outcomes : "",
             other_collaborations : "",
-            grants : [],
-            student_support : []
+            grants : []
         },
         mode:"onChange"
     });
