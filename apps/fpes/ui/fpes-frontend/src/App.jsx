@@ -9,7 +9,7 @@ import { BrowserRouter, Routes, Route, Link, Navigate  } from 'react-router-dom'
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import LoginPage from './pages/login/LoginPage.jsx';
 import ServicesPage from './pages/services/ServicesPage.jsx';
-import GrantsPage from './pages/grants/GrantsPage.jsx';
+import GrantsPage from './pages/grants/grantsPage.jsx';
 import DepartmentsPage from './pages/departments/DepartmentsPage.jsx';
 import CourseSectionsPage from './pages/course_sections/CourseSectionsPage.jsx';
 import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';

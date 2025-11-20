@@ -47,7 +47,22 @@ export default function HighlightsFormPage() {
             publications : [],
             significant_outcomes : "",
             other_collaborations : "",
-            grants : []
+            grants : [],
+            student_support: {
+                independent_studies_supervised: 0,
+                bs_cs_students_supervised: 0,
+                ms_defence_chair: 0,
+                ms_defence_member: 0,
+                active_ms_cs_as_chair: 0,
+                other_bs_projects: 0,
+                other_ms_projects: 0,
+                current_phd_advisees: 0,
+                phd_passed_rpa_as_chair: 0,
+                phd_passed_pro_as_chair: 0,
+                phd_passed_def_as_chair: 0,
+                phd_rpa_def_pro_as_member: 0,
+                other_contributions: ""
+            }
         },
         mode:"onChange"
     });
