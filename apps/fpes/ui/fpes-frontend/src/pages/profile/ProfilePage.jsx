@@ -11,12 +11,11 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { getFacultyById, updateFaculty } from "../../api/faculty_api_imports";
 
-export default function ProfilePage() {
+export default function ProfilePage({ facultyId }) {
   const [faculty, setFaculty] = useState(null);
   const [editing, setEditing] = useState(false);
   
-  // TODO: Replace with actual logged-in faculty ID from your auth system
-  const currentFacultyId = 6;
+  const currentFacultyId = facultyId;
 
   const {
     handleSubmit,
@@ -34,18 +33,23 @@ export default function ProfilePage() {
 
   // Load faculty data
   useEffect(() => {
-    getFacultyById(currentFacultyId)
-      .then((res) => {
-        const data = res?.data;
-        setFaculty(data);
-        reset({
-          name: data?.name || "",
-          rank: data?.rank || "",
-          unit: data?.unit || "",
-          affiliations: data?.affiliations || "",
-        });
-      })
-      .catch(console.error);
+    // 1. Conditional Check: Prevents the API call if the ID is invalid (e.g., -1)
+    if (currentFacultyId > 0) { 
+      getFacultyById(currentFacultyId)
+        .then((res) => {
+          const data = res?.data;
+          setFaculty(data);
+          reset({
+            name: data?.name || "",
+            rank: data?.rank || "",
+            unit: data?.unit || "",
+            affiliations: data?.affiliations || "",
+          });
+        })
+        .catch(console.error);
+    }
+    // 2. Dependency Array: Tells React to re-run this effect
+    //    whenever currentFacultyId changes (i.e., a new user logs in)
   }, [currentFacultyId, reset]);
 
   const onSubmit = async (values) => {

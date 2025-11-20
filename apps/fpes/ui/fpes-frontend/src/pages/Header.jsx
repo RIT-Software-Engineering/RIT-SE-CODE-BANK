@@ -7,7 +7,7 @@ export default function Header({ pages, adminView, setRole, isAuthenticated, onL
     const profilePage = pages.find(page => page.name === "Profile");
 
     return (
-        <AppBar position='absolute'>
+        <AppBar position='absolute' sx={{ backgroundColor: '#FF7700'}}>
             <Toolbar>
                 <Box sx={{flexGrow:1, display:"flex"}}>
                     {isAuthenticated && pages.map((page, index) => (
@@ -36,13 +36,13 @@ export default function Header({ pages, adminView, setRole, isAuthenticated, onL
                             </Button>
                         )}
                         
-                        <FormControl sx={{backgroundColor:"white", borderRadius:"5%"}} variant='filled'>
+                        {/* <FormControl sx={{backgroundColor:"white", borderRadius:"5%"}} variant='filled'>
                             <InputLabel id="role_view_label">View</InputLabel>
                             <Select labelId="role_view_label" label="View" defaultValue={"faculty"} onChange={(e) => setRole(e.target.value)}>
                                 <MenuItem value="admin">Admin</MenuItem>
                                 <MenuItem value="faculty">Faculty</MenuItem>
                             </Select>
-                        </FormControl>
+                        </FormControl> */}
                         
                         <Button 
                             color="inherit"
