@@ -14,17 +14,34 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
   }, []);
 
   const handleLogin = () => {
-    //if (selectedUser) {
-      //const user = users.find(u => u.faculty_id === selectedUser);
-      //setRole(user.user_role); 
-      updateFacultyId(users.faculty_id);
-      setIsAuthenticated(true);
-    //}
+    // 1. Find the selected user object based on the selectedUser state (the ID).
+    const user = users.find(u => u.faculty_id === selectedUser);
+    
+    // 2. Check if a user was found (optional but good practice)
+    if (user) {
+        // 3. Pass the ID to the function from App.jsx
+        updateFacultyId(user.faculty_id); 
+        
+        // 4. Set the user's role
+        setRole(user.user_role); 
+        
+        // 5. Set authentication status
+        setIsAuthenticated(true);
+    } else {
+        console.error("Please select a user to log in.");
+    }
   };
 
   return (
     <Box sx={{ width: 300, margin: "auto", mt: 10 }}>
-      <FormControl fullWidth>
+      <FormControl fullWidth
+        sx={{ 
+          '& .MuiInputLabel-shrink': {
+              // Adjust this value (e.g., -4px, -8px, etc.)
+              // The smaller the negative value, the higher the label goes.
+              transform: 'translate(14px, -15px) scale(0.75)', 
+          }
+      }}>
         <InputLabel>Select User</InputLabel>
         <Select
           value={selectedUser}
@@ -39,7 +56,7 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
       </FormControl>
 
 
-          <TextField 
+          {/* <TextField 
             fullWidth
             label="Password"
             type="password"
@@ -47,7 +64,7 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
             onChange={(e) => setPassword(e.target.value)}
             margin="normal"
             required 
-          />
+          /> */}
 
           <Button 
               onClick={handleLogin}

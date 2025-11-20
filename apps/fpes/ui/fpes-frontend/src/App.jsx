@@ -2,6 +2,8 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import theme from './theme/MuiTheme'; 
+import { ThemeProvider } from '@mui/material/styles';
 
 import { BrowserRouter, Routes, Route, Link, Navigate  } from 'react-router-dom';
 import ProtectedRoute from "./ProtectedRoute.jsx";
@@ -83,51 +85,53 @@ function App() {
   } 
 
   return (
-    <BrowserRouter>
-      <Header 
-        pages={pages} 
-        adminView={role === "admin"} 
-        setRole={setRole}
-        isAuthenticated={isAuthenticated} 
-        onLogout={() => {
-          setIsAuthenticated(false);
-          setRole(null);
-          setFacultyId(-1);
-        }}
-        profileRoute="/profile"
-      />
-        
-      <h1> FPES Portal</h1>
-
-      {!isAuthenticated && (
-        <div style={{ textAlign: "center", marginTop: "20px" }}>
-
-          <Link to="/login">
-            <button style={{ mt: 2, backgroundColor: "#1976d2", color: "white",}}  >
-              Login
-            </button>
-          </Link>
-
-          <button style={{ mt: 2, backgroundColor: "#555", color: "white", }} >
-              Register
-          </button>
+    <ThemeProvider theme={theme}>
+      <BrowserRouter>
+        <Header 
+          pages={pages} 
+          adminView={role === "admin"} 
+          setRole={setRole}
+          isAuthenticated={isAuthenticated} 
+          onLogout={() => {
+            setIsAuthenticated(false);
+            setRole(null);
+            setFacultyId(-1);
+          }}
+          profileRoute="/profile"
+        />
           
-        </div>
-      )}
+        <h1> FPES Portal</h1>
+
+        {/* {!isAuthenticated && (
+          <div style={{ textAlign: "center", marginTop: "20px" }}>
+
+            <Link to="/login">
+              <button style={{ mt: 2, backgroundColor: "#1976d2", color: "white",}}  >
+                Login
+              </button>
+            </Link>
+
+            <button style={{ mt: 2, backgroundColor: "#555", color: "white", }} >
+                Register
+            </button>
             
+          </div>
+        )} */}
               
-      <Routes>
-        <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
-        <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
-        <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
-        {role === 'admin' ? adminRoutes : null}
-        <Route path="/course_sections" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <CourseSectionsPage/> </ProtectedRoute>} />
-        <Route path="/student_support" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <StudentSupportPage/> </ProtectedRoute> } />
-        <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage/> </ProtectedRoute> } />
-        <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage/> </ProtectedRoute> } />
-        <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } />
-      </Routes>
-    </BrowserRouter>
+                
+        <Routes>
+          <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
+          <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
+          <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
+          {role === 'admin' ? adminRoutes : null}
+          <Route path="/course_sections" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <CourseSectionsPage/> </ProtectedRoute>} />
+          <Route path="/student_support" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <StudentSupportPage/> </ProtectedRoute> } />
+          <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage facultyId={facultyId} /> </ProtectedRoute> } />
+          <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage/> </ProtectedRoute> } />
+          <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } />
+        </Routes>
+      </BrowserRouter>
+  </ThemeProvider>
   )
 }
 

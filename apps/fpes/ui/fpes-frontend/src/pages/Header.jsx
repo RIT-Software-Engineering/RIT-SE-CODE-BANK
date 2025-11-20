@@ -7,7 +7,7 @@ export default function Header({ pages, adminView, setRole, isAuthenticated, onL
     const profilePage = pages.find(page => page.name === "Profile");
 
     return (
-        <AppBar position='absolute'>
+        <AppBar position='absolute' sx={{ backgroundColor: '#FF7700'}}>
             <Toolbar>
                 <Box sx={{flexGrow:1, display:"flex"}}>
                     {isAuthenticated && pages.map((page, index) => (
