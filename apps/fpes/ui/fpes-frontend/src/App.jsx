@@ -12,7 +12,6 @@ import ServicesPage from './pages/services/ServicesPage.jsx';
 import GrantsPage from './pages/grants/GrantsPage.jsx';
 import DepartmentsPage from './pages/departments/DepartmentsPage.jsx';
 import CourseSectionsPage from './pages/course_sections/CourseSectionsPage.jsx';
-import { FormControl, FormLabel, InputLabel, MenuItem, Select } from '@mui/material';
 import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';
 import CoursesPage from './pages/courses/CoursePage.jsx'
 import ProfilePage from './pages/profile/ProfilePage.jsx';
@@ -25,26 +24,26 @@ function App() {
   const [role, setRole] = useState("faculty")
   const [facultyId, setFacultyId] = useState(-1);
   const pages = [
-    {
-        name : "Serivces",
-        route : "/services",
-        adminOnly : false
-    },
-    {
-        name : "Grants",
-        route : "/grants",
-        adminOnly : false
-    },
-    {
-        name : "Course Sections",
-        route : "/course_sections",
-        adminOnly : false,
-    },
-    {
-        name : "Student Support",
-        route : "/student_support",
-        adminOnly : false
-    },
+    // {
+    //     name : "Serivces",
+    //     route : "/services",
+    //     adminOnly : false
+    // },
+    // {
+    //     name : "Grants",
+    //     route : "/grants",
+    //     adminOnly : false
+    // },
+    // {
+    //     name : "Course Sections",
+    //     route : "/course_sections",
+    //     adminOnly : false,
+    // },
+    // {
+    //     name : "Student Support",
+    //     route : "/student_support",
+    //     adminOnly : false
+    // },
     {
         name : "Departments",
         route : "/departments",
@@ -88,28 +87,28 @@ function App() {
                 <h1> FPES Portal</h1>
             </div>
         );
-
+  const isLoginPage = location.pathname === '/login';
+  const shouldShowHeader = !isLoginPage && isAuthenticated;
 return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        <Header 
-          pages={pages} 
-          adminView={role === "admin"} 
-          setRole={setRole}
-          isAuthenticated={isAuthenticated} 
-          onLogout={() => {
-            setIsAuthenticated(false);
-            setRole(null);
-            setFacultyId(-1);
-          }}
-          profileRoute="/profile"
-        />
-          
-        {/* If your h1 FPES Portal was here, ensure it's removed/gone */}
-        {/* The commented-out Login button block remains commented out */}
+        {shouldShowHeader && (
+          <Header 
+            pages={pages} 
+            adminView={role === "admin"} 
+            setRole={setRole}
+            isAuthenticated={isAuthenticated} 
+            onLogout={() => {
+              setIsAuthenticated(false);
+              setRole(null);
+              setFacultyId(-1);
+            }}
+            profileRoute="/profile"
+          />
+        )}
               
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Navigate to="/profile" /> : <Navigate to="/login" />} />
+          <Route path="/" element={isAuthenticated ? <Navigate to="/highlights_form" /> : <Navigate to="/login" />} />
           <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
           <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
           <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />

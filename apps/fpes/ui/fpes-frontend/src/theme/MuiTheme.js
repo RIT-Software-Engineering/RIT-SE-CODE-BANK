@@ -4,7 +4,7 @@ import { createTheme } from '@mui/material/styles';
 const RIT_ORANGE = '#F76902'; 
 const PRIMARY_CONTRAST = '#FFFFFF'; // White
 const BLACK_TEXT = '#000000';
-const BLACK_HOVER = 'rgba(0, 0, 0, 0.2)'; 
+const BLACK_HOVER = 'rgba(0, 0, 0, 0.2)'; // Transparent Black for hover background
 
 const theme = createTheme({
   palette: {
@@ -15,46 +15,53 @@ const theme = createTheme({
     },
   },
   components: {
-    // 🎯 Target the AppBar (Assuming you want the RIT Orange background for the navbar)
+    // 🎯 1. Target the AppBar (The Top Navigation)
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: RIT_ORANGE, // Navbar Background is RIT Orange
-          color: PRIMARY_CONTRAST, // Default text color on AppBar is White
+          backgroundColor: RIT_ORANGE,
+          color: PRIMARY_CONTRAST,
+          
+          // Target Buttons specifically INSIDE the AppBar
+          '& .MuiButton-root': {
+            color: PRIMARY_CONTRAST, 
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              backgroundColor: BLACK_HOVER, 
+              color: BLACK_TEXT, 
+            },
+          },
         },
       },
     },
     
-    // 🎯 Target all default MUI Buttons globally
+    // 🎯 2. Target Global Buttons (Everywhere else in the app)
     MuiButton: {
       defaultProps: {
         color: 'primary', 
       },
       styleOverrides: {
         root: {
-          // --- Custom Styles for Buttons (Text/Link Buttons in Header) ---
-          
-          // 💡 FIX: Set default text color to WHITE
-          color: PRIMARY_CONTRAST, 
-
-          // Hover/Focus/Active State Overrides
+          color: BLACK_TEXT, 
           '&:hover': {
-            // Apply the translucent black hover background
-            backgroundColor: BLACK_HOVER, 
-            // 💡 FIX: Force text color to BLACK only on hover
-            color: BLACK_TEXT, 
+            backgroundColor: 'rgba(247, 105, 2, 0.1)', 
           },
-          '&:focus, &:active': {
-            // Ensure text color is black on focus/active states
-            color: BLACK_TEXT, 
-          }
         },
-        // Override for contained buttons (like ADD SERVICE/Submit)
+        // Ensure "Contained" buttons stay Orange with White text
         containedPrimary: {
             backgroundColor: RIT_ORANGE, 
-            color: PRIMARY_CONTRAST,
+            color: PRIMARY_CONTRAST, 
             '&:hover': {
-                backgroundColor: '#AA4702',
+                backgroundColor: '#D15600', 
+                color: PRIMARY_CONTRAST, 
+            }
+        },
+        // ✅ ADDED THIS: Target Outlined Buttons specifically
+        outlined: {
+            '&:hover': {
+                borderColor: BLACK_TEXT, // Changes the outline (border) to black on hover
+                color: BLACK_TEXT,       // Ensures text is also black on hover
+                backgroundColor: 'transparent' // Optional: keeps background clear
             }
         }
       },

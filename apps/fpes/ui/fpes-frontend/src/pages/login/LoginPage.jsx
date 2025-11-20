@@ -29,7 +29,7 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
         
         // 5. Set authentication status
         setIsAuthenticated(true);
-        navigate("/profile");
+        navigate("/highlights_form");
     } else {
         console.error("Please select a user to log in.");
     }
@@ -59,18 +59,6 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
             ))}
           </Select>
         </FormControl>
-
-
-            {/* <TextField 
-              fullWidth
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              margin="normal"
-              required 
-            /> */}
-
             <Button 
                 onClick={handleLogin}
                 sx={{ mt: 2 }}
