@@ -47,8 +47,7 @@ export default function HighlightsFormPage() {
             publications : [],
             significant_outcomes : "",
             other_collaborations : "",
-            grants : [],
-            student_support : []
+            grants : []
         },
         mode:"onChange"
     });
