@@ -83,8 +83,13 @@ function App() {
   function updateFacultyId(id) {
     setFacultyId(id !== undefined ? id : -1);
   } 
+  const PortalHeading = () => (
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+                <h1> FPES Portal</h1>
+            </div>
+        );
 
-  return (
+return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <Header 
@@ -100,26 +105,11 @@ function App() {
           profileRoute="/profile"
         />
           
-        <h1> FPES Portal</h1>
-
-        {/* {!isAuthenticated && (
-          <div style={{ textAlign: "center", marginTop: "20px" }}>
-
-            <Link to="/login">
-              <button style={{ mt: 2, backgroundColor: "#1976d2", color: "white",}}  >
-                Login
-              </button>
-            </Link>
-
-            <button style={{ mt: 2, backgroundColor: "#555", color: "white", }} >
-                Register
-            </button>
-            
-          </div>
-        )} */}
+        {/* If your h1 FPES Portal was here, ensure it's removed/gone */}
+        {/* The commented-out Login button block remains commented out */}
               
-                
         <Routes>
+          <Route path="/" element={isAuthenticated ? <Navigate to="/profile" /> : <Navigate to="/login" />} />
           <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
           <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
           <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
@@ -132,7 +122,7 @@ function App() {
         </Routes>
       </BrowserRouter>
   </ThemeProvider>
-  )
+)
 }
 
 export default App
