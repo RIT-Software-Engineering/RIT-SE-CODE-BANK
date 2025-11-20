@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button, Grid, Paper } from "@mui/material";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray } from "react-hook-form";
 import GrantForm from "./GrantsForm.jsx";
 
 export default function GrantsFormStep({ form_id, control, errors }) {
@@ -29,22 +29,20 @@ export default function GrantsFormStep({ form_id, control, errors }) {
 
     return (
         <div>
-                <Grid container rowSpacing={0} columns={12}>
-                    {fields.map((grant, index) => (
-                        <Paper sx={{padding:"4% 4%", margin:"4% auto", width:"700px"}}>
-                            <GrantForm 
-                                key={grant.id} 
-                                control={control} 
-                                register_grant={`grants[${index}].`} 
-                                errors={errors}
-                                index={index}
-                                handleRemoveGrant={removeGrant}
-                            />
-                        </Paper>
-                        ))}
-                </Grid>
-                <Button onClick={() => {append(new Grant(form_id)); setNumberOfGrants(number_of_grants + 1)}}>Add Grant</Button>
-
+            <Grid container rowSpacing={0} columns={12}>
+                {fields.map((grant, index) => (
+                    <Paper key = {grant.id} sx={{padding:"4% 4%", margin:"4% auto", width:"700px"}}>
+                        <GrantForm 
+                            control={control} 
+                            register_grant={`grants[${index}].`} 
+                            errors={errors}
+                            index={index}
+                            handleRemoveGrant={removeGrant}
+                        />
+                    </Paper>
+                    ))}
+            </Grid>
+            <Button onClick={() => {append(new Grant(form_id)); setNumberOfGrants(number_of_grants + 1)}}>Add Grant</Button>s
         </div>
     );
 }
