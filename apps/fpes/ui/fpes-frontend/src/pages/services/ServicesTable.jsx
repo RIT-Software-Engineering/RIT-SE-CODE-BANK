@@ -61,7 +61,7 @@ export default function ServicesTable({services, setServices}) {
 
     return (
         <span>
-            <Paper sx={{ height: 400, width:600, display:"inline-block"}}>
+            <Paper sx={{ height: 400, width: 600, display:"inline-block"}}>
             <DataGrid
                 rows={services}
                 columns={columns}

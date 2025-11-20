@@ -8,7 +8,7 @@ export default function GrantsFormStep({ form_id, control, errors }) {
 
     function Grant(form_id){
         this.title = "";
-        this.sponsor = "";
+        this.funder = "";
         this.amount = "";
         this.start_date = "";
         this.end_date = "";

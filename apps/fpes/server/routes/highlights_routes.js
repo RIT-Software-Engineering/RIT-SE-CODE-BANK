@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db'); 
+const { submitHighlightsForm } = require('../api/highlights_api');
 
 // GET all
 router.get('/', async (_req, res) => {
@@ -40,7 +41,8 @@ router.post('/', async (req, res) => {
     supervisor_id = null,
     student_support_id = null,
     collaborations_section = null,
-    professional_development = null
+    professional_development = null,
+    significant_outcomes = null
   } = req.body;
 
   if (!faculty_information_id) {
@@ -52,11 +54,11 @@ router.post('/', async (req, res) => {
     conn = await pool.getConnection();
     const result = await conn.query(
       `INSERT INTO highlights
-       (faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development)
-       VALUES (?, ?, ?, ?, ?)`,
-      [faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development]
+       (faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development, significant_outcomes)
+       VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
+      [faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development, significant_outcomes]
     );
-    res.status(201).json({ id: result.insertId });
+    res.status(201).json(result);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create highlight' });
@@ -116,6 +118,21 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete highlight' });
   } finally {
     if (conn) conn.end();
+  }
+});
+
+// FULL FORM SUBMISSION
+/*
+  This is the endpoint where all the data to completely fill the form is sent. It not only includes the data
+  to complete the highlights record but also the other dynamic form pieces such as the services and publications
+*/
+router.post("/submit", async(req, res) => {
+  try{
+    const results = submitHighlightsForm(req.body);
+
+    return res.send(results);
+  } catch (err){
+    return res.status(500).json({ error : "Failed to submit form"})
   }
 });
 

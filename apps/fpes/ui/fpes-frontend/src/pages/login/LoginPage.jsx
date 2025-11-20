@@ -17,7 +17,7 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
     //if (selectedUser) {
       //const user = users.find(u => u.faculty_id === selectedUser);
       //setRole(user.user_role); 
-      updateFacultyId(users.faculty_id);
+      updateFacultyId(selectedUser);
       setIsAuthenticated(true);
     //}
   };

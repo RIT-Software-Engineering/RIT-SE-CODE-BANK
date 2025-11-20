@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS publications (
     status ENUM("In Progress", "In Submission", "Accepted", "Published"),
     venue VARCHAR(255) NOT NULL,
     proof_of_significance VARCHAR(255) NOT NULL,
-    date_published DATETIME
+    date_published DATE
 );
 
 INSERT INTO publications (
