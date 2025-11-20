@@ -35,7 +35,7 @@ const theme = createTheme({
       },
     },
     
-    // 🎯 2. Target Global Buttons (Everywhere else in the app)
+    //  2. Target Global Buttons (Everywhere else in the app)
     MuiButton: {
       defaultProps: {
         color: 'primary', 
@@ -56,12 +56,11 @@ const theme = createTheme({
                 color: PRIMARY_CONTRAST, 
             }
         },
-        // ✅ ADDED THIS: Target Outlined Buttons specifically
         outlined: {
             '&:hover': {
                 borderColor: BLACK_TEXT, // Changes the outline (border) to black on hover
                 color: BLACK_TEXT,       // Ensures text is also black on hover
-                backgroundColor: 'transparent' // Optional: keeps background clear
+                backgroundColor: 'transparent' 
             }
         }
       },

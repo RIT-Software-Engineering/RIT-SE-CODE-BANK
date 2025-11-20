@@ -68,7 +68,7 @@ export default function HighlightsFormPage() {
     });
 
     return (
-        <div>
+        <div >
             <Stepper sx={{minWidth:"800px"}} activeStep={activeStep}>
                 {steps.map((step,index) => (
                     <Step key={index}>
@@ -77,7 +77,7 @@ export default function HighlightsFormPage() {
                 ))}
             </Stepper>
 
-            <form>
+            <form >
             {isOnFirstStep() ? <ServicesFormStep form_id={1} control={control} errors={errors} /> : null}
             {activeStep === 1 ? <GrantsFormStep form_id={1} control={control} errors={errors}/> : null}
             {activeStep === 2 ? <PublicationsFormStep form_id={1} control={control} errors={errors}/> : null}
