@@ -2,6 +2,8 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import theme from './theme/MuiTheme'; 
+import { ThemeProvider } from '@mui/material/styles';
 
 import { BrowserRouter, Routes, Route, Link, Navigate  } from 'react-router-dom';
 import ProtectedRoute from "./ProtectedRoute.jsx";
@@ -10,7 +12,6 @@ import ServicesPage from './pages/services/ServicesPage.jsx';
 import GrantsPage from './pages/grants/GrantsPage.jsx';
 import DepartmentsPage from './pages/departments/DepartmentsPage.jsx';
 import CourseSectionsPage from './pages/course_sections/CourseSectionsPage.jsx';
-import { FormControl, FormLabel, InputLabel, MenuItem, Select } from '@mui/material';
 import StudentSupportPage from './pages/student_support/StudentSupportPage.jsx';
 import CoursesPage from './pages/courses/CoursePage.jsx'
 import ProfilePage from './pages/profile/ProfilePage.jsx';
@@ -23,26 +24,26 @@ function App() {
   const [role, setRole] = useState("faculty")
   const [facultyId, setFacultyId] = useState(-1);
   const pages = [
-    {
-        name : "Serivces",
-        route : "/services",
-        adminOnly : false
-    },
-    {
-        name : "Grants",
-        route : "/grants",
-        adminOnly : false
-    },
-    {
-        name : "Course Sections",
-        route : "/course_sections",
-        adminOnly : false,
-    },
-    {
-        name : "Student Support",
-        route : "/student_support",
-        adminOnly : false
-    },
+    // {
+    //     name : "Serivces",
+    //     route : "/services",
+    //     adminOnly : false
+    // },
+    // {
+    //     name : "Grants",
+    //     route : "/grants",
+    //     adminOnly : false
+    // },
+    // {
+    //     name : "Course Sections",
+    //     route : "/course_sections",
+    //     adminOnly : false,
+    // },
+    // {
+    //     name : "Student Support",
+    //     route : "/student_support",
+    //     adminOnly : false
+    // },
     {
         name : "Departments",
         route : "/departments",
@@ -81,54 +82,46 @@ function App() {
   function updateFacultyId(id) {
     setFacultyId(id !== undefined ? id : -1);
   } 
-
-  return (
-    <BrowserRouter>
-      <Header 
-        pages={pages} 
-        adminView={role === "admin"} 
-        setRole={setRole}
-        isAuthenticated={isAuthenticated} 
-        onLogout={() => {
-          setIsAuthenticated(false);
-          setRole(null);
-          setFacultyId(-1);
-        }}
-        profileRoute="/profile"
-      />
-        
-      <h1> FPES Portal</h1>
-
-      {!isAuthenticated && (
-        <div style={{ textAlign: "center", marginTop: "20px" }}>
-
-          <Link to="/login">
-            <button style={{ mt: 2, backgroundColor: "#1976d2", color: "white",}}  >
-              Login
-            </button>
-          </Link>
-
-          <button style={{ mt: 2, backgroundColor: "#555", color: "white", }} >
-              Register
-          </button>
-          
-        </div>
-      )}
-            
+  const PortalHeading = () => (
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+                <h1> FPES Portal</h1>
+            </div>
+        );
+  const isLoginPage = location.pathname === '/login';
+  const shouldShowHeader = !isLoginPage && isAuthenticated;
+return (
+    <ThemeProvider theme={theme}>
+      <BrowserRouter>
+        {shouldShowHeader && (
+          <Header 
+            pages={pages} 
+            adminView={role === "admin"} 
+            setRole={setRole}
+            isAuthenticated={isAuthenticated} 
+            onLogout={() => {
+              setIsAuthenticated(false);
+              setRole(null);
+              setFacultyId(-1);
+            }}
+            profileRoute="/profile"
+          />
+        )}
               
-      <Routes>
-        <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
-        <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
-        <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
-        {role === 'admin' ? adminRoutes : null}
-        <Route path="/course_sections" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <CourseSectionsPage/> </ProtectedRoute>} />
-        <Route path="/student_support" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <StudentSupportPage/> </ProtectedRoute> } />
-        <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage/> </ProtectedRoute> } />
-        <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage facultyId={facultyId}/> </ProtectedRoute> } />
-        <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } />
-      </Routes>
-    </BrowserRouter>
-  )
+        <Routes>
+          <Route path="/" element={isAuthenticated ? <Navigate to="/highlights_form" /> : <Navigate to="/login" />} />
+          <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
+          <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
+          <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
+          {role === 'admin' ? adminRoutes : null}
+          <Route path="/course_sections" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <CourseSectionsPage/> </ProtectedRoute>} />
+          <Route path="/student_support" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <StudentSupportPage/> </ProtectedRoute> } />
+          <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage facultyId={facultyId} /> </ProtectedRoute> } />
+          <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage/> </ProtectedRoute> } />
+          <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } />
+        </Routes>
+      </BrowserRouter>
+  </ThemeProvider>
+)
 }
 
 export default App

@@ -1,8 +1,26 @@
+/* App.css */
+
+/* --- Global Typography and Layout --- */
+
+/* Apply font stack from design document */
+body {
+  font-family: "Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif;
+  /* Setting line-height to 1.5 for body text (16px * 1.5 = 24px) */
+  line-height: 1.5; 
+}
+
+/* Container max width from design document */
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  /* Keeping padding for centering, though MUI Containers will handle outer margins */
+  padding: 2rem; 
   text-align: center;
+}
+
+/* Paragraph margins specified in design document (1rem = 16px) */
+p {
+  margin-bottom: 1rem;
 }
 
 .logo {
@@ -11,11 +29,13 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
+/* Removed specific blue/teal colors as they violate the design spec */
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em #F76902aa); /* Using Primary Orange for general logo hover */
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em #F76902aa); /* Using Primary Orange for React logo hover */
 }
 
 @keyframes logo-spin {
@@ -34,6 +54,7 @@
 }
 
 .card {
+  /* Keeping original style, if any */
   padding: 2em;
 }
 
