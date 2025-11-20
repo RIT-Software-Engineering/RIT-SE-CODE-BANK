@@ -57,11 +57,21 @@ model users {
   receivedEntries JournalEntry[] @relation("ReceivedUserEntries")
   topicEntries    JournalEntry[] @relation("TopicUserEntries")
 }
-
+enum PrivacyEnum {
+  PERSONAL
+  PUBLIC
+}
+enum EntryType {
+  MANUAL
+  AUTOMATED
+}
 model JournalEntry {
   id                  Int      @id @default(autoincrement())
   date                DateTime
   notes               String?  @db.VarChar(500)
+  visibility_level       Int?
+  privacy_level          PrivacyEnum?
+  entry_type             EntryType?
   sender_id           String
   topic_id            String
   recipients    users[]     @relation("ReceivedUserEntries")

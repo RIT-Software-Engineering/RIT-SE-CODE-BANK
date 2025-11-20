@@ -175,6 +175,8 @@ router.get("/:id", async (req, res) => {
       where: { id: id },
     });
 
+    let entries = [];
+
     if(user.type == "scooployee"){
       const scooployeeEntries = await prisma.journalEntry.findMany({
         where: {
@@ -184,7 +186,8 @@ router.get("/:id", async (req, res) => {
                     some: {
                       id: id,
                 },},},
-          ]
+          ],
+          privacy_level: "PUBLIC",
         },
         include: {
           sender: true,
@@ -199,10 +202,14 @@ router.get("/:id", async (req, res) => {
           },
         },
         })
-      res.status(200).json(scooployeeEntries);
+      //res.status(200).json(scooployeeEntries);
+      entries = entries.concat(scooployeeEntries);
     }
     else if(user.type == "scoopdinator"){
       const dinatorEntries = await prisma.journalEntry.findMany({
+        where:{
+          privacy_level: "PUBLIC",
+        },
         include: {
           sender: true,
           recipients: true,
@@ -216,7 +223,8 @@ router.get("/:id", async (req, res) => {
           },
         },
       });
-      res.status(200).json(dinatorEntries); 
+      //res.status(200).json(dinatorEntries); 
+      entries = entries.concat(dinatorEntries);
     }
     else if(user.type == "scoopervisor"){
       const scoopervisorTeams = await prisma.teams.findMany({
@@ -249,6 +257,7 @@ router.get("/:id", async (req, res) => {
                 },},},
                 { topic_id: memberId },
                 ]),
+              privacy_level: "PUBLIC",
               },
             include: {
               sender: true,
@@ -263,8 +272,29 @@ router.get("/:id", async (req, res) => {
               },
             },
         });
-        res.status(200).json(visorEntries);       
+        //res.status(200).json(visorEntries); 
+        entries = entries.concat(visorEntries);      
       }
+      const privateEntries = await prisma.journalEntry.findMany({
+        where:{
+          privacy_level: "PERSONAL",
+          sender_id: id,
+        },
+        include: {
+          sender: true,
+          recipients: true,
+          topic: true,
+          next_entries: {
+            include: {
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
+        },
+      });
+      entries = entries.concat(privateEntries);
+      res.status(200).json(entries);
   } catch (error) {
     console.error("Error fetching the users journal entries: ", error);
     res.status(500).json({
