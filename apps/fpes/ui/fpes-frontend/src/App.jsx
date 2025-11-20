@@ -82,11 +82,7 @@ function App() {
   function updateFacultyId(id) {
     setFacultyId(id !== undefined ? id : -1);
   } 
-  const PortalHeading = () => (
-            <div style={{ padding: '20px', textAlign: 'center' }}>
-                <h1> FPES Portal</h1>
-            </div>
-        );
+ 
   const isLoginPage = location.pathname === '/login';
   const shouldShowHeader = !isLoginPage && isAuthenticated;
 return (
