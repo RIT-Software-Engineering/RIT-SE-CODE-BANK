@@ -1,16 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
-import {
-  Paper,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Box,
-} from "@mui/material";
+import { Paper, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box, } from "@mui/material";
 
 export default function StudentSupportPage() {
   const [rows, setRows] = useState([]);

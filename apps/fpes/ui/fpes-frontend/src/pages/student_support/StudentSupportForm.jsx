@@ -4,9 +4,6 @@ import CloseIcon from "@mui/icons-material/Close";
 
 export default function StudentSupportForm({
   control,
-  register_support,
-  handleRemoveSupport,
-  index,
   errors,
 }) {
   const fields = [
@@ -30,19 +27,12 @@ export default function StudentSupportForm({
       <Grid item size={10}>
       <Typography variant="h5" textAlign="left">Record Entry</Typography>
       </Grid>
-    
-          <IconButton
-              onClick={() => handleRemoveSupport(index)}
-              sx={{ position: "absolute", top: 8, right: 8 }}
-            >
-              <CloseIcon />
-          </IconButton>
 
     <Grid container spacing={2}>
       {fields.map((fieldName) => (
         <Grid item xs={12} sm={6} key={fieldName}>
           <Controller
-            name={`${register_support}${fieldName}`}
+            name={`student_support.${fieldName}`}
             control={control}
             rules={{
               required: "Required",
@@ -56,8 +46,8 @@ export default function StudentSupportForm({
                 type="number"
                 fullWidth
                 inputProps={{ min: 0 }}
-                error={errors?.student_support?.[index]?.[fieldName]}
-                helperText={errors?.student_support?.[index]?.[fieldName]?.message}
+                error={errors?.student_support?.[fieldName]}
+                helperText={errors?.student_support?.[fieldName]?.message}
               />
             )}
           />
@@ -68,7 +58,7 @@ export default function StudentSupportForm({
 
           <Grid item size={10}>
               <Controller
-                  name={register_support + "other_contributions"}
+                  name={'student_support.other_contributions'}
                   control={control}
                   render={({field}) =>
                       <TextField 
