@@ -73,7 +73,7 @@ export default function HighlightsFormPage({facultyId}) {
     }
 
     return (
-        <div >
+        <div style={{margin:"100px 0px", alignContent:"start", position:"absolute", top:"0px", transform: "translateX(-50%)", left:"50%"}}>
             <Stepper sx={{minWidth:"800px"}} activeStep={activeStep}>
                 {steps.map((step,index) => (
                     <Step key={index}>

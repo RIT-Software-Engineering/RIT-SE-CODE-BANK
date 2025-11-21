@@ -23,7 +23,7 @@ export default function StudentSupportFormStep({ form_id, control, errors, suppo
   return (
   <Box sx={{ width: "60%", margin: "auto"}}>
       <Grid container spacing={2}>
-          <Grid item xs={12} key={support.id}>
+          <Grid item xs={12}>
               <StudentSupportForm
                   control={control}
                   register_support="student_support."
