@@ -29,7 +29,7 @@ export const sampleJournalEntries = [
   {
     id: 2,
     previous_entryid: 1,
-    date: new Date("2025-06-13T12:00:00Z"), // in UTC
+    date: new Date("2025-06-17T12:00:00Z"), // in UTC
     notes: "I think Vicki would be a good candidate for SCOOP",
     visibility_level: 2,
     privacy_level: "PERSONAL",

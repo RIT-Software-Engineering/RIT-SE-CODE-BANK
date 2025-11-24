@@ -36,6 +36,10 @@ router.post("/", async (req, res) => {
     sender_id,
     topic_id,
     semester_GroupId,
+    previous_entryid,
+    entry_type,
+    visibility_level,
+    privacy_level,
   } = req.body;
   try {
     const newEntry = await prisma.journalEntry.create({
@@ -46,11 +50,28 @@ router.post("/", async (req, res) => {
         sender_id,
         topic_id,
         semester_GroupId: semester_GroupId ? Number(semester_GroupId) : null,
+        previous_entryid: previous_entryid,
+        entry_type: entry_type,
+        visibility_level: visibility_level,
+        privacy_level: privacy_level,
       },
       include:{
         sender: true,
         recipients: true,
         topic: true,
+              next_entries: {
+                where:{
+                  OR:[
+                    { privacy_level: "PUBLIC" },
+                    { sender_id: sender_id }
+                  ],
+                },
+                include:{
+                  sender: true,
+                  recipients: true,
+                  topic: true,
+                },
+              },
       },
     });
     res
@@ -194,6 +215,12 @@ router.get("/:id", async (req, res) => {
           recipients: true,
           topic: true,
           next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+            },
             include:{
               sender: true,
               recipients: true,
@@ -215,6 +242,12 @@ router.get("/:id", async (req, res) => {
           recipients: true,
           topic: true,
           next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+            },
             include: {
               sender: true,
               recipients: true,
@@ -264,6 +297,12 @@ router.get("/:id", async (req, res) => {
               recipients: true,
               topic: true,
               next_entries: {
+                where:{
+                  OR:[
+                    { privacy_level: "PUBLIC" },
+                    { sender_id: id }
+                  ],
+                },
                 include:{
                   sender: true,
                   recipients: true,
@@ -285,6 +324,12 @@ router.get("/:id", async (req, res) => {
           recipients: true,
           topic: true,
           next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+            },
             include: {
               sender: true,
               recipients: true,

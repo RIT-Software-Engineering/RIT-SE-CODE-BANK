@@ -56,10 +56,13 @@ export default function Journal() {
   const [filterSenderValue, setFilterSenderValue] = useState("");
   const [filterRecipientValue, setFilterRecipientValue] = useState("");
   const [filterTopicValue, setFilterTopicValue] = useState("");
+  const [filterEntryTypeValue, setFilterEntryTypeValue] = useState("");
+  const [filterTimeValue, setFilterTimeValue] = useState("");
   // For creating new journal entries
   const [newEntrySemester, setNewEntrySemester] = useState("");
   const [newEntryRecipientIds, setNewEntryRecipientIds] = useState([]);
   const [newEntryTopicId, setNewEntryTopicId] = useState("");
+  const [newEntryPreviousId, setNewEntryPreviousId] = useState(null);
   // For editing journal entry notes
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
@@ -142,6 +145,12 @@ export default function Journal() {
   const handleFilterTopicChange = (event) => {
     setFilterTopicValue(event.target.value || "");
   };
+  const handleFilterEntryTypeChange = (event) => {
+    setFilterEntryTypeValue(event.target.value || "");
+  };
+  const handleFilterTimeChange = (event) => {
+    setFilterTimeValue(event.target.value || "");
+  }
 
   /**
    * Handles the logic for applying the filter to the journal entries.
@@ -153,7 +162,7 @@ export default function Journal() {
    * @returns {void}
    */
   const handleApplyFilter = async () => {
-    if(filterSemesterValue != "" || filterRecipientValue != "" || filterSenderValue != "" || filterTopicValue != ""){
+    if(filterSemesterValue != "" || filterRecipientValue != "" || filterSenderValue != "" || filterTopicValue != "" || filterEntryTypeValue != "" || filterTimeValue != ""){
       let baseArray = Array.from(journalEntries)
       if (filterSemesterValue) {
         baseArray = baseArray.filter((entry) => entry.semester_GroupId == filterSemesterValue);
@@ -166,6 +175,17 @@ export default function Journal() {
       }
       if(filterTopicValue){
         baseArray = baseArray.filter((entry) => entry.topic_id == filterTopicValue);
+      }
+      if(filterEntryTypeValue){
+        baseArray = baseArray.filter((entry) => entry.entry_type == filterEntryTypeValue);
+      }
+      if(filterTimeValue){
+        if(filterTimeValue == "newest_first"){
+          baseArray.sort((a,b) => new Date(b.date) - new Date(a.date));
+        }
+        if(filterTimeValue == "oldest_first"){
+          baseArray.sort((a,b) => new Date(a.date) - new Date(b.date));
+        }
       }
       setFilteredJournalEntries(baseArray)
     }
@@ -268,6 +288,10 @@ export default function Journal() {
       recipient_ids: newEntryRecipientIds,
       topic_id: newEntryTopicId,
       semester_GroupId: Number(newEntrySemester),
+      previous_entryid: parseInt(newEntryPreviousId) || null,
+      entry_type: "MANUAL",
+      visibility_level: 1,
+      privacy_level: "PUBLIC",
     };
 
     try {
@@ -298,6 +322,7 @@ export default function Journal() {
       setNewEntrySemester("");
       setNewEntryRecipientIds([]);
       setNewEntryTopicId("");
+      setNewEntryPreviousId(null);
       return { message: "Journal entry created!" };
     } catch (error) {
       console.error("Failed to create a new journal entry: ", error);
@@ -305,7 +330,7 @@ export default function Journal() {
     }
   };
 
-  function EntriesList({entries}){
+  function EntriesList({entries, commentView = false} ){
     if(entries == null || entries.length === 0){
       return(
         <Typography variant="body1">
@@ -357,6 +382,15 @@ export default function Journal() {
               <Typography>
                 Semester: {semesterGroups[entry.semester_GroupId] || "Unknown"}
               </Typography>
+              <Typography>
+                visibility_level: {entry.visibility_level}
+              </Typography>
+              <Typography>
+                privacy_level: {entry.privacy_level}
+              </Typography>
+              <Typography>
+                entry_type: {entry.entry_type}
+              </Typography>
               <Typography variant="body1">Notes:</Typography>
               <Box
                 sx={{
@@ -377,12 +411,22 @@ export default function Journal() {
                 </pre>
               </Box>
               <Divider sx={{ my: 2 }} />
+              {commentView == true &&(
+              <Typography>
               <Button
                   variant="solid-orange"
                   onClick={() => setReplyEntry(entry)}
                 >
-                  Show Replies
+                  {entry.next_entries.length || 0} Comment(s)
                 </Button>
+                <Button
+                  variant="solid-orange"
+                  onClick={() => { setNewEntryPreviousId(entry.id); setNewEntryOpen(true); }}
+                >
+                  Comment
+                </Button>
+                </Typography>
+            )} 
             </Card>
           ))}
     </>);
@@ -415,7 +459,7 @@ export default function Journal() {
           setFilterDialogOpen={setFilterDialogOpen}
           setNewEntryOpen={setNewEntryOpen}
         />
-      <EntriesList entries={filteredJournalEntries}></EntriesList>
+      <EntriesList entries={filteredJournalEntries} commentView={true}></EntriesList>
       </Container>
       {/* Add Entry */}
       <Dialog
@@ -598,6 +642,39 @@ export default function Journal() {
                 {name}
               </MenuItem>
             ))}
+          </Select>
+        </FormControl>
+
+        <Typography>Filter by entry type</Typography>
+        <FormControl>
+          <Select
+            value={filterEntryTypeValue}
+            onChange={handleFilterEntryTypeChange}
+          >
+            <MenuItem key="none" value="">
+              <em>None</em>
+            </MenuItem>
+            <MenuItem key="AUTOMATED" value="AUTOMATED">
+              AUTOMATED
+            </MenuItem>
+            <MenuItem key="MANUAL" value="MANUAL">
+              MANUAL
+            </MenuItem>
+          </Select>
+        </FormControl>
+
+        <Typography>Filter by time</Typography>
+        <FormControl>
+          <Select
+            value={filterTimeValue}
+            onChange={handleFilterTimeChange}
+          >
+            <MenuItem key="newest" value="newest_first">
+              Newest First
+            </MenuItem>
+            <MenuItem key="oldest" value="oldest_first">
+              Oldest First
+            </MenuItem>
           </Select>
         </FormControl>
       </FilterDialog>
