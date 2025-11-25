@@ -49,26 +49,27 @@ model users {
   last_login     String
   prev_login     String
 
-  teams Teams[] @relation("TeamMembers")
-  login Login? @relation(fields: [loginId], references: [id])
-  loginId Int? @unique
+  teams   Teams[] @relation("TeamMembers")
+  login   Login?  @relation(fields: [loginId], references: [id])
+  loginId Int?    @unique
 
   sentEntries     JournalEntry[] @relation("SentUserEntries")
   receivedEntries JournalEntry[] @relation("ReceivedUserEntries")
   topicEntries    JournalEntry[] @relation("TopicUserEntries")
+  Teams           Teams[]
 }
 
 model JournalEntry {
-  id                  Int      @id @default(autoincrement())
-  date                DateTime
-  recipient_id        String
-  notes               String?  @db.VarChar(500)
-  sender_id           String
-  topic_id            String
-  recipient     users     @relation("ReceivedUserEntries", fields: [recipient_id], references: [id])
-  sender        users     @relation("SentUserEntries", fields: [sender_id], references: [id])
-  topic         users     @relation("TopicUserEntries", fields: [topic_id], references: [id])
-  
+  id           Int      @id @default(autoincrement())
+  date         DateTime
+  recipient_id String
+  notes        String?  @db.VarChar(500)
+  sender_id    String
+  topic_id     String
+  recipient    users    @relation("ReceivedUserEntries", fields: [recipient_id], references: [id])
+  sender       users    @relation("SentUserEntries", fields: [sender_id], references: [id])
+  topic        users    @relation("TopicUserEntries", fields: [topic_id], references: [id])
+
   Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
   semester_GroupId Int?
 }
@@ -99,12 +100,13 @@ model Application {
 }
 
 model Teams {
-  id   Int    @id @default(autoincrement())
-  name String
-
-  projectId Int?
-  project   Project? @relation(fields: [projectId], references: [id])
-  members   users[]  @relation("TeamMembers")
+  id             Int      @id @default(autoincrement())
+  name           String
+  scoopervisorId String?
+  projectId      Int?
+  project        Project? @relation(fields: [projectId], references: [id])
+  members        users[]  @relation("TeamMembers")
+  scoopervisor   users?   @relation(fields: [scoopervisorId], references: [id])
 }
 
 model Login {
@@ -113,6 +115,5 @@ model Login {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user users?
-
+  user      users?
 }

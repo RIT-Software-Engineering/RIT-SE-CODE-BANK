@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 // POST a new team
 router.post("/", async (req, res) => {
-    const { name, projectId, memberIds = [] } = req.body;
+    const { name, projectId, memberIds, scoopervisorId = [] } = req.body;
 
     try {
         const team = await prisma.teams.create({
@@ -15,10 +15,12 @@ router.post("/", async (req, res) => {
                 ...(memberIds.length > 0
                   ? { members: { connect: memberIds.map(id => ({ id })) } }
                   : {}),
+                ...(scoopervisorId ? { scoopervisorId: scoopervisorId } : {})
             },
             include: {
                 members: true,
                 project: true,
+                scoopervisor: true,
             },
         });
 
@@ -58,6 +60,7 @@ router.post("/:teamId/members", async (req, res) => {
       include: {
         members: true,
         project: true,
+        scoopervisor: true,
       },
     });
 
@@ -75,6 +78,7 @@ router.get("/", async (req, res) => {
             include: {
                 members: true,
                 project: true,
+                scoopervisor: true,
             },
         });
 
@@ -98,6 +102,7 @@ router.get("/:memberid", async (req, res) => {
         include: { 
           members: true,
           project: true,
+          scoopervisor: true,
         } 
         });
         res.status(200).json(teams);
@@ -119,7 +124,8 @@ router.put("/", async(req,res) => {
       },
       include: {
         members: true,
-        project: true
+        project: true,
+        scoopervisor: true,
       }
     })
     res.status(200).json({ message: "Team project updated", team });
@@ -128,6 +134,28 @@ router.put("/", async(req,res) => {
     res.status(500).json({ message: "Failed to update team project", error: error.message });
   }
 })
+
+// REMOVE the scoopervisor from a team
+router.delete("/:teamId/:scoopervisorId", async (req, res) => {
+  const { teamId, scoopervisorId } = req.params;
+  try {
+    const team = await prisma.teams.update({
+      where: {id: parseInt(teamId) },
+      data: {
+        scoopervisorId: null,
+      },
+      include: {
+        members: true,
+        project: true,
+        scoopervisor: true,
+      }
+    });
+    res.status(200).json({message: "Scoopervisor removed", team})
+  } catch (error) {
+    console.error("Error removing Scoopervisor:", error);
+    res.status(500).json({message: "Failed to remove Scoopervisor", error: error.message});
+  }
+});
 
 // REMOVE a member from a team
 router.delete("/:teamId/members/:memberId", async (req, res) => {
@@ -144,6 +172,7 @@ router.delete("/:teamId/members/:memberId", async (req, res) => {
       include: {
         members: true,
         project: true,
+        scoopervisor: true,
       },
     });
 
@@ -168,6 +197,7 @@ router.delete("/:teamId", async (req, res) => {
       include: {
         members: true,
         project: true,
+        scoopervisor: true,
       },
     });
 

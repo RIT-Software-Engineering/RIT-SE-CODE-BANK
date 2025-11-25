@@ -150,7 +150,22 @@ export default function TeamsPage() {
                   </Typography>
 
                   <Divider sx={{ my: 2 }} />
+                  <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                    Scoopervisor:
+                  </Typography>
+                  {team.scoopervisorId != null ? (
+                    <Chip
+                      key={team.scoopervisor.id}
+                      label={`${team.scoopervisor.fname} ${team.scoopervisor.lname}`}
+                      sx={{ backgroundColor: "#F76902", color: "#fff" }}
+                    />
+                  ) : (
+                    <Typography variant="body2" sx={{ color: "#999" }}>
+                      No Scoopervisor assigned
+                    </Typography>
+                  )
 
+                  }
                   <Typography sx={{ fontWeight: 500, mb: 1 }}>
                     Members:
                   </Typography>
