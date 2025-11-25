@@ -70,8 +70,15 @@ router.get("/", async (req, res) => {
 
 // POST /actions
 router.post("/", async (req, res) => {
-    const { name, description, form, actionType, metadata, parentActionId } =
-        req.body;
+    const {
+        name,
+        description,
+        form,
+        actionType,
+        metadata,
+        parentActionId,
+        requireAllParticipants,
+    } = req.body;
     const { userId } = req.body; // TODO: make this work with req.user instead
 
     const data = {};
@@ -87,9 +94,13 @@ router.post("/", async (req, res) => {
     if (actionType) {
         data.actionType = actionType;
     }
+    if (typeof requireAllParticipants === "boolean") {
+        data.requireAllParticipants = requireAllParticipants;
+    }
     if (parentActionId) {
         data.parentAction = { connect: { id: parentActionId } };
     }
+    const metadataEntries = importMetadata(metadata);
 
     const action = await prisma.action.create({
         data: {
@@ -103,9 +114,12 @@ router.post("/", async (req, res) => {
                     })),
                 },
             },
-            metadata: {
-                create: importMetadata(metadata),
-            },
+            metadata:
+                metadataEntries.length > 0
+                    ? {
+                          create: metadataEntries,
+                      }
+                    : undefined,
         },
     });
 
@@ -122,6 +136,7 @@ router.put("/:id", async (req, res) => {
         metadata,
         nextActionId,
         parentActionId,
+        requireAllParticipants,
     } = req.body;
     const { id } = req.params;
 
@@ -137,6 +152,9 @@ router.put("/:id", async (req, res) => {
     }
     if (actionType) {
         data.actionType = actionType;
+    }
+    if (typeof requireAllParticipants === "boolean") {
+        data.requireAllParticipants = requireAllParticipants;
     }
     if (nextActionId) {
         data.nextAction = { connect: { id: nextActionId } };

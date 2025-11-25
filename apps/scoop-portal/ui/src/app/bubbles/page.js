@@ -1,10 +1,143 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Header from '@components/Header';
 import {
   Box, Typography, Container, Button, Grid, Paper, Chip, Modal,
 } from '@mui/material';
 import { useUser } from "../utils/user-context/page";
+
+const truthyStrings = new Set(["true", "1", "yes", "y", "on"]);
+const requireAllKeys = ["requireallparticipants", "requiresallparticipants"];
+
+const toMetadataMap = (metadata) => {
+  if (!metadata) return {};
+  const entries = Array.isArray(metadata)
+    ? metadata
+    : Object.entries(metadata || {}).map(([key, value]) => ({ key, value }));
+
+  return entries.reduce((acc, entry) => {
+    if (entry?.key) {
+      acc[entry.key.toLowerCase()] = entry.value;
+    }
+    return acc;
+  }, {});
+};
+
+const isTruthy = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    return truthyStrings.has(value.toLowerCase());
+  }
+  return false;
+};
+
+const requiresAllFromMetadata = (metadataMap) =>
+  requireAllKeys.some((key) => isTruthy(metadataMap?.[key]));
+
+const getParticipantIdsFromWorkflowState = (workflowState) => {
+  const ids = new Set();
+  if (workflowState?.userId) ids.add(workflowState.userId);
+  workflowState?.participants?.forEach((participant) => {
+    if (participant?.userId) ids.add(participant.userId);
+  });
+  return Array.from(ids);
+};
+
+const formatPersonName = (data) => {
+  if (!data) return "Unknown";
+  const first = data.fname ?? data.firstName ?? data.givenName;
+  const last = data.lname ?? data.lastName ?? data.familyName;
+  const name = [first, last].filter(Boolean).join(" ").trim();
+  return (
+    name ||
+    data.display_name ||
+    data.preferredName ||
+    data.email ||
+    data.username ||
+    data.id ||
+    "Unknown"
+  );
+};
+
+const buildTeamDirectory = (team, fallbackUsers = []) => {
+  const directory = {};
+  if (Array.isArray(team?.members)) {
+    team.members.forEach((member) => {
+      if (member?.id) {
+        directory[member.id] = formatPersonName(member);
+      }
+    });
+  }
+  fallbackUsers.forEach((user) => {
+    if (user?.id && !directory[user.id]) {
+      directory[user.id] = formatPersonName(user);
+    }
+  });
+  return directory;
+};
+
+const getDisplayName = (directory, userId) => {
+  if (!userId) return "Unknown user";
+  return directory[userId] || `User ${userId.substring(0, 6)}`;
+};
+
+const extractTeamMemberIds = (team) => {
+  if (!Array.isArray(team?.members)) return [];
+  const ids = team.members
+    .map((member) => member?.id)
+    .filter((id) => typeof id === "string" && id.trim().length > 0);
+  return Array.from(new Set(ids));
+};
+
+const deriveActionStateDetails = (
+  actionState,
+  workflowState,
+  userId,
+  team,
+  fallbackUsers = []
+) => {
+  const metadataMap = toMetadataMap(actionState?.action?.metadata);
+  const submissions = Array.isArray(actionState?.submissions)
+    ? actionState.submissions
+    : [];
+  const participantIds = getParticipantIdsFromWorkflowState(workflowState);
+  const participantCount =
+    participantIds.length > 0 ? participantIds.length : 1;
+  const directory = buildTeamDirectory(team, fallbackUsers);
+  const requiresAllParticipants =
+    actionState?.action?.requireAllParticipants === true ||
+    requiresAllFromMetadata(metadataMap);
+  const completedSubmissions = submissions.filter(
+    (submission) => submission?.completed
+  );
+  const pendingUserIds = requiresAllParticipants
+    ? participantIds.filter(
+        (id) =>
+          !completedSubmissions.some(
+            (submission) => submission.userId === id
+          )
+      )
+    : [];
+  const missingParticipantNames = pendingUserIds.map((id) =>
+    getDisplayName(directory, id)
+  );
+
+  return {
+    metadataMap,
+    requiresAllParticipants,
+    submittedCount: completedSubmissions.length,
+    participantCount,
+    userHasSubmitted: userId
+      ? completedSubmissions.some(
+          (submission) => submission.userId === userId
+        )
+      : false,
+    missingParticipantNames,
+    pendingUserIds,
+    participantDirectory: directory,
+  };
+};
 
 
 
@@ -22,6 +155,7 @@ export default function bubbled(){
   const {user} = useUser();
   const workflowsApiUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL || "http://localhost:5001";
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+  const participantsSyncMapRef = useRef({});
 
   useEffect(() => {
     let cancelled = false;
@@ -170,6 +304,51 @@ export default function bubbled(){
     };
   }, [workflowStates, user, usersById, apiBaseUrl]);
 
+  useEffect(() => {
+    if (
+      workflowStates.length === 0 ||
+      !workflowsApiUrl ||
+      Object.keys(teamsById).length === 0
+    ) {
+      return;
+    }
+
+    workflowStates.forEach((state) => {
+      if (!state.teamId) {
+        return;
+      }
+
+      const team = teamsById[state.teamId];
+      const teamMemberIds = extractTeamMemberIds(team);
+      const participantIds = Array.isArray(state.participants)
+        ? state.participants
+            .map((participant) => participant?.userId)
+            .filter((id) => typeof id === "string" && id.trim().length > 0)
+        : [];
+      const memberIds = Array.from(
+        new Set([...teamMemberIds, ...participantIds])
+      );
+      if (memberIds.length === 0) {
+        return;
+      }
+
+      const cacheKey = `${state.id}:${memberIds.slice().sort().join("|")}`;
+      if (participantsSyncMapRef.current[state.id] === cacheKey) {
+        return;
+      }
+      participantsSyncMapRef.current[state.id] = cacheKey;
+
+      fetch(`${workflowsApiUrl}/states/workflow/${state.id}/participants`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantUserIds: memberIds }),
+      }).catch((error) => {
+        console.error("Failed to sync workflow participants:", error);
+        delete participantsSyncMapRef.current[state.id];
+      });
+    });
+  }, [workflowStates, teamsById, workflowsApiUrl]);
+
   const formatUserName = (userId) => {
     if (!userId) {
       return "Unknown";
@@ -220,8 +399,20 @@ export default function bubbled(){
     [workflowStates],
   );
 
-  const handleOpen = (actionState, workflowState) => {
-    setOpenActionState(actionState);
+  const handleOpen = (actionState, workflowState, derivedDetails = null) => {
+    const details =
+      derivedDetails ??
+      deriveActionStateDetails(
+        actionState,
+        workflowState,
+        user?.id,
+        teamsById[workflowState?.teamId],
+        [user]
+      );
+    setOpenActionState({
+      ...actionState,
+      ...details,
+    });
     setOpenAction(actionState.action);
     setActiveWorkflowState(workflowState);
     setOpen(true);
@@ -230,18 +421,20 @@ export default function bubbled(){
   const handleClose = async(shouldPromote = true) => {
     if(shouldPromote && openActionState?.stateType != "completed"){
       try {
-      const res = await fetch(`${workflowsApiUrl}/states/handleSubmit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          actionStateId: openActionState.id,
-          stateType: "inProgress",
-        }),
-      });
-      forceRefresh(previous => previous + 1);
-    } catch (e) {console.error('Error handling submit:', e);}
+        await fetch(`${workflowsApiUrl}/states/handleSubmit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            actionStateId: openActionState.id,
+            stateType: "inProgress",
+            userId: user?.id,
+            workflowStateId: activeWorkflowState?.id,
+          }),
+        });
+        forceRefresh(previous => previous + 1);
+      } catch (e) {console.error('Error handling submit:', e);}
     }
     setOpenAction(null);
     setOpenActionState(null);
@@ -249,9 +442,76 @@ export default function bubbled(){
     setOpen(false);
   };
 
+  useEffect(() => {
+    if (!openActionState) {
+      return;
+    }
+    const targetWorkflow = workflowStates.find((state) =>
+      state.actionStates?.some((as) => as.id === openActionState.id)
+    );
+    if (!targetWorkflow) {
+      return;
+    }
+    const latestActionState = targetWorkflow.actionStates.find(
+      (as) => as.id === openActionState.id
+    );
+    if (!latestActionState) {
+      return;
+    }
+    const teamForState = teamsById[targetWorkflow.teamId];
+    const derivedDetails = deriveActionStateDetails(
+      latestActionState,
+      targetWorkflow,
+      user?.id,
+      teamForState,
+      [user]
+    );
+    setOpenActionState((prev) => {
+      if (
+        !prev ||
+        (prev.submittedCount === derivedDetails.submittedCount &&
+          prev.participantCount === derivedDetails.participantCount &&
+          prev.stateType === latestActionState.stateType &&
+          prev.requiresAllParticipants === derivedDetails.requiresAllParticipants &&
+          (prev.missingParticipantNames || []).join("|") ===
+            (derivedDetails.missingParticipantNames || []).join("|"))
+      ) {
+        return prev;
+      }
+      return {
+        ...latestActionState,
+        ...derivedDetails,
+      };
+    });
+    setOpenAction(latestActionState.action);
+    setActiveWorkflowState(targetWorkflow);
+  }, [workflowStates, teamsById, user?.id, openActionState?.id]);
+
+  const markLocalSubmissionProgress = (payload) => {
+    setOpenActionState((prev) => {
+      if (!prev) return prev;
+      const directory = prev.participantDirectory || {};
+      const pendingIds = prev.pendingUserIds || [];
+      const remainingIds = pendingIds.filter(
+        (id) => String(id) !== String(user?.id)
+      );
+      return {
+        ...prev,
+        stateType: payload?.fullyCompleted ? "completed" : "inProgress",
+        submittedCount: payload?.completedCount ?? prev.submittedCount,
+        participantCount: payload?.requiredCount ?? prev.participantCount,
+        userHasSubmitted: true,
+        pendingUserIds: remainingIds,
+        missingParticipantNames: remainingIds.map(
+          (id) => directory[id] || `User ${String(id).slice(0, 6)}`
+        ),
+      };
+    });
+  };
+
 
   const submitAction = async () => {
-    if (!openActionState) {
+    if (!openActionState || !user?.id) {
       return;
     }
     try {
@@ -262,14 +522,30 @@ export default function bubbled(){
         },
         body: JSON.stringify({
           actionStateId: openActionState.id,
+          userId: user.id,
+          workflowStateId: activeWorkflowState?.id,
         }),
       });
+      const payload = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(`Failed to submit action state (${res.status})`);
+        const message =
+          payload?.message ||
+          `Failed to submit action state (${res.status})`;
+        alert(message);
+        return;
       }
+      const requiresAll = payload?.requiresAllParticipants;
+      const fullyCompleted = payload?.fullyCompleted;
+      markLocalSubmissionProgress(payload);
       forceRefresh(previous => previous + 1);
-    } catch (e) {console.error('Error handling submit:', e);}
-    handleClose(false);
+      if (requiresAll && !fullyCompleted) {
+        return;
+      }
+      handleClose(false);
+    } catch (e) {
+      console.error('Error handling submit:', e);
+      alert(e.message);
+    }
   };
 
   const bubbleColor = (actionState) => {
@@ -298,15 +574,48 @@ export default function bubbled(){
       );
     }
 
-    return sortedStates.map((actionState) => (
-      <Grid item key={actionState.id}>
-        <Chip
-          label={actionState.action?.name || "Task"}
-          sx={bubbleColor(actionState)}
-          onClick={() => handleOpen(actionState, workflowState)}
-        />
-      </Grid>
-    ));
+    return sortedStates.map((actionState) => {
+      const team = teamsById[workflowState.teamId];
+      const derivedDetails = deriveActionStateDetails(
+        actionState,
+        workflowState,
+        user?.id,
+        team,
+        [user]
+      );
+      return (
+        <Grid item key={actionState.id}>
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+            <Chip
+              label={actionState.action?.name || "Task"}
+              sx={bubbleColor(actionState)}
+              title={
+                derivedDetails.requiresAllParticipants
+                  ? `${Math.min(
+                      derivedDetails.submittedCount ?? 0,
+                      derivedDetails.participantCount ?? 0
+                    )} of ${derivedDetails.participantCount ?? 0} teammates submitted`
+                  : undefined
+              }
+              onClick={() => handleOpen(actionState, workflowState, derivedDetails)}
+            />
+            {workflowState.teamId &&
+              derivedDetails.requiresAllParticipants &&
+              (derivedDetails.missingParticipantNames?.length ?? 0) > 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{ mt: 0.25, color: "#F76902", fontWeight: 500 }}
+                >
+                  {`${Math.min(
+                    derivedDetails.submittedCount ?? 0,
+                    derivedDetails.participantCount ?? 0
+                  )}/${derivedDetails.participantCount ?? 0} • Waiting on ${derivedDetails.missingParticipantNames.join(", ")}`}
+                </Typography>
+              )}
+          </Box>
+        </Grid>
+      );
+    });
   };
 
   const hasTeamWorkflows = Object.keys(teamGroups).length > 0;
@@ -405,7 +714,43 @@ export default function bubbled(){
                   Participants: {getParticipantNames(activeWorkflowState) || "Shared"}
                 </Typography>
               )}
-              <Button onClick={submitAction}>Submit</Button>
+              {openActionState?.requiresAllParticipants && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  This step requires every teammate to submit.{" "}
+                  {Math.min(
+                    openActionState.submittedCount ?? 0,
+                    openActionState.participantCount ?? 0
+                  )}{" "}
+                  of {openActionState.participantCount ?? 0} submissions completed.
+                  {openActionState.userHasSubmitted &&
+                    (openActionState.submittedCount ?? 0) <
+                      (openActionState.participantCount ?? 0) &&
+                    " You're all set—waiting on your teammates."}
+                  {activeWorkflowState?.teamId &&
+                    (openActionState.missingParticipantNames?.length ?? 0) > 0 && (
+                    <>
+                      {" "}
+                      Waiting on{" "}
+                      {openActionState.missingParticipantNames.join(", ")}.
+                    </>
+                  )}
+                </Typography>
+              )}
+              <Button
+                onClick={submitAction}
+                disabled={
+                  !openActionState ||
+                  !user?.id ||
+                  openActionState.stateType === "completed" ||
+                  openActionState.userHasSubmitted
+                }
+              >
+                {openActionState?.requiresAllParticipants
+                  ? openActionState?.userHasSubmitted
+                    ? "Submitted"
+                    : "Mark My Part Complete"
+                  : "Mark Complete"}
+              </Button>
 
             </Box>
           </Modal>

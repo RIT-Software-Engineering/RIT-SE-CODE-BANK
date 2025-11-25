@@ -14,10 +14,92 @@ import {
   useTheme,
 } from "@mui/material";
 import { ArrowBack, EditOutlined } from "@mui/icons-material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "@components/Header";
 import { useUser } from "../../utils/user-context/page";
 import UnauthorizedPage from "../../unauthorized/page";
+
+const truthyStrings = new Set(["true", "1", "yes", "y", "on"]);
+const requireAllKeys = ["requireallparticipants", "requiresallparticipants"];
+
+const toMetadataMap = (metadata) => {
+  if (!metadata) return {};
+  const entries = Array.isArray(metadata)
+    ? metadata
+    : Object.entries(metadata || {}).map(([key, value]) => ({ key, value }));
+
+  return entries.reduce((acc, entry) => {
+    if (entry?.key) {
+      acc[entry.key.toLowerCase()] = entry.value;
+    }
+    return acc;
+  }, {});
+};
+
+const isTruthyValue = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    return truthyStrings.has(value.toLowerCase());
+  }
+  return false;
+};
+
+const requiresAllFromMetadata = (metadataMap) =>
+  requireAllKeys.some((key) => isTruthyValue(metadataMap?.[key]));
+
+const getParticipantIdsFromWorkflowState = (workflowState) => {
+  const ids = new Set();
+  if (workflowState?.userId) ids.add(workflowState.userId);
+  workflowState?.participants?.forEach((participant) => {
+    if (participant?.userId) ids.add(participant.userId);
+  });
+  return Array.from(ids);
+};
+
+const formatPersonName = (data) => {
+  if (!data) return "";
+  const first = data.fname ?? data.firstName ?? data.givenName;
+  const last = data.lname ?? data.lastName ?? data.familyName;
+  const full = [first, last].filter(Boolean).join(" ").trim();
+  return (
+    full ||
+    data.display_name ||
+    data.preferredName ||
+    data.email ||
+    data.username ||
+    data.id ||
+    "Unknown"
+  );
+};
+
+const buildParticipantDirectory = (team, fallbackUser) => {
+  const directory = {};
+  if (Array.isArray(team?.members)) {
+    team.members.forEach((member) => {
+      if (member?.id) {
+        directory[member.id] = formatPersonName(member);
+      }
+    });
+  }
+  if (fallbackUser?.id && !directory[fallbackUser.id]) {
+    directory[fallbackUser.id] = formatPersonName(fallbackUser);
+  }
+  return directory;
+};
+
+const getDisplayName = (directory, userId) => {
+  if (!userId) return "Unknown user";
+  return directory[userId] || `User ${userId.substring(0, 6)}`;
+};
+
+const extractTeamMemberIds = (team) => {
+  if (!Array.isArray(team?.members)) return [];
+  const ids = team.members
+    .map((member) => member?.id)
+    .filter((id) => typeof id === "string" && id.trim().length > 0);
+  return Array.from(new Set(ids));
+};
 
 /**
  * This component fetches the details of a project based on the provided project ID and displays it on the Project Details page.
@@ -41,6 +123,44 @@ export default function ProjectDetails({ params }) {
   const [openModal, setOpenModal] = useState(false);
   const [selectedActionState, setSelectedActionState] = useState(null);
   const [project, setProject] = useState({});
+  const [teamMembers, setTeamMembers] = useState([]);
+  const participantSyncKeysRef = useRef({});
+  const workflowParticipantMembers = useMemo(() => {
+    if (!Array.isArray(teamWorkflowState?.participants)) return [];
+    return teamWorkflowState.participants.map((participant) => ({
+      id: participant.userId,
+      ...participant,
+    }));
+  }, [teamWorkflowState]);
+
+  const resolvedTeamMembers = useMemo(() => {
+    if (Array.isArray(teamMembers) && teamMembers.length > 0) {
+      return teamMembers;
+    }
+    if (Array.isArray(teamAssignment?.members)) {
+      return teamAssignment.members;
+    }
+    return [];
+  }, [teamMembers, teamAssignment]);
+
+  const combinedTeamMembers = useMemo(() => {
+    const map = new Map();
+    [...resolvedTeamMembers, ...workflowParticipantMembers].forEach((member) => {
+      if (member?.id) {
+        map.set(member.id, member);
+      }
+    });
+    return Array.from(map.values());
+  }, [resolvedTeamMembers, workflowParticipantMembers]);
+
+  const teamMemberIds = useMemo(
+    () => extractTeamMemberIds({ members: combinedTeamMembers }),
+    [combinedTeamMembers]
+  );
+  const teamMemberIdsKey = useMemo(
+    () => teamMemberIds.slice().sort().join("|"),
+    [teamMemberIds]
+  );
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -110,6 +230,40 @@ export default function ProjectDetails({ params }) {
   }, [user, projectId]);
 
   useEffect(() => {
+    if (!teamAssignment?.id || !process.env.NEXT_PUBLIC_API_URL) {
+      setTeamMembers(teamAssignment?.members || []);
+      return;
+    }
+
+    let cancelled = false;
+    const loadTeamMembers = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/teams/${teamAssignment.id}/members`
+        );
+        if (!res.ok) {
+          throw new Error("Failed to load team members");
+        }
+        const data = await res.json();
+        if (!cancelled) {
+          setTeamMembers(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error("Unable to load team members:", error);
+        if (!cancelled) {
+          setTeamMembers(teamAssignment?.members || []);
+        }
+      }
+    };
+
+    loadTeamMembers();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [teamAssignment?.id, teamAssignment?.members, user]);
+
+  useEffect(() => {
     if (!user || !teamAssignment) {
       setTeamWorkflowState(null);
       setActionStates([]);
@@ -135,10 +289,57 @@ export default function ProjectDetails({ params }) {
 
         if (assignmentState) {
           setTeamWorkflowState(assignmentState);
-          const sortedStates = (assignmentState.actionStates || []).slice().sort(
-            (a, b) => a.index - b.index
+          const sortedStates = (assignmentState.actionStates || [])
+            .slice()
+            .sort((a, b) => a.index - b.index);
+          const participantIds = getParticipantIdsFromWorkflowState(assignmentState);
+          const participantCount =
+            participantIds.length > 0 ? participantIds.length : 1;
+          const currentUserId = user?.id ?? null;
+          const participantDirectory = buildParticipantDirectory(
+            { ...teamAssignment, members: combinedTeamMembers },
+            user
           );
-          setActionStates(sortedStates);
+          const enrichedStates = sortedStates.map((state) => {
+            const metadataMap = toMetadataMap(state.action?.metadata);
+            const submissions = Array.isArray(state.submissions)
+              ? state.submissions
+              : [];
+            const completedSubmissions = submissions.filter(
+              (submission) => submission?.completed
+            );
+            const submittedCount = completedSubmissions.length;
+            const userHasSubmitted = currentUserId
+              ? completedSubmissions.some(
+                  (submission) => submission.userId === currentUserId
+                )
+              : false;
+            const requiresAllParticipants =
+              state?.action?.requireAllParticipants === true ||
+              requiresAllFromMetadata(metadataMap);
+            const pendingUserIds = requiresAllParticipants
+              ? participantIds.filter(
+                  (id) =>
+                    !completedSubmissions.some(
+                      (submission) => submission.userId === id
+                    )
+                )
+              : [];
+            const missingParticipantNames = pendingUserIds.map((id) =>
+              getDisplayName(participantDirectory, id)
+            );
+
+            return {
+              ...state,
+              metadataMap,
+              requiresAllParticipants,
+              submittedCount,
+              participantCount,
+              userHasSubmitted,
+              missingParticipantNames,
+            };
+          });
+          setActionStates(enrichedStates);
         } else {
           setTeamWorkflowState(null);
           setActionStates([]);
@@ -150,6 +351,51 @@ export default function ProjectDetails({ params }) {
 
     fetchWorkflowState();
   }, [user, teamAssignment, refresh]);
+
+  useEffect(() => {
+    if (
+      !teamWorkflowState?.id ||
+      teamMemberIds.length === 0 ||
+      !process.env.NEXT_PUBLIC_WORKFLOWS_API_URL
+    ) {
+      return;
+    }
+
+    const cacheKey = `${teamWorkflowState.id}:${teamMemberIdsKey}`;
+
+    if (participantSyncKeysRef.current[teamWorkflowState.id] === cacheKey) {
+      return;
+    }
+    participantSyncKeysRef.current[teamWorkflowState.id] = cacheKey;
+
+    const controller = new AbortController();
+
+    const syncParticipants = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/workflow/${teamWorkflowState.id}/participants`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ participantUserIds: teamMemberIds }),
+            signal: controller.signal,
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to sync workflow participants");
+        }
+      } catch (error) {
+        if (error.name === "AbortError") return;
+        console.error("Failed to sync workflow participants:", error);
+        delete participantSyncKeysRef.current[teamWorkflowState.id];
+      }
+    };
+
+    syncParticipants();
+
+    return () => controller.abort();
+  }, [teamWorkflowState?.id, teamMemberIds, teamMemberIdsKey]);
 
   const bubbleStyles = (stateType) => {
     switch (stateType) {
@@ -220,7 +466,7 @@ export default function ProjectDetails({ params }) {
   };
 
   const submitAction = async () => {
-    if (!selectedActionState) return;
+    if (!selectedActionState || !user?.id) return;
 
     try {
       const res = await fetch(
@@ -228,15 +474,22 @@ export default function ProjectDetails({ params }) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ actionStateId: selectedActionState.id }),
+          body: JSON.stringify({
+            actionStateId: selectedActionState.id,
+            userId: user.id,
+            workflowStateId: teamWorkflowState?.id,
+          }),
         }
       );
 
+      const payload = await res.json().catch(() => null);
+
       if (!res.ok) {
-        console.error("Failed to submit action state");
-      } else {
-        setRefresh((prev) => prev + 1);
+        const message = payload?.message || "Failed to submit action state";
+        throw new Error(message);
       }
+
+      setRefresh((prev) => prev + 1);
     } catch (error) {
       console.error("Error submitting action state:", error);
     } finally {
@@ -446,11 +699,33 @@ export default function ProjectDetails({ params }) {
                 <Grid container spacing={1}>
                   {actionStates.map((actionState) => (
                     <Grid item key={actionState.id}>
-                      <Chip
-                        label={actionState.action?.name || "Task"}
-                        sx={bubbleStyles(actionState.stateType)}
-                        onClick={() => handleOpen(actionState)}
-                      />
+                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                        <Chip
+                          label={actionState.action?.name || "Task"}
+                          sx={bubbleStyles(actionState.stateType)}
+                          title={
+                            actionState.requiresAllParticipants
+                              ? `${Math.min(
+                                  actionState.submittedCount ?? 0,
+                                  actionState.participantCount ?? 0
+                                )} of ${actionState.participantCount ?? 0} teammates submitted`
+                              : undefined
+                          }
+                          onClick={() => handleOpen(actionState)}
+                        />
+                        {actionState.requiresAllParticipants &&
+                          (actionState.missingParticipantNames?.length ?? 0) > 0 && (
+                            <Typography
+                              variant="caption"
+                              sx={{ mt: 0.25, color: "#F76902", fontWeight: 500 }}
+                            >
+                              {`${Math.min(
+                                actionState.submittedCount ?? 0,
+                                actionState.participantCount ?? 0
+                              )}/${actionState.participantCount ?? 0} • Waiting on ${actionState.missingParticipantNames.join(", ")}`}
+                            </Typography>
+                          )}
+                      </Box>
                     </Grid>
                   ))}
                 </Grid>
@@ -481,15 +756,41 @@ export default function ProjectDetails({ params }) {
             {selectedActionState?.action?.description ||
               "No description is available for this step."}
           </Typography>
+          {selectedActionState?.requiresAllParticipants && (
+            <Typography variant="body2" color="text.secondary" sx={{ marginBottom: "1rem" }}>
+              This step requires every teammate to submit.{" "}
+              {Math.min(
+                selectedActionState.submittedCount ?? 0,
+                selectedActionState.participantCount ?? 0
+              )}{" "}
+              of {selectedActionState.participantCount ?? 0} submissions completed.
+              {selectedActionState.userHasSubmitted &&
+                (selectedActionState.submittedCount ?? 0) <
+                  (selectedActionState.participantCount ?? 0) &&
+                " You're all set—waiting on your teammates."}
+              {(selectedActionState.missingParticipantNames?.length ?? 0) > 0 && (
+                <>
+                  {" "}
+                  Waiting on{" "}
+                  {selectedActionState.missingParticipantNames.join(", ")}.
+                </>
+              )}
+            </Typography>
+          )}
           <Button
             variant="solid-orange"
             onClick={submitAction}
             disabled={
               !selectedActionState ||
-              selectedActionState.stateType === "completed"
+              selectedActionState.stateType === "completed" ||
+              selectedActionState.userHasSubmitted
             }
           >
-            Mark Complete
+            {selectedActionState?.requiresAllParticipants
+              ? selectedActionState?.userHasSubmitted
+                ? "Submitted"
+                : "Mark My Part Complete"
+              : "Mark Complete"}
           </Button>
         </Box>
       </Modal>

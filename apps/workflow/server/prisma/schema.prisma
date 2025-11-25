@@ -32,6 +32,7 @@ model Action {
   description    String?    @db.Text
   form           String?    @db.Text
   actionType     ActionType @default(simple)
+  requireAllParticipants Boolean @default(false)
   isFrozen       Boolean    @default(false) // Indicates if the action is frozen and cannot be modified (only the creator can change this)
   nextActionId   String?    @unique @db.Char(36)
   parentActionId String?    @db.Char(36)
@@ -136,6 +137,7 @@ model ActionState {
   children      ActionState[]   @relation("ParentChild")
   workflowStates      WorkflowState[]  @relation("ActionStates")
   workflowState WorkflowState? @relation("BaseActionState")
+  submissions   ActionStateSubmission[]
 }
 
 model WorkflowStateParticipant {
@@ -153,4 +155,17 @@ enum StateType {
   inProgress
   notStarted
   hidden
+}
+
+model ActionStateSubmission {
+  id            String   @id @default(uuid()) @db.Char(36)
+  actionStateId String   @db.Char(36)
+  userId        String   @db.Char(36)
+  createdAt     DateTime @default(now())
+  completed     Boolean  @default(false)
+  completedAt   DateTime?
+
+  actionState ActionState @relation(fields: [actionStateId], references: [id], onDelete: Cascade)
+
+  @@unique([actionStateId, userId])
 }

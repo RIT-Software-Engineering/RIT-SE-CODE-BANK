@@ -19,6 +19,9 @@ async function createWorkflow(workflowData) {
   if (workflowData.description)
     baseActionData.description = workflowData.description;
   if (workflowData.isFrozen) data.isFrozen = workflowData.isFrozen;
+  if (typeof workflowData.requireAllParticipants === "boolean") {
+    baseActionData.requireAllParticipants = workflowData.requireAllParticipants;
+  }
   if (workflowData.metadata) {
     baseActionData.metadata = {
       create: importMetadata(workflowData.metadata),
@@ -106,6 +109,9 @@ async function createAction(actionData) {
   if (actionData.form) data.form = actionData.form;
   if (actionData.actionType) data.actionType = actionData.actionType;
   if (actionData.isFrozen) data.isFrozen = actionData.isFrozen;
+  if (typeof actionData.requireAllParticipants === "boolean") {
+    data.requireAllParticipants = actionData.requireAllParticipants;
+  }
   if (actionData.metadata) {
     data.metadata = {
       create: importMetadata(actionData.metadata),

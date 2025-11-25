@@ -125,7 +125,11 @@ export default function WorkflowPage() {
         response = await fetch(`${baseUrl}/states/handleSubmit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ actionStateId }),
+          body: JSON.stringify({
+            actionStateId,
+            userId,
+            workflowStateId: workflowState?.id,
+          }),
         });
       } else {
         response = await fetch(`${baseUrl}/states/action/${actionStateId}`, {
@@ -135,8 +139,8 @@ export default function WorkflowPage() {
         });
       }
 
+      const resBody = await response.json().catch(() => null);
       if (!response.ok) {
-        const resBody = await response.json().catch(() => null);
         throw new Error(resBody?.message || 'Failed to update action state');
       }
 

@@ -16,6 +16,7 @@ Note: You can comment out the credentials settings in our cors policies to execu
 - `POST /states/workflow` now supports `participantUserIds` and `teamId`, allowing a single workflow state to be shared by a team.
 - The new `WorkflowStateParticipant` records ensure every participant sees the same progress; completing an action once marks it complete for the whole team.
 - `GET /states/workflow` includes shared assignments when filtering by `userId`, so clients do not need separate logic for individual vs team tasks.
+- Actions now include a `requireAllParticipants` flag (also exposed in Prisma). Set it to `true` on any action that should remain “in progress” until every teammate submits.
 
 ## Prerequisites
 1.  **Node.js**

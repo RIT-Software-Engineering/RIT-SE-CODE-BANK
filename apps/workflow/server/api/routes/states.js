@@ -13,6 +13,123 @@ const { getFullActionTree } = require("../helpers/actions.js");
 // - Optimize
 // - Improve readability and organization
 
+const REQUIRE_ALL_METADATA_KEYS = [
+  "requireallparticipants",
+  "requiresallparticipants",
+  "requireall",
+  "requiresall",
+  "requireeveryone",
+  "requiringeveryone",
+];
+
+const truthyStrings = new Set(["true", "1", "yes", "y", "on"]);
+
+function metadataEntries(metadata) {
+  if (!metadata) return [];
+  if (Array.isArray(metadata)) return metadata;
+  return Object.entries(metadata).map(([key, value]) => ({
+    key,
+    value: value?.toString?.() ?? String(value),
+  }));
+}
+
+function metadataValueIsTruthy(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    return truthyStrings.has(value.toLowerCase());
+  }
+  return false;
+}
+
+function actionRequiresAllParticipants(action) {
+  if (action?.requireAllParticipants === true) {
+    return true;
+  }
+  const metadata = metadataEntries(action?.metadata);
+  return metadata.some(
+    (entry) =>
+      REQUIRE_ALL_METADATA_KEYS.includes(entry.key?.toLowerCase?.()) &&
+      metadataValueIsTruthy(entry.value)
+  );
+}
+
+async function findRootActionStateId(actionStateId, initialParentId) {
+  let currentId = actionStateId;
+  let parentId = initialParentId;
+
+  if (parentId === undefined) {
+    const current = await prisma.actionState.findUnique({
+      where: { id: currentId },
+      select: { parentId: true },
+    });
+    parentId = current?.parentId ?? null;
+  }
+
+  while (parentId) {
+    currentId = parentId;
+    const current = await prisma.actionState.findUnique({
+      where: { id: currentId },
+      select: { parentId: true },
+    });
+    if (!current) {
+      return null;
+    }
+    parentId = current.parentId;
+  }
+
+  return currentId;
+}
+
+async function findWorkflowStateForActionState(actionStateId, initialParentId) {
+  const rootActionStateId = await findRootActionStateId(
+    actionStateId,
+    initialParentId
+  );
+  if (!rootActionStateId) return null;
+
+  return prisma.workflowState.findUnique({
+    where: { baseActionStateId: rootActionStateId },
+    include: {
+      participants: true,
+    },
+  });
+}
+
+function collectParticipantIds(
+  workflowState,
+  fallbackUserId = null,
+  submissionUserIds = []
+) {
+  const ids = new Set();
+  if (workflowState?.userId) ids.add(workflowState.userId);
+  workflowState?.participants?.forEach((participant) => {
+    if (participant?.userId) {
+      ids.add(participant.userId);
+    }
+  });
+  submissionUserIds
+    ?.filter((id) => typeof id === "string" && id.trim().length > 0)
+    .forEach((id) => ids.add(id));
+  if (fallbackUserId) ids.add(fallbackUserId);
+  return ids;
+}
+
+function sanitizeUserIds(possibleIds) {
+  if (!Array.isArray(possibleIds)) return [];
+
+  const ids = new Set();
+  possibleIds.forEach((value) => {
+    if (typeof value !== "string") return;
+    const trimmed = value.trim();
+    if (trimmed.length > 0) {
+      ids.add(trimmed);
+    }
+  });
+
+  return Array.from(ids);
+}
+
 /**
  * Recurisve function for collecting all action states branching from a a specific action.
  *
@@ -64,7 +181,10 @@ router.get("/workflow/:id", async (req, res) => {
   // Add any actionStates stemming from the baseActionState as it's children
   const children = await getChildren(
     { parentId: state.baseActionStateId },
-    { action: true }
+    {
+      action: { include: { metadata: true } },
+      submissions: true,
+    }
   );
   if (children?.length > 0) {
     state.baseActionState.children = children;
@@ -100,7 +220,8 @@ router.get("/workflow", async (req, res) => {
       baseActionState: true,
       actionStates: {
         include: {
-          action: true,
+          action: { include: { metadata: true } },
+          submissions: true,
         },
       },
       participants: true,
@@ -271,12 +392,7 @@ async function createActionStates(
 router.post("/workflow", async (req, res) => {
   const { userId, workflowId, teamId, participantUserIds } = req.body;
 
-  const participantIds = new Set();
-  if (Array.isArray(participantUserIds)) {
-    participantUserIds
-      .filter((id) => typeof id === "string" && id.trim().length > 0)
-      .forEach((id) => participantIds.add(id));
-  }
+  const participantIds = new Set(sanitizeUserIds(participantUserIds));
   if (typeof userId === "string" && userId.trim().length > 0) {
     participantIds.add(userId);
   }
@@ -496,7 +612,10 @@ router.put("/workflow/:id", async (req, res) => {
     // Add any actionStates stemming from the baseActionState as it's children
     const children = await getChildren(
       { parentId: updated.baseActionStateId },
-      { action: true }
+      {
+        action: { include: { metadata: true } },
+        submissions: true,
+      }
     );
     if (children?.length > 0) {
       updated.baseActionState.children = children;
@@ -521,6 +640,147 @@ router.delete("/workflow/:id", async (req, res) => {
   });
 
   res.json({ message: "Deleted" });
+});
+
+router.put("/workflow/:id/participants", async (req, res) => {
+  const { id } = req.params;
+  const participantIds = sanitizeUserIds(req.body?.participantUserIds);
+  const parentIdsToCascade = new Set();
+
+  if (participantIds.length === 0) {
+    return res.status(400).json({
+      message: "participantUserIds must include at least one user id.",
+    });
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const workflowState = await tx.workflowState.findUnique({
+        where: { id },
+        include: {
+          actionStates: {
+            select: { id: true },
+          },
+        },
+      });
+
+      if (!workflowState) {
+        throw new Error("Workflow state not found");
+      }
+
+      await tx.workflowStateParticipant.deleteMany({
+        where: {
+          workflowStateId: id,
+          userId: { notIn: participantIds },
+        },
+      });
+
+      const existing = await tx.workflowStateParticipant.findMany({
+        where: { workflowStateId: id },
+        select: { userId: true },
+      });
+
+      const existingSet = new Set(existing.map((p) => p.userId));
+      const toCreate = participantIds.filter((pid) => !existingSet.has(pid));
+
+      if (toCreate.length > 0) {
+        await tx.workflowStateParticipant.createMany({
+          data: toCreate.map((pid) => ({
+            workflowStateId: id,
+            userId: pid,
+          })),
+        });
+      }
+
+      const actionStateIds = workflowState.actionStates.map((as) => as.id);
+      if (actionStateIds.length > 0) {
+        const participantSet = new Set(participantIds);
+        await tx.actionStateSubmission.deleteMany({
+          where: {
+            actionStateId: { in: actionStateIds },
+            userId: { notIn: participantIds },
+          },
+        });
+
+        for (const actionStateId of actionStateIds) {
+          for (const userId of participantIds) {
+            await tx.actionStateSubmission.upsert({
+              where: {
+                actionStateId_userId: {
+                  actionStateId,
+                  userId,
+                },
+              },
+              update: {},
+              create: {
+                actionStateId,
+                userId,
+                completed: false,
+              },
+            });
+          }
+        }
+
+        const actionStatesForRecalc = await tx.actionState.findMany({
+          where: { id: { in: actionStateIds } },
+          include: {
+            action: { include: { metadata: true } },
+            submissions: {
+              select: {
+                userId: true,
+                completed: true,
+              },
+            },
+          },
+        });
+
+        for (const actionState of actionStatesForRecalc) {
+          if (actionState.stateType === "hidden") continue;
+
+          const requiresAll = actionRequiresAllParticipants(actionState.action);
+          if (!requiresAll) continue;
+
+          const completedCount = actionState.submissions.filter(
+            (submission) =>
+              submission.completed && participantSet.has(submission.userId)
+          ).length;
+          const requiredCount =
+            participantSet.size > 0 ? participantSet.size : 1;
+          const fullyCompleted = completedCount >= requiredCount;
+          const desiredStateType = fullyCompleted
+            ? "completed"
+            : completedCount > 0
+            ? "inProgress"
+            : "notStarted";
+
+          if (actionState.stateType !== desiredStateType) {
+            await tx.actionState.update({
+              where: { id: actionState.id },
+              data: { stateType: desiredStateType },
+            });
+            if (actionState.parentId) {
+              parentIdsToCascade.add(actionState.parentId);
+            }
+          }
+        }
+      }
+    });
+
+    for (const parentId of parentIdsToCascade) {
+      await cascadeSubmission(parentId);
+    }
+
+    const participants = await prisma.workflowStateParticipant.findMany({
+      where: { workflowStateId: id },
+    });
+
+    res.json({
+      participants,
+    });
+  } catch (error) {
+    console.error("Failed to update workflow participants:", error);
+    res.status(500).json({ message: "Failed to update participants." });
+  }
 });
 
 // May not need this
@@ -586,6 +846,12 @@ router.put("/action/:id", async (req, res) => {
     where: { id: id },
     data: data,
   });
+
+  if (data.stateType && data.stateType !== "completed") {
+    await prisma.actionStateSubmission.deleteMany({
+      where: { actionStateId: id },
+    });
+  }
 
   res.json(actionState);
 });
@@ -658,43 +924,176 @@ async function cascadeSubmission(actionStateId) {
  * Update the state of actions to track progress.
  */
 router.post("/handleSubmit", async (req, res) => {
-  const { actionStateId } = req.body;
-  const stateType = req.body.stateType ?? "completed";
+  const { actionStateId, userId, workflowStateId } = req.body;
+  const requestedStateType = req.body.stateType ?? "completed";
 
-  // Find the type of the action, and determine whether or not it can be completed this way.
-  const actionState = await prisma.actionState.findUnique({
+  if (!actionStateId) {
+    return res.status(400).json({ message: "actionStateId is required." });
+  }
+
+  const existingActionState = await prisma.actionState.findUnique({
     where: { id: actionStateId },
-    select: {
+    include: {
       action: {
+        include: { metadata: true },
+      },
+      parent: {
+        select: { id: true },
+      },
+      submissions: {
         select: {
-          actionType: true,
+          userId: true,
         },
       },
     },
   });
-  if (actionState.action.actionType !== "simple") {
+
+  if (!existingActionState) {
+    return res.status(404).json({ message: "Action state not found." });
+  }
+
+  if (existingActionState.action.actionType !== "simple") {
     return res.status(400).json({
       message: "This action will only be completed by completing sub actions.",
     });
   }
 
-  // If the action can be completed, complete the action and cascade the status updates
-  await prisma.$transaction(async () => {
-    const actionState = await prisma.actionState.update({
-      where: { id: actionStateId },
-      data: {
-        stateType: stateType,
-      },
+  let workflowState = null;
+  if (workflowStateId) {
+    workflowState = await prisma.workflowState.findUnique({
+      where: { id: workflowStateId },
       include: {
-        action: true,
+        participants: true,
       },
     });
+  } else {
+    workflowState = await findWorkflowStateForActionState(
+      actionStateId,
+      existingActionState.parentId
+    );
+  }
+  if (!workflowState) {
+    return res
+      .status(404)
+      .json({ message: "Owning workflow state could not be located." });
+  }
 
-    // Cascade status updates upward
-    if (actionState.parentId) await cascadeSubmission(actionState.parentId);
+  const requiresAll = actionRequiresAllParticipants(existingActionState.action);
+  const submissionUserIds =
+    existingActionState.submissions?.map((submission) => submission.userId) ??
+    [];
+  const participantIds = collectParticipantIds(
+    workflowState,
+    userId,
+    submissionUserIds
+  );
+  const requiredCount = requiresAll
+    ? Math.max(participantIds.size, 1)
+    : 1;
 
-    res.status(200).json({ message: "Completed" });
+  if (requiresAll && !userId) {
+    return res.status(400).json({
+      message: "userId is required when submitting this action.",
+    });
+  }
+
+  if (requiresAll && participantIds.size > 0 && !participantIds.has(userId)) {
+    return res.status(403).json({
+      message: "This user is not a participant in the workflow state.",
+    });
+  }
+
+  let responsePayload = null;
+  let cascadeParentId = null;
+
+  await prisma.$transaction(async (tx) => {
+    const submissionTimestamp = new Date();
+    if (requiresAll) {
+      await tx.actionStateSubmission.upsert({
+        where: {
+          actionStateId_userId: {
+            actionStateId,
+            userId,
+          },
+        },
+        update: {
+          completed: true,
+          completedAt: submissionTimestamp,
+        },
+        create: {
+          actionStateId,
+          userId,
+          completed: true,
+          completedAt: submissionTimestamp,
+        },
+      });
+
+      const participantFilter =
+        participantIds.size > 0
+          ? Array.from(participantIds)
+          : [userId].filter(Boolean);
+
+      const completedCount = await tx.actionStateSubmission.count({
+        where: {
+          actionStateId,
+          completed: true,
+          ...(participantFilter.length > 0
+            ? { userId: { in: participantFilter } }
+            : {}),
+        },
+      });
+
+      const fullyCompleted = completedCount >= requiredCount;
+      const nextStateType = fullyCompleted ? requestedStateType : "inProgress";
+
+      const updatedState = await tx.actionState.update({
+        where: { id: actionStateId },
+        data: {
+          stateType: nextStateType,
+        },
+        select: {
+          parentId: true,
+        },
+      });
+
+      cascadeParentId = fullyCompleted ? updatedState.parentId : null;
+      responsePayload = {
+        message: fullyCompleted
+          ? "Completed"
+          : "Submission recorded. Awaiting teammates.",
+        fullyCompleted,
+        requiresAllParticipants: true,
+        completedCount,
+        requiredCount,
+      };
+    } else {
+      const updatedState = await tx.actionState.update({
+        where: { id: actionStateId },
+        data: {
+          stateType: requestedStateType,
+        },
+        select: {
+          parentId: true,
+        },
+      });
+
+      cascadeParentId = updatedState.parentId;
+      responsePayload = {
+        message: "Completed",
+        fullyCompleted: true,
+        requiresAllParticipants: false,
+        completedCount: 1,
+        requiredCount: 1,
+      };
+    }
   });
+
+  // Cascade status updates upward if needed
+  if (cascadeParentId) {
+    await cascadeSubmission(cascadeParentId);
+  }
+
+  res.status(200).json(responsePayload);
 });
 
 module.exports = router;
