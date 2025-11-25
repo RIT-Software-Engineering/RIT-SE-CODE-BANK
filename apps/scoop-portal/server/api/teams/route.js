@@ -135,14 +135,14 @@ router.put("/", async(req,res) => {
   }
 })
 
-// REMOVE the scoopervisor from a team
-router.delete("/:teamId/:scoopervisorId", async (req, res) => {
-  const { teamId, scoopervisorId } = req.params;
+// PUT a scoopervisor on a team
+router.put("/scoopervisor", async (req, res) => {
+  const { teamId, scoopervisorId } = req.body;
   try {
     const team = await prisma.teams.update({
       where: {id: parseInt(teamId) },
       data: {
-        scoopervisorId: null,
+        scoopervisorId: scoopervisorId,
       },
       include: {
         members: true,
@@ -150,10 +150,10 @@ router.delete("/:teamId/:scoopervisorId", async (req, res) => {
         scoopervisor: true,
       }
     });
-    res.status(200).json({message: "Scoopervisor removed", team})
+    res.status(200).json({message: "Team Scoopervisor updated", team})
   } catch (error) {
-    console.error("Error removing Scoopervisor:", error);
-    res.status(500).json({message: "Failed to remove Scoopervisor", error: error.message});
+    console.error("Error updating Scoopervisor:", error);
+    res.status(500).json({message: "Failed to update Scoopervisor", error: error.message});
   }
 });
 
