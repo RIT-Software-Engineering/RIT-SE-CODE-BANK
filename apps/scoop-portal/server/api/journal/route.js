@@ -207,8 +207,12 @@ router.get("/:id", async (req, res) => {
                     some: {
                       id: id,
                 },},},
+            { topic_id: id },
           ],
           privacy_level: "PUBLIC",
+          visibility_level: {
+            lt: 2
+          },
         },
         include: {
           sender: true,
@@ -220,6 +224,9 @@ router.get("/:id", async (req, res) => {
                 { privacy_level: "PUBLIC" },
                 { sender_id: id }
               ],
+              visibility_level: {
+                lt: 2
+              },
             },
             include:{
               sender: true,
@@ -236,6 +243,9 @@ router.get("/:id", async (req, res) => {
       const dinatorEntries = await prisma.journalEntry.findMany({
         where:{
           privacy_level: "PUBLIC",
+          visibility_level: {
+            lt: 5
+          },
         },
         include: {
           sender: true,
@@ -247,6 +257,9 @@ router.get("/:id", async (req, res) => {
                 { privacy_level: "PUBLIC" },
                 { sender_id: id }
               ],
+              visibility_level: {
+                lt: 5
+              },
             },
             include: {
               sender: true,
@@ -291,6 +304,9 @@ router.get("/:id", async (req, res) => {
                 { topic_id: memberId },
                 ]),
               privacy_level: "PUBLIC",
+              visibility_level: {
+                  lt: 3
+              },
               },
             include: {
               sender: true,
@@ -302,6 +318,9 @@ router.get("/:id", async (req, res) => {
                     { privacy_level: "PUBLIC" },
                     { sender_id: id }
                   ],
+                  visibility_level: {
+                    lt: 3
+                  },
                 },
                 include:{
                   sender: true,

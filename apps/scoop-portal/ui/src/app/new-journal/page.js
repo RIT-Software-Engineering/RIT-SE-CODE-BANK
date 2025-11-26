@@ -362,6 +362,7 @@ export default function Journal() {
                       })
                     : ""}
                 </Typography>
+                {entry.sender_id === user.id && (
                 <Button
                   startIcon={<EditNoteIcon />}
                   variant="solid-orange"
@@ -369,6 +370,7 @@ export default function Journal() {
                 >
                   Edit Notes
                 </Button>
+                )}
               </Box>
               <Typography variant="h3">
                 To: {entry.recipients.map(rec => rec.fname + " " + rec.lname).join(", ")}
@@ -459,7 +461,7 @@ export default function Journal() {
           setFilterDialogOpen={setFilterDialogOpen}
           setNewEntryOpen={setNewEntryOpen}
         />
-      <EntriesList entries={filteredJournalEntries} commentView={true}></EntriesList>
+      <EntriesList entries={filteredJournalEntries.filter(entry => entry.previous_entryid == null)} commentView={true}></EntriesList>
       </Container>
       {/* Add Entry */}
       <Dialog
