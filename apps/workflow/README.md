@@ -12,6 +12,11 @@ Alternatively, you can use the [OpenAPI VS Code extension](https://marketplace.v
 
 Note: You can comment out the credentials settings in our cors policies to execute the endpoint commands in the preview. However, DON'T LEAVE THE API UNPROTECTED GOING FORWARD!
 
+### Team Workflow Assignments
+- `POST /states/workflow` now supports `participantUserIds` and `teamId`, allowing a single workflow state to be shared by a team.
+- The new `WorkflowStateParticipant` records ensure every participant sees the same progress; completing an action once marks it complete for the whole team.
+- `GET /states/workflow` includes shared assignments when filtering by `userId`, so clients do not need separate logic for individual vs team tasks.
+
 ## Prerequisites
 1.  **Node.js**
     * Download from: [https://nodejs.org/en/download](https://nodejs.org/en/download)

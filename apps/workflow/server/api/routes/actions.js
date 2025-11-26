@@ -48,6 +48,7 @@ router.get("/", async (req, res) => {
             include: {
                 metadata: true,
                 previousAction: true,
+                actionStates: true,
             },
         });
         const intersectionIds = intersection.map(action => action.id);
@@ -61,6 +62,7 @@ router.get("/", async (req, res) => {
         include: {
             metadata: true,
             previousAction: true,
+            actionStates: true,
         },
     });
     return res.json(actions.map((a) => exportAction(a)));

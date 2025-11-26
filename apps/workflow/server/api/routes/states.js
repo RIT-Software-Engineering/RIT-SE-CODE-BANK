@@ -57,6 +57,7 @@ router.get("/workflow/:id", async (req, res) => {
     where: { id: id },
     include: {
       baseActionState: true,
+      participants: true,
     },
   });
 
@@ -76,14 +77,33 @@ router.get("/workflow/:id", async (req, res) => {
 router.get("/workflow", async (req, res) => {
   const { userId, workflowId } = req.query;
 
-  const where = {};
-  if (userId) where.userId = userId;
-  if (workflowId) where.workflowId = workflowId;
+  const filters = [];
+  if (workflowId) filters.push({ workflowId });
+  if (userId) {
+    filters.push({
+      OR: [
+        { userId },
+        {
+          participants: {
+            some: {
+              userId,
+            },
+          },
+        },
+      ],
+    });
+  }
 
   const states = await prisma.workflowState.findMany({
-    where: where,
+    where: filters.length > 0 ? { AND: filters } : {},
     include: {
       baseActionState: true,
+      actionStates: {
+        include: {
+          action: true,
+        },
+      },
+      participants: true,
     },
   });
 
@@ -249,9 +269,29 @@ async function createActionStates(
 
 // POST /states/workflow
 router.post("/workflow", async (req, res) => {
-  const { userId, workflowId } = req.body;
+  const { userId, workflowId, teamId, participantUserIds } = req.body;
 
-  let state;
+  const participantIds = new Set();
+  if (Array.isArray(participantUserIds)) {
+    participantUserIds
+      .filter((id) => typeof id === "string" && id.trim().length > 0)
+      .forEach((id) => participantIds.add(id));
+  }
+  if (typeof userId === "string" && userId.trim().length > 0) {
+    participantIds.add(userId);
+  }
+
+  const participants = Array.from(participantIds);
+  const owningUserId =
+    typeof userId === "string" && userId.trim().length > 0
+      ? userId
+      : participants.length === 1
+      ? participants[0]
+      : null;
+  const teamIdentifier =
+    typeof teamId === "string" && teamId.trim().length > 0 ? teamId : null;
+
+  let stateId;
 
   await prisma.$transaction(async () => {
     // Ensure the workflow exists before creating a state
@@ -268,9 +308,10 @@ router.post("/workflow", async (req, res) => {
     }
 
     // Create the workflowState
-    state = await prisma.workflowState.create({
+    const createdState = await prisma.workflowState.create({
       data: {
-        userId: userId,
+        userId: owningUserId,
+        teamId: teamIdentifier,
         workflow: { connect: { id: workflowId } },
         baseActionState: {
           create: {
@@ -279,12 +320,30 @@ router.post("/workflow", async (req, res) => {
             index: 0,
           },
         },
+        participants:
+          participants.length > 0
+            ? {
+                create: participants.map((id) => ({
+                  userId: id,
+                })),
+              }
+            : undefined,
       },
     });
 
+    stateId = createdState.id;
+
     // Get all of the actions in the workflow and create ActionStates for them
     const actions = await getFullActionTree(workflow.rootActionId);
-    await createActionStates(actions, state.baseActionStateId);
+    await createActionStates(actions, createdState.baseActionStateId);
+  });
+
+  const state = await prisma.workflowState.findUnique({
+    where: { id: stateId },
+    include: {
+      baseActionState: true,
+      participants: true,
+    },
   });
 
   res.json(state);
@@ -430,6 +489,7 @@ router.put("/workflow/:id", async (req, res) => {
       include: {
         workflow: true,
         baseActionState: true,
+        participants: true,
       },
     });
 
@@ -599,6 +659,7 @@ async function cascadeSubmission(actionStateId) {
  */
 router.post("/handleSubmit", async (req, res) => {
   const { actionStateId } = req.body;
+  const stateType = req.body.stateType ?? "completed";
 
   // Find the type of the action, and determine whether or not it can be completed this way.
   const actionState = await prisma.actionState.findUnique({
@@ -622,7 +683,7 @@ router.post("/handleSubmit", async (req, res) => {
     const actionState = await prisma.actionState.update({
       where: { id: actionStateId },
       data: {
-        stateType: "completed",
+        stateType: stateType,
       },
       include: {
         action: true,
