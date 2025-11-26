@@ -154,7 +154,7 @@ export default function HeroBanner() {
           width: "fit-content",
           maxWidth: "90%",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
-          zIndex: 1400,
+          zIndex: 999,
           marginBottom: { xs: "-50px", md: "-65px" }, // Compensate for the negative space
         }}
       >
