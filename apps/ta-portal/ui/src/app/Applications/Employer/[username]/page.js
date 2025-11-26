@@ -2,6 +2,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import {
   getSemesterCodesForEmployer,
   getCandidateApplicationsAsEmployer,
@@ -297,6 +299,7 @@ export default function EmployerApplicationsPage() {
 
   // Main component render method.
   return (
+    <FeatureGate feature={FEATURES.APPLICATIONS}>
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography variant="h1" component="h1" gutterBottom>
@@ -377,5 +380,6 @@ export default function EmployerApplicationsPage() {
         </Paper>
       )}
     </Container>
+    </FeatureGate>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useContext } from "react";
 import { useRouter } from "next/navigation";
+import { useFeatureFlags, FEATURES } from "@/configuration/featureFlags";
 import {
   AppBar,
   Toolbar,
@@ -60,72 +61,84 @@ const HEADER_LINKS = [
     href: "/Messaging",
     icon: <Message />,
     roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
+    feature: FEATURES.MESSAGING,
   },
   {
     text: "Timecard",
     href: "/Timecard/Employee/[username]",
     icon: <AccessTime />,
     roles: [ROLES.EMPLOYEE],
+    feature: FEATURES.TIMECARD,
   },
   {
     text: "Timecard",
     href: "/Timecard/Admin/[username]",
     icon: <AccessTime />,
     roles: [ROLES.ADMIN],
+    feature: FEATURES.TIMECARD,
   },
   {
     text: "Timecard",
     href: "/Timecard/Employer/[username]",
     icon: <AccessTime />,
     roles: [ROLES.EMPLOYER],
+    feature: FEATURES.TIMECARD,
   },
   {
     text: "Positions",
     href: "/Positions/Candidate/[username]",
     icon: <Work />,
     roles: [ROLES.CANDIDATE],
+    feature: FEATURES.POSITIONS,
   },
   {
     text: "Positions",
     href: "/Positions/Employer/[username]",
     icon: <Work />,
     roles: [ROLES.EMPLOYER],
+    feature: FEATURES.POSITIONS,
   },
   {
     text: "Positions",
     href: "/Positions/Employee/[username]",
     icon: <Work />,
     roles: [ROLES.EMPLOYEE],
+    feature: FEATURES.POSITIONS,
   },
   {
     text: "Positions",
     href: "/Positions/Admin/[username]",
     icon: <Work />,
     roles: [ROLES.ADMIN],
+    feature: FEATURES.POSITIONS,
   },
   {
     text: "Applications",
     href: "/Applications/Candidate/[username]",
     icon: <Description />,
     roles: [ROLES.CANDIDATE],
+    feature: FEATURES.APPLICATIONS,
   },
   {
     text: "Applications",
     href: "/Applications/Employer/[username]",
     icon: <Description />,
     roles: [ROLES.EMPLOYER],
+    feature: FEATURES.APPLICATIONS,
   },
   {
     text: "Applications",
     href: "/Applications/Employee/[username]",
     icon: <Description />,
     roles: [ROLES.EMPLOYEE],
+    feature: FEATURES.APPLICATIONS,
   },
   {
     text: "Applications",
     href: "/Applications/Admin/[username]",
     icon: <Description />,
     roles: [ROLES.ADMIN],
+    feature: FEATURES.APPLICATIONS,
   },
   {
     text: "Users",
@@ -149,6 +162,7 @@ export default function Header() {
   const { currentUser, logout } = useAuth();
   const router = useRouter();
   const { toggleTheme, mode } = useContext(ThemeContext);
+  const { isFeatureEnabled, loading: featureFlagsLoading } = useFeatureFlags();
   const userRole = currentUser ? currentUser.role : null;
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:1380px)");
@@ -159,7 +173,8 @@ export default function Header() {
   const [searchResults, setSearchResults] = useState([]);
 
   const availableLinks = HEADER_LINKS.filter((link) =>
-    link.roles.includes(userRole)
+    link.roles.includes(userRole) && 
+    (!link.feature || isFeatureEnabled(link.feature))
   );
 
   const handleLogout = () => {
@@ -325,6 +340,37 @@ export default function Header() {
                 />
               </ListItemButton>
             </ListItem>
+            {/* Admin Feature Settings */}
+            {userRole === ROLES.ADMIN && (
+              <ListItem disablePadding sx={{ pl: 4 }}>
+                <ListItemButton
+                  component={Link}
+                  href="/Admin/Features"
+                  onClick={handleDrawerToggle}
+                  sx={{
+                    py: 1,
+                    px: 2,
+                    borderRadius: 1,
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: "auto",
+                      mr: 2,
+                      color: "inherit",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Settings />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Feature Settings"
+                    primaryTypographyProps={{ sx: { mb: 0, fontSize: "0.9rem" } }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )}
             {/* Future: Notif Preferences will be added here - placeholder for easy merging */}
             {/* 
             <ListItem disablePadding sx={{ pl: 4 }}>

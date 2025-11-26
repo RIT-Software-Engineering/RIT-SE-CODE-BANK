@@ -2,11 +2,13 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import { useSearchParams } from 'next/navigation';
 import {
-  getSemesterCodesForEmployer,
-  getCandidateApplicationsAsEmployer,
   getCandidateApplicationsAsAdmin,
+  getAllApplicationsForAdmin,
+  getSemesterCodesForEmployer,
   hireCandidate,
 } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,29 +40,32 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 /**
- * Renders the main applications management page for Administrators.
- * This page features two primary views accessible via tabs:
- * 1. "My Applications": Allows admins to view and manage applications for positions they own,
- * acting in an employer capacity.
- * 2. "Ready to Hire": Shows a system-wide list of candidates who have accepted offers and are
- * awaiting final processing by an admin to be hired.
+ * Renders the applications management page for Administrators.
+ * Features two tabs:
+ * 1. "Hire Candidates": Shows candidates who have accepted offers and are ready to be hired
+ * 2. "All Applications": Shows all applications across the system with search and filter
  */
 export default function AdminApplicationsPage() {
-  // Core hooks for authentication, notifications, and component references.
+  // Core hooks
   const { currentUser } = useAuth();
   const { showNotification } = useNotification();
   const filterRef = useRef();
   const searchParams = useSearchParams();
 
-  // Initialize active tab based on URL search parameter for linkability.
+  // Initialize active tab from URL
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
-    return tabParam === 'hiring' ? 1 : 0;
+    return tabParam === 'all' ? 1 : 0;
   });
 
-  // State for the "My Applications" tab.
+  // State for Hire Candidates tab
+  const [hiringApplications, setHiringApplications] = useState([]);
+  const [hiringLoading, setHiringLoading] = useState(false);
+  const [hiringError, setHiringError] = useState(null);
+
+  // State for All Applications tab
   const [displayData, setDisplayData] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchBy, setSearchBy] = useState('course');
@@ -72,105 +77,13 @@ export default function AdminApplicationsPage() {
     hasApplications: '',
   });
 
-  // State for the "Ready to Hire" tab.
-  const [hiringApplications, setHiringApplications] = useState([]);
-  const [hiringLoading, setHiringLoading] = useState(false);
-  const [hiringError, setHiringError] = useState(null);
-
-  // State for the hiring modal functionality.
+  // State for hiring modal
   const [isHireModalOpen, setIsHireModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Effect to fetch and configure filters on component mount or when the user changes.
-  useEffect(() => {
-    if (currentUser?.username) {
-      /**
-       * Fetches semester codes associated with the admin's own positions
-       * to dynamically generate and set the filter configuration.
-       */
-      const fetchAndSetConfig = async () => {
-        try {
-          const semesterCodes = await getSemesterCodesForEmployer(
-            currentUser.username
-          );
-          const newConfig = generateApplicationsFilterConfig(semesterCodes);
-          setFilterConfig(newConfig);
-        } catch (err) {
-          console.error('Failed to load filter configuration:', err);
-          setFilterConfig(generateApplicationsFilterConfig([])); // Set a default config on error
-        }
-      };
-      fetchAndSetConfig();
-    }
-  }, [currentUser]);
-
   /**
-   * Fetches, processes, and displays applications for the positions owned by the admin.
-   * This function handles searching, filtering, and grouping the data by semester.
-   * @param {string} search - The current search term.
-   * @param {string} searchType - The category to search by ('course' or 'student').
-   * @param {object} filters - The active filter object.
-   */
-  const updateApplicationsView = useCallback(
-    async (search, searchType, filters) => {
-      if (!currentUser?.username) return;
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await getCandidateApplicationsAsEmployer(
-          search,
-          searchType,
-          filters,
-          currentUser.username
-        );
-
-        // Process positions to convert grade enums to human-readable strings.
-        const positions = data.map((position) => {
-          const applicationsHistory =
-            position.jobPositionApplicationHistory.map((app) => {
-              if (
-                app.candidateGrade &&
-                gradeEnumToStringValue[app.candidateGrade]
-              ) {
-                return {
-                  ...app,
-                  candidateGrade: gradeEnumToStringValue[app.candidateGrade],
-                };
-              }
-              return app;
-            });
-          return {
-            ...position,
-            jobPositionApplicationHistory: applicationsHistory,
-          };
-        });
-
-        // Group the flattened list of positions by their semester code for display in accordions.
-        const groupedBySemester = positions.reduce((acc, position) => {
-          const semesterCode = position.semesterCode || 'Uncategorized';
-          if (!acc[semesterCode]) {
-            acc[semesterCode] = [];
-          }
-          acc[semesterCode].push(position);
-          return acc;
-        }, {});
-
-        setDisplayData(groupedBySemester);
-      } catch (err) {
-        console.error('Error updating applications view:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [currentUser]
-  );
-
-  /**
-   * Fetches applications from across the system that have the 'ACCEPTED_OFFER' status,
-   * preparing them for the "Ready to Hire" tab.
+   * Fetches applications from across the system that have the 'ACCEPTED_OFFER' status.
    */
   const fetchHiringApplications = useCallback(async () => {
     setHiringLoading(true);
@@ -197,100 +110,34 @@ export default function AdminApplicationsPage() {
     }
   }, []);
 
-  // Main data fetching effect that runs when the active tab or user context changes.
+  // Fetch filter config on mount
+  useEffect(() => {
+    if (currentUser?.username) {
+      const fetchAndSetConfig = async () => {
+        try {
+          const semesterCodes = await getSemesterCodesForEmployer(currentUser.username);
+          const newConfig = generateApplicationsFilterConfig(semesterCodes);
+          setFilterConfig(newConfig);
+        } catch (err) {
+          console.error('Failed to load filter configuration:', err);
+          setFilterConfig(generateApplicationsFilterConfig([]));
+        }
+      };
+      fetchAndSetConfig();
+    }
+  }, [currentUser]);
+
+  // Fetch data based on active tab
   useEffect(() => {
     if (currentUser) {
       if (activeTab === 0) {
-        updateApplicationsView(searchTerm, searchBy, appliedFilters);
-      } else if (activeTab === 1) {
         fetchHiringApplications();
+      } else if (activeTab === 1) {
+        updateAllApplicationsView(searchTerm, searchBy, appliedFilters);
       }
     }
-    // Disabling exhaustive-deps because we intentionally want this to run only when the tab or user changes,
-    // not on every change to search/filter state, which are handled by their own callbacks.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, activeTab]);
-
-  /**
-   * Handles the user switching between the "My Applications" and "Ready to Hire" tabs.
-   * Resets all search and filter states to provide a clean slate for the new view.
-   * @param {React.SyntheticEvent} event - The event source of the callback.
-   * @param {number} newValue - The index of the newly selected tab.
-   */
-  const handleTabChange = (event, newValue) => {
-    // Reset search and filter states.
-    setSearchTerm('');
-    setSearchBy('course');
-    const initialFilters = {
-      status: [],
-      level: [],
-      semester: '',
-      hasApplications: '',
-    };
-    setAppliedFilters(initialFilters);
-
-    // Clear all filters in the child Filter component via its ref.
-    if (filterRef.current && typeof filterRef.current.clearAll === 'function') {
-      filterRef.current.clearAll();
-    }
-    
-    setActiveTab(newValue);
-  };
-
-  /**
-   * Callback function passed to child ApplicationCard components.
-   * Triggers a refresh of the "My Applications" view when a status is changed.
-   */
-  const handleStatusChange = () => {
-    updateApplicationsView(searchTerm, searchBy, appliedFilters);
-  };
-
-  /**
-   * Handles updates from the Filter component, triggering a data refresh.
-   * @param {object} filters - The new set of applied filters.
-   */
-  const handleFilterChange = (filters) => {
-    setAppliedFilters(filters);
-    updateApplicationsView(searchTerm, searchBy, filters);
-  };
-
-  /**
-   * Updates the search term state as the user types in the search bar.
-   * Clears the view if the search term is empty.
-   * @param {string} newTerm - The new value from the search input.
-   */
-  const handleSearchTermChange = (newTerm) => {
-    setSearchTerm(newTerm);
-    if (newTerm === '') {
-      updateApplicationsView('', searchBy, appliedFilters);
-    }
-  };
-
-  /**
-   * Handles changes to the search category dropdown (e.g., 'By Course', 'By Student').
-   * Resets the search term if the category is changed while a search term exists.
-   * @param {React.ChangeEvent<HTMLInputElement>} event - The change event from the Select component.
-   */
-  const handleSearchByChange = (event) => {
-    const newSearchBy = event.target.value;
-    setSearchBy(newSearchBy);
-    // If a search term exists, clear it to prevent mismatched searches.
-    if (searchTerm !== '') {
-      setSearchTerm('');
-      updateApplicationsView('', newSearchBy, appliedFilters);
-    }
-  };
-
-  /**
-   * Triggers a search and data refresh when the search form is submitted.
-   * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
-   */
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const latestFilters = filterRef.current.getFilters();
-    setAppliedFilters(latestFilters);
-    updateApplicationsView(searchTerm, searchBy, latestFilters);
-  };
 
   /**
    * Opens the hire confirmation modal and sets the selected application.
@@ -345,41 +192,126 @@ export default function AdminApplicationsPage() {
   };
 
   /**
-   * Renders the UI for the "My Applications" tab, including search, filters,
-   * and the accordion-style list of applications grouped by semester and position.
-   * @returns {React.ReactNode} The JSX for the applications tab.
+   * Fetches and displays all applications across the system with search/filter.
    */
-  const renderApplicationsTab = () => {
-    // Calculate the total number of applications currently displayed.
-    const totalApplications = Object.values(displayData)
-      .flat()
-      .reduce(
-        (acc, position) => acc + position.jobPositionApplicationHistory.length,
-        0
-      );
+  const updateAllApplicationsView = useCallback(
+    async (search, searchType, filters) => {
+      if (!currentUser?.username) return;
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await getAllApplicationsForAdmin(search, searchType, filters);
+        
+        // Process positions to convert grade enums
+        const positions = data.map((position) => {
+          const applicationsHistory = position.jobPositionApplicationHistory.map((app) => {
+            if (app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]) {
+              return {
+                ...app,
+                candidateGrade: gradeEnumToStringValue[app.candidateGrade],
+              };
+            }
+            return app;
+          });
+          return {
+            ...position,
+            jobPositionApplicationHistory: applicationsHistory,
+          };
+        });
+
+        // Group by semester
+        const groupedBySemester = positions.reduce((acc, position) => {
+          const semesterCode = position.semesterCode || 'Uncategorized';
+          if (!acc[semesterCode]) {
+            acc[semesterCode] = [];
+          }
+          acc[semesterCode].push(position);
+          return acc;
+        }, {});
+
+        setDisplayData(groupedBySemester);
+      } catch (err) {
+        console.error('Error updating all applications view:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentUser]
+  );
+
+  /**
+   * Handles tab switching between Hire Candidates and All Applications.
+   */
+  const handleTabChange = (event, newValue) => {
+    setSearchTerm('');
+    setSearchBy('course');
+    setAppliedFilters({
+      status: [],
+      level: [],
+      semester: '',
+      hasApplications: '',
+    });
+    if (filterRef.current && typeof filterRef.current.clearAll === 'function') {
+      filterRef.current.clearAll();
+    }
+    setActiveTab(newValue);
+  };
+
+  /**
+   * Handles search/filter changes for All Applications tab.
+   */
+  const handleFilterChange = (filters) => {
+    setAppliedFilters(filters);
+    updateAllApplicationsView(searchTerm, searchBy, filters);
+  };
+
+  const handleSearchTermChange = (newTerm) => {
+    setSearchTerm(newTerm);
+    if (newTerm === '') {
+      updateAllApplicationsView('', searchBy, appliedFilters);
+    }
+  };
+
+  const handleSearchByChange = (event) => {
+    const newSearchBy = event.target.value;
+    setSearchBy(newSearchBy);
+    if (searchTerm !== '') {
+      setSearchTerm('');
+      updateAllApplicationsView('', newSearchBy, appliedFilters);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const latestFilters = filterRef.current.getFilters();
+    setAppliedFilters(latestFilters);
+    updateAllApplicationsView(searchTerm, searchBy, latestFilters);
+  };
+
+  const handleStatusChange = () => {
+    updateAllApplicationsView(searchTerm, searchBy, appliedFilters);
+  };
+
+  /**
+   * Renders the All Applications tab with search and filters.
+   */
+  const renderAllApplicationsTab = () => {
+    const totalApplications = Object.values(displayData).reduce((total, positions) => {
+      return total + positions.reduce((acc, position) => acc + position.jobPositionApplicationHistory.length, 0);
+    }, 0);
 
     return (
       <Box sx={{ width: '100%' }}>
-        {/* Search and Filter Bar */}
+        {/* Search and Filter */}
         <Paper
           component="form"
           onSubmit={handleSearch}
-          elevation={2}
-          sx={{
-            p: 2,
-            mb: 4,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            backgroundColor: 'background.paper',
-          }}
+          sx={{ p: 2, mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}
         >
           <FormControl sx={{ minWidth: 150 }}>
-            <Select
-              value={searchBy}
-              onChange={handleSearchByChange}
-              size="small"
-            >
+            <Select value={searchBy} onChange={handleSearchByChange} size="small">
               <MenuItem value="course">By Course</MenuItem>
               <MenuItem value="student">By Student</MenuItem>
             </Select>
@@ -387,63 +319,44 @@ export default function AdminApplicationsPage() {
           <SearchBar
             value={searchTerm}
             onChange={handleSearchTermChange}
-            placeholder={
-              searchBy === 'course'
-                ? 'Search by course code or name...'
-                : 'Search by student name...'
-            }
+            placeholder={searchBy === 'course' ? 'Search by course code or name...' : 'Search by student name...'}
             sx={{ flexGrow: 1 }}
           />
-          <Filter
-            ref={filterRef}
-            onFilterChange={handleFilterChange}
-            filterConfig={filterConfig}
-          />
-          <Button type="submit" variant="contained" color="primary">
-            Search
-          </Button>
+          <Filter ref={filterRef} onFilterChange={handleFilterChange} filterConfig={filterConfig} />
+          <Button type="submit" variant="contained" color="primary">Search</Button>
         </Paper>
 
-        {/* Application Count */}
         {!loading && !error && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            <strong>
-              {totalApplications}{' '}
-              {totalApplications === 1 ? 'application' : 'applications'} found
-            </strong>
+            <strong>{totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found</strong>
           </Typography>
         )}
 
-        {/* Main Content: Loading, Error, No Results, or Data */}
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
           </Box>
         ) : error ? (
-          <Typography color="error" align="center" sx={{ p: 4 }}>
-            Error: {error}
-          </Typography>
+          <Typography color="error" align="center" sx={{ p: 4 }}>Error: {error}</Typography>
         ) : Object.keys(displayData).length === 0 ? (
-          <Paper sx={{ textAlign: 'center', p: 4, mt: 2 }}>
-            <Typography variant="h6">No Positions Found</Typography>
+          <Paper sx={{ textAlign: 'center', p: 4 }}>
+            <Typography variant="h6">No Applications Found</Typography>
             <Typography color="text.secondary" sx={{ mt: 1 }}>
-              Your search or filter criteria did not match any job positions.
+              Your search or filter criteria did not match any applications.
             </Typography>
           </Paper>
         ) : (
           Object.keys(displayData).map((semesterCode) => (
             <Accordion key={semesterCode} defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h5">{`Semester ${semesterCode}`}</Typography>
+                <Typography variant="h5">Semester {semesterCode}</Typography>
               </AccordionSummary>
-             <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
+              <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
                 {displayData[semesterCode].map((position) => (
                   <Accordion key={position.id} defaultExpanded>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="h6">
-                        {position.courseCode}-
-                        {String(position.sectionNumber).padStart(2, '0')}:{' '}
-                        {position.course?.name}
+                        {position.courseCode}-{String(position.sectionNumber).padStart(2, '0')}: {position.course?.name}
                       </Typography>
                     </AccordionSummary>
                     <AccordionDetails>
@@ -458,9 +371,7 @@ export default function AdminApplicationsPage() {
                           />
                         ))
                       ) : (
-                        <Typography sx={{ p: 2 }}>
-                          No matching applications for this position.
-                        </Typography>
+                        <Typography sx={{ p: 2 }}>No matching applications for this position.</Typography>
                       )}
                     </AccordionDetails>
                   </Accordion>
@@ -474,11 +385,10 @@ export default function AdminApplicationsPage() {
   };
 
   /**
-   * Renders the UI for the "Ready to Hire" tab, displaying a list
-   * of candidates who have accepted offers and can be hired.
-   * @returns {React.ReactNode} The JSX for the hiring tab.
+   * Renders the UI for candidates who have accepted offers and can be hired.
+   * @returns {React.ReactNode} The JSX for the hiring view.
    */
-  const renderHiringTab = () => {
+  const renderHiringView = () => {
     return (
       <Box sx={{ width: '100%' }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -526,33 +436,29 @@ export default function AdminApplicationsPage() {
 
   // Main component render method.
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <FeatureGate feature={FEATURES.APPLICATIONS}>
+    <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography variant="h1" component="h1" gutterBottom>
-          Applications
+          Manage Applications
         </Typography>
         <Typography variant="h3" color="text.secondary">
-          Search, filter, and review candidate applications.
+          Review all applications and hire candidates who have accepted job offers.
         </Typography>
       </Box>
 
       {/* Conditionally render content based on user role */}
       {currentUser && currentUser.role === 'ADMIN' ? (
-        <Box sx={{ width: '100%' }}>
+        <>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              aria-label="admin applications tabs"
-              centered
-            >
-              <Tab label="My Applications" />
-              <Tab label="Ready to Hire" />
+            <Tabs value={activeTab} onChange={handleTabChange} centered>
+              <Tab label="Hire Candidates" />
+              <Tab label="All Applications" />
             </Tabs>
           </Box>
-          {activeTab === 0 && renderApplicationsTab()}
-          {activeTab === 1 && renderHiringTab()}
-        </Box>
+
+          {activeTab === 0 ? renderHiringView() : renderAllApplicationsTab()}
+        </>
       ) : (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Typography>Please make sure you are logged in as an ADMIN.</Typography>
@@ -569,5 +475,6 @@ export default function AdminApplicationsPage() {
         />
       )}
     </Container>
+    </FeatureGate>
   );
 }

@@ -1,6 +1,8 @@
 // app/Profile/page.js
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import { useAuth } from "@/contexts/AuthContext";
 import UserProfileModal from "@/components/profile/UserProfileModal";
 import { getUserProfile, getAllCourses } from "@/services/db-apis";
@@ -177,6 +179,7 @@ export default function ProfilePage() {
 
   // Main component render method.
   return (
+    <FeatureGate feature={FEATURES.PROFILES}>
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {/* The main profile information card, visible to all roles. */}
@@ -222,5 +225,6 @@ export default function ProfilePage() {
         />
       )}
     </Container>
+    </FeatureGate>
   );
 }

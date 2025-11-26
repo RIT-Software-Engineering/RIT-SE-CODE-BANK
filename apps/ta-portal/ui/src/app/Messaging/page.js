@@ -2,6 +2,8 @@
 "use client";
 
 import MessagingClient from "@/components/messaging/MessagingClient";
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 
 /**
  * Renders the main messaging page.
@@ -10,6 +12,9 @@ import MessagingClient from "@/components/messaging/MessagingClient";
  * @returns {React.ReactNode} The MessagingClient component.
  */
 export default function MessagingPage() {
-  // This page simply renders the main client for the messaging interface.
-  return <MessagingClient />;
+  return (
+    <FeatureGate feature={FEATURES.MESSAGING}>
+      <MessagingClient />
+    </FeatureGate>
+  );
 }

@@ -2,11 +2,13 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Box, CircularProgress, Container } from "@mui/material";
+import { Box, CircularProgress, Container, Paper, Typography, useTheme } from "@mui/material";
 import LandingDashboard from "@/components/dashboard/LandingDashboard";
 import HeroBanner from "@/components/HeroBanner";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAllUsers } from "@/services/db-apis";
+import Link from "next/link";
+import { ArrowForward } from "@mui/icons-material";
 
 /**
  * Home Page Component
@@ -18,6 +20,7 @@ import { getAllUsers } from "@/services/db-apis";
  */
 export default function Home() {
   const { currentUser } = useAuth();
+  const theme = useTheme();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -91,8 +94,95 @@ export default function Home() {
       </Container>
 
       {/* Show dashboard - for both logged in and logged out users */}
-      {currentUser && (
+      {currentUser ? (
         <LandingDashboard user={currentUser} />
+      ) : (
+        <Container maxWidth="lg">
+          <Box
+            sx={{
+              mb: 10,
+              textAlign: "center",
+              pt: 4,
+              borderTop: "2px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h2"
+              sx={{
+                fontWeight: 600,
+                mb: 4,
+                color: theme.palette.primary.main,
+                fontSize: { xs: "1.4rem", sm: "1.7rem", md: "2rem" },
+              }}
+            >
+              Explore Positions
+            </Typography>
+
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <Paper
+                component={Link}
+                href="/login?redirect=positions"
+                elevation={0}
+                sx={{
+                  // Sizing and Layout
+                  width: "100%",
+                  maxWidth: "500px",
+                  minHeight: 140,
+                  p: { xs: 3, sm: 4 },
+                  borderRadius: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  textDecoration: "none",
+                  background: theme.palette.mode === 'dark'
+                    ? "linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%)"
+                    : "linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)",
+                  border: `2px solid ${theme.palette.primary.main}`,
+
+                  // Transitions & Hover Effects
+                  transition: (theme) => theme.transitions.create(
+                    ["transform", "box-shadow", "background-color"],
+                    { duration: "200ms", easing: "ease-in-out" }
+                  ),
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: `0 12px 24px ${theme.palette.action.focus}`,
+                    background: theme.palette.mode === 'dark'
+                      ? "linear-gradient(135deg, #3d3d3d 0%, #2f2f2f 100%)"
+                      : "linear-gradient(135deg, #fffbf0 0%, #fff5e0 100%)",
+                  },
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  fontWeight="600"
+                  color="primary"
+                  sx={{
+                    fontSize: { xs: "1.1rem", sm: "1.3rem" },
+                    mb: 1,
+                  }}
+                >
+                  Find Open Positions
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", color: "primary.main" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      mr: 1,
+                    }}
+                  >
+                    Login to explore opportunities
+                  </Typography>
+                  <ArrowForward sx={{ fontSize: "1.2rem" }} />
+                </Box>
+              </Paper>
+            </Box>
+          </Box>
+        </Container>
       )}
     </Box>
   );

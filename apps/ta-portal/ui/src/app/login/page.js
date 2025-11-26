@@ -29,13 +29,30 @@ export default function LoginPage() {
   const [profileDataForModal, setProfileDataForModal] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authView, setAuthView] = useState('login');
+  const [redirectPath, setRedirectPath] = useState(null);
+
+  // Capture redirect query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
+    if (redirect) {
+      setRedirectPath(redirect);
+    }
+  }, []);
 
   // Redirect if already logged in
   useEffect(() => {
     if (currentUser) {
-      router.push('/');
+      let targetPath = '/';
+      if (redirectPath === 'positions') {
+        const formattedRole = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1).toLowerCase();
+        targetPath = `/Positions/${formattedRole}/${currentUser.username}`;
+      } else if (redirectPath) {
+        targetPath = redirectPath;
+      }
+      router.push(targetPath);
     }
-  }, [currentUser, router]);
+  }, [currentUser, router, redirectPath]);
 
   // Fetch all users on component mount
   useEffect(() => {
@@ -59,7 +76,16 @@ export default function LoginPage() {
         localStorage.setItem('username', fullProfile.username);
         setCurrentUser(fullProfile);
         showNotification("Login successful!", "success");
-        router.push('/');
+        
+        // Redirect to the target path or home
+        let targetPath = '/';
+        if (redirectPath === 'positions') {
+          const formattedRole = fullProfile.role.charAt(0).toUpperCase() + fullProfile.role.slice(1).toLowerCase();
+          targetPath = `/Positions/${formattedRole}/${fullProfile.username}`;
+        } else if (redirectPath) {
+          targetPath = redirectPath;
+        }
+        router.push(targetPath);
       } catch (error) {
         console.error("Failed to fetch full user profile after login:", error);
       }
@@ -78,7 +104,16 @@ export default function LoginPage() {
     setIsProfileModalOpen(false);
     setProfileDataForModal(null);
     setAuthView('login');
-    router.push('/');
+    
+    // Redirect to the target path or home
+    let targetPath = '/';
+    if (redirectPath === 'positions') {
+      const formattedRole = newlyCreatedProfile.role.charAt(0).toUpperCase() + newlyCreatedProfile.role.slice(1).toLowerCase();
+      targetPath = `/Positions/${formattedRole}/${newlyCreatedProfile.username}`;
+    } else if (redirectPath) {
+      targetPath = redirectPath;
+    }
+    router.push(targetPath);
   };
 
   if (isLoading) {

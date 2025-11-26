@@ -196,6 +196,9 @@ export default function ApplicationCard({
                     {application.candidateEmail}
                   </MuiLink>
                 </Typography>
+                <Typography color="text.secondary" fontWeight="medium">
+                  Professor: {jobPosition.employer?.user?.fname} {jobPosition.employer?.user?.lname}
+                </Typography>
                 <Typography color="text.secondary">
                   UID: {application.candidateUID}
                 </Typography>

@@ -3,18 +3,22 @@
 
 import SelectionCard from "@/components/dashboard/SelectionCard";
 import { DASHBOARD_OPTIONS } from "@/configuration/dashboard.config";
+import { useFeatureFlags } from "@/configuration/featureFlags";
 import Link from "next/link";
 import { Box, Container, Grid, Paper, Typography, Button, useTheme } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 
 export default function LandingDashboard({ user }) {
   const theme = useTheme();
+  const { isFeatureEnabled } = useFeatureFlags();
   
-  // filter options based on user role
+  // filter options based on user role and feature flags
   const userRole = user?.role;
   const PersonalOptions = DASHBOARD_OPTIONS.filter(
     (option) =>
-      option.roles.includes(userRole) && option.category === "Personal"
+      option.roles.includes(userRole) && 
+      option.category === "Personal" &&
+      (!option.feature || isFeatureEnabled(option.feature))
   );
   const formattedUserRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase();
 
@@ -27,12 +31,55 @@ export default function LandingDashboard({ user }) {
       }}
     >
       <Container maxWidth="lg" sx={{ width: "100%", overflow: "hidden" }}>
-        {/* Explore Section - NOW FIRST */}
+        {/* Quick Actions Section - NOW FIRST */}
+        <Box sx={{ mb: 10, textAlign: "center", pt: 4, borderTop: `2px solid ${theme.palette.divider}` }}>
+          <Typography
+            variant="h4"
+            component="h2"
+            sx={{
+              fontWeight: 600,
+              mb: 4,
+              color: theme.palette.primary.main,
+              fontSize: { xs: "1.4rem", sm: "1.7rem", md: "2rem" },
+            }}
+          >
+            Quick Actions
+          </Typography>
+
+          <Grid
+            container
+            spacing={{ xs: 2, sm: 3, md: 4 }}
+            justifyContent="center"
+          >
+            {PersonalOptions.map((option, index) => {
+              const finalLink =
+                option.link.includes("[username]") && user
+                  ? option.link.replace("[username]", user.username)
+                  : option.link;
+
+              return (
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                  md={4}
+                  lg={2}
+                  key={index}
+                  sx={{ display: "flex", justifyContent: "center" }}
+                >
+                  <SelectionCard text={option.text} link={finalLink} />
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Box>
+
+        {/* Explore Section - NOW SECOND */}
         <Box
           sx={{
             mb: 10,
             textAlign: "center",
-            pt: 4,
+            pt: 8,
             borderTop: "2px solid",
             borderColor: "divider",
           }}
@@ -111,49 +158,6 @@ export default function LandingDashboard({ user }) {
               </Box>
             </Paper>
           </Box>
-        </Box>
-
-        {/* Quick Actions Section - NOW SECOND */}
-        <Box sx={{ mb: 10, textAlign: "center", pt: 8, borderTop: `2px solid ${theme.palette.divider}` }}>
-          <Typography
-            variant="h4"
-            component="h2"
-            sx={{
-              fontWeight: 600,
-              mb: 4,
-              color: theme.palette.primary.main,
-              fontSize: { xs: "1.4rem", sm: "1.7rem", md: "2rem" },
-            }}
-          >
-            Quick Actions
-          </Typography>
-
-          <Grid
-            container
-            spacing={{ xs: 2, sm: 3, md: 4 }}
-            justifyContent="center"
-          >
-            {PersonalOptions.map((option, index) => {
-              const finalLink =
-                option.link.includes("[username]") && user
-                  ? option.link.replace("[username]", user.username)
-                  : option.link;
-
-              return (
-                <Grid
-                  item
-                  xs={12}
-                  sm={6}
-                  md={4}
-                  lg={2}
-                  key={index}
-                  sx={{ display: "flex", justifyContent: "center" }}
-                >
-                  <SelectionCard text={option.text} link={finalLink} />
-                </Grid>
-              );
-            })}
-          </Grid>
         </Box>
 
         {/* OLD SECTIONS REMOVED - REPLACED ABOVE */}

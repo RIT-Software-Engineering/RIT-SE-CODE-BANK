@@ -13,7 +13,7 @@ export const ritColors = {
   gray_1: '#D0D3D4',
   gray_2: '#A2AAAD',
   gray_3: '#7C878E',
-  warm_gray_1: '#D7D2CB',
+  warm_gray_1: '#D0D3D4',
   warm_gray_2: '#ACA39A',
   dark_gray: '#222222',
   green: '#84BD00',
