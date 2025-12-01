@@ -15,6 +15,9 @@ const prisma = new PrismaClient();
 const makeTeamBuilderRouter = require("./routes/teamBuilder");
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 
+const authMiddleware = require("./authMiddleware");
+
+
 // ---- DEV USERS JSON (only in dev) ----
 let devUsers = [];
 if (process.env.NODE_ENV !== "production") {
@@ -36,6 +39,8 @@ app.use(
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(authMiddleware);
 
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
