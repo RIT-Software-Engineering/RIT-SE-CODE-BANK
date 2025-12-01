@@ -41,11 +41,11 @@ export const sampleJournalEntries = [
   },
     {
     id: 3,
-    date: new Date("2025-06-20T12:00:00Z"), // in UTC
+    date: new Date("2025-06-18T12:00:00Z"), // in UTC
     notes: "Vicki Leigh can see this entry",
     visibility_level: 1,
     privacy_level: "PUBLIC",
-    entry_type: "AUTOMATED",
+    entry_type: "MANUAL",
     recipient_ids: [],
     sender_id: "adminA",
     topic_id: "vcl123",
@@ -53,11 +53,11 @@ export const sampleJournalEntries = [
   },
   {
     id: 4,
-    date: new Date("2025-06-20T12:00:00Z"), // in UTC
+    date: new Date("2025-06-19T12:00:00Z"), // in UTC
     notes: "Vicki Leigh can't see this entry",
     visibility_level: 3,
     privacy_level: "PUBLIC",
-    entry_type: "AUTOMATED",
+    entry_type: "MANUAL",
     recipient_ids: [],
     sender_id: "adminA",
     topic_id: "vcl123",

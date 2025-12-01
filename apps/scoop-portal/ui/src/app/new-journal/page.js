@@ -63,6 +63,7 @@ export default function Journal() {
   const [newEntryRecipientIds, setNewEntryRecipientIds] = useState([]);
   const [newEntryTopicId, setNewEntryTopicId] = useState("");
   const [newEntryPreviousId, setNewEntryPreviousId] = useState(null);
+  const [newEntryVisibilityLevel, setNewEntryVisibilityLevel] = useState("");
   // For editing journal entry notes
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
@@ -195,6 +196,30 @@ export default function Journal() {
 
   };
 
+  const getVisibilityOptions = () => {
+    let options = {};
+    options["PERSONAL"] = "Private Note";
+    if (user == null || user.id == null){
+          return options;
+    }
+    if(user.type == "scooployee"){
+      options["1"] = "Scooployees and higher";
+    }
+    if(user.type == "scoopvisor"){
+      options["1"] = "Scooployees and higher";
+      options["2"] = "Advisors and higher";
+      options["3"] = "Scoopervisors and higher";
+    }
+    if(user.type == "scoopdinator"){
+      options["1"] = "Scooployees and higher";
+      options["2"] = "Advisors and higher";
+      options["3"] = "Scoopervisors and higher";
+      options["4"] = "Scoopdinators only";
+    }
+    return options;
+  }
+
+
   // Functions for editing journal entry notes
   /**
    * Handles the logic for setting up the journal entry to have their notes edited.
@@ -280,7 +305,16 @@ export default function Journal() {
   };
 
   const postNewEntry = async () => {
+    let privacy_level = "PUBLIC";
+    if(newEntryVisibilityLevel == "PERSONAL"){
+      privacy_level = "PERSONAL";
+    }
 
+    let visibility_level = 1;
+    if(newEntryVisibilityLevel != "PERSONAL"){
+      visibility_level = parseInt(newEntryVisibilityLevel);
+    }
+    
     const entry = {
       date: new Date().toISOString(), // Add this to match existing entries
       sender_id: user.id,
@@ -290,8 +324,8 @@ export default function Journal() {
       semester_GroupId: Number(newEntrySemester),
       previous_entryid: parseInt(newEntryPreviousId) || null,
       entry_type: "MANUAL",
-      visibility_level: 1,
-      privacy_level: "PUBLIC",
+      visibility_level: visibility_level,
+      privacy_level: privacy_level,
     };
 
     try {
@@ -542,6 +576,29 @@ export default function Journal() {
                 )}
               />
             </FormControl>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Autocomplete
+                options={Object.entries(getVisibilityOptions()).map(([value, label]) => ({
+                  label: label,
+                  value: value,
+                }))}
+                getOptionLabel={(option) => option.label}
+                onChange={(event, newValue) =>
+                  setNewEntryVisibilityLevel(newValue ? newValue.value : "")
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Visibility Level"
+                    variant="outlined"
+                    fullWidth
+                    required
+                  />
+                )}
+              />
+            </FormControl>
+
 
             <textarea
               placeholder="Write your notes here..."
