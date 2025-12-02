@@ -32,25 +32,46 @@ router.post("/", async (req, res) => {
   const {
     date,
     notes,
-    recipient_id,
+    recipient_ids,
     sender_id,
     topic_id,
     semester_GroupId,
+    previous_entryid,
+    entry_type,
+    visibility_level,
+    privacy_level,
   } = req.body;
   try {
     const newEntry = await prisma.journalEntry.create({
       data: {
         date: new Date(date),
         notes,
-        recipient_id,
+        recipients: { connect: recipient_ids.map(id => ({ id })) },
         sender_id,
         topic_id,
         semester_GroupId: semester_GroupId ? Number(semester_GroupId) : null,
+        previous_entryid: previous_entryid,
+        entry_type: entry_type,
+        visibility_level: visibility_level,
+        privacy_level: privacy_level,
       },
       include:{
         sender: true,
-        recipient: true,
+        recipients: true,
         topic: true,
+              next_entries: {
+                where:{
+                  OR:[
+                    { privacy_level: "PUBLIC" },
+                    { sender_id: sender_id }
+                  ],
+                },
+                include:{
+                  sender: true,
+                  recipients: true,
+                  topic: true,
+                },
+              },
       },
     });
     res
@@ -89,7 +110,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// HACK: Temporary Routes
 /**
  * GET journal entries for scoopdinator
  */
@@ -176,31 +196,81 @@ router.get("/:id", async (req, res) => {
       where: { id: id },
     });
 
+    let entries = [];
+
     if(user.type == "scooployee"){
       const scooployeeEntries = await prisma.journalEntry.findMany({
         where: {
           OR: [
             {sender_id: id},
-            {recipient_id: id},
-          ]
+            { recipients: {
+                    some: {
+                      id: id,
+                },},},
+            { topic_id: id },
+          ],
+          privacy_level: "PUBLIC",
+          visibility_level: {
+            lt: 2
+          },
         },
         include: {
           sender: true,
-          recipient: true,
+          recipients: true,
           topic: true,
+          next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+              visibility_level: {
+                lt: 2
+              },
+            },
+            include:{
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
         },
         })
-      res.status(200).json(scooployeeEntries);
+      //res.status(200).json(scooployeeEntries);
+      entries = entries.concat(scooployeeEntries);
     }
     else if(user.type == "scoopdinator"){
       const dinatorEntries = await prisma.journalEntry.findMany({
+        where:{
+          privacy_level: "PUBLIC",
+          visibility_level: {
+            lt: 5
+          },
+        },
         include: {
           sender: true,
-          recipient: true,
+          recipients: true,
           topic: true,
+          next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+              visibility_level: {
+                lt: 5
+              },
+            },
+            include: {
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
         },
       });
-      res.status(200).json(dinatorEntries); 
+      //res.status(200).json(dinatorEntries); 
+      entries = entries.concat(dinatorEntries);
     }
     else if(user.type == "scoopervisor"){
       const scoopervisorTeams = await prisma.teams.findMany({
@@ -227,18 +297,68 @@ router.get("/:id", async (req, res) => {
             where: {
               OR: memberArray.flatMap(memberId => [
                 { sender_id: memberId },
-                { recipient_id: memberId },
+                { recipients: {
+                    some: {
+                      id: memberId,
+                },},},
                 { topic_id: memberId },
                 ]),
+              privacy_level: "PUBLIC",
+              visibility_level: {
+                  lt: 3
+              },
               },
             include: {
               sender: true,
-              recipient: true,
+              recipients: true,
               topic: true,
+              next_entries: {
+                where:{
+                  OR:[
+                    { privacy_level: "PUBLIC" },
+                    { sender_id: id }
+                  ],
+                  visibility_level: {
+                    lt: 3
+                  },
+                },
+                include:{
+                  sender: true,
+                  recipients: true,
+                  topic: true,
+                },
+              },
             },
         });
-        res.status(200).json(visorEntries);       
+        //res.status(200).json(visorEntries); 
+        entries = entries.concat(visorEntries);      
       }
+      const privateEntries = await prisma.journalEntry.findMany({
+        where:{
+          privacy_level: "PERSONAL",
+          sender_id: id,
+        },
+        include: {
+          sender: true,
+          recipients: true,
+          topic: true,
+          next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+            },
+            include: {
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
+        },
+      });
+      entries = entries.concat(privateEntries);
+      res.status(200).json(entries);
   } catch (error) {
     console.error("Error fetching the users journal entries: ", error);
     res.status(500).json({

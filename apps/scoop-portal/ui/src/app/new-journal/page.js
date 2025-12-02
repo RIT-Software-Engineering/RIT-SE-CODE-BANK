@@ -10,11 +10,13 @@ import {
   Box,
   Button,
   Card,
+  Chip,
   Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   FormControl,
   InputLabel,
   MenuItem,
@@ -54,13 +56,20 @@ export default function Journal() {
   const [filterSenderValue, setFilterSenderValue] = useState("");
   const [filterRecipientValue, setFilterRecipientValue] = useState("");
   const [filterTopicValue, setFilterTopicValue] = useState("");
+  const [filterEntryTypeValue, setFilterEntryTypeValue] = useState("");
+  const [filterTimeValue, setFilterTimeValue] = useState("");
   // For creating new journal entries
   const [newEntrySemester, setNewEntrySemester] = useState("");
-  const [newEntryContacteeId, setNewEntryContacteeId] = useState("");
+  const [newEntryRecipientIds, setNewEntryRecipientIds] = useState([]);
   const [newEntryTopicId, setNewEntryTopicId] = useState("");
+  const [newEntryPreviousId, setNewEntryPreviousId] = useState(null);
+  const [newEntryVisibilityLevel, setNewEntryVisibilityLevel] = useState("");
+  const [newEntryIsComment, setNewEntryIsComment] = useState(false);
   // For editing journal entry notes
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
+  // For determining which entry's comments are displayed
+  const [replyEntry, setReplyEntry] = useState(null);
 
   const { user } = useUser();
   
@@ -84,7 +93,8 @@ export default function Journal() {
 
         // Ensure entries is an array before setting it
         setJournalEntries(Array.isArray(entries) ? entries : []);
-        setFilteredJournalEntries(Array.isArray(entries) ? entries : []);
+        //setFilteredJournalEntries(Array.isArray(entries) ? entries : []);
+        handleApplyFilter(Array.isArray(entries) ? entries : []);
 
         const contacteeMap = {};
         loadedUsers.forEach((loadedUser) => {
@@ -138,6 +148,12 @@ export default function Journal() {
   const handleFilterTopicChange = (event) => {
     setFilterTopicValue(event.target.value || "");
   };
+  const handleFilterEntryTypeChange = (event) => {
+    setFilterEntryTypeValue(event.target.value || "");
+  };
+  const handleFilterTimeChange = (event) => {
+    setFilterTimeValue(event.target.value || "");
+  }
 
   /**
    * Handles the logic for applying the filter to the journal entries.
@@ -148,28 +164,69 @@ export default function Journal() {
    * @async
    * @returns {void}
    */
-  const handleApplyFilter = async () => {
-    if(filterSemesterValue != "" || filterRecipientValue != "" || filterSenderValue != "" || filterTopicValue != ""){
-      let baseArray = Array.from(journalEntries)
-      if (filterSemesterValue) {
-        baseArray = baseArray.filter((entry) => entry.semester_GroupId == filterSemesterValue);
-      }  
-      if(filterRecipientValue){
-        baseArray = baseArray.filter((entry) => entry.recipient_id == filterRecipientValue);
-      }
-      if(filterSenderValue){
-        baseArray = baseArray.filter((entry) => entry.sender_id == filterSenderValue);
-      }
-      if(filterTopicValue){
-        baseArray = baseArray.filter((entry) => entry.topic_id == filterTopicValue);
-      }
-      setFilteredJournalEntries(baseArray)
-    }
-    else{
-      setFilteredJournalEntries(Array.from(journalEntries));
+  const handleApplyFilter = async (baseArray=null) => {
+    if(baseArray == null){
+        baseArray = Array.from(journalEntries);
     }
 
+    if(filterTopicValue && filterTopicValue != ""){
+        baseArray = baseArray.filter((entry) => entry.topic_id == filterTopicValue);
+    }
+    //else{
+    //  setFilteredJournalEntries([]);
+    //  return;
+    //}
+
+    if (filterSemesterValue && filterSemesterValue != "") {
+      baseArray = baseArray.filter((entry) => entry.semester_GroupId == filterSemesterValue);
+    } 
+
+    if(filterRecipientValue && filterRecipientValue != ""){
+      baseArray = baseArray.filter(entry => entry.recipients.some(recipient => recipient.id === filterRecipientValue));
+    }
+
+    if(filterSenderValue && filterSenderValue != ""){
+      baseArray = baseArray.filter((entry) => entry.sender_id == filterSenderValue);
+    }
+
+    if(filterEntryTypeValue && filterEntryTypeValue != ""){
+      baseArray = baseArray.filter((entry) => entry.entry_type == filterEntryTypeValue);
+    }
+
+    if(filterTimeValue && filterTimeValue != ""){
+      if(filterTimeValue == "newest_first"){
+          baseArray.sort((a,b) => new Date(b.date) - new Date(a.date));
+        }
+      if(filterTimeValue == "oldest_first"){
+        baseArray.sort((a,b) => new Date(a.date) - new Date(b.date));
+      }  
+    }
+    setFilteredJournalEntries(baseArray)
   };
+
+  const getVisibilityOptions = () => {
+    let options = {};
+    options["PERSONAL"] = "Private Note";
+    if (user == null || user.id == null){
+          return options;
+    }
+    if(user.type == "scooployee"){
+      options["1"] = "Scooployees and higher";
+    }
+    if(user.type == "scoopvisor"){
+      options["1"] = "Scooployees and higher";
+      options["2"] = "Advisors and higher";
+      options["3"] = "Scoopervisors and higher";
+    }
+    if(user.type == "scoopdinator"){
+      options["1"] = "Scooployees and higher";
+      options["2"] = "Advisors and higher";
+      options["3"] = "Scoopervisors and higher";
+      options["4"] = "Scoopdinators only";
+    }
+    return options;
+  }
+
 
   // Functions for editing journal entry notes
   /**
@@ -256,14 +313,27 @@ export default function Journal() {
   };
 
   const postNewEntry = async () => {
+    let privacy_level = "PUBLIC";
+    if(newEntryVisibilityLevel == "PERSONAL"){
+      privacy_level = "PERSONAL";
+    }
 
+    let visibility_level = 1;
+    if(newEntryVisibilityLevel != "PERSONAL"){
+      visibility_level = parseInt(newEntryVisibilityLevel);
+    }
+    
     const entry = {
       date: new Date().toISOString(), // Add this to match existing entries
       sender_id: user.id,
       notes: editValue,
-      recipient_id: newEntryContacteeId,
+      recipient_ids: newEntryRecipientIds,
       topic_id: newEntryTopicId,
       semester_GroupId: Number(newEntrySemester),
+      previous_entryid: parseInt(newEntryPreviousId) || null,
+      entry_type: "MANUAL",
+      visibility_level: visibility_level,
+      privacy_level: privacy_level,
     };
 
     try {
@@ -281,9 +351,23 @@ export default function Journal() {
 
       const data = await res.json();
       if (data.entry) {
-        setJournalEntries((prev) => [...prev, data.entry]);
-        setFilteredJournalEntries((prev) => [...prev, data.entry]);
-        handleApplyFilter();
+        let updatedEntries = Array.from(journalEntries);
+        if(newEntryIsComment == false){
+            updatedEntries = [...updatedEntries, data.entry];
+        }
+        else if(newEntryIsComment == true){
+          updatedEntries = updatedEntries.map((check_entry) => {
+            if (check_entry.id == parseInt(newEntryPreviousId)) {
+              return {
+                ...check_entry,
+                next_entries: [...check_entry.next_entries, data.entry],
+              };
+            }
+            return check_entry;    
+          });
+        }
+        setJournalEntries(updatedEntries);
+        handleApplyFilter(updatedEntries);
       } else {
         console.warn("No entry returned from API, or unexpected structure.");
         throw new Error("API did not return the expected entry object.");
@@ -292,47 +376,38 @@ export default function Journal() {
       setNewEntryOpen(false);
       setEditValue("");
       setNewEntrySemester("");
-      setNewEntryContacteeId("");
+      setNewEntryRecipientIds([]);
       setNewEntryTopicId("");
+      setNewEntryPreviousId(null);
+      setNewEntryVisibilityLevel("");
+      setNewEntryIsComment(false);
       return { message: "Journal entry created!" };
     } catch (error) {
       console.error("Failed to create a new journal entry: ", error);
       throw error;
     }
   };
+  const handleCancelNewEntry = () => {
+      setNewEntryOpen(false);
+      setEditValue("");
+      setNewEntrySemester("");
+      setNewEntryRecipientIds([]);
+      setNewEntryTopicId("");
+      setNewEntryPreviousId(null);
+      setNewEntryVisibilityLevel("");
+      setNewEntryIsComment(false); 
+  }
 
-  /**
-   * A stubbed function for creating a new journal entry.
-   * Currently, an alert is produced.
-   * @returns {void}
-   */
-  const handleCreateNewEntry = () => {
-    if (!newEntrySemester || !newEntryContacteeId || !newEntryTopicId) {
-      toast.error("Please fill out all fields.");
-      return;
+  function EntriesList({entries, commentView = false} ){
+    if(entries == null || entries.length === 0){
+      return(
+        <Typography variant="body1">
+          No journal entries found. Please check back later.
+        </Typography>
+      );
     }
-
-    toast.promise(postNewEntry(), {
-      loading: "Creating new journal entry...",
-      success: "Journal entry created!",
-      error: "Failed to create a new journal entry.",
-    });
-  };
-
-  return (
-    <>
-      <Header />
-      <Container maxWidth="lg" sx={{ py: 4, "& > *:last-child": { mb: "0" } }}>
-        <JournalHeader
-          setFilterDialogOpen={setFilterDialogOpen}
-          setNewEntryOpen={setNewEntryOpen}
-        />
-        {filteredJournalEntries.length === 0 ? (
-          <Typography variant="body1">
-            No journal entries found. Please check back later.
-          </Typography>
-        ) : (
-          filteredJournalEntries.map((entry) => (
+    return(
+        <>{entries.map((entry) => (
             <Card
               key={entry.id}
               square
@@ -355,6 +430,7 @@ export default function Journal() {
                       })
                     : ""}
                 </Typography>
+                {entry.sender_id === user.id && (
                 <Button
                   startIcon={<EditNoteIcon />}
                   variant="solid-orange"
@@ -362,9 +438,10 @@ export default function Journal() {
                 >
                   Edit Notes
                 </Button>
+                )}
               </Box>
               <Typography variant="h3">
-                To: {entry.recipient.fname} {entry.recipient.lname}
+                To: {entry.recipients.map(rec => rec.fname + " " + rec.lname).join(", ")}
               </Typography>
               <Typography variant="h3">
                 From: {entry.sender.fname} {entry.sender.lname}
@@ -374,6 +451,15 @@ export default function Journal() {
               </Typography>
               <Typography>
                 Semester: {semesterGroups[entry.semester_GroupId] || "Unknown"}
+              </Typography>
+              <Typography>
+                visibility_level: {entry.visibility_level}
+              </Typography>
+              <Typography>
+                privacy_level: {entry.privacy_level}
+              </Typography>
+              <Typography>
+                entry_type: {entry.entry_type}
               </Typography>
               <Typography variant="body1">Notes:</Typography>
               <Box
@@ -394,14 +480,69 @@ export default function Journal() {
                   {entry.notes}
                 </pre>
               </Box>
+              <Divider sx={{ my: 2 }} />
+              {commentView == true &&(
+              <Typography>
+              <Button
+                  variant="solid-orange"
+                  onClick={() => setReplyEntry(entry)}
+                >
+                  {entry.next_entries.length || 0} Comment(s)
+                </Button>
+                <Button
+                  variant="solid-orange"
+                  onClick={() => { 
+                    setNewEntryPreviousId(entry.id); 
+                    setNewEntryIsComment(true); 
+                    setNewEntryTopicId(entry.topic_id);
+                    for (const recipient of entry.recipients){
+                        setNewEntryRecipientIds(prev => [...prev, recipient.id]); 
+                    }
+                    setNewEntrySemester(entry.semester_GroupId);
+                    setNewEntryOpen(true); }}
+                >
+                  Comment
+                </Button>
+                </Typography>
+            )} 
             </Card>
-          ))
-        )}
+          ))}
+    </>);
+  }
+
+
+  /**
+   * A stubbed function for creating a new journal entry.
+   * Currently, an alert is produced.
+   * @returns {void}
+   */
+  const handleCreateNewEntry = () => {
+    if (!newEntrySemester || !newEntryRecipientIds || !newEntryTopicId || !newEntryVisibilityLevel) {
+      toast.error("Please fill out all fields.");
+      return;
+    }
+
+    toast.promise(postNewEntry(), {
+      loading: "Creating new journal entry...",
+      success: "Journal entry created!",
+      error: "Failed to create a new journal entry.",
+    });
+  };
+
+  return (
+    <>
+      <Header />
+      <Container maxWidth="lg" sx={{ py: 4, "& > *:last-child": { mb: "0" } }}>
+        <JournalHeader
+          setFilterDialogOpen={setFilterDialogOpen}
+          setNewEntryOpen={setNewEntryOpen}
+        />
+      <EntriesList entries={filteredJournalEntries.filter(entry => entry.previous_entryid == null)} commentView={true}></EntriesList>
       </Container>
       {/* Add Entry */}
       <Dialog
         open={newEntryOpen}
-        onClose={() => setNewEntryOpen(false)}
+        onClose={() => handleCancelNewEntry()}
         maxWidth="sm"
         fullWidth
       >
@@ -411,6 +552,7 @@ export default function Journal() {
           <Box>
             {/* TODO: Add option and functionality for picking the date and time for the journal entries. */}
             <FormControl fullWidth>
+              {!newEntryIsComment && (
               <Autocomplete
                 options={Object.entries(semesterGroups).map(([id, name]) => ({
                   label: name,
@@ -431,17 +573,19 @@ export default function Journal() {
                 )}
                 sx={{ my: 2 }}
               />
+              )}
             </FormControl>
-
+            {!newEntryIsComment && (
             <FormControl fullWidth sx={{ mb: 2 }}>
               <Autocomplete
+                multiple
                 options={Object.entries(users).map(([id, name]) => ({
                   label: name,
                   value: id,
                 }))}
                 getOptionLabel={(option) => option.label}
-                onChange={(event, newValue) =>
-                  setNewEntryContacteeId(newValue ? newValue.value : "")
+                onChange={(event, selected) =>
+                  setNewEntryRecipientIds(selected.map(selectedName => selectedName.value))
                 }
                 renderInput={(params) => (
                   <TextField
@@ -454,7 +598,8 @@ export default function Journal() {
                 )}
               />
             </FormControl>
-
+            )}
+            {!newEntryIsComment && (
             <FormControl fullWidth sx={{ mb: 2 }}>
               <Autocomplete
                 options={Object.entries(users).map(([id, name]) => ({
@@ -476,6 +621,32 @@ export default function Journal() {
                 )}
               />
             </FormControl>
+            )}
+            
+            
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <Autocomplete
+                options={Object.entries(getVisibilityOptions()).map(([value, label]) => ({
+                  label: label,
+                  value: value,
+                }))}
+                getOptionLabel={(option) => option.label}
+                onChange={(event, newValue) =>
+                  setNewEntryVisibilityLevel(newValue ? newValue.value : "")
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Visibility Level"
+                    variant="outlined"
+                    fullWidth
+                    required
+                  />
+                )}
+              />
+            </FormControl>
+            
+
 
             <textarea
               placeholder="Write your notes here..."
@@ -495,7 +666,7 @@ export default function Journal() {
         <DialogActions>
           <Button
             variant="outline-orange"
-            onClick={() => setNewEntryOpen(false)}
+            onClick={() => handleCancelNewEntry()}
           >
             Cancel
           </Button>
@@ -510,7 +681,7 @@ export default function Journal() {
         open={filterDialogOpen}
         title="Filter Journal Entries"
         onCancel={() => setFilterDialogOpen(false)}
-        onSubmit={handleApplyFilter}
+        onSubmit={() => handleApplyFilter()}
         actionLabel="Apply Filter"
       >
         <Typography>Filter by semester</Typography>
@@ -580,6 +751,39 @@ export default function Journal() {
             ))}
           </Select>
         </FormControl>
+
+        <Typography>Filter by entry type</Typography>
+        <FormControl>
+          <Select
+            value={filterEntryTypeValue}
+            onChange={handleFilterEntryTypeChange}
+          >
+            <MenuItem key="none" value="">
+              <em>None</em>
+            </MenuItem>
+            <MenuItem key="AUTOMATED" value="AUTOMATED">
+              AUTOMATED
+            </MenuItem>
+            <MenuItem key="MANUAL" value="MANUAL">
+              MANUAL
+            </MenuItem>
+          </Select>
+        </FormControl>
+
+        <Typography>Filter by time</Typography>
+        <FormControl>
+          <Select
+            value={filterTimeValue}
+            onChange={handleFilterTimeChange}
+          >
+            <MenuItem key="newest" value="newest_first">
+              Newest First
+            </MenuItem>
+            <MenuItem key="oldest" value="oldest_first">
+              Oldest First
+            </MenuItem>
+          </Select>
+        </FormControl>
       </FilterDialog>
 
       {/* For Note Editing */}
@@ -602,7 +806,7 @@ export default function Journal() {
               })}
               <br />
               with{" "}
-              {`${editingEntry.recipient.fname} ${editingEntry.recipient.lname}`}
+              {editingEntry.recipients.map(rec => rec.fname + " " + rec.lname).join(", ")}
             </DialogTitle>
             <DialogContent>
               <Box>
@@ -635,6 +839,18 @@ export default function Journal() {
               </Button>
             </DialogActions>
           </>
+        )}
+      </Dialog>
+      <Dialog
+        open={replyEntry != null}
+        onClose={() => setReplyEntry(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        {replyEntry && (
+        <DialogContent>
+          <EntriesList entries={replyEntry.next_entries}></EntriesList>
+        </DialogContent>
         )}
       </Dialog>
 
