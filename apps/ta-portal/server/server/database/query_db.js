@@ -1113,6 +1113,11 @@ async function getCandidateApplicationsAsAdmin(){
 async function getAllApplicationsForAdmin(search = '', searchType = 'course', filters = {}) {
   const whereClause = {};
   
+  // Validate and sanitize search input to prevent performance issues
+  if (search && search.length > 100) {
+    throw new Error('Search query too long (max 100 characters)');
+  }
+  
   // Handle search by course code or name
   if (search && searchType === 'course') {
     whereClause.OR = [

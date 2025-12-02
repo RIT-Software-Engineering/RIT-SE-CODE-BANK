@@ -5,7 +5,7 @@ import SelectionCard from "@/components/dashboard/SelectionCard";
 import { DASHBOARD_OPTIONS } from "@/configuration/dashboard.config";
 import { useFeatureFlags } from "@/configuration/featureFlags";
 import Link from "next/link";
-import { Box, Container, Grid, Paper, Typography, Button, useTheme } from "@mui/material";
+import { Box, Container, Grid, Paper, Typography, useTheme } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 
 export default function LandingDashboard({ user }) {

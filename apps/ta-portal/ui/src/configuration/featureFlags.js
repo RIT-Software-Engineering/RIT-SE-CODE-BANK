@@ -48,6 +48,9 @@ export async function fetchFeatureFlags() {
   }
 
   try {
+    if (!process.env.NEXT_PUBLIC_BACKEND_URL || !process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION) {
+      throw new Error('Required environment variables are not defined');
+    }
     const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
     const dbExtension = process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
     const response = await fetch(`${baseUrl}${dbExtension}/feature-flags`);

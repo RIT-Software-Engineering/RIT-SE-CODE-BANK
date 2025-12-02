@@ -637,6 +637,12 @@ router.get("/applications/admin/all", async (req, res) => {
   try {
     const { search = '', searchType = 'course', status, level, semester, hasApplications } = req.query;
 
+    // Validate searchType
+    const validSearchTypes = ['course', 'student'];
+    if (searchType && !validSearchTypes.includes(searchType)) {
+      return res.status(400).json({ error: 'Invalid searchType. Must be "course" or "student".' });
+    }
+
     // Parse comma-separated filters
     const statusArray = status ? status.split(',').map(s => s.trim()) : [];
     const levelArray = level ? level.split(',').map(l => l.trim()) : [];

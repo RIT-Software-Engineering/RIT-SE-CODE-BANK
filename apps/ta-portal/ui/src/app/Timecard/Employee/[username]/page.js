@@ -140,7 +140,7 @@ export default function EmployeeTimecard() {
         } else {
             setLoading(false);
         }
-    }, [currentUser, loadAllTimecards]);
+    }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
     /**
      * Fetches all timecards for a given job and populates the component's state.

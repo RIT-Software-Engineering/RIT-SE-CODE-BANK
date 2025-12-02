@@ -162,7 +162,7 @@ export default function Header() {
   const { currentUser, logout } = useAuth();
   const router = useRouter();
   const { toggleTheme, mode } = useContext(ThemeContext);
-  const { isFeatureEnabled, loading: featureFlagsLoading } = useFeatureFlags();
+  const { isFeatureEnabled } = useFeatureFlags();
   const userRole = currentUser ? currentUser.role : null;
   const theme = useTheme();
   const isMobile = useMediaQuery("(max-width:1380px)");

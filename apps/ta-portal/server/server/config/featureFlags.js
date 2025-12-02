@@ -18,7 +18,11 @@
 "use strict";
 
 const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+
+// Create a singleton Prisma client to prevent connection pool exhaustion
+const globalForPrisma = global;
+const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 /**
  * Feature flag names enum for consistency

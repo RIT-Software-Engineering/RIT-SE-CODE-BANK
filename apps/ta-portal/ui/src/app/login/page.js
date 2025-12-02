@@ -82,7 +82,7 @@ export default function LoginPage() {
         if (redirectPath === 'positions') {
           const formattedRole = fullProfile.role.charAt(0).toUpperCase() + fullProfile.role.slice(1).toLowerCase();
           targetPath = `/Positions/${formattedRole}/${fullProfile.username}`;
-        } else if (redirectPath) {
+        } else if (redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')) {
           targetPath = redirectPath;
         }
         router.push(targetPath);
@@ -110,7 +110,7 @@ export default function LoginPage() {
     if (redirectPath === 'positions') {
       const formattedRole = newlyCreatedProfile.role.charAt(0).toUpperCase() + newlyCreatedProfile.role.slice(1).toLowerCase();
       targetPath = `/Positions/${formattedRole}/${newlyCreatedProfile.username}`;
-    } else if (redirectPath) {
+    } else if (redirectPath && redirectPath.startsWith('/') && !redirectPath.startsWith('//')) {
       targetPath = redirectPath;
     }
     router.push(targetPath);
