@@ -29,6 +29,7 @@ const fs = require('fs');
 const path = require('path');
 // Import CORS middleware to enable cross-origin requests from the frontend.
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 // Import custom modules from the application's codebase.
 const apiRoutes = require('./server/routing/index'); // The main API router.
@@ -43,9 +44,38 @@ const port = process.env.PORT;
 // =============================================================================
 
 // Enable Cross-Origin Resource Sharing for all routes, allowing the frontend to communicate with this backend.
-app.use(cors());
+// Be explicit to ensure PUT preflight (OPTIONS) succeeds with the right headers and methods.
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  'http://localhost:3000',
+  'https://localhost:3000',
+];
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl) or allowed origins
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // allow cookies / auth headers
+  optionsSuccessStatus: 204,
+}));
+// Cookie parser BEFORE routes so we can read cookies in handlers
+app.use(cookieParser());
 // Enable the Express JSON middleware to parse incoming request bodies with JSON payloads.
-app.use(express.json());
+// Add a JSON parse error handler so malformed JSON returns 400 instead of a crash.
+const jsonParser = express.json();
+app.use((req, res, next) => {
+  // Use the json parser but catch parse errors and return 400
+  jsonParser(req, res, (err) => {
+    if (err) {
+      console.error('Invalid JSON payload:', err.message);
+      return res.status(400).json({ error: 'Invalid JSON payload.' });
+    }
+    next();
+  });
+});
 // Serve static files (like resumes) from the 'resources' directory under the '/resources' URL path.
 app.use('/resources', express.static(path.resolve(__dirname, 'resources')));
 
@@ -61,10 +91,7 @@ app.use('/resources', express.static(path.resolve(__dirname, 'resources')));
 // ... all your imports and setup stay the same ...
 
 async function initializeApp() {
-  const httpsOptions = {
-    key: fs.readFileSync("./localhost+2-key.pem"),
-    cert: fs.readFileSync("./localhost+2.pem"),
-  };
+
 
   if (!port) {
     console.error(
@@ -79,6 +106,7 @@ async function initializeApp() {
   });
   
   // Mount main API router
+
   app.use("/api", apiRoutes);
 
   // Catch-all 404 handler
@@ -92,13 +120,23 @@ async function initializeApp() {
   const errorHandler = require("./server/middleware/errorHandler.js");
   app.use(errorHandler);
 
-  // Start the server
-  https.createServer(httpsOptions, app).listen(port, () => {
-    console.log(`Server listening on ${process.env.BACKEND_URL}`);
-    console.log(
-      `Current Environment: ${process.env.NODE_ENV || "development"}`
-    );
-  });
+  // Start the server. In local dev we prefer HTTPS when certs are available,
+  // but don't crash if the PEM files are missing — fall back to HTTP to make
+  // local development easier (avoids requiring users to create certs).
+  try {
+    const key = fs.readFileSync(path.resolve(__dirname, './localhost+2-key.pem'));
+    const cert = fs.readFileSync(path.resolve(__dirname, './localhost+2.pem'));
+    https.createServer({ key, cert }, app).listen(port, () => {
+      console.log(`HTTPS server listening on ${process.env.BACKEND_URL || `https://localhost:${port}`}`);
+      console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (err) {
+    console.warn('HTTPS certs not available or unreadable, falling back to HTTP for development:', err && err.message);
+    app.listen(port, () => {
+      console.log(`HTTP server listening on http://localhost:${port}`);
+      console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  }
 }
 
 

@@ -177,9 +177,9 @@ export default function Header() {
     (!link.feature || isFeatureEnabled(link.feature))
   );
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
   };
 
   const handleDrawerToggle = () => {
@@ -570,6 +570,23 @@ export default function Header() {
                 })}
               </Box>
             )}
+
+            {/* Theme Toggle Button - Desktop */}
+            <Tooltip
+              title={
+                mode === "dark"
+                  ? "Switch to light mode"
+                  : "Switch to dark mode"
+              }
+            >
+              <IconButton
+                sx={{ ml: 1 }}
+                onClick={toggleTheme}
+                color="inherit"
+              >
+                {mode === "dark" ? <Brightness7 /> : <Brightness4 />}
+              </IconButton>
+            </Tooltip>
 
             {/* Search Bar - Desktop */}
             {!isMobile && searchOpen && (

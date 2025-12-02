@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,104 +7,88 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//////////////////////////////////////////////////
-/// MODEL TABLES
-//////////////////////////////////////////////////
-
 model User {
-  //Fields
-  username String @id @db.VarChar(7) // RIT user id that's normally at the front of your email address (i.e. xyz1234)
-  uid      Int    @unique            // 9 digit numeric id
-  fname    String @db.Text           // first name
-  lname    String @db.Text           // last name
-  password String @db.Text
-  email    String @unique @db.VarChar(255)
-  pronouns String @db.Text
-  role     Role   @default(GUEST)    // we have the role types be GUEST, CANDIDATE, EMPLOYEE, EMPLOYER, & ADMIN
-
-  //Relationships
+  username  String     @id @db.VarChar(7)
+  uid       Int        @unique
+  fname     String     @db.Text
+  lname     String     @db.Text
+  password  String     @db.Text
+  email     String     @unique @db.VarChar(255)
+  pronouns  String     @db.Text
+  role      Role       @default(GUEST)
   candidate Candidate?
   employer  Employer?
+  
 }
 
 model Candidate {
-  //Fields
-  username           String         @id
-  year               Int            @db.Int
-  major              String         @db.Text
-  graduateStatus     GraduateStatus @default(UNDERGRADUATE)
-  wasPriorEmployee   Boolean
-
-  //Relationships
+  username                      String                          @id
+  year                          Int
+  major                         String                          @db.Text
+  graduateStatus                GraduateStatus                  @default(UNDERGRADUATE)
+  wasPriorEmployee              Boolean
   user                          User                            @relation(fields: [username], references: [username])
-  resumes                       Resume[]
   courseHistory                 CourseHistory[]
   employee                      Employee[]
   jobPositionApplicationHistory JobPositionApplicationHistory[]
+  resumes                       Resume[]
 }
 
 model Comment {
-  //Fields
   id               Int      @id @default(autoincrement())
-  author           String            //this is the full name of the user who wrote the comment
+  author           String
   foreignTableName String   @db.Text
-  foreignKey       String   @db.Text //this is the id of a specific entry within one of the foreign tables
+  foreignKey       String   @db.Text
   status           String   @db.Text
   comment          String   @db.Text
   timestamp        DateTime
 }
 
 model Resume {
-  //Fields
-  id          Int     @id @default(autoincrement())
-  name        String  @db.Text
-  username    String //Foreign key for the user table (specificallly users who are in the candidate table)
-  isPrimary   Boolean
-  resumeURL   String
-
-  //Relationships
-  candidate                     Candidate                       @relation(fields: [username], references: [username])
+  id                            Int                             @id @default(autoincrement())
+  name                          String                          @db.Text
+  username                      String
+  isPrimary                     Boolean
+  resumeURL                     String
   jobPositionApplicationHistory JobPositionApplicationHistory[]
+  candidate                     Candidate                       @relation(fields: [username], references: [username])
+
+  @@index([username], map: "Resume_username_fkey")
 }
 
 model Employer {
-  //Fields
-  username    String @id //Foreign key for the user table
-  department  String @db.Text
-
-  //Relationships
+  username    String        @id
+  department  String        @db.Text
   user        User          @relation(fields: [username], references: [username])
   jobPositions JobPosition[]
 }
 
 model Employee {
-  //Fields
-  id             Int          @id //employee id that RIT gives to you when you start working under a new position (like a Course Assistant)
-  username       String       //Foreign key for the user table (specificallly users who are in the candidate table)
-  employeeStatus EmployeeStatus @default(ACTIVE)
-
-  //Relationships
+  id                 Int                  @id
+  username           String
+  employeeStatus     EmployeeStatus       @default(ACTIVE)
   candidate          Candidate            @relation(fields: [username], references: [username])
   jobPositionHistory JobPositionHistory[]
+
+  @@index([username], map: "Employee_username_fkey")
 }
 
 model JobPositionHistory {
-  //Fields
   id                       Int                      @id @default(autoincrement())
   jobPositionId            String
   employeeId               Int
   jobPositionHistoryStatus JobPositionHistoryStatus @default(ACTIVE)
+  employee                 Employee                 @relation(fields: [employeeId], references: [id])
+  jobPosition              JobPosition              @relation(fields: [jobPositionId], references: [id])
+  timecardWeeklyHistory    TimecardWeeklyHistory[]
 
-  // Relations
-  jobPosition           JobPosition      @relation(fields: [jobPositionId], references: [id])
-  employee              Employee?        @relation(fields: [employeeId], references: [id])
-  timecardWeeklyHistory TimecardWeeklyHistory[]
+  @@index([employeeId], map: "JobPositionHistory_employeeId_fkey")
+  @@index([jobPositionId], map: "JobPositionHistory_jobPositionId_fkey")
 }
 
 model JobPositionApplicationHistory {
-  //Fields
   id                              Int                  @id @default(autoincrement())
-  username                        String               //Foreign key for the user table (specificallly users who are in the candidate table)
+  username                        String
   candidateUID                    Int
   jobPositionId                   String
   resumeId                        Int
@@ -127,111 +105,97 @@ model JobPositionApplicationHistory {
   priorEmploymentHistory          String?              @db.Text
   coverLetterName                 String?              @db.Text
   coverLetterURL                  String?
+  jobPosition                     JobPosition          @relation(fields: [jobPositionId], references: [id])
+  resume                          Resume               @relation(fields: [resumeId], references: [id])
+  candidate                       Candidate            @relation(fields: [username], references: [username])
 
-  // Relations
-  candidate   Candidate   @relation(fields: [username], references: [username])
-  resume      Resume      @relation(fields: [resumeId], references: [id])
-  jobPosition JobPosition @relation(fields: [jobPositionId], references: [id])
+  @@index([jobPositionId], map: "JobPositionApplicationHistory_jobPositionId_fkey")
+  @@index([resumeId], map: "JobPositionApplicationHistory_resumeId_fkey")
+  @@index([username], map: "JobPositionApplicationHistory_username_fkey")
 }
 
-//This table to storing specifically past courses a Candidate has taken before or has been an employee in the past
 model CourseHistory {
-  //Fields
-  id               Int     @id @default(autoincrement())
-  username         String  //Foreign key for the user table (specificallly users who are in the candidate table)
-  courseCode       String  @db.VarChar(8)
-  grade            Grade?  //Letter Grade
+  id               Int       @id @default(autoincrement())
+  username         String
+  courseCode       String    @db.VarChar(8)
+  grade            Grade?
   hasTaken         Boolean
   wasPriorEmployee Boolean
+  course           Course    @relation(fields: [courseCode], references: [courseCode])
+  candidate        Candidate @relation(fields: [username], references: [username])
 
-  // Relations
-  candidate Candidate @relation(fields: [username], references: [username])
-  course    Course    @relation(fields: [courseCode], references: [courseCode])
+  @@index([courseCode], map: "CourseHistory_courseCode_fkey")
+  @@index([username], map: "CourseHistory_username_fkey")
 }
 
-//This table is a generic table of all of the course that RIT has to offer
 model Course {
-  //Fields
-  courseCode  String @id @db.VarChar(8)
-  name        String @db.Text
-  description String @db.Text
-
-  // Relations
-  jobPositions  JobPosition[]
+  courseCode    String          @id @db.VarChar(8)
+  name          String          @db.Text
+  description   String          @db.Text
   courseHistory CourseHistory[]
+  jobPositions  JobPosition[]
 }
 
 model JobPosition {
-  //Fields
-  id                        String            @id // For for id here is SemesterCode-CourseCode-SectionNumber
-  courseCode                String            @db.VarChar(8)
-  sectionNumber             Int
-  semesterCode              Int
-  username                  String            //Foreign key for the user table (specificallly users who are in the employer table)
-  maxTAs                    Int
-  jobPositionStatus         JobPositionStatus @default(PENDING_APPROVAL)
-  location                  String            @db.Text
-  locationType              LocationType
-  graduateStatusRequirement GraduateStatus?
-  gradeRequirement          Grade?
-  courseTakenRequirement    Boolean
-  startDate                 DateTime
-  endDate                   DateTime
-
-  // Relations
-  course                        Course                        @relation(fields: [courseCode], references: [courseCode])
-  employer                      Employer                      @relation(fields: [username], references: [username])
-  jobSchedules                  JobSchedule[]
-  jobPositionHistory            JobPositionHistory[]
+  id                            String                          @id
+  courseCode                    String                          @db.VarChar(8)
+  sectionNumber                 Int
+  semesterCode                  Int
+  username                      String
+  maxTAs                        Int
+  jobPositionStatus             JobPositionStatus               @default(PENDING_APPROVAL)
+  location                      String                          @db.Text
+  locationType                  LocationType
+  graduateStatusRequirement     GraduateStatus?
+  gradeRequirement              Grade?
+  courseTakenRequirement        Boolean
+  startDate                     DateTime
+  endDate                       DateTime
+  course                        Course                          @relation(fields: [courseCode], references: [courseCode])
+  employer                      Employer                        @relation(fields: [username], references: [username])
   jobPositionApplicationHistory JobPositionApplicationHistory[]
+  jobPositionHistory            JobPositionHistory[]
+  jobSchedules                  JobSchedule[]
+
+  @@index([courseCode], map: "JobPosition_courseCode_fkey")
+  @@index([username], map: "JobPosition_username_fkey")
 }
 
 model JobSchedule {
-  //Fields
-  id            Int      @id @default(autoincrement())
+  id            Int         @id @default(autoincrement())
   jobPositionId String
-  dayOfWeek     String   @db.Text
-  startTime     DateTime @db.Time
-  endTime       DateTime @db.Time
+  dayOfWeek     String      @db.Text
+  startTime     DateTime    @db.Time(0)
+  endTime       DateTime    @db.Time(0)
+  jobPosition   JobPosition @relation(fields: [jobPositionId], references: [id])
 
-  // Relations
-  jobPosition JobPosition @relation(fields: [jobPositionId], references: [id])
+  @@index([jobPositionId], map: "JobSchedule_jobPositionId_fkey")
 }
 
-// =============================================================================
-// TIMECARD TABLES
-// =============================================================================
-
 model TimecardWeeklyHistory {
-  // Fields
-  id                   Int      @id @default(autoincrement())
+  id                   Int                @id @default(autoincrement())
   jobPositionHistoryId Int
   isCurrentWeek        Boolean
-  weekStartDate        DateTime @db.Date
-
-  // Relations
-  jobPositionHistory JobPositionHistory @relation(fields: [jobPositionHistoryId], references: [id])
-  dailyEntries       TimecardDay[]
+  weekStartDate        DateTime           @db.Date
+  dailyEntries         TimecardDay[]
+  jobPositionHistory   JobPositionHistory @relation(fields: [jobPositionHistoryId], references: [id])
 
   @@index([jobPositionHistoryId])
 }
 
 model TimecardDay {
-  // Fields
-  id                      String    @id // Composite Key: employeeID-day
-  day                     DateTime  @db.Date
+  id                      String                @id
+  day                     DateTime              @db.Date
   timecardWeeklyHistoryId Int
-  notes                   String?   @db.Text
-  duration                Decimal   @db.Decimal(10, 2)
-  timeIn1                 DateTime? @db.Time
-  timeOut1                DateTime? @db.Time
-  timeIn2                 DateTime? @db.Time
-  timeOut2                DateTime? @db.Time
-  timeIn3                 DateTime? @db.Time
-  timeOut3                DateTime? @db.Time
-
-  // Relations
-  timecardWeeklyHistory TimecardWeeklyHistory @relation(fields: [timecardWeeklyHistoryId], references: [id])
+  notes                   String?               @db.Text
+  duration                Decimal               @db.Decimal(10, 2)
+  timeIn1                 DateTime?             @db.Time(0)
+  timeOut1                DateTime?             @db.Time(0)
+  timeIn2                 DateTime?             @db.Time(0)
+  timeOut2                DateTime?             @db.Time(0)
+  timeIn3                 DateTime?             @db.Time(0)
+  timeOut3                DateTime?             @db.Time(0)
+  timecardWeeklyHistory   TimecardWeeklyHistory @relation(fields: [timecardWeeklyHistoryId], references: [id])
 
   @@index([timecardWeeklyHistoryId])
 }
@@ -244,9 +208,6 @@ model FeatureFlag {
 }
 
 
-//////////////////////////////////////////////////
-/// ENUM MAPS
-//////////////////////////////////////////////////
 
 enum Role {
   GUEST
@@ -268,24 +229,21 @@ enum EmployeeStatus {
 }
 
 enum JobPositionHistoryStatus {
-  //these roles are for when employees are currently working within a job position
   ACTIVE
-  TERMINATED // When the candidate is fired
-  INACTIVE // When the job position is no longer available (e.g., end of semester)
+  TERMINATED
+  INACTIVE
 }
 
 enum JobApplicationStatus {
-  //these roles are for when candidates are applying to the job positions
   APPLIED
   HIRED
   ACCEPTED_OFFER
-  DECLINED_OFFER //used to rejct offers given by employers/admin
+  DECLINED_OFFER
   PENDING_OFFER
   INTERVIEW
   ONHOLD
-  REJECTED //used for rejecting applications made by candidate/employee
+  REJECTED
   INACTIVE
-  //any deletion of a job position will delete the jobposition application altogether
 }
 
 enum Grade {

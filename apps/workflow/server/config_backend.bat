@@ -3,7 +3,7 @@ SETLOCAL
 
 REM --- Workflow Configuration ---
 SET "DB_ROOT_PASSWORD=newPassword"
-SET "DB_HOST=127.0.0.1"
+SET "DB_HOST=localhost"
 SET "DB_PORT=8000"
 SET "DB_NAME_WORKFLOWS=workflows"
 SET "DB_APP_USER=app_user"
