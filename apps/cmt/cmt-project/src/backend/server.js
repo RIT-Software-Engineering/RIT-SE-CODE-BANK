@@ -5,9 +5,10 @@ const path = require("path");
 
 const eventRoutes = require("./routes/events");
 const templateRoutes = require("./routes/template");
+const workflowRoutes = require("./routes/workflows");
 
 const app = express();
-const PORT = process.env.PORT || 5010;
+const PORT = process.env.BACKEND_PORT || 5010;
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
@@ -24,6 +25,12 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Middleware to attach prisma to request for workflow routes
+app.use((req, res, next) => {
+  req.prisma = prisma;
+  next();
+});
+
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
@@ -33,6 +40,7 @@ app.use((req, res, next) => {
 app.use("/api/events", eventRoutes);
 app.use("/api/template", templateRoutes);
 app.use("/api/team-builder", teamBuilderRoutes);
+app.use("/api/workflows", workflowRoutes); // NEW: Workflow routes
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -52,6 +60,7 @@ app.get("/", (req, res) => {
       health: "/api/health",
       events: "/api/events",
       courses: "/api/events/courses",
+      workflows: "/api/workflows"
     },
   });
 });

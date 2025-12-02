@@ -8,12 +8,6 @@ import {
   List as ListIcon,
   CheckSquare,
 } from "lucide-react";
-import {
-  createOnboardingWorkflow,
-  updateOnboardingWorkflow,
-  getWorkflowActions,
-  deleteWorkflow,
-} from "../services/workflowService";
 import "../styles/course.css";
 
 function CoursePage() {
@@ -36,7 +30,7 @@ function CoursePage() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
+  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api';
 
   // Fetch courses on mount
   useEffect(() => {
@@ -379,26 +373,39 @@ function CoursePage() {
   );
 }
 
-// Onboarding Workflow Editor Component
+// Onboarding Workflow Editor Component - NOW USES BACKEND API
 function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
   const [actions, setActions] = useState([
-    { id: "temp-1", title: "Review Syllabus", description: "", order: 1 },
+    { 
+      id: "temp-1", 
+      title: "Review Syllabus", 
+      description: "", 
+      linkType: "none",
+      linkUrl: "",
+      order: 1 
+    },
     {
       id: "temp-2",
       title: "Add Important Dates to Calendar",
       description: "",
+      linkType: "none",
+      linkUrl: "",
       order: 2,
     },
     {
       id: "temp-3",
       title: "Join Course Communication Channel",
       description: "",
+      linkType: "none",
+      linkUrl: "",
       order: 3,
     },
     {
       id: "temp-4",
       title: "Complete Intro Assignment",
       description: "",
+      linkType: "none",
+      linkUrl: "",
       order: 4,
     },
   ]);
@@ -406,7 +413,7 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
+  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api';
 
   // Load existing workflow actions if course has a workflow
   useEffect(() => {
@@ -418,12 +425,23 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
   const loadExistingWorkflow = async () => {
     setLoadingData(true);
     try {
-      const workflowActions = await getWorkflowActions(course.workflowId);
-      if (workflowActions.length > 0) {
-        setActions(workflowActions);
+      // NOW: Call backend API instead of workflowService
+      const response = await fetch(
+        `${API_BASE}/workflows/course/${course.id}/actions`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to load workflow');
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data.length > 0) {
+        setActions(result.data);
       }
     } catch (error) {
       console.error("Error loading workflow:", error);
+      setError("Failed to load existing workflow");
     } finally {
       setLoadingData(false);
     }
@@ -436,6 +454,8 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
         id: `temp-${Date.now()}`,
         title: "",
         description: "",
+        linkType: "none",
+        linkUrl: "",
         order: actions.length + 1,
       },
     ]);
@@ -465,20 +485,23 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
     setError(null);
 
     try {
-      // For now, always create a new workflow (simpler)
-      // TODO: Implement proper update logic later
-      const result = await createOnboardingWorkflow(course, validActions);
+      // NOW: Call backend API instead of workflowService
+      const response = await fetch(
+        `${API_BASE}/workflows/course/${course.id}/onboarding`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actions: validActions })
+        }
+      );
 
-      // Save workflow ID back to course
+      if (!response.ok) {
+        throw new Error('Failed to save workflow');
+      }
+
+      const result = await response.json();
+
       if (result.success) {
-        await fetch(`${API_BASE}/course/${course.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            workflowId: result.workflowId,
-          }),
-        });
-
         onSave();
       } else {
         setError(result.error || "Failed to save workflow");
@@ -516,15 +539,63 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
         {actions.map((action, index) => (
           <div key={action.id || index} className="action-item">
             <span className="action-number">{index + 1}</span>
-            <input
-              type="text"
-              className="action-title"
-              value={action.title}
-              onChange={(e) =>
-                handleActionChange(index, "title", e.target.value)
-              }
-              placeholder="Action title..."
-            />
+            
+            <div className="action-inputs">
+              <input
+                type="text"
+                className="action-title"
+                value={action.title}
+                onChange={(e) =>
+                  handleActionChange(index, "title", e.target.value)
+                }
+                placeholder="Action title..."
+              />
+              
+              <div className="link-options">
+                <select
+                  className="link-type-select"
+                  value={action.linkType || "none"}
+                  onChange={(e) =>
+                    handleActionChange(index, "linkType", e.target.value)
+                  }
+                >
+                  <option value="none">No Link</option>
+                  <option value="internal">Internal CMT Page</option>
+                  <option value="external">External URL</option>
+                </select>
+                
+                {action.linkType !== "none" && (
+                  <>
+                    {action.linkType === "internal" ? (
+                      <select
+                        className="link-url-input"
+                        value={action.linkUrl || ""}
+                        onChange={(e) =>
+                          handleActionChange(index, "linkUrl", e.target.value)
+                        }
+                      >
+                        <option value="">Select page...</option>
+                        <option value="/cmt/calendar">Calendar</option>
+                        <option value="/cmt/team-builder">Team Builder</option>
+                        <option value="/cmt/course-builder">Course Builder</option>
+                        <option value="/cmt/onboarding">My Onboarding</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="url"
+                        className="link-url-input"
+                        value={action.linkUrl || ""}
+                        onChange={(e) =>
+                          handleActionChange(index, "linkUrl", e.target.value)
+                        }
+                        placeholder="https://example.com"
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
             <Button
               variant="outline-danger"
               size="sm"

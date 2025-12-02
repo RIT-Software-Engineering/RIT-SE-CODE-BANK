@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, ProgressBar, Form, Button, Badge, Alert } from "react-bootstrap";
+import { Card, ProgressBar, Form, Alert } from "react-bootstrap";
 import {
   CheckCircle,
   Circle,
@@ -16,8 +16,7 @@ function StudentOnboardingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
-  const WORKFLOWS_API = "http://localhost:5001";
+  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api';
 
   // TODO: Replace with actual student ID from authentication
   const TEMP_STUDENT_ID = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
@@ -26,187 +25,145 @@ function StudentOnboardingPage() {
     loadStudentWorkflows();
   }, []);
 
+  /**
+   * Load all workflows for the current student
+   * Now just a simple API call - all logic is on backend
+   */
   const loadStudentWorkflows = async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      // Step 1: Get all courses (not just enrolled ones)
-      const coursesResponse = await fetch(`${API_BASE}/events/courses`);
-      const coursesData = await coursesResponse.json();
-      const courses = coursesData.success ? coursesData.data : [];
-
-      // Step 2: Filter courses that have workflows
-      const coursesWithWorkflows = courses.filter((c) => c.workflowId);
-
-      console.log("Courses with workflows:", coursesWithWorkflows);
-
-      if (coursesWithWorkflows.length === 0) {
-        setWorkflows([]);
-        setLoading(false);
-        return;
-      }
-
-      // Step 3: Load workflow data for each course
-      const workflowPromises = coursesWithWorkflows.map(async (course) => {
-        try {
-          // Get workflow details
-          const workflowResponse = await fetch(
-            `${WORKFLOWS_API}/workflows/${course.workflowId}`
-          );
-
-          if (!workflowResponse.ok) {
-            console.error(`Workflow ${course.workflowId} not found`);
-            return null;
-          }
-
-          const workflow = await workflowResponse.json();
-
-          // Get workflow actions
-          const actionsResponse = await fetch(
-            `${WORKFLOWS_API}/actions?workflowId=${course.workflowId}`
-          );
-          const actions = await actionsResponse.json();
-
-          if (!actions || actions.length === 0) {
-            console.warn(`No actions found for workflow ${course.workflowId}`);
-            return null;
-          }
-
-          // Get or create workflow state for this student
-          const state = await getOrCreateWorkflowState(
-            course.workflowId,
-            TEMP_STUDENT_ID
-          );
-
-          if (!state || !state.actionStates) {
-            console.error(`Invalid workflow state for ${course.name}`, state);
-            return null;
-          }
-
-          const completed = state.actionStates.filter(
-            (s) => s.stateType === "completed"
-          ).length;
-          const total = state.actionStates.length;
-
-          return {
-            course,
-            workflow,
-            actions,
-            state,
-            completed,
-            total,
-          };
-        } catch (error) {
-          console.error(`Error loading workflow for ${course.name}:`, error);
-          return null;
-        }
-      });
-
-      const workflowData = await Promise.all(workflowPromises);
-      setWorkflows(workflowData.filter((w) => w !== null));
-      setLoading(false);
-    } catch (error) {
-      console.error("Error loading student workflows:", error);
-      setError("Failed to load your onboarding checklists");
-      setLoading(false);
-    }
-  };
-
-  const getOrCreateWorkflowState = async (workflowId, userId) => {
-    try {
-      console.log("Creating workflow state for:", workflowId, userId);
-
-      const response = await fetch(`${WORKFLOWS_API}/states/workflow`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          workflowId,
-        }),
-      });
+      const response = await fetch(
+        `${API_BASE}/workflows/student/${TEMP_STUDENT_ID}`
+      );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(
-          "Failed to create workflow state:",
-          response.status,
-          errorText
-        );
-        throw new Error(`Failed to create workflow state: ${response.status}`);
+        throw new Error(`HTTP ${response.status}: Failed to load workflows`);
       }
 
-      const workflowState = await response.json();
-      console.log(
-        "Workflow state created:",
-        JSON.stringify(workflowState, null, 2)
-      );
+      const data = await response.json();
 
-      // Now fetch the action states for this workflow state
-      const actionStatesResponse = await fetch(
-        `${WORKFLOWS_API}/states/workflow/${workflowState.id}`
-      );
-
-      if (!actionStatesResponse.ok) {
-        throw new Error("Failed to fetch action states");
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to load workflows');
       }
 
-      const fullState = await actionStatesResponse.json();
-      console.log(
-        "Full workflow state with action states:",
-        JSON.stringify(fullState, null, 2)
-      );
-
-      // The structure has actionStates nested in baseActionState.children
-      if (
-        !fullState.baseActionState ||
-        !fullState.baseActionState.children ||
-        !Array.isArray(fullState.baseActionState.children)
-      ) {
-        console.error(
-          "BaseActionState.children missing or not an array:",
-          fullState
-        );
-        throw new Error(
-          "Invalid workflow state structure - baseActionState.children missing"
-        );
-      }
-
-      // Transform the structure to have a top-level actionStates array
-      fullState.actionStates = fullState.baseActionState.children;
-
-      return fullState;
+      setWorkflows(data.data);
+      setLoading(false);
     } catch (error) {
-      console.error("Error creating workflow state:", error);
-      throw error;
+      console.error("Error loading workflows:", error);
+      setError(error.message || "Failed to load your onboarding checklists");
+      setLoading(false);
     }
   };
 
-  const handleActionToggle = async (
-    workflowIndex,
-    actionStateId,
-    currentState
-  ) => {
+  /**
+   * Toggle action completion status
+   * Now just updates backend and reloads
+   */
+  const handleActionToggle = async (actionStateId, currentState) => {
     try {
-      const newState =
-        currentState === "completed" ? "notStarted" : "completed";
+      const newState = currentState === "completed" ? "notStarted" : "completed";
 
-      // Update action state via Workflows API
-      await fetch(`${WORKFLOWS_API}/states/action/${actionStateId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          stateType: newState,
-        }),
-      });
+      const response = await fetch(
+        `${API_BASE}/workflows/action-state/${actionStateId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stateType: newState }),
+        }
+      );
 
-      // Reload workflows to get updated state
+      if (!response.ok) {
+        throw new Error(`Failed to update action`);
+      }
+
+      // Reload workflows to show updated state
       await loadStudentWorkflows();
     } catch (error) {
-      console.error("Error updating action state:", error);
+      console.error("Error updating action:", error);
       setError("Failed to update checklist item");
     }
   };
 
+  /**
+   * Handle clicking on action link
+   * Marks action as complete and opens link in new tab
+   */
+  const handleActionLinkClick = async (actionState, linkUrl, linkType) => {
+    console.log('handleActionLinkClick called:', {
+      actionStateId: actionState.id,
+      linkUrl,
+      linkType,
+      currentState: actionState.stateType
+    });
+
+    try {
+      // Mark as completed if not already
+      if (actionState.stateType !== "completed") {
+        console.log('Marking action as completed...');
+        const response = await fetch(
+          `${API_BASE}/workflows/action-state/${actionState.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stateType: "completed" }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Failed to update action:', response.status, errorText);
+          throw new Error(`Failed to update action: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ Action marked as completed successfully:', result);
+      } else {
+        console.log('Action already completed, skipping update');
+      }
+
+      // Wait a moment for database to fully update
+      console.log('⏳ Waiting 500ms for database to update...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Reload workflows FIRST to update UI
+      console.log('🔄 Reloading workflows to show completion...');
+      await loadStudentWorkflows();
+      console.log('✅ Workflows reloaded - UI should be updated now');
+
+      // THEN open link
+      console.log('=== ABOUT TO OPEN LINK ===');
+      console.log('linkType:', linkType);
+      console.log('linkUrl:', linkUrl);
+      
+      let finalUrl = linkUrl;
+      
+      // Ensure internal links have /cmt prefix
+      if (linkType === 'internal') {
+        if (!linkUrl.startsWith('/cmt/')) {
+          console.log('Adding /cmt prefix to internal link');
+          finalUrl = `/cmt${linkUrl}`;
+        }
+        console.log('✅ OPENING INTERNAL LINK IN NEW TAB:', finalUrl);
+      } else {
+        console.log('✅ OPENING EXTERNAL LINK IN NEW TAB:', finalUrl);
+      }
+      
+      // Open ALL links in new tab
+      window.open(finalUrl, '_blank', 'noopener,noreferrer');
+      
+      console.log('✅ Link opened in new tab. Original tab should show completion.');
+      // Note: Workflows already reloaded above, so UI should be updated
+    } catch (error) {
+      console.error("Error handling action link:", error);
+      setError("Failed to complete action");
+    }
+  };
+
+  /**
+   * Get appropriate icon for action based on name
+   */
   const getIconForAction = (actionName) => {
     const name = actionName.toLowerCase();
     if (name.includes("syllabus") || name.includes("review"))
@@ -220,15 +177,25 @@ function StudentOnboardingPage() {
     return <Circle size={18} />;
   };
 
+  /**
+   * Calculate overall progress across all workflows
+   */
   const getOverallProgress = () => {
     if (workflows.length === 0) return 0;
-    const totalCompleted = workflows.reduce((sum, w) => sum + w.completed, 0);
-    const totalActions = workflows.reduce((sum, w) => sum + w.total, 0);
+    const totalCompleted = workflows.reduce(
+      (sum, w) => sum + w.progress.completed,
+      0
+    );
+    const totalActions = workflows.reduce(
+      (sum, w) => sum + w.progress.total,
+      0
+    );
     return totalActions > 0
       ? Math.round((totalCompleted / totalActions) * 100)
       : 0;
   };
 
+  // Loading state
   if (loading) {
     return (
       <div className="student-onboarding-page">
@@ -242,16 +209,21 @@ function StudentOnboardingPage() {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="student-onboarding-page">
         <Alert variant="danger" dismissible onClose={() => setError(null)}>
           {error}
         </Alert>
+        <button className="btn btn-primary" onClick={loadStudentWorkflows}>
+          Try Again
+        </button>
       </div>
     );
   }
 
+  // Empty state
   if (workflows.length === 0) {
     return (
       <div className="student-onboarding-page">
@@ -267,6 +239,7 @@ function StudentOnboardingPage() {
     );
   }
 
+  // Main content
   return (
     <div className="student-onboarding-page">
       <div className="page-header">
@@ -290,7 +263,7 @@ function StudentOnboardingPage() {
       </div>
 
       <div className="workflows-container">
-        {workflows.map((workflow, workflowIndex) => (
+        {workflows.map((workflow) => (
           <Card key={workflow.course.id} className="workflow-card">
             <Card.Header className="workflow-header">
               <div className="course-info">
@@ -309,12 +282,12 @@ function StudentOnboardingPage() {
               </div>
               <div className="progress-info">
                 <span className="completion-count">
-                  {workflow.completed} / {workflow.total} completed
+                  {workflow.progress.completed} / {workflow.progress.total} completed
                 </span>
                 <ProgressBar
-                  now={(workflow.completed / workflow.total) * 100}
+                  now={workflow.progress.percentage}
                   variant={
-                    workflow.completed === workflow.total ? "success" : "info"
+                    workflow.progress.percentage === 100 ? "success" : "info"
                   }
                   className="workflow-progress-bar"
                 />
@@ -324,15 +297,33 @@ function StudentOnboardingPage() {
             <Card.Body>
               <div className="actions-checklist">
                 {workflow.state.actionStates.map((actionState, actionIndex) => {
-                  const action = actionState.action; // Action is nested inside actionState
+                  const action = actionState.action;
                   const isCompleted = actionState.stateType === "completed";
+                  
+                  // Sequential logic: Check if previous action is completed
+                  const isPreviousCompleted = actionIndex === 0 || 
+                    workflow.state.actionStates[actionIndex - 1].stateType === "completed";
+                  const isLocked = !isPreviousCompleted && !isCompleted;
+
+                  // Get link data from action metadata
+                  const linkType = action.metadata?.linkType || 'none';
+                  const linkUrl = action.metadata?.linkUrl || '';
+                  const hasLink = linkType !== 'none' && linkUrl;
+
+                  // Debug logging
+                  console.log('Action:', action.name, {
+                    linkType,
+                    linkUrl,
+                    hasLink,
+                    metadata: action.metadata
+                  });
 
                   return (
                     <div
                       key={actionState.id}
                       className={`checklist-item ${
                         isCompleted ? "completed" : ""
-                      }`}
+                      } ${isLocked ? "locked" : ""}`}
                     >
                       <Form.Check
                         type="checkbox"
@@ -340,26 +331,55 @@ function StudentOnboardingPage() {
                         checked={isCompleted}
                         onChange={() =>
                           handleActionToggle(
-                            workflowIndex,
                             actionState.id,
                             actionState.stateType
                           )
                         }
+                        disabled={isLocked || hasLink}
                         className="action-checkbox"
                       />
-                      <div className="action-content">
+                      <div 
+                        className={`action-content ${hasLink && !isLocked ? 'clickable' : ''}`}
+                        onClick={() => {
+                          console.log('Action div clicked:', {
+                            hasLink,
+                            isLocked,
+                            linkUrl,
+                            linkType
+                          });
+                          if (hasLink && !isLocked) {
+                            handleActionLinkClick(actionState, linkUrl, linkType);
+                          }
+                        }}
+                        style={{ cursor: hasLink && !isLocked ? 'pointer' : 'default' }}
+                      >
                         <div className="action-icon">
                           {isCompleted ? (
                             <CheckCircle size={20} className="completed-icon" />
+                          ) : isLocked ? (
+                            <Circle size={20} className="locked-icon" />
                           ) : (
                             getIconForAction(action.name)
                           )}
                         </div>
                         <div className="action-details">
-                          <div className="action-title">{action.name}</div>
+                          <div className="action-title">
+                            {action.name}
+                            {hasLink && !isLocked && (
+                              <span className="action-link-indicator"> 🔗</span>
+                            )}
+                            {isLocked && (
+                              <span className="action-locked-indicator"> 🔒</span>
+                            )}
+                          </div>
                           {action.description && (
                             <div className="action-description">
                               {action.description}
+                            </div>
+                          )}
+                          {isLocked && (
+                            <div className="action-locked-message">
+                              Complete previous step first
                             </div>
                           )}
                         </div>
@@ -370,7 +390,7 @@ function StudentOnboardingPage() {
                 })}
               </div>
 
-              {workflow.completed === workflow.total && (
+              {workflow.progress.percentage === 100 && (
                 <div className="completion-badge">
                   <Award size={20} />
                   <span>Course Onboarding Complete!</span>
