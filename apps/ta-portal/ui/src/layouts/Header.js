@@ -43,6 +43,7 @@ import {
   ExpandMore,
   Search as SearchIcon,
   Close as CloseIcon,
+  Notifications,
 } from "@mui/icons-material";
 import { ROLES } from "@/configuration/dashboard.config";
 import { useAuth } from "@/contexts/AuthContext";
@@ -208,6 +209,7 @@ export default function Header() {
     // Profile and settings
     additionalPages.push(
       { text: "My Profile", href: "/Profile", category: "Settings" },
+      { text: "Notification Preferences", href: "/Settings", category: "Settings" },
       { text: "Theme/Appearance", href: "#", category: "Settings", action: () => {
         setDrawerOpen(true);
         setSettingsOpen(true);
@@ -494,16 +496,23 @@ export default function Header() {
                 </ListItemButton>
               </ListItem>
             )}
-            {/* Future: Notif Preferences will be added here - placeholder for easy merging */}
-            {/* 
+            {/* Notification Preferences */}
             <ListItem disablePadding sx={{ pl: 4 }}>
               <ListItemButton
                 component={Link}
-                href="/Settings/NotificationPreferences"
+                href="/Settings"
+                onClick={handleDrawerToggle}
                 sx={{
                   py: 1,
                   px: 2,
                   borderRadius: 1,
+                  "&:hover": {
+                    backgroundColor: theme.palette.action.hover,
+                    color: theme.palette.primary.main,
+                    "& .MuiListItemIcon-root": {
+                      color: theme.palette.primary.main,
+                    },
+                  },
                 }}
               >
                 <ListItemIcon
@@ -523,7 +532,6 @@ export default function Header() {
                 />
               </ListItemButton>
             </ListItem>
-            */}
           </List>
         </Collapse>
       </List>
@@ -616,8 +624,8 @@ export default function Header() {
         sx={{
           backgroundColor: "#000000", // always black
           height: "85px",
-          boxShadow: "none",
-          border: "none",
+          boxShadow: theme.palette.mode === 'dark' ? '0 1px 0 rgba(255, 255, 255, 0.1)' : 'none',
+          borderBottom: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : 'none',
         }}
       >
         <Toolbar

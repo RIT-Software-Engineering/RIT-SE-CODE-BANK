@@ -176,7 +176,7 @@ async function initializeFeatureFlags() {
     console.log('\nInitializing feature flags...');
     
     const features = [
-        { name: 'MESSAGING', enabled: true },
+        { name: 'MESSAGING', enabled: false },
         { name: 'TIMECARD', enabled: true },
         { name: 'POSITIONS', enabled: true },
         { name: 'APPLICATIONS', enabled: true },
