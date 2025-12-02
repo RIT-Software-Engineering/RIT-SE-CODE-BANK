@@ -210,7 +210,7 @@ export const lightTheme = createTheme({
     mode: 'light',
     background: {
       default: ritColors.white,
-      paper: ritColors.warm_gray_1,
+      paper: ritColors.gray_1,
     },
     text: {
       primary: ritColors.black,
@@ -246,15 +246,16 @@ export const darkTheme = createTheme({
     mode: 'dark',
     background: {
       default: ritColors.black,
-      paper: '#101010',
+      paper: ritColors.black,
     },
     text: {
       primary: ritColors.white,
       secondary: ritColors.gray_1,
     },
-    divider: ritColors.gray_3,
+    divider: ritColors.dark_gray,
     action: {
       active: ritColors.white,
+      hover: 'rgba(255, 255, 255, 0.08)',
     },
   },
   components: {
@@ -262,14 +263,24 @@ export const darkTheme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          border: `1px solid ${ritColors.gray_3}`,
+          backgroundColor: ritColors.black,
+          border: 'none',
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: ritColors.black,
+          border: 'none',
         },
       },
     },
     MuiAccordion: {
       styleOverrides: {
         root: {
-          border: `1px solid ${ritColors.gray_3}`,
+          backgroundColor: ritColors.black,
+          border: `1px solid ${ritColors.dark_gray}`,
         },
       },
     },

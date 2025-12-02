@@ -171,6 +171,31 @@ async function seedWindows() {
     }
 }
 
+// ---------------- Feature Flags Initialization ----------------
+async function initializeFeatureFlags() {
+    console.log('\nInitializing feature flags...');
+    
+    const features = [
+        { name: 'MESSAGING', enabled: false },
+        { name: 'TIMECARD', enabled: true },
+        { name: 'POSITIONS', enabled: true },
+        { name: 'APPLICATIONS', enabled: true },
+        { name: 'PROFILES', enabled: true },
+        { name: 'KRONOS', enabled: true },
+        { name: 'ORACLE', enabled: true },
+    ];
+
+    for (const feature of features) {
+        await prisma.featureFlag.upsert({
+            where: { name: feature.name },
+            update: {},
+            create: feature,
+        });
+    }
+    
+    console.log('Feature flags initialized successfully.');
+}
+
 // ---------------- Entrypoint ----------------
 async function main() {
     try {
@@ -180,6 +205,10 @@ async function main() {
         } else {
             await seedMacLinux();
         }
+        
+        // Initialize feature flags after seeding test data
+        await initializeFeatureFlags();
+        
         console.log('\nDynamic seeding finished successfully.');
     } catch (error) {
         console.error('Seeding failed:', error.message);

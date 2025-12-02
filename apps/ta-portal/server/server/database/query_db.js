@@ -1616,6 +1616,100 @@ async function getCandidateApplicationsAsAdmin() {
 }
 
 /**
+ * Gets ALL applications across the system for admin viewing with search and filters
+ * @param {string} search - Search term (course code/name or student name)
+ * @param {string} searchType - Type of search ("course" or "student")
+ * @param {object} filters - Object containing status, level, semester, hasApplications filters
+ * @returns {Promise<Array>} Array of job positions with their application history
+ */
+async function getAllApplicationsForAdmin(search = '', searchType = 'course', filters = {}) {
+  const whereClause = {};
+  
+  // Validate and sanitize search input to prevent performance issues
+  if (search && search.length > 100) {
+    throw new Error('Search query too long (max 100 characters)');
+  }
+  
+  // Handle search by course code or name
+  if (search && searchType === 'course') {
+    whereClause.OR = [
+      { courseCode: { contains: search, mode: 'insensitive' } },
+      { course: { name: { contains: search, mode: 'insensitive' } } },
+    ];
+  }
+
+  // Filter by semester
+  if (filters.semester) {
+    whereClause.semesterCode = filters.semester;
+  }
+
+  // Build the query
+  const positions = await prisma.jobPosition.findMany({
+    where: whereClause,
+    include: {
+      course: {
+        select: { name: true, description: true },
+      },
+      jobSchedules: {
+        select: { dayOfWeek: true, startTime: true, endTime: true },
+      },
+      employer: {
+        include: {
+          user: {
+            select: {
+              fname: true,
+              lname: true,
+            },
+          },
+        },
+      },
+      jobPositionApplicationHistory: {
+        where: buildApplicationFilterClause(filters),
+        include: {
+          candidate: {
+            include: {
+              user: {
+                select: {
+                  fname: true,
+                  lname: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          resume: {
+            select: { name: true, resumeURL: true },
+          },
+        },
+      },
+    },
+  });
+
+  // Filter by student name if searchType is "student"
+  if (search && searchType === 'student') {
+    const searchLower = search.toLowerCase();
+    return positions.filter(position => {
+      return position.jobPositionApplicationHistory.some(app => {
+        const fname = app.candidate?.user?.fname?.toLowerCase() || '';
+        const lname = app.candidate?.user?.lname?.toLowerCase() || '';
+        const fullName = `${fname} ${lname}`;
+        return fullName.includes(searchLower) || fname.includes(searchLower) || lname.includes(searchLower);
+      });
+    });
+  }
+
+  // Filter by hasApplications
+  if (filters.hasApplications === 'yes') {
+    return positions.filter(p => p.jobPositionApplicationHistory.length > 0);
+  } else if (filters.hasApplications === 'no') {
+    return positions.filter(p => p.jobPositionApplicationHistory.length === 0);
+  }
+
+  return positions;
+}
+
+
+/**
  * Check if a job position is full based on its status
  * @param {string} jobPositionId - The ID of the job position to check
  * @returns {Promise<boolean>} Returns true if job position status is 'FILLED' or 'ACTIVE', false otherwise
@@ -2604,6 +2698,7 @@ module.exports = {
   getCandidateApplicationsAsEmployer,
   getCandidateApplications,
   getCandidateApplicationsAsAdmin,
+  getAllApplicationsForAdmin,
   deleteCandidateApplication,
   getCandidateApplication,
   getSemesterCodes,

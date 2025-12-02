@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Paper, Typography, ButtonBase, Box } from "@mui/material";
+import { Paper, Typography, ButtonBase, Box, useTheme } from "@mui/material";
 
 /**
  * A styled, fixed-size card component for dashboard navigation.
@@ -12,19 +12,35 @@ import { Paper, Typography, ButtonBase, Box } from "@mui/material";
  * @param {string} props.link - The navigation link for the card.
  */
 export default function SelectionCard({ text, icon, link }) {
+  const theme = useTheme();
+
   return (
     <Paper
-      elevation={3}
+      elevation={0}
       sx={{
-        width: 200, // Set a fixed width
-        height: 200, // Set a fixed height
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+        width: "100%",
+        aspectRatio: "1",
+        minHeight: 120,
+        maxHeight: 160,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: theme.palette.mode === 'dark'
+          ? "linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%)"
+          : "linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)",
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 2,
+        transition: (theme) => theme.transitions.create(
+          ["transform", "box-shadow", "border-color", "background"],
+          { duration: "200ms", easing: "ease-in-out" }
+        ),
         "&:hover": {
-          transform: "scale(1.05)",
-          boxShadow: 6,
+          transform: "translateY(-6px)",
+          boxShadow: `0 12px 24px ${theme.palette.action.hover}`,
+          borderColor: theme.palette.primary.main,
+          background: theme.palette.mode === 'dark'
+            ? "linear-gradient(135deg, #3d3d3d 0%, #2f2f2f 100%)"
+            : "linear-gradient(135deg, #fffbf0 0%, #fff5e0 100%)",
         },
       }}
     >
@@ -39,23 +55,32 @@ export default function SelectionCard({ text, icon, link }) {
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          borderRadius: 1,
+          borderRadius: 2,
+          gap: 1,
         }}
       >
         {icon && (
           <Box
             component="span"
-            sx={{ mb: 1.5, fontSize: "2.25rem", color: "primary.main" }}
+            sx={{
+              fontSize: { xs: "2rem", sm: "2.5rem", md: "2.75rem" },
+              color: theme.palette.primary.main,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
             {icon}
           </Box>
         )}
         <Typography
-          variant="h2"
+          variant="body1"
           sx={{
             textAlign: "center",
-            color: "text.primary",
-            fontSize: "1.25rem",
+            color: theme.palette.text.primary,
+            fontSize: { xs: "0.95rem", sm: "1rem", md: "1.05rem" },
+            fontWeight: 600,
+            lineHeight: 1.3,
           }}
         >
           {text}

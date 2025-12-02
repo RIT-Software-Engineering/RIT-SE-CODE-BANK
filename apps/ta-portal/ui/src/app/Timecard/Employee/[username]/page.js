@@ -1,7 +1,9 @@
 // app/Timecard/Employee/[username]/page.js
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import {
     Box,
     Button,
@@ -86,14 +88,14 @@ export default function EmployeeTimecard() {
      * @param {Date} weekStart - The starting date of the week (e.g., a Friday).
      * @returns {Array<Object>} An array of day objects for the timecard grid.
      */
-    const buildWeekFrom = (weekStart) => {
+    const buildWeekFrom = useCallback((weekStart) => {
         const dayLabels = ["Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
         return dayLabels.map((label, i) => {
             const date = new Date(weekStart);
             date.setDate(date.getDate() + i);
             return { day: label, date: formatDate(date), ins: ["", "", ""], outs: ["", "", ""], total: 0, notes: "" };
         });
-    };
+    }, []);
 
     /**
      * Calculates the difference in hours between two time strings (e.g., "14:30").
@@ -138,13 +140,13 @@ export default function EmployeeTimecard() {
         } else {
             setLoading(false);
         }
-    }, [currentUser]);
+    }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
     /**
      * Fetches all timecards for a given job and populates the component's state.
      * @param {number} jobHistoryId - The ID of the employee's active job history record.
      */
-    const loadAllTimecards = async (jobHistoryId) => {
+    const loadAllTimecards = useCallback(async (jobHistoryId) => {
         setLoading(true);
         setError(null);
         try {
@@ -181,7 +183,7 @@ export default function EmployeeTimecard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [buildWeekFrom]);
 
     // --- EVENT HANDLERS ---
 
@@ -366,6 +368,7 @@ export default function EmployeeTimecard() {
     
     // Main component render method.
     return (
+        <FeatureGate feature={FEATURES.TIMECARD}>
         <>
             {/* Conditionally render content based on user role. */}
             {currentUser && currentUser.role === 'EMPLOYEE' ? (
@@ -494,5 +497,6 @@ export default function EmployeeTimecard() {
                 isSubmitting={submitting}
             />
         </>
+        </FeatureGate>
     );
 }

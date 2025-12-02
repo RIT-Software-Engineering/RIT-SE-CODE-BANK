@@ -3,6 +3,8 @@
 
 import MessagingClient from "@/components/messaging/MessagingClient";
 import { useParams } from "next/navigation";
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 
 /**
  * A page component that serves as a wrapper for the main MessagingClient.
@@ -18,6 +20,9 @@ export default function PreFilledMessagingPage() {
   // Decode the email from the URL parameter to correctly handle special characters (e.g., '+').
   const email = params.email ? decodeURIComponent(params.email) : "";
 
-  // Render the main messaging component, passing the extracted email as a prop.
-  return <MessagingClient initialEmail={email} />;
+  return (
+    <FeatureGate feature={FEATURES.MESSAGING}>
+      <MessagingClient initialEmail={email} />
+    </FeatureGate>
+  );
 }

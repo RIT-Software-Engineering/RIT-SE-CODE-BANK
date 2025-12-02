@@ -9,7 +9,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   getOpenJobPositions,
   getPositionsByOwner,
@@ -21,6 +21,7 @@ import {
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useFeatureFlags, FEATURES } from "@/configuration/featureFlags";
 import PositionsCard from "@/components/positions/PositionsCard";
 import { Filter } from "@/components/common/searchAndFilter/Filter";
 import SearchBar from "@/components/common/searchAndFilter/SearchBar";
@@ -49,6 +50,8 @@ import {
 export default function AdminPositions() {
   // Core hooks for component references, authentication, and notifications.
   const filterRef = useRef();
+  const router = useRouter();
+  const { isFeatureEnabled, loading: featureFlagsLoading } = useFeatureFlags();
   const { currentUser } = useAuth();
   const { showNotification } = useNotification();
   const searchParams = useSearchParams();
@@ -172,6 +175,21 @@ export default function AdminPositions() {
       fetchData(activeTab, "", initialFilters);
     }
   }, [currentUser, filterConfig, activeTab, fetchData]);
+
+  // Redirect if feature is disabled
+  useEffect(() => {
+    if (!featureFlagsLoading && !isFeatureEnabled(FEATURES.POSITIONS)) {
+      router.push("/");
+    }
+  }, [featureFlagsLoading, isFeatureEnabled, router]);
+
+  if (featureFlagsLoading || !isFeatureEnabled(FEATURES.POSITIONS)) {
+    return (
+      <Container sx={{ mt: 4, textAlign: "center" }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
 
   /**
    * Handles the form submission for a search, triggering a data fetch.

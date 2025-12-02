@@ -46,10 +46,11 @@ export default function ProfileInfoCard({
   isCandidateOrEmployee,
   onEdit,
 }) {
-  if (!profileData) return null;
   const { currentUser } = useAuth();
   const [isMadeOffersModalOpen, setIsMadeOffersModalOpen] = useState(false);
   const [isToMakeOffersModalOpen, setIsToMakeOffersModalOpen] = useState(false);
+
+  if (!profileData) return null;
 
 
   const yearLevel = profileData.candidate?.graduateStatus === "GRADUATE" ? "Graduate" : profileData.candidate?.year;

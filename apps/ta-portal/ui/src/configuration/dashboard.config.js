@@ -1,5 +1,7 @@
 // src/app/dashboard.config.js
 
+import { FEATURES } from './featureFlags';
+
 export const ROLES = {
   CANDIDATE: "CANDIDATE",
   EMPLOYEE: "EMPLOYEE",
@@ -17,50 +19,51 @@ export const DASHBOARD_OPTIONS = [
     category: 'Personal',
     text: 'Kronos',
     link: 'https://kronosapps.rit.edu/kronosTimecard/login',
-    roles: [ROLES.EMPLOYEE, ROLES.ADMIN]
+    roles: [ROLES.EMPLOYEE, ROLES.ADMIN],
+    feature: FEATURES.KRONOS
   },
   {
     category: 'Personal',
     text: 'Oracle',
     link: 'https://myinfo.rit.edu',
-    roles: [ROLES.EMPLOYEE, ROLES.ADMIN]
+    roles: [ROLES.EMPLOYEE, ROLES.ADMIN],
+    feature: FEATURES.ORACLE
   },
   {
     category: 'Personal',
     text: 'Send Message',
     link: '/Messaging',
-    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN]
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN],
+    feature: FEATURES.MESSAGING
   },
   {
     category: 'Personal',
     text: 'View Timecards',
     link: '/Timecard/Admin/[username]',
-    roles: [ROLES.ADMIN]
+    roles: [ROLES.ADMIN],
+    feature: FEATURES.TIMECARD
   },
   {
     category: 'Personal',
     text: 'View Timecards',
     link: '/Timecard/Employer/[username]',
-    roles: [ROLES.EMPLOYER]
-  },
-  {
-    category: 'Personal',
-    text: 'Manage Profile',
-    link: '/Profile',
-    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN]
+    roles: [ROLES.EMPLOYER],
+    feature: FEATURES.TIMECARD
   },
   // --- EMPLOYEE-SPECIFIC PERSONAL OPTIONS ---
   {
     category: 'Personal',
     text: 'My Timecards',
     link: '/Timecard/Employee/[username]',
-    roles: [ROLES.EMPLOYEE]
+    roles: [ROLES.EMPLOYEE],
+    feature: FEATURES.TIMECARD
   },
   {
     category: 'Personal',
     text: 'My Applications',
     link: '/Applications/Employee/[username]',
-    roles: [ROLES.EMPLOYEE]
+    roles: [ROLES.EMPLOYEE],
+    feature: FEATURES.APPLICATIONS
   },
   // --- ADMIN-SPECIFIC PERSONAL OPTIONS ---
   {
@@ -71,27 +74,17 @@ export const DASHBOARD_OPTIONS = [
   },
   {
     category: 'Personal',
-    text: 'Manage My Positions',
+    text: 'Manage Positions',
     link: '/Positions/Admin/[username]?tab=my-positions',
-    roles: [ROLES.ADMIN]
+    roles: [ROLES.ADMIN],
+    feature: FEATURES.POSITIONS
   },
   {
     category: 'Personal',
-    text: 'Hire Candidate',
-    link: '/Applications/Admin/[username]?tab=hiring',
-    roles: [ROLES.ADMIN]
-  },
-  {
-    category: 'Personal',
-    text: 'Manage All Positions',
-    link: '/Positions/Admin/[username]?tab=all-positions',
-    roles: [ROLES.ADMIN]
-  },
-  {
-    category: 'Personal',
-    text: 'View Applications',
-    link: '/Applications/Admin/[username]?tab=applications',
-    roles: [ROLES.ADMIN]
+    text: 'Manage Applications',
+    link: '/Applications/Admin/[username]',
+    roles: [ROLES.ADMIN],
+    feature: FEATURES.APPLICATIONS
   },
   // --- EMPLOYER SPECIFIC OPTIONS ---
   {
@@ -99,12 +92,14 @@ export const DASHBOARD_OPTIONS = [
     text: 'View Applications',
     link: '/Applications/Employer/[username]',
     roles: [ROLES.EMPLOYER],
+    feature: FEATURES.APPLICATIONS
   },
   {
     category: 'Personal',
-    text: 'Manage My Positions',
+    text: 'Manage Positions',
     link: '/Positions/Employer/[username]?tab=my-positions',
-    roles: [ROLES.EMPLOYER]
+    roles: [ROLES.EMPLOYER],
+    feature: FEATURES.POSITIONS
   },
   // --- CANDIDATE-SPECIFIC OPTIONS ---
   {
@@ -112,5 +107,6 @@ export const DASHBOARD_OPTIONS = [
     text: 'My Applications',
     link: '/Applications/Candidate/[username]',
     roles: [ROLES.CANDIDATE],
+    feature: FEATURES.APPLICATIONS
   },
 ];

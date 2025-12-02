@@ -603,6 +603,41 @@ export async function getCandidateApplicationsAsAdmin() {
 }
 
 /**
+ * Fetches ALL applications across the system for admin viewing, regardless of status.
+ * Supports search and filtering by course, student, status, level, and semester.
+ * @param {string} search - The search term (course code/name or student name).
+ * @param {string} searchType - The type of search ("course" or "student").
+ * @param {object} filters - Object containing filters (status, level, semester, hasApplications).
+ * @returns {Promise<Array>} A promise that resolves to an array of all job positions with applications.
+ */
+export async function getAllApplicationsForAdmin(search = '', searchType = 'course', filters = {}) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  // Build query string
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (searchType) params.append('searchType', searchType);
+  if (filters.status && filters.status.length > 0) {
+    params.append('status', filters.status.join(','));
+  }
+  if (filters.level && filters.level.length > 0) {
+    params.append('level', filters.level.join(','));
+  }
+  if (filters.semester) params.append('semester', filters.semester);
+  if (filters.hasApplications) params.append('hasApplications', filters.hasApplications);
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/admin/all?${params.toString()}`;
+  console.log(`Fetching all applications for admin from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+/**
  * Updates the status of a specific job application and adds a comment.
  * @param {string} author - The username of the person making the update.
  * @param {number|string} applicationId - The ID of the application to update.
