@@ -1,32 +1,25 @@
+// src/backend/server.js
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require("path");
+const jwt = require("jsonwebtoken");
+const authMiddleware = require("./authMiddleware");
 
 const eventRoutes = require("./routes/events");
 const templateRoutes = require("./routes/template");
-
-const app = express();
-const PORT = process.env.PORT || 5010;
+const makeTeamBuilderRouter = require("./routes/teamBuilder");
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const makeTeamBuilderRouter = require("./routes/teamBuilder");
-const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
+const app = express();
+const PORT = process.env.PORT || 5010;
 
-// ---- DEV USERS JSON (only in dev) ----
-let devUsers = [];
-if (process.env.NODE_ENV !== "production") {
-  try {
-    devUsers = require(path.join(__dirname, "dev-users.json"));
-    console.log("Loaded dev users:", devUsers.length);
-  } catch (e) {
-    console.error("Could not load dev-users.json:", e.message);
-  }
-}
+/* ------------------------------------------------------------------
+   MIDDLEWARE
+   ------------------------------------------------------------------ */
 
-// ---- Middleware ----
 app.use(
   cors({
     origin: /^http:\/\/localhost:\d+$/, // allows any localhost port
@@ -37,43 +30,32 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Attach req.user from the cmt_id cookie
+app.use(authMiddleware);
+
+// Simple logger
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// ---- Routes ----
-app.use("/api/events", eventRoutes);
-app.use("/api/template", templateRoutes);
-app.use("/api/team-builder", teamBuilderRoutes);
+/* ------------------------------------------------------------------
+   DEV USERS (JSON file) + DEV LOGIN ROUTES
+   ------------------------------------------------------------------ */
 
-// Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    message: "Course Calendar Backend is running",
-  });
-});
-
-// Root endpoint
-app.get("/", (req, res) => {
-  res.json({
-    message: "Course Calendar Backend API",
-    version: "1.0.0",
-    endpoints: {
-      health: "/api/health",
-      events: "/api/events",
-      courses: "/api/events/courses",
-    },
-  });
-});
-
-// ---------------- Dev Temporary Login (JSON-based) ----------------
+let devUsers = [];
 if (process.env.NODE_ENV !== "production") {
-  const jwt = require("jsonwebtoken");
+  try {
+    const devUsersPath = path.join(__dirname, "dev-users.json");
+    console.log("Loading dev-users from:", devUsersPath);
+    devUsers = require(devUsersPath);
+    console.log("Loaded dev users:", devUsers.length);
+  } catch (e) {
+    console.error("Could not load dev-users.json:", e.message);
+    devUsers = [];
+  }
 
-  // List of users for the React DevLoginPage
+  // GET /dev/users – list of test users for DevLoginPage
   app.get("/dev/users", (req, res) => {
     const publicUsers = devUsers.map(({ id, email, name, roles }) => ({
       id,
@@ -84,7 +66,7 @@ if (process.env.NODE_ENV !== "production") {
     res.json(publicUsers);
   });
 
-  // Helper: map dev user to JWT payload (match your future Shib claims)
+  // Helper: map dev user to JWT payload (match future Shibboleth claims)
   function buildClaimsFromDevUser(user) {
     return {
       sub: user.uid || user.email,
@@ -109,34 +91,55 @@ if (process.env.NODE_ENV !== "production") {
 
     const claims = buildClaimsFromDevUser(user);
 
-    const token = jwt.sign(
-      claims,
-      process.env.JWT_SECRET || "dev-secret",
-      {
-        issuer: "cmt-auth",
-        expiresIn: "8h",
-      }
-    );
+    const token = jwt.sign(claims, process.env.JWT_SECRET || "dev-secret", {
+      issuer: "cmt-auth",
+      expiresIn: "8h",
+    });
 
-    // Important for dev: httpOnly: false so frontend can read the cookie
+    // In dev we allow JS to read this cookie (RequireAuth on the frontend)
     res.cookie("cmt_id", token, {
-      httpOnly: false,       // <-- allow JS to read in dev for RequireAuth
+      httpOnly: false,
       sameSite: "lax",
-      secure: false,         // ok for http://localhost
+      secure: false, // ok for http://localhost
       path: "/",
-      maxAge: 8 * 60 * 60 * 1000,
+      maxAge: 8 * 60 * 60 * 1000, // 8 hours
     });
 
     res.json({ ok: true, user: claims });
   });
 }
 
-// ---- Error handling middleware ----
-app.use((err, req, res, next) => {
-  console.error("Error:", err.stack);
-  res.status(500).json({
-    error: "Something went wrong!",
-    message: err.message,
+
+
+/* ------------------------------------------------------------------
+   ROUTES
+   ------------------------------------------------------------------ */
+
+const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
+
+app.use("/api/events", eventRoutes);
+app.use("/api/template", templateRoutes);
+app.use("/api/team-builder", teamBuilderRoutes);
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    message: "Course Calendar Backend is running",
+  });
+});
+
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({
+    message: "Course Calendar Backend API",
+    version: "1.0.0",
+    endpoints: {
+      health: "/api/health",
+      events: "/api/events",
+      courses: "/api/events/courses",
+    },
   });
 });
 
@@ -168,6 +171,19 @@ app.post("/api/course", async (req, res) => {
   }
 });
 
+/* ------------------------------------------------------------------
+   ERROR / 404 HANDLERS
+   ------------------------------------------------------------------ */
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err.stack);
+  res.status(500).json({
+    error: "Something went wrong!",
+    message: err.message,
+  });
+});
+
 // 404 handler
 app.use("*", (req, res) => {
   res.status(404).json({
@@ -176,7 +192,10 @@ app.use("*", (req, res) => {
   });
 });
 
-// Start server
+/* ------------------------------------------------------------------
+   START SERVER
+   ------------------------------------------------------------------ */
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📚 Course Calendar Backend is ready!`);

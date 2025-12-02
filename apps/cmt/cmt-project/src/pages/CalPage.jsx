@@ -43,35 +43,36 @@ export default function CalPage() {
   const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/events`;
 
   const loadCourses = async () => {
-    try {
-      const response = await fetch(`${API_BASE}/courses`);
-      const result = await response.json();
-      if (result.success) setCourses(result.data);
-    } catch (error) {
-      console.error("Error loading courses:", error);
-    }
-  };
+  try {
+    const response = await fetch(`${API_BASE}/courses`, {
+      credentials: "include",          
+    });
+    const result = await response.json();
+    if (result.success) setCourses(result.data);
+  } catch (error) {
+    console.error("Error loading courses:", error);
+  }
+};
 
   const loadEvents = async () => {
-    try {
-      const response = await fetch(API_BASE);
-      const result = await response.json();
-      if (result.success) {
-        // Transform the array of events into date-grouped object for calendar display
-        const eventsByDate = {};
-        result.data.forEach((event) => {
-          const dateKey = new Date(event.date).toISOString().split("T")[0];
-          if (!eventsByDate[dateKey]) {
-            eventsByDate[dateKey] = [];
-          }
-          eventsByDate[dateKey].push(event);
-        });
-        setEvents(eventsByDate);
-      }
-    } catch (error) {
-      console.error("Error loading events:", error);
+  try {
+    const response = await fetch(API_BASE, {
+      credentials: "include",          
+    });
+    const result = await response.json();
+    if (result.success) {
+      const eventsByDate = {};
+      result.data.forEach((event) => {
+        const dateKey = new Date(event.date).toISOString().split("T")[0];
+        if (!eventsByDate[dateKey]) eventsByDate[dateKey] = [];
+        eventsByDate[dateKey].push(event);
+      });
+      setEvents(eventsByDate);
     }
-  };
+  } catch (error) {
+    console.error("Error loading events:", error);
+  }
+};
 
   useEffect(() => {
     loadCourses();
@@ -80,17 +81,19 @@ export default function CalPage() {
   }, []);
 
   const loadUpcomingDeadlines = async () => {
-    try {
-      const response = await fetch(`${API_BASE}/deadlines?days=7`);
-      const result = await response.json();
-      if (result.success) {
-        setUpcomingDeadlines(result.data);
-      }
-    } catch (error) {
-      console.error("Error loading deadlines:", error);
-      setUpcomingDeadlines([]);
+  try {
+    const response = await fetch(`${API_BASE}/deadlines?days=7`, {
+      credentials: "include",          // 👈 add
+    });
+    const result = await response.json();
+    if (result.success) {
+      setUpcomingDeadlines(result.data);
     }
-  };
+  } catch (error) {
+    console.error("Error loading deadlines:", error);
+    setUpcomingDeadlines([]);
+  }
+};
 
   // Button handler functions
   const handleAddEvent = (date = null) => {
@@ -109,31 +112,32 @@ export default function CalPage() {
   };
 
   const handleSaveNewEvent = async () => {
-    if (!newEvent.title || !newEvent.courseId) {
-      alert("Please fill in required fields: Title and Course");
-      return;
-    }
+  if (!newEvent.title || !newEvent.courseId) {
+    alert("Please fill in required fields: Title and Course");
+    return;
+  }
 
-    try {
-      const response = await fetch(API_BASE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...newEvent, date: selectedDate }),
-      });
-      const result = await response.json();
+  try {
+    const response = await fetch(API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...newEvent, date: selectedDate }),
+      credentials: "include",          // 👈 add
+    });
+    const result = await response.json();
 
-      if (result.success) {
-        await loadEvents();
-        await loadUpcomingDeadlines();
-        setShowAddEventModal(false);
-        alert("Event added successfully!");
-      } else {
-        alert(`Error: ${result.error}`);
-      }
-    } catch (error) {
-      alert("Failed to save event");
+    if (result.success) {
+      await loadEvents();
+      await loadUpcomingDeadlines();
+      setShowAddEventModal(false);
+      alert("Event added successfully!");
+    } else {
+      alert(`Error: ${result.error}`);
     }
-  };
+  } catch (error) {
+    alert("Failed to save event");
+  }
+};
 
   const handleEditEvent = () => {
     if (!selectedEvent) return;
@@ -141,25 +145,26 @@ export default function CalPage() {
   };
 
   const handleDeleteEvent = async () => {
-    if (!selectedEvent || !window.confirm(`Delete "${selectedEvent.title}"?`))
-      return;
+  if (!selectedEvent || !window.confirm(`Delete "${selectedEvent.title}"?`))
+    return;
 
-    try {
-      const response = await fetch(`${API_BASE}/${selectedEvent.id}`, {
-        method: "DELETE",
-      });
-      const result = await response.json();
+  try {
+    const response = await fetch(`${API_BASE}/${selectedEvent.id}`, {
+      method: "DELETE",
+      credentials: "include",          // 👈 add
+    });
+    const result = await response.json();
 
-      if (result.success) {
-        await loadEvents();
-        await loadUpcomingDeadlines();
-        setShowEventModal(false);
-        alert("Event deleted successfully!");
-      }
-    } catch (error) {
-      alert("Failed to delete event");
+    if (result.success) {
+      await loadEvents();
+      await loadUpcomingDeadlines();
+      setShowEventModal(false);
+      alert("Event deleted successfully!");
     }
-  };
+  } catch (error) {
+    alert("Failed to delete event");
+  }
+};
 
   const handleCloseModal = () => {
     setShowEventModal(false);

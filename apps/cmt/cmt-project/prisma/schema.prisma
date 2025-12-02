@@ -19,6 +19,10 @@ model Event {
   importance  Importance
   course      Course?    @relation(fields: [courseId], references: [id])
 
+  // NEW FIELDS for per-user ownership
+  ownerUid    String?    // RIT username / uid from JWT (req.user.uid)
+  ownerEmail  String?    // email from JWT (req.user.email)
+
   @@index([courseId])
   @@map("events")
 }
