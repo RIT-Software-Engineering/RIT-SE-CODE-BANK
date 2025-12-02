@@ -626,6 +626,9 @@ export default function Header() {
           height: "85px",
           boxShadow: theme.palette.mode === 'dark' ? '0 1px 0 rgba(255, 255, 255, 0.1)' : 'none',
           borderBottom: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : 'none',
+          width: '100%',
+          maxWidth: '100vw',
+          overflowX: 'hidden',
         }}
       >
         <Toolbar
@@ -637,6 +640,8 @@ export default function Header() {
             alignItems: "center",
             justifyContent: "space-between",
             minHeight: "85px",
+            maxWidth: '100%',
+            width: '100%',
           }}
         >
           {/* Left: RIT Logo and Title */}
