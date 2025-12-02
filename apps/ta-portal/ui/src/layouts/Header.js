@@ -278,7 +278,7 @@ export default function Header() {
     } else {
       // Smart routing for Applications page when already on it
       if (currentUser && pathname?.includes('/Applications/Admin/')) {
-        const currentTab = searchParams?.get('tab') || 'hiring'; // Default is hiring page
+        const currentTab = searchParams?.get('tab') || 'hiring'; // No tab param = hiring tab (default)
         const isSearchingForHiring = selected?.text?.toLowerCase().includes('hir');
         const isSearchingForApplications = selected?.text === 'Applications';
         

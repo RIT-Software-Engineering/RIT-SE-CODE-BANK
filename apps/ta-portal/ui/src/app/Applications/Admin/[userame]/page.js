@@ -182,7 +182,7 @@ export default function AdminApplicationsPage() {
   // and we're on the Ready to Hire tab and the application is present.
   useEffect(() => {
     if (didAutoOpenFromLink.current) return;
-    if (activeTab !== 1) return; // Only makes sense on Ready to Hire
+    if (activeTab !== 0) return; // Only makes sense on Ready to Hire (tab 0)
 
     const appIdParam = searchParams.get('applicationId');
     if (!appIdParam) return;

@@ -1,7 +1,7 @@
 // src/components/HeroBanner.js
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { Box, IconButton } from "@mui/material";
+import { Box, IconButton, useTheme } from "@mui/material";
 import { PlayArrow, Pause } from "@mui/icons-material";
 
 /**
@@ -20,6 +20,7 @@ export default function HeroBanner() {
   const [isPlaying, setIsPlaying] = useState(true);
   const videoRef = useRef(null);
   const mobileVideoRef = useRef(null);
+  const theme = useTheme();
 
   useEffect(() => {
     // Autoplay videos on mount
@@ -56,7 +57,7 @@ export default function HeroBanner() {
           position: "relative",
           width: "100%",
           height: { xs: "300px", sm: "400px", md: "500px", lg: "600px" },
-          backgroundColor: "#000",
+          backgroundColor: theme.ritColors.black,
           overflow: "hidden",
         }}
       >
@@ -125,7 +126,7 @@ export default function HeroBanner() {
             bottom: { xs: 16, md: 24 },
             right: { xs: 16, md: 24 },
             backgroundColor: "rgba(0, 0, 0, 0.6)",
-            color: "white",
+            color: theme.ritColors.white,
             "&:hover": {
               backgroundColor: "rgba(0, 0, 0, 0.8)",
             },
@@ -146,8 +147,8 @@ export default function HeroBanner() {
           bottom: { xs: "50px", md: "65px" },
           left: "50%",
           transform: "translateX(-50%)",
-          backgroundColor: "#F76902", // RIT Orange
-          color: "white",
+          backgroundColor: theme.palette.primary.main, // RIT Orange
+          color: theme.ritColors.white,
           py: { xs: 2, md: 3 },
           px: { xs: 4, md: 6 },
           textAlign: "center",
