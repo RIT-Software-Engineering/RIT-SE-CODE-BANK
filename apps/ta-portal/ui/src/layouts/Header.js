@@ -251,6 +251,10 @@ export default function Header() {
                   alignItems: "center",
                   "&:hover": {
                     backgroundColor: theme.palette.action.hover,
+                    color: theme.palette.primary.main,
+                    "& .MuiListItemIcon-root": {
+                      color: theme.palette.primary.main,
+                    },
                   },
                 }}
               >
@@ -286,6 +290,13 @@ export default function Header() {
               py: 1,
               px: 2,
               borderRadius: 1,
+              "&:hover": {
+                backgroundColor: theme.palette.action.hover,
+                color: theme.palette.primary.main,
+                "& .MuiListItemIcon-root": {
+                  color: theme.palette.primary.main,
+                },
+              },
             }}
           >
             <ListItemIcon
@@ -319,6 +330,13 @@ export default function Header() {
                   py: 1,
                   px: 2,
                   borderRadius: 1,
+                  "&:hover": {
+                    backgroundColor: theme.palette.action.hover,
+                    color: theme.palette.primary.main,
+                    "& .MuiListItemIcon-root": {
+                      color: theme.palette.primary.main,
+                    },
+                  },
                 }}
               >
                 <ListItemIcon
@@ -336,7 +354,12 @@ export default function Header() {
                   primary="Dark Mode"
                   secondary={mode === "dark" ? "On" : "Off"}
                   primaryTypographyProps={{ sx: { mb: 0, fontSize: "0.9rem" } }}
-                  secondaryTypographyProps={{ sx: { fontSize: "0.8rem" } }}
+                  secondaryTypographyProps={{ 
+                    sx: { 
+                      fontSize: "0.8rem",
+                      color: "inherit",
+                    } 
+                  }}
                 />
               </ListItemButton>
             </ListItem>
@@ -351,6 +374,13 @@ export default function Header() {
                     py: 1,
                     px: 2,
                     borderRadius: 1,
+                    "&:hover": {
+                      backgroundColor: theme.palette.action.hover,
+                      color: theme.palette.primary.main,
+                      "& .MuiListItemIcon-root": {
+                        color: theme.palette.primary.main,
+                      },
+                    },
                   }}
                 >
                   <ListItemIcon
@@ -418,6 +448,13 @@ export default function Header() {
               py: 1,
               px: 2,
               borderRadius: 1,
+              "&:hover": {
+                backgroundColor: theme.palette.action.hover,
+                color: theme.palette.primary.main,
+                "& .MuiListItemIcon-root": {
+                  color: theme.palette.primary.main,
+                },
+              },
             }}
           >
             <ListItemIcon
@@ -450,6 +487,9 @@ export default function Header() {
                 px: 2,
                 borderRadius: 1,
                 color: theme.palette.error.main,
+                "&:hover": {
+                  backgroundColor: theme.palette.action.hover,
+                },
               }}
             >
               <ListItemIcon
@@ -479,10 +519,12 @@ export default function Header() {
       {/* RIT-Branded Header */}
       <AppBar
         position="static"
+        elevation={0}
         sx={{
-          backgroundColor: theme.palette.secondary.main, // Black background
+          backgroundColor: "#000000", // always black
           height: "85px",
-          boxShadow: `0 2px 8px rgba(0, 0, 0, 0.15)`,
+          boxShadow: "none",
+          border: "none",
         }}
       >
         <Toolbar
@@ -641,25 +683,6 @@ export default function Header() {
               </Tooltip>
             )}
 
-            {/* Theme Toggle - Always Visible */}
-            <Tooltip
-              title={
-                mode === "dark" ? "Switch to light mode" : "Switch to dark mode"
-              }
-            >
-              <IconButton
-                onClick={toggleTheme}
-                sx={{
-                  color: "white",
-                  "&:hover": {
-                    color: theme.palette.primary.main,
-                  },
-                }}
-              >
-                {mode === "dark" ? <Brightness7 /> : <Brightness4 />}
-              </IconButton>
-            </Tooltip>
-
             {/* Login Button - Show when not logged in */}
             {!currentUser && (
               <Button
@@ -679,7 +702,7 @@ export default function Header() {
               </Button>
             )}
 
-            {/* Mobile Hamburger Menu */}
+            {/* Hamburger Menu */}
             {currentUser && (
               <IconButton
                 color="inherit"
