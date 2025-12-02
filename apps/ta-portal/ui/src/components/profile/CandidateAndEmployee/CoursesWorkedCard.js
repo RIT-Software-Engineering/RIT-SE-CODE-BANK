@@ -40,7 +40,7 @@ export default function CoursesWorkedCard({ coursesTaken, onEdit }) {
       ) : (
         <List disablePadding>
           {coursesWorked.map((course, index) => (
-            <React.Fragment key={course.courseCode}>
+            <React.Fragment key={`${course.courseCode}-${index}`}>
               <ListItem sx={{ px: 0, py: 1.5 }}>
                 <ListItemText
                   primary={`${course.courseCode} - ${course.name || 'No course name available'}`}

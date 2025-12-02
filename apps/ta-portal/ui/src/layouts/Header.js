@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useContext } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useFeatureFlags, FEATURES } from "@/configuration/featureFlags";
 import {
   AppBar,
@@ -135,7 +135,7 @@ const HEADER_LINKS = [
   },
   {
     text: "Applications",
-    href: "/Applications/Admin/[username]",
+    href: "/Applications/Admin/[username]?tab=all",
     icon: <Description />,
     roles: [ROLES.ADMIN],
     feature: FEATURES.APPLICATIONS,
@@ -161,6 +161,8 @@ const HEADER_LINKS = [
 export default function Header() {
   const { currentUser, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { toggleTheme, mode } = useContext(ThemeContext);
   const { isFeatureEnabled } = useFeatureFlags();
   const userRole = currentUser ? currentUser.role : null;
@@ -196,8 +198,63 @@ export default function Header() {
       link.href.includes("[username]") && currentUser
         ? link.href.replace("[username]", currentUser.username)
         : link.href;
-    return { text: link.text, href: finalHref };
+    return { text: link.text, href: finalHref, category: "Navigation" };
   });
+
+  // Add additional searchable pages and actions
+  const additionalPages = [];
+  
+  if (currentUser) {
+    // Profile and settings
+    additionalPages.push(
+      { text: "My Profile", href: "/Profile", category: "Settings" },
+      { text: "Theme/Appearance", href: "#", category: "Settings", action: () => {
+        setDrawerOpen(true);
+        setSettingsOpen(true);
+      }},
+      { text: "Dark Mode", href: "#", category: "Settings", action: () => {
+        setDrawerOpen(true);
+        setSettingsOpen(true);
+      }}
+    );
+
+    // Admin-specific pages
+    if (userRole === ROLES.ADMIN) {
+      additionalPages.push(
+        { text: "Feature Settings", href: "/Admin/Features", category: "Admin" },
+        { text: "All Users", href: "/Users", category: "Admin" },
+        { text: "Manage Users", href: "/Users", category: "Admin" },
+        { text: "Hire Candidates", href: `/Applications/Admin/${currentUser.username}`, category: "Admin" },
+        { text: "Hire Applicants", href: `/Applications/Admin/${currentUser.username}`, category: "Admin" },
+        { text: "Hiring", href: `/Applications/Admin/${currentUser.username}`, category: "Admin" }
+      );
+    }
+
+    // Role-specific quick actions
+    if (userRole === ROLES.CANDIDATE && isFeatureEnabled(FEATURES.POSITIONS)) {
+      additionalPages.push(
+        { text: "Browse Positions", href: `/Positions/Candidate/${currentUser.username}`, category: "Quick Actions" },
+        { text: "Find Jobs", href: `/Positions/Candidate/${currentUser.username}`, category: "Quick Actions" }
+      );
+    }
+
+    if (userRole === ROLES.EMPLOYER && isFeatureEnabled(FEATURES.POSITIONS)) {
+      additionalPages.push(
+        { text: "Create Position", href: `/Positions/Employer/${currentUser.username}`, category: "Quick Actions" },
+        { text: "New Job Posting", href: `/Positions/Employer/${currentUser.username}`, category: "Quick Actions" },
+        { text: "My Positions", href: `/Positions/Employer/${currentUser.username}`, category: "Quick Actions" }
+      );
+    }
+
+    if (userRole === ROLES.EMPLOYEE && isFeatureEnabled(FEATURES.TIMECARD)) {
+      additionalPages.push(
+        { text: "Submit Timecard", href: `/Timecard/Employee/${currentUser.username}`, category: "Quick Actions" },
+        { text: "My Timecard", href: `/Timecard/Employee/${currentUser.username}`, category: "Quick Actions" }
+      );
+    }
+  }
+
+  const searchablePages = [...allPages, ...additionalPages];
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -205,14 +262,50 @@ export default function Header() {
       setSearchResults([]);
       return;
     }
-    const filtered = allPages.filter((page) =>
+    const filtered = searchablePages.filter((page) =>
       page.text.toLowerCase().includes(query.toLowerCase())
     );
     setSearchResults(filtered);
   };
 
   const handleSearchSelect = (href) => {
-    router.push(href);
+    // Check if it's an action (dark mode toggle)
+    const selected = searchResults.find(r => r.href === href);
+    if (selected?.action) {
+      selected.action();
+    } else {
+      // Smart routing for Applications page when already on it
+      if (currentUser && pathname?.includes('/Applications/Admin/')) {
+        const currentTab = searchParams?.get('tab') || 'hiring'; // Default is hiring page
+        const isSearchingForHiring = selected?.text?.toLowerCase().includes('hir');
+        const isSearchingForApplications = selected?.text === 'Applications';
+        
+        // If on hiring and searching for Applications, go to all tab
+        if (currentTab === 'hiring' && isSearchingForApplications) {
+          const newUrl = `/Applications/Admin/${currentUser.username}?tab=all`;
+          router.push(newUrl);
+          // Force scroll to trigger re-render detection
+          window.scrollTo(0, 0);
+          setSearchOpen(false);
+          setSearchQuery("");
+          setSearchResults([]);
+          return;
+        }
+        // If on all tab and searching for hiring, go to hiring tab
+        else if (currentTab === 'all' && isSearchingForHiring) {
+          const newUrl = `/Applications/Admin/${currentUser.username}`;
+          router.push(newUrl);
+          // Force scroll to trigger re-render detection
+          window.scrollTo(0, 0);
+          setSearchOpen(false);
+          setSearchQuery("");
+          setSearchResults([]);
+          return;
+        }
+      }
+      // Default routing
+      router.push(href);
+    }
     setSearchOpen(false);
     setSearchQuery("");
     setSearchResults([]);
@@ -622,7 +715,12 @@ export default function Header() {
               }
             >
               <IconButton
-                sx={{ ml: 1 }}
+                sx={{ 
+                  ml: 1,
+                  "&:hover": {
+                    color: theme.palette.primary.main,
+                  },
+                }}
                 onClick={toggleTheme}
                 color="inherit"
               >
@@ -768,7 +866,12 @@ export default function Header() {
                   },
                 }}
               >
-                <Typography variant="body2">{result.text}</Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                  <Typography variant="body2">{result.text}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {result.category}
+                  </Typography>
+                </Box>
               </ListItemButton>
             ))}
           </List>

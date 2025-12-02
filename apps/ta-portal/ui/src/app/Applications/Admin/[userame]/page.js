@@ -57,15 +57,25 @@ export default function AdminApplicationsPage() {
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam === 'all') return 1;
-    if (tabParam === 'hiring') return 1;
+    if (tabParam === 'hiring') return 0;
     // If we arrive via a deep link that includes application identifiers but
     // no explicit tab, prefer landing on the "Ready to Hire" tab which is the
     // typical admin action surface for notifications.
     const hasDeepLink = !!(
       searchParams.get('jobPositionId') || searchParams.get('applicationId')
     );
-    return hasDeepLink ? 1 : 0;
+    return hasDeepLink ? 0 : 0;
   });
+
+  // Watch for URL changes and update active tab
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'all') {
+      setActiveTab(1);
+    } else if (tabParam === 'hiring' || !tabParam) {
+      setActiveTab(0);
+    }
+  }, [searchParams]);
 
   // State for Hire Candidates tab
   const [hiringApplications, setHiringApplications] = useState([]);
