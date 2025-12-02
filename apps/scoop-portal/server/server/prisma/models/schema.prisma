@@ -79,7 +79,7 @@ model JournalEntry {
   topic         users     @relation("TopicUserEntries", fields: [topic_id], references: [id])
 
   previous_entryid Int?
-  previos_entry    JournalEntry? @relation("PreviousEntry", fields: [previous_entryid], references: [id])
+  previous_entry    JournalEntry? @relation("PreviousEntry", fields: [previous_entryid], references: [id])
   next_entries      JournalEntry[] @relation("PreviousEntry")
   
   Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
