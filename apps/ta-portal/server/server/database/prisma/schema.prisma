@@ -204,7 +204,7 @@ model FeatureFlag {
   // Fields
   name      String   @id @db.VarChar(50) // e.g., "MESSAGING", "TIMECARD", "POSITIONS"
   enabled   Boolean  @default(true)
-  updatedAt DateTime @default(now()) @updatedAt
+  updatedAt DateTime @updatedAt
 }
 
 
