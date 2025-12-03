@@ -109,4 +109,11 @@ export const DASHBOARD_OPTIONS = [
     roles: [ROLES.CANDIDATE],
     feature: FEATURES.APPLICATIONS
   },
+  // --- WORKFLOWS (ALL ROLES) ---
+  {
+    category: 'Personal',
+    text: 'My Workflows',
+    link: '/Workflows/[username]',
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN]
+  },
 ];

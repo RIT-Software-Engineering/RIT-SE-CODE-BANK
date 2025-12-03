@@ -5,4 +5,5 @@ INSERT INTO `Candidate` (`username`, `year`, `major`, `graduateStatus`, `wasPrio
 ('ee8901', 2, 'Computer Engineering', 'UNDERGRADUATE', TRUE),
 ('ss9012', 4, 'Cybersecurity', 'UNDERGRADUATE', FALSE),
 ('gg5672', 3, 'Software Engineering', 'UNDERGRADUATE', FALSE),
-('bgg6007', 4, 'Cybersecurity', 'UNDERGRADUATE', FALSE);
+('bgg6007', 4, 'Cybersecurity', 'UNDERGRADUATE', FALSE),
+('yvk1136', 4, 'Computer Science', 'UNDERGRADUATE', FALSE);

@@ -147,6 +147,12 @@ const HEADER_LINKS = [
     icon: <People />,
     roles: [ROLES.ADMIN],
   },
+  {
+    text: "Workflows",
+    href: "/Workflows/[username]",
+    icon: <AccessTime />,
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN],
+  },
 ];
 
 

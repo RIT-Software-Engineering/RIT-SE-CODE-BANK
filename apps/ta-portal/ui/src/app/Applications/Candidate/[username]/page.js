@@ -252,13 +252,18 @@ export default function CandidateApplicationsPage() {
                 {displayData[semester].map((app) => (
                   <Box
                     key={app.id}
-                    currentUser={currentUser}
-                    application={app}
-                    onStatusChange={handleStatusChange}
-                    refreshUserProfile={refreshUserProfile}
-                    cardId={`app-${app.id}`}
-                    isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
-                  />
+                    id={`application-${app.id}`}
+                    sx={{
+                      borderRadius: 2
+                    }}
+                  >
+                    <ApplicationCard
+                      currentUser={currentUser}
+                      application={app}
+                      onStatusChange={handleStatusChange}
+                      refreshUserProfile={refreshUserProfile}
+                    />
+                  </Box>
                 ))}
               </Box>
             </AccordionDetails>

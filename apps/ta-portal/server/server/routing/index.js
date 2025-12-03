@@ -34,6 +34,9 @@ const slack_router = require("./slack_routes");
 const devNotifyRoutes = require('./dev_notify_routes');
 const notificationsApi = require('./notifications_api');
 
+// Import the Workflow-specific routes from the `wf_routes.js` file.
+const wf_router = require("./wf_routes");
+
 // Import feature flag utilities
 const { isFeatureEnabled, FEATURES } = require("../config/featureFlags");
 
@@ -58,6 +61,11 @@ router.use("/slack", async (req, res, next) => {
 // Mount dev notification and notifications API routes
 router.use('/dev', devNotifyRoutes);
 router.use('/notifications', notificationsApi);
+
+// Mount the Workflow router. All routes defined in `wf_routes.js` will now
+// be accessible under the `/api/workflows` path.
+router.use("/workflows", wf_router);
+
 // =============================================================================
 // EXPORTS
 // =============================================================================

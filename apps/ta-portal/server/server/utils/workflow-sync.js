@@ -700,7 +700,6 @@ async function syncWorkflowsWithApplications() {
                                                 { actionStateId: actionState.id },
                                                 { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                                             );
-                                            console.log(`[syncWorkflows] Marked action ${i + 1} as completed for user ${user.username}`);
                                         }
                                     }
                                 }

@@ -15,6 +15,7 @@ const {
 const { verifyPassword, hashPassword } = require("../config/passwordHashes");
 // Notifications: call the notification service directly (no shared client)
 const { dispatchTemplated } = require('../utils/notifications');
+const { createTimecardApprovalWorkflow } = require('../utils/workflow-sync');
 
 // Build a stable deep link back into the TA Portal UI for CTAs in notifications.
 // Uses TA_PORTAL_BASE_URL or defaults to http://localhost:3000 for dev.
@@ -2542,6 +2543,24 @@ async function upsertTimecard(timecardData) {
 
     return { success: true, message: "Timecard saved successfully." };
   });
+}
+
+/**
+ * Submits a timecard for approval and creates a workflow.
+ * @param {number} timecardWeeklyHistoryId - The ID of the timecard week to submit.
+ * @returns {Promise<Object>} A promise that resolves with the workflow creation result.
+ */
+async function submitTimecard(timecardWeeklyHistoryId) {
+  try {
+    const workflow = await createTimecardApprovalWorkflow(timecardWeeklyHistoryId);
+    if (!workflow) {
+      return { success: false, message: "Failed to create approval workflow." };
+    }
+    return { success: true, message: "Timecard submitted for approval.", workflow };
+  } catch (error) {
+    console.error('Error submitting timecard:', error);
+    throw error;
+  }
 }
 
 /**

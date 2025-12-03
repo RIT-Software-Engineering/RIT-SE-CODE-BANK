@@ -292,12 +292,16 @@ export default function EmployerApplicationsPage() {
                   position.jobPositionApplicationHistory.map((app) => (
                     <Box
                       key={app.id}
-                      jobPosition={position}
-                      application={app}
-                      onStatusChange={handleStatusChange}
-                      cardId={`app-${app.id}`}
-                      isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
-                    />
+                      id={`application-${app.id}`}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      <ApplicationCard
+                        currentUser={currentUser}
+                        jobPosition={position}
+                        application={app}
+                        onStatusChange={handleStatusChange}
+                      />
+                    </Box>
                   ))
                 ) : (
                   <Typography sx={{ p: 2 }}>

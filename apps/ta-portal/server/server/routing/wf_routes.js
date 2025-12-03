@@ -1754,9 +1754,6 @@ router.get("/by-role/:username", async (req, res) => {
     const transformedWorkflows = await Promise.all(filteredWorkflows.map(async workflow => {
       const metadata = workflow.metadata || workflow.baseAction?.metadata || {};
       
-      // Debug logging for metadata
-      console.log(`[wf_routes] Workflow ${workflow.id} metadata:`, JSON.stringify(metadata, null, 2));
-      
       return {
         id: workflow.id,
         name: workflow.baseAction?.name || 'Unnamed Workflow',
