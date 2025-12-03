@@ -7,6 +7,7 @@ const root = process.cwd();
 const portalServerDir = path.join(root, "apps", "scoop-portal", "server");
 const portalUIDir = path.join(root, "apps", "scoop-portal", "ui");
 const workflowServerDir = path.join(root, "apps", "workflow", "server");
+const notifDir = path.join(root, "services", "notification-service");
 
 // Command to run from root
 function run(cmd, opts = {}) {
@@ -24,12 +25,26 @@ console.log("Installing dependencies...");
 runInDir("npm install", portalServerDir);
 runInDir("npm install", portalUIDir);
 runInDir("npm install", workflowServerDir);
+runInDir("npm install", notifDir);
 
 // Create environment files
 const envFilePortalServer = path.join(portalServerDir, ".env");
 const envFilePortalUI = path.join(portalUIDir, ".env");
 const envFilePortalUIDev = path.join(portalUIDir, ".env.development");
 const envFileWorkflowServer = path.join(workflowServerDir, ".env");
+const envNotifService = path.join(notifDir, ".env");
+
+if (!fs.existsSync(envNotifService)) {
+  console.log("Creating notification service .env file...");
+  const defaultEnv = `SMTP_HOST=smtp4dev
+SMTP_PORT=25
+SMTP_FROM=se_svc_apps@rit.edu
+PORT=4000
+NODE_ENV=development
+SLACK_BOT_TOKEN=
+DATABASE_URL="mysql://root:password@localhost:3309/notification_service"`;
+  fs.writeFileSync(envNotifService, defaultEnv);
+}
 
 if (!fs.existsSync(envFilePortalServer)) {
   console.log("Creating scoop portal server .env file...");
@@ -78,6 +93,9 @@ runInDir(`npx prisma db seed`, workflowServerDir);
 console.log("Applying schema & seeding scoop portal DB...");
 runInDir(`npx prisma migrate dev --name init`, portalServerDir);
 runInDir(`npx prisma db seed`, portalServerDir);
+
+console.log("Applying schema for notification service DB...");
+runInDir(`npx prisma migrate dev --name init`, notifDir);
 
 // End
 console.log("\nPortal setup complete! Run `npm run startportal` to launch.");

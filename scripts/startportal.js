@@ -7,6 +7,7 @@ const root = process.cwd();
 const portalServerDir = path.join(root, "apps", "scoop-portal", "server");
 const portalUIDir = path.join(root, "apps", "scoop-portal", "ui");
 const workflowServerDir = path.join(root, "apps", "workflow", "server");
+const notifDir = path.join(root, "services", "notification-service");
 
 function run(cmd, opts = {}) {
   console.log(`\n> ${cmd}`);
@@ -23,6 +24,7 @@ try {
     `"cd ${workflowServerDir} && npm start dev"`,
     `"cd ${portalServerDir} && node server.js"`,
     `"cd ${portalUIDir} && npm run dev"`,
+    `"cd ${notifDir} && npm start dev"`,
   ].join(" ");
 
   run(`npx concurrently ${concurrentlyCmd}`);
