@@ -62,6 +62,16 @@ function requireUser(req, res) {
 }
 
 // GET /api/events - Get all events with course information (for this user)
+// Helper: require a logged-in user
+function requireUser(req, res) {
+  if (!req.user) {
+    res.status(401).json({ success: false, error: "Not authenticated" });
+    return null;
+  }
+  return req.user;
+}
+
+// GET /api/events - Get all events with course information (for this user)
 router.get("/", async (req, res) => {
   const user = requireUser(req, res);
   if (!user) return;
@@ -72,7 +82,7 @@ router.get("/", async (req, res) => {
         ownerUid: user.uid,
       },
       include: {
-        course: true, // Include course details
+        course: true,
       },
       orderBy: {
         date: "asc",
@@ -92,7 +102,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/events/courses - Get all courses that have events for this user
+// GET /api/events/courses - Get all courses
 router.get("/courses", async (req, res) => {
   const user = requireUser(req, res);
   if (!user) return;
@@ -108,7 +118,7 @@ router.get("/courses", async (req, res) => {
       },
       include: {
         _count: {
-          select: { events: true }, // Count events per course (still total)
+          select: { events: true }, // Count events per course
         },
       },
       orderBy: {
@@ -221,7 +231,7 @@ router.get("/deadlines", async (req, res) => {
           lte: endDate,
         },
         type: {
-          in: ["exam", "assignment"], // Only deadlines
+          in: ["exam", "assignment"],
         },
       },
       include: {
@@ -332,13 +342,10 @@ router.post("/", validateEvent, async (req, res) => {
   try {
     const { date, courseId, ...eventData } = req.body;
 
-    // Verify course exists (unless "admin")
-    const course =
-      courseId === "admin"
-        ? null
-        : await prisma.course.findUnique({
-            where: { id: courseId },
-          });
+    // Verify course exists
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+    });
 
     if (!course && courseId !== "admin") {
       return res.status(400).json({
@@ -379,18 +386,15 @@ router.post("/", validateEvent, async (req, res) => {
   }
 });
 
-// PUT /api/events/:id - Update existing event (only if owned by this user)
+// PUT /api/events/:id - Update existing event
 router.put("/:id", async (req, res) => {
-  const user = requireUser(req, res);
-  if (!user) return;
-
-  try{
+  try {
     const eventId = parseInt(req.params.id);
     const { date, courseId, ...updatedData } = req.body;
 
-    // Check if event exists and is owned by this user
-    const existingEvent = await prisma.event.findFirst({
-      where: { id: eventId, ownerUid: user.uid },
+    // Check if event exists
+    const existingEvent = await prisma.event.findUnique({
+      where: { id: eventId },
     });
 
     if (!existingEvent) {
@@ -444,7 +448,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// DELETE /api/events/:id - Delete event (only if owned by this user)
+// DELETE /api/events/:id - Delete event
 router.delete("/:id", async (req, res) => {
   const user = requireUser(req, res);
   if (!user) return;
