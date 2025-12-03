@@ -3,7 +3,7 @@ const pool = require("../db");
 // READ : all forms
 async function getAllForms(){
     let connection;
-    try{
+    try {
         connection = await pool.getConnection();
         return await connection.query('SELECT * FROM forms');
     } finally {
@@ -14,7 +14,7 @@ async function getAllForms(){
 // READ : form by a specific id
 async function getFormById(id){
     let connection;
-    try{
+    try {
         connection = await pool.getConnection();
         return await connection.query('SELECT * FROM forms WHERE id = ?', [id]);
     } finally {
