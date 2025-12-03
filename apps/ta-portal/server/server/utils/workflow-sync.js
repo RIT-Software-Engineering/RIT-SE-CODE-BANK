@@ -22,13 +22,11 @@ const WORKFLOW_SERVICE_URL = process.env.WORKFLOWS_URL || 'http://localhost:3001
 const workflowCache = new Map();
 
 async function updateWorkflowProgress(applicationId, newStatus) {
-    console.log(`[updateWorkflowProgress] Called with applicationId=${applicationId}, newStatus=${newStatus}`);
     try {
         // Check if workflow service is available
         try {
             await axios.get(`${WORKFLOW_SERVICE_URL}/workflows`, { timeout: 3000 });
         } catch (error) {
-            console.log('[updateWorkflowProgress] Workflow service not available');
             return; // Workflow service not available, skip update
         }
 
@@ -37,13 +35,11 @@ async function updateWorkflowProgress(applicationId, newStatus) {
         let workflow = null;
 
         if (workflowId) {
-            console.log(`[updateWorkflowProgress] Using cached workflow ID: ${workflowId}`);
             // Fetch the specific workflow
             try {
                 const workflowResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows/${workflowId}`, { timeout: 10000 });
                 workflow = workflowResponse.data;
             } catch (error) {
-                console.log('[updateWorkflowProgress] Cached workflow not found, will search all workflows');
                 workflowCache.delete(applicationId.toString());
             }
         }
@@ -52,9 +48,6 @@ async function updateWorkflowProgress(applicationId, newStatus) {
         if (!workflow) {
             const allWorkflowsResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows`, { timeout: 10000 });
             const allWorkflows = allWorkflowsResponse.data || [];
-            
-            console.log(`[updateWorkflowProgress] Searching for workflow with applicationId=${applicationId}`);
-            console.log(`[updateWorkflowProgress] Total workflows found: ${allWorkflows.length}`);
             
             workflow = allWorkflows.find(w => {
                 const baseActionAppId = w.baseAction?.metadata?.applicationId;
@@ -65,12 +58,10 @@ async function updateWorkflowProgress(applicationId, newStatus) {
             if (workflow) {
                 // Cache the workflow ID for future lookups
                 workflowCache.set(applicationId.toString(), workflow.id);
-                console.log(`[updateWorkflowProgress] Found and cached workflow: ${workflow.id}`);
             }
         }
 
         if (!workflow) {
-            console.log('[updateWorkflowProgress] No workflow found for application');
             return;
         }
 
@@ -127,22 +118,18 @@ async function updateWorkflowProgress(applicationId, newStatus) {
                 if (adminUsers.length > 0) {
                     userToComplete = adminUsers[0].username;
                 } else {
-                    console.log('[updateWorkflowProgress] No admin user found for Hired action');
                     return;
                 }
                 break;
             case 'REJECTED':
                 // Complete the entire workflow for rejection
-                console.log(`[updateWorkflowProgress] Calling completeEntireWorkflow for terminal state: ${newStatus}`);
                 await completeEntireWorkflow(workflow.id, app);
                 return;
         }
 
         if (!actionToComplete || !userToComplete) {
-            console.log('[updateWorkflowProgress] No action to complete or no user to complete');
             return;
         }
-        console.log(`[updateWorkflowProgress] Action to complete: "${actionToComplete}", User: ${userToComplete}`);
 
         // Get the user ID
         const user = await prisma.user.findUnique({
@@ -161,7 +148,6 @@ async function updateWorkflowProgress(applicationId, newStatus) {
         if (!allWorkflowStatesResponse.data || allWorkflowStatesResponse.data.length === 0) return;
 
         const allWorkflowStates = allWorkflowStatesResponse.data;
-        console.log(`[updateWorkflowProgress] Found ${allWorkflowStates.length} workflow states for all users`);
 
         // Get all actions for this workflow
         const actionsResponse = await axios.get(
@@ -170,23 +156,17 @@ async function updateWorkflowProgress(applicationId, newStatus) {
         );
 
         const actions = actionsResponse.data || [];
-        console.log(`[updateWorkflowProgress] Available actions:`, actions.map(a => a.name));
         const targetAction = actions.find(action => action.name === actionToComplete);
         if (!targetAction) {
-            console.log(`[updateWorkflowProgress] Target action "${actionToComplete}" not found in workflow actions`);
             return;
         }
-        console.log(`[updateWorkflowProgress] Found target action: ${targetAction.id}`);
 
         // Check if previous actions need to be completed (when steps are skipped)
         const currentActionIndex = actions.findIndex(a => a.id === targetAction.id);
-        console.log(`[updateWorkflowProgress] Current action index: ${currentActionIndex}`);
         
         // For EACH user's workflow state, complete the target action and all previous actions
         for (const workflowState of allWorkflowStates) {
             if (!workflowState.actionStates) continue;
-            
-            console.log(`[updateWorkflowProgress] Processing workflow state for user ${workflowState.userId}`);
             
             // Complete all previous actions that haven't been completed yet
             for (let i = 0; i < currentActionIndex; i++) {
@@ -194,8 +174,6 @@ async function updateWorkflowProgress(applicationId, newStatus) {
                 const previousActionState = workflowState.actionStates.find(as => as.actionId === previousAction.id);
                 
                 if (previousActionState && previousActionState.stateType !== 'completed') {
-                    console.log(`[updateWorkflowProgress] Previous action "${previousAction.name}" not completed for user ${workflowState.userId}, completing it now`);
-                    
                     // Start if not started
                     if (previousActionState.stateType === 'notStarted') {
                         await axios.post(
@@ -211,7 +189,6 @@ async function updateWorkflowProgress(applicationId, newStatus) {
                         { actionStateId: previousActionState.id },
                         { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                     );
-                    console.log(`[updateWorkflowProgress] Completed skipped action "${previousAction.name}" for user ${workflowState.userId}`);
                 }
             }
 
@@ -221,15 +198,11 @@ async function updateWorkflowProgress(applicationId, newStatus) {
             );
             
             if (!targetActionState) {
-                console.log(`[updateWorkflowProgress] Action state not found for action ${targetAction.id} for user ${workflowState.userId}`);
                 continue;
             }
-            
-            console.log(`[updateWorkflowProgress] Found action state: ${targetActionState.id}, current status: ${targetActionState.stateType} for user ${workflowState.userId}`);
 
             // If action is not started yet, start it first
             if (targetActionState.stateType === 'notStarted') {
-                console.log(`[updateWorkflowProgress] Action not started yet for user ${workflowState.userId}, starting it first`);
                 await axios.post(
                     `${WORKFLOW_SERVICE_URL}/states/handleStart`,
                     { actionStateId: targetActionState.id },
@@ -239,13 +212,11 @@ async function updateWorkflowProgress(applicationId, newStatus) {
 
             // Mark the action as completed for this user
             if (targetActionState.stateType !== 'completed') {
-                console.log(`[updateWorkflowProgress] Calling handleSubmit for action state ${targetActionState.id} for user ${workflowState.userId}`);
                 await axios.post(
                     `${WORKFLOW_SERVICE_URL}/states/handleSubmit`,
                     { actionStateId: targetActionState.id },
                     { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                 );
-                console.log(`[updateWorkflowProgress] Successfully completed action "${actionToComplete}" for user ${workflowState.userId}`);
             }
 
             // Auto-start the next action in sequence for this user
@@ -255,28 +226,23 @@ async function updateWorkflowProgress(applicationId, newStatus) {
                 const nextActionState = workflowState.actionStates.find(as => as.actionId === nextAction.id);
                 
                 if (nextActionState && nextActionState.stateType === 'notStarted') {
-                    console.log(`[updateWorkflowProgress] Auto-starting next action: "${nextAction.name}" for user ${workflowState.userId}`);
                     try {
                         await axios.post(
                             `${WORKFLOW_SERVICE_URL}/states/handleStart`,
                             { actionStateId: nextActionState.id },
                             { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                         );
-                        console.log(`[updateWorkflowProgress] Successfully started next action "${nextAction.name}" for user ${workflowState.userId}`);
                     } catch (startError) {
-                        console.log(`[updateWorkflowProgress] Failed to start next action for user ${workflowState.userId}: ${startError.message}`);
+                        // Silently continue if next action start fails
                     }
                 }
             }
         }
 
-        // Send notifications to relevant parties (only once, not per user)
-        try {
-            await notifyActionCompleted(actionToComplete, app, workflow.id);
-        } catch (notifError) {
-            console.error('[updateWorkflowProgress] Failed to send notifications:', notifError.message);
-            // Continue despite notification failure
-        }
+        // Skip sending notifications here because changeCandidateApplicationStatus already sends them
+        // with proper subjects and context. Sending them again causes duplicate emails with MIME errors.
+        // The application status change notification is more appropriate than workflow action notifications
+        // for hiring workflows since it has the correct event types and subjects.
 
 
 
@@ -957,7 +923,6 @@ async function createTimecardApprovalWorkflow(timecardWeeklyHistoryId) {
                     { userId: user.uid, workflowId: createdWorkflow.id },
                     { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                 );
-                console.log(`[Timecard Workflow] Created workflow state for user ${user.username}`);
             } catch (error) {
                 console.error(`[Timecard Workflow] Error creating state for user ${user.username}:`, error.message);
             }
@@ -997,10 +962,7 @@ async function createTimecardApprovalWorkflow(timecardWeeklyHistoryId) {
                                         { actionStateId: actionState.id },
                                         { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                                     );
-                                    console.log(`[Timecard Workflow] Marked first action completed for user ${user.username}`);
                                     success = true;
-                                } else {
-                                    console.log(`[Timecard Workflow] Action state not found for user ${user.username}, retrying...`);
                                 }
                             }
                         }
@@ -1044,8 +1006,6 @@ async function createTimecardApprovalWorkflow(timecardWeeklyHistoryId) {
                 { metadata: updatedMetadata },
                 { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
             );
-            
-            console.log(`[Timecard Workflow] Updated workflow metadata - ${completedActions}/${totalActions} completed`);
         } catch (metadataError) {
             console.error('[Timecard Workflow] Error updating workflow metadata:', metadataError.message);
         }

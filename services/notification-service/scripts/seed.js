@@ -42,7 +42,7 @@ async function main() {
     },
     {
       appId: 'ta-portal',
-      userEmail: 'yvk1136@g.rit.edu',
+      userEmail: 'yvk1136@rit.edu',
       userId: 'yvk1136',
       slackUsername: 'yvk1136',
       notifyEmail: true,
@@ -51,7 +51,7 @@ async function main() {
   ];
 
   for (const s of samples) {
-    console.log('Upserting', s.appId, s.userId);
+    console.log('Upserting', s.appId, s.userId);s
     await prisma.userPreference.upsert({
       where: { appId_userId: { appId: s.appId, userId: s.userId } },
       update: {

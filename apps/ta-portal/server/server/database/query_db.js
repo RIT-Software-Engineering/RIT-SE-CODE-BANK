@@ -15,7 +15,7 @@ const {
 const { verifyPassword, hashPassword } = require("../config/passwordHashes");
 // Notifications: call the notification service directly (no shared client)
 const { dispatchTemplated } = require('../utils/notifications');
-const { createTimecardApprovalWorkflow } = require('../utils/workflow-sync');
+const { createTimecardApprovalWorkflow, updateWorkflowProgress } = require('../utils/workflow-sync');
 
 // Build a stable deep link back into the TA Portal UI for CTAs in notifications.
 // Uses TA_PORTAL_BASE_URL or defaults to http://localhost:3000 for dev.
@@ -963,6 +963,13 @@ try {
 } catch (e) {
   console.error("Slack notify (status change) failed:", e.message);
 }
+
+  // Sync workflow progress
+  try {
+    await updateWorkflowProgress(applicationId, status);
+  } catch (e) {
+    console.error('Workflow sync failed:', e.message);
+  }
 
   return updatedApp;
 }

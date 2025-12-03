@@ -714,10 +714,70 @@ const ActionPopup = ({ action, anchorEl, open, onClose, onViewAction, onComplete
 };
 
 // Detailed Action Modal Component
-const ActionDetailModal = ({ action, open, onClose }) => {
+const ActionDetailModal = ({ action, open, onClose, onSubmit, isTimecardReview = false }) => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  
   if (!action) return null;
   
-  const actionContent = getActionContent(action.name, action);
+  // Generate action content - special handling for timecard reviews
+  const actionContent = isTimecardReview ? {
+    description: `Review and approve timecard for ${action.metadata?.employeeId || 'employee'}`,
+    startDate: action.startDate || 'Not specified',
+    dueDate: action.dueDate || 'Not specified',
+    project: 'Current workflow',
+    submissionType: 'File submission required',
+    submissionStatus: 'Upload approved timecard document',
+    modalTitle: 'Review Details',
+    fileTypes: 'PDF, DOC, DOCX, XLS, XLSX',
+    uploadText: 'Upload your reviewed timecard approval document'
+  } : (typeof getActionContent === 'function' ? getActionContent(action.name, action) : {
+    description: action.description || 'Action details',
+    startDate: action.startDate || 'Not specified',
+    dueDate: action.dueDate || 'Not specified',
+    project: 'Current workflow',
+    submissionType: 'No submission required',
+    submissionStatus: 'Not applicable',
+    modalTitle: 'Action Details',
+    fileTypes: 'No file',
+    uploadText: 'No submission required'
+  });
+  
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Check file size (15 MB max)
+      const maxSize = 15 * 1024 * 1024; // 15 MB in bytes
+      if (file.size > maxSize) {
+        alert('File size exceeds 15 MB limit');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+  
+  const handleSubmit = async () => {
+    if (isTimecardReview && !selectedFile) {
+      alert('Please select a file to upload');
+      return;
+    }
+    
+    setUploading(true);
+    try {
+      await onSubmit(action, selectedFile);
+      setSelectedFile(null);
+      onClose();
+    } catch (error) {
+      console.error('Error submitting action:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+  
+  const handleClose = () => {
+    setSelectedFile(null);
+    onClose();
+  };
 
   return (
     <Dialog
@@ -782,25 +842,44 @@ const ActionDetailModal = ({ action, open, onClose }) => {
         </Typography>
 
         <Typography variant="body2" color="#aaa" mb={2}>
-          {actionContent.fileTypes.includes('Online form') || actionContent.fileTypes.includes('No file') 
-            ? actionContent.fileTypes
-            : `File Submission (Accepted: ${actionContent.fileTypes}) (Max size of each file: 15 MB) *`
+          {isTimecardReview 
+            ? `File Submission (Accepted: ${actionContent.fileTypes}) (Max size of each file: 15 MB) *`
+            : (actionContent.fileTypes.includes('Online form') || actionContent.fileTypes.includes('No file') 
+              ? actionContent.fileTypes
+              : `File Submission (Accepted: ${actionContent.fileTypes}) (Max size of each file: 15 MB) *`)
           }
         </Typography>
 
-        {!actionContent.fileTypes.includes('Online form') && !actionContent.fileTypes.includes('No file') ? (
+        {(isTimecardReview || (!actionContent.fileTypes.includes('Online form') && !actionContent.fileTypes.includes('No file'))) ? (
           <Box sx={{ 
             border: '2px dashed #555',
             borderRadius: 1,
             p: 3,
             textAlign: 'center',
             mb: 3,
-            backgroundColor: '#333'
-          }}>
+            backgroundColor: '#333',
+            cursor: isTimecardReview ? 'pointer' : 'default',
+            '&:hover': isTimecardReview ? { backgroundColor: '#3a3a3a' } : {}
+          }}
+          onClick={() => isTimecardReview && document.getElementById('timecard-file-input')?.click()}
+          >
+            <input
+              id="timecard-file-input"
+              type="file"
+              accept=".pdf,.doc,.docx,.xls,.xlsx"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+              disabled={!isTimecardReview}
+            />
             <UploadIcon sx={{ fontSize: 48, color: '#666', mb: 1 }} />
             <Typography variant="body2" color="#aaa">
-              Choose Files - No file chosen
+              {selectedFile ? selectedFile.name : 'Choose Files - No file chosen'}
             </Typography>
+            {selectedFile && (
+              <Typography variant="caption" color="#888" display="block" mt={1}>
+                Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+              </Typography>
+            )}
           </Box>
         ) : (
           <Box sx={{ 
@@ -827,8 +906,9 @@ const ActionDetailModal = ({ action, open, onClose }) => {
 
       <DialogActions sx={{ p: 3, borderTop: '1px solid #555' }}>
         <Button 
-          onClick={onClose} 
+          onClick={handleClose} 
           sx={{ color: '#aaa' }}
+          disabled={uploading}
         >
           Cancel
         </Button>
@@ -838,9 +918,10 @@ const ActionDetailModal = ({ action, open, onClose }) => {
             backgroundColor: '#1976d2',
             '&:hover': { backgroundColor: '#1565c0' }
           }}
-          disabled={actionContent.fileTypes.includes('No file')}
+          disabled={isTimecardReview ? (!selectedFile || uploading) : (actionContent.fileTypes.includes('No file') || uploading)}
+          onClick={isTimecardReview ? handleSubmit : undefined}
         >
-          {actionContent.fileTypes.includes('No file') ? 'Schedule' : 'Submit'}
+          {uploading ? 'Submitting...' : (isTimecardReview ? 'Submit & Approve' : (actionContent.fileTypes.includes('No file') ? 'Schedule' : 'Submit'))}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1905,7 +1986,7 @@ export default function WorkflowsPage() {
       return;
     }
 
-    // Check if this is a timecard review action - open file upload dialog instead
+    // Check if this is a timecard review action - open view details modal instead
     const isTimecardReview = workflowForAction.metadata?.workflowType === 'timecard_approval' && 
                             action.name === 'Review';
     
@@ -1918,9 +1999,8 @@ export default function WorkflowsPage() {
         return;
       }
       
-      setSelectedFileAction(action);
-      setFileUploadDialogOpen(true);
-      handlePopupClose();
+      // Open the view details modal instead of file upload
+      handleViewAction(action);
       return;
     }
 
@@ -1981,7 +2061,7 @@ export default function WorkflowsPage() {
       return;
     }
 
-    // Check if this is a timecard review action - open file upload dialog instead
+    // Check if this is a timecard review action - open view details modal instead
     const isTimecardReview = workflowForAction.metadata?.workflowType === 'timecard_approval' && 
                             action.name === 'Review';
     
@@ -1994,9 +2074,8 @@ export default function WorkflowsPage() {
         return;
       }
       
-      setSelectedFileAction(action);
-      setFileUploadDialogOpen(true);
-      handlePopupClose();
+      // Open the view details modal instead of file upload
+      handleViewAction(action);
       return;
     }
 
@@ -2193,7 +2272,67 @@ export default function WorkflowsPage() {
     setSelectedActionForMenu(null);
   };
 
+  // Handle timecard action submission from detail modal
+  const handleTimecardSubmit = async (action, file) => {
+    if (!file) {
+      showSnackbar('Please select a file to upload', 'warning');
+      throw new Error('No file selected');
+    }
 
+    try {
+      // Get workflow for the action
+      const workflowForAction = findWorkflowForAction(action.id);
+      if (!workflowForAction) {
+        throw new Error('Could not find workflow for this action');
+      }
+
+      // Find the actionStateId
+      let actionStateId = action.actionStateId || action.id;
+
+      if (!action.actionStateId) {
+        const workflowStateResponse = await getWorkflowStateWithActions(username, workflowForAction.id);
+        const matchingActionState = workflowStateResponse.actionStates?.find(
+          as => as.action?.id === action.id
+        );
+        
+        if (matchingActionState) {
+          actionStateId = matchingActionState.id;
+        } else {
+          throw new Error('Could not find action state for this action');
+        }
+      }
+
+      // Complete the action (note: file reference is tracked but actual upload may require separate endpoint)
+      const response = await completeAction(username, actionStateId, {
+        result: 'approved',
+        notes: `Timecard reviewed and approved via file submission: ${file.name}`,
+        completedBy: username,
+        fileName: file.name,
+        fileSize: file.size
+      });
+
+      // Update local state
+      setWorkflows(prevWorkflows => 
+        updateActionInWorkflows(prevWorkflows, action.id, { 
+          status: 'completed',
+          completedBy: username,
+          completedAt: new Date().toISOString()
+        })
+      );
+
+      showSnackbar(`Timecard approved successfully! File: ${file.name}`, 'success');
+      
+      // Refresh workflows to get latest state
+      setTimeout(() => {
+        fetchWorkflows();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error completing timecard action:', error);
+      showSnackbar(`Failed to approve timecard: ${error.message}`, 'error');
+      throw error;
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -2780,6 +2919,20 @@ export default function WorkflowsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Action Detail Modal */}
+      <ActionDetailModal
+        action={selectedAction}
+        open={detailModalOpen}
+        onClose={handleDetailModalClose}
+        onSubmit={handleTimecardSubmit}
+        isTimecardReview={(() => {
+          if (!selectedAction) return false;
+          const workflowForAction = findWorkflowForAction(selectedAction.id);
+          return workflowForAction?.metadata?.workflowType === 'timecard_approval' && 
+                 selectedAction.name === 'Review';
+        })()}
+      />
       </Container>
   );
 }

@@ -492,7 +492,7 @@ router.get("/action/:id", async (req, res) => {
     where: { id: id },
     include: {
       action: true,
-      workflowState: true,
+      workflowStates: true,
     },
   });
 

@@ -9,7 +9,9 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4000/api/notifications';
+// Ensure the notification service URL includes the API path
+const baseUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4000';
+const NOTIFICATION_SERVICE_URL = baseUrl.includes('/api/notifications') ? baseUrl : `${baseUrl}/api/notifications`;
 const APP_ID = 'ta-portal';
 const PORTAL_BASE_URL = process.env.PORTAL_BASE_URL || 'https://localhost:3300';
 
@@ -287,28 +289,39 @@ async function notifyActionCompleted(actionName, app, workflowId) {
 /**
  * Send a single notification via the notification service
  */
-async function sendNotification({ userId, role, context }) {
+async function sendNotification({ userId, role, context, event, subject }) {
     try {
-        const response = await axios.post(
-            `${NOTIFICATION_SERVICE_URL}/dispatch/${APP_ID}`,
-            {
-                userId,
-                event: 'workflow_action_completed',
-                role,
-                context
-            },
-            { timeout: 5000, headers: { 'Content-Type': 'application/json' } }
-        );
-
+        const url = `${NOTIFICATION_SERVICE_URL}/dispatch/${APP_ID}`;
+        const payload = {
+            userId,
+            event: event || 'workflow_action_completed',
+            role,
+            context
+        };
+        
+        // Add subject if provided
+        if (subject) {
+            payload.subject = subject;
+        }
+        
+        const response = await axios.post(url, payload, { 
+            timeout: 5000, 
+            headers: { 'Content-Type': 'application/json' } 
+        });
         return response.data;
     } catch (error) {
-        // Check if notification service is available
         if (error.code === 'ECONNREFUSED') {
-            console.warn('[workflow-notifications] Notification service not available');
+            console.warn('[workflow-notifications] ⚠ Notification service not running at', NOTIFICATION_SERVICE_URL);
+        } else if (error.response?.status === 404) {
+            console.warn('[workflow-notifications] ⚠ Notification endpoint not found:', error.config?.url);
         } else {
-            console.error('[workflow-notifications] Notification error:', error.message);
+            console.error('[workflow-notifications] ✗ Notification failed:', error.message);
+            if (error.response) {
+                console.error('[workflow-notifications]   Status:', error.response.status);
+                console.error('[workflow-notifications]   Data:', error.response.data);
+            }
         }
-        throw error;
+        return null;
     }
 }
 
@@ -319,8 +332,6 @@ async function sendNotification({ userId, role, context }) {
  */
 async function notifyTimecardSubmitted(timecard, workflowId) {
     try {
-        console.log(`[workflow-notifications] Sending timecard submission notification`);
-
         const employee = timecard.employee;
         const admin = timecard.admin;
         const weekStart = new Date(timecard.weekStartDate);
@@ -331,41 +342,44 @@ async function notifyTimecardSubmitted(timecard, workflowId) {
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         };
 
-        // Build context for notification
+        // Build context for notification matching timecard template expectations
         const context = {
             appName: 'TA Portal',
-            item: {
-                id: timecard.timecardWeeklyHistoryId.toString(),
-                title: `Timecard - ${employee.fname} ${employee.lname} - Week of ${formatDate(weekStart)}`,
-                timecardId: timecard.timecardWeeklyHistoryId.toString(),
-                weekStartDate: weekStart.toISOString(),
-                courseCode: timecard.courseCode
-            },
-            status: {
-                new: 'SUBMITTED',
-                action: 'Timecard Submitted'
-            },
-            cta: {
-                url: `${PORTAL_BASE_URL}/Workflows/${admin.username}?workflowId=${workflowId}`
-            },
             recipient: {
                 name: `${admin.fname} ${admin.lname}`,
                 email: admin.email
             },
-            submitter: {
+            employee: {
                 name: `${employee.fname} ${employee.lname}`,
                 email: employee.email
+            },
+            job: {
+                title: timecard.courseCode,
+                courseCode: timecard.courseCode,
+                sectionNumber: timecard.sectionNumber || '01'
+            },
+            timecard: {
+                weekStartDate: formatDate(weekStart),
+                weekEndDate: formatDate(weekEnd),
+                totalHours: timecard.totalHours || '0'
+            },
+            flags: {
+                hasNotes: !!timecard.notes,
+                overHours: timecard.totalHours > 10
+            },
+            cta: {
+                url: `${PORTAL_BASE_URL}/Workflows/${admin.username}?workflowId=${workflowId}`
             }
         };
 
-        // Send notification to admin
+        // Send notification to admin using timecard_submitted template with employer role
         await sendNotification({
             userId: admin.username,
-            role: 'admin',
+            event: 'timecard_submitted',
+            role: 'employer',
+            subject: `Timecard Submitted: ${context.employee.name} - ${context.job.title}`,
             context
         });
-
-        console.log(`[workflow-notifications] Timecard notification sent to admin ${admin.username}`);
     } catch (error) {
         console.error('[workflow-notifications] Error sending timecard notification:', error.message);
         // Don't throw - notifications are non-critical
@@ -391,54 +405,110 @@ async function notifyWorkflowActionCompleted({
     comment
 }) {
     try {
-        console.log(`[workflow-notifications] Sending workflow action completed notification to ${recipient.username}`);
-
-        const metadata = workflow.metadata || {};
+        // Get metadata from baseAction.metadata (where workflow sync stores it) or workflow.metadata array
+        const metadata = workflow.baseAction?.metadata || 
+                        (Array.isArray(workflow.metadata) 
+                            ? workflow.metadata.reduce((acc, m) => ({ ...acc, [m.key]: m.value }), {})
+                            : workflow.metadata) || {};
         const workflowType = metadata.workflowType || 'workflow';
         
-        // Determine workflow title based on type
+        // Determine workflow title and event based on type
         let workflowTitle = 'Workflow';
+        let eventName = 'workflow_action_completed';
+        let context = {};
+        
         if (workflowType === 'timecard_approval') {
             workflowTitle = `Timecard - ${metadata.employeeName} - ${metadata.courseCode}`;
+            // Use timecard_approved event when timecard workflow is completed
+            const completedActions = parseInt(metadata.completedActions) || 0;
+            const totalActions = parseInt(metadata.totalActions) || 0;
+            const isComplete = completedActions === totalActions;
+            
+            // If timecard workflow is complete, it means it was approved
+            if (isComplete) {
+                eventName = 'timecard_approved';
+                
+                // Build timecard-specific context
+                const weekStart = new Date(metadata.weekStartDate);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                
+                const formatDate = (date) => {
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                };
+                
+                context = {
+                    appName: 'TA Portal',
+                    recipient: {
+                        name: `${recipient.fname} ${recipient.lname}`,
+                        email: recipient.email
+                    },
+                    employer: {
+                        name: `${actor.fname} ${actor.lname}`,
+                        email: actor.email,
+                        comments: comment || ''
+                    },
+                    job: {
+                        title: metadata.courseCode,
+                        courseCode: metadata.courseCode,
+                        sectionNumber: '01'
+                    },
+                    timecard: {
+                        weekStartDate: formatDate(weekStart),
+                        weekEndDate: formatDate(weekEnd),
+                        totalHours: metadata.totalHours || '0'
+                    },
+                    cta: {
+                        url: `${PORTAL_BASE_URL}/Workflows/${recipient.username}?workflowId=${workflowId}`
+                    }
+                };
+            }
         } else if (workflowType === 'hiring_process') {
             workflowTitle = `${metadata.jobTitle} - ${metadata.candidateName}`;
         }
+        
+        // If no specific context was built, use generic workflow context
+        if (Object.keys(context).length === 0) {
+            context = {
+                appName: 'TA Portal',
+                item: {
+                    id: workflowId,
+                    title: workflowTitle,
+                    workflowType
+                },
+                status: {
+                    new: `${metadata.completedActions || 0} / ${metadata.totalActions || 0} Complete`,
+                    action: actionName
+                },
+                cta: {
+                    url: `${PORTAL_BASE_URL}/Workflows/${recipient.username}?workflowId=${workflowId}`
+                },
+                recipient: {
+                    name: `${recipient.fname} ${recipient.lname}`,
+                    email: recipient.email
+                },
+                actorName: `${actor.fname} ${actor.lname}`,
+                actionName: actionName,
+                completedActions: metadata.completedActions || 0,
+                totalActions: metadata.totalActions || 0,
+                ...(comment && { comment })
+            };
+        }
 
-        // Build context for notification
-        const context = {
-            appName: 'TA Portal',
-            item: {
-                id: workflowId,
-                title: workflowTitle,
-                workflowType
-            },
-            status: {
-                new: `${metadata.completedActions || 0} / ${metadata.totalActions || 0} Complete`,
-                action: actionName
-            },
-            cta: {
-                url: `${PORTAL_BASE_URL}/Workflows/${recipient.username}?workflowId=${workflowId}`
-            },
-            recipient: {
-                name: `${recipient.fname} ${recipient.lname}`,
-                email: recipient.email
-            },
-            actorName: `${actor.fname} ${actor.lname}`,
-            actionName: actionName,
-            completedActions: metadata.completedActions || 0,
-            totalActions: metadata.totalActions || 0,
-            ...(comment && { comment })
-        };
-
-        // Send notification
+        // Generate subject line based on workflow type
+        let subject;
+        if (workflowType === 'timecard_approval' && eventName === 'timecard_approved') {
+            subject = `Timecard Approved: ${context.job?.title || workflowTitle}`;
+        }
+        
+        // Send notification with appropriate event
         await sendNotification({
             userId: recipient.username,
-            event: 'workflow_action_completed',
+            event: eventName,
             role: recipient.role,
+            subject,
             context
         });
-
-        console.log(`[workflow-notifications] Workflow notification sent to ${recipient.username}`);
     } catch (error) {
         console.error('[workflow-notifications] Error sending workflow notification:', error.message);
         // Don't throw - notifications are non-critical
