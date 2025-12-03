@@ -14,6 +14,8 @@ import {
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 
 import PositionsCard from "@/components/positions/PositionsCard";
 import { Filter } from "@/components/common/searchAndFilter/Filter";
@@ -36,6 +38,14 @@ import {
  * new or different opportunities.
  */
 export default function EmployeePositionsPage() {
+  return (
+    <FeatureGate feature={FEATURES.POSITIONS}>
+      <EmployeePositionsContent />
+    </FeatureGate>
+  );
+}
+
+function EmployeePositionsContent() {
   // Core hooks for component references and authentication context.
   const filterRef = useRef();
   const { currentUser } = useAuth();

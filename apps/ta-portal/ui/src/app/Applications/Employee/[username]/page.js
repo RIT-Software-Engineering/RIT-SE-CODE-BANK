@@ -2,6 +2,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
+import { useSearchParams } from 'next/navigation';
 import { getCandidateApplicationsAsCandidate } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
 import { gradeEnumToStringValue } from '@/constants/gradeConstants';
@@ -33,6 +36,8 @@ export default function EmployeeApplicationsPage() {
   // Core hooks for authentication context and component references.
   const { currentUser, refreshUserProfile } = useAuth();
   const filterRef = useRef();
+  const searchParams = useSearchParams();
+  const scrolledRef = useRef(false);
 
   // State for managing application data, loading, and errors.
   const [displayData, setDisplayData] = useState({});
@@ -139,6 +144,24 @@ export default function EmployeeApplicationsPage() {
     }
   }, [currentUser, updateApplicationsView]);
 
+  // Auto-scroll to a specific application if deep-linked
+  useEffect(() => {
+    if (loading || scrolledRef.current) return;
+    const appId = searchParams.get('applicationId');
+    if (!appId) return;
+    const el = document.getElementById(`app-${appId}`);
+    if (el) {
+      scrolledRef.current = true;
+      try {
+        el.closest('[role="region"]')?.previousElementSibling?.click?.();
+      } catch (_) {}
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
+      }, 50);
+    }
+  }, [loading, searchParams, displayData]);
+
   /**
    * Callback function passed to child ApplicationCard components.
    * Triggers a refresh of the applications view when a status is changed.
@@ -233,6 +256,8 @@ export default function EmployeeApplicationsPage() {
                     application={app}
                     onStatusChange={handleStatusChange}
                     refreshUserProfile={refreshUserProfile}
+                    cardId={`app-${app.id}`}
+                    isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
                   />
                 ))}
               </Box>
@@ -248,6 +273,7 @@ export default function EmployeeApplicationsPage() {
 
   // Main component render method.
   return (
+    <FeatureGate feature={FEATURES.APPLICATIONS}>
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography variant="h1" component="h1" gutterBottom>
@@ -324,5 +350,6 @@ export default function EmployeeApplicationsPage() {
         </Paper>
       )}
     </Container>
+    </FeatureGate>
   );
 }

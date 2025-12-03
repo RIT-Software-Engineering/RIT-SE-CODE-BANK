@@ -9,6 +9,9 @@ const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
 
+// Import feature flag utilities
+const { getAllFeatureFlags, updateFeatureFlag, FEATURES } = require("../config/featureFlags");
+
 // Import all necessary database query functions.
 const {
   createJobPosition,
@@ -30,6 +33,7 @@ const {
   updateEmployerProfile,
   getCandidateApplicationsAsEmployer,
   getCandidateApplicationsAsAdmin,
+  getAllApplicationsForAdmin,
   hireCandidateForJobPosition,
   isJobPositionFull,
   applyForJobPosition,
@@ -51,6 +55,8 @@ const {
   getAllTimecardsForJob,
   fetchAdminViewData,
   fetchEmployerViewData,
+  getUserNotificationPreferences,
+  upsertUserNotificationPreferences,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -615,6 +621,47 @@ router.get("/applications/admin", async (req, res) => {
 });
 
 /**
+ * @route   GET /api/db/applications/admin/all
+ * @desc    Gets ALL applications across the system for admin viewing, with search and filters.
+ * @access  Public (should be protected by admin auth middleware)
+ * @query   {string} search - Search term for course code/name or student name.
+ * @query   {string} searchType - Type of search ("course" or "student").
+ * @query   {string} status - Comma-separated list of statuses to filter by.
+ * @query   {string} level - Comma-separated list of grade levels to filter by.
+ * @query   {string} semester - Semester code to filter by.
+ * @query   {string} hasApplications - Filter positions with/without applications ("yes", "no").
+ * @returns {Array} An array of job positions with their application history.
+ */
+router.get("/applications/admin/all", async (req, res) => {
+  try {
+    const { search = '', searchType = 'course', status, level, semester, hasApplications } = req.query;
+
+    // Validate searchType
+    const validSearchTypes = ['course', 'student'];
+    if (searchType && !validSearchTypes.includes(searchType)) {
+      return res.status(400).json({ error: 'Invalid searchType. Must be "course" or "student".' });
+    }
+
+    // Parse comma-separated filters
+    const statusArray = status ? status.split(',').map(s => s.trim()) : [];
+    const levelArray = level ? level.split(',').map(l => l.trim()) : [];
+
+    const filters = {
+      status: statusArray,
+      level: levelArray,
+      semester: semester || '',
+      hasApplications: hasApplications || '',
+    };
+
+    const positions = await getAllApplicationsForAdmin(search, searchType, filters);
+    res.status(200).json(positions);
+  } catch (error) {
+    console.error("Error in GET /applications/admin/all route:", error);
+    res.status(500).json({ error: "Failed to retrieve all applications for admin." });
+  }
+});
+
+/**
  * @route   GET /api/db/positions/:id/is-full
  * @desc    Checks if a job position is full (status is 'FILLED' or 'ACTIVE').
  * @access  Public (should be protected by auth middleware)
@@ -703,13 +750,14 @@ router.post("/hire", async (req, res) => {
  * @desc    Retrieves a list of all users.
  * @access  Public
  */
-router.get('/users', async (req, res) => {
+router.get('/users', async (req, res, next) => {
   try {
     const users = await getAllUsers();
     res.status(200).json(users);
   } catch (error) {
+    // Log and forward to central error handler so it can include name/stack
     console.error('Error in /users route:', error);
-    res.status(500).json({ error: 'Failed to retrieve users.' });
+    next(error);
   }
 });
 
@@ -808,14 +856,22 @@ router.get('/user-profile/:username', async (req, res) => {
  */
 router.post('/candidate-profile', async (req, res) => {
   try {
-    // The complete data, including username, username, etc., comes from the request body.
-    const newProfile = await createCandidateProfile(req.body);
+    // Validate incoming payload for required candidate fields before calling DB layer.
+    const candidateData = req.body || {};
+    const required = ['username', 'password', 'fname', 'lname', 'email', 'year'];
+    const missing = required.filter((k) => !(k in candidateData) || candidateData[k] === undefined || candidateData[k] === null || candidateData[k] === '');
+    if (missing.length > 0) {
+      return res.status(400).json({ error: `Missing required fields: ${missing.join(', ')}` });
+    }
+
+    const newProfile = await createCandidateProfile(candidateData);
     res.status(201).json(newProfile); // 201 Created is the standard status for success
   } catch (error) {
     console.error("Error in POST /candidate-profile route:", error);
     // Check for specific Prisma error for unique constraints (e.g., username taken)
-    if (error.code === 'P2002') {
-      return res.status(409).json({ error: `A user with this ${error.meta.target.join(', ')} already exists.` });
+    if (error && error.code === 'P2002') {
+      const target = error.meta && Array.isArray(error.meta.target) ? error.meta.target.join(', ') : (error.meta ? JSON.stringify(error.meta) : 'unique field');
+      return res.status(409).json({ error: `A user with this ${target} already exists.` });
     }
     res.status(500).json({ error: "Failed to create candidate profile." });
   }
@@ -853,8 +909,9 @@ router.post("/employer-profile", async (req, res) => {
     res.status(201).json(newProfile);
   } catch (error) {
     console.error("Error in POST /employer-profile route:", error);
-    if (error.code === 'P2002') {
-      return res.status(409).json({ error: `A user with this ${error.meta.target.join(', ')} already exists.` });
+    if (error && error.code === 'P2002') {
+      const target = error.meta && Array.isArray(error.meta.target) ? error.meta.target.join(', ') : (error.meta ? JSON.stringify(error.meta) : 'unique field');
+      return res.status(409).json({ error: `A user with this ${target} already exists.` });
     }
     res.status(500).json({ error: "Failed to create employer profile." });
   }
@@ -912,6 +969,10 @@ router.put('/terminate-employee/:username', async (req, res) => {
  */
 router.post('/resume', upload.single('resumeFile'), async (req, res) => {
     try {
+
+      console.log("🔥 Incoming /resume request");
+      console.log("Body:", req.body);
+      console.log("File:", req.file);
       if (!req.file) {
         return res.status(400).json({ error: 'Resume file is required.' });
       }
@@ -1185,6 +1246,90 @@ router.get("/timecard/employer/:employerUsername", async (req, res) => {
       console.error(`Error in /timecard/employer/${req.params.employerUsername} route:`, error);
       res.status(500).json({ error: "Failed to retrieve employer timecard data." });
     }
+});
+
+/**
+ * @route   GET /api/db/notifications/preferences
+ * @desc    Returns the current user's notification preferences.
+ * @access  Public (replace with auth middleware when available)
+ */
+router.get("/notifications/preferences", async (req, res) => {
+  const { username } = req.query;
+  if (!username) return res.status(400).json({ error: "Username required" });
+  try {
+    const prefs = await getUserNotificationPreferences(username);
+    res.json(prefs);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/**
+ * @route   PUT /api/db/notifications/preferences
+ * @desc    Creates or updates the user's notification preferences.
+ * @body    {string} username - The user’s username.
+ * @body    {boolean} notifyEmail
+ * @body    {boolean} notifySlack
+ */
+router.put("/notifications/preferences", async (req, res) => {
+  const { username, notifyEmail, notifySlack } = req.body;
+  if (!username) return res.status(400).json({ error: "Username required" });
+  try {
+    await upsertUserNotificationPreferences(username, notifyEmail, notifySlack);
+    res.sendStatus(204); //success with no response body
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// =============================================================================
+// FEATURE FLAGS ROUTES
+// =============================================================================
+
+/**
+ * @route   GET /api/db/feature-flags
+ * @desc    Get all feature flags and their current status
+ * @access  Admin only (should add authentication middleware in production)
+ * @returns {JSON} Object mapping feature names to enabled status
+ */
+router.get("/feature-flags", async (req, res) => {
+  try {
+    const flags = await getAllFeatureFlags();
+    res.json(flags);
+  } catch (error) {
+    console.error("Error fetching feature flags:", error);
+    res.status(500).json({ error: "Failed to fetch feature flags." });
+  }
+});
+
+/**
+ * @route   PUT /api/db/feature-flags/:featureName
+ * @desc    Update a feature flag's enabled status
+ * @access  Admin only (should add authentication middleware in production)
+ * @body    {boolean} enabled - Whether the feature should be enabled
+ * @returns {JSON} Updated feature flag record
+ */
+router.put("/feature-flags/:featureName", async (req, res) => {
+  try {
+    const { featureName } = req.params;
+    const { enabled } = req.body;
+
+    // Validate feature name
+    if (!Object.values(FEATURES).includes(featureName)) {
+      return res.status(400).json({ error: "Invalid feature name." });
+    }
+
+    // Validate enabled value
+    if (typeof enabled !== "boolean") {
+      return res.status(400).json({ error: "Enabled must be a boolean value." });
+    }
+
+    const updatedFlag = await updateFeatureFlag(featureName, enabled);
+    res.json(updatedFlag);
+  } catch (error) {
+    console.error("Error updating feature flag:", error);
+    res.status(500).json({ error: "Failed to update feature flag." });
+  }
 });
 
 // =============================================================================

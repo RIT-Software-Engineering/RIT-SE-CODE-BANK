@@ -2,6 +2,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import { useSearchParams } from 'next/navigation';
 import { getCandidateApplicationsAsCandidate } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,9 +35,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 export default function CandidateApplicationsPage() {
   // Core hooks for authentication context and component references.
   const { currentUser, refreshUserProfile } = useAuth();
-  const searchParams = useSearchParams();
-  const applicationIdToHighlight = searchParams.get('applicationId');
   const filterRef = useRef();
+  const searchParams = useSearchParams();
+  const scrolledRef = useRef(false);
 
   // State for managing application data, loading, and errors.
   const [displayData, setDisplayData] = useState({});
@@ -142,31 +144,23 @@ export default function CandidateApplicationsPage() {
     }
   }, [currentUser, updateApplicationsView]);
 
-  // Effect to scroll and highlight application when applicationId is in URL
+  // Auto-scroll to focused application when deep-linked
   useEffect(() => {
-    if (applicationIdToHighlight && !loading && Object.keys(displayData).length > 0) {
+    if (loading || scrolledRef.current) return;
+    const appId = searchParams.get('applicationId');
+    if (!appId) return;
+    const el = document.getElementById(`app-${appId}`);
+    if (el) {
+      scrolledRef.current = true;
+      try {
+        el.closest('[role="region"]')?.previousElementSibling?.click?.();
+      } catch (_) {}
       setTimeout(() => {
-        const element = document.getElementById(`application-${applicationIdToHighlight}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          element.style.transition = 'all 0.3s ease';
-          element.style.outline = '3px solid #1976d2';
-          element.style.outlineOffset = '2px';
-          
-          setTimeout(() => {
-            element.style.transition = 'all 1.5s ease';
-            element.style.outline = '3px solid transparent';
-            
-            setTimeout(() => {
-              element.style.outline = '';
-              element.style.outlineOffset = '';
-              element.style.transition = '';
-            }, 1500);
-          }, 1500);
-        }
-      }, 300);
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
+      }, 50);
     }
-  }, [applicationIdToHighlight, loading, displayData]);
+  }, [loading, displayData, searchParams]);
 
   /**
    * Callback function passed to child ApplicationCard components.
@@ -258,18 +252,13 @@ export default function CandidateApplicationsPage() {
                 {displayData[semester].map((app) => (
                   <Box
                     key={app.id}
-                    id={`application-${app.id}`}
-                    sx={{
-                      borderRadius: 2
-                    }}
-                  >
-                    <ApplicationCard
-                      currentUser={currentUser}
-                      application={app}
-                      onStatusChange={handleStatusChange}
-                      refreshUserProfile={refreshUserProfile}
-                    />
-                  </Box>
+                    currentUser={currentUser}
+                    application={app}
+                    onStatusChange={handleStatusChange}
+                    refreshUserProfile={refreshUserProfile}
+                    cardId={`app-${app.id}`}
+                    isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
+                  />
                 ))}
               </Box>
             </AccordionDetails>
@@ -284,6 +273,7 @@ export default function CandidateApplicationsPage() {
 
   // Main component render method.
   return (
+    <FeatureGate feature={FEATURES.APPLICATIONS}>
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography variant="h1" component="h1" gutterBottom>
@@ -360,5 +350,6 @@ export default function CandidateApplicationsPage() {
         </Paper>
       )}
     </Container>
+    </FeatureGate>
   );
 }

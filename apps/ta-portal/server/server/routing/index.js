@@ -20,17 +20,22 @@
 // IMPORTS & SETUP
 // =============================================================================
 
-// Import the Express Router to create modular, mountable route handlers.
-const router = require("express").Router();
+// Import Express to create an app and router for mounting routes. Export an
+// Express application so tests (and Supertest) can require this module and
+// exercise the routes directly.
+const express = require("express");
+const router = express.Router();
 
 // Import the database-specific routes from the `db_routes.js` file.
 const db_router = require("./db_routes");
 
 // Import the Slack-specific routes from the `slack_routes.js` file.
 const slack_router = require("./slack_routes");
+const devNotifyRoutes = require('./dev_notify_routes');
+const notificationsApi = require('./notifications_api');
 
-// Import the Workflow-specific routes from the `wf_routes.js` file.
-const wf_router = require("./wf_routes");
+// Import feature flag utilities
+const { isFeatureEnabled, FEATURES } = require("../config/featureFlags");
 
 // =============================================================================
 // ROUTE MOUNTING
@@ -40,18 +45,23 @@ const wf_router = require("./wf_routes");
 // be accessible under the `/api/db` path.
 router.use("/db", db_router);
 
-// Mount the Slack router. All routes defined in `slack_routes.js` will now
-// be accessible under the `/api/slack` path.
-router.use("/slack", slack_router);
+// Mount the Slack router conditionally based on MESSAGING feature flag
+// All routes defined in `slack_routes.js` will be accessible under `/api/slack`
+// only if the messaging feature is enabled.
+router.use("/slack", async (req, res, next) => {
+  if (await isFeatureEnabled(FEATURES.MESSAGING)) {
+    return slack_router(req, res, next);
+  }
+  res.status(404).json({ error: "Messaging feature is currently disabled." });
+});
 
-// Mount the Workflow router. All routes defined in `wf_routes.js` will now
-// be accessible under the `/api/workflows` path.
-console.log("Mounting workflow router at /api/workflows");
-router.use("/workflows", wf_router);
-
+// Mount dev notification and notifications API routes
+router.use('/dev', devNotifyRoutes);
+router.use('/notifications', notificationsApi);
 // =============================================================================
 // EXPORTS
 // =============================================================================
 
-// Export the configured main router to be used by the main server file (e.g., server.js).
+// Export the router directly so it can be mounted at `/api` in main.js
+// For tests, create a separate app instance when needed
 module.exports = router;

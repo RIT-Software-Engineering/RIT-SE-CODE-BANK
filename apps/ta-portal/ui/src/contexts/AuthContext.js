@@ -56,8 +56,20 @@ export default function AuthProvider({ children }) {
   }, []);
 
   // the logout function to clear the session
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      // Clear Slack session cookies via backend
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${process.env.NEXT_PUBLIC_API_EXTENSION}${process.env.NEXT_PUBLIC_SLACK_API_EXTENSION}/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      await response.json();
+    } catch (error) {
+      console.error('Failed to clear Slack session:', error);
+    }
+    
     localStorage.removeItem('username');
+    sessionStorage.removeItem('slack_selected_email');
     setCurrentUser(null);
   }, []);
 

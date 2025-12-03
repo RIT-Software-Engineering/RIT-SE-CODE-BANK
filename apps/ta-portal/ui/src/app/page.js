@@ -2,42 +2,30 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Box, CircularProgress } from "@mui/material";
-import LoginWrapper from "@/components/auth/Login/LoginWrapper";
-import SignUpForm from "@/components/auth/SignUpForm";
+import { Box, CircularProgress, Container, Paper, Typography, useTheme } from "@mui/material";
 import LandingDashboard from "@/components/dashboard/LandingDashboard";
+import HeroBanner from "@/components/HeroBanner";
 import { useAuth } from "@/contexts/AuthContext";
-import UserProfileModal from "@/components/profile/UserProfileModal";
-import { getAllUsers, getUserProfile } from "@/services/db-apis";
-import { useNotification } from "@/contexts/NotificationContext";
+import { getAllUsers } from "@/services/db-apis";
+import Link from "next/link";
+import { ArrowForward } from "@mui/icons-material";
 
 /**
  * Home Page Component
  * --------------------
  * Acts as the root page of the application. 
- * Responsibilities:
- * - Handles authentication (login/signup flow).
- * - Fetches user data on load.
- * - Displays login/signup forms or dashboard based on authentication state.
- * - Manages profile creation modal after signup.
+ * Displays the hero banner and dashboard for authenticated users.
  *
- * @returns {JSX.Element} The rendered root page (auth forms, profile modal, or dashboard)
+ * @returns {JSX.Element} The rendered root page
  */
 export default function Home() {
-  // Authentication and notification contexts
-  const { currentUser, setCurrentUser } = useAuth();
-  const { showNotification } = useNotification();
-
-  // Local state for users, profile modal, loading indicator, and auth flow
+  const { currentUser } = useAuth();
+  const theme = useTheme();
   const [users, setUsers] = useState([]);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [profileDataForModal, setProfileDataForModal] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [authView, setAuthView] = useState('login'); // Toggles between login and signup forms
 
   /**
    * Fetch all users on component mount.
-   * Populates the users list used for validation in login/signup forms.
    */
   useEffect(() => {
     async function fetchUsers() {
@@ -52,59 +40,6 @@ export default function Home() {
     }
     fetchUsers();
   }, []);
-
-  /**
-   * Handle successful login or signup event.
-   *
-   * @param {Object} user - The user object returned after login/signup.
-   * @param {"login"|"signup"} action - The type of auth action performed.
-   */
-  const handleLoginSuccess = async (user, action) => {
-    if (action === 'login' && user && user.username) {
-      try {
-        // After successful login, fetch the full user profile
-        const fullProfile = await getUserProfile(user.username);
-
-        // Save profile in context and persist session in localStorage
-        localStorage.setItem('username', fullProfile.username);
-        setCurrentUser(fullProfile);
-        showNotification("Login successful!", "success");
-        console.log("User logged in and session saved:", fullProfile);
-      } catch (error) {
-        console.error("Failed to fetch full user profile after login:", error);
-      }
-
-    } else if (action === 'signup' && user) {
-      // For new users, open the profile modal to complete registration
-      console.log("New user creation started. Opening profile form.", user);
-      setProfileDataForModal(user);
-      setIsProfileModalOpen(true);
-    } else {
-      // Error fallback if user or action data is invalid
-      console.error("Login/Signup failed: Data is missing or invalid.", { user, action });
-      showNotification("Login/Signup failed. Please try again.", "error");
-    }
-  };
-
-  /**
-   * Handle successful profile creation or update.
-   *
-   * @param {Object} newlyCreatedProfile - The completed user profile object.
-   */
-  const handleProfileUpdateSuccess = (newlyCreatedProfile) => {
-    console.log("Profile creation successful. Logging in new user:", newlyCreatedProfile);
-
-    // Save profile and update global state
-    localStorage.setItem('username', newlyCreatedProfile.username);
-    setCurrentUser(newlyCreatedProfile);
-
-    // Reset modal state
-    setIsProfileModalOpen(false);
-    setProfileDataForModal(null);
-
-    // Return to login view after profile completion
-    setAuthView('login');
-  };
 
   // Render a full-page loading spinner while initial data is being fetched
   if (isLoading) {
@@ -124,41 +59,130 @@ export default function Home() {
 
   return (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      {/* Modal for creating a user profile after signup */}
-      {isProfileModalOpen && (
-        <UserProfileModal
-          isOpen={isProfileModalOpen}
-          onClose={() => setIsProfileModalOpen(false)}
-          mode="create"
-          profileData={profileDataForModal}
-          onUpdateSuccess={handleProfileUpdateSuccess}
-          allUsers={users}
-        />
-      )}
+      {/* Hero Banner - Shows on home page for both logged in and logged out users */}
+      <HeroBanner />
 
-      {/* Show login/signup forms if no user is logged in */}
-      {!currentUser && !isProfileModalOpen && (
-        <>
-          {authView === 'login' && (
-            <LoginWrapper
-              onLoginSuccess={handleLoginSuccess}
-              allUsers={users}
-              onSwitchToSignUp={() => setAuthView('signup')}
-            />
-          )}
-          {authView === 'signup' && (
-            <SignUpForm
-              onSignUpSubmit={handleLoginSuccess}
-              allUsers={users}
-              onSwitchToLogin={() => setAuthView('login')}
-            />
-          )}
-        </>
-      )}
+      {/* Description text below hero banner - styled like RIT homepage */}
+      <Container maxWidth="lg">
+        <Box
+          sx={{
+            textAlign: "center",
+            mt: { xs: 2, md: 3 },
+            mb: 3,
+            px: 2,
+            py: 2,
+          }}
+        >
+          <Box
+            component="p"
+            sx={{
+              fontSize: { xs: "1.4rem", md: "1.7rem" },
+              lineHeight: 1.6,
+              maxWidth: "900px",
+              mx: "auto",
+              color: "text.primary",
+              "& .orange-text": {
+                color: "#F76902",
+                fontWeight: 700,
+              },
+            }}
+          >
+            Find <span className="orange-text">opportunities</span> to be a teaching assistant for the Software Engineering Department and{" "}
+            <span className="orange-text">manage</span> your teaching assistant responsibilities
+          </Box>
+        </Box>
+      </Container>
 
-      {/* Show dashboard if user is authenticated */}
-      {currentUser && (
+      {/* Show dashboard - for both logged in and logged out users */}
+      {currentUser ? (
         <LandingDashboard user={currentUser} />
+      ) : (
+        <Container maxWidth="lg">
+          <Box
+            sx={{
+              mb: 10,
+              textAlign: "center",
+              pt: 4,
+              borderTop: "2px solid",
+              borderColor: "divider",
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h2"
+              sx={{
+                fontWeight: 600,
+                mb: 4,
+                color: theme.palette.primary.main,
+                fontSize: { xs: "1.4rem", sm: "1.7rem", md: "2rem" },
+              }}
+            >
+              Explore Positions
+            </Typography>
+
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <Paper
+                component={Link}
+                href="/login?redirect=positions"
+                elevation={0}
+                sx={{
+                  // Sizing and Layout
+                  width: "100%",
+                  maxWidth: "500px",
+                  minHeight: 140,
+                  p: { xs: 3, sm: 4 },
+                  borderRadius: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  textDecoration: "none",
+                  background: theme.palette.mode === 'dark'
+                    ? "linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%)"
+                    : "linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)",
+                  border: `2px solid ${theme.palette.primary.main}`,
+
+                  // Transitions & Hover Effects
+                  transition: (theme) => theme.transitions.create(
+                    ["transform", "box-shadow", "background-color"],
+                    { duration: "200ms", easing: "ease-in-out" }
+                  ),
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: `0 12px 24px ${theme.palette.action.focus}`,
+                    background: theme.palette.mode === 'dark'
+                      ? "linear-gradient(135deg, #3d3d3d 0%, #2f2f2f 100%)"
+                      : "linear-gradient(135deg, #fffbf0 0%, #fff5e0 100%)",
+                  },
+                }}
+              >
+                <Typography
+                  variant="h5"
+                  fontWeight="600"
+                  color="primary"
+                  sx={{
+                    fontSize: { xs: "1.1rem", sm: "1.3rem" },
+                    mb: 1,
+                  }}
+                >
+                  Find Open Positions
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", color: "primary.main" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      mr: 1,
+                    }}
+                  >
+                    Login to explore opportunities
+                  </Typography>
+                  <ArrowForward sx={{ fontSize: "1.2rem" }} />
+                </Box>
+              </Paper>
+            </Box>
+          </Box>
+        </Container>
       )}
     </Box>
   );
