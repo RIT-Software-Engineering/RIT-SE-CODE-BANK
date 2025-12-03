@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   getSemesterCodesForEmployer,
   getCandidateApplicationsAsEmployer,
@@ -39,6 +40,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 export default function EmployerApplicationsPage() {
   // Core hooks for authentication context and component references.
   const { currentUser } = useAuth();
+  const searchParams = useSearchParams();
+  const applicationIdToHighlight = searchParams.get('applicationId');
   const filterRef = useRef();
 
   // State for managing application data, loading, and errors.
@@ -157,6 +160,32 @@ export default function EmployerApplicationsPage() {
     }
   }, [currentUser, updateApplicationsView]);
 
+  // Effect to scroll and highlight application when applicationId is in URL
+  useEffect(() => {
+    if (applicationIdToHighlight && !loading && Object.keys(displayData).length > 0) {
+      setTimeout(() => {
+        const element = document.getElementById(`application-${applicationIdToHighlight}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.style.transition = 'all 0.3s ease';
+          element.style.outline = '3px solid #1976d2';
+          element.style.outlineOffset = '2px';
+          
+          setTimeout(() => {
+            element.style.transition = 'all 1.5s ease';
+            element.style.outline = '3px solid transparent';
+            
+            setTimeout(() => {
+              element.style.outline = '';
+              element.style.outlineOffset = '';
+              element.style.transition = '';
+            }, 1500);
+          }, 1500);
+        }
+      }, 300);
+    }
+  }, [applicationIdToHighlight, loading, displayData]);
+
   /**
    * Callback function passed to child ApplicationCard components.
    * Triggers a refresh of the applications view when a status is changed.
@@ -266,13 +295,21 @@ export default function EmployerApplicationsPage() {
               <AccordionDetails>
                 {position.jobPositionApplicationHistory.length > 0 ? (
                   position.jobPositionApplicationHistory.map((app) => (
-                    <ApplicationCard
-                      currentUser={currentUser}
+                    <Box
                       key={app.id}
-                      jobPosition={position}
-                      application={app}
-                      onStatusChange={handleStatusChange}
-                    />
+                      id={`application-${app.id}`}
+                      sx={{
+                        borderRadius: 2,
+                        mb: 2
+                      }}
+                    >
+                      <ApplicationCard
+                        currentUser={currentUser}
+                        jobPosition={position}
+                        application={app}
+                        onStatusChange={handleStatusChange}
+                      />
+                    </Box>
                   ))
                 ) : (
                   <Typography sx={{ p: 2 }}>

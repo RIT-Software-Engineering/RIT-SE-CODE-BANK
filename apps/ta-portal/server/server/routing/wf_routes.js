@@ -16,6 +16,7 @@ const router = express.Router();
 const axios = require("axios");
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { notifyWorkflowActionCompleted } = require('../utils/workflow-notifications');
 
 // Configuration for workflow service
 const WORKFLOW_SERVICE_URL = process.env.WORKFLOWS_URL || "http://localhost:3001";
@@ -49,6 +50,81 @@ const handleWorkflowError = (error, res) => {
     details: error.message 
   });
 };
+
+/**
+ * Helper function to determine recipients for workflow notifications
+ * @param {Object} workflow - The workflow object with metadata
+ * @param {string} actorUsername - Username of the person who performed the action
+ * @returns {Promise<Array>} Array of recipient objects {username, fname, lname, email, role}
+ */
+async function getWorkflowNotificationRecipients(workflow, actorUsername) {
+  const recipients = [];
+  const metadata = workflow.baseAction?.metadata || {};
+  const workflowType = metadata.workflowType;
+
+  try {
+    if (workflowType === 'timecard_approval') {
+      // For timecard workflows, notify admin when employee submits, and employee when admin approves
+      const employeeUsername = metadata.employeeId;
+      const adminUsername = metadata.adminId;
+
+      if (actorUsername === employeeUsername && adminUsername) {
+        // Employee submitted, notify admin
+        const admin = await prisma.user.findUnique({
+          where: { username: adminUsername },
+          select: { username: true, fname: true, lname: true, email: true }
+        });
+        if (admin) recipients.push({ ...admin, role: 'admin' });
+      } else if (actorUsername === adminUsername && employeeUsername) {
+        // Admin approved, notify employee
+        const employee = await prisma.user.findUnique({
+          where: { username: employeeUsername },
+          select: { username: true, fname: true, lname: true, email: true }
+        });
+        if (employee) recipients.push({ ...employee, role: 'employee' });
+      }
+    } else if (workflowType === 'hiring_process') {
+      // For hiring workflows, notify relevant parties based on who acted
+      const candidateUsername = metadata.candidateUsername;
+      const employerUsername = metadata.employerUsername;
+      const adminUsername = 'aa1234'; // Default admin - could make this dynamic
+
+      // Notify candidate when employer or admin acts
+      if (actorUsername !== candidateUsername && candidateUsername) {
+        const candidate = await prisma.user.findUnique({
+          where: { username: candidateUsername },
+          select: { username: true, fname: true, lname: true, email: true }
+        });
+        if (candidate) recipients.push({ ...candidate, role: 'candidate' });
+      }
+
+      // Notify employer when candidate or admin acts
+      if (actorUsername !== employerUsername && employerUsername) {
+        const employer = await prisma.user.findUnique({
+          where: { username: employerUsername },
+          select: { username: true, fname: true, lname: true, email: true }
+        });
+        if (employer) recipients.push({ ...employer, role: 'employer' });
+      }
+
+      // Optionally notify admin (only on certain actions to avoid spam)
+      // Uncomment if you want admin notifications for all hiring workflow updates
+      /*
+      if (actorUsername !== adminUsername && adminUsername) {
+        const admin = await prisma.user.findUnique({
+          where: { username: adminUsername },
+          select: { username: true, fname: true, lname: true, email: true }
+        });
+        if (admin) recipients.push({ ...admin, role: 'admin' });
+      }
+      */
+    }
+  } catch (error) {
+    console.error('[getWorkflowNotificationRecipients] Error determining recipients:', error);
+  }
+
+  return recipients;
+}
 
 // Middleware to transform username to userId
 const transformUsernameToId = async (req, res, next) => {
@@ -246,19 +322,24 @@ router.get("/health", async (req, res) => {
  * Synchronize action state changes across all users in a hiring workflow
  */
 async function synchronizeHiringWorkflowAction(workflowId, actionId, newStateType) {
+  console.log(`[synchronizeHiringWorkflowAction] Starting for workflowId=${workflowId}, actionId=${actionId}, newStateType=${newStateType}`);
   try {
     const allStatesResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
       params: { workflowId }
     });
     
     const allWorkflowStates = Array.isArray(allStatesResponse.data) ? allStatesResponse.data : [allStatesResponse.data];
+    console.log(`[synchronizeHiringWorkflowAction] Found ${allWorkflowStates.length} workflow states`);
     
     for (let i = 0; i < allWorkflowStates.length; i++) {
       const workflowState = allWorkflowStates[i];
       
       if (!workflowState || !workflowState.id) {
+        console.log(`[synchronizeHiringWorkflowAction] Skipping invalid workflow state at index ${i}`);
         continue;
       }
+      
+      console.log(`[synchronizeHiringWorkflowAction] Processing workflow state ${workflowState.id} (${i + 1}/${allWorkflowStates.length})`);
       
       try {
         const detailedStateResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow/${workflowState.id}`);
@@ -267,20 +348,54 @@ async function synchronizeHiringWorkflowAction(workflowId, actionId, newStateTyp
         const targetActionState = detailedWorkflowState.actionStates?.find(as => as.actionId === actionId);
         
         if (!targetActionState) {
+          console.log(`[synchronizeHiringWorkflowAction] Action ${actionId} not found in workflow state ${workflowState.id}`);
           continue;
         }
         
+        console.log(`[synchronizeHiringWorkflowAction] Found action state ${targetActionState.id} with current type: ${targetActionState.stateType}`);
+        
         if (targetActionState.stateType !== newStateType) {
-          await axios.put(`${WORKFLOW_SERVICE_URL}/states/action/${targetActionState.id}`, {
-            stateType: newStateType
-          });
+          // Properly start and complete the action through the workflow service
+          if (newStateType === 'completed') {
+            // Start if not started
+            if (targetActionState.stateType === 'notStarted') {
+              console.log(`[synchronizeHiringWorkflowAction] Starting action state ${targetActionState.id}`);
+              await axios.post(`${WORKFLOW_SERVICE_URL}/states/handleStart`, {
+                actionStateId: targetActionState.id
+              });
+            }
+            // Then complete
+            console.log(`[synchronizeHiringWorkflowAction] Completing action state ${targetActionState.id}`);
+            await axios.post(`${WORKFLOW_SERVICE_URL}/states/handleSubmit`, {
+              actionStateId: targetActionState.id
+            });
+            console.log(`[synchronizeHiringWorkflowAction] Successfully completed action state ${targetActionState.id}`);
+          } else if (newStateType === 'inProgress') {
+            if (targetActionState.stateType === 'notStarted') {
+              console.log(`[synchronizeHiringWorkflowAction] Starting action state ${targetActionState.id} (inProgress)`);
+              await axios.post(`${WORKFLOW_SERVICE_URL}/states/handleStart`, {
+                actionStateId: targetActionState.id
+              });
+            }
+          } else {
+            // Direct state update for other state types
+            console.log(`[synchronizeHiringWorkflowAction] Directly updating action state ${targetActionState.id} to ${newStateType}`);
+            await axios.put(`${WORKFLOW_SERVICE_URL}/states/action/${targetActionState.id}`, {
+              stateType: newStateType
+            });
+          }
+        } else {
+          console.log(`[synchronizeHiringWorkflowAction] Action state ${targetActionState.id} already has type ${newStateType}, skipping`);
         }
       } catch (updateError) {
-        console.error(`Could not update action state for workflow state ${workflowState.id}:`, updateError.message);
+        console.error(`[synchronizeHiringWorkflowAction] Could not update action state for workflow state ${workflowState.id}:`, updateError.message);
+        console.error(`[synchronizeHiringWorkflowAction] Error details:`, updateError.response?.data || updateError);
       }
     }
+    console.log(`[synchronizeHiringWorkflowAction] Completed synchronization for all workflow states`);
   } catch (error) {
-    console.error('Error synchronizing hiring workflow action:', error.message);
+    console.error('[synchronizeHiringWorkflowAction] Error synchronizing hiring workflow action:', error.message);
+    console.error('[synchronizeHiringWorkflowAction] Error details:', error.response?.data || error);
     throw error;
   }
 }
@@ -298,16 +413,58 @@ const extractActionsFromWorkflow = async (workflow, userId = null) => {
     
     if (actionsResponse.data && Array.isArray(actionsResponse.data)) {
       const actionMap = new Map();
+      
+      // Fetch actual action states from workflow service if userId is provided
+      let actionStates = new Map();
+      if (userId) {
+        try {
+          const statesResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow`, {
+            params: { workflowId: workflow.id, userId: userId }
+          });
+          
+          const workflowStates = Array.isArray(statesResponse.data) ? statesResponse.data : [statesResponse.data];
+          
+          // Get detailed workflow state with action states
+          if (workflowStates.length > 0 && workflowStates[0]?.id) {
+            const detailedStateResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/states/workflow/${workflowStates[0].id}`);
+            const detailedState = detailedStateResponse.data;
+            
+            if (detailedState?.actionStates) {
+              detailedState.actionStates.forEach(actionState => {
+                // Map stateType to status format expected by frontend
+                let status = 'pending';
+                if (actionState.stateType === 'completed') {
+                  status = 'completed';
+                } else if (actionState.stateType === 'inProgress') {
+                  status = 'in-progress';
+                } else if (actionState.stateType === 'notStarted') {
+                  status = 'pending';
+                }
+                actionStates.set(actionState.actionId, status);
+              });
+            }
+          }
+        } catch (stateError) {
+          console.error('Error fetching action states:', stateError.message);
+          // Fall back to metadata-based status if state fetch fails
+        }
+      }
+      
       const metadata = workflow.metadata || workflow.baseAction?.metadata || {};
       const completedActions = parseInt(metadata.completedActions) || 0;
       const inProgressActionIndex = metadata.inProgressActionIndex ? parseInt(metadata.inProgressActionIndex) : null;
       
       const processAction = (actionData, index) => {
-        let status = 'pending';
-        if (index < completedActions) {
-          status = 'completed';
-        } else if (index === inProgressActionIndex - 1) {
-          status = 'in-progress';
+        // Use actual action state if available, otherwise fall back to metadata
+        let status = actionStates.get(actionData.id) || 'pending';
+        
+        // If no action state, use metadata-based status
+        if (!actionStates.has(actionData.id)) {
+          if (index < completedActions) {
+            status = 'completed';
+          } else if (index === inProgressActionIndex - 1) {
+            status = 'in-progress';
+          }
         }
         
         const action = {
@@ -934,17 +1091,80 @@ router.post("/user/:username/actions/:actionStateId/complete", async (req, res) 
       actionStateId: actionStateId
     });
     
-    // Check if this is a hiring workflow and synchronize
+    // Check workflow type and synchronize accordingly
     try {
       const workflowResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows/${workflowId}`);
       const workflow = workflowResponse.data;
-      const isHiringWorkflow = workflow.baseAction?.metadata?.workflowType === 'hiring_process';
       
-      if (isHiringWorkflow) {
+      console.log(`[wf_routes] Workflow structure for ${workflowId}:`, JSON.stringify({
+        hasBaseAction: !!workflow.baseAction,
+        baseActionMetadata: workflow.baseAction?.metadata,
+        workflowMetadata: workflow.metadata
+      }, null, 2));
+      
+      // Try to get workflow type from multiple possible locations
+      const workflowType = workflow.baseAction?.metadata?.workflowType || 
+                          workflow.metadata?.find(m => m.key === 'workflowType')?.value;
+      
+      console.log(`[wf_routes] Detected workflow type: ${workflowType}`);
+      
+      if (workflowType === 'hiring_process') {
         await synchronizeHiringWorkflowAction(workflowId, actionState.actionId, 'completed');
+      } else if (workflowType === 'timecard_approval') {
+        // Get metadata from the base action
+        const baseActionMetadata = workflow.baseAction?.metadata || {};
+        
+        const currentCompleted = parseInt(baseActionMetadata.completedActions || '0');
+        const totalActions = parseInt(baseActionMetadata.totalActions || '2');
+        const newCompleted = currentCompleted + 1;
+        
+        console.log(`[wf_routes] Timecard workflow ${workflowId}: currentCompleted=${currentCompleted}, newCompleted=${newCompleted}, totalActions=${totalActions}`);
+        
+        // Update metadata - need to send the FULL metadata object with all existing fields
+        const updatedMetadata = {
+          ...baseActionMetadata,  // Keep all existing metadata
+          completedActions: String(newCompleted),
+          inProgressActionIndex: newCompleted < totalActions ? String(newCompleted + 1) : String(totalActions)
+        };
+        
+        // Use the PUT /workflows/:id endpoint with the metadata field
+        await axios.put(`${WORKFLOW_SERVICE_URL}/workflows/${workflowId}`, {
+          metadata: updatedMetadata
+        });
+        
+        console.log(`[wf_routes] Updated timecard workflow ${workflowId} metadata: completedActions=${newCompleted}, totalActions=${totalActions}`);
+      }
+      
+      // Send notifications to relevant parties
+      try {
+        const actor = await prisma.user.findUnique({
+          where: { username },
+          select: { username: true, fname: true, lname: true, email: true }
+        });
+
+        if (actor) {
+          const recipients = await getWorkflowNotificationRecipients(workflow, username);
+          const actionName = actionState.action?.name || 'Action';
+          const comment = actionData.comment || req.body.comment;
+
+          for (const recipient of recipients) {
+            await notifyWorkflowActionCompleted({
+              workflowId,
+              workflow,
+              actor,
+              recipient,
+              actionName,
+              comment
+            });
+          }
+        }
+      } catch (notifyError) {
+        console.error('[wf_routes] Failed to send workflow notifications:', notifyError);
+        // Don't fail the request if notifications fail
       }
     } catch (syncError) {
-      console.error('Could not synchronize hiring workflow action:', syncError.message);
+      console.error('Could not synchronize workflow action:', syncError);
+      console.error('Error details:', syncError.response?.data || syncError.message);
     }
 
     res.json(response.data);
@@ -1072,7 +1292,11 @@ router.post("/hiring/create", async (req, res) => {
         jobTitle: jobTitle,
         applicationId: applicationId,
         candidateUserId: candidate.uid.toString(),
+        candidateUsername: candidate.username,
+        candidateName: `${candidate.fname} ${candidate.lname}`,
         employerUserId: employer.uid.toString(),
+        employerUsername: employer.username,
+        employerName: `${employer.fname} ${employer.lname}`,
         adminUserId: admin.uid.toString(),
         workflowType: 'hiring_process',
         createdAt: new Date().toISOString()
@@ -1185,12 +1409,19 @@ router.post("/hiring/create", async (req, res) => {
     ];
 
     const stateResponses = await Promise.all(stateCreationPromises);
+    console.log(`[Hiring Workflow] Created workflow states for ${stateResponses.length} users`);
+
+    // Give workflow service a moment to process state creation
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Auto-complete the "Applied" action
     try {
+      console.log(`[Hiring Workflow] Auto-completing Applied action (ID: ${appliedAction.data.id}) for workflow ${createdWorkflow.id}`);
       await synchronizeHiringWorkflowAction(createdWorkflow.id, appliedAction.data.id, 'completed');
+      console.log(`[Hiring Workflow] Successfully auto-completed Applied action`);
     } catch (autoCompleteError) {
-      console.error('Could not auto-complete Applied action:', autoCompleteError.message);
+      console.error('[Hiring Workflow] Could not auto-complete Applied action:', autoCompleteError.message);
+      console.error('[Hiring Workflow] Error details:', autoCompleteError.response?.data || autoCompleteError);
     }
 
     res.status(201).json({
@@ -1521,12 +1752,17 @@ router.get("/by-role/:username", async (req, res) => {
     }
 
     const transformedWorkflows = await Promise.all(filteredWorkflows.map(async workflow => {
+      const metadata = workflow.metadata || workflow.baseAction?.metadata || {};
+      
+      // Debug logging for metadata
+      console.log(`[wf_routes] Workflow ${workflow.id} metadata:`, JSON.stringify(metadata, null, 2));
+      
       return {
         id: workflow.id,
         name: workflow.baseAction?.name || 'Unnamed Workflow',
         description: workflow.baseAction?.description || '',
         tags: workflow.tags || [],
-        metadata: workflow.metadata || workflow.baseAction?.metadata || {},
+        metadata: metadata,
         actions: await extractActionsFromWorkflow(workflow, userId)
       };
     }));

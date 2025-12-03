@@ -51,6 +51,7 @@ export default function AdminApplicationsPage() {
   const { showNotification } = useNotification();
   const filterRef = useRef();
   const searchParams = useSearchParams();
+  const applicationIdToHighlight = searchParams.get('applicationId');
 
   // Initialize active tab based on URL search parameter for linkability.
   const [activeTab, setActiveTab] = useState(() => {
@@ -210,6 +211,35 @@ export default function AdminApplicationsPage() {
     // not on every change to search/filter state, which are handled by their own callbacks.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, activeTab]);
+
+  // Effect to scroll and highlight application when applicationId is in URL
+  useEffect(() => {
+    if (applicationIdToHighlight && !loading && !hiringLoading) {
+      const hasData = activeTab === 0 ? Object.keys(displayData).length > 0 : hiringApplications.length > 0;
+      if (hasData) {
+        setTimeout(() => {
+          const element = document.getElementById(`application-${applicationIdToHighlight}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.style.transition = 'all 0.3s ease';
+            element.style.outline = '3px solid #1976d2';
+            element.style.outlineOffset = '2px';
+            
+            setTimeout(() => {
+              element.style.transition = 'all 1.5s ease';
+              element.style.outline = '3px solid transparent';
+              
+              setTimeout(() => {
+                element.style.outline = '';
+                element.style.outlineOffset = '';
+                element.style.transition = '';
+              }, 1500);
+            }, 1500);
+          }
+        }, 300);
+      }
+    }
+  }, [applicationIdToHighlight, loading, hiringLoading, displayData, hiringApplications, activeTab]);
 
   /**
    * Handles the user switching between the "My Applications" and "Ready to Hire" tabs.
@@ -449,13 +479,21 @@ export default function AdminApplicationsPage() {
                     <AccordionDetails>
                       {position.jobPositionApplicationHistory.length > 0 ? (
                         position.jobPositionApplicationHistory.map((app) => (
-                          <ApplicationCard
-                            currentUser={currentUser}
+                          <Box
                             key={app.id}
-                            jobPosition={position}
-                            application={app}
-                            onStatusChange={handleStatusChange}
-                          />
+                            id={`application-${app.id}`}
+                            sx={{
+                              borderRadius: 2,
+                              mb: 2
+                            }}
+                          >
+                            <ApplicationCard
+                              currentUser={currentUser}
+                              jobPosition={position}
+                              application={app}
+                              onStatusChange={handleStatusChange}
+                            />
+                          </Box>
                         ))
                       ) : (
                         <Typography sx={{ p: 2 }}>
@@ -508,15 +546,22 @@ export default function AdminApplicationsPage() {
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {hiringApplications.map((application) => (
-              <ApplicationCard
+              <Box
                 key={application.id}
-                currentUser={currentUser}
-                jobPosition={application.jobPosition}
-                application={application}
-                onStatusChange={() => fetchHiringApplications()}
-                onHire={() => handleOpenHireModal(application)}
-                showHireAction={true}
-              />
+                id={`application-${application.id}`}
+                sx={{
+                  borderRadius: 2
+                }}
+              >
+                <ApplicationCard
+                  currentUser={currentUser}
+                  jobPosition={application.jobPosition}
+                  application={application}
+                  onStatusChange={() => fetchHiringApplications()}
+                  onHire={() => handleOpenHireModal(application)}
+                  showHireAction={true}
+                />
+              </Box>
             ))}
           </Box>
         )}

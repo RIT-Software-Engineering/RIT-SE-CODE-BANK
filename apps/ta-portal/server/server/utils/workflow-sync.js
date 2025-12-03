@@ -8,6 +8,7 @@
 
 const axios = require('axios');
 const { PrismaClient } = require('@prisma/client');
+const { notifyActionCompleted, notifyTimecardSubmitted } = require('./workflow-notifications');
 
 const prisma = new PrismaClient();
 const WORKFLOW_SERVICE_URL = process.env.WORKFLOWS_URL || 'http://localhost:3001';
@@ -151,16 +152,16 @@ async function updateWorkflowProgress(applicationId, newStatus) {
 
         if (!user || !user.uid) return;
 
-        // Get the user's workflow state
-        const workflowStateResponse = await axios.get(
-            `${WORKFLOW_SERVICE_URL}/states/workflow?userId=${user.uid}&workflowId=${workflow.id}`,
-            { timeout: 10000 }
+        // Get ALL workflow states for this workflow (for all users: admin, employer, candidate)
+        const allWorkflowStatesResponse = await axios.get(
+            `${WORKFLOW_SERVICE_URL}/states/workflow`,
+            { params: { workflowId: workflow.id }, timeout: 10000 }
         );
 
-        if (!workflowStateResponse.data || workflowStateResponse.data.length === 0) return;
+        if (!allWorkflowStatesResponse.data || allWorkflowStatesResponse.data.length === 0) return;
 
-        const workflowState = workflowStateResponse.data[0];
-        if (!workflowState || !workflowState.actionStates) return;
+        const allWorkflowStates = allWorkflowStatesResponse.data;
+        console.log(`[updateWorkflowProgress] Found ${allWorkflowStates.length} workflow states for all users`);
 
         // Get all actions for this workflow
         const actionsResponse = await axios.get(
@@ -177,85 +178,104 @@ async function updateWorkflowProgress(applicationId, newStatus) {
         }
         console.log(`[updateWorkflowProgress] Found target action: ${targetAction.id}`);
 
-        // Find the corresponding action state
-        const targetActionState = workflowState.actionStates.find(
-            as => as.actionId === targetAction.id
-        );
-        if (!targetActionState) {
-            console.log(`[updateWorkflowProgress] Action state not found for action ${targetAction.id}`);
-            return;
-        }
-        console.log(`[updateWorkflowProgress] Found action state: ${targetActionState.id}, current status: ${targetActionState.stateType}`);
-
         // Check if previous actions need to be completed (when steps are skipped)
         const currentActionIndex = actions.findIndex(a => a.id === targetAction.id);
         console.log(`[updateWorkflowProgress] Current action index: ${currentActionIndex}`);
         
-        // Complete all previous actions that haven't been completed yet
-        for (let i = 0; i < currentActionIndex; i++) {
-            const previousAction = actions[i];
-            const previousActionState = workflowState.actionStates.find(as => as.actionId === previousAction.id);
+        // For EACH user's workflow state, complete the target action and all previous actions
+        for (const workflowState of allWorkflowStates) {
+            if (!workflowState.actionStates) continue;
             
-            if (previousActionState && previousActionState.stateType !== 'completed') {
-                console.log(`[updateWorkflowProgress] Previous action "${previousAction.name}" not completed, completing it now`);
+            console.log(`[updateWorkflowProgress] Processing workflow state for user ${workflowState.userId}`);
+            
+            // Complete all previous actions that haven't been completed yet
+            for (let i = 0; i < currentActionIndex; i++) {
+                const previousAction = actions[i];
+                const previousActionState = workflowState.actionStates.find(as => as.actionId === previousAction.id);
                 
-                // Start if not started
-                if (previousActionState.stateType === 'notStarted') {
+                if (previousActionState && previousActionState.stateType !== 'completed') {
+                    console.log(`[updateWorkflowProgress] Previous action "${previousAction.name}" not completed for user ${workflowState.userId}, completing it now`);
+                    
+                    // Start if not started
+                    if (previousActionState.stateType === 'notStarted') {
+                        await axios.post(
+                            `${WORKFLOW_SERVICE_URL}/states/handleStart`,
+                            { actionStateId: previousActionState.id },
+                            { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
+                        );
+                    }
+                    
+                    // Complete it
                     await axios.post(
-                        `${WORKFLOW_SERVICE_URL}/states/handleStart`,
+                        `${WORKFLOW_SERVICE_URL}/states/handleSubmit`,
                         { actionStateId: previousActionState.id },
                         { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                     );
+                    console.log(`[updateWorkflowProgress] Completed skipped action "${previousAction.name}" for user ${workflowState.userId}`);
                 }
-                
-                // Complete it
+            }
+
+            // Find the target action state for this user
+            const targetActionState = workflowState.actionStates.find(
+                as => as.actionId === targetAction.id
+            );
+            
+            if (!targetActionState) {
+                console.log(`[updateWorkflowProgress] Action state not found for action ${targetAction.id} for user ${workflowState.userId}`);
+                continue;
+            }
+            
+            console.log(`[updateWorkflowProgress] Found action state: ${targetActionState.id}, current status: ${targetActionState.stateType} for user ${workflowState.userId}`);
+
+            // If action is not started yet, start it first
+            if (targetActionState.stateType === 'notStarted') {
+                console.log(`[updateWorkflowProgress] Action not started yet for user ${workflowState.userId}, starting it first`);
                 await axios.post(
-                    `${WORKFLOW_SERVICE_URL}/states/handleSubmit`,
-                    { actionStateId: previousActionState.id },
+                    `${WORKFLOW_SERVICE_URL}/states/handleStart`,
+                    { actionStateId: targetActionState.id },
                     { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                 );
-                console.log(`[updateWorkflowProgress] Completed skipped action "${previousAction.name}"`);
             }
-        }
 
-        // If action is not started yet, start it first
-        if (targetActionState.stateType === 'notStarted') {
-            console.log(`[updateWorkflowProgress] Action not started yet, starting it first`);
-            await axios.post(
-                `${WORKFLOW_SERVICE_URL}/states/handleStart`,
-                { actionStateId: targetActionState.id },
-                { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
-            );
-        }
+            // Mark the action as completed for this user
+            if (targetActionState.stateType !== 'completed') {
+                console.log(`[updateWorkflowProgress] Calling handleSubmit for action state ${targetActionState.id} for user ${workflowState.userId}`);
+                await axios.post(
+                    `${WORKFLOW_SERVICE_URL}/states/handleSubmit`,
+                    { actionStateId: targetActionState.id },
+                    { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
+                );
+                console.log(`[updateWorkflowProgress] Successfully completed action "${actionToComplete}" for user ${workflowState.userId}`);
+            }
 
-        // Mark the action as completed
-        console.log(`[updateWorkflowProgress] Calling handleSubmit for action state ${targetActionState.id}`);
-        await axios.post(
-            `${WORKFLOW_SERVICE_URL}/states/handleSubmit`,
-            { actionStateId: targetActionState.id },
-            { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
-        );
-        console.log(`[updateWorkflowProgress] Successfully completed action "${actionToComplete}"`);
-
-        // Auto-start the next action in sequence
-        const nextActionIndex = currentActionIndex + 1;
-        if (nextActionIndex < actions.length) {
-            const nextAction = actions[nextActionIndex];
-            const nextActionState = workflowState.actionStates.find(as => as.actionId === nextAction.id);
-            
-            if (nextActionState && nextActionState.stateType === 'notStarted') {
-                console.log(`[updateWorkflowProgress] Auto-starting next action: "${nextAction.name}"`);
-                try {
-                    await axios.post(
-                        `${WORKFLOW_SERVICE_URL}/states/handleStart`,
-                        { actionStateId: nextActionState.id },
-                        { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
-                    );
-                    console.log(`[updateWorkflowProgress] Successfully started next action "${nextAction.name}"`);
-                } catch (startError) {
-                    console.log(`[updateWorkflowProgress] Failed to start next action: ${startError.message}`);
+            // Auto-start the next action in sequence for this user
+            const nextActionIndex = currentActionIndex + 1;
+            if (nextActionIndex < actions.length) {
+                const nextAction = actions[nextActionIndex];
+                const nextActionState = workflowState.actionStates.find(as => as.actionId === nextAction.id);
+                
+                if (nextActionState && nextActionState.stateType === 'notStarted') {
+                    console.log(`[updateWorkflowProgress] Auto-starting next action: "${nextAction.name}" for user ${workflowState.userId}`);
+                    try {
+                        await axios.post(
+                            `${WORKFLOW_SERVICE_URL}/states/handleStart`,
+                            { actionStateId: nextActionState.id },
+                            { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
+                        );
+                        console.log(`[updateWorkflowProgress] Successfully started next action "${nextAction.name}" for user ${workflowState.userId}`);
+                    } catch (startError) {
+                        console.log(`[updateWorkflowProgress] Failed to start next action for user ${workflowState.userId}: ${startError.message}`);
+                    }
                 }
             }
+        }
+
+        // Send notifications to relevant parties (only once, not per user)
+        try {
+            await notifyActionCompleted(actionToComplete, app, workflow.id);
+        } catch (notifError) {
+            console.error('[updateWorkflowProgress] Failed to send notifications:', notifError.message);
+            // Continue despite notification failure
         }
 
 
@@ -268,8 +288,11 @@ async function updateWorkflowProgress(applicationId, newStatus) {
                 const allWorkflowsResponse = await axios.get(`${WORKFLOW_SERVICE_URL}/workflows`, { timeout: 10000 });
                 const freshWorkflows = allWorkflowsResponse.data || [];
                 const freshWorkflow = freshWorkflows.find(w => w.id === workflow.id);
-                if (freshWorkflow && freshWorkflow.metadata) {
-                    existingMetadata = freshWorkflow.metadata;
+                if (freshWorkflow) {
+                    // Check multiple possible locations for metadata
+                    existingMetadata = freshWorkflow.metadata || 
+                                      freshWorkflow.baseAction?.metadata || 
+                                      {};
                 }
             } catch (listError) {
                 try {
@@ -281,59 +304,58 @@ async function updateWorkflowProgress(applicationId, newStatus) {
                                      currentWorkflowResponse.data?.baseAction?.metadata || 
                                      {};
                 } catch (fetchError) {
-                    existingMetadata = workflow.metadata || {};
+                    existingMetadata = workflow.metadata || workflow.baseAction?.metadata || {};
                 }
             }
             
-            // Get updated workflow state
-            const allUsersStateResponse = await axios.get(
-                `${WORKFLOW_SERVICE_URL}/states/workflow`,
-                { params: { workflowId: workflow.id }, timeout: 10000 }
-            );
+            // Use the allWorkflowStates we already fetched
+            const allStates = allWorkflowStates;
+            const allActions = actions;
+            
+            let totalCompleted = 0;
+            let inProgressActionIndex = null;
+            let currentWorkflowStatus = newStatus;
 
-            if (allUsersStateResponse.data && allUsersStateResponse.data.length > 0) {
-                const allStates = allUsersStateResponse.data;
-                const allActions = actions;
-                
-                let totalCompleted = 0;
-                let inProgressActionIndex = null;
-                let currentWorkflowStatus = newStatus;
-
-                // Count completed actions
-                for (let i = 0; i < allActions.length; i++) {
-                    const action = allActions[i];
-                    const isCompleted = allStates.some(state => 
-                        state.actionStates && 
-                        state.actionStates.some(as => 
-                            as.actionId === action.id && as.stateType === 'completed'
-                        )
-                    );
-                    
-                    if (isCompleted) {
-                        totalCompleted++;
-                    } else if (inProgressActionIndex === null) {
-                        inProgressActionIndex = i + 1;
-                    }
-                }
-
-                if (totalCompleted === allActions.length) {
-                    inProgressActionIndex = null;
-                }
-
-                // Update metadata
-                const updatedMetadata = {
-                    ...existingMetadata,
-                    completedActions: totalCompleted,
-                    currentStatus: currentWorkflowStatus,
-                    inProgressActionIndex: inProgressActionIndex
-                };
-
-                await axios.put(
-                    `${WORKFLOW_SERVICE_URL}/workflows/${workflow.id}`,
-                    { metadata: updatedMetadata },
-                    { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
+            // Count completed actions (check if ANY user has it completed)
+            for (let i = 0; i < allActions.length; i++) {
+                const action = allActions[i];
+                const isCompleted = allStates.some(state => 
+                    state.actionStates && 
+                    state.actionStates.some(as => 
+                        as.actionId === action.id && as.stateType === 'completed'
+                    )
                 );
+                
+                if (isCompleted) {
+                    totalCompleted++;
+                } else if (inProgressActionIndex === null) {
+                    inProgressActionIndex = i + 1;
+                }
             }
+
+            if (totalCompleted === allActions.length) {
+                inProgressActionIndex = null;
+            }
+
+            // Update metadata - preserve ALL existing fields (names, IDs, etc.)
+            const updatedMetadata = {
+                ...existingMetadata, // Preserve all existing metadata including names
+                completedActions: totalCompleted.toString(),
+                currentStatus: currentWorkflowStatus,
+                totalActions: allActions.length.toString(),
+                inProgressActionIndex: inProgressActionIndex ? inProgressActionIndex.toString() : null
+            };
+
+            console.log('[updateWorkflowProgress] Existing metadata before update:', existingMetadata);
+            console.log('[updateWorkflowProgress] Updated metadata being sent:', updatedMetadata);
+
+            await axios.put(
+                `${WORKFLOW_SERVICE_URL}/workflows/${workflow.id}`,
+                { metadata: updatedMetadata },
+                { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
+            );
+            
+            console.log('[updateWorkflowProgress] Successfully updated workflow metadata');
         } catch (metadataError) {
             console.error('Could not update workflow metadata:', metadataError.message);
         }
@@ -638,14 +660,13 @@ async function syncWorkflowsWithApplications() {
 
                 await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Mark completed actions
+                // Mark completed actions for ALL users
                 if (statusInfo.completed > 0) {
                     for (let i = 0; i < Math.min(statusInfo.completed, createdActionIds.length); i++) {
                         const actionId = createdActionIds[i];
-                        const assignedUserId = actions[i].assignedTo;
-                        const assignedUser = usersToCreateStatesFor.find(u => u.uid === assignedUserId);
                         
-                        if (assignedUser) {
+                        // Complete this action for ALL users (admin, employer, candidate)
+                        for (const user of usersToCreateStatesFor) {
                             try {
                                 let workflowStateResponse = null;
                                 let retryCount = 0;
@@ -654,7 +675,7 @@ async function syncWorkflowsWithApplications() {
                                 while (retryCount < maxRetries && !workflowStateResponse) {
                                     try {
                                         workflowStateResponse = await axios.get(
-                                            `${WORKFLOW_SERVICE_URL}/states/workflow?userId=${assignedUser.uid}&workflowId=${createdWorkflow.id}`,
+                                            `${WORKFLOW_SERVICE_URL}/states/workflow?userId=${user.uid}&workflowId=${createdWorkflow.id}`,
                                             { timeout: 10000 }
                                         );
                                     } catch (error) {
@@ -679,11 +700,12 @@ async function syncWorkflowsWithApplications() {
                                                 { actionStateId: actionState.id },
                                                 { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                                             );
+                                            console.log(`[syncWorkflows] Marked action ${i + 1} as completed for user ${user.username}`);
                                         }
                                     }
                                 }
                             } catch (error) {
-                                // Ignore completion errors
+                                console.error(`[syncWorkflows] Error completing action for user ${user.username}:`, error.message);
                             }
                         }
                     }
@@ -739,17 +761,17 @@ async function syncWorkflowsWithApplications() {
                     }
                 }
                 
-                // Update progress metadata
+                // Update progress metadata - preserve all existing metadata fields
                 try {
                     await axios.put(
                         `${WORKFLOW_SERVICE_URL}/workflows/${createdWorkflow.id}`,
                         {
                             metadata: {
-                                ...workflowData.metadata,
-                                completedActions: statusInfo.completed,
-                                totalActions: actions.length,
+                                ...workflowData.metadata, // This includes all the names and IDs
+                                completedActions: statusInfo.completed.toString(),
+                                totalActions: actions.length.toString(),
                                 currentStatus: app.jobApplicationStatus,
-                                inProgressActionIndex: statusInfo.inProgress || null,
+                                inProgressActionIndex: statusInfo.inProgress ? statusInfo.inProgress.toString() : null,
                                 deadline: app.jobPosition.startDate
                             }
                         },
@@ -814,6 +836,19 @@ async function createTimecardApprovalWorkflow(timecardWeeklyHistoryId) {
         const employee = timecard.jobPositionHistory.employee.candidate.user;
         const employer = timecard.jobPositionHistory.jobPosition.employer.user;
         const course = timecard.jobPositionHistory.jobPosition.course;
+        
+        // Get admin users for approval
+        const adminUsers = await prisma.user.findMany({
+            where: { role: 'ADMIN' }
+        });
+        
+        if (!adminUsers || adminUsers.length === 0) {
+            console.error('No admin users found for timecard approval workflow');
+            return null;
+        }
+        
+        const admin = adminUsers[0]; // Use first admin
+        
         const weekStart = new Date(timecard.weekStartDate);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 6);
@@ -847,12 +882,12 @@ async function createTimecardApprovalWorkflow(timecardWeeklyHistoryId) {
             {
                 name: 'Review',
                 description: `Review and approve timecard for ${employee.fname} ${employee.lname}`,
-                assignedTo: employer.uid.toString()
+                assignedTo: admin.uid.toString()
             }
         ];
 
         const workflowData = {
-            userId: employer.uid.toString(),
+            userId: admin.uid.toString(),
             name: workflowName,
             description: `Timecard approval workflow for ${employee.fname} ${employee.lname} (${course.courseCode}) - Week ${formatDate(weekStart)} to ${formatDate(weekEnd)}`,
             metadata: {
@@ -860,10 +895,10 @@ async function createTimecardApprovalWorkflow(timecardWeeklyHistoryId) {
                 timecardWeeklyHistoryId: timecardWeeklyHistoryId.toString(),
                 employeeId: employee.username,
                 employeeUserId: employee.uid.toString(),
-                employerId: employer.username,
-                employerUserId: employer.uid.toString(),
+                adminId: admin.username,
+                adminUserId: admin.uid.toString(),
                 employeeName: `${employee.fname} ${employee.lname}`,
-                employerName: `${employer.fname} ${employer.lname}`,
+                adminName: `${admin.fname} ${admin.lname}`,
                 courseCode: course.courseCode,
                 weekStartDate: timecard.weekStartDate.toISOString(),
                 deadline: weekEnd.toISOString()
@@ -883,7 +918,7 @@ async function createTimecardApprovalWorkflow(timecardWeeklyHistoryId) {
         
         for (let i = 0; i < actions.length; i++) {
             const actionData = {
-                userId: employer.uid.toString(),
+                userId: admin.uid.toString(),
                 name: actions[i].name,
                 description: actions[i].description,
                 actionType: 'simple',
@@ -913,7 +948,7 @@ async function createTimecardApprovalWorkflow(timecardWeeklyHistoryId) {
         // Create workflow states
         const usersToCreateStatesFor = [
             { uid: employee.uid.toString(), role: 'employee', username: employee.username },
-            { uid: employer.uid.toString(), role: 'employer', username: employer.username }
+            { uid: admin.uid.toString(), role: 'admin', username: admin.username }
         ];
 
         for (const user of usersToCreateStatesFor) {
@@ -923,45 +958,107 @@ async function createTimecardApprovalWorkflow(timecardWeeklyHistoryId) {
                     { userId: user.uid, workflowId: createdWorkflow.id },
                     { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
                 );
+                console.log(`[Timecard Workflow] Created workflow state for user ${user.username}`);
             } catch (error) {
-                // Ignore state creation errors
+                console.error(`[Timecard Workflow] Error creating state for user ${user.username}:`, error.message);
             }
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait longer for states to be fully created
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // Mark first action as completed
+        // Mark first action as completed for ALL users
         try {
             const actionId = createdActionIds[0];
-            const assignedUser = usersToCreateStatesFor.find(u => u.uid === employee.uid.toString());
-
-            if (assignedUser) {
-                const workflowStateResponse = await axios.get(
-                    `${WORKFLOW_SERVICE_URL}/states/workflow?userId=${assignedUser.uid}&workflowId=${createdWorkflow.id}`,
-                    { timeout: 10000 }
-                );
-
-                if (workflowStateResponse.data && workflowStateResponse.data.length > 0) {
-                    const workflowState = workflowStateResponse.data[0];
-                    
-                    if (workflowState.actionStates) {
-                        const actionState = workflowState.actionStates.find(
-                            as => as.actionId === actionId
+            
+            // Complete the first action for each user with retry logic
+            for (const user of usersToCreateStatesFor) {
+                let retries = 5;
+                let success = false;
+                
+                while (retries > 0 && !success) {
+                    try {
+                        const workflowStateResponse = await axios.get(
+                            `${WORKFLOW_SERVICE_URL}/states/workflow?userId=${user.uid}&workflowId=${createdWorkflow.id}`,
+                            { timeout: 10000 }
                         );
+
+                        if (workflowStateResponse.data && workflowStateResponse.data.length > 0) {
+                            const workflowState = workflowStateResponse.data[0];
+                            
+                            if (workflowState.actionStates) {
+                                const actionState = workflowState.actionStates.find(
+                                    as => as.actionId === actionId
+                                );
+                                
+                                if (actionState) {
+                                    // Use handleSubmit endpoint (correct endpoint for completing actions)
+                                    await axios.post(
+                                        `${WORKFLOW_SERVICE_URL}/states/handleSubmit`,
+                                        { actionStateId: actionState.id },
+                                        { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
+                                    );
+                                    console.log(`[Timecard Workflow] Marked first action completed for user ${user.username}`);
+                                    success = true;
+                                } else {
+                                    console.log(`[Timecard Workflow] Action state not found for user ${user.username}, retrying...`);
+                                }
+                            }
+                        }
                         
-                        if (actionState) {
-                            await axios.post(
-                                `${WORKFLOW_SERVICE_URL}/states/handleCompletion`,
-                                { actionStateId: actionState.id },
-                                { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
-                            );
+                        if (!success && retries > 1) {
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+                        }
+                    } catch (userError) {
+                        console.error(`[Timecard Workflow] Error completing action for user ${user.username} (${retries} retries left):`, userError.message);
+                        if (retries > 1) {
+                            await new Promise(resolve => setTimeout(resolve, 1500));
                         }
                     }
+                    
+                    retries--;
+                }
+                
+                if (!success) {
+                    console.error(`[Timecard Workflow] Failed to complete first action for user ${user.username} after all retries`);
                 }
             }
         } catch (error) {
-            // Ignore completion errors
+            console.error('[Timecard Workflow] Error in initial action completion:', error.message);
         }
+
+        // Update workflow metadata with progress information
+        try {
+            const totalActions = actions.length;
+            const completedActions = 1; // First action is completed
+            const inProgressActionIndex = 2; // Second action is now in progress
+            
+            const updatedMetadata = {
+                ...workflowData.metadata,
+                completedActions: completedActions.toString(),
+                totalActions: totalActions.toString(),
+                inProgressActionIndex: inProgressActionIndex.toString()
+            };
+            
+            await axios.put(
+                `${WORKFLOW_SERVICE_URL}/workflows/${createdWorkflow.id}`,
+                { metadata: updatedMetadata },
+                { timeout: 10000, headers: { 'Content-Type': 'application/json' } }
+            );
+            
+            console.log(`[Timecard Workflow] Updated workflow metadata - ${completedActions}/${totalActions} completed`);
+        } catch (metadataError) {
+            console.error('[Timecard Workflow] Error updating workflow metadata:', metadataError.message);
+        }
+
+        // Send notification to admin about timecard submission
+        await notifyTimecardSubmitted({
+            timecardWeeklyHistoryId,
+            employee,
+            admin,
+            weekStartDate: timecard.weekStartDate,
+            courseCode: course.courseCode
+        }, createdWorkflow.id);
 
         return createdWorkflow;
 

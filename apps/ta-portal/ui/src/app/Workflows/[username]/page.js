@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Box,
   Container,
@@ -54,7 +55,8 @@ import {
   FilterList as FilterListIcon,
   Search as SearchIcon,
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon
+  ExpandLess as ExpandLessIcon,
+  Lock as LockIcon
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { 
@@ -168,47 +170,23 @@ const DeadlineSettingsDialog = ({ open, onClose, showExpiredActions, setShowExpi
 };
 
 // Helper function to check if action is past deadline
+// NOTE: Expiration/overdue behavior disabled for TA Portal integration.
+// This function always returns false so actions are never considered past deadline.
 const isActionPastDeadline = (action) => {
-  if (!action.deadline) return false;
-  const deadline = new Date(action.deadline);
-  const now = new Date();
-  return now > deadline;
+  return false;
 };
 
 // Helper function to get deadline status
+// NOTE: Expiration/overdue behavior disabled for TA Portal integration.
+// Always return null so UI does not mark actions as overdue or show deadline text.
 const getDeadlineStatus = (action) => {
-  if (!action.deadline) return null;
-  
-  const deadline = new Date(action.deadline);
-  const now = new Date();
-  const timeDiff = deadline.getTime() - now.getTime();
-  const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-  
-  if (daysDiff < 0) {
-    return { status: 'overdue', days: Math.abs(daysDiff), text: `${Math.abs(daysDiff)} days overdue` };
-  } else if (daysDiff === 0) {
-    return { status: 'today', days: 0, text: 'Due today' };
-  } else if (daysDiff <= 3) {
-    return { status: 'urgent', days: daysDiff, text: `${daysDiff} days left` };
-  } else {
-    return { status: 'normal', days: daysDiff, text: `${daysDiff} days left` };
-  }
+  return null;
 };
 
 // Helper function to determine if an action should be marked as overdue
+// NOTE: Expiration/overdue behavior disabled for TA Portal integration.
+// Always return the original action status (never 'overdue').
 const getActionStatusWithOverdue = (action) => {
-  // If already completed, don't change status
-  if (action.status === 'completed') {
-    return action.status;
-  }
-  
-  // Check if action is overdue and not completed
-  const deadlineStatus = getDeadlineStatus(action);
-  if (deadlineStatus && deadlineStatus.status === 'overdue' && action.status !== 'completed') {
-    return 'overdue';
-  }
-  
-  // Return original status if not overdue
   return action.status;
 };
 
@@ -869,7 +847,7 @@ const ActionDetailModal = ({ action, open, onClose }) => {
   );
 };
 
-const WorkflowCard = ({ workflow, onActionClick, onActionMenuClick, expanded, onToggleExpand, handleStartAction, handleCompleteAction }) => {
+const WorkflowCard = ({ workflow, username, currentUser, onActionClick, onActionMenuClick, expanded, onToggleExpand, handleStartAction, handleCompleteAction }) => {
   const isRejected = workflow.metadata.currentStatus === 'REJECTED';
   
   const getActionStatusColor = (action, index, actions) => {
@@ -918,7 +896,7 @@ const WorkflowCard = ({ workflow, onActionClick, onActionMenuClick, expanded, on
       } else if (index === actualRejectionIndex) {
         return <Typography variant="h6" sx={{ fontSize: 16, color: 'white', fontWeight: 'bold' }}>✕</Typography>; // Red X for rejection step
       } else {
-        return <span style={{ fontSize: '12px', color: 'white' }}>🔒</span>; // Lock for steps after rejection
+        return <LockIcon sx={{ fontSize: 16, color: 'white' }} />; // Lock for steps after rejection
       }
     }
     
@@ -934,11 +912,11 @@ const WorkflowCard = ({ workflow, onActionClick, onActionMenuClick, expanded, on
     const canStart = previousAction?.status === 'completed';
     
     if (!canStart) {
-      return <span style={{ fontSize: '12px', color: 'white' }}>🔒</span>;
+      return <LockIcon sx={{ fontSize: 16, color: 'white' }} />;
     }
     
     return action.status === 'in-progress' ? 
-      <span style={{ fontSize: '12px', color: 'white' }}>▶</span> :
+      <PlayArrowIcon sx={{ fontSize: 16, color: 'white' }} /> :
       <PlayArrowIcon sx={{ fontSize: 16, color: 'white' }} />;
   };
 
@@ -950,7 +928,8 @@ const WorkflowCard = ({ workflow, onActionClick, onActionMenuClick, expanded, on
         mb: 3,
         borderRadius: 2,
         backgroundColor: '#fafafa',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        transition: 'all 0.3s ease'
       }}
     >
       {/* Workflow Header */}
@@ -976,7 +955,7 @@ const WorkflowCard = ({ workflow, onActionClick, onActionMenuClick, expanded, on
             )}
             
             {/* Display Applicant and Professor info for hiring workflows */}
-            <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+            <Box sx={{ display: 'flex', gap: 2, mt: 1, alignItems: 'center' }}>
               {workflow.metadata.candidateName && (
                 <Chip 
                   label={workflow.metadata.candidateName}
@@ -1000,7 +979,12 @@ const WorkflowCard = ({ workflow, onActionClick, onActionMenuClick, expanded, on
             {/* Progress Summary */}
             <Box sx={{ textAlign: 'right' }}>
               <Typography variant="caption" color="text.secondary">
-                {workflow.actions?.filter(a => a.actionType !== 'workflow' && a.status === 'completed').length || 0} / {workflow.actions?.filter(a => a.actionType !== 'workflow').length || 0} Complete
+                {(() => {
+                  // Always count actual action statuses for accuracy
+                  const completed = workflow.actions?.filter(a => a.actionType !== 'workflow' && a.status === 'completed').length || 0;
+                  const total = workflow.actions?.filter(a => a.actionType !== 'workflow').length || 0;
+                  return `${completed} / ${total} Complete`;
+                })()}
               </Typography>
               <Box sx={{ 
                 width: 60, 
@@ -1010,7 +994,12 @@ const WorkflowCard = ({ workflow, onActionClick, onActionMenuClick, expanded, on
                 mt: 0.5
               }}>
                 <Box sx={{
-                  width: `${((workflow.actions?.filter(a => a.actionType !== 'workflow' && a.status === 'completed').length || 0) / (workflow.actions?.filter(a => a.actionType !== 'workflow').length || 1)) * 100}%`,
+                  width: `${(() => {
+                    // Always count actual action statuses for accuracy
+                    const completed = workflow.actions?.filter(a => a.actionType !== 'workflow' && a.status === 'completed').length || 0;
+                    const total = workflow.actions?.filter(a => a.actionType !== 'workflow').length || 1;
+                    return (completed / total) * 100;
+                  })()}%`,
                   height: '100%',
                   backgroundColor: '#4caf50',
                   borderRadius: 2,
@@ -1420,15 +1409,17 @@ async function canUserPerformAction(workflow, action, username) {
  * @param {Object} action - The action object
  * @param {Object} workflow - The workflow containing the action
  * @param {string} username - The current username
+ * @param {Object} currentUser - The current user profile object with role information
  * @returns {string|null} The URL to navigate to, or null if no specific page
  */
-function getActionNavigationUrl(action, workflow, username) {
+function getActionNavigationUrl(action, workflow, username, currentUser) {
   if (process.env.NODE_ENV === 'development') {
     console.log('Getting navigation URL for action:', {
       actionName: action.name,
       workflowName: workflow.name,
       workflowMetadata: workflow.metadata,
-      username
+      username,
+      userRole: currentUser?.role
     });
   }
   
@@ -1445,8 +1436,33 @@ function getActionNavigationUrl(action, workflow, username) {
     if (workflow.metadata?.candidateUsername) {
       candidateUsername = workflow.metadata.candidateUsername;
     }
+    
+    // Try to get applicationId from multiple sources
     if (workflow.metadata?.applicationId) {
       applicationId = workflow.metadata.applicationId;
+    } else if (action.metadata?.applicationId) {
+      applicationId = action.metadata.applicationId;
+    } else if (workflow.actions?.[0]?.metadata?.applicationId) {
+      // Try first action's metadata
+      applicationId = workflow.actions[0].metadata.applicationId;
+    }
+    
+    // If still no applicationId, try to extract from workflow description
+    // Format: "Complete hiring workflow for [Job Title] position (Application #[ID])"
+    if (!applicationId && workflow.description) {
+      const appIdMatch = workflow.description.match(/Application\s+#(\d+)/i);
+      if (appIdMatch) {
+        applicationId = appIdMatch[1];
+      }
+    }
+    
+    // If still no applicationId, try to extract from workflow ID
+    // The ID field in the workflow might actually be the application ID for some workflow types
+    if (!applicationId && workflow.id) {
+      const idMatch = workflow.id.match(/^\d+$/);
+      if (idMatch) {
+        applicationId = workflow.id;
+      }
     }
     
     // Fallback: try to extract from workflow name 
@@ -1465,49 +1481,57 @@ function getActionNavigationUrl(action, workflow, username) {
     
     // Route based on action name and user context
     const actionName = action.name.toLowerCase();
+    const appIdParam = applicationId ? `?applicationId=${applicationId}` : '';
+    
+    // Determine the appropriate base route based on the user's actual role in the database
+    // CANDIDATE role → /Applications/Candidate/{username}
+    // EMPLOYEE role → /Applications/Employee/{username}
+    // This ensures employees applying for positions go to Employee pages, not Candidate pages
+    const userRole = currentUser?.role;
+    const baseRoute = userRole === 'CANDIDATE' 
+      ? `/Applications/Candidate/${username}` 
+      : `/Applications/Employee/${username}`;
     
     switch (actionName) {
       case 'applied':
-        // For "Applied" action, candidate should go to their applications page
-        if (candidateUsername) {
-          return `/Applications/Employee/${candidateUsername}`;
+        // For "Applied" action, route to the appropriate role-based Applications page
+        if (applicationId) {
+          return `${baseRoute}${appIdParam}`;
         }
         break;
         
       case 'interview':
         // For "Interview" action, employer should go to their employer applications page
         // Use the current user's username (should be employer) for the route
-        return `/Applications/Employer/${username}`;
+        return `/Applications/Employer/${username}${appIdParam}`;
         break;
         
       case 'offer':
         // For "Offer" action, employer should go to their employer applications page
         // Use the current user's username (should be employer) for the route
-        return `/Applications/Employer/${username}`;
+        return `/Applications/Employer/${username}${appIdParam}`;
         break;
         
       case 'accepted':
-        // For "Accepted" action, candidate should go to their applications page to accept offer
+        // For "Accepted" action, route to the appropriate role-based Applications page
         if (process.env.NODE_ENV === 'development') {
-          console.log('Accepted action navigation:', { candidateUsername, username, workflowMetadata: workflow.metadata });
+          console.log('Accepted action navigation:', { candidateUsername, username, userRole, baseRoute });
         }
-        if (candidateUsername) {
-          return `/Applications/Employee/${candidateUsername}`;
+        if (applicationId) {
+          return `${baseRoute}${appIdParam}`;
         }
-        // Fallback: use current username if it's the candidate viewing their own workflow
-        return `/Applications/Employee/${username}`;
         break;
         
       case 'hired':
         // For "Hired" action, admin should go to admin applications page with hiring tab
         // Use the current user's username (should be admin) for the route
-        return `/Applications/Admin/${username}?tab=hiring`;
+        return `/Applications/Admin/${username}?tab=hiring${applicationId ? `&applicationId=${applicationId}` : ''}`;
         break;
         
       default:
-        // For unknown actions, fallback to employee applications page
-        if (candidateUsername) {
-          return `/Applications/Employee/${candidateUsername}`;
+        // For unknown actions, route to the appropriate role-based Applications page
+        if (applicationId) {
+          return `${baseRoute}${appIdParam}`;
         }
         break;
     }
@@ -1522,6 +1546,7 @@ export default function WorkflowsPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { currentUser } = useAuth();
   const username = params.username;
   const workflowIdToExpand = searchParams.get('workflowId');
   
@@ -1529,6 +1554,7 @@ export default function WorkflowsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [unauthorized, setUnauthorized] = useState(false);
   
   // Workflow expansion state
   const [expandedWorkflows, setExpandedWorkflows] = useState(new Set());
@@ -1555,6 +1581,12 @@ export default function WorkflowsPage() {
   const [showExpiredActions, setShowExpiredActions] = useState(true);
   const [deadlineSettingsOpen, setDeadlineSettingsOpen] = useState(false);
   
+  // File upload state for timecard workflows
+  const [fileUploadDialogOpen, setFileUploadDialogOpen] = useState(false);
+  const [selectedFileAction, setSelectedFileAction] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  
   // Filtering state for overdue and rejected workflows
   const [hideOverdueRejected, setHideOverdueRejected] = useState(false);
   
@@ -1569,39 +1601,17 @@ export default function WorkflowsPage() {
   const [statusExpanded, setStatusExpanded] = useState(true);
 
   // Check if an action is past its deadline
+  // NOTE: Expiration/overdue behavior disabled for TA Portal integration.
+  // Always consider actions as not past deadline.
   const isActionPastDeadline = (action) => {
-    if (!action.deadline) return false;
-    
-    const deadline = new Date(action.deadline);
-    const now = new Date();
-    
-    return now > deadline;
+    return false;
   };
 
-  // Check if a workflow is completely overdue (all incomplete actions are overdue)
+  // Check if a workflow is completely overdue (disabled)
+  // NOTE: Expiration/overdue behavior disabled for TA Portal integration.
+  // Always return false so workflows are never treated as completely overdue.
   const isWorkflowCompletelyOverdue = (workflow) => {
-    if (!workflow.actions || workflow.actions.length === 0) return false;
-    
-    // Check if the workflow itself has an overdue deadline in metadata
-    const workflowDeadline = workflow.metadata?.deadline;
-    if (workflowDeadline) {
-      const deadline = new Date(workflowDeadline);
-      const now = new Date();
-      if (now > deadline) {
-        console.log(`Workflow ${workflow.metadata?.candidateName} is overdue (deadline: ${workflowDeadline})`);
-        return true;
-      }
-    }
-    
-    const incompleteActions = workflow.actions.filter(action => action.status !== 'completed');
-    if (incompleteActions.length === 0) return false; // All actions completed
-    
-    return incompleteActions.every(action => {
-      if (!action.deadline) return false;
-      const deadline = new Date(action.deadline);
-      const now = new Date();
-      return now > deadline;
-    });
+    return false;
   };
 
   // Check if a workflow is rejected
@@ -1710,32 +1720,58 @@ export default function WorkflowsPage() {
   );
 
   useEffect(() => {
-    if (username) {
+    if (username && currentUser) {
       fetchWorkflows();
     }
-  }, [username]);
+  }, [username, currentUser]);
 
   // Auto-expand workflow if workflowId is in URL
   useEffect(() => {
-    if (workflowIdToExpand && workflows.length > 0) {
+    if (workflowIdToExpand && workflows.length > 0 && !loading) {
       const workflowExists = workflows.some(w => w.id === workflowIdToExpand);
       if (workflowExists) {
+        // Clear any existing expanded workflows and expand only the target
         setExpandedWorkflows(new Set([workflowIdToExpand]));
         
-        // Scroll to the workflow
-        setTimeout(() => {
+        // Scroll to the workflow after DOM updates - increased delay for expansion animation
+        const scrollTimer = setTimeout(() => {
           const element = document.getElementById(`workflow-${workflowIdToExpand}`);
           if (element) {
+            // Scroll into view
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Add a visible highlight by temporarily changing the border
+            element.style.transition = 'all 0.3s ease';
+            element.style.border = '3px solid #1976d2';
+            element.style.boxShadow = '0 0 20px rgba(25, 118, 210, 0.5)';
+            
+            // Reset after animation
+            setTimeout(() => {
+              element.style.border = '';
+              element.style.boxShadow = '';
+            }, 3000);
+          } else {
+            console.log('Element not found:', `workflow-${workflowIdToExpand}`);
           }
-        }, 100);
+        }, 800);
+        
+        return () => clearTimeout(scrollTimer);
       }
     }
-  }, [workflowIdToExpand, workflows]);
+  }, [workflowIdToExpand, workflows, loading]);
 
   const fetchWorkflows = async () => {
     setLoading(true);
     setError(null);
+    setUnauthorized(false);
+    
+    // Check if the logged-in user matches the URL parameter
+    if (!currentUser || currentUser.username !== username) {
+      setUnauthorized(true);
+      setLoading(false);
+      return;
+    }
+    
     try {
       const data = await getWorkflowsByRole(username);
       setWorkflows(data.workflows || []);
@@ -1869,6 +1905,25 @@ export default function WorkflowsPage() {
       return;
     }
 
+    // Check if this is a timecard review action - open file upload dialog instead
+    const isTimecardReview = workflowForAction.metadata?.workflowType === 'timecard_approval' && 
+                            action.name === 'Review';
+    
+    if (isTimecardReview) {
+      // Check if user is the admin (not the employee who submitted)
+      const isAdmin = workflowForAction.metadata?.adminId === username;
+      if (!isAdmin) {
+        showSnackbar('Only the assigned admin can review and approve this timecard', 'error');
+        handlePopupClose();
+        return;
+      }
+      
+      setSelectedFileAction(action);
+      setFileUploadDialogOpen(true);
+      handlePopupClose();
+      return;
+    }
+
     // Check permissions for hiring workflows
     const hasPermission = await canUserPerformAction(workflowForAction, action, username);
     if (!hasPermission) {
@@ -1900,7 +1955,7 @@ export default function WorkflowsPage() {
     }
 
     // Get the navigation URL for this action
-    const navigationUrl = getActionNavigationUrl(action, workflowForAction, username);
+    const navigationUrl = getActionNavigationUrl(action, workflowForAction, username, currentUser);
     
     if (navigationUrl) {
       // Navigate to the specific page for this action
@@ -1926,6 +1981,25 @@ export default function WorkflowsPage() {
       return;
     }
 
+    // Check if this is a timecard review action - open file upload dialog instead
+    const isTimecardReview = workflowForAction.metadata?.workflowType === 'timecard_approval' && 
+                            action.name === 'Review';
+    
+    if (isTimecardReview) {
+      // Check if user is the admin (not the employee who submitted)
+      const isAdmin = workflowForAction.metadata?.adminId === username;
+      if (!isAdmin) {
+        showSnackbar('Only the assigned admin can review and approve this timecard', 'error');
+        handlePopupClose();
+        return;
+      }
+      
+      setSelectedFileAction(action);
+      setFileUploadDialogOpen(true);
+      handlePopupClose();
+      return;
+    }
+
     // Check permissions first
     const hasPermission = await canUserPerformAction(workflowForAction, action, username);
     if (!hasPermission) {
@@ -1945,7 +2019,7 @@ export default function WorkflowsPage() {
     }
 
     // Get the navigation URL for this action
-    const navigationUrl = getActionNavigationUrl(action, workflowForAction, username);
+    const navigationUrl = getActionNavigationUrl(action, workflowForAction, username, currentUser);
     
     if (navigationUrl) {
       // Navigate to the specific page for this action
@@ -2018,6 +2092,81 @@ export default function WorkflowsPage() {
       }
     }
     return null;
+  };
+
+  // Handle file upload for timecard review
+  const handleFileUploadSubmit = async () => {
+    if (!selectedFile) {
+      showSnackbar('Please select a file to upload', 'warning');
+      return;
+    }
+
+    if (!selectedFileAction) {
+      showSnackbar('No action selected', 'error');
+      return;
+    }
+
+    setUploadingFile(true);
+
+    try {
+      // Get workflow state for the current user
+      const workflowForAction = findWorkflowForAction(selectedFileAction.id);
+      if (!workflowForAction) {
+        throw new Error('Could not find workflow for this action');
+      }
+
+      console.log('Selected action for file upload:', selectedFileAction);
+      console.log('Workflow:', workflowForAction);
+
+      // Find the actionStateId from the workflow state
+      // The action.id in the UI is actually the action ID, not the actionStateId
+      // We need to fetch the workflow state to get the correct actionStateId
+      let actionStateId = selectedFileAction.actionStateId || selectedFileAction.id;
+
+      if (!selectedFileAction.actionStateId) {
+        console.log('Fetching workflow state to find actionStateId...');
+        try {
+          const workflowStateResponse = await getWorkflowStateWithActions(username, workflowForAction.id);
+          console.log('Workflow state response:', workflowStateResponse);
+          
+          // Find the matching action state by comparing action IDs
+          const matchingActionState = workflowStateResponse.actionStates?.find(
+            as => as.action?.id === selectedFileAction.id
+          );
+          
+          if (matchingActionState) {
+            actionStateId = matchingActionState.id;
+            console.log('Found actionStateId from workflow state:', actionStateId);
+          } else {
+            throw new Error('Could not find action state for this action');
+          }
+        } catch (fetchError) {
+          console.error('Error fetching workflow state:', fetchError);
+          throw new Error('Could not retrieve action state information');
+        }
+      }
+
+      console.log('Completing action with actionStateId:', actionStateId);
+
+      // Complete the action via the workflow API
+      await completeAction(username, actionStateId, { 
+        fileName: selectedFile.name,
+        fileSize: selectedFile.size 
+      });
+
+      // Refresh workflows to show updated status
+      await fetchWorkflows();
+
+      showSnackbar('Timecard reviewed and approved successfully!', 'success');
+      setFileUploadDialogOpen(false);
+      setSelectedFile(null);
+      setSelectedFileAction(null);
+    } catch (error) {
+      console.error('Error submitting timecard review:', error);
+      showSnackbar('Failed to submit timecard review', 'error');
+    } finally {
+      setUploadingFile(false);
+    }
   };
 
   // Show snackbar notification
@@ -2101,6 +2250,13 @@ export default function WorkflowsPage() {
       {error && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           {error}
+        </Alert>
+      )}
+
+      {/* Unauthorized Alert */}
+      {unauthorized && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          You are not authorized to view this page. You can only view your own workflows.
         </Alert>
       )}
 
@@ -2208,6 +2364,8 @@ export default function WorkflowsPage() {
                 <WorkflowCard
                   key={workflow.id}
                   workflow={workflow}
+                  username={username}
+                  currentUser={currentUser}
                   expanded={expandedWorkflows.has(workflow.id)}
                   onToggleExpand={handleToggleWorkflowExpand}
                   onActionClick={handleActionClick}
@@ -2494,6 +2652,134 @@ export default function WorkflowsPage() {
           </Button>
         </Box>
       </Drawer>
+
+      {/* File Upload Dialog for Timecard Review */}
+      <Dialog
+        open={fileUploadDialogOpen}
+        onClose={() => {
+          if (!uploadingFile) {
+            setFileUploadDialogOpen(false);
+            setSelectedFile(null);
+            setSelectedFileAction(null);
+          }
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: '#2c2c2c',
+            color: 'white'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          borderBottom: '1px solid #555'
+        }}>
+          <Typography variant="h6" component="span" fontWeight="600">
+            {selectedFileAction?.name || 'Review Timecard'}
+          </Typography>
+          <IconButton 
+            onClick={() => {
+              if (!uploadingFile) {
+                setFileUploadDialogOpen(false);
+                setSelectedFile(null);
+                setSelectedFileAction(null);
+              }
+            }} 
+            sx={{ color: 'white' }}
+            disabled={uploadingFile}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 3 }}>
+          <Typography variant="body1" color="#ccc" mb={3}>
+            {selectedFileAction?.description || 'Upload your reviewed timecard approval document'}
+          </Typography>
+
+          <Box sx={{ 
+            border: '2px dashed #555',
+            borderRadius: 1,
+            p: 3,
+            textAlign: 'center',
+            mb: 3,
+            backgroundColor: '#333',
+            cursor: uploadingFile ? 'not-allowed' : 'pointer',
+            '&:hover': uploadingFile ? {} : { borderColor: '#1976d2', backgroundColor: '#3a3a3a' }
+          }}
+          onClick={() => {
+            if (!uploadingFile) {
+              document.getElementById('timecard-file-input').click();
+            }
+          }}
+          >
+            <input
+              id="timecard-file-input"
+              type="file"
+              hidden
+              accept=".pdf,.doc,.docx,.xls,.xlsx"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setSelectedFile(e.target.files[0]);
+                }
+              }}
+              disabled={uploadingFile}
+            />
+            <UploadIcon sx={{ fontSize: 48, color: '#666', mb: 1 }} />
+            <Typography variant="body2" color="#aaa">
+              {selectedFile ? selectedFile.name : 'Click to choose file - No file chosen'}
+            </Typography>
+            <Typography variant="caption" color="#777" sx={{ mt: 1, display: 'block' }}>
+              Accepted formats: PDF, DOC, DOCX, XLS, XLSX
+            </Typography>
+          </Box>
+
+          {selectedFile && (
+            <Alert severity="info" sx={{ backgroundColor: '#1976d2', color: 'white' }}>
+              File selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+            </Alert>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #555' }}>
+          <Button 
+            onClick={() => {
+              if (!uploadingFile) {
+                setFileUploadDialogOpen(false);
+                setSelectedFile(null);
+                setSelectedFileAction(null);
+              }
+            }}
+            sx={{ color: '#aaa' }}
+            disabled={uploadingFile}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleFileUploadSubmit}
+            disabled={!selectedFile || uploadingFile}
+            sx={{ 
+              backgroundColor: '#1976d2',
+              '&:hover': { backgroundColor: '#1565c0' },
+              '&:disabled': { backgroundColor: '#555', color: '#999' }
+            }}
+          >
+            {uploadingFile ? (
+              <>
+                <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
+                Submitting...
+              </>
+            ) : (
+              'Submit & Approve'
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
       </Container>
   );
 }

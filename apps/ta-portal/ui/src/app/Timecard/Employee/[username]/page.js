@@ -309,7 +309,7 @@ export default function EmployeeTimecard() {
             // Step 2: Submit the timecard for review (creates workflow)
             if (currentTimecardId) {
                 await submitTimecard(currentTimecardId);
-                showNotification("Timecard submitted for review! Your professor will be notified.", "success");
+                showNotification("Timecard submitted for review! An admin will be notified.", "success");
             }
     
             // Step 3: Create the NEW week's timecard record.

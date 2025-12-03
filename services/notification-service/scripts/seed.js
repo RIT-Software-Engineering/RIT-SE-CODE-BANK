@@ -40,6 +40,14 @@ async function main() {
       notifyEmail: false,
       notifySlack: true,
     },
+    {
+      appId: 'ta-portal',
+      userEmail: 'yvk1136@g.rit.edu',
+      userId: 'yvk1136',
+      slackUsername: 'yvk1136',
+      notifyEmail: true,
+      notifySlack: true,
+    },
   ];
 
   for (const s of samples) {

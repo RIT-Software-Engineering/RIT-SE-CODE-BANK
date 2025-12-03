@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { getCandidateApplicationsAsCandidate } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
 import { gradeEnumToStringValue } from '@/constants/gradeConstants';
@@ -32,6 +33,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 export default function CandidateApplicationsPage() {
   // Core hooks for authentication context and component references.
   const { currentUser, refreshUserProfile } = useAuth();
+  const searchParams = useSearchParams();
+  const applicationIdToHighlight = searchParams.get('applicationId');
   const filterRef = useRef();
 
   // State for managing application data, loading, and errors.
@@ -139,6 +142,32 @@ export default function CandidateApplicationsPage() {
     }
   }, [currentUser, updateApplicationsView]);
 
+  // Effect to scroll and highlight application when applicationId is in URL
+  useEffect(() => {
+    if (applicationIdToHighlight && !loading && Object.keys(displayData).length > 0) {
+      setTimeout(() => {
+        const element = document.getElementById(`application-${applicationIdToHighlight}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.style.transition = 'all 0.3s ease';
+          element.style.outline = '3px solid #1976d2';
+          element.style.outlineOffset = '2px';
+          
+          setTimeout(() => {
+            element.style.transition = 'all 1.5s ease';
+            element.style.outline = '3px solid transparent';
+            
+            setTimeout(() => {
+              element.style.outline = '';
+              element.style.outlineOffset = '';
+              element.style.transition = '';
+            }, 1500);
+          }, 1500);
+        }
+      }, 300);
+    }
+  }, [applicationIdToHighlight, loading, displayData]);
+
   /**
    * Callback function passed to child ApplicationCard components.
    * Triggers a refresh of the applications view when a status is changed (e.g., application withdrawn).
@@ -227,13 +256,20 @@ export default function CandidateApplicationsPage() {
             <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {displayData[semester].map((app) => (
-                  <ApplicationCard
+                  <Box
                     key={app.id}
-                    currentUser={currentUser}
-                    application={app}
-                    onStatusChange={handleStatusChange}
-                    refreshUserProfile={refreshUserProfile}
-                  />
+                    id={`application-${app.id}`}
+                    sx={{
+                      borderRadius: 2
+                    }}
+                  >
+                    <ApplicationCard
+                      currentUser={currentUser}
+                      application={app}
+                      onStatusChange={handleStatusChange}
+                      refreshUserProfile={refreshUserProfile}
+                    />
+                  </Box>
                 ))}
               </Box>
             </AccordionDetails>
