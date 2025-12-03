@@ -76,7 +76,7 @@ export default function CourseSectionFormStep({form_id, control, errors, getValu
                 />
             </Paper>
         ))}
-        <Button onClick={() => {append(new CourseSection(form_id)); setNumberOfSections(numberOfSections + 1)}}>Add Course Section</Button>
+        <Button variant="contained" sx={{margin:"4%"}} onClick={() => {append(new CourseSection(form_id)); setNumberOfSections(numberOfSections + 1)}}>Add Course Section</Button>
         </div>
     )
 }
