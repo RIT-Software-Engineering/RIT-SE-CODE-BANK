@@ -247,7 +247,7 @@ export default function ViewScooployees() {
 
   const handleJournalClick = () => {
     if (selectedEmployee?.id) {
-      router.push(`/new-journal`);
+      router.push(`/journal`);
     }
   };
 
