@@ -20,7 +20,19 @@ services:
       - "3307:3306"
     volumes:
       - mariadb_workflows_data:/var/lib/mysql
+  
+  mariadb_notifications:
+    image: mariadb:11
+    container_name: mariadb_notifications
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: scoop_portal_demo
+    ports:
+      - "3309:3306"
+    volumes:
+      - mariadb_notifications_data:/var/lib/mysql
 
 volumes:
   mariadb_scoop_portal_data:
   mariadb_workflows_data:
+  mariadb_notifications_data:

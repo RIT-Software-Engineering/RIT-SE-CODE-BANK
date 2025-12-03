@@ -74,6 +74,15 @@ router.post("/", async (req, res) => {
               },
       },
     });
+
+    notifyStatus({ userId: "msk1582", context: { journalEntryId: newEntry.id } })
+      .then(summary => {
+        console.log('Notification sent:', summary)
+      })
+      .catch(error => {
+        console.error('Error sending notification:', error);
+      });
+
     res
       .status(200)
       .json({ message: "New journal entry created", entry: newEntry });
@@ -367,5 +376,25 @@ router.get("/:id", async (req, res) => {
     });
   }
 })
+
+const NOTIFY_BASE = process.env.NOTIFY_BASE || 'http://localhost:4000/api/notifications'
+const APP_ID = process.env.APP_ID || 'scoop'
+export async function notifyStatus({ userId, context }) {
+  const res = await fetch(`${NOTIFY_BASE}/dispatch/${APP_ID}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: userId,
+      subject: "New Journal Entry Created",
+      message: "A new journal entry has been created."
+        })
+  })
+
+
+  const data = await res.json()
+  if (!res.ok) throw new Error(`Dispatch failed: ${res.status} ${JSON.stringify(data)}`)
+  return data.summary
+}
+
 
 export default router;
