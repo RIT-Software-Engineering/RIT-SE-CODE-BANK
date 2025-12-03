@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../styles/devLogin.css";
 
-const AUTH_BASE = "http://localhost:3010"; // backend server
+const AUTH_BASE = "http://localhost:5010"; // backend server
 
 export default function DevLoginPage() {
   const [users, setUsers] = useState([]);
