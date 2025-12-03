@@ -29,7 +29,7 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
         
         // 5. Set authentication status
         setIsAuthenticated(true);
-        navigate("/highlights_form");
+        navigate("/highlights");
     } else {
         console.error("Please select a user to log in.");
     }

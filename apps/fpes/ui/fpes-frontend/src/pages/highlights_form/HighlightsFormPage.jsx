@@ -2,7 +2,7 @@ import { Button, Step, StepContent, StepLabel, Stepper } from "@mui/material";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import ServicesFormStep from "../services/ServicesFormStep";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { validateProps } from "@mui/x-data-grid/internals";
 import axios from "axios";
 import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
@@ -12,6 +12,7 @@ import GrantsFormStep from "../grants/GrantsFormStep";
 
 export default function HighlightsFormPage({facultyId}) {
     const [activeStep, setActiveStep] = useState(0);
+    const navigate = useNavigate();
 
     const steps = [
 
@@ -70,6 +71,7 @@ export default function HighlightsFormPage({facultyId}) {
         data.faculty_information_id = facultyId;
         console.log(facultyId)
         axios.post("http://localhost:3000/highlights/submit", data);
+        navigate("/highlights")
     }
 
     return (
@@ -92,7 +94,7 @@ export default function HighlightsFormPage({facultyId}) {
             {/* Back or Cancel Button */}
             {
                 isOnFirstStep() ? 
-                <Button component={Link} to="/services">Cancel</Button> :
+                <Button component={Link} to="/highlights">Cancel</Button> :
                 <Button onClick={() => handleStepperChange(activeStep - 1)}>Back</Button>
             }
 

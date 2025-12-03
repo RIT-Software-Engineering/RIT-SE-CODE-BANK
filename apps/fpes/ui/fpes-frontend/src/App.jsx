@@ -18,6 +18,7 @@ import ProfilePage from './pages/profile/ProfilePage.jsx';
 import UsersPage from './pages/users/UsersPage.jsx';
 import Header from './pages/Header.jsx';
 import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
+import HighlightsPage from './pages/highlights_page/HighlightsPage.jsx';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -66,7 +67,7 @@ function App() {
     },
     {
       name : "Highlights",
-      route : "/highlights_form",
+      route : "/highlights",
       adminOnly : false
     }
   ]
@@ -104,7 +105,7 @@ return (
         )}
               
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Navigate to="/highlights_form" /> : <Navigate to="/login" />} />
+          <Route path="/" element={isAuthenticated ? <Navigate to="/highlights" /> : <Navigate to="/login" />} />
           <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
           <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
           <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
@@ -112,7 +113,8 @@ return (
           <Route path="/course_sections" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <CourseSectionsPage/> </ProtectedRoute>} />
           <Route path="/student_support" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <StudentSupportPage/> </ProtectedRoute> } />
           <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage facultyId={facultyId} /> </ProtectedRoute> } />
-          <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage/> </ProtectedRoute> } />
+          <Route path="/highlights" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsPage facultyId={facultyId}/> </ProtectedRoute> } />
+          <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage facultyId={facultyId}/> </ProtectedRoute> } />
           <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } />
         </Routes>
       </BrowserRouter>
