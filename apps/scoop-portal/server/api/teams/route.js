@@ -5,14 +5,14 @@ const prisma = new PrismaClient();
 
 // POST a new team
 router.post("/", async (req, res) => {
-    const { name, projectId, memberIds, scoopervisorId = [] } = req.body;
+    const { name, projectId, memberIds, scoopervisorId } = req.body;
 
     try {
         const team = await prisma.teams.create({
             data: {
                 name,
                 ...(projectId ? { projectId: Number(projectId) } : {}),
-                ...(memberIds.length > 0
+                ...(memberIds!=undefined&&memberIds.length > 0
                   ? { members: { connect: memberIds.map(id => ({ id })) } }
                   : {}),
                 ...(scoopervisorId ? { scoopervisorId: scoopervisorId } : {})
