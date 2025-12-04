@@ -35,7 +35,7 @@ export default function CourseSectionFormStep({form_id, control, errors, getValu
         this.semester = "";
         this.year = null;
         this.first_time_teaching_course = false;
-        this.number_of_sections = 0;
+        this.section_id = 0;
         this.curriculum_development = "";
         this.course = null;
         this.form_id = form_id;

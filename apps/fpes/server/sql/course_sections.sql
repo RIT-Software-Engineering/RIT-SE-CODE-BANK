@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS course_sections (
     semester ENUM('FALL', 'SPRING', 'SUMMER') NOT NULL,
     year YEAR NOT NULL, 
     first_time_teaching_course BOOLEAN DEFAULT FALSE,
-    number_of_sections INT UNSIGNED  NOT NULL,
+    section_id INT UNSIGNED  NOT NULL,
     curriculum_development TEXT,
     course_id INT UNSIGNED,
     form_id INT,
