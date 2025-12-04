@@ -9,6 +9,11 @@ import {
   Card,
   Container,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
   useTheme,
 } from "@mui/material";
 
@@ -22,6 +27,15 @@ export default function Projects() {
   const theme = useTheme();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [form, setForm] = useState({
+    title: "",
+    display_name: "",
+    description: "",
+    teams: "",
+    semesterGroupId: "",
+  });
 
   useEffect(() => {
     console.log("API URL: ", process.env.NEXT_PUBLIC_API_URL);
@@ -43,6 +57,69 @@ export default function Projects() {
     fetchProjects();
   }, []);
 
+  const openCreateModal = () => {
+    setEditingProject(null);
+    setForm({ title: "", display_name: "", description: "", teams: "", semesterGroupId: "" });
+    setModalOpen(true);
+  };
+
+  const openEditModal = (project) => {
+    setEditingProject(project);
+    setForm({
+      title: project.title || "",
+      display_name: project.display_name || "",
+      description: project.description || "",
+      teams: (project.teams || []).map(t => (t && t.id) ? t.id : t).join(","),
+      semesterGroupId: project.semesterGroupId ?? "",
+    });
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const teamsArray = form.teams ? form.teams.split(",").map(s => Number(s.trim())).filter(Boolean) : [];
+    const payload = {
+      title: form.title,
+      display_name: form.display_name,
+      description: form.description,
+      teams: teamsArray,
+      semesterGroupId: form.semesterGroupId ? Number(form.semesterGroupId) : undefined,
+    };
+
+    try {
+      if (editingProject) {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project/${editingProject.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const updated = await res.json();
+        setProjects(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+      } else {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const body = await res.json();
+        const newProject = body.project || body;
+        setProjects(prev => [newProject, ...prev]);
+      }
+      closeModal();
+    } catch (err) {
+      console.error("Failed to save project", err);
+    }
+  };
+
   if (loading) {
     return <ProjectsLoading />;
   }
@@ -51,9 +128,10 @@ export default function Projects() {
     <>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Typography variant="h1" sx={{ mb: 4 }}>
-          Projects
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Typography variant="h1">Projects</Typography>
+          <Button variant="contained" onClick={openCreateModal}>Create Project</Button>
+        </Box>
 
         {projects.length === 0 ? (
           <Typography variant="body1">
@@ -78,9 +156,10 @@ export default function Projects() {
                 <Typography variant="h2">
                   {project.display_name || project.title || "Unknown Project"}
                 </Typography>
-                <Button variant="solid-orange" href={`/projects/${project.id}`}>
-                  View
-                </Button>
+                <Box>
+                  <Button sx={{ mr: 1 }} variant="outlined" onClick={() => openEditModal(project)}>Edit</Button>
+                  <Button variant="solid-orange" href={`/projects/${project.id}`}>View</Button>
+                </Box>
               </Box>
               <Box
                 sx={{
@@ -113,6 +192,60 @@ export default function Projects() {
           ))
         )}
       </Container>
+
+      <Dialog open={modalOpen} onClose={closeModal} fullWidth maxWidth="sm">
+        <form onSubmit={handleSubmit}>
+          <DialogTitle>{editingProject ? "Edit Project" : "Create Project"}</DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Title"
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Display Name"
+              name="display_name"
+              value={form.display_name}
+              onChange={handleChange}
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Description"
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              multiline
+              minRows={3}
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Teams (comma-separated ids)"
+              name="teams"
+              value={form.teams}
+              onChange={handleChange}
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Semester Group ID"
+              name="semesterGroupId"
+              value={form.semesterGroupId}
+              onChange={handleChange}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeModal}>Cancel</Button>
+            <Button type="submit" variant="contained">Save</Button>
+          </DialogActions>
+        </form>
+      </Dialog>
     </>
   );
 }

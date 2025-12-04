@@ -137,7 +137,7 @@ const workflows = [
         title: "Manage Projects",
         roles: ["scoopdinator"],
         description: "Create, edit, and archive scoop projects.",
-        link: "/projects/1",
+        link: "/projects",
       },
       {
         title: "View Projects",
