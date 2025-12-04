@@ -9,7 +9,6 @@ import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
 import PublicationsFormStep from "../publications/PublicationsFormStep";
 import StudentSupportFormStep from "../student_support/StudentSupportFormStep";
 import GrantsFormStep from "../grants/GrantsFormStep";
-import HighlightsFormPreview from "./HighlightsFormPreview";
 
 export default function HighlightsFormPage({facultyId}) {
     const [activeStep, setActiveStep] = useState(0);
