@@ -18,6 +18,7 @@ import ProfilePage from './pages/profile/ProfilePage.jsx';
 import UsersPage from './pages/users/UsersPage.jsx';
 import Header from './pages/Header.jsx';
 import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
+import HomePage from "./pages/home/HomePage";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -104,7 +105,8 @@ return (
         )}
               
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Navigate to="/highlights_form" /> : <Navigate to="/login" />} />
+          <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <Navigate to="/login" />} />
+          <Route path="/home" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HomePage /> </ProtectedRoute>} />
           <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
           <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
           <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
