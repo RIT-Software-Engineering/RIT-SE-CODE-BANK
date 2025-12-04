@@ -77,7 +77,7 @@ async function deletePublication(title) {
     }
 }
 
-async function initPublicationsTable(){
+async function resetPublicationsTable(){
     let connection;
     try {
         // Read sql file that rebuilds course_sections table and inserts test data
@@ -105,5 +105,5 @@ module.exports = {
     createPublication,
     updatePublication,
     deletePublication,
-    initPublicationsTable
+    resetPublicationsTable
 }

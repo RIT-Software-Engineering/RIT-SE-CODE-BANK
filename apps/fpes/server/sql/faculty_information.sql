@@ -1,6 +1,3 @@
--- Need to drop highlights table first due to foreign key dependency
-DROP TABLE faculty_information;
-
 CREATE TABLE IF NOT EXISTS faculty_information (
     faculty_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,

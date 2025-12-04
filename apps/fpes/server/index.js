@@ -32,6 +32,7 @@ const publicationsRoutes = require('./routes/publications_routes.js');
 app.use('/publications', publicationsRoutes)
 
 const highlightsRoutes = require('./routes/highlights_routes.js');
+const { rebuildTables } = require('./api/rebuild_tables.js');
 app.use('/highlights', highlightsRoutes);
 
 
@@ -40,8 +41,22 @@ app.get('/', (req, res) => {
   res.send('Server is running...');
 });
 
+
+app.post("/db/init", async (req,res) => {
+  let response;
+  try{
+    response = await rebuildTables();
+    res.send("Tables successfully rebuilt!")
+  } catch (err){
+    console.log(err)
+    res.status(500).send("An error occured while trying to rebuild the tables : " + err);
+  }
+  
+})
+
 // Start Express server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+

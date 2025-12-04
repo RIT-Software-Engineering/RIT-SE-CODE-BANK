@@ -1,4 +1,5 @@
 const pool = require('../db');
+const fs = require('fs')
 
 const student_support_api = require('./student_support_api');
 const course_sections_api = require('./course_section_api');
@@ -175,6 +176,29 @@ async function submitHighlightsForm(formData){
   return;
 }
 
+// Reset
+async function resetHighlightsTable(){
+    let connection;
+    try {
+        // Read sql file that rebuilds highlights table and inserts test data
+        const resetQuery = await fs.readFileSync("sql/highlights.sql", 'utf-8');
+        // Splits file into multiple queries
+        let queries = resetQuery.split(';');
+        // Removes the empty query at the end
+        queries.pop();
+
+        connection = await pool.getConnection();
+        let results = [];
+        for (const query of queries){
+            await connection.query(query);
+        }
+
+        return;
+    } finally {
+        if (connection) connection.release();
+    } 
+}
+
 module.exports = {
   getAllHighlights,
   getHighlightById,
@@ -183,4 +207,5 @@ module.exports = {
   deleteHighlight,
   submitHighlightsForm,
   getHighlightByFacultyId,
+  resetHighlightsTable
 };

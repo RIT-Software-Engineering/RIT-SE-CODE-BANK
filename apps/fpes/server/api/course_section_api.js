@@ -71,7 +71,7 @@ async function getSectionByYear(year){
     }
 }
 
-async function initCourseSectionsTable(){
+async function resetCourseSectionsTable(){
     let connection;
     try {
         // Read sql file that rebuilds course_sections table and inserts test data
@@ -169,7 +169,7 @@ function getDaysOfTheWeek(values){
 
 module.exports = {
     getAllCourseSections,
-    initCourseSectionsTable,
+    resetCourseSectionsTable,
     getSectionsByCourseID,
     getSectionByID,
     createCourseSection,

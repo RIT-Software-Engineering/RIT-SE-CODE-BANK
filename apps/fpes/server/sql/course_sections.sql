@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS course_sections;
-
 CREATE TABLE IF NOT EXISTS course_sections (
     id INT UNSIGNED UNIQUE auto_increment PRIMARY KEY,
     room_location VARCHAR(60),

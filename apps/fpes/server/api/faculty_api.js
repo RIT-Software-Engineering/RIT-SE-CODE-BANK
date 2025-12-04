@@ -89,10 +89,34 @@ async function deleteFaculty(facultyId) {
   }
 }
 
+// Reset
+async function resetFacultyTable(){
+    let connection;
+    try {
+        // Read sql file that rebuilds faculty_information table and inserts test data
+        const resetQuery = await fs.readFileSync("sql/faculty_information.sql", 'utf-8');
+        // Splits file into multiple queries
+        let queries = resetQuery.split(';');
+        // Removes the empty query at the end
+        queries.pop();
+
+        connection = await pool.getConnection();
+        let results = [];
+        for (const query of queries){
+            await connection.query(query);
+        }
+
+        return;
+    } finally {
+        if (connection) connection.release();
+    } 
+}
+
 module.exports = {
   getAllFaculty,
   getFacultyById,
   addFaculty,
   updateFaculty,
   deleteFaculty,
+  resetFacultyTable
 };

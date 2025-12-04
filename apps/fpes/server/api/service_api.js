@@ -48,7 +48,7 @@ async function getServicesByFormId(form_id){
     }
 }
 
-async function resetServiceTable(){
+async function resetServicesTable(){
     let connection;
     try {
         // Read sql file that rebuilds services table and inserts test data
@@ -126,7 +126,7 @@ module.exports = {
     getAllServices,
     getServiceById,
     getServicesByFormId,
-    resetServiceTable,
+    resetServicesTable,
     createService,
     deleteService,
     updateService

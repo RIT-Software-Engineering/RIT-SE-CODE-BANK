@@ -1,4 +1,5 @@
 const pool = require("../db");
+const fs = require('fs')
 
 // READ : all forms
 async function getAllForms(){
@@ -63,10 +64,35 @@ async function deleteForm(id){
     }
 }
 
+// RESET
+// Reset
+async function resetFormsTable(){
+    let connection;
+    try {
+        // Read sql file that rebuilds grants table and inserts test data
+        const resetQuery = await fs.readFileSync("sql/forms.sql", 'utf-8');
+        // Splits file into multiple queries
+        let queries = resetQuery.split(';');
+        // Removes the empty query at the end
+        queries.pop();
+
+        connection = await pool.getConnection();
+        let results = [];
+        for (const query of queries){
+            await connection.query(query);
+        }
+
+        return;
+    } finally {
+        if (connection) connection.release();
+    } 
+}
+
 module.exports = {
     getAllForms,
     getFormByFacultyId,
     getFormById,
     createForm,
     deleteForm,
+    resetFormsTable
 }
