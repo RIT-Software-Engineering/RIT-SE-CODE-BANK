@@ -12,7 +12,9 @@ const prisma = new PrismaClient();
  */
 router.get("/", async (req, res) => {
   try {
-    const projects = await prisma.project.findMany();
+    const projects = await prisma.project.findMany({
+      include: { teams: true}
+    });
     res.status(200).json(projects);
   } catch (error) {
     console.error("Error fetching projects: ", error);
@@ -31,6 +33,7 @@ router.get("/:id", async (req, res) => {
   try {
     const project = await prisma.project.findUnique({
       where: { id: Number(id) },
+      include: { teams: true }
     });
     res.status(200).json(project);
   } catch (error) {

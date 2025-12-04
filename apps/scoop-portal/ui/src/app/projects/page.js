@@ -17,6 +17,8 @@ import {
   FormControl,
   Autocomplete,
   useTheme,
+  Chip,
+  Paper,
 } from "@mui/material";
 
 /**
@@ -31,7 +33,9 @@ export default function Projects() {
   const [allTeams, setAllTeams] = useState([]);
   const [semesterGroups, setSemesterGroups] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [viewingProject, setViewingProject] = useState([]);
   const [editingProject, setEditingProject] = useState(null);
   const [form, setForm] = useState({
     title: "",
@@ -82,7 +86,7 @@ export default function Projects() {
   const openCreateModal = () => {
     setEditingProject(null);
     setForm({ title: "", display_name: "", description: "", teams: "", semesterGroupId: "" });
-    setModalOpen(true);
+    setCreateModalOpen(true);
   };
 
   const openEditModal = (project) => {
@@ -91,15 +95,26 @@ export default function Projects() {
       title: project.title || "",
       display_name: project.display_name || "",
       description: project.description || "",
-      teams: (project.teams || []).map(t => (t && t.id) ? t.id : t),
+      teams: (project.teams || []).map(t => (t && t.id) ? t.id.toString() : t),
       semesterGroupId: project.semesterGroupId ?? "",
     });
-    setModalOpen(true);
+    setCreateModalOpen(true);
   };
 
   const closeModal = () => {
-    setModalOpen(false);
+    setCreateModalOpen(false);
   };
+
+  const openViewModal = (project) => {
+    setViewingProject(project);
+    setViewModalOpen(true);
+  }
+
+
+  const closeViewModal = () => {
+    setViewingProject([]);
+    setViewModalOpen(false);
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -124,18 +139,20 @@ export default function Projects() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const updated = await res.json();
-        setProjects(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+        // const updated = await res.json();
+        // setProjects(prev => prev.map(p => (p.id === updated.id ? updated : p)));
       } else {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const body = await res.json();
-        const newProject = body.project || body;
-        setProjects(prev => [newProject, ...prev]);
+        // const body = await res.json();
+        // const newProject = body.project || body;
+        // setProjects(prev => [newProject, ...prev]);
       }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`);
+      setProjects(await res.json());
       closeModal();
     } catch (err) {
       console.error("Failed to save project", err);
@@ -180,7 +197,7 @@ export default function Projects() {
                 </Typography>
                 <Box>
                   <Button sx={{ mr: 1 }} variant="outlined" onClick={() => openEditModal(project)}>Edit</Button>
-                  <Button variant="solid-orange" href={`/projects/${project.id}`}>View</Button>
+                  <Button variant="solid-orange" onClick={() => openViewModal(project)}>View</Button>
                 </Box>
               </Box>
               <Box
@@ -215,7 +232,7 @@ export default function Projects() {
         )}
       </Container>
 
-      <Dialog open={modalOpen} onClose={closeModal} fullWidth maxWidth="sm">
+      <Dialog open={createModalOpen} onClose={closeModal} fullWidth maxWidth="sm">
         <form onSubmit={handleSubmit}>
           <DialogTitle>{editingProject ? "Edit Project" : "Create Project"}</DialogTitle>
           <DialogContent>
@@ -253,6 +270,11 @@ export default function Projects() {
                   value: id,
                 }))}
                 getOptionLabel={(option) => option.label}
+                value={form.teams ? form.teams.map(tid => {
+                  const name = allTeams[tid];
+                  return { label: name, value: tid };
+                }) : []}
+                isOptionEqualToValue={(option, value) => option?.value === value?.value}
                 onChange={(event, selected) =>
                   setForm((prev) => ({
                     ...prev,
@@ -277,6 +299,8 @@ export default function Projects() {
                   value: id,
                 }))}
                 getOptionLabel={(option) => option.label}
+                value={Object.entries(semesterGroups).map(([id, name]) => ({ label: name, value: Number(id) })).find(opt => opt.value === Number(form.semesterGroupId)) || null}
+                isOptionEqualToValue={(option, value) => option?.value === value?.value}
                 onChange={(event, newValue) =>
                   setForm((prev) => ({
                     ...prev,
@@ -302,6 +326,39 @@ export default function Projects() {
             <Button type="submit" variant="contained">Save</Button>
           </DialogActions>
         </form>
+      </Dialog>
+      <Dialog open={viewModalOpen} onClose={closeViewModal} fullWidth maxWidth="sm">
+        <Paper elevation={2} sx={{ borderRadius: 4, p: 3 }}>
+          <Typography
+            variant="h2"
+            sx={{ fontSize: "1.5rem", fontWeight: 700, mb: 1 }}
+            >
+          {viewingProject.display_name}
+          </Typography>
+          <Typography sx={{ fontSize: "1rem", color: "#666", mb: 2 }}>
+            Description:{" "}
+            {viewingProject.description}
+          </Typography>
+          <Typography sx={{ fontWeight: 500, mb: 1 }}>
+            Teams assigned:
+          </Typography>
+          {Array.isArray(viewingProject.teams) && viewingProject.teams.length > 0 ? (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {viewingProject.teams.map((team) => (
+                  <Chip
+                    key={team.id}
+                    label={team.name}
+                    sx={{ backgroundColor: "#F76902", color: "#fff" }}
+                    
+                    />
+                ))}
+            </Box>                   
+          ) : (
+            <Typography variant="body2" sx={{ color: "#999" }}>
+              No teams assigned
+            </Typography>
+          )}
+        </Paper>
       </Dialog>
     </>
   );
