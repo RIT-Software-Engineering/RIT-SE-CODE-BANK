@@ -93,6 +93,7 @@ CREATE TABLE `Teams` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
     `projectId` INTEGER NULL,
+    `scoopervisorId` VARCHAR(191) NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -114,6 +115,9 @@ ALTER TABLE `JournalEntry` ADD CONSTRAINT `JournalEntry_semester_GroupId_fkey` F
 
 -- AddForeignKey
 ALTER TABLE `Teams` ADD CONSTRAINT `Teams_projectId_fkey` FOREIGN KEY (`projectId`) REFERENCES `Project`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Teams` ADD CONSTRAINT `Teams_scoopervisorId_fkey` FOREIGN KEY (`scoopervisorId`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_TeamMembers` ADD CONSTRAINT `_TeamMembers_A_fkey` FOREIGN KEY (`A`) REFERENCES `Teams`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

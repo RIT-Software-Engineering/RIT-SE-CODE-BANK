@@ -73,6 +73,7 @@ async function main() {
     data: {
       name: "Alpha",
       projectId: 1,
+      scoopervisorId: "cds123",
       members: {
         connect: [{ id: vicki.id }, { id: jimmy.id }, { id: dudeBro.id }],
       },
@@ -86,6 +87,7 @@ async function main() {
     data: {
       name: "Omega",
       projectId: 2,
+      scoopervisorId: "coachB",
       members: {
         connect: [{ id: galgirl.id }, { id: edison.id }],
       },
