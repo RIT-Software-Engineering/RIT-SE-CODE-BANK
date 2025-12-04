@@ -40,7 +40,7 @@ async function createForm(formData){
         connection = await pool.getConnection();
         const {
             faculty_information_id,
-            isSubmission = true,
+            isSubmission,
         } = formData;
         let submissionTimestamp = 0;
         if (isSubmission){

@@ -1,4 +1,4 @@
-import { Button, Step, StepContent, StepLabel, Stepper } from "@mui/material";
+import { Button, Paper, Step, StepButton, StepContent, StepLabel, Stepper } from "@mui/material";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import ServicesFormStep from "../services/ServicesFormStep";
@@ -9,6 +9,7 @@ import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
 import PublicationsFormStep from "../publications/PublicationsFormStep";
 import StudentSupportFormStep from "../student_support/StudentSupportFormStep";
 import GrantsFormStep from "../grants/GrantsFormStep";
+import HighlightsFormPreview from "./HighlightsFormPreview";
 
 export default function HighlightsFormPage({facultyId}) {
     const [activeStep, setActiveStep] = useState(0);
@@ -20,7 +21,8 @@ export default function HighlightsFormPage({facultyId}) {
         "Grants",
         "Publications",
         "Student Support",
-        "Course Sections"
+        "Course Sections",
+        "Preview"
     ]
 
     function isOnFirstStep(){
@@ -69,17 +71,19 @@ export default function HighlightsFormPage({facultyId}) {
 
     function handleFormSubmission(data){
         data.faculty_information_id = facultyId;
+        data.isSubmission = true;
         console.log(facultyId)
         axios.post("http://localhost:3000/highlights/submit", data);
         navigate("/highlights")
     }
 
     return (
+        <Paper sx={{minWidth:"75%", padding:"10%"}}>
         <div style={{margin:"100px 0px", alignContent:"start", position:"absolute", top:"0px", transform: "translateX(-50%)", left:"50%"}}>
-            <Stepper sx={{minWidth:"800px"}} activeStep={activeStep}>
+            <Stepper sx={{minWidth:"800px"}} activeStep={activeStep} nonLinear>
                 {steps.map((step,index) => (
-                    <Step key={index}>
-                        <StepLabel>{step}</StepLabel>
+                    <Step  key={index}>
+                        <StepButton onClick={() => handleStepperChange(index)}>{step}</StepButton>
                     </Step>
                 ))}
             </Stepper>
@@ -89,7 +93,8 @@ export default function HighlightsFormPage({facultyId}) {
             {activeStep === 1 ? <GrantsFormStep form_id={1} control={control} errors={errors}/> : null}
             {activeStep === 2 ? <PublicationsFormStep form_id={1} control={control} errors={errors}/> : null}
             {activeStep === 3 ? <StudentSupportFormStep form_id={1} control={control} errors={errors}/> : null}
-            {isOnLastStep() ? <CourseSectionFormStep form_id={1} control={control} errors={errors}  getValues={getValues}/> : null}
+            {activeStep === 4 ? <CourseSectionFormStep form_id={1} control={control} errors={errors}  getValues={getValues}/> : null}
+            {isOnLastStep() ? <HighlightsFormPreview formData={getValues()}/> : null}
 
             {/* Back or Cancel Button */}
             {
@@ -105,8 +110,7 @@ export default function HighlightsFormPage({facultyId}) {
                 <Button onClick={() => handleStepperChange(activeStep + 1)}>Next</Button>
             }
             </form>
-            
-            
         </div>
+        </Paper>
     )
 }
