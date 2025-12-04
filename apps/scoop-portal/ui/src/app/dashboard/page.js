@@ -70,13 +70,13 @@ const workflows = [
     steps: [
       {
         title: "Review Applications",
-        roles: ["scoopdinator"],
+        roles: ["scoopdinator","advisor"],
         description: "Approve or reject scooployee applications.",
         link: "/scoopdinator/applications",
       },
       {
         title: "Manage Employees",
-        roles: ["scoopdinator", "scoopervisor"],
+        roles: ["scoopdinator", "scoopervisor", "advisor"],
         description: "Review current scooployee details and statuses.",
         link: "/scoopdinator/scooployees",
       },
@@ -194,7 +194,7 @@ const workflows = [
       },
       {
         title: "Open Communications Journal",
-        roles: ["scoopdinator","scoopervisor","scooployee"],
+        roles: ["scoopdinator","scoopervisor","scooployee","advisor"],
         description:
           "View your past communications with others and leave notes.",
         link: "/journal",

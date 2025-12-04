@@ -205,25 +205,25 @@ export default function Journal() {
   };
 
   const getVisibilityOptions = () => {
-    let options = {};
-    options["PERSONAL"] = "Private Note";
+    let options = {"PERSONAL": "Private Note"};
+    let options_map = {"scooployee": 1, "advisor": 2, "scoopervisor": 3, "scoopdinator": 4};
+
     if (user == null || user.id == null){
           return options;
     }
-    if(user.type == "scooployee"){
-      options["1"] = "Scooployees and higher";
+    switch(options_map[user.type]){
+      case 4:
+        options["4"] = "Scoopdinators only";
+      case 3:
+        options["3"] = "Scoopervisors and higher";
+      case 2:
+        options["2"] = "Advisors and higher";
+      case 1:
+        options["1"] = "Scooployees and higher";
+
+      break;
     }
-    if(user.type == "scoopvisor"){
-      options["1"] = "Scooployees and higher";
-      options["2"] = "Advisors and higher";
-      options["3"] = "Scoopervisors and higher";
-    }
-    if(user.type == "scoopdinator"){
-      options["1"] = "Scooployees and higher";
-      options["2"] = "Advisors and higher";
-      options["3"] = "Scoopervisors and higher";
-      options["4"] = "Scoopdinators only";
-    }
+
     return options;
   }
 

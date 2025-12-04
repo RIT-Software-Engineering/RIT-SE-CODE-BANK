@@ -26,7 +26,7 @@ services:
     container_name: mariadb_notifications
     environment:
       MARIADB_ROOT_PASSWORD: password
-      MARIADB_DATABASE: scoop_portal_demo
+      MARIADB_DATABASE: notification_service
     ports:
       - "3309:3306"
     volumes:

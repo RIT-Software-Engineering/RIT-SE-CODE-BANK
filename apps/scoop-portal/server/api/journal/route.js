@@ -302,7 +302,7 @@ router.get("/:id", async (req, res) => {
           }
         const memberArray = Array.from(memberSet);
         //this currently allows Scoopervisors to see entries in which they are the topic 
-        const visorEntries = await prisma.journalEntry.findMany({
+        const scoopervisorEntries = await prisma.journalEntry.findMany({
             where: {
               OR: memberArray.flatMap(memberId => [
                 { sender_id: memberId },
@@ -340,7 +340,39 @@ router.get("/:id", async (req, res) => {
             },
         });
         //res.status(200).json(visorEntries); 
-        entries = entries.concat(visorEntries);      
+        entries = entries.concat(scoopervisorEntries);      
+      }
+      else if(user.type == "advisor"){
+        const advisorEntries = await prisma.journalEntry.findMany({
+        where: {
+          privacy_level: "PUBLIC",
+          visibility_level: {
+            lt: 3
+          },
+        },
+        include: {
+          sender: true,
+          recipients: true,
+          topic: true,
+          next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+              visibility_level: {
+                lt: 3
+              },
+            },
+            include:{
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
+        },
+        })
+        entries = entries.concat(advisorEntries); 
       }
       const privateEntries = await prisma.journalEntry.findMany({
         where:{
