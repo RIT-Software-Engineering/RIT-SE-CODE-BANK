@@ -382,5 +382,17 @@ export const sampleUsers = [
     "active": "",
     "last_login": "null",
     "prev_login": "null"
+  },
+  {
+    "id": "advisor1",
+    "fname": "advisor",
+    "lname": "1",
+    "email": "advisor1@rit.edu",
+    "type": "advisor",
+    "semester_group": "2",
+    "project": "null",
+    "active": "",
+    "last_login": "null",
+    "prev_login": "null"
   }
 ]

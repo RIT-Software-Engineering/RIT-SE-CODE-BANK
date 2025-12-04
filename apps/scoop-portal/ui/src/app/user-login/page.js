@@ -37,7 +37,7 @@ export default function AuthPage() {
         setSnackbarOpen(true);
 
         setTimeout(() => {
-          router.push("/new-dashboards");
+          router.push("/dashboard");
         }, 1500);
       } else {
         setSnackbarMessage(

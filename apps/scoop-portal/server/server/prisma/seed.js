@@ -45,9 +45,25 @@ async function main() {
     data: sampleApplications,
   });
 
-  await prisma.journalEntry.createMany({
-    data: sampleJournalEntries,
-  });
+  await Promise.all(
+    sampleJournalEntries.map(journalEntry =>
+      prisma.journalEntry.create({
+        data:{
+          id: journalEntry.id,
+          previous_entryid: journalEntry.previous_entryid,
+          notes : journalEntry.notes,
+          privacy_level: journalEntry.privacy_level,
+          visibility_level: journalEntry.visibility_level,
+          entry_type: journalEntry.entry_type,
+          date: journalEntry.date,
+          sender_id: journalEntry.sender_id,
+          recipients: { connect: journalEntry.recipient_ids.map(id => ({ id })) },
+          topic_id: journalEntry.topic_id,
+          semester_GroupId: journalEntry.semester_GroupId,
+        }
+      })
+    )
+  );
 
   const vicki = await prisma.users.findUnique({ where: { email: "vcl123@rit.edu" } });
   const jimmy = await prisma.users.findUnique({ where: { email: "jlp123@rit.edu" } });
