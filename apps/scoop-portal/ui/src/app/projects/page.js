@@ -14,6 +14,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  FormControl,
+  Autocomplete,
   useTheme,
 } from "@mui/material";
 
@@ -26,6 +28,8 @@ import {
 export default function Projects() {
   const theme = useTheme();
   const [projects, setProjects] = useState([]);
+  const [allTeams, setAllTeams] = useState([]);
+  const [semesterGroups, setSemesterGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
@@ -42,11 +46,29 @@ export default function Projects() {
     const fetchProjects = async () => {
       setLoading(true);
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/project`
-        );
-        const data = await res.json();
-        setProjects(data);
+        const [projectRes, teamRes, semestersRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`), 
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup`),
+        ]);
+
+        const [projects, loadedTeams, semesterGroups] = await Promise.all([
+          projectRes.json(),
+          teamRes.json(),
+          semestersRes.json(),
+        ]);
+        setProjects(projects);
+        const teamMap = {};
+        loadedTeams.forEach((team) => {
+          teamMap[team.id] = team.name;
+        });
+        setAllTeams(teamMap);
+        const semesterGroupMap = {};
+        semesterGroups.forEach((group) => {
+          semesterGroupMap[group.id] = group.name;
+        });
+        setSemesterGroups(semesterGroupMap);
+    
       } catch (err) {
         console.error("Failed to fetch projects: ", err);
       } finally {
@@ -69,7 +91,7 @@ export default function Projects() {
       title: project.title || "",
       display_name: project.display_name || "",
       description: project.description || "",
-      teams: (project.teams || []).map(t => (t && t.id) ? t.id : t).join(","),
+      teams: (project.teams || []).map(t => (t && t.id) ? t.id : t),
       semesterGroupId: project.semesterGroupId ?? "",
     });
     setModalOpen(true);
@@ -86,7 +108,7 @@ export default function Projects() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const teamsArray = form.teams ? form.teams.split(",").map(s => Number(s.trim())).filter(Boolean) : [];
+    const teamsArray = form.teams ? form.teams.map(s => Number(s.trim())).filter(Boolean) : [];
     const payload = {
       title: form.title,
       display_name: form.display_name,
@@ -223,22 +245,57 @@ export default function Projects() {
               multiline
               minRows={3}
             />
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Teams (comma-separated ids)"
-              name="teams"
-              value={form.teams}
-              onChange={handleChange}
-            />
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Semester Group ID"
-              name="semesterGroupId"
-              value={form.semesterGroupId}
-              onChange={handleChange}
-            />
+             <FormControl fullWidth>
+              <Autocomplete
+                multiple
+                options={Object.entries(allTeams).map(([id, name]) => ({
+                  label: name,
+                  value: id,
+                }))}
+                getOptionLabel={(option) => option.label}
+                onChange={(event, selected) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    teams: selected ? selected.map(option => option.value) : [],
+                  }))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Teams"
+                    variant="outlined"
+                    fullWidth
+                  />
+                )}
+                sx={{ my: 2 }}
+              />
+            </FormControl>
+            <FormControl fullWidth>
+              <Autocomplete
+                options={Object.entries(semesterGroups).map(([id, name]) => ({
+                  label: name,
+                  value: id,
+                }))}
+                getOptionLabel={(option) => option.label}
+                onChange={(event, newValue) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    semesterGroupId: newValue ? newValue.value : "",
+                  }))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Semester"
+                    variant="outlined"
+                    fullWidth
+                    required
+                  />
+                )}
+                sx={{ my: 2 }}
+              />
+            </FormControl>
+            <Typography>{JSON.stringify(form)}</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={closeModal}>Cancel</Button>
