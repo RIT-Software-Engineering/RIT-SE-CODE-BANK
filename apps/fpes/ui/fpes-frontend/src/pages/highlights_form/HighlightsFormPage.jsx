@@ -21,7 +21,6 @@ export default function HighlightsFormPage({facultyId}) {
         "Publications",
         "Student Support",
         "Course Sections",
-        "Preview"
     ]
 
     function isOnFirstStep(){
@@ -92,8 +91,7 @@ export default function HighlightsFormPage({facultyId}) {
             {activeStep === 1 ? <GrantsFormStep form_id={1} control={control} errors={errors}/> : null}
             {activeStep === 2 ? <PublicationsFormStep form_id={1} control={control} errors={errors}/> : null}
             {activeStep === 3 ? <StudentSupportFormStep form_id={1} control={control} errors={errors}/> : null}
-            {activeStep === 4 ? <CourseSectionFormStep form_id={1} control={control} errors={errors}  getValues={getValues}/> : null}
-            {isOnLastStep() ? <HighlightsFormPreview formData={getValues()}/> : null}
+            {isOnLastStep() ? <CourseSectionFormStep form_id={1} control={control} errors={errors}  getValues={getValues}/> : null}
 
             {/* Back or Cancel Button */}
             {
