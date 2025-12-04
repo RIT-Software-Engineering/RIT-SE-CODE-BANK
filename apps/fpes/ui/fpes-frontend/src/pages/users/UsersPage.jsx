@@ -3,11 +3,12 @@ import { TextField, Button, MenuItem, Card, CardContent, Typography } from "@mui
 
 export default function CreateUserPage() {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     email: "",
-    role: "faculty",
-    password: ""
+    rank: "",
+    unit: "",
+    affiliations: "",
+    role: "faculty"
   });
 
   const handleChange = (e) => {
@@ -17,13 +18,23 @@ export default function CreateUserPage() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    //tba post request to backend 
-    console.log("Creating user:", formData);
+    try {
+      const res = await fetch("http://localhost:3000/faculty_information", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
 
-    alert(`User "${formData.email}" created successfully!`);
+        const data = await res.json();
+        alert(`User has been created. Id = ${data.user_id}`);
+        
+      } catch (err) {
+        console.error(err);
+        alert("Error creating user");
+    }
   };
 
   return (
@@ -37,17 +48,9 @@ export default function CreateUserPage() {
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 
             <TextField
-              label="First Name"
-              name="firstName"
+              label="Full Name"
+              name="fullName"
               value={formData.firstName}
-              onChange={handleChange}
-              required
-            />
-
-            <TextField
-              label="Last Name"
-              name="lastName"
-              value={formData.lastName}
               onChange={handleChange}
               required
             />
@@ -62,10 +65,28 @@ export default function CreateUserPage() {
             />
 
             <TextField
-              label="Password"
-              name="password"
-              type="password"
-              value={formData.password}
+              label="Rank"
+              name="rank"
+              type="rank"
+              value={formData.rank}
+              onChange={handleChange}
+              required
+            />
+
+            <TextField
+              label="Unit"
+              name="unit"
+              type="unit"
+              value={formData.unit}
+              onChange={handleChange}
+              required
+            />
+
+            <TextField
+              label="Affiliations"
+              name="affiliations"
+              type="affiliations"
+              value={formData.affiliations}
               onChange={handleChange}
               required
             />
@@ -78,6 +99,7 @@ export default function CreateUserPage() {
               onChange={handleChange}
             >
               <MenuItem value="faculty">Faculty</MenuItem>
+              <MenuItem value="supervisor">Supervisor</MenuItem>
               <MenuItem value="admin">Admin</MenuItem>
             </TextField>
 
