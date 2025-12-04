@@ -112,7 +112,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                 const { resumeFile, resumeId, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 data.append('jobPositionApplicationFormData', JSON.stringify(restOfFormData));
                 
-                await applyForJobPositionWithNewUploads(data);
+                await applyForJobPositionWithNewUploads(data, position);
 
             } else {
                 const { resumeFile, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
@@ -122,7 +122,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                     resumeId: parseInt(formData.resumeId, 10),
                     jobPositionApplicationFormData: JSON.stringify(restOfFormData),
                 };
-                await applyForJobPosition(applicationDetails);
+                await applyForJobPosition(applicationDetails, position);
             }
 
             onApplySuccess();

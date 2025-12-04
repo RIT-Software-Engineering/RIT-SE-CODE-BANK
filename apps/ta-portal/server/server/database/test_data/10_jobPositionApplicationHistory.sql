@@ -18,4 +18,14 @@ INSERT INTO `JobPositionApplicationHistory` (`username`, `candidateUID`, `jobPos
 
 -- Student 305 (Sally Student) Applications
 ('ss9012', 305, '2241-SWEN-344-1', 4, 'REJECTED', 'Sally', 'Student', 'they/them', 'student5@example.com', 'Computer Engineering', 3, 'A_MINUS', FALSE, FALSE, NULL, NULL, NULL),
-('ss9012', 305, '2241-SWEN-261-1', 4, 'APPLIED', 'Sally', 'Student', 'they/them', 'student5@example.com', 'Computer Engineering', 3, NULL, FALSE, FALSE, NULL, NULL, NULL);
+('ss9012', 305, '2241-SWEN-261-1', 4, 'APPLIED', 'Sally', 'Student', 'they/them', 'student5@example.com', 'Computer Engineering', 3, NULL, FALSE, FALSE, NULL, NULL, NULL),
+
+-- Spring Semester Applications for 2251-SWEN-344-1 (Jan 12 - May 12, 2026)
+-- Student 306 (Gary Greenfield) Application
+('gg5672', 306, '2251-SWEN-344-1', 5, 'APPLIED', 'Gary', 'Greenfield', 'he/him', 'student6@example.com', 'Software Engineering', 3, 'B_PLUS', FALSE, TRUE, 'SWEN-261', NULL, NULL),
+
+-- Student 303 (Evan Engineer) Applications
+('ee8901', 303, '2251-SWEN-344-1', 3, 'INTERVIEW', 'Evan', 'Engineer', 'they/them', 'student6@example.com', 'Computer Engineering', 2, 'B_PLUS', FALSE, TRUE, 'SWEN-261', NULL, NULL),
+
+-- Student 305 (Sally Student) Applications
+('ss9012', 305, '2251-SWEN-344-1', 4, 'APPLIED', 'Sally', 'Student', 'they/them', 'student5@example.com', 'Computer Engineering', 3, 'A', FALSE, TRUE, 'SWEN-261', NULL, NULL);

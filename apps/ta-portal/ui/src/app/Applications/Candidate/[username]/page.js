@@ -2,6 +2,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import { useSearchParams } from 'next/navigation';
 import { getCandidateApplicationsAsCandidate } from '@/services/db-apis';
 import { useAuth } from '@/contexts/AuthContext';
@@ -248,15 +250,20 @@ export default function CandidateApplicationsPage() {
             <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {displayData[semester].map((app) => (
-                  <ApplicationCard
+                  <Box
                     key={app.id}
-                    currentUser={currentUser}
-                    application={app}
-                    onStatusChange={handleStatusChange}
-                    refreshUserProfile={refreshUserProfile}
-                    cardId={`app-${app.id}`}
-                    isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
-                  />
+                    id={`application-${app.id}`}
+                    sx={{
+                      borderRadius: 2
+                    }}
+                  >
+                    <ApplicationCard
+                      currentUser={currentUser}
+                      application={app}
+                      onStatusChange={handleStatusChange}
+                      refreshUserProfile={refreshUserProfile}
+                    />
+                  </Box>
                 ))}
               </Box>
             </AccordionDetails>
@@ -271,6 +278,7 @@ export default function CandidateApplicationsPage() {
 
   // Main component render method.
   return (
+    <FeatureGate feature={FEATURES.APPLICATIONS}>
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography variant="h1" component="h1" gutterBottom>
@@ -347,5 +355,6 @@ export default function CandidateApplicationsPage() {
         </Paper>
       )}
     </Container>
+    </FeatureGate>
   );
 }

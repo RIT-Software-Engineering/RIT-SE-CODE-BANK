@@ -13,6 +13,7 @@ services:
       - SMTP_FROM=se_svc_apps@rit.edu
       - PORT=4000
       - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - DATABASE_URL=${DATABASE_URL:-mysql://root:password@host.docker.internal:3308/rit_notifications}
     ports:
       - "4000:4000"
     depends_on:

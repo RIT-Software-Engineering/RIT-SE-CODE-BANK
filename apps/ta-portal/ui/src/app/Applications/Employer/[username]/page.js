@@ -2,6 +2,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import { useSearchParams } from 'next/navigation';
 import {
   getSemesterCodesForEmployer,
@@ -288,15 +290,18 @@ export default function EmployerApplicationsPage() {
               <AccordionDetails>
                 {position.jobPositionApplicationHistory.length > 0 ? (
                   position.jobPositionApplicationHistory.map((app) => (
-                    <ApplicationCard
-                      currentUser={currentUser}
+                    <Box
                       key={app.id}
-                      jobPosition={position}
-                      application={app}
-                      onStatusChange={handleStatusChange}
-                      cardId={`app-${app.id}`}
-                      isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
-                    />
+                      id={`application-${app.id}`}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      <ApplicationCard
+                        currentUser={currentUser}
+                        jobPosition={position}
+                        application={app}
+                        onStatusChange={handleStatusChange}
+                      />
+                    </Box>
                   ))
                 ) : (
                   <Typography sx={{ p: 2 }}>
@@ -321,6 +326,7 @@ export default function EmployerApplicationsPage() {
 
   // Main component render method.
   return (
+    <FeatureGate feature={FEATURES.APPLICATIONS}>
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <Typography variant="h1" component="h1" gutterBottom>
@@ -401,5 +407,6 @@ export default function EmployerApplicationsPage() {
         </Paper>
       )}
     </Container>
+    </FeatureGate>
   );
 }

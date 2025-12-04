@@ -34,6 +34,12 @@ const slack_router = require("./slack_routes");
 const devNotifyRoutes = require('./dev_notify_routes');
 const notificationsApi = require('./notifications_api');
 
+// Import the Workflow-specific routes from the `wf_routes.js` file.
+const wf_router = require("./wf_routes");
+
+// Import feature flag utilities
+const { isFeatureEnabled, FEATURES } = require("../config/featureFlags");
+
 // =============================================================================
 // ROUTE MOUNTING
 // =============================================================================
@@ -42,11 +48,24 @@ const notificationsApi = require('./notifications_api');
 // be accessible under the `/api/db` path.
 router.use("/db", db_router);
 
-// Mount the Slack router. All routes defined in `slack_routes.js` will now
-// be accessible under the `/api/slack` path.
-router.use("/slack", slack_router);
+// Mount the Slack router conditionally based on MESSAGING feature flag
+// All routes defined in `slack_routes.js` will be accessible under `/api/slack`
+// only if the messaging feature is enabled.
+router.use("/slack", async (req, res, next) => {
+  if (await isFeatureEnabled(FEATURES.MESSAGING)) {
+    return slack_router(req, res, next);
+  }
+  res.status(404).json({ error: "Messaging feature is currently disabled." });
+});
+
+// Mount dev notification and notifications API routes
 router.use('/dev', devNotifyRoutes);
 router.use('/notifications', notificationsApi);
+
+// Mount the Workflow router. All routes defined in `wf_routes.js` will now
+// be accessible under the `/api/workflows` path.
+router.use("/workflows", wf_router);
+
 // =============================================================================
 // EXPORTS
 // =============================================================================

@@ -33,6 +33,7 @@ const cookieParser = require('cookie-parser');
 
 // Import custom modules from the application's codebase.
 const apiRoutes = require('./server/routing/index'); // The main API router.
+const { syncWorkflowsWithApplications } = require('./server/utils/workflow-sync'); // Workflow sync utility
 
 // Initialize the Express application.
 const app = express();
@@ -126,15 +127,33 @@ async function initializeApp() {
   try {
     const key = fs.readFileSync(path.resolve(__dirname, './localhost+2-key.pem'));
     const cert = fs.readFileSync(path.resolve(__dirname, './localhost+2.pem'));
-    https.createServer({ key, cert }, app).listen(port, () => {
+    https.createServer({ key, cert }, app).listen(port, async () => {
       console.log(`HTTPS server listening on ${process.env.BACKEND_URL || `https://localhost:${port}`}`);
       console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
+      
+      // Sync workflows with applications on startup
+      console.log('Workflow sync starting...');
+      try {
+        await syncWorkflowsWithApplications();
+        console.log('Workflow sync complete');
+      } catch (error) {
+        console.error('Workflow sync failed:', error.message);
+      }
     });
   } catch (err) {
     console.warn('HTTPS certs not available or unreadable, falling back to HTTP for development:', err && err.message);
-    app.listen(port, () => {
+    app.listen(port, async () => {
       console.log(`HTTP server listening on http://localhost:${port}`);
       console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
+      
+      // Sync workflows with applications on startup
+      console.log('Workflow sync starting...');
+      try {
+        await syncWorkflowsWithApplications();
+        console.log('Workflow sync complete');
+      } catch (error) {
+        console.error('Workflow sync failed:', error.message);
+      }
     });
   }
 }

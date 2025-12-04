@@ -1,0 +1,10 @@
+.read test_data_scoop/semester_dummy.sql
+.read test_data_scoop/user_dummy.sql
+.read test_data_scoop/teams_dummy.sql
+.read test_data_scoop/projects_dummy.sql
+.read test_data_scoop/student_mentorship_dummy.sql
+.read test_data_scoop/actions_dummy.sql
+.read test_data_scoop/action_log_dummy.sql
+.read test_data_scoop/time_log_dummy.sql
+.read test_data_scoop/archive_dummy.sql
+.read test_data_scoop/page_html_dummy.sql

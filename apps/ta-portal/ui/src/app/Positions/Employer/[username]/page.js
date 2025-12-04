@@ -19,6 +19,8 @@ import {
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotification } from "@/contexts/NotificationContext";
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import PositionsCard from "@/components/positions/PositionsCard";
 import { Filter } from "@/components/common/searchAndFilter/Filter";
 import SearchBar from "@/components/common/searchAndFilter/SearchBar";
@@ -45,6 +47,14 @@ import {
  * with options to create and edit.
  */
 export default function EmployerPositionsPage() {
+  return (
+    <FeatureGate feature={FEATURES.POSITIONS}>
+      <EmployerPositionsContent />
+    </FeatureGate>
+  );
+}
+
+function EmployerPositionsContent() {
   // Core hooks for component references, authentication, and notifications.
   const filterRef = useRef();
   const { currentUser } = useAuth();

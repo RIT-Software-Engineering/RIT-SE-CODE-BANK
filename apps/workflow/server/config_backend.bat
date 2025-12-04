@@ -2,6 +2,7 @@
 SETLOCAL
 
 REM --- Workflow Configuration ---
+REM Note: DB_PORT may need to be set to something different if your OS restricts access to the preset port.
 SET "DB_ROOT_PASSWORD=newPassword"
 SET "DB_HOST=localhost"
 SET "DB_PORT=8000"

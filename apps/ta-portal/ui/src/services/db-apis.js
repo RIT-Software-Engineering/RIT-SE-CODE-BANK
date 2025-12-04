@@ -1,5 +1,7 @@
 // ui/src/services/db-apis.js
 
+import { createHiringWorkflow } from './workflow-apis.js';
+
 // --- API Configuration ---
 const BASE_API_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
@@ -479,9 +481,10 @@ export async function checkJobPositionIsFull(jobPositionId) {
 /**
  * Submits a job application using the candidate's existing primary resume.
  * @param {object} jobPositionApplicationData - The data for the job application.
+ * @param {object} [jobPosition] - The job position details for workflow creation.
  * @returns {Promise<object>} A promise that resolves to the newly created application record.
  */
-export async function applyForJobPosition(jobPositionApplicationData) {
+export async function applyForJobPosition(jobPositionApplicationData, jobPosition = null) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error(
       "Backend API URL components are not defined. Check your .env.local file."
@@ -497,12 +500,34 @@ export async function applyForJobPosition(jobPositionApplicationData) {
     },
     body: JSON.stringify(jobPositionApplicationData),
   });
-  return handleApiResponse(response);
+  
+  const applicationResult = await handleApiResponse(response);
+  
+  // Create hiring workflow after successful application
+  if (applicationResult && jobPosition) {
+    try {
+      const hiringData = {
+        candidateUsername: jobPositionApplicationData.candidateUsername,
+        employerUsername: jobPosition.username || 'aa1234', // Use position.username (employer)
+        adminUsername: 'aa1234', // Default admin
+        jobTitle: `${jobPosition.course?.name || 'Position'} - ${jobPosition.course?.department || 'Department'}`,
+        applicationId: applicationResult.id || `app-${Date.now()}`
+      };
+      
+      await createHiringWorkflow(hiringData);
+    } catch (workflowError) {
+      console.warn('Failed to create hiring workflow:', workflowError);
+      // Don't fail the application if workflow creation fails
+    }
+  }
+  
+  return applicationResult;
 }
 
 /**
  * Submits a job application along with new file uploads (e.g., resume, cover letter).
  * @param {FormData} jobPositionApplicationData - The form data containing application details and files.
+ * @param {object} [jobPosition] - The job position details for workflow creation.
  * @returns {Promise<object>} A promise that resolves to the newly created application record.
  */
 export async function applyForJobPositionWithNewUploads(
@@ -519,7 +544,30 @@ export async function applyForJobPositionWithNewUploads(
     body: jobPositionApplicationData,
   });
 
-  return handleApiResponse(response);
+  const applicationResult = await handleApiResponse(response);
+  
+  // Create hiring workflow after successful application
+  if (applicationResult && jobPosition) {
+    try {
+      // Extract candidateUsername directly from FormData
+      const candidateUsername = jobPositionApplicationData.get('candidateUsername');
+      
+      const hiringData = {
+        candidateUsername: candidateUsername || 'unknown',
+        employerUsername: jobPosition.username || 'aa1234', // Use position.username (employer)
+        adminUsername: 'aa1234', // Default admin
+        jobTitle: `${jobPosition.course?.name || 'Position'} - ${jobPosition.course?.department || 'Department'}`,
+        applicationId: applicationResult.id || `app-${Date.now()}`
+      };
+      
+      await createHiringWorkflow(hiringData);
+    } catch (workflowError) {
+      console.warn('Failed to create hiring workflow:', workflowError);
+      // Don't fail the application if workflow creation fails
+    }
+  }
+  
+  return applicationResult;
 }
 
 /**
@@ -597,6 +645,41 @@ export async function getCandidateApplicationsAsAdmin() {
   }
   const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/admin`;
   console.log(`Fetching admin applications from: ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+/**
+ * Fetches ALL applications across the system for admin viewing, regardless of status.
+ * Supports search and filtering by course, student, status, level, and semester.
+ * @param {string} search - The search term (course code/name or student name).
+ * @param {string} searchType - The type of search ("course" or "student").
+ * @param {object} filters - Object containing filters (status, level, semester, hasApplications).
+ * @returns {Promise<Array>} A promise that resolves to an array of all job positions with applications.
+ */
+export async function getAllApplicationsForAdmin(search = '', searchType = 'course', filters = {}) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  // Build query string
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (searchType) params.append('searchType', searchType);
+  if (filters.status && filters.status.length > 0) {
+    params.append('status', filters.status.join(','));
+  }
+  if (filters.level && filters.level.length > 0) {
+    params.append('level', filters.level.join(','));
+  }
+  if (filters.semester) params.append('semester', filters.semester);
+  if (filters.hasApplications) params.append('hasApplications', filters.hasApplications);
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/admin/all?${params.toString()}`;
+  console.log(`Fetching all applications for admin from: ${url}`);
 
   const response = await fetch(url);
   return handleApiResponse(response);
@@ -906,6 +989,30 @@ export async function upsertTimecard(timecardData) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(timecardData),
+  });
+  return handleApiResponse(response);
+}
+
+/**
+ * Submits a timecard for review and creates an approval workflow
+ * @param {number} timecardWeeklyHistoryId - The ID of the timecard to submit
+ * @returns {Promise<object>} A promise that resolves to the submission result
+ */
+export async function submitTimecard(timecardWeeklyHistoryId) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/submit-timecard`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ timecardWeeklyHistoryId }),
   });
   return handleApiResponse(response);
 }

@@ -15,6 +15,7 @@ const {
 const { verifyPassword, hashPassword } = require("../config/passwordHashes");
 // Notifications: call the notification service directly (no shared client)
 const { dispatchTemplated } = require('../utils/notifications');
+const { createTimecardApprovalWorkflow, updateWorkflowProgress } = require('../utils/workflow-sync');
 
 // Build a stable deep link back into the TA Portal UI for CTAs in notifications.
 // Uses TA_PORTAL_BASE_URL or defaults to http://localhost:3000 for dev.
@@ -963,6 +964,13 @@ try {
   console.error("Slack notify (status change) failed:", e.message);
 }
 
+  // Sync workflow progress
+  try {
+    await updateWorkflowProgress(applicationId, status);
+  } catch (e) {
+    console.error('Workflow sync failed:', e.message);
+  }
+
   return updatedApp;
 }
 
@@ -1614,6 +1622,100 @@ async function getCandidateApplicationsAsAdmin() {
     },
   });
 }
+
+/**
+ * Gets ALL applications across the system for admin viewing with search and filters
+ * @param {string} search - Search term (course code/name or student name)
+ * @param {string} searchType - Type of search ("course" or "student")
+ * @param {object} filters - Object containing status, level, semester, hasApplications filters
+ * @returns {Promise<Array>} Array of job positions with their application history
+ */
+async function getAllApplicationsForAdmin(search = '', searchType = 'course', filters = {}) {
+  const whereClause = {};
+  
+  // Validate and sanitize search input to prevent performance issues
+  if (search && search.length > 100) {
+    throw new Error('Search query too long (max 100 characters)');
+  }
+  
+  // Handle search by course code or name
+  if (search && searchType === 'course') {
+    whereClause.OR = [
+      { courseCode: { contains: search, mode: 'insensitive' } },
+      { course: { name: { contains: search, mode: 'insensitive' } } },
+    ];
+  }
+
+  // Filter by semester
+  if (filters.semester) {
+    whereClause.semesterCode = filters.semester;
+  }
+
+  // Build the query
+  const positions = await prisma.jobPosition.findMany({
+    where: whereClause,
+    include: {
+      course: {
+        select: { name: true, description: true },
+      },
+      jobSchedules: {
+        select: { dayOfWeek: true, startTime: true, endTime: true },
+      },
+      employer: {
+        include: {
+          user: {
+            select: {
+              fname: true,
+              lname: true,
+            },
+          },
+        },
+      },
+      jobPositionApplicationHistory: {
+        where: buildApplicationFilterClause(filters),
+        include: {
+          candidate: {
+            include: {
+              user: {
+                select: {
+                  fname: true,
+                  lname: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          resume: {
+            select: { name: true, resumeURL: true },
+          },
+        },
+      },
+    },
+  });
+
+  // Filter by student name if searchType is "student"
+  if (search && searchType === 'student') {
+    const searchLower = search.toLowerCase();
+    return positions.filter(position => {
+      return position.jobPositionApplicationHistory.some(app => {
+        const fname = app.candidate?.user?.fname?.toLowerCase() || '';
+        const lname = app.candidate?.user?.lname?.toLowerCase() || '';
+        const fullName = `${fname} ${lname}`;
+        return fullName.includes(searchLower) || fname.includes(searchLower) || lname.includes(searchLower);
+      });
+    });
+  }
+
+  // Filter by hasApplications
+  if (filters.hasApplications === 'yes') {
+    return positions.filter(p => p.jobPositionApplicationHistory.length > 0);
+  } else if (filters.hasApplications === 'no') {
+    return positions.filter(p => p.jobPositionApplicationHistory.length === 0);
+  }
+
+  return positions;
+}
+
 
 /**
  * Check if a job position is full based on its status
@@ -2451,6 +2553,24 @@ async function upsertTimecard(timecardData) {
 }
 
 /**
+ * Submits a timecard for approval and creates a workflow.
+ * @param {number} timecardWeeklyHistoryId - The ID of the timecard week to submit.
+ * @returns {Promise<Object>} A promise that resolves with the workflow creation result.
+ */
+async function submitTimecard(timecardWeeklyHistoryId) {
+  try {
+    const workflow = await createTimecardApprovalWorkflow(timecardWeeklyHistoryId);
+    if (!workflow) {
+      return { success: false, message: "Failed to create approval workflow." };
+    }
+    return { success: true, message: "Timecard submitted for approval.", workflow };
+  } catch (error) {
+    console.error('Error submitting timecard:', error);
+    throw error;
+  }
+}
+
+/**
  * Retrieves all weekly timecards for a specific job.
  * @param {number} jobPositionHistoryId - The ID of the employee's specific job history record.
  * @returns {Promise<Array>} A promise that resolves to an array of all timecard objects.
@@ -2604,6 +2724,7 @@ module.exports = {
   getCandidateApplicationsAsEmployer,
   getCandidateApplications,
   getCandidateApplicationsAsAdmin,
+  getAllApplicationsForAdmin,
   deleteCandidateApplication,
   getCandidateApplication,
   getSemesterCodes,
@@ -2637,6 +2758,7 @@ module.exports = {
   getComments,
   terminateEmployee,
   upsertTimecard,
+  submitTimecard,
   getAllTimecardsForJob,
   fetchAdminViewData,
   fetchEmployerViewData,

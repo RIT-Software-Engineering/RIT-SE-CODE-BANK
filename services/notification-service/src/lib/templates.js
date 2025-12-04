@@ -32,6 +32,7 @@ const EVENT_ALIAS_MAP = {
   declined_offer: 'application_status_changed',
   hired: 'application_status_changed',
   applied: 'application_status_changed',
+  workflow_action_completed: 'application_status_changed',
 };
 
 function normalizeEventKey(raw) {

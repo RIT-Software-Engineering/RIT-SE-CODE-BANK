@@ -14,6 +14,8 @@ import {
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 
 import PositionsCard from "@/components/positions/PositionsCard";
 import { Filter } from "@/components/common/searchAndFilter/Filter";
@@ -35,6 +37,14 @@ import {
  * that they are eligible to apply for.
  */
 export default function CandidatePositionsPage() {
+  return (
+    <FeatureGate feature={FEATURES.POSITIONS}>
+      <CandidatePositionsContent />
+    </FeatureGate>
+  );
+}
+
+function CandidatePositionsContent() {
   // Core hooks for component references and authentication context.
   const filterRef = useRef();
   const { currentUser } = useAuth();

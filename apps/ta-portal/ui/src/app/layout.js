@@ -51,7 +51,7 @@ export default function RootLayout({ children }) {
       <body
         // Apply global font variables, enable antialiasing for smoother text,
         // and set up a flex layout with full-height screen
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen overflow-x-hidden`}
       >
         {/* Global theme registry for MUI / styled components */}
         <ThemeRegistry>

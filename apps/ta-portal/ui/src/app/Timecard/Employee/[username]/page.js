@@ -1,7 +1,9 @@
 // app/Timecard/Employee/[username]/page.js
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import {
     Box,
     Button,
@@ -29,6 +31,7 @@ import StartDateModal from "@/components/timecard/StartDateModal";
 import { useNotification } from "@/contexts/NotificationContext";
 import {
     upsertTimecard,
+    submitTimecard,
     getAllTimecardsForJob,
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
@@ -49,6 +52,7 @@ export default function EmployeeTimecard() {
 
     // State for core timecard data.
     const [currentTimecard, setCurrentTimecard] = useState([]); // The editable timecard for the current week.
+    const [currentTimecardId, setCurrentTimecardId] = useState(null); // The ID of the current timecard record
     const [previousTimecards, setPreviousTimecards] = useState([]); // A list of previously submitted timecards.
     const [jobPositionHistoryId, setJobPositionHistoryId] = useState(null); // The ID of the employee's active job.
     const [weekStartDate, setWeekStartDate] = useState(null); // The start date of the current timecard week.
@@ -86,14 +90,14 @@ export default function EmployeeTimecard() {
      * @param {Date} weekStart - The starting date of the week (e.g., a Friday).
      * @returns {Array<Object>} An array of day objects for the timecard grid.
      */
-    const buildWeekFrom = (weekStart) => {
+    const buildWeekFrom = useCallback((weekStart) => {
         const dayLabels = ["Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
         return dayLabels.map((label, i) => {
             const date = new Date(weekStart);
             date.setDate(date.getDate() + i);
             return { day: label, date: formatDate(date), ins: ["", "", ""], outs: ["", "", ""], total: 0, notes: "" };
         });
-    };
+    }, []);
 
     /**
      * Calculates the difference in hours between two time strings (e.g., "14:30").
@@ -138,13 +142,13 @@ export default function EmployeeTimecard() {
         } else {
             setLoading(false);
         }
-    }, [currentUser]);
+    }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
     /**
      * Fetches all timecards for a given job and populates the component's state.
      * @param {number} jobHistoryId - The ID of the employee's active job history record.
      */
-    const loadAllTimecards = async (jobHistoryId) => {
+    const loadAllTimecards = useCallback(async (jobHistoryId) => {
         setLoading(true);
         setError(null);
         try {
@@ -158,6 +162,7 @@ export default function EmployeeTimecard() {
             } else {
                 // The API returns timecards sorted by most recent first.
                 const mostRecent = allTimecards[0];
+                setCurrentTimecardId(mostRecent.id); // Store the timecard ID
                 setPreviousTimecards(allTimecards.length > 1 ? allTimecards.slice(1) : []);
 
                 const weekStart = new Date(mostRecent.weekStartDate);
@@ -181,7 +186,7 @@ export default function EmployeeTimecard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [buildWeekFrom]);
 
     // --- EVENT HANDLERS ---
 
@@ -303,29 +308,31 @@ export default function EmployeeTimecard() {
             };
             await upsertTimecard(finalSavePayload);
     
-            // Step 2: Create the NEW week's timecard record.
+            // Step 2: Submit the timecard for review (creates workflow)
+            if (currentTimecardId) {
+                await submitTimecard(currentTimecardId);
+                showNotification("Timecard submitted for review! An admin will be notified.", "success");
+            }
+    
+            // Step 3: Create the NEW week's timecard record.
             const newWeekPayload = {
                 jobPositionHistoryId, weekStartDate: newStartDate, isCurrentWeek: true, entries: []
             };
             await upsertTimecard(newWeekPayload);
     
-            // Step 3: Export the data for the week that was just finalized.
+            // Step 4: Export the data for the week that was just finalized.
             handleExport(currentTimecard, weekStartDate);
     
-            // Step 4: Reload all timecard data from the database to reflect the changes.
+            // Step 5: Reload all timecard data from the database to reflect the changes.
             await loadAllTimecards(jobPositionHistoryId);
-    
-            showNotification("Timecard submitted successfully and new week started!", "success");
-    
+
         } catch (error) {
             showNotification(error.message || "Failed to submit timecard.", "error");
         } finally {
             setSubmitting(false);
             setShowStartDateModal(false);
         }
-    };
-
-    /**
+    };    /**
      * Creates the very first timecard for a new employee and saves it immediately.
      * @param {Date} startDate - The selected start date for their first week.
      */
@@ -366,6 +373,7 @@ export default function EmployeeTimecard() {
     
     // Main component render method.
     return (
+        <FeatureGate feature={FEATURES.TIMECARD}>
         <>
             {/* Conditionally render content based on user role. */}
             {currentUser && currentUser.role === 'EMPLOYEE' ? (
@@ -494,5 +502,6 @@ export default function EmployeeTimecard() {
                 isSubmitting={submitting}
             />
         </>
+        </FeatureGate>
     );
 }

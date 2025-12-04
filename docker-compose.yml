@@ -1,0 +1,26 @@
+services:
+  mariadb_main:
+    image: mariadb:11
+    container_name: mariadb_scoop_portal
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: scoop_portal_demo
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_scoop_portal_data:/var/lib/mysql
+
+  mariadb_workflows:
+    image: mariadb:11
+    container_name: mariadb_workflows
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: scoop_portal_demo
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_workflows_data:/var/lib/mysql
+
+volumes:
+  mariadb_scoop_portal_data:
+  mariadb_workflows_data:

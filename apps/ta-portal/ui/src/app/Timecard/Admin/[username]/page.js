@@ -2,6 +2,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import FeatureGate from "@/components/common/FeatureGate";
+import { FEATURES } from "@/configuration/featureFlags";
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchAdminViewData } from '@/services/db-apis';
 import GroupedTimecardView from '@/components/timecard/GroupedTimecardView';
@@ -136,6 +138,7 @@ export default function AdminTimecardsPage() {
     
     // Main component render method.
     return (
+        <FeatureGate feature={FEATURES.TIMECARD}>
         <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: { xs: 2, sm: 4 } }}>
             <Container maxWidth="lg">
                 <Box sx={{ textAlign: 'center', mb: 4 }}>
@@ -182,5 +185,6 @@ export default function AdminTimecardsPage() {
                 )}
             </Container>
         </Box>
+        </FeatureGate>
     );
 }

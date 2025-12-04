@@ -9,6 +9,9 @@ const path = require("path");
 const fs = require("fs");
 const multer = require("multer");
 
+// Import feature flag utilities
+const { getAllFeatureFlags, updateFeatureFlag, FEATURES } = require("../config/featureFlags");
+
 // Import all necessary database query functions.
 const {
   createJobPosition,
@@ -30,6 +33,7 @@ const {
   updateEmployerProfile,
   getCandidateApplicationsAsEmployer,
   getCandidateApplicationsAsAdmin,
+  getAllApplicationsForAdmin,
   hireCandidateForJobPosition,
   isJobPositionFull,
   applyForJobPosition,
@@ -47,6 +51,7 @@ const {
   getComments,
   terminateEmployee,
   upsertTimecard,
+  submitTimecard,
   getAllTimecardsForJob,
   fetchAdminViewData,
   fetchEmployerViewData,
@@ -425,10 +430,6 @@ router.delete('/applications/:username', async (req, res) => {
         const filePath = path.join(serverRootPath, application.coverLetterURL);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
-          console.log(`Successfully deleted cover letter: ${filePath}`);
-        }
-        else{
-          console.log(`Cover letter file not found: ${filePath}`);
         }
       } catch (err) {
         console.error(`Failed to delete cover letter file for application ${application.id}:`, err);
@@ -616,6 +617,47 @@ router.get("/applications/admin", async (req, res) => {
   } catch (error) {
     console.error("Error in GET /applications/admin route:", error);
     res.status(500).json({ error: "Failed to retrieve applications for admin." });
+  }
+});
+
+/**
+ * @route   GET /api/db/applications/admin/all
+ * @desc    Gets ALL applications across the system for admin viewing, with search and filters.
+ * @access  Public (should be protected by admin auth middleware)
+ * @query   {string} search - Search term for course code/name or student name.
+ * @query   {string} searchType - Type of search ("course" or "student").
+ * @query   {string} status - Comma-separated list of statuses to filter by.
+ * @query   {string} level - Comma-separated list of grade levels to filter by.
+ * @query   {string} semester - Semester code to filter by.
+ * @query   {string} hasApplications - Filter positions with/without applications ("yes", "no").
+ * @returns {Array} An array of job positions with their application history.
+ */
+router.get("/applications/admin/all", async (req, res) => {
+  try {
+    const { search = '', searchType = 'course', status, level, semester, hasApplications } = req.query;
+
+    // Validate searchType
+    const validSearchTypes = ['course', 'student'];
+    if (searchType && !validSearchTypes.includes(searchType)) {
+      return res.status(400).json({ error: 'Invalid searchType. Must be "course" or "student".' });
+    }
+
+    // Parse comma-separated filters
+    const statusArray = status ? status.split(',').map(s => s.trim()) : [];
+    const levelArray = level ? level.split(',').map(l => l.trim()) : [];
+
+    const filters = {
+      status: statusArray,
+      level: levelArray,
+      semester: semester || '',
+      hasApplications: hasApplications || '',
+    };
+
+    const positions = await getAllApplicationsForAdmin(search, searchType, filters);
+    res.status(200).json(positions);
+  } catch (error) {
+    console.error("Error in GET /applications/admin/all route:", error);
+    res.status(500).json({ error: "Failed to retrieve all applications for admin." });
   }
 });
 
@@ -1132,6 +1174,25 @@ router.post("/upsert-timecard", async (req, res) => {
 });
 
 /**
+ * @route   POST /submit-timecard
+ * @desc    Submits a timecard for review and creates an approval workflow.
+ * @access  Public
+ */
+router.post("/submit-timecard", async (req, res) => {
+  try {
+    const { timecardWeeklyHistoryId } = req.body;
+    if (!timecardWeeklyHistoryId) {
+      return res.status(400).json({ error: "Timecard Weekly History ID is required." });
+    }
+    const result = await submitTimecard(timecardWeeklyHistoryId);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error in /submit-timecard route:", error);
+    res.status(500).json({ error: "Failed to submit timecard for review." });
+  }
+});
+
+/**
  * @route   GET /api/db/timecard/all/:jobPositionHistoryId
  * @desc    Retrieves all timecards for a specific job position history.
  * @access  Public
@@ -1218,6 +1279,56 @@ router.put("/notifications/preferences", async (req, res) => {
     res.sendStatus(204); //success with no response body
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// =============================================================================
+// FEATURE FLAGS ROUTES
+// =============================================================================
+
+/**
+ * @route   GET /api/db/feature-flags
+ * @desc    Get all feature flags and their current status
+ * @access  Admin only (should add authentication middleware in production)
+ * @returns {JSON} Object mapping feature names to enabled status
+ */
+router.get("/feature-flags", async (req, res) => {
+  try {
+    const flags = await getAllFeatureFlags();
+    res.json(flags);
+  } catch (error) {
+    console.error("Error fetching feature flags:", error);
+    res.status(500).json({ error: "Failed to fetch feature flags." });
+  }
+});
+
+/**
+ * @route   PUT /api/db/feature-flags/:featureName
+ * @desc    Update a feature flag's enabled status
+ * @access  Admin only (should add authentication middleware in production)
+ * @body    {boolean} enabled - Whether the feature should be enabled
+ * @returns {JSON} Updated feature flag record
+ */
+router.put("/feature-flags/:featureName", async (req, res) => {
+  try {
+    const { featureName } = req.params;
+    const { enabled } = req.body;
+
+    // Validate feature name
+    if (!Object.values(FEATURES).includes(featureName)) {
+      return res.status(400).json({ error: "Invalid feature name." });
+    }
+
+    // Validate enabled value
+    if (typeof enabled !== "boolean") {
+      return res.status(400).json({ error: "Enabled must be a boolean value." });
+    }
+
+    const updatedFlag = await updateFeatureFlag(featureName, enabled);
+    res.json(updatedFlag);
+  } catch (error) {
+    console.error("Error updating feature flag:", error);
+    res.status(500).json({ error: "Failed to update feature flag." });
   }
 });
 
