@@ -125,6 +125,7 @@ async function submitHighlightsForm(formData){
   // Add record for student support
   const result = await student_support_api.addStudentSupport(formData.student_support);
   const student_support_id = result.id;
+  console.log(result);
   
   formData.student_support_id = student_support_id;
   console.log(student_support_id);

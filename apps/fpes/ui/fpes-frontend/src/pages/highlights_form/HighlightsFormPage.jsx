@@ -71,6 +71,7 @@ export default function HighlightsFormPage({facultyId}) {
         data.faculty_information_id = facultyId;
         data.isSubmission = true;
         console.log(facultyId)
+        console.log(data)
         axios.post("http://localhost:3000/highlights/submit", data);
         navigate("/highlights")
     }
