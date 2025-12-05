@@ -126,6 +126,25 @@ export default function GrantForm({ control, register_grant, handleRemoveGrant, 
                 />
             </Grid>
 
+            <Grid item xs={12} sm={6}>
+                <Controller
+                    name={`${register_grant}faculty_share`}
+                    control={control}
+                    rules={{ min: 0, valueAsNumber: true }}
+                    render={({ field }) => (
+                        <TextField
+                            {...field}
+                            type="number"
+                            label="Faculty Share"
+                            fullWidth
+                            inputProps={{ min: 0 }}
+                            error={errors?.grants?.[index]?.faculty_share}
+                            helperText={errors?.grants?.[index]?.faculty_share?.message}
+                        />
+                    )}
+                />
+            </Grid>
+                        
             <Grid item size={10}>
                 <Controller
                     name={register_grant + "other_contributions"}
