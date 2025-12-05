@@ -107,7 +107,7 @@ router.put("/:id", async (req, res) => {
       title,
       display_name,
       description,
-      teams: { connect: teams.map((teamId) => ({ id: teamId })) },
+      teams: { set: teams.map((teamId) => ({ id: teamId })) },
       SemesterGroup,
       semesterGroupId
       },

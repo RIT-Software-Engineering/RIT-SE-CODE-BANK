@@ -1,17 +1,10 @@
 /*
-Because the id for the users table is generated with uuid(),
-it's difficult to hard-code users for the sample journal entries.
 
-Journal entries will have to be created by running `npx prisma studio`
-and clicking the button for creating a new record when viewing the table.
+Test data for journal entries
+
+Entries must be listed in order to ensure previous_entryid references work
+
 */
-// import { PrismaClient } from "../../src/generated/prisma/index.js"
-
-// const prisma = new PrismaClient;
-
-// async function getIdByName(fname, lname) {
-//   try {} catch (error) {}
-// }
 
 export const sampleJournalEntries = [
   {
