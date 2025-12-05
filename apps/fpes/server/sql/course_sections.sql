@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS course_sections (
     course_id INT UNSIGNED,
     form_id INT,
     FOREIGN KEY (course_id) REFERENCES courses(id),
-    FOREIGN KEY (form_id) REFERENCES highlights(id)
+    FOREIGN KEY (form_id) REFERENCES forms(id)
 );
 
 -- INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year)

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db'); 
-const { submitHighlightsForm } = require('../api/highlights_api');
+const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highlights_api');
 
 // GET all
 router.get('/', async (_req, res) => {
@@ -15,6 +15,17 @@ router.get('/', async (_req, res) => {
     res.status(500).json({ error: 'Failed to fetch highlights' });
   } finally {
     if (conn) conn.end(); //release
+  }
+});
+
+// GET by facultyID
+router.get("/submitted_by/:facultyID", async(req, res) => {
+  try{
+    const results = await getHighlightByFacultyId(req.params.facultyID);
+    return res.send(results);
+  } catch (err){
+    console.error(err)
+    return res.status(500).json({ error : "Failed to get highlights forms"})
   }
 });
 
@@ -129,7 +140,6 @@ router.delete('/:id', async (req, res) => {
 router.post("/submit", async(req, res) => {
   try{
     const results = submitHighlightsForm(req.body);
-
     return res.send(results);
   } catch (err){
     return res.status(500).json({ error : "Failed to submit form"})

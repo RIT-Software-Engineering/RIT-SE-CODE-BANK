@@ -29,7 +29,7 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
         
         // 5. Set authentication status
         setIsAuthenticated(true);
-        navigate("/highlights_form");
+        navigate("/highlights");
     } else {
         console.error("Please select a user to log in.");
     }
@@ -37,8 +37,8 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
 
   return (
     <div style={{ textAlign: 'center', marginTop: '20px' }}>
-      <h1>FPES Portal</h1>
-      <Box sx={{ width: 300, margin: "auto", mt: 10 }}>
+      <h1>Faculty Performance <br /> Evaluation Portal</h1>
+      <Box sx={{ width: 250, margin: "auto", mt: 10 }}>
         <FormControl fullWidth
           sx={{ 
             '& .MuiInputLabel-shrink': {

@@ -5,6 +5,8 @@ const course_sections_api = require('./course_section_api');
 const services_api = require('./service_api');
 const publications_api = require('./publications_api');
 const grants_api = require('./grants_api');
+const { createForm } = require('./forms_api');
+
 
 // READ: all
 async function getAllHighlights() {
@@ -29,10 +31,23 @@ async function getHighlightById(id) {
   }
 }
 
+// READ: by faculty id
+async function getHighlightByFacultyId(facultyId){
+
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const rows = await connection.query('SELECT highlights.id, forms.time_submitted FROM forms INNER JOIN highlights ON forms.id = highlights.form_id WHERE forms.faculty_information_id = ?', [facultyId]);
+    console.log(rows);
+    return rows;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
 // CREATE
 async function addHighlight({
-  faculty_information_id,
-  supervisor_id = null,
+  form_id,
   student_support_id = null,
   collaborations_section = null,
   professional_development = null,
@@ -43,9 +58,9 @@ async function addHighlight({
     connection = await pool.getConnection();
     const result = await connection.query(
       `INSERT INTO highlights
-       (faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development, significant_outcomes)
-       VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
-      [faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development, significant_outcomes]
+       (form_id, student_support_id, collaborations_section, professional_development, significant_outcomes)
+       VALUES (?, ?, ?, ?, ?) RETURNING id`,
+      [form_id, student_support_id, collaborations_section, professional_development, significant_outcomes]
     );
     return result; // contains just the id of the inserted form.
   } finally {
@@ -104,19 +119,21 @@ async function deleteHighlight(id) {
 // It converts the data into the expected format for the database as well as performs the creation of
 // the dynamic elements of the form (ie. services, publications, etc.)
 async function submitHighlightsForm(formData){
-  console.log(formData)
 
   // Add record for student support
-  if(formData.student_support.length > 0){
-  const result = await student_support_api.addStudentSupport(formData.student_support[0]);
+  const result = await student_support_api.addStudentSupport(formData.student_support);
   const student_support_id = result.id;
-  console.log(formData.student_support[0]);
+  
   formData.student_support_id = student_support_id;
-  }
+  console.log(student_support_id);
+
+  // Create Form Record
+  const form_response = await createForm(formData);
+  const form_id = form_response[0].id;
+  formData.form_id = form_id;
 
   // Create Highlights Form Record
   const highlights_response = await addHighlight(formData);
-  const form_id = highlights_response[0].id;
   console.log("Succesfully Created Form");
 
   // Create Course Sections Records
@@ -165,4 +182,5 @@ module.exports = {
   updateHighlight,
   deleteHighlight,
   submitHighlightsForm,
+  getHighlightByFacultyId,
 };

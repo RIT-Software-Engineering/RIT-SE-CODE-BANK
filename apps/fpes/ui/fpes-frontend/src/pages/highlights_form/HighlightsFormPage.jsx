@@ -1,8 +1,8 @@
-import { Button, Step, StepContent, StepLabel, Stepper } from "@mui/material";
+import { Button, Paper, Step, StepButton, StepContent, StepLabel, Stepper } from "@mui/material";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import ServicesFormStep from "../services/ServicesFormStep";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { validateProps } from "@mui/x-data-grid/internals";
 import axios from "axios";
 import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
@@ -12,6 +12,7 @@ import GrantsFormStep from "../grants/GrantsFormStep";
 
 export default function HighlightsFormPage({facultyId}) {
     const [activeStep, setActiveStep] = useState(0);
+    const navigate = useNavigate();
 
     const steps = [
 
@@ -19,7 +20,7 @@ export default function HighlightsFormPage({facultyId}) {
         "Grants",
         "Publications",
         "Student Support",
-        "Course Sections"
+        "Course Sections",
     ]
 
     function isOnFirstStep(){
@@ -68,16 +69,19 @@ export default function HighlightsFormPage({facultyId}) {
 
     function handleFormSubmission(data){
         data.faculty_information_id = facultyId;
+        data.isSubmission = true;
         console.log(facultyId)
         axios.post("http://localhost:3000/highlights/submit", data);
+        navigate("/highlights")
     }
 
     return (
+        <Paper sx={{minWidth:"75%", padding:"10%"}}>
         <div style={{margin:"100px 0px", alignContent:"start", position:"absolute", top:"0px", transform: "translateX(-50%)", left:"50%"}}>
-            <Stepper sx={{minWidth:"800px"}} activeStep={activeStep}>
+            <Stepper sx={{minWidth:"800px"}} activeStep={activeStep} nonLinear>
                 {steps.map((step,index) => (
-                    <Step key={index}>
-                        <StepLabel>{step}</StepLabel>
+                    <Step  key={index}>
+                        <StepButton onClick={() => handleStepperChange(index)}>{step}</StepButton>
                     </Step>
                 ))}
             </Stepper>
@@ -92,7 +96,7 @@ export default function HighlightsFormPage({facultyId}) {
             {/* Back or Cancel Button */}
             {
                 isOnFirstStep() ? 
-                <Button component={Link} to="/services">Cancel</Button> :
+                <Button component={Link} to="/highlights">Cancel</Button> :
                 <Button onClick={() => handleStepperChange(activeStep - 1)}>Back</Button>
             }
 
@@ -103,8 +107,7 @@ export default function HighlightsFormPage({facultyId}) {
                 <Button onClick={() => handleStepperChange(activeStep + 1)}>Next</Button>
             }
             </form>
-            
-            
         </div>
+        </Paper>
     )
 }
