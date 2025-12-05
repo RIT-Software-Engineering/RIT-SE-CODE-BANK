@@ -270,9 +270,9 @@ export default function Projects() {
                   value: id,
                 }))}
                 getOptionLabel={(option) => option.label}
-                value={form.teams ? form.teams.map(tid => {
-                  const name = allTeams[tid];
-                  return { label: name, value: tid };
+                value={form.teams ? form.teams.map(teamID => {
+                  const teamName = allTeams[teamID];
+                  return { label: teamName, value: teamID };
                 }) : []}
                 isOptionEqualToValue={(option, value) => option?.value === value?.value}
                 onChange={(event, selected) =>
