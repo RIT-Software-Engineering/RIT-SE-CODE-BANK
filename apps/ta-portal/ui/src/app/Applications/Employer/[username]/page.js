@@ -167,7 +167,7 @@ export default function EmployerApplicationsPage() {
     if (loading || scrolledRef.current) return;
     const appId = searchParams.get('applicationId');
     if (!appId) return;
-    const el = document.getElementById(`app-${appId}`);
+    const el = document.getElementById(`application-${appId}`);
     if (el) {
       scrolledRef.current = true;
       // Expand any parent accordions by clicking summaries if needed
@@ -300,6 +300,7 @@ export default function EmployerApplicationsPage() {
                         jobPosition={position}
                         application={app}
                         onStatusChange={handleStatusChange}
+                        isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
                       />
                     </Box>
                   ))

@@ -102,6 +102,8 @@ export default function AdminApplicationsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   // Track whether we've auto-opened a modal from a deep link to avoid repeats.
   const didAutoOpenFromLink = useRef(false);
+  // Track whether we've auto-scrolled to avoid repeats.
+  const scrolledRef = useRef(false);
 
   /**
    * Fetches applications from across the system that have the 'ACCEPTED_OFFER' status.
@@ -198,6 +200,32 @@ export default function AdminApplicationsPage() {
       handleOpenHireModal(target);
     }
   }, [activeTab, searchParams, hiringApplications, hiringLoading]);
+
+  // Auto-scroll to the deep-linked application card
+  useEffect(() => {
+    if (scrolledRef.current) return;
+    
+    const appIdParam = searchParams.get('applicationId');
+    if (!appIdParam) return;
+
+    // Wait for data to load based on active tab
+    if (activeTab === 0 && hiringLoading) return;
+    if (activeTab === 1 && loading) return;
+
+    const el = document.getElementById(`application-${appIdParam}`);
+    if (el) {
+      scrolledRef.current = true;
+      // Try to expand any parent accordions
+      try {
+        el.closest('[role="region"]')?.previousElementSibling?.click?.();
+      } catch (_) {}
+      // Scroll to the card
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
+      }, 300);
+    }
+  }, [activeTab, searchParams, hiringApplications, hiringLoading, displayData, loading]);
 
   /**
    * Opens the hire confirmation modal and sets the selected application.
@@ -435,6 +463,7 @@ export default function AdminApplicationsPage() {
                               jobPosition={position}
                               application={app}
                               onStatusChange={handleStatusChange}
+                              isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
                             />
                           </Box>
                         ))
@@ -500,6 +529,7 @@ export default function AdminApplicationsPage() {
                   onStatusChange={() => fetchHiringApplications()}
                   onHire={() => handleOpenHireModal(application)}
                   showHireAction={true}
+                  isHighlighted={String(searchParams.get('applicationId')||'')===String(application.id)}
                 />
               </Box>
             ))}

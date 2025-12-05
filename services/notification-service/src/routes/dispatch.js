@@ -2,8 +2,7 @@ import { Router } from "express";
 import { getPrisma } from "../db.js";
 import { sendEmail } from "../channels/email.js";
 import { resolveDmChannel, sendSlackMessage } from "../channels/slack.js";
-import { defaultSubject, renderEmail, renderSlack, normalizeEventKey } from "../lib/templates.js";
-import { resolveUserEmail } from "../lib/identity.js";
+import { defaultSubject, renderEmail, renderSlack } from "../lib/templates.js";
 
 const router = Router();
 
@@ -26,7 +25,7 @@ router.post("/:appId", async (req, res) => {
   if (!userId && !providedEmail) return res.status(400).json({ error: "userId or userEmail is required" });
   const providedSubject = req.body?.subject;
   const providedMessage = req.body?.message;
-  const event = req.body?.event ? normalizeEventKey(req.body.event) : null;
+  const event = req.body?.event ? String(req.body.event || '').trim().toLowerCase() : null;
   const context = req.body?.context || null;
   const role = req.body?.role || 'recipient';
 
@@ -55,11 +54,6 @@ router.post("/:appId", async (req, res) => {
       if (ctxEmail.includes('@')) userEmail = ctxEmail;
     }
     const slackUsername = pref?.slackUsername || (context?.recipient && context.recipient.slackUsername) || null;
-
-    // If email not stored, try to resolve from app backend (ta-portal)
-    if (!userEmail && (notifyEmail || (notifySlack && process.env.SLACK_BOT_TOKEN))) {
-      userEmail = await resolveUserEmail({ appId, userId });
-    }
 
   const results = [];
   const errors = [];

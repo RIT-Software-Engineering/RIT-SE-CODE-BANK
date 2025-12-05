@@ -622,7 +622,7 @@ async function applyForJobPosition(applicationDetails) {
       const { employerEmail } = await getCourseStakeholders(newApp.jobPositionId);
       const candidateUserId = String(newApp.candidateEmail).split('@', 1)[0].toLowerCase();
       await dispatchTemplated(candidateUserId, {
-        event: 'APPLICATION_RECEIVED',
+        event: 'application_status_changed',
         role: 'candidate',
         userEmail: newApp.candidateEmail,
         subject: 'TA Application Status Update',
@@ -646,7 +646,7 @@ async function applyForJobPosition(applicationDetails) {
         const employerUserId = String(employerEmail).split('@', 1)[0].toLowerCase();
         try {
           await dispatchTemplated(employerUserId, {
-            event: 'APPLICATION_RECEIVED',
+            event: 'application_status_changed',
             role: 'employer',
             userEmail: employerEmail,
             subject: 'TA Application Status Update',
@@ -866,18 +866,8 @@ try {
 
   const { candidateName, candidateEmail, jobPositionId } = details;
 
-  const eventTypeMap = {
-    INTERVIEW: "MOVED_TO_INTERVIEW",
-    REJECTED: "REJECTED",
-    PENDING_OFFER: "STATUS_CHANGED",
-    ACCEPTED_OFFER: "ACCEPTED_OFFER",
-    DECLINED_OFFER: "STATUS_CHANGED",
-    HIRED: "HIRED",
-    ONHOLD: "STATUS_CHANGED",
-    INACTIVE: "STATUS_CHANGED",
-    APPLIED: "APPLICATION_RECEIVED",
-  };
-  const eventType = eventTypeMap[status] || "STATUS_CHANGED";
+  // All application status changes use the same event name
+  const eventType = "application_status_changed";
 
   {
     const candidateUserId = String(candidateEmail).split('@', 1)[0].toLowerCase();
@@ -1127,7 +1117,7 @@ async function hireCandidateForJobPosition(
         {
           const candidateUserId = String(candidateEmail).split('@', 1)[0].toLowerCase();
           await dispatchTemplated(candidateUserId, {
-            event: 'HIRED',
+            event: 'application_status_changed',
             role: 'candidate',
             userEmail: candidateEmail,
             subject: 'TA Application Status Update',
@@ -1149,7 +1139,7 @@ async function hireCandidateForJobPosition(
           const employerUserId = String(employerEmail).split('@', 1)[0].toLowerCase();
           try {
             await dispatchTemplated(employerUserId, {
-              event: 'HIRED',
+              event: 'application_status_changed',
               role: 'employer',
               userEmail: employerEmail,
               subject: 'TA Application Status Update',
@@ -1183,7 +1173,7 @@ async function hireCandidateForJobPosition(
           for (const adminEmail of adminList) {
             const adminUserId = String(adminEmail).split('@', 1)[0].toLowerCase();
             await dispatchTemplated(adminUserId, {
-              event: 'HIRED',
+              event: 'application_status_changed',
               role: 'admin',
               userEmail: adminEmail,
               subject: 'TA Application Status Update',
