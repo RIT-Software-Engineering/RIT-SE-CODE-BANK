@@ -60,23 +60,25 @@ export default function CourseSectionFormStep({form_id, control, errors, getValu
 
     return (
         <div>
-        {fields.map((section, index) => 
-        (
-            
-            <Paper sx={{padding:"4% 4%", margin:"4% auto", width:"600px"}} key={section.id}>
-                <CourseSectionForm
-                key={section.id} 
-                control={control} 
-                section={`course_sections[${index}].`} 
-                errors={errors} 
-                index={index}
-                courses={courses}
-                handleRemoveSection={removeCourseSection}
-                handleDuplicateSection={duplicateCourseSection}
-                />
-            </Paper>
-        ))}
-        <Button onClick={() => {append(new CourseSection(form_id)); setNumberOfSections(numberOfSections + 1)}}>Add Course Section</Button>
+            {fields.map((section, index) => 
+            (
+                
+                <Paper sx={{padding:"4% 4%", margin:"4% auto", width:"600px"}} key={section.id}>
+                    <CourseSectionForm
+                    key={section.id} 
+                    control={control} 
+                    section={`course_sections[${index}].`} 
+                    errors={errors} 
+                    index={index}
+                    courses={courses}
+                    handleRemoveSection={removeCourseSection}
+                    handleDuplicateSection={duplicateCourseSection}
+                    />
+                </Paper>
+            ))}
+            <div style={{ paddingTop: "20px" }}>
+                <Button variant="contained" onClick={() => {append(new CourseSection(form_id)); setNumberOfSections(numberOfSections + 1)}}>Add Course Section</Button>
+            </div>
         </div>
     )
 }

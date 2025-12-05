@@ -41,13 +41,54 @@ export default function HighlightsFormPage({facultyId}) {
 
     const {control, handleSubmit, getValues, reset, trigger, formState:{errors}} = useForm({defaultValues :
         {
-            services : [],
+            services : [
+                {
+                    title: "",
+                    hours_worked: "",
+                    service_type: "",
+                    other_contributions: "",
+                    form_id: facultyId 
+                }
+            ],
             professional_development : "",
-            course_sections : [],
-            publications : [],
+            course_sections : [
+                {
+                    room_location: "",
+                    days_of_the_week: [],
+                    number_of_students: "",
+                    semester: "",
+                    year: null,
+                    first_time_teaching_course: false,
+                    number_of_sections: 0,
+                    curriculum_development: "",
+                    course: null,
+                    form_id: facultyId,
+                }
+            ],
+            publications : [
+                {
+                    title: "",
+                    status: "",
+                    venue: "",
+                    proof_of_significance: "",
+                    date_published: null,
+                    form_id: facultyId
+                }
+            ],
             significant_outcomes : "",
             other_collaborations : "",
-            grants : [],
+            grants : [
+                {
+                    title: "",
+                    funder: "",
+                    amount: "",
+                    start_date: "",
+                    end_date: "",
+                    grant_status: "Pending",
+                    other_contributions: "",
+                    form_id: facultyId   
+                }
+            ],
             student_support: {
                 independent_studies_supervised: 0,
                 bs_cs_students_supervised: 0,
@@ -87,25 +128,26 @@ export default function HighlightsFormPage({facultyId}) {
             </Stepper>
 
             <form >
-            {isOnFirstStep() ? <ServicesFormStep form_id={1} control={control} errors={errors} /> : null}
-            {activeStep === 1 ? <GrantsFormStep form_id={1} control={control} errors={errors}/> : null}
-            {activeStep === 2 ? <PublicationsFormStep form_id={1} control={control} errors={errors}/> : null}
-            {activeStep === 3 ? <StudentSupportFormStep form_id={1} control={control} errors={errors}/> : null}
-            {isOnLastStep() ? <CourseSectionFormStep form_id={1} control={control} errors={errors}  getValues={getValues}/> : null}
+                {isOnFirstStep() ? <ServicesFormStep form_id={1} control={control} errors={errors} /> : null}
+                {activeStep === 1 ? <GrantsFormStep form_id={1} control={control} errors={errors}/> : null}
+                {activeStep === 2 ? <PublicationsFormStep form_id={1} control={control} errors={errors}/> : null}
+                {activeStep === 3 ? <StudentSupportFormStep form_id={1} control={control} errors={errors}/> : null}
+                {isOnLastStep() ? <CourseSectionFormStep form_id={1} control={control} errors={errors}  getValues={getValues}/> : null}
+                <div style={{ paddingTop: "20px" }}>
+                    {/* Back or Cancel Button */}
+                    {
+                        isOnFirstStep() ? 
+                        <Button component={Link} to="/highlights">Cancel</Button> :
+                        <Button onClick={() => handleStepperChange(activeStep - 1)}>Back</Button>
+                    }
 
-            {/* Back or Cancel Button */}
-            {
-                isOnFirstStep() ? 
-                <Button component={Link} to="/highlights">Cancel</Button> :
-                <Button onClick={() => handleStepperChange(activeStep - 1)}>Back</Button>
-            }
-
-            {/* Forward Button */}
-            {
-                isOnLastStep() ? 
-                <Button variant="contained" onClick={handleSubmit((data) => handleFormSubmission(data))}>Submit</Button> : 
-                <Button onClick={() => handleStepperChange(activeStep + 1)}>Next</Button>
-            }
+                    {/* Forward Button */}
+                    {
+                        isOnLastStep() ? 
+                        <Button variant="contained" onClick={handleSubmit((data) => handleFormSubmission(data))}>Submit</Button> : 
+                        <Button onClick={() => handleStepperChange(activeStep + 1)}>Next</Button>
+                    }
+                </div>
             </form>
         </div>
         </Paper>

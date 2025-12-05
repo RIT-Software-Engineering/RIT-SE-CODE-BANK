@@ -9,6 +9,15 @@ import dayjs from "dayjs";
 
 
 export default function CourseSectionForm({courses, control, section, handleRemoveSection, handleDuplicateSection, index, errors}){
+    // Handles Menu Item of (M,W,F) and (T,TH) presets for days of the week selection
+    const handlePresetClick = (e, preset, field) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const current = field.value || [];
+        const allSelected = preset.every(day => current.includes(day));
+        field.onChange(allSelected ? current.filter(d => !preset.includes(d)) : [...new Set([...current, ...preset])]);
+    };
+
     return (
         <Grid container spacing={2} columnSpacing={8}>
             <Grid item size={10}>
@@ -68,7 +77,19 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                         defaultValue={[]}
                         error={errors.course_sections?.[index]?.days_of_the_week}
                         helperText={errors.course_sections?.[index]?.days_of_the_week?.message}
+
+                        // Mapping of days is needed for the ability to select multiple days from one MenuItem
+                        renderValue={(selected) => {
+                            const dayMap = { "1": "Mon.", "2": "Tue.", "3": "Wed.", "4": "Thu.", "5": "Fri." };
+                            return selected.sort((a, b) => a - b).map(day => dayMap[day]).join(", ");
+                        }}
                         >
+                            <MenuItem value="MWF" onMouseDown={(e) => handlePresetClick(e, ["1", "3", "5"], field)} sx={{ fontWeight: 'bold', borderBottom: '1px solid #e0e0e0' }}>
+                                Mon. Wed. Fri.
+                            </MenuItem>
+                            <MenuItem value="TTH" onMouseDown={(e) => handlePresetClick(e, ["2", "4"], field)} sx={{ fontWeight: 'bold', borderBottom: '1px solid #e0e0e0', mb: 1 }}>
+                                Tue. Thu.
+                            </MenuItem> 
                             <MenuItem value="1">Mon.</MenuItem>
                             <MenuItem value="2">Tue.</MenuItem>
                             <MenuItem value="3">Wed.</MenuItem>
@@ -220,7 +241,7 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                             {...field}
                             sx={{width:"100%"}}
                             multiline
-                            rows={6}
+                            minRows={6}
                             maxRows={10}
                             label="Curriculum Development"
                         />

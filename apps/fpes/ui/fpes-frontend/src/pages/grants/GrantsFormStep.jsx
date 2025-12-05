@@ -42,7 +42,9 @@ export default function GrantsFormStep({ form_id, control, errors }) {
                     </Paper>
                     ))}
             </Grid>
-            <Button onClick={() => {append(new Grant(form_id)); setNumberOfGrants(number_of_grants + 1)}}>Add Grant</Button>
+            <div style={{ paddingTop: "20px" }}>
+                <Button variant="contained" onClick={() => {append(new Grant(form_id)); setNumberOfGrants(number_of_grants + 1)}}>Add Grant</Button>
+            </div>
         </div>
     );
 }

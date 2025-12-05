@@ -38,13 +38,14 @@ async function addStudentSupport(studentSupportData) {  //Create
         phd_passed_rpa_as_chair,
         phd_passed_pro_as_chair,
         phd_passed_def_as_chair,
-        phd_rpa_def_pro_as_member } = studentSupportData
+        phd_rpa_def_pro_as_member,
+        other_contributions } = studentSupportData
     const result = await conn.query(
       `INSERT INTO student_support 
        (independent_studies_supervised, bs_cs_students_supervised, ms_defence_chair, ms_defence_member,
         active_ms_cs_as_chair, other_bs_projects, other_ms_projects, current_phd_advisees,
-        phd_passed_rpa_as_chair, phd_passed_pro_as_chair, phd_passed_def_as_chair, phd_rpa_def_pro_as_member)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+        phd_passed_rpa_as_chair, phd_passed_pro_as_chair, phd_passed_def_as_chair, phd_rpa_def_pro_as_member,  other_contributions)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [
         independent_studies_supervised,
         bs_cs_students_supervised,
@@ -57,7 +58,8 @@ async function addStudentSupport(studentSupportData) {  //Create
         phd_passed_rpa_as_chair,
         phd_passed_pro_as_chair,
         phd_passed_def_as_chair,
-        phd_rpa_def_pro_as_member
+        phd_rpa_def_pro_as_member,
+        other_contributions
       ]
     );
 
@@ -81,13 +83,14 @@ async function updateStudentSupport(id, studentSupportData) { //Update
         phd_passed_rpa_as_chair,
         phd_passed_pro_as_chair,
         phd_passed_def_as_chair,
-        phd_rpa_def_pro_as_member } = studentSupportData
+        phd_rpa_def_pro_as_member,
+        other_contributions } = studentSupportData
 
     const result = await conn.query(
       `UPDATE student_support SET
         independent_studies_supervised = ?, bs_cs_students_supervised = ?, ms_defence_chair = ?, ms_defence_member = ?,
         active_ms_cs_as_chair = ?, other_bs_projects = ?, other_ms_projects = ?, current_phd_advisees = ?,
-        phd_passed_rpa_as_chair = ?, phd_passed_pro_as_chair = ?, phd_passed_def_as_chair = ?, phd_rpa_def_pro_as_member = ?
+        phd_passed_rpa_as_chair = ?, phd_passed_pro_as_chair = ?, phd_passed_def_as_chair = ?, phd_rpa_def_pro_as_member = ?, other_contributions = ?
        WHERE id = ?`,
       [
         data.independent_studies_supervised,
@@ -102,6 +105,7 @@ async function updateStudentSupport(id, studentSupportData) { //Update
         data.phd_passed_pro_as_chair,
         data.phd_passed_def_as_chair,
         data.phd_rpa_def_pro_as_member,
+        data.other_contributions,
         id
       ]
     );
