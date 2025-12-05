@@ -92,6 +92,28 @@ router.get("/employees", async (req, res) => {
   }
 });
 
+// GET supervisors
+router.get("/supervisors", async (req, res) => {
+  try {
+    const whereCondition = {
+      type: "scoopervisor",
+    };
+
+    const supervisors = await prisma.users.findMany({
+      where: whereCondition,
+      include: {
+        teams: true,
+      },
+      take: 30, // Limiting to 30 for demo purposes, in case we mass populate db.
+    });
+
+    res.json(supervisors);
+  } catch (error) {
+    console.error("Error fetching supervisors:", error);
+    res.status(500).json({ error: "Failed to fetch supervisors" });
+  }
+});
+
 // GET user by ID
 router.get("/:id", async (req, res) => {
   const { id } = req.params;

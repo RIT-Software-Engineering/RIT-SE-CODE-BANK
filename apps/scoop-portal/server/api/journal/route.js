@@ -31,27 +31,58 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const {
     date,
-    contactee_fname,
-    contactee_lname,
     notes,
-    journal_owner_fname,
-    journal_owner_lname,
-    journal_owner_type,
+    recipient_ids,
+    sender_id,
+    topic_id,
     semester_GroupId,
+    previous_entryid,
+    entry_type,
+    visibility_level,
+    privacy_level,
   } = req.body;
   try {
     const newEntry = await prisma.journalEntry.create({
       data: {
         date: new Date(date),
-        contactee_fname,
-        contactee_lname,
         notes,
-        journal_owner_fname,
-        journal_owner_lname,
-        journal_owner_type,
+        recipients: { connect: recipient_ids.map(id => ({ id })) },
+        sender_id,
+        topic_id,
         semester_GroupId: semester_GroupId ? Number(semester_GroupId) : null,
+        previous_entryid: previous_entryid,
+        entry_type: entry_type,
+        visibility_level: visibility_level,
+        privacy_level: privacy_level,
+      },
+      include:{
+        sender: true,
+        recipients: true,
+        topic: true,
+              next_entries: {
+                where:{
+                  OR:[
+                    { privacy_level: "PUBLIC" },
+                    { sender_id: sender_id }
+                  ],
+                },
+                include:{
+                  sender: true,
+                  recipients: true,
+                  topic: true,
+                },
+              },
       },
     });
+
+    notifyStatus({ userId: "msk1582", context: { journalEntryId: newEntry.id } })
+      .then(summary => {
+        console.log('Notification sent:', summary)
+      })
+      .catch(error => {
+        console.error('Error sending notification:', error);
+      });
+
     res
       .status(200)
       .json({ message: "New journal entry created", entry: newEntry });
@@ -88,7 +119,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// HACK: Temporary Routes
 /**
  * GET journal entries for scoopdinator
  */
@@ -163,5 +193,240 @@ router.get("/scooployee", async (req, res) => {
     });
   }
 });
+
+/**
+ * GET journal entries for user with id
+ */
+router.get("/:id", async (req, res) => {
+  const {id} = req.params;
+  
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id: id },
+    });
+
+    let entries = [];
+
+    if(user.type == "scooployee"){
+      const scooployeeEntries = await prisma.journalEntry.findMany({
+        where: {
+          OR: [
+            {sender_id: id},
+            { recipients: {
+                    some: {
+                      id: id,
+                },},},
+            { topic_id: id },
+          ],
+          privacy_level: "PUBLIC",
+          visibility_level: {
+            lt: 2
+          },
+        },
+        include: {
+          sender: true,
+          recipients: true,
+          topic: true,
+          next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+              visibility_level: {
+                lt: 2
+              },
+            },
+            include:{
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
+        },
+        })
+      //res.status(200).json(scooployeeEntries);
+      entries = entries.concat(scooployeeEntries);
+    }
+    else if(user.type == "scoopdinator"){
+      const dinatorEntries = await prisma.journalEntry.findMany({
+        where:{
+          privacy_level: "PUBLIC",
+          visibility_level: {
+            lt: 5
+          },
+        },
+        include: {
+          sender: true,
+          recipients: true,
+          topic: true,
+          next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+              visibility_level: {
+                lt: 5
+              },
+            },
+            include: {
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
+        },
+      });
+      //res.status(200).json(dinatorEntries); 
+      entries = entries.concat(dinatorEntries);
+    }
+    else if(user.type == "scoopervisor"){
+      const scoopervisorTeams = await prisma.teams.findMany({
+        where: {
+          members: {
+            some: { id: user.id },
+            },
+        },
+        include: { 
+          members: true,
+        } 
+        });
+
+        const memberSet = new Set();
+
+        for (const team of scoopervisorTeams) {
+          for (const member of team.members) {
+              memberSet.add(member.id)
+            }
+          }
+        const memberArray = Array.from(memberSet);
+        //this currently allows Scoopervisors to see entries in which they are the topic 
+        const scoopervisorEntries = await prisma.journalEntry.findMany({
+            where: {
+              OR: memberArray.flatMap(memberId => [
+                { sender_id: memberId },
+                { recipients: {
+                    some: {
+                      id: memberId,
+                },},},
+                { topic_id: memberId },
+                ]),
+              privacy_level: "PUBLIC",
+              visibility_level: {
+                  lt: 3
+              },
+              },
+            include: {
+              sender: true,
+              recipients: true,
+              topic: true,
+              next_entries: {
+                where:{
+                  OR:[
+                    { privacy_level: "PUBLIC" },
+                    { sender_id: id }
+                  ],
+                  visibility_level: {
+                    lt: 3
+                  },
+                },
+                include:{
+                  sender: true,
+                  recipients: true,
+                  topic: true,
+                },
+              },
+            },
+        });
+        //res.status(200).json(visorEntries); 
+        entries = entries.concat(scoopervisorEntries);      
+      }
+      else if(user.type == "advisor"){
+        const advisorEntries = await prisma.journalEntry.findMany({
+        where: {
+          privacy_level: "PUBLIC",
+          visibility_level: {
+            lt: 3
+          },
+        },
+        include: {
+          sender: true,
+          recipients: true,
+          topic: true,
+          next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+              visibility_level: {
+                lt: 3
+              },
+            },
+            include:{
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
+        },
+        })
+        entries = entries.concat(advisorEntries); 
+      }
+      const privateEntries = await prisma.journalEntry.findMany({
+        where:{
+          privacy_level: "PERSONAL",
+          sender_id: id,
+        },
+        include: {
+          sender: true,
+          recipients: true,
+          topic: true,
+          next_entries: {
+            where:{
+              OR:[
+                { privacy_level: "PUBLIC" },
+                { sender_id: id }
+              ],
+            },
+            include: {
+              sender: true,
+              recipients: true,
+              topic: true,
+            },
+          },
+        },
+      });
+      entries = entries.concat(privateEntries);
+      res.status(200).json(entries);
+  } catch (error) {
+    console.error("Error fetching the users journal entries: ", error);
+    res.status(500).json({
+      message: "Error fetching users journal entries",
+      error: error.message,
+    });
+  }
+})
+
+const NOTIFY_BASE = process.env.NOTIFY_BASE || 'http://localhost:4000/api/notifications'
+const APP_ID = process.env.APP_ID || 'scoop'
+export async function notifyStatus({ userId, context }) {
+  const res = await fetch(`${NOTIFY_BASE}/dispatch/${APP_ID}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: userId,
+      subject: "New Journal Entry Created",
+      message: "A new journal entry has been created."
+        })
+  })
+
+
+  const data = await res.json()
+  if (!res.ok) throw new Error(`Dispatch failed: ${res.status} ${JSON.stringify(data)}`)
+  return data.summary
+}
+
 
 export default router;

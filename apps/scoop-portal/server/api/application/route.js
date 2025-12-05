@@ -3,6 +3,7 @@ const router = Router();
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
+
 /**
  * Post route to save an application
  * @param {Object} req - The request object containing application data
@@ -72,6 +73,8 @@ router.post("/", async (req, res) => {
                 createdAt: formData.createdAt,
             },
         });
+        // Notify via Slack
+
         res.status(200).json({
             message: "Application saved",
             application: saved,
