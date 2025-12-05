@@ -62,7 +62,7 @@ const searchablePages = [
         label: "Assign Scooployees to Teams",
         path: "/scoopdinator/scooployees/assign",
     },
-    { label: "Manage Projects", path: "/projects/1" },
+    { label: "Manage Projects", path: "/projects" },
     { label: "View Projects", path: "/projects" },
     { label: "Assign Teams", path: "/projects/assign/team" },
     { label: "Assign Scoopervisor", path: "/projects/assign/scoopervisor" },
