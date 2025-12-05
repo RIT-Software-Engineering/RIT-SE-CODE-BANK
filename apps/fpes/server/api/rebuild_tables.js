@@ -56,22 +56,6 @@ async function rebuildTables(){
         // Reset publications
         await resetPublicationsTable();
 
-        
-
-        
-
-        
-
-        
-
-        
-
-
-
-
-
-
-
         console.log("All tables successfully rebuilt...");
 
         return;

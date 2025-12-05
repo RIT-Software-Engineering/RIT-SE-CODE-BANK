@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS forms (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT UNIQUE AUTO_INCREMENT PRIMARY KEY,
     faculty_information_id INT NOT NULL,
     time_submitted TIMESTAMP,
 

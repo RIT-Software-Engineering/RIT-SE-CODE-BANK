@@ -1,9 +1,9 @@
 CREATE TABLE IF NOT EXISTS courses (
-  id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  id            INT UNIQUE AUTO_INCREMENT PRIMARY KEY,
   course_code   VARCHAR(50),
   course_name   VARCHAR(255),
   credits       INT UNSIGNED,
-  department_id INT UNSIGNED,
+  department_id INT,
   FOREIGN KEY (department_id) REFERENCES departments(id)
 );
 
