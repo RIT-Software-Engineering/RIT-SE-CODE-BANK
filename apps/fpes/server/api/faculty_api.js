@@ -30,6 +30,41 @@ async function getFacultyById(facultyId) {
   }
 }
 
+// READ : get the faculty members a supervisor supervises
+async function getAllSupervisedFaculty(supervisor_id){
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const result = connection.query(
+      `SELECT * FROM faculty_information
+      WHERE supervisor_id = ?
+      `,
+      [supervisor_id]
+    )
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
+// READ : gets the record of a faculty members supervisor
+async function getSupervisorOfFacultyMember(facultyId){
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const result = connection.query(
+      `SELECT T2.* FROM T1 AS faculty_information 
+      INNER JOIN T2 as faculty_information
+      WHERE 
+      T1.faculty_id = ? AND
+      T1.supervisor_id = T2.faculty_id`,
+      [facultyId]
+    );
+    return result;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
 // CREATE
 async function addFaculty({ name, rank, unit, affiliations = null, user_role }) {
   let conn;
@@ -74,6 +109,21 @@ async function updateFaculty(facultyId, data = {}) {
   }
 }
 
+// UPDATE : assign faculty member a supervisor
+async function assignSupervisorToFaculty(facultyId, supervisorId){
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const results = connection.query(
+      `UPDATE faculty_information SET supervisor_id = ? WHERE faculty_id = ?`,
+      [supervisorId, facultyId]
+    )
+    return results;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
 // DELETE
 async function deleteFaculty(facultyId) {
   let conn;
@@ -111,6 +161,11 @@ async function resetFacultyTable(){
         if (connection) connection.release();
     } 
 }
+
+
+
+
+
 
 module.exports = {
   getAllFaculty,
