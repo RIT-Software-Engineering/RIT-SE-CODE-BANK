@@ -1,8 +1,13 @@
 // src/backend/server.js
+const path = require("path");
+require("dotenv").config({
+  // Load .env from the cmt-project root
+  path: path.join(__dirname, "..", "..", ".env"),
+});
+
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const path = require("path");
 const jwt = require("jsonwebtoken");
 const authMiddleware = require("./authMiddleware");
 
@@ -14,7 +19,9 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const app = express();
-const PORT = process.env.PORT || 5010;
+
+const BACKEND_PORT = Number(process.env.BACKEND_PORT) || 5010; // API server
+const FRONTEND_PORT = Number(process.env.PORT) || 3010;        // React dev server
 
 /* ------------------------------------------------------------------
    MIDDLEWARE
@@ -22,7 +29,7 @@ const PORT = process.env.PORT || 5010;
 
 app.use(
   cors({
-    origin: /^http:\/\/localhost:\d+$/, // allows any localhost port
+    origin: [`http://localhost:${FRONTEND_PORT}`],
     credentials: true,
   })
 );
@@ -30,7 +37,6 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(authMiddleware);
 
 // Attach req.user from the cmt_id cookie
 app.use(authMiddleware);
@@ -58,7 +64,7 @@ if (process.env.NODE_ENV !== "production") {
   }
 
   // GET /dev/users – list of test users for DevLoginPage
-  app.get("/dev/users", (req, res) => {
+  app.get("/api/dev/users", (req, res) => {
     const publicUsers = devUsers.map(({ id, email, name, roles }) => ({
       id,
       email,
@@ -83,7 +89,7 @@ if (process.env.NODE_ENV !== "production") {
   }
 
   // POST /dev/login { id } -> set cmt_id cookie
-  app.post("/dev/login", (req, res) => {
+  app.post("/api/dev/login", (req, res) => {
     const { id } = req.body || {};
     const user = devUsers.find((u) => u.id === id);
 
@@ -198,8 +204,8 @@ app.use("*", (req, res) => {
    START SERVER
    ------------------------------------------------------------------ */
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+app.listen(BACKEND_PORT, () => {
+  console.log(`🚀 Server running on port ${BACKEND_PORT}`);
   console.log(`📚 Course Calendar Backend is ready!`);
-  console.log(`🔗 API endpoints available at http://localhost:${PORT}/api`);
+  console.log(`🔗 API endpoints available at http://localhost:${BACKEND_PORT}/api`);
 });

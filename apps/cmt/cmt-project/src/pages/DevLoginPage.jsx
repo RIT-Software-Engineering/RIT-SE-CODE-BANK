@@ -15,7 +15,7 @@ export default function DevLoginPage() {
         setLoadingUsers(true);
         setError(null);
 
-        const res = await fetch(`${AUTH_BASE}/dev/users`, {
+        const res = await fetch(`${AUTH_BASE}/api/dev/users`, {
           credentials: "include",
         });
 
@@ -41,7 +41,7 @@ export default function DevLoginPage() {
       setLoggingInId(id);
       setError(null);
 
-      const res = await fetch(`${AUTH_BASE}/dev/login`, {
+      const res = await fetch(`${AUTH_BASE}/api/dev/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
