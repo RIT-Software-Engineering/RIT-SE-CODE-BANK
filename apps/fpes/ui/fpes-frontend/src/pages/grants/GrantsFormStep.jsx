@@ -11,7 +11,8 @@ export default function GrantsFormStep({ form_id, control, errors }) {
         this.funder = "";
         this.amount = "";
         this.start_date = "";
-        this.end_date = "";
+        this.end_date = ""; 
+        this.faculty_share = ""; 
         this.grant_status = "Pending";
         this.other_contributions = "";
         this.form_id = form_id;
@@ -42,7 +43,9 @@ export default function GrantsFormStep({ form_id, control, errors }) {
                     </Paper>
                     ))}
             </Grid>
-            <Button onClick={() => {append(new Grant(form_id)); setNumberOfGrants(number_of_grants + 1)}}>Add Grant</Button>
+            <div style={{ paddingTop: "20px" }}>
+                <Button variant="contained" onClick={() => {append(new Grant(form_id)); setNumberOfGrants(number_of_grants + 1)}}>Add Grant</Button>
+            </div>
         </div>
     );
 }
