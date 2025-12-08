@@ -1,16 +1,20 @@
 import { useState, useEffect} from 'react';
 import { DataGrid, renderActionsCell} from '@mui/x-data-grid';
+import axios from 'axios';
 
-export default function SupervisedFaculty({supervisorId}){
+export default function SupervisedFacultyTable({supervisorId}){
     const [supervised, setSupervised] = useState([]);
 
     useEffect(() => {
-        axios.get("localhost:3000/faculty/supervised_by/" + supervisorId)
-        .then((res) => setSupervised(res.data))
+        axios.get("http://localhost:3000/faculty/supervised_by/" + supervisorId)
+        .then((res) => {
+            setSupervised(res.data); 
+            console.log(supervised);
+        })
     });
 
     const columns = [
-        {field : "faculty_id", headerName : "Faculty ID", flex:.2},
+        {field : "faculty_id", headerName : "Faculty ID", flex:.5},
         {field : "name", headerName : "Name", flex:1.}
     ]
 
@@ -22,7 +26,7 @@ export default function SupervisedFaculty({supervisorId}){
             columns={columns}
             initialState={{ pagination: { paginationModel } }}
             pageSizeOptions={[5]}
-            sx={{ border: 0 }}
+            sx={{ border: 0, minWidth:"600px" }}
         />
     )
 }

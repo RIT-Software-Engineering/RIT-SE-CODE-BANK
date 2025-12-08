@@ -58,10 +58,8 @@ async function buildRelationshipTables(){
     try {
         connection = await pool.getConnection();
         const courseSectionsQuery = await fs.readFileSync("sql/form_to_field_tables/forms_course_sections.sql", 'utf-8');
-        let queries = buildQuery.split(';');
+        let queries = courseSectionsQuery.split(';');
         queries.pop();
-
-        connection = await pool.getConnection();
 
         for (const query of queries){
             await connection.query(query);
@@ -71,7 +69,6 @@ async function buildRelationshipTables(){
         queries = servicesQuery.split(';');
         queries.pop();
 
-        connection = await pool.getConnection();
         for (const query of queries){
             await connection.query(query);
         }
@@ -79,8 +76,6 @@ async function buildRelationshipTables(){
         const publicationsQuery = await fs.readFileSync("sql/form_to_field_tables/forms_publications.sql", 'utf-8');
         queries = publicationsQuery.split(';');
         queries.pop();
-
-        connection = await pool.getConnection();
         for (const query of queries){
             await connection.query(query);
         }
@@ -89,7 +84,6 @@ async function buildRelationshipTables(){
         queries = grantsQuery.split(';');
         queries.pop();
 
-        connection = await pool.getConnection();
         for (const query of queries){
             await connection.query(query);
         }
