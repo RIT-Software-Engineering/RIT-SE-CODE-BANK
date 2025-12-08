@@ -108,6 +108,15 @@ export default function HighlightsFormPage({facultyId}) {
         mode:"onChange"
     });
 
+    async function handleSaveDraft(data){
+        data.faculty_information_id = facultyId;
+        data.isSubmission = false;
+
+        await axios.post("http://localhost:3000/highlights/draft", data);
+
+        alert("Draft saved");
+    }
+
     function handleFormSubmission(data){
         data.faculty_information_id = facultyId;
         data.isSubmission = true;
@@ -141,6 +150,12 @@ export default function HighlightsFormPage({facultyId}) {
                         <Button onClick={() => handleStepperChange(activeStep - 1)}>Back</Button>
                     }
 
+                    {/* Save Draft Button */}
+
+                    <Button onClick={handleSubmit(data => handleSaveDraft(data))} > 
+                        Save Draft
+                    </Button>
+
                     {/* Forward Button */}
                     {
                         isOnLastStep() ? 
@@ -151,5 +166,6 @@ export default function HighlightsFormPage({facultyId}) {
             </form>
         </div>
         </Paper>
+        
     )
 }
