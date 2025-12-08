@@ -1,258 +1,245 @@
 const { permissionTypes } = require("../api/consts");
-const { PrismaClient, StateType } = require("@prisma/client");
+const { importMetadata } = require("../api/helpers/metadata");
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+/**
+ * Create a workflow with the workflowData provided.
+ *
+ * @param {Object} workflowData
+ * @returns An Object representing the workflow created
+ */
+async function createWorkflow(workflowData) {
+  const baseActionData = {};
+
+  // required
+  baseActionData.name = workflowData.name;
+
+  // optional
+  if (workflowData.description)
+    baseActionData.description = workflowData.description;
+  if (workflowData.isFrozen) data.isFrozen = workflowData.isFrozen;
+  if (typeof workflowData.requireAllParticipants === "boolean") {
+    baseActionData.requireAllParticipants = workflowData.requireAllParticipants;
+  }
+  if (workflowData.metadata) {
+    baseActionData.metadata = {
+      create: importMetadata(workflowData.metadata),
+    };
+  }
+  if (workflowData.previousActionId) {
+    baseActionData.previousAction = {
+      connect: { id: workflowData.previousActionId },
+    };
+  }
+  if (workflowData.parentActionId) {
+    baseActionData.parentAction = {
+      connect: { id: workflowData.parentActionId },
+    };
+  }
+
+  let workflow;
+
+  await prisma.$transaction(async () => {
+    // Create the workflow
+    workflow = await prisma.workflowAttributes.create({
+      data: {
+        baseAction: {
+          create: {
+            ...baseActionData,
+            actionType: "workflow",
+            permissions: {
+              createMany: {
+                data: permissionTypes.map((permissionType) => ({
+                  userId: workflowData.userId,
+                  permissionType: permissionType,
+                })),
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Create any actions in this workflow
+    if (workflowData.actions?.length > 0) {
+      let lastActionId = null;
+
+      for (let i = 0; i < workflowData.actions.length; i++) {
+        const actionData = workflowData.actions[i];
+
+        lastActionId
+          ? (actionData.previousActionId = lastActionId)
+          : (actionData.rootActionOfId = workflow.id);
+
+        const action = await createAction(actionData);
+        lastActionId = action.id;
+      }
+    }
+  });
+
+  return workflow;
+}
+
+/**
+ * Create an action with the actionData provided.
+ *
+ * @param {Object} actionData
+ * @returns An Object representing the action created
+ */
+async function createAction(actionData) {
+  // For workflow base actions
+  if (actionData.actionType && actionData.actionType === "workflow") {
+    // Create a workflow and return the base action as the newly create action
+    const workflow = await createWorkflow(actionData);
+    // throw Error(actionData.previousActionId);
+    return await prisma.action.findUnique({
+      where: { id: workflow.baseActionId },
+    });
+  }
+
+  // Get the data used to create the action
+  const data = {};
+
+  // required data
+  data.name = actionData.name;
+
+  // optional data
+  if (actionData.description) data.description = actionData.description;
+  if (actionData.form) data.form = actionData.form;
+  if (actionData.actionType) data.actionType = actionData.actionType;
+  if (actionData.isFrozen) data.isFrozen = actionData.isFrozen;
+  if (typeof actionData.requireAllParticipants === "boolean") {
+    data.requireAllParticipants = actionData.requireAllParticipants;
+  }
+  if (actionData.metadata) {
+    data.metadata = {
+      create: importMetadata(actionData.metadata),
+    };
+  }
+  // actions directly in complex/branching actions only
+  if (actionData.parentActionId) {
+    data.parentAction = { connect: { id: actionData.parentActionId } };
+  }
+  // actions directly in workflows only
+  if (actionData.previousActionId) {
+    data.previousAction = { connect: { id: actionData.previousActionId } };
+  }
+  if (actionData.rootActionOfId) {
+    data.rootActionOf = { connect: { id: actionData.rootActionOfId } };
+  }
+
+  let action;
+
+  await prisma.$transaction(async () => {
+    // Create the data on the database using prisma
+    action = await prisma.action.create({
+      data: data,
+    });
+
+    //make an action state for this actiony
+    await prisma.actionState.create({
+    data: {
+      stateType: 'notStarted',
+      actionId: action.id,
+      index: 0
+    },
+    });
+
+
+
+    // Create any child actions for this action
+    if (actionData.childActions?.length > 0) {
+      for (let i = 0; i < actionData.childActions.length; i++) {
+        const childAction = actionData.childActions[i];
+        childAction.parentActionId = action.id;
+
+        await createAction(childAction);
+      }
+    }
+  });
+
+  return action;
+}
+
 async function main() {
-  console.log("Cleaning up existing seed data...");
 
-  await prisma.actionState.deleteMany({});
-  await prisma.workflowState.deleteMany({});
-  await prisma.permission.deleteMany({});
-  await prisma.metadata.deleteMany({});
-  await prisma.referenceEndpoint.deleteMany({});
-  await prisma.tag.deleteMany({});
-  await prisma.workflowAttributes.deleteMany({});
-  await prisma.action.deleteMany({});
-
-  console.log("Existing seed data deleted.");
-
-  const users = Array.from({ length: 10 }, (_, i) => ({ id: (i + 1).toString() }));
-
-  // Onboarding Demo Workflow
-  const onboardingWorkflowData = {
-    name: "Onboarding Workflow",
-    description: "Proof of concept demo for an admin walking through an onboarding process",
-    metadata: [{ key: "tag", value: "demo" }],
-    userId: "1",
-  };
-
-  const onboardingWorkflow = await prisma.workflowAttributes.create({
-    data: {
-      baseAction: {
-        create: {
-          name: onboardingWorkflowData.name,
-          description: onboardingWorkflowData.description,
-          metadata: {
-            create: onboardingWorkflowData.metadata,
-          },
-          permissions: {
-            createMany: {
-              data: permissionTypes.map((permissionType) => ({
-                userId: onboardingWorkflowData.userId,
-                permissionType: permissionType,
-              })),
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const onboardingActionsData = [
-    {
-      name: "Review Applications",
-      description: "Review pending student applications and accept or reject students.",
-      metadata: [],
-      userId: "1",
-    },
-    {
-      name: "Upload Students CSV and View Employees",
-      description: "Upload additional CSV file of new hires and verify current employees.",
-      metadata: [],
-      userId: "1",
-    },
-    {
-      name: "Create and Assign Teams",
-      description: "Assign students to teams, new or existing.",
-      metadata: [],
-      userId: "1",
-    },
-    {
-      name: "Create and Assign Projects",
-      description: "Assign projects to teams, new or existing.",
-      metadata: [],
-      userId: "1",
-    },
-    {
-      name: "Start Semester",
-      description: "Kick off the semester officially!",
-      metadata: [],
-      userId: "1",
-    },
-  ];
-
-  const onboardingActions = await Promise.all(
-    onboardingActionsData.map((action) =>
-      prisma.action.create({
-        data: {
-          name: action.name,
-          description: action.description,
-          metadata: {
-            create: action.metadata,
-          },
-          permissions: {
-            createMany: {
-              data: permissionTypes.map((permissionType) => ({
-                userId: "1",
-                permissionType: permissionType,
-              })),
-            },
-          },
-        },
-      })
-    )
-  );
-
-  const onboardingWorkflowState = await prisma.workflowState.create({
-    data: {
-      userId: "1",
-      workflowId: onboardingWorkflow.id,
-    },
-  });
-
-  await Promise.all(
-    onboardingActions.map((action, index) =>
-      prisma.actionState.create({
-        data: {
-          workflowStateId: onboardingWorkflowState.id,
-          actionId: action.id,
-          stateType: StateType.notStarted,
-          index,
-        },
-      })
-    )
-  );
-
-  await prisma.workflowAttributes.update({
-    where: { id: onboardingWorkflow.id },
-    data: {
-      rootAction: { connect: { id: onboardingActions[0].id } },
-    },
-  });
-
-  for (let i = 0; i < onboardingActions.length - 1; i++) {
-    await prisma.action.update({
-      where: { id: onboardingActions[i].id },
-      data: {
-        nextAction: { connect: { id: onboardingActions[i + 1].id } },
-      },
-    });
+  if (process.env.NODE_ENV === "production") {
+    throw Error(
+      "This action should only be used in development for populating the database with test data."
+    );
   }
 
-  // New Scooployee Demo Workflow
-  const newScooployeeData = {
-    name: "New Scooployee Workflow",
-    description: "Proof of concept demo for a new scooployee walking through an onboarding process",
-    metadata: [{ key: "tag", value: "demo" }],
-    userId: "2",
-  };
+  ///////////
+  // Users //
+  ///////////
 
-  const newScooployeeWorkflow = await prisma.workflowAttributes.create({
-    data: {
-      baseAction: {
-        create: {
-          name: newScooployeeData.name,
-          description: newScooployeeData.description,
+  const users = Array.from({ length: 10 }, (_, i) => ({
+    id: `user${(i + 1).toString()}`,
+  }));
+
+  ///////////////
+  // Workflows //
+  ///////////////
+
+  const workflowData = [
+    {
+      name: "Onboarding Workflow",
+      description: "The set of actions Scooployees go through during onboarding",
+      userId: users[2].id,
+      actions: [
+        {
+          name: "Drop Classes",
+          description: "Drop all classes you are currently enrolled in",
           metadata: {
-            create: newScooployeeData.metadata,
-          },
-          permissions: {
-            createMany: {
-              data: permissionTypes.map((permissionType) => ({
-                userId: newScooployeeData.userId,
-                permissionType: permissionType,
-              })),
-            },
+            key: "value",
           },
         },
-      },
-    },
-  });
-
-  const newScooployeeActionsData = [
-    {
-      name: "Report Your CO-OP",
-      description: "Submit the details of your co-op before getting started.",
-      metadata: [],
-      userId: "2",
-    },
-    {
-      name: "Join The Slack",
-      description: "Join the RIT SCOOP slack to get communications from your team members.",
-      metadata: [],
-      userId: "2",
-    },
-    {
-      name: "Join The GitHub",
-      description: "Join the RIT shared apps GitHub to start contributing.",
-      metadata: [],
-      userId: "2",
-    },
-    {
-      name: "Submit Your CO-OP Work Report",
-      description: "At the end of the term, fill out your report of your co-op experience.",
-      metadata: [],
-      userId: "2",
-    },
+        {
+          name: "Report Co-op",
+          description: "Report Scoop as a Co-op in career connect",
+          metadata: {
+            key1: "value1",
+            key2: "value2",
+            number: 1,
+          },
+        },
+        {
+          name: "Warmup",
+          description: "Complete the Scoop warmup",
+        },
+        {
+          name: "Join Slack",
+          description: "Join the Scoop slack channels",
+        },
+        {
+          name: "Complete Scoop Promise",
+          description: "Scooployees complete their Scoop promise and send it to the Scoodinator",
+        },
+        {
+          name: "Team Skills Grid",
+          description: "Team will navigate the repository and find any necessary skills and rate their expertise and knowledge from 0-5",
+        },
+        {
+          name: "Make Individual Domain Models",
+          description: "After being briefed on the basics of their project each Scooployee will complete an individual domain model to level set their Mental Model.",
+        },
+        {
+          name: "Midterm Presentation",
+          description: "Each SCOOP team will give a presentation near the halfway point of the term to reflect on and share their progress",
+        },
+      ],
+    }, 
   ];
 
-  const newScooployeeActions = await Promise.all(
-    newScooployeeActionsData.map((action) =>
-      prisma.action.create({
-        data: {
-          name: action.name,
-          description: action.description,
-          metadata: {
-            create: action.metadata,
-          },
-          permissions: {
-            createMany: {
-              data: permissionTypes.map((permissionType) => ({
-                userId: "2",
-                permissionType: permissionType,
-              })),
-            },
-          },
-        },
-      })
-    )
-  );
-
-  const newScooployeeWorkflowState = await prisma.workflowState.create({
-    data: {
-      userId: "2",
-      workflowId: newScooployeeWorkflow.id,
-    },
-  });
-
+  // Create all workflows from workflowData
   await Promise.all(
-    newScooployeeActions.map((action, index) =>
-      prisma.actionState.create({
-        data: {
-          workflowStateId: newScooployeeWorkflowState.id,
-          actionId: action.id,
-          stateType: StateType.notStarted,
-          index,
-        },
-      })
-    )
+    workflowData.map(async (w) => {
+      // Create the workflow
+      await createWorkflow(w);
+    })
   );
 
-  await prisma.workflowAttributes.update({
-    where: { id: newScooployeeWorkflow.id },
-    data: {
-      rootAction: { connect: { id: newScooployeeActions[0].id } },
-    },
-  });
-
-  for (let i = 0; i < newScooployeeActions.length - 1; i++) {
-    await prisma.action.update({
-      where: { id: newScooployeeActions[i].id },
-      data: {
-        nextAction: { connect: { id: newScooployeeActions[i + 1].id } },
-      },
-    });
-  }
 
   console.log("🌱 Seed data created successfully!");
 }

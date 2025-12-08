@@ -35,6 +35,7 @@ const navItems = [
     submenu: [
       { label: "Scooployee", path: "/scooployee/workflows" },
       { label: "Scoopdinator", path: "/scoopdinator/workflows" },
+      { label: "Bubbles", path: "/bubbles" },
     ],
   },
   {
