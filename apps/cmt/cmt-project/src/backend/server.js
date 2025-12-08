@@ -37,10 +37,10 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use("/api/events", eventRoutes);
-app.use("/api/template", templateRoutes);
-app.use("/api/team-builder", teamBuilderRoutes);
-app.use("/api/workflows", workflowRoutes); // NEW: Workflow routes
+app.use("/api/cmt/events", eventRoutes);
+app.use("/api/cmt/template", templateRoutes);
+app.use("/api/cmt/team-builder", teamBuilderRoutes);
+app.use("/api/cmt/workflows", workflowRoutes); // NEW: Workflow routes
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
