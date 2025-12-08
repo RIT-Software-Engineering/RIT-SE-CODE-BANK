@@ -4,7 +4,10 @@ import { DataGrid, renderActionsCell} from '@mui/x-data-grid';
 export default function SupervisedFaculty({supervisorId}){
     const [supervised, setSupervised] = useState([]);
 
-    useEffect(() => {});
+    useEffect(() => {
+        axios.get("localhost:3000/faculty/supervised_by/" + supervisorId)
+        .then((res) => setSupervised(res.data))
+    });
 
     const columns = [
         {field : "faculty_id", headerName : "Faculty ID", flex:.2},

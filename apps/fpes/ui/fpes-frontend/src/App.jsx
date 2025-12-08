@@ -48,27 +48,32 @@ function App() {
     {
         name : "Departments",
         route : "/departments",
-        adminOnly : true
+        roles_with_access : new Set(["Admin"])
     },
     {
         name : "users",
         route : "/users",
-        adminOnly : true
+        roles_with_access : new Set(["Admin"])
     },
     {
         name : "Courses",
         route : "/courses",
-        adminOnly : true
+        roles_with_access : new Set(["Admin"])
     },
     {
       name: "Profile",
       route: "/profile",
-      adminOnly: false
+      roles_with_access : new Set(["Admin", "Faculty", "Supervisor"])
     },
     {
       name : "Highlights",
       route : "/highlights",
-      adminOnly : false
+      roles_with_access : new Set(["Faculty", "Supervisor"])
+    },
+    {
+      name : "Supervising",
+      route : "/supervising",
+      roles_with_access : new Set(["Supervisor"])
     }
   ]
 
@@ -76,7 +81,7 @@ function App() {
     <>
       <Route path='/departments' element={<DepartmentsPage/>}/>
       <Route path='/courses' element={<CoursesPage/>}/>
-       <Route path="/users" element={<UsersPage />} />
+      <Route path="/users" element={<UsersPage />} />
     </>
   )
 

@@ -2,7 +2,7 @@ import { AppBar, Box, Button, FormControl, InputLabel, MenuItem, Select, Toolbar
 import react from 'react'
 import { Link } from 'react-router-dom'
 
-export default function Header({ pages, adminView, setRole, isAuthenticated, onLogout }) {
+export default function Header({ pages, adminView, setRole, isAuthenticated, onLogout, roles }) {
     
     const profilePage = pages.find(page => page.name === "Profile");
 
