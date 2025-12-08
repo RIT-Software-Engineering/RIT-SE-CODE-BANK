@@ -65,6 +65,23 @@ async function getSupervisorOfFacultyMember(facultyId){
   }
 }
 
+// READ : get all faculty with supervisor role
+async function getAllSupervisors(){
+  let connection;
+  try {
+    connection : await pool.getConnection();
+    const result = connection.query(
+      `SELECT * FROM faculty_information
+      WHERE FIND_IN_SET('Supervisor', user_role)
+      `
+    );
+    return result;
+  } finally {
+    if (connection) connection.release();
+  }
+  
+}
+
 // CREATE
 async function addFaculty({ name, rank, unit, affiliations = null, user_role }) {
   let conn;
@@ -177,4 +194,5 @@ module.exports = {
   assignSupervisorToFaculty,
   getSupervisorOfFacultyMember,
   getAllFacultyOfSupervisor,
+  getAllSupervisors
 };

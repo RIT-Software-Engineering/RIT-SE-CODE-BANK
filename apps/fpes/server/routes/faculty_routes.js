@@ -14,6 +14,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/supervisors', async (req,res) => {
+  try {
+    const rows = await faculty.getAllSupervisors();
+    res.json(rows);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to fetch supervisors' });
+  }
+});
+
 // GET /faculty/:id/supervisor : gets a faculty member's supervisor
 router.get('/:id/supervisor', async (req, res) => {
   try {

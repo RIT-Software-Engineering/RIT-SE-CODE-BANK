@@ -18,6 +18,7 @@ import ProfilePage from './pages/profile/ProfilePage.jsx';
 import UsersPage from './pages/users/UsersPage.jsx';
 import Header from './pages/Header.jsx';
 import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
+import HomePage from "./pages/home/HomePage";
 import HighlightsPage from './pages/highlights_page/HighlightsPage.jsx';
 import SupervisedFacultyTable from './pages/supervisor/SupervisedFacultyTable.jsx';
 
@@ -92,7 +93,8 @@ return (
         )}
               
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Navigate to="/highlights" /> : <Navigate to="/login" />} />
+          <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <Navigate to="/login" />} />
+          <Route path="/home" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HomePage /> </ProtectedRoute>} />
           <Route path="/login" element={<LoginPage setRoles={setRoles} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
           {roles.intersection(new Set(["Admin"])).size > 0? adminRoutes : null}
           <Route path="/course_sections" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <CourseSectionsPage/> </ProtectedRoute>} />
