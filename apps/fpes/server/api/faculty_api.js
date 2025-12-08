@@ -31,7 +31,7 @@ async function getFacultyById(facultyId) {
 }
 
 // READ : get the faculty members a supervisor supervises
-async function getAllSupervisedFaculty(supervisor_id){
+async function getAllFacultyOfSupervisor(supervisor_id){
   let connection;
   try {
     connection = await pool.getConnection();
@@ -173,5 +173,8 @@ module.exports = {
   addFaculty,
   updateFaculty,
   deleteFaculty,
-  resetFacultyTable
+  resetFacultyTable,
+  assignSupervisorToFaculty,
+  getSupervisorOfFacultyMember,
+  getAllFacultyOfSupervisor,
 };

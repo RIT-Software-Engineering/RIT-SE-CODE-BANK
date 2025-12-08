@@ -14,6 +14,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /faculty/:id/supervisor : gets a faculty member's supervisor
+router.get('/:id/supervisor', async (req, res) => {
+  try {
+    const row = await faculty.getSupervisorOfFacultyMember(req.params.id);
+    if(!row) return res.status(404).json({ error: 'Faculty Member does not have an assigned supervisor'});
+    res.json(row);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({error: "Failed to fetch faculty member's supervisor"})
+  }
+});
+
+// GET /faculty/supervised_by/:id : gets all faculty supervised by a given faculty member
+router.get('/supervised_by/:id', async (req,res) => {
+  try {
+    const row = await faculty.getAllFacultyOfSupervisor(req.params.id);
+    res.json(row);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({error: "Failed to fetch faculty of supervisor"})
+  }
+});
+
 // GET /faculty/:id
 router.get('/:id', async (req, res) => {
   try {
@@ -25,6 +48,8 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch faculty' });
   }
 });
+
+// GET 
 
 // POST /faculty
 router.post('/', async (req, res) => {
@@ -41,6 +66,17 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PUT /faculty/:faculty_id/assign_supervisor/:supervisor_id : Assign a faculty member a supervisor
+router.put('/:faculty_id/assign_supervisor/:supervisor_id', async (req,res) => {
+  try {
+    const result = await faculty.assignSupervisorToFaculty(req.params.faculty_id, req.params.supervisor_id);
+    res.json(result);
+  } catch {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to assign supervisor to faculty member'})
+  }
+});
+
 // PUT /faculty/:id  (partial update is fine)
 router.put('/:id', async (req, res) => {
   try {
@@ -51,6 +87,7 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to update faculty' });
   }
 });
+
 
 // DELETE /faculty/:id
 router.delete('/:id', async (req, res) => {
