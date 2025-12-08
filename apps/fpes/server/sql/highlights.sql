@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS highlights (
-  id                         INT AUTO_INCREMENT PRIMARY KEY,
+  id                         INT UNIQUE AUTO_INCREMENT PRIMARY KEY,
   form_id                    INT NOT NULL,
 
   student_support_id         INT NULL,

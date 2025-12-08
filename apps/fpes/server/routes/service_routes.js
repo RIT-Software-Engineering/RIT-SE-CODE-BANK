@@ -38,18 +38,6 @@ router.put("/:id", async (req,res) => {
     }
 });
 
-// Gets all services of a given form_id
-router.get("/of-form/:form_id", async (req,res) => {
-    try {
-        const results = await api.getServicesByFormId(req.params.form_id);
-        console.log(results);
-        res.json(results);
-    } catch (err) {
-        console.log(err);
-        res.status(500).send(err);
-    }
-});
-
 // Resets table with test data
 router.post("/init", async (req,res) => {
     try {

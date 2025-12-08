@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS grants (
-    grant_id INT UNSIGNED UNIQUE AUTO_INCREMENT PRIMARY KEY,
-    form_id INT NOT NULL,
+    grant_id INT UNIQUE AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     funder VARCHAR(255) NOT NULL,
     amount INT DEFAULT NULL,                     

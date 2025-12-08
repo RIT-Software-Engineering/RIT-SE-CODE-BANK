@@ -26,17 +26,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.get('/:form_id', async (req, res) => {
-  try {
-    const grant = await grantsApi.getGrantsByFormId(req.params.fomrm_id);
-    if (!grant) return res.status(404).json({ error: "Grant not found" });
-    res.json(grant);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({err});
-  }
-});
-
 router.put("/:id", async (req,res) => {
     try {
         const results = await api.updateGrant(req.params.id, req.body);

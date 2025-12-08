@@ -6,6 +6,7 @@ const course_sections_api = require('./course_section_api');
 const services_api = require('./service_api');
 const publications_api = require('./publications_api');
 const grants_api = require('./grants_api');
+const forms_to_dynamics_api = require('./forms_to_dynamics_tables_api')
 const { createForm } = require('./forms_api');
 
 
@@ -124,6 +125,7 @@ async function submitHighlightsForm(formData){
   // Add record for student support
   const result = await student_support_api.addStudentSupport(formData.student_support);
   const student_support_id = result.id;
+  console.log(result);
   
   formData.student_support_id = student_support_id;
   console.log(student_support_id);
@@ -137,13 +139,16 @@ async function submitHighlightsForm(formData){
   const highlights_response = await addHighlight(formData);
   console.log("Succesfully Created Form");
 
-  // Create Course Sections Records
+  // Create Course Sections Records and assign course sections
   for(let course_section of formData.course_sections){
     course_section.form_id = form_id;
     course_section.days_of_the_week = course_sections_api.getDaysOfTheWeek(course_section.days_of_the_week);
     course_section.course_id = course_section.course.value;
     course_section.year = course_section.year.match(/^\d{4}/)[0]; //Extracts the year from the timestamp object
-    course_sections_api.createCourseSection(course_section);
+    const res = await course_sections_api.createCourseSection(course_section);
+    const course_section_id = res[0].id;
+    // Adds Course Section to Form Relationship Table
+    forms_to_dynamics_api.assignCourseSectionToForm(form_id, course_section_id);
   }
 
   console.log("Successfully Added Course Sections")
@@ -151,7 +156,10 @@ async function submitHighlightsForm(formData){
   // Create Services Records
   for(let service of formData.services){
     service.form_id = form_id;
-    await services_api.createService(service);
+    const res = await services_api.createService(service);
+    const service_id = res[0].id;
+    // Adds Service to Form Relationship Table
+    forms_to_dynamics_api.assignServiceToForm(form_id, service_id);
   }
 
   console.log("Successfully Added Services")
@@ -159,7 +167,10 @@ async function submitHighlightsForm(formData){
   // Create Grants Records
   for(let grant of formData.grants){
     grant.form_id = form_id;
-    await grants_api.addGrant(grant);
+    const res = await grants_api.addGrant(grant);
+    const grant_id = res[0].id;
+    // Adds Grant to Form Relationship Table
+    forms_to_dynamics_api.assignGrantToForm(form_id, grant_id);
   }
 
   console.log("Successfully Added Grants")
@@ -168,7 +179,10 @@ async function submitHighlightsForm(formData){
   for(let publication of formData.publications){
     publication.form_id = form_id;
     publication.date_published = publication.date_published.match(/^\d{4}-\d{2}-\d{2}/)[0];
-    await publications_api.createPublication(publication);
+    const res = await publications_api.createPublication(publication);
+    const publication_id = res[0].id;
+    // Adds Publication to Form Relationship Table
+    forms_to_dynamics_api.assignPublicationToForm(form_id, publication_id);
   }
   
   console.log("Successfully Added Publications")

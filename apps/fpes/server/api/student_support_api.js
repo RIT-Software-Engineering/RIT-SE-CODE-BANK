@@ -64,7 +64,7 @@ async function addStudentSupport(studentSupportData) {  //Create
       ]
     );
 
-    return { id: result.insertId };
+    return results;
   } finally {
     if (conn) conn.release();
   }

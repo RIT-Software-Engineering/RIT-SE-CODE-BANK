@@ -1,8 +1,16 @@
+DROP TABLE IF EXISTS forms_course_sections;
+
 DROP TABLE IF EXISTS course_sections;
+
+DROP TABLE IF EXISTS forms_publications;
 
 DROP TABLE IF EXISTS publications;
 
+DROP TABLE IF EXISTS forms_services;
+
 DROP TABLE IF EXISTS services;
+
+DROP TABLE IF EXISTS forms_grants;
 
 DROP TABLE IF EXISTS grants;
 
