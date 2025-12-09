@@ -2,7 +2,6 @@ import { Router } from "express";
 const router = Router();
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-// import { notifyEvent } from "../../../../../libs/notifications/slack/src/index.js"
 
 /**
  * Post route to save an application
@@ -51,6 +50,7 @@ router.post("/", async (req, res) => {
     try {
         const saved = await prisma.application.create({
             data: {
+                applicant_id: formData.applicant_id,
                 lastName: formData.lastName,
                 firstName: formData.firstName,
                 ritEmail: formData.ritEmail,
@@ -73,12 +73,7 @@ router.post("/", async (req, res) => {
                 createdAt: formData.createdAt,
             },
         });
-
-        // notifyEvent("APPLICATION_RECEIVED_SCOOP", {
-        //     firstName: saved.firstName,
-        // }, {
-        //     toEmails: [saved.ritEmail],
-        // });
+        // Notify via Slack
 
         res.status(200).json({
             message: "Application saved",

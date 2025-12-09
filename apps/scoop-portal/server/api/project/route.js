@@ -12,7 +12,9 @@ const prisma = new PrismaClient();
  */
 router.get("/", async (req, res) => {
   try {
-    const projects = await prisma.project.findMany();
+    const projects = await prisma.project.findMany({
+      include: { teams: true}
+    });
     res.status(200).json(projects);
   } catch (error) {
     console.error("Error fetching projects: ", error);
@@ -31,6 +33,7 @@ router.get("/:id", async (req, res) => {
   try {
     const project = await prisma.project.findUnique({
       where: { id: Number(id) },
+      include: { teams: true }
     });
     res.status(200).json(project);
   } catch (error) {
@@ -50,42 +53,22 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   const {
-    submission_date,
-    status,
     title,
     display_name,
     description,
-    project_challenges,
-    constraints_assumptions,
-    project_search_keywords,
-    team_name,
-    poster,
-    video,
-    website,
-    synopsis,
-    semesterId,
-    created_at,
-    updated_at,
+    teams,
+    SemesterGroup,
+    semesterGroupId
   } = req.body;
   try {
     const newProject = await prisma.project.create({
       data: {
-        submission_date,
-        status,
-        title,
-        display_name,
-        description,
-        project_challenges,
-        constraints_assumptions,
-        project_search_keywords,
-        team_name,
-        poster,
-        video,
-        website,
-        synopsis,
-        semesterId,
-        created_at,
-        updated_at,
+      title,
+      display_name,
+      description,
+      teams: { connect: teams.map((teamId) => ({ id: teamId })) },
+      SemesterGroup,
+      semesterGroupId
       },
     });
     res.status(200).json({
@@ -110,41 +93,23 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const {
-    submission_date,
-    status,
     title,
     display_name,
     description,
-    project_challenges,
-    constraints_assumptions,
-    project_search_keywords,
-    team_name,
-    poster,
-    video,
-    website,
-    synopsis,
-    semesterId,
-    updated_at,
+    teams,
+    SemesterGroup,
+    semesterGroupId
   } = req.body;
   try {
     const updatedProject = await prisma.project.update({
       where: { id: Number(id) },
       data: {
-        submission_date,
-        status,
-        title,
-        display_name,
-        description,
-        project_challenges,
-        constraints_assumptions,
-        project_search_keywords,
-        team_name,
-        poster,
-        video,
-        website,
-        synopsis,
-        semesterId,
-        updated_at,
+      title,
+      display_name,
+      description,
+      teams: { set: teams.map((teamId) => ({ id: teamId })) },
+      SemesterGroup,
+      semesterGroupId
       },
     });
     res.status(200).json(updatedProject);

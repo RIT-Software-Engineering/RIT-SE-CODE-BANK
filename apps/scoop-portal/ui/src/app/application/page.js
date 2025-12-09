@@ -187,9 +187,18 @@ function ApplicationPage() {
             .map((course) => course.name)
             .join(", ");
 
+        let user_id = ""
+        if (!formValues.ritEmail.includes('@')) {
+            user_id = formValues.firstName.toLowerCase() + formValues.lastName.toLowerCase()
+        }
+        else{
+            user_id = formValues.ritEmail.split('@')[0];
+        }
+
         const completeFormData = {
             ...formValues,
             coursesTaken: selectedCourses,
+            applicant_id: user_id,
         };
 
         try {
@@ -199,8 +208,63 @@ function ApplicationPage() {
             console.log("Response status:", response.status);
 
             if (response.status === 200) {
+                try{
+                    //see if the user exists
+                    const userResponse = await fetch(
+                        process.env.NEXT_PUBLIC_API_URL + `/api/users/${user_id}`,
+                        { method: "GET" }
+                    );
+                    if (userResponse.status === 404){ 
+                        const createUserRes = await fetch(
+                            process.env.NEXT_PUBLIC_API_URL + "/api/users",
+                            {
+                                method: "POST",
+                                body: JSON.stringify({
+                                    id: user_id,
+                                    fname: formValues.firstName,
+                                    lname: formValues.lastName,
+                                    email: formValues.ritEmail,
+                                    type: "applicant",
+                                    createdAt: new Date().toISOString(),
+                                    semester_group: "null",
+                                    project: "null",
+                                    active: "",
+                                    last_login: "null",
+                                    prev_login: "null",
+                                }),
+                                headers: { "Content-Type": "application/json" },
+                            }
+                        );   
+                    }
+
+                    try{
+                        const entry = {
+                            date: new Date().toISOString(), 
+                            sender_id: user_id,
+                            notes: formValues.firstName + " " + formValues.lastName + " submitted an application for SCOOP.",
+                            recipient_ids: [],
+                            topic_id: user_id,
+                            semester_GroupId: null,
+                            previous_entryid: null,
+                            entry_type: "AUTOMATED",
+                            visibility_level: 1,
+                            privacy_level: "PUBLIC",
+                        };
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal`,
+                        {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(entry),
+                        });
+                    }catch(err){
+                        console.error("Error creating journal entry:", err);
+                    }
+                }catch(err){
+                    console.error("Error creating user:", err);
+                }
                 setModalOpen(MODAL_STATUS.SUCCESS);
                 redirect("/", RedirectType.replace);
+
 
             } else {
                 setModalOpen(MODAL_STATUS.FAIL);
@@ -322,7 +386,7 @@ function ApplicationPage() {
                         error={!!errors.ritEmail}
                     />
                     <FormControl fullWidth margin="normal">
-                        <FormLabel>Number of Co-op blocks completed?</FormLabel>
+                        <FormLabel required >Number of Co-op blocks completed?</FormLabel>
                         <Select
                             required
                             // margin="normal"
@@ -348,7 +412,7 @@ function ApplicationPage() {
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel id="semester-label">
+                        <FormLabel required id="semester-label">
                             Which semester did you start at RIT?
                         </FormLabel>
                         <Select
@@ -458,7 +522,7 @@ function ApplicationPage() {
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel id="pending-offers-list-label">
+                        <FormLabel required id="pending-offers-list-label">
                             {" "}
                             If Yes, and these as a result of an interview, name
                             each employer and your last date of contact for
@@ -501,7 +565,7 @@ function ApplicationPage() {
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel id="rejection-letters-details-label">
+                        <FormLabel required id="rejection-letters-details-label">
                             {" "}
                             If Yes, approximately how many? Name as many as you
                             can recall that you would be able to provide
@@ -571,7 +635,7 @@ function ApplicationPage() {
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel id="remoteAbility-label">
+                        <FormLabel required id="remoteAbility-label">
                             {" "}
                             If Unable, please confirm that you can be remote by
                             stating your capabilities (e.g.
@@ -608,7 +672,7 @@ function ApplicationPage() {
                     </FormControl> */}
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel>
+                        <FormLabel required>
                             Is there anything else you&apos;d like to share with us
                             about your search efforts or about your summer
                             availability?

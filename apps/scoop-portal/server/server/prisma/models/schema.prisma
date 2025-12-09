@@ -27,7 +27,7 @@ model SemesterGroup {
 }
 
 model Project {
-  id           Int    @id
+  id           Int    @id @default(autoincrement())
   title        String
   display_name String
   description  String @db.VarChar(255)
@@ -43,31 +43,45 @@ model users {
   lname          String
   email          String @unique
   type           String
-  semester_group String
-  project        String
-  active         String
-  last_login     String
-  prev_login     String
+  semester_group String?
+  project        String?
+  active         String?
+  last_login     String?
+  prev_login     String?
 
-  teams Teams[] @relation("TeamMembers")
-  login Login? @relation(fields: [loginId], references: [id])
-  loginId Int? @unique
+  teams   Teams[] @relation("TeamMembers")
+  login   Login?  @relation(fields: [loginId], references: [id])
+  loginId Int?    @unique
 
   sentEntries     JournalEntry[] @relation("SentUserEntries")
   receivedEntries JournalEntry[] @relation("ReceivedUserEntries")
   topicEntries    JournalEntry[] @relation("TopicUserEntries")
+  Teams           Teams[]
 }
-
+enum PrivacyEnum {
+  PERSONAL
+  PUBLIC
+}
+enum EntryType {
+  MANUAL
+  AUTOMATED
+}
 model JournalEntry {
   id                  Int      @id @default(autoincrement())
   date                DateTime
-  recipient_id        String
   notes               String?  @db.VarChar(500)
+  visibility_level       Int?
+  privacy_level          PrivacyEnum?
+  entry_type             EntryType?
   sender_id           String
   topic_id            String
-  recipient     users     @relation("ReceivedUserEntries", fields: [recipient_id], references: [id])
+  recipients    users[]     @relation("ReceivedUserEntries")
   sender        users     @relation("SentUserEntries", fields: [sender_id], references: [id])
   topic         users     @relation("TopicUserEntries", fields: [topic_id], references: [id])
+
+  previous_entryid Int?
+  previous_entry    JournalEntry? @relation("PreviousEntry", fields: [previous_entryid], references: [id])
+  next_entries      JournalEntry[] @relation("PreviousEntry")
   
   Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
   semester_GroupId Int?
@@ -75,6 +89,7 @@ model JournalEntry {
 
 model Application {
   id                      Int      @id @default(autoincrement())
+  applicant_id            String?
   lastName                String
   firstName               String?
   ritEmail                String
@@ -99,12 +114,13 @@ model Application {
 }
 
 model Teams {
-  id   Int    @id @default(autoincrement())
-  name String
-
-  projectId Int?
-  project   Project? @relation(fields: [projectId], references: [id])
-  members   users[]  @relation("TeamMembers")
+  id             Int      @id @default(autoincrement())
+  name           String
+  scoopervisorId String?
+  projectId      Int?
+  project        Project? @relation(fields: [projectId], references: [id])
+  members        users[]  @relation("TeamMembers")
+  scoopervisor   users?   @relation(fields: [scoopervisorId], references: [id])
 }
 
 model Login {
@@ -113,6 +129,5 @@ model Login {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user users?
-
+  user      users?
 }

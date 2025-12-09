@@ -28,6 +28,8 @@ export default function TeamsPage() {
   const [newTeamName, setNewTeamName] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [projects, setProjects] = useState([]);
+  const [scoopervisors, setScoopervisors] = useState([]);
+  const [selectedScoopervisorId, setSelectedScoopervisorId] = useState("");
 
   useEffect(() => {
     async function fetchTeams() {
@@ -57,6 +59,21 @@ export default function TeamsPage() {
       }
     }
     fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    async function fetchScoopervisors() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/supervisors`
+        );
+        const data = await res.json();
+        setScoopervisors(data);
+      } catch(err) {
+        console.error("Failed to fetch Scoopervisors:", err);
+      }
+    }
+    fetchScoopervisors();
   }, []);
 
   useEffect(() => {
@@ -150,7 +167,22 @@ export default function TeamsPage() {
                   </Typography>
 
                   <Divider sx={{ my: 2 }} />
+                  <Typography sx={{ fontWeight: 500, mb: 1 }}>
+                    Scoopervisor:
+                  </Typography>
+                  {team.scoopervisorId != null ? (
+                    <Chip
+                      key={team.scoopervisor.id}
+                      label={`${team.scoopervisor.fname} ${team.scoopervisor.lname}`}
+                      sx={{ backgroundColor: "#F76902", color: "#fff" }}
+                    />
+                  ) : (
+                    <Typography variant="body2" sx={{ color: "#999" }}>
+                      No Scoopervisor assigned
+                    </Typography>
+                  )
 
+                  }
                   <Typography sx={{ fontWeight: 500, mb: 1 }}>
                     Members:
                   </Typography>
@@ -196,6 +228,18 @@ export default function TeamsPage() {
                       }}
                     >
                       Edit Members
+                    </Button>
+
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => {
+                        setActiveTeam(team);
+                        setOpenModal("scoopervisor");
+                      }}
+                    >
+                      Change Scoopervisor
                     </Button>
 
                     <Button
@@ -359,6 +403,62 @@ export default function TeamsPage() {
               </Box>
             </>
           )}
+          {openModal === "scoopervisor" && (
+            <>
+              <Typography variant="h6" mb={2} fontWeight="bold">
+                Change Scoopervisor for {activeTeam?.name}
+              </Typography>
+              <TextField
+                select
+                fullWidth
+                label="Scoopervisor"
+                value={selectedScoopervisorId}
+                onChange={(e) => setSelectedScoopervisorId(e.target.value)}
+                slotProps={{ select: { native: true } }}
+                sx={{ mb: 3 }}
+              >
+                <option value=""></option>
+                {scoopervisors.map((svr) => (
+                  <option key={svr.id} value={svr.id}>
+                    {`${svr.fname} ${svr.lname}`}
+                  </option>
+                ))}
+              </TextField>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                onClick={async () => {
+                        try {
+                          const res = await fetch(
+                            `${process.env.NEXT_PUBLIC_API_URL}/api/teams/scoopervisor`,
+                            { method: "PUT",
+                              headers: {"Content-Type": "application/json"},
+                              body: JSON.stringify({teamId:activeTeam.id,scoopervisorId:selectedScoopervisorId===""?null:selectedScoopervisorId})
+                             }
+                          );
+
+                          if (!res.ok)
+                            throw new Error("Failed to update Scoopervisor");
+                          const updatedTeam = await res.json();
+                          setTeams((prev) =>
+                            prev.map((t) =>
+                              t.id === activeTeam.id ? updatedTeam.team : t
+                            )
+                          );
+                          setActiveTeam(updatedTeam.team);
+                          setOpenModal(null);
+                        } catch (err) {
+                          console.error("Error updating Scoopervisor:", err);
+                        }
+                        setSelectedScoopervisorId("")
+                      }}
+              >
+                Save
+              </Button>
+            </>
+          )}
+
         </Box>
       </Modal>
 
@@ -566,7 +666,22 @@ export default function TeamsPage() {
               </option>
             ))}
           </TextField>
-
+          <TextField
+            select
+            fullWidth
+            label="Scoopervisor (optional)"
+            value={selectedScoopervisorId}
+            onChange={(e) => setSelectedScoopervisorId(e.target.value)}
+            slotProps={{ select: { native: true } }}
+            sx={{ mb: 3 }}
+          >
+            <option value=""></option>
+            {scoopervisors.map((svr) => (
+                <option key={svr.id} value={svr.id}>
+                  {`${svr.fname} ${svr.lname}`}
+                </option>
+            ))}
+          </TextField>
           <Button
             variant="contained"
             color="success"
@@ -579,6 +694,7 @@ export default function TeamsPage() {
                   ...(selectedProjectId
                     ? { projectId: Number(selectedProjectId) }
                     : {}),
+                  scoopervisorId:selectedScoopervisorId===""?null:selectedScoopervisorId,
                 };
 
                 const res = await fetch(
@@ -601,6 +717,7 @@ export default function TeamsPage() {
                 setTeams(allTeams);
                 setNewTeamName("");
                 setSelectedProjectId("");
+                setSelectedScoopervisorId("")
                 setCreateTeamModalOpen(false);
               } catch (err) {
                 console.error("Error creating team:", err);

@@ -16,6 +16,9 @@ components:
           nullable: true
         actionType:
           $ref: '#/components/schemas/ActionType'
+        requireAllParticipants:
+          type: boolean
+          description: When true, the action only completes after every participant submits.
         isFrozen:
           type: boolean
         nextActionId:
@@ -101,10 +104,35 @@ components:
         userId:
           type: string
           format: uuid
+          nullable: true
+        teamId:
+          type: string
+          nullable: true
         workflowId:
           type: string
           format: uuid
-      required: [id, userId, workflowId]
+        baseActionStateId:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowStateParticipant'
+      required: [id, workflowId, baseActionStateId]
+
+    WorkflowStateParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflowStateId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+      required: [id, workflowStateId, userId]
 
     ActionState:
       type: object
@@ -122,8 +150,35 @@ components:
           $ref: '#/components/schemas/StateType'
         index:
           type: integer
+        submissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionStateSubmission'
       required: [id, workflowStateId, actionId, stateType, index]
 
     StateType:
       type: string
       enum: [completed, inProgress, notStarted, hidden]
+
+    ActionStateSubmission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        actionStateId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        completed:
+          type: boolean
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, actionStateId, userId, createdAt, completed]

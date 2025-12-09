@@ -5,20 +5,22 @@ const prisma = new PrismaClient();
 
 // POST a new team
 router.post("/", async (req, res) => {
-    const { name, projectId, memberIds = [] } = req.body;
+    const { name, projectId, memberIds, scoopervisorId } = req.body;
 
     try {
         const team = await prisma.teams.create({
             data: {
                 name,
                 ...(projectId ? { projectId: Number(projectId) } : {}),
-                ...(memberIds.length > 0
+                ...(memberIds!=undefined&&memberIds.length > 0
                   ? { members: { connect: memberIds.map(id => ({ id })) } }
                   : {}),
+                ...(scoopervisorId ? { scoopervisorId: scoopervisorId } : {})
             },
             include: {
                 members: true,
                 project: true,
+                scoopervisor: true,
             },
         });
 
@@ -58,6 +60,7 @@ router.post("/:teamId/members", async (req, res) => {
       include: {
         members: true,
         project: true,
+        scoopervisor: true,
       },
     });
 
@@ -75,6 +78,7 @@ router.get("/", async (req, res) => {
             include: {
                 members: true,
                 project: true,
+                scoopervisor: true,
             },
         });
 
@@ -98,6 +102,7 @@ router.get("/:memberid", async (req, res) => {
         include: { 
           members: true,
           project: true,
+          scoopervisor: true,
         } 
         });
         res.status(200).json(teams);
@@ -119,7 +124,8 @@ router.put("/", async(req,res) => {
       },
       include: {
         members: true,
-        project: true
+        project: true,
+        scoopervisor: true,
       }
     })
     res.status(200).json({ message: "Team project updated", team });
@@ -128,6 +134,28 @@ router.put("/", async(req,res) => {
     res.status(500).json({ message: "Failed to update team project", error: error.message });
   }
 })
+
+// PUT a scoopervisor on a team
+router.put("/scoopervisor", async (req, res) => {
+  const { teamId, scoopervisorId } = req.body;
+  try {
+    const team = await prisma.teams.update({
+      where: {id: parseInt(teamId) },
+      data: {
+        scoopervisorId: scoopervisorId,
+      },
+      include: {
+        members: true,
+        project: true,
+        scoopervisor: true,
+      }
+    });
+    res.status(200).json({message: "Team Scoopervisor updated", team})
+  } catch (error) {
+    console.error("Error updating Scoopervisor:", error);
+    res.status(500).json({message: "Failed to update Scoopervisor", error: error.message});
+  }
+});
 
 // REMOVE a member from a team
 router.delete("/:teamId/members/:memberId", async (req, res) => {
@@ -144,6 +172,7 @@ router.delete("/:teamId/members/:memberId", async (req, res) => {
       include: {
         members: true,
         project: true,
+        scoopervisor: true,
       },
     });
 
@@ -168,6 +197,7 @@ router.delete("/:teamId", async (req, res) => {
       include: {
         members: true,
         project: true,
+        scoopervisor: true,
       },
     });
 

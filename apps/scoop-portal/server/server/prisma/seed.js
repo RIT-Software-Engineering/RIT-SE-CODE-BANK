@@ -29,11 +29,12 @@ async function main() {
   });
 
   await prisma.project.createMany({
-    data: sampleProjects.map(({ id, title, display_name, description }) => ({
+    data: sampleProjects.map(({ id, title, display_name, description, semester_GroupId }) => ({
       id,
       title,
       display_name,
       description,
+      semesterGroupId: semester_GroupId
     })),
   });
 
@@ -45,9 +46,25 @@ async function main() {
     data: sampleApplications,
   });
 
-  await prisma.journalEntry.createMany({
-    data: sampleJournalEntries,
-  });
+  // Journal entries in sampleJournalEntries must be in order to ensure previous_entryid references work
+  for (const journalEntry of sampleJournalEntries) {
+    await prisma.journalEntry.create({
+          data:{
+          id: journalEntry.id,
+          previous_entryid: journalEntry.previous_entryid,
+          notes : journalEntry.notes,
+          privacy_level: journalEntry.privacy_level,
+          visibility_level: journalEntry.visibility_level,
+          entry_type: journalEntry.entry_type,
+          date: journalEntry.date,
+          sender_id: journalEntry.sender_id,
+          recipients: { connect: journalEntry.recipient_ids.map(id => ({ id })) },
+          topic_id: journalEntry.topic_id,
+          semester_GroupId: journalEntry.semester_GroupId,
+        }
+    });
+  }
+
 
   const vicki = await prisma.users.findUnique({ where: { email: "vcl123@rit.edu" } });
   const jimmy = await prisma.users.findUnique({ where: { email: "jlp123@rit.edu" } });
@@ -57,6 +74,7 @@ async function main() {
     data: {
       name: "Alpha",
       projectId: 1,
+      scoopervisorId: "cds123",
       members: {
         connect: [{ id: vicki.id }, { id: jimmy.id }, { id: dudeBro.id }],
       },
@@ -70,6 +88,7 @@ async function main() {
     data: {
       name: "Omega",
       projectId: 2,
+      scoopervisorId: "coachB",
       members: {
         connect: [{ id: galgirl.id }, { id: edison.id }],
       },

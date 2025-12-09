@@ -15,6 +15,71 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Header from '@components/Header';
 import { useParams, useRouter } from 'next/navigation';
 
+const truthyStrings = new Set(['true', '1', 'yes', 'y', 'on']);
+const requireAllKeys = ['requireallparticipants', 'requiresallparticipants'];
+
+const toMetadataMap = (metadata) => {
+  if (!metadata) return {};
+  const entries = Array.isArray(metadata)
+    ? metadata
+    : Object.entries(metadata || {}).map(([key, value]) => ({ key, value }));
+
+  return entries.reduce((acc, entry) => {
+    if (entry?.key) {
+      acc[entry.key.toLowerCase()] = entry.value;
+    }
+    return acc;
+  }, {});
+};
+
+const isTruthy = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    return truthyStrings.has(value.toLowerCase());
+  }
+  return false;
+};
+
+const requiresAllFromMetadata = (metadataMap) =>
+  requireAllKeys.some((key) => isTruthy(metadataMap?.[key]));
+
+const getParticipantIdsFromWorkflowState = (workflowState) => {
+  const ids = new Set();
+  if (workflowState?.userId) ids.add(workflowState.userId);
+  workflowState?.participants?.forEach((participant) => {
+    if (participant?.userId) ids.add(participant.userId);
+  });
+  return Array.from(ids);
+};
+
+const deriveActionStateDetails = (actionState, workflowState, currentUserId) => {
+  const metadataMap = toMetadataMap(actionState?.action?.metadata);
+  const requiresAllParticipants =
+    actionState?.action?.requireAllParticipants === true ||
+    requiresAllFromMetadata(metadataMap);
+  const submissions = Array.isArray(actionState?.submissions)
+    ? actionState.submissions
+    : [];
+  const completedSubmissions = submissions.filter(
+    (submission) => submission?.completed
+  );
+  const participantCount =
+    getParticipantIdsFromWorkflowState(workflowState).length || 1;
+
+  return {
+    metadataMap,
+    requiresAllParticipants,
+    userHasSubmitted: currentUserId
+      ? completedSubmissions.some(
+          (submission) => submission.userId === currentUserId
+        )
+      : false,
+    submittedCount: completedSubmissions.length,
+    participantCount,
+  };
+};
+
 export default function WorkflowDashboard() {
   const { id: workflowId } = useParams(); // get workflowId from route param
   const router = useRouter();
@@ -77,7 +142,13 @@ export default function WorkflowDashboard() {
 
         const completed = new Set(
           state.actionStates
-            .filter((as) => as.stateType === 'completed')
+            .filter((as) => {
+              const details = deriveActionStateDetails(as, state, userId);
+              return (
+                as.stateType === 'completed' ||
+                (details.requiresAllParticipants && details.userHasSubmitted)
+              );
+            })
             .map((as) => as.actionId)
         );
         setCompletedSteps(completed);
@@ -101,6 +172,15 @@ export default function WorkflowDashboard() {
       return;
     }
 
+    const actionState = workflowState?.actionStates?.find(
+      (state) => state.actionId === actionId
+    );
+    if (!actionState) {
+      alert('Unable to locate the selected action state.');
+      return;
+    }
+
+    const details = deriveActionStateDetails(actionState, workflowState, userId);
     const currentlyCompleted = completedSteps.has(actionId);
     const newCompleted = !currentlyCompleted;
 
@@ -112,10 +192,18 @@ export default function WorkflowDashboard() {
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ actionStateId }),
+            body: JSON.stringify({
+              actionStateId,
+              userId,
+              workflowStateId: workflowState?.id,
+            }),
           }
         );
       } else {
+        if (details.requiresAllParticipants) {
+          alert('This action tracks submissions for every teammate and cannot be unchecked.');
+          return;
+        }
         response = await fetch(
           `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/action/${actionStateId}`,
           {
@@ -126,8 +214,8 @@ export default function WorkflowDashboard() {
         );
       }
 
+      const resBody = await response.json().catch(() => null);
       if (!response.ok) {
-        const resBody = await response.json().catch(() => null);
         throw new Error(resBody?.message || 'Failed to update action state');
       }
 
@@ -193,6 +281,15 @@ export default function WorkflowDashboard() {
                   const prevStep = steps[index - 1];
                   const isLocked = index > 0 && !completedSteps.has(prevStep.actionId);
                   const isCompleted = completedSteps.has(step.actionId);
+                  const details = deriveActionStateDetails(step, workflowState, userId);
+                  const waitingOnTeam =
+                    details.requiresAllParticipants &&
+                    details.userHasSubmitted &&
+                    step.stateType !== 'completed';
+                  const checkboxDisabled =
+                    isLocked ||
+                    (details.requiresAllParticipants &&
+                      (details.userHasSubmitted || step.stateType === 'completed'));
 
                   const action = actionsMap[step.actionId];
 
@@ -219,7 +316,7 @@ export default function WorkflowDashboard() {
                       <Checkbox
                         checked={isCompleted}
                         onChange={() => toggleComplete(step.actionId)}
-                        disabled={isLocked}
+                        disabled={checkboxDisabled}
                         sx={{ color: '#F76902', mr: 1 }}
                         inputProps={{ 'aria-label': 'Mark step complete' }}
                       />
@@ -272,6 +369,20 @@ export default function WorkflowDashboard() {
                         >
                           {action?.description || 'No description available'}
                         </Typography>
+                        {waitingOnTeam && (
+                          <Typography
+                            variant="caption"
+                            sx={{ color: '#F76902', display: 'block', mt: 0.5 }}
+                          >
+                            Waiting for teammates (
+                            {Math.min(
+                              details.submittedCount ?? 0,
+                              details.participantCount ?? 0
+                            )}
+                            /
+                            {details.participantCount ?? 0})
+                          </Typography>
+                        )}
                       </Box>
 
                       <Button
