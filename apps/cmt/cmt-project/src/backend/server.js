@@ -27,9 +27,23 @@ const FRONTEND_PORT = Number(process.env.PORT) || 3010;        // React dev serv
    MIDDLEWARE
    ------------------------------------------------------------------ */
 
+const allowedOrigins = [
+  `http://localhost:${FRONTEND_PORT}`, // from .env (e.g., 3010)
+  "http://localhost:3000",            // CRA default
+];
+
 app.use(
   cors({
-    origin: [`http://localhost:${FRONTEND_PORT}`],
+    origin: function (origin, callback) {
+      // Allow requests from tools/extensions with no origin
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS: " + origin));
+    },
     credentials: true,
   })
 );
