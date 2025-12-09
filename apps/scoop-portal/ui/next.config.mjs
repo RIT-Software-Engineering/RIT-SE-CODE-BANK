@@ -7,6 +7,8 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    basePath: '/scoop-portal',
+    assetPrefix: '/scoop-portal',
     outputFileTracingRoot: path.join(__dirname),
     async rewrites() {
     return [

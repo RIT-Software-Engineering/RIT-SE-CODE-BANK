@@ -673,7 +673,7 @@ function ApplicationPage() {
 
                     <FormControl fullWidth margin="normal">
                         <FormLabel required>
-                            Is there anything else you'd like to share with us
+                            Is there anything else you&apos;d like to share with us
                             about your search efforts or about your summer
                             availability?
                         </FormLabel>

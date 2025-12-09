@@ -27,7 +27,8 @@ import {
   FormControlLabel,
   InputAdornment,
   Tooltip,
-  Skeleton
+  Skeleton,
+  List
 } from "@mui/material";
 
 // Icons
@@ -241,7 +242,7 @@ export default function Header() {
               <Box component="span" sx={{ display: "flex", alignItems: "center", mr: 2, cursor: "pointer" }}>
                 <Box
                   component="img"
-                  src="/RIT_RGB_hor.png"
+                  src={process.env.NEXT_PUBLIC_URL_BASE_PATH+"/RIT_RGB_hor.png"}
                   alt="RIT Logo"
                   sx={{ height: 48, width: "auto" }}
                 />
@@ -367,7 +368,7 @@ export default function Header() {
 
             {/* Logout Button */}
             <Button
-              href="/"
+              href={process.env.NEXT_PUBLIC_URL_BASE_PATH}
               variant="outlined"
               color="inherit"
               startIcon={<LogoutIcon />}

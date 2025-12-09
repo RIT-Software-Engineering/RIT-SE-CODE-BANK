@@ -1,8 +1,7 @@
 {
-  "name": "ui",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "scoop-portal",
+  "version": "0.1.0",
+  "prviate": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "next dev --turbopack",
@@ -17,6 +16,8 @@
     "@mui/icons-material": "^7.3.2",
     "@mui/material": "^7.3.2",
     "@mui/material-nextjs": "^7.3.2",
+    "@prisma/client": "^6.11.0",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "next": "^15.5.7",
     "papaparse": "^5.5.3",
@@ -28,9 +29,14 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "15.5.3",
+    "eslint-config-next": "^15.5.7",
     "jest": "^30.0.2",
     "prettier": "3.6.0",
+    "prisma": "^6.11.0",
     "tailwindcss": "^4"
+  },
+  "prisma": {
+    "seed": "node server/server/prisma/seed.js",
+    "schema": "server/server/prisma"
   }
 }

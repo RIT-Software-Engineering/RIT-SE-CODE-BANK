@@ -1,21 +1,29 @@
+version: "3.8"
 services:
   mariadb_main:
-    image: mariadb:11
+    image: mariadb:latest
     container_name: mariadb_scoop_portal
     environment:
       MARIADB_ROOT_PASSWORD: password
       MARIADB_DATABASE: scoop_portal_demo
+      MARIADB_USER: scoop_portal_user
+      MARIADB_PASSWORD: scoop_portal_password
     ports:
-      - "3306:3306"
+      - "3308:3306"
+    expose:
+      - "3308"
     volumes:
       - mariadb_scoop_portal_data:/var/lib/mysql
+    restart: unless-stopped
 
   mariadb_workflows:
-    image: mariadb:11
+    image: mariadb:latest
     container_name: mariadb_workflows
     environment:
       MARIADB_ROOT_PASSWORD: password
       MARIADB_DATABASE: scoop_portal_demo
+      MARIADB_USER: scoop_portal_user
+      MARIADB_PASSWORD: scoop_portal_password
     ports:
       - "3307:3306"
     volumes:
@@ -31,6 +39,34 @@ services:
       - "3309:3306"
     volumes:
       - mariadb_notifications_data:/var/lib/mysql
+
+  scoop-portal-backend:
+    build:
+      context: ./apps/scoop-portal/server
+      dockerfile: Dockerfile
+    ports:
+      - "5020:5020"
+    environment:
+      NODE_ENV: production
+      PORT: 5020
+      DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_main:3306/scoop_portal_demo
+    depends_on:
+      - mariadb_main
+    restart: unless-stopped
+
+  scoop-portal-frontend:
+    build:
+      context: ./apps/scoop-portal/ui
+      dockerfile: Dockerfile
+    ports:
+      - "3020:3020"
+    environment:
+      NODE_ENV: production
+      PORT: 3020
+      REACT_APP_BACKEND_URL: http://localhost:5020
+    depends_on:
+      - scoop-portal-backend
+    restart: unless-stopped
 
 volumes:
   mariadb_scoop_portal_data:
