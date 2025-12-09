@@ -1,7 +1,7 @@
 set -e
 
 APP_DIR="/opt/scoop-portal"
-BRANCH="scoop-portal-cicd-1"
+BRANCH="scoop-portal-dev"
 PORTAL_SERVER_DIR="$APP_DIR/apps/scoop-portal/server"
 PORTAL_UI_DIR="$APP_DIR/apps/scoop-portal/ui"
 WORKFLOW_SERVER_DIR="$APP_DIR/apps/workflow/server"
@@ -55,7 +55,7 @@ echo $(pwd)
 
 echo "Waiting for services to start..."
 sleep 15
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 npx prisma db seed
 cd $APP_DIR
 docker compose ps

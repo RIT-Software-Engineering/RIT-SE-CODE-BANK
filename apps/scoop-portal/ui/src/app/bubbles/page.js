@@ -141,7 +141,7 @@ const deriveActionStateDetails = (
 
 
 
-export default function bubbled(){
+export default function Bubbled(){
   
   const [workflowStates, setWorkflowStates] = useState([]);
   const [teamsById, setTeamsById] = useState({});
