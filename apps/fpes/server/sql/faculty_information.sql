@@ -1,12 +1,15 @@
 CREATE TABLE IF NOT EXISTS faculty_information (
     faculty_id INT UNIQUE AUTO_INCREMENT PRIMARY KEY,
+    supervisor_id INT,
     name VARCHAR(255) NOT NULL,
     rank VARCHAR(100) NOT NULL,                  -- e.g., Assistant Professor
     unit VARCHAR(150) NOT NULL,                  -- e.g., Software Engineering
     affiliations VARCHAR(255) DEFAULT NULL,      -- e.g., MAGIC, ESL GCI
     user_role SET('Faculty', 'Supervisor', 'Admin') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (supervisor_id) REFERENCES faculty_information(faculty_id)
 );
 
 INSERT INTO faculty_information (name, rank, unit, affiliations, user_role)

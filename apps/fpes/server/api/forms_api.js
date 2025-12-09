@@ -34,6 +34,24 @@ async function getFormByFacultyId(facultyId){
     }
 }
 
+async function getFormsBySupervisorId(supervisorId){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const rows = await connection.query(
+            `SELECT forms.id, faculty_information.name, forms.type, forms.time_submitted
+            FROM forms INNER JOIN faculty_information ON faculty_information.faculty_id = forms.faculty_information_id
+            WHERE faculty_information.supervisor_id = ?
+            `,
+            [supervisorId]
+        )
+        console.log(rows);
+        return rows;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
 // CREATE : create form record with a timestamp and faculty id
 async function createForm(formData){
     let connection;
@@ -94,5 +112,6 @@ module.exports = {
     getFormById,
     createForm,
     deleteForm,
-    resetFormsTable
+    resetFormsTable,
+    getFormsBySupervisorId,
 }
