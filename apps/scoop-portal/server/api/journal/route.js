@@ -75,13 +75,13 @@ router.post("/", async (req, res) => {
       },
     });
 
-    notifyStatus({ userId: "msk1582", context: { journalEntryId: newEntry.id } })
-      .then(summary => {
-        console.log('Notification sent:', summary)
-      })
-      .catch(error => {
-        console.error('Error sending notification:', error);
-      });
+    // notifyStatus({ userId: "msk1582", context: { journalEntryId: newEntry.id } })
+    //   .then(summary => {
+    //     console.log('Notification sent:', summary)
+    //   })
+    //   .catch(error => {
+    //     console.error('Error sending notification:', error);
+    //   });
 
     res
       .status(200)
