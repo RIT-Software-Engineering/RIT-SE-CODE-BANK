@@ -1,4 +1,5 @@
 import { Router } from "express";
+import axios from "axios";
 import { getPrisma } from '../db.js';
 
 const router = Router();
@@ -73,6 +74,46 @@ router.put("/:appId/:userId", async (req, res) => {
   } catch (e) {
     console.error('preferences:put error', e?.message || e);
     return res.status(500).json({ error: 'Failed to save preferences' });
+  }
+});
+
+// GET /api/notifications/preferences/:appId/:userId/slack-status
+router.get("/:appId/:userId/slack-status", async (req, res) => {
+  const { appId, userId } = req.params;
+  const { email } = req.query;
+  
+  if (!process.env.SLACK_BOT_TOKEN) {
+    return res.json({ inWorkspace: false, reason: 'slack_not_configured' });
+  }
+  
+  if (!email) {
+    return res.json({ inWorkspace: false, reason: 'no_email_provided' });
+  }
+  
+  try {
+    const normalizedEmail = normalizeEmail(email);
+    
+    const resp = await axios.get(
+      "https://slack.com/api/users.lookupByEmail",
+      { 
+        headers: { 
+          Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+          "Content-Type": "application/json; charset=utf-8"
+        },
+        params: { email: normalizedEmail }
+      }
+    );
+    
+    if (resp.data?.ok) {
+      return res.json({ inWorkspace: true, userId: resp.data.user.id });
+    } else if (resp.data?.error === 'users_not_found') {
+      return res.json({ inWorkspace: false, reason: 'not_in_workspace' });
+    } else {
+      return res.json({ inWorkspace: false, reason: resp.data?.error || 'unknown_error' });
+    }
+  } catch (e) {
+    console.error('slack-status check error', e?.message || e);
+    return res.status(500).json({ error: 'Failed to check Slack status' });
   }
 });
 
