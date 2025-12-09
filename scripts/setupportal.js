@@ -67,6 +67,8 @@ if (!fs.existsSync(envFilePortalUIDev)) {
   console.log("Creating scoop portal ui .env.development file...");
   const defaultEnv = `NEXT_PUBLIC_API_URL=http://localhost:5002
 NEXT_PUBLIC_WORKFLOWS_API_URL=http://localhost:5001
+NEXT_PUBLIC_NOTIFICATION=/api/notifications
+
 `;
   fs.writeFileSync(envFilePortalUIDev, defaultEnv);
 }
