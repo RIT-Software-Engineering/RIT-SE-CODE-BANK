@@ -51,6 +51,7 @@ router.post("/", async (req, res) => {
     try {
         const saved = await prisma.application.create({
             data: {
+                applicant_id: formData.applicant_id,
                 lastName: formData.lastName,
                 firstName: formData.firstName,
                 ritEmail: formData.ritEmail,

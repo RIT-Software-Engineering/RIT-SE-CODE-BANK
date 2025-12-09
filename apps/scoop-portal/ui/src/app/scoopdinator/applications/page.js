@@ -163,6 +163,11 @@ export default function SupervisorApplicationsPage() {
       //update in database
       putApplicationStatus(status);
 
+
+      const selectedAppCopy = { ...selectedApp };
+      handleUserStatusUpdate(status, selectedAppCopy);
+
+    
       //update local state
       setApplications((prev) =>
         prev.map((a) => (a.id === selectedApp.id ? { ...a, status } : a))
@@ -180,6 +185,7 @@ export default function SupervisorApplicationsPage() {
         message: `Application for ${selectedApp.firstName} has been ${status}.`,
         severity: status === STATUSES[1] ? "success" : "error",
       });
+
       setSelectedApp(null);
     } catch (err) {
       setNotification({
@@ -190,6 +196,96 @@ export default function SupervisorApplicationsPage() {
     }
     // console.log("app status", selectedApp.status);
   };
+
+  async function handleUserStatusUpdate(status, application) {
+    console.log("Handling user status update for", application.applicant_id);
+    let new_role = ""
+    if(status == "ACCEPTED"){
+      new_role = "scooployee"
+    }
+    else if(status == "REJECTED"){
+      new_role = "applicant"
+    }
+    try{
+      const userResponse = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + `/api/users/${application.applicant_id}`,
+        { method: "GET" });
+      if (userResponse.status === 404){ 
+        console.log("User not found, creating new user:", application.applicant_id);
+        const createUserRes = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/api/users",
+              {
+                method: "POST",
+                body: JSON.stringify({
+                id: application.applicant_id,
+                fname: application.firstName,
+                lname: application.lastName,
+                email: application.ritEmail,
+                type: new_role,
+                createdAt: new Date().toISOString(),
+                semester_group: "null",
+                project: "null",
+                active: "",
+                last_login: "null",
+                prev_login: "null",
+                }),
+                headers: { "Content-Type": "application/json" },
+        });
+      }
+      else{
+        console.log("User found, updating role to:", new_role);
+        const updateUserRes = await fetch(
+          process.env.NEXT_PUBLIC_API_URL + `/api/users/${application.applicant_id}`,
+            {
+              method: "PUT",
+              body: JSON.stringify({
+                type: new_role,
+                }),
+              headers: { "Content-Type": "application/json" },
+            });
+      }
+      console.log("Creating journal entry for status:", status);
+      handleJournalEntry(application, status);
+    }catch(error){
+      console.error("Error updating user role:", error);
+    }
+
+  }
+
+  async function handleJournalEntry(application, status){ 
+    console.log("Creating journal entry for", application.firstName, "with status", status);
+    let entry_string = "";
+    if(status == "ACCEPTED"){
+      entry_string = application.firstName + " " + application.lastName + " has been accepted for SCOOP.";
+    }
+    else if(status == "REJECTED"){
+      entry_string = application.firstName + " " + application.lastName + " has been rejected for SCOOP.";
+    }
+    try{
+        const entry = {
+        date: new Date().toISOString(), 
+        sender_id: application.applicant_id,
+        notes: entry_string,
+        recipient_ids: [],
+        topic_id: application.applicant_id,
+        semester_GroupId: null,
+        previous_entryid: null,
+        entry_type: "AUTOMATED",
+        visibility_level: 1,
+        privacy_level: "PUBLIC",
+        };
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(entry),
+          });
+    }catch(error){
+      console.error("Error creating journal entry:", error);
+    }
+  }
+
+
 
   const handleNotificationClose = (event, reason) => {
     if (reason === "clickaway") return;
@@ -202,6 +298,7 @@ export default function SupervisorApplicationsPage() {
    * @returns {Response}
    */
   async function postNewUsers(data) {
+    try{
     const response = await fetch(
       process.env.NEXT_PUBLIC_API_URL + "/api/users",
       {
@@ -213,6 +310,11 @@ export default function SupervisorApplicationsPage() {
     console.log("Submitting users with data:", data);
 
     return response;
+  } catch (error) {
+    console.error("Error submitting user:", error);
+  }
+
+
   }
 
 
@@ -243,7 +345,7 @@ export default function SupervisorApplicationsPage() {
       fname: app.firstName,
       lname: app.lastName,
       email: app.ritEmail,
-      type: "student", //change to scooployee
+      type: "scooployee", //change to scooployee
       semester_group: tempData.semester_group,
       project: tempData.project,
       active: tempData.active,
@@ -265,7 +367,7 @@ export default function SupervisorApplicationsPage() {
   const handleSubmit = () => {
     //   let data ;
     //
-    const acceptedApps = applications.filter((app) => app.accepted === true);
+    const acceptedApps = applications.filter((app) => app.status === "ACCEPTED");
     // console.log(acceptedApps)
     for (let app of acceptedApps) {
       // console.log(app)
@@ -519,7 +621,7 @@ export default function SupervisorApplicationsPage() {
                     your search efforts or about your summer availability?
                   </strong>{" "}
                   <br />
-                  {selectedApp.additionalComments}
+                  {selectedApp.applicant_id}
                 </Typography>
                 <Typography margin={2}>
                   <strong>Resume:</strong> <br />

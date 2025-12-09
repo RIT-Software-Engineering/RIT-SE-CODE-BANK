@@ -537,6 +537,34 @@ export default function bubbled(){
       const requiresAll = payload?.requiresAllParticipants;
       const fullyCompleted = payload?.fullyCompleted;
       markLocalSubmissionProgress(payload);
+      try{
+        const entry_string = user.fname + " " + user.lname + " submitted an action: " + (openAction?.name || "an action") ;
+        const entry = {
+          date: new Date().toISOString(), 
+          sender_id: user.id,
+          notes: entry_string,
+          recipient_ids: [],
+          topic_id: user.id,
+          semester_GroupId: null,
+          previous_entryid: null,
+          entry_type: "AUTOMATED",
+          visibility_level: 1,
+          privacy_level: "PUBLIC",
+        };
+        const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/journal`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(entry),
+        }
+      );
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      } catch(e){
+        console.error('Error creating journal entry:', e);
+      }
       forceRefresh(previous => previous + 1);
       if (requiresAll && !fullyCompleted) {
         return;

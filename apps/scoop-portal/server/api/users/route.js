@@ -5,6 +5,7 @@ const prisma = new PrismaClient();
 
 router.post("/", async (req, res) => {
   const {
+    id,
     lname,
     fname,
     email,
@@ -14,12 +15,12 @@ router.post("/", async (req, res) => {
     active,
     last_login,
     prev_login,
-    createdAt,
   } = req.body;
 
   try {
     const saved = await prisma.users.create({
       data: {
+        id,
         lname,
         fname,
         email,
@@ -29,7 +30,6 @@ router.post("/", async (req, res) => {
         active,
         last_login,
         prev_login,
-        createdAt,
       },
     });
     res.status(200).json({ message: "User saved", user: saved });
@@ -38,6 +38,22 @@ router.post("/", async (req, res) => {
     return res
       .status(500)
       .json({ message: "Error saving user", error: error.message });
+  }
+});
+
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { type } = req.body;
+  try{
+    const updatedUser = await prisma.users.update({
+      where: { id },
+      data: { type },
+    });
+    return res.status(200).json({ message: "User updated", user: updatedUser });
+
+  }catch(error){
+    console.error("Error updating user:", error);
+    return res.status(500).json({ message: "Error updating user", error: error.message });
   }
 });
 
