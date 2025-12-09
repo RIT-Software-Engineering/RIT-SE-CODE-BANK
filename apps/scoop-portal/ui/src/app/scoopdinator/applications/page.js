@@ -621,7 +621,7 @@ export default function SupervisorApplicationsPage() {
                     your search efforts or about your summer availability?
                   </strong>{" "}
                   <br />
-                  {selectedApp.applicant_id}
+                  {selectedApp.additionalInfo}
                 </Typography>
                 <Typography margin={2}>
                   <strong>Resume:</strong> <br />
