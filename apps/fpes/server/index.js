@@ -35,6 +35,9 @@ const highlightsRoutes = require('./routes/highlights_routes.js');
 const { rebuildTables } = require('./api/rebuild_tables.js');
 app.use('/highlights', highlightsRoutes);
 
+const formsRoutes = require('./routes/forms_routes.js');
+app.use('/forms', formsRoutes);
+
 
 // Test route (just to confirm server is alive)
 app.get('/', (req, res) => {

@@ -21,6 +21,7 @@ import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
 import HomePage from "./pages/home/HomePage";
 import HighlightsPage from './pages/highlights_page/HighlightsPage.jsx';
 import SupervisedFacultyTable from './pages/supervisor/SupervisedFacultyTable.jsx';
+import SupervisingPage from './pages/supervisor/SupervisingPage.jsx';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -48,6 +49,11 @@ function App() {
       roles_with_access : new Set(["Admin", "Faculty", "Supervisor"])
     },
     {
+      name : "Home",
+      route : "/home",
+      roles_with_access : new Set(["Faculty", "Supervisor", "Admin"])
+    },
+    {
       name : "Highlights",
       route : "/highlights",
       roles_with_access : new Set(["Faculty", "Supervisor"])
@@ -55,8 +61,8 @@ function App() {
     {
       name : "Supervising",
       route : "/supervising",
-      roles_with_access : new Set(["Supervisor"])
-    }
+      roles_with_access : new Set(["Supervisor", "Admin"])
+    },
   ]
 
   const adminRoutes = (
@@ -102,7 +108,7 @@ return (
           <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage facultyId={facultyId} /> </ProtectedRoute> } />
           <Route path="/highlights" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsPage facultyId={facultyId}/> </ProtectedRoute> } />
           <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage facultyId={facultyId}/> </ProtectedRoute> } />
-          <Route path="/supervising" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <SupervisedFacultyTable supervisorId={facultyId}/></ProtectedRoute>} />
+          <Route path="/supervising" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <SupervisingPage facultyId={facultyId} roles={roles}/> </ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } />
         </Routes>
       </BrowserRouter>

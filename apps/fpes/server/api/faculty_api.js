@@ -41,6 +41,7 @@ async function getAllFacultyOfSupervisor(supervisor_id){
       `,
       [supervisor_id]
     )
+    return result;
   } finally {
     if (connection) connection.release();
   }
@@ -69,7 +70,7 @@ async function getSupervisorOfFacultyMember(facultyId){
 async function getAllSupervisors(){
   let connection;
   try {
-    connection : await pool.getConnection();
+    connection = await pool.getConnection();
     const result = connection.query(
       `SELECT * FROM faculty_information
       WHERE FIND_IN_SET('Supervisor', user_role)
@@ -135,6 +136,23 @@ async function assignSupervisorToFaculty(facultyId, supervisorId){
       `UPDATE faculty_information SET supervisor_id = ? WHERE faculty_id = ?`,
       [supervisorId, facultyId]
     )
+    console.log("Supervisor assigned successfully")
+    return results;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
+// UPDATE : remove a faculty member's supervisor
+async function removeSupervisor(facultyId){
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const results = connection.query(
+      `UPDATE faculty_information SET supervisor_id = NULL WHERE faculty_id = ?`,
+      [facultyId]
+    )
+    console.log("SUpervisor removed successfully");
     return results;
   } finally {
     if (connection) connection.release();
@@ -192,6 +210,7 @@ module.exports = {
   deleteFaculty,
   resetFacultyTable,
   assignSupervisorToFaculty,
+  removeSupervisor,
   getSupervisorOfFacultyMember,
   getAllFacultyOfSupervisor,
   getAllSupervisors

@@ -14,6 +14,7 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /faculty/supervisors : gets all faculty member's with a supervisor role
 router.get('/supervisors', async (req,res) => {
   try {
     const rows = await faculty.getAllSupervisors();
@@ -40,6 +41,7 @@ router.get('/:id/supervisor', async (req, res) => {
 router.get('/supervised_by/:id', async (req,res) => {
   try {
     const row = await faculty.getAllFacultyOfSupervisor(req.params.id);
+    console.log(row)
     res.json(row);
   } catch (e) {
     console.error(e);
@@ -80,10 +82,27 @@ router.post('/', async (req, res) => {
 router.put('/:faculty_id/assign_supervisor/:supervisor_id', async (req,res) => {
   try {
     const result = await faculty.assignSupervisorToFaculty(req.params.faculty_id, req.params.supervisor_id);
-    res.json(result);
-  } catch {
+    if(result?.insertedId){
+      console.log('Supervisor successfully assigned')
+      res.json({message: 'Supervisor successfully assigned'});
+    }
+    
+  } catch (e){
     console.error(e);
     res.status(500).json({ error: 'Failed to assign supervisor to faculty member'})
+  }
+});
+
+// PUT /faculty/:id/remove_supervisor : Remove a faculty member's supervisor
+router.put('/:id/remove_supervisor', async (req,res) => {
+  try {
+    const result = await faculty.removeSupervisor(req.params.id);
+    if(result.insertedId){
+      res.json({message: 'Supervisor successfully assigned'});
+    }
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to remove supervisor of faculty member'})
   }
 });
 
@@ -109,5 +128,6 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete faculty' });
   }
 });
+
 
 module.exports = router;

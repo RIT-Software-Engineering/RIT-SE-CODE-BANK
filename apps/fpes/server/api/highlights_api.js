@@ -128,6 +128,7 @@ async function submitHighlightsForm(formData){
   console.log(result);
   
   formData.student_support_id = student_support_id;
+  formData.type = "Highlights";
   console.log(student_support_id);
 
   // Create Form Record

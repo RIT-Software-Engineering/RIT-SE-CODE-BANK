@@ -10,14 +10,6 @@ export default function Header({ pages, adminView, isAuthenticated, onLogout, ro
         <AppBar position='absolute' sx={{ backgroundColor: '#FF7700'}}>
             <Toolbar>
                 <Box sx={{flexGrow:1, display:"flex"}}>
-                    {isAuthenticated && (
-                        <Button 
-                            component={Link} 
-                            to="/home" 
-                            color="inherit" >
-                            Home
-                        </Button>
-                    )}
                     {isAuthenticated && pages.map((page, index) => (
                         page.name !== "Profile" && roles.intersection(page.roles_with_access).size > 0
                             ? (
