@@ -4,11 +4,19 @@ import { getPrisma } from '../db.js';
 
 const router = Router();
 
+/**
+ * Normalizes email address to lowercase without whitespace.
+ * @param {string} e - Email address
+ * @returns {string} Normalized email
+ */
 function normalizeEmail(e) {
   return (e || "").trim().toLowerCase();
 }
 
-// GET /api/notifications/preferences/:appId/:userId
+/**
+ * GET /api/notifications/preferences/:appId/:userId
+ * Retrieves notification preferences for a user. Returns defaults if no record exists.
+ */
 router.get("/:appId/:userId", async (req, res) => {
   const { appId, userId } = req.params;
   try {
@@ -39,8 +47,11 @@ router.get("/:appId/:userId", async (req, res) => {
   }
 });
 
-// PUT /api/notifications/preferences/:appId/:userId
-// Body: { notifyEmail?: boolean, notifySlack?: boolean, userEmail?: string }
+/**
+ * PUT /api/notifications/preferences/:appId/:userId
+ * Updates notification preferences for a user. Creates record if it doesn't exist.
+ * Body: { notifyEmail?: boolean, notifySlack?: boolean, userEmail?: string }
+ */
 router.put("/:appId/:userId", async (req, res) => {
   const { appId, userId } = req.params;
   const { notifyEmail, notifySlack, userEmail } = req.body || {};
@@ -77,7 +88,12 @@ router.put("/:appId/:userId", async (req, res) => {
   }
 });
 
-// GET /api/notifications/preferences/:appId/:userId/slack-status
+/**
+ * GET /api/notifications/preferences/:appId/:userId/slack-status
+ * Checks if a user is a member of the configured Slack workspace.
+ * Query params: email (required)
+ * Returns: { inWorkspace: boolean, userId?: string, reason?: string }
+ */
 router.get("/:appId/:userId/slack-status", async (req, res) => {
   const { appId, userId } = req.params;
   const { email } = req.query;
