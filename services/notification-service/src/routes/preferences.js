@@ -23,7 +23,6 @@ router.get("/:appId/:userId", async (req, res) => {
         notifyEmail: true,
         notifySlack: false,
         userEmail: null,
-        slackUsername: null,
       });
     }
     return res.json({
@@ -32,7 +31,6 @@ router.get("/:appId/:userId", async (req, res) => {
       notifyEmail: !!pref.notifyEmail,
       notifySlack: !!pref.notifySlack,
       userEmail: pref.userEmail || null,
-      slackUsername: pref.slackUsername || null,
     });
   } catch (e) {
     console.error('preferences:get error', e?.message || e);
@@ -41,10 +39,10 @@ router.get("/:appId/:userId", async (req, res) => {
 });
 
 // PUT /api/notifications/preferences/:appId/:userId
-// Body: { notifyEmail?: boolean, notifySlack?: boolean, userEmail?: string, slackUsername?: string }
+// Body: { notifyEmail?: boolean, notifySlack?: boolean, userEmail?: string }
 router.put("/:appId/:userId", async (req, res) => {
   const { appId, userId } = req.params;
-  const { notifyEmail, notifySlack, userEmail, slackUsername } = req.body || {};
+  const { notifyEmail, notifySlack, userEmail } = req.body || {};
   try {
     const prisma = getPrisma();
     const upserted = await prisma.userPreference.upsert({
@@ -53,13 +51,11 @@ router.put("/:appId/:userId", async (req, res) => {
         appId,
         userId,
         userEmail: userEmail ? normalizeEmail(userEmail) : null,
-        slackUsername: slackUsername || null,
         notifyEmail: notifyEmail ?? true,
         notifySlack: notifySlack ?? false,
       },
       update: {
         userEmail: userEmail === undefined ? undefined : (userEmail ? normalizeEmail(userEmail) : null),
-        slackUsername: slackUsername === undefined ? undefined : (slackUsername || null),
         notifyEmail: notifyEmail === undefined ? undefined : !!notifyEmail,
         notifySlack: notifySlack === undefined ? undefined : !!notifySlack,
       },
@@ -72,7 +68,6 @@ router.put("/:appId/:userId", async (req, res) => {
         notifyEmail: !!upserted.notifyEmail,
         notifySlack: !!upserted.notifySlack,
         userEmail: upserted.userEmail || null,
-        slackUsername: upserted.slackUsername || null,
       },
     });
   } catch (e) {

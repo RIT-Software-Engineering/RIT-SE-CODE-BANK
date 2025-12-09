@@ -53,7 +53,6 @@ router.post("/:appId", async (req, res) => {
       ).trim().toLowerCase();
       if (ctxEmail.includes('@')) userEmail = ctxEmail;
     }
-    const slackUsername = pref?.slackUsername || (context?.recipient && context.recipient.slackUsername) || null;
 
   const results = [];
   const errors = [];
@@ -109,9 +108,8 @@ router.post("/:appId", async (req, res) => {
         errors.push({ channel: "slack", error: slackErrorSummary });
       } else {
         try {
-          // Prefer direct handle when provided; otherwise resolve by email
-          const handle = slackUsername ? (slackUsername.startsWith("@") ? slackUsername : `@${slackUsername}`) : undefined;
-          const channelId = await resolveDmChannel({ slack: handle, email: userEmail || undefined });
+          // Resolve DM channel by email
+          const channelId = await resolveDmChannel({ email: userEmail || undefined });
           let textToSend = '';
           if (event) {
             const rendered = renderSlack({ event, role, appId, context, fallbackText: `${providedSubject || defaultSubject(role, context)} — ${providedMessage || ''}` });
@@ -122,8 +120,8 @@ router.post("/:appId", async (req, res) => {
           const resp = await sendSlackMessage({ channel: channelId, text: textToSend });
           results.push({ channel: "slack", ts: resp.ts, channelId });
           slackSent = true;
-          slackToSummary = handle || channelId;
-          console.log(`[dispatch][${ts()}] app=${appId} userId=${userId} slack=ok to=${handle}`);
+          slackToSummary = channelId;
+          console.log(`[dispatch][${ts()}] app=${appId} userId=${userId} slack=ok to=${channelId}`);
         } catch (e) {
           const err = e?.message || String(e);
           slackErrorSummary = err;

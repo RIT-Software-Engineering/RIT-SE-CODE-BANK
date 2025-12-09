@@ -17,34 +17,25 @@ function headers() {
 }
 
 /**
- * Resolves a Slack DM channel ID by email.
- * If a username is provided instead, converts it to email by appending @rit.edu.
+ * Resolves a Slack DM channel ID by email address.
  * 
  * @param {Object} params - Resolution parameters
- * @param {string} params.slack - Slack username with @ prefix (e.g., "@jdoe") - will be converted to email
  * @param {string} params.email - Email address for user lookup
  * @returns {Promise<string>} Slack channel ID for DM
  * @throws {Error} If user not found or Slack API fails
  */
-export async function resolveDmChannel({ slack, email }) {
-  // Convert username to email if provided (RIT Slack uses email-based usernames)
-  let lookupEmail = email;
-  if (!lookupEmail && slack && slack.startsWith("@")) {
-    const username = slack.slice(1);
-    lookupEmail = `${username}@rit.edu`;
-  }
-
-  if (!lookupEmail) {
-    throw new Error("No email or username provided for Slack lookup");
+export async function resolveDmChannel({ email }) {
+  if (!email) {
+    throw new Error("No email provided for Slack lookup");
   }
 
   // Use email lookup API
   const resp = await axios.get(
     "https://slack.com/api/users.lookupByEmail",
-    { headers: headers(), params: { email: lookupEmail } }
+    { headers: headers(), params: { email } }
   );
   if (!resp.data?.ok) {
-    throw new Error(`users.lookupByEmail failed for ${lookupEmail}: ${resp.data?.error || 'unknown error'}`);
+    throw new Error(`users.lookupByEmail failed for ${email}: ${resp.data?.error || 'unknown error'}`);
   }
   
   const userId = resp.data.user.id;
