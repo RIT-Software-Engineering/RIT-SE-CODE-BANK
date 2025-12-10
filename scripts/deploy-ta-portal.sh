@@ -5,7 +5,7 @@ echo "🚀 Deploying TA Portal to apps-staging.se.rit.edu..."
 
 # Configuration
 VM_HOST="${DEPLOY_HOST:-apps-staging.se.rit.edu}"
-VM_USER="${DEPLOY_USER:-kc8563}"
+VM_USER="${TA_PORTAL_DEPLOY_USER:-ka9920}"
 DEPLOY_PATH="/opt/ta-portal"
 # Get the branch name from GitHub Actions environment
 DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
@@ -23,7 +23,7 @@ ssh "${VM_USER}@${VM_HOST}" << ENDSSH
     
     echo "🐳 Rebuilding and restarting Docker containers..."
     docker compose down
-    docker compose up -d --build
+    ./run-ta-portal-dev.sh
     
     echo "⏳ Waiting for services to be healthy..."
     sleep 10
