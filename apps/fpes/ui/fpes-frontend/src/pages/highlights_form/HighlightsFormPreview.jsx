@@ -1,4 +1,4 @@
-import { Card, CardContent, Grid, Paper, Typography } from "@mui/material";
+import { Box, Card, CardContent, Grid, Paper, Typography } from "@mui/material";
 import { useState } from "react";
 
 export default function HighlightsFormPreview({formData, idToLookup = null}){
@@ -116,13 +116,24 @@ export default function HighlightsFormPreview({formData, idToLookup = null}){
                     <Typography variant="h4" style={{textAlign:"left"}}>{publicationData.title}</Typography>
                     <br/>
                     <Grid container size={12}>
-
                         <Grid item size={6}>
-                        <Typography variant="h6" style={{textAlign:"left"}}>Hours Worked : {serviceData.hours_worked}</Typography>
+                        <Typography variant="h6" style={{textAlign:"left"}}>Title : {publicationData.title}</Typography>
                         </Grid>
 
                         <Grid item size={6}>
-                        <Typography variant="h6" style={{textAlign:"left"}}>Service Type : {serviceData.service_type}</Typography>
+                        <Typography variant="h6" style={{textAlign:"left"}}>Status : {publicationData.status}</Typography>
+                        </Grid>
+
+                        <Grid item size={6}>
+                        <Typography variant="h6" style={{textAlign:"left"}}>Venue : {publicationData.venue}</Typography>
+                        </Grid>
+
+                        <Grid item size={6}>
+                        <Typography variant="h6" style={{textAlign:"left"}}>Proof of Signficance : {publicationData.proof_of_significance}</Typography>
+                        </Grid>
+
+                        <Grid item size={6}>
+                        <Typography variant="h6" style={{textAlign:"left"}}>Date : {publicationData.date_published.$y + "-" + publicationData.date_published.$M + "-" + publicationData.date_published.$D}</Typography>
                         </Grid>
 
                     </Grid>
@@ -134,7 +145,8 @@ export default function HighlightsFormPreview({formData, idToLookup = null}){
     }
 
     return (
-        <div>
+        <Paper minWidth="1000px" padding="50px">
+            <Box sx={{margin:"10%", border:"1"}} >
             <Typography variant="h3" textAlign="left">Services</Typography>
             {formData.services.length === 0 ?
             <Typography variant="h5" >No Services Added</Typography> :
@@ -151,6 +163,14 @@ export default function HighlightsFormPreview({formData, idToLookup = null}){
             ))
             }
 
+            <Typography variant="h3" textAlign="left">Publications</Typography>
+            {formData.publications.length === 0 ? 
+            <Typography variant="h5" >No Publications Added</Typography> :
+            formData.publications.map((publication, index) => (
+                <PublicationCard publicationData={publication} key={index}/>
+            ))
+            }
+
             <Typography variant="h3" textAlign="left">Course Sections</Typography>
             {formData.course_sections.length === 0 ? 
             <Typography variant="h5" >No Course Sections Added</Typography> :
@@ -158,6 +178,8 @@ export default function HighlightsFormPreview({formData, idToLookup = null}){
                 <CourseSectionCard courseSectionData={course_section} key={index}/>
             ))
             }
-        </div>
+
+            </Box>
+        </Paper>
     )
 }
