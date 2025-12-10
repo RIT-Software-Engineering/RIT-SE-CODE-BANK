@@ -11,7 +11,7 @@ DEPLOY_PATH="/opt/ta-portal"
 DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
 VM_KEY="${DEPLOY_KEY}"
 # SSH and deploy
-ssh "${VM_KEY}" "${VM_USER}@${VM_HOST}" << ENDSSH
+ssh -i "${VM_KEY}" "${VM_USER}@${VM_HOST}" << ENDSSH
     set -e
     
     echo "📂 Navigating to deployment directory..."
