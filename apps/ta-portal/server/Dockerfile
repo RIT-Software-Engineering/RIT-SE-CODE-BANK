@@ -17,6 +17,7 @@ RUN npx prisma generate --schema=./server/database/prisma/schema.prisma
 # Copy rest of application
 COPY . .
 
-EXPOSE 5000
+#Port 5000 on the Prod server
+EXPOSE 3300 
 
 CMD ["node", "main.js"]

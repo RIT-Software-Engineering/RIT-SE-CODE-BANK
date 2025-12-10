@@ -25,10 +25,10 @@ services:
        DATABASE_URL: mysql://root:ta_root_password@mariadb:3306/ta_portal_db
     environment:
       DATABASE_URL: mysql://root:ta_root_password@mariadb:3306/ta_portal_db
-      PORT: 5000
+      PORT: 3300 #Port 5000 on the Prod server
       NODE_ENV: production
     ports:
-      - "5000:5000"
+      - "3300:3300" #Port 5000 on the Prod server
     restart: unless-stopped
 
   ta-portal-frontend:
@@ -44,7 +44,7 @@ services:
       NEXT_PUBLIC_BACKEND_URL: http://apps-staging.se.rit.edu
       NEXT_PUBLIC_API_EXTENSION: /api
     ports:
-      - "3000:3000"
+      - "3000:3000" 
     depends_on:
       - ta-portal-backend
     restart: unless-stopped
