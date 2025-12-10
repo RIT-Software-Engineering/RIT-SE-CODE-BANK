@@ -11,7 +11,7 @@ DEPLOY_PATH="/opt/ta-portal"
 DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
 # SSH and deploy
 
-ssh -i "$DEPLOY_KEY" "${VM_USER}@apps-staging.se.rit.edu" << ENDSSH
+ssh -i "$DEPLOY_KEY" "kac9920@apps-staging.se.rit.edu" << ENDSSH
     set -e
     
     echo "📂 Navigating to deployment directory..."
