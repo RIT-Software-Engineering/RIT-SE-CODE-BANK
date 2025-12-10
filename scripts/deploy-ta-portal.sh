@@ -23,6 +23,7 @@ ssh -i "$DEPLOY_KEY" "kac9920@apps-staging.se.rit.edu" << ENDSSH
     
     echo "🐳 Rebuilding and restarting Docker containers..."
     docker compose down
+    chmod +x ./run-ta-portal-dev.sh
     ./run-ta-portal-dev.sh
     
     echo "⏳ Waiting for services to be healthy..."
