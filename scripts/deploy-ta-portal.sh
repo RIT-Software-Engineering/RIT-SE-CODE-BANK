@@ -10,7 +10,6 @@ DEPLOY_PATH="/opt/ta-portal"
 # Get the branch name from GitHub Actions environment
 DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
 # SSH and deploy
-echo "$DEPLOY_KEY"
 
 ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     set -e
