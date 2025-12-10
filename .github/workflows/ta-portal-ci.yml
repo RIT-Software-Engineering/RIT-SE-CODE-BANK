@@ -124,6 +124,7 @@ jobs:
         env:
           DEPLOY_USER: ${{ secrets.TA_PORTAL_DEPLOY_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_KEY: ${{secrets.TA_PORTAL_DEPLOY_SSH_KEY}}
         run: |
           if [ "$APP_NAME" = "all" ]; then
             echo "Deploying all apps"

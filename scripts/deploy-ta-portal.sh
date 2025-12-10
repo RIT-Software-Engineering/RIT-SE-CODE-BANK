@@ -9,9 +9,9 @@ VM_USER="${TA_PORTAL_DEPLOY_USER:-ka9920}"
 DEPLOY_PATH="/opt/ta-portal"
 # Get the branch name from GitHub Actions environment
 DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
-
+VM_KEY="${DEPLOY_KEY}"
 # SSH and deploy
-ssh "${VM_USER}@${VM_HOST}" << ENDSSH
+ssh "${VM_KEY}" "${VM_USER}@${VM_HOST}" << ENDSSH
     set -e
     
     echo "📂 Navigating to deployment directory..."
