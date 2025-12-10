@@ -1,5 +1,6 @@
 const pool = require('../db');
 const mariadb = require('mariadb');
+const fs = require('fs')
 
 
 async function getAllStudentSupport() { //Read
@@ -63,7 +64,7 @@ async function addStudentSupport(studentSupportData) {  //Create
       ]
     );
 
-    return { id: result.insertId };
+    return results;
   } finally {
     if (conn) conn.release();
   }
@@ -126,10 +127,33 @@ async function deleteStudentSupport(id) { //Delete
   }
 }
 
+async function resetStudentSupportTable(){
+    let connection;
+    try {
+        // Read sql file that rebuilds student support table and inserts test data
+        const resetQuery = await fs.readFileSync("sql/student_support.sql", 'utf-8');
+        // Splits file into multiple queries
+        let queries = resetQuery.split(';');
+        // Removes the empty query at the end
+        queries.pop();
+
+        connection = await pool.getConnection();
+        let results = [];
+        for (const query of queries){
+            results.push(await connection.query(query));
+        }
+
+        return results;
+    } finally {
+        if (connection) connection.release();
+    } 
+}
+
 module.exports = {
   getAllStudentSupport,
   getStudentSupportById,
   addStudentSupport,
   updateStudentSupport,
-  deleteStudentSupport
+  deleteStudentSupport,
+  resetStudentSupportTable
 };

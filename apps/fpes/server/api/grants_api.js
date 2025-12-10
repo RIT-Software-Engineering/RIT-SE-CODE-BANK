@@ -27,26 +27,14 @@ async function getGrantsById(id){
 
 }
 
-async function getGrantsByFormId(form_id){
-    let connection;
-    try {
-      conn = await pool.getConnection();
-      const results = await connection.query("SELECT * FROM grants WHERE form_id = ?", [form_id]);
-      return results;
-    }
-    finally {
-      if (connection) connection.release();
-    }
-}
-
 async function addGrant(grantData){ //Create
   try {
     conn = await pool.getConnection();
-    const { form_id, title, amount, funder, start_date, end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
+    const { title, amount, funder, start_date, end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
     const result = await conn.query(
-      `INSERT INTO grants (form_id, title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [form_id, title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status]
+      `INSERT INTO grants (title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status]
     );
     return { grant_id: result.insertId };
   } finally {
@@ -83,11 +71,34 @@ async function deleteGrant(id) {
   }
 }
 
+// Reset
+async function resetGrantsTable(){
+    let connection;
+    try {
+        // Read sql file that rebuilds grants table and inserts test data
+        const resetQuery = await fs.readFileSync("sql/grants.sql", 'utf-8');
+        // Splits file into multiple queries
+        let queries = resetQuery.split(';');
+        // Removes the empty query at the end
+        queries.pop();
+
+        connection = await pool.getConnection();
+        let results = [];
+        for (const query of queries){
+            await connection.query(query);
+        }
+
+        return;
+    } finally {
+        if (connection) connection.release();
+    } 
+}
+
 module.exports = {
     getAllGrants,
     getGrantsById,
-    getGrantsByFormId,
     addGrant,
     updateGrant,
-    deleteGrant
+    deleteGrant,
+    resetGrantsTable
 }

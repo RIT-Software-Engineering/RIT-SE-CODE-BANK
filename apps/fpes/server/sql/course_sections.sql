@@ -1,19 +1,15 @@
-DROP TABLE IF EXISTS course_sections;
-
 CREATE TABLE IF NOT EXISTS course_sections (
-    id INT UNSIGNED UNIQUE auto_increment PRIMARY KEY,
+    id INT UNIQUE AUTO_INCREMENT PRIMARY KEY,
     room_location VARCHAR(60),
     days_of_the_week VARCHAR(20) NOT NULL,
     number_of_students INT UNSIGNED NOT NULL,
     semester ENUM('FALL', 'SPRING', 'SUMMER') NOT NULL,
     year YEAR NOT NULL, 
     first_time_teaching_course BOOLEAN DEFAULT FALSE,
-    number_of_sections INT UNSIGNED  NOT NULL,
+    section_id INT UNSIGNED  NOT NULL,
     curriculum_development TEXT,
-    course_id INT UNSIGNED,
-    form_id INT,
-    FOREIGN KEY (course_id) REFERENCES courses(id),
-    FOREIGN KEY (form_id) REFERENCES forms(id)
+    course_id INT,
+    FOREIGN KEY (course_id) REFERENCES courses(id)
 );
 
 -- INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, scholastic_year)

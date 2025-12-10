@@ -58,6 +58,33 @@ export default function CourseSectionForm({courses, control, section, handleRemo
             </Grid>
 
             <Grid size={6}>
+                <Controller 
+                    control={control}
+                    name={section + "section_id"}
+                    rules={
+                        {
+                            required:{value:true, message:"Section ID is required"},
+                            min : {value : 0, message:"Section ID must be > 0"},
+                            pattern: {
+                                value: /^[0-9]+$/i,
+                                message: 'Must only contain numbers',
+                            },
+                            valueAsNumber : true
+                        }
+                    }
+                    render={({field}) =>
+                    <TextField 
+                        {...field}
+                        sx={{width:"100%"}}
+                        label="Section ID"
+                        error={errors.course_sections?.[index]?.section_id} 
+                        helperText={errors.course_sections?.[index]?.section_id?.message}
+                        />
+                    }
+                />
+            </Grid>
+
+            <Grid size={6}>
                 <Controller
                     control={control}
                     name={section + "days_of_the_week"}
@@ -190,33 +217,6 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                         label="Number of Students"
                         error={errors.course_sections?.[index]?.number_of_students} 
                         helperText={errors.course_sections?.[index]?.number_of_students?.message}
-                        />
-                    }
-                />
-            </Grid>
-
-            <Grid size={6}>
-                <Controller 
-                    control={control}
-                    name={section + "number_of_sections"}
-                    rules={
-                        {
-                            required:{value:true, message:"Number of Sections is required"},
-                            min : {value : 0, message:"Number of Sections must be > 0"},
-                            pattern: {
-                                value: /^[0-9]+$/i,
-                                message: 'Must only contain numbers',
-                            },
-                            valueAsNumber : true
-                        }
-                    }
-                    render={({field}) =>
-                    <TextField 
-                        {...field}
-                        sx={{width:"100%"}}
-                        label="Number of Sections"
-                        error={errors.course_sections?.[index]?.number_of_sections} 
-                        helperText={errors.course_sections?.[index]?.number_of_sections?.message}
                         />
                     }
                 />

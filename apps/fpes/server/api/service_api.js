@@ -37,18 +37,7 @@ async function deleteService(id){
     }
 }
 
-async function getServicesByFormId(form_id){
-    let connection;
-    try {
-        connection = await pool.getConnection();
-        const results = await connection.query("SELECT * FROM services WHERE form_id = ?", [form_id]);
-        return results;
-    } finally {
-        if (connection) connection.release();
-    }
-}
-
-async function resetServiceTable(){
+async function resetServicesTable(){
     let connection;
     try {
         // Read sql file that rebuilds services table and inserts test data
@@ -75,12 +64,12 @@ async function createService(body){
     try {
         // Get Connection from Pool
         connection = await pool.getConnection();
-        const { form_id, service_type, title, hours_worked, other_contributions} = body;
+        const {service_type, title, hours_worked, other_contributions} = body;
 
         const results = await connection.query(
-            `INSERT INTO services (form_id, service_type, title, hours_worked, other_contributions) 
-            VALUES (?, ?, ?, ?, ?) RETURNING id`,
-            [form_id, service_type, title, hours_worked, other_contributions]
+            `INSERT INTO services (service_type, title, hours_worked, other_contributions) 
+            VALUES (?, ?, ?, ?) RETURNING id`,
+            [service_type, title, hours_worked, other_contributions]
         );
         
         return results
@@ -93,7 +82,7 @@ async function updateService(id, body){
     try {
         // Get Connection from Pool
         connection = await pool.getConnection();
-        const allowed = ["form_id", "service_type", "title", "hours_worked", "other_contributions"];
+        const allowed = ["service_type", "title", "hours_worked", "other_contributions"];
         sets = []
         params = []
 
@@ -125,8 +114,7 @@ async function updateService(id, body){
 module.exports = {
     getAllServices,
     getServiceById,
-    getServicesByFormId,
-    resetServiceTable,
+    resetServicesTable,
     createService,
     deleteService,
     updateService

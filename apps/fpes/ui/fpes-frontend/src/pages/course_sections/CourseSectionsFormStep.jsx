@@ -9,7 +9,6 @@ export default function CourseSectionFormStep({form_id, control, errors, getValu
     const [courses, setCourses] = useState([]);
 
     const getAllCourses = () => {
-        useEffect(() => {
             axios.get("http://localhost:3000/courses")
             .then((response) => {
                 let sanitized_courses = [];
@@ -22,11 +21,11 @@ export default function CourseSectionFormStep({form_id, control, errors, getValu
                     )
                 });
                 setCourses(sanitized_courses);
-            })
-        }, []);
+            });
+
     }
 
-    getAllCourses();
+    useEffect(() => getAllCourses());
 
     function CourseSection(form_id){
         this.room_location = "";
@@ -35,7 +34,7 @@ export default function CourseSectionFormStep({form_id, control, errors, getValu
         this.semester = "";
         this.year = null;
         this.first_time_teaching_course = false;
-        this.number_of_sections = 0;
+        this.section_id = 0;
         this.curriculum_development = "";
         this.course = null;
         this.form_id = form_id;

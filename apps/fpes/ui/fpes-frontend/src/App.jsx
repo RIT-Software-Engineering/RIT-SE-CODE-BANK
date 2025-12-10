@@ -20,64 +20,56 @@ import Header from './pages/Header.jsx';
 import HighlightsFormPage from './pages/highlights_form/HighlightsFormPage.jsx';
 import HomePage from "./pages/home/HomePage";
 import HighlightsPage from './pages/highlights_page/HighlightsPage.jsx';
+import SupervisedFacultyTable from './pages/supervisor/SupervisedFacultyTable.jsx';
+import SupervisingPage from './pages/supervisor/SupervisingPage.jsx';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [role, setRole] = useState("faculty")
+  const [roles, setRoles] = useState(new Set([]));
   const [facultyId, setFacultyId] = useState(-1);
   const pages = [
-    // {
-    //     name : "Serivces",
-    //     route : "/services",
-    //     adminOnly : false
-    // },
-    // {
-    //     name : "Grants",
-    //     route : "/grants",
-    //     adminOnly : false
-    // },
-    // {
-    //     name : "Course Sections",
-    //     route : "/course_sections",
-    //     adminOnly : false,
-    // },
-    // {
-    //     name : "Student Support",
-    //     route : "/student_support",
-    //     adminOnly : false
-    // },
     {
         name : "Departments",
         route : "/departments",
-        adminOnly : true
+        roles_with_access : new Set(["Admin"])
     },
     {
-        name : "users",
+        name : "Users",
         route : "/users",
-        adminOnly : true
+        roles_with_access : new Set(["Admin"])
     },
     {
         name : "Courses",
         route : "/courses",
-        adminOnly : true
+        roles_with_access : new Set(["Admin"])
     },
     {
       name: "Profile",
       route: "/profile",
-      adminOnly: false
+      roles_with_access : new Set(["Admin", "Faculty", "Supervisor"])
+    },
+    {
+      name : "Home",
+      route : "/home",
+      roles_with_access : new Set(["Faculty", "Supervisor", "Admin"])
     },
     {
       name : "Highlights",
       route : "/highlights",
-      adminOnly : false
-    }
+      roles_with_access : new Set(["Faculty", "Supervisor"])
+    },
+    {
+      name : "Supervising",
+      route : "/supervising",
+      roles_with_access : new Set(["Supervisor", "Admin"])
+    },
   ]
 
   const adminRoutes = (
     <>
       <Route path='/departments' element={<DepartmentsPage/>}/>
       <Route path='/courses' element={<CoursesPage/>}/>
-       <Route path="/users" element={<UsersPage />} />
+      <Route path="/users" element={<UsersPage />} />
     </>
   )
 
@@ -93,30 +85,30 @@ return (
         {shouldShowHeader && (
           <Header 
             pages={pages} 
-            adminView={role === "admin"} 
-            setRole={setRole}
+            adminView={roles.intersection(new Set(["Admin"])).size > 0} 
             isAuthenticated={isAuthenticated} 
             onLogout={() => {
               setIsAuthenticated(false);
-              setRole(null);
+              setRoles(new Set([]));
               setFacultyId(-1);
             }}
+            roles={roles}
             profileRoute="/profile"
+
           />
         )}
               
         <Routes>
           <Route path="/" element={isAuthenticated ? <Navigate to="/home" /> : <Navigate to="/login" />} />
           <Route path="/home" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HomePage /> </ProtectedRoute>} />
-          <Route path="/login" element={<LoginPage setRole={setRole} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
-          <Route path="/services" element={ <ProtectedRoute isAuthenticated={isAuthenticated}> <ServicesPage /> </ProtectedRoute>} />
-          <Route path="/grants" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GrantsPage /> </ProtectedRoute>} />
-          {role === 'admin' ? adminRoutes : null}
+          <Route path="/login" element={<LoginPage setRoles={setRoles} setIsAuthenticated={setIsAuthenticated} updateFacultyId={updateFacultyId} />} />
+          {roles.intersection(new Set(["Admin"])).size > 0? adminRoutes : null}
           <Route path="/course_sections" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <CourseSectionsPage/> </ProtectedRoute>} />
           <Route path="/student_support" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <StudentSupportPage/> </ProtectedRoute> } />
           <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage facultyId={facultyId} /> </ProtectedRoute> } />
           <Route path="/highlights" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsPage facultyId={facultyId}/> </ProtectedRoute> } />
           <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage facultyId={facultyId}/> </ProtectedRoute> } />
+          <Route path="/supervising" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <SupervisingPage facultyId={facultyId} roles={roles}/> </ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } />
         </Routes>
       </BrowserRouter>

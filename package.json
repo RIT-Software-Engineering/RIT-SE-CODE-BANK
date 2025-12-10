@@ -6,6 +6,7 @@
   "dependencies": {
     "@mui/x-date-pickers": "^8.17.0",
     "dayjs": "^1.11.19",
-    "mariadb": "^3.4.5"
+    "mariadb": "^3.4.5",
+    "react-switch-selector": "^2.3.0"
   }
 }

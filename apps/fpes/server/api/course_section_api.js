@@ -8,7 +8,7 @@ async function getAllCourseSections(){
         const results = await connection.query(
             `SELECT cs.id, c.course_name, c.course_code,
             cs.days_of_the_week, cs.number_of_students, cs.room_location, cs.semester,
-            cs.year, cs.first_time_teaching_course
+            cs.year, cs.first_time_teaching_course, cs.section_id
             FROM course_sections cs
             INNER JOIN courses c
                 ON c.id = cs.course_id;
@@ -26,7 +26,7 @@ async function getSectionByID(id){
         const results = await connection.query(
             `SELECT cs.id, c.course_name, c.course_code,
             cs.days_of_the_week, cs.room_location, cs.semester,
-            cs.year, cs.number_of_sections, cs.first_time_teaching_course
+            cs.year, cs.section_id, cs.first_time_teaching_course
             FROM course_sections cs
             INNER JOIN courses c
                 ON c.id = cs.course_id
@@ -71,7 +71,7 @@ async function getSectionByYear(year){
     }
 }
 
-async function initCourseSectionsTable(){
+async function resetCourseSectionsTable(){
     let connection;
     try {
         // Read sql file that rebuilds course_sections table and inserts test data
@@ -97,12 +97,12 @@ async function createCourseSection(body){
     let connection;
     try {
         connection = await pool.getConnection();
-        const {course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, number_of_sections, curriculum_development} = body;
+        const {course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, section_id, curriculum_development} = body;
 
         const results = await connection.query(
-            `INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, number_of_sections, curriculum_development)
+            `INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, section_id, curriculum_development)
             VALUES (?,?,?,?,?,?,?,?,?) RETURNING id`,
-            [course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, number_of_sections, curriculum_development]
+            [course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, section_id, curriculum_development]
         );
 
         return results;
@@ -115,7 +115,7 @@ async function updateCourseSection(id, body){
     let connection;
     try {
         connection = await pool.getConnection();
-        allowed = ["course_id", "room_location", "days_of_the_week", "number_of_students", "semester", "year", "first_time_teaching_course", "number_of_sections", "curriculum_development"];
+        allowed = ["course_id", "room_location", "days_of_the_week", "number_of_students", "semester", "year", "first_time_teaching_course", "section_id", "curriculum_development"];
 
         sets = []
         params = []
@@ -169,7 +169,7 @@ function getDaysOfTheWeek(values){
 
 module.exports = {
     getAllCourseSections,
-    initCourseSectionsTable,
+    resetCourseSectionsTable,
     getSectionsByCourseID,
     getSectionByID,
     createCourseSection,
