@@ -21,6 +21,7 @@ async function main() {
   console.log('👨‍🏫 Creating professors...');
   const prof1 = await prisma.professor.create({
     data: {
+      id: 1, // ✅ Explicitly set id to 1 for the first professor
       fname: 'John',
       lname: 'Smith',
       email: 'john.smith@rit.edu',
@@ -43,7 +44,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created ${3} professors`);
+  console.log(`✅ Created ${3} professors (Professor 1: John Smith with id=1)`);
 
   // 2. Create Courses
   console.log('📚 Creating courses...');
@@ -441,7 +442,7 @@ async function main() {
   console.log('🎉 Database seeding completed successfully!');
   console.log('='.repeat(60));
   console.log(`📊 Summary:`);
-  console.log(`   • Professors:         ${3}`);
+  console.log(`   • Professors:         ${3} (Prof 1: John Smith with id=1)`);
   console.log(`   • Courses:            ${5}`);
   console.log(`   • Events:             ${events.length}`);
   console.log(`   • Course Templates:   ${2}`);
@@ -451,6 +452,7 @@ async function main() {
   console.log(`   • Team Members:       ${members.length}`);
   console.log('='.repeat(60));
   console.log('\n✨ You can now use the application with test data!');
+  console.log('\n💡 Note: Professor John Smith has id=1 for easy testing');
 }
 
 main()

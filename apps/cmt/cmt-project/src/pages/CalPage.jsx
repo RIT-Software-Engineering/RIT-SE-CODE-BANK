@@ -42,6 +42,15 @@ export default function CalPage() {
 
   const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/events`;
 
+  // Add calendar-page class to body on mount, remove on unmount
+  useEffect(() => {
+    document.body.classList.add('calendar-page');
+    
+    return () => {
+      document.body.classList.remove('calendar-page');
+    };
+  }, []);
+
   const loadCourses = async () => {
     try {
       const response = await fetch(`${API_BASE}/courses`);
@@ -78,6 +87,12 @@ export default function CalPage() {
     loadEvents();
     loadUpcomingDeadlines();
   }, []);
+
+  // Reload events when month changes to ensure fresh data
+  useEffect(() => {
+    loadEvents();
+    loadUpcomingDeadlines();
+  }, [currentDate]);
 
   const loadUpcomingDeadlines = async () => {
     try {
@@ -280,16 +295,10 @@ export default function CalPage() {
       {/* Header */}
       <div className="calendar-header">
         <div>
-          <h1 className="calendar-title">📚 Course Management Calendar</h1>
-          <p style={{ color: "var(--text-secondary)", marginTop: "0.5rem" }}>
+          <h1 className="calendar-title">📚 Course Calendar</h1>
+          <p className="calendar-subtitle">
             Manage your courses, assignments, and academic schedule
           </p>
-        </div>
-        <div className="header-buttons">
-          <button className="btn btn-primary" onClick={() => handleAddEvent()}>
-            <Plus size={16} />
-            Add Event
-          </button>
         </div>
       </div>
 
@@ -539,8 +548,7 @@ export default function CalPage() {
                 Edit Event
               </button>
               <button
-                className="btn"
-                style={{ background: "var(--danger)", color: "white" }}
+                className="btn btn-danger"
                 onClick={handleDeleteEvent}
               >
                 <Trash2 size={16} />
