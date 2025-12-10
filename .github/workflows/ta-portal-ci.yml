@@ -113,9 +113,9 @@ jobs:
       - name: Setup SSH Key
         if: env.APP_NAME != ''
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.TA_PORTAL_DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.TA_PORTAL_DEPLOY_SSH_KEY }}" > ../id_rsa
+          chmod 600 ../id_rsa
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
 
@@ -124,7 +124,7 @@ jobs:
         env:
           DEPLOY_USER: ${{ secrets.TA_PORTAL_DEPLOY_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_KEY: ${{secrets.TA_PORTAL_DEPLOY_SSH_KEY}}
+          DEPLOY_KEY: ${{ github.workspace }}/../id_rsa
         run: |
           if [ "$APP_NAME" = "all" ]; then
             echo "Deploying all apps"
