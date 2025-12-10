@@ -1,8 +1,8 @@
 import { Button, Paper, Step, StepButton, StepContent, StepLabel, Stepper } from "@mui/material";
-import React, { useState } from "react";
+import React, { useState, useEffect} from "react";
 import { useForm } from "react-hook-form";
 import ServicesFormStep from "../services/ServicesFormStep";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { validateProps } from "@mui/x-data-grid/internals";
 import axios from "axios";
 import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
@@ -13,6 +13,7 @@ import GrantsFormStep from "../grants/GrantsFormStep";
 export default function HighlightsFormPage({facultyId}) {
     const [activeStep, setActiveStep] = useState(0);
     const navigate = useNavigate();
+    const { id } = useParams();
 
     const steps = [
 
@@ -107,6 +108,20 @@ export default function HighlightsFormPage({facultyId}) {
         },
         mode:"onChange"
     });
+
+    useEffect(() => {
+        if (id) {
+            axios.get(`http://localhost:3000/highlights/${id}`)
+                .then(res => {
+                    reset(res.data);
+                });
+        } else {
+            axios.get(`http://localhost:3000/highlights/draft/${facultyId}`)
+                .then(res => {
+                    if (res.data) reset(res.data);
+                });
+        }
+    }, [id, facultyId, reset]);
 
     async function handleSaveDraft(data){
         data.faculty_information_id = facultyId;

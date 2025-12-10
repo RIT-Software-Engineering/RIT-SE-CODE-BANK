@@ -34,6 +34,7 @@ app.use('/publications', publicationsRoutes)
 const highlightsRoutes = require('./routes/highlights_routes.js');
 const { rebuildTables } = require('./api/rebuild_tables.js');
 app.use('/highlights', highlightsRoutes);
+app.use("/highlights", require("./routes/highlights_draft"));
 
 const formsRoutes = require('./routes/forms_routes.js');
 app.use('/forms', formsRoutes);

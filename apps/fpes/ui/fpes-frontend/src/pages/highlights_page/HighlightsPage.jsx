@@ -22,7 +22,14 @@ export default function HighlightsPage({facultyId}){
 
     const columns = [
         {field : "id", headerName : "ID", flex:.2},
-        {field : "time_submitted", headerName : "Submitted On", flex:1}
+        {field : "time_submitted", headerName : "Submitted On", flex:1},
+        {field: "action", headerName: "Action", 
+            renderCell: (params) => (
+                <Link to={`/highlights_form/${params.row.id}`}>
+                Edit
+                </Link>
+        )}
+        
     ]
 
     const paginationModel = { page: 0, pageSize: 5 };
