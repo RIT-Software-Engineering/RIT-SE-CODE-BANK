@@ -116,7 +116,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.TA_PORTAL_DEPLOY_SSH_KEY }}" > ../github-actions-deploy
           chmod 600 ../github-actions-deploy
-          ssh-keyscan -H ${{ secrets.SSH_KNOWN_HOSTS }} >> ~/.ssh/known_hosts
+          echo ${{ secrets.SSH_KNOWN_HOSTS }} > ~/.ssh/known_hosts
 
 
       - name: Deploy script
