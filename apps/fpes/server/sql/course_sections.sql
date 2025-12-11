@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS course_sections (
     year YEAR NOT NULL, 
     first_time_teaching_course BOOLEAN DEFAULT FALSE,
     section_id INT UNSIGNED  NOT NULL,
-    curriculum_development TEXT,
     course_id INT,
     FOREIGN KEY (course_id) REFERENCES courses(id)
 );

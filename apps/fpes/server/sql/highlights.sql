@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS highlights (
   collaborations_section     TEXT NULL,
   professional_development   TEXT NULL,
   administrative_responsibilities TEXT NULL,
+  curriculum_development TEXT NULL,
 
 -- Requires form and student_support tables to exist first
 
