@@ -53,7 +53,8 @@ services:
       NODE_ENV: production
       PORT: 3003
       DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_workflows:3306/scoop_portal_demo
-    depends_on: mariadb_workflows
+    depends_on: 
+      - mariadb_workflows
     restart: unless-stopped
   
   notifications_api:
@@ -70,7 +71,8 @@ services:
       NODE_ENV: development
       SLACK_BOT_TOKEN:
       DATABASE_URL: mysql://root:password@mariadb_notifications:3306/notification_service
-    depends_on: mariadb_notifications
+    depends_on: 
+      - mariadb_notifications
     restart: unless-stopped
 
   scoop-portal-backend:

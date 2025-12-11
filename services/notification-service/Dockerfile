@@ -1,4 +1,4 @@
-FROM node:20-alpha
+FROM node:20-alpine
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ RUN npm ci
 
 RUN npx prisma generate
 
-COPY ..
+COPY . .
 
 EXPOSE 4000
 
