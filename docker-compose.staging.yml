@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   mariadb_main:
-    image: mariadb:latest
+    image: mariadb:11
     container_name: mariadb_scoop_portal
     environment:
       MARIADB_ROOT_PASSWORD: password
@@ -10,14 +10,17 @@ services:
       MARIADB_PASSWORD: scoop_portal_password
     ports:
       - "3308:3306"
-    expose:
-      - "3308"
     volumes:
       - mariadb_scoop_portal_data:/var/lib/mysql
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mariadb_workflows:
-    image: mariadb:latest
+    image: mariadb:11
     container_name: mariadb_workflows
     environment:
       MARIADB_ROOT_PASSWORD: password
@@ -51,7 +54,8 @@ services:
       PORT: 5020
       DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_main:3306/scoop_portal_demo
     depends_on:
-      - mariadb_main
+      mariadb_main:
+        condition: service_healthy
     restart: unless-stopped
 
   scoop-portal-frontend:
