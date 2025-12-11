@@ -47,7 +47,7 @@ NODE_ENV=development'
 
 
 
-docker compose up -d --build
+docker compose -f docker-compose.staging.yml up -d --build
 echo "we made it"
 cd ./apps/scoop-portal/server
 echo $(pwd)

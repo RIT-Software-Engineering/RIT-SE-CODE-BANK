@@ -59,16 +59,17 @@ if (!fs.existsSync(envFilePortalUI)) {
   console.log("Creating scoop portal ui .env file...");
   const defaultEnv = `PORT=3000
 API_PORT=5002
+NEXT_PUBLIC_URL_BASE_PATH=/scoop-portal
 `;
   fs.writeFileSync(envFilePortalUI, defaultEnv);
 }
 
 if (!fs.existsSync(envFilePortalUIDev)) {
   console.log("Creating scoop portal ui .env.development file...");
-  const defaultEnv = `NEXT_PUBLIC_API_URL=http://localhost:5002
+  const defaultEnv = `NEXT_PUBLIC_API_URL=http://localhost:5002/scoop-portal
 NEXT_PUBLIC_WORKFLOWS_API_URL=http://localhost:5001
 NEXT_PUBLIC_NOTIFICATION=/api/notifications
-
+NEXT_PUBLIC_URL_BASE_PATH=/scoop-portal
 `;
   fs.writeFileSync(envFilePortalUIDev, defaultEnv);
 }
