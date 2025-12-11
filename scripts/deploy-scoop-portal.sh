@@ -14,7 +14,7 @@ git fetch origin
 git checkout $BRANCH
 git pull origin $BRANCH
 
-docker compose down
+docker compose -f docker-compose.staging.yml down
 
 create_env_file() {
   local file_path="$1"
