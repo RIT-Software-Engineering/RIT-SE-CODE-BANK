@@ -2,10 +2,7 @@ import { Grid, TextField, IconButton, Typography, Paper } from "@mui/material";
 import { Controller } from "react-hook-form";
 import CloseIcon from "@mui/icons-material/Close";
 
-export default function StudentSupportForm({
-  control,
-  errors,
-}) {
+export default function StudentSupportForm({ control, errors }) {
   const fields = [
     "independent_studies_supervised",
     "bs_cs_students_supervised",
@@ -22,56 +19,56 @@ export default function StudentSupportForm({
   ];
 
   return (
-      <Paper sx={{ p: 3, mb: 3, position: "relative" }}>
-        
-      <Grid item size={10}>
-      <Typography variant="h5" textAlign="left">Record Entry</Typography>
-      </Grid>
+    <Paper sx={{padding:"4% 4%", margin:"4% auto", width:"600px"}}>
 
-    <Grid container spacing={2}>
-      {fields.map((fieldName) => (
-        <Grid item xs={12} sm={6} key={fieldName}>
-          <Controller
-            name={`student_support.${fieldName}`}
-            control={control}
-            rules={{
-              required: "Required",
-              min: { value: 0, message: "Cannot be negative" },
-              valueAsNumber: true,
-            }}
-            render={({ field: f }) => (
-              <TextField
-                {...f}
-                label={fieldName.replaceAll("_", " ")}
-                type="number"
-                fullWidth
-                inputProps={{ min: 0 }}
-                error={errors?.student_support?.[fieldName]}
-                helperText={errors?.student_support?.[fieldName]?.message}
-              />
-            )}
-          />
-  
-        </Grid>
-      ))}
-        </Grid>
+        <Typography variant="h5" sx={{ mb: 2 }}>
+          Student Support Entry
+        </Typography>
 
-          <Grid item size={10}>
-              <Controller
-                  name={'student_support.other_contributions'}
-                  control={control}
-                  render={({field}) =>
-                      <TextField 
-                      sx={{width:"100%"}} 
-                      {...field} 
-                      label="Other Contributions" 
-                      placeholder="Other Contributions" 
-                      multiline minRows={4} 
-                      maxRows={10}
-                      />
-                  }
-              />
+        <Grid container spacing={2}>
+
+        {fields.map((fieldName) => (
+          <Grid item xs={12} sm={6} key={fieldName}>
+            <Controller
+              name={`student_support.${fieldName}`}
+              control={control}
+              rules={{
+                required: "Required",
+                min: { value: 0, message: "Cannot be negative" },
+                valueAsNumber: true,
+              }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label={fieldName.replaceAll("_", " ")}
+                  type="number"
+                  fullWidth
+                  inputProps={{ min: 0 }}
+                  error={!!errors?.student_support?.[fieldName]}
+                  helperText={errors?.student_support?.[fieldName]?.message}
+                />
+              )}
+            />
           </Grid>
-      </Paper>
+        ))}
+
+       <Grid item xs={12}>
+        <Controller
+          name={"student_support.other_contributions"}
+          control={control}
+          render={({ field }) => (
+            <TextField
+              {...field}
+              label="Other Contributions"
+              multiline
+              fullWidth
+              minRows={4}
+              maxRows={10}
+            />
+          )}
+        />
+      </Grid>
+      </Grid>
+    </Paper>
   );
 }

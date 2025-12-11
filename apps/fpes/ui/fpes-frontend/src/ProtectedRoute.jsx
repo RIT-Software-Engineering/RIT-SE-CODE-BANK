@@ -4,7 +4,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/
 export default function ProtectedRoute({ isAuthenticated, children}) {
 
   if (!isAuthenticated) {
-   return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace />;
   }
   return children;
 }
