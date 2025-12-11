@@ -43,6 +43,36 @@ services:
     volumes:
       - mariadb_notifications_data:/var/lib/mysql
 
+  workflow_api_sp:
+    build: 
+      context: ./apps/workflow/server
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_workflows:3306/scoop_portal_demo
+    depends_on: mariadb_workflows
+    restart: unless-stopped
+  
+  notifications_api:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    ports: 
+      - "4000:4000"
+    environment:
+      SMTP_HOST: smtp4dev
+      SMTP_PORT: 25
+      SMTP_FROM: se_svc_apps@rit.edu
+      PORT: 4000
+      NODE_ENV: development
+      SLACK_BOT_TOKEN:
+      DATABASE_URL: mysql://root:password@mariadb_notifications:3306/notification_service
+    depends_on: mariadb_notifications
+    restart: unless-stopped
+
   scoop-portal-backend:
     build:
       context: ./apps/scoop-portal/server
