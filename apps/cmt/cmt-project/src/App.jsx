@@ -3,7 +3,7 @@ import SiteNav from "./components/SiteNav.jsx";
 
 export default function App() {
   return (
-    <div>
+    <div style={{ minHeight: "100vh" }}>
       <SiteNav />
       <main style={{ padding: "24px" }}>
         <Outlet />

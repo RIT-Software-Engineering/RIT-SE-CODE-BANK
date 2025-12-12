@@ -1,51 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import "../styles/devLogin.css";
 
-const AUTH_BASE = "http://localhost:5010"; // backend server
+const AUTH_BASE = "http://localhost:5010";
 
 export default function DevLoginPage() {
-  const [users, setUsers] = useState([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [loggingIn, setLoggingIn] = useState(false);
   const [error, setError] = useState(null);
-  const [loggingInId, setLoggingInId] = useState(null);
 
-  useEffect(() => {
-    async function loadUsers() {
-      try {
-        setLoadingUsers(true);
-        setError(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoggingIn(true);
 
-        const res = await fetch(`${AUTH_BASE}/api/dev/users`, {
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          throw new Error(`Failed to load dev users (${res.status})`);
-        }
-
-        const data = await res.json();
-        setUsers(data);
-      } catch (err) {
-        console.error(err);
-        setError("Could not load dev users. Check dev backend.");
-      } finally {
-        setLoadingUsers(false);
-      }
-    }
-
-    loadUsers();
-  }, []);
-
-  const handleLogin = async (id) => {
     try {
-      setLoggingInId(id);
-      setError(null);
-
       const res = await fetch(`${AUTH_BASE}/api/dev/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
@@ -53,13 +28,12 @@ export default function DevLoginPage() {
         throw new Error(`Login failed (${res.status}): ${text}`);
       }
 
-      // cookie set – now go into the main app
       window.location.href = "/cmt/";
     } catch (err) {
       console.error(err);
-      setError("Login failed. Check console / backend logs.");
+      setError("Login failed. Check email/password or backend logs.");
     } finally {
-      setLoggingInId(null);
+      setLoggingIn(false);
     }
   };
 
@@ -67,39 +41,40 @@ export default function DevLoginPage() {
     <div className="dev-login-container">
       <h1 className="dev-login-title">Developer Login</h1>
       <p className="dev-login-subtitle">
-        Select a test user to simulate Shibboleth login.
+        Enter a test account to simulate Shibboleth login.
       </p>
 
-      {loadingUsers && <p>Loading test users…</p>}
       {error && <p className="dev-login-error">{error}</p>}
 
-      {!loadingUsers && users.length === 0 && !error && (
-        <p>No dev users found. Check your JSON file.</p>
-      )}
+      <form className="dev-login-form" onSubmit={handleSubmit}>
+        <label className="dev-login-label">
+          Email
+          <input
+            className="dev-login-input"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="username"
+            required
+          />
+        </label>
 
-      <div className="dev-login-users">
-        {users.map((user) => (
-          <button
-            key={user.id}
-            className={
-              loggingInId === user.id
-                ? "dev-login-user-btn dev-login-user-btn-disabled"
-                : "dev-login-user-btn"
-            }
-            onClick={() => handleLogin(user.id)}
-            disabled={!!loggingInId}
-          >
-            <div className="dev-login-user-name">
-              {user.name || user.email}
-            </div>
-            <div className="dev-login-user-email">{user.email}</div>
-            {user.roles?.length > 0 && (
-              <div className="dev-login-user-roles">
-                Roles: {user.roles.join(", ")}</div>
-            )}
-          </button>
-        ))}
-      </div>
+        <label className="dev-login-label">
+          Password
+          <input
+            className="dev-login-input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
+        </label>
+
+        <button className="dev-login-submit" type="submit" disabled={loggingIn}>
+          {loggingIn ? "Logging in…" : "Log in"}
+        </button>
+      </form>
     </div>
   );
 }

@@ -1,58 +1,81 @@
 .dev-login-container {
-  max-width: 640px;
-  margin: 2rem auto;
-  padding: 1.5rem;
+  max-width: 420px;
+  margin: 80px auto;
+  padding: 32px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  text-align: center;
 }
 
 .dev-login-title {
-  margin-bottom: 0.5rem;
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  color: #222;
 }
 
 .dev-login-subtitle {
-  margin-bottom: 1.5rem;
-  color: #999;
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.dev-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dev-login-label {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  font-size: 0.85rem;
+  color: #444;
+  gap: 6px;
+}
+
+.dev-login-input {
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.dev-login-input:focus {
+  border-color: #f36e21; /* RIT orange accent */
+  box-shadow: 0 0 0 2px rgba(243, 110, 33, 0.2);
+}
+
+.dev-login-submit {
+  margin-top: 12px;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #f36e21;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.15s, transform 0.05s;
+}
+
+.dev-login-submit:hover {
+  background-color: #dd5f1b;
+}
+
+.dev-login-submit:active {
+  transform: translateY(1px);
+}
+
+.dev-login-submit:disabled {
+  background-color: #f3a679;
+  cursor: not-allowed;
 }
 
 .dev-login-error {
-  color: #ff6b6b;
-  margin-bottom: 1rem;
-}
-
-.dev-login-users {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.dev-login-user-btn {
-  text-align: left;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid #333;
-  background: rgba(255, 255, 255, 0.02);
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.dev-login-user-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.dev-login-user-btn-disabled {
-  background: #222 !important;
-  cursor: wait !important;
-}
-
-.dev-login-user-name {
-  font-weight: 600;
-}
-
-.dev-login-user-email {
+  margin-bottom: 16px;
+  color: #b00020;
   font-size: 0.9rem;
-  color: #bbb;
-}
-
-.dev-login-user-roles {
-  font-size: 0.85rem;
-  color: #888;
-  margin-top: 4px;
 }

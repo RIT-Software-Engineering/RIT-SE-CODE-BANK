@@ -79,14 +79,14 @@ if (process.env.NODE_ENV !== "production") {
 
   // GET /dev/users – list of test users for DevLoginPage
   app.get("/api/dev/users", (req, res) => {
-    const publicUsers = devUsers.map(({ id, email, name, roles }) => ({
-      id,
-      email,
-      name,
-      roles,
-    }));
-    res.json(publicUsers);
-  });
+  const publicUsers = devUsers.map(({ id, email, name, roles }) => ({
+    id,
+    email,
+    name,
+    roles,
+  }));
+  res.json({ users: publicUsers }); // wrapped for consistency
+});
 
   // Helper: map dev user to JWT payload (match future Shibboleth claims)
   function buildClaimsFromDevUser(user) {
@@ -104,31 +104,38 @@ if (process.env.NODE_ENV !== "production") {
 
   // POST /dev/login { id } -> set cmt_id cookie
   app.post("/api/dev/login", (req, res) => {
-    const { id } = req.body || {};
-    const user = devUsers.find((u) => u.id === id);
+  const { email, password } = req.body || {};
 
-    if (!user) {
-      return res.status(404).json({ error: "Unknown dev user" });
-    }
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password required" });
+  }
 
-    const claims = buildClaimsFromDevUser(user);
+  const user = devUsers.find(
+    (u) => String(u.email || "").toLowerCase() === String(email).toLowerCase()
+  );
 
-    const token = jwt.sign(claims, process.env.JWT_SECRET || "dev-secret", {
-      issuer: "cmt-auth",
-      expiresIn: "8h",
-    });
+  // dev-users.json must include "password"
+  if (!user || user.password !== password) {
+    return res.status(401).json({ error: "Invalid email or password" });
+  }
 
-    // In dev we allow JS to read this cookie (RequireAuth on the frontend)
-    res.cookie("cmt_id", token, {
-      httpOnly: false,
-      sameSite: "lax",
-      secure: false, // ok for http://localhost
-      path: "/",
-      maxAge: 8 * 60 * 60 * 1000, // 8 hours
-    });
+  const claims = buildClaimsFromDevUser(user);
 
-    res.json({ ok: true, user: claims });
+  const token = jwt.sign(claims, process.env.JWT_SECRET || "dev-secret", {
+    issuer: "cmt-auth",
+    expiresIn: "8h",
   });
+
+  res.cookie("cmt_id", token, {
+    httpOnly: false,
+    sameSite: "lax",
+    secure: false,
+    path: "/",
+    maxAge: 8 * 60 * 60 * 1000,
+  });
+
+  res.json({ ok: true, user: claims });
+});
 }
 
 

@@ -7,10 +7,30 @@ import CalPage from "./pages/CalPage.jsx";
 import CoursePage from "./pages/CoursePage.jsx";
 import CreateTemplatePage from "./pages/CreateTemplatePage.jsx";
 import DevLoginPage from "./pages/DevLoginPage.jsx";
-import RequireAuth from "./components/RequireAuth.jsx";   // <-- add this
+import RequireAuth from "./components/RequireAuth.jsx";
 import "./styles/global.css";
 import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
+
+
+
+/* ------------------------------------------------------------------
+   Suppress noisy ResizeObserver errors in development
+   (Does NOT affect production behavior)
+   ------------------------------------------------------------------ */
+if (process.env.NODE_ENV === "development") {
+  const _error = console.error;
+  console.error = (...args) => {
+    const msg = args?.[0]?.toString?.() || "";
+    if (
+      msg.includes("ResizeObserver loop limit exceeded") ||
+      msg.includes("ResizeObserver loop completed with undelivered notifications")
+    ) {
+      return; // ignore
+    }
+    _error(...args);
+  };
+}
 
 console.log("pages seen:", require.context("./pages", false, /\.jsx$/).keys());
 
@@ -21,7 +41,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         {/* Public route: login page */}
         <Route path="/login" element={<DevLoginPage />} />
 
-        {/* Protected routes: everything under "/" */}
+        {/* Protected routes */}
         <Route
           path="/"
           element={

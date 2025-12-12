@@ -36,7 +36,7 @@
 
 html,
 body {
-    max-width: 100vw;
+    width: 100%;
     overflow-x: hidden;
 }
 
@@ -73,8 +73,9 @@ body {
 
 main {
     margin: 1.5rem;
-    max-width: 100%;
+    max-width: calc(100% - 3rem);
 }
+
 
 footer {
     width: 100%;
@@ -115,3 +116,41 @@ p {
     line-height: 1.5rem;
     font-weight: 300;
 }
+
+:root {
+  --nav-height: 100px;
+}
+body {
+  padding-top: var(--nav-height);
+}
+
+
+html, body, #root {
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* If you have a main layout wrapper, make it stable */
+.app-root, .app-container, .page-container {
+  min-height: 100%;
+}
+
+/* Prevent resize jitter in scrolling areas */
+.main-content, .content, .outlet-wrapper {
+  min-height: 0;         /* critical for flex children */
+  overflow: auto;
+}
+
