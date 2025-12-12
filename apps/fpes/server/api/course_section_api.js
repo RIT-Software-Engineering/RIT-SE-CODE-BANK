@@ -97,12 +97,12 @@ async function createCourseSection(body){
     let connection;
     try {
         connection = await pool.getConnection();
-        const {course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, section_id, curriculum_development} = body;
+        const {course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, section_id} = body;
 
         const results = await connection.query(
-            `INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, section_id, curriculum_development)
-            VALUES (?,?,?,?,?,?,?,?,?) RETURNING id`,
-            [course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, section_id, curriculum_development]
+            `INSERT INTO course_sections (course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, section_id)
+            VALUES (?,?,?,?,?,?,?,?) RETURNING id`,
+            [course_id, room_location, days_of_the_week, number_of_students, semester, year, first_time_teaching_course, section_id]
         );
 
         return results;
@@ -115,7 +115,7 @@ async function updateCourseSection(id, body){
     let connection;
     try {
         connection = await pool.getConnection();
-        allowed = ["course_id", "room_location", "days_of_the_week", "number_of_students", "semester", "year", "first_time_teaching_course", "section_id", "curriculum_development"];
+        allowed = ["course_id", "room_location", "days_of_the_week", "number_of_students", "semester", "year", "first_time_teaching_course", "section_id"];
 
         sets = []
         params = []

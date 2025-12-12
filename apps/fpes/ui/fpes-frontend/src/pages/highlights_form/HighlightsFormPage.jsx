@@ -60,11 +60,11 @@ export default function HighlightsFormPage({facultyId}) {
                     year: null,
                     first_time_teaching_course: false,
                     number_of_sections: 0,
-                    curriculum_development: "",
                     course: null,
                     form_id: facultyId,
                 }
             ],
+            curriculum_development : "",
             publications : [
                 {
                     title: "",

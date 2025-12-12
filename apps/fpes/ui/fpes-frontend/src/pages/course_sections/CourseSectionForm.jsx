@@ -232,22 +232,7 @@ export default function CourseSectionForm({courses, control, section, handleRemo
                 />
             </Grid>
 
-            <Grid size={12}>
-                <Controller
-                    control={control}
-                    name={section + "curriculum_development"}
-                    render={({field}) =>
-                        <TextField
-                            {...field}
-                            sx={{width:"100%"}}
-                            multiline
-                            minRows={6}
-                            maxRows={10}
-                            label="Curriculum Development"
-                        />
-                    }
-                />
-            </Grid>
+            
         </Grid>
     )
 }

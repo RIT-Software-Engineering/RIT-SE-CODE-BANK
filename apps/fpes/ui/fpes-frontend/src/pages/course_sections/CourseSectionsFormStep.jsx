@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper, IconButton, Icon} from "@mui/material";
-import { useFieldArray } from "react-hook-form";
+import { Controller, useFieldArray } from "react-hook-form";
 import CourseSectionForm from "./CourseSectionForm";
 import axios from "axios";
 
@@ -76,8 +76,28 @@ export default function CourseSectionFormStep({form_id, control, errors, getValu
                 </Paper>
             ))}
             <div style={{ paddingTop: "20px" }}>
-                <Button variant="contained" onClick={() => {append(new CourseSection(form_id)); setNumberOfSections(numberOfSections + 1)}}>Add Course Section</Button>
+                <Button variant="contained" sx={{margin:"4%"}}onClick={() => {append(new CourseSection(form_id)); setNumberOfSections(numberOfSections + 1)}}>Add Course Section</Button>
             </div>
+
+            <Grid container rowSpacing={2} spacing={8}>
+                <Grid size={12}>
+                    <Controller
+                        control={control}
+                        name={"curriculum_development"}
+                        render={({field}) =>
+                            <TextField
+                                {...field}
+                                sx={{width:"100%"}}
+                                multiline
+                                minRows={6}
+                                maxRows={10}
+                                helperText="(Describe any significant curriculum development or activites and label them by their course code ex. SWEN-101 : ~~~~)"
+                                label="Curriculum Development"
+                            />
+                        }
+                    />
+                </Grid>
+            </Grid>
         </div>
     )
 }
