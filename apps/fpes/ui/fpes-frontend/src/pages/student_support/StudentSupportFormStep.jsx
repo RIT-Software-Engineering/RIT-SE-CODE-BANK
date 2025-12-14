@@ -1,7 +1,7 @@
 import { Grid, TextField, Button, Paper, Typography, Box, IconButton } from "@mui/material";
 import StudentSupportForm from "./StudentSupportForm";
 
-export default function StudentSupportFormStep({ form_id, control, errors, support }) {
+export default function StudentSupportFormStep({ form_id, control, errors }) {
 
   function StudentSupport() {
     this.independent_studies_supervised = 0;
@@ -21,18 +21,8 @@ export default function StudentSupportFormStep({ form_id, control, errors, suppo
   }
 
   return (
-  <Box sx={{ width: "60%", margin: "auto"}}>
-      <Grid container spacing={2}>
-          <Grid item xs={12}>
-              <StudentSupportForm
-                  control={control}
-                  register_support="student_support."
-                  errors={errors}
-              />
-            </Grid>
-      </Grid>
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 2, gap: 2 }}>
-      </Box>
-  </Box>
+    <Box sx={{ width: "80%", margin: "auto" }}>
+      <StudentSupportForm control={control} errors={errors} />
+    </Box>
   );
 }

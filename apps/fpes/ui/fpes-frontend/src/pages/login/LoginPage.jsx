@@ -3,7 +3,7 @@ import { Box, Button, TextField, FormControl, InputLabel, Select, MenuItem } fro
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId}) {
+export default function LoginPage({ setRoles, setIsAuthenticated, updateFacultyId}) {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("");
   const [password, setPassword] = useState("");
@@ -24,12 +24,12 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
         // 3. Pass the ID to the function from App.jsx
         updateFacultyId(user.faculty_id); 
         
-        // 4. Set the user's role
-        setRole(user.user_role); 
+        // 4. Set the user's roles
+        setRoles(new Set(user.user_role)); 
         
         // 5. Set authentication status
         setIsAuthenticated(true);
-        navigate("/highlights");
+        navigate("/home");
     } else {
         console.error("Please select a user to log in.");
     }
@@ -37,8 +37,8 @@ export default function LoginPage({ setRole, setIsAuthenticated, updateFacultyId
 
   return (
     <div style={{ textAlign: 'center', marginTop: '20px' }}>
-      <h1>FPES Portal</h1>
-      <Box sx={{ width: 300, margin: "auto", mt: 10 }}>
+      <h1>Faculty Performance <br /> Evaluation Portal</h1>
+      <Box sx={{ width: 250, margin: "auto", mt: 10 }}>
         <FormControl fullWidth
           sx={{ 
             '& .MuiInputLabel-shrink': {

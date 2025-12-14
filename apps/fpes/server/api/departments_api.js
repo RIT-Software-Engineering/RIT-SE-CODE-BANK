@@ -79,7 +79,7 @@ async function deleteDepartment(id) {
     }
 }
 
-async function initDepartmentsTable(){
+async function resetDepartmentsTable(){
     let connection;
     try {
         // Read sql file that rebuilds departments table and inserts test data
@@ -109,5 +109,5 @@ module.exports = {
     createDepartment,
     updateDepartment,
     deleteDepartment,
-    initDepartmentsTable
+    resetDepartmentsTable
 }

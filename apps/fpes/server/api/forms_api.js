@@ -33,11 +33,13 @@ async function getFormByIdInPreviewFormat(id){
     const facultyId = formResponse.faculty_information_id;
     const highlightsData = await getHighlightByFormId(id);
 
-    const facultyInformation = await getFacultyById(facultyId);
-
     formData.highlights = highlightsData;
 
-    const 
+    const facultyInformation = await getFacultyById(facultyId);
+    formData.faculty_information = facultyInformation;
+
+    // add getters for dynamics
+
 
 }
 

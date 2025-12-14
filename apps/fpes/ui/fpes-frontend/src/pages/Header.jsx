@@ -2,7 +2,7 @@ import { AppBar, Box, Button, FormControl, InputLabel, MenuItem, Select, Toolbar
 import react from 'react'
 import { Link } from 'react-router-dom'
 
-export default function Header({ pages, adminView, setRole, isAuthenticated, onLogout }) {
+export default function Header({ pages, adminView, isAuthenticated, onLogout, roles }) {
     
     const profilePage = pages.find(page => page.name === "Profile");
 
@@ -11,7 +11,7 @@ export default function Header({ pages, adminView, setRole, isAuthenticated, onL
             <Toolbar>
                 <Box sx={{flexGrow:1, display:"flex"}}>
                     {isAuthenticated && pages.map((page, index) => (
-                        page.name !== "Profile" && (adminView || page.adminOnly === false) 
+                        page.name !== "Profile" && roles.intersection(page.roles_with_access).size > 0
                             ? (
                                 <Button 
                                     key={index} 

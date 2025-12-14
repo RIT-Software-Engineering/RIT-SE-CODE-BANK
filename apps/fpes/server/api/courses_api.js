@@ -1,5 +1,5 @@
 const pool = require('../db');
-require('dotenv').config();
+const fs = require('fs')
 
 // READ: all
 async function getAllCourses() {
@@ -100,10 +100,34 @@ async function deleteCourse(id) {
   }
 }
 
+// Reset
+async function resetCoursesTable(){
+    let connection;
+    try {
+        // Read sql file that rebuilds courses table and inserts test data
+        const resetQuery = await fs.readFileSync("sql/courses.sql", 'utf-8');
+        // Splits file into multiple queries
+        let queries = resetQuery.split(';');
+        // Removes the empty query at the end
+        queries.pop();
+
+        connection = await pool.getConnection();
+        let results = [];
+        for (const query of queries){
+            await connection.query(query);
+        }
+
+        return;
+    } finally {
+        if (connection) connection.release();
+    } 
+}
+
 module.exports = {
   getAllCourses,
   getCourseById,
   addCourse,
   updateCourse,
   deleteCourse,
+  resetCoursesTable
 };

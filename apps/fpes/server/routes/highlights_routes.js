@@ -138,11 +138,25 @@ router.delete('/:id', async (req, res) => {
   to complete the highlights record but also the other dynamic form pieces such as the services and publications
 */
 router.post("/submit", async(req, res) => {
-  try{
-    const results = submitHighlightsForm(req.body);
+  try {
+    const data = req.body;
+    data.status = "SUBMITTED";  
+    const results = await submitHighlightsForm(data);
     return res.send(results);
   } catch (err){
-    return res.status(500).json({ error : "Failed to submit form"})
+    return res.status(500).json({ error : "Failed to submit form"});
+  }
+});
+
+router.post("/draft", async (req, res) => {
+  try {
+    const data = req.body;
+    data.status = "DRAFT";
+    const result = await submitHighlightsForm(data);
+    return res.send({ success: true, id: result.id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save draft" });
   }
 });
 
