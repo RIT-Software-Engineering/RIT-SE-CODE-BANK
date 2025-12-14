@@ -1,4 +1,6 @@
 const pool = require("../db");
+const { getFacultyById } = require("./faculty_api");
+const { getHighlightByFormId } = require("./highlights_api");
 
 // READ : all forms
 async function getAllForms(){
@@ -20,6 +22,23 @@ async function getFormById(id){
     } finally {
         if (connection) connection.release();
     }
+}
+
+// READ : get form of a specific id in preview format
+async function getFormByIdInPreviewFormat(id){
+    const formData = {}
+
+    const formResponse = await getFormById(id);
+
+    const facultyId = formResponse.faculty_information_id;
+    const highlightsData = await getHighlightByFormId(id);
+
+    const facultyInformation = await getFacultyById(facultyId);
+
+    formData.highlights = highlightsData;
+
+    const 
+
 }
 
 // READ : forms with a given faculty id

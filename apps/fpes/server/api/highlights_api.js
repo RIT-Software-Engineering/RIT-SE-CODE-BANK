@@ -33,13 +33,25 @@ async function getHighlightById(id) {
 
 // READ: by faculty id
 async function getHighlightByFacultyId(facultyId){
-
   let connection;
   try {
     connection = await pool.getConnection();
     const rows = await connection.query('SELECT highlights.id, forms.time_submitted FROM forms INNER JOIN highlights ON forms.id = highlights.form_id WHERE forms.faculty_information_id = ?', [facultyId]);
     console.log(rows);
     return rows;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
+// READ: get Highlight by form id
+async function getHighlightByFormId(formId){
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const result = await connection.query(`SELECT * FROM highlights WHERE form_id = ?`);
+    console.log(result);
+    return result;
   } finally {
     if (connection) connection.release();
   }
@@ -183,4 +195,5 @@ module.exports = {
   deleteHighlight,
   submitHighlightsForm,
   getHighlightByFacultyId,
+  getHighlightByFormId
 };
