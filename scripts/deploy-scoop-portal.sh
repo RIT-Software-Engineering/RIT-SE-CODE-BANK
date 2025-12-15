@@ -5,6 +5,7 @@ BRANCH="scoop-portal-dev"
 PORTAL_SERVER_DIR="$APP_DIR/apps/scoop-portal/server"
 PORTAL_UI_DIR="$APP_DIR/apps/scoop-portal/ui"
 WORKFLOW_SERVER_DIR="$APP_DIR/apps/workflow/server"
+NOTIFICATIONS_SERVER_DIR="$APP_DIR/services/notification-service"
 
 echo "Deploying Scoop Portal application..."
 
@@ -40,10 +41,19 @@ create_env_file "$PORTAL_UI_DIR/.env.development" \
 NEXT_PUBLIC_WORKFLOWS_API_URL=http://localhost:5001'
 
 create_env_file "$WORKFLOW_SERVER_DIR/.env" \
-'DATABASE_URL=mysql://root:password@localhost:3307/scoop_portal_demo
-PORT=5001
+'DATABASE_URL="mysql://root:password@localhost:3307/scoop_portal_demo"
+PORT=3003
 BASE_URL=http://localhost:3020
 NODE_ENV=development'
+
+create_env_file "$NOTIFICATIONS_SERVER_DIR/.env" \
+'SMTP_HOST=smtp4dev
+SMTP_PORT=25
+SMTP_FROM=se_svc_apps@rit.edu
+PORT=4000
+NODE_ENV=development
+SLACK_BOT_TOKEN=
+DATABASE_URL="mysql://root:password@localhost:3309/notification_service"'
 
 
 
@@ -57,6 +67,13 @@ echo "Waiting for services to start..."
 sleep 15
 npx prisma migrate deploy
 npx prisma db seed
+cd $APP_DIR
+cd $WORKFLOW_SERVER_DIR
+npx prisma migrate deploy
+npx prisma db seed
+cd $APP_DIR
+cd $NOTIFICATIONS_SERVER_DIR
+npx prisma migrate deploy
 cd $APP_DIR
 docker compose ps
 
