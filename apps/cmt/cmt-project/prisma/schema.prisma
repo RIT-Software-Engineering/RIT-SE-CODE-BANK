@@ -17,6 +17,7 @@ model Event {
   location    String
   description String?    @db.LongText
   importance  Importance
+  url         String?
   course      Course?    @relation(fields: [courseId], references: [id])
 
   @@index([courseId])
@@ -134,7 +135,6 @@ model TBTeamSet {
   teamSize             Int?
   constraints          String?          @db.LongText
   publishedAt          DateTime?
-  archivedAt           DateTime?
   createdByProfessorId Int
   createdAt            DateTime         @default(now())
   teams                TBTeam[]
