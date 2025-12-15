@@ -69,10 +69,11 @@ npx prisma migrate deploy
 npx prisma db seed
 cd $APP_DIR
 cd $WORKFLOW_SERVER_DIR
+npx prisma migrate deploy
 npx prisma db seed
 cd $APP_DIR
 cd $NOTIFICATIONS_SERVER_DIR
-npx prisma db seed
+npx prisma migrate deploy
 cd $APP_DIR
 docker compose ps
 
