@@ -33,10 +33,10 @@ async function addGrant(grantData){ //Create
     const { title, amount, funder, start_date, end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
     const result = await conn.query(
       `INSERT INTO grants (title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING grant_id`,
       [title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status]
     );
-    return { grant_id: result.insertId };
+    return result;
   } finally {
     if (conn) conn.release();
   }

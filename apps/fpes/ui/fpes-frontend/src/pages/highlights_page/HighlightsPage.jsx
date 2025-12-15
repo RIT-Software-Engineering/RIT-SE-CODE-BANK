@@ -3,17 +3,27 @@ import axios from 'axios';
 import { DataGrid } from "@mui/x-data-grid";
 import { Button, Paper } from "@mui/material";
 import { Link } from "react-router-dom";
+import HighlightsViewModal from "./HighlightsViewModal";
 
 export default function HighlightsPage({facultyId}){
     const [highlights, setHighlights] = useState([]);
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [viewModalForm, setViewModalForm] = useState({});
+
+    function closeModal(){
+        setViewModalOpen(false);
+    }
 
     useEffect(() => {
         axios.get("http://localhost:3000/highlights/submitted_by/" + facultyId)
         .then(response => {
             console.log(response);
             // Format Date Information into YYYY-MM-DD HH:MM:SS
-            
-            setHighlights(response.data);
+            const data = response.data;
+            data.map((form) => {
+                form.time_submitted = form.time_submitted.match(/^\d{4}-\d{2}-\d{2}/);
+            })
+            setHighlights(data);
         })
         .catch(console.log("Error Retrieving Highlights"))
     }, []);
@@ -22,7 +32,23 @@ export default function HighlightsPage({facultyId}){
 
     const columns = [
         {field : "id", headerName : "ID", flex:.2},
-        {field : "time_submitted", headerName : "Submitted On", flex:1}
+        {field : "time_submitted", headerName : "Submitted On", flex:1},
+        {field : "Open", flex: .5, sortable: false, renderCell : (params) => {
+            const onClick = (e) => {
+                axios.get("http://localhost:3000/forms/" + params.row.id + "/view_format")
+                .then( (response) => {
+                    setViewModalForm(response.data);
+                    console.log(response.data);
+                    setViewModalOpen(true);
+                    console.log(viewModalOpen);
+                });
+                
+            }
+
+            return(
+                <Button variant="contained" onClick={onClick}>View</Button>
+            )
+        }}
     ]
 
     const paginationModel = { page: 0, pageSize: 5 };
@@ -40,6 +66,7 @@ export default function HighlightsPage({facultyId}){
             initialState={{ pagination: { paginationModel } }}
         />
         </Paper>
+        <HighlightsViewModal formData={viewModalForm} isOpen={viewModalOpen} closeModal={() => closeModal()}/>
         </div>
     )
 }

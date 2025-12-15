@@ -30,7 +30,7 @@ async function createPublication(body) {
         const {title, venue, proof_of_significance, date_published, status} = body;
         const results = connection.query(
             `INSERT INTO publications (title, venue, proof_of_significance, date_published, status)
-             VALUES (?,?,?,?,?)`, [title, venue, proof_of_significance, date_published, status]);
+             VALUES (?,?,?,?,?) RETURNING id`, [title, venue, proof_of_significance, date_published, status]);
         return results;
     } finally {
         if (connection) connection.release();

@@ -4,4 +4,4 @@ CREATE TABLE IF NOT EXISTS forms_services (
     service_id INT NOT NULL,
     FOREIGN KEY (form_id) REFERENCES forms(id),
     FOREIGN KEY (service_id) REFERENCES services(id)
-)
+);

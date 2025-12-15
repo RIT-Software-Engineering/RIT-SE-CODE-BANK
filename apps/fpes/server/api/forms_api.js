@@ -1,6 +1,9 @@
 const pool = require("../db");
+const fs = require('fs')
 const { getFacultyById } = require("./faculty_api");
-const { getHighlightByFormId } = require("./highlights_api");
+const { getCourseSectionsOfForm, getGrantsOfForm, getPublicationsOfForm, getServicesOfForm } = require("./forms_to_dynamics_tables_api");
+
+const { getStudentSupportById } = require("./student_support_api");
 
 // READ : all forms
 async function getAllForms(){
@@ -24,23 +27,42 @@ async function getFormById(id){
     }
 }
 
+
 // READ : get form of a specific id in preview format
-async function getFormByIdInPreviewFormat(id){
+async function getFormByIdInViewFormat(id){
+    const { getHighlightByFormId } = require("./highlights_api");
+
     const formData = {}
 
+    // Gets the basic form information like facultyId
     const formResponse = await getFormById(id);
 
-    const facultyId = formResponse.faculty_information_id;
+    const facultyId = formResponse[0].faculty_information_id;
     const highlightsData = await getHighlightByFormId(id);
 
-    formData.highlights = highlightsData;
+    const studentSupportId = highlightsData[0].student_support_id;
+
+    formData.highlights = highlightsData[0];
 
     const facultyInformation = await getFacultyById(facultyId);
     formData.faculty_information = facultyInformation;
 
-    // add getters for dynamics
+    const courseSections = await getCourseSectionsOfForm(id);
+    formData.course_sections = courseSections;
 
+    const grants = await getGrantsOfForm(id);
+    formData.grants = grants;
 
+    const publications = await getPublicationsOfForm(id);
+    formData.publications = publications;
+
+    const services = await getServicesOfForm(id);
+    formData.services = services;
+
+    const studentSupport = await getStudentSupportById(studentSupportId);
+    formData.student_support = studentSupport;
+
+    return formData;
 }
 
 // READ : forms with a given faculty id
@@ -49,6 +71,22 @@ async function getFormByFacultyId(facultyId){
     try {
         connection = await pool.getConnection();
         return await connection.query('SELECT * FROM forms WHERE faculty_information_id = ?', [facultyId]);
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function getFormsBySupervisorId(supervisorId){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        return await connection.query(
+            `SELECT faculty_information.name, forms.* FROM forms INNER JOIN faculty_information
+            ON forms.faculty_information_id = faculty_information.faculty_id
+            WHERE faculty_information.supervisor_id = ?
+            `,
+            [supervisorId]
+        )
     } finally {
         if (connection) connection.release();
     }
@@ -84,10 +122,36 @@ async function deleteForm(id){
     }
 }
 
+// RESET
+async function resetFormsTable(){
+    let connection;
+    try {
+        // Read sql file that rebuilds forms table
+        const resetQuery = await fs.readFileSync("sql/forms.sql", 'utf-8');
+        // Splits file into multiple queries
+        let queries = resetQuery.split(';');
+        // Removes the empty query at the end
+        queries.pop();
+
+        connection = await pool.getConnection();
+        let results = [];
+        for (const query of queries){
+            await connection.query(query);
+        }
+
+        return;
+    } finally {
+        if (connection) connection.release();
+    } 
+}
+
 module.exports = {
     getAllForms,
     getFormByFacultyId,
+    getFormsBySupervisorId,
     getFormById,
+    getFormByIdInViewFormat,
     createForm,
     deleteForm,
+    resetFormsTable,
 }

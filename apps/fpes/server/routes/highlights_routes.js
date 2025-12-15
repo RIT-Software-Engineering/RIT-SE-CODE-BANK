@@ -144,6 +144,7 @@ router.post("/submit", async(req, res) => {
     const results = await submitHighlightsForm(data);
     return res.send(results);
   } catch (err){
+    console.error(err);
     return res.status(500).json({ error : "Failed to submit form"});
   }
 });

@@ -147,14 +147,14 @@ export default function GrantForm({ control, register_grant, handleRemoveGrant, 
                         
             <Grid item size={10}>
                 <Controller
-                    name={register_grant + "other_contributions"}
+                    name={register_grant + "comments"}
                     control={control}
                     render={({field}) =>
                         <TextField 
                         sx={{width:"100%"}} 
                         {...field} 
-                        label="Other Contributions" 
-                        placeholder="Other Contributions" 
+                        label="Other Comments" 
+                        placeholder="Other Comments" 
                         multiline minRows={4} 
                         maxRows={10}
                         />

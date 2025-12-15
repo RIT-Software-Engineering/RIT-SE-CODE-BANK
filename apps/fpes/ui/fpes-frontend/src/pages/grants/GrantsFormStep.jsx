@@ -14,7 +14,7 @@ export default function GrantsFormStep({ form_id, control, errors }) {
         this.end_date = ""; 
         this.faculty_share = ""; 
         this.grant_status = "Pending";
-        this.other_contributions = "";
+        this.comments = "";
         this.form_id = form_id;
     }
 

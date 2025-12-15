@@ -64,7 +64,7 @@ async function addStudentSupport(studentSupportData) {  //Create
       ]
     );
 
-    return results;
+    return result;
   } finally {
     if (conn) conn.release();
   }

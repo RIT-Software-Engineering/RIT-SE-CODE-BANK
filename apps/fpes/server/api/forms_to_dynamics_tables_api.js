@@ -14,13 +14,47 @@ async function assignCourseSectionToForm(formId, courseSectionId){
     }
 }
 
-async function assignServiceToForm(formId, serviceId){
+async function getCourseSectionsOfForm(formId){
     let connection;
     try {
         connection = await pool.getConnection();
         const results = connection.query(
+            ` SELECT c.course_name, c.course_code, cs.* FROM course_sections AS cs INNER JOIN forms_course_sections AS fcs
+            ON fcs.course_section_id = cs.id INNER JOIN courses AS c ON c.id = cs.course_id
+            WHERE fcs.form_id = ?
+            `,
+            [formId]
+        );
+        return  results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function assignServiceToForm(formId, serviceId){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = await connection.query(
             `INSERT INTO forms_services (form_id, service_id) 
             VALUES (?,?)`, [formId, serviceId]);
+        return results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function getServicesOfForm(formId){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = await connection.query(
+            ` SELECT services.* FROM services INNER JOIN forms_services AS fs
+            ON fs.service_id = services.id
+            WHERE fs.form_id = ?
+            `,
+            [formId]
+        );
         return results;
     } finally {
         if (connection) connection.release();
@@ -31,9 +65,26 @@ async function assignPublicationToForm(formId, publicationId){
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query(
+        const results = await connection.query(
             `INSERT INTO forms_publications (form_id, publications_id) 
             VALUES (?,?)`, [formId, publicationId]);
+        return results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function getPublicationsOfForm(formId){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = await connection.query(
+            ` SELECT publications.* FROM publications INNER JOIN forms_publications AS fp
+            ON fp.publication_id = publications.id
+            WHERE fp.form_id = ?
+            `,
+            [formId]
+        );
         return results;
     } finally {
         if (connection) connection.release();
@@ -48,6 +99,23 @@ async function assignGrantToForm(form_id, grant_id){
             `INSERT INTO forms_grants (form_id, grant_id) 
             VALUES (?,?)`, [form_id, grant_id]);
         return results;
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+async function getGrantsOfForm(formId){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const results = await connection.query(
+            ` SELECT grants.* FROM grants INNER JOIN forms_grants AS fg
+            ON fg.grant_id = grants.grant_id
+            WHERE fg.form_id = ?
+            `,
+            [formId]
+        );
+        return  results;
     } finally {
         if (connection) connection.release();
     }
@@ -97,5 +165,9 @@ module.exports = {
     assignGrantToForm,
     assignPublicationToForm,
     assignServiceToForm,
+    getCourseSectionsOfForm,
+    getServicesOfForm,
+    getPublicationsOfForm,
+    getGrantsOfForm,
     buildRelationshipTables
 }

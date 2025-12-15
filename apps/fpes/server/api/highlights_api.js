@@ -51,7 +51,7 @@ async function getHighlightByFormId(formId){
   let connection;
   try {
     connection = await pool.getConnection();
-    const result = await connection.query(`SELECT * FROM highlights WHERE form_id = ?`);
+    const result = await connection.query(`SELECT * FROM highlights WHERE form_id = ?`, [formId]);
     console.log(result);
     return result;
   } finally {
@@ -133,15 +133,13 @@ async function deleteHighlight(id) {
 // It converts the data into the expected format for the database as well as performs the creation of
 // the dynamic elements of the form (ie. services, publications, etc.)
 async function submitHighlightsForm(formData){
-
+  console.log(formData)
   // Add record for student support
   const result = await student_support_api.addStudentSupport(formData.student_support);
-  const student_support_id = result.id;
-  console.log(result);
+  const student_support_id = result[0].id;
   
   formData.student_support_id = student_support_id;
   formData.type = "Highlights";
-  console.log(student_support_id);
 
   // Create Form Record
   const form_response = await createForm(formData);
@@ -161,7 +159,7 @@ async function submitHighlightsForm(formData){
     const res = await course_sections_api.createCourseSection(course_section);
     const course_section_id = res[0].id;
     // Adds Course Section to Form Relationship Table
-    forms_to_dynamics_api.assignCourseSectionToForm(form_id, course_section_id);
+    await forms_to_dynamics_api.assignCourseSectionToForm(form_id, course_section_id);
   }
 
   console.log("Successfully Added Course Sections")
@@ -172,7 +170,7 @@ async function submitHighlightsForm(formData){
     const res = await services_api.createService(service);
     const service_id = res[0].id;
     // Adds Service to Form Relationship Table
-    forms_to_dynamics_api.assignServiceToForm(form_id, service_id);
+    await forms_to_dynamics_api.assignServiceToForm(form_id, service_id);
   }
 
   console.log("Successfully Added Services")
@@ -181,9 +179,10 @@ async function submitHighlightsForm(formData){
   for(let grant of formData.grants){
     grant.form_id = form_id;
     const res = await grants_api.addGrant(grant);
-    const grant_id = res[0].id;
+    console.log(res);
+    const grant_id = res[0].grant_id;
     // Adds Grant to Form Relationship Table
-    forms_to_dynamics_api.assignGrantToForm(form_id, grant_id);
+    await forms_to_dynamics_api.assignGrantToForm(form_id, grant_id);
   }
 
   console.log("Successfully Added Grants")
@@ -195,7 +194,7 @@ async function submitHighlightsForm(formData){
     const res = await publications_api.createPublication(publication);
     const publication_id = res[0].id;
     // Adds Publication to Form Relationship Table
-    forms_to_dynamics_api.assignPublicationToForm(form_id, publication_id);
+    await forms_to_dynamics_api.assignPublicationToForm(form_id, publication_id);
   }
   
   console.log("Successfully Added Publications")

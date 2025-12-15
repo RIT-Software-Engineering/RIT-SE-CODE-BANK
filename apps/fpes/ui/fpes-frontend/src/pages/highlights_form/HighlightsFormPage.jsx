@@ -1,5 +1,4 @@
 import { Button, Paper, Step, StepButton, StepContent, StepLabel, Stepper } from "@mui/material";
-import { Button, Paper, Step, StepButton, StepContent, StepLabel, Stepper } from "@mui/material";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import ServicesFormStep from "../services/ServicesFormStep";
@@ -88,7 +87,7 @@ export default function HighlightsFormPage({facultyId}) {
                     start_date: "",
                     end_date: "",
                     grant_status: "Pending",
-                    other_contributions: "",
+                    comments: "",
                     form_id: facultyId   
                 }
             ],
@@ -130,7 +129,6 @@ export default function HighlightsFormPage({facultyId}) {
     }
 
     return (
-        <Paper sx={{minWidth:"75%", padding:"10%"}}>
         <Paper sx={{minWidth:"75%", padding:"10%"}}>
         <div style={{margin:"100px 0px", alignContent:"start", position:"absolute", top:"0px", transform: "translateX(-50%)", left:"50%"}}>
             <Stepper sx={{minWidth:"800px"}} activeStep={activeStep} nonLinear>

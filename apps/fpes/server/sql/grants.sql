@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS grants (
     amount INT DEFAULT NULL,                     
     start_date DATE, 
     end_date DATE,           
-    faculty_role VARCHAR(255) NOT NULL,             
+    faculty_role VARCHAR(255) DEFAULT NULL,             
     faculty_share INT DEFAULT NULL,       
     grant_status ENUM('Funded', 'In Submission', 'Declined', 'In Development') NOT NULL,
-    other_contributions VARCHAR(255) NOT NULL
+    comments VARCHAR(255) NOT NULL
 );
