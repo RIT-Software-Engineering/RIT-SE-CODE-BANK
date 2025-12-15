@@ -80,7 +80,14 @@ router.delete("/:id", async (req, res) => {
 
     console.log("DELETE /api/cmt/course/:id called with:", id);
 
-    // Delete the course (related data will cascade delete based on schema)
+    // First, delete all events associated with this course
+    await prisma.event.deleteMany({
+      where: { courseId: id },
+    });
+
+    console.log(`✅ Deleted all events for course: ${id}`);
+
+    // Then delete the course
     await prisma.course.delete({
       where: { id },
     });
@@ -89,7 +96,7 @@ router.delete("/:id", async (req, res) => {
 
     res.json({
       success: true,
-      message: "Course deleted successfully",
+      message: "Course and all related events deleted successfully",
     });
   } catch (error) {
     console.error("Error deleting course:", error);
