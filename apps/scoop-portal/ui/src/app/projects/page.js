@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import Header from "@components/Header";
 import ProjectsLoading from "./loading";
 import {
@@ -33,6 +34,7 @@ export default function Projects() {
   const [allTeams, setAllTeams] = useState([]);
   const [semesterGroups, setSemesterGroups] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewingProject, setViewingProject] = useState([]);
@@ -45,16 +47,42 @@ export default function Projects() {
     semesterGroupId: "",
   });
 
+  const { data: session, status } = useSession();
+
   useEffect(() => {
+    // wait for auth status to settle
+    if (status === "loading") return;
+
     console.log("API URL: ", process.env.NEXT_PUBLIC_API_URL);
     const fetchProjects = async () => {
       setLoading(true);
+      setError(null);
+
+      // attach Authorization header when we have access token
+      const authHeaders = session?.user?.access_token
+        ? { Authorization: `Bearer ${session.user.access_token}` }
+        : {};
+
       try {
         const [projectRes, teamRes, semestersRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`), 
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`, { headers: authHeaders }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teams`, { headers: authHeaders }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup`, { headers: authHeaders }),
         ]);
+
+        // Check for 401 Unauthorized on projects endpoint
+        if (projectRes.status === 401) {
+          setError("User is unauthorized. Please log in to access projects.");
+          setLoading(false);
+          return;
+        }
+
+        if (!projectRes.ok || !teamRes.ok || !semestersRes.ok) {
+          console.error("Fetch responses not ok", { projectRes, teamRes, semestersRes });
+          setError("Failed to load projects or related data.");
+          setLoading(false);
+          return;
+        }
 
         const [projects, loadedTeams, semesterGroups] = await Promise.all([
           projectRes.json(),
@@ -75,13 +103,14 @@ export default function Projects() {
     
       } catch (err) {
         console.error("Failed to fetch projects: ", err);
+        setError("Failed to load projects. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProjects();
-  }, []);
+  }, [session, status]);
 
   const openCreateModal = () => {
     setEditingProject(null);
@@ -133,29 +162,37 @@ export default function Projects() {
     };
 
     try {
+      // include auth header if available
+      const authHeaders = session?.user?.access_token
+        ? { Authorization: `Bearer ${session.user.access_token}` }
+        : {};
+
       if (editingProject) {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project/${editingProject.id}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project/${editingProject.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify(payload),
         });
-        // const updated = await res.json();
-        // setProjects(prev => prev.map(p => (p.id === updated.id ? updated : p)));
       } else {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders },
           body: JSON.stringify(payload),
         });
-        // const body = await res.json();
-        // const newProject = body.project || body;
-        // setProjects(prev => [newProject, ...prev]);
       }
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`);
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project`, { headers: authHeaders });
+
+      if (res.status === 401) {
+        setError("User is unauthorized. Please log in to perform that action.");
+        return;
+      }
+
       setProjects(await res.json());
       closeModal();
     } catch (err) {
       console.error("Failed to save project", err);
+      setError("Failed to save project. Please try again later.");
     }
   };
 
@@ -172,7 +209,18 @@ export default function Projects() {
           <Button variant="contained" onClick={openCreateModal}>Create Project</Button>
         </Box>
 
-        {projects.length === 0 ? (
+        {error ? (
+          <Box>
+            <Typography variant="body1" sx={{ color: "error.main", py: 2 }}>
+              {error}
+            </Typography>
+            {error.toLowerCase().includes("unauthorized") && (
+              <Box sx={{ mt: 2 }}>
+                <Button variant="contained" onClick={() => signIn('keycloak')}>Log in</Button>
+              </Box>
+            )}
+          </Box>
+        ) : projects.length === 0 ? (
           <Typography variant="body1">
             No projects found. Please check back later.
           </Typography>

@@ -2,6 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import Header from "@components/Header";
+import { signIn } from "next-auth/react";
 
 const NavButton = ({ href, children }) => {
   const baseStyle = {

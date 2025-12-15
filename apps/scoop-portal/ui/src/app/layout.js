@@ -2,6 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import ThemeRegistry from "ThemeRegistry";
 import { UserProvider } from "utils/user-context/page";
+import { SessionProvider } from "next-auth/react";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +26,11 @@ export default function RootLayout({ children }) {
     <body>
     <AppRouterCacheProvider>
     <ThemeRegistry>
-    <UserProvider>{children}</UserProvider>
+    <UserProvider>
+    <Providers>
+      {children}
+    </Providers>
+    </UserProvider>
     </ThemeRegistry>
     </AppRouterCacheProvider>
     </body>

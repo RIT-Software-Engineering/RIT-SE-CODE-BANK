@@ -16,6 +16,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CloseIcon from "@mui/icons-material/Close";
+import { signIn } from "next-auth/react";
 
 const navItems = [
   {
@@ -129,6 +130,13 @@ export default function LandingHeader() {
 
             <Link href="/user-roles" passHref>
               <Button variant="outline-orange">Log In</Button>
+            </Link>
+{/*             
+         <button onClick={() => signIn("keycloak", { callbackUrl: "/dashboard" })}>
+      Sign in with Keycloak
+    </button> */}
+         <Link href={`/api/auth/signin?callbackUrl=${encodeURIComponent("/scoop-portal/dashboard")}`} passHref>
+              <Button variant="outline-orange">Log In with Keycloak</Button>
             </Link>
           </Box>
         </Toolbar>

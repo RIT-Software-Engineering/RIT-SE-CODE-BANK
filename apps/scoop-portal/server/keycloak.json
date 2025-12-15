@@ -1,0 +1,10 @@
+{
+  "realm": "master",
+  "bearer-only": true,
+  "auth-server-url": "http://localhost:8080/",
+  "ssl-required": "external",
+  "resource": "scoop-realm-realm",
+  "verify-token-audience": true,
+  "use-resource-role-mappings": true,
+  "confidential-port": 0
+}
