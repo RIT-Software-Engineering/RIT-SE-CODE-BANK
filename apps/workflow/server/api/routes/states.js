@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const { getFullActionTree } = require("../helpers/actions.js");
+const { getFullActionTree, parseMimeTypes } = require("../helpers/actions.js");
+const { submissionAllowedMimeTypes } = require("../consts.js");
 
 // I'm sorry for the chaos that this file is. I tried to leave enough inline comments that you could follow my madness. I'm very short on time.
 
@@ -23,6 +24,7 @@ const REQUIRE_ALL_METADATA_KEYS = [
 ];
 
 const truthyStrings = new Set(["true", "1", "yes", "y", "on"]);
+const MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 
 function metadataEntries(metadata) {
   if (!metadata) return [];
@@ -53,6 +55,93 @@ function actionRequiresAllParticipants(action) {
       metadataValueIsTruthy(entry.value)
   );
 }
+
+function actionRequiresSubmission(action) {
+  if (!action) return false;
+  if (action.requiresSubmission === true) return true;
+  return action.actionType === "complex";
+}
+
+function allowedMimeTypesForAction(action) {
+  const parsed = parseMimeTypes(action?.submissionMimeTypes);
+  if (parsed.length > 0) return parsed;
+  return submissionAllowedMimeTypes;
+}
+
+function parseIncomingFile(fileData, providedType = null) {
+  if (!fileData) return null;
+
+  let base64Payload = fileData;
+  let mimeType = providedType ?? null;
+
+  const dataUrlMatch = /^data:([^;]+);base64,(.*)$/i.exec(fileData);
+  if (dataUrlMatch) {
+    mimeType = mimeType ?? dataUrlMatch[1];
+    base64Payload = dataUrlMatch[2];
+  }
+
+  try {
+    const buffer = Buffer.from(base64Payload, "base64");
+    if (!mimeType && dataUrlMatch) {
+      mimeType = dataUrlMatch[1];
+    }
+    return { buffer, mimeType };
+  } catch (err) {
+    return null;
+  }
+}
+
+const toResponseSubmission = (submission) => {
+  if (!submission) return submission;
+  const buffer =
+    submission.fileData instanceof Buffer
+      ? submission.fileData
+      : submission.fileData
+        ? Buffer.from(submission.fileData)
+        : null;
+  const base64 = buffer ? buffer.toString("base64") : null;
+  const fileData =
+    base64 && (submission.fileType || "").length > 0
+      ? `data:${submission.fileType};base64,${base64}`
+      : base64
+        ? `data:application/octet-stream;base64,${base64}`
+        : undefined;
+
+  return {
+    ...submission,
+    fileData,
+  };
+};
+
+const toResponseAction = (action) => {
+  if (!action) return action;
+  return {
+    ...action,
+    requiresSubmission: actionRequiresSubmission(action),
+    submissionMimeTypes: parseMimeTypes(action.submissionMimeTypes),
+  };
+};
+
+const toResponseActionState = (state) => {
+  if (!state) return state;
+  const children = Array.isArray(state.children)
+    ? state.children.map(toResponseActionState)
+    : undefined;
+
+  const transformed = {
+    ...state,
+    action: toResponseAction(state.action),
+    submissions: Array.isArray(state.submissions)
+      ? state.submissions.map(toResponseSubmission)
+      : [],
+  };
+
+  if (children) {
+    transformed.children = children;
+  }
+
+  return transformed;
+};
 
 async function findRootActionStateId(actionStateId, initialParentId) {
   let currentId = actionStateId;
@@ -186,8 +275,9 @@ router.get("/workflow/:id", async (req, res) => {
       submissions: true,
     }
   );
-  if (children?.length > 0) {
-    state.baseActionState.children = children;
+  const transformedChildren = (children || []).map(toResponseActionState);
+  if (transformedChildren.length > 0) {
+    state.baseActionState.children = transformedChildren;
   }
 
   res.json(state);
@@ -228,7 +318,12 @@ router.get("/workflow", async (req, res) => {
     },
   });
 
-  res.json(states);
+  const transformedStates = states.map((state) => ({
+    ...state,
+    actionStates: (state.actionStates || []).map(toResponseActionState),
+  }));
+
+  res.json(transformedStates);
 });
 
 /**
@@ -924,7 +1019,14 @@ async function cascadeSubmission(actionStateId) {
  * Update the state of actions to track progress.
  */
 router.post("/handleSubmit", async (req, res) => {
-  const { actionStateId, userId, workflowStateId } = req.body;
+  const {
+    actionStateId,
+    userId,
+    workflowStateId,
+    fileData,
+    fileName,
+    fileType,
+  } = req.body;
   const requestedStateType = req.body.stateType ?? "completed";
 
   if (!actionStateId) {
@@ -956,6 +1058,41 @@ router.post("/handleSubmit", async (req, res) => {
     return res.status(400).json({
       message: "This action will only be completed by completing sub actions.",
     });
+  }
+
+  const requiresSubmission = actionRequiresSubmission(existingActionState.action);
+  const allowedMimeTypes = allowedMimeTypesForAction(existingActionState.action);
+  let parsedFile = null;
+  let resolvedFileType = fileType ?? null;
+
+  if (requiresSubmission) {
+    if (!userId) {
+      return res.status(400).json({
+        message: "userId is required when submitting this action.",
+      });
+    }
+
+    parsedFile = parseIncomingFile(fileData, resolvedFileType);
+    if (!parsedFile || !parsedFile.buffer || parsedFile.buffer.length === 0) {
+      return res.status(400).json({
+        message: "File submission is required for this action.",
+      });
+    }
+
+    resolvedFileType = resolvedFileType || parsedFile.mimeType;
+    if (!resolvedFileType || !allowedMimeTypes.includes(resolvedFileType)) {
+      return res.status(400).json({
+        message: `Unsupported file type. Allowed types: ${allowedMimeTypes.join(
+          ", "
+        )}.`,
+      });
+    }
+
+    if (parsedFile.buffer.length > MAX_SUBMISSION_FILE_SIZE) {
+      return res.status(413).json({
+        message: "File is too large. Please upload a file under 8MB.",
+      });
+    }
   }
 
   let workflowState = null;
@@ -1005,6 +1142,15 @@ router.post("/handleSubmit", async (req, res) => {
 
   let responsePayload = null;
   let cascadeParentId = null;
+  const submissionFilePayload =
+    requiresSubmission && parsedFile
+      ? {
+          fileName: fileName || "submission",
+          fileType: resolvedFileType,
+          fileSize: parsedFile.buffer.length,
+          fileData: parsedFile.buffer,
+        }
+      : null;
 
   await prisma.$transaction(async (tx) => {
     const submissionTimestamp = new Date();
@@ -1019,12 +1165,14 @@ router.post("/handleSubmit", async (req, res) => {
         update: {
           completed: true,
           completedAt: submissionTimestamp,
+          ...(submissionFilePayload || {}),
         },
         create: {
           actionStateId,
           userId,
           completed: true,
           completedAt: submissionTimestamp,
+          ...(submissionFilePayload || {}),
         },
       });
 
@@ -1067,6 +1215,29 @@ router.post("/handleSubmit", async (req, res) => {
         requiredCount,
       };
     } else {
+      if (requiresSubmission && userId) {
+        await tx.actionStateSubmission.upsert({
+          where: {
+            actionStateId_userId: {
+              actionStateId,
+              userId,
+            },
+          },
+          update: {
+            completed: true,
+            completedAt: submissionTimestamp,
+            ...(submissionFilePayload || {}),
+          },
+          create: {
+            actionStateId,
+            userId,
+            completed: true,
+            completedAt: submissionTimestamp,
+            ...(submissionFilePayload || {}),
+          },
+        });
+      }
+
       const updatedState = await tx.actionState.update({
         where: { id: actionStateId },
         data: {
@@ -1087,6 +1258,17 @@ router.post("/handleSubmit", async (req, res) => {
       };
     }
   });
+
+  if (responsePayload) {
+    responsePayload.requiresSubmission = requiresSubmission;
+    if (submissionFilePayload) {
+      responsePayload.submission = {
+        fileName: submissionFilePayload.fileName,
+        fileType: submissionFilePayload.fileType,
+        fileSize: submissionFilePayload.fileSize,
+      };
+    }
+  }
 
   // Cascade status updates upward if needed
   if (cascadeParentId) {

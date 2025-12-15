@@ -80,9 +80,23 @@ async function getFullActionTree(rootActionId) {
   return actions;
 }
 
+const parseMimeTypes = (mimeTypes) => {
+  if (!mimeTypes) return [];
+  if (Array.isArray(mimeTypes)) return mimeTypes;
+  if (typeof mimeTypes === "string") {
+    return mimeTypes
+      .split(",")
+      .map((type) => type.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
 const exportAction = (action) => ({
   ...action,
-  metadata: action.metadata.reduce(
+  requiresSubmission: action?.requiresSubmission === true || action?.actionType === "complex",
+  submissionMimeTypes: parseMimeTypes(action?.submissionMimeTypes),
+  metadata: (action?.metadata ?? []).reduce(
     (acc, m) => ({ ...acc, [m.key]: m.value }),
     {}
   ),
@@ -91,4 +105,5 @@ const exportAction = (action) => ({
 module.exports = {
   getFullActionTree,
   exportAction,
+  parseMimeTypes,
 };

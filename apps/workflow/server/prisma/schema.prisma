@@ -33,6 +33,8 @@ model Action {
   form           String?    @db.Text
   actionType     ActionType @default(simple)
   requireAllParticipants Boolean @default(false)
+  requiresSubmission Boolean @default(false)
+  submissionMimeTypes String? @db.VarChar(512)
   isFrozen       Boolean    @default(false) // Indicates if the action is frozen and cannot be modified (only the creator can change this)
   nextActionId   String?    @unique @db.Char(36)
   parentActionId String?    @db.Char(36)
@@ -164,6 +166,10 @@ model ActionStateSubmission {
   createdAt     DateTime @default(now())
   completed     Boolean  @default(false)
   completedAt   DateTime?
+  fileName      String?  @db.VarChar(255)
+  fileType      String?  @db.VarChar(255)
+  fileSize      Int?
+  fileData      Bytes?   @db.LongBlob
 
   actionState ActionState @relation(fields: [actionStateId], references: [id], onDelete: Cascade)
 

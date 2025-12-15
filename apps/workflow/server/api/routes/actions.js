@@ -4,7 +4,20 @@ const { PrismaClient } = require("@prisma/client");
 const { getFullActionTree, exportAction } = require("../helpers/actions.js");
 const { importMetadata } = require("../helpers/metadata.js");
 const prisma = new PrismaClient();
-const { permissionTypes } = require("../consts.js") || [];
+const { permissionTypes, submissionAllowedMimeTypes } = require("../consts.js") || [];
+
+const serializeMimeTypes = (mimeTypes, fallback = null) => {
+    if (Array.isArray(mimeTypes)) {
+        return mimeTypes
+            .map((type) => type?.toString?.().trim())
+            .filter(Boolean)
+            .join(",");
+    }
+    if (typeof mimeTypes === "string") {
+        return mimeTypes;
+    }
+    return fallback;
+};
 
 // GET /actions/:id
 router.get("/:id", async (req, res) => {
@@ -78,6 +91,8 @@ router.post("/", async (req, res) => {
         metadata,
         parentActionId,
         requireAllParticipants,
+        requiresSubmission,
+        submissionMimeTypes,
     } = req.body;
     const { userId } = req.body; // TODO: make this work with req.user instead
 
@@ -96,6 +111,20 @@ router.post("/", async (req, res) => {
     }
     if (typeof requireAllParticipants === "boolean") {
         data.requireAllParticipants = requireAllParticipants;
+    }
+    const actionRequiresSubmission =
+        typeof requiresSubmission === "boolean"
+            ? requiresSubmission
+            : actionType === "complex";
+    data.requiresSubmission = actionRequiresSubmission === true;
+    const mimeString = serializeMimeTypes(
+        submissionMimeTypes,
+        submissionAllowedMimeTypes.join(",")
+    );
+    if (actionRequiresSubmission && mimeString) {
+        data.submissionMimeTypes = mimeString;
+    } else if (mimeString) {
+        data.submissionMimeTypes = mimeString;
     }
     if (parentActionId) {
         data.parentAction = { connect: { id: parentActionId } };
@@ -137,6 +166,8 @@ router.put("/:id", async (req, res) => {
         nextActionId,
         parentActionId,
         requireAllParticipants,
+        requiresSubmission,
+        submissionMimeTypes,
     } = req.body;
     const { id } = req.params;
 
@@ -155,6 +186,16 @@ router.put("/:id", async (req, res) => {
     }
     if (typeof requireAllParticipants === "boolean") {
         data.requireAllParticipants = requireAllParticipants;
+    }
+    if (typeof requiresSubmission === "boolean") {
+        data.requiresSubmission = requiresSubmission;
+    }
+    if (submissionMimeTypes !== undefined) {
+        const mimeString = serializeMimeTypes(
+            submissionMimeTypes,
+            submissionAllowedMimeTypes.join(",")
+        );
+        data.submissionMimeTypes = mimeString;
     }
     if (nextActionId) {
         data.nextAction = { connect: { id: nextActionId } };

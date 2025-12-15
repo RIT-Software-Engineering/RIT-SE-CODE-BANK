@@ -8,6 +8,13 @@ import { useUser } from "../utils/user-context/page";
 
 const truthyStrings = new Set(["true", "1", "yes", "y", "on"]);
 const requireAllKeys = ["requireallparticipants", "requiresallparticipants"];
+const allowedSubmissionMimeTypes = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+const maxSubmissionBytes = 8 * 1024 * 1024;
 
 const toMetadataMap = (metadata) => {
   if (!metadata) return {};
@@ -108,6 +115,12 @@ const deriveActionStateDetails = (
   const requiresAllParticipants =
     actionState?.action?.requireAllParticipants === true ||
     requiresAllFromMetadata(metadataMap);
+  const requiresSubmission =
+    actionState?.action?.requiresSubmission === true ||
+    actionState?.action?.actionType === "complex";
+  const submissionMimeTypes = Array.isArray(actionState?.action?.submissionMimeTypes)
+    ? actionState.action.submissionMimeTypes
+    : [];
   const completedSubmissions = submissions.filter(
     (submission) => submission?.completed
   );
@@ -126,6 +139,8 @@ const deriveActionStateDetails = (
   return {
     metadataMap,
     requiresAllParticipants,
+    requiresSubmission,
+    submissionMimeTypes,
     submittedCount: completedSubmissions.length,
     participantCount,
     userHasSubmitted: userId
@@ -151,6 +166,8 @@ export default function bubbled(){
   const [openAction, setOpenAction] = useState(null);
   const [activeWorkflowState, setActiveWorkflowState] = useState(null);
   const [refresh, forceRefresh] = useState(0);
+  const [submissionFile, setSubmissionFile] = useState(null);
+  const [submissionError, setSubmissionError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const {user} = useUser();
   const workflowsApiUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL || "http://localhost:5001";
@@ -400,6 +417,8 @@ export default function bubbled(){
   );
 
   const handleOpen = (actionState, workflowState, derivedDetails = null) => {
+    setSubmissionFile(null);
+    setSubmissionError("");
     const details =
       derivedDetails ??
       deriveActionStateDetails(
@@ -419,7 +438,11 @@ export default function bubbled(){
   };
 
   const handleClose = async(shouldPromote = true) => {
-    if(shouldPromote && openActionState?.stateType != "completed"){
+    const shouldMarkInProgress =
+      shouldPromote &&
+      openActionState?.stateType != "completed" &&
+      !openAction?.requiresSubmission;
+    if(shouldMarkInProgress){
       try {
         await fetch(`${workflowsApiUrl}/states/handleSubmit`, {
           method: 'POST',
@@ -439,6 +462,8 @@ export default function bubbled(){
     setOpenAction(null);
     setOpenActionState(null);
     setActiveWorkflowState(null);
+    setSubmissionFile(null);
+    setSubmissionError("");
     setOpen(false);
   };
 
@@ -509,22 +534,61 @@ export default function bubbled(){
     });
   };
 
+  const handleSubmissionFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setSubmissionFile(null);
+      setSubmissionError("");
+      return;
+    }
+    if (file.size > maxSubmissionBytes) {
+      setSubmissionError("File is too large. Please upload a file under 8MB.");
+      setSubmissionFile(null);
+      return;
+    }
+    if (!allowedSubmissionMimeTypes.includes(file.type)) {
+      setSubmissionError("Unsupported file type. Please upload PDF, DOC, DOCX, or XLSX files.");
+      setSubmissionFile(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSubmissionFile({
+        name: file.name,
+        type: file.type,
+        data: reader.result,
+      });
+      setSubmissionError("");
+    };
+    reader.readAsDataURL(file);
+  };
+
 
   const submitAction = async () => {
     if (!openActionState || !user?.id) {
       return;
     }
+    if (openAction?.requiresSubmission && !submissionFile) {
+      setSubmissionError("A file submission is required for this action.");
+      return;
+    }
     try {
+      const body = {
+        actionStateId: openActionState.id,
+        userId: user.id,
+        workflowStateId: activeWorkflowState?.id,
+      };
+      if (openAction?.requiresSubmission && submissionFile) {
+        body.fileData = submissionFile.data;
+        body.fileName = submissionFile.name;
+        body.fileType = submissionFile.type;
+      }
       const res = await fetch(`${workflowsApiUrl}/states/handleSubmit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          actionStateId: openActionState.id,
-          userId: user.id,
-          workflowStateId: activeWorkflowState?.id,
-        }),
+        body: JSON.stringify(body),
       });
       const payload = await res.json().catch(() => null);
       if (!res.ok) {
@@ -538,6 +602,8 @@ export default function bubbled(){
       const fullyCompleted = payload?.fullyCompleted;
       markLocalSubmissionProgress(payload);
       forceRefresh(previous => previous + 1);
+      setSubmissionFile(null);
+      setSubmissionError("");
       if (requiresAll && !fullyCompleted) {
         return;
       }
@@ -736,13 +802,73 @@ export default function bubbled(){
                   )}
                 </Typography>
               )}
+              {openAction?.requiresSubmission && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    File submission required (PDF, DOC, DOCX, or XLSX).
+                  </Typography>
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    size="small"
+                    sx={{ textTransform: "none" }}
+                  >
+                    {submissionFile?.name ? `Replace ${submissionFile.name}` : "Choose File"}
+                    <input
+                      type="file"
+                      hidden
+                      accept=".pdf,.doc,.docx,.xlsx"
+                      onChange={handleSubmissionFileChange}
+                    />
+                  </Button>
+                  {submissionFile?.name && (
+                    <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>
+                      Selected: {submissionFile.name}
+                    </Typography>
+                  )}
+                  {submissionError && (
+                    <Typography variant="caption" color="error" sx={{ display: "block", mt: 0.5 }}>
+                      {submissionError}
+                    </Typography>
+                  )}
+                  {Array.isArray(openActionState?.submissions) &&
+                    openActionState.submissions.length > 0 && (
+                      <Box sx={{ mt: 1.5 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          Submitted files
+                        </Typography>
+                        {openActionState.submissions.map((submission) => (
+                          <Box
+                            key={`${submission.userId}-${submission.completedAt ?? submission.createdAt ?? submission.id}`}
+                            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}
+                          >
+                            <Typography variant="caption">
+                              {submission.fileName || "Submission"} by{" "}
+                              {submission.userId ? submission.userId.slice(0, 8) : "unknown"}
+                            </Typography>
+                            {submission.fileData && (
+                              <Button
+                                size="small"
+                                href={submission.fileData}
+                                download={submission.fileName || "submission"}
+                              >
+                                Download
+                              </Button>
+                            )}
+                          </Box>
+                        ))}
+                      </Box>
+                    )}
+                </Box>
+              )}
               <Button
                 onClick={submitAction}
                 disabled={
                   !openActionState ||
                   !user?.id ||
                   openActionState.stateType === "completed" ||
-                  openActionState.userHasSubmitted
+                  openActionState.userHasSubmitted ||
+                  (openAction?.requiresSubmission && !submissionFile)
                 }
               >
                 {openActionState?.requiresAllParticipants
