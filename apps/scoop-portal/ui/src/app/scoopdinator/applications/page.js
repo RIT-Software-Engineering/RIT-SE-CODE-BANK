@@ -415,8 +415,8 @@ export default function SupervisorApplicationsPage() {
             </MenuItem>
           ))}
         </Select>
-
-        <Button
+        
+        {/* <Button
           onClick={() => handleSubmit()}
           sx={{
             bgcolor: "#F76902",
@@ -428,7 +428,7 @@ export default function SupervisorApplicationsPage() {
           }}
         >
           Submit Accepted
-        </Button>
+        </Button> */}
 
         </Box>
         <Paper elevation={1}>

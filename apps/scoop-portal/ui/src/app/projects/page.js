@@ -319,7 +319,6 @@ export default function Projects() {
                 sx={{ my: 2 }}
               />
             </FormControl>
-            <Typography>{JSON.stringify(form)}</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={closeModal}>Cancel</Button>

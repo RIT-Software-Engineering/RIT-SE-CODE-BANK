@@ -453,13 +453,7 @@ export default function Journal() {
                 Semester: {semesterGroups[entry.semester_GroupId] || "Unknown"}
               </Typography>
               <Typography>
-                visibility_level: {entry.visibility_level}
-              </Typography>
-              <Typography>
-                privacy_level: {entry.privacy_level}
-              </Typography>
-              <Typography>
-                entry_type: {entry.entry_type}
+                {entry.privacy_level} {entry.entry_type} ENTRY
               </Typography>
               <Typography variant="body1">Notes:</Typography>
               <Box
