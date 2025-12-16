@@ -225,10 +225,6 @@ async function main() {
           description: "After being briefed on the basics of their project each Scooployee will complete an individual domain model to level set their Mental Model.",
         },
         {
-          name: "Midterm Presentation",
-          description: "Each SCOOP team will give a presentation near the halfway point of the term to reflect on and share their progress",
-        },
-        {
           name: "Accept SCOOP Offer",
           description: "Students confirm their acceptance of the SCOOP placement via Slack.",
         },
@@ -257,7 +253,27 @@ async function main() {
           description: "Each SCOOP team will create the user stories that they plan to work on for the term.",
         },
       ],
-    }, 
+    },
+    {
+      name: "SCOOP Workflow",
+      description: "The set of actions Scooployees go through during onboarding",
+      userId: users[2].id,
+      actions: [
+        {
+        name: "Midterm Presentation",
+        description: "Each SCOOP team will give a presentation near the halfway point of the term to reflect on and share their progress",
+        },
+        {
+        name: "Final Presentation",
+        description: "Each SCOOP team will give a presentation at the end of the term to share what they were able to accomplish over the course of the semester.",
+        },
+        {
+        name: "Scooployee Work Report",
+        description: "At the end of SCOOP each Scooployee will submit a Work Report detailing what they did over the course of their SCOOp session.",
+        },
+      ],
+    },
+    
   ];
 
   // Create all workflows from workflowData
