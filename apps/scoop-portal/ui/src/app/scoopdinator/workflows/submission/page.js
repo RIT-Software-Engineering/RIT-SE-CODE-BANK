@@ -143,7 +143,19 @@ export default function WorkflowSubmissionsPage() {
           return bTime - aTime;
         });
 
-        setSubmissions(collected);
+        const deduped = [];
+        const seenIds = new Set();
+        collected.forEach((submission) => {
+          if (submission?.id) {
+            if (seenIds.has(submission.id)) {
+              return;
+            }
+            seenIds.add(submission.id);
+          }
+          deduped.push(submission);
+        });
+
+        setSubmissions(deduped);
       } catch (err) {
         console.error('Failed to load submissions:', err);
         setError(
@@ -270,15 +282,18 @@ export default function WorkflowSubmissionsPage() {
                       justifyContent: 'space-between',
                       px: 3,
                       py: 2,
-                      backgroundColor: '#fdf6f0',
+                      backgroundColor: '#000',
                       borderBottom: '1px solid #F76902',
                     }}
                   >
                     <Box>
-                      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, color: '#fff' }}
+                      >
                         {monthLabel(month)}
                       </Typography>
-                      <Typography color="text.secondary">
+                      <Typography sx={{ color: '#ccc' }}>
                         {groupedSubmissions[month].length} submission
                         {groupedSubmissions[month].length !== 1 ? 's' : ''}
                       </Typography>
@@ -294,20 +309,24 @@ export default function WorkflowSubmissionsPage() {
                   <Divider />
                   <Table>
                     <TableHead>
-                      <TableRow sx={{ backgroundColor: '#fafafa' }}>
-                        <TableCell>Submitted On</TableCell>
-                        <TableCell>Submitted By</TableCell>
-                        <TableCell>Workflow</TableCell>
-                        <TableCell>Action</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell align="right">Files</TableCell>
+                      <TableRow sx={{ backgroundColor: '#000' }}>
+                        <TableCell sx={{ color: '#fff' }}>Submitted On</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Submitted By</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Workflow</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Action</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Status</TableCell>
+                        <TableCell align="right" sx={{ color: '#fff' }}>
+                          Files
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {groupedSubmissions[month].map((submission) => {
+                      {groupedSubmissions[month].map((submission, idx) => {
                         const user = usersById[submission.userId];
                         return (
-                          <TableRow key={submission.id}>
+                          <TableRow
+                            key={submission.id ?? `${month}-${idx}`}
+                          >
                             <TableCell>{formatDateTime(submission.submittedAt)}</TableCell>
                             <TableCell>
                               <Typography fontWeight={600}>
@@ -341,6 +360,11 @@ export default function WorkflowSubmissionsPage() {
                                   direction="row"
                                   spacing={1}
                                   justifyContent="flex-end"
+                                  sx={{
+                                    backgroundColor: '#000',
+                                    p: 1,
+                                    borderRadius: 1,
+                                  }}
                                 >
                                   <Button
                                     variant="outline-orange"
@@ -349,6 +373,14 @@ export default function WorkflowSubmissionsPage() {
                                     href={submission.fileData}
                                     download={submission.fileName || 'submission'}
                                     startIcon={<DownloadIcon />}
+                                    sx={{
+                                      color: '#fff',
+                                      borderColor: '#fff',
+                                      '&:hover': {
+                                        borderColor: '#fff',
+                                        backgroundColor: '#111',
+                                      },
+                                    }}
                                   >
                                     Download
                                   </Button>
@@ -360,6 +392,9 @@ export default function WorkflowSubmissionsPage() {
                                     target="_blank"
                                     rel="noreferrer"
                                     startIcon={<VisibilityIcon />}
+                                    sx={{
+                                      color: '#fff',
+                                    }}
                                   >
                                     View
                                   </Button>

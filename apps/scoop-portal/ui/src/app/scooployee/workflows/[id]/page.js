@@ -14,6 +14,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import Header from '@components/Header';
 import { useParams, useRouter } from 'next/navigation';
+import { useUser } from '../../../utils/user-context/page';
 
 const truthyStrings = new Set(['true', '1', 'yes', 'y', 'on']);
 const requireAllKeys = ['requireallparticipants', 'requiresallparticipants'];
@@ -62,9 +63,12 @@ const getParticipantIdsFromWorkflowState = (workflowState) => {
 
 const deriveActionStateDetails = (actionState, workflowState, currentUserId) => {
   const metadataMap = toMetadataMap(actionState?.action?.metadata);
+  const participantIds = getParticipantIdsFromWorkflowState(workflowState);
+  const participantCount = participantIds.length || 1;
   const requiresAllParticipants =
     actionState?.action?.requireAllParticipants === true ||
-    requiresAllFromMetadata(metadataMap);
+    requiresAllFromMetadata(metadataMap) ||
+    participantCount > 1;
   const requiresSubmission =
     actionState?.action?.requiresSubmission === true ||
     actionState?.action?.actionType === 'complex';
@@ -75,10 +79,10 @@ const deriveActionStateDetails = (actionState, workflowState, currentUserId) => 
     ? actionState.submissions
     : [];
   const completedSubmissions = submissions.filter(
-    (submission) => submission?.completed
+    (submission) =>
+      submission?.completed &&
+      participantIds.includes(submission.userId)
   );
-  const participantCount =
-    getParticipantIdsFromWorkflowState(workflowState).length || 1;
 
   return {
     metadataMap,
@@ -98,7 +102,8 @@ const deriveActionStateDetails = (actionState, workflowState, currentUserId) => 
 export default function WorkflowDashboard() {
   const { id: workflowId } = useParams(); // get workflowId from route param
   const router = useRouter();
-  const userId = '2';
+  const { user } = useUser();
+  const userId = user?.id;
 
   const [workflowState, setWorkflowState] = useState(null);
   const [actionsMap, setActionsMap] = useState({});
@@ -211,10 +216,19 @@ export default function WorkflowDashboard() {
       }
     };
 
-    if (workflowId) fetchWorkflowAndActions();
+    if (!workflowId || !userId) {
+      setLoading(false);
+      return;
+    }
+
+    fetchWorkflowAndActions();
   }, [userId, workflowId]);
 
   const toggleComplete = async (actionId) => {
+    if (!userId) {
+      alert('No user selected. Please choose a user first.');
+      return;
+    }
     const actionStateId = actionStateIdsMap[actionId];
     if (!actionStateId) {
       alert('No actionState ID found for this action. Cannot update.');
@@ -308,6 +322,13 @@ export default function WorkflowDashboard() {
   };
 
   if (!workflowId) return <Typography sx={{ p: 4 }}>No workflow ID provided.</Typography>;
+  if (!userId) {
+    return (
+      <Typography sx={{ p: 4, color: 'red' }}>
+        No user selected. Please choose a user to view this workflow.
+      </Typography>
+    );
+  }
   if (loading) return <Typography sx={{ p: 4 }}>Loading workflows...</Typography>;
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
   if (!workflowState) return <Typography sx={{ p: 4 }}>No workflow state available</Typography>;

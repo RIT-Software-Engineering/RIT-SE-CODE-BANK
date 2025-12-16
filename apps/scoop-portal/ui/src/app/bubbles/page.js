@@ -112,7 +112,7 @@ const deriveActionStateDetails = (
   const participantCount =
     participantIds.length > 0 ? participantIds.length : 1;
   const directory = buildTeamDirectory(team, fallbackUsers);
-  const requiresAllParticipants =
+  const requiresAllParticipantsExplicit =
     actionState?.action?.requireAllParticipants === true ||
     requiresAllFromMetadata(metadataMap);
   const requiresSubmission =
@@ -122,9 +122,12 @@ const deriveActionStateDetails = (
     ? actionState.action.submissionMimeTypes
     : [];
   const completedSubmissions = submissions.filter(
-    (submission) => submission?.completed
+    (submission) =>
+      submission?.completed &&
+      participantIds.includes(submission.userId)
   );
-  const pendingUserIds = requiresAllParticipants
+  const requiresAll = requiresAllParticipantsExplicit || participantCount > 1;
+  const pendingUserIds = requiresAll
     ? participantIds.filter(
         (id) =>
           !completedSubmissions.some(
@@ -138,7 +141,7 @@ const deriveActionStateDetails = (
 
   return {
     metadataMap,
-    requiresAllParticipants,
+    requiresAllParticipants: requiresAll,
     requiresSubmission,
     submissionMimeTypes,
     submittedCount: completedSubmissions.length,

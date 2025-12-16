@@ -122,17 +122,28 @@ const toResponseAction = (action) => {
   };
 };
 
-const toResponseActionState = (state) => {
+const filterSubmissionsForWorkflowState = (submissions, workflowStateId) => {
+  if (!Array.isArray(submissions)) return [];
+  if (!workflowStateId) return submissions;
+  return submissions.filter(
+    (submission) =>
+      !submission?.workflowStateId || submission.workflowStateId === workflowStateId
+  );
+};
+
+const toResponseActionState = (state, workflowStateId = null) => {
   if (!state) return state;
   const children = Array.isArray(state.children)
-    ? state.children.map(toResponseActionState)
+    ? state.children.map((child) => toResponseActionState(child, workflowStateId))
     : undefined;
 
   const transformed = {
     ...state,
     action: toResponseAction(state.action),
     submissions: Array.isArray(state.submissions)
-      ? state.submissions.map(toResponseSubmission)
+      ? filterSubmissionsForWorkflowState(state.submissions, workflowStateId).map(
+          toResponseSubmission
+        )
       : [],
   };
 
@@ -185,11 +196,7 @@ async function findWorkflowStateForActionState(actionStateId, initialParentId) {
   });
 }
 
-function collectParticipantIds(
-  workflowState,
-  fallbackUserId = null,
-  submissionUserIds = []
-) {
+function collectParticipantIds(workflowState, fallbackUserId = null) {
   const ids = new Set();
   if (workflowState?.userId) ids.add(workflowState.userId);
   workflowState?.participants?.forEach((participant) => {
@@ -197,9 +204,6 @@ function collectParticipantIds(
       ids.add(participant.userId);
     }
   });
-  submissionUserIds
-    ?.filter((id) => typeof id === "string" && id.trim().length > 0)
-    .forEach((id) => ids.add(id));
   if (fallbackUserId) ids.add(fallbackUserId);
   return ids;
 }
@@ -343,15 +347,24 @@ router.get("/workflow", async (req, res) => {
           }
         );
 
-        actionStates = [
-          baseActionState,
-          ...(childStates || []),
-        ].filter(Boolean);
+        actionStates = [baseActionState, ...(childStates || [])]
+          .filter(Boolean)
+          .map((as) => ({
+            ...as,
+            submissions: filterSubmissionsForWorkflowState(as.submissions, state.id),
+          }));
       }
+
+      const scopedActionStates = (actionStates || []).map((as) => ({
+        ...as,
+        submissions: filterSubmissionsForWorkflowState(as.submissions, state.id),
+      }));
 
       return {
         ...state,
-        actionStates: (actionStates || []).map(toResponseActionState),
+        actionStates: scopedActionStates.map((as) =>
+          toResponseActionState(as, state.id)
+        ),
       };
     })
   );
@@ -864,14 +877,16 @@ router.put("/workflow/:id/participants", async (req, res) => {
           for (const userId of participantIds) {
             await tx.actionStateSubmission.upsert({
               where: {
-                actionStateId_userId: {
+                actionStateId_userId_workflowStateId: {
                   actionStateId,
                   userId,
+                  workflowStateId: id,
                 },
               },
               update: {},
               create: {
                 actionStateId,
+                workflowStateId: id,
                 userId,
                 completed: false,
               },
@@ -1110,6 +1125,9 @@ router.post("/handleSubmit", async (req, res) => {
           userId: true,
         },
       },
+      workflowStates: {
+        select: { id: true },
+      },
     },
   });
 
@@ -1164,8 +1182,32 @@ router.post("/handleSubmit", async (req, res) => {
       where: { id: workflowStateId },
       include: {
         participants: true,
+        baseActionState: { select: { id: true } },
       },
     });
+
+    let actionStateBelongsToWorkflow =
+      existingActionState.workflowStates?.some(
+        (state) => state.id === workflowStateId
+      ) || false;
+
+    if (!actionStateBelongsToWorkflow) {
+      const rootForAction = await findRootActionStateId(
+        actionStateId,
+        existingActionState.parentId
+      );
+      actionStateBelongsToWorkflow =
+        rootForAction &&
+        workflowState?.baseActionState?.id &&
+        rootForAction === workflowState.baseActionState.id;
+    }
+
+    if (!actionStateBelongsToWorkflow) {
+      return res.status(403).json({
+        message:
+          "This action state does not belong to the provided workflow state.",
+      });
+    }
   } else {
     workflowState = await findWorkflowStateForActionState(
       actionStateId,
@@ -1178,15 +1220,10 @@ router.post("/handleSubmit", async (req, res) => {
       .json({ message: "Owning workflow state could not be located." });
   }
 
-  const requiresAll = actionRequiresAllParticipants(existingActionState.action);
-  const submissionUserIds =
-    existingActionState.submissions?.map((submission) => submission.userId) ??
-    [];
-  const participantIds = collectParticipantIds(
-    workflowState,
-    userId,
-    submissionUserIds
-  );
+  const participantIds = collectParticipantIds(workflowState, userId);
+  const requiresAll =
+    actionRequiresAllParticipants(existingActionState.action) ||
+    participantIds.size > 1;
   const requiredCount = requiresAll
     ? Math.max(participantIds.size, 1)
     : 1;
@@ -1212,6 +1249,7 @@ router.post("/handleSubmit", async (req, res) => {
           fileType: resolvedFileType,
           fileSize: parsedFile.buffer.length,
           fileData: parsedFile.buffer,
+          workflowStateId: workflowState.id,
         }
       : null;
 
@@ -1220,18 +1258,21 @@ router.post("/handleSubmit", async (req, res) => {
     if (requiresAll) {
       await tx.actionStateSubmission.upsert({
         where: {
-          actionStateId_userId: {
+          actionStateId_userId_workflowStateId: {
             actionStateId,
             userId,
+            workflowStateId: workflowState.id,
           },
         },
         update: {
+          workflowStateId: workflowState.id,
           completed: true,
           completedAt: submissionTimestamp,
           ...(submissionFilePayload || {}),
         },
         create: {
           actionStateId,
+          workflowStateId: workflowState.id,
           userId,
           completed: true,
           completedAt: submissionTimestamp,
@@ -1281,18 +1322,21 @@ router.post("/handleSubmit", async (req, res) => {
       if (requiresSubmission && userId) {
         await tx.actionStateSubmission.upsert({
           where: {
-            actionStateId_userId: {
+            actionStateId_userId_workflowStateId: {
               actionStateId,
               userId,
+              workflowStateId: workflowState.id,
             },
           },
           update: {
+            workflowStateId: workflowState.id,
             completed: true,
             completedAt: submissionTimestamp,
             ...(submissionFilePayload || {}),
           },
           create: {
             actionStateId,
+            workflowStateId: workflowState.id,
             userId,
             completed: true,
             completedAt: submissionTimestamp,
