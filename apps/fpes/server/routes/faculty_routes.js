@@ -98,7 +98,7 @@ router.put('/:id/remove_supervisor', async (req,res) => {
   try {
     const result = await faculty.removeSupervisor(req.params.id);
     if(result.insertedId){
-      res.json({message: 'Supervisor successfully assigned'});
+      res.json({message: 'Supervisor successfully removed'});
     }
   } catch (e) {
     console.error(e);

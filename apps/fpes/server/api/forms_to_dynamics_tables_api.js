@@ -66,7 +66,7 @@ async function assignPublicationToForm(formId, publicationId){
     try {
         connection = await pool.getConnection();
         const results = await connection.query(
-            `INSERT INTO forms_publications (form_id, publications_id) 
+            `INSERT INTO forms_publications (form_id, publication_id) 
             VALUES (?,?)`, [formId, publicationId]);
         return results;
     } finally {

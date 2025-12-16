@@ -82,7 +82,7 @@ export default function AssignRemoveSupervisorsForm(){
 
     function handleRemoveSupervisor(){
         if(facultyToRemoveSupervisor != null){
-            axios.put("http://localhost:3000/faculty/" + facultyMemberToAssign.faculty_id + "/remove_supervisor");
+            axios.put("http://localhost:3000/faculty/" + facultyToRemoveSupervisor.faculty_id + "/remove_supervisor");
         }
     }
 
