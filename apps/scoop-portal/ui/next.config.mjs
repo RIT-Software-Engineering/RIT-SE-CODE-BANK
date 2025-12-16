@@ -17,6 +17,7 @@ const nextConfig = {
         source: '/api/notifications/:path*',
         // Proxies it to backend server
         destination: 'http://localhost:4000/api/notifications/:path*',
+        basePath: false
       }
     ];
   },
