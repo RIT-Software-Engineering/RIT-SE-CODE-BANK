@@ -1343,6 +1343,28 @@ router.post("/handleSubmit", async (req, res) => {
             ...(submissionFilePayload || {}),
           },
         });
+      } else if (userId) {
+        await tx.actionStateSubmission.upsert({
+          where: {
+            actionStateId_userId_workflowStateId: {
+              actionStateId,
+              userId,
+              workflowStateId: workflowState.id,
+            },
+          },
+          update: {
+            workflowStateId: workflowState.id,
+            completed: true,
+            completedAt: submissionTimestamp,
+          },
+          create: {
+            actionStateId,
+            workflowStateId: workflowState.id,
+            userId,
+            completed: true,
+            completedAt: submissionTimestamp,
+          },
+        });
       }
 
       const updatedState = await tx.actionState.update({
