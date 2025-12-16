@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AppBar,
@@ -35,6 +35,7 @@ const navItems = [
     submenu: [
       { label: "Scooployee", path: "/scooployee/workflows" },
       { label: "Scoopdinator", path: "/scoopdinator/workflows" },
+      { label: "Submission", path: "/scoopdinator/workflows/submission" },
       { label: "Bubbles", path: "/bubbles" },
     ],
   },
@@ -55,7 +56,9 @@ const navItems = [
 
 // Pages need to be filled in as they are created
 const searchablePages = [
-    { label: "Workflows", path: "/scoopdinator/workflows" },
+    { label: "Scoopdinator Workflows", path: "/scoopdinator/workflows", roles: ["scoopdinator"] },
+    { label: "Scooployee Workflows", path: "/scooployee/workflows", roles: ["scooployee"] },
+    { label: "Workflow Submissions", path: "/scoopdinator/workflows/submission", roles: ["scoopdinator"] },
     { label: "Dashboard", path: "/scoopdinator/dashboard" },
     { label: "Review Applications", path: "/scoopdinator/applications" },
     { label: "View Scooployees", path: "/scoopdinator/scooployees/view" },
@@ -124,10 +127,23 @@ export default function Header() {
     }
 
 
+  const visibleNavItems = useMemo(() => {
+    const shouldShowWorkflows =
+      user?.type === "scoopdinator" || user?.type === "scooployee";
+    if (shouldShowWorkflows) return navItems;
+    return navItems.filter((item) => item.label !== "Workflows");
+  }, [user]);
+
   const filteredResults = query
-    ? searchablePages.filter((page) =>
-        page.label.toLowerCase().includes(query.toLowerCase())
-      )
+    ? searchablePages
+        .filter((page) =>
+          page.label.toLowerCase().includes(query.toLowerCase())
+        )
+        .filter(
+          (page) =>
+            !page.roles ||
+            (user?.type && page.roles.includes(user.type))
+        )
     : [];
 
   return (
@@ -169,7 +185,7 @@ export default function Header() {
               </Box>
             </Link>
 
-            {navItems.map(({ label, submenu, path }) => (
+            {visibleNavItems.map(({ label, submenu, path }) => (
               <Box key={label} sx={{ position: "relative", mr: 3 }}>
                 {path ? (
                   <Button
@@ -205,7 +221,13 @@ export default function Header() {
                   open={Boolean(anchorEls[label])}
                   onClose={() => handleMenuClose(label)}
                 >
-                  {submenu.map((item) => (
+                  {submenu
+                    .filter(
+                      (item) =>
+                        item.label !== "Submission" ||
+                        user?.type === "scoopdinator"
+                    )
+                    .map((item) => (
                     <MenuItem
                       key={item.path}
                       component={Link}

@@ -318,10 +318,43 @@ router.get("/workflow", async (req, res) => {
     },
   });
 
-  const transformedStates = states.map((state) => ({
-    ...state,
-    actionStates: (state.actionStates || []).map(toResponseActionState),
-  }));
+  const transformedStates = await Promise.all(
+    states.map(async (state) => {
+      let actionStates = state.actionStates || [];
+      const missingBase =
+        state.baseActionStateId &&
+        !actionStates.some((as) => as.id === state.baseActionStateId);
+
+      // If the relation is missing (or missing the base), fallback to walking the tree from baseActionState
+      if ((missingBase || !actionStates.length) && state.baseActionStateId) {
+        const baseActionState = await prisma.actionState.findUnique({
+          where: { id: state.baseActionStateId },
+          include: {
+            action: { include: { metadata: true } },
+            submissions: true,
+          },
+        });
+
+        const childStates = await flattenActionStates(
+          { parentId: state.baseActionStateId },
+          {
+            action: { include: { metadata: true } },
+            submissions: true,
+          }
+        );
+
+        actionStates = [
+          baseActionState,
+          ...(childStates || []),
+        ].filter(Boolean);
+      }
+
+      return {
+        ...state,
+        actionStates: (actionStates || []).map(toResponseActionState),
+      };
+    })
+  );
 
   res.json(transformedStates);
 });
@@ -452,7 +485,8 @@ async function updateStateByChildren(actionStateId) {
 async function createActionStates(
   actions,
   parentActionStateId = null,
-  dataModifier = () => {}
+  dataModifier = () => {},
+  workflowStateId = null
 ) {
   for (let i = 0; i < actions.length; i++) {
     const action = actions[i];
@@ -461,6 +495,9 @@ async function createActionStates(
       stateType: "notStarted",
       action: { connect: { id: action.id } },
       index: i,
+      ...(workflowStateId
+        ? { workflowStates: { connect: { id: workflowStateId } } }
+        : {}),
     };
     if (parentActionStateId) {
       data.parent = { connect: { id: parentActionStateId } };
@@ -546,7 +583,22 @@ router.post("/workflow", async (req, res) => {
 
     // Get all of the actions in the workflow and create ActionStates for them
     const actions = await getFullActionTree(workflow.rootActionId);
-    await createActionStates(actions, createdState.baseActionStateId);
+    await createActionStates(
+      actions,
+      createdState.baseActionStateId,
+      undefined,
+      createdState.id
+    );
+
+    // Ensure the base action state is linked to the workflowState's actionStates relation
+    await prisma.workflowState.update({
+      where: { id: createdState.id },
+      data: {
+        actionStates: {
+          connect: { id: createdState.baseActionStateId },
+        },
+      },
+    });
   });
 
   const state = await prisma.workflowState.findUnique({
@@ -691,8 +743,19 @@ router.put("/workflow/:id", async (req, res) => {
           data.id = actionState.id;
           data.stateType = actionState.stateType;
         }
-      }
+      },
+      workflowState.id
     );
+
+    // Ensure base action state is linked to the workflowState's actionStates relation
+    await prisma.workflowState.update({
+      where: { id },
+      data: {
+        actionStates: {
+          connect: { id: workflowState.baseActionStateId },
+        },
+      },
+    });
 
     // Return the updated workflowState
     const updated = await prisma.workflowState.findUnique({
