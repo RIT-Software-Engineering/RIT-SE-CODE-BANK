@@ -1,11 +1,15 @@
 import { AppBar, Box, Button, FormControl, InputLabel, MenuItem, Select, Toolbar } from '@mui/material'
 import react from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function Header({ pages, adminView, isAuthenticated, onLogout, roles }) {
     
     const profilePage = pages.find(page => page.name === "Profile");
-
+    const navigate = useNavigate()
+    const handleLogout = () => {
+            onLogout();
+            navigate('/login');
+        };
     return (
         <AppBar position='absolute' sx={{ backgroundColor: '#FF7700'}}>
             <Toolbar>
@@ -36,17 +40,9 @@ export default function Header({ pages, adminView, isAuthenticated, onLogout, ro
                             </Button>
                         )}
                         
-                        {/* <FormControl sx={{backgroundColor:"white", borderRadius:"5%"}} variant='filled'>
-                            <InputLabel id="role_view_label">View</InputLabel>
-                            <Select labelId="role_view_label" label="View" defaultValue={"faculty"} onChange={(e) => setRole(e.target.value)}>
-                                <MenuItem value="admin">Admin</MenuItem>
-                                <MenuItem value="faculty">Faculty</MenuItem>
-                            </Select>
-                        </FormControl> */}
-                        
                         <Button 
                             color="inherit"
-                            onClick={onLogout}
+                            onClick={handleLogout}
                         >
                             Logout
                         </Button>

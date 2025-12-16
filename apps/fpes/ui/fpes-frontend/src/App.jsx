@@ -66,12 +66,12 @@ function App() {
   ]
 
   const adminRoutes = (
-    <>
-      <Route path='/departments' element={<DepartmentsPage/>}/>
-      <Route path='/courses' element={<CoursesPage/>}/>
-      <Route path="/users" element={<UsersPage />} />
-    </>
-  )
+      <>
+        <Route path='/departments' element={<ProtectedRoute isAuthenticated={isAuthenticated}><DepartmentsPage/></ProtectedRoute>}/>
+        <Route path='/courses' element={<ProtectedRoute isAuthenticated={isAuthenticated}><CoursesPage/></ProtectedRoute>}/>
+        <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}><UsersPage /></ProtectedRoute>} />
+      </>
+    )
 
   function updateFacultyId(id) {
     setFacultyId(id !== undefined ? id : -1);
@@ -109,7 +109,7 @@ return (
           <Route path="/highlights" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsPage facultyId={facultyId}/> </ProtectedRoute> } />
           <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage facultyId={facultyId}/> </ProtectedRoute> } />
           <Route path="/supervising" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <SupervisingPage facultyId={facultyId} roles={roles}/> </ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } />
+          {/* <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } /> */}
         </Routes>
       </BrowserRouter>
   </ThemeProvider>
