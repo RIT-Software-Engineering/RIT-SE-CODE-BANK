@@ -82,7 +82,7 @@ router.post('/', async (req, res) => {
 router.put('/:faculty_id/assign_supervisor/:supervisor_id', async (req,res) => {
   try {
     const result = await faculty.assignSupervisorToFaculty(req.params.faculty_id, req.params.supervisor_id);
-    if(result?.insertedId){
+    if(result.affectedRows === 1){
       console.log('Supervisor successfully assigned')
       res.json({message: 'Supervisor successfully assigned'});
     }
@@ -97,7 +97,8 @@ router.put('/:faculty_id/assign_supervisor/:supervisor_id', async (req,res) => {
 router.put('/:id/remove_supervisor', async (req,res) => {
   try {
     const result = await faculty.removeSupervisor(req.params.id);
-    if(result.insertedId){
+    if(result.affectedRows === 1){
+      console.log('Supervisor successfully removed');
       res.json({message: 'Supervisor successfully removed'});
     }
   } catch (e) {

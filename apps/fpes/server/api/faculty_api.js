@@ -132,11 +132,10 @@ async function assignSupervisorToFaculty(facultyId, supervisorId){
   let connection;
   try {
     connection = await pool.getConnection();
-    const results = connection.query(
+    const results = await connection.query(
       `UPDATE faculty_information SET supervisor_id = ? WHERE faculty_id = ?`,
       [supervisorId, facultyId]
     )
-    console.log("Supervisor assigned successfully")
     return results;
   } finally {
     if (connection) connection.release();
@@ -148,11 +147,10 @@ async function removeSupervisor(facultyId){
   let connection;
   try {
     connection = await pool.getConnection();
-    const results = connection.query(
+    const results = await connection.query(
       `UPDATE faculty_information SET supervisor_id = NULL WHERE faculty_id = ?`,
       [facultyId]
     )
-    console.log("SUpervisor removed successfully");
     return results;
   } finally {
     if (connection) connection.release();

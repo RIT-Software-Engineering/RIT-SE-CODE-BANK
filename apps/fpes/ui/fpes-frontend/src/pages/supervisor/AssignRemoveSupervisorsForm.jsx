@@ -50,7 +50,6 @@ export default function AssignRemoveSupervisorsForm(){
 
         faculty.map((facultyMember) => {
             if(facultyMember.supervisor_id != null){
-                console.log("Not Null")
                 availableFaculty.push(facultyMember);
             }
         })
@@ -77,12 +76,27 @@ export default function AssignRemoveSupervisorsForm(){
     function handleAssignSupervisor(){
         if(facultyMemberToAssign != null && supervisorToAssign != null){
             axios.put("http://localhost:3000/faculty/" + facultyMemberToAssign.faculty_id + "/assign_supervisor/" + supervisorToAssign.faculty_id)
+            .then((response) => {
+                console.log(response);
+                const facultyMember = faculty.find(facultyMember => facultyMember.faculty_id === facultyMemberToAssign.faculty_id);
+                facultyMember.supervisor_id = supervisorToAssign.faculty_id;
+                setFacultyMemberToAssign(null);
+                setSupervisorToAssign(null);
+            })
         }
     }
 
     function handleRemoveSupervisor(){
         if(facultyToRemoveSupervisor != null){
-            axios.put("http://localhost:3000/faculty/" + facultyToRemoveSupervisor.faculty_id + "/remove_supervisor");
+            axios.put("http://localhost:3000/faculty/" + facultyToRemoveSupervisor.faculty_id + "/remove_supervisor").then(
+                (response) => {
+                console.log(response);
+                const facultyMember = faculty.find(facultyMember => facultyMember.faculty_id === facultyToRemoveSupervisor.faculty_id);
+                console.log(facultyMember);
+                facultyMember.supervisor_id = null;
+                setFacultyToRemoveSupervisor(null);
+            }
+            );
         }
     }
 
@@ -107,7 +121,12 @@ export default function AssignRemoveSupervisorsForm(){
                 disablePortal
                 options={getAvailableFacultyToAssign()}
                 value={facultyMemberToAssign}
-                getOptionLabel={(option) => option.name}
+                getOptionLabel={(option) => {
+                    const supervisor = supervisors.find(supervisor => 
+                    supervisor.faculty_id === option.supervisor_id);
+                    const supervisorName = supervisor?.name;
+                    return supervisorName ? option.name + " — " + supervisorName : option.name;
+                }}
                 sx={{ width: 300 }}
                 renderInput={(params) => <TextField {...params} label="Faculty Member" />}
                 onChange={(e,data) => setFacultyMemberToAssign(data)}
@@ -139,7 +158,11 @@ export default function AssignRemoveSupervisorsForm(){
                     disablePortal
                     options={getAvailableFacultyToRemoveSupervisor()}
                     value={facultyToRemoveSupervisor}
-                    getOptionLabel={(option) => option.name}
+                    getOptionLabel={(option) => {
+                        const supervisor = supervisors.find(supervisor => 
+                        supervisor.faculty_id === option.supervisor_id);
+                        return option.name + " — " + supervisor.name;
+                    }}  
                     sx={{ width: 300, margin:"5% auto" }}
                     renderInput={(params) => <TextField {...params} label="Faculty Member" />}
                     onChange={(e,data) => setFacultyToRemoveSupervisor(data)}
