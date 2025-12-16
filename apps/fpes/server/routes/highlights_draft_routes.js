@@ -13,11 +13,11 @@ router.post("/draft", async (req, res) => {
   let conn;
   try {
     conn = await pool.getConnection();
-
+    //delete old draft
     await conn.query(`DELETE FROM highlight_drafts WHERE faculty_information_id = ?`, [
       faculty_information_id
     ]);
-
+    //save new draft
     const result = await conn.query(
       `INSERT INTO highlight_drafts (faculty_information_id, draft_json)
        VALUES (?, ?)`,
@@ -34,7 +34,7 @@ router.post("/draft", async (req, res) => {
   }
 });
 
-// Loead Draft
+// Load Draft
 router.get("/draft/:facultyId", async (req, res) => {
   let conn;
   try {

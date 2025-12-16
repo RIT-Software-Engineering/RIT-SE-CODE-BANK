@@ -109,7 +109,8 @@ export default function HighlightsFormPage({facultyId}) {
         mode:"onChange"
     });
 
-    useEffect(() => {
+    //function that was intended to support loading a form draft
+    /*useEffect(() => {
         if (id) {
             axios.get(`http://localhost:3000/highlights/${id}`)
                 .then(res => {
@@ -121,7 +122,7 @@ export default function HighlightsFormPage({facultyId}) {
                     if (res.data) reset(res.data);
                 });
         }
-    }, [id, facultyId, reset]);
+    }, [id, facultyId, reset]);*/
 
     async function handleSaveDraft(data){
         data.faculty_information_id = facultyId;
