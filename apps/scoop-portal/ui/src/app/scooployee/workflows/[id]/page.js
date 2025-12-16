@@ -14,9 +14,17 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import Header from '@components/Header';
 import { useParams, useRouter } from 'next/navigation';
+import { useUser } from '../../../utils/user-context/page';
 
 const truthyStrings = new Set(['true', '1', 'yes', 'y', 'on']);
 const requireAllKeys = ['requireallparticipants', 'requiresallparticipants'];
+const allowedSubmissionMimeTypes = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+const maxSubmissionBytes = 8 * 1024 * 1024;
 
 const toMetadataMap = (metadata) => {
   if (!metadata) return {};
@@ -55,21 +63,32 @@ const getParticipantIdsFromWorkflowState = (workflowState) => {
 
 const deriveActionStateDetails = (actionState, workflowState, currentUserId) => {
   const metadataMap = toMetadataMap(actionState?.action?.metadata);
+  const participantIds = getParticipantIdsFromWorkflowState(workflowState);
+  const participantCount = participantIds.length || 1;
   const requiresAllParticipants =
     actionState?.action?.requireAllParticipants === true ||
-    requiresAllFromMetadata(metadataMap);
+    requiresAllFromMetadata(metadataMap) ||
+    participantCount > 1;
+  const requiresSubmission =
+    actionState?.action?.requiresSubmission === true ||
+    actionState?.action?.actionType === 'complex';
+  const submissionMimeTypes = Array.isArray(actionState?.action?.submissionMimeTypes)
+    ? actionState.action.submissionMimeTypes
+    : [];
   const submissions = Array.isArray(actionState?.submissions)
     ? actionState.submissions
     : [];
   const completedSubmissions = submissions.filter(
-    (submission) => submission?.completed
+    (submission) =>
+      submission?.completed &&
+      participantIds.includes(submission.userId)
   );
-  const participantCount =
-    getParticipantIdsFromWorkflowState(workflowState).length || 1;
 
   return {
     metadataMap,
     requiresAllParticipants,
+    requiresSubmission,
+    submissionMimeTypes,
     userHasSubmitted: currentUserId
       ? completedSubmissions.some(
           (submission) => submission.userId === currentUserId
@@ -83,7 +102,8 @@ const deriveActionStateDetails = (actionState, workflowState, currentUserId) => 
 export default function WorkflowDashboard() {
   const { id: workflowId } = useParams(); // get workflowId from route param
   const router = useRouter();
-  const userId = '2';
+  const { user } = useUser();
+  const userId = user?.id;
 
   const [workflowState, setWorkflowState] = useState(null);
   const [actionsMap, setActionsMap] = useState({});
@@ -91,6 +111,40 @@ export default function WorkflowDashboard() {
   const [error, setError] = useState(null);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [actionStateIdsMap, setActionStateIdsMap] = useState({});
+
+  const promptForSubmissionFile = () =>
+    new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.pdf,.doc,.docx,.xlsx';
+      input.onchange = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+          resolve(null);
+          return;
+        }
+        if (file.size > maxSubmissionBytes) {
+          alert('File is too large. Please upload a file under 8MB.');
+          resolve(null);
+          return;
+        }
+        if (!allowedSubmissionMimeTypes.includes(file.type)) {
+          alert('Unsupported file type. Please upload PDF, DOC, DOCX, or XLSX files.');
+          resolve(null);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          resolve({
+            name: file.name,
+            type: file.type,
+            data: reader.result,
+          });
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    });
 
   useEffect(() => {
     const fetchWorkflowAndActions = async () => {
@@ -162,10 +216,19 @@ export default function WorkflowDashboard() {
       }
     };
 
-    if (workflowId) fetchWorkflowAndActions();
+    if (!workflowId || !userId) {
+      setLoading(false);
+      return;
+    }
+
+    fetchWorkflowAndActions();
   }, [userId, workflowId]);
 
   const toggleComplete = async (actionId) => {
+    if (!userId) {
+      alert('No user selected. Please choose a user first.');
+      return;
+    }
     const actionStateId = actionStateIdsMap[actionId];
     if (!actionStateId) {
       alert('No actionState ID found for this action. Cannot update.');
@@ -187,6 +250,17 @@ export default function WorkflowDashboard() {
     try {
       let response;
       if (newCompleted) {
+        const action = actionsMap[actionId];
+        const requiresSubmission =
+          action?.requiresSubmission === true ||
+          action?.actionType === 'complex';
+        let submissionFile = null;
+        if (requiresSubmission) {
+          submissionFile = await promptForSubmissionFile();
+          if (!submissionFile) {
+            return;
+          }
+        }
         response = await fetch(
           `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/handleSubmit`,
           {
@@ -196,6 +270,13 @@ export default function WorkflowDashboard() {
               actionStateId,
               userId,
               workflowStateId: workflowState?.id,
+              ...(submissionFile
+                ? {
+                    fileData: submissionFile.data,
+                    fileName: submissionFile.name,
+                    fileType: submissionFile.type,
+                  }
+                : {}),
             }),
           }
         );
@@ -241,6 +322,13 @@ export default function WorkflowDashboard() {
   };
 
   if (!workflowId) return <Typography sx={{ p: 4 }}>No workflow ID provided.</Typography>;
+  if (!userId) {
+    return (
+      <Typography sx={{ p: 4, color: 'red' }}>
+        No user selected. Please choose a user to view this workflow.
+      </Typography>
+    );
+  }
   if (loading) return <Typography sx={{ p: 4 }}>Loading workflows...</Typography>;
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
   if (!workflowState) return <Typography sx={{ p: 4 }}>No workflow state available</Typography>;

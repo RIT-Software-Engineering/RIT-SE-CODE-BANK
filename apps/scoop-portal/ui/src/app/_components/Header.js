@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AppBar,
@@ -57,6 +57,7 @@ const navItems = [
     submenu: [
       { label: "Scooployee", path: "/scooployee/workflows" },
       { label: "Scoopdinator", path: "/scoopdinator/workflows" },
+      { label: "Submission", path: "/scoopdinator/workflows/submission" },
       { label: "Bubbles", path: "/bubbles" },
     ],
   },
@@ -70,7 +71,9 @@ const navItems = [
 ];
 
 const searchablePages = [
-    { label: "Workflows", path: "/scoopdinator/workflows" },
+    { label: "Scoopdinator Workflows", path: "/scoopdinator/workflows", roles: ["scoopdinator"] },
+    { label: "Scooployee Workflows", path: "/scooployee/workflows", roles: ["scooployee"] },
+    { label: "Workflow Submissions", path: "/scoopdinator/workflows/submission", roles: ["scoopdinator"] },
     { label: "Dashboard", path: "/scoopdinator/dashboard" },
     { label: "Review Applications", path: "/scoopdinator/applications" },
     { label: "View Scooployees", path: "/scoopdinator/scooployees/view" },
@@ -210,8 +213,23 @@ export default function Header() {
     setTempPrefs((prev) => ({ ...prev, [field]: value }));
   };
 
+  const visibleNavItems = useMemo(() => {
+    const shouldShowWorkflows =
+      user?.type === "scoopdinator" || user?.type === "scooployee";
+    if (shouldShowWorkflows) return navItems;
+    return navItems.filter((item) => item.label !== "Workflows");
+  }, [user]);
+
   const filteredResults = query
-    ? searchablePages.filter((page) => page.label.toLowerCase().includes(query.toLowerCase()))
+    ? searchablePages
+        .filter((page) =>
+          page.label.toLowerCase().includes(query.toLowerCase())
+        )
+        .filter(
+          (page) =>
+            !page.roles ||
+            (user?.type && page.roles.includes(user.type))
+        )
     : [];
 
   return (
@@ -249,8 +267,8 @@ export default function Header() {
               </Box>
             </Link>
 
-            {navItems.map(({ label, submenu, path }) => (
-              <Box key={label} sx={{ position: "relative", mr: 1 }}>
+            {visibleNavItems.map(({ label, submenu, path }) => (
+              <Box key={label} sx={{ position: "relative", mr: 3 }}>
                 {path ? (
                   <Button
                     component={Link}
@@ -260,13 +278,39 @@ export default function Header() {
                     {label}
                   </Button>
                 ) : (
-                  <>
-                    <Button
-                      aria-controls={anchorEls[label] ? `${label}-menu` : undefined}
-                      aria-haspopup="true"
-                      onClick={(e) => handleMenuOpen(e, label)}
-                      endIcon={<ArrowDropDownIcon />}
-                      sx={{ color: "#212121", fontWeight: 600, textTransform: "none" }}
+                  <Button
+                    aria-controls={anchorEls[label] ? `${label}-menu` : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={anchorEls[label] ? "true" : undefined}
+                    onClick={(e) => handleMenuOpen(e, label)}
+                    endIcon={<ArrowDropDownIcon />}
+                    sx={{
+                      color: "#212121",
+                      fontWeight: 600,
+                      textTransform: "none",
+                    }}
+                  >
+                    {label}
+                  </Button>
+                )}
+                <Menu
+                  id={`${label}-menu`}
+                  anchorEl={anchorEls[label]}
+                  open={Boolean(anchorEls[label])}
+                  onClose={() => handleMenuClose(label)}
+                >
+                  {submenu
+                    .filter(
+                      (item) =>
+                        item.label !== "Submission" ||
+                        user?.type === "scoopdinator"
+                    )
+                    .map((item) => (
+                    <MenuItem
+                      key={item.path}
+                      component={Link}
+                      href={item.path}
+                      onClick={() => handleMenuClose(label)}
                     >
                       {label}
                     </Button>

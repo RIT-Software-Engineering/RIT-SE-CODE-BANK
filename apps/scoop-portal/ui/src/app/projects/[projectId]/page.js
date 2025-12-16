@@ -21,6 +21,13 @@ import UnauthorizedPage from "../../unauthorized/page";
 
 const truthyStrings = new Set(["true", "1", "yes", "y", "on"]);
 const requireAllKeys = ["requireallparticipants", "requiresallparticipants"];
+const allowedSubmissionMimeTypes = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+const maxSubmissionBytes = 8 * 1024 * 1024;
 
 const toMetadataMap = (metadata) => {
   if (!metadata) return {};
@@ -124,6 +131,8 @@ export default function ProjectDetails({ params }) {
   const [selectedActionState, setSelectedActionState] = useState(null);
   const [project, setProject] = useState({});
   const [teamMembers, setTeamMembers] = useState([]);
+  const [submissionFile, setSubmissionFile] = useState(null);
+  const [submissionError, setSubmissionError] = useState("");
   const participantSyncKeysRef = useRef({});
   const workflowParticipantMembers = useMemo(() => {
     if (!Array.isArray(teamWorkflowState?.participants)) return [];
@@ -317,6 +326,12 @@ export default function ProjectDetails({ params }) {
             const requiresAllParticipants =
               state?.action?.requireAllParticipants === true ||
               requiresAllFromMetadata(metadataMap);
+            const requiresSubmission =
+              state?.action?.requiresSubmission === true ||
+              state?.action?.actionType === "complex";
+            const submissionMimeTypes = Array.isArray(state?.action?.submissionMimeTypes)
+              ? state.action.submissionMimeTypes
+              : [];
             const pendingUserIds = requiresAllParticipants
               ? participantIds.filter(
                   (id) =>
@@ -333,6 +348,8 @@ export default function ProjectDetails({ params }) {
               ...state,
               metadataMap,
               requiresAllParticipants,
+              requiresSubmission,
+              submissionMimeTypes,
               submittedCount,
               participantCount,
               userHasSubmitted,
@@ -456,29 +473,72 @@ export default function ProjectDetails({ params }) {
   };
 
   const handleOpen = (actionState) => {
+    setSubmissionFile(null);
+    setSubmissionError("");
     setSelectedActionState(actionState);
     setOpenModal(true);
   };
 
   const handleClose = () => {
     setSelectedActionState(null);
+    setSubmissionFile(null);
+    setSubmissionError("");
     setOpenModal(false);
+  };
+
+  const handleSubmissionFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setSubmissionFile(null);
+      setSubmissionError("");
+      return;
+    }
+    if (file.size > maxSubmissionBytes) {
+      setSubmissionError("File is too large. Please upload a file under 8MB.");
+      setSubmissionFile(null);
+      return;
+    }
+    if (!allowedSubmissionMimeTypes.includes(file.type)) {
+      setSubmissionError("Unsupported file type. Please upload PDF, DOC, DOCX, or XLSX files.");
+      setSubmissionFile(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSubmissionFile({
+        name: file.name,
+        type: file.type,
+        data: reader.result,
+      });
+      setSubmissionError("");
+    };
+    reader.readAsDataURL(file);
   };
 
   const submitAction = async () => {
     if (!selectedActionState || !user?.id) return;
+    if (selectedActionState?.requiresSubmission && !submissionFile) {
+      setSubmissionError("A file submission is required for this action.");
+      return;
+    }
 
     try {
+      const body = {
+        actionStateId: selectedActionState.id,
+        userId: user.id,
+        workflowStateId: teamWorkflowState?.id,
+      };
+      if (selectedActionState?.requiresSubmission && submissionFile) {
+        body.fileData = submissionFile.data;
+        body.fileName = submissionFile.name;
+        body.fileType = submissionFile.type;
+      }
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_WORKFLOWS_API_URL}/states/handleSubmit`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            actionStateId: selectedActionState.id,
-            userId: user.id,
-            workflowStateId: teamWorkflowState?.id,
-          }),
+          body: JSON.stringify(body),
         }
       );
 
@@ -490,6 +550,8 @@ export default function ProjectDetails({ params }) {
       }
 
       setRefresh((prev) => prev + 1);
+      setSubmissionFile(null);
+      setSubmissionError("");
     } catch (error) {
       console.error("Error submitting action state:", error);
     } finally {
@@ -777,13 +839,78 @@ export default function ProjectDetails({ params }) {
               )}
             </Typography>
           )}
+          {selectedActionState?.requiresSubmission && (
+            <Box sx={{ marginBottom: "1rem" }}>
+              <Typography variant="body2" sx={{ marginBottom: "0.5rem" }}>
+                File submission required (PDF, DOC, DOCX, or XLSX).
+              </Typography>
+              <Button
+                component="label"
+                variant="outlined"
+                size="small"
+                sx={{ textTransform: "none" }}
+              >
+                {submissionFile?.name ? `Replace ${submissionFile.name}` : "Choose File"}
+                <input
+                  type="file"
+                  hidden
+                  accept=".pdf,.doc,.docx,.xlsx"
+                  onChange={handleSubmissionFileChange}
+                />
+              </Button>
+              {submissionFile?.name && (
+                <Typography variant="caption" sx={{ display: "block", marginTop: "0.25rem" }}>
+                  Selected: {submissionFile.name}
+                </Typography>
+              )}
+              {submissionError && (
+                <Typography variant="caption" color="error" sx={{ display: "block", marginTop: "0.25rem" }}>
+                  {submissionError}
+                </Typography>
+              )}
+              {Array.isArray(selectedActionState?.submissions) &&
+                selectedActionState.submissions.length > 0 && (
+                  <Box sx={{ marginTop: "0.75rem" }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, marginBottom: "0.25rem" }}>
+                      Submitted files
+                    </Typography>
+                    {selectedActionState.submissions.map((submission) => (
+                      <Box
+                        key={`${submission.userId}-${submission.completedAt ?? submission.createdAt ?? submission.id}`}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "0.35rem",
+                        }}
+                      >
+                        <Typography variant="caption">
+                          {submission.fileName || "Submission"} by{" "}
+                          {submission.userId ? submission.userId.slice(0, 8) : "unknown"}
+                        </Typography>
+                        {submission.fileData && (
+                          <Button
+                            size="small"
+                            href={submission.fileData}
+                            download={submission.fileName || "submission"}
+                          >
+                            Download
+                          </Button>
+                        )}
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+            </Box>
+          )}
           <Button
             variant="solid-orange"
             onClick={submitAction}
             disabled={
               !selectedActionState ||
               selectedActionState.stateType === "completed" ||
-              selectedActionState.userHasSubmitted
+              selectedActionState.userHasSubmitted ||
+              (selectedActionState?.requiresSubmission && !submissionFile)
             }
           >
             {selectedActionState?.requiresAllParticipants

@@ -7,11 +7,12 @@ import {
 import { useRouter } from 'next/navigation';
 
 import Header from '@components/Header';
-
-const userId = '2'; // Hardcoded for testing and demo purposes
+import { useUser } from '../../utils/user-context/page';
 
 export default function WorkflowsList() {
   const router = useRouter();
+  const { user } = useUser();
+  const userId = user?.id;
 
   const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +23,7 @@ export default function WorkflowsList() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
         const baseUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL;
 
         const workflowsRes = await fetch(`${baseUrl}/workflows`);
@@ -92,10 +94,24 @@ export default function WorkflowsList() {
       }
     };
 
+    if (!userId) {
+      setWorkflows([]);
+      setCompletedStepsMap({});
+      setLoading(false);
+      return;
+    }
+
     fetchData();
-  }, []);
+  }, [userId]);
 
   if (loading) return <Typography sx={{ p: 4 }}>Loading workflows...</Typography>;
+  if (!userId) {
+    return (
+      <Typography sx={{ p: 4, color: 'red' }}>
+        No user selected. Please choose a user to view workflows.
+      </Typography>
+    );
+  }
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
 
   return (

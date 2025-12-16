@@ -228,6 +228,34 @@ async function main() {
           name: "Midterm Presentation",
           description: "Each SCOOP team will give a presentation near the halfway point of the term to reflect on and share their progress",
         },
+        {
+          name: "Accept SCOOP Offer",
+          description: "Students confirm their acceptance of the SCOOP placement via Slack.",
+        },
+        {
+          name: "Team contract",
+          description: "Teams draft a contract outlining norms, communication expectations, and responsibilities.",
+        },
+        {
+          name: "Make Team domain model",
+          description: "After all team members complete their individual domain models they will meet as a group to consolidate their work into one final team domain model.",        
+        },
+        {
+          name: "Join dev team",
+          description: "Each Scooployee will accept the Github invite once they recieve it from the Scoopdinator.",
+        },
+        {
+          name: "Confirm are able to write to repo by doing creating bogus branch and submitting URL",
+          description: "After being granted access to the repo, one Scooployee will attempt to create a branch to ensure they have write access, then submit the URL of the branch to the SCOOPervisor",
+        },
+        {
+          name: "Get the project running locally",
+          description: "Each Scooployee will clone the latest version of their projects dev branch and attempt to get the project running locally.",
+        },
+        {
+          name: "Create User Stories",
+          description: "Each SCOOP team will create the user stories that they plan to work on for the term.",
+        },
       ],
     }, 
   ];
