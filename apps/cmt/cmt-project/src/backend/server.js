@@ -4,6 +4,11 @@ const bodyParser = require("body-parser");
 const path = require("path");
 
 const eventRoutes = require("./routes/events");
+
+const templateRoutes = require("./routes/template");
+
+const app = express();
+const PORT = process.env.PORT || 5010;
 const templateRoutes = require("./routes/template");
 const workflowRoutes = require("./routes/workflows");
 
@@ -15,6 +20,9 @@ const prisma = new PrismaClient();
 
 const makeTeamBuilderRouter = require("./routes/teamBuilder");
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
+
+const makeCourseWebsiteRouter = require("./routes/courseWebsite");
+const courseWebsiteRoutes = makeCourseWebsiteRouter(prisma);
 
 app.use(
   cors({
@@ -40,6 +48,7 @@ app.use((req, res, next) => {
 app.use("/api/events", eventRoutes);
 app.use("/api/template", templateRoutes);
 app.use("/api/team-builder", teamBuilderRoutes);
+app.use("/api/course-website", courseWebsiteRoutes)
 app.use("/api/workflows", workflowRoutes); // NEW: Workflow routes
 
 // Health check endpoint
@@ -60,6 +69,16 @@ app.get("/", (req, res) => {
       health: "/api/health",
       events: "/api/events",
       courses: "/api/events/courses",
+    },
+  });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err.stack);
+  res.status(500).json({
+    error: "Something went wrong!",
+    message: err.message,
       workflows: "/api/workflows"
     },
   });
@@ -93,6 +112,7 @@ app.post("/api/course", async (req, res) => {
   }
 });
 
+// 404 handler
 // UPDATE course - add workflowId
 // IMPORTANT: This MUST be BEFORE the 404 handler!
 app.put("/api/course/:id", async (req, res) => {

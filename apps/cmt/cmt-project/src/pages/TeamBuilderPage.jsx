@@ -35,6 +35,7 @@ export default function TeamBuilderPage() {
         const res = await fetch(`${API}/team-builder`);
         const data = await res.json();
         console.log("API response:", data, Array.isArray(data));
+        setCourses(data || []);
         setCourses(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error(e);
@@ -139,6 +140,9 @@ export default function TeamBuilderPage() {
     const found = teamSets.find((t) => String(t.id) === String(id));
     if (found) return setActiveSet(found);
     // fallback re-fetch
+    const res = await fetch(
+      `${API}/team-builder/courses/${courseId}/teamsets`
+    );
     const res = await fetch(`${API}/team-builder/courses/${courseId}/teamsets`);
     const sets = await res.json();
     setTeamSets(Array.isArray(sets) ? sets : []);
@@ -400,8 +404,8 @@ export default function TeamBuilderPage() {
                       }}
                     >
                       <span style={{ fontSize: 14 }}>
-                        {m.enrollment?.firstName} {m.enrollment?.lastName}
-                        {m.enrollment?.email ? ` — ${m.enrollment.email}` : ""}
+                        {m.tbenrollment?.firstName} {m.tbenrollment?.lastName}
+                        {m.tbenrollment?.email ? ` — ${m.tbenrollment.email}` : ""}
                       </span>
 
                       {/* Only show move dropdown if NOT published */}

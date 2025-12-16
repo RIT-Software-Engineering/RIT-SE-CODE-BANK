@@ -1,3 +1,9 @@
+import { useState } from "react";
+import { Form, Button, Row, Col } from "react-bootstrap";
+import Alert from "react-bootstrap/Alert";
+import "../styles/course.css";
+
+function CoursePage() {
 import { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Card, Modal } from "react-bootstrap";
 import Alert from "react-bootstrap/Alert";
@@ -32,6 +38,7 @@ function CoursePage() {
 
   const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api';
 
+  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
   // Fetch courses on mount
   useEffect(() => {
     fetchCourses();
@@ -104,6 +111,60 @@ function CoursePage() {
     }
   };
 
+  // TODO nothing happens with the syllabus upload yet
+  return (
+    <>
+      <h1>Create a course</h1>
+
+      {showAlert && (
+        <Alert
+          variant="success"
+          onClose={() => setShowAlert(false)}
+          dismissible
+        >
+          ✅ Course created successfully!
+        </Alert>
+      )}
+      <Form className="course-form" onSubmit={handleSubmit}>
+        <Row>
+          <Col>
+            <Form.Group id="formCourseCode">
+              <Form.Label>Course ID: </Form.Label>
+              <Form.Control
+                type="text"
+                required
+                value={courseId}
+                onChange={(e) => setCourseId(e.target.value)}
+                placeholder="ex. Swen101"
+              ></Form.Control>
+            </Form.Group>
+          </Col>
+
+          <Col>
+            <Form.Group id="formCourseName">
+              <Form.Label>Course Name: </Form.Label>
+              <Form.Control
+                type="text"
+                required
+                value={courseName}
+                onChange={(e) => setCourseName(e.target.value)}
+                placeholder="ex. Freshmen Seminar"
+              ></Form.Control>
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col>
+            <Form.Group id="formNumOfStudents">
+              <Form.Label>Number of students: </Form.Label>
+              <Form.Control
+                type="number"
+                required
+                value={numOfStudents}
+                onChange={(e) => setStudents(e.target.value)}
+                placeholder="ex. 15"
+              ></Form.Control>
   // Handle course deletion
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm("Are you sure you want to delete this course?")) return;
@@ -300,6 +361,56 @@ function CoursePage() {
             </Form.Group>
           </Row>
 
+          <Col>
+            <Form.Group id="formCourseSemester">
+              <Form.Label>Semester: </Form.Label>
+              <Form.Control
+                type="text"
+                required
+                value={semester}
+                onChange={(e) => setSemester(e.target.value)}
+                placeholder="ex. Fall"
+              ></Form.Control>
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row>
+          <Form.Group id="formCourseColor">
+            <Form.Label>Select a color: </Form.Label>
+            <Form.Select
+              requried
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+            >
+              <option value=""></option>
+              <option value="red">Red</option>
+              <option value="orange">Orange</option>
+              <option value="yellow">Yellow</option>
+              <option value="green">Green</option>
+              <option value="blue">Blue</option>
+              <option value="purple">Purple</option>
+              <option value="pink">Pink</option>
+              <option value="brown">Brown</option>
+              <option value="gray">Gray</option>
+            </Form.Select>
+          </Form.Group>
+        </Row>
+
+        <Row>
+          <Form.Group id="formFile">
+            <Form.Label>Upload Syllabus</Form.Label>
+            <Form.Control type="file"></Form.Control>
+          </Form.Group>
+        </Row>
+
+        <div id="button-wrapper">
+          <Button id="form-button" type="submit">
+            Create Course
+          </Button>
+        </div>
+      </Form>
+    </>
           <Row>
             <Form.Group id="formFile">
               <Form.Label>Upload Syllabus</Form.Label>
