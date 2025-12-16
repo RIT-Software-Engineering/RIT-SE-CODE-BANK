@@ -3,7 +3,6 @@ const router = Router();
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-
 /**
  * Post route to save an application
  * @param {Object} req - The request object containing application data
@@ -51,6 +50,7 @@ router.post("/", async (req, res) => {
     try {
         const saved = await prisma.application.create({
             data: {
+                applicant_id: formData.applicant_id,
                 lastName: formData.lastName,
                 firstName: formData.firstName,
                 ritEmail: formData.ritEmail,

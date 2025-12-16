@@ -43,11 +43,11 @@ model users {
   lname          String
   email          String @unique
   type           String
-  semester_group String
-  project        String
-  active         String
-  last_login     String
-  prev_login     String
+  semester_group String?
+  project        String?
+  active         String?
+  last_login     String?
+  prev_login     String?
 
   teams   Teams[] @relation("TeamMembers")
   login   Login?  @relation(fields: [loginId], references: [id])
@@ -89,6 +89,7 @@ model JournalEntry {
 
 model Application {
   id                      Int      @id @default(autoincrement())
+  applicant_id            String?
   lastName                String
   firstName               String?
   ritEmail                String

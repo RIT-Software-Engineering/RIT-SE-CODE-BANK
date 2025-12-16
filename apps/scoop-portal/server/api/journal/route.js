@@ -75,13 +75,13 @@ router.post("/", async (req, res) => {
       },
     });
 
-    notifyStatus({ userId: "msk1582", context: { journalEntryId: newEntry.id } })
-      .then(summary => {
-        console.log('Notification sent:', summary)
-      })
-      .catch(error => {
-        console.error('Error sending notification:', error);
-      });
+    // notifyStatus({ userId: "msk1582", context: { journalEntryId: newEntry.id } })
+    //   .then(summary => {
+    //     console.log('Notification sent:', summary)
+    //   })
+    //   .catch(error => {
+    //     console.error('Error sending notification:', error);
+    //   });
 
     res
       .status(200)
@@ -284,9 +284,7 @@ router.get("/:id", async (req, res) => {
     else if(user.type == "scoopervisor"){
       const scoopervisorTeams = await prisma.teams.findMany({
         where: {
-          members: {
-            some: { id: user.id },
-            },
+          scoopervisorId: user.id,
         },
         include: { 
           members: true,
@@ -314,7 +312,7 @@ router.get("/:id", async (req, res) => {
                 ]),
               privacy_level: "PUBLIC",
               visibility_level: {
-                  lt: 3
+                  lt: 4
               },
               },
             include: {
@@ -328,7 +326,7 @@ router.get("/:id", async (req, res) => {
                     { sender_id: id }
                   ],
                   visibility_level: {
-                    lt: 3
+                    lt: 4
                   },
                 },
                 include:{

@@ -18,24 +18,24 @@ app.use(cors());
 // Increase payload size limit to 10MB for JSON and URL-encoded data
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-app.use("/api/semestergroup", semesterGroupRoutes);
-app.use("/api/application", applicationRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/journal", journalRoutes);
-app.use("/api/teams", teamRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/project", projectRoutes);
+app.use("/scoop-portal/api/semestergroup", semesterGroupRoutes);
+app.use("/scoop-portal/api/application", applicationRoutes);
+app.use("/scoop-portal/api/users", userRoutes);
+app.use("/scoop-portal/api/journal", journalRoutes);
+app.use("/scoop-portal/api/teams", teamRoutes);
+app.use("/scoop-portal/api/auth", authRoutes);
+app.use("/scoop-portal/api/project", projectRoutes);
 
 (async () => {
-  const workflowsRoutesModule = await import('../../workflow/server/api/routes/workflows.js');
-  const actionsRoutesModule = await import('../../workflow/server/api/routes/actions.js');
-  const statesRoutesModule = await import('../../workflow/server/api/routes/states.js');
-  const permissionsRoutesModule = await import('../../workflow/server/api/routes/permissions.js');
+  // // const workflowsRoutesModule = await import('../../workflow/server/api/routes/workflows.js');
+  // // const actionsRoutesModule = await import('../../workflow/server/api/routes/actions.js');
+  // // const statesRoutesModule = await import('../../workflow/server/api/routes/states.js');
+  // const permissionsRoutesModule = await import('../../workflow/server/api/routes/permissions.js');
 
-  app.use("/workflows", workflowsRoutesModule.default);
-  app.use("/actions", actionsRoutesModule.default);
-  app.use("/states", statesRoutesModule.default);
-  app.use("/permissions", permissionsRoutesModule.default);
+  // // app.use("/workflows", workflowsRoutesModule.default);
+  // app.use("/actions", actionsRoutesModule.default);
+  // app.use("/states", statesRoutesModule.default);
+  // app.use("/permissions", permissionsRoutesModule.default);
 
   app.listen(PORT, () => {
     console.log(`Express server is running on port ${PORT}`);

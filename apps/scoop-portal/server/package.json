@@ -10,9 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@prisma/client": "^6.13.0",
+    "@prisma/client": "^6.18.0",
     "@slack/web-api": "^7.11.0",
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "next": "15.3.4",
@@ -26,7 +27,7 @@
     "eslint-config-next": "15.3.4",
     "jest": "^30.0.2",
     "prettier": "3.6.0",
-    "prisma": "^6.13.0"
+    "prisma": "^6.18.0"
   },
   "prisma": {
     "seed": "node server/prisma/seed.js",

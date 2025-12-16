@@ -1,5 +1,9 @@
 {
   "devDependencies": {
+    "nx": "^19.8.4",
+    "@nx/jest": "^19.8.4",
+    "@nx/linter": "^19.8.4",
+    "@nx/next": "^19.8.4",
     "concurrently": "^9.2.0"
   },
   "scripts": {
