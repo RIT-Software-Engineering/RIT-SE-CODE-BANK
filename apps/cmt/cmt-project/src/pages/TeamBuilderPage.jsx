@@ -35,7 +35,6 @@ export default function TeamBuilderPage() {
         const res = await fetch(`${API}/team-builder`);
         const data = await res.json();
         console.log("API response:", data, Array.isArray(data));
-        setCourses(data || []);
         setCourses(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error(e);
@@ -143,7 +142,6 @@ export default function TeamBuilderPage() {
     const res = await fetch(
       `${API}/team-builder/courses/${courseId}/teamsets`
     );
-    const res = await fetch(`${API}/team-builder/courses/${courseId}/teamsets`);
     const sets = await res.json();
     setTeamSets(Array.isArray(sets) ? sets : []);
     setActiveSet(sets?.find((s) => String(s.id) === String(id)) || null);

@@ -4,11 +4,6 @@ const bodyParser = require("body-parser");
 const path = require("path");
 
 const eventRoutes = require("./routes/events");
-
-const templateRoutes = require("./routes/template");
-
-const app = express();
-const PORT = process.env.PORT || 5010;
 const templateRoutes = require("./routes/template");
 const workflowRoutes = require("./routes/workflows");
 
@@ -48,8 +43,8 @@ app.use((req, res, next) => {
 app.use("/api/events", eventRoutes);
 app.use("/api/template", templateRoutes);
 app.use("/api/team-builder", teamBuilderRoutes);
-app.use("/api/course-website", courseWebsiteRoutes)
-app.use("/api/workflows", workflowRoutes); // NEW: Workflow routes
+app.use("/api/course-website", courseWebsiteRoutes);
+app.use("/api/workflows", workflowRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -69,17 +64,7 @@ app.get("/", (req, res) => {
       health: "/api/health",
       events: "/api/events",
       courses: "/api/events/courses",
-    },
-  });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("Error:", err.stack);
-  res.status(500).json({
-    error: "Something went wrong!",
-    message: err.message,
-      workflows: "/api/workflows"
+      workflows: "/api/workflows",
     },
   });
 });
@@ -112,7 +97,6 @@ app.post("/api/course", async (req, res) => {
   }
 });
 
-// 404 handler
 // UPDATE course - add workflowId
 // IMPORTANT: This MUST be BEFORE the 404 handler!
 app.put("/api/course/:id", async (req, res) => {
@@ -135,6 +119,23 @@ app.put("/api/course/:id", async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating course:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// DELETE course
+app.delete("/api/course/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.course.delete({
+      where: { id },
+    });
+    res.json({ success: true, message: "Course deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting course:", error);
     res.status(500).json({
       success: false,
       error: error.message,
