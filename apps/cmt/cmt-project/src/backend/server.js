@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const path = require("path");
 
 const eventRoutes = require("./routes/events");
+const courseRoutes = require("./routes/course"); // NEW - Course routes
 const templateRoutes = require("./routes/template");
 const workflowRoutes = require("./routes/workflows");
 
@@ -40,11 +41,11 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use("/api/events", eventRoutes);
-app.use("/api/template", templateRoutes);
-app.use("/api/team-builder", teamBuilderRoutes);
-app.use("/api/course-website", courseWebsiteRoutes);
-app.use("/api/workflows", workflowRoutes);
+app.use("/api/cmt/events", eventRoutes);
+app.use("/api/cmt/course", courseRoutes); // NEW - All course routes (CRUD + workflow)
+app.use("/api/cmt/template", templateRoutes);
+app.use("/api/cmt/team-builder", teamBuilderRoutes);
+app.use("/api/cmt/workflows", workflowRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -62,9 +63,11 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     endpoints: {
       health: "/api/health",
-      events: "/api/events",
-      courses: "/api/events/courses",
-      workflows: "/api/workflows",
+      events: "/api/cmt/events",
+      courses: "/api/cmt/course",
+      templates: "/api/cmt/template",
+      workflows: "/api/cmt/workflows",
+      teamBuilder: "/api/cmt/team-builder",
     },
   });
 });

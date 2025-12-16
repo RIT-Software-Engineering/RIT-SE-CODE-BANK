@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Form, Button, Row, Col, Card, Modal } from "react-bootstrap";
+import { Form, Button, Row, Col, Card, Modal, ProgressBar } from "react-bootstrap";
 import Alert from "react-bootstrap/Alert";
 import {
   Plus,
@@ -7,6 +7,9 @@ import {
   Trash2,
   List as ListIcon,
   CheckSquare,
+  ArrowRight,
+  ArrowLeft,
+  Check,
 } from "lucide-react";
 import "../styles/course.css";
 
@@ -16,12 +19,19 @@ function CoursePage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Form state
-  const [courseId, setCourseId] = useState("");
-  const [courseName, setCourseName] = useState("");
-  const [semester, setSemester] = useState("");
-  const [color, setColor] = useState("");
-  const [numOfStudents, setStudents] = useState("");
+  // Multi-step workflow state
+  const [currentStep, setCurrentStep] = useState(1);
+  const [courseData, setCourseData] = useState({
+    id: "",
+    name: "",
+    semester: "",
+    color: "",
+    students: "",
+  });
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [calendarEvents, setCalendarEvents] = useState([]);
+
+  // Alert state
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertVariant, setAlertVariant] = useState("success");
@@ -30,7 +40,7 @@ function CoursePage() {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api';
+  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api/cmt';
 
   // Fetch courses on mount
   useEffect(() => {
@@ -43,7 +53,6 @@ function CoursePage() {
       if (!response.ok) throw new Error("Failed to fetch courses");
       const result = await response.json();
 
-      // Handle the response format: { success: true, data: [...] }
       if (result.success && result.data) {
         setCourses(result.data);
       } else {
@@ -56,52 +65,24 @@ function CoursePage() {
     }
   };
 
-  // Handle course creation
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Reset workflow state
+  const resetWorkflow = () => {
+    setCurrentStep(1);
+    setCourseData({
+      id: "",
+      name: "",
+      semester: "",
+      color: "",
+      students: "",
+    });
+    setSelectedTemplate(null);
+    setCalendarEvents([]);
+  };
 
-    try {
-      const courseResponse = await fetch(`${API_BASE}/course`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: courseId,
-          name: courseName,
-          semester: semester,
-          color: color,
-          students: numOfStudents,
-          professorId: 1, // TODO: REPLACE WITH REAL PROFESSORID
-        }),
-      });
-
-      if (!courseResponse.ok) {
-        throw new Error("Failed to create a new course");
-      }
-
-      const courseData = await courseResponse.json();
-      console.log("New course created: ", courseData);
-
-      setAlertVariant("success");
-      setAlertMessage("✅ Course created successfully!");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 6000);
-
-      // Clear form and refresh courses
-      setCourseId("");
-      setCourseName("");
-      setColor("");
-      setStudents("");
-      setSemester("");
-
-      fetchCourses();
-      setView("list"); // Return to list view
-    } catch (err) {
-      console.error(err.message);
-      setAlertVariant("danger");
-      setAlertMessage("❌ Failed to create course");
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 6000);
-    }
+  // Handle starting course creation
+  const handleStartCreate = () => {
+    resetWorkflow();
+    setView("create");
   };
 
   // Handle course deletion
@@ -153,7 +134,7 @@ function CoursePage() {
           <ListIcon size={48} />
           <h3>No Courses Yet</h3>
           <p>Create your first course to get started!</p>
-          <Button variant="primary" onClick={() => setView("create")}>
+          <Button variant="primary" onClick={handleStartCreate}>
             <Plus size={20} /> Create First Course
           </Button>
         </div>
@@ -210,113 +191,6 @@ function CoursePage() {
     );
   };
 
-  // Render create course form
-  const renderCreateForm = () => {
-    return (
-      <div className="create-course-container">
-        <div className="form-header">
-          <h1>Create a Course</h1>
-          <Button variant="outline-secondary" onClick={() => setView("list")}>
-            ← Back to Courses
-          </Button>
-        </div>
-
-        <Form className="course-form" onSubmit={handleSubmit}>
-          <Row>
-            <Col>
-              <Form.Group id="formCourseCode">
-                <Form.Label>Course ID: </Form.Label>
-                <Form.Control
-                  type="text"
-                  required
-                  value={courseId}
-                  onChange={(e) => setCourseId(e.target.value)}
-                  placeholder="ex. Swen101"
-                />
-              </Form.Group>
-            </Col>
-
-            <Col>
-              <Form.Group id="formCourseName">
-                <Form.Label>Course Name: </Form.Label>
-                <Form.Control
-                  type="text"
-                  required
-                  value={courseName}
-                  onChange={(e) => setCourseName(e.target.value)}
-                  placeholder="ex. Freshmen Seminar"
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col>
-              <Form.Group id="formNumOfStudents">
-                <Form.Label>Number of students: </Form.Label>
-                <Form.Control
-                  type="number"
-                  required
-                  value={numOfStudents}
-                  onChange={(e) => setStudents(e.target.value)}
-                  placeholder="ex. 15"
-                />
-              </Form.Group>
-            </Col>
-
-            <Col>
-              <Form.Group id="formCourseSemester">
-                <Form.Label>Semester: </Form.Label>
-                <Form.Control
-                  type="text"
-                  required
-                  value={semester}
-                  onChange={(e) => setSemester(e.target.value)}
-                  placeholder="ex. Fall"
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <Row>
-            <Form.Group id="formCourseColor">
-              <Form.Label>Select a color: </Form.Label>
-              <Form.Select
-                required
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-              >
-                <option value=""></option>
-                <option value="red">Red</option>
-                <option value="orange">Orange</option>
-                <option value="yellow">Yellow</option>
-                <option value="green">Green</option>
-                <option value="blue">Blue</option>
-                <option value="purple">Purple</option>
-                <option value="pink">Pink</option>
-                <option value="brown">Brown</option>
-                <option value="gray">Gray</option>
-              </Form.Select>
-            </Form.Group>
-          </Row>
-
-          <Row>
-            <Form.Group id="formFile">
-              <Form.Label>Upload Syllabus</Form.Label>
-              <Form.Control type="file" />
-            </Form.Group>
-          </Row>
-
-          <div id="button-wrapper">
-            <Button id="form-button" type="submit">
-              Create Course
-            </Button>
-          </div>
-        </Form>
-      </div>
-    );
-  };
-
   return (
     <div className="course-page">
       {showAlert && (
@@ -334,14 +208,36 @@ function CoursePage() {
         <div className="course-list-view">
           <div className="list-header">
             <h1>My Courses</h1>
-            <Button variant="primary" onClick={() => setView("create")}>
+            <Button variant="primary" onClick={handleStartCreate}>
               <Plus size={20} /> Create New Course
             </Button>
           </div>
           {renderCourseList()}
         </div>
       ) : (
-        renderCreateForm()
+        <CourseCreationWorkflow
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          courseData={courseData}
+          setCourseData={setCourseData}
+          selectedTemplate={selectedTemplate}
+          setSelectedTemplate={setSelectedTemplate}
+          calendarEvents={calendarEvents}
+          setCalendarEvents={setCalendarEvents}
+          onComplete={() => {
+            resetWorkflow();
+            setView("list");
+            fetchCourses();
+            setAlertVariant("success");
+            setAlertMessage("✅ Course created successfully!");
+            setShowAlert(true);
+            setTimeout(() => setShowAlert(false), 6000);
+          }}
+          onCancel={() => {
+            resetWorkflow();
+            setView("list");
+          }}
+        />
       )}
 
       {/* Onboarding Workflow Editor Modal */}
@@ -373,7 +269,475 @@ function CoursePage() {
   );
 }
 
-// Onboarding Workflow Editor Component - NOW USES BACKEND API
+// Multi-step Course Creation Workflow Component
+function CourseCreationWorkflow({
+  currentStep,
+  setCurrentStep,
+  courseData,
+  setCourseData,
+  selectedTemplate,
+  setSelectedTemplate,
+  calendarEvents,
+  setCalendarEvents,
+  onComplete,
+  onCancel,
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api/cmt';
+
+  const steps = [
+    { number: 1, title: "Course Details", icon: "📋" },
+    { number: 2, title: "Select Template", icon: "📑" },
+    { number: 3, title: "Calendar Events", icon: "📅" },
+  ];
+
+  const handleNext = () => {
+    if (currentStep === 1 && !validateCourseDetails()) {
+      return;
+    }
+    setCurrentStep(currentStep + 1);
+  };
+
+  const handleBack = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  const validateCourseDetails = () => {
+    if (!courseData.id || !courseData.name || !courseData.semester || !courseData.color || !courseData.students) {
+      setError("Please fill in all required fields");
+      return false;
+    }
+    setError(null);
+    return true;
+  };
+
+  const handleFinish = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Call backend API to create course with all data
+      const response = await fetch(`${API_BASE}/course/create-with-workflow`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          course: {
+            id: courseData.id,
+            name: courseData.name,
+            semester: courseData.semester,
+            color: courseData.color,
+            students: courseData.students,
+            professorId: 1, // TODO: Replace with real professorId
+          },
+          templateId: selectedTemplate,
+          calendarEvents: calendarEvents,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create course");
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        onComplete();
+      } else {
+        setError(result.error || "Failed to create course");
+      }
+    } catch (error) {
+      console.error("Error creating course:", error);
+      setError("Failed to create course. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const progress = (currentStep / steps.length) * 100;
+
+  return (
+    <div className="course-creation-workflow">
+      <div className="workflow-header">
+        <h1>Create a New Course</h1>
+        <Button variant="outline-secondary" onClick={onCancel} disabled={loading}>
+          Cancel
+        </Button>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="workflow-progress">
+        <ProgressBar now={progress} className="mb-3" />
+        <div className="steps-indicator">
+          {steps.map((step) => (
+            <div
+              key={step.number}
+              className={`step-item ${currentStep === step.number ? "active" : ""} ${
+                currentStep > step.number ? "completed" : ""
+              }`}
+            >
+              <div className="step-icon">
+                {currentStep > step.number ? <Check size={20} /> : step.icon}
+              </div>
+              <div className="step-title">{step.title}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Step Content */}
+      <div className="workflow-content">
+        {currentStep === 1 && (
+          <CourseDetailsStep courseData={courseData} setCourseData={setCourseData} />
+        )}
+        {currentStep === 2 && (
+          <TemplateSelectionStep
+            selectedTemplate={selectedTemplate}
+            setSelectedTemplate={setSelectedTemplate}
+          />
+        )}
+        {currentStep === 3 && (
+          <CalendarEventsStep
+            calendarEvents={calendarEvents}
+            setCalendarEvents={setCalendarEvents}
+            courseData={courseData}
+          />
+        )}
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="workflow-navigation">
+        {currentStep > 1 && (
+          <Button variant="outline-secondary" onClick={handleBack} disabled={loading}>
+            <ArrowLeft size={16} /> Back
+          </Button>
+        )}
+        <div className="spacer" />
+        {currentStep < steps.length ? (
+          <Button variant="primary" onClick={handleNext} disabled={loading}>
+            Next <ArrowRight size={16} />
+          </Button>
+        ) : (
+          <Button variant="success" onClick={handleFinish} disabled={loading}>
+            {loading ? "Creating..." : "Create Course"} <Check size={16} />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Step 1: Course Details Form
+function CourseDetailsStep({ courseData, setCourseData }) {
+  const handleChange = (field, value) => {
+    setCourseData({ ...courseData, [field]: value });
+  };
+
+  return (
+    <div className="step-content course-details-step">
+      <h3>📋 Course Information</h3>
+      <p className="step-description">Enter the basic details for your course</p>
+
+      <Form>
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Course ID *</Form.Label>
+              <Form.Control
+                type="text"
+                required
+                value={courseData.id}
+                onChange={(e) => handleChange("id", e.target.value)}
+                placeholder="e.g., SWEN101"
+              />
+            </Form.Group>
+          </Col>
+
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Course Name *</Form.Label>
+              <Form.Control
+                type="text"
+                required
+                value={courseData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+                placeholder="e.g., Freshman Seminar"
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Semester *</Form.Label>
+              <Form.Control
+                type="text"
+                required
+                value={courseData.semester}
+                onChange={(e) => handleChange("semester", e.target.value)}
+                placeholder="e.g., Fall 2025"
+              />
+            </Form.Group>
+          </Col>
+
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Number of Students *</Form.Label>
+              <Form.Control
+                type="number"
+                required
+                value={courseData.students}
+                onChange={(e) => handleChange("students", e.target.value)}
+                placeholder="e.g., 30"
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Course Color *</Form.Label>
+              <Form.Select
+                required
+                value={courseData.color}
+                onChange={(e) => handleChange("color", e.target.value)}
+              >
+                <option value="">Select a color...</option>
+                <option value="red">Red</option>
+                <option value="orange">Orange</option>
+                <option value="yellow">Yellow</option>
+                <option value="green">Green</option>
+                <option value="blue">Blue</option>
+                <option value="purple">Purple</option>
+                <option value="pink">Pink</option>
+                <option value="brown">Brown</option>
+                <option value="gray">Gray</option>
+              </Form.Select>
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col>
+            <Form.Group className="mb-3">
+              <Form.Label>Upload Syllabus (Optional)</Form.Label>
+              <Form.Control type="file" />
+            </Form.Group>
+          </Col>
+        </Row>
+      </Form>
+    </div>
+  );
+}
+
+// Step 2: Template Selection
+function TemplateSelectionStep({ selectedTemplate, setSelectedTemplate }) {
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api/cmt';
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      // Use existing template endpoint - get templates for professor
+      const professorId = 1; // TODO: Replace with real professorId
+      const response = await fetch(`${API_BASE}/template/professor/${professorId}`);
+      if (!response.ok) throw new Error("Failed to fetch templates");
+      const templatesData = await response.json();
+
+      // Transform to match expected format
+      setTemplates(templatesData.map(template => ({
+        id: template.id,
+        name: template.name,
+        description: `${template.semester} - ${template.weeks} weeks, ${template.assignments} assignments, ${template.exams} exams, ${template.labs} labs, ${template.projects} projects`,
+        icon: '📋',
+        eventsCount: template.assignments + template.exams + template.labs + template.projects
+      })));
+      
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="loading-state">Loading templates...</div>;
+  }
+
+  return (
+    <div className="step-content template-selection-step">
+      <h3>📑 Choose a Template (Optional)</h3>
+      <p className="step-description">
+        Select a pre-made template to quickly set up your course, or skip to start from scratch
+      </p>
+
+      <div className="template-options">
+        <Card
+          className={`template-card ${selectedTemplate === null ? "selected" : ""}`}
+          onClick={() => setSelectedTemplate(null)}
+        >
+          <Card.Body>
+            <div className="template-icon">📝</div>
+            <Card.Title>Start from Scratch</Card.Title>
+            <Card.Text>Create a completely custom course without any template</Card.Text>
+          </Card.Body>
+        </Card>
+
+        {templates.map((template) => (
+          <Card
+            key={template.id}
+            className={`template-card ${selectedTemplate === template.id ? "selected" : ""}`}
+            onClick={() => setSelectedTemplate(template.id)}
+          >
+            <Card.Body>
+              <div className="template-icon">{template.icon || "📋"}</div>
+              <Card.Title>{template.name}</Card.Title>
+              <Card.Text>{template.description}</Card.Text>
+              {template.eventsCount && (
+                <div className="template-stats">
+                  <small>{template.eventsCount} calendar events included</small>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Step 3: Calendar Events
+function CalendarEventsStep({ calendarEvents, setCalendarEvents, courseData }) {
+  const handleAddEvent = () => {
+    setCalendarEvents([
+      ...calendarEvents,
+      {
+        id: `temp-${Date.now()}`,
+        title: "",
+        date: "",
+        time: "",
+        description: "",
+      },
+    ]);
+  };
+
+  const handleRemoveEvent = (index) => {
+    setCalendarEvents(calendarEvents.filter((_, i) => i !== index));
+  };
+
+  const handleEventChange = (index, field, value) => {
+    const updated = [...calendarEvents];
+    updated[index][field] = value;
+    setCalendarEvents(updated);
+  };
+
+  return (
+    <div className="step-content calendar-events-step">
+      <h3>📅 Add Calendar Events (Optional)</h3>
+      <p className="step-description">
+        Add important dates and deadlines for your course. You can always add more later.
+      </p>
+
+      {calendarEvents.length === 0 ? (
+        <div className="empty-state-small">
+          <p>No events added yet. Click "Add Event" to create your first calendar event.</p>
+        </div>
+      ) : (
+        <div className="events-list">
+          {calendarEvents.map((event, index) => (
+            <Card key={event.id || index} className="event-card mb-3">
+              <Card.Body>
+                <div className="event-header">
+                  <span className="event-number">Event {index + 1}</span>
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => handleRemoveEvent(index)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Event Title *</Form.Label>
+                      <Form.Control
+                        type="text"
+                        value={event.title}
+                        onChange={(e) => handleEventChange(index, "title", e.target.value)}
+                        placeholder="e.g., Midterm Exam"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Date *</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={event.date}
+                        onChange={(e) => handleEventChange(index, "date", e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Time</Form.Label>
+                      <Form.Control
+                        type="time"
+                        value={event.time}
+                        onChange={(e) => handleEventChange(index, "time", e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Description</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        value={event.description}
+                        onChange={(e) => handleEventChange(index, "description", e.target.value)}
+                        placeholder="Additional details about this event..."
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Button variant="outline-primary" onClick={handleAddEvent}>
+        <Plus size={16} /> Add Event
+      </Button>
+    </div>
+  );
+}
+
+// Onboarding Workflow Editor Component
 function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
   const [actions, setActions] = useState([
     { 
@@ -413,9 +777,8 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState(null);
 
-  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api';
+  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api/cmt';
 
-  // Load existing workflow actions if course has a workflow
   useEffect(() => {
     if (course?.workflowId) {
       loadExistingWorkflow();
@@ -425,7 +788,6 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
   const loadExistingWorkflow = async () => {
     setLoadingData(true);
     try {
-      // NOW: Call backend API instead of workflowService
       const response = await fetch(
         `${API_BASE}/workflows/course/${course.id}/actions`
       );
@@ -473,7 +835,6 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
   };
 
   const handleSave = async () => {
-    // Validate actions
     const validActions = actions.filter((a) => a.title.trim() !== "");
 
     if (validActions.length === 0) {
@@ -485,7 +846,6 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
     setError(null);
 
     try {
-      // NOW: Call backend API instead of workflowService
       const response = await fetch(
         `${API_BASE}/workflows/course/${course.id}/onboarding`,
         {

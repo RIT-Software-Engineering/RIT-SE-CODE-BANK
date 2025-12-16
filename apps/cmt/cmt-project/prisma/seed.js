@@ -5,6 +5,19 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seeding...');
 
+  // Helper functions to create dates relative to today (used throughout seeding)
+  const addDays = (days) => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date;
+  };
+  
+  const addWeeks = (weeks) => {
+    const date = new Date();
+    date.setDate(date.getDate() + (weeks * 7));
+    return date;
+  };
+
   // Clear existing data (in reverse order of dependencies)
   console.log('🗑️  Clearing existing data...');
   await prisma.event.deleteMany({});
@@ -21,6 +34,7 @@ async function main() {
   console.log('👨‍🏫 Creating professors...');
   const prof1 = await prisma.professor.create({
     data: {
+      id: 1, // ✅ Explicitly set id to 1 for the first professor
       fname: 'John',
       lname: 'Smith',
       email: 'john.smith@rit.edu',
@@ -43,7 +57,7 @@ async function main() {
     },
   });
 
-  console.log(`✅ Created ${3} professors`);
+  console.log(`✅ Created ${3} professors (Professor 1: John Smith with id=1)`);
 
   // 2. Create Courses
   console.log('📚 Creating courses...');
@@ -111,7 +125,6 @@ async function main() {
 
   // 3. Create Events
   console.log('📅 Creating events...');
-  const now = new Date();
   const events = [];
 
   // SWEN101 Events
@@ -122,7 +135,7 @@ async function main() {
         courseId: swen101.id,
         type: 'exam',
         time: '10:00 AM',
-        date: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7),
+        date: addDays(7), // 7 days from today
         location: 'GOL-2400',
         description: 'Covers chapters 1-5',
         importance: 'High',
@@ -137,7 +150,7 @@ async function main() {
         courseId: swen101.id,
         type: 'assignment',
         time: '11:59 PM',
-        date: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3),
+        date: addDays(3), // 3 days from today
         location: 'Online',
         description: 'Submit via MyCourses',
         importance: 'High',
@@ -152,7 +165,7 @@ async function main() {
         courseId: swen101.id,
         type: 'lab',
         time: '2:00 PM',
-        date: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2),
+        date: addDays(2), // 2 days from today
         location: 'GOL-2435',
         description: 'Bring your laptop',
         importance: 'Medium',
@@ -168,7 +181,7 @@ async function main() {
         courseId: swen261.id,
         type: 'assignment',
         time: '11:59 PM',
-        date: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 5),
+        date: addDays(5), // 5 days from today
         location: 'Online',
         description: 'Peer review required',
         importance: 'High',
@@ -183,7 +196,7 @@ async function main() {
         courseId: swen261.id,
         type: 'office_hours',
         time: '3:00 PM',
-        date: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
+        date: addDays(1), // Tomorrow
         location: 'GOL-3100',
         description: 'Drop-in or by appointment',
         importance: 'Low',
@@ -199,7 +212,7 @@ async function main() {
         courseId: swen343.id,
         type: 'lecture',
         time: '9:00 AM',
-        date: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
+        date: addDays(1), // Tomorrow
         location: 'GOL-2690',
         description: 'Factory and Observer patterns',
         importance: 'Medium',
@@ -214,7 +227,7 @@ async function main() {
         courseId: swen343.id,
         type: 'assignment',
         time: '1:00 PM',
-        date: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14),
+        date: addDays(14), // 2 weeks from today
         location: 'GOL-2400',
         description: '15 minute presentation + Q&A',
         importance: 'High',
@@ -222,10 +235,11 @@ async function main() {
     })
   );
 
-  console.log(`✅ Created ${events.length} events`);
+  console.log(`✅ Created ${events.length} events with dynamic dates`);
 
   // 4. Create Course Templates
   console.log('📋 Creating course templates...');
+  
   const template1 = await prisma.courseTemplate.create({
     data: {
       name: 'Standard Software Engineering Course',
@@ -241,19 +255,43 @@ async function main() {
           {
             type: 'assignment',
             name: 'Assignment 1: Introduction',
-            dueDate: new Date(now.getFullYear(), 8, 15), // Sept 15
+            dueDate: addWeeks(1), // 1 week from today
             description: 'Getting started with the course',
+          },
+          {
+            type: 'assignment',
+            name: 'Assignment 2: Basic Concepts',
+            dueDate: addWeeks(2), // 2 weeks from today
+            description: 'Understanding fundamental principles',
+          },
+          {
+            type: 'lab',
+            name: 'Lab 1: Setup Environment',
+            dueDate: addDays(5), // 5 days from today
+            description: 'Configure development environment',
+          },
+          {
+            type: 'lab',
+            name: 'Lab 2: First Program',
+            dueDate: addDays(10), // 10 days from today
+            description: 'Write your first program',
           },
           {
             type: 'exam',
             name: 'Midterm Exam',
-            dueDate: new Date(now.getFullYear(), 9, 20), // Oct 20
+            dueDate: addWeeks(7), // 7 weeks from today
             description: 'Covers first half of semester',
+          },
+          {
+            type: 'exam',
+            name: 'Final Exam',
+            dueDate: addWeeks(14), // 14 weeks from today
+            description: 'Comprehensive final examination',
           },
           {
             type: 'project',
             name: 'Final Project',
-            dueDate: new Date(now.getFullYear(), 11, 10), // Dec 10
+            dueDate: addWeeks(13), // 13 weeks from today
             description: 'Team-based software project',
           },
         ],
@@ -276,21 +314,45 @@ async function main() {
           {
             type: 'project',
             name: 'Project 1: Web Application',
-            dueDate: new Date(now.getFullYear(), 2, 1), // March 1
+            dueDate: addWeeks(6), // 6 weeks from today
             description: 'Build a full-stack web app',
           },
           {
             type: 'project',
             name: 'Project 2: Mobile App',
-            dueDate: new Date(now.getFullYear(), 4, 15), // May 15
+            dueDate: addWeeks(12), // 12 weeks from today
             description: 'Create a mobile application',
+          },
+          {
+            type: 'assignment',
+            name: 'Assignment 1: Requirements Document',
+            dueDate: addWeeks(2), // 2 weeks from today
+            description: 'Define project requirements',
+          },
+          {
+            type: 'assignment',
+            name: 'Assignment 2: Design Document',
+            dueDate: addWeeks(4), // 4 weeks from today
+            description: 'Create system design',
+          },
+          {
+            type: 'lab',
+            name: 'Lab 1: Version Control',
+            dueDate: addDays(3), // 3 days from today
+            description: 'Learn Git basics',
+          },
+          {
+            type: 'exam',
+            name: 'Final Exam',
+            dueDate: addWeeks(15), // 15 weeks from today
+            description: 'Comprehensive final examination',
           },
         ],
       },
     },
   });
 
-  console.log(`✅ Created ${2} course templates`);
+  console.log(`✅ Created ${2} course templates with dynamic dates`);
 
   // 5. Create Team Builder Enrollments
   console.log('👥 Creating team builder enrollments...');
@@ -441,7 +503,7 @@ async function main() {
   console.log('🎉 Database seeding completed successfully!');
   console.log('='.repeat(60));
   console.log(`📊 Summary:`);
-  console.log(`   • Professors:         ${3}`);
+  console.log(`   • Professors:         ${3} (Prof 1: John Smith with id=1)`);
   console.log(`   • Courses:            ${5}`);
   console.log(`   • Events:             ${events.length}`);
   console.log(`   • Course Templates:   ${2}`);
@@ -451,6 +513,7 @@ async function main() {
   console.log(`   • Team Members:       ${members.length}`);
   console.log('='.repeat(60));
   console.log('\n✨ You can now use the application with test data!');
+  console.log('\n💡 Note: Professor John Smith has id=1 for easy testing');
 }
 
 main()
