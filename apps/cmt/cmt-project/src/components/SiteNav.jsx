@@ -43,7 +43,7 @@ export default function SiteNav() {
   }, [user]);
 
   return (
-    <header className="site-nav">
+    <div className="site-nav">
       <div className="site-nav__inner">
         <div className="site-nav__brand">
           <h1 className="site-nav__title">Course Management Tool</h1>
@@ -130,6 +130,6 @@ export default function SiteNav() {
           )}
         </div>
       </div>
-    </header>
+    </div>
   );
 }

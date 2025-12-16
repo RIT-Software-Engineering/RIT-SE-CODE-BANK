@@ -8,6 +8,7 @@ import CoursePage from "./pages/CoursePage.jsx";
 import CreateTemplatePage from "./pages/CreateTemplatePage.jsx";
 import DevLoginPage from "./pages/DevLoginPage.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
+import HomePage from "./pages/HomePage.jsx";
 import "./styles/global.css";
 import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -50,6 +51,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             </RequireAuth>
           }
         >
+
+          <Route index element={<HomePage />} />
           <Route path="teambuilder" element={<TeamBuilderPage />} />
           <Route path="calendar" element={<CalPage />} />
           <Route path="coursebuilder" element={<CoursePage />} />

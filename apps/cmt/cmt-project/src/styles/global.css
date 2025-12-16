@@ -1,156 +1,246 @@
 :root {
-    --background: #ffffff;
-    --foreground: #000000;
+  --background: #ffffff;
+  --foreground: #000000;
 
-    /* Primary colors */
-    --color-orange: #f76902;
-    /* use white or #FFFFFF for white */
+  /* Primary colors */
+  --color-orange: #f76902;
 
-    /* Secondary colors */
-    /* use black or #000000 for black */
-    --color-gray-1: #d0d3d4;
-    --color-gray-2: #a2aaad;
-    --color-gray-3: #7c878e;
-    --color-warm-gray-1: #d7d2cb;
-    --color-warm-gray-2: #aca39a;
+  /* Secondary colors */
+  --color-gray-1: #d0d3d4;
+  --color-gray-2: #a2aaad;
+  --color-gray-3: #7c878e;
+  --color-warm-gray-1: #d7d2cb;
+  --color-warm-gray-2: #aca39a;
 
-    /* Accent colors */
-    --color-green: #84bd00;
-    --color-yellow-green: #c4d600;
-    --color-blue: #009cbd;
-    --color-purple: #7d55c7;
-    --color-red: #da291c;
-    --color-yellow: #f6be00;
+  /* Accent colors */
+  --color-green: #84bd00;
+  --color-yellow-green: #c4d600;
+  --color-blue: #009cbd;
+  --color-purple: #7d55c7;
+  --color-red: #da291c;
+  --color-yellow: #f6be00;
+
+  /* App layout */
+  --nav-height: 100px;
 }
 
 @media (prefers-color-scheme: dark) {
-    :root {
-        --background: #000000;
-        --foreground: #ffffff;
-    }
-}
-
-* {
-    box-sizing: border-box;
-}
-
-html,
-body {
-    width: 100%;
-    overflow-x: hidden;
-}
-
-header {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    height: 4em;
-    z-index: 100;
-    padding: 0 1.5em;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: white;
-    color: black;
-    box-shadow: 0em 0.5rem 1em rgba(0, 0, 0, 0.1);
-}
-
-.banner {
-    top: 4.25em;
-    width: 100%;
-    background-color: var(--color-orange); /* or you may use --color-yellow */
-    padding: 1em;
-    font-weight: 700;
-}
-
-body {
-    margin: 0; /* Removes default body margin */
-    padding-top: 4em; /* Prevents fixed header from covering body content */
-    background: var(--background);
-    color: var(--foreground);
-    font-family: "Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif;
-}
-
-main {
-    margin: 1.5rem;
-    max-width: calc(100% - 3rem);
-}
-
-
-footer {
-    width: 100%;
-    height: 5rem;
-    box-sizing: border-box;
-    padding: 0 1.5rem;
-    background-color: #212121;
-    color: white;
-}
-
-h1 {
-    font-size: 2rem;
-    line-height: 2.5rem;
-    font-weight: 900;
-}
-
-h2 {
-    font-size: 1.5rem;
-    line-height: 2rem;
-    font-weight: 500;
-}
-
-h3 {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
-    font-weight: 300;
-}
-
-p {
-    font-size: 1rem;
-    line-height: 1.5rem;
-    font-weight: 400;
-    margin-bottom: 1rem;
-}
-
-.smalltext {
-    font-size: 0.875rem;
-    line-height: 1.5rem;
-    font-weight: 300;
-}
-
-:root {
-  --nav-height: 100px;
-}
-body {
-  padding-top: var(--nav-height);
-}
-
-
-html, body, #root {
-  height: 100%;
+  :root {
+    --background: #000000;
+    --foreground: #ffffff;
+  }
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 html, body, #root {
   height: 100%;
 }
 
+body {
+  margin: 0;
+  padding-top: var(--nav-height); /* ✅ single source of truth */
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif;
+}
+
+/* ✅ IMPORTANT:
+   Remove global styling on ALL <header> tags.
+   SiteNav owns its own styling via .site-nav in NavBar.css
+*/
+/* header { ... }  <-- deleted on purpose */
+
+/* If you use a banner component somewhere, keep it */
+.banner {
+  width: 100%;
+  background-color: var(--color-orange);
+  padding: 1em;
+  font-weight: 700;
+}
+
+/* Prefer padding instead of margin to avoid width jitter */
+main {
+  padding: 24px;
+  width: 100%;
+}
+
+/* Optional footer styling */
+footer {
+  width: 100%;
+  height: 5rem;
+  padding: 0 1.5rem;
+  background-color: #212121;
+  color: white;
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: 2.5rem;
+  font-weight: 900;
+}
+
+h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 500;
+}
+
+h3 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 300;
+}
+
+p {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+.smalltext {
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  font-weight: 300;
+}
+
+/* Helpful stability rules (safe) */
 #root {
   display: flex;
   flex-direction: column;
 }
 
-
-/* If you have a main layout wrapper, make it stable */
 .app-root, .app-container, .page-container {
   min-height: 100%;
 }
 
-/* Prevent resize jitter in scrolling areas */
 .main-content, .content, .outlet-wrapper {
-  min-height: 0;         /* critical for flex children */
+  min-height: 0;
   overflow: auto;
+}
+
+.home-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-top: 2rem;
+
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.home-page h2 {
+  margin-bottom: 1rem;
+}
+
+.home-page ul {
+  margin-top: 1rem;
+  padding-left: 1.2rem;
+}
+
+.home-page li {
+  margin-bottom: 0.5rem;
+}
+
+/* -------- Home (RIT-ish landing panel) -------- */
+.home {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 28px 24px;
+}
+
+.home__card {
+  position: relative;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.home__accent {
+  height: 8px;
+  background: var(--color-orange);
+}
+
+.home__content {
+  padding: 28px;
+}
+
+.home__title {
+  margin: 0 0 10px 0;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.15;
+  font-weight: 900;
+  color: #111;
+}
+
+.home__subtitle {
+  margin: 0 0 18px 0;
+  color: rgba(0,0,0,0.7);
+  font-size: 1.05rem;
+}
+
+.home__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.home__list li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.home__label {
+  font-weight: 800;
+  color: #111;
+  min-width: 140px;
+}
+
+.home__dash {
+  color: rgba(0,0,0,0.35);
+}
+
+.home__text {
+  color: rgba(0,0,0,0.8);
+}
+
+/* Small screens */
+@media (max-width: 640px) {
+  .home {
+    padding: 20px 14px;
+  }
+
+  .home__content {
+    padding: 20px;
+  }
+
+  .home__list li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .home__label {
+    min-width: 0;
+  }
 }
 
