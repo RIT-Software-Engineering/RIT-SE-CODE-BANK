@@ -5,6 +5,7 @@ import App from "./App.jsx";
 import TeamBuilderPage from "./pages/TeamBuilderPage.jsx";
 import CalPage from "./pages/CalPage.jsx";
 import CoursePage from "./pages/CoursePage.jsx";
+import StudentOnboardingPage from "./pages/StudentOnboardingPage.jsx";
 import CreateTemplatePage from "./pages/CreateTemplatePage.jsx";
 import "./styles/global.css";
 import "./styles/index.css";
@@ -23,6 +24,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="coursebuilder" element={<CoursePage />} />
           <Route path="createtemplate" element={<CreateTemplatePage />} />
           <Route path="coursewebsite" element={<CourseWebsitePage />} />
+          <Route path="onboarding" element={<StudentOnboardingPage />} />
+          <Route path="createtemplate" element={<CreateTemplatePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

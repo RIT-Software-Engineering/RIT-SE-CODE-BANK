@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
  *  1) call full URLs like http://localhost:5000/api/...  (works with your CORS settings), OR
  *  2) set up a dev proxy so just `/api/...` works.
  *
- * For now we’ll call absolute URLs to avoid proxy setup.
+ * For now we'll call absolute URLs to avoid proxy setup.
  */
 const API = `${process.env.REACT_APP_BACKEND_URL}`;
 
@@ -36,6 +36,7 @@ export default function TeamBuilderPage() {
         const data = await res.json();
         console.log("API response:", data, Array.isArray(data));
         setCourses(data || []);
+        setCourses(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error(e);
         alert("Failed to load courses");
@@ -58,7 +59,7 @@ export default function TeamBuilderPage() {
           `${API}/team-builder/courses/${courseId}/teamsets`
         );
         const sets = await res.json();
-        setTeamSets(sets || []);
+        setTeamSets(Array.isArray(sets) ? sets : []);
         if (sets?.length) {
           setActiveSetId(String(sets[0].id));
           setActiveSet(sets[0]);
@@ -122,7 +123,7 @@ export default function TeamBuilderPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Generate failed");
       // Prepend new run
-      setTeamSets((prev) => [data, ...(prev || [])]);
+      setTeamSets((prev) => (Array.isArray(prev) ? [data, ...prev] : [data]));
       setActiveSetId(String(data.id));
       setActiveSet(data);
     } catch (err) {
@@ -142,8 +143,9 @@ export default function TeamBuilderPage() {
     const res = await fetch(
       `${API}/team-builder/courses/${courseId}/teamsets`
     );
+    const res = await fetch(`${API}/team-builder/courses/${courseId}/teamsets`);
     const sets = await res.json();
-    setTeamSets(sets || []);
+    setTeamSets(Array.isArray(sets) ? sets : []);
     setActiveSet(sets?.find((s) => String(s.id) === String(id)) || null);
   };
 

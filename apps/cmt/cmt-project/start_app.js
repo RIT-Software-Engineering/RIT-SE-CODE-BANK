@@ -9,6 +9,8 @@ const colors = {
   blue: "\x1b[34m",
   red: "\x1b[31m",
   yellow: "\x1b[33m",
+  cyan: "\x1b[36m",
+  magenta: "\x1b[35m",
 };
 
 function log(message, color = colors.reset) {
@@ -75,21 +77,21 @@ async function main() {
     log("Running in development mode", colors.yellow);
 
     // Only install Prisma if it's not already there
-    log("Checking Prisma installation...", colors.blue);
+    log("\n📦 Checking Prisma installation...", colors.blue);
     const prismaInstalled = checkPrismaInstalled();
 
     if (!prismaInstalled) {
       log("Installing Prisma dependencies...", colors.blue);
       await runCommand("npm", [
         "install",
-        "prisma",
-        "@prisma/client",
+        "prisma@^5.0.0",
+        "@prisma/client@^5.0.0",
         "mysql2",
         "--save-dev",
         "--legacy-peer-deps",
       ]);
     } else {
-      log("Skipping Prisma installation (already installed)", colors.green);
+      log("✅ Skipping Prisma installation (already installed)", colors.green);
     }
 
     // Set up the database schema
@@ -99,9 +101,8 @@ async function main() {
 
     // Install dependencies for both frontend and backend
     const backendPath = path.join(process.cwd(), "src", "backend");
-
     if (fs.existsSync(backendPath)) {
-      log("Installing backend dependencies...", colors.blue);
+      log("\n📦 Installing CMT backend dependencies...", colors.blue);
       await runCommand("npm", ["install", "--legacy-peer-deps"], {
         cwd: backendPath,
       });
@@ -163,14 +164,16 @@ async function main() {
       process.exit(0);
     }, 2000);
   } catch (error) {
-    log(`Error: ${error.message}`, colors.red);
+    log("\n" + "=".repeat(60), colors.red);
+    log(`❌ Error: ${error.message}`, colors.red);
+    log("=".repeat(60), colors.red);
     process.exit(1);
   }
 }
 
 // Handle Ctrl+C gracefully
 process.on("SIGINT", () => {
-  log("Process interrupted", colors.yellow);
+  log("\n⚠️  Process interrupted", colors.yellow);
   process.exit(0);
 });
 

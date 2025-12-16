@@ -81,6 +81,7 @@ model Course {
   events       Event[]
   tbenrollment TBEnrollment[]
   tbteamset    TBTeamSet[]
+  workflowId    String?
 
   @@id([id, professorId])
   @@index([professorId])
@@ -108,7 +109,7 @@ model TBMember {
   enrollmentId Int
   role         String?
   createdAt    DateTime     @default(now())
-  tbenrollment   TBEnrollment @relation(fields: [enrollmentId], references: [id])
+  enrollment   TBEnrollment @relation(fields: [enrollmentId], references: [id])
   tbteam       TBTeam       @relation(fields: [teamId], references: [id])
 
   @@unique([teamId, enrollmentId])
