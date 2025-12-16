@@ -45,6 +45,7 @@ app.use("/api/cmt/events", eventRoutes);
 app.use("/api/cmt/course", courseRoutes); // NEW - All course routes (CRUD + workflow)
 app.use("/api/cmt/template", templateRoutes);
 app.use("/api/cmt/team-builder", teamBuilderRoutes);
+app.use("/api/cmt/course-website", courseWebsiteRoutes);
 app.use("/api/cmt/workflows", workflowRoutes);
 
 // Health check endpoint
