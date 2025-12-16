@@ -1,11 +1,10 @@
 import axios from "axios";
 
-const token = process.env.SLACK_BOT_TOKEN;
 
 function headers() {
-  if (!token) throw new Error("SLACK_BOT_TOKEN not set");
+  if (!process.env.SLACK_BOT_TOKEN) throw new Error("SLACK_BOT_TOKEN not set");
   return {
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
     "Content-Type": "application/json; charset=utf-8",
   };
 }
