@@ -75,7 +75,7 @@ router.post("/", async (req, res) => {
       },
     });
 
-    notifyStatus({ userId: "jjm6490", context: { journalEntryId: newEntry.id } })
+    notifyStatus({ userId: "jjm6490", context: { journalEntryId: newEntry.id, notes: newEntry.notes } })
       .then(summary => {
         console.log('Notification sent:', summary)
       })
@@ -416,8 +416,8 @@ export async function notifyStatus({ userId, context }) {
     body: JSON.stringify({
       userId: userId,
       subject: "New Journal Entry Created",
-      message: "A new journal entry has been created."
-        })
+      message: context.notes || "A new journal entry has been created.",
+      })
   })
 
 
