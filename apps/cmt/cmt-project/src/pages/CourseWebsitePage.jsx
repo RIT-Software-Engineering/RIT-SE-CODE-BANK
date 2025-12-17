@@ -29,7 +29,9 @@ export default function CourseWebsitePage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/events/courses`);
+        const res = await fetch(`${API_BASE}/events/courses`, {
+          credentials: 'include',
+        });
         const result = await res.json();
         if (result.success) setCourses(result.data);
       } catch (error) {
@@ -44,7 +46,9 @@ export default function CourseWebsitePage() {
     const fetchEvents = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/course-website/${selectedCourse}/events`);
+        const res = await fetch(`${API_BASE}/course-website/${selectedCourse}/events`, {
+          credentials: 'include',
+        });
         const result = await res.json();
         if (result.success) setEvents(result.data);
         else setEvents([]);

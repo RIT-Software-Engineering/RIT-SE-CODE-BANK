@@ -219,6 +219,10 @@ async function main() {
       stdio: "inherit",
       shell: true,
       detached: true,
+      env:{
+        ...process.env,
+        PORT: "3000",
+      },
     });
     pids.frontend = frontendProcess.pid;
 

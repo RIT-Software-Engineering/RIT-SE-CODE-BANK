@@ -20,7 +20,14 @@ model Event {
   url         String?
   course      Course?    @relation(fields: [courseId], references: [id])
 
+  // User ownership fields
+  ownerUid    String?    // RIT username / uid from JWT (req.user.uid)
+  ownerEmail  String?    // email from JWT (req.user.email)
+  professorId Int?       // Link to professor for scoping
+  professor   Professor? @relation(fields: [professorId], references: [id])
+
   @@index([courseId])
+  @@index([professorId])
   @@map("events")
 }
 
@@ -32,6 +39,7 @@ model Professor {
   courses         Course[]
   tbteamset       TBTeamSet[]
   courseTemplates CourseTemplate[]
+  events          Event[]
 
   @@map("professors")
 }

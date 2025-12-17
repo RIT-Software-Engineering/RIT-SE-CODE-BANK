@@ -28,7 +28,9 @@ function CreateTemplatePage() {
 
   const fetchTemplates = async () => {
     try {
-      const response = await fetch(`${API_BASE}/template/professor/1`);
+      const response = await fetch(`${API_BASE}/template/professor/1`, {
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch templates");
       }
@@ -64,6 +66,7 @@ function CreateTemplatePage() {
     try {
       const response = await fetch(`${API_BASE}/template/${templateId}`, {
         method: "DELETE",
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -104,6 +107,7 @@ function CreateTemplatePage() {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(templateData),
+            credentials: 'include',
           }
         );
         setAlertMessage("Template updated successfully!");
@@ -112,6 +116,7 @@ function CreateTemplatePage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(templateData),
+          credentials: 'include',
         });
         setAlertMessage("Template created successfully!");
       }
@@ -445,7 +450,9 @@ function DateConfigView({ template, onBack, onSave, apiBase }) {
 
   const loadExistingItems = async () => {
     try {
-      const response = await fetch(`${apiBase}/template/${template.id}/items`);
+      const response = await fetch(`${apiBase}/template/${template.id}/items`, {
+        credentials: 'include',
+      });
       if (response.ok) {
         const existingItems = await response.json();
         if (existingItems.length > 0) {
@@ -476,6 +483,7 @@ function DateConfigView({ template, onBack, onSave, apiBase }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
+        credentials: 'include',
       });
 
       if (!response.ok) {

@@ -49,7 +49,9 @@ function CoursePage() {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch(`${API_BASE}/events/courses`);
+      const response = await fetch(`${API_BASE}/events/courses`, {
+        credentials: 'include', // Send cookies
+      });
       if (!response.ok) throw new Error("Failed to fetch courses");
       const result = await response.json();
 
@@ -92,6 +94,7 @@ function CoursePage() {
     try {
       const response = await fetch(`${API_BASE}/course/${courseId}`, {
         method: "DELETE",
+        credentials: 'include', // Send cookies
       });
 
       if (!response.ok) throw new Error("Failed to delete course");
@@ -322,6 +325,7 @@ function CourseCreationWorkflow({
       const response = await fetch(`${API_BASE}/course/create-with-workflow`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', // Send cookies
         body: JSON.stringify({
           course: {
             id: courseData.id,
@@ -554,7 +558,9 @@ function TemplateSelectionStep({ selectedTemplate, setSelectedTemplate }) {
     try {
       // Use existing template endpoint - get templates for professor
       const professorId = 1; // TODO: Replace with real professorId
-      const response = await fetch(`${API_BASE}/template/professor/${professorId}`);
+      const response = await fetch(`${API_BASE}/template/professor/${professorId}`, {
+        credentials: 'include', // Send cookies
+      });
       if (!response.ok) throw new Error("Failed to fetch templates");
       const templatesData = await response.json();
 
@@ -789,7 +795,10 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
     setLoadingData(true);
     try {
       const response = await fetch(
-        `${API_BASE}/workflows/course/${course.id}/actions`
+        `${API_BASE}/workflows/course/${course.id}/actions`,
+        {
+          credentials: 'include', // Send cookies
+        }
       );
 
       if (!response.ok) {
@@ -851,6 +860,7 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // Send cookies
           body: JSON.stringify({ actions: validActions })
         }
       );
