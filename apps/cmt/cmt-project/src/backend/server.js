@@ -1,39 +1,144 @@
+// src/backend/server.js
+const path = require("path");
+require("dotenv").config({
+  // Load .env from the cmt-project root
+  path: path.join(__dirname, "..", "..", ".env"),
+});
+
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const path = require("path");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const authMiddleware = require("./authMiddleware");
 
 const eventRoutes = require("./routes/events");
-
+const courseRoutes = require("./routes/course"); // NEW - Course routes
 const templateRoutes = require("./routes/template");
-
-const app = express();
-const PORT = process.env.PORT || 5010;
+const makeTeamBuilderRouter = require("./routes/teamBuilder");
+const workflowRoutes = require("./routes/workflows");
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const makeTeamBuilderRouter = require("./routes/teamBuilder");
+const app = express();
+
+const BACKEND_PORT = Number(process.env.BACKEND_PORT) || 5010; // API server
+const FRONTEND_PORT = Number(process.env.PORT) || 3010;        // React dev server
+
+/* ------------------------------------------------------------------
+   MIDDLEWARE
+   ------------------------------------------------------------------ */
+
+const allowedOrigins = [
+  `http://localhost:${FRONTEND_PORT}`, // from .env (e.g., 3010)
+  "http://localhost:3000",            // CRA default
+];
+
+const makeCourseWebsiteRouter = require("./routes/courseWebsite");
+const courseWebsiteRoutes = makeCourseWebsiteRouter(prisma);
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 
 app.use(
   cors({
-    origin: /^http:\/\/localhost:\d+$/, // allows any localhost port
+    origin: function (origin, callback) {
+      // Allow requests from tools/extensions with no origin
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS: " + origin));
+    },
     credentials: true,
   })
 );
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
+// Middleware to attach prisma to request for workflow routes
+app.use((req, res, next) => {
+  req.prisma = prisma;
+  next();
+});
+
+// Attach req.user from the cmt_id cookie
+app.use(authMiddleware);
+
+// Simple logger
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// Routes
-app.use("/api/events", eventRoutes);
-app.use("/api/template", templateRoutes);
-app.use('/api/team-builder', teamBuilderRoutes);
+/* ------------------------------------------------------------------
+   ROUTES
+   ------------------------------------------------------------------ */
+
+// Dev login endpoint - creates a JWT token for testing
+app.post("/api/dev/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    // Read dev-users.json for authentication
+    const fs = require("fs");
+    const devUsersPath = path.join(__dirname, "dev-users.json");
+    const devUsers = JSON.parse(fs.readFileSync(devUsersPath, "utf-8"));
+
+    // Find user by email
+    const user = devUsers.find(u => u.email === email);
+
+    if (!user || user.password !== password) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    // Create JWT token with user data from dev-users.json
+    const token = jwt.sign(
+      { 
+        uid: user.uid,
+        professorId: user.id,
+        email: user.email,
+        name: user.name,
+        givenName: user.givenName,
+        sn: user.sn,
+        affiliations: user.affiliations,
+        roles: user.roles,
+      },
+      process.env.JWT_SECRET || "dev-secret",
+      { expiresIn: "7d" }
+    );
+
+    // Set cookie (httpOnly: false so frontend can read it)
+    res.cookie("cmt_id", token, {
+      httpOnly: false, // Allow JavaScript access for dev
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        uid: user.uid,
+        name: user.name,
+        email: user.email,
+        roles: user.roles,
+        affiliations: user.affiliations,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
@@ -51,21 +156,24 @@ app.get("/", (req, res) => {
     version: "1.0.0",
     endpoints: {
       health: "/api/health",
-      events: "/api/events",
-      courses: "/api/events/courses",
+      events: "/api/cmt/events",
+      courses: "/api/cmt/course",
+      templates: "/api/cmt/template",
+      workflows: "/api/cmt/workflows",
+      teamBuilder: "/api/cmt/team-builder",
     },
   });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("Error:", err.stack);
-  res.status(500).json({
-    error: "Something went wrong!",
-    message: err.message,
-  });
-});
+// API Routes
+app.use("/api/cmt/events", eventRoutes);
+app.use("/api/cmt/course", courseRoutes);
+app.use("/api/cmt/template", templateRoutes);
+app.use("/api/cmt/team-builder", teamBuilderRoutes);
+app.use("/api/cmt/course-website", courseWebsiteRoutes);
+app.use("/api/cmt/workflows", workflowRoutes);
 
+// Legacy course routes (if not handled by courseRoutes)
 // get all courses from a professor
 // TODO: CHANGE IT SO IT'S BASED ON THE PROFESSOR ID THAT'S CURRENTLY LOGGED IN
 app.get("/api/course", async (req, res) => {
@@ -94,7 +202,65 @@ app.post("/api/course", async (req, res) => {
   }
 });
 
-// 404 handler
+// UPDATE course - add workflowId
+app.put("/api/course/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    console.log("PUT /api/course/:id called with:", id, updateData);
+
+    const updatedCourse = await prisma.course.update({
+      where: { id },
+      data: updateData,
+    });
+
+    console.log("Course updated successfully:", updatedCourse);
+
+    res.json({
+      success: true,
+      data: updatedCourse,
+    });
+  } catch (error) {
+    console.error("Error updating course:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// DELETE course
+app.delete("/api/course/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.course.delete({
+      where: { id },
+    });
+    res.json({ success: true, message: "Course deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting course:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/* ------------------------------------------------------------------
+   ERROR / 404 HANDLERS
+   ------------------------------------------------------------------ */
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err.stack);
+  res.status(500).json({
+    error: "Something went wrong!",
+    message: err.message,
+  });
+});
+
+// 404 handler - MUST BE LAST!
 app.use("*", (req, res) => {
   res.status(404).json({
     error: "Route not found",
@@ -102,9 +268,12 @@ app.use("*", (req, res) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+/* ------------------------------------------------------------------
+   START SERVER
+   ------------------------------------------------------------------ */
+
+app.listen(BACKEND_PORT, () => {
+  console.log(`🚀 Server running on port ${BACKEND_PORT}`);
   console.log(`📚 Course Calendar Backend is ready!`);
-  console.log(`🔗 API endpoints available at http://localhost:${PORT}/api`);
+  console.log(`🔗 API endpoints available at http://localhost:${BACKEND_PORT}/api`);
 });

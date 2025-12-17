@@ -139,7 +139,9 @@ export default function TeamBuilderPage() {
     const found = teamSets.find((t) => String(t.id) === String(id));
     if (found) return setActiveSet(found);
     // fallback re-fetch
-    const res = await fetch(`${API}/team-builder/courses/${courseId}/teamsets`);
+    const res = await fetch(
+      `${API}/team-builder/courses/${courseId}/teamsets`
+    );
     const sets = await res.json();
     setTeamSets(Array.isArray(sets) ? sets : []);
     setActiveSet(sets?.find((s) => String(s.id) === String(id)) || null);
@@ -400,8 +402,8 @@ export default function TeamBuilderPage() {
                       }}
                     >
                       <span style={{ fontSize: 14 }}>
-                        {m.enrollment?.firstName} {m.enrollment?.lastName}
-                        {m.enrollment?.email ? ` — ${m.enrollment.email}` : ""}
+                        {m.tbenrollment?.firstName} {m.tbenrollment?.lastName}
+                        {m.tbenrollment?.email ? ` — ${m.tbenrollment.email}` : ""}
                       </span>
 
                       {/* Only show move dropdown if NOT published */}

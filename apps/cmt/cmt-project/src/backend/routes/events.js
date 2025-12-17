@@ -52,12 +52,38 @@ const validateEvent = (req, res, next) => {
   next();
 };
 
-// GET /api/events - Get all events with course information
+// Helper: require a logged-in user
+function requireUser(req, res) {
+  if (!req.user) {
+    res.status(401).json({ success: false, error: "Not authenticated" });
+    return null;
+  }
+  return req.user;
+}
+
+// GET /api/events - Get all events with course information (for this user)
 router.get("/", async (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+
   try {
+    // If user is a professor, get events by professorId
+    let whereClause;
+    if (user.professorId) {
+      whereClause = {
+        professorId: parseInt(user.professorId),
+      };
+    } else {
+      // For students or other users, filter by ownerUid
+      whereClause = {
+        ownerUid: user.uid,
+      };
+    }
+
     const events = await prisma.event.findMany({
+      where: whereClause,
       include: {
-        course: true, // Include course details
+        course: true,
       },
       orderBy: {
         date: "asc",
@@ -77,13 +103,46 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/events/courses - Get all courses
+// GET /api/events/courses - Get all courses for this professor
 router.get("/courses", async (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+
   try {
+    // If user is a professor, get their courses by professorId
+    if (user.professorId) {
+      const courses = await prisma.course.findMany({
+        where: {
+          professorId: parseInt(user.professorId), // Convert string to integer
+        },
+        include: {
+          _count: {
+            select: { events: true }, // Count events per course
+          },
+        },
+        orderBy: {
+          id: "asc",
+        },
+      });
+
+      return res.json({
+        success: true,
+        data: courses,
+      });
+    }
+
+    // For students or other users, show courses they have events in
     const courses = await prisma.course.findMany({
+      where: {
+        events: {
+          some: {
+            ownerUid: user.uid,
+          },
+        },
+      },
       include: {
         _count: {
-          select: { events: true }, // Count events per course
+          select: { events: true },
         },
       },
       orderBy: {
@@ -104,14 +163,37 @@ router.get("/courses", async (req, res) => {
   }
 });
 
-// GET /api/events/stats - Get statistics
+// GET /api/events/stats - Get statistics for this user
 router.get("/stats", async (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+
   try {
-    const totalEvents = await prisma.event.count();
-    const totalCourses = await prisma.course.count();
+    // Build where clause based on user type
+    let whereClause;
+    if (user.professorId) {
+      whereClause = { professorId: parseInt(user.professorId) };
+    } else {
+      whereClause = { ownerUid: user.uid };
+    }
+
+    const totalEvents = await prisma.event.count({
+      where: whereClause,
+    });
+
+    const totalCourses = await prisma.course.count({
+      where: user.professorId
+        ? { professorId: parseInt(user.professorId) }
+        : {
+            events: {
+              some: { ownerUid: user.uid },
+            },
+          },
+    });
 
     const eventsByType = await prisma.event.groupBy({
       by: ["type"],
+      where: whereClause,
       _count: {
         id: true,
       },
@@ -119,6 +201,7 @@ router.get("/stats", async (req, res) => {
 
     const eventsByImportance = await prisma.event.groupBy({
       by: ["importance"],
+      where: whereClause,
       _count: {
         id: true,
       },
@@ -126,6 +209,7 @@ router.get("/stats", async (req, res) => {
 
     const upcomingEvents = await prisma.event.count({
       where: {
+        ...whereClause,
         date: {
           gte: new Date(),
         },
@@ -159,23 +243,44 @@ router.get("/stats", async (req, res) => {
   }
 });
 
-// GET /api/events/deadlines - Get upcoming deadlines
+// GET /api/events/deadlines - Get upcoming deadlines for this user
 router.get("/deadlines", async (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+
   try {
     const daysAhead = parseInt(req.query.days) || 7;
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + daysAhead);
 
-    const deadlines = await prisma.event.findMany({
-      where: {
+    // Build where clause based on user type
+    let whereClause;
+    if (user.professorId) {
+      whereClause = {
+        professorId: parseInt(user.professorId),
         date: {
           gte: new Date(),
           lte: endDate,
         },
         type: {
-          in: ["exam", "assignment"], // Only deadlines
+          in: ["exam", "assignment"],
         },
-      },
+      };
+    } else {
+      whereClause = {
+        ownerUid: user.uid,
+        date: {
+          gte: new Date(),
+          lte: endDate,
+        },
+        type: {
+          in: ["exam", "assignment"],
+        },
+      };
+    }
+
+    const deadlines = await prisma.event.findMany({
+      where: whereClause,
       include: {
         course: true,
       },
@@ -197,16 +302,31 @@ router.get("/deadlines", async (req, res) => {
   }
 });
 
-// GET /api/events/date/:date - Get events for specific date
+// GET /api/events/date/:date - Get events for specific date (for this user)
 router.get("/date/:date", async (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+
   try {
     const { date } = req.params;
     const targetDate = new Date(date);
 
-    const events = await prisma.event.findMany({
-      where: {
+    // Build where clause based on user type
+    let whereClause;
+    if (user.professorId) {
+      whereClause = {
+        professorId: parseInt(user.professorId),
         date: targetDate,
-      },
+      };
+    } else {
+      whereClause = {
+        ownerUid: user.uid,
+        date: targetDate,
+      };
+    }
+
+    const events = await prisma.event.findMany({
+      where: whereClause,
       include: {
         course: true,
       },
@@ -228,8 +348,11 @@ router.get("/date/:date", async (req, res) => {
   }
 });
 
-// GET /api/events/course/:courseId - Get course by ID with its events
+// GET /api/events/course/:courseId - Get course by ID with this user's events
 router.get("/course/:courseId", async (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+
   try {
     const { courseId } = req.params;
 
@@ -239,6 +362,9 @@ router.get("/course/:courseId", async (req, res) => {
       },
       include: {
         events: {
+          where: user.professorId
+            ? { professorId: parseInt(user.professorId) }
+            : { ownerUid: user.uid },
           orderBy: {
             date: "asc",
           },
@@ -266,8 +392,11 @@ router.get("/course/:courseId", async (req, res) => {
   }
 });
 
-// POST /api/events - Create new event
+// POST /api/events - Create new event for this user
 router.post("/", validateEvent, async (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+
   try {
     const { date, courseId, ...eventData } = req.body;
 
@@ -283,18 +412,29 @@ router.post("/", validateEvent, async (req, res) => {
       });
     }
 
-    const newEvent = await prisma.event.create({
-      data: {
-        title: eventData.title,
-        courseId: courseId === "admin" ? null : courseId,
-        type: eventData.type,
-        date: new Date(date),
-        time: eventData.time || "12:00 PM",
-        location: eventData.location || "TBD",
-        description: eventData.description || "",
-        importance: eventData.importance || "Medium",
+    // Build event data
+    const eventCreateData = {
+      title: eventData.title,
+      courseId: courseId === "admin" ? null : courseId,
+      type: eventData.type,
+      date: new Date(date),
+      time: eventData.time || "12:00 PM",
+      location: eventData.location || "TBD",
+      description: eventData.description || "",
+      importance: eventData.importance || "Medium",
+      ownerUid: user.uid,
+      ownerEmail: user.email,
+    };
 
-      },
+    // Add professorId if user is a professor
+    if (user.professorId) {
+      eventCreateData.professor = {
+        connect: { id: parseInt(user.professorId) },
+      };
+    }
+
+    const newEvent = await prisma.event.create({
+      data: eventCreateData,
       include: {
         course: true,
       },
@@ -378,12 +518,29 @@ router.put("/:id", async (req, res) => {
 
 // DELETE /api/events/:id - Delete event
 router.delete("/:id", async (req, res) => {
+  const user = requireUser(req, res);
+  if (!user) return;
+
   try {
     const eventId = parseInt(req.params.id);
 
-    // Check if event exists
-    const existingEvent = await prisma.event.findUnique({
-      where: { id: eventId },
+    // Build where clause based on user type
+    let whereClause;
+    if (user.professorId) {
+      whereClause = {
+        id: eventId,
+        professorId: parseInt(user.professorId),
+      };
+    } else {
+      whereClause = {
+        id: eventId,
+        ownerUid: user.uid,
+      };
+    }
+
+    // Check if event exists & belongs to this user
+    const existingEvent = await prisma.event.findFirst({
+      where: whereClause,
     });
 
     if (!existingEvent) {
