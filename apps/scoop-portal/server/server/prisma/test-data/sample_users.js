@@ -25,8 +25,8 @@ export const sampleUsers = [
   },
   {
     "id": "adminB",
-    "fname": "SUPER DUPER",
-    "lname": "ADMIN",
+    "fname": "SUPER",
+    "lname": "DUPER ADMIN",
     "email": "adminB@rit.edu",
     "type": "scoopdinator",
     "semester_group": "null",
@@ -122,7 +122,7 @@ export const sampleUsers = [
   {
     "id": "adminA",
     "fname": "Samuel",
-    "lname": "Sangsong",
+    "lname": "Johnson",
     "email": "adminA@rit.edu",
     "type": "scoopdinator",
     "semester_group": "null",
@@ -133,8 +133,8 @@ export const sampleUsers = [
   },
   {
     "id": "coachA",
-    "fname": "SomeCoach",
-    "lname": "AAA",
+    "fname": "Some",
+    "lname": "CoachA",
     "email": "coachA@rit.edu",
     "type": "scoopervisor",
     "semester_group": "null",
@@ -145,8 +145,8 @@ export const sampleUsers = [
   },
   {
     "id": "coachB",
-    "fname": "SomeCoach",
-    "lname": "BBB",
+    "fname": "Some",
+    "lname": "CoachB",
     "email": "coachB@rit.edu",
     "type": "scoopervisor",
     "semester_group": "null",
