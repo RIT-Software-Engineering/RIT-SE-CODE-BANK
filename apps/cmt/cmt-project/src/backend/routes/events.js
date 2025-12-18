@@ -400,22 +400,23 @@ router.post("/", validateEvent, async (req, res) => {
   try {
     const { date, courseId, ...eventData } = req.body;
 
-    // Verify course exists
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-    });
-
-    if (!course && courseId !== "admin") {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid course ID",
+    // Verify course exists (unless it's admin)
+    if (courseId && courseId !== "admin") {
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
       });
+
+      if (!course) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid course ID",
+        });
+      }
     }
 
     // Build event data
     const eventCreateData = {
       title: eventData.title,
-      courseId: courseId === "admin" ? null : courseId,
       type: eventData.type,
       date: new Date(date),
       time: eventData.time || "12:00 PM",
@@ -425,6 +426,13 @@ router.post("/", validateEvent, async (req, res) => {
       ownerUid: user.uid,
       ownerEmail: user.email,
     };
+
+    // Connect to course if provided and not admin
+    if (courseId && courseId !== "admin") {
+      eventCreateData.course = {
+        connect: { id: courseId }
+      };
+    }
 
     // Add professorId if user is a professor
     if (user.professorId) {

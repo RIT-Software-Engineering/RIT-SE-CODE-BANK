@@ -72,10 +72,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
 
       res.json(courses);
     } catch (e) {
-      res.status(500).json({
-        error: "Failed to list courses",
-        detail: String(e.message || e),
-      });
+      console.error("List courses failed:", e);
       res.status(500).json({
         error: "Failed to list courses",
         detail: String(e.message || e),
@@ -242,17 +239,14 @@ module.exports = function makeTeamBuilderRouter(prisma) {
         return tx.TBTeamSet.findUnique({
           where: { id: teamSet.id },
           include: {
-            teams: { include: { members: { include: { tbenrollment: true } } } },
+            teams: { include: { members: { include: { enrollment: true } } } },
           },
         });
       });
 
       res.json(data);
     } catch (e) {
-      res.status(500).json({
-        error: "Generate teams failed",
-        detail: String(e.message || e),
-      });
+      console.error("Generate teams failed:", e);
       res.status(500).json({
         error: "Generate teams failed",
         detail: String(e.message || e),
@@ -279,15 +273,12 @@ module.exports = function makeTeamBuilderRouter(prisma) {
         where,
         orderBy: [{ createdAt: "desc" }],
         include: {
-          teams: { include: { members: { include: { tbenrollment: true } } } },
+          teams: { include: { members: { include: { enrollment: true } } } },
         },
       });
       res.json(sets);
     } catch (e) {
-      res.status(500).json({
-        error: "Failed to list team sets",
-        detail: String(e.message || e),
-      });
+      console.error("List team sets failed:", e);
       res.status(500).json({
         error: "Failed to list team sets",
         detail: String(e.message || e),
@@ -297,21 +288,39 @@ module.exports = function makeTeamBuilderRouter(prisma) {
 
   // Publish
   router.patch("/teamsets/:id/publish", async (req, res) => {
-    const id = Number(req.params.id);
-    const set = await prisma.TBTeamSet.update({
-      where: { id },
-      data: { status: "PUBLISHED", publishedAt: new Date(), archivedAt: null },
-      include: {
-        teams: {
-          include: {
-            members: {
-              include: { tbenrollment: true },
+    try {
+      const professor = await getProfessorForUser(prisma, req, res);
+      if (!professor) return;
+
+      const existing = await ensureTeamSetOwnedByProfessor(
+        prisma,
+        req.params.id,
+        professor.id
+      );
+      if (!existing) {
+        return res
+          .status(404)
+          .json({ error: "TeamSet not found for this instructor" });
+      }
+
+      const set = await prisma.TBTeamSet.update({
+        where: { id: existing.id },
+        data: { status: "PUBLISHED", publishedAt: new Date() },
+        include: {
+          teams: {
+            include: {
+              members: {
+                include: { enrollment: true },
+              },
             },
           },
         },
-      },
-    });
-    res.json(set);
+      });
+      res.json(set);
+    } catch (e) {
+      console.error("Publish failed:", e);
+      res.status(500).json({ error: "Failed to publish team set" });
+    }
   });
 
   // Unpublish
@@ -361,7 +370,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
 
       const set = await prisma.TBTeamSet.update({
         where: { id: existing.id },
-        data: { status: "ARCHIVED", archivedAt: new Date() },
+        data: { status: "ARCHIVED" },
       });
       res.json(set);
     } catch (e) {
@@ -391,12 +400,12 @@ module.exports = function makeTeamBuilderRouter(prisma) {
         where: { id: existing.id },
         data: { status: "DRAFT" },
         include: {
-          teams: { include: { members: { include: { tbenrollment: true } } } },
+          teams: { include: { members: { include: { enrollment: true } } } },
         },
       });
       res.json(updated);
     } catch (e) {
-      console.error(e);
+      console.error("Edit failed:", e);
       res
         .status(500)
         .json({ error: "Failed to reopen team set for editing" });
@@ -454,7 +463,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
       const updated = await prisma.TBTeamSet.findUnique({
         where: { id: teamSetId },
         include: {
-          teams: { include: { members: { include: { tbenrollment: true } } } },
+          teams: { include: { members: { include: { enrollment: true } } } },
         },
       });
       res.json(updated);

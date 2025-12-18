@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 
-/**
- * If your frontend runs on 3000 and backend on 5000, either:
- *  1) call full URLs like http://localhost:5000/api/...  (works with your CORS settings), OR
- *  2) set up a dev proxy so just `/api/...` works.
- *
- * For now we'll call absolute URLs to avoid proxy setup.
- */
 const API = `${process.env.REACT_APP_BACKEND_URL}`;
 
 export default function TeamBuilderPage() {
@@ -32,7 +25,9 @@ export default function TeamBuilderPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API}/team-builder`);
+        const res = await fetch(`${API}/team-builder`, {
+          credentials: 'include',
+        });
         const data = await res.json();
         console.log("API response:", data, Array.isArray(data));
         setCourses(Array.isArray(data) ? data : []);
@@ -55,7 +50,10 @@ export default function TeamBuilderPage() {
     (async () => {
       try {
         const res = await fetch(
-          `${API}/team-builder/courses/${courseId}/teamsets`
+          `${API}/team-builder/courses/${courseId}/teamsets`,
+          {
+            credentials: 'include',
+          }
         );
         const sets = await res.json();
         setTeamSets(Array.isArray(sets) ? sets : []);
@@ -86,6 +84,7 @@ export default function TeamBuilderPage() {
         {
           method: "POST",
           body: fd,
+          credentials: 'include',
         }
       );
       const data = await res.json();
@@ -117,6 +116,7 @@ export default function TeamBuilderPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, teamSize, createdByProfessorId }),
+          credentials: 'include',
         }
       );
       const data = await res.json();
@@ -140,7 +140,10 @@ export default function TeamBuilderPage() {
     if (found) return setActiveSet(found);
     // fallback re-fetch
     const res = await fetch(
-      `${API}/team-builder/courses/${courseId}/teamsets`
+      `${API}/team-builder/courses/${courseId}/teamsets`,
+      {
+        credentials: 'include',
+      }
     );
     const sets = await res.json();
     setTeamSets(Array.isArray(sets) ? sets : []);
@@ -154,7 +157,10 @@ export default function TeamBuilderPage() {
     try {
       const res = await fetch(
         `${API}/team-builder/teamsets/${activeSet.id}/publish`,
-        { method: "PATCH" }
+        { 
+          method: "PATCH",
+          credentials: 'include',
+        }
       );
       const data = await res.json();
       if (!res.ok) throw new Error("Publish failed");
@@ -175,7 +181,11 @@ export default function TeamBuilderPage() {
     try {
       const res = await fetch(
         `${API}/team-builder/teamsets/${activeSet.id}/edit`,
-        { method: "PUT", headers: { "Content-Type": "application/json" } }
+        { 
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: 'include',
+        }
       );
       const data = await res.json();
       if (!res.ok) throw new Error("Failed to edit team set");
@@ -199,6 +209,7 @@ export default function TeamBuilderPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ enrollmentId, toTeamId }),
+          credentials: 'include',
         }
       );
       const data = await res.json();
@@ -402,8 +413,8 @@ export default function TeamBuilderPage() {
                       }}
                     >
                       <span style={{ fontSize: 14 }}>
-                        {m.tbenrollment?.firstName} {m.tbenrollment?.lastName}
-                        {m.tbenrollment?.email ? ` — ${m.tbenrollment.email}` : ""}
+                        {m.enrollment?.firstName} {m.enrollment?.lastName}
+                        {m.enrollment?.email ? ` — ${m.enrollment.email}` : ""}
                       </span>
 
                       {/* Only show move dropdown if NOT published */}
