@@ -3,7 +3,7 @@ services:
     image: mariadb:latest
     environment:
       MYSQL_ROOT_PASSWORD: cmt_root_pass
-      MYSQL_DATABASE: cmt_db # ← Database name
+      MYSQL_DATABASE: cmt_db
       MYSQL_USER: cmt_user
       MYSQL_PASSWORD: cmt_pass
     healthcheck:
@@ -16,12 +16,27 @@ services:
       - mariadb_data:/var/lib/mysql
     restart: unless-stopped
 
+  workflows-backend:
+    build:
+      context: ../../workflows/server  # Path to workflows service
+      dockerfile: Dockerfile
+    ports:
+      - "5011:5011"  # Workflows backend port
+    environment:
+      NODE_ENV: production
+      PORT: 5011
+      DATABASE_URL: mysql://cmt_user:cmt_pass@mariadb:3306/cmt_db
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
   cmt-backend:
     build:
-      context: . # ← Build context is project root
+      context: .
       dockerfile: src/backend/Dockerfile
     ports:
-      - "5010:5010" # ← CHANGED: Port 5010
+      - "5010:5010"
     environment:
       NODE_ENV: production
       PORT: 5010
@@ -29,6 +44,7 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
+    restart: unless-stopped
 
   cmt-frontend:
     build:
@@ -46,6 +62,7 @@ services:
       PUBLIC_URL: /cmt
     depends_on:
       - cmt-backend
+      - workflows-backend
     restart: unless-stopped
 
 volumes:
