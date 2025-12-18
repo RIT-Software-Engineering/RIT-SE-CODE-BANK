@@ -6,7 +6,7 @@ services:
       MYSQL_DATABASE: cmt_db # ← Database name
       MYSQL_USER: cmt_user
       MYSQL_PASSWORD: cmt_pass
-      healthcheck:
+    healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
