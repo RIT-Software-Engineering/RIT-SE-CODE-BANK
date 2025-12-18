@@ -20,11 +20,11 @@ RUN npx prisma generate
 COPY . .
 
 # Expose port
-EXPOSE 5001
+EXPOSE 5011
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=5001
+ENV PORT=5011
 
 # Start the server
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node server.js"]
+CMD ["sh", "-c", "npx prisma db push  && node server.js"]

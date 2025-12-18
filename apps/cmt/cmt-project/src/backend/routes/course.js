@@ -144,22 +144,28 @@ router.post("/create-with-workflow", async (req, res) => {
     let professorId = course.professorId;
     
     if (!professorId) {
-      // Try to get the first professor, or create a default one
-      let professor = await prisma.professor.findFirst();
-      
-      if (!professor) {
-        console.log("⚠️ No professor found, creating default professor...");
-        professor = await prisma.professor.create({
-          data: {
-            fname: "Default",
-            lname: "Professor",
-            email: "professor@example.com",
-          },
-        });
+      // Try to get professorId from authenticated user
+      if (req.user && req.user.professorId) {
+        professorId = req.user.professorId;
+        console.log(`✅ Using authenticated professorId: ${professorId}`);
+      } else {
+        // Fallback: Try to get the first professor, or create a default one
+        let professor = await prisma.professor.findFirst();
+        
+        if (!professor) {
+          console.log("⚠️ No professor found, creating default professor...");
+          professor = await prisma.professor.create({
+            data: {
+              fname: "Default",
+              lname: "Professor",
+              email: "professor@example.com",
+            },
+          });
+        }
+        
+        professorId = professor.id;
+        console.log(`✅ Using professorId: ${professorId}`);
       }
-      
-      professorId = professor.id;
-      console.log(`✅ Using professorId: ${professorId}`);
     }
 
     // Step 2: Create the course
@@ -176,7 +182,7 @@ router.post("/create-with-workflow", async (req, res) => {
 
     console.log(`✅ Course created: ${newCourse.id}`);
 
-    // Step 2: Apply template if selected
+    // Step 3: Apply template if selected
     let templateItems = [];
     if (templateId) {
       try {
@@ -197,7 +203,7 @@ router.post("/create-with-workflow", async (req, res) => {
       }
     }
 
-    // Step 3: Create calendar events from template items + custom events
+    // Step 4: Create calendar events from template items + custom events
     const allEvents = [];
 
     // Convert template items to events
@@ -255,6 +261,7 @@ router.post("/create-with-workflow", async (req, res) => {
             time: event.time || "00:00",
             description: event.description || "",
             courseId: newCourse.id,
+            professorId: professorId,  // ✅ FIXED: Added professorId to events
             type: eventType,
             location: "",
             importance: "Medium",
@@ -274,7 +281,7 @@ router.post("/create-with-workflow", async (req, res) => {
       }
     }
 
-    // Step 4: Return success
+    // Step 5: Return success
     return res.status(201).json({
       success: true,
       data: {
