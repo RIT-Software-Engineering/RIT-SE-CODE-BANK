@@ -1,38 +1,76 @@
-** Please read backend-setup.md in the scoop-portal/server folder for now for updated instructions**
+# Scoop Portal Setup Guide
+How to set up and run the Scoop Portal project locally using **Express**, **Prisma**, **React**, **Next.js** and **MariaDB**.
+## Prerequisites
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Ensure the following are installed:
+- [Node.js](https://nodejs.org/) (v18+ recommended)
+- [npm](https://www.npmjs.com/)
+- [Docker](https://www.docker.com/)
 
-## Getting Started
+## Environment Variables
 
-First, run the development server:
+**DO NOT CREATE THE ENVIRONMENT VARIABLES THE SCRIPT WILL DO IT AUTOMATICALLY**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+If you want Slack notifactions you will have to add the SLACK_BOT_TOKEN to the .env file in ./services/notification-service 
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## (OPTIONAL) Install Dependencies
+If you want to manually install the dependencies:
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+In the monorepo root directory, run `npm install`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## Run The Server
+Open Docker. On most Docker installations, this involves opening Docker Desktop.
 
-To learn more about Next.js, take a look at the following resources:
+In the monorepo root directory, run `npm run setupportal`, followed by `npm run startportal`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**NOTE**   
+There is a known issue where the database seeding may not be executed on setup. If this happens, run the setup script again and it should populate.
 
-## Deploy on Vercel
+## API Endpoints
+API endpoints can be found under `api/` in the server directory.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Workflow API endpoints can be found under `api/` in the workflow/server directory.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Notification API endpoints can be found under `routes/` in the notification-service/src directory.
+
+## Prisma
+**THE FOLLOWING STEPS ARE DEPRECATED FOR SETUP DUE TO SCRIPTS BUT ARE USEFUL FOR ERROR CORRECTIONS:**   
+To generate a Prisma client:  
+Navigate to the `/server` directory.
+Run `npx prisma generate`
+
+### Useful Prisma Commands
+For setup and after any changes to the Prisma schema, push the schema to the database:
+`npx prisma db push`
+
+The database can be seeded with:  
+`npx prisma db seed`
+
+You can use Prisma Studio as a GUI to see data held in the Prisma Schema:   
+`npx prisma studio`
+
+Generate the Prisma schema from the current database schema:  
+`npx prisma db pull`
+
+Reset database (drops all tables)  
+`npx prisma migrate reset`
+
+If modifying or adding Prisma models, delete schema.prisma inside `src/generated/prisma` (NOT schema.prisma inside `prisma/models/`), the generate the Prisma client with:  
+`npx prisma generate`
+This will generate a new schema.prisma inside the `src/generated/prisma` and update the schema.
+
+
+**NOTE**   
+DO NOT have MariaDB or MySQL running locally on your computer. It will run inside of the Docker Containers.
+
+After creating the database, most table and schema creation and manipulation will be done through Prisma.
+Manipulating the database or schema directly will cause incongruencies between your database and the Prisma schema.
+
+### Useful MySQL Shell Commands
+
+`show databases` shows all databases  
+`use [database]` switch to the specified database  
+`show tables` show all tables in a database  
+`select * in [table]` show all records in the specified table  

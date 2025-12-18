@@ -49,25 +49,24 @@ DATABASE_URL="mysql://root:password@localhost:3309/notification_service"`;
 if (!fs.existsSync(envFilePortalServer)) {
   console.log("Creating scoop portal server .env file...");
   const defaultEnv = `DATABASE_URL="mysql://root:password@127.0.0.1:3306/scoop_portal_demo"
-WORKFLOWS_URL="mysql://root:password@127.0.0.1:3307/scoop_portal_demo"
 PORT=5002
 `;
   fs.writeFileSync(envFilePortalServer, defaultEnv);
 }
 
-if (!fs.existsSync(envFilePortalUI)) {
-  console.log("Creating scoop portal ui .env file...");
-  const defaultEnv = `PORT=3000
-API_PORT=5002
-NEXT_PUBLIC_URL_BASE_PATH=/scoop-portal
-`;
-  fs.writeFileSync(envFilePortalUI, defaultEnv);
-}
+// if (!fs.existsSync(envFilePortalUI)) {
+//   console.log("Creating scoop portal ui .env file...");
+//   const defaultEnv = `PORT=3000
+// API_PORT=5002
+// NEXT_PUBLIC_URL_BASE_PATH=/scoop-portal
+// `;
+//   fs.writeFileSync(envFilePortalUI, defaultEnv);
+// }
 
 if (!fs.existsSync(envFilePortalUIDev)) {
   console.log("Creating scoop portal ui .env.development file...");
   const defaultEnv = `NEXT_PUBLIC_API_URL=http://localhost:5002/scoop-portal
-NEXT_PUBLIC_WORKFLOWS_API_URL=http://localhost:5001
+NEXT_PUBLIC_WORKFLOWS_API_URL=http://localhost:5001/scoop-portal/workflow-api
 NEXT_PUBLIC_NOTIFICATION=/api/notifications
 NEXT_PUBLIC_URL_BASE_PATH=/scoop-portal
 `;
