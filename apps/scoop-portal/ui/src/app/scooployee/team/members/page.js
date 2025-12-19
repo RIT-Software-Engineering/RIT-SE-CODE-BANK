@@ -89,18 +89,16 @@ export default function ViewTeamMembers() {
                   <Divider sx={{ my: 2 }} />
 
                   <Typography sx={{ fontWeight: 500, mb: 1 }}>
-                    Your Scoopervisors:
+                    Your Scoopervisor:
                   </Typography>
-                  {Array.isArray(team.members) && team.members.filter((member) => member.type === "scoopervisor").length > 0 ? (
+                  {team.scoopervisor != null ? (
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                      {team.members.filter((member) => member.type === "scoopervisor").map((member) => (
                         <Chip
-                          key={member.id}
-                          label={`${member.fname} ${member.lname}`}
+                          key={team.scoopervisor.id}
+                          label={`${team.scoopervisor.fname} ${team.scoopervisor.lname}`}
                           sx={{ backgroundColor: "#F76902", color: "#fff" }}
-                          onClick={() => handleOpen(member.fname,member.lname,member.email)}
-                        /> 
-                      ))}
+                          onClick={() => handleOpen(team.scoopervisor.fname,team.scoopervisor.lname,team.scoopervisor.email)}
+                        />
                     </Box>
                   ) : (
                     <Typography variant="body2" sx={{ color: "#999" }}>
@@ -113,7 +111,7 @@ export default function ViewTeamMembers() {
                   <Typography sx={{ fontWeight: 500, mb: 1 }}>
                     Your Team Members:
                   </Typography>
-                  {Array.isArray(team.members) && team.members.filter((member) => member.type === "scooployee").length > 0 ? (
+                  {Array.isArray(team.members) && team.members.length > 0 ? (
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                       {team.members.filter((member) => member.type === "scooployee" && member.id !== user.id).map((member) => (
                         <Chip
