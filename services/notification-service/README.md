@@ -48,7 +48,7 @@ npm run seed
 | `DATABASE_URL` | Prisma connection string to MySQL/MariaDB | - |
 | `SMTP_HOST` | SMTP host (e.g., 127.0.0.1) | - |
 | `SMTP_PORT` | SMTP port (e.g., 2525) | - |
-| `SMTP_FROM` | Sender address | se-apps@rit.edu |
+| `SMTP_FROM` | Sender address | se_svc_apps@rit.edu |
 | `SMTP_USER` | SMTP username (optional) | - |
 | `SMTP_PASS` | SMTP password (optional) | - |
 | `SLACK_BOT_TOKEN` | Slack bot token for DMs (optional) | - |
