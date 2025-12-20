@@ -186,4 +186,3 @@ npm test
 - **Email delivery**: Check smtp4dev UI and SMTP_HOST/SMTP_PORT values  
 - **Slack delivery**: Ensure SLACK_BOT_TOKEN is set with `chat:write` and `users:read.email` scopes
 - **Port conflicts**: If port 3306 is in use, change the host port in docker command/compose and update `DATABASE_URL`
-- **Windows networking**: Use `127.0.0.1` instead of `localhost` in connection strings
