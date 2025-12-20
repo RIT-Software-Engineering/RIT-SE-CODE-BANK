@@ -531,7 +531,8 @@ export async function applyForJobPosition(jobPositionApplicationData, jobPositio
  * @returns {Promise<object>} A promise that resolves to the newly created application record.
  */
 export async function applyForJobPositionWithNewUploads(
-  jobPositionApplicationData
+  jobPositionApplicationData,
+  jobPosition = null
 ) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error("Backend API URL components are not defined.");
