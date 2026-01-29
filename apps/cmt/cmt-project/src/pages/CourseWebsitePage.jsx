@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
+import { API_BASE } from "../utils/api";
 
 // Helper to get week number relative to semester start
 const getWeekNumber = (date, start) => {

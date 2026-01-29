@@ -15,6 +15,7 @@ import {
   Clock,
 } from "lucide-react";
 import "../styles/calendar.css";
+import { API_BASE } from "../utils/api";
 
 export default function CalPage() {
   console.log("Loaded CalPage.jsx");
@@ -39,8 +40,6 @@ export default function CalPage() {
     preparation: [],
   });
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
-
-  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/events`;
 
   // Add calendar-page class to body on mount, remove on unmount
   useEffect(() => {
