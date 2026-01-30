@@ -110,7 +110,7 @@ async function main() {
     },
   });
 
-  const swen562 = await prisma.course.create({
+  await prisma.course.create({ // SWEN 562
     data: {
       id: 'SWEN562',
       name: 'Engineering Secure Software',
@@ -315,7 +315,8 @@ async function main() {
   // 4. Create Course Templates
   console.log('📋 Creating course templates...');
   
-  const template1 = await prisma.courseTemplate.create({
+  //Template 1
+  await prisma.courseTemplate.create({
     data: {
       name: 'Standard Software Engineering Course',
       semester: 'Fall',
@@ -374,7 +375,8 @@ async function main() {
     },
   });
 
-  const template2 = await prisma.courseTemplate.create({
+  //Template 2
+  await prisma.courseTemplate.create({
     data: {
       name: 'Project-Based Course Template',
       semester: 'Spring',
@@ -427,7 +429,8 @@ async function main() {
     },
   });
 
-  const template3 = await prisma.courseTemplate.create({
+  // Template 3
+  await prisma.courseTemplate.create({
     data: {
       name: 'Advanced Topics Template',
       semester: 'Fall',
@@ -555,7 +558,7 @@ async function main() {
 
   const team2 = await prisma.tBTeam.create({
     data: {
-      teamSetId: teamSet1.id,
+      teamSetId: teamSet2.id,
       name: 'Bug Hunters',
       maxSize: 4,
     },

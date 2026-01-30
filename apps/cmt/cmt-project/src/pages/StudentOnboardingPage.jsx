@@ -230,7 +230,7 @@ function StudentOnboardingPage() {
         <div className="empty-state">
           <Award size={64} />
           <h2>All Caught Up!</h2>
-          <p>You don't have any onboarding tasks right now.</p>
+          <p>You do&apos;t have any onboarding tasks right now.</p>
           <p className="text-muted">
             New checklists will appear here when you enroll in courses.
           </p>

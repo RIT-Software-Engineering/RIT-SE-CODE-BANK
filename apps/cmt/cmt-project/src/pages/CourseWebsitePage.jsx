@@ -91,7 +91,7 @@ export default function CourseWebsitePage() {
     }
 
     return (
-      <a href = {event.url} target = "_blank" className = "text-blue-600 no-underline hover:no-underline visited:no-underline">
+      <a href = {event.url} target = "_blank" rel="noreferrer" className = "text-blue-600 no-underline hover:no-underline visited:no-underline">
         {event.title}
       </a>
     );

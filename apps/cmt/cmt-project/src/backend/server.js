@@ -252,7 +252,7 @@ app.delete("/api/course/:id", async (req, res) => {
    ------------------------------------------------------------------ */
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error("Error:", err.stack);
   res.status(500).json({
     error: "Something went wrong!",
