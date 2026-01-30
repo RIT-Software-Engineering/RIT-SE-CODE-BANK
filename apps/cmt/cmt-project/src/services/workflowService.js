@@ -1,7 +1,7 @@
 // Workflows API Service
 // Handles all communication with the Workflows API
 
-const WORKFLOWS_API_BASE = "http://localhost:5001";
+import { WORKFLOWS_API_BASE } from "../utils/api";
 
 // TODO: Replace with actual user ID from authentication
 const TEMP_USER_ID = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
