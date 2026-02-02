@@ -1,0 +1,5 @@
+// Fixtures are generally reusable bits of code.
+// They accomplish tasks like logging in as a certain user,
+// which can simplify test creation.
+
+// I don't know how Cypress fixtures work, though.
