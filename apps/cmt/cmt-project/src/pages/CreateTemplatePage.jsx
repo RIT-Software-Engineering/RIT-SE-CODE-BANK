@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Card } from "react-bootstrap";
 import Alert from "react-bootstrap/Alert";
 import "../styles/course.css";
+import { API_BASE } from "../utils/api";
 
 function CreateTemplatePage() {
   const [showForm, setShowForm] = useState(false);
@@ -18,8 +19,6 @@ function CreateTemplatePage() {
   const [numProjects, setNumProjects] = useState("");
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-
-  const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
 
   // Fetch existing templates when component loads
   useEffect(() => {

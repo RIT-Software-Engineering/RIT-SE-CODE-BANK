@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-
-const API = `${process.env.REACT_APP_BACKEND_URL}`;
+import { API_BASE } from "../utils/api";
 
 export default function TeamBuilderPage() {
   const [loading, setLoading] = useState(false);
@@ -25,7 +24,7 @@ export default function TeamBuilderPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API}/team-builder`, {
+        const res = await fetch(`${API_BASE}/team-builder`, {
           credentials: 'include',
         });
         const data = await res.json();
@@ -50,7 +49,7 @@ export default function TeamBuilderPage() {
     (async () => {
       try {
         const res = await fetch(
-          `${API}/team-builder/courses/${courseId}/teamsets`,
+          `${API_BASE}/team-builder/courses/${courseId}/teamsets`,
           {
             credentials: 'include',
           }
@@ -80,7 +79,7 @@ export default function TeamBuilderPage() {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch(
-        `${API}/team-builder/courses/${courseId}/roster`,
+        `${API_BASE}/team-builder/courses/${courseId}/roster`,
         {
           method: "POST",
           body: fd,
@@ -111,7 +110,7 @@ export default function TeamBuilderPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${API}/team-builder/courses/${courseId}/teamsets`,
+        `${API_BASE}/team-builder/courses/${courseId}/teamsets`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -140,7 +139,7 @@ export default function TeamBuilderPage() {
     if (found) return setActiveSet(found);
     // fallback re-fetch
     const res = await fetch(
-      `${API}/team-builder/courses/${courseId}/teamsets`,
+      `${API_BASE}/team-builder/courses/${courseId}/teamsets`,
       {
         credentials: 'include',
       }
@@ -156,7 +155,7 @@ export default function TeamBuilderPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${API}/team-builder/teamsets/${activeSet.id}/publish`,
+        `${API_BASE}/team-builder/teamsets/${activeSet.id}/publish`,
         { 
           method: "PATCH",
           credentials: 'include',
@@ -180,7 +179,7 @@ export default function TeamBuilderPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${API}/team-builder/teamsets/${activeSet.id}/edit`,
+        `${API_BASE}/team-builder/teamsets/${activeSet.id}/edit`,
         { 
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -204,7 +203,7 @@ export default function TeamBuilderPage() {
     if (!activeSet) return;
     try {
       const res = await fetch(
-        `${API}/team-builder/teamsets/${activeSet.id}/move`,
+        `${API_BASE}/team-builder/teamsets/${activeSet.id}/move`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

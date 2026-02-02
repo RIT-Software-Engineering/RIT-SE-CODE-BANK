@@ -10,13 +10,12 @@ import {
   Award,
 } from "lucide-react";
 import "../styles/studentonboarding.css";
+import { API_BASE } from "../utils/api";
 
 function StudentOnboardingPage() {
   const [workflows, setWorkflows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api';
 
   // TODO: Replace with actual student ID from authentication
   const TEMP_STUDENT_ID = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
