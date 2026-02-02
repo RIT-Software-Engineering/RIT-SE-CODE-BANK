@@ -6,6 +6,7 @@ import "@/styles/globals.css";
 import AuthProvider from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import ThemeRegistry from "@/styles/ThemeRegistry";
+import { Suspense } from "react";
 
 /**
  * Configure custom fonts to be used across the app.
@@ -60,6 +61,7 @@ export default function RootLayout({ children }) {
             {/* Notification provider (manages in-app alerts and toasts) */}
             <NotificationProvider>
               {/* Global header (persistent across pages) */}
+              <Suspense>
               <Header />
 
               {/* Main content area (grows to fill available space) */}
@@ -67,6 +69,7 @@ export default function RootLayout({ children }) {
 
               {/* Global footer (persistent across pages) */}
               <Footer />
+              </Suspense>
             </NotificationProvider>
           </AuthProvider>
         </ThemeRegistry>
