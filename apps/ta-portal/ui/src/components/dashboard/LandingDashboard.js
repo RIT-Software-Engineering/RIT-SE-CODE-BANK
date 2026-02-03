@@ -11,12 +11,12 @@ import { ArrowForward } from "@mui/icons-material";
 export default function LandingDashboard({ user }) {
   const theme = useTheme();
   const { isFeatureEnabled } = useFeatureFlags();
-  
+
   // filter options based on user role and feature flags
   const userRole = user?.role;
   const PersonalOptions = DASHBOARD_OPTIONS.filter(
     (option) =>
-      option.roles.includes(userRole) && 
+      option.roles.includes(userRole) &&
       option.category === "Personal" &&
       (!option.feature || isFeatureEnabled(option.feature))
   );
@@ -74,92 +74,96 @@ export default function LandingDashboard({ user }) {
           </Grid>
         </Box>
 
-        {/* Explore Section - NOW SECOND */}
-        <Box
-          sx={{
-            mb: 10,
-            textAlign: "center",
-            pt: 8,
-            borderTop: "2px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Typography
-            variant="h4"
-            component="h2"
-            sx={{
-              fontWeight: 600,
-              mb: 4,
-              color: theme.palette.primary.main,
-              fontSize: { xs: "1.4rem", sm: "1.7rem", md: "2rem" },
-            }}
-          >
-            Explore Positions
-          </Typography>
-
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <Paper
-              component={Link}
-              href={`/Positions/${formattedUserRole}/${user.username}`}
-              elevation={0}
+        {userRole !== 'ADMIN' && userRole !== 'EMPLOYER' ? (
+          <>
+            {/* Explore Section - NOW SECOND */}
+            <Box
               sx={{
-                // Sizing and Layout
-                width: "100%",
-                maxWidth: "500px",
-                minHeight: 140,
-                p: { xs: 3, sm: 4 },
-                borderRadius: 2,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                textDecoration: "none",
-                background: theme.palette.mode === 'dark'
-                  ? "linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%)"
-                  : "linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)",
-                border: `2px solid ${theme.palette.primary.main}`,
-
-                // Transitions & Hover Effects
-                transition: (theme) => theme.transitions.create(
-                  ["transform", "box-shadow", "background-color"],
-                  { duration: "200ms", easing: "ease-in-out" }
-                ),
-                "&:hover": {
-                  transform: "translateY(-4px)",
-                  boxShadow: `0 12px 24px ${theme.palette.action.focus}`,
-                  background: theme.palette.mode === 'dark'
-                    ? "linear-gradient(135deg, #3d3d3d 0%, #2f2f2f 100%)"
-                    : "linear-gradient(135deg, #fffbf0 0%, #fff5e0 100%)",
-                },
+                mb: 10,
+                textAlign: "center",
+                pt: 8,
+                borderTop: "2px solid",
+                borderColor: "divider",
               }}
             >
               <Typography
-                variant="h5"
-                fontWeight="600"
-                color="primary"
+                variant="h4"
+                component="h2"
                 sx={{
-                  fontSize: { xs: "1.1rem", sm: "1.3rem" },
-                  mb: 1,
+                  fontWeight: 600,
+                  mb: 4,
+                  color: theme.palette.primary.main,
+                  fontSize: { xs: "1.4rem", sm: "1.7rem", md: "2rem" },
                 }}
               >
-                Find Open Positions
+                Explore Positions
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", color: "primary.main" }}>
-                <Typography
-                  variant="body2"
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
+
+                <Paper
+                  component={Link}
+                  href={`/Positions/${formattedUserRole}/${user.username}`}
+                  elevation={0}
                   sx={{
-                    fontWeight: 500,
-                    mr: 1,
+                    // Sizing and Layout
+                    width: "100%",
+                    maxWidth: "500px",
+                    minHeight: 140,
+                    p: { xs: 3, sm: 4 },
+                    borderRadius: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    textDecoration: "none",
+                    background: theme.palette.mode === 'dark'
+                      ? "linear-gradient(135deg, #2d2d2d 0%, #1f1f1f 100%)"
+                      : "linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)",
+                    border: `2px solid ${theme.palette.primary.main}`,
+
+                    // Transitions & Hover Effects
+                    transition: (theme) => theme.transitions.create(
+                      ["transform", "box-shadow", "background-color"],
+                      { duration: "200ms", easing: "ease-in-out" }
+                    ),
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: `0 12px 24px ${theme.palette.action.focus}`,
+                      background: theme.palette.mode === 'dark'
+                        ? "linear-gradient(135deg, #3d3d3d 0%, #2f2f2f 100%)"
+                        : "linear-gradient(135deg, #fffbf0 0%, #fff5e0 100%)",
+                    },
                   }}
                 >
-                  Explore opportunities
-                </Typography>
-                <ArrowForward sx={{ fontSize: "1.2rem" }} />
+                  <Typography
+                    variant="h5"
+                    fontWeight="600"
+                    color="primary"
+                    sx={{
+                      fontSize: { xs: "1.1rem", sm: "1.3rem" },
+                      mb: 1,
+                    }}
+                  >
+                    Find Open Positions
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", color: "primary.main" }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 500,
+                        mr: 1,
+                      }}
+                    >
+                      Explore opportunities
+                    </Typography>
+                    <ArrowForward sx={{ fontSize: "1.2rem" }} />
+                  </Box>
+                </Paper>
               </Box>
-            </Paper>
-          </Box>
-        </Box>
-
+            </Box>
+          </>)
+          : (<></>)
+        }
         {/* OLD SECTIONS REMOVED - REPLACED ABOVE */}
       </Container>
     </Box>
