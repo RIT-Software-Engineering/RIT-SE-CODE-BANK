@@ -12,6 +12,10 @@ Centralized microservice for managing per-user notification preferences and disp
 - **Integration Guide**: [`INTEGRATION.md`](INTEGRATION.md) - How to use this service from any app
 - **System Overview**: [`../../docs/Notifications-System.md`](../../docs/Notifications-System.md) - End-to-end architecture
 
+**Default ports:**
+- smtp4dev web UI: http://localhost:3005
+- notification service: http://localhost:4000
+
 ## Quick Start (Development)
 
 1. **Copy environment file and set connection details**
@@ -28,12 +32,13 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-**Default ports:**
-- smtp4dev web UI: http://localhost:3005
-- notification service: http://localhost:4000
-
 3. **Apply Prisma schema and seed example preferences (optional)**
 
+Enter the docker container:
+```powershell
+docker compose exe notify sh
+```
+Then:
 ```powershell
 npx prisma generate
 npx prisma db push
