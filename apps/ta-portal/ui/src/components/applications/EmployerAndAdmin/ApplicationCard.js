@@ -55,7 +55,7 @@ export default function ApplicationCard({
   application,
   onStatusChange,
   onHire,
-  showHireAction = false,
+  showHireAction = true,
   // Optional: deep-link highlighting and scroll targeting
   cardId,
   isHighlighted = false,
