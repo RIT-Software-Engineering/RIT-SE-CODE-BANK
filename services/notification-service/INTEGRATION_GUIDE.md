@@ -20,10 +20,10 @@ The Notification Service is a standalone microservice that **must be accessed th
 ```
 ┌─────────────┐         ┌──────────────────┐         ┌────────────────────┐
 │             │         │                  │         │                    │
-│  Frontend   │────────▶│  Your Backend    │────────▶│  Notification      │
+│  Frontend   │────────▶│  Your Backend    │───────▶│  Notification      │
 │  (React,    │  HTTPS  │  (Express,       │  HTTP   │  Service           │
 │   Next.js)  │         │   Node.js)       │         │  (Port 4000)       │
-│             │◀────────│                  │◀────────│                    │
+│             │◀────────│                  │◀───────│                    │
 └─────────────┘         └──────────────────┘         └────────────────────┘
 ```
 
@@ -616,6 +616,7 @@ View your application: {{deepLink}}
 
 ## Need Help?
 
-- See the TA Portal implementation as reference: `apps/ta-portal/server/routing/notifications_api.js`
-- Review notification service docs for template creation
+- See the TA Portal implementation as reference: 
+  - `apps/ta-portal/server/server/routing/notifications_api.js`
+- Review notification service docs in shared drive for template creation
 - Check `services/notification-service/README.md` for service-level details
