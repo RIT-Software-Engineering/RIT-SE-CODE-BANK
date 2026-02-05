@@ -17,8 +17,7 @@ Centralized notification service that handles email and Slack notifications acro
 
 **Documentation**:
 - **Setup & Development**: See [`notification-service/README.md`](notification-service/README.md)
-- **Integration Guide**: See [`notification-service/INTEGRATION.md`](notification-service/INTEGRATION.md) 
-- **System Overview**: See [`../docs/Notifications-System.md`](../docs/Notifications-System.md)
+- **Integration Guide**: See [`notification-service/INTEGRATION_GUIDE.md`](notification-service/INTEGRATION_GUIDE.md) 
 
 **Quick Start**:
 ```powershell
