@@ -31,5 +31,16 @@
     "uid": "sso9999",
     "affiliations": ["student"],
     "roles": ["student"]
-  }
+  },
+  {
+  "id": "4",
+  "email": "prof2@rit.edu",
+  "password": "test123",
+  "name": "Professor Two",
+  "givenName": "Professor",
+  "sn": "Two",
+  "uid": "pao1235",
+  "affiliations": ["employee", "faculty"],
+  "roles": ["instructor"]
+}
 ]
