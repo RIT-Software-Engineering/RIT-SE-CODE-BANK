@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Action {
+  id                 String               @id @default(uuid()) @db.Char(36)
+  name               String
+  description        String?              @db.Text
+  form               String?              @db.Text
+  actionType         ActionType           @default(simple)
+  isFrozen           Boolean              @default(false)
+  nextActionId       String?              @unique @db.Char(36)
+  parentActionId     String?              @db.Char(36)
+  nextAction         Action?              @relation("NextAction", fields: [nextActionId], references: [id])
+  previousAction     Action?              @relation("NextAction")
+  parentAction       Action?              @relation("ParentChild", fields: [parentActionId], references: [id])
+  childActions       Action[]             @relation("ParentChild")
+  actionStates       ActionState[]
+  metadata           Metadata[]
+  permissions        Permission[]
+  referenceEndpoints ReferenceEndpoint[]
+  baseActionOf       WorkflowAttributes?  @relation("baseAction")
+  rootActionOf       WorkflowAttributes[] @relation("rootAction")
+
+  @@index([parentActionId], map: "Action_parentActionId_fkey")
+}
+
+model Metadata {
+  id       String @id @default(uuid()) @db.Char(36)
+  key      String
+  value    String @db.Text
+  actionId String @db.Char(36)
+  action   Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@unique([key, actionId])
+  @@index([actionId], map: "Metadata_actionId_fkey")
+}
+
+model ReferenceEndpoint {
+  id       String @id @default(uuid()) @db.Char(36)
+  name     String
+  url      String
+  method   String
+  actionId String @db.Char(36)
+  action   Action @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@index([actionId], map: "ReferenceEndpoint_actionId_fkey")
+}
+
+model WorkflowAttributes {
+  id             String          @id @default(uuid()) @db.Char(36)
+  baseActionId   String          @unique @db.Char(36)
+  rootActionId   String?         @db.Char(36)
+  baseAction     Action          @relation("baseAction", fields: [baseActionId], references: [id], onDelete: Cascade)
+  rootAction     Action?         @relation("rootAction", fields: [rootActionId], references: [id], onDelete: Cascade)
+  workflowStates WorkflowState[]
+  tags           Tag[]           @relation("TagToWorkflowAttributes")
+
+  @@index([rootActionId], map: "WorkflowAttributes_rootActionId_fkey")
+}
+
+model Tag {
+  id                 String               @id @default(uuid()) @db.Char(36)
+  name               String               @unique
+  workflowAttributes WorkflowAttributes[] @relation("TagToWorkflowAttributes")
+}
+
+model Permission {
+  id             String         @id @default(uuid()) @db.Char(36)
+  userId         String         @db.Char(36)
+  actionId       String         @db.Char(36)
+  permissionType PermissionType
+  action         Action         @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@index([actionId], map: "Permission_actionId_fkey")
+}
+
+model WorkflowState {
+  id           String                     @id @default(uuid()) @db.Char(36)
+  userId       String?                    @db.Char(36)
+  workflowId   String?                    @db.Char(36)
+  workflow     WorkflowAttributes?        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  participants WorkflowStateParticipant[]
+  actionStates ActionState[]              @relation("ActionStates")
+
+  @@index([workflowId], map: "WorkflowState_workflowId_fkey")
+}
+
+model ActionState {
+  id             String          @id @default(uuid()) @db.Char(36)
+  actionId       String          @db.Char(36)
+  stateType      StateType
+  index          Int
+  parentId       String?         @db.Char(36)
+  action         Action          @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  parent         ActionState?    @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
+  children       ActionState[]   @relation("ParentChild")
+  workflowStates WorkflowState[] @relation("ActionStates")
+
+  @@index([actionId], map: "ActionState_actionId_fkey")
+  @@index([parentId], map: "ActionState_parentId_fkey")
+}
+
+model WorkflowStateParticipant {
+  id              String        @id @default(uuid()) @db.Char(36)
+  workflowStateId String        @db.Char(36)
+  userId          String        @db.Char(36)
+  workflowState   WorkflowState @relation(fields: [workflowStateId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowStateId, userId])
+}
+
+enum ActionType {
+  simple
+  workflow
+  complex
+  branching
+}
+
+enum PermissionType {
+  creator
+  sharer
+  editor
+  viewer
+}
+
+enum StateType {
+  completed
+  inProgress
+  notStarted
+  hidden
+}

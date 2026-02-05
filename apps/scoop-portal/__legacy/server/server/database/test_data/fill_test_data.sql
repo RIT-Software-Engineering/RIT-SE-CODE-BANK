@@ -1,0 +1,10 @@
+.read test_data/semester_dummy.sql
+.read test_data/user_dummy.sql
+.read test_data/teams_dummy.sql
+.read test_data/project_dummy.sql
+.read test_data/student_mentorship_dummy.sql
+.read test_data/actions_dummy.sql
+.read test_data/action_log_dummy.sql
+.read test_data/time_log_dummy.sql
+.read test_data/archive_dummy.sql
+.read test_data/page_html_dummy.sql
