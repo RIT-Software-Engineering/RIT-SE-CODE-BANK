@@ -11,6 +11,7 @@ import {
   Check,
 } from "lucide-react";
 import "../styles/course.css";
+import { API_BASE } from "../utils/api";
 
 function CoursePage() {
   // View state
@@ -38,8 +39,6 @@ function CoursePage() {
   // Onboarding modal state
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(null);
-
-  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api/cmt';
 
   // Fetch courses on mount
   useEffect(() => {
@@ -286,8 +285,6 @@ function CourseCreationWorkflow({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api/cmt';
 
   const steps = [
     { number: 1, title: "Course Details", icon: "📋" },
@@ -547,8 +544,6 @@ function TemplateSelectionStep({ selectedTemplate, setSelectedTemplate }) {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api/cmt';
-
   useEffect(() => {
     fetchTemplates();
   }, []);
@@ -781,8 +776,6 @@ function OnboardingWorkflowEditor({ course, onSave, onCancel }) {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState(null);
-
-  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api/cmt';
 
   useEffect(() => {
     if (course?.workflowId) {

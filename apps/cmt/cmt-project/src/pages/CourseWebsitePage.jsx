@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-const API_BASE = `${process.env.REACT_APP_BACKEND_URL}`;
+import { API_BASE } from "../utils/api";
 
 // Helper to get week number relative to semester start
 const getWeekNumber = (date, start) => {
@@ -14,16 +14,9 @@ export default function CourseWebsitePage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   // headers: schedule, syllabus, project, resources
-  const [selectedHeader, setSelectedHeader] = useState("Schedule")
-  const headerTitles = {
-    schedule: "Course Schedule",
-    syllabus: "Syllabus",
-    project: "Project Overview",
-    resources: "Course Resources"
-  }
 
   // need to change
-  const [semesterStart, setSemesterStart] = useState("2025-08-25");
+  const [semesterStart] = useState("2025-08-25");
 
   // Fetch courses
   useEffect(() => {
