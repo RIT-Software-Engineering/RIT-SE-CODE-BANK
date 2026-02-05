@@ -67,7 +67,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
       const courses = await prisma.course.findMany({
         where: { professorId: professor.id },
         orderBy: [{ id: "asc" }],
-        select: { id: true, professorId: true, name: true, semester: true },
+        select: { id: true, professorId: true, name: true, semester: true, classId: true },
       });
 
       res.json(courses);
@@ -85,7 +85,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
     "/courses/:courseId/roster",
     upload.single("file"),
     async (req, res) => {
-      const courseId = req.params.courseId;
+      const courseId = parseInt(req.params.courseId);
 
       try {
         const professor = await getProfessorForUser(prisma, req, res);
@@ -176,7 +176,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
   // ---------- GENERATE TEAMSET (for this prof + course) ----------
   // POST /api/team-builder/courses/:courseId/teamsets
   router.post("/courses/:courseId/teamsets", async (req, res) => {
-    const courseId = req.params.courseId;
+    const courseId = parseInt(req.params.courseId);
     const { name, teamSize = 4 } = req.body || {};
     if (!name) return res.status(400).json({ error: "name required" });
 
@@ -256,7 +256,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
 
   // ---------- LIST TEAMSETS FOR A COURSE (only this prof's) ----------
   router.get("/courses/:courseId/teamsets", async (req, res) => {
-    const courseId = req.params.courseId;
+    const courseId = parseInt(req.params.courseId);
     const status = req.query.status;
 
     try {

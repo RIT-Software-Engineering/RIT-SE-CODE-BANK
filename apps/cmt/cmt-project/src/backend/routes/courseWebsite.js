@@ -24,7 +24,8 @@ module.exports = function makeCourseWebsiteRouter(prisma) {
   // Fetch all events (assignments, lectures, exams, etc) for a course
   // IMPORTANT: This must come BEFORE /:courseId to avoid route collision
   router.get("/:courseId/events", async (req, res) => {
-    const { courseId } = req.params;
+    const { courseId: courseIdString } = req.params;
+    const courseId = parseInt(courseIdString);
     try {
       const events = await prisma.Event.findMany({
         where: { courseId },
@@ -45,7 +46,8 @@ module.exports = function makeCourseWebsiteRouter(prisma) {
   // Get details for a single course
   // IMPORTANT: This must come AFTER more specific routes like /:courseId/events
   router.get("/:courseId", async (req, res) => {
-    const { courseId } = req.params;
+    const { courseId: courseIdString } = req.params;
+    const courseId = parseInt(courseIdString);
     try {
       const course = await prisma.Course.findUnique({
         where: { id: courseId },

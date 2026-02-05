@@ -326,7 +326,8 @@ async function getOrCreateWorkflowState(workflowId, userId) {
  */
 router.post('/course/:courseId/onboarding', async (req, res) => {
   try {
-    const { courseId } = req.params;
+    const { courseId: courseIdString } = req.params;
+    const courseId = parseInt(courseIdString);
     const { actions } = req.body;
     const prisma = req.prisma;
 
@@ -491,7 +492,8 @@ router.post('/course/:courseId/onboarding', async (req, res) => {
  */
 router.get('/course/:courseId/actions', async (req, res) => {
   try {
-    const { courseId } = req.params;
+    const { courseId: courseIdString } = req.params;
+    const courseId = parseInt(courseIdString);
     const prisma = req.prisma;
 
     console.log(`Getting workflow actions for course: ${courseId}`);

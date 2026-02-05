@@ -248,7 +248,7 @@ export default function TeamBuilderPage() {
           <option value="">-- choose --</option>
           {courses.map((course) => (
             <option key={course.id} value={course.id}>
-              {course.id}
+              {course.classId}
             </option>
           ))}
         </select>

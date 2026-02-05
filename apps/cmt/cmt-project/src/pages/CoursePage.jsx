@@ -23,7 +23,8 @@ function CoursePage() {
   // Multi-step workflow state
   const [currentStep, setCurrentStep] = useState(1);
   const [courseData, setCourseData] = useState({
-    id: "",
+    id: 0,
+    classId: "",
     name: "",
     semester: "",
     color: "",
@@ -70,7 +71,8 @@ function CoursePage() {
   const resetWorkflow = () => {
     setCurrentStep(1);
     setCourseData({
-      id: "",
+      id: 0,
+      classId: "",
       name: "",
       semester: "",
       color: "",
@@ -150,7 +152,7 @@ function CoursePage() {
             <Card.Body>
               <div className="course-header">
                 <span className={`course-badge ${getColorClass(course.color)}`}>
-                  {course.id}
+                  {course.classId}
                 </span>
                 <div className="course-actions">
                   <Button
