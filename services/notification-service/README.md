@@ -35,7 +35,7 @@ docker compose up --build
 
 The prisma schema must be set up inside the docker container:
 ```powershell
-docker compose exe notify sh
+docker compose exec notify sh
 ```
 Then:
 ```powershell
