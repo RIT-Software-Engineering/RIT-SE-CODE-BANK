@@ -34,6 +34,7 @@ const FEATURE_LABELS = {
   PROFILES: "User Profiles",
   KRONOS: "Kronos Link",
   ORACLE: "Oracle Link",
+  SLACK_WORKSPACE_URL: "Show Slack Workspace Join Link",
 };
 
 const FEATURE_DESCRIPTIONS = {
@@ -44,6 +45,7 @@ const FEATURE_DESCRIPTIONS = {
   PROFILES: "Enable user profile viewing and editing",
   KRONOS: "Enable quick access link to Kronos timecard system",
   ORACLE: "Enable quick access link to Oracle MyInfo portal",
+  SLACK_WORKSPACE_URL: "Show Slack workspace join link in notification settings. When disabled, users must contact the department for access.",
 };
 
 export default function FeatureFlagsPage() {

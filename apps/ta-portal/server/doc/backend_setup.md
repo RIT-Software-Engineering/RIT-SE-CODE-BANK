@@ -14,7 +14,7 @@
 2.  Run the following command to install a new Docker image container for a MariaDB instance.
     * **Important:** Remember to change the `project-name-maria-db-instance` and `newPassword` values to your desired settings:
         ```bash
-        docker run --name project-name-maria-db-instance -e MARIADB_ROOT_PASSWORD=newPassword -p 8000:3306 -d mariadb:latest
+        docker run --name ta-portal-maria-db-instance -e MARIADB_ROOT_PASSWORD=newPassword -p 8000:3306 -d mariadb:latest
         ```
 > **Note:** Our backend does require you to have a setup of a slack app configuration for the messaging feature. There was one setup for the initial team, but for future scooployees, they might meed to set a new one up if the current one is deprecated. To verify it has been decrepted, check if you have access to this [slack app](https://api.slack.com/apps/A0938114J84). If you don't then please refer to the file here to create your own [messaging_feature.md](messaging_feature.md). If you done have access, then proceed with the setup steps.
 
