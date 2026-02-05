@@ -51,6 +51,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
 
   function shuffleDeterministic(arr) {
     const a = [...arr];
+    // TODO: do better
     for (let i = a.length - 1; i > 0; i--) {
       const j = ((i * 9301 + 49297) % 233280) % (i + 1);
       [a[i], a[j]] = [a[j], a[i]];
@@ -59,6 +60,7 @@ module.exports = function makeTeamBuilderRouter(prisma) {
   }
 
   // ---------- LIST COURSES (only this prof's) ----------
+  // TODO: this is likely a duplicate endpoint
   router.get("/", async (req, res) => {
     try {
       const professor = await getProfessorForUser(prisma, req, res);
