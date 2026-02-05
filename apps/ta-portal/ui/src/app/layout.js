@@ -62,13 +62,13 @@ export default function RootLayout({ children }) {
             <NotificationProvider>
               {/* Global header (persistent across pages) */}
               <Suspense>
-              <Header />
+                <Header />
 
-              {/* Main content area (grows to fill available space) */}
-              <main className="flex-grow relative">{children}</main>
+                {/* Main content area (grows to fill available space) */}
+                <main className="flex-grow relative">{children}</main>
 
-              {/* Global footer (persistent across pages) */}
-              <Footer />
+                {/* Global footer (persistent across pages) */}
+                <Footer />
               </Suspense>
             </NotificationProvider>
           </AuthProvider>

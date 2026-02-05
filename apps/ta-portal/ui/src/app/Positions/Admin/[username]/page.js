@@ -486,7 +486,9 @@ export default function AdminPositions() {
                 value={searchTerm}
                 onChange={handleSearchTermChange}
                 placeholder="Search via course code or name:"
+                
                 sx={{ flexGrow: 1 }}
+                
               />
               <Filter 
                 key={activeTab} // Use key to force re-render when tab changes, ensuring correct filters are shown.

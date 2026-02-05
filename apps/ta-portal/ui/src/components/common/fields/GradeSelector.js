@@ -48,6 +48,9 @@ export default function GradeSelector({ value, onChange, id, label, isOptional =
         value={value || ''}
         label={label}
         onChange={handleChange}
+        sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "#e0e0e0" })}
       >
         <MenuItem value="">
           <em>{isOptional ? '-- No Grade --' : 'Select a grade...'}</em>
@@ -58,6 +61,7 @@ export default function GradeSelector({ value, onChange, id, label, isOptional =
             {option.label}
           </MenuItem>
         ))}
+        
       </Select>
 
       {error && <FormHelperText>{error.message}</FormHelperText>}

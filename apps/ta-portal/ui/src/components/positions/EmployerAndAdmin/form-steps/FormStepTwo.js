@@ -43,6 +43,7 @@ export default function FormStepTwo({ register, control, errors }) {
             label="Minimum Grade Required"
             isOptional={true}
             error={fieldState.error}
+            
           />
         )}
       />
@@ -54,9 +55,18 @@ export default function FormStepTwo({ register, control, errors }) {
         {...register("location")}
         error={!!errors.location}
         helperText={errors.location?.message}
+        sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "#e0e0e0",
+            }
+          })}
       />
 
       <FormControl fullWidth>
+        
         <InputLabel id="locationType-label">Location Type</InputLabel>
         <Select
           labelId="locationType-label"
@@ -64,6 +74,9 @@ export default function FormStepTwo({ register, control, errors }) {
           label="Location Type"
           {...register("locationType")}
           defaultValue="INPERSON"
+          sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "#e0e0e0" })}
         >
           <MenuItem value="REMOTE">Remote</MenuItem>
           <MenuItem value="HYBRID">Hybrid</MenuItem>
@@ -82,6 +95,14 @@ export default function FormStepTwo({ register, control, errors }) {
         })}
         error={!!errors.maxTAs}
         helperText={errors.maxTAs?.message}
+        sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "#e0e0e0",
+            }
+          })}
       />
     </Box>
   );

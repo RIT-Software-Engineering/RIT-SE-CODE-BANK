@@ -379,11 +379,12 @@ export default function AdminApplicationsPage() {
           <SearchBar
             value={searchTerm}
             onChange={handleSearchTermChange}
+            variant="outlined"
             placeholder={searchBy === 'course' ? 'Search by course code or name...' : 'Search by student name...'}
             sx={{ flexGrow: 1 }}
           />
           <Filter ref={filterRef} onFilterChange={handleFilterChange} filterConfig={filterConfig} />
-          <Button type="submit" variant="contained" color="primary">Search</Button>
+          <Button type="submit" variant="contained" color="primary" >Search</Button>
         </Paper>
 
         {!loading && !error && (

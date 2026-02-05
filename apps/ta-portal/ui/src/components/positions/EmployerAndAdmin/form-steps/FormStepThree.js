@@ -30,6 +30,14 @@ export default function FormStepThree({ register, control, errors }) {
         })}
         error={!!errors.startDate}
         helperText={errors.startDate?.message}
+        sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "#e0e0e0",
+            }
+          })}
       />
       <TextField
         fullWidth
@@ -42,6 +50,14 @@ export default function FormStepThree({ register, control, errors }) {
         })}
         error={!!errors.endDate}
         helperText={errors.endDate?.message}
+        sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "#e0e0e0",
+            }
+          })}
       />
       <Controller
         name="jobSchedules"
@@ -59,6 +75,7 @@ export default function FormStepThree({ register, control, errors }) {
             )}
           </>
         )}
+        
       />
     </Box>
   );

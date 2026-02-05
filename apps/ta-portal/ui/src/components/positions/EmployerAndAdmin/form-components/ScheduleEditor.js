@@ -78,7 +78,14 @@ export default function ScheduleEditor({
   };
 
   return (
-    <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
+    <Paper variant="outlined" sx={(theme) => ({
+    p: 2,
+    bgcolor:
+      theme.palette.mode === "dark"
+        ? ""
+        : "#e0e0e0",    
+  })}
+>
       <Typography variant="h3" gutterBottom>
         Edit Weekly Schedule
       </Typography>

@@ -107,9 +107,12 @@ export const Filter = forwardRef(function FilterComponent({ onFilterChange, filt
       <Button
         aria-describedby={id}
         variant="outlined"
+        color="primary"
         onClick={handleClick}
         startIcon={<FilterIcon />}
-        sx={{ height: 40 }}
+        sx={(theme)=>({ height: 40, background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "#e0e0e0" })}
       >
         Filter
       </Button>
