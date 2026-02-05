@@ -47,6 +47,26 @@ router.put('/preferences/:appId/:identifier', async (req, res) => {
   }
 });
 
+// GET /api/notifications/preferences/:appId/:identifier/slack-status
+router.get('/preferences/:appId/:identifier/slack-status', async (req, res) => {
+  const { appId, identifier } = req.params;
+  const { email } = req.query;
+
+  if (!email) {
+    return res.status(400).json({ error: 'email query parameter is required' });
+  }
+
+  try {
+    console.log(`[notifications_api] GET slack-status appId=${appId} id=${identifier} email=${email}`);
+    const result = await notificationClient.checkSlackStatus(email, appId, identifier);
+    console.log(`[notifications_api] GET slack-status ->`, result);
+    return res.json(result);
+  } catch (err) {
+    console.error('Failed to check Slack status:', err && err.message);
+    return res.status(502).json({ error: 'Failed to check Slack status', detail: String(err) });
+  }
+});
+
 // Dev-only helper to reset contact fields. Do NOT enable in production.
 if (process.env.NODE_ENV !== 'production') {
   router.post('/preferences/:appId/:identifier/reset-contacts', async (req, res) => {
