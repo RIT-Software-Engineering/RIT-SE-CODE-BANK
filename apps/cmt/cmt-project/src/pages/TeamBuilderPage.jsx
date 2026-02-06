@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { API_BASE } from "../utils/api";
 
 export default function TeamBuilderPage() {
@@ -220,9 +220,6 @@ export default function TeamBuilderPage() {
       alert("Move failed");
     }
   };
-
-  const allTeams = activeSet?.teams || [];
-  const isPublishingAllowed = activeSet && activeSet.status !== "PUBLISHED";
 
   return (
     <div style={{ padding: "24px", maxWidth: 1100, margin: "0 auto" }}>

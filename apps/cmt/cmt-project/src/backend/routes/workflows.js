@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 
 
-const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:5001').replace(/\/$/, ''); // Remove trailing slash
+const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:3001').replace(/\/$/, ''); // Remove trailing slash
 
 /**
  * GET /api/workflows/student/:studentId

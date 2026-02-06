@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
-  Calendar,
   Plus,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
   Edit,
   Trash2,
   X,
@@ -359,7 +357,7 @@ export default function CalPage() {
               </span>
             </div>
             <div className="stats-item">
-              <span className="stats-label">This Month's Events:</span>
+              <span className="stats-label">This Month&apos;s Events:</span>
               <span className="stats-value">
                 {Object.values(events).flat().length}
               </span>
@@ -445,8 +443,7 @@ export default function CalPage() {
                         <div className="events-container">
                           {filteredEvents.map((event) => {
                             const courseInfo = getCourseInfo(event.courseId);
-                            const IconComponent =
-                              eventTypes[event.type]?.icon || BookOpen;
+                            eventTypes[event.type]?.icon || BookOpen;
 
                             return (
                               <div

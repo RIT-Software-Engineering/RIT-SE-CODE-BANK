@@ -14,16 +14,9 @@ export default function CourseWebsitePage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   // headers: schedule, syllabus, project, resources
-  const [selectedHeader, setSelectedHeader] = useState("Schedule")
-  const headerTitles = {
-    schedule: "Course Schedule",
-    syllabus: "Syllabus",
-    project: "Project Overview",
-    resources: "Course Resources"
-  }
 
   // need to change
-  const [semesterStart, setSemesterStart] = useState("2025-08-25");
+  const [semesterStart] = useState("2025-08-25");
 
   // Fetch courses
   useEffect(() => {
@@ -91,7 +84,7 @@ export default function CourseWebsitePage() {
     }
 
     return (
-      <a href = {event.url} target = "_blank" className = "text-blue-600 no-underline hover:no-underline visited:no-underline">
+      <a href = {event.url} target = "_blank" rel="noreferrer" className = "text-blue-600 no-underline hover:no-underline visited:no-underline">
         {event.title}
       </a>
     );
