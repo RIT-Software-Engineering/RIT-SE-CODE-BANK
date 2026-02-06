@@ -365,9 +365,9 @@ router.post('/course/:courseId/onboarding', async (req, res) => {
     console.log('Creating workflow at:', `${WORKFLOWS_API}/workflows`);
     console.log('Request body:', JSON.stringify({
       userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-      tags: ['onboarding', course.id, course.semester],
+      tags: ['onboarding', course.id.toString(), course.semester],
       metadata: {
-        courseId: course.id,
+        courseId: course.id.toString(),
         courseName: course.name,
         semester: course.semester,
         type: 'student-onboarding'
@@ -379,9 +379,9 @@ router.post('/course/:courseId/onboarding', async (req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // TODO: Replace with actual professor ID from auth
-        tags: ['onboarding', course.id, course.semester],
+        tags: ['onboarding', course.id.toString(), course.semester],
         metadata: {
-          courseId: course.id,
+          courseId: course.id.toString(),
           courseName: course.name,
           semester: course.semester,
           type: 'student-onboarding'
