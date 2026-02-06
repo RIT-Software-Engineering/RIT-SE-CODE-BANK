@@ -204,8 +204,11 @@ export default function ProfileInfoCard({
     }
   };
   return (
-    <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+    <Paper elevation={2}
+    sx={(theme)=>({  p: { xs: 2, md: 3 }, background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "white" })}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2}}>
         <Typography variant="h2" component="h2">
           {profileData.fname} {profileData.lname}
         </Typography>

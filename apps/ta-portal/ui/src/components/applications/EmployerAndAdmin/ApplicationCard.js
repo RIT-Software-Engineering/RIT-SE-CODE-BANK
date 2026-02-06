@@ -317,7 +317,7 @@ export default function ApplicationCard({
       )}
 
       {isViewingComments && (
-         <ViewableCommentForm
+        <ViewableCommentForm
           foreignKey={application.id}
           foreignTableName="JobPositionApplicationHistory"
           itemTitle="Application Comment History"

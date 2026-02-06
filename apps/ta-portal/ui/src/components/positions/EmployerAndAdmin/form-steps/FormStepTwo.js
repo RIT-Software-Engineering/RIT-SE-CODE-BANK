@@ -75,8 +75,7 @@ export default function FormStepTwo({ register, control, errors }) {
           {...register("locationType")}
           defaultValue="INPERSON"
           sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? ""
-                    : "#e0e0e0" })}
+                    ? "" : "#e0e0e0" })}
         >
           <MenuItem value="REMOTE">Remote</MenuItem>
           <MenuItem value="HYBRID">Hybrid</MenuItem>

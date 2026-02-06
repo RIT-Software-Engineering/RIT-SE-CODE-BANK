@@ -49,8 +49,7 @@ export default function GradeSelector({ value, onChange, id, label, isOptional =
         label={label}
         onChange={handleChange}
         sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? ""
-                    : "#e0e0e0" })}
+                    ? "" : "#e0e0e0" })}
       >
         <MenuItem value="">
           <em>{isOptional ? '-- No Grade --' : 'Select a grade...'}</em>

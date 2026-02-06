@@ -371,7 +371,9 @@ export default function AdminApplicationsPage() {
           sx={{ p: 2, mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}
         >
           <FormControl sx={{ minWidth: 150 }}>
-            <Select value={searchBy} onChange={handleSearchByChange} size="small">
+            <Select value={searchBy} onChange={handleSearchByChange} size="small"
+            sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? "" : "#e0e0e0" })}>
               <MenuItem value="course">By Course</MenuItem>
               <MenuItem value="student">By Student</MenuItem>
             </Select>
@@ -409,12 +411,15 @@ export default function AdminApplicationsPage() {
         ) : (
           Object.keys(displayData).map((semesterCode) => (
             <Accordion key={semesterCode} defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? "" : "--color-rit-gray" })}>
                 <Typography variant="h5">Semester {semesterCode}</Typography>
               </AccordionSummary>
-              <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
+              <AccordionDetails  sx={(theme)=>({ p: { xs: 1, md: 2 }, background: theme.palette.mode === 'dark'
+                    ? "" : "--color-rit-gray" })}>
                 {displayData[semesterCode].map((position) => (
-                  <Accordion key={position.id} defaultExpanded>
+                  <Accordion key={position.id} defaultExpanded sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? "" : "#e0e0e0" })}> 
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="h6">
                         {position.courseCode}-{String(position.sectionNumber).padStart(2, '0')}: {position.course?.name}
