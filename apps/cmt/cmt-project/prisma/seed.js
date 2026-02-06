@@ -64,7 +64,7 @@ async function main() {
   console.log('📚 Creating courses...');
   const swen101 = await prisma.course.create({
     data: {
-      id: 'SWEN101',
+      classId: 'SWEN101',
       name: 'Software Engineering Fundamentals',
       semester: 'Fall 2024',
       color: '#4A90E2',
@@ -76,7 +76,7 @@ async function main() {
 
   const swen261 = await prisma.course.create({
     data: {
-      id: 'SWEN261',
+      classId: 'SWEN261',
       name: 'Intro to Software Engineering',
       semester: 'Fall 2024',
       color: '#E94B3C',
@@ -88,7 +88,7 @@ async function main() {
 
   const swen343 = await prisma.course.create({
     data: {
-      id: 'SWEN343',
+      classId: 'SWEN343',
       name: 'Software Design',
       semester: 'Fall 2024',
       color: '#50C878',
@@ -100,7 +100,7 @@ async function main() {
 
   const swen440 = await prisma.course.create({
     data: {
-      id: 'SWEN440',
+      classId: 'SWEN440',
       name: 'Software Architecture',
       semester: 'Fall 2024',
       color: '#9B59B6',
@@ -112,7 +112,7 @@ async function main() {
 
   await prisma.course.create({ // SWEN 562
     data: {
-      id: 'SWEN562',
+      classId: 'SWEN562',
       name: 'Engineering Secure Software',
       semester: 'Spring 2025',
       color: '#F39C12',
