@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    
+    "noEmit": true,
+    "esModuleInterop": true
+  }
+}
