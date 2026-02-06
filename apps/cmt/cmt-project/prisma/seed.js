@@ -64,7 +64,7 @@ async function main() {
   console.log('📚 Creating courses...');
   const swen101 = await prisma.course.create({
     data: {
-      id: 'SWEN101',
+      classId: 'SWEN101',
       name: 'Software Engineering Fundamentals',
       semester: 'Fall 2024',
       color: '#4A90E2',
@@ -76,7 +76,7 @@ async function main() {
 
   const swen261 = await prisma.course.create({
     data: {
-      id: 'SWEN261',
+      classId: 'SWEN261',
       name: 'Intro to Software Engineering',
       semester: 'Fall 2024',
       color: '#E94B3C',
@@ -88,7 +88,7 @@ async function main() {
 
   const swen343 = await prisma.course.create({
     data: {
-      id: 'SWEN343',
+      classId: 'SWEN343',
       name: 'Software Design',
       semester: 'Fall 2024',
       color: '#50C878',
@@ -100,7 +100,7 @@ async function main() {
 
   const swen440 = await prisma.course.create({
     data: {
-      id: 'SWEN440',
+      classId: 'SWEN440',
       name: 'Software Architecture',
       semester: 'Fall 2024',
       color: '#9B59B6',
@@ -110,9 +110,9 @@ async function main() {
     },
   });
 
-  const swen562 = await prisma.course.create({
+  await prisma.course.create({ // SWEN 562
     data: {
-      id: 'SWEN562',
+      classId: 'SWEN562',
       name: 'Engineering Secure Software',
       semester: 'Spring 2025',
       color: '#F39C12',
@@ -315,7 +315,8 @@ async function main() {
   // 4. Create Course Templates
   console.log('📋 Creating course templates...');
   
-  const template1 = await prisma.courseTemplate.create({
+  //Template 1
+  await prisma.courseTemplate.create({
     data: {
       name: 'Standard Software Engineering Course',
       semester: 'Fall',
@@ -374,7 +375,8 @@ async function main() {
     },
   });
 
-  const template2 = await prisma.courseTemplate.create({
+  //Template 2
+  await prisma.courseTemplate.create({
     data: {
       name: 'Project-Based Course Template',
       semester: 'Spring',
@@ -427,7 +429,8 @@ async function main() {
     },
   });
 
-  const template3 = await prisma.courseTemplate.create({
+  // Template 3
+  await prisma.courseTemplate.create({
     data: {
       name: 'Advanced Topics Template',
       semester: 'Fall',
@@ -555,7 +558,7 @@ async function main() {
 
   const team2 = await prisma.tBTeam.create({
     data: {
-      teamSetId: teamSet1.id,
+      teamSetId: teamSet2.id,
       name: 'Bug Hunters',
       maxSize: 4,
     },

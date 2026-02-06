@@ -10,7 +10,7 @@ datasource db {
 model Event {
   id          Int        @id @default(autoincrement())
   title       String
-  courseId    String?
+  courseId    Int?
   type        EventType
   time        String
   date        DateTime
@@ -79,9 +79,10 @@ model TemplateItem {
 }
 
 model Course {
-  id           String         @unique
+  id           Int            @id @default(autoincrement())
   name         String
   semester     String
+  classId      String
   color        String
   students     Int
   professorId  Int
@@ -89,15 +90,12 @@ model Course {
   events       Event[]
   tbenrollment TBEnrollment[]
   tbteamset    TBTeamSet[]
-  workflowId    String?
-
-  @@id([id, professorId])
-  @@index([professorId])
+  workflowId   String?
 }
 
 model TBEnrollment {
   id        Int        @id @default(autoincrement())
-  courseId  String
+  courseId  Int
   studentId String?
   email     String?
   firstName String?
@@ -138,7 +136,7 @@ model TBTeam {
 
 model TBTeamSet {
   id                   Int              @id @default(autoincrement())
-  courseId             String
+  courseId             Int
   name                 String
   status               tbteamset_status @default(DRAFT)
   teamSize             Int?

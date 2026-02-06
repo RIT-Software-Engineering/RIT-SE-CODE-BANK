@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 
 
-const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:5001').replace(/\/$/, ''); // Remove trailing slash
+const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:3001').replace(/\/$/, ''); // Remove trailing slash
 
 /**
  * GET /api/workflows/student/:studentId
@@ -326,7 +326,8 @@ async function getOrCreateWorkflowState(workflowId, userId) {
  */
 router.post('/course/:courseId/onboarding', async (req, res) => {
   try {
-    const { courseId } = req.params;
+    const { courseId: courseIdString } = req.params;
+    const courseId = parseInt(courseIdString);
     const { actions } = req.body;
     const prisma = req.prisma;
 
@@ -364,9 +365,9 @@ router.post('/course/:courseId/onboarding', async (req, res) => {
     console.log('Creating workflow at:', `${WORKFLOWS_API}/workflows`);
     console.log('Request body:', JSON.stringify({
       userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-      tags: ['onboarding', course.id, course.semester],
+      tags: ['onboarding', course.id.toString(), course.semester],
       metadata: {
-        courseId: course.id,
+        courseId: course.id.toString(),
         courseName: course.name,
         semester: course.semester,
         type: 'student-onboarding'
@@ -378,9 +379,9 @@ router.post('/course/:courseId/onboarding', async (req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // TODO: Replace with actual professor ID from auth
-        tags: ['onboarding', course.id, course.semester],
+        tags: ['onboarding', course.id.toString(), course.semester],
         metadata: {
-          courseId: course.id,
+          courseId: course.id.toString(),
           courseName: course.name,
           semester: course.semester,
           type: 'student-onboarding'
@@ -491,7 +492,8 @@ router.post('/course/:courseId/onboarding', async (req, res) => {
  */
 router.get('/course/:courseId/actions', async (req, res) => {
   try {
-    const { courseId } = req.params;
+    const { courseId: courseIdString } = req.params;
+    const courseId = parseInt(courseIdString);
     const prisma = req.prisma;
 
     console.log(`Getting workflow actions for course: ${courseId}`);

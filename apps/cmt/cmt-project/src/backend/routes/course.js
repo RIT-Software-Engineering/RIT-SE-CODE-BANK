@@ -171,7 +171,7 @@ router.post("/create-with-workflow", async (req, res) => {
     // Step 2: Create the course
     const newCourse = await prisma.course.create({
       data: {
-        id: course.id,
+        classId: course.id,
         name: course.name,
         semester: course.semester,
         color: course.color,

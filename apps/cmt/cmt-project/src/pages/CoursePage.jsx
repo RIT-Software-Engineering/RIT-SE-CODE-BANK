@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Card, Modal, ProgressBar } from "react-bootstrap";
 import Alert from "react-bootstrap/Alert";
 import {
   Plus,
-  Edit,
   Trash2,
   List as ListIcon,
   CheckSquare,
@@ -23,7 +22,8 @@ function CoursePage() {
   // Multi-step workflow state
   const [currentStep, setCurrentStep] = useState(1);
   const [courseData, setCourseData] = useState({
-    id: "",
+    id: 0,
+    classId: "",
     name: "",
     semester: "",
     color: "",
@@ -70,7 +70,8 @@ function CoursePage() {
   const resetWorkflow = () => {
     setCurrentStep(1);
     setCourseData({
-      id: "",
+      id: 0,
+      classId: "",
       name: "",
       semester: "",
       color: "",
@@ -150,7 +151,7 @@ function CoursePage() {
             <Card.Body>
               <div className="course-header">
                 <span className={`course-badge ${getColorClass(course.color)}`}>
-                  {course.id}
+                  {course.classId}
                 </span>
                 <div className="course-actions">
                   <Button
@@ -622,7 +623,7 @@ function TemplateSelectionStep({ selectedTemplate, setSelectedTemplate }) {
 }
 
 // Step 3: Calendar Events
-function CalendarEventsStep({ calendarEvents, setCalendarEvents, courseData }) {
+function CalendarEventsStep({ calendarEvents, setCalendarEvents }) {
   const handleAddEvent = () => {
     setCalendarEvents([
       ...calendarEvents,
@@ -655,7 +656,7 @@ function CalendarEventsStep({ calendarEvents, setCalendarEvents, courseData }) {
 
       {calendarEvents.length === 0 ? (
         <div className="empty-state-small">
-          <p>No events added yet. Click "Add Event" to create your first calendar event.</p>
+          <p>No events added yet. Click &quot;Add Event&quot; to create your first calendar event.</p>
         </div>
       ) : (
         <div className="events-list">

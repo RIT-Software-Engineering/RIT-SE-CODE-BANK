@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { API_BASE } from "../utils/api";
 
 export default function TeamBuilderPage() {
@@ -221,9 +221,6 @@ export default function TeamBuilderPage() {
     }
   };
 
-  const allTeams = activeSet?.teams || [];
-  const isPublishingAllowed = activeSet && activeSet.status !== "PUBLISHED";
-
   return (
     <div style={{ padding: "24px", maxWidth: 1100, margin: "0 auto" }}>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>
@@ -248,7 +245,7 @@ export default function TeamBuilderPage() {
           <option value="">-- choose --</option>
           {courses.map((course) => (
             <option key={course.id} value={course.id}>
-              {course.id}
+              {course.classId}
             </option>
           ))}
         </select>

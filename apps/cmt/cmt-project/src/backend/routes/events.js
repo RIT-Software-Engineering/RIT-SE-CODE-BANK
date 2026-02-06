@@ -354,7 +354,8 @@ router.get("/course/:courseId", async (req, res) => {
   if (!user) return;
 
   try {
-    const { courseId } = req.params;
+    const { courseId: courseIdString } = req.params;
+    const courseId = parseInt(courseIdString);
 
     const course = await prisma.course.findUnique({
       where: {

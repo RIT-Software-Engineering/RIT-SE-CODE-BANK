@@ -1,3 +1,5 @@
+import React from "react";
+
 // src/pages/HomePage.jsx
 export default function HomePage() {
   return (
