@@ -51,6 +51,7 @@ export default function LoginPage({ setRoles, setIsAuthenticated, updateFacultyI
           <Select
             value={selectedUser}
             onChange={(e) => setSelectedUser(e.target.value)}
+            sx={{ color: 'primary.main' }}
           >
             {users.map(user => (
               <MenuItem key={user.faculty_id} value={user.faculty_id}>

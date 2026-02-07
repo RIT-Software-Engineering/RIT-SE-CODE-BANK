@@ -4,11 +4,13 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Button, Paper } from "@mui/material";
 import { Link } from "react-router-dom";
 import HighlightsViewModal from "./HighlightsViewModal";
+import AddFileModal from "./AddFilePage";
 
 export default function HighlightsPage({facultyId}){
     const [highlights, setHighlights] = useState([]);
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [viewModalForm, setViewModalForm] = useState({});
+    const [addFileModalOpen, setAddFileModalOpen] = useState(false);
 
     function closeModal(){
         setViewModalOpen(false);
@@ -58,6 +60,7 @@ export default function HighlightsPage({facultyId}){
         <h1>Highlights</h1>
         <div>
         <Button component={Link} to="/highlights_form" variant="contained" style={{margin:"2%"}}>Create New Form</Button>
+        <Button variant="contained" style={{margin:"2%"}} onClick={() => setAddFileModalOpen(true)}>Add File</Button>
         </div>
         <Paper sx={{ height: 400, width: 600, display:"inline-block"}}>
         <DataGrid
@@ -67,6 +70,7 @@ export default function HighlightsPage({facultyId}){
         />
         </Paper>
         <HighlightsViewModal formData={viewModalForm} isOpen={viewModalOpen} closeModal={() => closeModal()}/>
+        <AddFileModal isOpen={addFileModalOpen} closeModal={() => setAddFileModalOpen(false)}/>
         </div>
     )
 }
