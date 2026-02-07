@@ -126,17 +126,19 @@ router.post("/create-with-workflow", async (req, res) => {
     const prisma = req.prisma;
 
     // Validate course data
+    var missingField = "";
+    if (!course.classId) {missingField += " Class ID ";}
+    if (!course.name) {missingField += " Class Name ";}
+    if (!course.semester) {missingField += "Semester ";}
+    if (!course.color) {missingField += " Color ";}
+
     if (
       !course ||
-      !course.id ||
-      !course.name ||
-      !course.semester ||
-      !course.color ||
-      !course.students
+      missingField
     ) {
       return res.status(400).json({
         success: false,
-        error: "Missing required course fields",
+        error: `Missing required course fields: ${missingField}`,
       });
     }
 
@@ -171,12 +173,13 @@ router.post("/create-with-workflow", async (req, res) => {
     // Step 2: Create the course
     const newCourse = await prisma.course.create({
       data: {
-        classId: course.id,
+        classId: course.classId,
         name: course.name,
         semester: course.semester,
         color: course.color,
-        students: parseInt(course.students),
-        professorId: professorId,
+        students: (!course.students) ? null : parseInt(course.students),
+        section: (!course.section) ? null : parseInt(course.section),
+        professorId: course.professorId
       },
     });
 
