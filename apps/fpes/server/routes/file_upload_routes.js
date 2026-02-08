@@ -1,0 +1,55 @@
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { parsePDF, parseCSV } = require('../api/file_parser_api');
+
+const router = express.Router();
+
+// Ensure uploads directory exists
+// Under apps\fpes\server\uploads
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
+
+const upload = multer({ dest: uploadsDir });
+
+router.post('/upload', upload.single('file'), async (req, res) => {
+    console.log('File upload request received');
+    try {
+        if (!req.file) {
+            console.log('No file in request');
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        console.log('File received:', req.file.originalname);
+        const filePath = req.file.path;
+        const fileExt = path.extname(req.file.originalname).toLowerCase();
+
+        let parsedData;
+
+        if (fileExt === '.pdf') {
+            parsedData = await parsePDF(filePath);
+        } else if (fileExt === '.csv') {
+            parsedData = await parseCSV(filePath);
+        } else {
+            fs.unlinkSync(filePath);
+            return res.status(400).json({ error: 'Unsupported file type' });
+        }
+
+        fs.unlinkSync(filePath);
+
+        res.json({
+            success: true,
+            filename: req.file.originalname,
+            data: parsedData
+        });
+
+    } catch (error) {
+        console.error('Error parsing file:', error);
+        res.status(500).json({ error: 'Failed to parse file: ' + error.message });
+    }
+});
+
+module.exports = router;

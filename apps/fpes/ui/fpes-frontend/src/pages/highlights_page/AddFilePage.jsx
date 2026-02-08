@@ -1,5 +1,6 @@
 import { Modal, Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
+import axios from "axios";
 
 export default function AddFileModal({ isOpen, closeModal }) {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -8,15 +9,25 @@ export default function AddFileModal({ isOpen, closeModal }) {
         setSelectedFile(e.target.files[0]);
     };
 
-    const handleUpload = () => {
+    const handleUpload = async () => {
         if (!selectedFile) return;
         
         const formData = new FormData();
         formData.append("file", selectedFile);
 
-        //Replace later with actual upload endpoint
-        console.log("Uploading file:", selectedFile.name);
-        closeModal();
+        try {
+            const response = await axios.post("http://localhost:3000/file/upload", formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            console.log("Upload successful:", response.data);
+            console.log("Parsed data:", response.data.data);
+            alert("File uploaded and parsed successful, check console for data.");
+            closeModal();
+        } catch (error) {
+            console.error("Upload failed:", error);
+            console.error("Error details:", error.response?.data);
+            alert("Failed to upload file: " + (error.response?.data?.error || error.message));
+        }
     };
 
     return (

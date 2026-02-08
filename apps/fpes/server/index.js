@@ -38,6 +38,9 @@ app.use('/highlights', highlightsRoutes);
 const formsRoutes = require('./routes/forms_routes.js');
 app.use('/forms', formsRoutes);
 
+const fileUploadRoutes = require('./routes/file_upload_routes.js');
+app.use('/file', fileUploadRoutes);
+
 
 // Test route (just to confirm server is alive)
 app.get('/', (req, res) => {
