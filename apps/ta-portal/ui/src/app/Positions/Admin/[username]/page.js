@@ -28,6 +28,7 @@ import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
+import ConfirmationModal from "@/components/common/models/ConfirmationModal";
 
 import {
   Box,
@@ -69,6 +70,7 @@ export default function AdminPositions() {
   const [filterConfig, setFilterConfig] = useState([]);
 
   // State for managing modals (edit/create position and comment confirmation).
+  const [showClearConfirm, setShowClearConfirm]=useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -251,8 +253,16 @@ export default function AdminPositions() {
    * Closes the EditPositionModal and resets the selected job state.
    */
   const handleCloseModal = () => {
+    setShowClearConfirm(true);
+  };
+
+    /**
+   * Closes the EditPositionModal and resets the selected job state.
+   */
+  const handleClearConfirm = () => {
     setIsModalOpen(false);
     setSelectedJob(null);
+    setShowClearConfirm(false);
   };
   
   /**
@@ -535,6 +545,12 @@ export default function AdminPositions() {
           onSave={handleSaveJob}
         />
       )}
+      {isModalOpen &&(
+        <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Cancel Position Creation">
+          Are you sure you want to cancel this job application? This action cannot be undone.
+        </ConfirmationModal>
+      )}
+      
       
       <EditableCommentForm
         isOpen={commentModalState.isOpen}

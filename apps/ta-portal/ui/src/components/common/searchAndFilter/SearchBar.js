@@ -40,7 +40,7 @@ export default function SearchBar({ value, onChange, placeholder, ...props }) {
     backgroundColor:
       theme.palette.mode === "dark"
         ? ""
-        : "#e0e0e0",
+        : "white",
   }
 })}
   InputProps={{

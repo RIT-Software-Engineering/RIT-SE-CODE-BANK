@@ -111,7 +111,7 @@ export const Filter = forwardRef(function FilterComponent({ onFilterChange, filt
         onClick={handleClick}
         startIcon={<FilterIcon />}
         sx={(theme)=>({ height: 40, background: theme.palette.mode === 'dark'
-                    ? "" : "#e0e0e0" })}
+                    ? "" : "white" })}
       >
         Filter
       </Button>
