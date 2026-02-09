@@ -162,7 +162,7 @@ export const Filter = forwardRef(function FilterComponent({ onFilterChange, filt
                     value={selectedFilters[filter.id] || ''}
                     label={filter.label}
                     onChange={(e) => handleFilterChange(filter.id, e.target.value, "select")}
-                  >
+                  > 
                     <MenuItem value="">
                       <em>{filter.placeholder || `Any ${filter.label}`}</em>
                     </MenuItem>

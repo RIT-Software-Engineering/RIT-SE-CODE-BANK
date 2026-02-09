@@ -35,7 +35,7 @@ export default function FormStepThree({ register, control, errors }) {
               backgroundColor:
                 theme.palette.mode === "dark"
                   ? ""
-                  : "#e0e0e0",
+                  : "white",
             }
           })}
       />
@@ -55,7 +55,7 @@ export default function FormStepThree({ register, control, errors }) {
               backgroundColor:
                 theme.palette.mode === "dark"
                   ? ""
-                  : "#e0e0e0",
+                  : "white",
             }
           })}
       />

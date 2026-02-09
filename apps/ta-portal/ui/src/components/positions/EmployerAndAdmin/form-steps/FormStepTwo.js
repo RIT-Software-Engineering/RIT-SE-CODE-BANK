@@ -60,7 +60,7 @@ export default function FormStepTwo({ register, control, errors }) {
               backgroundColor:
                 theme.palette.mode === "dark"
                   ? ""
-                  : "#e0e0e0",
+                  : "white",
             }
           })}
       />
@@ -75,7 +75,7 @@ export default function FormStepTwo({ register, control, errors }) {
           {...register("locationType")}
           defaultValue="INPERSON"
           sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "#e0e0e0" })}
+                    ? "" : "white" })}
         >
           <MenuItem value="REMOTE">Remote</MenuItem>
           <MenuItem value="HYBRID">Hybrid</MenuItem>
@@ -99,7 +99,7 @@ export default function FormStepTwo({ register, control, errors }) {
               backgroundColor:
                 theme.palette.mode === "dark"
                   ? ""
-                  : "#e0e0e0",
+                  : "white",
             }
           })}
       />

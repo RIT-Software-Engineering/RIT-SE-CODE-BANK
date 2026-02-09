@@ -104,6 +104,14 @@ export default function ScheduleEditor({
                 onChange={(e) => handleTimeChange(index, "startTime", e.target.value)}
                 fullWidth
                 size="small"
+                sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
               />
             </Grid>
             <Grid item xs={3}>
@@ -113,6 +121,14 @@ export default function ScheduleEditor({
                 onChange={(e) => handleTimeChange(index, "endTime", e.target.value)}
                 fullWidth
                 size="small"
+                sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
               />
             </Grid>
             <Grid item xs={2} sx={{ textAlign: 'right' }}>
@@ -134,6 +150,8 @@ export default function ScheduleEditor({
             label="Day"
             value={newSchedule.dayOfWeek}
             onChange={handleNewScheduleInputChange}
+          sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? "" : "white" })}
           >
             <MenuItem value="Monday">Monday</MenuItem>
             <MenuItem value="Tuesday">Tuesday</MenuItem>
@@ -150,7 +168,14 @@ export default function ScheduleEditor({
           onChange={handleNewScheduleInputChange}
           size="small"
           InputLabelProps={{ shrink: true }}
-          sx={{ flex: 1, width: '100%' }}
+          sx={(theme) => ({ flex: 1, width: '100%',
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
         <TextField
           type="time"
@@ -160,7 +185,14 @@ export default function ScheduleEditor({
           onChange={handleNewScheduleInputChange}
           size="small"
           InputLabelProps={{ shrink: true }}
-          sx={{ flex: 1, width: '100%' }}
+          sx={(theme) => ({ flex: 1, width: '100%',
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
         <Button
           onClick={handleAddSchedule}

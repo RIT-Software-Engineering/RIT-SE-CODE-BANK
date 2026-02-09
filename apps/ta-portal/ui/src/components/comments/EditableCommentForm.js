@@ -72,6 +72,14 @@ export default function EditableCommentForm({ isOpen, onClose, onConfirm, title,
           onChange={(e) => setComment(e.target.value)}
           placeholder="Enter comment..."
           disabled={isProcessing}
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
       </DialogContent>
       <DialogActions sx={{ p: 3 }}>

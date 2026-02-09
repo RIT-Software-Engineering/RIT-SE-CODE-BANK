@@ -31,9 +31,9 @@ import {
   Typography,
   Link as MuiLink,
 } from '@mui/material';
-import { 
-    MoreVert as EllipsisVerticalIcon,
-    Article as DocumentIcon
+import {
+  MoreVert as EllipsisVerticalIcon,
+  Article as DocumentIcon
 } from '@mui/icons-material';
 
 /**
@@ -202,7 +202,10 @@ export default function ApplicationCard({
           animation: isHighlighted ? 'flashPulse 1.2s ease-in-out 2' : 'none',
         }}
       >
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={(theme) => ({
+          p: { xs: 2, md: 3 }, background: theme.palette.mode === 'dark'
+            ? "" : "white"
+        })}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
               <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>
@@ -229,26 +232,26 @@ export default function ApplicationCard({
               </Box>
             </Box>
             <IconButton onClick={handleMenuClick} disabled={isCheckingHiredStatus}>
-                {isCheckingHiredStatus ? <CircularProgress size={24} /> : <EllipsisVerticalIcon />}
+              {isCheckingHiredStatus ? <CircularProgress size={24} /> : <EllipsisVerticalIcon />}
             </IconButton>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
-                <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
-                
-                {showActionMenuItems && <Divider />}
+              <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
+              <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
 
-                {showHireOption && (
-                    <MenuItem onClick={() => { if(onHire) onHire(); handleMenuClose(); }} sx={{color: 'success.main'}}>Hire Candidate</MenuItem>
-                )}
-                {showRejectOption && (
-                    <MenuItem onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} sx={{color: 'error.main'}}>Reject Application</MenuItem>
-                )}
-                {showInterviewOption && (
-                    <MenuItem onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>Select for Interview</MenuItem>
-                )}
-                {showOfferOption && (
-                    <MenuItem onClick={handleOfferPosition}>Offer Position</MenuItem>
-                )}
+              {showActionMenuItems && <Divider />}
+
+              {showHireOption && (
+                <MenuItem onClick={() => { if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</MenuItem>
+              )}
+              {showRejectOption && (
+                <MenuItem onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} sx={{ color: 'error.main' }}>Reject Application</MenuItem>
+              )}
+              {showInterviewOption && (
+                <MenuItem onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>Select for Interview</MenuItem>
+              )}
+              {showOfferOption && (
+                <MenuItem onClick={handleOfferPosition}>Offer Position</MenuItem>
+              )}
             </Menu>
           </Box>
 
@@ -256,48 +259,48 @@ export default function ApplicationCard({
 
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-                <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                    <Typography variant="body2" color="text.secondary">Resume</Typography>
-                    <DocumentIcon fontSize="small" />
-                </Box>
-                <MuiLink href={`${backendURL}${resume.resumeURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
-                    {resume.name}
-                </MuiLink>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">Resume</Typography>
+                <DocumentIcon fontSize="small" />
+              </Box>
+              <MuiLink href={`${backendURL}${resume.resumeURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
+                {resume.name}
+              </MuiLink>
             </Grid>
             {application.coverLetterURL && (
-                <Grid item xs={12} sm={6}>
-                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                        <Typography variant="body2" color="text.secondary">Cover Letter</Typography>
-                        <DocumentIcon fontSize="small" />
-                    </Box>
-                    <MuiLink href={`${backendURL}${application.coverLetterURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
-                        {application.coverLetterName || 'View Cover Letter'}
-                    </MuiLink>
-                </Grid>
+              <Grid item xs={12} sm={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">Cover Letter</Typography>
+                  <DocumentIcon fontSize="small" />
+                </Box>
+                <MuiLink href={`${backendURL}${application.coverLetterURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
+                  {application.coverLetterName || 'View Cover Letter'}
+                </MuiLink>
+              </Grid>
             )}
             <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">Course:</Typography>
-                <Typography fontWeight="bold">{jobPosition.courseCode || "N/A"}</Typography>
+              <Typography variant="body2" color="text.secondary">Course:</Typography>
+              <Typography fontWeight="bold">{jobPosition.courseCode || "N/A"}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">Recent Course Grade</Typography>
-                <Typography fontWeight="bold">{application.candidateGrade || "N/A"}</Typography>
+              <Typography variant="body2" color="text.secondary">Recent Course Grade</Typography>
+              <Typography fontWeight="bold">{application.candidateGrade || "N/A"}</Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary">Previous TA Experience For This Course</Typography>
-                <Typography fontWeight="bold">{application.wasPriorEmployeeForThisCourse ? "Yes" : "No"}</Typography>
+              <Typography variant="body2" color="text.secondary">Previous TA Experience For This Course</Typography>
+              <Typography fontWeight="bold">{application.wasPriorEmployeeForThisCourse ? "Yes" : "No"}</Typography>
             </Grid>
             <Grid item xs={12}>
-                <Typography variant="body2" color="text.secondary">Previously TA&apos;d Courses</Typography>
-                <Typography fontWeight="bold">{application.priorEmploymentHistory || "None"}</Typography>
+              <Typography variant="body2" color="text.secondary">Previously TA&apos;d Courses</Typography>
+              <Typography fontWeight="bold">{application.priorEmploymentHistory || "None"}</Typography>
             </Grid>
           </Grid>
 
           <Divider sx={{ my: 3 }} />
-          
+
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
             <Box sx={{ width: { xs: '100%', md: '65%' } }}>
-              <ApplicationTracker currentStep={jobApplicationStatus}/>
+              <ApplicationTracker currentStep={jobApplicationStatus} />
             </Box>
             <Chip
               label={jobApplicationStatus?.replace("_", " ")}

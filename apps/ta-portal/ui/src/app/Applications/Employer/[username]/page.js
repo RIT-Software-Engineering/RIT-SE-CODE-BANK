@@ -277,9 +277,11 @@ export default function EmployerApplicationsPage() {
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="h5">{`Semester ${semesterCode}`}</Typography>
         </AccordionSummary>
-        <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
+        <AccordionDetails  sx={(theme)=>({ p: { xs: 1, md: 2 }, background: theme.palette.mode === 'dark'
+                            ? "" : "--color-rit-gray" })}>
           {displayData[semesterCode].map((position) => (
-            <Accordion key={position.id} defaultExpanded>
+            <Accordion key={position.id} defaultExpanded sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                                ? "" : "#e0e0e0" })}> 
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="h6">
                   {position.courseCode}-
@@ -355,11 +357,9 @@ export default function EmployerApplicationsPage() {
             }}
           >
             <FormControl sx={{ minWidth: 150 }}>
-              <Select
-                value={searchBy}
-                onChange={handleSearchByChange}
-                size="small"
-              >
+              <Select value={searchBy} onChange={handleSearchByChange} size="small"
+                          sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                                  ? "" : "white" })}>
                 <MenuItem value="course">By Course</MenuItem>
                 <MenuItem value="student">By Student</MenuItem>
               </Select>

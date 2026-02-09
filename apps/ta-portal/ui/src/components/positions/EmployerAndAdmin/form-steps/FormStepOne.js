@@ -121,7 +121,7 @@ export default function FormStepOne({
                       backgroundColor:
                         theme.palette.mode === "dark"
                           ? ""
-                          : "#e0e0e0",
+                          : "white",
                     }
                   })}
                   label="Course Code"
@@ -170,7 +170,7 @@ export default function FormStepOne({
               backgroundColor:
                 theme.palette.mode === "dark"
                   ? ""
-                  : "#e0e0e0",
+                  : "white",
             }
           })}
         />
@@ -202,7 +202,7 @@ export default function FormStepOne({
               backgroundColor:
                 theme.palette.mode === "dark"
                   ? ""
-                  : "#e0e0e0",
+                  : "white",
             }
           })}
         />

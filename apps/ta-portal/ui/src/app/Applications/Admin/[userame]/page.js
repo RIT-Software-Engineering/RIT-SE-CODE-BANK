@@ -373,7 +373,7 @@ export default function AdminApplicationsPage() {
           <FormControl sx={{ minWidth: 150 }}>
             <Select value={searchBy} onChange={handleSearchByChange} size="small"
             sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "#e0e0e0" })}>
+                    ? "" : "white" })}>
               <MenuItem value="course">By Course</MenuItem>
               <MenuItem value="student">By Student</MenuItem>
             </Select>

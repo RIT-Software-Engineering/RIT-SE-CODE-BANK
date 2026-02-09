@@ -52,8 +52,8 @@ export default function ViewablePositionForm({ position, onClose }) {
   if (!position) return null;
   console.log(position);
   return (
-    <Dialog open={true} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Dialog open={true} onClose={onClose} fullWidth maxWidth="md" >
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background:"background.default"}}>
         <Box>
           <Typography variant="h2" component="div">{position.course.name}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
