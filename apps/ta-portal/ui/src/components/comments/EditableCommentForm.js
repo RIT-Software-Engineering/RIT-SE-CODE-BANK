@@ -57,7 +57,7 @@ export default function EditableCommentForm({ isOpen, onClose, onConfirm, title,
       </DialogTitle>
       <DialogContent dividers>
         <DialogContentText sx={{ mb: 2 }}>
-          Please provide a comment for this action:
+          Please provide a comment for this action. Admins, other employers, and the candidate will be able to view this comment.
         </DialogContentText>
         <TextField
           autoFocus
