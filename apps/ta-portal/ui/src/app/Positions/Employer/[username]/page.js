@@ -27,6 +27,7 @@ import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
+import ConfirmationModal from "@/components/common/models/ConfirmationModal";
 
 import {
   Box,
@@ -73,6 +74,7 @@ function EmployerPositionsContent() {
   const [filterConfig, setFilterConfig] = useState([]);
 
   // State for managing modals (edit/create position and comment confirmation).
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -233,13 +235,26 @@ function EmployerPositionsContent() {
   };
 
   /**
-   * Closes the EditPositionModal and resets the selected job state.
+   * Popup for clear confirmation of modal close
    */
   const handleCloseModal = () => {
+    setShowClearConfirm(true);
+  };
+  /**
+   * closes modal immediately 
+   */
+  const closeModalImmediately = () => {
     setIsModalOpen(false);
     setSelectedJob(null);
   };
-  
+    /**
+ * Closes the EditPositionModal and resets the selected job state.
+ */
+  const handleClearConfirm = () => {
+    setIsModalOpen(false);
+    setSelectedJob(null);
+    setShowClearConfirm(false);
+  };
   /**
    * Closes the comment confirmation modal.
    */
@@ -268,7 +283,7 @@ function EmployerPositionsContent() {
         const finalPositionData = { ...positionData, jobPositionStatus: 'PENDING_APPROVAL' };
         await createPosition(finalPositionData, employerData);
         showNotification('Position created and submitted for approval!', 'success');
-        handleCloseModal();
+        closeModalImmediately();
         
         // Refresh the data grid after creation.
         setSearchTerm("");
@@ -283,7 +298,7 @@ function EmployerPositionsContent() {
         setIsProcessing(false);
       }
     } else { // Otherwise, it's an UPDATE action, which requires a comment.
-      handleCloseModal();
+      closeModalImmediately();
       setCommentModalState({
         isOpen: true,
         title: 'Confirm Position Update',
@@ -495,6 +510,11 @@ function EmployerPositionsContent() {
           onSave={handleSaveJob}
         />
       )}
+      {showClearConfirm && (
+              <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Cancel Position Creation">
+                Are you sure you want to cancel this job application? This action cannot be undone.
+              </ConfirmationModal>
+            )}
       
       <EditableCommentForm
         isOpen={commentModalState.isOpen}
