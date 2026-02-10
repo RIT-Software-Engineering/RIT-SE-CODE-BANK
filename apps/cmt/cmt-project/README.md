@@ -95,3 +95,22 @@ The two sources of linting in this project are Typescript and ESLint. Even thoug
 **Command Line Linting**: You can also lint CMT through the following commands:
 - **Typescript (tsc)**: In `apps/cmt/cmt-project`, run `tsc`
 - **ESLint**: In `apps/cmt/cmt-project/`, run `npm run lint`
+
+---
+## Keeping Everything in Sync
+As you make changes to the codebase, your development server should detect the changes and restart automatically.
+
+But, **when you make changes to the schema, those will not be automatically reflected**. To update the schema and database, you can use the automated scripts, or do it manually.
+
+**Option 1: Script** 
+
+1. In `apps/cmt/cmt-project`, run `node stop_app.js` 
+2. In `apps/cmt/cmt-project`, run `node start_app.js`
+
+
+**Option 2: Manual**
+
+1. In `apps/cmt/cmt-project`, run `npx prisma db push`
+2. Done! You shouldn't need to restart the app.
+
+You will likely be prompted with warnings about risky schema changes. In a lot of cases, data will have to be wiped. If you're okay with the warnings, say yes to the prompts.
