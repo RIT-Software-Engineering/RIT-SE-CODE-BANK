@@ -24,6 +24,7 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData }) {
                 </IconButton>
                 <Typography variant="h6" component="h2" sx={{ mb: 2, clear: 'both' }}>Review and Edit Parsed Data</Typography>
                 
+                <h3>Basic Information</h3>
                 <TextField fullWidth label="Name" value={formData.name || ''} 
                     onChange={(e) => handleChange('name', e.target.value)} sx={{ mb: 2 }} />
                 
@@ -39,19 +40,28 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData }) {
                 <TextField fullWidth label="Period" value={formData.period || ''} 
                     onChange={(e) => handleChange('period', e.target.value)} sx={{ mb: 2 }} />
                 
-                <TextField fullWidth multiline rows={6} label="Scholarship" 
+                <h3>Scholarship</h3>
+                <TextField fullWidth multiline rows={6} 
                     value={formData.scholarship || ''} 
                     onChange={(e) => handleChange('scholarship', e.target.value)} sx={{ mb: 2 }} />
                 
-                <TextField fullWidth multiline rows={6} label="Teaching" 
+                <h3>Teaching</h3>
+                <TextField fullWidth multiline rows={6} 
                     value={formData.teaching || ''} 
                     onChange={(e) => handleChange('teaching', e.target.value)} sx={{ mb: 2 }} />
                 
-                <TextField fullWidth multiline rows={6} label="Service" 
+                <h3>Service</h3>
+                <TextField fullWidth multiline rows={6} 
                     value={formData.service || ''} 
                     onChange={(e) => handleChange('service', e.target.value)} sx={{ mb: 2 }} />
                 
-                <TextField fullWidth multiline rows={6} label="Administrative" 
+                <h3>Professional Development</h3>
+                <TextField fullWidth multiline rows={4} 
+                    value={formData.professionalDevelopment || ''} 
+                    onChange={(e) => handleChange('professionalDevelopment', e.target.value)} sx={{ mb: 2 }} />
+                
+                <h3>Administrative</h3>
+                <TextField fullWidth multiline rows={6} 
                     value={formData.administrative || ''} 
                     onChange={(e) => handleChange('administrative', e.target.value)} sx={{ mb: 2 }} />
                 
