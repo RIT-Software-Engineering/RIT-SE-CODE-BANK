@@ -243,11 +243,17 @@ export default function EmployeeApplicationsPage() {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {semesterCodes.map((semester) => (
-          <Accordion key={semester} defaultExpanded>
+          <Accordion key={semester} defaultExpanded sx={(theme) => ({
+            background: theme.palette.mode === 'dark'
+              ? "" : "#e0e0e0"
+          })}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h5">{`Semester ${semester}`}</Typography>
             </AccordionSummary>
-            <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
+            <AccordionDetails sx={(theme) => ({
+              p: { xs: 1, md: 2 }, background: theme.palette.mode === 'dark'
+                ? "" : "--color-rit-gray"
+            })}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {displayData[semester].map((app) => (
                   <ApplicationCard

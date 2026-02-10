@@ -198,6 +198,7 @@ export const Filter = forwardRef(function FilterComponent({ onFilterChange, filt
               component="button"
               variant="body2"
               onClick={handleClearFilters}
+              
             >
               Clear All
             </MuiLink>

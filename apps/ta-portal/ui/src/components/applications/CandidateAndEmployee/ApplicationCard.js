@@ -310,7 +310,7 @@ export default function CandidateApplicationCard({
         <ViewableApplicationForm
           position={jobPosition}
           application={application}
-          onClose={setShowClearConfirm(true)}
+          onClose={()=>setShowClearConfirm(true)}
         />
       )}
     {/*{{(isViewingApplication &&showClearConfirm) &&(

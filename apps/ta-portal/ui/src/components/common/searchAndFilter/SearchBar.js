@@ -29,42 +29,42 @@ export default function SearchBar({ value, onChange, placeholder, ...props }) {
 
   return (
     <TextField
-  fullWidth
-  value={value}
-  size="small"
-  onChange={(e) => onChange(e.target.value)}
-  placeholder={placeholder}
-  {...props}
-  sx={(theme) => ({
-  "& .MuiOutlinedInput-root": {
-    backgroundColor:
-      theme.palette.mode === "dark"
-        ? ""
-        : "white",
-  }
-})}
-  InputProps={{
-    startAdornment: (
-      <InputAdornment position="start">
-        <SearchIcon color="action" />
-      </InputAdornment>
-    ),
-    endAdornment: (
-      value && (
-        <InputAdornment position="end">
-          <IconButton
-            aria-label="clear search"
-            onClick={handleClear}
-            edge="end"
-            size="small"
-          >
-            <ClearIcon />
-          </IconButton>
-        </InputAdornment>
-      )
-    ),
-  }}
-  
-/>
+      fullWidth
+      value={value}
+      size="small"
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      {...props}
+      sx={(theme) => ({
+        "& .MuiOutlinedInput-root": {
+          backgroundColor:
+            theme.palette.mode === "dark"
+              ? ""
+              : "white",
+        }
+      })}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon color="action" />
+          </InputAdornment>
+        ),
+        endAdornment: (
+          value && (
+            <InputAdornment position="end">
+              <IconButton
+                aria-label="clear search"
+                onClick={handleClear}
+                edge="end"
+                size="small"
+              >
+                <ClearIcon />
+              </IconButton>
+            </InputAdornment>
+          )
+        ),
+      }}
+
+    />
   );
 }

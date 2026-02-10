@@ -73,14 +73,14 @@ export default function CandidateApplicationsPage() {
             { status: [], level: [], semester: '' },
             currentUser.username
           );
-          
+
           // Use a Set to get unique semester codes, then sort them in descending order.
           const semesterCodes = [...new Set(allApps.map(app => app.jobPositionId.split('-')[0]))]
-            .sort((a,b) => b.localeCompare(a));
-          
+            .sort((a, b) => b.localeCompare(a));
+
           const newConfig = generateApplicationsFilterConfig(semesterCodes);
           setFilterConfig(newConfig);
-        } catch (err)          {
+        } catch (err) {
           console.error('Failed to load filter configuration:', err);
           // Set a default empty config on error to prevent crashes.
           setFilterConfig(generateApplicationsFilterConfig([]));
@@ -107,7 +107,7 @@ export default function CandidateApplicationsPage() {
         filters,
         currentUser.username
       );
-      
+
       // Process applications to convert grade enums to human-readable strings.
       const applications = data.map(application => {
         if (application.candidateGrade && gradeEnumToStringValue[application.candidateGrade]) {
@@ -154,7 +154,7 @@ export default function CandidateApplicationsPage() {
       scrolledRef.current = true;
       try {
         el.closest('[role="region"]')?.previousElementSibling?.click?.();
-      } catch (_) {}
+      } catch (_) { }
       setTimeout(() => {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.focus({ preventScroll: true });
@@ -178,7 +178,7 @@ export default function CandidateApplicationsPage() {
     setAppliedFilters(filters);
     updateApplicationsView(searchTerm, filters);
   };
-  
+
   /**
    * Updates the search term state as the user types.
    * If the search bar is cleared, it refreshes the view to show all items.
@@ -190,16 +190,14 @@ export default function CandidateApplicationsPage() {
       updateApplicationsView('', appliedFilters);
     }
   };
-  
+
   /**
    * Triggers a search when the search form is submitted.
    * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
    */
   const handleSearch = (e) => {
     e.preventDefault();
-    const latestFilters = filterRef.current.getFilters();
-    setAppliedFilters(latestFilters);
-    updateApplicationsView(searchTerm, latestFilters);
+    updateApplicationsView(searchTerm, appliedFilters);
   };
 
   /**
@@ -223,7 +221,7 @@ export default function CandidateApplicationsPage() {
         </Typography>
       );
     }
-    
+
     // Sort semester codes in descending order (e.g., 2241, 2235, 2231).
     const semesterCodes = Object.keys(displayData).sort((a, b) => b.localeCompare(a));
 
@@ -243,11 +241,17 @@ export default function CandidateApplicationsPage() {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {semesterCodes.map((semester) => (
-          <Accordion key={semester} defaultExpanded>
+          <Accordion key={semester} defaultExpanded sx={(theme) => ({
+            background: theme.palette.mode === 'dark'
+              ? "" : "#e0e0e0"
+          })}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h5">{`Semester ${semester}`}</Typography>
             </AccordionSummary>
-            <AccordionDetails sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.default' }}>
+            <AccordionDetails sx={(theme) => ({
+              p: { xs: 1, md: 2 }, background: theme.palette.mode === 'dark'
+                ? "" : "--color-rit-gray"
+            })}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {displayData[semester].map((app) => (
                   <ApplicationCard
@@ -257,7 +261,7 @@ export default function CandidateApplicationsPage() {
                     onStatusChange={handleStatusChange}
                     refreshUserProfile={refreshUserProfile}
                     cardId={`app-${app.id}`}
-                    isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
+                    isHighlighted={String(searchParams.get('applicationId') || '') === String(app.id)}
                   />
                 ))}
               </Box>
@@ -274,82 +278,82 @@ export default function CandidateApplicationsPage() {
   // Main component render method.
   return (
     <FeatureGate feature={FEATURES.APPLICATIONS}>
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h1" component="h1" gutterBottom>
-          {pageTitle}
-        </Typography>
-        <Typography variant="h3" color="text.secondary">
-          {pageSubtitle}
-        </Typography>
-      </Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography variant="h1" component="h1" gutterBottom>
+            {pageTitle}
+          </Typography>
+          <Typography variant="h3" color="text.secondary">
+            {pageSubtitle}
+          </Typography>
+        </Box>
 
-      {/* Conditionally render content based on user role. */}
-      {currentUser && currentUser.role === 'CANDIDATE' ? (
-        <>
-          {/* Search and Filter Bar */}
-          <Paper
-            component="form"
-            onSubmit={handleSearch}
-            elevation={2}
-            sx={{
-              p: 2,
-              mb: 4,
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              alignItems: 'center',
-              gap: 2,
-              position: 'sticky',
-              top: 0,
-              zIndex: 10,
-              backgroundColor: 'background.paper',
-            }}
-          >
-            <SearchBar
-              value={searchTerm}
-              onChange={handleSearchTermChange}
-              placeholder="Search by Course Name or Code..."
-              sx={{ width: '100%' }}
-            />
-            {/* Show a placeholder skeleton while the filter config is loading. */}
-            {filterConfig.length > 0 ? (
-              <Filter
-                ref={filterRef}
-                onFilterChange={handleFilterChange}
-                filterConfig={filterConfig}
-              />
-            ) : (
-              <Box sx={{ width: 120, height: 40, bgcolor: 'action.disabledBackground', borderRadius: 1 }} />
-            )}
-            <Button
-              type='submit'
-              variant='contained'
-              color='primary'
-              sx={{ height: 40, width: { xs: '100%', md: 'auto' } }}
+        {/* Conditionally render content based on user role. */}
+        {currentUser && currentUser.role === 'CANDIDATE' ? (
+          <>
+            {/* Search and Filter Bar */}
+            <Paper
+              component="form"
+              onSubmit={handleSearch}
+              elevation={2}
+              sx={{
+                p: 2,
+                mb: 4,
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: 'center',
+                gap: 2,
+                position: 'sticky',
+                top: 0,
+                zIndex: 10,
+                backgroundColor: 'background.paper',
+              }}
             >
-              Search
-            </Button>
-          </Paper>
+              <SearchBar
+                value={searchTerm}
+                onChange={handleSearchTermChange}
+                placeholder="Search by Course Name or Code..."
+                sx={{ width: '100%' }}
+              />
+              {/* Show a placeholder skeleton while the filter config is loading. */}
+              {filterConfig.length > 0 ? (
+                <Filter
+                  ref={filterRef}
+                  onFilterChange={handleFilterChange}
+                  filterConfig={filterConfig}
+                />
+              ) : (
+                <Box sx={{ width: 120, height: 40, bgcolor: 'action.disabledBackground', borderRadius: 1 }} />
+              )}
+              <Button
+                type='submit'
+                variant='contained'
+                color='primary'
+                sx={{ height: 40, width: { xs: '100%', md: 'auto' } }}
+              >
+                Search
+              </Button>
+            </Paper>
 
-          {/* Main Content Area */}
-          <Box>
-            {!loading && !error && (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                <strong>
-                  {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
-                </strong>
-              </Typography>
-            )}
-            {renderContent()}
-          </Box>
-        </>
-      ) : (
-        // Render a fallback message if the user is not a candidate or not logged in.
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography>Please make sure you are logged in as a CANDIDATE to view this page.</Typography>
-        </Paper>
-      )}
-    </Container>
+            {/* Main Content Area */}
+            <Box>
+              {!loading && !error && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  <strong>
+                    {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
+                  </strong>
+                </Typography>
+              )}
+              {renderContent()}
+            </Box>
+          </>
+        ) : (
+          // Render a fallback message if the user is not a candidate or not logged in.
+          <Paper sx={{ p: 4, textAlign: 'center' }}>
+            <Typography>Please make sure you are logged in as a CANDIDATE to view this page.</Typography>
+          </Paper>
+        )}
+      </Container>
     </FeatureGate>
   );
 }
