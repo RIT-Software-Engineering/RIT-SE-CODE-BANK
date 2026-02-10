@@ -3,7 +3,7 @@
 ## Developer Environment Setup
 
 ### 1. Install Node 20.20.0
-- This can be done through the normal Node installer, but I reccomend NVM (Node Version Manager)
+- This can be done through the normal Node installer, but I recomend NVM (Node Version Manager)
 - Confirm your version by running `node -v` in any directory.
 
 > Common issues:
@@ -20,7 +20,7 @@
 
 ### 3. Install MariaDB
 
-Two options: native or containerized. If you have Docker Desktop already setup or are familiar with containers, I reccommend containerized.
+Two options: native or containerized. If you have Docker Desktop already setup or are familiar with containers, I recommend containerized.
     
 - **Containerized**: Download [this image](https://www.docker.com/products/docker-desktop/) and run it
 - **Native**: Download and run [the installer](https://mariadb.org/download/?t=mariadb&p=mariadb&r=12.1.2&os=windows&cpu=x86_64&pkg=msi&mirror=acorn)
@@ -37,7 +37,7 @@ Two options: native or containerized. If you have Docker Desktop already setup o
 
 
 ### 5. Prisma Setup
-This whole step is optional, since the custom startup script can do this. Using the startup script is reccommended, but these instructions remain in case of errors or preference. If you do this step, you will need your MariaDB server/container running.
+This whole step is optional, since the custom startup script can do this. Using the startup script is recommended, but these instructions remain in case of errors or preference. If you do this step, you will need your MariaDB server/container running.
 
 We will both create a Prisma object for the code to use, and will also push that schema to the database. This means you will need your database running.
 
