@@ -27,8 +27,6 @@ Two options: native or containerized. If you have Docker Desktop already setup o
 
 > The latest version of MariaDB should work. If not, downgrade until a working version is found and then update these instructions. For reference, my version at the time of writing was 11.8.2
 
-> **IF THE ABOVE DOESN'T WORK**: You can also run the `docker-compose up -d` in `apps/cmt/cmt-project`, which will automatically install and run the database. This is not preferred because the `docker-compose.yml` is meant for production, but it will run your MariaDB instance regardless.
-
 ### 4. Setup Environment Variables
 #### CMT
 1. Navigate to `apps/cmt/cmt-project`
