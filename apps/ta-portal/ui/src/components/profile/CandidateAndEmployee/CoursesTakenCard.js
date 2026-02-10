@@ -41,22 +41,41 @@ export default function CoursesTakenCard({ coursesTaken, onEdit }) {
         <List disablePadding>
           {gradedCourses.map((course, index) => (
             <React.Fragment key={`${course.courseCode}-${index}`}>
+
               <ListItem sx={{ px: 0, py: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <ListItemText
-                  primary={`${course.courseCode} - ${course.name || "No course name available"}`}
-                  secondary={course.description || "No description provided"}
-                  primaryTypographyProps={{ fontWeight: 'medium' }}
-                  sx={{ pr: 2 }}
-                />
-                {(course.grade && gradeEnumToStringValue[course.grade]) && (
-                  <Chip
-                    label={`Grade: ${gradeEnumToStringValue[course.grade]}`}
-                    color="primary"
-                    size="small"
+                <Paper
+                  key={course.courseCode}
+                  elevation={2}
+                  sx={(theme) => ({
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: "8px",
+                    transition: "box-shadow 0.2s ease, transform 0.1s ease",
+                    "&:hover": {
+                      boxShadow: 4,
+                      transform: "translateY(-1px)",
+                    }, background: theme.palette.mode === 'dark'
+                      ? ""
+                      : "white"
+                  })}
+                >
+                  <ListItemText
+                    primary={`${course.courseCode} - ${course.name || "No course name available"}`}
+                    secondary={course.description || "No description provided"}
+                    primaryTypographyProps={{ fontWeight: 'medium' }}
+                    sx={{ pr: 2 }}
                   />
-                )}
+                  {(course.grade && gradeEnumToStringValue[course.grade]) && (
+                    <Chip
+                      label={`Grade: ${gradeEnumToStringValue[course.grade]}`}
+                      color="primary"
+                      size="small"
+                    />
+                  )}
+                </Paper>
               </ListItem>
-              {index < gradedCourses.length - 1 && <Divider />}
+              {index < gradedCourses.length - 1}
             </React.Fragment>
           ))}
         </List>

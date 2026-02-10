@@ -60,7 +60,7 @@ export default function HireModal({ application, onClose, onConfirm, isProcessin
 
   return (
     <Dialog open={true} onClose={onClose} fullWidth maxWidth="sm">
-      
+
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h2" component="div">
           Hire Candidate
@@ -106,6 +106,15 @@ export default function HireModal({ application, onClose, onConfirm, isProcessin
             helperText={errors.employeeId}
             disabled={isProcessing}
             required
+            sx={(theme) => ({
+              "& .MuiOutlinedInput-root": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? ""
+                    : "white",
+              },
+            })}
+
           />
           <TextField
             fullWidth
@@ -122,6 +131,15 @@ export default function HireModal({ application, onClose, onConfirm, isProcessin
             helperText={errors.comment}
             disabled={isProcessing}
             required
+            sx={(theme) => ({
+              "& .MuiOutlinedInput-root": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? ""
+                    : "white",
+              },
+            })}
+
           />
         </Box>
       </DialogContent>
