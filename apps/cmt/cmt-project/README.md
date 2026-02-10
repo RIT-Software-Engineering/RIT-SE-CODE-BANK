@@ -1,70 +1,95 @@
-# Getting Started with Create React App
+# Course Management Tool (CMT)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Developer Environment Setup
 
-## Available Scripts
+### 1. Install Node 20.20.0
+- This can be done through the normal Node installer, but I reccomend NVM (Node Version Manager)
+- Confirm your version by running `node -v` in any directory.
 
-In the project directory, you can run:
+> Common issues:
+> - If installation was successful but your OS doesn't recognize the command, try to create a new terminal and try again. If the issue persists, manually check your OS environment variables. In Windows, the variable is likely `NODE_HOME`. Ensure it points to the installed version of Node.
 
-### `npm start`
+### 2. Install Project Dependencies
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **CMT Frontend**: In `apps/cmt/cmt-project`, run `npm install`
+- **CMT Backend**: In `apps/cmt/cmt-project/src/backend`, run `npm install`
+- **Workflow API**: In `apps/workflow/server`, run `npm install`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+> Common Issues:
+> - While unlikely, you may need to run `npm i --legacy-peer-deps`. If this happens, consider attempting to downgrade conflicting packages.
 
-### `npm test`
+### 3. Install MariaDB
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Two options: native or containerized. If you have Docker Desktop already setup or are familiar with containers, I reccommend containerized.
+    
+- **Containerized**: Download [this image](https://www.docker.com/products/docker-desktop/) and run it
+- **Native**: Download and run [the installer](https://mariadb.org/download/?t=mariadb&p=mariadb&r=12.1.2&os=windows&cpu=x86_64&pkg=msi&mirror=acorn)
 
-### `npm run build`
+> The latest version of MariaDB should work. If not, downgrade until a working version is found and then update these instructions. For reference, my version at the time of writing was 11.8.2
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 4. Setup Environment Variables
+#### CMT
+1. Navigate to `apps/cmt/cmt-project`
+2. Copy `.env.sample` and rename it `.env`
+3. Fill out values, especially your connection string
+#### Workflows
+1. Navigate to `apps/workflows/server` and repeat steps 2 & 3 above
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 5. Prisma Setup
+This whole step is optional, since the custom startup script can do this. Using the startup script is reccommended, but these instructions remain in case of errors or preference. If you do this step, you will need your MariaDB server/container running.
 
-### `npm run eject`
+We will both create a Prisma object for the code to use, and will also push that schema to the database. This means you will need your database running.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1. Start MariaDB server/container
+2. **CMT**: Navigate to `apps/cmt/cmt-project` and run `npx prisma db push`
+3. **Workflows**: Navigate to `apps/workflows/server` and run `npx prisma db push`
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+#### Congratulations! Your environment should be set up.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+---
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Running The Developer Environment
+You can either use the startup script, or run the servers manually. Either way, you will need to start the databse, if you haven't already.
 
-## Learn More
+1. Start MariaDB server/container
+> Common issues:
+> - If you are having port problems, make sure that your MariaDB instance and your connection strings have port 3306, the default mariaDB port. 
+> - If mariaDB won't start due to the port being in use, it may be due to a MySQL server running. Either way, find the process ID according to your OS and kill the process.
+> - If the server 
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+#### 2. (Option 1): Startup Script
+- Navigate to apps/cmt/cmt-project
+- Run `node start_app.js`
+- Wait a while
+    - On Windows, this should create a bunch of output on the terminal you ran it in, as well as open up 3 terminal windows. These represent your Workflows backend & CMT frontend and backend
+    - On Linux, it aggregates all of those servers' output to the terminal you ran it in. This makes it hard to distinguish outputs. For this reason, you may consider running them manually.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+#### 2. (Option 2): Manual
 
-### Code Splitting
+> **Disclaimer**: If running servers manually, you need to create a new .env file in the apps/cmt/cmt-project/src/backend directory. You may simply copy-paste the CMT frontend's .env file there.
+>
+> Also, make sure you open a new terminal window for each of the below.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- **CMT Frontend**: In `apps/cmt/cmt-project`, run `npm run start`
+- **CMT Backend**: In `apps/cmt/cmt-project/src/backend`, run `npm run dev`
+- **Workflows**: In `apps/workflow/server`, run `npm run start`
 
-### Analyzing the Bundle Size
+---
+## Linting
+Linting can catch silly mistakes! You can either use extensions that exist in your IDE, or use the tools already in the project.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+The two sources of linting in this project are Typescript and ESLint. Even though this is a Javascript project, Typescript can catch some type errors that could otherwise cause runtime errors. This project's tsconfig is set to make Typescript very lenient. ESLint is standard for Javascript/Typescript, and uses the eslint config specified by create-react-app.
 
-### Making a Progressive Web App
+**IDE Extensions**: Typescript is installed by default on VSCode, and an ESLint extension is easily available.
+> **Disclaimer**: ESLint will often have issues, given that this is a monorepo. To fix this, add the following to your settings.json:
+> ```
+> "eslint.workingDirectories": [
+>         { "directory": "apps/cmt/cmt-project", "changeProcessCWD": true }
+>     ]
+> ```
+> You can get to the settings.json by pressing `ctrl` + `,`, then searching "eslint working directory"
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Command Line Linting**: You can also lint CMT through the following commands:
+- **Typescript (tsc)**: In `apps/cmt/cmt-project`, run `tsc`
+- **ESLint**: In `apps/cmt/cmt-project/`, run `npm run lint .`
