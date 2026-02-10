@@ -1,9 +1,12 @@
 import { Modal, Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
 import axios from "axios";
+import DataPreviewModal from "./DataPreviewPage";
 
 export default function AddFileModal({ isOpen, closeModal }) {
     const [selectedFile, setSelectedFile] = useState(null);
+    const [parsedData, setParsedData] = useState(null);
+    const [showPreview, setShowPreview] = useState(false);
 
     const handleFileChange = (e) => {
         setSelectedFile(e.target.files[0]);
@@ -21,8 +24,8 @@ export default function AddFileModal({ isOpen, closeModal }) {
             });
             console.log("Upload successful:", response.data);
             console.log("Parsed data:", response.data.data);
-            alert("File uploaded and parsed successful, check console for data.");
-            closeModal();
+            setParsedData(response.data.data);
+            setShowPreview(true);
         } catch (error) {
             console.error("Upload failed:", error);
             console.error("Error details:", error.response?.data);
@@ -30,8 +33,16 @@ export default function AddFileModal({ isOpen, closeModal }) {
         }
     };
 
+    const handlePreviewClose = () => {
+        setShowPreview(false);
+        setParsedData(null);
+        setSelectedFile(null);
+        closeModal();
+    };
+
     return (
-        <Modal open={isOpen} onClose={closeModal}>
+        <>
+        <Modal open={isOpen && !showPreview} onClose={closeModal}>
             <Box sx={{
                 position: 'absolute',
                 top: '50%',
@@ -61,5 +72,7 @@ export default function AddFileModal({ isOpen, closeModal }) {
                 </Box>
             </Box>
         </Modal>
+        <DataPreviewModal isOpen={showPreview} closeModal={handlePreviewClose} parsedData={parsedData} />
+        </>
     );
 }
