@@ -28,6 +28,7 @@ import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
 import EditableCommentForm from "@/components/comments/EditableCommentForm";
+import ConfirmationModal from "@/components/common/models/ConfirmationModal";
 
 import {
   Box,
@@ -69,6 +70,7 @@ export default function AdminPositions() {
   const [filterConfig, setFilterConfig] = useState([]);
 
   // State for managing modals (edit/create position and comment confirmation).
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -77,7 +79,7 @@ export default function AdminPositions() {
     title: '',
     context: {},
   });
-  
+
   // Initialize the active tab based on URL search parameters for linkability.
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
@@ -164,8 +166,8 @@ export default function AdminPositions() {
     } finally {
       setIsLoading(false);
     }
-  // Disabling exhaustive-deps because `tabs` is a stable, locally defined array.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Disabling exhaustive-deps because `tabs` is a stable, locally defined array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
   // Effect to trigger the initial data fetch when the component mounts or the active tab changes.
@@ -214,7 +216,7 @@ export default function AdminPositions() {
       fetchData(activeTab, "", latestFilters);
     }
   };
-  
+
   /**
    * Handles updates from the Filter component, triggering a data refresh.
    * @param {object} newFilters - The new set of applied filters.
@@ -237,7 +239,7 @@ export default function AdminPositions() {
     setAppliedFilters(initialFilters);
     setActiveTab(newTabIndex);
   };
-  
+
   /**
    * Opens the EditPositionModal for creating a new position or editing an existing one.
    * @param {object | null} job - The job object to edit, or null to create a new one.
@@ -248,13 +250,27 @@ export default function AdminPositions() {
   };
 
   /**
-   * Closes the EditPositionModal and resets the selected job state.
+   * Popup for clear confirmation of modal close
    */
   const handleCloseModal = () => {
+    setShowClearConfirm(true);
+  };
+  /**
+   * closes modal immediately 
+   */
+  const closeModalImmediately = () => {
     setIsModalOpen(false);
     setSelectedJob(null);
   };
-  
+  /**
+ * Closes the EditPositionModal and resets the selected job state.
+ */
+  const handleClearConfirm = () => {
+    setIsModalOpen(false);
+    setSelectedJob(null);
+    setShowClearConfirm(false);
+  };
+
   /**
    * Closes the comment confirmation modal.
    */
@@ -270,7 +286,7 @@ export default function AdminPositions() {
    */
   const handleSaveJob = async (positionData) => {
     if (!currentUser) return;
-  
+
     // If no job is selected, this is a CREATE action.
     if (!selectedJob) {
       setIsProcessing(true);
@@ -284,8 +300,8 @@ export default function AdminPositions() {
         const finalPositionData = { ...positionData, jobPositionStatus: 'OPEN' };
         await createPosition(finalPositionData, employerData);
         showNotification('Position created successfully!', 'success');
-        handleCloseModal();
-        
+        closeModalImmediately();
+
         // Refresh the data grid after creation.
         setSearchTerm("");
         const initialFilters = createInitialState(filterConfig);
@@ -299,13 +315,13 @@ export default function AdminPositions() {
         setIsProcessing(false);
       }
     } else { // Otherwise, it's an UPDATE action, which requires a comment.
-      handleCloseModal();
+      closeModalImmediately();
       setCommentModalState({
         isOpen: true,
         title: 'Confirm Position Update',
-        context: { 
+        context: {
           action: 'update',
-          positionData: positionData, 
+          positionData: positionData,
           jobId: selectedJob.id,
         },
       });
@@ -321,10 +337,10 @@ export default function AdminPositions() {
     setCommentModalState({
       isOpen: true,
       title: newStatus === 'OPEN' ? 'Approve Position' : 'Reject Position',
-      context: { 
+      context: {
         action: 'statusUpdate',
-        jobId, 
-        newStatus 
+        jobId,
+        newStatus
       },
     });
   };
@@ -352,7 +368,7 @@ export default function AdminPositions() {
         await updatePosition(context.jobId, context.positionData, commentData);
         showNotification('Position updated successfully!', 'success');
       }
-      
+
       // Refresh the data grid after the action is complete.
       setSearchTerm("");
       const initialFilters = createInitialState(filterConfig);
@@ -367,7 +383,7 @@ export default function AdminPositions() {
       handleCloseCommentModal();
     }
   };
-    
+
   // Configuration for the tabs, linking them to their respective data states.
   const tabs = [
     { id: "open-positions", label: "All Open Positions", data: openPositions },
@@ -411,9 +427,9 @@ export default function AdminPositions() {
 
     // Render the list of position cards.
     return positions.map((position) => (
-      <PositionsCard 
+      <PositionsCard
         key={position.id}
-        position={position} 
+        position={position}
         onEdit={handleOpenModal}
         onApprove={(jobId) => handleStatusUpdate(jobId, 'OPEN')}
         onReject={(jobId) => handleStatusUpdate(jobId, 'REJECTED')}
@@ -479,20 +495,22 @@ export default function AdminPositions() {
                 </Button>
               )}
             </Box>
-            
+
             {/* Search and Filter Bar */}
             <Box component="form" onSubmit={handleSearch} sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
               <SearchBar
                 value={searchTerm}
                 onChange={handleSearchTermChange}
                 placeholder="Search via course code or name:"
+
                 sx={{ flexGrow: 1 }}
+
               />
-              <Filter 
+              <Filter
                 key={activeTab} // Use key to force re-render when tab changes, ensuring correct filters are shown.
-                ref={filterRef} 
-                onFilterChange={handleFilterChange} 
-                filterConfig={visibleFilters} 
+                ref={filterRef}
+                onFilterChange={handleFilterChange}
+                filterConfig={visibleFilters}
               />
               <Button
                 type="submit"
@@ -503,7 +521,7 @@ export default function AdminPositions() {
                 Search
               </Button>
             </Box>
-            
+
             {/* Result Count */}
             {!isLoading && !error && (
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -533,7 +551,13 @@ export default function AdminPositions() {
           onSave={handleSaveJob}
         />
       )}
-      
+      {showClearConfirm && (
+        <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Cancel Position Creation">
+          Are you sure you want to cancel this job application? This action cannot be undone.
+        </ConfirmationModal>
+      )}
+
+
       <EditableCommentForm
         isOpen={commentModalState.isOpen}
         onClose={handleCloseCommentModal}

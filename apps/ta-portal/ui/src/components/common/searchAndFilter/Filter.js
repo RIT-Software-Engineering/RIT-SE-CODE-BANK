@@ -107,9 +107,11 @@ export const Filter = forwardRef(function FilterComponent({ onFilterChange, filt
       <Button
         aria-describedby={id}
         variant="outlined"
+        color="primary"
         onClick={handleClick}
         startIcon={<FilterIcon />}
-        sx={{ height: 40 }}
+        sx={(theme)=>({ height: 40, background: theme.palette.mode === 'dark'
+                    ? "" : "white" })}
       >
         Filter
       </Button>
@@ -160,7 +162,7 @@ export const Filter = forwardRef(function FilterComponent({ onFilterChange, filt
                     value={selectedFilters[filter.id] || ''}
                     label={filter.label}
                     onChange={(e) => handleFilterChange(filter.id, e.target.value, "select")}
-                  >
+                  > 
                     <MenuItem value="">
                       <em>{filter.placeholder || `Any ${filter.label}`}</em>
                     </MenuItem>
@@ -196,6 +198,7 @@ export const Filter = forwardRef(function FilterComponent({ onFilterChange, filt
               component="button"
               variant="body2"
               onClick={handleClearFilters}
+              
             >
               Clear All
             </MuiLink>

@@ -41,7 +41,21 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, title, c
         </div>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} disabled={isConfirming}>
+        <Button onClick={onClose} variant="outlined" disabled={isConfirming}
+          sx={(theme) => ({
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? ""
+                : "white",
+
+            "&:hover": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "#f5f5f5"
+            }
+          })}
+        >
           Cancel
         </Button>
         <Button

@@ -24,7 +24,10 @@ export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = 
     const totalCount = Object.values(users).reduce((sum, arr) => sum + arr.length, 0);
 
     return (
-        <Accordion>
+        <Accordion sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "#e0e0e0" })}
+>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6" fontWeight={600}>
                 {title} ({totalCount})
@@ -62,7 +65,10 @@ export default function UserGroup({ title, users, onEditUser, isEmployeeGroup = 
 
     // Non-employee groups
     return (
-        <Accordion>
+        <Accordion sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "#e0e0e0" })}
+>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6" fontWeight={600}>
             {title} ({users.length})

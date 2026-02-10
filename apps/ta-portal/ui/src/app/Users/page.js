@@ -239,13 +239,16 @@ export default function AdminUsersPage() {
         </Typography>
       </Box>
 
-      <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
-        <SearchBar
+      <Paper elevation={2} sx={{ p: 2,gap: 2 }}>
+        <Box sx={{pb:3}}>
+          <SearchBar
           value={searchTerm}
           onChange={setSearchTerm}
           placeholder='Search by name, email, or UID...'
           sx={{ mb: 3 }}
         />
+        </Box>
+        
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {renderContent()}
         </Box>
@@ -262,13 +265,17 @@ export default function AdminUsersPage() {
             justifyContent: 'center'
         }}
       >
-        <Paper sx={{
+        <Paper
+          sx={(theme)=>({ 
             p: {xs: 2, md: 4},
             width: '90%',
             maxWidth: '800px',
             maxHeight: '90vh',
-            overflowY: 'auto'
-        }}>
+            overflowY: 'auto',
+            background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "#e0e0e0" })}
+        >
             <AdminEditUserForm
                 user={selectedUser}
                 onClose={handleCloseModal}

@@ -31,7 +31,14 @@ export default function EditCandidateEmployeeData({ register, errors, watchedSta
                 maxLength={9}
                 required={true}
                 error={errors.uid}
-            />
+                sx={(theme) => ({
+                    "& .MuiOutlinedInput-root": {
+                        backgroundColor:
+                            theme.palette.mode === "dark"
+                                ? ""
+                                : "white",
+                    }
+                })} />
             <InputField
                 id="fname"
                 label="First Name"
@@ -39,6 +46,14 @@ export default function EditCandidateEmployeeData({ register, errors, watchedSta
                 registerProps={register("fname", { required: "First name is required." })}
                 required={true}
                 error={errors.fname}
+                sx={(theme) => ({
+                    "& .MuiOutlinedInput-root": {
+                        backgroundColor:
+                            theme.palette.mode === "dark"
+                                ? ""
+                                : "white",
+                    }
+                })}
             />
             <InputField
                 id="lname"
@@ -47,6 +62,14 @@ export default function EditCandidateEmployeeData({ register, errors, watchedSta
                 registerProps={register("lname", { required: "Last name is required." })}
                 required={true}
                 error={errors.lname}
+                sx={(theme) => ({
+                    "& .MuiOutlinedInput-root": {
+                        backgroundColor:
+                            theme.palette.mode === "dark"
+                                ? ""
+                                : "white",
+                    }
+                })}
             />
             <InputField
                 id="email"
@@ -55,6 +78,14 @@ export default function EditCandidateEmployeeData({ register, errors, watchedSta
                 registerProps={register("email", { required: "An email address is required." })}
                 required={true}
                 error={errors.email}
+                sx={(theme) => ({
+                    "& .MuiOutlinedInput-root": {
+                        backgroundColor:
+                            theme.palette.mode === "dark"
+                                ? ""
+                                : "white",
+                    }
+                })}
             />
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
                 <InputField
@@ -64,6 +95,15 @@ export default function EditCandidateEmployeeData({ register, errors, watchedSta
                     registerProps={register("pronouns", { required: "Pronouns are required." })}
                     required={true}
                     error={errors.pronouns}
+                    sx={(theme) => ({
+                        "& .MuiOutlinedInput-root": {
+                            backgroundColor:
+                                theme.palette.mode === "dark"
+                                    ? ""
+                                    : "white",
+                        }
+                    })}
+
                 />
                 <InputField
                     id="major"
@@ -72,6 +112,14 @@ export default function EditCandidateEmployeeData({ register, errors, watchedSta
                     registerProps={register("major", { required: "Major is required." })}
                     required={true}
                     error={errors.major}
+                    sx={(theme) => ({
+                        "& .MuiOutlinedInput-root": {
+                            backgroundColor:
+                                theme.palette.mode === "dark"
+                                    ? ""
+                                    : "white",
+                        }
+                    })}
                 />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
@@ -82,8 +130,17 @@ export default function EditCandidateEmployeeData({ register, errors, watchedSta
                     registerProps={register("graduateStatus", { required: "Academic status is required." })}
                     value={currentValues.graduateStatus || ''}
                     error={errors.graduateStatus}
+                    sx={(theme) => ({ background: theme.palette.mode === 'dark' ? "" : "white" })}
+                    MenuProps={{
+                        PaperProps: {
+                            sx: (theme) => ({
+                                background: theme.palette.mode === 'dark' ? "" : "white"
+                            }),
+                        },
+                    }}
+
                 >
-                    <MenuItem value=""><em>Select Status...</em></MenuItem>
+                    <MenuItem value="" ><em>Select Status...</em></MenuItem>
                     <MenuItem value="UNDERGRADUATE">Undergraduate</MenuItem>
                     <MenuItem value="GRADUATE">Graduate</MenuItem>
                 </SelectField>
@@ -96,6 +153,14 @@ export default function EditCandidateEmployeeData({ register, errors, watchedSta
                         registerProps={register("yearLevel", { required: "Year level is required for undergraduates." })}
                         value={currentValues.yearLevel || ''}
                         error={errors.yearLevel}
+                        sx={(theme) => ({ background: theme.palette.mode === 'dark' ? "" : "white" })}
+                        MenuProps={{
+                        PaperProps: {
+                            sx: (theme) => ({
+                                background: theme.palette.mode === 'dark' ? "" : "white"
+                            }),
+                        },
+                    }}
                     >
                         <MenuItem value=""><em>Select Year...</em></MenuItem>
                         <MenuItem value="2">Second Year</MenuItem>

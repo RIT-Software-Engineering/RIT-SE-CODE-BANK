@@ -115,9 +115,18 @@ export default function MultiStepForm({
       <Divider sx={{ my: 2 }} />
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 2 }}>
-        <Button
+
+
+        <Button  variant="outlined" 
           onClick={ (currentStep > 1 && !isEditMode) || currentStep === 3 ? handleBack : onClose }
           disabled={isSubmitting}
+          sx={(theme) => ({
+            backgroundColor:
+              theme.palette.mode === "dark"
+                ? ""
+                : "white",
+
+          })}
         >
           { (currentStep > 1 && !isEditMode) || currentStep === 3 ? "Back" : "Cancel" }
         </Button>

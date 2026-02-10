@@ -60,6 +60,7 @@ export default function HireModal({ application, onClose, onConfirm, isProcessin
 
   return (
     <Dialog open={true} onClose={onClose} fullWidth maxWidth="sm">
+      
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h2" component="div">
           Hire Candidate

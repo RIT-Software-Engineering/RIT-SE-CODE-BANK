@@ -211,9 +211,10 @@ export default function PositionsCard({
 
   return (
     <>
-      <Paper elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
-          <Box flexGrow={1}>
+      <Paper elevation={3} sx={(theme)=>({  p: { xs: 2, md: 3 } , background: theme.palette.mode === 'dark'
+                    ? "" : "white" })}> 
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }} >
+          <Box flexGrow={1} >
             <Typography variant="h2" component="h2" gutterBottom>
               {position.course.name}
             </Typography>

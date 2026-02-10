@@ -41,7 +41,7 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
         reset,
         watch,
     } = useForm({
-            defaultValues: {
+        defaultValues: {
             uid: user.uid || '',
             fname: user.fname || '',
             lname: user.lname || '',
@@ -74,14 +74,14 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
         setIsPromoting(true);
         try {
             const updatedEmployer = {
-            uid: user.uid,
-            fname: user.fname,
-            lname: user.lname,
-            username: user.username,
-            email: user.email,
-            pronouns: user.pronouns,
-            department: user?.employer?.department || 'Unknown',
-            role: 'ADMIN',
+                uid: user.uid,
+                fname: user.fname,
+                lname: user.lname,
+                username: user.username,
+                email: user.email,
+                pronouns: user.pronouns,
+                department: user?.employer?.department || 'Unknown',
+                role: 'ADMIN',
             };
 
             await updateEmployerProfile(updatedEmployer);
@@ -167,37 +167,52 @@ export default function AdminEditUserForm({ user, onClose, onUpdateSuccess }) {
                         />
                     ) : (
                         <>
-                        <EditEmployerAdminData user={user} register={register} errors={errors} />
+                            <EditEmployerAdminData user={user} register={register} errors={errors} />
 
-                        {user.role === 'EMPLOYER' && (
-                            <Button
-                                variant="contained"
-                                color="warning"
-                                onClick={() => setShowConfirm(true)}
-                                sx={{ mt: 2 }}
-                            >
-                            Promote to Admin
-                            </Button>
-                        )}
+                            {user.role === 'EMPLOYER' && (
+                                <Button
+                                    variant="contained"
+                                    color="warning"
+                                    onClick={() => setShowConfirm(true)}
+                                    sx={{ mt: 2 }}
+                                >
+                                    Promote to Admin
+                                </Button>
+                            )}
                         </>
                     )}
 
                     {userRole === 'EMPLOYEE' &&
                         user?.candidate?.employee?.[0]?.employeeStatus !== 'TERMINATED' && (
-                        <Button
-                            variant="contained"
-                            color="error"
-                            onClick={() => setShowTerminateConfirm(true)}
-                            sx={{ mt: 2 }}
-                        >
-                            Terminate Employee
-                        </Button>
+                            <Button
+                                variant="contained"
+                                color="error"
+                                onClick={() => setShowTerminateConfirm(true)}
+                                sx={{ mt: 2 }}
+                            >
+                                Terminate Employee
+                            </Button>
                         )}
 
                     <Box sx={{ pt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                         <Button
                             variant="outlined"
                             onClick={onClose}
+                            sx={(theme) => ({
+                                backgroundColor:
+                                    theme.palette.mode === "dark"
+                                        ? ""
+                                        : "white",
+
+                                "&:hover": {
+                                    backgroundColor:
+                                        theme.palette.mode === "dark"
+                                            ? ""
+                                            : "#f5f5f5"
+                                }
+                            })}
+
+
                         >
                             Cancel
                         </Button>

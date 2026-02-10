@@ -109,7 +109,9 @@ export default function ViewableApplicationForm({position, application, onClose 
         </Box>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose}>Close</Button>
+        <Button onClick={onClose} variant="outlined" sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "white" })}>Close</Button>
       </DialogActions>
     </Dialog>
   );

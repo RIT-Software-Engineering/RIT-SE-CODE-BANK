@@ -90,8 +90,8 @@ export default function ViewableCommentForm({
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {comments.map((comment) => (
-          <Paper key={comment.id} variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+          <Paper key={comment.id} variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background:'background.default', mb: 1 }}>
               <Box>
                 <Typography variant="h3" component="p" sx={{ fontWeight: 'bold' }}>
                   {statusEnumMap[comment.status] || comment.status}

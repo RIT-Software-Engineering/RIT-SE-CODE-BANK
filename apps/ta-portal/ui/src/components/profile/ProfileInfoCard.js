@@ -1,7 +1,7 @@
 // components/Profile/ProfileInfoCard.js
 'use client';
 
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import EditButton from '../common/buttons/EditButton';
 import {
   Box,
@@ -54,15 +54,15 @@ export default function ProfileInfoCard({
 
 
   const yearLevel = profileData.candidate?.graduateStatus === "GRADUATE" ? "Graduate" : profileData.candidate?.year;
-  const getOffersToMake=(positions)=>{
-    let offers=0;
+  const getOffersToMake = (positions) => {
+    let offers = 0;
     positions.forEach((position) => {
-      if(position.jobPositionStatus === "OPEN"){
-        offers=offers+position.maxTAs
-        if(position.jobPositionApplicationHistory.length>0){
+      if (position.jobPositionStatus === "OPEN") {
+        offers = offers + position.maxTAs
+        if (position.jobPositionApplicationHistory.length > 0) {
           position.jobPositionApplicationHistory.map((application) => {
-            if(application.jobApplicationStatus ==="HIRED"||application.jobApplicationStatus ==="ACCEPTED_OFFER"||application.jobApplicationStatus ==="PENDING_OFFER"){
-              offers=offers-1;
+            if (application.jobApplicationStatus === "HIRED" || application.jobApplicationStatus === "ACCEPTED_OFFER" || application.jobApplicationStatus === "PENDING_OFFER") {
+              offers = offers - 1;
             }
           });
         }
@@ -70,13 +70,13 @@ export default function ProfileInfoCard({
     });
     return offers;
   };
-  const getMadeOffers=(positions)=>{
-    let offers=0;
+  const getMadeOffers = (positions) => {
+    let offers = 0;
     positions.forEach((position) => {
-      if(position.jobPositionApplicationHistory.length>0){
+      if (position.jobPositionApplicationHistory.length > 0) {
         position.jobPositionApplicationHistory.map((application) => {
-          if(application.jobApplicationStatus === "HIRED"||application.jobApplicationStatus ==="ACCEPTED_OFFER"||application.jobApplicationStatus ==="PENDING_OFFER"){
-            offers=offers+1;
+          if (application.jobApplicationStatus === "HIRED" || application.jobApplicationStatus === "ACCEPTED_OFFER" || application.jobApplicationStatus === "PENDING_OFFER") {
+            offers = offers + 1;
           }
         });
       }
@@ -84,27 +84,27 @@ export default function ProfileInfoCard({
     return offers;
   };
 
-  const renderOffersToMakeModalContent=(positions)=>{
-    if(getOffersToMake(positions)==0){
-      return(
+  const renderOffersToMakeModalContent = (positions) => {
+    if (getOffersToMake(positions) == 0) {
+      return (
         <Box>
           Congrats you have made all your offers!
         </Box>
       )
     }
     return positions.map((position) => {
-      if(position.jobPositionStatus=="OPEN"){
-        let offers=0;
-        let offers_made=0;
-        offers=offers+position.maxTAs
-        if(position.jobPositionApplicationHistory.length>0){
+      if (position.jobPositionStatus == "OPEN") {
+        let offers = 0;
+        let offers_made = 0;
+        offers = offers + position.maxTAs
+        if (position.jobPositionApplicationHistory.length > 0) {
           position.jobPositionApplicationHistory.forEach((application) => {
-            if(application.jobApplicationStatus=="HIRED"||application.jobApplicationStatus=="ACCEPTED_OFFER"||application.jobApplicationStatus=="PENDING_OFFER"){
-              offers=offers-1;
+            if (application.jobApplicationStatus == "HIRED" || application.jobApplicationStatus == "ACCEPTED_OFFER" || application.jobApplicationStatus == "PENDING_OFFER") {
+              offers = offers - 1;
             }
           });
-          offers_made=position.maxTAs-offers;
-          return(
+          offers_made = position.maxTAs - offers;
+          return (
             <Paper key={position.id} elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
                 <Box flexGrow={1}>
@@ -116,7 +116,7 @@ export default function ProfileInfoCard({
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
                     <Typography variant="body2">
-                      Offers to Make: {offers} 
+                      Offers to Make: {offers}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
@@ -126,12 +126,12 @@ export default function ProfileInfoCard({
                   </Box>
                 </Box>
               </Box>
-            </Paper>  
+            </Paper>
           );
         }
-        else{
-          offers_made=position.maxTAs-offers;
-          return(
+        else {
+          offers_made = position.maxTAs - offers;
+          return (
             <Paper key={position.id} elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
                 <Box flexGrow={1}>
@@ -143,7 +143,7 @@ export default function ProfileInfoCard({
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
                     <Typography variant="body2">
-                      Offers to Make: {offers} 
+                      Offers to Make: {offers}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
@@ -160,7 +160,7 @@ export default function ProfileInfoCard({
     });
   };
 
-  const renderMadeOffersModalContent=(positions)=> {
+  const renderMadeOffersModalContent = (positions) => {
     return positions.flatMap((position) => {
       if (position.jobPositionApplicationHistory.length > 0) {
         return position.jobPositionApplicationHistory
@@ -184,27 +184,32 @@ export default function ProfileInfoCard({
     });
   };
 
-  const handleOffersToMakeModalContent=()=>{
-    setIsMadeOffersModalOpen(false);   
-    if(isToMakeOffersModalOpen){
+  const handleOffersToMakeModalContent = () => {
+    setIsMadeOffersModalOpen(false);
+    if (isToMakeOffersModalOpen) {
       setIsToMakeOffersModalOpen(false);
     }
-    else{
+    else {
       setIsToMakeOffersModalOpen(true);
     }
   };
-  
-  const handleMadeOffersModal=()=>{
+
+  const handleMadeOffersModal = () => {
     setIsToMakeOffersModalOpen(false);
-    if(isMadeOffersModalOpen){
+    if (isMadeOffersModalOpen) {
       setIsMadeOffersModalOpen(false);
     }
-    else{
+    else {
       setIsMadeOffersModalOpen(true);
     }
   };
   return (
-    <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
+    <Paper elevation={2}
+      sx={(theme) => ({
+        p: { xs: 2, md: 3 }, background: theme.palette.mode === 'dark'
+          ? ""
+          : "white"
+      })}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
         <Typography variant="h2" component="h2">
           {profileData.fname} {profileData.lname}
@@ -225,55 +230,75 @@ export default function ProfileInfoCard({
         {isEmployerOrAdmin && (
           <InfoItem label="Department" value={profileData.employer?.department} />
         )}
-        {profileData.role === "EMPLOYER"&&(
+        {profileData.role === "EMPLOYER" && (
           <Box>
             <Typography variant="body2" color="text.secondary">
               Offers Made:
-            </Typography> 
+            </Typography>
             <Button onClick={() => handleMadeOffersModal()}>{getMadeOffers(profileData.employer.jobPositions)} </Button>
             <Modal
               open={isMadeOffersModalOpen}
               onClose={handleMadeOffersModal}
               aria-labelledby="made-offers-modal-title"
               sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
-              <Paper sx={{
-                  p: {xs: 2, md: 4},
-                  width: '90%',
-                  maxWidth: '800px',
-                  maxHeight: '90vh',
-                  overflowY: 'auto'
-              }}>
+              <Paper 
+              sx={(theme)=>({ 
+                p: { xs: 2, md: 4 },
+                width: '90%',
+                maxWidth: '800px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "#e0e0e0" })}
+              >
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {renderMadeOffersModalContent(profileData.employer.jobPositions)}
                 </Box>
-                <Button onClick={() => handleMadeOffersModal()}>close </Button>
+                <Button onClick={() => handleMadeOffersModal()}
+                  sx={(theme) => ({
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? ""
+                        : "white",
+                    "&:hover": {
+                      backgroundColor:
+                        theme.palette.mode === "dark"
+                          ? ""
+                          : "#f5f5f5"
+                    }
+                  })}
+                >
+                  Close
+                </Button>
+
               </Paper>
             </Modal>
             <Typography variant="body2" color="text.secondary">
               Offers To Make:
-            </Typography> 
-            <Button onClick={()=>handleOffersToMakeModalContent()}>{getOffersToMake(profileData.employer.jobPositions)} </Button>
+            </Typography>
+            <Button onClick={() => handleOffersToMakeModalContent()}>{getOffersToMake(profileData.employer.jobPositions)} </Button>
             <Modal
               open={isToMakeOffersModalOpen}
               onClose={handleOffersToMakeModalContent}
               aria-labelledby="made-offers-modal-title"
               sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
             >
               <Paper sx={{
-                  p: {xs: 2, md: 4},
-                  width: '90%',
-                  maxWidth: '800px',
-                  maxHeight: '90vh',
-                  overflowY: 'auto'
+                p: { xs: 2, md: 4 },
+                width: '90%',
+                maxWidth: '800px',
+                maxHeight: '90vh',
+                overflowY: 'auto'
               }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {renderOffersToMakeModalContent(profileData.employer.jobPositions)}
@@ -283,7 +308,7 @@ export default function ProfileInfoCard({
             </Modal>
           </Box>
         )}
-      </Box>  
+      </Box>
     </Paper>
   );
 };

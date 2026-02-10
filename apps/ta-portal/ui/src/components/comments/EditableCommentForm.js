@@ -57,7 +57,7 @@ export default function EditableCommentForm({ isOpen, onClose, onConfirm, title,
       </DialogTitle>
       <DialogContent dividers>
         <DialogContentText sx={{ mb: 2 }}>
-          Please provide a comment for this action:
+          Please provide a comment for this action. Admins, other employers, and the candidate will be able to view this comment.
         </DialogContentText>
         <TextField
           autoFocus
@@ -72,6 +72,14 @@ export default function EditableCommentForm({ isOpen, onClose, onConfirm, title,
           onChange={(e) => setComment(e.target.value)}
           placeholder="Enter comment..."
           disabled={isProcessing}
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
       </DialogContent>
       <DialogActions sx={{ p: 3 }}>

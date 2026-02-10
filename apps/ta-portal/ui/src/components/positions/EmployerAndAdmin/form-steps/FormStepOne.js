@@ -54,7 +54,7 @@ export default function FormStepOne({
           getAllCourses(),
           getAllPositions()
         ]);
-        
+
         setAvailableCourses(courses);
         setAvailablePositions(positions);
       } catch (error) {
@@ -65,19 +65,19 @@ export default function FormStepOne({
     };
 
     if (!isEditMode) {
-        fetchInitialData();
+      fetchInitialData();
     } else {
-        const fetchCourses = async () => {
-            try {
-                const courses = await getAllCourses();
-                setAvailableCourses(courses);
-            } catch (error) {
-                console.error("Failed to fetch courses:", error);
-            } finally {
-                setLoadingCourses(false);
-            }
-        };
-        fetchCourses();
+      const fetchCourses = async () => {
+        try {
+          const courses = await getAllCourses();
+          setAvailableCourses(courses);
+        } catch (error) {
+          console.error("Failed to fetch courses:", error);
+        } finally {
+          setLoadingCourses(false);
+        }
+      };
+      fetchCourses();
     }
   }, [isEditMode]);
 
@@ -108,7 +108,7 @@ export default function FormStepOne({
               isOptionEqualToValue={(option, value) => option === value}
               onChange={(event, newValue) => field.onChange(newValue)}
               onInputChange={(event, newInputValue) => {
-                  field.onChange(newInputValue.toUpperCase());
+                field.onChange(newInputValue.toUpperCase());
               }}
               freeSolo
               autoSelect
@@ -116,6 +116,14 @@ export default function FormStepOne({
               renderInput={(params) => (
                 <TextField
                   {...params}
+                  sx={(theme) => ({
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor:
+                        theme.palette.mode === "dark"
+                          ? ""
+                          : "white",
+                    }
+                  })}
                   label="Course Code"
                   error={!!fieldState.error}
                   helperText={
@@ -157,6 +165,14 @@ export default function FormStepOne({
           {...register("semesterCode", { required: "Semester Code is required." })}
           error={!!errors.semesterCode}
           helperText={errors.semesterCode?.message}
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
 
         <TextField
@@ -181,6 +197,14 @@ export default function FormStepOne({
           })}
           error={!!errors.sectionNumber}
           helperText={errors.sectionNumber?.message}
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
       </Box>
 

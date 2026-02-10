@@ -9,20 +9,20 @@ import DisplayField from '../common/fields/DisplayField';
 import GradeSelector from '../common/fields/GradeSelector';
 
 import {
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-  Typography,
+    Box,
+    Button,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    IconButton,
+    InputLabel,
+    MenuItem,
+    Select,
+    TextField,
+    Typography,
 } from '@mui/material';
 import { Close as CloseIcon, UploadFile as UploadFileIcon } from '@mui/icons-material';
 
@@ -82,7 +82,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
         try {
             const isUploadingNewResume = formData.resumeId === 'new';
             const isUploadingCoverLetter = formData.coverLetterFile && formData.coverLetterFile.length > 0;
-            
+
             if (formData.grade === '') {
                 formData.grade = null;
             }
@@ -108,10 +108,10 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                     data.append('coverLetterFile', formData.coverLetterFile[0]);
                     data.append('coverLetterName', formData.coverLetterName);
                 }
-                
+
                 const { resumeFile, resumeId, resumeName, coverLetterFile, coverLetterName, ...restOfFormData } = formData;
                 data.append('jobPositionApplicationFormData', JSON.stringify(restOfFormData));
-                
+
                 await applyForJobPositionWithNewUploads(data);
 
             } else {
@@ -157,7 +157,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                         <DisplayField label="Prior TA For Other Courses" value={initialValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
                         <DisplayField label="Prior TA History" value={initialValues.priorEmploymentHistory.length > 0 ? initialValues.priorEmploymentHistory.map(item => item.courseCode).join(', ') : 'None'} />
                     </Box>
-                    
+
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <Controller
                             name="grade"
@@ -189,14 +189,17 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                         <FormControl fullWidth>
                             <InputLabel id="resume-select-label">Resume</InputLabel>
                             <Select
+                            sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? "" : "white" })}
                                 labelId="resume-select-label"
                                 id="resumeId"
                                 label="Resume"
                                 {...register("resumeId")}
                                 defaultValue={initialValues.resumeId}
+
                             >
                                 {existingResumes.map(resume => (
-                                    <MenuItem key={resume.id} value={String(resume.id)}>
+                                    <MenuItem key={resume.id} value={String(resume.id)} >
                                         {`${resume.name}${resume.isPrimary ? ' (Primary)' : ''}`}
                                     </MenuItem>
                                 ))}
@@ -213,35 +216,90 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                                     error={!!errors.resumeName}
                                     helperText={errors.resumeName?.message}
                                     placeholder="e.g., General Purpose Resume"
+                                    variant="filled"
+                                    sx={(theme) => ({
+                                        "& .MuiFilledInput-root": {
+                                            backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+                                            "&:hover": {
+                                                backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+                                            },
+                                            "&.Mui-focused": {
+                                                backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+                                            },
+                                            "&:before, &:after": {
+                                                borderBottomColor: "inherit",
+                                            },
+                                        },
+                                    })}
                                 />
                                 <Box>
-                                    <Button component="label" variant="outlined" startIcon={<UploadFileIcon />} fullWidth>
+                                    <Button component="label" variant="outlined" startIcon={<UploadFileIcon />} fullWidth sx={(theme) => ({
+                                        backgroundColor:
+                                            theme.palette.mode === "dark"
+                                                ? ""
+                                                : "white",
+
+
+                                        "&:hover": {
+                                            backgroundColor:
+                                                theme.palette.mode === "dark"
+                                                    ? ""
+                                                    : "#f5f5f5"
+                                        }
+                                    })}>
                                         {resumeFile && resumeFile[0] ? resumeFile[0].name : 'Upload Resume (PDF)'}
                                         <input type="file" hidden {...register("resumeFile", { validate: (v) => v.length > 0 || "A PDF resume is required." })} accept=".pdf" />
                                     </Button>
-                                    {errors.resumeFile && <Typography color="error" variant="caption" sx={{ml: 2}}>{errors.resumeFile.message}</Typography>}
+                                    {errors.resumeFile && <Typography color="error" variant="caption" sx={{ ml: 2 }}>{errors.resumeFile.message}</Typography>}
                                 </Box>
                             </>
                         )}
 
                         <TextField
                             fullWidth
+
+                            variant="filled"
                             label="Cover Letter Name (Optional)"
                             {...register("coverLetterName", {
                                 validate: (v) => (getValues("coverLetterFile")?.length > 0 && !v) ? "Name is required for cover letter." : true
                             })}
+                            sx={(theme) => ({
+                                "& .MuiFilledInput-root": {
+                                    backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+                                    "&:before, &:after": {
+                                        borderBottomColor: "inherit",
+                                    },
+                                },
+                            })}
                             error={!!errors.coverLetterName}
                             helperText={errors.coverLetterName?.message}
                             placeholder="e.g., Application for SWEN-261"
+
                         />
                         <Box>
-                            <Button component="label" variant="outlined" startIcon={<UploadFileIcon />} fullWidth>
+                            <Button component="label" variant="outlined" startIcon={<UploadFileIcon />} fullWidth
+                                sx={(theme) => ({
+                                    backgroundColor:
+                                        theme.palette.mode === "dark"
+                                            ? ""
+                                            : "white",
+
+
+                                    "&:hover": {
+                                        backgroundColor:
+                                            theme.palette.mode === "dark"
+                                                ? ""
+                                                : "#f5f5f5"
+                                    }
+                                })}
+                            >
+
                                 {coverLetterFile && coverLetterFile[0] ? coverLetterFile[0].name : 'Upload Cover Letter (PDF)'}
                                 <input type="file" hidden {...register("coverLetterFile", {
                                     validate: (v) => (getValues("coverLetterName") && v.length === 0) ? "File is required for cover letter." : true
                                 })} accept=".pdf" />
                             </Button>
-                            {errors.coverLetterFile && <Typography color="error" variant="caption" sx={{ml: 2}}>{errors.coverLetterFile.message}</Typography>}
+                            {errors.coverLetterFile && <Typography color="error" variant="caption" sx={{ ml: 2 }}>{errors.coverLetterFile.message}</Typography>}
                         </Box>
                     </Box>
                 </Box>

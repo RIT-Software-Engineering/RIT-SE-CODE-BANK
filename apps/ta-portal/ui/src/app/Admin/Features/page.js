@@ -188,13 +188,14 @@ export default function FeatureFlagsPage() {
         {Object.entries(features).map(([featureName, isEnabled]) => (
           <Box
             key={featureName}
-            sx={{
-              mb: 3,
+            
+            sx={(theme)=>({ mb: 3,
               p: 2,
               border: "1px solid",
               borderColor: "divider",
-              borderRadius: 1,
-            }}
+              borderRadius: 1, background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "#e0e0e0" })}
           >
             <FormControlLabel
               control={
@@ -205,7 +206,7 @@ export default function FeatureFlagsPage() {
                 />
               }
               label={
-                <Box>
+                <Box >
                   <Typography variant="h6">
                     {FEATURE_LABELS[featureName] || featureName}
                   </Typography>

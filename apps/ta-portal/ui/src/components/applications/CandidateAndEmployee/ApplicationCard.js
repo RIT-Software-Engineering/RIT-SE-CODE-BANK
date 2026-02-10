@@ -16,6 +16,7 @@ import EditableCommentForm from "@/components/comments/EditableCommentForm";
 import { applicationStatusEnumToString } from '@/constants/applicationStatusConstants';
 import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
+
 import {
   Box,
   Chip,
@@ -61,6 +62,7 @@ export default function CandidateApplicationCard({
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
   const [isViewingComments, setIsViewingComments] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [clearConfirm, setShowClearConfirm]=useState(false);
 
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -196,7 +198,7 @@ export default function CandidateApplicationCard({
       >
         <Box sx={{ p: { xs: 2, md: 3 } }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
-            <Box>
+            <Box >
               <Typography variant="h2" component="h2" gutterBottom>
                 {jobPosition.course.name}
               </Typography>
@@ -308,10 +310,15 @@ export default function CandidateApplicationCard({
         <ViewableApplicationForm
           position={jobPosition}
           application={application}
-          onClose={() => setIsViewingApplication(false)}
+          onClose={()=>setIsViewingApplication(false)}
         />
       )}
-
+    {/*{{(isViewingApplication &&showClearConfirm) &&(
+        <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={() => setIsViewingApplication(false)} title="Cancel Position Edits">
+          Are you sure you want to cancel your edits? This action cannot be undone.
+        </ConfirmationModal>
+      )}
+      */}
       {isViewingComments && (
         <ViewableCommentForm
           foreignKey={application.id}

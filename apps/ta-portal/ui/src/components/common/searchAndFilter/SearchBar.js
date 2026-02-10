@@ -30,11 +30,19 @@ export default function SearchBar({ value, onChange, placeholder, ...props }) {
   return (
     <TextField
       fullWidth
-      variant="outlined"
       value={value}
       size="small"
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      {...props}
+      sx={(theme) => ({
+        "& .MuiOutlinedInput-root": {
+          backgroundColor:
+            theme.palette.mode === "dark"
+              ? ""
+              : "white",
+        }
+      })}
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">
@@ -56,7 +64,7 @@ export default function SearchBar({ value, onChange, placeholder, ...props }) {
           )
         ),
       }}
-      {...props}
+
     />
   );
 }

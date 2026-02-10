@@ -18,6 +18,17 @@ export default function DisplayField({ label, value }) {
       InputProps={{
         readOnly: true,
       }}
+      sx={(theme) => ({
+        "& .MuiFilledInput-root": {
+          backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+          "&:hover": {
+            backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+          },
+          "&.Mui-focused": {
+            backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+          },
+        },
+      })}
       // This prevents the label from shrinking when there is no value
       InputLabelProps={{ shrink: true }}
     />
