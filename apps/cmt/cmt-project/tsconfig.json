@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    "jsx": "react-jsx",
+
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "noEmit": true,
+
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"]
+}
