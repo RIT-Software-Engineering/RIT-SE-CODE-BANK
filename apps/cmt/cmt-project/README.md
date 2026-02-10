@@ -58,7 +58,7 @@ You can either use the startup script, or run the servers manually. Either way, 
 > Common issues:
 > - If you are having port problems, make sure that your MariaDB instance and your connection strings have port 3306, the default mariaDB port. 
 > - If mariaDB won't start due to the port being in use, it may be due to a MySQL server running. Either way, find the process ID according to your OS and kill the process.
-> - If the server 
+> - **Make sure you set your connection string correctly!**
 
 #### 2. (Option 1): Startup Script
 - Navigate to apps/cmt/cmt-project
