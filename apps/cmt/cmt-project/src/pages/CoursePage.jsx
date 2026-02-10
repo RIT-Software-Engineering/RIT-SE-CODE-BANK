@@ -93,22 +93,34 @@ function CoursePage() {
   };
 
   //Handle course editing
-  const handleEditCourse = async (course) => {
-    setSelectedCourse(course);
-    setCurrentStep(1);
-    setSelectedTemplate(null); 
-    setCalendarEvents([]);
-    setCourseData({
-      id: course.id,                 
-      classId: course.classId,
-      name: course.name,
-      season: course.season,
-      year: course.year,
-      color: course.color,
-      students: course.students ?? "",
-      section: course.section ?? "",
-    });                       
-    setView("create");
+  const handleEditCourse = async (courseId, updates) => {
+    try {
+      const response = await fetch(`${API_BASE}/course/${Number(courseId)}`, {
+        method: "PUT",
+        headers: {
+        "Content-Type": "application/json",
+      },
+        credentials: 'include',
+        body: JSON.stringify(updates)
+      });
+
+      if (!response.ok) throw new Error("Failed to edit course");
+
+      setAlertVariant("success");
+      setAlertMessage("✅ Course deleted successfully!");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 6000);
+
+      fetchCourses();
+    }
+    catch (error) {
+      console.error("Error editing course:", error);
+      setAlertVariant("danger");
+      setAlertMessage("❌ Failed to edit course");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 6000);
+    }
+
   }
 
   // Handle course deletion
