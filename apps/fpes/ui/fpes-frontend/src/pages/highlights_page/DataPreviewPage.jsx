@@ -1,17 +1,35 @@
 import { Modal, Box, Button, TextField, Typography, Paper, IconButton } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export default function DataPreviewModal({ isOpen, closeModal, parsedData }) {
+    console.log("DataPreviewModal received:", parsedData);
     const [formData, setFormData] = useState(parsedData || {});
+    
+    useEffect(() => {
+        if (parsedData) {
+            setFormData(parsedData);
+        }
+    }, [parsedData]);
+    
+    console.log("formData state:", formData);
 
     const handleChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         console.log("Saving data:", formData);
-        closeModal();
+        
+        try {
+            await axios.post("http://localhost:3000/highlights/parsed", formData);
+            alert("Data saved successfully");
+            closeModal();
+        } catch (error) {
+            console.error("Save failed:", error);
+            alert("Failed to save data");
+        }
     };
 
     if (!isOpen) return null;
@@ -54,11 +72,6 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData }) {
                 <TextField fullWidth multiline rows={6} 
                     value={formData.service || ''} 
                     onChange={(e) => handleChange('service', e.target.value)} sx={{ mb: 2 }} />
-                
-                <h3>Professional Development</h3>
-                <TextField fullWidth multiline rows={4} 
-                    value={formData.professionalDevelopment || ''} 
-                    onChange={(e) => handleChange('professionalDevelopment', e.target.value)} sx={{ mb: 2 }} />
                 
                 <h3>Administrative</h3>
                 <TextField fullWidth multiline rows={6} 

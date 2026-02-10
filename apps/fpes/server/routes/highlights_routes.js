@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db'); 
 const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highlights_api');
+const { saveParsedHighlights } = require('../api/parsed_highlights_api');
 
 // GET all
 router.get('/', async (_req, res) => {
@@ -158,6 +159,16 @@ router.post("/draft", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to save draft" });
+  }
+});
+
+router.post("/parsed", async (req, res) => {
+  try {
+    const result = await saveParsedHighlights(req.body);
+    res.json({ success: true, id: result.insertId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save parsed data" });
   }
 });
 
