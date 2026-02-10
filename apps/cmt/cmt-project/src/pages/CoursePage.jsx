@@ -9,6 +9,7 @@ import {
   ArrowRight,
   ArrowLeft,
   Check,
+  Edit,
 } from "lucide-react";
 import "../styles/course.css";
 import { API_BASE } from "../utils/api";
@@ -91,6 +92,25 @@ function CoursePage() {
     setView("create");
   };
 
+  //Handle course editing
+  const handleEditCourse = async (course) => {
+    setSelectedCourse(course);
+    setCurrentStep(1);
+    setSelectedTemplate(null); 
+    setCalendarEvents([]);
+    setCourseData({
+      id: course.id,                 
+      classId: course.classId,
+      name: course.name,
+      season: course.season,
+      year: course.year,
+      color: course.color,
+      students: course.students ?? "",
+      section: course.section ?? "",
+    });                       
+    setView("create");
+  }
+
   // Handle course deletion
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm("Are you sure you want to delete this course?")) return;
@@ -165,6 +185,14 @@ function CoursePage() {
                     title="Edit Onboarding Workflow"
                   >
                     <CheckSquare size={16} />
+                  </Button>
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => handleEditCourse(course)}
+                    title="Edit Course"
+                  >
+                    <Edit size={16} />
                   </Button>
                   <Button
                     variant="outline-danger"
