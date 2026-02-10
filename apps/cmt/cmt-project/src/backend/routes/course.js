@@ -50,8 +50,15 @@ router.put("/:id", async (req, res) => {
     console.log("PUT /api/cmt/course/:id called with:", id, updateData);
 
     const updatedCourse = await prisma.course.update({
-      where: { id },
-      data: updateData,
+      where: { id: Number(id) },
+      data: {
+        classId: updateData.classId,
+        name: updateData.name,
+        semester: updateData.semester,
+        color: updateData.color,
+        students: (!updateData.students) ? null : parseInt(updateData.students),
+        section: (!updateData.section) ? null : parseInt(updateData.section),
+      },
     });
 
     console.log("Course updated successfully:", updatedCourse);
