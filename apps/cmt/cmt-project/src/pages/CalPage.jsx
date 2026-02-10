@@ -443,7 +443,6 @@ export default function CalPage() {
                         <div className="events-container">
                           {filteredEvents.map((event) => {
                             const courseInfo = getCourseInfo(event.courseId);
-                            eventTypes[event.type]?.icon || BookOpen;
 
                             return (
                               <div
