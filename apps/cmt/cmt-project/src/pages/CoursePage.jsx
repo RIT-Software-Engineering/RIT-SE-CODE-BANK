@@ -16,9 +16,10 @@ import { API_BASE } from "../utils/api";
 
 function CoursePage() {
   // View state
-  const [view, setView] = useState("list"); // 'list' or 'create'
+  const [view, setView] = useState("list"); // 'list' or 'create' or 'edit'
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  // const [editingCourse, setEditingCourse] = useState(null);
 
   // Multi-step workflow state
   const [currentStep, setCurrentStep] = useState(1);
@@ -92,10 +93,18 @@ function CoursePage() {
     setView("create");
   };
 
+  // Handle starting course edit
+  const handleEditClick = (course) => {
+    setView("edit");
+    // Add code :)
+    handleEditCourse();
+  };
+
+
   //Handle course editing
   const handleEditCourse = async (courseId, updates) => {
     try {
-      const response = await fetch(`${API_BASE}/course/${Number(courseId)}`, {
+      const response = await fetch(`${API_BASE}/course/${(courseId)}`, {
         method: "PUT",
         headers: {
         "Content-Type": "application/json",
@@ -107,7 +116,7 @@ function CoursePage() {
       if (!response.ok) throw new Error("Failed to edit course");
 
       setAlertVariant("success");
-      setAlertMessage("✅ Course deleted successfully!");
+      setAlertMessage("✅ Course edited successfully!");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 6000);
 
@@ -120,7 +129,6 @@ function CoursePage() {
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 6000);
     }
-
   }
 
   // Handle course deletion
@@ -201,7 +209,7 @@ function CoursePage() {
                   <Button
                     variant="outline-primary"
                     size="sm"
-                    onClick={() => handleEditCourse(course)}
+                    onClick={() => handleEditClick(course)}
                     title="Edit Course"
                   >
                     <Edit size={16} />
