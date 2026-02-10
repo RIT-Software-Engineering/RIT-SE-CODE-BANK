@@ -47,6 +47,8 @@ We will both create a Prisma object for the code to use, and will also push that
 
 #### Congratulations! Your environment should be set up.
 
+You can also run `node prisma/seed.js` from `apps/cmt/cmt-project`, which will seed your database with some convenient testing data.
+
 ---
 
 ## Running The Developer Environment
