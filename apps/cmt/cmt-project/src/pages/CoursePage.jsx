@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import "../styles/course.css";
 import { API_BASE } from "../utils/api";
+import { CourseEdit } from "./CourseEdit";
 
 function CoursePage() {
   // View state
@@ -95,16 +96,14 @@ function CoursePage() {
 
   // Handle starting course edit
   const handleEditClick = (course) => {
+    setCourseData(course)
     setView("edit");
-    // Add code :)
-    handleEditCourse();
   };
 
-
-  //Handle course editing
+  // Handle course editing
   const handleEditCourse = async (courseId, updates) => {
     try {
-      const response = await fetch(`${API_BASE}/course/${(courseId)}`, {
+      const response = await fetch(`${API_BASE}/course/${courseId}`, {
         method: "PUT",
         headers: {
         "Content-Type": "application/json",
@@ -272,6 +271,8 @@ function CoursePage() {
           </div>
           {renderCourseList()}
         </div>
+      ) : view === "edit" ? (
+        <CourseEdit initialCourseData={courseData} onSubmit={handleEditCourse} setView={setView}/>
       ) : (
         <CourseCreationWorkflow
           currentStep={currentStep}
@@ -520,7 +521,7 @@ function CourseCreationWorkflow({
 const year = new Date().getFullYear();
 
 // Step 1: Course Details Form
-function CourseDetailsStep({ courseData, setCourseData }) {
+export function CourseDetailsStep({ courseData, setCourseData }) {
   const handleChange = (field, value) => {
     setCourseData({ ...courseData, [field]: value });
   };
