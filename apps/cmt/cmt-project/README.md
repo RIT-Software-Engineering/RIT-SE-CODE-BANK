@@ -92,4 +92,4 @@ The two sources of linting in this project are Typescript and ESLint. Even thoug
 
 **Command Line Linting**: You can also lint CMT through the following commands:
 - **Typescript (tsc)**: In `apps/cmt/cmt-project`, run `tsc`
-- **ESLint**: In `apps/cmt/cmt-project/`, run `npm run lint .`
+- **ESLint**: In `apps/cmt/cmt-project/`, run `npm run lint`
