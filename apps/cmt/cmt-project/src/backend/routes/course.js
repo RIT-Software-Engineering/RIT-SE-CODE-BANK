@@ -78,18 +78,20 @@ router.delete("/:id", async (req, res) => {
     const prisma = req.prisma;
     const { id } = req.params;
 
-    console.log("DELETE /api/cmt/course/:id called with:", id);
+    // Had to cast id to a Number so an int is passed instead of a string
+
+    console.log("DELETE /api/cmt/course/:id called with:", Number(id));
 
     // First, delete all events associated with this course
     await prisma.event.deleteMany({
-      where: { courseId: id },
+      where: { courseId:Number(id) },
     });
 
     console.log(`✅ Deleted all events for course: ${id}`);
 
     // Then delete the course
     await prisma.course.delete({
-      where: { id },
+      where: { id:Number(id) },
     });
 
     console.log(`✅ Course deleted: ${id}`);
