@@ -189,21 +189,17 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                         <FormControl fullWidth>
                             <InputLabel id="resume-select-label">Resume</InputLabel>
                             <Select
+                            sx={(theme)=>({ background: theme.palette.mode === 'dark'
+                    ? "" : "white" })}
                                 labelId="resume-select-label"
                                 id="resumeId"
                                 label="Resume"
                                 {...register("resumeId")}
                                 defaultValue={initialValues.resumeId}
-                                sx={(theme) => ({
-                                    background: theme.palette.mode === 'dark'
-                                        ? "" : "white"
-                                })}
+
                             >
                                 {existingResumes.map(resume => (
-                                    <MenuItem key={resume.id} value={String(resume.id)} sx={(theme) => ({
-                                        background: theme.palette.mode === 'dark'
-                                            ? "" : "white"
-                                    })}>
+                                    <MenuItem key={resume.id} value={String(resume.id)} >
                                         {`${resume.name}${resume.isPrimary ? ' (Primary)' : ''}`}
                                     </MenuItem>
                                 ))}
@@ -220,9 +216,37 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                                     error={!!errors.resumeName}
                                     helperText={errors.resumeName?.message}
                                     placeholder="e.g., General Purpose Resume"
+                                    variant="filled"
+                                    sx={(theme) => ({
+                                        "& .MuiFilledInput-root": {
+                                            backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+                                            "&:hover": {
+                                                backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+                                            },
+                                            "&.Mui-focused": {
+                                                backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+                                            },
+                                            "&:before, &:after": {
+                                                borderBottomColor: "inherit",
+                                            },
+                                        },
+                                    })}
                                 />
                                 <Box>
-                                    <Button component="label" variant="outlined" startIcon={<UploadFileIcon />} fullWidth>
+                                    <Button component="label" variant="outlined" startIcon={<UploadFileIcon />} fullWidth sx={(theme) => ({
+                                        backgroundColor:
+                                            theme.palette.mode === "dark"
+                                                ? ""
+                                                : "white",
+
+
+                                        "&:hover": {
+                                            backgroundColor:
+                                                theme.palette.mode === "dark"
+                                                    ? ""
+                                                    : "#f5f5f5"
+                                        }
+                                    })}>
                                         {resumeFile && resumeFile[0] ? resumeFile[0].name : 'Upload Resume (PDF)'}
                                         <input type="file" hidden {...register("resumeFile", { validate: (v) => v.length > 0 || "A PDF resume is required." })} accept=".pdf" />
                                     </Button>

@@ -21,8 +21,11 @@ export default function DisplayField({ label, value }) {
       sx={(theme) => ({
         "& .MuiFilledInput-root": {
           backgroundColor: theme.palette.mode === "dark" ? "" : "white",
-          "&:before, &:after": {
-            borderBottomColor: "inherit",
+          "&:hover": {
+            backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+          },
+          "&.Mui-focused": {
+            backgroundColor: theme.palette.mode === "dark" ? "" : "white",
           },
         },
       })}
