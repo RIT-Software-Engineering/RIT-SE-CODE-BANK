@@ -9,15 +9,18 @@ import {
   ArrowRight,
   ArrowLeft,
   Check,
+  Edit,
 } from "lucide-react";
 import "../styles/course.css";
 import { API_BASE } from "../utils/api";
+import { CourseEdit } from "./CourseEdit";
 
 function CoursePage() {
   // View state
-  const [view, setView] = useState("list"); // 'list' or 'create'
+  const [view, setView] = useState("list"); // 'list' or 'create' or 'edit'
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  // const [editingCourse, setEditingCourse] = useState(null);
 
   // Multi-step workflow state
   const [currentStep, setCurrentStep] = useState(1);
@@ -25,9 +28,11 @@ function CoursePage() {
     id: 0,
     classId: "",
     name: "",
-    semester: "",
+    season: "",
+    year: 0,
     color: "",
     students: "",
+    section: ""
   });
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [calendarEvents, setCalendarEvents] = useState([]);
@@ -73,9 +78,11 @@ function CoursePage() {
       id: 0,
       classId: "",
       name: "",
-      semester: "",
+      season: "",
+      year: 0,
       color: "",
       students: "",
+      section: ""
     });
     setSelectedTemplate(null);
     setCalendarEvents([]);
@@ -86,6 +93,42 @@ function CoursePage() {
     resetWorkflow();
     setView("create");
   };
+
+  // Handle starting course edit
+  const handleEditClick = (course) => {
+    setCourseData(course)
+    setView("edit");
+  };
+
+  // Handle course editing
+  const handleEditCourse = async (courseId, updates) => {
+    try {
+      const response = await fetch(`${API_BASE}/course/${courseId}`, {
+        method: "PUT",
+        headers: {
+        "Content-Type": "application/json",
+      },
+        credentials: 'include',
+        body: JSON.stringify(updates)
+      });
+
+      if (!response.ok) throw new Error("Failed to edit course");
+
+      setAlertVariant("success");
+      setAlertMessage("✅ Course edited successfully!");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 6000);
+
+      fetchCourses();
+    }
+    catch (error) {
+      console.error("Error editing course:", error);
+      setAlertVariant("danger");
+      setAlertMessage("❌ Failed to edit course");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 6000);
+    }
+  }
 
   // Handle course deletion
   const handleDeleteCourse = async (courseId) => {
@@ -163,6 +206,14 @@ function CoursePage() {
                     <CheckSquare size={16} />
                   </Button>
                   <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => handleEditClick(course)}
+                    title="Edit Course"
+                  >
+                    <Edit size={16} />
+                  </Button>
+                  <Button
                     variant="outline-danger"
                     size="sm"
                     onClick={() => handleDeleteCourse(course.id)}
@@ -179,8 +230,11 @@ function CoursePage() {
                 <div className="course-detail-item">
                   <strong>Semester:</strong> {course.semester}
                 </div>
-                <div className="course-detail-item">
+                <div className="course-detail-item" hidden={course.students===null ? true : false}>
                   <strong>Students:</strong> {course.students}
+                </div>
+                <div className="course-detail-item" hidden={course.section===null ? true : false}>
+                  <strong>Section:</strong> {course.section}
                 </div>
               </div>
 
@@ -217,6 +271,8 @@ function CoursePage() {
           </div>
           {renderCourseList()}
         </div>
+      ) : view === "edit" ? (
+        <CourseEdit initialCourseData={courseData} onSubmit={handleEditCourse} setView={setView}/>
       ) : (
         <CourseCreationWorkflow
           currentStep={currentStep}
@@ -306,8 +362,18 @@ function CourseCreationWorkflow({
   };
 
   const validateCourseDetails = () => {
-    if (!courseData.id || !courseData.name || !courseData.semester || !courseData.color || !courseData.students) {
-      setError("Please fill in all required fields");
+    var badField = "";
+    if (!courseData.classId) { badField = "Course ID ";}
+    else if (!courseData.name) {badField = "Course Name ";}
+    else if (!courseData.color) {badField = "Course Color ";}
+    console.log(badField)
+    if (badField !== "") {
+      setError(`Please fill in the following field: ${badField}`);
+      return false;
+    }
+    if ((courseData.students && isNaN(parseInt(courseData.students))) || 
+        (courseData.section && isNaN(parseInt(courseData.section)))){
+      // No need to have an error since the page progresses anyways
       return false;
     }
     setError(null);
@@ -320,17 +386,33 @@ function CourseCreationWorkflow({
 
     try {
       // Call backend API to create course with all data
+      var courseSemester; 
+      switch (courseData.semester){
+        case "fall":
+          courseSemester = 2261 + (10* (courseData.year - 2026)) // Starts at Fall 2026
+          break;
+        case "spring":
+          courseSemester = 2255 + (10* (courseData.year - 2026)) // Starts at Spring 2026
+          break;
+        case "summer":
+          courseSemester = 2258 + (10* (courseData.year - 2027)) // Starts at Summer 2027
+          break;
+        default:
+          courseSemester = 2255;
+          break;
+      }
       const response = await fetch(`${API_BASE}/course/create-with-workflow`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include', // Send cookies
         body: JSON.stringify({
           course: {
-            id: courseData.id,
+            classId: courseData.classId,
             name: courseData.name,
-            semester: courseData.semester,
+            semester: courseSemester,
             color: courseData.color,
             students: courseData.students,
+            section: courseData.section,
             professorId: 1, // TODO: Replace with real professorId
           },
           templateId: selectedTemplate,
@@ -436,8 +518,10 @@ function CourseCreationWorkflow({
   );
 }
 
+const year = new Date().getFullYear();
+
 // Step 1: Course Details Form
-function CourseDetailsStep({ courseData, setCourseData }) {
+export function CourseDetailsStep({ courseData, setCourseData }) {
   const handleChange = (field, value) => {
     setCourseData({ ...courseData, [field]: value });
   };
@@ -451,12 +535,13 @@ function CourseDetailsStep({ courseData, setCourseData }) {
         <Row>
           <Col md={6}>
             <Form.Group className="mb-3">
-              <Form.Label>Course ID *</Form.Label>
+              <Form.Label>Course ID <span style={{color:"red"}}>*</span>
+              </Form.Label>
               <Form.Control
                 type="text"
                 required
-                value={courseData.id}
-                onChange={(e) => handleChange("id", e.target.value)}
+                value={courseData.classId}
+                onChange={(e) => handleChange("classId", e.target.value)}
                 placeholder="e.g., SWEN101"
               />
             </Form.Group>
@@ -464,7 +549,7 @@ function CourseDetailsStep({ courseData, setCourseData }) {
 
           <Col md={6}>
             <Form.Group className="mb-3">
-              <Form.Label>Course Name *</Form.Label>
+              <Form.Label>Course Name <span style={{color:"red"}}>*</span></Form.Label>
               <Form.Control
                 type="text"
                 required
@@ -479,26 +564,41 @@ function CourseDetailsStep({ courseData, setCourseData }) {
         <Row>
           <Col md={6}>
             <Form.Group className="mb-3">
-              <Form.Label>Semester *</Form.Label>
-              <Form.Control
-                type="text"
-                required
-                value={courseData.semester}
-                onChange={(e) => handleChange("semester", e.target.value)}
-                placeholder="e.g., Fall 2025"
-              />
+              <Form.Label>Semester <span style={{color:"red"}}>*</span></Form.Label>
+              <div style={{display: "flex"}}>
+                <Form.Select
+                  required
+                  value={courseData.season}
+                  onChange={(e) => handleChange("season", e.target.value)} 
+                  style={{flex: 2}}
+                >
+                  <option value="fall">Fall</option>
+                  <option value="spring">Spring</option>
+                  <option value="summer">Summer</option>
+                </Form.Select>
+                <Form.Select
+                  required
+                  style={{flex: 1}}
+                  value={courseData.year}
+                  onChange={(e) => handleChange("year", e.target.value)}
+                >
+                  <option value={year}>{year}</option>
+                  <option value={year+1}>{year+1}</option>
+                  <option value={year+2}>{year+2}</option>
+                </Form.Select>
+              </div>
             </Form.Group>
           </Col>
 
           <Col md={6}>
             <Form.Group className="mb-3">
-              <Form.Label>Number of Students *</Form.Label>
+              <Form.Label>Number of Students (Optional)</Form.Label>
               <Form.Control
                 type="number"
-                required
                 value={courseData.students}
                 onChange={(e) => handleChange("students", e.target.value)}
-                placeholder="e.g., 30"
+                placeholder="e.g. 30"
+                min = "0"
               />
             </Form.Group>
           </Col>
@@ -507,13 +607,13 @@ function CourseDetailsStep({ courseData, setCourseData }) {
         <Row>
           <Col md={6}>
             <Form.Group className="mb-3">
-              <Form.Label>Course Color *</Form.Label>
+              <Form.Label>Course Color <span style={{color:"red"}}>*</span></Form.Label>
               <Form.Select
                 required
                 value={courseData.color}
                 onChange={(e) => handleChange("color", e.target.value)}
               >
-                <option value="">Select a color...</option>
+                <option value="" hidden>Select a color...</option>
                 <option value="red">Red</option>
                 <option value="orange">Orange</option>
                 <option value="yellow">Yellow</option>
@@ -524,6 +624,19 @@ function CourseDetailsStep({ courseData, setCourseData }) {
                 <option value="brown">Brown</option>
                 <option value="gray">Gray</option>
               </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Section Number (Optional)</Form.Label>
+              <Form.Control
+                type="number"
+                value={courseData.section}
+                onChange={(e) => handleChange("section", e.target.value)}
+                min = "1"
+                max = "10"
+                placeholder="e.g. 1"
+              />
             </Form.Group>
           </Col>
         </Row>

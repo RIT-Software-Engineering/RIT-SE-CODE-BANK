@@ -66,9 +66,10 @@ async function main() {
     data: {
       classId: 'SWEN101',
       name: 'Software Engineering Fundamentals',
-      semester: 'Fall 2024',
-      color: '#4A90E2',
+      semester: 2241,
+      color: 'blue',
       students: 45,
+      section: 1,
       professorId: prof1.id, // Professor 1
       workflowId: null,
     },
@@ -78,9 +79,10 @@ async function main() {
     data: {
       classId: 'SWEN261',
       name: 'Intro to Software Engineering',
-      semester: 'Fall 2024',
-      color: '#E94B3C',
+      semester: 2241,
+      color: 'red',
       students: 38,
+      section: 2,
       professorId: prof1.id, // Professor 1
       workflowId: null,
     },
@@ -90,9 +92,10 @@ async function main() {
     data: {
       classId: 'SWEN343',
       name: 'Software Design',
-      semester: 'Fall 2024',
-      color: '#50C878',
+      semester: 2241,
+      color: 'green',
       students: 32,
+      section: 7,
       professorId: prof2.id, // Professor 2
       workflowId: null,
     },
@@ -102,9 +105,10 @@ async function main() {
     data: {
       classId: 'SWEN440',
       name: 'Software Architecture',
-      semester: 'Fall 2024',
-      color: '#9B59B6',
+      semester: 2241,
+      color: 'purple',
       students: 28,
+      section: 3,
       professorId: prof2.id, // Professor 2
       workflowId: null,
     },
@@ -114,9 +118,10 @@ async function main() {
     data: {
       classId: 'SWEN562',
       name: 'Engineering Secure Software',
-      semester: 'Spring 2025',
-      color: '#F39C12',
+      semester: 2245,
+      color: 'orange',
       students: 24,
+      section: 1,
       professorId: prof1.id, // Professor 1
       workflowId: null,
     },

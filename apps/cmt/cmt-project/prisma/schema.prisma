@@ -81,10 +81,11 @@ model TemplateItem {
 model Course {
   id           Int            @id @default(autoincrement())
   name         String
-  semester     String
+  semester     Int
   classId      String
   color        String
-  students     Int
+  students     Int?
+  section      Int?
   professorId  Int
   professors   Professor      @relation(fields: [professorId], references: [id])
   events       Event[]
