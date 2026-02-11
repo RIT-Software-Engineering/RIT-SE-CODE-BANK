@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { CourseDetailsStep } from "./CoursePage";
 import { Button } from "react-bootstrap";
 
