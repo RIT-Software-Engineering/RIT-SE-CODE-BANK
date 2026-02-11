@@ -50,15 +50,8 @@ router.put("/:id", async (req, res) => {
     console.log("PUT /api/cmt/course/:id called with:", id, updateData);
 
     const updatedCourse = await prisma.course.update({
-      where: { id: Number(id) },
-      data: {
-        classId: updateData.classId,
-        name: updateData.name,
-        semester: updateData.semester,
-        color: updateData.color,
-        students: (!updateData.students) ? null : parseInt(updateData.students),
-        section: (!updateData.section) ? null : parseInt(updateData.section),
-      },
+      where: { id },
+      data: updateData,
     });
 
     console.log("Course updated successfully:", updatedCourse);
@@ -135,19 +128,17 @@ router.post("/create-with-workflow", async (req, res) => {
     const prisma = req.prisma;
 
     // Validate course data
-    var missingField = "";
-    if (!course.classId) {missingField += " Class ID ";}
-    if (!course.name) {missingField += " Class Name ";}
-    if (!course.semester) {missingField += "Semester ";}
-    if (!course.color) {missingField += " Color ";}
-
     if (
       !course ||
-      missingField
+      !course.id ||
+      !course.name ||
+      !course.semester ||
+      !course.color ||
+      !course.students
     ) {
       return res.status(400).json({
         success: false,
-        error: `Missing required course fields: ${missingField}`,
+        error: "Missing required course fields",
       });
     }
 
@@ -182,13 +173,12 @@ router.post("/create-with-workflow", async (req, res) => {
     // Step 2: Create the course
     const newCourse = await prisma.course.create({
       data: {
-        classId: course.classId,
+        classId: course.id,
         name: course.name,
         semester: course.semester,
         color: course.color,
-        students: (!course.students) ? null : parseInt(course.students),
-        section: (!course.section) ? null : parseInt(course.section),
-        professors: {connect: {id: course.professorId}}
+        students: parseInt(course.students),
+        professorId: professorId,
       },
     });
 
