@@ -188,7 +188,7 @@ router.post("/create-with-workflow", async (req, res) => {
         color: course.color,
         students: (!course.students) ? null : parseInt(course.students),
         section: (!course.section) ? null : parseInt(course.section),
-        professorId: course.professorId
+        professors: {connect: {id: course.professorId}}
       },
     });
 
