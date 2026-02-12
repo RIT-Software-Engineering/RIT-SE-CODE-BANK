@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { createCourse } from "@/services/db-apis";
+import { upsertCourse } from "@/services/db-apis";
 import {
   Button,
   CircularProgress,
@@ -42,7 +42,7 @@ export default function CreateCourseModal ({ isOpen, onClose, onCourseCreated, i
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const newCourse = await createCourse({ courseCode: initialCode, name, description });
+      const newCourse = await upsertCourse({ courseCode: initialCode, name, description });
       onCourseCreated(newCourse);
       onClose(); 
     } catch (error) {

@@ -22,7 +22,7 @@ const {
   getAllJobPositions,
   getAllUsers,
   getAllCourses,
-  createCourse,
+  upsertCourse,
   authenticateUser,
   resetPassword,
   getUser,
@@ -1136,18 +1136,18 @@ router.get('/comments', async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/create-course
- * @desc    Creates a new course with the provided data.
+ * @route   POST /api/db/upsert-course
+ * @desc    Updates or Creates a new course with the provided data.
  * @access  Public
  */
-router.post("/create-course", async (req, res) => {
+router.post("/upsert-course", async (req, res) => {
   try {
     const courseData = req.body;
-    const newCourse = await createCourse(courseData);
+    const newCourse = await upsertCourse(courseData);
     res.status(201).json(newCourse);
   } catch (error) {
-    console.error("Error in /create-course route:", error);
-    res.status(500).json({ error: "Failed to create course." });
+    console.error("Error in /upsert-course route:", error);
+    res.status(500).json({ error: "Failed to upsert course." });
   }
 });
 
