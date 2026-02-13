@@ -119,7 +119,7 @@ function SimpleWorkflowActionFormRenderer({ action, refresh }) {
         // })
         
     }
-console.log(action)
+    
     return (<>
         <Form onSubmit={submitAction}>
             {metadata.outputs.map((output, i) =>
