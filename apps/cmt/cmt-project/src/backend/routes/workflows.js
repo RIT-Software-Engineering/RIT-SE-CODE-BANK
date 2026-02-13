@@ -329,7 +329,7 @@ async function getOrCreateWorkflowState(workflowId, userId) {
  *  parentID: the parentActionId if the action created is a simple child of a complex action
  * Returns an action response
  */
-async function create_action(name, description, actionType, metadata, parentId ){
+async function createAction(name, description, actionType, metadata, parentId ){
   const actionResponse = await fetch(`${WORKFLOWS_API}/actions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -381,17 +381,17 @@ router.post('/course/createCourse', async (req, res) => {
     const createdActions = [];
 
     createdActions.push(
-      await create_action(
+      await createAction(
         "Complex Course Workflow", "This is the first action in this workflow.", "complex"
       )
     );
     createdActions.push(
-      await create_action(
+      await createAction(
         {name: "Fill in Details", desciption:"The user enters the details for the course", metadata: {key: "DET"}} 
       )
     );
     createdActions.push(
-      await create_action(
+      await createAction(
         {name: "Upload Syllabus", desciption:"This is where the user uploads the syllabus.", metadata: {key: "SYL"}} 
       )
     );
