@@ -188,25 +188,26 @@ async function main() {
 
     const workflowData = [
     {
-      name: "Create course",
+      name: "SEED Create course",
       description:
         "A workflow that points to a complex action.",
       actionType: "workflow",
       userId: users[0].id,
       actions: [
         {
-          name: "Complex",
+          name: "SEED Complex",
           description: "This is the first action in this workflow.",
           actionType: "complex",
+          userId: users[0].id,
           childActions: [
             {
-              name: "Course Initialization",
+              name: "SEED Course Initialization",
               description: "This is the first action in this complex action.",
               actionType: "workflow",
               userId: users[0].id,
               actions: [
                 {
-                  name: "Choose Template",
+                  name: "SEED Choose Template",
                   description: "The user needs to choose a template (or start from scratch)",
                   actionType: "simple",
                   metadata: {
@@ -214,7 +215,7 @@ async function main() {
                   }
                 },
                 {
-                  name: "Fill in Details",
+                  name: "SEED Fill in Details",
                   description: "The user enters the details for the course",
                   actionType: "simple",
                   metadata: {
@@ -224,7 +225,7 @@ async function main() {
               ]
             },
             {
-              name: "Upload Syllabus",
+              name: "SEED Upload Syllabus",
               description: "This is where the user uploads the syllabus.",
               metadata: {
                 key: "SYL"

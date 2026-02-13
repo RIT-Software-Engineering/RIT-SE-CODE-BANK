@@ -91,6 +91,7 @@ function CoursePage() {
   // Handle starting course creation
   const handleStartCreate = () => {
     resetWorkflow();
+    createCourseWorkflow();
     setView("create");
   };
 
@@ -99,6 +100,16 @@ function CoursePage() {
     setCourseData(course)
     setView("edit");
   };
+
+  const createCourseWorkflow = async () => {
+   await fetch(`${API_BASE}/workflows/course/createCourse`, {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json",
+        },
+        credentials: 'include',
+    });
+  }
 
   // Handle course editing
   const handleEditCourse = async (courseId, updates) => {

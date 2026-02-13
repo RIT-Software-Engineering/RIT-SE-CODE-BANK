@@ -329,30 +329,28 @@ async function getOrCreateWorkflowState(workflowId, userId) {
  *  parentID: the parentActionId if the action created is a simple child of a complex action
  * Returns an action response
  */
-async function create_action(name, description, actionType, metadata, parentId ){
+async function createAction(name, description, actionType, metadata, parentId ){
   const actionResponse = await fetch(`${WORKFLOWS_API}/actions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // TODO: Replace with actual professor ID from auth
           name: name || 'New Action',
-          description: description || '',
+          description: description || 'No description provided.',
           actionType: actionType || 'simple',
-          metadata: metadata || null,
-          parentActionId: parentId || null
+          metadata: metadata || {},
+          parentActionId: parentId
         })
       });
     return actionResponse;
 }
 
 /**
- * POST /api/workflows/course/createCurse
+ * POST /api/workflows/course/createCourse
  * Create the entire meta Course workflow and items within it 
  */
 router.post('/course/createCourse', async (req, res) => {
   try {
-    const prisma = req.prisma;
-
     // Create the overall Course Workflow
     console.log('Creating workflow at:', `${WORKFLOWS_API}/workflows`);
 
@@ -380,19 +378,20 @@ router.post('/course/createCourse', async (req, res) => {
     // Step 2: Create actions and link them
     const createdActions = [];
 
-    createdActions.push(
-      await create_action(
+    const complexAction = await createAction(
         "Complex Course Workflow", "This is the first action in this workflow.", "complex"
+    );
+    const createdComplexAction = await complexAction.json();
+
+    createdActions.push(complexAction);
+    createdActions.push(
+      await createAction(
+        "Fill in Details", "The user enters the details for the course", "simple",  {key: "DET"}, createdComplexAction.id 
       )
     );
     createdActions.push(
-      await create_action(
-        {name: "Fill in Details", desciption:"The user enters the details for the course", metadata: {key: "DET"}} 
-      )
-    );
-    createdActions.push(
-      await create_action(
-        {name: "Upload Syllabus", desciption:"This is where the user uploads the syllabus.", metadata: {key: "SYL"}} 
+      await createAction(
+        "Upload Syllabus", "This is where the user uploads the syllabus.", "simple", {key: "SYL"}, createdComplexAction.id
       )
     );
 
