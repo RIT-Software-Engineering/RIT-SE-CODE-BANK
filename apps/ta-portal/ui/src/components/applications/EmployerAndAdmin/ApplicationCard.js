@@ -30,6 +30,7 @@ import {
   Paper,
   Typography,
   Link as MuiLink,
+  Button
 } from '@mui/material';
 import {
   MoreVert as EllipsisVerticalIcon,
@@ -307,6 +308,37 @@ export default function ApplicationCard({
               color={statusColor}
               sx={{ fontWeight: 'bold', fontSize: '1rem' }}
             />
+          </Box>
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="body2" color="text.secondary">Actions:</Typography>
+
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</Button>
+              </Grid>
+              <Button variant="outlined" onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</Button>
+              {showInterviewOption && (
+                <Grid item xs={12} sm={6}>
+                  <Button variant="outlined" onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>Select for Interview</Button>
+                </Grid>)}
+              {showHireOption && (
+                <Grid item xs={12} sm={6}>
+                  <Button variant="outlined" onClick={() => { if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</Button>
+                </Grid>
+              )}
+              {showOfferOption && (<Grid item xs={12} sm={6}>
+                <Button variant="outlined" onClick={handleOfferPosition}>Offer Position</Button>
+              </Grid>)}
+            </Grid>
+
+            {showRejectOption && (
+              <Button variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
+            )}
+
+
+
           </Box>
         </Box>
       </Paper>
