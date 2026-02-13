@@ -35,6 +35,7 @@ const FEATURES = {
   PROFILES: "PROFILES",
   KRONOS: "KRONOS",
   ORACLE: "ORACLE",
+  WORKDAY: "WORKDAY",
 };
 
 /**

@@ -24,6 +24,13 @@ export const DASHBOARD_OPTIONS = [
   },
   {
     category: 'Personal',
+    text: 'Workday',
+    link: 'https://workday.rit.edu',
+    roles: [ROLES.EMPLOYEE, ROLES.ADMIN],
+    feature: FEATURES.WORKDAY
+  },
+  {
+    category: 'Personal',
     text: 'Oracle',
     link: 'https://myinfo.rit.edu',
     roles: [ROLES.EMPLOYEE, ROLES.ADMIN],

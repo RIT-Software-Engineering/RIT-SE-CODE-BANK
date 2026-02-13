@@ -34,6 +34,7 @@ const FEATURE_LABELS = {
   PROFILES: "User Profiles",
   KRONOS: "Kronos Link",
   ORACLE: "Oracle Link",
+  WORKDAY: "Workday Link"
 };
 
 const FEATURE_DESCRIPTIONS = {
@@ -44,6 +45,7 @@ const FEATURE_DESCRIPTIONS = {
   PROFILES: "Enable user profile viewing and editing",
   KRONOS: "Enable quick access link to Kronos timecard system",
   ORACLE: "Enable quick access link to Oracle MyInfo portal",
+  WORKDAY: "Enable quick access link to Workday timecard system"
 };
 
 export default function FeatureFlagsPage() {
