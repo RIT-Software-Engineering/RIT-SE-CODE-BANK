@@ -221,7 +221,7 @@ export default function CandidateApplicationCard({
               onClose={handleMenuClose}
             >
               <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
-              <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
+              <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Notes</MenuItem>
               {(jobApplicationStatus.toLowerCase() === "applied" || jobApplicationStatus.toLowerCase() === "interview") && (
                 <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>Delete Application</MenuItem>
               )}

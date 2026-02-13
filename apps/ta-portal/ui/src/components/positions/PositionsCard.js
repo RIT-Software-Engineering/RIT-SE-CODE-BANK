@@ -199,7 +199,7 @@ export default function PositionsCard({
         </IconButton>
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
-          <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
+          <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Notes</MenuItem>
           {showActionItems && <Divider />}
           {showEdit && <MenuItem onClick={() => { onEdit(position); handleMenuClose(); }}>Edit Position</MenuItem>}
           {showApprove && <MenuItem onClick={() => { onApprove(position.id); handleMenuClose(); }}>Approve Position</MenuItem>}
@@ -212,7 +212,7 @@ export default function PositionsCard({
   return (
     <>
       <Paper elevation={3} sx={(theme)=>({  p: { xs: 2, md: 3 } , background: theme.palette.mode === 'dark'
-                    ? "" : "white" })}> 
+          ? "" : "white" })}> 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }} >
           <Box flexGrow={1} >
             <Typography variant="h2" component="h2" gutterBottom>

@@ -236,7 +236,7 @@ export default function ApplicationCard({
             </IconButton>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
               <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
-              <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
+              <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Notes</MenuItem>
 
               {showActionMenuItems && <Divider />}
 
