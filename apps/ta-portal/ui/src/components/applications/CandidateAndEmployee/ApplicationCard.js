@@ -11,8 +11,8 @@ import {
   getStatusChipColor,
 } from "@/utils/applicationUtils";
 import { useNotification } from "@/contexts/NotificationContext";
-import ViewableCommentForm from "../../comments/ViewableCommentForm";
-import EditableCommentForm from "@/components/comments/EditableCommentForm";
+import ViewableNoteForm from "../../notes/ViewableNoteForm";
+import EditableNoteForm from "@/components/notes/EditableNoteForm";
 import { applicationStatusEnumToString } from '@/constants/applicationStatusConstants';
 import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
@@ -60,7 +60,7 @@ export default function CandidateApplicationCard({
   const [isViewingApplication, setIsViewingApplication] = useState(false);
   const [isConfirmingDeletion, setIsConfirmingDeletion] = useState(false);
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
-  const [isViewingComments, setIsViewingComments] = useState(false);
+  const [isViewingNotes, setIsViewingNotes] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [clearConfirm, setShowClearConfirm]=useState(false);
 
@@ -147,7 +147,7 @@ export default function CandidateApplicationCard({
     }
   };
 
-  const handleConfirmUpdate = async (comment) => {
+  const handleConfirmUpdate = async (note) => {
     setIsProcessingUpdate(true);
     try {
       let fullName = `${currentUser.fname} ${currentUser.lname}`;
@@ -155,7 +155,7 @@ export default function CandidateApplicationCard({
         fullName,
         id,
         modalState.status,
-        comment
+        note
       );
       showNotification(
         `Application status successfully updated to "${modalState.status?.replace(
@@ -221,7 +221,7 @@ export default function CandidateApplicationCard({
               onClose={handleMenuClose}
             >
               <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
-              <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Notes</MenuItem>
+              <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
               {(jobApplicationStatus.toLowerCase() === "applied" || jobApplicationStatus.toLowerCase() === "interview") && (
                 <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>Delete Application</MenuItem>
               )}
@@ -319,19 +319,19 @@ export default function CandidateApplicationCard({
         </ConfirmationModal>
       )}
       */}
-      {isViewingComments && (
-        <ViewableCommentForm
+      {isViewingNotes && (
+        <ViewableNoteForm
           foreignKey={application.id}
           foreignTableName="JobPositionApplicationHistory"
-          itemTitle="Application Comment History"
+          itemTitle="Application Note History"
           itemSubtitle={application.jobPosition.course.name}
           statusEnumMap={applicationStatusEnumToString}
           userRole={currentUser.role}
-          onClose={() => setIsViewingComments(false)}
+          onClose={() => setIsViewingNotes(false)}
         />
       )}
 
-      <EditableCommentForm
+      <EditableNoteForm
         isOpen={modalState.isOpen}
         onClose={handleCloseUpdateModal}
         onConfirm={handleConfirmUpdate}
