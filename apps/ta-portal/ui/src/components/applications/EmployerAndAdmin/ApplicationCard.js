@@ -325,7 +325,7 @@ export default function ApplicationCard({
                 </Grid>)}
               {showHireOption && (
                 <Grid item xs={12} sm={6}>
-                  <Button variant="outlined" onClick={() => { if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</Button>
+                  <Button variant="outlined" onClick={() => { if (onHire) onHire(); handleMenuClose(); }} >Hire Candidate</Button>
                 </Grid>
               )}
               {showOfferOption && (<Grid item xs={12} sm={6}>
