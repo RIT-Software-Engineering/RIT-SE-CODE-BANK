@@ -320,6 +320,107 @@ async function getOrCreateWorkflowState(workflowId, userId) {
 }
 
 /**
+ * Helper function to create an action
+ * Params:
+ *  name: name of the action
+ *  description: description of the action
+ *  actionType: type of action (simple, complex, branching)
+ *  metadata: any extra data 
+ *  parentID: the parentActionId if the action created is a simple child of a complex action
+ * Returns an action response
+ */
+async function create_action(name, description, actionType, metadata, parentId ){
+  const actionResponse = await fetch(`${WORKFLOWS_API}/actions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // TODO: Replace with actual professor ID from auth
+          name: name || 'New Action',
+          description: description || '',
+          actionType: actionType || 'simple',
+          metadata: metadata || null,
+          parentActionId: parentId || null
+        })
+      });
+    return actionResponse;
+}
+
+/**
+ * POST /api/workflows/course/createCurse
+ * Create the entire meta Course workflow and items within it 
+ */
+router.post('/course/createCourse', async (req, res) => {
+  try {
+    const prisma = req.prisma;
+
+    // Create the overall Course Workflow
+    console.log('Creating workflow at:', `${WORKFLOWS_API}/workflows`);
+
+    const workflowResponse = await fetch(`${WORKFLOWS_API}/workflows`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // TODO: Replace with actual professor ID from auth
+        name: "Create Course",
+        description: "The overall Course Workflow that contains a complex action."
+      })
+    });
+
+    console.log('Workflow API response status:', workflowResponse.status);
+
+    if (!workflowResponse.ok) {
+      const errorText = await workflowResponse.text();
+      console.error('Workflows API error creating workflow:', workflowResponse.status, errorText);
+      throw new Error(`Failed to create workflow: ${workflowResponse.status} - ${errorText}`);
+    }
+
+    const workflow = await workflowResponse.json();
+    console.log('Workflow created:', workflow.id);
+
+    // Step 2: Create actions and link them
+    const createdActions = [];
+
+    createdActions.push(
+      await create_action(
+        "Complex Course Workflow", "This is the first action in this workflow.", "complex"
+      )
+    );
+    createdActions.push(
+      await create_action(
+        {name: "Fill in Details", desciption:"The user enters the details for the course", metadata: {key: "DET"}} 
+      )
+    );
+    createdActions.push(
+      await create_action(
+        {name: "Upload Syllabus", desciption:"This is where the user uploads the syllabus.", metadata: {key: "SYL"}} 
+      )
+    );
+
+    createdActions.forEach((actionResponse) => {
+      if (!actionResponse.ok) {
+        throw new Error(`Failed to create action.`);
+      }
+    })
+
+    res.json({
+      success: true,
+      data: {
+        workflowId: workflow.id,
+        actionsCreated: createdActions.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating onboarding workflow:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create onboarding workflow',
+      details: error.message
+    });
+  }
+});
+
+/**
  * POST /api/workflows/course/:courseId/onboarding
  * Create or update onboarding workflow for a course
  * Body: { actions: [{ title, description }] }
@@ -363,13 +464,15 @@ router.post('/course/:courseId/onboarding', async (req, res) => {
 
     // Step 1: Create workflow
     console.log('Creating workflow at:', `${WORKFLOWS_API}/workflows`);
+    const idString = course.id.toString();
+    const semesterString = course.semester.toString();
     console.log('Request body:', JSON.stringify({
-      userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-      tags: ['onboarding', course.id.toString(), course.semester.toString()],
+      userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // TODO update with real Prof. ID
+      tags: ['onboarding', idString, semesterString],
       metadata: {
-        courseId: course.id.toString(),
+        courseId: idString,
         courseName: course.name,
-        semester: course.semester.toString(),
+        semester: semesterString,
         type: 'student-onboarding'
       }
     }, null, 2));
@@ -379,11 +482,11 @@ router.post('/course/:courseId/onboarding', async (req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // TODO: Replace with actual professor ID from auth
-        tags: ['onboarding', course.id.toString(), course.semester.toString()],
+        tags: ['onboarding', idString, semesterString],
         metadata: {
-          courseId: course.id.toString(),
+          courseId: idString,
           courseName: course.name,
-          semester: course.semester.toString(),
+          semester: semesterString,
           type: 'student-onboarding'
         }
       })
