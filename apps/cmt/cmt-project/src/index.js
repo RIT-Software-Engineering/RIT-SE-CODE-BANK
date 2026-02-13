@@ -14,6 +14,7 @@ import CourseWebsitePage from "./pages/CourseWebsitePage.jsx";
 import "./styles/global.css";
 import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { WorkflowRendererTester } from "./components/WorkflowActionSimpleRenderer.jsx";
 
 /* ------------------------------------------------------------------
    Suppress noisy ResizeObserver errors in development
@@ -86,6 +87,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <CourseWebsitePage />
               </RequireAuth>
             } 
+          />
+          <Route 
+            path="actiontest" 
+            element={<WorkflowRendererTester />} 
           />
 
           {/* All authenticated users can access these */}
