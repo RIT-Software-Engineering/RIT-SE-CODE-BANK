@@ -53,7 +53,7 @@ export async function CMTFetch(method, url, body, headers, allowedErrorCodes = [
     const fullHeaders = { ...headers, "Content-Type": "application/json", }
     const headersJSON = JSON.stringify(fullHeaders)
 
-    console.log(`fetching to url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
+    console.log(`🐖 Fetching to url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
     
     let response
     try {
