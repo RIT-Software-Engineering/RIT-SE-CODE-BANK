@@ -38,7 +38,7 @@ async function getHighlightByFacultyId(facultyId){
   let connection;
   try {
     connection = await pool.getConnection();
-    const rows = await connection.query('SELECT highlights.id, forms.time_submitted FROM forms INNER JOIN highlights ON forms.id = highlights.form_id WHERE forms.faculty_information_id = ?', [facultyId]);
+    const rows = await connection.query('SELECT forms.id, forms.time_submitted FROM forms INNER JOIN highlights ON forms.id = highlights.form_id WHERE forms.faculty_information_id = ?', [facultyId]);
     console.log(rows);
     return rows;
   } finally {

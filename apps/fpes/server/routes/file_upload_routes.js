@@ -23,7 +23,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        console.log('File received:', req.file.originalname);
+        const { faculty_id } = req.body;
+        if (!faculty_id) {
+            return res.status(400).json({ error: 'faculty_id is required' });
+        }
+
+        console.log('File received:', req.file.originalname, 'for faculty:', faculty_id);
         const filePath = req.file.path;
         const fileExt = path.extname(req.file.originalname).toLowerCase();
 
@@ -43,7 +48,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         res.json({
             success: true,
             filename: req.file.originalname,
-            data: parsedData
+            data: parsedData,
+            faculty_id: faculty_id
         });
 
         

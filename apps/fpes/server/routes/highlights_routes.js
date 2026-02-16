@@ -22,7 +22,9 @@ router.get('/', async (_req, res) => {
 // GET by facultyID
 router.get("/submitted_by/:facultyID", async(req, res) => {
   try{
-    const results = await getHighlightByFacultyId(req.params.facultyID);
+    const facultyID = req.params.facultyID;
+    const results = await getHighlightByFacultyId(facultyID);
+    // Only return data for the requested faculty
     return res.send(results);
   } catch (err){
     console.error(err)
@@ -164,6 +166,10 @@ router.post("/draft", async (req, res) => {
 
 router.post("/parsed", async (req, res) => {
   try {
+    const { faculty_id } = req.body;
+    if (!faculty_id) {
+      return res.status(400).json({ error: 'faculty_id is required' });
+    }
     const result = await saveParsedHighlights(req.body);
     res.json({ success: true, id: result.insertId });
   } catch (err) {

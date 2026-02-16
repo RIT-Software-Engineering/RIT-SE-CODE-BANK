@@ -36,11 +36,19 @@ async function getFormByIdInViewFormat(id){
 
     // Gets the basic form information like facultyId
     const formResponse = await getFormById(id);
+    
+    if (!formResponse || formResponse.length === 0) {
+        throw new Error('Form not found');
+    }
 
     const facultyId = formResponse[0].faculty_information_id;
     const highlightsData = await getHighlightByFormId(id);
 
-    const studentSupportId = highlightsData[0].student_support_id;
+    if (!highlightsData || highlightsData.length === 0) {
+        throw new Error('No highlights data found for this form');
+    }
+
+    const studentSupportId = highlightsData[0]?.student_support_id || null;
 
     formData.highlights = highlightsData[0];
 
@@ -59,7 +67,7 @@ async function getFormByIdInViewFormat(id){
     const services = await getServicesOfForm(id);
     formData.services = services;
 
-    const studentSupport = await getStudentSupportById(studentSupportId);
+    const studentSupport = studentSupportId ? await getStudentSupportById(studentSupportId) : null;
     formData.student_support = studentSupport;
 
     return formData;

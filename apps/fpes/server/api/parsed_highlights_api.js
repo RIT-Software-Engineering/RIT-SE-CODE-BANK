@@ -3,12 +3,21 @@ const pool = require('../db');
 async function saveParsedHighlights(data) {
     const conn = await pool.getConnection();
     try {
-        const result = await conn.query(
-            `INSERT INTO highlights (faculty_information_id, scholarship, teaching, service, administrative, last_saved) 
-             VALUES (?, ?, ?, ?, ?, NOW())`,
-            [data.faculty_id, data.scholarship, data.teaching, data.service, data.administrative]
+        // First create a form entry
+        const formResult = await conn.query(
+            `INSERT INTO forms (faculty_information_id, time_submitted) VALUES (?, NOW())`,
+            [data.faculty_id]
         );
-        return result;
+        
+        const formId = Number(formResult.insertId);
+        
+        // Then save highlights with the new form_id
+        const result = await conn.query(
+            `INSERT INTO highlights (form_id, administrative_responsibilities, last_saved) 
+             VALUES (?, ?, NOW())`,
+            [formId, data.administrative]
+        );
+        return { success: true, id: Number(result.insertId) };
     } finally {
         conn.release();
     }
