@@ -1,10 +1,8 @@
 // Handles all workflow-related logic for CMT
 import express from "express";
+import { WORKFLOWS_API, workflowsFetch } from "../utils/api.js";
 
 const router = express.Router();
-
-
-const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:3001').replace(/\/$/, ''); // Remove trailing slash
 export default router
 
 /**
@@ -329,95 +327,16 @@ async function getOrCreateWorkflowState(workflowId, userId) {
  *  parentID: the parentActionId if the action created is a simple child of a complex action
  * Returns an action response
  */
-async function createAction(name, description, actionType, metadata, parentId ){
-  const actionResponse = await fetch(`${WORKFLOWS_API}/actions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // TODO: Replace with actual professor ID from auth
-          name: name || 'New Action',
-          description: description || 'No description provided.',
-          actionType: actionType || 'simple',
-          metadata: metadata || {},
-          parentActionId: parentId
-        })
-      });
-    return actionResponse;
+export async function createAction(userId, name, description, actionType, metadata, parentId){
+  return await workflowsFetch("POST", "actions", {
+    userId: userId,
+    name: name || 'New Action',
+    description: description || 'No description provided.',
+    actionType: actionType || 'simple',
+    metadata: metadata || {},
+    parentActionId: parentId
+  })
 }
-
-/**
- * POST /api/workflows/course/createCourse
- * Create the entire meta Course workflow and items within it 
- */
-router.post('/course/createCourse', async (req, res) => {
-  try {
-    // Create the overall Course Workflow
-    console.log('Creating workflow at:', `${WORKFLOWS_API}/workflows`);
-
-    const workflowResponse = await fetch(`${WORKFLOWS_API}/workflows`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', // TODO: Replace with actual professor ID from auth
-        name: "Create Course",
-        description: "The overall Course Workflow that contains a complex action."
-      })
-    });
-
-    console.log('Workflow API response status:', workflowResponse.status);
-
-    if (!workflowResponse.ok) {
-      const errorText = await workflowResponse.text();
-      console.error('Workflows API error creating workflow:', workflowResponse.status, errorText);
-      throw new Error(`Failed to create workflow: ${workflowResponse.status} - ${errorText}`);
-    }
-
-    const workflow = await workflowResponse.json();
-    console.log('Workflow created:', workflow.id);
-
-    // Step 2: Create actions and link them
-    const createdActions = [];
-
-    const complexAction = await createAction(
-        "Complex Course Workflow", "This is the first action in this workflow.", "complex"
-    );
-    const createdComplexAction = await complexAction.json();
-
-    createdActions.push(complexAction);
-    createdActions.push(
-      await createAction(
-        "Fill in Details", "The user enters the details for the course", "simple",  {key: "DET"}, createdComplexAction.id 
-      )
-    );
-    createdActions.push(
-      await createAction(
-        "Upload Syllabus", "This is where the user uploads the syllabus.", "simple", {key: "SYL"}, createdComplexAction.id
-      )
-    );
-
-    createdActions.forEach((actionResponse) => {
-      if (!actionResponse.ok) {
-        throw new Error(`Failed to create action.`);
-      }
-    })
-
-    res.json({
-      success: true,
-      data: {
-        workflowId: workflow.id,
-        actionsCreated: createdActions.length
-      }
-    });
-
-  } catch (error) {
-    console.error('Error creating onboarding workflow:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create onboarding workflow',
-      details: error.message
-    });
-  }
-});
 
 /**
  * POST /api/workflows/course/:courseId/onboarding

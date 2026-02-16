@@ -1,4 +1,8 @@
 import express from "express";
+import { createAction } from "./workflows.js";
+import { workflowsFetch } from "../utils/api.js";
+import { makeMetadataSafeForWorkflows } from "../../utils/workflows.js";
+
 const router = express.Router();
 export default router
 
@@ -20,21 +24,101 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * POST /api/cmt/course
- * Create a course
+ * GET /api/cmt/course/:id
  */
-router.post("/", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const prisma = req.prisma;
-    let { id, name, semester, color, students, professorId } = req.body;
-    students = parseInt(students, 10);
-    const course = await prisma.course.create({
-      data: { id, name, semester, color, students, professorId },
-    });
-    res.json(course);
+    // TODO: check perms/if prof owns course
+    const prisma = req.prisma
+    const course = await prisma.course.findUnique({
+      where: { id: parseInt(req.params.id) }
+    })
+
+    const workflow = await workflowsFetch("GET", `workflows/${course.workflowId}`)
+    const actions = await workflowsFetch("GET", `actions?workflowId=${course.workflowId}`)
+    const actionStates = await workflowsFetch("GET", `states/workflow/${course.workflowStateId}`)
+
+    function determineCallback(code, asid) {
+      switch (code) {
+        case "COURSE_INFORMATION":
+          return `course/${course.id}?uid=${req.user.uid}&asid=${asid}`
+        default:
+          throw Error("Unrecognized action metadata code " + code)
+      }
+    }
+    const actionsWithCallbacks = actions.map(action => ({
+      action,
+      callback: determineCallback(
+        JSON.parse(action.metadata.code),
+        actionStates.baseActionState.children.find(actionState => actionState.actionId === action.id).id // Find the action state's matching action
+      )
+    }))
+
+    res.json({ course, workflow, actionsWithCallbacks, actionStates });
   } catch (err) {
     console.error("course creation failed: ", err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * POST /api/cmt/course
+ * Create course workflow and course db entity
+ */
+router.post('/', async (req, res) => {
+  try {
+    const professorId = req.user.uid
+    
+    // TODO: this should be obtained from a template or something, whether user-selected or default
+    const metadataCourseInfo = {
+      code: "COURSE_INFORMATION",
+      outputs: [
+        {
+          name: "course section",
+          type: "text",
+          isRequired: false,
+          placeholder: "1",
+          validation: {
+            maxLength: 30
+          },
+        }
+      ]
+    }
+    const safeMetadata = makeMetadataSafeForWorkflows(metadataCourseInfo)
+
+    const createdWorkflow = await workflowsFetch("POST", "workflows", { userId: professorId, name: "Create Course", description: "Overall course workflow" }) // Create Workflow
+    console.log(`Created workflow with id ${createdWorkflow.id}`)
+    
+    const createdAction = await createAction(professorId, "Course Details", "Enter some details about the course", "simple", safeMetadata) // Create Action
+    console.log(`Created action with id ${createdAction.id}`)
+    
+    const workflowWithAction = await workflowsFetch("PUT", `workflows/${createdWorkflow.id}`, { rootActionId: createdAction.id }) // Attach Action to Workflow
+    console.log(`Attached action with id ${createdAction.id} to workflow with id ${workflowWithAction.id}`)
+    
+    const createdState = await workflowsFetch("POST", "states/workflow", { userId: professorId, workflowId: createdWorkflow.id }) // Create state
+    console.log(`Created workflow action state with id ${createdState.id}`)
+
+    const newCourse = await req.prisma.course.create({
+      data: {
+        classId: req.body.courseCode,
+        name: req.body.courseName,
+        color: req.body.color,
+        semester: 2245, // TODO: maybe replace with null? Needs to be updated in schema though
+        professors: {connect: {id: professorId}},
+        workflowId: createdWorkflow.id,
+        workflowStateId: createdState.id
+      },
+    });
+
+    // For simplicity of the frontend, return minimal information, since the GET for courses will contain all the info needed, and will be called much more often.
+    res.json({ course: newCourse });
+  } catch (error) {
+    console.error('Error creating meta course workflow/empty course :', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create meta course workflow/empty course',
+      details: error.message
+    });
   }
 });
 
@@ -64,6 +148,9 @@ router.put("/:id", async (req, res) => {
 
     console.log("Course updated successfully:", updatedCourse);
 
+    const { uid: userId, asid: actionStateId } = req.query
+    await workflowsFetch("PUT", `/states/action/${actionStateId}`, { stateType: "completed" })
+
     res.json({
       success: true,
       data: updatedCourse,
@@ -71,7 +158,7 @@ router.put("/:id", async (req, res) => {
   } catch (error) {
     console.error("Error updating course:", error);
     res.status(500).json({
-      success: false,
+      success: false, // TODO: ITS A 500 STATUS OF COURSE SUCCESS IS FALSE
       error: error.message,
     });
   }
@@ -136,6 +223,7 @@ router.post("/create-with-workflow", async (req, res) => {
     const prisma = req.prisma;
 
     // Validate course data
+    /* TODO: verify if these need to exist or can be deleted with workflow's own validation
     var missingField = "";
     if (!course.classId) {missingField += " Class ID ";}
     if (!course.name) {missingField += " Class Name ";}
@@ -150,7 +238,7 @@ router.post("/create-with-workflow", async (req, res) => {
         success: false,
         error: `Missing required course fields: ${missingField}`,
       });
-    }
+    }*/
 
     // Step 1: Get or create professor
     let professorId = course.professorId;
