@@ -47,20 +47,23 @@ class CMTFetchError extends Error {
  * @returns Response of fetch in the form of a promise. If the promise is rejected, an error will be returned in the format { message: string, response: Response }. The response contains the full response of the fetch.
  */
 export async function CMTFetch(method, url, body, headers, allowedErrorCodes = []) {
-    console.log(`fetching to url ${url} with body ${body} and headers ${headers} and method ${method}`)
+    
     const fullURL = `${API_BASE}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
+    const bodyJSON = body ? JSON.stringify(body) : undefined
+    const fullHeaders = { ...headers, "Content-Type": "application/json", }
+    const headersJSON = JSON.stringify(fullHeaders)
+
+    console.log(`🐖 Fetching to url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
+    
     let response
     try {
-        response = await fetch(fullURL, { 
-            method, 
-            body: JSON.stringify(body), 
-            headers: { ...headers, "Content-Type": "application/json", }, 
-            credentials: 'include',
-        })
+        const options = { method, headers: fullHeaders }
+        if (bodyJSON !== undefined) options.body = bodyJSON
+        response = await fetch(fullURL, { ...options, credentials: 'include'})
     } catch (error) {
         // TODO: Use central notification system to show error
-        console.error(`🥕 Error when fetching to url ${url} with body ${body} and headers ${headers} and method ${method}`)
-        throw Error(`🐦‍🔥 Error when fetching to url ${url} with body ${body} and headers ${headers} and method ${method}`)
+        console.error(`🥕 Error when fetching to url ${fullURL}: ${error} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
+        throw Error(`🐦‍🔥 Error when fetching to url ${fullURL}: ${error} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
     }
         
     if (response.ok) {
@@ -75,7 +78,7 @@ export async function CMTFetch(method, url, body, headers, allowedErrorCodes = [
     
     // Create specially formatted error so consumer can access the codes easily
     throw new CMTFetchError(
-        `🐘 Error status ${response.status} from url ${url} with body ${body} and headers ${headers} and method ${method}`, 
+        `🐘 Error status ${response.status}: ${JSON.stringify(await response.json())} from url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`, 
         response
     )
 }

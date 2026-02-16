@@ -1,7 +1,10 @@
-const express = require("express");
-const router = express.Router();
-const { PrismaClient } = require("@prisma/client");
+import express from "express";
+import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
+
+const router = express.Router();
+export default router
 
 // POST: Create a new course template
 router.post("/", async (req, res) => {
@@ -26,7 +29,7 @@ router.post("/", async (req, res) => {
         exams: parseInt(exams),
         labs: parseInt(labs),
         projects: parseInt(projects),
-        professorId: parseInt(professorId),
+        professorId: professorId,
       },
     });
 
@@ -44,7 +47,7 @@ router.get("/professor/:professorId", async (req, res) => {
 
     const templates = await prisma.courseTemplate.findMany({
       where: {
-        professorId: parseInt(professorId),
+        professorId: professorId,
       },
       orderBy: {
         createdAt: "desc",
@@ -182,5 +185,3 @@ router.get("/:id/items", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch template items" });
   }
 });
-
-module.exports = router;

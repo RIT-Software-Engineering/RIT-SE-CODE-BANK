@@ -520,7 +520,7 @@ body.calendar-page .banner {
    MODAL - IMPROVED CONTRAST
    ============================================ */
 
-.modal-overlay {
+/* .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -640,7 +640,7 @@ body.calendar-page .banner {
   color: var(--text-white);
 }
 
-/* Enhanced Form Input Styling */
+/* Enhanced Form Input Styling
 .modal-body input[type="text"],
 .modal-body select,
 .modal-body textarea {
@@ -747,7 +747,7 @@ body.calendar-page .banner {
 
 /* ============================================
    RESPONSIVE
-   ============================================ */
+   ============================================
 
 @media (max-width: 1200px) {
   .dashboard {
@@ -809,4 +809,4 @@ body.calendar-page .banner {
     width: 100%;
     justify-content: center;
   }
-}
+}*/

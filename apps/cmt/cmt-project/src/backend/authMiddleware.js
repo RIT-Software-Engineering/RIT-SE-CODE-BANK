@@ -1,8 +1,7 @@
-// src/backend/authMiddleware.js
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 
 // Middleware to read cmt_id cookie and attach req.user
-function authMiddleware(req, res, next) {
+export default function authMiddleware(req, res, next) {
   const cookieHeader = req.headers.cookie || "";
   let token = null;
 
@@ -29,5 +28,3 @@ function authMiddleware(req, res, next) {
 
   return next();
 }
-
-module.exports = authMiddleware;

@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 
-module.exports = function makeCourseWebsiteRouter(prisma) {
+export default function makeCourseWebsiteRouter(prisma) {
   const router = express.Router();
 
   // list all the courses

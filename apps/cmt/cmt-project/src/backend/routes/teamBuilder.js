@@ -1,7 +1,6 @@
-// src/backend/routes/teamBuilder.js  (CommonJS only)
-const express = require("express");
-const multer = require("multer");
-const { parse } = require("csv-parse/sync");
+import express from "express";
+import multer from "multer";
+import { parse } from "csv-parse/sync";
 
 // Require that a user is logged in (authMiddleware should set req.user)
 function requireUser(req, res) {
@@ -45,7 +44,7 @@ async function ensureTeamSetOwnedByProfessor(prisma, teamSetId, professorId) {
   return teamSet;
 }
 
-module.exports = function makeTeamBuilderRouter(prisma) {
+export default function makeTeamBuilderRouter(prisma) {
   const router = express.Router();
   const upload = multer({ storage: multer.memoryStorage() });
 

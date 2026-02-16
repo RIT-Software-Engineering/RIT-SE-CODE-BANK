@@ -1,24 +1,31 @@
-// src/backend/server.js
-const path = require("path");
-require("dotenv").config({
-  // Load .env from the cmt-project root
+import express from "express";
+import { PrismaClient } from "@prisma/client";
+import cors from "cors";
+import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
+
+import authMiddleware from "./authMiddleware.js";
+
+import eventRoutes from "./routes/events.js";
+import courseRoutes from "./routes/course.js";
+import templateRoutes from "./routes/template.js";
+import makeTeamBuilderRouter from "./routes/teamBuilder.js";
+import workflowRoutes from "./routes/workflows.js";
+
+import path from "path";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import makeCourseWebsiteRouter from "./routes/courseWebsite.js";
+import { readFileSync } from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
   path: path.join(__dirname, "..", "..", ".env"),
 });
 
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-const jwt = require("jsonwebtoken");
-const authMiddleware = require("./authMiddleware");
-
-const eventRoutes = require("./routes/events");
-const courseRoutes = require("./routes/course"); // NEW - Course routes
-const templateRoutes = require("./routes/template");
-const makeTeamBuilderRouter = require("./routes/teamBuilder");
-const workflowRoutes = require("./routes/workflows");
-
-const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const app = express();
@@ -35,7 +42,6 @@ const allowedOrigins = [
   "http://localhost:3000",            // CRA default
 ];
 
-const makeCourseWebsiteRouter = require("./routes/courseWebsite");
 const courseWebsiteRoutes = makeCourseWebsiteRouter(prisma);
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 
@@ -88,9 +94,8 @@ app.post("/api/dev/login", async (req, res) => {
     }
 
     // Read dev-users.json for authentication
-    const fs = require("fs");
     const devUsersPath = path.join(__dirname, "dev-users.json");
-    const devUsers = JSON.parse(fs.readFileSync(devUsersPath, "utf-8"));
+    const devUsers = JSON.parse(readFileSync(devUsersPath, "utf-8"));
 
     // Find user by email
     const user = devUsers.find(u => u.email === email);
