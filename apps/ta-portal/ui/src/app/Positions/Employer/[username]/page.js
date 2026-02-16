@@ -66,6 +66,12 @@ function EmployerPositionsContent() {
   const [openPositions, setOpenPositions] = useState([]);
   const [myPositions, setMyPositions] = useState([]);
 
+  // Configuration for the tabs, linking them to their respective data states.
+  const tabs = [
+    { id: "open-positions", label: "All Open Positions", data: openPositions },
+    { id: "my-positions", label: "My Created Positions", data: myPositions },
+  ];
+
   // General state for loading, errors, and search/filter functionality.
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -348,11 +354,7 @@ function EmployerPositionsContent() {
     }
   };
     
-  // Configuration for the tabs, linking them to their respective data states.
-  const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-  ];
+
 
   // Get the data for the currently active tab.
   const activeTabData = tabs[activeTab];

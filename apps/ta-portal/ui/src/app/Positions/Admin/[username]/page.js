@@ -62,6 +62,13 @@ export default function AdminPositions() {
   const [myPositions, setMyPositions] = useState([]);
   const [allPositions, setAllPositions] = useState([]);
 
+  // Configuration for the tabs, linking them to their respective data states.
+  const tabs = [
+    { id: "open-positions", label: "All Open Positions", data: openPositions },
+    { id: "my-positions", label: "My Created Positions", data: myPositions },
+    { id: "all-positions", label: "Manage All Positions", data: allPositions },
+  ];
+
   // General state for loading, errors, and search/filter functionality.
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -384,12 +391,7 @@ export default function AdminPositions() {
     }
   };
 
-  // Configuration for the tabs, linking them to their respective data states.
-  const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-    { id: "all-positions", label: "Manage All Positions", data: allPositions },
-  ];
+
 
   // Get the data for the currently active tab.
   const activeTabData = tabs[activeTab];
