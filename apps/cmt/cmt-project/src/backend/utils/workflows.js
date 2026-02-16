@@ -35,14 +35,14 @@ export async function workflowsFetch(method, url, body, headers) {
 }
 
 /**
- * Helper function to create an action
- * Params:
- *  name: name of the action
- *  description: description of the action
- *  actionType: type of action (simple, complex, branching)
- *  metadata: any extra data 
- *  parentID: the parentActionId if the action created is a simple child of a complex action
- * Returns an action response
+ * Helper to create action
+ * @param {string} userId 
+ * @param {string} name 
+ * @param {string} description 
+ * @param {string} actionType 
+ * @param {object} metadata 
+ * @param {*} parentId 
+ * @returns response from /action
  */
 export async function createAction(userId, name, description, actionType, metadata, parentId){
   return await workflowsFetch("POST", "actions", {
