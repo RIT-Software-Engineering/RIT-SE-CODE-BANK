@@ -34,11 +34,17 @@ export default function ScheduleEditor({
   onSchedulesChange,
 }) {
   const [schedules, setSchedules] = useState(initialSchedules);
-  const [newSchedule, setNewSchedule] = useState({
-    dayOfWeek: "Monday",
-    startTime: "",
-    endTime: "",
-  });
+  
+  const [newSchedule, setNewSchedule] = useState(() => {
+  if (!initialSchedules || initialSchedules.length === 0) {
+    return { dayOfWeek: "Monday", startTime: "", endTime: "" };
+  }
+  const last = initialSchedules[initialSchedules.length - 1];
+  return { ...last }; 
+});
+
+    const[defaultTimes, setDefaultTimes] = useState({ startTime: "", endTime: "" })
+
 
   const triggerParentUpdate = (updatedSchedules) => {
     setSchedules(updatedSchedules);
@@ -74,18 +80,19 @@ export default function ScheduleEditor({
     }
     const updatedSchedules = [...schedules, newSchedule];
     triggerParentUpdate(updatedSchedules);
-    setNewSchedule({ dayOfWeek: "Monday", startTime: "", endTime: "" });
+    //setNewSchedule({ dayOfWeek: "Monday", startTime:'', endTime:''});
+    console.log(schedules)
   };
 
   return (
     <Paper variant="outlined" sx={(theme) => ({
-    p: 2,
-    bgcolor:
-      theme.palette.mode === "dark"
-        ? ""
-        : "#e0e0e0",    
-  })}
->
+      p: 2,
+      bgcolor:
+        theme.palette.mode === "dark"
+          ? ""
+          : "#e0e0e0",
+    })}
+    >
       <Typography variant="h3" gutterBottom>
         Edit Weekly Schedule
       </Typography>
@@ -105,13 +112,13 @@ export default function ScheduleEditor({
                 fullWidth
                 size="small"
                 sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? ""
-                  : "white",
-            }
-          })}
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? ""
+                        : "white",
+                  }
+                })}
               />
             </Grid>
             <Grid item xs={3}>
@@ -122,13 +129,13 @@ export default function ScheduleEditor({
                 fullWidth
                 size="small"
                 sx={(theme) => ({
-            "& .MuiOutlinedInput-root": {
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? ""
-                  : "white",
-            }
-          })}
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? ""
+                        : "white",
+                  }
+                })}
               />
             </Grid>
             <Grid item xs={2} sx={{ textAlign: 'right' }}>
@@ -150,8 +157,10 @@ export default function ScheduleEditor({
             label="Day"
             value={newSchedule.dayOfWeek}
             onChange={handleNewScheduleInputChange}
-          sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "white" })}
+            sx={(theme) => ({
+              background: theme.palette.mode === 'dark'
+                ? "" : "white"
+            })}
           >
             <MenuItem value="Monday">Monday</MenuItem>
             <MenuItem value="Tuesday">Tuesday</MenuItem>
@@ -168,7 +177,8 @@ export default function ScheduleEditor({
           onChange={handleNewScheduleInputChange}
           size="small"
           InputLabelProps={{ shrink: true }}
-          sx={(theme) => ({ flex: 1, width: '100%',
+          sx={(theme) => ({
+            flex: 1, width: '100%',
             "& .MuiOutlinedInput-root": {
               backgroundColor:
                 theme.palette.mode === "dark"
@@ -185,7 +195,8 @@ export default function ScheduleEditor({
           onChange={handleNewScheduleInputChange}
           size="small"
           InputLabelProps={{ shrink: true }}
-          sx={(theme) => ({ flex: 1, width: '100%',
+          sx={(theme) => ({
+            flex: 1, width: '100%',
             "& .MuiOutlinedInput-root": {
               backgroundColor:
                 theme.palette.mode === "dark"
