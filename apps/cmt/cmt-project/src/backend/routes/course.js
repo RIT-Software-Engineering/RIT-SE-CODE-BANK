@@ -75,6 +75,12 @@ router.get("/:id", async (req, res) => {
 /**
  * POST /api/cmt/course
  * Create course workflow and course db entity
+ * Returns an object of the following format
+ * ```
+ * {
+ *  course: CMT course object
+ * }
+ * ```
  */
 router.post('/', async (req, res) => {
   try {
