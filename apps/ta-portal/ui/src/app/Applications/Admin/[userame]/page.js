@@ -434,6 +434,7 @@ export default function AdminApplicationsPage() {
                             jobPosition={position}
                             application={app}
                             onStatusChange={handleStatusChange}
+                            onHire={() => setActiveTab(0)}
                           />
                         ))
                       ) : (

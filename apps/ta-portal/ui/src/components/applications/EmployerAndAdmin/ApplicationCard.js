@@ -242,7 +242,7 @@ export default function ApplicationCard({
               {showActionMenuItems && <Divider />}
 
               {showHireOption && (
-                <MenuItem onClick={() => { if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</MenuItem>
+                <MenuItem onClick={() => {console.log('click'); if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</MenuItem>
               )}
               {showRejectOption && (
                 <MenuItem onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} sx={{ color: 'error.main' }}>Reject Application</MenuItem>

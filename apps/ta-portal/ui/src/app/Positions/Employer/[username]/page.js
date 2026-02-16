@@ -329,7 +329,7 @@ function EmployerPositionsContent() {
 
     try {
       if (action === 'update') {
-        const noteData = { fname: currentUser.fname, lname: currentUser.lname, note };
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
         // Any update sends the position back to 'PENDING_APPROVAL' status.
         const updatedPositionData = { 
           ...context.positionData, 

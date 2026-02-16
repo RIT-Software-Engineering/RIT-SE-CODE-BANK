@@ -277,6 +277,7 @@ router.put("/positions/:id", async (req, res) => {
     res.status(200).json(updatedPosition);
 
   } catch (error) {
+    
     console.error(`Error in PUT /positions/${req.params.id} route:`, error);
     res.status(500).json({ error: "Failed to update position." });
   }

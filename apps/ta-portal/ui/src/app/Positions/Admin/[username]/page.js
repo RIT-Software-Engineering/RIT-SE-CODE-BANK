@@ -366,12 +366,12 @@ export default function AdminPositions() {
 
     try {
       if (action === 'statusUpdate') {
-        const noteData = { fname: currentUser.fname, lname: currentUser.lname, note };
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
         await updatePositionStatus(context.jobId, context.newStatus, noteData);
         showNotification('Position status updated successfully!', 'success');
 
       } else if (action === 'update') {
-        const noteData = { fname: currentUser.fname, lname: currentUser.lname, note };
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
         await updatePosition(context.jobId, context.positionData, noteData);
         showNotification('Position updated successfully!', 'success');
       }

@@ -437,7 +437,7 @@ async function updateJobPosition(jobId, positionData, commentData) {
           foreignKey: jobId,
           author: `${fname} ${lname}`,
           status: jobPositionStatus,
-          comment: comment,
+          comment: "" + comment,
           timestamp: new Date(),
         },
       });
