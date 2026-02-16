@@ -93,7 +93,7 @@ router.post('/', async (req, res) => {
         {
           name: "course section",
           type: "text",
-          isRequired: false,
+          isRequired: true,
           placeholder: "1",
           validation: {
             maxLength: 30
