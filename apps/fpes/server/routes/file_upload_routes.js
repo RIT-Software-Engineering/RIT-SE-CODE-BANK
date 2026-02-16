@@ -46,6 +46,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
             data: parsedData
         });
 
+        
+
     } catch (error) {
         console.error('Error parsing file:', error);
         res.status(500).json({ error: 'Failed to parse file: ' + error.message });

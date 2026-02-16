@@ -1,7 +1,8 @@
-import { Modal, Box, Button, TextField, Typography, Paper, IconButton } from "@mui/material";
+import { Modal, Box, Button, TextField, Typography, Paper, IconButton, colors } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import { useState, useEffect } from "react";
 import axios from "axios";
+import FundingTable from "./FundingTable";
 
 export default function DataPreviewModal({ isOpen, closeModal, parsedData }) {
     console.log("DataPreviewModal received:", parsedData);
@@ -59,9 +60,8 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData }) {
                     onChange={(e) => handleChange('period', e.target.value)} sx={{ mb: 2 }} />
                 
                 <h3>Scholarship</h3>
-                <TextField fullWidth multiline rows={6} 
-                    value={formData.scholarship || ''} 
-                    onChange={(e) => handleChange('scholarship', e.target.value)} sx={{ mb: 2 }} />
+                <FundingTable rows={formData.scholarship}></FundingTable>
+              
                 
                 <h3>Teaching</h3>
                 <TextField fullWidth multiline rows={6} 
