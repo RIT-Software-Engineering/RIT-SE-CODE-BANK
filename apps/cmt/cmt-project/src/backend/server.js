@@ -17,6 +17,7 @@ import path from "path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import makeCourseWebsiteRouter from "./routes/courseWebsite.js";
+import { readFileSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -93,9 +94,8 @@ app.post("/api/dev/login", async (req, res) => {
     }
 
     // Read dev-users.json for authentication
-    const fs = require("fs");
     const devUsersPath = path.join(__dirname, "dev-users.json");
-    const devUsers = JSON.parse(fs.readFileSync(devUsersPath, "utf-8"));
+    const devUsers = JSON.parse(readFileSync(devUsersPath, "utf-8"));
 
     // Find user by email
     const user = devUsers.find(u => u.email === email);
