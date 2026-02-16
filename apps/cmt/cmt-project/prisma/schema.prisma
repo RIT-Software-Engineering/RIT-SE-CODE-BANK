@@ -23,7 +23,7 @@ model Event {
   // User ownership fields
   ownerUid    String?    // RIT username / uid from JWT (req.user.uid)
   ownerEmail  String?    // email from JWT (req.user.email)
-  professorId Int?       // Link to professor for scoping
+  professorId String?       // Link to professor for scoping
   professor   Professor? @relation(fields: [professorId], references: [id])
 
   @@index([courseId])
@@ -32,7 +32,7 @@ model Event {
 }
 
 model Professor {
-  id              Int              @id @default(autoincrement())
+  id              String              @id @default(uuid()) // String for compatibility with Workflows API
   fname           String
   lname           String
   email           String
@@ -53,7 +53,7 @@ model CourseTemplate {
   exams         Int
   labs          Int
   projects      Int
-  professorId   Int
+  professorId   String
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   professor     Professor      @relation(fields: [professorId], references: [id])
@@ -86,7 +86,7 @@ model Course {
   color        String
   students     Int?
   section      Int?
-  professorId  Int
+  professorId  String
   professors   Professor      @relation(fields: [professorId], references: [id])
   events       Event[]
   tbenrollment TBEnrollment[]
@@ -143,7 +143,7 @@ model TBTeamSet {
   teamSize             Int?
   constraints          String?          @db.LongText
   publishedAt          DateTime?
-  createdByProfessorId Int
+  createdByProfessorId String
   createdAt            DateTime         @default(now())
   teams                TBTeam[]
   course               Course           @relation(fields: [courseId], references: [id])

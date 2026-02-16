@@ -40,7 +40,7 @@ async function main() {
   console.log('👨‍🏫 Creating professors...');
   const prof1 = await prisma.professor.create({
     data: {
-      id: 1,
+      id: "pao1234",
       fname: 'John',
       lname: 'Smith',
       email: 'prof1@rit.edu',
@@ -49,7 +49,7 @@ async function main() {
 
   const prof2 = await prisma.professor.create({
     data: {
-      id: 2,
+      id: "pao1235",
       fname: 'Sarah',
       lname: 'Johnson',
       email: 'prof2@rit.edu',
@@ -57,8 +57,8 @@ async function main() {
   });
 
   console.log(`✅ Created 2 professors:`);
-  console.log(`   • Professor 1 (id=1): John Smith - prof1@rit.edu`);
-  console.log(`   • Professor 2 (id=2): Sarah Johnson - prof2@rit.edu`);
+  console.log(`   • Professor 1 (id="1"): John Smith - prof1@rit.edu`);
+  console.log(`   • Professor 2 (id="2"): Sarah Johnson - prof2@rit.edu`);
 
   // 2. Create Courses
   console.log('📚 Creating courses...');
