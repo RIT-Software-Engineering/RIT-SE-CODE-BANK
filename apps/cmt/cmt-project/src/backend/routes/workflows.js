@@ -1,6 +1,6 @@
 // Handles all workflow-related logic for CMT
 import express from "express";
-import { WORKFLOWS_API, workflowsFetch } from "../utils/api.js";
+import { WORKFLOWS_API, workflowsFetch } from "../utils/workflows.js";
 
 const router = express.Router();
 export default router
@@ -315,27 +315,6 @@ async function getOrCreateWorkflowState(workflowId, userId) {
     console.error('Error in getOrCreateWorkflowState:', error);
     throw error;
   }
-}
-
-/**
- * Helper function to create an action
- * Params:
- *  name: name of the action
- *  description: description of the action
- *  actionType: type of action (simple, complex, branching)
- *  metadata: any extra data 
- *  parentID: the parentActionId if the action created is a simple child of a complex action
- * Returns an action response
- */
-export async function createAction(userId, name, description, actionType, metadata, parentId){
-  return await workflowsFetch("POST", "actions", {
-    userId: userId,
-    name: name || 'New Action',
-    description: description || 'No description provided.',
-    actionType: actionType || 'simple',
-    metadata: metadata || {},
-    parentActionId: parentId
-  })
 }
 
 /**

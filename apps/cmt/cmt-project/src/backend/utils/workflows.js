@@ -33,3 +33,24 @@ export async function workflowsFetch(method, url, body, headers) {
         throw Error(`🐦‍🔥 Error when fetching to url ${fullURL}: ${error} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
     }
 }
+
+/**
+ * Helper function to create an action
+ * Params:
+ *  name: name of the action
+ *  description: description of the action
+ *  actionType: type of action (simple, complex, branching)
+ *  metadata: any extra data 
+ *  parentID: the parentActionId if the action created is a simple child of a complex action
+ * Returns an action response
+ */
+export async function createAction(userId, name, description, actionType, metadata, parentId){
+  return await workflowsFetch("POST", "actions", {
+    userId: userId,
+    name: name || 'New Action',
+    description: description || 'No description provided.',
+    actionType: actionType || 'simple',
+    metadata: metadata || {},
+    parentActionId: parentId
+  })
+}

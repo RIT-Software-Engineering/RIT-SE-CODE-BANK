@@ -1,6 +1,5 @@
 import express from "express";
-import { createAction } from "./workflows.js";
-import { workflowsFetch } from "../utils/api.js";
+import { createAction, workflowsFetch } from "../utils/workflows.js";
 import { makeMetadataSafeForWorkflows } from "../../utils/workflows.js";
 
 const router = express.Router();
