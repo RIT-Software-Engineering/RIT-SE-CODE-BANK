@@ -34,7 +34,7 @@ function CourseCreationModal() {
 
     const [courseCode, setCourseCode] = useState('')
     const [courseName, setCourseName] = useState('')
-    const [color, setColor] = useState('#FF0000')
+    const [color, setColor] = useState('')
 
     const [submitButtonElement, setSubmitButtonElement] = useState(<><PlusIcon />Create Course</>)
 
@@ -50,9 +50,15 @@ function CourseCreationModal() {
         })
     }
 
+    function resetForm() {
+        setCourseCode("")
+        setCourseName("")
+        setColor("")
+    }
+
     return (
         <>
-            <Modal show={isOpen} onHide={() => setIsOpen(false)} centered>
+            <Modal show={isOpen} onExit={resetForm} onHide={() => setIsOpen(false)} centered>
                 <Modal.Header closeButton>Create Course</Modal.Header>
                 <Modal.Body>
                     <Form onSubmit={handleCourseCreation}>
@@ -68,7 +74,8 @@ function CourseCreationModal() {
                         </div>
                         <Form.Label>Course Color</Form.Label>
                         <div className="flex gap-2 mb-4">
-                            {["#fd7e14", "#fa5252", "#e64980", "#be4bdb", "#4c6ef5", "#12b886", "#40c057"].map(hex => 
+                            {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
+                            {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380"].map(hex =>
                                 <ColorRadioOption color={color} setColor={setColor} hex={hex}/>
                             )}
                         </div>
