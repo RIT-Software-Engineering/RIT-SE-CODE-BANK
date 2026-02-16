@@ -156,7 +156,7 @@ router.put("/:id", async (req, res) => {
   } catch (error) {
     console.error("Error updating course:", error);
     res.status(500).json({
-      success: false, // TODO: ITS A 500 STATUS OF COURSE SUCCESS IS FALSE
+      success: false,
       error: error.message,
     });
   }
