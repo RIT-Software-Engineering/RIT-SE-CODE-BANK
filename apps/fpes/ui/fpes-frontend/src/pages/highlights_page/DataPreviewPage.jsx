@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import FundingTable from "./FundingTable";
 
-export default function DataPreviewModal({ isOpen, closeModal, parsedData }) {
+export default function DataPreviewModal({ isOpen, closeModal, parsedData, facultyId }) {
     console.log("DataPreviewModal received:", parsedData);
     const [formData, setFormData] = useState(parsedData || {});
     
@@ -24,7 +24,7 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData }) {
         console.log("Saving data:", formData);
         
         try {
-            await axios.post("http://localhost:3000/highlights/parsed", formData);
+            await axios.post("http://localhost:3000/highlights/parsed", { ...formData, faculty_id: facultyId });
             alert("Data saved successfully");
             closeModal();
         } catch (error) {

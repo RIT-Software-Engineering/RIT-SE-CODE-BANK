@@ -70,7 +70,7 @@ export default function HighlightsPage({facultyId}){
         />
         </Paper>
         <HighlightsViewModal formData={viewModalForm} isOpen={viewModalOpen} closeModal={() => closeModal()}/>
-        <AddFileModal isOpen={addFileModalOpen} closeModal={() => setAddFileModalOpen(false)}/>
+        <AddFileModal isOpen={addFileModalOpen} closeModal={() => setAddFileModalOpen(false)} facultyId={facultyId}/>
         </div>
     )
 }

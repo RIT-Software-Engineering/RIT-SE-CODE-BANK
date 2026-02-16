@@ -11,11 +11,17 @@ async function saveParsedHighlights(data) {
         
         const formId = Number(formResult.insertId);
         
-        // Then save highlights with the new form_id
+        // Create a minimal student_support record
+        const studentSupportResult = await conn.query(
+            `INSERT INTO student_support (other_contributions) VALUES ('')`
+        );
+        const studentSupportId = Number(studentSupportResult.insertId);
+        
+        // Then save highlights with the new form_id and student_support_id
         const result = await conn.query(
-            `INSERT INTO highlights (form_id, administrative_responsibilities, last_saved) 
-             VALUES (?, ?, NOW())`,
-            [formId, data.administrative]
+            `INSERT INTO highlights (form_id, student_support_id, administrative_responsibilities, last_saved) 
+             VALUES (?, ?, ?, NOW())`,
+            [formId, studentSupportId, data.administrative]
         );
         return { success: true, id: Number(result.insertId) };
     } finally {

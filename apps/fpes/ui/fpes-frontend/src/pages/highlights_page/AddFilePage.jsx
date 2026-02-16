@@ -3,7 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import DataPreviewModal from "./DataPreviewPage";
 
-export default function AddFileModal({ isOpen, closeModal }) {
+export default function AddFileModal({ isOpen, closeModal, facultyId }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const [parsedData, setParsedData] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
@@ -17,6 +17,7 @@ export default function AddFileModal({ isOpen, closeModal }) {
         
         const formData = new FormData();
         formData.append("file", selectedFile);
+        formData.append("faculty_id", facultyId);
 
         try {
             const response = await axios.post("http://localhost:3000/file/upload", formData, {
@@ -72,7 +73,7 @@ export default function AddFileModal({ isOpen, closeModal }) {
                 </Box>
             </Box>
         </Modal>
-        <DataPreviewModal isOpen={showPreview} closeModal={handlePreviewClose} parsedData={parsedData} />
+        <DataPreviewModal isOpen={showPreview} closeModal={handlePreviewClose} parsedData={parsedData} facultyId={facultyId} />
         </>
     );
 }
