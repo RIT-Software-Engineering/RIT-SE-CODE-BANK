@@ -29,7 +29,7 @@ router.post("/", async (req, res) => {
         exams: parseInt(exams),
         labs: parseInt(labs),
         projects: parseInt(projects),
-        professorId: parseInt(professorId),
+        professorId: professorId,
       },
     });
 
@@ -47,7 +47,7 @@ router.get("/professor/:professorId", async (req, res) => {
 
     const templates = await prisma.courseTemplate.findMany({
       where: {
-        professorId: parseInt(professorId),
+        professorId: professorId,
       },
       orderBy: {
         createdAt: "desc",
