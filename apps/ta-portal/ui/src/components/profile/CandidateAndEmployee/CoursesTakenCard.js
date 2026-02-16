@@ -51,6 +51,7 @@ export default function CoursesTakenCard({ coursesTaken, onEdit }) {
                     border: "1px solid",
                     borderColor: "divider",
                     borderRadius: "8px",
+                    width:"100%",
                     transition: "box-shadow 0.2s ease, transform 0.1s ease",
                     "&:hover": {
                       boxShadow: 4,
