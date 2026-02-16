@@ -1,11 +1,11 @@
-// routes/workflows.js
 // Handles all workflow-related logic for CMT
+import express from "express";
 
-const express = require('express');
 const router = express.Router();
 
 
 const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:3001').replace(/\/$/, ''); // Remove trailing slash
+export default router
 
 /**
  * GET /api/workflows/student/:studentId
@@ -688,5 +688,3 @@ router.delete('/:workflowId', async (req, res) => {
     });
   }
 });
-
-module.exports = router;

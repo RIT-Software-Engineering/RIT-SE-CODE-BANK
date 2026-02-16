@@ -1,5 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
+export default router
 
 /**
  * GET /api/cmt/course
@@ -319,5 +320,3 @@ router.post("/create-with-workflow", async (req, res) => {
     });
   }
 });
-
-module.exports = router;
