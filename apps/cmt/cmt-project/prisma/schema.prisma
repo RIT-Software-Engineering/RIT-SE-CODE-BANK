@@ -81,7 +81,7 @@ model TemplateItem {
 model Course {
   id           Int            @id @default(autoincrement())
   name         String
-  semester     Int
+  semester     Int?
   classId      String
   color        String
   students     Int?
@@ -91,8 +91,8 @@ model Course {
   events       Event[]
   tbenrollment TBEnrollment[]
   tbteamset    TBTeamSet[]
-  workflowId   String?
-  workflowStateId String?
+  workflowId   String
+  workflowStateId String
 }
 
 model TBEnrollment {

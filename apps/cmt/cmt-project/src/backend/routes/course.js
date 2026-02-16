@@ -102,7 +102,6 @@ router.post('/', async (req, res) => {
         classId: req.body.courseCode,
         name: req.body.courseName,
         color: req.body.color,
-        semester: 2245, // TODO: maybe replace with null? Needs to be updated in schema though
         professors: {connect: {id: professorId}},
         workflowId: createdWorkflow.id,
         workflowStateId: createdState.id

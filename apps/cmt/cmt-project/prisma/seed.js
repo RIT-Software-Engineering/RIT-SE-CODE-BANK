@@ -71,7 +71,8 @@ async function main() {
       students: 45,
       section: 1,
       professorId: prof1.id, // Professor 1
-      workflowId: null,
+      workflowId: "placeholderworkflowid1",
+      workflowStateId: "placeholderworkflowstateid1",
     },
   });
 
@@ -84,7 +85,8 @@ async function main() {
       students: 38,
       section: 2,
       professorId: prof1.id, // Professor 1
-      workflowId: null,
+      workflowId: "placeholderworkflowid2",
+      workflowStateId: "placeholderworkflowstateid2",
     },
   });
 
@@ -97,7 +99,8 @@ async function main() {
       students: 32,
       section: 7,
       professorId: prof2.id, // Professor 2
-      workflowId: null,
+      workflowId: "placeholderworkflowid3",
+      workflowStateId: "placeholderworkflowstateid3"
     },
   });
 
@@ -110,7 +113,8 @@ async function main() {
       students: 28,
       section: 3,
       professorId: prof2.id, // Professor 2
-      workflowId: null,
+      workflowId: "placeholderworkflowid4",
+      workflowStateId: "placeholderworkflowstateid4"
     },
   });
 
@@ -123,7 +127,8 @@ async function main() {
       students: 24,
       section: 1,
       professorId: prof1.id, // Professor 1
-      workflowId: null,
+      workflowId: "placeholderworkflowid5",
+      workflowStateId: "placeholderworkflowstateid5"
     },
   });
 
