@@ -42,8 +42,8 @@ export default function HighlightsView({formData}){
                     Funder : {grant.funder} <br/>
                     Amount : {grant.amount} <br/>
                     Status : {grant.grant_status} <br/>
-                    {grant.start_date.match(/^\d{4}-\d{2}-\d{2}/)} - {grant.end_date.match(/^\d{4}-\d{2}-\d{2}/)} <br/><br/>
-                    Other Contributions : {grant.other_contributions}
+                    {grant.start_date?.match(/^\d{4}-\d{2}-\d{2}/) || 'N/A'} - {grant.end_date?.match(/^\d{4}-\d{2}-\d{2}/) || 'N/A'} <br/><br/>
+                    Other Contributions : {grant.other_contributions || 'N/A'}
                 </p>
                 )
             })}

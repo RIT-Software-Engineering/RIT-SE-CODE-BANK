@@ -16,11 +16,10 @@ export default function HighlightsPage({facultyId}){
         setViewModalOpen(false);
     }
 
-    useEffect(() => {
+    function loadHighlights() {
         axios.get("http://localhost:3000/highlights/submitted_by/" + facultyId)
         .then(response => {
             console.log(response);
-            // Format Date Information into YYYY-MM-DD HH:MM:SS
             const data = response.data;
             data.map((form) => {
                 form.time_submitted = form.time_submitted.match(/^\d{4}-\d{2}-\d{2}/);
@@ -28,6 +27,10 @@ export default function HighlightsPage({facultyId}){
             setHighlights(data);
         })
         .catch(console.log("Error Retrieving Highlights"))
+    }
+
+    useEffect(() => {
+        loadHighlights();
     }, []);
 
     console.log(highlights)
@@ -70,7 +73,7 @@ export default function HighlightsPage({facultyId}){
         />
         </Paper>
         <HighlightsViewModal formData={viewModalForm} isOpen={viewModalOpen} closeModal={() => closeModal()}/>
-        <AddFileModal isOpen={addFileModalOpen} closeModal={() => setAddFileModalOpen(false)} facultyId={facultyId}/>
+        <AddFileModal isOpen={addFileModalOpen} closeModal={() => { setAddFileModalOpen(false); loadHighlights(); }} facultyId={facultyId}/>
         </div>
     )
 }

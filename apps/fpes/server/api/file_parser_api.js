@@ -27,8 +27,9 @@ async function parseGrantAI(scholarship_section) {
     "${scholarship_section}"
     
     Output Format:
-    Return ONLY a raw JSON object. Do not wrap it in markdown (no \`\`\`json tags).
-    If a field is not found, set it to null.) 
+    Return ONLY a raw JSON array of objects, one for each grant/project found. Do not wrap it in markdown (no \`\`\`json tags).
+    If a field is not found, set it to null.
+    If no grants are found, return an empty array [].
     `;
 
         // Expected JSON output list of
@@ -53,10 +54,10 @@ async function parseGrantAI(scholarship_section) {
 
         const data = JSON.parse(text);
         console.log(data)
-        return data;
+        return Array.isArray(data) ? data : [];
     } catch (error) {
         console.error("Error parsing grant: ", error);
-        return null;
+        return [];
     }
 }
 

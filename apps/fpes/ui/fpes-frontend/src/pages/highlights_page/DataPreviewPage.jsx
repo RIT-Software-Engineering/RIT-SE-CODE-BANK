@@ -6,15 +6,22 @@ import FundingTable from "./FundingTable";
 
 export default function DataPreviewModal({ isOpen, closeModal, parsedData, facultyId }) {
     console.log("DataPreviewModal received:", parsedData);
-    const [formData, setFormData] = useState(parsedData || {});
+    const [formData, setFormData] = useState(() => ({
+        ...(parsedData || {}),
+        scholarship: parsedData?.scholarship ?? []
+    }));
     
     useEffect(() => {
         if (parsedData) {
-            setFormData(parsedData);
+            setFormData({
+                ...parsedData,
+                scholarship: parsedData.scholarship ?? []
+            });
         }
     }, [parsedData]);
     
     console.log("formData state:", formData);
+    console.log("scholarship value:", formData.scholarship);
 
     const handleChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
@@ -60,7 +67,7 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                     onChange={(e) => handleChange('period', e.target.value)} sx={{ mb: 2 }} />
                 
                 <h3>Scholarship</h3>
-                <FundingTable rows={formData.scholarship}></FundingTable>
+                <FundingTable rows={formData.scholarship ?? []}></FundingTable>
               
                 
                 <h3>Teaching</h3>
