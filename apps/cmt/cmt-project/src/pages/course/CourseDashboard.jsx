@@ -22,7 +22,7 @@ export function CourseDashboard() {
     }
     useEffect(update, [id])
 
-    if (course === null || workflowState === null) return <p> Loading lol </p>
+    if (course === null || workflowState === null) return <p> Loading </p>
 
     return (<>
         <CourseInfo course={course} />
