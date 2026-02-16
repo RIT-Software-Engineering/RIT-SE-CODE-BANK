@@ -1,11 +1,41 @@
 import { Check, Loader2, PlusIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap'
 import { CMTFetch } from '../../utils/api'
 import { useNavigate } from 'react-router-dom'
 
 export function CoursePageWorkflony() {
-    const [courseOverview, setCourseOverview] = useState([{ name: 'Placeholder 1' }, { name: 'Placeholder 2' }])
+    const [courseOverview, setCourseOverview] = useState([{
+    id: 0,
+    classId: "",
+    name: "",
+    season: "",
+    year: 0,
+    color: "",
+    students: "",
+    section: ""
+    }])
+    const navigate = useNavigate()
+    
+    useEffect(() => {
+        fetchCourses();
+    }, []);
+
+    const fetchCourses = async () => {
+        try {
+        CMTFetch("GET", `events/courses`).then(async response => {
+            if (!response.ok) throw new Error("Failed to fetch courses");
+            const result = await response.json();
+            if (result.success && result.data) {
+            setCourseOverview(result.data);
+          } else {
+            setCourseOverview([]);
+          }
+        });
+        } catch (error) {
+          console.error("Error fetching courses:", error);
+        }
+      };
 
     return (
         <>
@@ -17,9 +47,9 @@ export function CoursePageWorkflony() {
                 <Row className='gy-4'>
                     {courseOverview.map(course => (
                         <Col md={4}>
-                            <Card>
-                                <Card.Header>{course.name}</Card.Header>
-                                <Card.Body></Card.Body>
+                            <Card className={`w-96 hover:underline hover:text-blue-500 hover:cursor-pointer ${course.students ? 'd-none' : ''}`} onClick={() => navigate(`/courses/${course.id}`)}>
+                                <Card.Header style={{background: course.color}} className='h-28'></Card.Header>
+                                <Card.Body className='h-28'><h3>{course.name}</h3></Card.Body>
                             </Card>
                         </Col>
                     ))}
