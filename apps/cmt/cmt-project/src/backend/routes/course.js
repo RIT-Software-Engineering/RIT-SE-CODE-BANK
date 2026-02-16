@@ -24,6 +24,18 @@ router.get("/", async (req, res) => {
 
 /**
  * GET /api/cmt/course/:id
+ * returns an object of the following format:
+ * ```
+ * {
+ *  course: CMT course object
+ *  workflow: Workflows workflow object
+ *  actionsWithCallbacks: {
+ *    action: Workflows action object
+ *    callback: CMT callback url to complete action 
+ *  }
+ *  actionStates: Workflows actionStates array
+ * }
+ * ```
  */
 router.get("/:id", async (req, res) => {
   try {
