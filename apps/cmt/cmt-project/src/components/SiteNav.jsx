@@ -69,6 +69,7 @@ export default function SiteNav() {
       icon: <GraduationCap size={18} />,
       items: [
         { to: "/coursebuilder", label: "Course Builder" },
+        { to: "/courses", label: "Course Builder (Workflony style)"},
         { to: "/createtemplate", label: "Create Template" },
         { to: "/coursewebsite", label: "Course Website" },
       ]

@@ -14,7 +14,8 @@ import CourseWebsitePage from "./pages/CourseWebsitePage.jsx";
 import "./styles/global.css";
 import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { WorkflowRendererTester } from "./components/WorkflowActionSimpleRenderer.jsx";
+import { CoursePageWorkflony } from "./pages/course/CourseOverview.jsx";
+import { CourseDashboard } from "./pages/course/CourseDashboard.jsx";
 
 /* ------------------------------------------------------------------
    Suppress noisy ResizeObserver errors in development
@@ -89,10 +90,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             } 
           />
           <Route 
-            path="actiontest" 
-            element={<WorkflowRendererTester />} 
+            path="courses" 
+            element={<CoursePageWorkflony />} 
           />
-
+          <Route 
+            path="courses/:id" 
+            element={<CourseDashboard />} 
+          />
           {/* All authenticated users can access these */}
           <Route path="calendar" element={<CalPage />} />
           <Route path="onboarding" element={<StudentOnboardingPage />} />
