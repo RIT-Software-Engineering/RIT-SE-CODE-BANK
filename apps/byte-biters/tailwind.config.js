@@ -6,7 +6,27 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      //colors for the overall frontend
+      colors: {
+        main: {
+          primary: "#14161A",
+          secondary: "#181B20",
+        },
+        //current does not account for highlighted keywords
+        text: {
+          primary: "#34C759",
+          muted: "#8E8E93",
+        },
+        button: {
+          default: "#E8DEF8",
+          text: "#4A4459",
+        },
+        border: {
+          primary: "#2A2E37",
+        }
+      }
+    },
   },
   plugins: [],
 }
