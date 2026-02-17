@@ -91,7 +91,8 @@ router.post('/', async (req, res) => {
       code: "COURSE_INFORMATION",
       outputs: [
         {
-          name: "course section",
+          name: "Course Section",
+          key: "section",
           type: "text",
           isRequired: true,
           placeholder: "1",
