@@ -41,6 +41,7 @@ const allowedOrigins = [
   `http://localhost:${FRONTEND_PORT}`, // from .env (e.g., 3010)
   "http://localhost:3000",            // CRA default
 ];
+if (process.env.REMOTE_DEV_SERVER_ORIGIN) allowedOrigins.push(process.env.REMOTE_DEV_SERVER_ORIGIN)
 
 const courseWebsiteRoutes = makeCourseWebsiteRouter(prisma);
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);

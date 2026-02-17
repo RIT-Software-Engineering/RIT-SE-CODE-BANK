@@ -1,4 +1,5 @@
-export const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5010/api/cmt';
+export const API_BASE = process.env.REACT_APP_BAKEND_URL || "http://98.10.40.122:5010/api/cmt";
+export const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || "http://98.10.40.122:5010";
 
 class CMTFetchError extends Error {
     constructor(message, response) {
