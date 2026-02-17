@@ -45,6 +45,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: apps/cmt/cmt-project
 
       - name: Cache Nx output
         uses: actions/cache@v4
@@ -64,8 +65,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm ci
-        working-directory: apps/cmt/cmt-project
       - run: npm run lint
         working-directory: apps/cmt/cmt-project
 
