@@ -65,7 +65,7 @@ jobs:
         with:
           node-version: 18
       - run: npm ci
-      - run: npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - run: npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }} --verbose
 
   test:
     name: Test Affected Projects
