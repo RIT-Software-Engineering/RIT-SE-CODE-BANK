@@ -1,0 +1,695 @@
+{
+  "version": "6.0",
+  "nxVersion": "21.2.0",
+  "pathMappings": {},
+  "nxJsonPlugins": [],
+  "fileMap": {
+    "projectFileMap": {},
+    "nonProjectFiles": [
+      {
+        "file": ".github/workflows/cmt-ci.yml",
+        "hash": "3219181134124584273"
+      },
+      {
+        "file": ".gitignore",
+        "hash": "919886134739621448"
+      },
+      {
+        "file": ".gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": ".nx/nxw.js",
+        "hash": "6414013009162943946"
+      },
+      {
+        "file": "LICENSE",
+        "hash": "3436599895438545929"
+      },
+      {
+        "file": "README.md",
+        "hash": "13941046287860347768"
+      },
+      {
+        "file": "apps/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/deploy/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/deploy/README.md",
+        "hash": "744585662008010071"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/nginx/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/nginx/README.md",
+        "hash": "10658513994544432788"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/nginx/sample.conf",
+        "hash": "17069876133073151201"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/server/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/server/doc/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/server/server/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/server/server/config/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/server/server/database/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/server/server/routing/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/server/www/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/public/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/public/api-docs/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/public/robots.txt",
+        "hash": "7741650710988015806"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/src/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/src/assets/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/src/components/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/src/contexts/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/src/hooks/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/src/layouts/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/src/pages/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/src/services/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/000-sample-app-TEMPLATE/ui/src/styles/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/ca-portal/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/cmt/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/cmt/cmt-project/.env.sample",
+        "hash": "17873998315697016476"
+      },
+      {
+        "file": "apps/cmt/cmt-project/.gitignore",
+        "hash": "13162591408339557260"
+      },
+      {
+        "file": "apps/cmt/cmt-project/.npmrc",
+        "hash": "9260419677237559870"
+      },
+      {
+        "file": "apps/cmt/cmt-project/Dockerfile",
+        "hash": "4403592808083476975"
+      },
+      {
+        "file": "apps/cmt/cmt-project/README.md",
+        "hash": "12358110985605822160"
+      },
+      {
+        "file": "apps/cmt/cmt-project/deploy/run-cmt-dev.sh",
+        "hash": "7087302959483679850"
+      },
+      {
+        "file": "apps/cmt/cmt-project/docker-compose.yml",
+        "hash": "15488191478478848271"
+      },
+      {
+        "file": "apps/cmt/cmt-project/package-lock.json",
+        "hash": "2450161750822529342"
+      },
+      {
+        "file": "apps/cmt/cmt-project/package.json",
+        "hash": "912036238540120446"
+      },
+      {
+        "file": "apps/cmt/cmt-project/prisma/migrations/migration_lock.toml",
+        "hash": "8877461730101463416"
+      },
+      {
+        "file": "apps/cmt/cmt-project/prisma/schema.prisma",
+        "hash": "13329499067198812366"
+      },
+      {
+        "file": "apps/cmt/cmt-project/prisma/seed.js",
+        "hash": "9885911120041568290"
+      },
+      {
+        "file": "apps/cmt/cmt-project/public/favicon.ico",
+        "hash": "2949791817221603359"
+      },
+      {
+        "file": "apps/cmt/cmt-project/public/index.html",
+        "hash": "3022064532076506349"
+      },
+      {
+        "file": "apps/cmt/cmt-project/public/manifest.json",
+        "hash": "1447645250373428393"
+      },
+      {
+        "file": "apps/cmt/cmt-project/public/robots.txt",
+        "hash": "2790380794362165217"
+      },
+      {
+        "file": "apps/cmt/cmt-project/scripts/deploy-cmt.sh",
+        "hash": "11740341330219225770"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/.gitignore",
+        "hash": "13795225436928898694"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/App.jsx",
+        "hash": "13849140227128454729"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/app/router.jsx",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/Dockerfile",
+        "hash": "10206464049996962076"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/authMiddleware.js",
+        "hash": "7458816368564363247"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/dev-users.json",
+        "hash": "15369343476513869586"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/package-lock.json",
+        "hash": "3218395951722409535"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/package.json",
+        "hash": "16475779520706134401"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/routes/course.js",
+        "hash": "8293537827353001447"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/routes/courseWebsite.js",
+        "hash": "17450181836568349895"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/routes/events.js",
+        "hash": "4734812670990265244"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/routes/teamBuilder.js",
+        "hash": "13204075590533516189"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/routes/template.js",
+        "hash": "15878122851626214606"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/routes/workflows.js",
+        "hash": "2222234063984659774"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/server.js",
+        "hash": "10053594369214861228"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/backend/utils/workflows.js",
+        "hash": "9665232999841883959"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/components/RequireAuth.jsx",
+        "hash": "9310316861598915879"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/components/SiteNav.jsx",
+        "hash": "1658405707541009544"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/components/workflows/OutputRenderers.jsx",
+        "hash": "7063940373946672913"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/components/workflows/WorkflowRenderer.jsx",
+        "hash": "4549237541186132322"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/data/courseData.json",
+        "hash": "12916698129977838542"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/data/jsonToSql.js",
+        "hash": "14920882155870674654"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/data/test_data.sql",
+        "hash": "1942838019234663916"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/index.js",
+        "hash": "11263536346180133619"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/CalPage.jsx",
+        "hash": "18009713729074876564"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/CourseEdit.jsx",
+        "hash": "17472332714419673232"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/CoursePage.jsx",
+        "hash": "3813938932662211969"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/CourseWebsitePage.jsx",
+        "hash": "12823285704613674045"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/CreateTemplatePage.jsx",
+        "hash": "6625012502173190637"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/DevLoginPage.jsx",
+        "hash": "15933532264708242468"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/Homepage.jsx",
+        "hash": "7965678828233697465"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/StudentOnboardingPage.jsx",
+        "hash": "4410899858074246873"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/TeamBuilderPage.jsx",
+        "hash": "15858810244422015736"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/course/CourseDashboard.jsx",
+        "hash": "12689645349395396253"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/pages/course/CourseOverview.jsx",
+        "hash": "167662625131306234"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/services/workflowService.js",
+        "hash": "6054888422570559179"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/styles/NavBar.css",
+        "hash": "16992586828208433533"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/styles/calendar.css",
+        "hash": "11061733120595317135"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/styles/course.css",
+        "hash": "10567222459495389864"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/styles/devLogin.css",
+        "hash": "6174644803485314011"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/styles/global.css",
+        "hash": "18029608427437660598"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/styles/index.css",
+        "hash": "2172668849966456987"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/styles/studentonboarding.css",
+        "hash": "11596187144056024065"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/styles/teambuilder.css",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/utils/api.js",
+        "hash": "4876615937642295844"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/utils/auth.js",
+        "hash": "11909822404418694470"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/utils/userRoles.js",
+        "hash": "17759190070850610311"
+      },
+      {
+        "file": "apps/cmt/cmt-project/src/utils/workflows.js",
+        "hash": "7601110629329515737"
+      },
+      {
+        "file": "apps/cmt/cmt-project/start_app.js",
+        "hash": "274357900827867995"
+      },
+      {
+        "file": "apps/cmt/cmt-project/stop_app.js",
+        "hash": "5019829476489524230"
+      },
+      {
+        "file": "apps/cmt/cmt-project/tailwind.config.js",
+        "hash": "14614312376702732130"
+      },
+      {
+        "file": "apps/cmt/cmt-project/tsconfig.json",
+        "hash": "2600605414563443495"
+      },
+      {
+        "file": "apps/peereval/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/rubricon/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/rubricon/server/data/rubrics.json",
+        "hash": "18019011695655366653"
+      },
+      {
+        "file": "apps/scoop-portal/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/workflow/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/workflow/README.md",
+        "hash": "16324772787582567708"
+      },
+      {
+        "file": "apps/workflow/server/.dockerignore",
+        "hash": "9698518346704756962"
+      },
+      {
+        "file": "apps/workflow/server/.env.sample",
+        "hash": "13006659193992345858"
+      },
+      {
+        "file": "apps/workflow/server/.gitignore",
+        "hash": "1225707474864687423"
+      },
+      {
+        "file": "apps/workflow/server/Dockerfile",
+        "hash": "15017436757533355348"
+      },
+      {
+        "file": "apps/workflow/server/api/consts.js",
+        "hash": "15831079232842969911"
+      },
+      {
+        "file": "apps/workflow/server/api/helpers/actions.js",
+        "hash": "1373257020126679623"
+      },
+      {
+        "file": "apps/workflow/server/api/helpers/auth.js",
+        "hash": "17182344642794788056"
+      },
+      {
+        "file": "apps/workflow/server/api/helpers/metadata.js",
+        "hash": "3788569377847009338"
+      },
+      {
+        "file": "apps/workflow/server/api/helpers/workflows.js",
+        "hash": "15610261771952207981"
+      },
+      {
+        "file": "apps/workflow/server/api/routes/actions.js",
+        "hash": "9587068307495281267"
+      },
+      {
+        "file": "apps/workflow/server/api/routes/permissions.js",
+        "hash": "4326638709894346754"
+      },
+      {
+        "file": "apps/workflow/server/api/routes/states.js",
+        "hash": "12352518889433710507"
+      },
+      {
+        "file": "apps/workflow/server/api/routes/workflows.js",
+        "hash": "13532039072862223034"
+      },
+      {
+        "file": "apps/workflow/server/config_backend.bat",
+        "hash": "10124765593931141995"
+      },
+      {
+        "file": "apps/workflow/server/config_backend.sh",
+        "hash": "4485887185524562504"
+      },
+      {
+        "file": "apps/workflow/server/doc/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "apps/workflow/server/doc/api-docs/actions_routes.yaml",
+        "hash": "15630483176576512717"
+      },
+      {
+        "file": "apps/workflow/server/doc/api-docs/permissions_routes.yaml",
+        "hash": "2415744965022846420"
+      },
+      {
+        "file": "apps/workflow/server/doc/api-docs/schemas.yaml",
+        "hash": "6817942444626188097"
+      },
+      {
+        "file": "apps/workflow/server/doc/api-docs/server_doc.yaml",
+        "hash": "4394436257787549263"
+      },
+      {
+        "file": "apps/workflow/server/doc/api-docs/states_routes.yaml",
+        "hash": "10378909074521600998"
+      },
+      {
+        "file": "apps/workflow/server/doc/api-docs/workflows_routes.yaml",
+        "hash": "1376911905076309707"
+      },
+      {
+        "file": "apps/workflow/server/index.js",
+        "hash": "17407564794492792758"
+      },
+      {
+        "file": "apps/workflow/server/package-lock.json",
+        "hash": "5146182228013985236"
+      },
+      {
+        "file": "apps/workflow/server/package.json",
+        "hash": "18196089064639544250"
+      },
+      {
+        "file": "apps/workflow/server/prisma/cmtSeed.js",
+        "hash": "11227553954562341132"
+      },
+      {
+        "file": "apps/workflow/server/prisma/example_scoop_portal_seed.js",
+        "hash": "13700023403704009598"
+      },
+      {
+        "file": "apps/workflow/server/prisma/migrations/20250911171116_init/migration.sql",
+        "hash": "11515256193630317991"
+      },
+      {
+        "file": "apps/workflow/server/prisma/migrations/20250926145358_init/migration.sql",
+        "hash": "17486604214218070294"
+      },
+      {
+        "file": "apps/workflow/server/prisma/migrations/20250926173707_init/migration.sql",
+        "hash": "12551404546863277462"
+      },
+      {
+        "file": "apps/workflow/server/prisma/migrations/20250930142558_init/migration.sql",
+        "hash": "1639022831545047057"
+      },
+      {
+        "file": "apps/workflow/server/prisma/migrations/20251006140658_add_action_states_relation/migration.sql",
+        "hash": "12616991013604838191"
+      },
+      {
+        "file": "apps/workflow/server/prisma/migrations/20251015120000_add_workflow_team_participants/migration.sql",
+        "hash": "18038082520518689802"
+      },
+      {
+        "file": "apps/workflow/server/prisma/migrations/migration_lock.toml",
+        "hash": "12659609011245866447"
+      },
+      {
+        "file": "apps/workflow/server/prisma/schema.prisma",
+        "hash": "8489873140036014010"
+      },
+      {
+        "file": "apps/workflow/server/prisma/seed.js",
+        "hash": "9482244796561588210"
+      },
+      {
+        "file": "apps/workflow/server/setup_db.js",
+        "hash": "16504842832951099291"
+      },
+      {
+        "file": "assets/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "assets/README.md",
+        "hash": "13941046287860347768"
+      },
+      {
+        "file": "assets/audio/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "assets/css/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "assets/fonts/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "assets/icons/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "assets/images/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "assets/se-core/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "assets/video/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "nx.json",
+        "hash": "4013980103080271812"
+      },
+      {
+        "file": "package-lock.json",
+        "hash": "2023653484565054269"
+      },
+      {
+        "file": "package.json",
+        "hash": "7538811314124582902"
+      },
+      {
+        "file": "packages/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "packages/README.md",
+        "hash": "13941046287860347768"
+      },
+      {
+        "file": "packages/ui-components/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "packages/ui-components/src/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "packages/ui-components/src/GenericFooter/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "packages/ui-components/src/GenericHeader/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "scripts/deploy-cmt.sh",
+        "hash": "103452866488203722"
+      },
+      {
+        "file": "services/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "services/README.md",
+        "hash": "13941046287860347768"
+      },
+      {
+        "file": "tools/.gitkeep",
+        "hash": "3244421341483603138"
+      },
+      {
+        "file": "tools/README.md",
+        "hash": "5327074689316218582"
+      },
+      {
+        "file": "tools/shared-scripts/.gitkeep",
+        "hash": "3244421341483603138"
+      }
+    ]
+  }
+}
