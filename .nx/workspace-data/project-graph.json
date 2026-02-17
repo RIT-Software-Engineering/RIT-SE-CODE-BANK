@@ -15,8 +15,7 @@
               "start",
               "build",
               "test",
-              "eject",
-              "lint"
+              "eject"
             ]
           },
           "js": {
@@ -89,13 +88,11 @@
             "parallelism": true
           },
           "lint": {
-            "executor": "nx:run-script",
+            "executor": "@nx/eslint:lint",
             "options": {
-              "script": "lint"
-            },
-            "metadata": {
-              "scriptContent": "eslint \"src/**/*.{js,jsx}\"",
-              "runCommand": "npm run lint"
+              "lintFilePatterns": [
+                "apps/cmt/**/*.{ts,tsx,js,jsx}"
+              ]
             },
             "configurations": {},
             "parallelism": true,
@@ -3526,5 +3523,5 @@
   },
   "version": "6.0",
   "errors": [],
-  "computedAt": 1771360304753
+  "computedAt": 1771361174476
 }

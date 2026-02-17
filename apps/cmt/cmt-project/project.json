@@ -1,3 +1,11 @@
-{ 
-    "name": "cmt"
+{
+  "name": "cmt",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["apps/cmt/**/*.{ts,tsx,js,jsx}"]
+      }
+    }
+  }
 }

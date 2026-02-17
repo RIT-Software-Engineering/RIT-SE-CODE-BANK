@@ -40,10 +40,6 @@
       "apps/cmt/cmt-project/package.json",
       "nx/core/package-json"
     ],
-    "metadata.targetGroups.NPM Scripts.4": [
-      "apps/cmt/cmt-project/package.json",
-      "nx/core/package-json"
-    ],
     "metadata.js": [
       "apps/cmt/cmt-project/package.json",
       "nx/core/package-json"
@@ -173,32 +169,20 @@
       "nx/core/package-json"
     ],
     "targets.lint": [
-      "apps/cmt/cmt-project/package.json",
-      "nx/core/package-json"
+      "apps/cmt/cmt-project/project.json",
+      "nx/core/project-json"
     ],
     "targets.lint.executor": [
-      "apps/cmt/cmt-project/package.json",
-      "nx/core/package-json"
+      "apps/cmt/cmt-project/project.json",
+      "nx/core/project-json"
     ],
     "targets.lint.options": [
-      "apps/cmt/cmt-project/package.json",
-      "nx/core/package-json"
+      "apps/cmt/cmt-project/project.json",
+      "nx/core/project-json"
     ],
-    "targets.lint.metadata": [
-      "apps/cmt/cmt-project/package.json",
-      "nx/core/package-json"
-    ],
-    "targets.lint.options.script": [
-      "apps/cmt/cmt-project/package.json",
-      "nx/core/package-json"
-    ],
-    "targets.lint.metadata.scriptContent": [
-      "apps/cmt/cmt-project/package.json",
-      "nx/core/package-json"
-    ],
-    "targets.lint.metadata.runCommand": [
-      "apps/cmt/cmt-project/package.json",
-      "nx/core/package-json"
+    "targets.lint.options.lintFilePatterns": [
+      "apps/cmt/cmt-project/project.json",
+      "nx/core/project-json"
     ],
     "targets.build.dependsOn": [
       "nx.json",
