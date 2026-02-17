@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import "../styles/devLogin.css";
-
-const AUTH_BASE = "http://localhost:5010";
+import { AUTH_BASE } from "../utils/api";
 
 export default function DevLoginPage() {
   const [email, setEmail] = useState("");

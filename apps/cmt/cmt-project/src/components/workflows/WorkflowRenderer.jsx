@@ -19,7 +19,7 @@ function SimpleWorkflowActionFormRenderer({ actionWithCallback, refresh }) {
         metadata[key] = JSON.parse(actionWithCallback.action.metadata[key])
     })
     
-    const [outputValues, setOutputValues] = useState(Object.fromEntries(metadata.outputs.map(output => [output.name, output.initialValue]))) // Initialize with array of the Workflows specified initial (or default) values
+    const [outputValues, setOutputValues] = useState(Object.fromEntries(metadata.outputs.map(output => [output.key, output.initialValue]))) // Initialize with array of the Workflows specified initial (or default) values
     
     const [submitButtonName, setSubmitButtonName] = useState("Submit")
     const [submitButtonVariant, setSubmitButtonVariant] = useState("primary")
@@ -32,14 +32,14 @@ function SimpleWorkflowActionFormRenderer({ actionWithCallback, refresh }) {
             setTimeout(refresh, 500)
         })
     }
-    
+
     return (<>
         <Form onSubmit={submitAction}>
             {metadata.outputs.map((output, i) =>
                 <WorkflowActionOutputRenderer
                 output={output}
                 value={outputValues[i]}
-                setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.name]: value }))}
+                setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
                 />
             )}
             <Button type="submit" variant={submitButtonVariant}>{submitButtonName}</Button>
