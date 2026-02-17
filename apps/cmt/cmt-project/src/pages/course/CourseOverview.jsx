@@ -15,7 +15,7 @@ export function CoursePageWorkflony() {
     students: "",
     section: ""
     }])
-    const navigate = useNavigate()
+    const navigate = useNavigate();
     
     useEffect(() => {
         fetchCourses();
@@ -47,9 +47,9 @@ export function CoursePageWorkflony() {
                 <Row className='gy-4'>
                     {courseOverview.map(course => (
                         <Col md={4}>
-                            <Card className={`w-96 hover:underline hover:text-blue-500 hover:cursor-pointer ${course.students ? 'd-none' : ''}`} onClick={() => navigate(`/courses/${course.id}`)}>
+                            <Card className={`w-xl hover:underline hover:text-blue-500 hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
                                 <Card.Header style={{background: course.color}} className='h-28'></Card.Header>
-                                <Card.Body className='h-28'><h3>{course.name}</h3></Card.Body>
+                                <Card.Body className='h-28 text-2xl'>{course.classId} - {course.name}</Card.Body>
                             </Card>
                         </Col>
                     ))}
