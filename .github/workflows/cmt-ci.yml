@@ -52,21 +52,22 @@ jobs:
           path: .nx/cache
           key: nx-cache-${{ github.sha }}
 
-#   lint:
-#     name: Lint Affected Projects
-#     needs: setup
-#     runs-on: ubuntu-latest
+  lint:
+    name: Lint Affected Projects
+    needs: setup
+    runs-on: ubuntu-latest
 
-#     steps:
-#       - uses: actions/checkout@v4
-#         with:
-#           fetch-depth: 0
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version: 18
-#       - run: npm ci
-#       - run: npm run lint
-#         working-directory: apps/cmt/cmt-project
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci
+        working-directory: apps/cmt/cmt-project
+      - run: npm run lint
+        working-directory: apps/cmt/cmt-project
 
 #   test:
 #     name: Test Affected Projects
