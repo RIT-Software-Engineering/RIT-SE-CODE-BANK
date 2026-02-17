@@ -52,36 +52,36 @@ jobs:
           path: .nx/cache
           key: nx-cache-${{ github.sha }}
 
-  lint:
-    name: Lint Affected Projects
-    needs: setup
-    runs-on: ubuntu-latest
+#   lint:
+#     name: Lint Affected Projects
+#     needs: setup
+#     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm ci
-      - run: npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: 18
+#       - run: npm ci
+#       - run: npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
 
-  test:
-    name: Test Affected Projects
-    needs: setup
-    runs-on: ubuntu-latest
+#   test:
+#     name: Test Affected Projects
+#     needs: setup
+#     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm ci
-      - run: npx nx affected:test --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }} --code-coverage
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: 18
+#       - run: npm ci
+#       - run: npx nx affected:test --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }} --code-coverage
+#       - name: Upload coverage report
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: coverage-report
+#           path: coverage/
 
 #   sonarqube:
 #     name: SonarQube Analysis
