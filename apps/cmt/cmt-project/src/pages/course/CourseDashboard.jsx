@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { WorkflowRenderer } from "../../components/workflows/WorkflowRenderer";
 import { CMTFetch } from "../../utils/api";
+import {Edit,} from "lucide-react";
+import { Button } from "react-bootstrap";
 
 export function CourseDashboard() {
     const { id } = useParams()
@@ -32,9 +34,24 @@ export function CourseDashboard() {
 
 function CourseInfo({ course }) {
     return (<>
-        <h1 style={{ backgroundColor: course.color }}> Course Info </h1>
-        <p> Course Name: {course.name} </p>
-        <p> Class Id: {course.classId} </p>
-        <p> Session number: {course.section ?? "TBD"} </p>
+        <h1 style={{ backgroundColor: course.color }} > Course Info </h1>
+        <div className="flex inline gap">
+            <p className="text-lg"> Course Name: {course.name} </p>
+            <Button size="sm" title="Edit Course">
+                <Edit size={24} />
+            </Button>
+        </div>
+        <div className="flex inline gap">
+            <p> Class Id: {course.classId} </p>
+             <Button size="sm" title="Edit Course">
+                <Edit size={24} />
+            </Button>
+        </div>
+        <div className="flex inline gap">
+            <p> Session number: {course.section ?? "TBD"} </p>
+             <Button size="sm" title="Edit Course">
+                <Edit size={24} />
+            </Button>
+        </div>
     </>)
 }
