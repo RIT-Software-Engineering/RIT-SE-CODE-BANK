@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { WorkflowRenderer } from "../../components/workflows/WorkflowRenderer";
 import { CMTFetch } from "../../utils/api";
 import {Edit,} from "lucide-react";
-import { Button } from "react-bootstrap";
+import { Button, Col, Row } from "react-bootstrap";
 
 export function CourseDashboard() {
     const { id } = useParams()
@@ -33,25 +33,38 @@ export function CourseDashboard() {
 }
 
 function CourseInfo({ course }) {
+    var isEditHidden = true;
     return (<>
         <h1 style={{ backgroundColor: course.color }} > Course Info </h1>
-        <div className="flex inline gap">
-            <p className="text-lg"> Course Name: {course.name} </p>
-            <Button size="sm" title="Edit Course">
-                <Edit size={24} />
-            </Button>
-        </div>
-        <div className="flex inline gap">
-            <p> Class Id: {course.classId} </p>
-             <Button size="sm" title="Edit Course">
-                <Edit size={24} />
-            </Button>
-        </div>
-        <div className="flex inline gap">
-            <p> Session number: {course.section ?? "TBD"} </p>
-             <Button size="sm" title="Edit Course">
-                <Edit size={24} />
-            </Button>
-        </div>
+        <Row className="flex items-center hover:bg-gray-200">
+            <Col>
+                <p className="text-lg"> Course Name: {course.name} </p>
+            </Col>
+            <Col>
+                <Button size="sm" title="Edit Course" variant="outline-secondary">
+                    <Edit size={24} />
+                </Button>
+            </Col>
+        </Row>
+        <Row className="flex inline-block hover:bg-gray-200">
+            <Col>
+                <p className="text-lg"> Class Id: {course.classId} </p>
+            </Col>
+            <Col>
+                <Button size="sm" title="Edit Course" variant="outline-secondary">
+                    <Edit size={24} />
+                </Button>
+            </Col>
+        </Row>
+        <Row className="flex inline hover:bg-gray-200" onMouseEnter={() => {isEditHidden = false;}} onMouseLeave={() => {isEditHidden = true;}}>
+            <Col>
+                <p className="text-lg"> Session number: {course.section ?? "TBD"} </p>
+            </Col>
+            <Col>
+                <Button size="sm" title="Edit Course" variant="outline-secondary" className={`${isEditHidden ? 'invisible' : 'visible'}`}>
+                    <Edit size={24} />
+                </Button>
+            </Col>
+        </Row>
     </>)
 }
