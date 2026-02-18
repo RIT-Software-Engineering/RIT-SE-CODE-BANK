@@ -469,6 +469,7 @@ export default function AdminApplicationsPage() {
                               jobPosition={position}
                               application={app}
                               onStatusChange={handleStatusChange}
+                              showHireAction={false}
                               isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
                             />
                           </Box>
