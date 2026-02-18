@@ -48,6 +48,10 @@
       "apps/cmt/cmt-project/package.json",
       "nx/core/package-json"
     ],
+    "metadata.js.packageVersion": [
+      "apps/cmt/cmt-project/package.json",
+      "nx/core/package-json"
+    ],
     "metadata.js.isInPackageManagerWorkspaces": [
       "apps/cmt/cmt-project/package.json",
       "nx/core/package-json"
