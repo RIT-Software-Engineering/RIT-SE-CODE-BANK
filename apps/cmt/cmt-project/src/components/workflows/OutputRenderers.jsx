@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Form } from "react-bootstrap";
 
-export function WorkflowActionOutputRenderer({ output, value, setValue },) {
+export function OutputRenderer({ output, value, setValue },) {
     const [touched, setTouched] = useState(false);
     const [invalidMessage, setInvalidMessage] = useState("")
     
@@ -14,18 +14,22 @@ export function WorkflowActionOutputRenderer({ output, value, setValue },) {
             // TODO: add other types inputElement = <WorkflowActionOutputSelectInputRenderer output={output} value={value} setValue={setValue} touched={touched} setTouched={setTouched} invalidMessage={invalidMessage} setInvalidMessage={setInvalidMessage}/>
             break
         default: // case "text"
-            inputElement = <WorkflowActionOutputTextInputRenderer output={output} value={value} setValue={setValue} touched={touched} setTouched={setTouched} invalidMessage={invalidMessage} setInvalidMessage={setInvalidMessage}/>
+            inputElement = <TextOutputRenderer output={output} value={value} setValue={setValue} touched={touched} setTouched={setTouched} invalidMessage={invalidMessage} setInvalidMessage={setInvalidMessage}/>
     } 
 
+    // TODO: should we keep the star
+    // const star = output.isRequired ? <span style={{color:"red"}}>*</span> : <></>
+    const star = <></>
+
     return (
-        <Form.Group className="pb-4">
-            <Form.Label>{output.name} {output.isRequired ? <span style={{color:"red"}}>*</span> : <></>}</Form.Label>
+        <Form.Group className="flex gap-4">
+            <Form.Label className="w-max text-xl">{output.name} {star}</Form.Label>
             {inputElement}
         </Form.Group>
     )
 }
 
-function WorkflowActionOutputTextInputRenderer({ output, value, setValue, touched, setTouched, invalidMessage, setInvalidMessage }) {
+function TextOutputRenderer({ output, value, setValue, touched, setTouched, invalidMessage, setInvalidMessage }) {
     
     function isValid(value) {
         if (output?.validation?.minLength) if (value?.length < output.validation.minLength) { setInvalidMessage("Too short"); return false }
@@ -33,7 +37,7 @@ function WorkflowActionOutputTextInputRenderer({ output, value, setValue, touche
         return true
     }
 
-    return (<>
+    return (<div className="shrink">
         <Form.Control
             type={output.type}
             required={output.isRequired ?? false}
@@ -48,5 +52,5 @@ function WorkflowActionOutputTextInputRenderer({ output, value, setValue, touche
         <Form.Control.Feedback type="invalid">
             {invalidMessage}
         </Form.Control.Feedback>
-    </>)
+    </div>)
 }

@@ -1,17 +1,17 @@
 import { useState } from "react"
-import { Button, Form } from "react-bootstrap"
+import { Button, Card, Form } from "react-bootstrap"
 import { CMTFetch } from "../../utils/api"
-import { WorkflowActionOutputRenderer } from "./OutputRenderers"
+import { OutputRenderer } from "./OutputRenderers"
 
 export function WorkflowRenderer({ actionsWithCallbacks, workflowState, workflow, refresh }) {
     const nextActionState = workflowState.baseActionState.children.find(actionState => actionState.stateType === "notStarted")
     if (!nextActionState) return <h1> All Done! </h1>
     
     const nextActionWithCallback = actionsWithCallbacks.find(awc => awc.action.id === nextActionState.actionId)
-    return <SimpleWorkflowActionFormRenderer actionWithCallback={nextActionWithCallback} refresh={refresh} />
+    return <ActionRenderer actionWithCallback={nextActionWithCallback} refresh={refresh} />
 }
 
-function SimpleWorkflowActionFormRenderer({ actionWithCallback, refresh }) {
+export function ActionRenderer({ actionWithCallback, refresh }) {
     // Flatten array of objects to simplify later usage
     let metadata = {};
     Object.keys(actionWithCallback.action.metadata).forEach(key => {
@@ -34,15 +34,20 @@ function SimpleWorkflowActionFormRenderer({ actionWithCallback, refresh }) {
     }
 
     return (<>
-        <Form onSubmit={submitAction}>
-            {metadata.outputs.map((output, i) =>
-                <WorkflowActionOutputRenderer
-                output={output}
-                value={outputValues[i]}
-                setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
-                />
-            )}
-            <Button type="submit" variant={submitButtonVariant}>{submitButtonName}</Button>
-        </Form>
+        <Card className="w-fit">
+            <Card.Body>
+                <p className="text-2xl">{actionWithCallback.action.name}</p>
+                <Form onSubmit={submitAction} className="flex gap-4">
+                    {metadata.outputs.map((output, i) =>
+                        <OutputRenderer
+                        output={output}
+                        value={outputValues[i]}
+                        setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
+                        />
+                    )}
+                    <Button type="submit" variant={submitButtonVariant}>{submitButtonName}</Button>
+                </Form>
+            </Card.Body>
+        </Card>
     </>)
 }
