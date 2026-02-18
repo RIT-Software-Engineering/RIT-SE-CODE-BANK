@@ -49,7 +49,11 @@
       }
     ]
   },
-  "projects": {},
+  "projects": {
+    "cmt":{
+      "root": "apps/cmt/cmt-project"
+    }
+  },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "nxCloudId": "6995cbaa34f0871dc0994eb0"
 }
