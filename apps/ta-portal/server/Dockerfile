@@ -19,6 +19,8 @@ COPY . .
 
 EXPOSE 3300
 
-#CMD ["npm", "run", "prisma:deploy"] TODO: change so this always runs after the db is fully setup
+# must be ran after db is set up:
+#RUN npm run prisma:deploy 
+#RUN npm run prisma:seed
 
 CMD ["node", "main.js"]
