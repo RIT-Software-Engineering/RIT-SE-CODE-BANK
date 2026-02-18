@@ -145,7 +145,7 @@ jobs:
         with:
           node-version: 18
       - run: npm ci --ignore-scripts
-      - run: npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - run: NX_DAEMON=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
