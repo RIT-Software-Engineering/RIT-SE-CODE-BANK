@@ -2,7 +2,8 @@
   "dependencies": {
     "csv-parse": "^6.1.0",
     "express": "^5.1.0",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "babel-plugin-macros": "^3.1.0"
   },
   "devDependencies": {
     "@nrwl/jest": "^19.8.4",
