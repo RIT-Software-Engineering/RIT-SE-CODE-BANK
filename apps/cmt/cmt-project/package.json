@@ -27,8 +27,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build1": "react-scripts build",
-    "build": "build \"src/**/*.{js,jsx}\"",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint \"src/**/*.{js,jsx}\""
