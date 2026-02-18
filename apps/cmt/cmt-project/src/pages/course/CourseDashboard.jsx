@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { WorkflowRenderer } from "../../components/workflows/WorkflowRenderer";
-import { CMTFetch } from "../../utils/api";
-import {Edit,} from "lucide-react";
-import { Button, Col, Row } from "react-bootstrap";
+import { useCallback, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
+import { CMTFetch } from '../../utils/api'
+import { Edit, X, Check } from 'lucide-react'
+import { Button, Form } from 'react-bootstrap'
+import { OutputRenderer } from '../../components/workflows/OutputRenderers'
 
 export function CourseDashboard() {
     const { id } = useParams()
@@ -26,45 +27,190 @@ export function CourseDashboard() {
 
     if (course === null || workflowState === null) return <p> Loading </p>
 
-    return (<>
-        <CourseInfo course={course} />
-        <WorkflowRenderer actionsWithCallbacks={actionsWithCallbacks} workflowState={workflowState} workflow={workflow} refresh={update} />
-    </>)
+    return (
+        <>
+            <CourseInfo course={course} actionsWithCallbacks={actionsWithCallbacks} refresh={update} />
+            <div className="h-10"></div>
+            <p className="text-4xl">Workflow Info</p>
+            <p className="text-2xl">Next Action:</p>
+
+            <WorkflowRenderer
+                actionsWithCallbacks={actionsWithCallbacks}
+                workflowState={workflowState}
+                workflow={workflow}
+                refresh={update}
+            />
+        </>
+    )
 }
 
-function CourseInfo({ course }) {
-    var isEditHidden = true;
-    return (<>
-        <h1 style={{ backgroundColor: course.color }} > Course Info </h1>
-        <Row className="flex items-center hover:bg-gray-200">
-            <Col>
-                <p className="text-lg"> Course Name: {course.name} </p>
-            </Col>
-            <Col>
-                <Button size="sm" title="Edit Course" variant="outline-secondary">
-                    <Edit size={24} />
+function CourseInfo({ course, actionsWithCallbacks, refresh }) {
+
+    const [newCourseName, setNewCourseName] = useState(course.name)
+    const [newCourseCode, setNewCourseCode] = useState(course.classId)
+
+    function updateCourseName(e) {
+        e.preventDefault()
+        return CMTFetch('PUT', `course/${course.id}`, { courseName: newCourseName }).then(async () => await refresh())
+    }
+    function updateCourseCode(e) {
+        e.preventDefault()
+        return CMTFetch('PUT', `course/${course.id}`, { courseCode: newCourseCode }).then(async () => await refresh())
+    }
+
+    return (
+        <>
+            <h1 style={{ backgroundColor: course.color }} className='p-2'>
+                {' '}
+                Course Info{' '}
+            </h1>
+            <div className='flex items-center hover:bg-gray-200 group pl-2'>
+                <InlineFormHoverable
+                    label={'Course Name'}
+                    value={course.name}
+                    onSubmit={e => updateCourseName(e)}
+                    onChange={e => setNewCourseName(e.target.value)}
+                />
+            </div>
+            <div className='flex items-center hover:bg-gray-200 group pl-2'>
+                <InlineFormHoverable
+                    label={'Course Code'}
+                    value={course.classId}
+                    onSubmit={e => updateCourseCode(e)}
+                    onChange={e => setNewCourseCode(e.target.value)}
+                />
+            </div>
+                {actionsWithCallbacks.map(actionWithCallback => {
+                    // Flatten array of objects to simplify later usage
+                    let metadata = {}
+                    Object.keys(actionWithCallback.action.metadata).forEach(key => {
+                        metadata[key] = JSON.parse(actionWithCallback.action.metadata[key])
+                    })
+
+                    return (
+                        <InlineActionRenderer
+                            course={course}
+                            actionWithCallback={actionWithCallback}
+                            metadata={metadata}
+                            refresh={refresh}
+                        />
+                    )
+                })}
+        </>
+    )
+}
+
+function InlineForm({ label, value, onReset, onChange, onSubmit }) {
+    return (
+        <Form onSubmit={onSubmit} onReset={onReset} className='flex items-center gapw'>
+            <Form.Label className='text-xl my-2 w-4/5'>{label}:</Form.Label>
+            <Form.Control defaultValue={value} onChange={onChange}></Form.Control>
+            <div className='flex'>
+                <Button className='mx-1' variant='outline-danger' type='reset'>
+                    <X />
                 </Button>
-            </Col>
-        </Row>
-        <Row className="flex inline-block hover:bg-gray-200">
-            <Col>
-                <p className="text-lg"> Class Id: {course.classId} </p>
-            </Col>
-            <Col>
-                <Button size="sm" title="Edit Course" variant="outline-secondary">
-                    <Edit size={24} />
+                <Button className='mx-1' variant='outline-success' type='submit'>
+                    <Check />
                 </Button>
-            </Col>
-        </Row>
-        <Row className="flex inline hover:bg-gray-200" onMouseEnter={() => {isEditHidden = false;}} onMouseLeave={() => {isEditHidden = true;}}>
-            <Col>
-                <p className="text-lg"> Session number: {course.section ?? "TBD"} </p>
-            </Col>
-            <Col>
-                <Button size="sm" title="Edit Course" variant="outline-secondary" className={`${isEditHidden ? 'invisible' : 'visible'}`}>
-                    <Edit size={24} />
+            </div>
+        </Form>
+    )
+}
+
+function InlineFormHoverable({ label, value, onChange, onSubmit }) {
+    const [editing, setEditing] = useState(false)
+
+    return editing ? (
+        <InlineForm
+            label={label}
+            value={value}
+            onReset={() => setEditing(false)}
+            onChange={onChange}
+            onSubmit={async (e) => {
+                await onSubmit(e)
+                setEditing(false)
+            }}
+        />
+    ) : (
+        <div className="flex items-center gap-20">
+            <div className=''>
+                <p className={`text-xl my-2`}>
+                    {' '}
+                    {label}: {value}{' '}
+                </p>
+            </div>
+            <div className='hidden group-hover:block'>
+                <Button size='sm' title='Edit Course' variant='outline-secondary' onClick={() => setEditing(true)}>
+                    <Edit className='size-6' />
                 </Button>
-            </Col>
-        </Row>
-    </>)
+            </div>
+        </div>
+    )
+}
+
+function InlineActionRenderer({ actionWithCallback, course, metadata, refresh }) {
+    const [outputValues, setOutputValues] = useState(Object.fromEntries(metadata.outputs.map(output => [output.key, output.initialValue]))) // Initialize with array of the Workflows specified initial (or default) values
+
+    const [submitButtonName, setSubmitButtonName] = useState('Submit')
+    const [submitButtonVariant, setSubmitButtonVariant] = useState('primary')
+
+    function submitAction(e) {
+        e.preventDefault()
+        CMTFetch('PUT', actionWithCallback.callback, outputValues).then(() => {
+            setSubmitButtonName('Submitted!')
+            setSubmitButtonVariant('success')
+            setTimeout(async () => {
+                await refresh()
+                setIsEditing(false)
+            }, 500)
+        })
+    }
+
+    const [isEditing, setIsEditing] = useState(false)
+
+    return (
+        <>
+            {isEditing ? (
+                <div>
+                    <Form className='flex items-center gap-6' onSubmit={submitAction}>
+                        {metadata.outputs.map((output, i) => (
+                            <OutputRenderer
+                                output={output}
+                                value={outputValues[i]}
+                                setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
+                            />
+                        ))}
+                        <Button
+                            variant='outline-danger'
+                            type='reset'
+                            onClick={() => {
+                                setIsEditing(false)
+                            }}
+                        >
+                            <X />
+                        </Button>
+                        <Button variant='outline-success' type='submit'>
+                            <Check />
+                        </Button>
+                    </Form>
+                </div>
+            ) : (
+                metadata.outputs.map(output => (
+                    <div className='flex items-center hover:bg-gray-200 group pl-2'>
+                        <div className='w-1/5'>
+                            <p className='text-xl my-2'>
+                                {' '}
+                                {actionWithCallback.action.name} {course[output.key] ?? 'TBD'}{' '}
+                            </p>
+                        </div>
+                        <div className='hidden group-hover:block'>
+                            <Button size='sm' title='Edit Course' variant='outline-secondary' onClick={() => setIsEditing(true)}>
+                                <Edit size={24} />
+                            </Button>
+                        </div>
+                    </div>
+                ))
+            )}
+        </>
+    )
 }
