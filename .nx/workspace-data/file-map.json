@@ -4,297 +4,6 @@
   "pathMappings": {},
   "nxJsonPlugins": [],
   "fileMap": {
-    "projectFileMap": {
-      "cmt": [
-        {
-          "file": "apps/cmt/cmt-project/.env.sample",
-          "hash": "17873998315697016476"
-        },
-        {
-          "file": "apps/cmt/cmt-project/.gitignore",
-          "hash": "13162591408339557260"
-        },
-        {
-          "file": "apps/cmt/cmt-project/.npmrc",
-          "hash": "9260419677237559870"
-        },
-        {
-          "file": "apps/cmt/cmt-project/Dockerfile",
-          "hash": "4403592808083476975"
-        },
-        {
-          "file": "apps/cmt/cmt-project/README.md",
-          "hash": "12358110985605822160"
-        },
-        {
-          "file": "apps/cmt/cmt-project/deploy/run-cmt-dev.sh",
-          "hash": "7087302959483679850"
-        },
-        {
-          "file": "apps/cmt/cmt-project/docker-compose.yml",
-          "hash": "15488191478478848271"
-        },
-        {
-          "file": "apps/cmt/cmt-project/package-lock.json",
-          "hash": "2450161750822529342"
-        },
-        {
-          "file": "apps/cmt/cmt-project/package.json",
-          "hash": "912036238540120446",
-          "deps": [
-            "npm:baseline-browser-mapping",
-            "npm:csv-parse",
-            "npm:dotenv",
-            "npm:multer",
-            "npm:typescript"
-          ]
-        },
-        {
-          "file": "apps/cmt/cmt-project/prisma/migrations/migration_lock.toml",
-          "hash": "8877461730101463416"
-        },
-        {
-          "file": "apps/cmt/cmt-project/prisma/schema.prisma",
-          "hash": "13329499067198812366"
-        },
-        {
-          "file": "apps/cmt/cmt-project/prisma/seed.js",
-          "hash": "9885911120041568290"
-        },
-        {
-          "file": "apps/cmt/cmt-project/project.json",
-          "hash": "10103725901311707610"
-        },
-        {
-          "file": "apps/cmt/cmt-project/public/favicon.ico",
-          "hash": "2949791817221603359"
-        },
-        {
-          "file": "apps/cmt/cmt-project/public/index.html",
-          "hash": "3022064532076506349"
-        },
-        {
-          "file": "apps/cmt/cmt-project/public/manifest.json",
-          "hash": "1447645250373428393"
-        },
-        {
-          "file": "apps/cmt/cmt-project/public/robots.txt",
-          "hash": "2790380794362165217"
-        },
-        {
-          "file": "apps/cmt/cmt-project/scripts/deploy-cmt.sh",
-          "hash": "10810931664540509494"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/.gitignore",
-          "hash": "13795225436928898694"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/App.jsx",
-          "hash": "13849140227128454729"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/app/router.jsx",
-          "hash": "3244421341483603138"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/Dockerfile",
-          "hash": "10206464049996962076"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/authMiddleware.js",
-          "hash": "7458816368564363247"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/dev-users.json",
-          "hash": "15369343476513869586"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/package-lock.json",
-          "hash": "3218395951722409535"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/package.json",
-          "hash": "16475779520706134401"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/routes/course.js",
-          "hash": "8293537827353001447"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/routes/courseWebsite.js",
-          "hash": "17450181836568349895"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/routes/events.js",
-          "hash": "4734812670990265244"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/routes/teamBuilder.js",
-          "hash": "13204075590533516189"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/routes/template.js",
-          "hash": "15878122851626214606"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/routes/workflows.js",
-          "hash": "2222234063984659774"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/server.js",
-          "hash": "10053594369214861228"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/backend/utils/workflows.js",
-          "hash": "9665232999841883959"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/components/RequireAuth.jsx",
-          "hash": "9310316861598915879"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/components/SiteNav.jsx",
-          "hash": "1658405707541009544"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/components/workflows/OutputRenderers.jsx",
-          "hash": "7063940373946672913"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/components/workflows/WorkflowRenderer.jsx",
-          "hash": "4549237541186132322"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/data/courseData.json",
-          "hash": "12916698129977838542"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/data/jsonToSql.js",
-          "hash": "14920882155870674654"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/data/test_data.sql",
-          "hash": "1942838019234663916"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/index.js",
-          "hash": "11263536346180133619"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/CalPage.jsx",
-          "hash": "18009713729074876564"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/CourseEdit.jsx",
-          "hash": "17472332714419673232"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/CoursePage.jsx",
-          "hash": "3813938932662211969"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/CourseWebsitePage.jsx",
-          "hash": "12823285704613674045"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/CreateTemplatePage.jsx",
-          "hash": "6625012502173190637"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/DevLoginPage.jsx",
-          "hash": "15933532264708242468"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/Homepage.jsx",
-          "hash": "7965678828233697465"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/StudentOnboardingPage.jsx",
-          "hash": "4410899858074246873"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/TeamBuilderPage.jsx",
-          "hash": "15858810244422015736"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/course/CourseDashboard.jsx",
-          "hash": "12689645349395396253"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/pages/course/CourseOverview.jsx",
-          "hash": "167662625131306234"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/services/workflowService.js",
-          "hash": "6054888422570559179"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/styles/NavBar.css",
-          "hash": "16992586828208433533"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/styles/calendar.css",
-          "hash": "11061733120595317135"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/styles/course.css",
-          "hash": "10567222459495389864"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/styles/devLogin.css",
-          "hash": "6174644803485314011"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/styles/global.css",
-          "hash": "18029608427437660598"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/styles/index.css",
-          "hash": "2172668849966456987"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/styles/studentonboarding.css",
-          "hash": "11596187144056024065"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/styles/teambuilder.css",
-          "hash": "3244421341483603138"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/utils/api.js",
-          "hash": "4876615937642295844"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/utils/auth.js",
-          "hash": "11909822404418694470"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/utils/userRoles.js",
-          "hash": "17759190070850610311"
-        },
-        {
-          "file": "apps/cmt/cmt-project/src/utils/workflows.js",
-          "hash": "7601110629329515737"
-        },
-        {
-          "file": "apps/cmt/cmt-project/start_app.js",
-          "hash": "274357900827867995"
-        },
-        {
-          "file": "apps/cmt/cmt-project/stop_app.js",
-          "hash": "5019829476489524230"
-        },
-        {
-          "file": "apps/cmt/cmt-project/tailwind.config.js",
-          "hash": "14614312376702732130"
-        },
-        {
-          "file": "apps/cmt/cmt-project/tsconfig.json",
-          "hash": "2600605414563443495"
-        }
-      ]
-    },
     "nonProjectFiles": [
       {
         "file": ".github/workflows/cmt-ci.yml",
@@ -307,18 +16,6 @@
       {
         "file": ".gitkeep",
         "hash": "3244421341483603138"
-      },
-      {
-        "file": ".nx/installation/package-lock.json",
-        "hash": "13234058275675625148"
-      },
-      {
-        "file": ".nx/installation/package.json",
-        "hash": "9460205740331359719"
-      },
-      {
-        "file": ".nx/nxw.js",
-        "hash": "6414013009162943946"
       },
       {
         "file": "LICENSE",
@@ -712,7 +409,298 @@
         "file": "tools/shared-scripts/.gitkeep",
         "hash": "3244421341483603138"
       }
-    ]
+    ],
+    "projectFileMap": {
+      "cmt": [
+        {
+          "file": "apps/cmt/cmt-project/.env.sample",
+          "hash": "17873998315697016476"
+        },
+        {
+          "file": "apps/cmt/cmt-project/.gitignore",
+          "hash": "13162591408339557260"
+        },
+        {
+          "file": "apps/cmt/cmt-project/.npmrc",
+          "hash": "9260419677237559870"
+        },
+        {
+          "file": "apps/cmt/cmt-project/Dockerfile",
+          "hash": "4403592808083476975"
+        },
+        {
+          "file": "apps/cmt/cmt-project/README.md",
+          "hash": "12358110985605822160"
+        },
+        {
+          "file": "apps/cmt/cmt-project/deploy/run-cmt-dev.sh",
+          "hash": "7087302959483679850"
+        },
+        {
+          "file": "apps/cmt/cmt-project/docker-compose.yml",
+          "hash": "15488191478478848271"
+        },
+        {
+          "file": "apps/cmt/cmt-project/package-lock.json",
+          "hash": "2450161750822529342"
+        },
+        {
+          "file": "apps/cmt/cmt-project/package.json",
+          "hash": "912036238540120446",
+          "deps": [
+            "npm:baseline-browser-mapping",
+            "npm:csv-parse",
+            "npm:dotenv",
+            "npm:multer",
+            "npm:typescript"
+          ]
+        },
+        {
+          "file": "apps/cmt/cmt-project/prisma/migrations/migration_lock.toml",
+          "hash": "8877461730101463416"
+        },
+        {
+          "file": "apps/cmt/cmt-project/prisma/schema.prisma",
+          "hash": "13329499067198812366"
+        },
+        {
+          "file": "apps/cmt/cmt-project/prisma/seed.js",
+          "hash": "9885911120041568290"
+        },
+        {
+          "file": "apps/cmt/cmt-project/project.json",
+          "hash": "10103725901311707610"
+        },
+        {
+          "file": "apps/cmt/cmt-project/public/favicon.ico",
+          "hash": "2949791817221603359"
+        },
+        {
+          "file": "apps/cmt/cmt-project/public/index.html",
+          "hash": "3022064532076506349"
+        },
+        {
+          "file": "apps/cmt/cmt-project/public/manifest.json",
+          "hash": "1447645250373428393"
+        },
+        {
+          "file": "apps/cmt/cmt-project/public/robots.txt",
+          "hash": "2790380794362165217"
+        },
+        {
+          "file": "apps/cmt/cmt-project/scripts/deploy-cmt.sh",
+          "hash": "10810931664540509494"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/.gitignore",
+          "hash": "13795225436928898694"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/App.jsx",
+          "hash": "13849140227128454729"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/app/router.jsx",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/Dockerfile",
+          "hash": "10206464049996962076"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/authMiddleware.js",
+          "hash": "7458816368564363247"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/dev-users.json",
+          "hash": "15369343476513869586"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/package-lock.json",
+          "hash": "3218395951722409535"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/package.json",
+          "hash": "16475779520706134401"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/routes/course.js",
+          "hash": "8293537827353001447"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/routes/courseWebsite.js",
+          "hash": "17450181836568349895"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/routes/events.js",
+          "hash": "4734812670990265244"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/routes/teamBuilder.js",
+          "hash": "13204075590533516189"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/routes/template.js",
+          "hash": "15878122851626214606"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/routes/workflows.js",
+          "hash": "2222234063984659774"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/server.js",
+          "hash": "10053594369214861228"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/backend/utils/workflows.js",
+          "hash": "9665232999841883959"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/components/RequireAuth.jsx",
+          "hash": "9310316861598915879"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/components/SiteNav.jsx",
+          "hash": "1658405707541009544"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/components/workflows/OutputRenderers.jsx",
+          "hash": "7063940373946672913"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/components/workflows/WorkflowRenderer.jsx",
+          "hash": "4549237541186132322"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/data/courseData.json",
+          "hash": "12916698129977838542"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/data/jsonToSql.js",
+          "hash": "14920882155870674654"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/data/test_data.sql",
+          "hash": "1942838019234663916"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/index.js",
+          "hash": "11263536346180133619"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/CalPage.jsx",
+          "hash": "18009713729074876564"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/CourseEdit.jsx",
+          "hash": "17472332714419673232"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/CoursePage.jsx",
+          "hash": "3813938932662211969"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/CourseWebsitePage.jsx",
+          "hash": "12823285704613674045"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/CreateTemplatePage.jsx",
+          "hash": "6625012502173190637"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/DevLoginPage.jsx",
+          "hash": "15933532264708242468"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/Homepage.jsx",
+          "hash": "7965678828233697465"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/StudentOnboardingPage.jsx",
+          "hash": "4410899858074246873"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/TeamBuilderPage.jsx",
+          "hash": "15858810244422015736"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/course/CourseDashboard.jsx",
+          "hash": "12689645349395396253"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/pages/course/CourseOverview.jsx",
+          "hash": "167662625131306234"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/services/workflowService.js",
+          "hash": "6054888422570559179"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/styles/NavBar.css",
+          "hash": "16992586828208433533"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/styles/calendar.css",
+          "hash": "11061733120595317135"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/styles/course.css",
+          "hash": "10567222459495389864"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/styles/devLogin.css",
+          "hash": "6174644803485314011"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/styles/global.css",
+          "hash": "18029608427437660598"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/styles/index.css",
+          "hash": "2172668849966456987"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/styles/studentonboarding.css",
+          "hash": "11596187144056024065"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/styles/teambuilder.css",
+          "hash": "3244421341483603138"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/utils/api.js",
+          "hash": "4876615937642295844"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/utils/auth.js",
+          "hash": "11909822404418694470"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/utils/userRoles.js",
+          "hash": "17759190070850610311"
+        },
+        {
+          "file": "apps/cmt/cmt-project/src/utils/workflows.js",
+          "hash": "7601110629329515737"
+        },
+        {
+          "file": "apps/cmt/cmt-project/start_app.js",
+          "hash": "274357900827867995"
+        },
+        {
+          "file": "apps/cmt/cmt-project/stop_app.js",
+          "hash": "5019829476489524230"
+        },
+        {
+          "file": "apps/cmt/cmt-project/tailwind.config.js",
+          "hash": "14614312376702732130"
+        },
+        {
+          "file": "apps/cmt/cmt-project/tsconfig.json",
+          "hash": "2600605414563443495"
+        }
+      ]
+    }
   },
   "externalNodesHash": "11621896008812654649"
 }
