@@ -59,8 +59,8 @@ export default function ViewableCommentForm({
         setComments(data);
         setError(null);
       } catch (err) {
-        console.error("Failed to fetch comments:", err);
-        setError('Could not load comment history.');
+        console.error("Failed to fetch notes:", err);
+        setError('Could not load note history.');
       } finally {
         setLoading(false);
       }
@@ -83,7 +83,7 @@ export default function ViewableCommentForm({
     if (comments.length === 0) {
       return (
         <Typography color="text.secondary" sx={{ p: 4, textAlign: 'center' }}>
-          No comments found for this item.
+          No notes found for this item.
         </Typography>
       );
     }

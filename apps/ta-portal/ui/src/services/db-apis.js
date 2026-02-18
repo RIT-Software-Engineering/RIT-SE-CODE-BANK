@@ -79,6 +79,7 @@ export async function authenticateUser(username, password) {
     body: JSON.stringify({ username, password }),
   });
 
+  print(response)
   return handleApiResponse(response);
 }
 
@@ -392,7 +393,7 @@ export async function createPosition(positionData, employerData) {
 }
 
 /**
- * Updates an existing job position's details and adds an update comment.
+ * Updates an existing job position's details and adds an update note (refered to as a comment).
  * @param {string} jobID - The ID of the job position to update.
  * @param {object} positionData - An object with the new data for the position.
  * @param {object} commentData - An object with details for the update comment.

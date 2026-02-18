@@ -89,7 +89,7 @@ export default function Step2CandidateAndEmployee({
       {/* Selected Courses */}
       <div className="space-y-4 pt-4">
         {coursesTaken.length > 0 && (
-          <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <Box display="flex" alignItems="center" gap={2} mb={2} >
             <Typography variant="h2">Selected Courses</Typography>
             <Chip label={coursesTaken.length} size="small" color="primary" />
           </Box>
@@ -99,8 +99,7 @@ export default function Step2CandidateAndEmployee({
           <Paper
             key={courseCode}
             elevation={2}
-            sx={{
-              p: 2,
+            sx={(theme)=>({  p: 2,
               border: "1px solid",
               borderColor: "divider",
               borderRadius: "8px",
@@ -109,10 +108,14 @@ export default function Step2CandidateAndEmployee({
                 boxShadow: 4,
                 transform: "translateY(-1px)",
               },
-            }}
+              background: theme.palette.mode === 'dark'
+                    ? ""
+                    : "#e0e0e0" })}
+
+            
           >
-            <div className="flex items-center justify-between">
-              <Typography variant="h3" fontWeight={700} letterSpacing="0.025em">
+            <div className="flex items-center justify-between" >
+              <Typography variant="h3" fontWeight={700} letterSpacing="0.025em" >
                 {courseCode}
               </Typography>
 

@@ -24,8 +24,8 @@ import {
  * @param {object[]} props.allUsers - The list of all existing users for validation.
  */
 export default function SignUpForm({
-  onSignUpSubmit = () => {},
-  onSwitchToLogin = () => {},
+  onSignUpSubmit = () => { },
+  onSwitchToLogin = () => { },
   allUsers = [],
 }) {
   const [error, setError] = useState(null);
@@ -94,6 +94,14 @@ export default function SignUpForm({
           fullWidth
           placeholder="Enter username (e.g., xyz1234)"
           inputProps={{ maxLength: 7 }}
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
         <TextField
           label="Password"
@@ -103,6 +111,14 @@ export default function SignUpForm({
           margin="normal"
           fullWidth
           placeholder="Enter password"
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
         <FormControl fullWidth margin="normal">
           <InputLabel id="role-select-label">I am a...</InputLabel>
@@ -111,6 +127,12 @@ export default function SignUpForm({
             value={newUser.role}
             label="I am a..."
             onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+            sx={(theme) => ({
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white"
+            })}
           >
             <MenuItem value="CANDIDATE">Candidate</MenuItem>
             <MenuItem value="EMPLOYEE">Employee</MenuItem>

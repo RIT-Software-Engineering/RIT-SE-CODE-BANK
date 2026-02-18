@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { getStatusChipColor } from "@/utils/applicationUtils";
 import ViewableApplicationForm from "../ViewableApplicationForm";
-import ViewableCommentForm from "../../comments/ViewableCommentForm";
-import EditableCommentForm from "@/components/comments/EditableCommentForm";
+import ViewableNoteForm from "../../notes/ViewableNoteForm";
+import EditableNoteForm from "@/components/notes/EditableNoteForm";
 import {
   updateCandidateApplicationStatus,
   getCandidateHiredStatus,
@@ -30,6 +30,7 @@ import {
   Paper,
   Typography,
   Link as MuiLink,
+  Button
 } from '@mui/material';
 import {
   MoreVert as EllipsisVerticalIcon,
@@ -62,7 +63,7 @@ export default function ApplicationCard({
 }) {
   const { showNotification } = useNotification();
   const [isViewingApplication, setIsViewingApplication] = useState(false);
-  const [isViewingComments, setIsViewingComments] = useState(false);
+  const [isViewingNotes, setIsViewingNotes] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
 
   const [modalState, setModalState] = useState({
@@ -145,7 +146,7 @@ export default function ApplicationCard({
     }
   };
 
-  const handleConfirmUpdate = async (comment) => {
+  const handleConfirmUpdate = async (note) => {
     setIsProcessingUpdate(true);
     try {
       let fullName = `${currentUser.fname} ${currentUser.lname}`;
@@ -153,7 +154,7 @@ export default function ApplicationCard({
         fullName,
         id,
         modalState.status,
-        comment
+        note
       );
       showNotification(
         `Application status successfully updated to "${modalState.status?.replace(
@@ -236,12 +237,12 @@ export default function ApplicationCard({
             </IconButton>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
               <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
-              <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
+              <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
 
               {showActionMenuItems && <Divider />}
 
               {showHireOption && (
-                <MenuItem onClick={() => { if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</MenuItem>
+                <MenuItem onClick={() => {console.log('click'); if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</MenuItem>
               )}
               {showRejectOption && (
                 <MenuItem onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} sx={{ color: 'error.main' }}>Reject Application</MenuItem>
@@ -308,6 +309,37 @@ export default function ApplicationCard({
               sx={{ fontWeight: 'bold', fontSize: '1rem' }}
             />
           </Box>
+          <Divider sx={{ my: 3 }} />
+
+          <Typography variant="body2" color="text.secondary">Actions:</Typography>
+
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</Button>
+              </Grid>
+              <Button variant="outlined" onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</Button>
+              {showInterviewOption && (
+                <Grid item xs={12} sm={6}>
+                  <Button variant="outlined" onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>Select for Interview</Button>
+                </Grid>)}
+              {showHireOption && (
+                <Grid item xs={12} sm={6}>
+                  <Button variant="outlined" onClick={() => { if (onHire) onHire(); handleMenuClose(); }} >Hire Candidate</Button>
+                </Grid>
+              )}
+              {showOfferOption && (<Grid item xs={12} sm={6}>
+                <Button variant="outlined" onClick={handleOfferPosition}>Offer Position</Button>
+              </Grid>)}
+            </Grid>
+
+            {showRejectOption && (
+              <Button variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
+            )}
+
+
+
+          </Box>
         </Box>
       </Paper>
 
@@ -319,19 +351,19 @@ export default function ApplicationCard({
         />
       )}
 
-      {isViewingComments && (
-        <ViewableCommentForm
+      {isViewingNotes && (
+        <ViewableNoteForm
           foreignKey={application.id}
           foreignTableName="JobPositionApplicationHistory"
-          itemTitle="Application Comment History"
+          itemTitle="Application Note History"
           itemSubtitle={jobPosition.course.name}
           statusEnumMap={applicationStatusEnumToString}
           userRole={currentUser.role}
-          onClose={() => setIsViewingComments(false)}
+          onClose={() => setIsViewingNotes(false)}
         />
       )}
 
-      <EditableCommentForm
+      <EditableNoteForm
         isOpen={modalState.isOpen}
         onClose={handleCloseUpdateModal}
         onConfirm={handleConfirmUpdate}

@@ -27,7 +27,7 @@ import { Filter } from "@/components/common/searchAndFilter/Filter";
 import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
-import EditableCommentForm from "@/components/comments/EditableCommentForm";
+import EditableNoteForm from "@/components/notes/EditableNoteForm";
 import ConfirmationModal from "@/components/common/models/ConfirmationModal";
 
 import {
@@ -62,6 +62,13 @@ export default function AdminPositions() {
   const [myPositions, setMyPositions] = useState([]);
   const [allPositions, setAllPositions] = useState([]);
 
+  // Configuration for the tabs, linking them to their respective data states.
+  const tabs = [
+    { id: "open-positions", label: "All Open Positions", data: openPositions },
+    { id: "my-positions", label: "My Created Positions", data: myPositions },
+    { id: "all-positions", label: "Manage All Positions", data: allPositions },
+  ];
+
   // General state for loading, errors, and search/filter functionality.
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -69,12 +76,12 @@ export default function AdminPositions() {
   const [appliedFilters, setAppliedFilters] = useState({});
   const [filterConfig, setFilterConfig] = useState([]);
 
-  // State for managing modals (edit/create position and comment confirmation).
+  // State for managing modals (edit/create position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [commentModalState, setCommentModalState] = useState({
+  const [noteModalState, setNoteModalState] = useState({
     isOpen: false,
     title: '',
     context: {},
@@ -272,16 +279,16 @@ export default function AdminPositions() {
   };
 
   /**
-   * Closes the comment confirmation modal.
+   * Closes the note confirmation modal.
    */
-  const handleCloseCommentModal = () => {
-    setCommentModalState({ isOpen: false, title: '', context: {} });
+  const handleCloseNoteModal = () => {
+    setNoteModalState({ isOpen: false, title: '', context: {} });
   };
 
   /**
    * Handles saving a job position from the EditPositionModal.
    * It determines whether to perform a CREATE or UPDATE action.
-   * For updates, it opens a comment modal for confirmation.
+   * For updates, it opens a note modal for confirmation.
    * @param {object} positionData - The data of the position to be saved.
    */
   const handleSaveJob = async (positionData) => {
@@ -314,9 +321,9 @@ export default function AdminPositions() {
       } finally {
         setIsProcessing(false);
       }
-    } else { // Otherwise, it's an UPDATE action, which requires a comment.
+    } else { // Otherwise, it's an UPDATE action, which requires a note.
       closeModalImmediately();
-      setCommentModalState({
+      setNoteModalState({
         isOpen: true,
         title: 'Confirm Position Update',
         context: {
@@ -329,12 +336,12 @@ export default function AdminPositions() {
   };
 
   /**
-   * Initiates a status update by opening the comment modal for confirmation.
+   * Initiates a status update by opening the note modal for confirmation.
    * @param {string} jobId - The ID of the job to update.
    * @param {string} newStatus - The new status to set (e.g., 'OPEN', 'REJECTED').
    */
   const handleStatusUpdate = async (jobId, newStatus) => {
-    setCommentModalState({
+    setNoteModalState({
       isOpen: true,
       title: newStatus === 'OPEN' ? 'Approve Position' : 'Reject Position',
       context: {
@@ -346,26 +353,26 @@ export default function AdminPositions() {
   };
 
   /**
-   * Handles the final confirmation from the comment modal.
+   * Handles the final confirmation from the note modal.
    * It performs the appropriate API call (status update or position update)
-   * with the provided comment.
-   * @param {string} comment - The comment entered by the user.
+   * with the provided note.
+   * @param {string} note - The note entered by the user.
    */
-  const handleConfirmComment = async (comment) => {
+  const handleConfirmNote = async (note) => {
     if (!currentUser) return;
     setIsProcessing(true);
 
-    const { action, ...context } = commentModalState.context;
+    const { action, ...context } = noteModalState.context;
 
     try {
       if (action === 'statusUpdate') {
-        const commentData = { fname: currentUser.fname, lname: currentUser.lname, comment };
-        await updatePositionStatus(context.jobId, context.newStatus, commentData);
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
+        await updatePositionStatus(context.jobId, context.newStatus, noteData);
         showNotification('Position status updated successfully!', 'success');
 
       } else if (action === 'update') {
-        const commentData = { fname: currentUser.fname, lname: currentUser.lname, comment };
-        await updatePosition(context.jobId, context.positionData, commentData);
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
+        await updatePosition(context.jobId, context.positionData, noteData);
         showNotification('Position updated successfully!', 'success');
       }
 
@@ -380,16 +387,11 @@ export default function AdminPositions() {
       showNotification(err.message || 'An unexpected error occurred.', 'error');
     } finally {
       setIsProcessing(false);
-      handleCloseCommentModal();
+      handleCloseNoteModal();
     }
   };
 
-  // Configuration for the tabs, linking them to their respective data states.
-  const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-    { id: "all-positions", label: "Manage All Positions", data: allPositions },
-  ];
+
 
   // Get the data for the currently active tab.
   const activeTabData = tabs[activeTab];
@@ -558,11 +560,11 @@ export default function AdminPositions() {
       )}
 
 
-      <EditableCommentForm
-        isOpen={commentModalState.isOpen}
-        onClose={handleCloseCommentModal}
-        onConfirm={handleConfirmComment}
-        title={commentModalState.title}
+      <EditableNoteForm
+        isOpen={noteModalState.isOpen}
+        onClose={handleCloseNoteModal}
+        onConfirm={handleConfirmNote}
+        title={noteModalState.title}
         isProcessing={isProcessing}
       />
     </Container>

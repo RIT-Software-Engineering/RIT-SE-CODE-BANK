@@ -222,6 +222,20 @@ export const lightTheme = createTheme({
   },
   components: {
     ...baseTheme.components,
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: ritColors.white,
+        },
+      },
+    },
+    MuiFilledInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: ritColors.white,
+        },
+      },
+    },
     MuiChip: {
       styleOverrides: {
         root: ({ ownerState, theme }) => ({

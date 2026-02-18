@@ -177,12 +177,13 @@ async function initializeFeatureFlags() {
     
     const features = [
         { name: 'MESSAGING', enabled: false },
-        { name: 'TIMECARD', enabled: true },
+        { name: 'TIMECARD', enabled: false },
         { name: 'POSITIONS', enabled: true },
         { name: 'APPLICATIONS', enabled: true },
         { name: 'PROFILES', enabled: true },
-        { name: 'KRONOS', enabled: true },
-        { name: 'ORACLE', enabled: true },
+        { name: 'KRONOS', enabled: false },
+        { name: 'ORACLE', enabled: false },
+        { name: 'WORKDAY', enabled: true },
     ];
 
     for (const feature of features) {
