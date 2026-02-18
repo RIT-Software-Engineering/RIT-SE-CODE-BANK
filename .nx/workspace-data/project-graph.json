@@ -14,6 +14,7 @@
           "targetGroups": {
             "NPM Scripts": [
               "start",
+              "build1",
               "build",
               "test",
               "eject"
@@ -33,13 +34,25 @@
             "configurations": {},
             "parallelism": true
           },
+          "build1": {
+            "executor": "nx:run-script",
+            "options": {
+              "script": "build1"
+            },
+            "metadata": {
+              "scriptContent": "react-scripts build",
+              "runCommand": "npm run build1"
+            },
+            "configurations": {},
+            "parallelism": true
+          },
           "build": {
             "executor": "nx:run-script",
             "options": {
               "script": "build"
             },
             "metadata": {
-              "scriptContent": "react-scripts build",
+              "scriptContent": "build \"src/**/*.{js,jsx}\"",
               "runCommand": "npm run build"
             },
             "configurations": {},
