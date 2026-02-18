@@ -11,7 +11,7 @@ export default function App() {
 
   //purple background is placeholder to see better
   return (
-    <div className="h-screen w-screen bg-purple-900 text-text-muted flex flex-col">
+    <div className="h-screen w-screen bg-purple-900 text-text-muted font-mono flex flex-col">
       <Header></Header>
       <div className="flex flex-row flex-1">
         <div className="flex flex-col flex-1">
