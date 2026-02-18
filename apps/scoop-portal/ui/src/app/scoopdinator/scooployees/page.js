@@ -22,6 +22,7 @@ import {
   TableSortLabel,
   Snackbar,
   Alert,
+  TextField,
 } from "@mui/material";
 
 export default function ViewScooployees() {
@@ -42,8 +43,12 @@ export default function ViewScooployees() {
   const [snackbarMsg, setSnackbarMsg] = useState("");
 
   const [manageOpen, setManageOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importing, setImporting] = useState(false);
+
+  const [newEmployee, setNewEmployee] = useState({ fname: "", lname: "", email: "" });
+  const [addingEmployee, setAddingEmployee] = useState(false);
 
   const OPTIONS = ["all", "active", "inactive"];
 
@@ -245,6 +250,48 @@ export default function ViewScooployees() {
     });
   };
 
+  const handleAddEmployee = async () => {
+    const { fname, lname, email } = newEmployee;
+    if (!fname || !lname || !email) return;
+
+    setAddingEmployee(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fname,
+          lname,
+          email,
+          semester_group: "",
+          project: "null",
+          active: "true",
+          type: "scooployee",
+          last_login: "",
+          prev_login: "",
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to add employee");
+
+      const refreshRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/employees`
+      );
+      const data = await refreshRes.json();
+      setEmployees(data);
+
+      setSnackbarMsg("Employee added successfully!");
+      setSnackbarOpen(true);
+      setNewEmployee({ fname: "", lname: "", email: "" });
+      setAddOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add employee. Please try again.");
+    } finally {
+      setAddingEmployee(false);
+    }
+  };
+
   const handleJournalClick = () => {
     if (selectedEmployee?.id) {
       router.push(`/journal`);
@@ -281,13 +328,22 @@ export default function ViewScooployees() {
             </MenuItem>
           ))}
         </Select>
-        <Button
-          variant="contained"
-          onClick={() => setManageOpen(true)}
-          sx={{ mr: "10px" }}
-        >
-          Manage
-        </Button>
+        <Box>
+          <Button
+            variant="contained"
+            onClick={() => setAddOpen(true)}
+            sx={{ mr: "10px" }}
+          >
+            Add
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => setManageOpen(true)}
+            sx={{ mr: "10px" }}
+          >
+            Manage
+          </Button>
+        </Box>
       </Box>
 
       <Paper elevation={1} square sx={{ maxHeight: 500, overflow: "auto" }}>
@@ -477,6 +533,71 @@ export default function ViewScooployees() {
           </Button>
           <Button onClick={handleConfirmAssign} variant="contained">
             Yes, Assign
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Employee Modal */}
+      <Dialog
+        open={addOpen}
+        onClose={() => {
+          setAddOpen(false);
+          setNewEmployee({ fname: "", lname: "", email: "" });
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Add Employee</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              label="First Name"
+              value={newEmployee.fname}
+              onChange={(e) =>
+                setNewEmployee((prev) => ({ ...prev, fname: e.target.value }))
+              }
+              fullWidth
+            />
+            <TextField
+              label="Last Name"
+              value={newEmployee.lname}
+              onChange={(e) =>
+                setNewEmployee((prev) => ({ ...prev, lname: e.target.value }))
+              }
+              fullWidth
+            />
+            <TextField
+              label="Email"
+              type="email"
+              value={newEmployee.email}
+              onChange={(e) =>
+                setNewEmployee((prev) => ({ ...prev, email: e.target.value }))
+              }
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setAddOpen(false);
+              setNewEmployee({ fname: "", lname: "", email: "" });
+            }}
+            color="inherit"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAddEmployee}
+            variant="contained"
+            disabled={
+              addingEmployee ||
+              !newEmployee.fname ||
+              !newEmployee.lname ||
+              !newEmployee.email
+            }
+          >
+            {addingEmployee ? "Adding..." : "Add"}
           </Button>
         </DialogActions>
       </Dialog>
