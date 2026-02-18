@@ -8,9 +8,5 @@
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "nx": "19.8.14"
-  },
-  "nx": {},
-  "workspaces":[
-    "apps/cmt/cmt-project"
-  ]
+  }
 }
