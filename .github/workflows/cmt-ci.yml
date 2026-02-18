@@ -40,7 +40,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
@@ -63,7 +63,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
       - run: npm ci
         working-directory: apps/cmt/cmt-project
       - run: npm run lint
@@ -143,7 +143,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
       - run: npm ci --ignore-scripts
         working-directory: apps/cmt/cmt-project
       - run: NX_DAEMON=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}

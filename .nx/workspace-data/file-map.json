@@ -1,6 +1,14 @@
 {
   "version": "6.0",
-  "nxVersion": "21.2.0",
+  "nxVersion": "19.8.14",
+  "deps": {
+    "csv-parse": "^6.1.0",
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
+    "nx": "19.8.14"
+  },
   "pathMappings": {},
   "nxJsonPlugins": [],
   "fileMap": {
@@ -81,7 +89,7 @@
         },
         {
           "file": "apps/cmt/cmt-project/scripts/deploy-cmt.sh",
-          "hash": "11740341330219225770"
+          "hash": "10810931664540509494"
         },
         {
           "file": "apps/cmt/cmt-project/src/.gitignore",
@@ -296,11 +304,11 @@
     "nonProjectFiles": [
       {
         "file": ".github/workflows/cmt-ci.yml",
-        "hash": "12383463758352242106"
+        "hash": "4145779745658745510"
       },
       {
         "file": ".gitignore",
-        "hash": "919886134739621448"
+        "hash": "202284656776750707"
       },
       {
         "file": ".gitkeep",
@@ -644,7 +652,7 @@
       },
       {
         "file": "nx.json",
-        "hash": "4013980103080271812"
+        "hash": "16064964979661945679"
       },
       {
         "file": "package-lock.json",
@@ -652,7 +660,7 @@
       },
       {
         "file": "package.json",
-        "hash": "4296922420257830975"
+        "hash": "7672520338938973363"
       },
       {
         "file": "packages/.gitkeep",
@@ -680,7 +688,7 @@
       },
       {
         "file": "scripts/deploy-cmt.sh",
-        "hash": "103452866488203722"
+        "hash": "3581051595089818893"
       },
       {
         "file": "services/.gitkeep",
