@@ -22,7 +22,7 @@ ssh -i "$DEPLOY_KEY" "fjg5149@apps-staging.se.rit.edu" << ENDSSH
     git reset --hard origin/${DEPLOY_BRANCH}
     
     echo "🐳 Rebuilding and restarting Docker containers..."
-    cd ./apps/cmt/deploy
+    cd ./apps/cmt/cmt-project/deploy
     docker compose down
     chmod +x ./run-cmt-dev.sh
     ./run-cmt-dev.sh

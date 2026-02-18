@@ -69,25 +69,25 @@ jobs:
       - run: npm run lint
         working-directory: apps/cmt/cmt-project
 
-#   test:
-#     name: Test Affected Projects
-#     needs: setup
-#     runs-on: ubuntu-latest
+  # test:
+  #   name: Test Affected Projects
+  #   needs: setup
+  #   runs-on: ubuntu-latest
 
-#     steps:
-#       - uses: actions/checkout@v4
-#         with:
-#           fetch-depth: 0
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version: 18
-#       - run: npm ci
-#       - run: npx nx affected:test --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }} --code-coverage
-#       - name: Upload coverage report
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: coverage-report
-#           path: coverage/
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 18
+  #     - run: npm ci
+  #     - run: npx nx affected:test --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }} --code-coverage
+  #     - name: Upload coverage report
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: coverage-report
+  #         path: coverage/
 
 #   sonarqube:
 #     name: SonarQube Analysis
@@ -132,23 +132,25 @@ jobs:
 #           name: RIT-SE-CODE-BANK
 #           fail_ci_if_error: true
   
-#   build:
-#     name: Build Affected Projects
-#     needs: [lint, test]
-#     runs-on: ubuntu-latest
+  build:
+    name: Build Affected Projects
+    needs: [setup, lint]
+    runs-on: ubuntu-latest
 
-#     steps:
-#       - uses: actions/checkout@v4
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version: 18
-#       - run: npm ci
-#       - run: npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
-#       - name: Upload build artifacts
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: build-artifacts
-#           path: dist/
+    steps:
+      - uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci --ignore-scripts
+      - run: npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist/
 
 #   deploy:
 #     # Placeholder for deployment. Reliant on deployment scripts that don't yet exist.
