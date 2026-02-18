@@ -37,7 +37,7 @@ describe('dispatchNotification (proxy to notification-service)', () => {
     expect(res).toEqual(expect.objectContaining({ ok: true }));
     expect(calls.length).toBe(1);
     const { url, opts } = calls[0];
-    expect(url).toMatch(/\/api\/notifications\/dispatch\//);
+    expect(url).toMatch(/\/ta-portal-api\/notifications\/dispatch\//);
     expect(opts.method).toBe('POST');
     expect(opts.headers['Content-Type']).toBe('application/json');
     const body = JSON.parse(opts.body);

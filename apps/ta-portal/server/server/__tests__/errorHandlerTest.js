@@ -4,7 +4,7 @@ describe("Express errorHandler middleware", () => {
   let req, res, next;
 
   beforeEach(() => {
-    req = { originalUrl: "/api/test" };
+    req = { originalUrl: "/ta-portal-api/test" };
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
@@ -23,7 +23,7 @@ describe("Express errorHandler middleware", () => {
     const json = res.json.mock.calls[0][0];
     expect(json.error).toBe("Test error");
     expect(json.statusCode).toBe(500);
-    expect(json.url).toBe("/api/test");
+    expect(json.url).toBe("/ta-portal-api/test");
     expect(json.stack).toBeDefined();
   });
 
@@ -38,7 +38,7 @@ describe("Express errorHandler middleware", () => {
     const json = res.json.mock.calls[0][0];
     expect(json.error).toBe("Prod error");
     expect(json.statusCode).toBe(400);
-    expect(json.url).toBe("/api/test");
+    expect(json.url).toBe("/ta-portal-api/test");
     expect(json.stack).toBeUndefined();
   });
 
@@ -71,7 +71,7 @@ describe("Express errorHandler middleware", () => {
     errorHandler(err, req, res, next);
 
     const json = res.json.mock.calls[0][0];
-    expect(json.url).toBe("/api/test");
+    expect(json.url).toBe("/ta-portal-api/test");
   });
 
   it("always includes a valid ISO timestamp", () => {

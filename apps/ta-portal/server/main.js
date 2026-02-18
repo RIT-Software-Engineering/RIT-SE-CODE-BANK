@@ -107,7 +107,7 @@ async function initializeApp() {
   
   // Mount main API router
 
-  app.use("/api", apiRoutes);
+  app.use("/ta-portal-api", apiRoutes);
 
   // Catch-all 404 handler
   app.use((req, res, next) => {
