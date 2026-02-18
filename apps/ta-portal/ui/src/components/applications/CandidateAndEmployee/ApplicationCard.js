@@ -19,6 +19,7 @@ import ApplicationProgressTracker from "@/components/applications/ApplicationPro
 
 import {
   Box,
+  Button,
   Chip,
   CircularProgress,
   Divider,
@@ -27,6 +28,7 @@ import {
   MenuItem,
   Paper,
   Typography,
+  Grid
 } from '@mui/material';
 import {
   CalendarMonth as CalendarIcon,
@@ -62,7 +64,7 @@ export default function CandidateApplicationCard({
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
   const [isViewingNotes, setIsViewingNotes] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [clearConfirm, setShowClearConfirm]=useState(false);
+  const [clearConfirm, setShowClearConfirm] = useState(false);
 
   const [modalState, setModalState] = useState({
     isOpen: false,
@@ -196,7 +198,10 @@ export default function CandidateApplicationCard({
           animation: isHighlighted ? 'flashPulse 1.2s ease-in-out 2' : 'none',
         }}
       >
-        <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={(theme) => ({
+          p: { xs: 2, md: 3 }, background: theme.palette.mode === 'dark'
+            ? "" : "white"
+        })}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
             <Box >
               <Typography variant="h2" component="h2" gutterBottom>
@@ -246,7 +251,7 @@ export default function CandidateApplicationCard({
               <Typography variant="body2">{jobPosition.location}</Typography>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-              <Person sx={{ mr: 1 }}/>
+              <Person sx={{ mr: 1 }} />
               <Typography variant="body2">
                 {jobPosition.employer.user.fname} {jobPosition.employer.user.lname} ({jobPosition.employer.user.email})
               </Typography>
@@ -275,6 +280,38 @@ export default function CandidateApplicationCard({
               sx={{ fontWeight: 'bold', fontSize: '1rem' }}
             />
           </Box>
+
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="body2" color="text.secondary">Actions:</Typography>
+
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</Button>
+              </Grid>
+              <Button variant="outlined" onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</Button>
+
+
+              {jobApplicationStatus.toLowerCase() === "pending_offer" && (
+                <Grid item xs={12} sm={6}>
+                  <Button variant="outlined" onClick={handleAcceptOffer}>Accept Offer</Button>
+                </Grid>)}
+
+            </Grid>
+
+            {(jobApplicationStatus.toLowerCase() === "applied" || jobApplicationStatus.toLowerCase() === "interview") && (
+              <Button variant="contained" color="error" onClick={handleDeleteClick} >Delete Application</Button>
+            )}
+            {jobApplicationStatus.toLowerCase() === "pending_offer" && (
+              <Button variant="contained"color="error" onClick={() => handleOpenUpdateModal("DECLINED_OFFER", "Decline Position Offer")}>Decline Offer</Button>
+            )}
+
+
+
+          </Box>
+
+
+
         </Box>
       </Paper>
 
@@ -310,10 +347,10 @@ export default function CandidateApplicationCard({
         <ViewableApplicationForm
           position={jobPosition}
           application={application}
-          onClose={()=>setIsViewingApplication(false)}
+          onClose={() => setIsViewingApplication(false)}
         />
       )}
-    {/*{{(isViewingApplication &&showClearConfirm) &&(
+      {/*{{(isViewingApplication &&showClearConfirm) &&(
         <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={() => setIsViewingApplication(false)} title="Cancel Position Edits">
           Are you sure you want to cancel your edits? This action cannot be undone.
         </ConfirmationModal>
