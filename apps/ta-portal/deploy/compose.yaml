@@ -1,0 +1,54 @@
+name: ta-portal
+
+services:
+  mariadb:
+    image: mariadb:11
+    ports:
+      - ${DB_HOST_PORT}:${DB_CONTAINER_PORT}
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD} # Root Password for db
+      MYSQL_DATABASE: ${DB_NAME} # The specific database that is created on startup
+      MYSQL_USER: ${DB_APP_USER} # The db user created on startup
+      MYSQL_PASSWORD: ${DB_APP_PASSWORD} # The password for the db user
+    volumes:
+      - ta_portal_mariadb_data:/var/lib/mysql # Volume that stores the sql data even if container is closed. /var/lib/mysql is where the data is inside the container
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build: # Built within the context of the ui folder
+      context: ../ui
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_NODE_ENV: ${NEXT_PUBLIC_NODE_ENV} # DEV or PROD, determines what login system is used
+        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
+        NEXT_PUBLIC_API_EXTENSION: ${NEXT_PUBLIC_API_EXTENSION}
+        NEXT_PUBLIC_DATABASE_API_EXTENSION: ${NEXT_PUBLIC_DATABASE_API_EXTENSION}
+    ports:
+      - ${FRONT_HOST_PORT}:${FRONT_CONTAINER_PORT}
+    depends_on:
+      - backend
+
+  backend:
+    build: # Built within the context of the server folder, requires database for prisma generation
+      context: ../server
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@${DB_HOST}:${DB_CONTAINER_PORT}/${DB_NAME}"
+    environment:
+      DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@${DB_HOST}:${DB_CONTAINER_PORT}/${DB_NAME}" # Database access through the main user.
+      PORT: ${BACK_HOST_PORT}
+      NODE_ENV: ${BACK_NODE_ENV} # DEV or PROD
+    ports:
+      - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+
+volumes:
+  ta_portal_mariadb_data: {} # Stores db info for when containers are reset or changed
