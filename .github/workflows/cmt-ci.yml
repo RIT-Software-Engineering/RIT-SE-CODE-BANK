@@ -144,9 +144,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci --ignore-scripts
+      - run: npm ci
         working-directory: apps/cmt/cmt-project
-      - run: NX_DAEMON=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      # - run: npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - run: npm run build
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

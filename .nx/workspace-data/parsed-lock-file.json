@@ -45,94 +45,103 @@
         "hash": "sha512-9zESzOO5aDByvhIAsOy9TbpZ0Ur2AJbUI7UT73kcUTS2mxAMHOBaa1st/jAymNoCtvrit99kkzT1FZuXVcgfIQ=="
       }
     },
+    "npm:@nrwl/tao": {
+      "type": "npm",
+      "name": "npm:@nrwl/tao",
+      "data": {
+        "version": "19.8.14",
+        "packageName": "@nrwl/tao",
+        "hash": "sha512-zBeYzzwg43T/Z8ZtLblv0fcKuqJULttqYDekSLILThXp3UOMSerEvruhUgwddCY1jUssfLscz8vacMKISv5X4w=="
+      }
+    },
     "npm:@nx/nx-darwin-arm64": {
       "type": "npm",
       "name": "npm:@nx/nx-darwin-arm64",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-darwin-arm64",
-        "hash": "sha512-vfGvQ9IKinXo785jB1gTa9pAFRfxkZGeK/4P5hQNxYNLyROGu9caujrseXTLjZvF1hDuStvnUfoaBlcfhP36hQ=="
+        "hash": "sha512-bZUFf23gAzuwVw71dR8rngye5aCR8Z/ouIo+KayjqB0LWWoi3WzO73s4S69ljftYt4n6z9wvD+Trbb1BKm2fPg=="
       }
     },
     "npm:@nx/nx-darwin-x64": {
       "type": "npm",
       "name": "npm:@nx/nx-darwin-x64",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-darwin-x64",
-        "hash": "sha512-+EMFxQzZshXbKXF1AexSnutroF1+Fs2W84DdfukHL0Q/hT00CZTKS4wgVAkMEO5dfRKpSB/fs8owRkSbE8R9vQ=="
+        "hash": "sha512-UXXVea8icFG/3rFwpbLYsD6O4wlyJ1STQfOdhGK1Hyuga70AUUdrjVm7HzigAQP/Sb2Nzd7155YXHzfpRPDFYA=="
       }
     },
     "npm:@nx/nx-freebsd-x64": {
       "type": "npm",
       "name": "npm:@nx/nx-freebsd-x64",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-freebsd-x64",
-        "hash": "sha512-wKTSZI9jb7lEjc8x60h10XCm5NExbXpz0vRjLEt8x8y5NXvDYCgHCRpAU4jPQRS3PIm2fBqa+5umc8qskQu7CQ=="
+        "hash": "sha512-TK2xuXn+BI6hxGaRK1HRUPWeF/nOtezKSqM+6rbippfCzjES/crmp9l5nbI764MMthtUmykCyWvhEfkDca6kbA=="
       }
     },
     "npm:@nx/nx-linux-arm-gnueabihf": {
       "type": "npm",
       "name": "npm:@nx/nx-linux-arm-gnueabihf",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-linux-arm-gnueabihf",
-        "hash": "sha512-6/Uoun4plMesFCrmjtaY5Ye2YvYqNZVkucZyjBYfJ8D5mF967I8Vpt0hDyDVfXxT0zx9YQGeUb33UgOktVL+xg=="
+        "hash": "sha512-33rptyRraqaeQ2Kq6pcZKQqgnYY/7zcGH8fHXgKK7XzKk+7QuPViq+jMEUZP5E3UzZPkIYhsfmZcZqhNRvepJQ=="
       }
     },
     "npm:@nx/nx-linux-arm64-gnu": {
       "type": "npm",
       "name": "npm:@nx/nx-linux-arm64-gnu",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-linux-arm64-gnu",
-        "hash": "sha512-0U2Q760B0pf9dQBGK3qes25jm1SwqGZ4bCgrdfccWpkka+Z+wWyIga55fAh3KIJQr5Cdw6QgsPKra6HbIFbpfQ=="
+        "hash": "sha512-2E70qMKOhh7Fp4JGcRbRLvFKq0+ANVdAgSzH47plxOLygIeVAfIXRSuQbCI0EUFa5Sy6hImLaoRSB2GdgKihAw=="
       }
     },
     "npm:@nx/nx-linux-arm64-musl": {
       "type": "npm",
       "name": "npm:@nx/nx-linux-arm64-musl",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-linux-arm64-musl",
-        "hash": "sha512-lM5GEliTA8TH8l64v1zq3sfsSOsODy+KdBLkcis0mNsuCop1kv/CxyuE0X3PwCGAGFchzDNj7mDprRR4FLfWoA=="
+        "hash": "sha512-ltty/PDWqkYgu/6Ye65d7v5nh3D6e0n3SacoKRs2Vtfz5oHYRUkSKizKIhEVfRNuHn3d9j8ve1fdcCN4SDPUBQ=="
       }
     },
     "npm:@nx/nx-linux-x64-gnu": {
       "type": "npm",
       "name": "npm:@nx/nx-linux-x64-gnu",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-linux-x64-gnu",
-        "hash": "sha512-5KoTe9Kv9elMWPvlWI4cXLXYmFjnD2asQIMgR4eSuWi09CqX9ua4mIyKC5sPjgy9VxWUhaKx+fZydp+akWh37w=="
+        "hash": "sha512-JzE3BuO9RCBVdgai18CCze6KUzG0AozE0TtYFxRokfSC05NU3nUhd/o62UsOl7s6Bqt/9nwrW7JC8pNDiCi9OQ=="
       }
     },
     "npm:@nx/nx-linux-x64-musl": {
       "type": "npm",
       "name": "npm:@nx/nx-linux-x64-musl",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-linux-x64-musl",
-        "hash": "sha512-UbFzIU331vEEprCeKN01k+9Sn1y9pQO32/6yV4eLvK/FdrvzJahu0Dn+IinvCqdIAMiUvIdkBtcKirQby+Pc2Q=="
+        "hash": "sha512-2rPvDOQLb7Wd6YiU88FMBiLtYco0dVXF99IJBRGAWv+WTI7MNr47OyK2ze+JOsbYY1d8aOGUvckUvCCZvZKEfg=="
       }
     },
     "npm:@nx/nx-win32-arm64-msvc": {
       "type": "npm",
       "name": "npm:@nx/nx-win32-arm64-msvc",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-win32-arm64-msvc",
-        "hash": "sha512-mKqED/y9hD4qTPSeBTc3uZHQozm0XtqnnnrZui4BdXJOMvS3llCiCxmZF2E5N6GZl5L5sb6nNkjhzJDbAfs3TQ=="
+        "hash": "sha512-JxW+YPS+EjhUsLw9C6wtk9pQTG3psyFwxhab8y/dgk2s4AOTLyIm0XxgcCJVvB6i4uv+s1g0QXRwp6+q3IR6hg=="
       }
     },
     "npm:@nx/nx-win32-x64-msvc": {
       "type": "npm",
       "name": "npm:@nx/nx-win32-x64-msvc",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "@nx/nx-win32-x64-msvc",
-        "hash": "sha512-UWc5C16yT99ntbHv5a3mlXuRNuPnmPtZ/q9UdRHWbfXbtlf5CBLOH7MrP6bbpNCsRdwsCpGCqAu8XO1QRBjeMw=="
+        "hash": "sha512-RxiPlBWPcGSf9TzIIy62iKRdRhokXMDUsPub9DL2VdVyTMXPZQR25aY/PJeasJN1EQU74hg097LK2wSHi+vzOQ=="
       }
     },
     "npm:@sinclair/typebox": {
@@ -184,9 +193,9 @@
       "type": "npm",
       "name": "npm:@yarnpkg/parsers",
       "data": {
-        "version": "3.0.2",
+        "version": "3.0.0-rc.46",
         "packageName": "@yarnpkg/parsers",
-        "hash": "sha512-/HcYgtUSiJiot/XWGLOlGxPYUG65+/31V8oqk17vZLW1xlCoR4PampyePljOxY2n8/3jz9+tIFzICsyGujJZoA=="
+        "hash": "sha512-aiATs7pSutzda/rq8fnuPwTglyVwjM22bNnK2ZgjrpAjQHSSl3lztd2f9evst1W/qnC58DRz7T7QndUDumAR4Q=="
       }
     },
     "npm:@zkochan/js-yaml": {
@@ -601,6 +610,15 @@
         "version": "1.0.1",
         "packageName": "dunder-proto",
         "hash": "sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A=="
+      }
+    },
+    "npm:duplexer": {
+      "type": "npm",
+      "name": "npm:duplexer",
+      "data": {
+        "version": "0.1.2",
+        "packageName": "duplexer",
+        "hash": "sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg=="
       }
     },
     "npm:ee-first": {
@@ -1246,9 +1264,9 @@
       "type": "npm",
       "name": "npm:nx",
       "data": {
-        "version": "21.2.0",
+        "version": "19.8.14",
         "packageName": "nx",
-        "hash": "sha512-64UK6Bt9a2BbeRhKPpfdyHDCtzz5onfjiBtngyqjtkB8FLVXW4OAggG18NIUl354SUcv2xqjlZyTRz7H/mmXdQ=="
+        "hash": "sha512-yprBOWV16eQntz5h5SShYHMVeN50fUb6yHfzsqNiFneCJeyVjyJ585m+2TuVbE11vT1amU0xCjHcSGfJBBnm8g=="
       }
     },
     "npm:object-assign": {
@@ -1420,15 +1438,6 @@
         "version": "2.1.1",
         "packageName": "require-directory",
         "hash": "sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q=="
-      }
-    },
-    "npm:resolve.exports": {
-      "type": "npm",
-      "name": "npm:resolve.exports",
-      "data": {
-        "version": "2.0.3",
-        "packageName": "resolve.exports",
-        "hash": "sha512-OcXjMsGdhL4XnbShKpAcSqPMzQoYkYyhbEaeSko47MjRP9NfEQMhZkXL1DoFlt9LWQn4YttrdnV6X2OiyzBi+A=="
       }
     },
     "npm:restore-cursor": {
@@ -1611,6 +1620,15 @@
         "hash": "sha512-vavAMRXOgBVNF6nyEEmL3DBK19iRpDcoIwW+swQ+CbGiu7lju6t+JklA1MHweoWtadgt4ISVUsXLyDq34ddcwA=="
       }
     },
+    "npm:strong-log-transformer": {
+      "type": "npm",
+      "name": "npm:strong-log-transformer",
+      "data": {
+        "version": "2.1.0",
+        "packageName": "strong-log-transformer",
+        "hash": "sha512-B3Hgul+z0L9a236FAUC9iZsL+nVHgoCJnqCbN588DjYxvGXaXaaFbfmQ/JhvKjZwsOukuR72XbHv71Qkug0HxA=="
+      }
+    },
     "npm:supports-color": {
       "type": "npm",
       "name": "npm:supports-color",
@@ -1629,6 +1647,15 @@
         "hash": "sha512-ujeqbceABgwMZxEJnk2HDY2DlnUZ+9oEcb1KzTVfYHio0UE6dG71n60d8D2I4qNvleWrrXpmjpt7vZeF1LnMZQ=="
       }
     },
+    "npm:through": {
+      "type": "npm",
+      "name": "npm:through",
+      "data": {
+        "version": "2.3.8",
+        "packageName": "through",
+        "hash": "sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg=="
+      }
+    },
     "npm:tmp": {
       "type": "npm",
       "name": "npm:tmp",
@@ -1645,15 +1672,6 @@
         "version": "1.0.1",
         "packageName": "toidentifier",
         "hash": "sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA=="
-      }
-    },
-    "npm:tree-kill": {
-      "type": "npm",
-      "name": "npm:tree-kill",
-      "data": {
-        "version": "1.2.2",
-        "packageName": "tree-kill",
-        "hash": "sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A=="
       }
     },
     "npm:tsconfig-paths": {
@@ -1755,15 +1773,6 @@
         "hash": "sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA=="
       }
     },
-    "npm:yaml": {
-      "type": "npm",
-      "name": "npm:yaml",
-      "data": {
-        "version": "2.8.2",
-        "packageName": "yaml",
-        "hash": "sha512-mplynKqc1C2hTVYxd0PU2xQAc22TI1vShAYGksCCfxbn/dFwnHTNi1bvYsBTkhdUNtGIf5xNOg938rrSSYvS9A=="
-      }
-    },
     "npm:yargs": {
       "type": "npm",
       "name": "npm:yargs",
@@ -1822,6 +1831,16 @@
     {
       "source": "npm:@napi-rs/wasm-runtime",
       "target": "npm:@tybys/wasm-util",
+      "type": "static"
+    },
+    {
+      "source": "npm:@nrwl/tao",
+      "target": "npm:nx",
+      "type": "static"
+    },
+    {
+      "source": "npm:@nrwl/tao",
+      "target": "npm:tslib",
       "type": "static"
     },
     {
@@ -2546,6 +2565,11 @@
     },
     {
       "source": "npm:nx",
+      "target": "npm:@nrwl/tao",
+      "type": "static"
+    },
+    {
+      "source": "npm:nx",
       "target": "npm:@yarnpkg/lockfile",
       "type": "static"
     },
@@ -2661,17 +2685,17 @@
     },
     {
       "source": "npm:nx",
-      "target": "npm:resolve.exports",
-      "type": "static"
-    },
-    {
-      "source": "npm:nx",
       "target": "npm:semver",
       "type": "static"
     },
     {
       "source": "npm:nx",
       "target": "npm:string-width",
+      "type": "static"
+    },
+    {
+      "source": "npm:nx",
+      "target": "npm:strong-log-transformer",
       "type": "static"
     },
     {
@@ -2686,22 +2710,12 @@
     },
     {
       "source": "npm:nx",
-      "target": "npm:tree-kill",
-      "type": "static"
-    },
-    {
-      "source": "npm:nx",
       "target": "npm:tsconfig-paths",
       "type": "static"
     },
     {
       "source": "npm:nx",
       "target": "npm:tslib",
-      "type": "static"
-    },
-    {
-      "source": "npm:nx",
-      "target": "npm:yaml",
       "type": "static"
     },
     {
@@ -3112,6 +3126,21 @@
     {
       "source": "npm:strip-ansi",
       "target": "npm:ansi-regex",
+      "type": "static"
+    },
+    {
+      "source": "npm:strong-log-transformer",
+      "target": "npm:duplexer",
+      "type": "static"
+    },
+    {
+      "source": "npm:strong-log-transformer",
+      "target": "npm:minimist",
+      "type": "static"
+    },
+    {
+      "source": "npm:strong-log-transformer",
+      "target": "npm:through",
       "type": "static"
     },
     {
