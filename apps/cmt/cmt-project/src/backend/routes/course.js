@@ -166,7 +166,7 @@ router.put("/:id", async (req, res) => {
     console.log("Course updated successfully:", updatedCourse);
 
     const { uid: userId, asid: actionStateId } = req.query
-    await workflowsFetch("PUT", `/states/action/${actionStateId}`, { stateType: "completed" })
+    if (actionStateId) await workflowsFetch("PUT", `/states/action/${actionStateId}`, { stateType: "completed" })
 
     res.json({
       success: true,
