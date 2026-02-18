@@ -13,16 +13,16 @@ export function CourseDashboard() {
     const [workflowState, setWorkflowState] = useState(null)
     const [workflow, setWorkflow] = useState(null)
 
-    function update() {
-        CMTFetch("GET", `course/${id}`).then(async response => {
+    const update = useCallback(() => {
+        return CMTFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
             setCourse(data.course)
             setActionsWithCallbacks(data.actionsWithCallbacks)
             setWorkflowState(data.actionStates)
             setWorkflow(data.workflow)
         })
-    }
-    useEffect(update, [id])
+    }, [id])
+    useEffect(() => void update(), [id, update])
 
     if (course === null || workflowState === null) return <p> Loading </p>
 
