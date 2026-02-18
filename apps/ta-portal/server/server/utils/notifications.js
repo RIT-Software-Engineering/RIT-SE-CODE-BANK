@@ -79,4 +79,15 @@ async function dispatchTemplated(userId, { event, context = {}, role, subject, u
   return res.json();
 }
 
-module.exports = { getPreferences, setPreferences, dispatchNotification, dispatchTemplated };
+async function checkSlackStatus(email, appIdOverride, userId) {
+  const finalAppId = appIdOverride || APP_ID;
+  const url = `${DEFAULT_SERVICE_URL}/api/notifications/preferences/${encodeURIComponent(finalAppId)}/${encodeURIComponent(userId)}/slack-status?email=${encodeURIComponent(email)}`;
+  const res = await fetchImpl(url);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '<unreadable>');
+    throw new Error(`checkSlackStatus failed ${res.status} ${txt}`);
+  }
+  return res.json();
+}
+
+module.exports = { getPreferences, setPreferences, dispatchNotification, dispatchTemplated, checkSlackStatus };

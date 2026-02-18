@@ -102,6 +102,8 @@ export default function AdminApplicationsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   // Track whether we've auto-opened a modal from a deep link to avoid repeats.
   const didAutoOpenFromLink = useRef(false);
+  // Track whether we've auto-scrolled to avoid repeats.
+  const scrolledRef = useRef(false);
 
   /**
    * Fetches applications from across the system that have the 'ACCEPTED_OFFER' status.
@@ -198,6 +200,32 @@ export default function AdminApplicationsPage() {
       handleOpenHireModal(target);
     }
   }, [activeTab, searchParams, hiringApplications, hiringLoading]);
+
+    // Auto-scroll to the deep-linked application card
+  useEffect(() => {
+    if (scrolledRef.current) return;
+
+    const appIdParam = searchParams.get('applicationId');
+    if (!appIdParam) return;
+
+    // Wait for data to load based on active tab
+    if (activeTab === 0 && hiringLoading) return;
+    if (activeTab === 1 && loading) return;
+
+    const el = document.getElementById(`application-${appIdParam}`);
+    if (el) {
+      scrolledRef.current = true;
+      // Try to expand any parent accordions
+      try {
+        el.closest('[role="region"]')?.previousElementSibling?.click?.();
+      } catch (_) {}
+      // Scroll to the card
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.focus({ preventScroll: true });
+      }, 300);
+    }
+  }, [activeTab, searchParams, hiringApplications, hiringLoading, displayData, loading]);
 
   /**
    * Opens the hire confirmation modal and sets the selected application.
@@ -428,14 +456,22 @@ export default function AdminApplicationsPage() {
                     <AccordionDetails>
                       {position.jobPositionApplicationHistory.length > 0 ? (
                         position.jobPositionApplicationHistory.map((app) => (
-                          <ApplicationCard
-                            currentUser={currentUser}
+                          <Box
                             key={app.id}
-                            jobPosition={position}
-                            application={app}
-                            onStatusChange={handleStatusChange}
-                            onHire={() => setActiveTab(0)}
-                          />
+                            id={`application-${app.id}`}
+                            sx={{
+                              borderRadius: 2,
+                              mb: 2
+                            }}
+                          >
+                            <ApplicationCard
+                              currentUser={currentUser}
+                              jobPosition={position}
+                              application={app}
+                              onStatusChange={handleStatusChange}
+                              isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
+                            />
+                          </Box>
                         ))
                       ) : (
                         <Typography sx={{ p: 2 }}>No matching applications for this position.</Typography>
@@ -485,15 +521,23 @@ export default function AdminApplicationsPage() {
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {hiringApplications.map((application) => (
-              <ApplicationCard
+              <Box
                 key={application.id}
-                currentUser={currentUser}
-                jobPosition={application.jobPosition}
-                application={application}
-                onStatusChange={() => fetchHiringApplications()}
-                onHire={() => handleOpenHireModal(application)}
-                showHireAction={true}
-              />
+                id={`application-${application.id}`}
+                sx={{
+                  borderRadius: 2
+                }}
+              >
+                <ApplicationCard
+                  currentUser={currentUser}
+                  jobPosition={application.jobPosition}
+                  application={application}
+                  onStatusChange={() => fetchHiringApplications()}
+                  onHire={() => handleOpenHireModal(application)}
+                  showHireAction={true}
+                  isHighlighted={String(searchParams.get('applicationId')||'')===String(application.id)}
+                />
+              </Box>
             ))}
           </Box>
         )}
