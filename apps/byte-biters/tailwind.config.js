@@ -20,6 +20,7 @@ export default {
         },
         button: {
           default: "#E8DEF8",
+          hover: "#b2a1cc",
           text: "#4A4459",
         },
         border: {
