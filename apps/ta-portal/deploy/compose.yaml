@@ -25,7 +25,7 @@ services:
       context: ../ui
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_NODE_ENV: ${NEXT_PUBLIC_NODE_ENV} # DEV or PROD, determines what login system is used
+        #NEXT_PUBLIC_NODE_ENV: ${NEXT_PUBLIC_NODE_ENV} # DEV or PROD, determines what login system is used
         NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
         NEXT_PUBLIC_API_EXTENSION: ${NEXT_PUBLIC_API_EXTENSION}
         NEXT_PUBLIC_DATABASE_API_EXTENSION: ${NEXT_PUBLIC_DATABASE_API_EXTENSION}
