@@ -50,6 +50,12 @@ export default function ViewScooployees() {
   const [newEmployee, setNewEmployee] = useState({ fname: "", lname: "", email: "" });
   const [addingEmployee, setAddingEmployee] = useState(false);
 
+  // Edit state
+  const [editMode, setEditMode] = useState(false);
+  const [editFields, setEditFields] = useState({ fname: "", lname: "", email: "", type: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmEditOpen, setConfirmEditOpen] = useState(false);
+
   const OPTIONS = ["all", "active", "inactive"];
 
   useEffect(() => {
@@ -82,6 +88,8 @@ export default function ViewScooployees() {
 
   const handleOpen = (emp) => {
     setSelectedEmployee({ ...emp, hasBeenRead: true });
+    setEditFields({ fname: emp.fname, lname: emp.lname, email: emp.email, type: emp.type || "" });
+    setEditMode(false);
     setEmployees((prev) =>
       prev.map((e) => (e.id === emp.id ? { ...e, hasBeenRead: true } : e))
     );
@@ -92,6 +100,8 @@ export default function ViewScooployees() {
     setAssignModalOpen(false);
     setConfirmAssignOpen(false);
     setSelectedTeam("");
+    setEditMode(false);
+    setConfirmEditOpen(false);
   };
 
   const setStatus = (employee) => {
@@ -169,6 +179,60 @@ export default function ViewScooployees() {
     } catch (error) {
       console.error(error);
       alert("Error assigning team, please try again.");
+    }
+  };
+
+  const handleEditClick = () => {
+    setEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    setEditFields({
+      fname: selectedEmployee.fname,
+      lname: selectedEmployee.lname,
+      email: selectedEmployee.email,
+      type: selectedEmployee.type || "",
+    });
+    setEditMode(false);
+  };
+
+  const handleSaveEditClick = () => {
+    if (!editFields.fname || !editFields.lname || !editFields.email) return;
+    setConfirmEditOpen(true);
+  };
+
+  const handleConfirmEdit = async () => {
+    setSavingEdit(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${selectedEmployee.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: editFields.type }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update employee");
+
+      const updatedEmployee = {
+        ...selectedEmployee,
+        ...editFields,
+      };
+
+      setEmployees((prev) =>
+        prev.map((e) => (e.id === selectedEmployee.id ? { ...e, ...editFields } : e))
+      );
+      setSelectedEmployee(updatedEmployee);
+      setEditMode(false);
+      setConfirmEditOpen(false);
+      setSnackbarMsg("Employee updated successfully!");
+      setSnackbarOpen(true);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update employee. Please try again.");
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -427,49 +491,156 @@ export default function ViewScooployees() {
               Employee: {selectedEmployee.fname} {selectedEmployee.lname}
             </DialogTitle>
             <DialogContent dividers>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                <Typography>
-                  <strong>First Name:</strong> {selectedEmployee.fname}
-                </Typography>
-                <Typography>
-                  <strong>Last Name:</strong> {selectedEmployee.lname}
-                </Typography>
-                <Typography>
-                  <strong>Email:</strong> {selectedEmployee.email}
-                </Typography>
-                <Typography>
-                  <strong>Semester Group:</strong>{" "}
-                  {selectedEmployee.semesterGroup}
-                </Typography>
-                <Typography>
-                  <strong>Team:</strong>{" "}
-                  {selectedEmployee.teams && selectedEmployee.teams.length > 0
-                    ? selectedEmployee.teams[0].name
-                    : "Not Assigned"}
-                </Typography>
-              </Box>
+              {editMode ? (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                  <TextField
+                    label="First Name"
+                    value={editFields.fname}
+                    onChange={(e) =>
+                      setEditFields((prev) => ({ ...prev, fname: e.target.value }))
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="Last Name"
+                    value={editFields.lname}
+                    onChange={(e) =>
+                      setEditFields((prev) => ({ ...prev, lname: e.target.value }))
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="Email"
+                    type="email"
+                    value={editFields.email}
+                    onChange={(e) =>
+                      setEditFields((prev) => ({ ...prev, email: e.target.value }))
+                    }
+                    fullWidth
+                  />
+                  <Select
+                    value={editFields.type}
+                    onChange={(e) =>
+                      setEditFields((prev) => ({ ...prev, type: e.target.value }))
+                    }
+                    fullWidth
+                    displayEmpty
+                  >
+                    <MenuItem value="" disabled>
+                      Select a Type
+                    </MenuItem>
+                    <MenuItem value="scooployee">Scooployee</MenuItem>
+                    <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+                    <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
+                  </Select>
+                </Box>
+              ) : (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  <Typography>
+                    <strong>First Name:</strong> {selectedEmployee.fname}
+                  </Typography>
+                  <Typography>
+                    <strong>Last Name:</strong> {selectedEmployee.lname}
+                  </Typography>
+                  <Typography>
+                    <strong>Email:</strong> {selectedEmployee.email}
+                  </Typography>
+                  <Typography>
+                    <strong>Semester Group:</strong>{" "}
+                    {selectedEmployee.semesterGroup}
+                  </Typography>
+                  <Typography>
+                    <strong>Team:</strong>{" "}
+                    {selectedEmployee.teams && selectedEmployee.teams.length > 0
+                      ? selectedEmployee.teams[0].name
+                      : "Not Assigned"}
+                  </Typography>
+                  <Typography>
+                    <strong>Type:</strong> {selectedEmployee.type || "—"}
+                  </Typography>
+                </Box>
+              )}
             </DialogContent>
             <DialogActions sx={{ px: 3, py: 2 }}>
-              <Button
-                variant="contained"
-                sx={{ bgcolor: "#84BD00", "&:hover": { bgcolor: "#6da400" } }}
-                onClick={handleJournalClick}
-              >
-                Journal
-              </Button>
-              <Button
-                variant="contained"
-                sx={{ bgcolor: "#007bff", "&:hover": { bgcolor: "#0066cc" } }}
-                onClick={handleAssignClick}
-              >
-                Assign
-              </Button>
-              <Button onClick={handleClose} variant="outlined" color="inherit">
-                Close
-              </Button>
+              {editMode ? (
+                <>
+                  <Button
+                    variant="contained"
+                    onClick={handleSaveEditClick}
+                    disabled={
+                      savingEdit ||
+                      !editFields.fname ||
+                      !editFields.lname ||
+                      !editFields.email
+                    }
+                  >
+                    {savingEdit ? "Saving..." : "Save"}
+                  </Button>
+                  <Button
+                    onClick={handleCancelEdit}
+                    variant="outlined"
+                    color="inherit"
+                    disabled={savingEdit}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="contained"
+                    sx={{ bgcolor: "#84BD00", "&:hover": { bgcolor: "#6da400" } }}
+                    onClick={handleJournalClick}
+                  >
+                    Journal
+                  </Button>
+                  <Button
+                    variant="contained"
+                    sx={{ bgcolor: "#007bff", "&:hover": { bgcolor: "#0066cc" } }}
+                    onClick={handleAssignClick}
+                  >
+                    Assign
+                  </Button>
+                  <Button
+                    variant="contained"
+                    sx={{ bgcolor: "#F76902", "&:hover": { bgcolor: "#d45a00" } }}
+                    onClick={handleEditClick}
+                  >
+                    Edit
+                  </Button>
+                  <Button onClick={handleClose} variant="outlined" color="inherit">
+                    Close
+                  </Button>
+                </>
+              )}
             </DialogActions>
           </>
         )}
+      </Dialog>
+
+      {/* Confirm Edit Dialog */}
+      <Dialog
+        open={confirmEditOpen}
+        onClose={() => setConfirmEditOpen(false)}
+      >
+        <DialogTitle>Confirm Changes</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to save changes to{" "}
+            <strong>
+              {editFields.fname} {editFields.lname}
+            </strong>
+            ?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmEditOpen(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmEdit} variant="contained" disabled={savingEdit}>
+            {savingEdit ? "Saving..." : "Yes, Save"}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* Assign Team Modal */}
