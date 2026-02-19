@@ -34,10 +34,7 @@ export default function ViewScooployees() {
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
 
-  const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [teams, setTeams] = useState([]);
-  const [selectedTeam, setSelectedTeam] = useState("");
-  const [confirmAssignOpen, setConfirmAssignOpen] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState("");
@@ -50,9 +47,11 @@ export default function ViewScooployees() {
   const [newEmployee, setNewEmployee] = useState({ fname: "", lname: "", email: "" });
   const [addingEmployee, setAddingEmployee] = useState(false);
 
+  const [semesterGroups, setSemesterGroups] = useState([]);
+
   // Edit state
   const [editMode, setEditMode] = useState(false);
-  const [editFields, setEditFields] = useState({ fname: "", lname: "", email: "", type: "" });
+  const [editFields, setEditFields] = useState({ fname: "", lname: "", email: "", type: "", teamId: "", semesterGroupId: "" });
   const [savingEdit, setSavingEdit] = useState(false);
   const [confirmEditOpen, setConfirmEditOpen] = useState(false);
 
@@ -86,9 +85,29 @@ export default function ViewScooployees() {
     fetchTeams();
   }, []);
 
+  useEffect(() => {
+    const fetchSemesterGroups = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup`);
+        const data = await res.json();
+        setSemesterGroups(data);
+      } catch (err) {
+        console.error("Failed to fetch semester groups:", err);
+      }
+    };
+    fetchSemesterGroups();
+  }, []);
+
   const handleOpen = (emp) => {
     setSelectedEmployee({ ...emp, hasBeenRead: true });
-    setEditFields({ fname: emp.fname, lname: emp.lname, email: emp.email, type: emp.type || "" });
+    setEditFields({
+      fname: emp.fname,
+      lname: emp.lname,
+      email: emp.email,
+      type: emp.type || "",
+      teamId: emp.teams && emp.teams.length > 0 ? emp.teams[0].id : "",
+      semesterGroupId: emp.semesterGroupId || "",
+    });
     setEditMode(false);
     setEmployees((prev) =>
       prev.map((e) => (e.id === emp.id ? { ...e, hasBeenRead: true } : e))
@@ -97,9 +116,6 @@ export default function ViewScooployees() {
 
   const handleClose = () => {
     setSelectedEmployee(null);
-    setAssignModalOpen(false);
-    setConfirmAssignOpen(false);
-    setSelectedTeam("");
     setEditMode(false);
     setConfirmEditOpen(false);
   };
@@ -128,60 +144,6 @@ export default function ViewScooployees() {
       ? sortedEmployees
       : sortedEmployees.filter((employee) => setStatus(employee) === filter);
 
-  const handleAssignClick = () => {
-    setAssignModalOpen(true);
-  };
-
-  const handleTeamSelect = (e) => {
-    setSelectedTeam(e.target.value);
-  };
-
-  const handleConfirmAssignOpen = () => {
-    if (!selectedTeam) return;
-    setConfirmAssignOpen(true);
-  };
-
-  const handleConfirmAssign = async () => {
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/teams/${selectedTeam}/members`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: selectedEmployee.id }),
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error("Failed to assign team");
-      }
-
-      setEmployees((prev) =>
-        prev.map((e) =>
-          e.id === selectedEmployee.id
-            ? {
-                ...e,
-                teams: teams.filter((t) => t.id === selectedTeam),
-              }
-            : e
-        )
-      );
-
-      setSelectedEmployee((prev) => ({
-        ...prev,
-        teams: teams.filter((t) => t.id === selectedTeam),
-      }));
-
-      setSnackbarMsg("Employee successfully assigned to team!");
-      setSnackbarOpen(true);
-      setConfirmAssignOpen(false);
-      setAssignModalOpen(false);
-    } catch (error) {
-      console.error(error);
-      alert("Error assigning team, please try again.");
-    }
-  };
-
   const handleEditClick = () => {
     setEditMode(true);
   };
@@ -192,6 +154,8 @@ export default function ViewScooployees() {
       lname: selectedEmployee.lname,
       email: selectedEmployee.email,
       type: selectedEmployee.type || "",
+      teamId: selectedEmployee.teams && selectedEmployee.teams.length > 0 ? selectedEmployee.teams[0].id : "",
+      semesterGroupId: selectedEmployee.semesterGroupId || "",
     });
     setEditMode(false);
   };
@@ -215,13 +179,33 @@ export default function ViewScooployees() {
 
       if (!res.ok) throw new Error("Failed to update employee");
 
+      // Assign team if changed
+      if (editFields.teamId && editFields.teamId !== (selectedEmployee.teams?.[0]?.id || "")) {
+        const teamRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/teams/${editFields.teamId}/members`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: selectedEmployee.id }),
+          }
+        );
+        if (!teamRes.ok) throw new Error("Failed to assign team");
+      }
+
+      const assignedTeams = editFields.teamId
+        ? teams.filter((t) => t.id === editFields.teamId)
+        : selectedEmployee.teams || [];
+
       const updatedEmployee = {
         ...selectedEmployee,
         ...editFields,
+        teams: assignedTeams,
       };
 
       setEmployees((prev) =>
-        prev.map((e) => (e.id === selectedEmployee.id ? { ...e, ...editFields } : e))
+        prev.map((e) =>
+          e.id === selectedEmployee.id ? { ...e, ...editFields, teams: assignedTeams } : e
+        )
       );
       setSelectedEmployee(updatedEmployee);
       setEditMode(false);
@@ -533,6 +517,40 @@ export default function ViewScooployees() {
                     <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
                     <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
                   </Select>
+                  <Select
+                    value={editFields.teamId}
+                    onChange={(e) =>
+                      setEditFields((prev) => ({ ...prev, teamId: e.target.value }))
+                    }
+                    fullWidth
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      No Team
+                    </MenuItem>
+                    {teams.map((team) => (
+                      <MenuItem key={team.id} value={team.id}>
+                        {team.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <Select
+                    value={editFields.semesterGroupId}
+                    onChange={(e) =>
+                      setEditFields((prev) => ({ ...prev, semesterGroupId: e.target.value }))
+                    }
+                    fullWidth
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      No Semester Group
+                    </MenuItem>
+                    {semesterGroups.map((sg) => (
+                      <MenuItem key={sg.id} value={sg.id}>
+                        {sg.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
                 </Box>
               ) : (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -546,17 +564,24 @@ export default function ViewScooployees() {
                     <strong>Email:</strong> {selectedEmployee.email}
                   </Typography>
                   <Typography>
-                    <strong>Semester Group:</strong>{" "}
-                    {selectedEmployee.semesterGroup}
+                    <strong>Type:</strong>{" "}
+                    {selectedEmployee.type === "scooployee"
+                      ? "Scooployee"
+                      : selectedEmployee.type === "scoopervisor"
+                      ? "Scoopervisor"
+                      : selectedEmployee.type === "scoopdinator"
+                      ? "Scoopdinator"
+                      : "Select a Type"}
                   </Typography>
                   <Typography>
                     <strong>Team:</strong>{" "}
                     {selectedEmployee.teams && selectedEmployee.teams.length > 0
                       ? selectedEmployee.teams[0].name
-                      : "Not Assigned"}
+                      : "No Team"}
                   </Typography>
                   <Typography>
-                    <strong>Type:</strong> {selectedEmployee.type || "—"}
+                    <strong>Semester Group:</strong>{" "}
+                    {selectedEmployee.semesterGroup || "No Semester Group"}
                   </Typography>
                 </Box>
               )}
@@ -596,13 +621,6 @@ export default function ViewScooployees() {
                   </Button>
                   <Button
                     variant="contained"
-                    sx={{ bgcolor: "#007bff", "&:hover": { bgcolor: "#0066cc" } }}
-                    onClick={handleAssignClick}
-                  >
-                    Assign
-                  </Button>
-                  <Button
-                    variant="contained"
                     sx={{ bgcolor: "#F76902", "&:hover": { bgcolor: "#d45a00" } }}
                     onClick={handleEditClick}
                   >
@@ -639,71 +657,6 @@ export default function ViewScooployees() {
           </Button>
           <Button onClick={handleConfirmEdit} variant="contained" disabled={savingEdit}>
             {savingEdit ? "Saving..." : "Yes, Save"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Assign Team Modal */}
-      <Dialog
-        open={assignModalOpen}
-        onClose={() => setAssignModalOpen(false)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Assign Team</DialogTitle>
-        <DialogContent>
-          <Select
-            value={selectedTeam}
-            onChange={handleTeamSelect}
-            fullWidth
-            displayEmpty
-          >
-            <MenuItem value="" disabled>
-              Select a Team
-            </MenuItem>
-            {teams.map((team) => (
-              <MenuItem key={team.id} value={team.id}>
-                {team.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAssignModalOpen(false)} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirmAssignOpen}
-            disabled={!selectedTeam}
-            variant="contained"
-          >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Confirm Assign Dialog */}
-      <Dialog
-        open={confirmAssignOpen}
-        onClose={() => setConfirmAssignOpen(false)}
-      >
-        <DialogTitle>Confirm Assignment</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to assign{" "}
-            <strong>
-              {selectedEmployee?.fname} {selectedEmployee?.lname}
-            </strong>{" "}
-            to the team{" "}
-            <strong>{teams.find((t) => t.id === selectedTeam)?.name}</strong>?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmAssignOpen(false)} color="inherit">
-            Cancel
-          </Button>
-          <Button onClick={handleConfirmAssign} variant="contained">
-            Yes, Assign
           </Button>
         </DialogActions>
       </Dialog>
