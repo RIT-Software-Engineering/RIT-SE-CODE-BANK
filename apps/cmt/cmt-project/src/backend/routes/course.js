@@ -87,26 +87,57 @@ router.post('/', async (req, res) => {
     const professorId = req.user.uid
     
     // TODO: this should be obtained from a template or something, whether user-selected or default
-    const metadataCourseInfo = {
-      outputs: [
-        {
-          name: "Course Section",
-          key: "section",
-          type: "text",
-          isRequired: true,
-          placeholder: "1",
-          validation: {
-            maxLength: 30
-          },
+    const workflow = {
+      name: "Create Course",
+      description: "Default course creation template",
+      rootAction: {
+        name: "Course Section",
+        description: "Enter your courses section (If you know it)",
+        actionType: "simple",
+        metadata: {
           code: "COURSE_SECTION",
+          outputs: [
+            {
+              name: "Course Section",
+              key: "section",
+              type: "text",
+              isRequired: true,
+              placeholder: "1",
+              validation: {
+                maxLength: 30,
+              },
+            }
+          ]
+        },
+        nextAction: {
+          name: "Number of Students",
+          description: "Enter the number of students enrolled in your course (If you know it)",
+          actionType: "simple",
+          metadata: {
+            code: "NUMBER_STUDENTS",
+            outputs: [
+              {
+                name: "Number of Students",
+                key: "students",
+                type: "number",
+                isRequired: true,
+                placeholder: 20,
+                validation: {
+                  max: 999,
+                  min: 1
+                },
+              }
+            ]
+          }
         }
-      ]
+      },
     }
-    const safeMetadata = makeMetadataSafeForWorkflows(metadataCourseInfo)
+
+    const safeMetadata = makeMetadataSafeForWorkflows(actions[0].metadata)
 
     const createdWorkflow = await workflowsFetch("POST", "workflows", { userId: professorId, name: "Create Course", description: "Overall course workflow" }) // Create Workflow
     console.log(`Created workflow with id ${createdWorkflow.id}`)
-    
+
     const createdAction = await createAction(professorId, "Course Details", "Enter some details about the course", "simple", safeMetadata) // Create Action
     console.log(`Created action with id ${createdAction.id}`)
     
