@@ -133,7 +133,7 @@ router.post('/', async (req, res) => {
             },
         }
 
-        const safeMetadata = makeMetadataSafeForWorkflows(actions[0].metadata)
+        const safeMetadata = makeMetadataSafeForWorkflows(workflow.rootAction.metadata)
 
         const createdWorkflow = await workflowsFetch('POST', 'workflows', {
             userId: professorId,
