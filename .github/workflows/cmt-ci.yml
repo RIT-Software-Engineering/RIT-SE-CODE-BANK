@@ -194,9 +194,11 @@ jobs:
         run: |
           if [ "$APP_NAME" = "all" ]; then
             echo "Deploying all apps"
+            chmod +x ./scripts/deploy-all.sh
             ./scripts/deploy-all.sh
           elif [ -f "./scripts/deploy-$APP_NAME.sh" ]; then
             echo "Deploying $APP_NAME"
+            chmod +x "./scripts/deploy-$APP_NAME.sh"
             ./scripts/deploy-$APP_NAME.sh
           else
             echo "No deployment script found for $APP_NAME, skipping."
