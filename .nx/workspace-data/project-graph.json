@@ -1881,6 +1881,42 @@
         "hash": "sha512-rBiBi0A9NsxA5cnMcDRXllNXFJYjk+YiNP4T5e+GmqHmicjRjF+mORrhQ4zBZXvZwS2O+ZO9iBOZX41IVqzFaw=="
       }
     },
+    "npm:babel-plugin-macros@2.8.0": {
+      "type": "npm",
+      "name": "npm:babel-plugin-macros@2.8.0",
+      "data": {
+        "version": "2.8.0",
+        "packageName": "babel-plugin-macros",
+        "hash": "sha512-SEP5kJpfGYqYKpBrj5XU3ahw5p5GOHJ0U5ssOSQ/WBVdwkD2Dzlce95exQTs3jOVWPPKLBN2rlEWkCK7dSmLvg=="
+      }
+    },
+    "npm:babel-plugin-macros": {
+      "type": "npm",
+      "name": "npm:babel-plugin-macros",
+      "data": {
+        "version": "3.1.0",
+        "packageName": "babel-plugin-macros",
+        "hash": "sha512-Cg7TFGpIr01vOQNODXOOaGz2NpCU5gl8x1qJFbb6hbZxR7XrcE2vtbAsTAbJ7/xwJtUuJEw8K8Zr/AE0LHlesg=="
+      }
+    },
+    "npm:cosmiconfig@6.0.0": {
+      "type": "npm",
+      "name": "npm:cosmiconfig@6.0.0",
+      "data": {
+        "version": "6.0.0",
+        "packageName": "cosmiconfig",
+        "hash": "sha512-xb3ZL6+L8b9JLLCx3ZdoZy4+2ECphCMo2PwqgP1tlfVq6M6YReyzBJtvWWtbDSpNr9hn96pkCiZqUcFEc+54Qg=="
+      }
+    },
+    "npm:cosmiconfig": {
+      "type": "npm",
+      "name": "npm:cosmiconfig",
+      "data": {
+        "version": "7.1.0",
+        "packageName": "cosmiconfig",
+        "hash": "sha512-AdmX6xUzdNASswsFtmwSt7Vj8po9IuqXm0UXz7QKPuEUmPB4XyjGfaAr2PSuELMwkRMVH1EpIkX5bTZGRB3eCA=="
+      }
+    },
     "npm:@nx/web": {
       "type": "npm",
       "name": "npm:@nx/web",
@@ -2358,15 +2394,6 @@
         "hash": "sha512-ESAc/RJvGTFEzRwOTT4+lNDk/GNHMkKbNzsvT0qKRfDyyYTskxB5rnU2njIDYVxXCBHHEI1c0YwHob3WaYujOg=="
       }
     },
-    "npm:babel-plugin-macros": {
-      "type": "npm",
-      "name": "npm:babel-plugin-macros",
-      "data": {
-        "version": "2.8.0",
-        "packageName": "babel-plugin-macros",
-        "hash": "sha512-SEP5kJpfGYqYKpBrj5XU3ahw5p5GOHJ0U5ssOSQ/WBVdwkD2Dzlce95exQTs3jOVWPPKLBN2rlEWkCK7dSmLvg=="
-      }
-    },
     "npm:babel-plugin-polyfill-corejs2": {
       "type": "npm",
       "name": "npm:babel-plugin-polyfill-corejs2",
@@ -2824,24 +2851,6 @@
         "version": "2.0.1",
         "packageName": "corser",
         "hash": "sha512-utCYNzRSQIZNPIcGZdQc92UVJYAhtGAteCFg0yRaFm8f0P+CPtyGyHXJcGXnffjCybUCEx3FQ2G7U3/o9eIkVQ=="
-      }
-    },
-    "npm:cosmiconfig": {
-      "type": "npm",
-      "name": "npm:cosmiconfig",
-      "data": {
-        "version": "6.0.0",
-        "packageName": "cosmiconfig",
-        "hash": "sha512-xb3ZL6+L8b9JLLCx3ZdoZy4+2ECphCMo2PwqgP1tlfVq6M6YReyzBJtvWWtbDSpNr9hn96pkCiZqUcFEc+54Qg=="
-      }
-    },
-    "npm:cosmiconfig@7.1.0": {
-      "type": "npm",
-      "name": "npm:cosmiconfig@7.1.0",
-      "data": {
-        "version": "7.1.0",
-        "packageName": "cosmiconfig",
-        "hash": "sha512-AdmX6xUzdNASswsFtmwSt7Vj8po9IuqXm0UXz7QKPuEUmPB4XyjGfaAr2PSuELMwkRMVH1EpIkX5bTZGRB3eCA=="
       }
     },
     "npm:create-require": {
@@ -8791,7 +8800,7 @@
       },
       {
         "source": "npm:@nx/js",
-        "target": "npm:babel-plugin-macros",
+        "target": "npm:babel-plugin-macros@2.8.0",
         "type": "static"
       },
       {
@@ -8882,6 +8891,50 @@
       {
         "source": "npm:@nx/js",
         "target": "npm:tslib",
+        "type": "static"
+      }
+    ],
+    "npm:babel-plugin-macros@2.8.0": [
+      {
+        "source": "npm:babel-plugin-macros@2.8.0",
+        "target": "npm:@babel/runtime",
+        "type": "static"
+      },
+      {
+        "source": "npm:babel-plugin-macros@2.8.0",
+        "target": "npm:cosmiconfig@6.0.0",
+        "type": "static"
+      },
+      {
+        "source": "npm:babel-plugin-macros@2.8.0",
+        "target": "npm:resolve",
+        "type": "static"
+      }
+    ],
+    "npm:cosmiconfig@6.0.0": [
+      {
+        "source": "npm:cosmiconfig@6.0.0",
+        "target": "npm:@types/parse-json",
+        "type": "static"
+      },
+      {
+        "source": "npm:cosmiconfig@6.0.0",
+        "target": "npm:import-fresh",
+        "type": "static"
+      },
+      {
+        "source": "npm:cosmiconfig@6.0.0",
+        "target": "npm:parse-json",
+        "type": "static"
+      },
+      {
+        "source": "npm:cosmiconfig@6.0.0",
+        "target": "npm:path-type",
+        "type": "static"
+      },
+      {
+        "source": "npm:cosmiconfig@6.0.0",
+        "target": "npm:yaml",
         "type": "static"
       }
     ],
@@ -10952,30 +11005,10 @@
         "type": "static"
       }
     ],
-    "npm:cosmiconfig@7.1.0": [
+    "npm:dedent@1.7.1": [
       {
-        "source": "npm:cosmiconfig@7.1.0",
-        "target": "npm:@types/parse-json",
-        "type": "static"
-      },
-      {
-        "source": "npm:cosmiconfig@7.1.0",
-        "target": "npm:import-fresh",
-        "type": "static"
-      },
-      {
-        "source": "npm:cosmiconfig@7.1.0",
-        "target": "npm:parse-json",
-        "type": "static"
-      },
-      {
-        "source": "npm:cosmiconfig@7.1.0",
-        "target": "npm:path-type",
-        "type": "static"
-      },
-      {
-        "source": "npm:cosmiconfig@7.1.0",
-        "target": "npm:yaml",
+        "source": "npm:dedent@1.7.1",
+        "target": "npm:babel-plugin-macros",
         "type": "static"
       }
     ],
@@ -13217,5 +13250,5 @@
   },
   "version": "6.0",
   "errors": [],
-  "computedAt": 1771430142347
+  "computedAt": 1771430523175
 }
