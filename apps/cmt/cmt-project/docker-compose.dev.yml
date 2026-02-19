@@ -1,0 +1,21 @@
+services:
+  mariadb:
+    container_name: cmt-mariadb-dev-1
+    volumes:
+      - mariadb_dev_data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: cmt_db_dev
+
+  cmt-backend:
+    build:
+      args:
+        DATABASE_URL: mysql://root:cmt_root_password@mariadb:3306/cmt_db_dev
+    environment:
+        DATABASE_URL: mysql://root:cmt_root_password@mariadb:3306/cmt_db_dev
+
+  cmt-frontend:
+    build:
+      args:
+        NEXT_PUBLIC_NODE_ENV: DEV
+volumes:
+  mariadb_dev_data:
