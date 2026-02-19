@@ -18,8 +18,8 @@ services:
 
   workflows-backend:
     build:
-      context: ../../../
-      dockerfile: apps/workflow/server/Dockerfile
+      context: ../../../apps/workflow/server
+      dockerfile: Dockerfile
     ports:
       - "5011:5011"  # Workflows backend port
     environment:
