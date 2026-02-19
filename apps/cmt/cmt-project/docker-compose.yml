@@ -34,6 +34,8 @@ services:
   cmt-backend:
     build:
       context: .
+      args:
+        DATABASE_URL: mysql://cmt_user:cmt_pass@mariadb:3306/cmt_db
       dockerfile: src/backend/Dockerfile
     ports:
       - "5010:5010"
