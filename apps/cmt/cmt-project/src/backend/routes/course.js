@@ -51,7 +51,7 @@ router.get("/:id", async (req, res) => {
 
     function determineCallback(code, asid) {
       switch (code) {
-        case "COURSE_INFORMATION":
+        case "COURSE_SECTION":
           return `course/${course.id}?uid=${req.user.uid}&asid=${asid}`
         default:
           throw Error("Unrecognized action metadata code " + code)
@@ -88,7 +88,6 @@ router.post('/', async (req, res) => {
     
     // TODO: this should be obtained from a template or something, whether user-selected or default
     const metadataCourseInfo = {
-      code: "COURSE_INFORMATION",
       outputs: [
         {
           name: "Course Section",
@@ -99,6 +98,7 @@ router.post('/', async (req, res) => {
           validation: {
             maxLength: 30
           },
+          code: "COURSE_SECTION",
         }
       ]
     }
