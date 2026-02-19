@@ -174,7 +174,7 @@ jobs:
           elif [[ "$BRANCH" == "dev" || "$BRANCH" == "main" ]]; then
             APP_NAME="all"  # fallback or global deploy logic
           else
-            APP_NAME=""
+            APP_NAME="cmt"
           fi
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "::notice ::Branch '$BRANCH' targets app '$APP_NAME'"
