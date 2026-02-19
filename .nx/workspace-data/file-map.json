@@ -517,11 +517,11 @@
         },
         {
           "file": "apps/cmt/cmt-project/src/backend/package-lock.json",
-          "hash": "3218395951722409535"
+          "hash": "13741612829808805344"
         },
         {
           "file": "apps/cmt/cmt-project/src/backend/package.json",
-          "hash": "16475779520706134401"
+          "hash": "15941764335467897819"
         },
         {
           "file": "apps/cmt/cmt-project/src/backend/routes/course.js",
