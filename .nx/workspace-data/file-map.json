@@ -7,7 +7,7 @@
     "nonProjectFiles": [
       {
         "file": ".github/workflows/cmt-ci.yml",
-        "hash": "17181828184642857267"
+        "hash": "11969153984418158885"
       },
       {
         "file": ".gitignore",
@@ -387,7 +387,7 @@
       },
       {
         "file": "scripts/deploy-cmt.sh",
-        "hash": "3581051595089818893"
+        "hash": "1412030458817165792"
       },
       {
         "file": "services/.gitkeep",
@@ -434,7 +434,7 @@
         },
         {
           "file": "apps/cmt/cmt-project/deploy/run-cmt-dev.sh",
-          "hash": "7087302959483679850"
+          "hash": "15917760794276526179"
         },
         {
           "file": "apps/cmt/cmt-project/docker-compose.yml",
