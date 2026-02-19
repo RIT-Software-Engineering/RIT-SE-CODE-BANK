@@ -22,10 +22,10 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     git reset --hard origin/${DEPLOY_BRANCH}
     
     echo "🐳 Rebuilding and restarting Docker containers..."
-    cd ./apps/cmt/cmt-project/deploy
+    cd ./apps/cmt/cmt-project/
     docker compose down
-    chmod +x ./run-cmt-dev.sh
-    ./run-cmt-dev.sh
+    chmod +x ./deploy/run-cmt-dev.sh
+    ./deploy/run-cmt-dev.sh
     
     echo "⏳ Waiting for services to be healthy..."
     sleep 10
