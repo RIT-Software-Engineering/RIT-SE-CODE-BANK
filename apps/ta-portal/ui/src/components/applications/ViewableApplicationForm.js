@@ -28,7 +28,7 @@ import { Close as CloseIcon, Article as DocumentIcon } from '@mui/icons-material
  * @param {Object} props.application - The candidate's submitted application data
  * @param {Function} props.onClose - Callback to close the dialog
  */
-export default function ViewableApplicationForm({position, application, onClose }) {
+export default function ViewableApplicationForm({ position, application, onClose }) {
   const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   const submittedResume = application.resume;
@@ -60,18 +60,28 @@ export default function ViewableApplicationForm({position, application, onClose 
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <DisplayField label="UID" value={displayValues.uid} />
-          <DisplayField label="Full Name" value={`${displayValues.fname} ${displayValues.lname}`} />
-          <DisplayField label="Pronouns" value={displayValues.pronouns} />
-          <DisplayField label="Email" value={displayValues.email} />
-          <DisplayField label="Major" value={displayValues.major} />
-          <DisplayField label="Year" value={displayValues.year} />
-          <DisplayField label={`Grade for ${position.courseCode}`} value={displayValues.grade} />
-          <DisplayField label={`Prior Employment For ${position.courseCode}`} value={displayValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
-          <DisplayField label="Prior Employment For Any Other Courses" value={displayValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
-          <DisplayField 
-            label="Prior Employment History" 
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+            <DisplayField label="Full Name" value={`${displayValues.fname} ${displayValues.lname}`} />
+            <Box>
+              <DisplayField label="Pronouns" value={displayValues.pronouns} />
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+            <DisplayField label="UID" value={displayValues.uid} />
+            <DisplayField label="Email" value={displayValues.email} />
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+            <DisplayField label="Major" value={displayValues.major} />
+            <Box>
+              <DisplayField label="Year" value={displayValues.year} />
+            </Box>
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+            <DisplayField label={`Prior TA For ${position.course.courseCode}`} value={displayValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
+            <DisplayField label="Prior TA For Other Courses" value={displayValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
+          </Box><DisplayField
+            label="Prior Employment History"
             value={displayValues.priorEmploymentHistory}
           />
 
@@ -109,9 +119,11 @@ export default function ViewableApplicationForm({position, application, onClose 
         </Box>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} variant="outlined" sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? ""
-                    : "white" })}>Close</Button>
+        <Button onClick={onClose} variant="outlined" sx={(theme) => ({
+          background: theme.palette.mode === 'dark'
+            ? ""
+            : "white"
+        })}>Close</Button>
       </DialogActions>
     </Dialog>
   );

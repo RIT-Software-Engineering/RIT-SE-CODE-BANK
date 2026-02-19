@@ -147,14 +147,26 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
             <DialogContent dividers>
                 <Box component="form" id="application-form" onSubmit={handleSubmit(onSubmit)}>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
-                        <DisplayField label="UID" value={initialValues.uid} />
-                        <DisplayField label="Full Name" value={`${initialValues.fname} ${initialValues.lname}`} />
-                        <DisplayField label="Pronouns" value={initialValues.pronouns} />
-                        <DisplayField label="Email" value={initialValues.email} />
-                        <DisplayField label="Major" value={initialValues.major} />
-                        <DisplayField label="Year" value={initialValues.year} />
-                        <DisplayField label={`Prior TA For ${position.course.courseCode}`} value={initialValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
-                        <DisplayField label="Prior TA For Other Courses" value={initialValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+                            <DisplayField label="Full Name" value={`${initialValues.fname} ${initialValues.lname}`} />
+                            <Box>
+                                <DisplayField label="Pronouns" value={initialValues.pronouns} />
+                            </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+                            <DisplayField label="UID" value={initialValues.uid} />
+                            <DisplayField label="Email" value={initialValues.email} />
+                        </Box>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+                            <DisplayField label="Major" value={initialValues.major} />
+                            <Box>
+                                <DisplayField label="Year" value={initialValues.year} />
+                            </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+                            <DisplayField label={`Prior TA For ${position.course.courseCode}`} value={initialValues.wasPriorEmployeeForThisCourse ? "Yes" : "No"} />
+                            <DisplayField label="Prior TA For Other Courses" value={initialValues.wasPriorEmployeeForOtherCourses ? "Yes" : "No"} />
+                        </Box>
                         <DisplayField label="Prior TA History" value={initialValues.priorEmploymentHistory.length > 0 ? initialValues.priorEmploymentHistory.map(item => item.courseCode).join(', ') : 'None'} />
                     </Box>
 
@@ -189,8 +201,10 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                         <FormControl fullWidth>
                             <InputLabel id="resume-select-label">Resume</InputLabel>
                             <Select
-                            sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "white" })}
+                                sx={(theme) => ({
+                                    background: theme.palette.mode === 'dark'
+                                        ? "" : "white"
+                                })}
                                 labelId="resume-select-label"
                                 id="resumeId"
                                 label="Resume"
