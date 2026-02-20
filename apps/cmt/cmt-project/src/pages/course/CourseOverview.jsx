@@ -43,11 +43,11 @@ export function CoursePageWorkflony() {
             <Container>
                 <div className='flex items-center mb-4 gap-4'>
                     <h1>Course Overview</h1>
-                        <Button onClick={() => {setModalOpen(true); setCourseId(0)}} className='h-min' variant='outline-primary'>
+                        <Button onClick={() => {setModalOpen(true); setCourseId(0); setEdit(false)}} className='h-min' variant='outline-primary'>
                         <div className='flex gap-1 -ml-1'><PlusIcon />Create Course</div>
                         </Button>
                 </div>
-                <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen} isEdit={edit} setIsEdit={setEdit} courseId={courseId}/>
+                <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen} isEdit={edit} courseId={courseId}/>
                 <Row className='gy-4'>
                     {courseOverview.map(course => (
                         <Col md={4}>
@@ -104,7 +104,7 @@ function ColorWheel({setColor}) {
 }
 
 //TODO make this less messy; no isEdit stuff
-function CourseCreationModal({isOpen, setIsOpen, isEdit, setIsEdit, courseId}) {
+function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
 
     const [courseCode, setCourseCode] = useState('')
     const [courseName, setCourseName] = useState('')
@@ -151,7 +151,6 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, setIsEdit, courseId}) {
         setCourseName("");
         setColor("");
         setColorHidden(true);
-        setIsEdit(false);
         setWarnHidden(true);
     }
 
