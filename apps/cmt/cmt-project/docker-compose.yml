@@ -37,6 +37,8 @@ services:
       dockerfile: src/backend/Dockerfile
     ports:
       - "${BACKEND_PORT}:5010"
+    env_file:
+      - .env.staging
     environment:
       NODE_ENV: ${NODE_ENV}
       PORT: 5010
