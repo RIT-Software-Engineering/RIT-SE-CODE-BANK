@@ -46,20 +46,21 @@ export class CPU {
     }
 
     resolveSource(mode, reg){
+        const base = this.registers[reg];
         switch(mode){
-            case 0:
+            case 0: //Normal Register
                 return {
                     value: this.registers[reg],
                     reg: reg,
                     isRegister: true
                 };
-            case 1:
+            case 1: //Register Deferred
                 return {
                     value: this.readWord(this.registers[reg]),
                     address: this.registers[reg],
                     isRegister: false
                 };
-            case 2:
+            case 2: //Autoincrement
                 let newValue = this.registers[reg];
                 this.registers[reg] += 2
                 return {
@@ -67,35 +68,47 @@ export class CPU {
                     address: newValue,
                     isRegister: false
                 };
-            case 3:
-                let initialReg = this.registers[reg];
-                let firstPointer = this.readWord(initialReg);
+            case 3: //Autoincrement Deferred
+                const pointer = this.readWord(base);
+                const value = this.readWord(pointer)
                 this.registers[reg] += 2;
                 return {
-                    value: this.readWord(firstPointer),
-                    address: firstPointer,
+                    value: value,
+                    address: pointer,
                     isRegister: false
                 };
-            case 4:
+            case 4: //Autodecrement
                 this.registers[reg] -= 2;
                 return {
                     value: this.readWord(this.registers[reg]),
                     address: this.registers[reg],
                     isRegister: false
                 }
-            case 5:
-                this.registers[reg] -= 2;
-                let firstPointerDec = this.readWord(this.registers[reg]);
+            case 5: //Autodecrement Deferred
+                const newBase = this.registers[reg] -= 2;
+                const pointerDec = this.readWord(newBase);
+                const valueDec = this.readWord(pointerDec);
                 return {
-                    value: this.readWord(firstPointerDec),
-                    address: firstPointerDec,
+                    value: valueDec,
+                    address: pointerDec,
                     isRegister: false
                 };
-            case 6:
-                //do something for indexed
-                break;
-            case 7:
-                //do something for indexed deferred
+            case 6: //Indexed
+                const index = this.fetch();
+                return {
+                    value: this.readWord(base + index),
+                    address: base + index,
+                    isRegister: false
+                };
+            case 7: //Indexed Deferred
+                const index2 = this.fetch();
+                const pointerInd = this.readWord(base + index2);
+                const valueInd = this.readWord(pointerInd);
+                return {
+                    value: valueInd,
+                    address: pointerInd,
+                    isRegister: false
+                };
         }
     }
 
