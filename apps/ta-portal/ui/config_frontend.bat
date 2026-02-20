@@ -8,7 +8,7 @@ REM --------------------------------------------------------------------
 
 REM --- Configuration Variables (MODIFY THESE FOR YOUR SETUP) ---
 SET "BACKEND_URL=https://localhost:3300"
-SET "API_EXTENSION=/api"
+SET "API_EXTENSION=/ta-portal-api"
 SET "DB_API_EXTENSION=/db"
 SET "SLACK_API_EXTENSION=/slack"
 SET "ENV_FILE=.env"

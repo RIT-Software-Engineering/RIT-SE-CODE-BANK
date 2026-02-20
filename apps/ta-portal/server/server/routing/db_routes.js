@@ -450,7 +450,7 @@ router.delete('/applications/:username', async (req, res) => {
     ) {
       return res.status(404).json({ message: 'Application not found.' });
     }
-    console.error('API Error deleting application:', error);
+    console.error('ta-portal-api Error deleting application:', error);
     res
       .status(500)
       .json({ message: 'An error occurred while deleting the application.' });

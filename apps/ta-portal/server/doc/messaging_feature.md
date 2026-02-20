@@ -147,7 +147,7 @@ This will create two files in your current directory:
     * im:write
     * users:read
 
-3. Set Up Redirect URI: While still on the OAuth & Permissions page, scroll down to the Redirect URLs section. Add the following URL exactly as written: `https://localhost:3300/api/slack/oauth_redirect`.
+3. Set Up Redirect URI: While still on the OAuth & Permissions page, scroll down to the Redirect URLs section. Add the following URL exactly as written: `https://localhost:3300/ta-portal-api/slack/oauth_redirect`.
  
 4. Get Credentials: Navigate to the Basic Information page in the sidebar. Scroll down to the App Credentials section to find your Client ID and Client Secret. You will need these for the backend setup in the `config_backend.bat` for windows or `config_backend.sh` for mac/linux. Make sure the other team members use the same Client ID and Client Secret so that they to can connect to your app that you just made here. You'll also need to add the slack redirect uri within the assoicated configuration file if it doesn't already exist within those files yet.
 
