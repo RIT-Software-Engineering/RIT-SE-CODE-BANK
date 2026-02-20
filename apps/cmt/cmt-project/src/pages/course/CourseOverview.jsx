@@ -22,19 +22,14 @@ export function CoursePageWorkflony() {
     }, []);
 
     const fetchCourses = async () => {
-        try {
         CMTFetch("GET", `events/courses`).then(async response => {
-            if (!response.ok) throw new Error("Failed to fetch courses");
             const result = await response.json();
-            if (result.success && result.data) {
+            if (result.data) {
             setCourseOverview(result.data);
           } else {
             setCourseOverview([]);
           }
         });
-        } catch (error) {
-          console.error("Error fetching courses:", error);
-        }
       };
 
     return (
