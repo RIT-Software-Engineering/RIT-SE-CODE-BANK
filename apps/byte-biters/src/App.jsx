@@ -16,10 +16,14 @@ export default function App() {
       <div className="flex flex-row flex-1">
         <div className="flex flex-col flex-1">
           <Editor code={code} setCode={setCode} />
+          {/* temp border */}
+          <div className="bg-border-primary min-h-2"></div>
           <ControlPanel></ControlPanel>
           <RegisterPanel></RegisterPanel>
           <MemoryPanel></MemoryPanel>
         </div>
+        {/* temp border */}
+        <div className="bg-border-primary min-w-2"></div>
         <SidePanel></SidePanel>
       </div>
     </div>

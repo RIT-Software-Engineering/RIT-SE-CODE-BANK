@@ -12,6 +12,7 @@ export default {
         main: {
           primary: "#14161A",
           secondary: "#181B20",
+          
         },
         //current does not account for highlighted keywords
         text: {
@@ -25,6 +26,7 @@ export default {
         },
         border: {
           primary: "#2A2E37",
+          secondary: "#8E8E93",
         }
       }
     },
