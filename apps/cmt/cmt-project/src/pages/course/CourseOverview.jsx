@@ -1,11 +1,36 @@
 import { Check, Loader2, PlusIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap'
 import { CMTFetch } from '../../utils/api'
 import { useNavigate } from 'react-router-dom'
 
 export function CoursePageWorkflony() {
-    const [courseOverview, setCourseOverview] = useState([{ name: 'Placeholder 1' }, { name: 'Placeholder 2' }])
+    const [courseOverview, setCourseOverview] = useState([{
+    id: 0,
+    classId: "",
+    name: "",
+    season: "",
+    year: 0,
+    color: "",
+    students: "",
+    section: ""
+    }])
+    const navigate = useNavigate();
+    
+    useEffect(() => {
+        fetchCourses();
+    }, []);
+
+    const fetchCourses = async () => {
+        CMTFetch("GET", `events/courses`).then(async response => {
+            const result = await response.json();
+            if (result.data) {
+            setCourseOverview(result.data);
+          } else {
+            setCourseOverview([]);
+          }
+        });
+      };
 
     return (
         <>
@@ -17,9 +42,9 @@ export function CoursePageWorkflony() {
                 <Row className='gy-4'>
                     {courseOverview.map(course => (
                         <Col md={4}>
-                            <Card>
-                                <Card.Header>{course.name}</Card.Header>
-                                <Card.Body></Card.Body>
+                            <Card className={`w-xl hover:underline hover:text-blue-500 hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
+                                <Card.Header style={{background: course.color}} className='h-28'></Card.Header>
+                                <Card.Body className='h-28 text-2xl'>{course.classId} - {course.name}</Card.Body>
                             </Card>
                         </Col>
                     ))}
