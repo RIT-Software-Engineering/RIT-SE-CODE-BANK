@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 
 import Link from "@mui/material/Link";
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
 export default function ResourcesPage() {
     const { currentUser } = useAuth();
@@ -23,9 +24,9 @@ export default function ResourcesPage() {
             link: "https://www.rit.edu/careerservices/students/on-campus-employment"
         },
         {
-            title: "Other Website",
+            title: "Training Website",
             desc: "",
-            link: ""
+            link: "https://www.rit.edu/fa/compliance/training-and-education"
         },
         {
             title: "Employee Rights",
@@ -33,9 +34,9 @@ export default function ResourcesPage() {
             link: ""
         },
         {
-            title: "Title IV",
+            title: "Title IX",
             desc: "",
-            link: ""
+            link: "https://www.rit.edu/fa/compliance/title-ix-home"
         },
     ];
 
@@ -47,12 +48,30 @@ export default function ResourcesPage() {
                     Resources
                 </Typography>
 
-                <Box sx={{ display: "flex",  flexDirection: "column", gap: 4 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {LINKS.map((info, index) => (
-                        <Box key={index} sx= {{display: "flex", justifyContent: "flex-start", flexDirection: "column"}}>
+                        <Box key={index} sx={{ display: "flex", justifyContent: "flex-start", flexDirection: "column" }}>
                             <Typography fontWeight="fontWeightBold" align="left" color="var(--color-rit-orange)" variant="h2" component="h2">{info.title}</Typography>
                             <Typography variant="body2" align="left">{info.desc}</Typography>
-                            <Link align="left" href={info.link} underline="hover">{info.link} </Link>
+                            <Link align="left"
+                                href={info.link}
+                                underline="none"
+                                color="text.primary"
+                                sx={{
+                                    outline: 'none',
+                                    gap: '0.25rem',
+                                    textDecoration: 'none',
+                                    '&:hover': {
+                                        textDecoration: 'underline',
+                                        textDecorationColor: 'var(--color-rit-orange)',
+                                        textDecorationThickness: '0.125rem',
+                                        textUnderlineOffset: '0.125rem',
+                                    },
+                                }}
+                            >
+                                {info.link}
+                                <KeyboardArrowRightIcon sx={{color:"var(--color-rit-orange)"}}/>
+                            </Link>
                         </Box>
                     ))}
                 </Box>
