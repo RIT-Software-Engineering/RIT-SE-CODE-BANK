@@ -112,7 +112,20 @@ export class CPU {
         }
     }
 
-    execute(oper){
+    resolveDestination(mode, reg) {
+        const base = this.registers[reg];
+        switch(mode){
+            case 0:
+                return {
+                    write: (val) => {this.registers(reg) = val},
+                    reg: reg,
+                    address: null,
+                    isRegister: true
+                }
+        }
+    }
+
+    execute(oper) {
         switch(oper.type){
             case 'MOV':
                 this.mov(oper.src, oper.dst);
