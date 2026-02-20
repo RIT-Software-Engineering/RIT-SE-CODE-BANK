@@ -30,16 +30,21 @@ const prisma = new PrismaClient();
 
 const app = express();
 
-const BACKEND_PORT = Number(process.env.BACKEND_PORT) || 5010; // API server
-const FRONTEND_PORT = Number(process.env.PORT) || 3010;        // React dev server
+// const BACKEND_PORT = Number(process.env.BACKEND_PORT) || 5010; // API server
+// const FRONTEND_PORT = Number(process.env.PORT) || 3010;        // React dev server
 
 /* ------------------------------------------------------------------
    MIDDLEWARE
    ------------------------------------------------------------------ */
 
+// const allowedOrigins = [
+//   `http://localhost:${FRONTEND_PORT}`, // from .env (e.g., 3010)
+//   "http://localhost:3000",            // CRA default
+// ];
+
 const allowedOrigins = [
-  `http://localhost:${FRONTEND_PORT}`, // from .env (e.g., 3010)
-  "http://localhost:3000",            // CRA default
+  `http://localhost:${process.env.FRONTEND_PORT}`,  // for local dev
+  process.env.BASE_URL,                             // staging or production
 ];
 
 const courseWebsiteRoutes = makeCourseWebsiteRouter(prisma);
@@ -277,8 +282,14 @@ app.use("*", (req, res) => {
    START SERVER
    ------------------------------------------------------------------ */
 
-app.listen(BACKEND_PORT, () => {
-  console.log(`🚀 Server running on port ${BACKEND_PORT}`);
+// app.listen(BACKEND_PORT, () => {
+//   console.log(`🚀 Server running on port ${BACKEND_PORT}`);
+//   console.log(`📚 Course Calendar Backend is ready!`);
+//   console.log(`🔗 API endpoints available at http://localhost:${BACKEND_PORT}/api`);
+// });
+
+app.listen(process.env.BACKEND_PORT, () => {
+  console.log(`🚀 Server running on port ${process.env.BACKEND_PORT}`);
   console.log(`📚 Course Calendar Backend is ready!`);
-  console.log(`🔗 API endpoints available at http://localhost:${BACKEND_PORT}/api`);
+  console.log(`🔗 API endpoints available at ${process.env.BASE_URL}/api`);
 });
