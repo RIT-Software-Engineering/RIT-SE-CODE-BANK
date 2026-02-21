@@ -7,6 +7,8 @@ import RegisterPanel from "./components/RegisterPanel"
 import ControlPanel from "./components/ControlPanel"
 
 export default function App() {
+  const memory = new Array(256).fill(0)
+
   const [code, setCode] = useState(`test code :D`)
 
   //purple background is placeholder to see better
@@ -20,7 +22,7 @@ export default function App() {
           <div className="bg-border-primary min-h-2"></div>
           <ControlPanel></ControlPanel>
           <RegisterPanel></RegisterPanel>
-          <MemoryPanel></MemoryPanel>
+          <MemoryPanel memory={memory}></MemoryPanel>
         </div>
         {/* temp border */}
         <div className="bg-border-primary min-w-2"></div>

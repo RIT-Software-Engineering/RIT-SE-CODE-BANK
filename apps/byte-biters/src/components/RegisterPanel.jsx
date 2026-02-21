@@ -11,6 +11,7 @@ export default function RegisterPanel () {
                 <Register name="R4"></Register>
                 <Register name="R5"></Register>
             </div>
+            {/* special registers */}
             <div className="flex flex-row gap-8">
                 <Register name="SP"></Register>
                 <Register name="PC"></Register>
