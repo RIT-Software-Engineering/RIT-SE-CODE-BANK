@@ -2,7 +2,7 @@ import Register from "./Register";
 
 export default function RegisterPanel () {
     return (
-        <div className="bg-main-secondary h-20 flex flex-col items-center justify-between p-2">
+        <div className="bg-main-secondary h-24 flex flex-col items-center justify-between py-4 gap-4">
             <div className="flex flex-row gap-8">
                 <Register name="R0" number="000"></Register>
                 <Register name="R1"></Register>

@@ -5,6 +5,7 @@ import SidePanel from "./components/SidePanel"
 import MemoryPanel from "./components/MemoryPanel"
 import RegisterPanel from "./components/RegisterPanel"
 import ControlPanel from "./components/ControlPanel"
+import {Group, Panel} from "react-resizable-panels"
 
 export default function App() {
   const memory = new Array(256).fill(0)
@@ -15,19 +16,33 @@ export default function App() {
   return (
     <div className="h-screen w-screen bg-purple-900 text-text-muted font-mono flex flex-col">
       <Header></Header>
-      <div className="flex flex-row flex-1">
-        <div className="flex flex-col flex-1">
-          <Editor code={code} setCode={setCode} />
+
+      <Group>
+        {/* left side */}
+        <Panel className="flex flex-col h-full">
+          <Group orientation="vertical">
+            <Panel>
+              <Editor code={code} setCode={setCode} />
+            </Panel>
+            <Panel className="flex flex-col h-full">
+              {/* temp border */}
+              <div className="bg-border-primary min-h-2 "></div>
+              <ControlPanel></ControlPanel>
+              <RegisterPanel></RegisterPanel>
+              <MemoryPanel memory={memory}></MemoryPanel>
+            </Panel>
+          </Group>
+          
+        </Panel>
+        {/* right side */}
+        <Panel className="flex flex-row flex-1 h-full">
           {/* temp border */}
-          <div className="bg-border-primary min-h-2"></div>
-          <ControlPanel></ControlPanel>
-          <RegisterPanel></RegisterPanel>
-          <MemoryPanel memory={memory}></MemoryPanel>
-        </div>
-        {/* temp border */}
-        <div className="bg-border-primary min-w-2"></div>
-        <SidePanel></SidePanel>
-      </div>
+          <div className="bg-border-primary min-w-2"></div>
+          <SidePanel></SidePanel>
+        </Panel>
+      </Group>
+
+      
     </div>
   )
 }

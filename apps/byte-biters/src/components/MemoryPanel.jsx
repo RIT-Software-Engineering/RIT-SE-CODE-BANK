@@ -8,7 +8,7 @@ export default function MemoryPanel({ memory }) {
   )
 
   return (
-    <div className="bg-main-secondary flex justify-center px-4 h-40 overflow-auto">
+    <div className="bg-main-secondary flex justify-center px-4 h-full overflow-auto pb-4">
       <table className="w-full text-center border-separate border-spacing-0">
         <thead >
           <tr>

@@ -9,7 +9,7 @@ export default function Editor({ code, setCode }) {
   
   return (
     //temp placeholders for the line numbers
-    <div className="flex flex-1 flex-row">
+    <div className="flex flex-1 flex-row h-full">
       <ol className="bg-main-secondary text-center w-10 p-3">
         <li>1</li>
         <li>2</li>
