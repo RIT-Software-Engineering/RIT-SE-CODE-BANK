@@ -61,6 +61,31 @@ async function parseGrantAI(scholarship_section) {
     }
 }
 
+async function parseServiceHoursAI(service_section) {
+    const prompt = `
+    Extract all service hours mentioned in the text and return ONLY the total sum as a number.
+    Look for patterns like "80 hrs", "40 hrs.", "5 hours", "10 hours in total", etc.
+    Add them all up and return just the number.
+    
+    Input Text:
+    "${service_section}"
+    
+    Output Format:
+    Return ONLY a number (the total hours). If no hours found, return 0.
+    `;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text().trim();
+        const hours = parseInt(text);
+
+        return hours || null;
+    } catch (error) {
+        return null;
+    }
+}
+
 async function parsePDF(filePath) {
     const dataBuffer = fs.readFileSync(filePath);
     const data = await pdfParse(dataBuffer);
@@ -79,6 +104,9 @@ async function parsePDF(filePath) {
     
 
 
+    const serviceSection = extractSection(text, 'Service', 'Professional Development');
+    const serviceHours = await parseServiceHoursAI(serviceSection);
+
     const extracted = {
         name: extractField(lines, 'Name'),
         rank: extractField(lines, 'Rank'),
@@ -87,7 +115,8 @@ async function parsePDF(filePath) {
         period: extractField(lines, 'Period'),
         scholarship: scholarshipData,
         teaching: extractSection(text, 'Teaching', 'Service'),
-        service: extractSection(text, 'Service', 'Professional Development'),
+        service: serviceSection,
+        service_hours: serviceHours,
         administrative: extractSection(text, 'Administrative', null)
     };
 

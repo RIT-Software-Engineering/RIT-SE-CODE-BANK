@@ -22,6 +22,7 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
     
     console.log("formData state:", formData);
     console.log("scholarship value:", formData.scholarship);
+    console.log("service_hours value:", formData.service_hours);
 
     const handleChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
@@ -75,7 +76,7 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                     value={formData.teaching || ''} 
                     onChange={(e) => handleChange('teaching', e.target.value)} sx={{ mb: 2 }} />
                 
-                <h3>Service</h3>
+                <h3>Service {formData.service_hours && <span style={{ color: "#555" }}>| Total hours:({formData.service_hours})</span>}</h3>
                 <TextField fullWidth multiline rows={6} 
                     value={formData.service || ''} 
                     onChange={(e) => handleChange('service', e.target.value)} sx={{ mb: 2 }} />
