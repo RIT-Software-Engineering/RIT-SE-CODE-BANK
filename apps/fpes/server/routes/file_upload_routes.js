@@ -36,6 +36,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
         if (fileExt === '.pdf') {
             parsedData = await parsePDF(filePath);
+            const pdfBuffer = fs.readFileSync(filePath);
+            const pdfBase64 = pdfBuffer.toString('base64');
+            parsedData.pdfData = pdfBase64;
         } else if (fileExt === '.csv') {
             parsedData = await parseCSV(filePath);
         } else {

@@ -7,6 +7,7 @@ export default function AddFileModal({ isOpen, closeModal, facultyId }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const [parsedData, setParsedData] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
+    const [pdfUrl, setPdfUrl] = useState(null);
 
     const handleFileChange = (e) => {
         setSelectedFile(e.target.files[0]);
@@ -25,6 +26,10 @@ export default function AddFileModal({ isOpen, closeModal, facultyId }) {
             });
             console.log("Upload successful:", response.data);
             console.log("Parsed data:", response.data.data);
+            if (response.data.data.pdfData) {
+                const blob = new Blob([Uint8Array.from(atob(response.data.data.pdfData), c => c.charCodeAt(0))], { type: 'application/pdf' });
+                setPdfUrl(URL.createObjectURL(blob));
+            }
             setParsedData(response.data.data);
             setShowPreview(true);
         } catch (error) {
@@ -38,6 +43,8 @@ export default function AddFileModal({ isOpen, closeModal, facultyId }) {
         setShowPreview(false);
         setParsedData(null);
         setSelectedFile(null);
+        if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+        setPdfUrl(null);
         closeModal();
     };
 
@@ -73,7 +80,7 @@ export default function AddFileModal({ isOpen, closeModal, facultyId }) {
                 </Box>
             </Box>
         </Modal>
-        <DataPreviewModal isOpen={showPreview} closeModal={handlePreviewClose} parsedData={parsedData} facultyId={facultyId} />
+        <DataPreviewModal isOpen={showPreview} closeModal={handlePreviewClose} parsedData={parsedData} facultyId={facultyId} pdfUrl={pdfUrl} />
         </>
     );
 }

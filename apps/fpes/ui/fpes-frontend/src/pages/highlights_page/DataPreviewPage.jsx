@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import FundingTable from "./FundingTable";
 
-export default function DataPreviewModal({ isOpen, closeModal, parsedData, facultyId }) {
+export default function DataPreviewModal({ isOpen, closeModal, parsedData, facultyId, pdfUrl }) {
     console.log("DataPreviewModal received:", parsedData);
     const [formData, setFormData] = useState(() => ({
         ...(parsedData || {}),
@@ -31,8 +31,10 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
     const handleSave = async () => {
         console.log("Saving data:", formData);
         
+        const { pdfData, ...dataToSave } = formData;
+        
         try {
-            await axios.post("http://localhost:3000/highlights/parsed", { ...formData, faculty_id: facultyId });
+            await axios.post("http://localhost:3000/highlights/parsed", { ...dataToSave, faculty_id: facultyId });
             alert("Data saved successfully");
             closeModal();
         } catch (error) {
@@ -50,6 +52,12 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                     <CloseIcon/>
                 </IconButton>
                 <Typography variant="h6" component="h2" sx={{ mb: 2, clear: 'both' }}>Review and Edit Parsed Data</Typography>
+                
+                {pdfUrl && (
+                    <Button variant="outlined" onClick={() => window.open(pdfUrl, '_blank')} sx={{ mb: 2 }}>
+                        View PDF
+                    </Button>
+                )}
                 
                 <h3>Basic Information</h3>
                 <TextField fullWidth label="Name" value={formData.name || ''} 
