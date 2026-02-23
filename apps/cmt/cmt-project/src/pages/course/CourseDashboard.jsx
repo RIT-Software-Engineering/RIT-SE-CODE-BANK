@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTFetch } from '../../utils/api'
 import { Edit, X, Check, ArrowLeft } from 'lucide-react'
-import { Accordion, Button, Form, Modal, Table } from 'react-bootstrap'
+import { Accordion, Button, Card, Form, Modal, Table } from 'react-bootstrap'
 import { OutputRenderer } from '../../components/workflows/OutputRenderers'
 
 export function CourseDashboard() {
@@ -242,7 +242,7 @@ function Session({ sessionCount}) {
 
     return (
         <Accordion alwaysOpen>
-        <SessionModal sessionNum={sessionNum} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen}/>
+        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen}/>
         {
             Array.from({ length: sessionCount }, (_, i) => (
                 <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
@@ -255,8 +255,15 @@ function Session({ sessionCount}) {
                         <SessionTable sessionData={sessionData} sessionNum={i}/> :
                         <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                         }
-
-                        <div className='flex justify-end'>
+                        { sessionData.find(data => data.sessionNum === i && data.column==="Personal Notes") ?
+                        <Card>
+                            <Card.Body>
+                                <Card.Title>{sessionData.find(data => data.sessionNum === i && data.column==="Personal Notes").label} (Notes)</Card.Title>
+                                <Card.Text>{sessionData.find(data => data.sessionNum === i && data.column==="Personal Notes").body}</Card.Text>
+                            </Card.Body>
+                        </Card> : <></>
+                        }
+                        <div className='flex justify-end pt-3'>
                             <Button onClick={() => setIsOpen(true)}>Add Material</Button>
                         </div>
                     </Accordion.Body>
@@ -267,7 +274,7 @@ function Session({ sessionCount}) {
   );
 }
 
-function SessionModal({ sessionNum, setSessionData, isOpen, setIsOpen}){
+function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen}){
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
     const [itemType, setItemType] = useState('Topic/Lecture');
@@ -305,7 +312,7 @@ function SessionModal({ sessionNum, setSessionData, isOpen, setIsOpen}){
                                 <option>Class Activity</option>
                                 <option>Group Assignment</option>
                                 <option>Individual Assignment</option>
-                                <option>Personal Notes</option>
+                                {!sessionData.find(data => data.sessionNum === sessionNum && data.column==="Personal Notes") ? <option>Personal Notes</option> : <></>} 
                                 </Form.Select>
                             </div>
                         </div>
