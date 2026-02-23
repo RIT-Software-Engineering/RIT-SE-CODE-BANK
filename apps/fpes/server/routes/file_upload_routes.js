@@ -36,9 +36,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
         if (fileExt === '.pdf') {
             parsedData = await parsePDF(filePath);
-            const pdfBuffer = fs.readFileSync(filePath);
-            const pdfBase64 = pdfBuffer.toString('base64');
-            parsedData.pdfData = pdfBase64;
+            
+            // Save PDF to permanent location
+            const pdfFileName = `${faculty_id}_${Date.now()}.pdf`;
+            const permanentPath = path.join(uploadsDir, pdfFileName);
+            fs.copyFileSync(filePath, permanentPath);
+            parsedData.pdfFileName = pdfFileName;
         } else if (fileExt === '.csv') {
             parsedData = await parseCSV(filePath);
         } else {
@@ -60,6 +63,15 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     } catch (error) {
         console.error('Error parsing file:', error);
         res.status(500).json({ error: 'Failed to parse file: ' + error.message });
+    }
+});
+
+router.get('/pdf/:filename', (req, res) => {
+    const filePath = path.join(uploadsDir, req.params.filename);
+    if (fs.existsSync(filePath)) {
+        res.sendFile(filePath);
+    } else {
+        res.status(404).json({ error: 'PDF not found' });
     }
 });
 

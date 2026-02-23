@@ -12,48 +12,35 @@ export default function HighlightsPage({facultyId}){
     const [viewModalForm, setViewModalForm] = useState({});
     const [addFileModalOpen, setAddFileModalOpen] = useState(false);
 
-    function closeModal(){
-        setViewModalOpen(false);
-    }
-
     function loadHighlights() {
         axios.get("http://localhost:3000/highlights/submitted_by/" + facultyId)
         .then(response => {
-            console.log(response);
             const data = response.data;
             data.map((form) => {
                 form.time_submitted = form.time_submitted.match(/^\d{4}-\d{2}-\d{2}/);
             })
             setHighlights(data);
         })
-        .catch(console.log("Error Retrieving Highlights"))
+        .catch(() => console.log("Error Retrieving Highlights"))
     }
 
     useEffect(() => {
         loadHighlights();
     }, []);
 
-    console.log(highlights)
-
     const columns = [
         {field : "id", headerName : "ID", flex:.2},
         {field : "time_submitted", headerName : "Submitted On", flex:1},
-        {field : "Open", flex: .5, sortable: false, renderCell : (params) => {
-            const onClick = (e) => {
+        {field : "Open", flex: .5, sortable: false, renderCell : (params) => (
+            <Button variant="contained" onClick={() => {
                 axios.get("http://localhost:3000/forms/" + params.row.id + "/view_format")
-                .then( (response) => {
+                .then(response => {
                     setViewModalForm(response.data);
-                    console.log(response.data);
                     setViewModalOpen(true);
-                    console.log(viewModalOpen);
                 });
-                
-            }
+            }}>View</Button>
+        )}
 
-            return(
-                <Button variant="contained" onClick={onClick}>View</Button>
-            )
-        }}
     ]
 
     const paginationModel = { page: 0, pageSize: 5 };
@@ -72,7 +59,7 @@ export default function HighlightsPage({facultyId}){
             initialState={{ pagination: { paginationModel } }}
         />
         </Paper>
-        <HighlightsViewModal formData={viewModalForm} isOpen={viewModalOpen} closeModal={() => closeModal()}/>
+        <HighlightsViewModal formData={viewModalForm} isOpen={viewModalOpen} closeModal={() => setViewModalOpen(false)} onOverwrite={() => { setViewModalOpen(false); setAddFileModalOpen(true); }}/>
         <AddFileModal isOpen={addFileModalOpen} closeModal={() => { setAddFileModalOpen(false); loadHighlights(); }} facultyId={facultyId}/>
         </div>
     )
