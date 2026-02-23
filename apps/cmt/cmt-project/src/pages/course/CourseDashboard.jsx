@@ -4,14 +4,15 @@ import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTFetch } from '../../utils/api'
 import { Edit, X, Check } from 'lucide-react'
 import { Button, Form } from 'react-bootstrap'
-import { OutputRenderer } from '../../components/workflows/OutputRenderers'
+import { metadataArrayToObject, metadataObjectToState } from '../../utils/workflows'
+import { GenericActionRenderer } from '../../components/workflows/ActionRenderers'
 
 export function CourseDashboard() {
     const { id } = useParams()
 
     const [course, setCourse] = useState(null)
     const [actionsWithCallbacks, setActionsWithCallbacks] = useState([])
-    const [workflowState, setWorkflowState] = useState(null)
+    const [actionStates, setActionStates] = useState(null)
     const [workflow, setWorkflow] = useState(null)
 
     const update = useCallback(() => {
@@ -19,25 +20,23 @@ export function CourseDashboard() {
             const data = await response.json()
             setCourse(data.course)
             setActionsWithCallbacks(data.actionsWithCallbacks)
-            setWorkflowState(data.actionStates)
+            setActionStates(data.actionStates)
             setWorkflow(data.workflow)
         })
     }, [id])
     useEffect(() => void update(), [id, update])
 
-    if (course === null || workflowState === null) return <p> Loading </p>
+    if (course === null || actionStates === null) return <p> Loading </p>
 
     return (
         <>
             <CourseInfo course={course} actionsWithCallbacks={actionsWithCallbacks} refresh={update} />
             <div className="h-10"></div>
-            <p className="text-4xl">Workflow Info</p>
-            <p className="text-2xl">Next Action:</p>
-
+            <p className="text-4xl pb-2 border-b">Workflow Info</p>
             <WorkflowRenderer
-                actionsWithCallbacks={actionsWithCallbacks}
-                workflowState={workflowState}
                 workflow={workflow}
+                actionsWithCallbacks={actionsWithCallbacks}
+                workflowState={actionStates}
                 refresh={update}
             />
         </>
@@ -80,22 +79,13 @@ function CourseInfo({ course, actionsWithCallbacks, refresh }) {
                     onChange={e => setNewCourseCode(e.target.value)}
                 />
             </div>
-                {actionsWithCallbacks.map(actionWithCallback => {
-                    // Flatten array of objects to simplify later usage
-                    let metadata = {}
-                    Object.keys(actionWithCallback.action.metadata).forEach(key => {
-                        metadata[key] = JSON.parse(actionWithCallback.action.metadata[key])
-                    })
-
-                    return (
-                        <InlineActionRenderer
-                            course={course}
-                            actionWithCallback={actionWithCallback}
-                            metadata={metadata}
-                            refresh={refresh}
-                        />
-                    )
-                })}
+                {actionsWithCallbacks.map(actionWithCallback => 
+                    <InlineActionRenderer
+                        course={course}
+                        actionWithCallback={actionWithCallback}
+                        refresh={refresh}
+                    />
+                )}
         </>
     )
 }
@@ -148,17 +138,14 @@ function InlineFormHoverable({ label, value, onChange, onSubmit }) {
     )
 }
 
-function InlineActionRenderer({ actionWithCallback, course, metadata, refresh }) {
-    const [outputValues, setOutputValues] = useState(Object.fromEntries(metadata.outputs.map(output => [output.key, output.initialValue]))) // Initialize with array of the Workflows specified initial (or default) values
-
-    const [submitButtonName, setSubmitButtonName] = useState('Submit')
-    const [submitButtonVariant, setSubmitButtonVariant] = useState('primary')
+function InlineActionRenderer({ actionWithCallback, course, refresh }) {
+    
+    const metadata = metadataArrayToObject(actionWithCallback.action.metadata)
+    const [outputValues, setOutputValues] = useState(metadataObjectToState(metadata))
 
     function submitAction(e) {
         e.preventDefault()
         CMTFetch('PUT', actionWithCallback.callback, outputValues).then(() => {
-            setSubmitButtonName('Submitted!')
-            setSubmitButtonVariant('success')
             setTimeout(async () => {
                 await refresh()
                 setIsEditing(false)
@@ -167,19 +154,17 @@ function InlineActionRenderer({ actionWithCallback, course, metadata, refresh })
     }
 
     const [isEditing, setIsEditing] = useState(false)
-
     return (
         <>
             {isEditing ? (
                 <div>
                     <Form className='flex items-center gap-6' onSubmit={submitAction}>
-                        {metadata.outputs.map((output, i) => (
-                            <OutputRenderer
-                                output={output}
-                                value={outputValues[i]}
-                                setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
-                            />
-                        ))}
+                        <GenericActionRenderer
+                            actionWithCallback={actionWithCallback}
+                            metadata={metadata}
+                            outputValues={outputValues}
+                            setOutputValues={setOutputValues}
+                        />
                         <Button
                             variant='outline-danger'
                             type='reset'
@@ -200,7 +185,7 @@ function InlineActionRenderer({ actionWithCallback, course, metadata, refresh })
                         <div className='w-1/5'>
                             <p className='text-xl my-2'>
                                 {' '}
-                                {actionWithCallback.action.name} {course[output.key] ?? 'TBD'}{' '}
+                                {output.name} {course[output.key] ?? 'TBD'}{' '}
                             </p>
                         </div>
                         <div className='hidden group-hover:block'>
