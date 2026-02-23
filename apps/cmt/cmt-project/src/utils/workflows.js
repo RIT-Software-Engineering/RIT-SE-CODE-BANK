@@ -1,13 +1,25 @@
-/**
- * The Workflows API calls .toString on every value of the metadata object passed in.
- * This function converts an arbitrary metadata object into an object where each value is a JSON object, so that .toString doesnt wreck it.
- * @param {Object} metadata 
- * @return Metadata object ready to be sent to the Workflows API
+ /**
+ * Workflows will take the object you give to it as the metadata and turn it into an array of key value pairs.
+ * This makes it very hard to access by key, so this function will take that array and turn it back into an object.
+ * It is meant for usage with `makeMetadataSafeForWorkflows` when uploading metadata 
+ * 
+ * @param {Array} metadataArray array of metadata given by the workflows API (and our endpoints)
  */
-export function makeMetadataSafeForWorkflows(metadata) {
-    let safeMetadata = {}
-    Object.entries(metadata).forEach(([key, value]) => {
-    safeMetadata[key] = JSON.stringify(value)
+export function metadataArrayToObject(metadataArray) {
+    let metadata = {}
+    Object.keys(metadataArray).forEach(key => {
+        metadata[key] = JSON.parse(metadataArray[key])
     })
-    return safeMetadata
+    return metadata
+}
+
+/**
+ * The various output renderers need to manage their state, so this complex snippet has been shared across them.
+ * This code is in a function and not centralized in one component because otherwise it is difficult to control styling across output renderers
+ * 
+ * @param {object} metadata Metadata returned from {@link metadataArrayToObject} 
+ * @returns object that has all of the keys defined by output with their corresponding initial values
+ */
+export function metadataObjectToState(metadata) {
+    return Object.fromEntries(metadata.outputs.map(output => [output.key, output.initialValue]))
 }
