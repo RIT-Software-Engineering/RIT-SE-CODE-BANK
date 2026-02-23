@@ -15,8 +15,6 @@ import Link from "@mui/material/Link";
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
 export default function ResourcesPage() {
-    const { currentUser } = useAuth();
-
     const LINKS = [
         {
             title: "RIT Student Employment Website",

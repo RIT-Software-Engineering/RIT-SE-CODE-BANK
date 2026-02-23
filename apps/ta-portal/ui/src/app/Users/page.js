@@ -5,8 +5,15 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAllUsers, getUserProfile } from '@/services/db-apis';
 import UserGroup from '@/components/users/UserGroups';
+import UserTable from '@/components/users/UserTable';
 import AdminEditUserForm from '@/components/users/AdminEditUserForm';
 import SearchBar from '@/components/common/searchAndFilter/SearchBar';
+
+
+import Accordion from "@mui/material/Accordion";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import {
   Alert,
@@ -180,36 +187,72 @@ export default function AdminUsersPage() {
         }, {});
 
         return (
-          <UserGroup
-            key={role}
-            title={role}
-            users={groupedByStatus}
-            onEditUser={handleEditClick}
-            isEmployeeGroup
+          <Accordion sx={(theme) => ({
+            background: theme.palette.mode === 'dark'
+                ? ""
+                : "#e0e0e0"
+        })}
+        >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="h6" fontWeight={600}>
+                    EMPLOYEES ({filtered.length})
+                </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <UserTable
+            key='Active'
+            title='Active'
+            users={groupedByStatus['ACTIVE']}
+            role='EMPLOYEE'
+            onEdit={handleEditClick}
           />
+
+          <UserTable
+            key='Unknown'
+            title='Unknown'
+            users={groupedByStatus['UNKNOWN']}
+            role='EMPLOYEE'
+            onEdit={handleEditClick}
+          />
+
+          
+          <UserTable
+            key='Inactive'
+            title='Inactive'
+            users={groupedByStatus['INACTIVE']}
+            role='EMPLOYEE'
+            onEdit={handleEditClick}
+          />
+</Box>
+            </AccordionDetails>
+        </Accordion>
         );
       }
 
       if (role === 'EMPLOYER') {
       
         return (
-          <UserGroup
-            key={role}
+          <>
+          <UserTable
+            key='employer'
             title={role}
-            users={filtered}
-            onEditUser={handleEditClick}
-          />
+            users={groupedUsers['EMPLOYER']}
+            role={role}
+            onEdit={handleEditClick}
+          /></>
         );
       }
 
       // Render a standard UserGroup for all other roles.
       return (
-        <UserGroup
+        roleOrder.includes(role)?
+          <UserTable
           key={role}
           title={role}
           users={filtered}
           onEditUser={handleEditClick}
-        />
+        />:<></>
       );
     });
   };
