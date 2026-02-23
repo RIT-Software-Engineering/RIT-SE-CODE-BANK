@@ -2411,6 +2411,7 @@ async function getAllCourses() {
       select: {
         courseCode: true,
         name: true,
+        description: true
       },
     });
   } catch (error) {
