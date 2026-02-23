@@ -1,6 +1,6 @@
 // Handles all workflow-related logic for CMT
 import express from "express";
-import { WORKFLOWS_API, workflowsFetch } from "../utils/workflows.js";
+import { WORKFLOWS_API } from "../utils/workflows.js";
 
 const router = express.Router();
 export default router
