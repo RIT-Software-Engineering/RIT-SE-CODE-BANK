@@ -36,12 +36,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
         if (fileExt === '.pdf') {
             parsedData = await parsePDF(filePath);
-            
-            // Save PDF to permanent location
-            const pdfFileName = `${faculty_id}_${Date.now()}.pdf`;
-            const permanentPath = path.join(uploadsDir, pdfFileName);
-            fs.copyFileSync(filePath, permanentPath);
-            parsedData.pdfFileName = pdfFileName;
+            const pdfBuffer = fs.readFileSync(filePath);
+            const pdfBase64 = pdfBuffer.toString('base64');
+            parsedData.pdfData = pdfBase64;
         } else if (fileExt === '.csv') {
             parsedData = await parseCSV(filePath);
         } else {

@@ -92,9 +92,9 @@ async function saveParsedHighlights(data) {
         
         // Then save highlights with the new form_id and student_support_id
         const result = await conn.query(
-            `INSERT INTO highlights (form_id, student_support_id, administrative_responsibilities, last_saved, pdf_filename) 
-             VALUES (?, ?, ?, NOW(), ?)`,
-            [formId, studentSupportId, data.administrative, data.pdfFileName || null]
+            `INSERT INTO highlights (form_id, student_support_id, administrative_responsibilities, last_saved) 
+             VALUES (?, ?, ?, NOW())`,
+            [formId, studentSupportId, data.administrative]
         );
         return { success: true, id: Number(result.insertId), formId };
     } finally {

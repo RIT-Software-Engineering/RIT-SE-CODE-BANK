@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import FundingTable from "./FundingTable";
 
-export default function DataPreviewModal({ isOpen, closeModal, parsedData, facultyId, pdfFileName }) {
+export default function DataPreviewModal({ isOpen, closeModal, parsedData, facultyId, pdfUrl }) {
     console.log("DataPreviewModal received:", parsedData);
     const [formData, setFormData] = useState(() => ({
         ...(parsedData || {}),
@@ -31,8 +31,7 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
     const handleSave = async () => {
         console.log("Saving data:", formData);
         
-        const dataToSave = { ...formData, pdfFileName };
-        delete dataToSave.pdfData;
+        const { pdfData, ...dataToSave } = formData;
         
         try {
             await axios.post("http://localhost:3000/highlights/parsed", { ...dataToSave, faculty_id: facultyId });
@@ -54,8 +53,8 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                 </IconButton>
                 <Typography variant="h6" component="h2" sx={{ mb: 2, clear: 'both' }}>Review and Edit Parsed Data</Typography>
                 
-                {pdfFileName && (
-                    <Button variant="outlined" onClick={() => window.open(`http://localhost:3000/file/pdf/${pdfFileName}`, '_blank')} sx={{ mb: 2 }}>
+                {pdfUrl && (
+                    <Button variant="outlined" onClick={() => window.open(pdfUrl, '_blank')} sx={{ mb: 2 }}>
                         View PDF
                     </Button>
                 )}
