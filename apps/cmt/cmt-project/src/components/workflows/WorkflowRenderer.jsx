@@ -1,53 +1,56 @@
-import { useState } from "react"
-import { Button, Card, Form } from "react-bootstrap"
-import { CMTFetch } from "../../utils/api"
-import { OutputRenderer } from "./OutputRenderers"
+import { metadataArrayToObject } from '../../utils/workflows'
+import { ArrowBigDown, PlusIcon } from 'lucide-react'
+import { StatusCardCompleted, StatusCardInProgress, StatusCardNotStarted } from './StatusCards'
+import { FormActionRenderer } from './ActionRenderers'
 
-export function WorkflowRenderer({ actionsWithCallbacks, workflowState, workflow, refresh }) {
-    const nextActionState = workflowState.baseActionState.children.find(actionState => actionState.stateType === "notStarted")
-    if (!nextActionState) return <h1> All Done! </h1>
-    
-    const nextActionWithCallback = actionsWithCallbacks.find(awc => awc.action.id === nextActionState.actionId)
-    return <ActionRenderer actionWithCallback={nextActionWithCallback} refresh={refresh} />
+export function WorkflowRenderer({ workflow, actionsWithCallbacks, workflowState, refresh }) {
+    return (
+        <>
+            <div className='flex flex-col'>
+                <p className='text-xl'>{workflow.baseAction.name}</p>
+                <p className='text-lg'>{workflow.baseAction.description}</p>
+                {actionsWithCallbacks.map(actionWithCallback => {
+
+                    // Determine whether there will be arrows between the actions to represent sequential actions (simple)
+                    // or if there will be plus signs to represent complex actions
+                    let connectingElement
+                    if (actionWithCallback.action.nextActionId) {
+                        //TODO: i dont know how complex actions actually work
+                        if (actionWithCallback.action.actionType === 'simple') {
+                            connectingElement = <ArrowBigDown />
+                        } else if (actionWithCallback.action.actionType === 'complex') {
+                            connectingElement = <PlusIcon />
+                        }
+                    }
+
+                    let statusElement
+                    const actionState = workflowState.baseActionState.children.find(actionState => actionState.actionId === actionWithCallback.action.id)
+                    if (actionState.stateType === "notStarted") {
+                        statusElement = <StatusCardNotStarted />
+                    } else if (actionState.stateType === "inProgress") {
+                        statusElement = <StatusCardInProgress />
+                    } else if (actionState.stateType === "completed") {
+                        statusElement = <StatusCardCompleted />
+                    }
+
+                    return (
+                        <>
+                            <div className='p-2 flex gap-10' key={actionWithCallback.action.actionId}>
+                                <div className="grow">
+                                    <FormActionRenderer
+                                        actionWithCallback={actionWithCallback}
+                                        metadata={metadataArrayToObject(actionWithCallback.action.metadata)}
+                                        refresh={refresh}
+                                    />
+                                </div>
+                                {statusElement}
+                            </div>
+                            <div className='flex justify-center'>{connectingElement}</div>
+                        </>
+                    )
+                })}
+            </div>
+        </>
+    )
 }
 
-export function ActionRenderer({ actionWithCallback, refresh }) {
-    // Flatten array of objects to simplify later usage
-    let metadata = {};
-    Object.keys(actionWithCallback.action.metadata).forEach(key => {
-        console.log(actionWithCallback.action.metadata[key])
-        metadata[key] = JSON.parse(actionWithCallback.action.metadata[key])
-    })
-    
-    const [outputValues, setOutputValues] = useState(Object.fromEntries(metadata.outputs.map(output => [output.key, output.initialValue]))) // Initialize with array of the Workflows specified initial (or default) values
-    
-    const [submitButtonName, setSubmitButtonName] = useState("Submit")
-    const [submitButtonVariant, setSubmitButtonVariant] = useState("primary")
-    
-    function submitAction (e) {
-        e.preventDefault()
-        CMTFetch("PUT", actionWithCallback.callback, outputValues).then(() => {
-            setSubmitButtonName("Submitted!")
-            setSubmitButtonVariant("success")
-            setTimeout(refresh, 500)
-        })
-    }
-
-    return (<>
-        <Card className="w-fit">
-            <Card.Body>
-                <p className="text-2xl">{actionWithCallback.action.name}</p>
-                <Form onSubmit={submitAction} className="flex gap-4">
-                    {metadata.outputs.map((output, i) =>
-                        <OutputRenderer
-                        output={output}
-                        value={outputValues[i]}
-                        setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
-                        />
-                    )}
-                    <Button type="submit" variant={submitButtonVariant}>{submitButtonName}</Button>
-                </Form>
-            </Card.Body>
-        </Card>
-    </>)
-}
