@@ -1,6 +1,6 @@
 import express from 'express'
-import { createAction, workflowsFetch } from '../utils/workflows.js'
-import { makeMetadataSafeForWorkflows } from '../../utils/workflows.js'
+import {  workflowsFetch } from '../utils/workflows.js'
+import { objectToNewWorkflow } from '../utils/workflows.js'
 
 const router = express.Router()
 export default router
@@ -133,26 +133,7 @@ router.post('/', async (req, res) => {
             },
         }
 
-        const safeMetadata = makeMetadataSafeForWorkflows(workflow.rootAction.metadata)
-
-        const createdWorkflow = await workflowsFetch('POST', 'workflows', {
-            userId: professorId,
-            name: 'Create Course',
-            description: 'Overall course workflow',
-        }) // Create Workflow
-        console.log(`Created workflow with id ${createdWorkflow.id}`)
-
-        const createdAction = await createAction(
-            professorId,
-            'Course Details',
-            'Enter some details about the course',
-            'simple',
-            safeMetadata,
-        ) // Create Action
-        console.log(`Created action with id ${createdAction.id}`)
-
-        const workflowWithAction = await workflowsFetch('PUT', `workflows/${createdWorkflow.id}`, { rootActionId: createdAction.id }) // Attach Action to Workflow
-        console.log(`Attached action with id ${createdAction.id} to workflow with id ${workflowWithAction.id}`)
+        const createdWorkflow = await objectToNewWorkflow(workflow, professorId)
 
         const createdState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdWorkflow.id }) // Create state
         console.log(`Created workflow action state with id ${createdState.id}`)
