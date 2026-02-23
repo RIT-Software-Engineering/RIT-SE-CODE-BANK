@@ -47,7 +47,7 @@ const createInitialState = (config) => {
  *   @param {Function} [filterConfig[].optionLabel] - Optional function to render select option labels
  *
  */ 
-export const Filter = forwardRef(function FilterComponent({ onFilterChange, filterConfig }, ref) {
+export const Filter = forwardRef(function FilterComponent({ onFilterChange, filterConfig}, ref) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedFilters, setSelectedFilters] = useState(
     createInitialState(filterConfig)

@@ -57,14 +57,14 @@ export default function AdminApplicationsPage() {
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam === 'all') return 1;
-    if (tabParam === 'hiring') return 0;
+    //if (tabParam === 'hiring') return 0;
     // If we arrive via a deep link that includes application identifiers but
     // no explicit tab, prefer landing on the "Ready to Hire" tab which is the
     // typical admin action surface for notifications.
     const hasDeepLink = !!(
       searchParams.get('jobPositionId') || searchParams.get('applicationId')
     );
-    return hasDeepLink ? 0 : 0;
+    return hasDeepLink ? 1 : 1;
   });
 
   // Watch for URL changes and update active tab
@@ -73,7 +73,8 @@ export default function AdminApplicationsPage() {
     if (tabParam === 'all') {
       setActiveTab(1);
     } else if (tabParam === 'hiring' || !tabParam) {
-      setActiveTab(0);
+      //setActiveTab(0);
+      setActiveTab(1);
     }
   }, [searchParams]);
 
@@ -201,7 +202,7 @@ export default function AdminApplicationsPage() {
     }
   }, [activeTab, searchParams, hiringApplications, hiringLoading]);
 
-    // Auto-scroll to the deep-linked application card
+  // Auto-scroll to the deep-linked application card
   useEffect(() => {
     if (scrolledRef.current) return;
 
@@ -218,7 +219,7 @@ export default function AdminApplicationsPage() {
       // Try to expand any parent accordions
       try {
         el.closest('[role="region"]')?.previousElementSibling?.click?.();
-      } catch (_) {}
+      } catch (_) { }
       // Scroll to the card
       setTimeout(() => {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -290,22 +291,29 @@ export default function AdminApplicationsPage() {
 
       try {
         const data = await getAllApplicationsForAdmin(search, searchType, filters);
-        
+        const hireableData = await getCandidateApplicationsAsAdmin();
+
+        const hireableMap = Object.fromEntries(
+          hireableData.map(app => [app.id, app])
+        );
+
         // Process positions to convert grade enums
         const positions = data.map((position) => {
           const applicationsHistory = position.jobPositionApplicationHistory.map((app) => {
-            if (app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]) {
-              return {
-                ...app,
-                candidateGrade: gradeEnumToStringValue[app.candidateGrade],
-              };
-            }
-            return app;
+            // Convert grade enum
+            const updatedApp = app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]
+              ? { ...app, candidateGrade: gradeEnumToStringValue[app.candidateGrade] }
+              : app;
+
+            // Merge hireable data if this application is approved
+            const approved = hireableMap[app.id];
+            return approved ? { ...updatedApp, ...approved } : updatedApp;
           });
           return {
             ...position,
             jobPositionApplicationHistory: applicationsHistory,
           };
+
         });
 
         // Group by semester
@@ -400,8 +408,10 @@ export default function AdminApplicationsPage() {
         >
           <FormControl sx={{ minWidth: 150 }}>
             <Select value={searchBy} onChange={handleSearchByChange} size="small"
-            sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "white" })}>
+              sx={(theme) => ({
+                background: theme.palette.mode === 'dark'
+                  ? "" : "white"
+              })}>
               <MenuItem value="course">By Course</MenuItem>
               <MenuItem value="student">By Student</MenuItem>
             </Select>
@@ -439,15 +449,21 @@ export default function AdminApplicationsPage() {
         ) : (
           Object.keys(displayData).map((semesterCode) => (
             <Accordion key={semesterCode} defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "--color-rit-gray" })}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={(theme) => ({
+                background: theme.palette.mode === 'dark'
+                  ? "" : "--color-rit-gray"
+              })}>
                 <Typography variant="h5">Semester {semesterCode}</Typography>
               </AccordionSummary>
-              <AccordionDetails  sx={(theme)=>({ p: { xs: 1, md: 2 }, background: theme.palette.mode === 'dark'
-                    ? "" : "--color-rit-gray" })}>
+              <AccordionDetails sx={(theme) => ({
+                p: { xs: 1, md: 2 }, background: theme.palette.mode === 'dark'
+                  ? "" : "--color-rit-gray"
+              })}>
                 {displayData[semesterCode].map((position) => (
-                  <Accordion key={position.id} defaultExpanded sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "#e0e0e0" })}> 
+                  <Accordion key={position.id} defaultExpanded sx={(theme) => ({
+                    background: theme.palette.mode === 'dark'
+                      ? "" : "#e0e0e0"
+                  })}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="h6">
                         {position.courseCode}-{String(position.sectionNumber).padStart(2, '0')}: {position.course?.name}
@@ -469,9 +485,11 @@ export default function AdminApplicationsPage() {
                               jobPosition={position}
                               application={app}
                               onStatusChange={handleStatusChange}
-                              showHireAction={false}
-                              isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
+                              showHireAction={true}
+                              onHire={() => handleOpenHireModal(app)}
+                              isHighlighted={String(searchParams.get('applicationId') || '') === String(app.id)}
                             />
+                            <Button onClick={() => console.log(app)}>TEST1</Button>
                           </Box>
                         ))
                       ) : (
@@ -536,8 +554,9 @@ export default function AdminApplicationsPage() {
                   onStatusChange={() => fetchHiringApplications()}
                   onHire={() => handleOpenHireModal(application)}
                   showHireAction={true}
-                  isHighlighted={String(searchParams.get('applicationId')||'')===String(application.id)}
+                  isHighlighted={String(searchParams.get('applicationId') || '') === String(application.id)}
                 />
+                <Button onClick={() => console.log(application)}>TEST2</Button>
               </Box>
             ))}
           </Box>
@@ -549,44 +568,45 @@ export default function AdminApplicationsPage() {
   // Main component render method.
   return (
     <FeatureGate feature={FEATURES.APPLICATIONS}>
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h1" component="h1" gutterBottom>
-          Manage Applications
-        </Typography>
-        <Typography variant="h3" color="text.secondary">
-          Review all applications and hire candidates who have accepted job offers.
-        </Typography>
-      </Box>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography variant="h1" component="h1" gutterBottom>
+            Manage Applications
+          </Typography>
+          <Typography variant="h3" color="text.secondary">
+            Review all applications and hire candidates who have accepted job offers.
+          </Typography>
+        </Box>
 
-      {/* Conditionally render content based on user role */}
-      {currentUser && currentUser.role === 'ADMIN' ? (
-        <>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-            <Tabs value={activeTab} onChange={handleTabChange} centered>
-              <Tab label="Hire Candidates" />
-              <Tab label="All Applications" />
-            </Tabs>
-          </Box>
+        {/* Conditionally render content based on user role */}
+        {currentUser && currentUser.role === 'ADMIN' ? (
+          <>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+              {/*<Tabs value={activeTab} onChange={handleTabChange} centered>
+                <Tab label="Hire Candidates" />
+                <Tab label="All Applications" />
+              </Tabs>*/}
+            </Box>
 
-          {activeTab === 0 ? renderHiringView() : renderAllApplicationsTab()}
-        </>
-      ) : (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography>Please make sure you are logged in as an ADMIN.</Typography>
-        </Paper>
-      )}
+            {/*activeTab === 0 ? renderHiringView() : renderAllApplicationsTab()*/}
+            {renderAllApplicationsTab()}
+          </>
+        ) : (
+          <Paper sx={{ p: 4, textAlign: 'center' }}>
+            <Typography>Please make sure you are logged in as an ADMIN.</Typography>
+          </Paper>
+        )}
 
-      {/* Render the modal conditionally */}
-      {isHireModalOpen && selectedApplication && (
-        <HireModal
-          application={selectedApplication}
-          onClose={handleCloseHireModal}
-          onConfirm={handleConfirmHire}
-          isProcessing={isProcessing}
-        />
-      )}
-    </Container>
+        {/* Render the modal conditionally */}
+        {isHireModalOpen && selectedApplication && (
+          <HireModal
+            application={selectedApplication}
+            onClose={handleCloseHireModal}
+            onConfirm={handleConfirmHire}
+            isProcessing={isProcessing}
+          />
+        )}
+      </Container>
     </FeatureGate>
   );
 }
