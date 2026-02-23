@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTFetch } from '../../utils/api'
 import { Edit, X, Check, ArrowLeft } from 'lucide-react'
-import { Button, Form } from 'react-bootstrap'
+import { Accordion, Button, Form, Table } from 'react-bootstrap'
 import { OutputRenderer } from '../../components/workflows/OutputRenderers'
 
 export function CourseDashboard() {
@@ -13,6 +13,9 @@ export function CourseDashboard() {
     const [actionsWithCallbacks, setActionsWithCallbacks] = useState([])
     const [workflowState, setWorkflowState] = useState(null)
     const [workflow, setWorkflow] = useState(null)
+    const [sessionCount, setSessionCount] = useState(0)
+    //TODO add implementation with the backend to hold and maintain session data
+    const [sessionData, setSessionData] = useState([])
 
     const update = useCallback(() => {
         return CMTFetch('GET', `course/${id}`).then(async response => {
@@ -40,6 +43,15 @@ export function CourseDashboard() {
                 workflow={workflow}
                 refresh={update}
             />
+
+            <div>
+                <Session sessionCount={sessionCount} sessionData={sessionData}/>
+                <div className='flex justify-end pt-4'>
+                    <Button onClick={() => {
+                       setSessionCount(sessionCount+1)
+                    }}>Add session</Button>
+                </div>
+            </div>
         </>
     )
 }
@@ -217,4 +229,53 @@ function InlineActionRenderer({ actionWithCallback, course, metadata, refresh })
             )}
         </>
     )
+}
+
+function Session({ sessionCount, sessionData }) {
+    return (
+      <Accordion alwaysOpen>
+        {
+            Array.from({ length: sessionCount }, (_, i) => (
+                <Accordion.Item eventKey={`${i}`}>
+                    <Accordion.Header><span className='text-2xl'>Session {i+1}</span></Accordion.Header>
+                    <Accordion.Body>
+                        {sessionData.length > 0 ? 
+                        <Table bordered>
+                            <thead>
+                                <tr>
+                                    {/* TODO make columns appear dynamically if children items exist */}
+                                    <td>Topic/Lecture</td>
+                                    <td>Class Activity</td>
+                                    <td>Reading/Resources</td>
+                                    <td>Projects & Practica</td>
+                                    <td>Class Activity</td>
+                                    <td>Group Assignment</td>
+                                    <td>Individual Assignment</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </Table> : 
+                        <div className='flex justify-center'>
+                            <p className='text-xl'>Nothing here yet!</p>
+                        </div>
+                        }
+                        <div className='flex justify-end'>
+                            <Button>Add Material</Button>
+                        </div>
+                    </Accordion.Body>
+                </Accordion.Item>
+            ))
+        }
+      </Accordion>
+  );
 }
