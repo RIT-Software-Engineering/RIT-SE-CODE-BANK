@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTFetch } from '../../utils/api'
 import { Edit, X, Check, ArrowLeft } from 'lucide-react'
-import { Accordion, Button, Form, Table } from 'react-bootstrap'
+import { Accordion, Button, Form, Modal, Table } from 'react-bootstrap'
 import { OutputRenderer } from '../../components/workflows/OutputRenderers'
 
 export function CourseDashboard() {
@@ -14,8 +14,6 @@ export function CourseDashboard() {
     const [workflowState, setWorkflowState] = useState(null)
     const [workflow, setWorkflow] = useState(null)
     const [sessionCount, setSessionCount] = useState(0)
-    //TODO add implementation with the backend to hold and maintain session data
-    const [sessionData, setSessionData] = useState([])
 
     const update = useCallback(() => {
         return CMTFetch('GET', `course/${id}`).then(async response => {
@@ -45,7 +43,7 @@ export function CourseDashboard() {
             />
 
             <div>
-                <Session sessionCount={sessionCount} sessionData={sessionData}/>
+                <Session sessionCount={sessionCount}/>
                 <div className='flex justify-end pt-4'>
                     <Button onClick={() => {
                        setSessionCount(sessionCount+1)
@@ -231,46 +229,35 @@ function InlineActionRenderer({ actionWithCallback, course, metadata, refresh })
     )
 }
 
-function Session({ sessionCount, sessionData }) {
+function Session({ sessionCount}) {
+    //TODO add implementation with the backend to hold and maintain session data
+    const [sessionData, setSessionData] = useState([]);
+    const [isOpen, setIsOpen] = useState(false);
+    const [sessionNum, setSessionNum] = useState(0);
+
+    //TODO add GET request to set the session data
+    function getSessionData(){
+
+    }
+
     return (
-      <Accordion alwaysOpen>
+        <Accordion alwaysOpen>
+        <SessionModal sessionNum={sessionNum} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen}/>
         {
             Array.from({ length: sessionCount }, (_, i) => (
-                <Accordion.Item eventKey={`${i}`}>
-                    <Accordion.Header><span className='text-2xl'>Session {i+1}</span></Accordion.Header>
+                <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
+                    <Accordion.Header>
+                        <Form.Check onClick={(e)=>e.stopPropagation()} className='mr-3 text-xl'></Form.Check>
+                        <span className='text-2xl'>Session {i+1}</span>
+                        </Accordion.Header>
                     <Accordion.Body>
-                        {sessionData.length > 0 ? 
-                        <Table bordered>
-                            <thead>
-                                <tr>
-                                    {/* TODO make columns appear dynamically if children items exist */}
-                                    <td>Topic/Lecture</td>
-                                    <td>Class Activity</td>
-                                    <td>Reading/Resources</td>
-                                    <td>Projects & Practica</td>
-                                    <td>Class Activity</td>
-                                    <td>Group Assignment</td>
-                                    <td>Individual Assignment</td>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                            </tbody>
-                        </Table> : 
-                        <div className='flex justify-center'>
-                            <p className='text-xl'>Nothing here yet!</p>
-                        </div>
+                        { sessionData.find(data => data.sessionNum === i) ?
+                        <SessionTable sessionData={sessionData} sessionNum={i}/> :
+                        <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                         }
+
                         <div className='flex justify-end'>
-                            <Button>Add Material</Button>
+                            <Button onClick={() => setIsOpen(true)}>Add Material</Button>
                         </div>
                     </Accordion.Body>
                 </Accordion.Item>
@@ -278,4 +265,124 @@ function Session({ sessionCount, sessionData }) {
         }
       </Accordion>
   );
+}
+
+function SessionModal({ sessionNum, setSessionData, isOpen, setIsOpen}){
+    const [itemLabel, setItemLabel] = useState('');
+    const [itemBody, setItemBody] = useState('');
+    const [itemType, setItemType] = useState('Topic/Lecture');
+
+    //TODO Make POST request to save session material
+    function uploadSessionMaterial(){
+        setSessionData(sessionData => [...sessionData, {
+            sessionNum: sessionNum,
+            column: itemType,
+            label: itemLabel,
+            body: itemBody,
+        }]);
+    }
+
+    return (
+            <Modal show={isOpen} onHide={() => {setIsOpen(false); 
+            setItemType('Topic/Lecture');}} centered size='lg'>
+                <Modal.Header closeButton>Add Material</Modal.Header>
+                <Modal.Body>
+                    <Form onSubmit={uploadSessionMaterial}>
+                        <div className='flex'>
+                            <div className='w-3/4'>
+                                <Form.Control placeholder={"My Title"} onChange={(e)=>setItemLabel(e.target.value)} required></Form.Control>
+                                <Form.Control as="textarea" onChange={(e)=>setItemBody(e.target.value)}>
+                                    {/* TODO Replace this with Rich Text Editor */}
+                                </Form.Control>
+                            </div>
+
+                            <div className=''>
+                                <Form.Select onChange={(e)=>setItemType(e.target.value)}>
+                                <option>Topic/Lecture</option>
+                                <option>Class Activity</option>
+                                <option>Reading/Resources</option>
+                                <option>Projects & Practica</option>
+                                <option>Class Activity</option>
+                                <option>Group Assignment</option>
+                                <option>Individual Assignment</option>
+                                <option>Personal Notes</option>
+                                </Form.Select>
+                            </div>
+                        </div>
+                       
+                        <div className='flex justify-end pt-3'>
+                            <Button type="submit" onClick={(e) => {
+                            e.preventDefault();
+                            uploadSessionMaterial();
+                            setIsOpen(false);
+                            setItemType('Topic/Lecture');
+                            }}>Submit</Button>
+                        </div>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+    );
+}
+
+function SessionTable( {sessionData, sessionNum} ) {
+    const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
+    const allCols = ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Class Activity", "Group Assignment", "Individual Assignment"];
+    // TODO: maybe... change how this works, currently updates all columns for every session but that may be ok.
+    // It'll look a bit more clumped, but it is closer to realistic for what a prof. may want.
+    function determineCols(){
+        sessionData.map(data => {
+            const i = allCols.indexOf(data.column);
+            if (cols[i] === 0)
+            setCols([...cols.slice(0, i), 1, ...cols.slice(i+1)]) ;
+            return null;}
+        )
+    }
+
+    function determineRows(){
+        var maxRows = 1;
+        allCols.forEach(col => {
+            const result = sessionData.filter(data => data.sessionNum === sessionNum && data.column === col).length;
+            if (result > maxRows)
+                maxRows = result;
+        });
+        return maxRows;
+    }
+
+    function displayLabel(col, index){
+        const labels = sessionData.filter(data => data.column === allCols[col] && data.sessionNum === sessionNum);
+        if (labels[index])
+            return labels[index].label;
+        return '';
+    }
+
+    determineCols();
+
+    return (
+            <Table bordered>
+                <thead>
+                    <tr>
+                        {cols[0] ? <td>Topic/Lecture</td> : <></>}
+                        {cols[1] ? <td>Class Activity</td> : <></>}
+                        {cols[2] ? <td>Reading/Resources</td> : <></>}
+                        {cols[3] ? <td>Projects & Practica</td> : <></>}
+                        {cols[4] ? <td>Class Activity</td> : <></>}
+                        {cols[5] ? <td>Group Assignment</td> : <></>}
+                        {cols[6] ? <td>Individual Assignment</td> : <></>}
+                    </tr>
+                </thead>
+                <tbody>
+                    {Array.from({ length: determineRows() }, (_, i) => (
+                    <tr>
+                        {cols[0] ? <td>{displayLabel(0,i)}</td> : <></>}
+                        {cols[1] ? <td>{displayLabel(1,i)}</td> : <></>}
+                        {cols[2] ? <td>{displayLabel(2,i)}</td> : <></>}
+                        {cols[3] ? <td>{displayLabel(3,i)}</td> : <></>}
+                        {cols[4] ? <td>{displayLabel(4,i)}</td> : <></>}
+                        {cols[5] ? <td>{displayLabel(5,i)}</td> : <></>}
+                        {cols[6] ? <td>{displayLabel(6,i)}</td> : <></>}
+                    </tr>
+                    ))}
+                </tbody>
+            </Table>
+    )
 }
