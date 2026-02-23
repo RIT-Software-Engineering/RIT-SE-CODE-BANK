@@ -276,6 +276,7 @@ export function UserRow({ user, role, onEdit }) {
 export default function UserTable({ title, users, role, onEdit, isEmployeeGroup = false }) {
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
+    const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -285,11 +286,14 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
-
-    // Slice users for pagination
-    const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-
+    const handleCopy = async (emails) => {
+        try {
+            await navigator.clipboard.writeText(emails);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            alert('Failed to copy text.');
+        }
+    };
 
     return (
         <Accordion sx={(theme) => ({
@@ -306,7 +310,19 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
             <AccordionDetails>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <TableContainer>
-                        <Table>
+                        <Table sx={(theme) => ({
+                            backgroundColor: theme.palette.background.default,
+                            borderCollapse: "separate",
+                            borderSpacing: 0,
+                            "& th, & td": {
+                                border: `1px solid ${theme.palette.divider}`,
+                            },
+                            "& th": {
+                                backgroundColor: theme.palette.action.hover,
+                                fontWeight: 600,
+                            },
+                        })}
+                        >
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Name</TableCell>
@@ -328,13 +344,12 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
                             </TableHead>
                             <TableBody>
                                 {paginatedUsers.map((user) => (
-                                    <UserRow user={user} role={role} onEdit={onEdit} />
+                                    <UserRow key={user.uid} user={user} role={role} onEdit={onEdit} />
                                 ))}
                             </TableBody>
                         </Table>
                     </TableContainer>
-                    <Box>
-
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                         <TablePagination
                             component="div"
                             count={users.length}
@@ -343,8 +358,21 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
                             rowsPerPage={rowsPerPage}
                             onRowsPerPageChange={handleChangeRowsPerPage}
                             rowsPerPageOptions={[5, 10, 25, 50]}
+                            variant='outlined'
                         />
-                        <Button onClick={() => console.log(users.map((user) => user.email).join())}>Copy all emails</Button>
+                        <Button variant='outlined' sx={(theme) => ({
+                            backgroundColor:
+                                theme.palette.mode === "dark"
+                                    ? ""
+                                    : "white",
+                            "&:hover": {
+                                backgroundColor:
+                                    theme.palette.mode === "dark"
+                                        ? ""
+                                        : "#f5f5f5"
+                            }
+                        })}
+                            onClick={() => handleCopy(users.map((user) => user.email).join())}>Copy all emails</Button>
                     </Box>
                 </Box>
             </AccordionDetails>
