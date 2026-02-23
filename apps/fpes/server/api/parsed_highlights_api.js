@@ -70,7 +70,7 @@ async function saveParsedHighlights(data) {
                     start_date: grant.period ? parseDate(grant.period.split('-')[0]) : null,
                     end_date: grant.period ? parseDate(grant.period.split('-')[1]) : null,
                     faculty_role: grant.role || null,
-                    faculty_share: grant.share || null,
+                    faculty_share: grant.share ? parseFloat(grant.share.toString().replace('%', '')) : null,
                     grant_status: mapGrantStatus(grant.progress),
                     comments: grant.additional_comments || ''
                 };
