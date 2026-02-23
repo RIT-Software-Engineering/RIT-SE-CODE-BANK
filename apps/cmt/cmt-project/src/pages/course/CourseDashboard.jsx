@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTFetch } from '../../utils/api'
-import { Edit, X, Check } from 'lucide-react'
+import { Edit, X, Check, ArrowLeft } from 'lucide-react'
 import { Button, Form } from 'react-bootstrap'
 import { metadataArrayToObject, metadataObjectToState } from '../../utils/workflows'
 import { GenericActionRenderer } from '../../components/workflows/ActionRenderers'
@@ -47,6 +47,7 @@ function CourseInfo({ course, actionsWithCallbacks, refresh }) {
 
     const [newCourseName, setNewCourseName] = useState(course.name)
     const [newCourseCode, setNewCourseCode] = useState(course.classId)
+    const navigate = useNavigate();
 
     function updateCourseName(e) {
         e.preventDefault()
@@ -59,6 +60,9 @@ function CourseInfo({ course, actionsWithCallbacks, refresh }) {
 
     return (
         <>
+            <div className='flex justify-between w-full pb-3 items-center'>
+                <Button onClick={() => navigate('/courses')}><div className='flex'><ArrowLeft/>{' '}Back</div></Button>
+            </div>
             <h1 style={{ backgroundColor: course.color }} className='p-2'>
                 {' '}
                 Course Info{' '}
