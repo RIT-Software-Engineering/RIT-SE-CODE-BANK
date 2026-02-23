@@ -571,7 +571,9 @@ router.get("/action", async (req, res) => {
   res.json(states);
 });
 
+
 // This may not be necessary
+// You probably want to use `handleSubmit` so that action completions are cascaded to parent complex/workflow actionss
 // PUT /states/action/:id
 router.put("/action/:id", async (req, res) => {
   const { id } = req.params;

@@ -53,6 +53,8 @@ router.get('/:id', async (req, res) => {
             switch (code) {
                 case 'COURSE_SECTION':
                     return `course/${course.id}?uid=${req.user.uid}&asid=${asid}`
+                case 'NUMBER_STUDENTS':
+                    return `course/${course.id}?uid=${req.user.uid}&asid=${asid}`
                 default:
                     throw Error('Unrecognized action metadata code ' + code)
             }
