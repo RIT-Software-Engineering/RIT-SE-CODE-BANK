@@ -289,21 +289,32 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
         }]);
     }
 
+    function resetForm(){
+        setItemType('Topic/Lecture');
+        setItemLabel('');
+        setItemBody('');
+    }
+
     return (
             <Modal show={isOpen} onHide={() => {setIsOpen(false); 
-            setItemType('Topic/Lecture');}} centered size='lg'>
+            resetForm();}} centered size='lg'>
                 <Modal.Header closeButton>Add Material</Modal.Header>
                 <Modal.Body>
                     <Form onSubmit={uploadSessionMaterial}>
                         <div className='flex'>
-                            <div className='w-3/4'>
+                            <div className='w-full'>
+                                <div>
+                                <Form.Label>Title (Required)</Form.Label>
                                 <Form.Control placeholder={"My Title"} onChange={(e)=>setItemLabel(e.target.value)} required></Form.Control>
+                                </div>
+                               <div>
+                                <Form.Label>Content</Form.Label>
                                 <Form.Control as="textarea" onChange={(e)=>setItemBody(e.target.value)}>
                                     {/* TODO Replace this with Rich Text Editor */}
                                 </Form.Control>
-                            </div>
-
-                            <div className=''>
+                               </div>
+                                <div>
+                                <Form.Label>Material Type</Form.Label>
                                 <Form.Select onChange={(e)=>setItemType(e.target.value)}>
                                 <option>Topic/Lecture</option>
                                 <option>Class Activity</option>
@@ -314,15 +325,18 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                                 <option>Individual Assignment</option>
                                 {!sessionData.find(data => data.sessionNum === sessionNum && data.column==="Personal Notes") ? <option>Personal Notes</option> : <></>} 
                                 </Form.Select>
+                                </div>
                             </div>
                         </div>
                        
                         <div className='flex justify-end pt-3'>
                             <Button type="submit" onClick={(e) => {
                             e.preventDefault();
-                            uploadSessionMaterial();
-                            setIsOpen(false);
-                            setItemType('Topic/Lecture');
+                            if (itemLabel){
+                                uploadSessionMaterial();
+                                setIsOpen(false);
+                            }
+                            resetForm();
                             }}>Submit</Button>
                         </div>
                     </Form>
