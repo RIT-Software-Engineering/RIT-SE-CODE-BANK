@@ -11,6 +11,7 @@ import CourseInfoCard from '@/components/courses/CourseInfoCard';
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
   Container,
   Modal,
@@ -19,9 +20,9 @@ import {
 } from '@mui/material';
 
 /**
- * Renders the administrator's user management page.
- * This page allows admins to view all users in the system, grouped by their role.
- * It provides functionality to search for users and edit their profiles via a modal.
+ * Renders the administrator's course management page.
+ * This page allows admins to view all courses, including the codes and description.
+ * It provides functionality to search for courses and edit name and description.
  * Access is restricted to users with the 'ADMIN' role.
  */
 export default function AdminCoursePage() {
@@ -36,7 +37,7 @@ export default function AdminCoursePage() {
 
   const [allCourses, setAllCourses] = useState([])
 
-  // State for user data, modal control, and search functionality.
+  // State for course data, modal control, and search functionality.
   const [selectedCourse, setSelectedCourse] = useState(null); // The course being edited in the modal.
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,8 +50,7 @@ export default function AdminCoursePage() {
   // --- DATA FETCHING & PROCESSING ---
 
   /**
-   * Fetches all users and their detailed profiles from the database.
-   * It then processes this data, grouping users by their assigned role.
+   * Fetches all courses from the database.
    * This function is wrapped in useCallback to prevent unnecessary re-fetches.
    */
   const fetchData = useCallback(async () => {
@@ -79,9 +79,8 @@ export default function AdminCoursePage() {
   }, [fetchData]);
 
   /**
-   * Handles the click event for the "Edit" button on a user card.
-   * It fetches the full user profile and opens the editing modal.
-   * @param {string} username - The username of the user to be edited.
+   * Handles the click event for the "Edit" button on a course card.
+   * @param {object} data - The course to be edited.
    */
   const handleEditClick = async (data) => {
     setSelectedCourse(data);
@@ -89,7 +88,7 @@ export default function AdminCoursePage() {
   };
 
   /**
-   * Closes the user editing modal and resets the selected user state.
+   * Closes the course editing modal and resets the selected course state.
    */
   const handleCloseModal = () => {
     setSelectedCourse(null);
@@ -99,7 +98,7 @@ export default function AdminCoursePage() {
   // --- RENDER LOGIC ---
 
   /**
-   * Renders the main content of the page, including user groups.
+   * Renders the main content of the page, including the list of courses.
    * It handles loading, error, and no-data states, and applies the search filter.
    * @returns {React.ReactNode} The JSX for the main content area.
    */
@@ -122,8 +121,15 @@ export default function AdminCoursePage() {
     if (allCourses.length === 0 && !searchTerm) {
         return <Typography sx={{textAlign: 'center', p: 4}}>No courses found.</Typography>
     }
+    
+    const filteredCourses = allCourses.filter((course) => {
+      return (
+        course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.courseCode.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    })
 
-    return allCourses.map((course) => {
+    return filteredCourses.map((course) => {
       return (
         <CourseInfoCard
           key={course.courseCode}
@@ -168,13 +174,24 @@ export default function AdminCoursePage() {
           sx={{ mb: 3 }}
         />
         </Box>
+        <Box sx={{pb:3}}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleEditClick(null)}
+            sx={{ mt: { xs: 2, md: 0 } }}
+          >
+            {'Create New Course'}
+          </Button>
+        </Box>
+        
         
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {renderContent()}
         </Box>
       </Paper>
 
-      {/* The modal for editing a selected user. */}
+      {/* The modal for editing a selected course. */}
       <Modal
         open={isModalOpen}
         onClose={handleCloseModal}

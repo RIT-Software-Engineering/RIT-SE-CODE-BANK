@@ -1,7 +1,7 @@
 // components/courses/CourseInfoCard.js
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import EditButton from '../common/buttons/EditButton';
 import {
   Box,
@@ -29,10 +29,10 @@ const InfoItem = ({ label, value }) => (
 
 
 /**
- * A component that displays a user's profile information.
- * @param {object} courseData The user's profile data, as returned by the API.
- * @param {function} onEdit Function to call when the edit button is clicked. This is used to open the edit profile modal.
- * @returns {ReactElement} A React Element representing the ProfileInfoCard.
+ * A component that displays course info
+ * @param {object} courseData The course info, as returned by the API. Includes courseCode, name, and description.
+ * @param {function} onEdit Function to call when the edit button is clicked. This is used to open the edit course modal.
+ * @returns {ReactElement} A React Element representing the CourseInfoCard.
  */
 export default function CourseInfoCard({
   courseData,

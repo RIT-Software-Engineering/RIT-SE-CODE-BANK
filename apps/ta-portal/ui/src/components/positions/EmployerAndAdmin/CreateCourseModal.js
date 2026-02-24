@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 
 /**
+ * @deprecated use {@link EditCourseForm} instead
  * A modal dialog for creating a new course.
  * This component allows employers and administrators to create a new course to be used in job postings.
  * The dialog includes fields for course code, name, description, and a submit button.

@@ -1,4 +1,4 @@
-// components/users/AdminEditUserForm.js
+// components/courses/EditCourseForm.js
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -10,22 +10,20 @@ import ConfirmationModal from '@/components/common/models/ConfirmationModal';
 import InputField from '../common/fields/InputField';
 
 /**
- * AdminEditUserForm component for admins to edit user data.
+ * EditCourseForm component for admins to edit or create courses.
  *
- * Displays different edit forms based on the user's role (candidate, employee, employer, or admin).
- * Allows promoting an employer to an admin and terminating an employee's employment.
+ * Provides fields for courseCode, name, description. 
+ * The course code cannot be changed if an existing course is being edited.
  * Submits the form via API calls and triggers parent callbacks.
  *
- * @param {Object} props - Component props
- * @param {Object} props.user - The user data to be edited
+ * @param {Object} props.course - The course data to be edited
  * @param {Function} props.onClose - Callback to close the form dialog
- * @param {Function} props.onUpdateSuccess - Callback fired after successful user data update
+ * @param {Function} props.onUpdateSuccess - Callback fired after successful course data update
  */
 export default function EditCourseForm({ course, onClose, onUpdateSuccess }) {
     const { showNotification } = useNotification();
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-
 
     const {
         register,
@@ -35,24 +33,24 @@ export default function EditCourseForm({ course, onClose, onUpdateSuccess }) {
         watch,
     } = useForm({
         defaultValues: {
-            courseCode: course.courseCode || '',
-            name: course.name || '',
-            description: course.description || ''
+            courseCode: course?.courseCode || '',
+            name: course?.name || '',
+            description: course?.description || ''
         },
     });
 
     useEffect(() => {
         reset({
-            courseCode: course.courseCode || '',
-            name: course.name || '',
-            description: course.description || ''
+            courseCode: course?.courseCode || '',
+            name: course?.name || '',
+            description: course?.description || ''
         });
     }, [course, reset]);
 
     const handleDeleteCourse = async () => {
         setIsDeleting(true);
         try {
-            //await terminateEmployee(user.username);
+            //TODO: decide how to handle course deletion
             showNotification('Course deleted successfully.', 'success');
             if (onUpdateSuccess) onUpdateSuccess();
             if (onClose) onClose();
@@ -97,13 +95,21 @@ export default function EditCourseForm({ course, onClose, onUpdateSuccess }) {
                             placeholder="Enter Course Code"
                             registerProps={register("courseCode", { required: "A course code is required."})}
                             required={true}
+                            maxLength={8}
+                            disabled={course} //If a course was provided on creation, disable the ability to change the courseCode
+                            slotProps={{
+                                input: {
+                                    readOnly: course,
+                                    pattern: "^[A-Z]+-\d+$" // Does not do anything yet
+                                },
+                            }}
                             error={errors.courseCode}
                             sx={(theme) => ({
                                 "& .MuiOutlinedInput-root": {
                                     backgroundColor:
                                         theme.palette.mode === "dark"
                                             ? ""
-                                            : "white",
+                                            : "white"
                                 }
                             })}
                         />
@@ -145,14 +151,14 @@ export default function EditCourseForm({ course, onClose, onUpdateSuccess }) {
                         />
                     </Box>
 
-                    <Button
-                                variant="contained"
-                                color="error"
-                                onClick={() => setShowDeleteConfirm(true)}
-                                sx={{ mt: 2 }}
-                            >
-                                Delete Course
-                            </Button>
+                    {/* <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        sx={{ mt: 2 }}
+                    >
+                        Delete Course
+                    </Button> */}
 
                     <Box sx={{ pt: 4, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                         <Button
