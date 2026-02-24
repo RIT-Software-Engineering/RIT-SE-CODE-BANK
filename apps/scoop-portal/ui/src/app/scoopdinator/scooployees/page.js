@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Papa from "papaparse";
 import Header from "@components/Header";
 import {
   Typography,
@@ -23,53 +22,91 @@ import {
   Snackbar,
   Alert,
   TextField,
+  Chip,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
+
+const TYPE_LABELS = {
+  prospect: "Prospect",
+  scooployee: "Scooployee",
+  scoopervisor: "Scoopervisor",
+  scoopdinator: "Scoopdinator",
+};
+
+const EMPLOYEE_TYPES = ["scooployee", "scoopervisor", "scoopdinator", "prospect"];
+
+const isActive = (emp) => {
+  if (emp.active !== undefined && emp.active !== null) {
+    return emp.active === true || emp.active === "true" || emp.active === 1 || emp.active === "1";
+  }
+  if (emp.project === "null") return false;
+  return true;
+};
+
+const StatusBadge = ({ active }) => (
+  <Chip
+    label={active ? "Active" : "Inactive"}
+    size="small"
+    sx={{
+      fontWeight: 600,
+      fontSize: "0.7rem",
+      bgcolor: active ? "#e6f4ea" : "#fce8e8",
+      color: active ? "#2e7d32" : "#c62828",
+      border: `1px solid ${active ? "#a5d6a7" : "#ef9a9a"}`,
+    }}
+  />
+);
 
 export default function ViewScooployees() {
   const router = useRouter();
 
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [filter, setFilter] = useState("all");
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
 
   const [teams, setTeams] = useState([]);
+  const [semesterGroups, setSemesterGroups] = useState([]);
+
+  // Filters
+  const [filterStatus, setFilterStatus] = useState("active");
+  const [filterType, setFilterType] = useState("all");
+  const [filterSemesterGroup, setFilterSemesterGroup] = useState("all");
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState("");
 
-  const [manageOpen, setManageOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [importFile, setImportFile] = useState(null);
-  const [importing, setImporting] = useState(false);
-
-  const [newEmployee, setNewEmployee] = useState({ fname: "", lname: "", email: "" });
+  const [newEmployee, setNewEmployee] = useState({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
   const [addingEmployee, setAddingEmployee] = useState(false);
-
-  const [semesterGroups, setSemesterGroups] = useState([]);
 
   // Edit state
   const [editMode, setEditMode] = useState(false);
-  const [editFields, setEditFields] = useState({ fname: "", lname: "", email: "", type: "", teamId: "", semesterGroupId: "" });
+  const [editFields, setEditFields] = useState({
+    fname: "",
+    lname: "",
+    email: "",
+    type: "",
+    teamId: "",
+    semesterGroupId: "",
+    active: "true",
+  });
   const [savingEdit, setSavingEdit] = useState(false);
   const [confirmEditOpen, setConfirmEditOpen] = useState(false);
 
-  const OPTIONS = ["all", "active", "inactive"];
+  const fetchAllEmployees = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`);
+      const data = await res.json();
+      setEmployees(data.filter((u) => EMPLOYEE_TYPES.includes(u.type)));
+    } catch (err) {
+      console.error("Failed to fetch employees:", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/users/employees`
-        );
-        const data = await res.json();
-        setEmployees(data);
-      } catch (err) {
-        console.error("Failed to fetch employees:", err);
-      }
-    };
-    fetchEmployees();
+    fetchAllEmployees();
   }, []);
 
   useEffect(() => {
@@ -107,6 +144,7 @@ export default function ViewScooployees() {
       type: emp.type || "",
       teamId: emp.teams && emp.teams.length > 0 ? emp.teams[0].id : "",
       semesterGroupId: emp.semesterGroupId || "",
+      active: emp.active !== undefined ? String(emp.active) : "true",
     });
     setEditMode(false);
     setEmployees((prev) =>
@@ -118,10 +156,6 @@ export default function ViewScooployees() {
     setSelectedEmployee(null);
     setEditMode(false);
     setConfirmEditOpen(false);
-  };
-
-  const setStatus = (employee) => {
-    return employee.project === "null" ? "inactive" : "active";
   };
 
   const handleSort = (field) => {
@@ -139,10 +173,16 @@ export default function ViewScooployees() {
     return 0;
   });
 
-  const filteredEmployees =
-    filter === "all"
-      ? sortedEmployees
-      : sortedEmployees.filter((employee) => setStatus(employee) === filter);
+  const filteredEmployees = sortedEmployees.filter((emp) => {
+    if (filterStatus === "active" && !isActive(emp)) return false;
+    if (filterStatus === "inactive" && isActive(emp)) return false;
+    if (filterType !== "all" && emp.type !== filterType) return false;
+    if (filterSemesterGroup !== "all") {
+      const sgVal = emp.semester_group && emp.semester_group !== "null" ? String(emp.semester_group) : "none";
+      if (filterSemesterGroup === "none" ? sgVal !== "none" : sgVal !== filterSemesterGroup) return false;
+    }
+    return true;
+  });
 
   const handleEditClick = () => {
     setEditMode(true);
@@ -156,6 +196,7 @@ export default function ViewScooployees() {
       type: selectedEmployee.type || "",
       teamId: selectedEmployee.teams && selectedEmployee.teams.length > 0 ? selectedEmployee.teams[0].id : "",
       semesterGroupId: selectedEmployee.semesterGroupId || "",
+      active: selectedEmployee.active !== undefined ? String(selectedEmployee.active) : "true",
     });
     setEditMode(false);
   };
@@ -173,13 +214,15 @@ export default function ViewScooployees() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: editFields.type }),
+          body: JSON.stringify({
+            type: editFields.type,
+            active: editFields.active,
+          }),
         }
       );
 
       if (!res.ok) throw new Error("Failed to update employee");
 
-      // Assign team if changed
       if (editFields.teamId && editFields.teamId !== (selectedEmployee.teams?.[0]?.id || "")) {
         const teamRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/teams/${editFields.teamId}/members`,
@@ -220,87 +263,17 @@ export default function ViewScooployees() {
     }
   };
 
-  const downloadCSV = () => {
-    if (employees.length === 0) return;
-
-    const csvData = employees.map(({ fname, lname, email, teams }) => ({
-      fname,
-      lname,
-      email,
-      team: teams && teams.length > 0 ? teams[0].name : "",
-    }));
-
-    const csv = Papa.unparse(csvData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "employees.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleImportCSV = () => {
-    if (!importFile) return;
-
-    setImporting(true);
-
-    Papa.parse(importFile, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        const employeesToAdd = results.data;
-
-        try {
-          for (const emp of employeesToAdd) {
-            const payload = {
-              fname: emp.fname || "",
-              lname: emp.lname || "",
-              email: emp.email || "",
-              semester_group: emp.semesterGroup || "",
-              project: emp.project || "",
-              active: emp.active !== undefined ? String(emp.active) : "true",
-              type: emp.type || "",
-              last_login: emp.last_login || "",
-              prev_login: emp.prev_login || "",
-            };
-
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-          }
-
-          setSnackbarMsg("Employees imported successfully!");
-          setSnackbarOpen(true);
-          setImportFile(null);
-          setManageOpen(false);
-
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/users/employees`
-          );
-          const data = await res.json();
-          setEmployees(data);
-        } catch (err) {
-          console.error("Import error:", err);
-          alert("Failed to import CSV. Please check the file format.");
-        } finally {
-          setImporting(false);
-        }
-      },
-      error: (err) => {
-        console.error("CSV parse error:", err);
-        setImporting(false);
-        alert("Failed to parse CSV.");
-      },
-    });
-  };
-
   const handleAddEmployee = async () => {
-    const { fname, lname, email } = newEmployee;
+    const { fname, lname, email, type, semesterGroupId } = newEmployee;
     if (!fname || !lname || !email) return;
+
+    let user_id = ""
+    if (!newEmployee.email.includes('@')) {
+      user_id = newEmployee.fname.toLowerCase() + newEmployee.lname.toLowerCase()
+    }
+    else{
+      user_id = newEmployee.email.split('@')[0];
+    }
 
     setAddingEmployee(true);
     try {
@@ -308,13 +281,16 @@ export default function ViewScooployees() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: user_id,
           fname,
           lname,
           email,
-          semester_group: "",
+          semester_group: semesterGroupId
+            ? (semesterGroups.find((sg) => String(sg.id) === String(semesterGroupId))?.name ?? "null")
+            : "null",
           project: "null",
           active: "true",
-          type: "scooployee",
+          type: type || "prospect",
           last_login: "",
           prev_login: "",
         }),
@@ -322,15 +298,11 @@ export default function ViewScooployees() {
 
       if (!res.ok) throw new Error("Failed to add employee");
 
-      const refreshRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/employees`
-      );
-      const data = await refreshRes.json();
-      setEmployees(data);
+      await fetchAllEmployees();
 
       setSnackbarMsg("Employee added successfully!");
       setSnackbarOpen(true);
-      setNewEmployee({ fname: "", lname: "", email: "" });
+      setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
       setAddOpen(false);
     } catch (err) {
       console.error(err);
@@ -353,52 +325,74 @@ export default function ViewScooployees() {
         View Scooployees
       </Typography>
 
+      {/* Toolbar: filters left, Add button right */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           mb: 2,
+          gap: 2,
         }}
       >
-        <Select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          sx={{
-            borderRadius: 2,
-            minWidth: 200,
-            boxShadow: 1,
-          }}
-        >
-          {OPTIONS.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option.charAt(0).toUpperCase() + option.slice(1)}
-            </MenuItem>
-          ))}
-        </Select>
-        <Box>
-          <Button
-            variant="contained"
-            onClick={() => setAddOpen(true)}
-            sx={{ mr: "10px" }}
-          >
-            Add
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => setManageOpen(true)}
-            sx={{ mr: "10px" }}
-          >
-            Manage
-          </Button>
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={filterStatus}
+              label="Status"
+              onChange={(e) => setFilterStatus(e.target.value)}
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Type</InputLabel>
+            <Select
+              value={filterType}
+              label="Type"
+              onChange={(e) => setFilterType(e.target.value)}
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="all">All Types</MenuItem>
+              <MenuItem value="prospect">Prospect</MenuItem>
+              <MenuItem value="scooployee">Scooployee</MenuItem>
+              <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+              <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 170 }}>
+            <InputLabel>Semester Group</InputLabel>
+            <Select
+              value={filterSemesterGroup}
+              label="Semester Group"
+              onChange={(e) => setFilterSemesterGroup(e.target.value)}
+              sx={{ borderRadius: 2 }}
+            >
+              <MenuItem value="all">All Groups</MenuItem>
+              <MenuItem value="none">No Group</MenuItem>
+              {semesterGroups.map((sg) => (
+                <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
+
+        <Button variant="contained" onClick={() => setAddOpen(true)}>
+          Add
+        </Button>
       </Box>
 
+      {/* Table */}
       <Paper elevation={1} square sx={{ maxHeight: 500, overflow: "auto" }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {["fname", "lname", "email", "project"].map((field) => (
+              {["fname", "lname", "email"].map((field) => (
                 <TableCell
                   key={field}
                   sx={{ backgroundColor: "#F76902", color: "#fff" }}
@@ -417,15 +411,17 @@ export default function ViewScooployees() {
                     {field === "fname" && "First Name"}
                     {field === "lname" && "Last Name"}
                     {field === "email" && "Email"}
-                    {field === "project" && "Team"}
                   </TableSortLabel>
                 </TableCell>
               ))}
-              <TableCell
-                sx={{ backgroundColor: "#F76902", color: "#fff" }}
-                align="right"
-              >
-                Actions
+              <TableCell sx={{ backgroundColor: "#F76902", color: "#fff" }}>
+                Type
+              </TableCell>
+              <TableCell sx={{ backgroundColor: "#F76902", color: "#fff" }}>
+                Status
+              </TableCell>
+              <TableCell sx={{ backgroundColor: "#F76902", color: "#fff" }} align="right">
+                Details
               </TableCell>
             </TableRow>
           </TableHead>
@@ -441,10 +437,9 @@ export default function ViewScooployees() {
                 <TableCell>{employee.fname}</TableCell>
                 <TableCell>{employee.lname}</TableCell>
                 <TableCell>{employee.email}</TableCell>
+                <TableCell>{TYPE_LABELS[employee.type] || "—"}</TableCell>
                 <TableCell>
-                  {employee.teams && employee.teams.length > 0
-                    ? employee.teams[0].name
-                    : "Not Assigned"}
+                  <StatusBadge active={isActive(employee)} />
                 </TableCell>
                 <TableCell align="right">
                   <Button
@@ -502,55 +497,65 @@ export default function ViewScooployees() {
                     }
                     fullWidth
                   />
-                  <Select
-                    value={editFields.type}
-                    onChange={(e) =>
-                      setEditFields((prev) => ({ ...prev, type: e.target.value }))
-                    }
-                    fullWidth
-                    displayEmpty
-                  >
-                    <MenuItem value="" disabled>
-                      Select a Type
-                    </MenuItem>
-                    <MenuItem value="scooployee">Scooployee</MenuItem>
-                    <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
-                    <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
-                  </Select>
-                  <Select
-                    value={editFields.teamId}
-                    onChange={(e) =>
-                      setEditFields((prev) => ({ ...prev, teamId: e.target.value }))
-                    }
-                    fullWidth
-                    displayEmpty
-                  >
-                    <MenuItem value="">
-                      No Team
-                    </MenuItem>
-                    {teams.map((team) => (
-                      <MenuItem key={team.id} value={team.id}>
-                        {team.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <Select
-                    value={editFields.semesterGroupId}
-                    onChange={(e) =>
-                      setEditFields((prev) => ({ ...prev, semesterGroupId: e.target.value }))
-                    }
-                    fullWidth
-                    displayEmpty
-                  >
-                    <MenuItem value="">
-                      No Semester Group
-                    </MenuItem>
-                    {semesterGroups.map((sg) => (
-                      <MenuItem key={sg.id} value={sg.id}>
-                        {sg.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
+                  <FormControl fullWidth>
+                    <InputLabel>Type</InputLabel>
+                    <Select
+                      value={editFields.type}
+                      label="Type"
+                      onChange={(e) =>
+                        setEditFields((prev) => ({ ...prev, type: e.target.value }))
+                      }
+                    >
+                      <MenuItem value="" disabled>Select a Type</MenuItem>
+                      <MenuItem value="prospect">Prospect</MenuItem>
+                      <MenuItem value="scooployee">Scooployee</MenuItem>
+                      <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+                      <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControl fullWidth>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={editFields.active}
+                      label="Status"
+                      onChange={(e) =>
+                        setEditFields((prev) => ({ ...prev, active: e.target.value }))
+                      }
+                    >
+                      <MenuItem value="true">Active</MenuItem>
+                      <MenuItem value="false">Inactive</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControl fullWidth>
+                    <InputLabel>Team</InputLabel>
+                    <Select
+                      value={editFields.teamId}
+                      label="Team"
+                      onChange={(e) =>
+                        setEditFields((prev) => ({ ...prev, teamId: e.target.value }))
+                      }
+                    >
+                      <MenuItem value="">No Team</MenuItem>
+                      {teams.map((team) => (
+                        <MenuItem key={team.id} value={team.id}>{team.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <FormControl fullWidth>
+                    <InputLabel>Semester Group</InputLabel>
+                    <Select
+                      value={editFields.semesterGroupId}
+                      label="Semester Group"
+                      onChange={(e) =>
+                        setEditFields((prev) => ({ ...prev, semesterGroupId: e.target.value }))
+                      }
+                    >
+                      <MenuItem value="">No Semester Group</MenuItem>
+                      {semesterGroups.map((sg) => (
+                        <MenuItem key={sg.id} value={sg.id}>{sg.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Box>
               ) : (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -565,23 +570,23 @@ export default function ViewScooployees() {
                   </Typography>
                   <Typography>
                     <strong>Type:</strong>{" "}
-                    {selectedEmployee.type === "scooployee"
-                      ? "Scooployee"
-                      : selectedEmployee.type === "scoopervisor"
-                      ? "Scoopervisor"
-                      : selectedEmployee.type === "scoopdinator"
-                      ? "Scoopdinator"
-                      : "Select a Type"}
+                    {TYPE_LABELS[selectedEmployee.type] || "—"}
                   </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography component="span"><strong>Status:</strong></Typography>
+                    <StatusBadge active={isActive(selectedEmployee)} />
+                  </Box>
                   <Typography>
                     <strong>Team:</strong>{" "}
                     {selectedEmployee.teams && selectedEmployee.teams.length > 0
                       ? selectedEmployee.teams[0].name
-                      : "No Team"}
+                      : <span style={{ color: "#9e9e9e", fontStyle: "italic" }}>No Team</span>}
                   </Typography>
                   <Typography>
                     <strong>Semester Group:</strong>{" "}
-                    {selectedEmployee.semesterGroup || "No Semester Group"}
+                    {selectedEmployee.semester_group && selectedEmployee.semester_group !== "null"
+                      ? (semesterGroups.find((sg) => String(sg.id) === String(selectedEmployee.semester_group))?.name ?? selectedEmployee.semester_group)
+                      : <span style={{ color: "#9e9e9e", fontStyle: "italic" }}>No Semester Group</span>}
                   </Typography>
                 </Box>
               )}
@@ -637,18 +642,12 @@ export default function ViewScooployees() {
       </Dialog>
 
       {/* Confirm Edit Dialog */}
-      <Dialog
-        open={confirmEditOpen}
-        onClose={() => setConfirmEditOpen(false)}
-      >
+      <Dialog open={confirmEditOpen} onClose={() => setConfirmEditOpen(false)}>
         <DialogTitle>Confirm Changes</DialogTitle>
         <DialogContent>
           <Typography>
             Are you sure you want to save changes to{" "}
-            <strong>
-              {editFields.fname} {editFields.lname}
-            </strong>
-            ?
+            <strong>{editFields.fname} {editFields.lname}</strong>?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -666,7 +665,7 @@ export default function ViewScooployees() {
         open={addOpen}
         onClose={() => {
           setAddOpen(false);
-          setNewEmployee({ fname: "", lname: "", email: "" });
+          setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
         }}
         maxWidth="xs"
         fullWidth
@@ -699,13 +698,40 @@ export default function ViewScooployees() {
               }
               fullWidth
             />
+            <Select
+              value={newEmployee.type}
+              onChange={(e) =>
+                setNewEmployee((prev) => ({ ...prev, type: e.target.value }))
+              }
+              fullWidth
+              displayEmpty
+            >
+              <MenuItem value="" disabled>Select a Type</MenuItem>
+              <MenuItem value="prospect">Prospect</MenuItem>
+              <MenuItem value="scooployee">Scooployee</MenuItem>
+              <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+              <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
+            </Select>
+            <Select
+              value={newEmployee.semesterGroupId}
+              onChange={(e) =>
+                setNewEmployee((prev) => ({ ...prev, semesterGroupId: e.target.value }))
+              }
+              fullWidth
+              displayEmpty
+            >
+              <MenuItem value="">No Semester Group</MenuItem>
+              {semesterGroups.map((sg) => (
+                <MenuItem key={sg.id} value={sg.id}>{sg.name}</MenuItem>
+              ))}
+            </Select>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button
             onClick={() => {
               setAddOpen(false);
-              setNewEmployee({ fname: "", lname: "", email: "" });
+              setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
             }}
             color="inherit"
           >
@@ -722,48 +748,6 @@ export default function ViewScooployees() {
             }
           >
             {addingEmployee ? "Adding..." : "Add"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Manage Modal */}
-      <Dialog
-        open={manageOpen}
-        onClose={() => setManageOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Manage Employees</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mb: 2 }}>
-            <Button variant="contained" onClick={downloadCSV} sx={{ mr: 2 }}>
-              Export CSV
-            </Button>
-            <Button variant="contained" component="label" disabled={importing}>
-              Import CSV
-              <input
-                type="file"
-                accept=".csv"
-                hidden
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
-              />
-            </Button>
-            {importFile && (
-              <Button
-                variant="contained"
-                color="success"
-                onClick={handleImportCSV}
-                disabled={importing}
-                sx={{ ml: 2 }}
-              >
-                {importing ? "Importing..." : "Start Import"}
-              </Button>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setManageOpen(false)} color="inherit">
-            Close
           </Button>
         </DialogActions>
       </Dialog>
