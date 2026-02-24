@@ -1,9 +1,9 @@
 {
   "dependencies": {
+    "babel-plugin-macros": "^3.1.0",
     "csv-parse": "^6.1.0",
     "express": "^5.1.0",
-    "multer": "^2.0.2",
-    "babel-plugin-macros": "^3.1.0"
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "@nrwl/jest": "^19.8.4",
@@ -11,6 +11,6 @@
     "@nrwl/workspace": "^19.8.4",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
-    "nx": "^22.5.1"
+    "nx": "^19.8.4"
   }
 }
