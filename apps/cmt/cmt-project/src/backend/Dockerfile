@@ -1,5 +1,5 @@
 FROM node:20-alpine
-WORKDIR /app
+WORKDIR /backend
 
 # Copy package files from backend
 COPY src/backend/package*.json ./
