@@ -79,6 +79,7 @@ export default function ViewScooployees() {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
@@ -258,6 +259,7 @@ export default function ViewScooployees() {
       setSelectedEmployee(updatedEmployee);
       setEditMode(false);
       setConfirmEditOpen(false);
+      setSnackbarSeverity("success");
       setSnackbarMsg("Employee updated successfully!");
       setSnackbarOpen(true);
     } catch (err) {
@@ -271,6 +273,17 @@ export default function ViewScooployees() {
   const handleAddEmployee = async () => {
     const { fname, lname, email, type, semesterGroupId } = newEmployee;
     if (!fname || !lname || !email) return;
+
+    // Check for duplicate email (case-insensitive)
+    const isDuplicate = employees.some(
+      (emp) => emp.email.trim().toLowerCase() === email.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      setSnackbarSeverity("error");
+      setSnackbarMsg("An employee with this email already exists.");
+      setSnackbarOpen(true);
+      return;
+    }
 
     setAddingEmployee(true);
     try {
@@ -297,6 +310,7 @@ export default function ViewScooployees() {
 
       await fetchAllEmployees();
 
+      setSnackbarSeverity("success");
       setSnackbarMsg("Employee added successfully!");
       setSnackbarOpen(true);
       setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
@@ -788,7 +802,7 @@ export default function ViewScooployees() {
       >
         <Alert
           onClose={() => setSnackbarOpen(false)}
-          severity="success"
+          severity={snackbarSeverity}
           sx={{ width: "100%" }}
         >
           {snackbarMsg}
