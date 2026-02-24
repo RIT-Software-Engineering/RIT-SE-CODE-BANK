@@ -4,11 +4,11 @@ WORKDIR /app
 # Copy package files from backend
 COPY src/backend/package*.json ./
 
+# Install dependencies
+RUN npm ci --legacy-peer-deps
+
 # Copy prisma schema from project root
 COPY prisma ./prisma/  
-
-# Install dependencies
-RUN npm ci
 
 # Generate Prisma client
 ARG DATABASE_URL
