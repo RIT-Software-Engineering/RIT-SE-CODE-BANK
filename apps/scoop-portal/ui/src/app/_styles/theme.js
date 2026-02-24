@@ -100,8 +100,8 @@ const baseTheme = createTheme({
             backgroundColor: "#F76902",
             color: "#FFFFFF",
             "&:hover": {
-              border: "1px solid #000000",
-              backgroundColor: "#000000",
+              border: "1px solid #C55400",
+              backgroundColor: "#C55400",
             },
           },
         },

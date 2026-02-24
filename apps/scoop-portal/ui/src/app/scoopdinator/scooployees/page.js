@@ -379,7 +379,7 @@ export default function ViewScooployees() {
                     onClick={() => handleSort(field)}
                     sx={{
                       color: theme.ritColors.white,
-                      "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.gray_3} !important` },
+                      "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` },
                     }}
                   >
                     {field === "fname" && "First Name"}
