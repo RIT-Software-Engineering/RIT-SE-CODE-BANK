@@ -23,5 +23,6 @@ COPY src/utils/ ./utils
 
 EXPOSE 5010 
 
-CMD node server.js
+CMD ["node", "backend/server.js"]
+# CMD node server.js
 # CMD sh -c "node seed.js && node server.js"
