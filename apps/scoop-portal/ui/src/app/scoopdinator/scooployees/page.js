@@ -319,7 +319,7 @@ export default function ViewScooployees() {
     <>
       <Header />
       <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
-        View Scooployees
+        View Users
       </Typography>
 
       {/* Toolbar */}
@@ -731,7 +731,7 @@ export default function ViewScooployees() {
         fullWidth
       >
         <DialogTitle sx={{ bgcolor: "#F76902", color: "#fff", fontWeight: 600 }}>
-          Filter Scooployees
+          Filter Users
         </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>

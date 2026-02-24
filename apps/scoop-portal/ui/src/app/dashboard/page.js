@@ -66,7 +66,7 @@ const workflows = [
     ],
   },
   {
-    title: "Scooployees",
+    title: "Admin",
     steps: [
       {
         title: "Review Applications",
@@ -75,9 +75,9 @@ const workflows = [
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/applications",
       },
       {
-        title: "Manage Employees",
+        title: "Manage Users",
         roles: ["scoopdinator", "scoopervisor", "advisor"],
-        description: "Review current scooployee details and statuses.",
+        description: "Review current user details and statuses.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees",
       },
       {
