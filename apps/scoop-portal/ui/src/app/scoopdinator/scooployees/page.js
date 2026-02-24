@@ -26,7 +26,6 @@ import {
   Chip,
   FormControl,
   InputLabel,
-  Stack,
 } from "@mui/material";
 
 
@@ -34,10 +33,9 @@ const TYPE_LABELS = {
   prospect: "Prospect",
   scooployee: "Scooployee",
   scoopervisor: "Scoopervisor",
-  scoopdinator: "Scoopdinator",
 };
 
-const EMPLOYEE_TYPES = ["scooployee", "scoopervisor", "scoopdinator", "prospect"];
+const EMPLOYEE_TYPES = ["scooployee", "scoopervisor", "prospect"];
 
 const isActive = (emp) => {
   if (emp.active !== undefined && emp.active !== null) {
@@ -485,7 +483,6 @@ export default function ViewScooployees() {
                       <MenuItem value="prospect">Prospect</MenuItem>
                       <MenuItem value="scooployee">Scooployee</MenuItem>
                       <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
-                      <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
                     </Select>
                   </FormControl>
                   <FormControl fullWidth>
@@ -685,7 +682,6 @@ export default function ViewScooployees() {
               <MenuItem value="prospect">Prospect</MenuItem>
               <MenuItem value="scooployee">Scooployee</MenuItem>
               <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
-              <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
             </Select>
             <Select
               value={newEmployee.semesterGroupId}
@@ -753,7 +749,6 @@ export default function ViewScooployees() {
                 <MenuItem value="prospect">Prospect</MenuItem>
                 <MenuItem value="scooployee">Scooployee</MenuItem>
                 <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
-                <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth>
