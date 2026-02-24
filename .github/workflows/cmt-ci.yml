@@ -148,7 +148,7 @@ jobs:
         working-directory: apps/cmt/cmt-project
       - run: npm ci
         working-directory: ./
-      - run: npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - run: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
