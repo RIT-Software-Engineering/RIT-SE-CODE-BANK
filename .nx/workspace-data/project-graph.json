@@ -5350,9 +5350,9 @@
       "type": "npm",
       "name": "npm:typescript",
       "data": {
-        "version": "5.9.3",
+        "version": "4.9.5",
         "packageName": "typescript",
-        "hash": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="
+        "hash": "sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g=="
       }
     },
     "npm:undici-types": {
@@ -13250,5 +13250,5 @@
   },
   "version": "6.0",
   "errors": [],
-  "computedAt": 1771856305515
+  "computedAt": 1771940985851
 }
