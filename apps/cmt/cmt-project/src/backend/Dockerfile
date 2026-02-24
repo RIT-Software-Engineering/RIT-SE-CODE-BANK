@@ -1,5 +1,5 @@
 FROM node:20-alpine
-WORKDIR /backend
+WORKDIR /app
 
 # Copy package files from backend
 COPY src/backend/package*.json ./
@@ -16,7 +16,7 @@ ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
 
 # Copy rest of backend application
-COPY src/backend/ .
+COPY src/ .
 
 EXPOSE 5010 
 
