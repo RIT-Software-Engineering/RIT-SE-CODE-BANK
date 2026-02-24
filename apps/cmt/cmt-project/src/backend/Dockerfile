@@ -16,10 +16,10 @@ ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
 
 # Copy rest of backend application
-COPY src/backend/ .
+COPY src/backend/ ./backend
 
-#Copy src folder
-COPY src/ .
+# Copy external utils used by backend
+COPY src/utils/ ./utils
 
 EXPOSE 5010 
 
