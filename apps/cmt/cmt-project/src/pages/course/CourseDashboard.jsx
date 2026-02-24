@@ -43,7 +43,7 @@ export function CourseDashboard() {
             />
 
             <div>
-                <Session sessionCount={sessionCount}/>
+                <Session sessionCount={sessionCount} courseId={course.courseId}/>
                 <div className='flex justify-end pt-4'>
                     <Button onClick={() => {
                        setSessionCount(sessionCount+1)
@@ -229,8 +229,26 @@ function InlineActionRenderer({ actionWithCallback, course, metadata, refresh })
     )
 }
 
-function Session({ sessionCount}) {
+/**
+ * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
+ * The session component is an accordion that dynamically adds more items the higher the count. 
+ * Displays a modal (when opened) and a table of uploaded resources. 
+ *
+ * @param {{ sessionCount: number; courseId: number; }} param0
+ * sessionCount - the number of sessions a user has created
+ * courseId - the identifier for which sessionData to obtain
+ * @returns {*} the session accordion as HTML
+ */
+function Session({sessionCount, courseId}) {
     //TODO add implementation with the backend to hold and maintain session data
+
+    /**
+     * sessionData is an array of objects that holds data regarding session material. Contains:
+     * sessionNum - the session the material belongs to
+     * column - the column where the material should go
+     * label - the title of the material
+     * body - the content of the material
+     */
     const [sessionData, setSessionData] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [sessionNum, setSessionNum] = useState(0);
@@ -274,6 +292,18 @@ function Session({ sessionCount}) {
   );
 }
 
+/**
+ * The modal to create session material. 
+ * The modal makes the user select the material type, material title and they can add material content.
+ *
+ * @param {{ sessionNum: any; sessionData: any; setSessionData: any; isOpen: any; setIsOpen: any; }} param0 
+ * sessionNum - the number of the session (used as an identifier in sessionData)
+ * sessionData - the data of sessions in a course. Used to check if a user has created a personal note or not since we restrict to 1 note per session
+ * setSessionData - function to set the sessionData. Used upon upload to keep track of the session
+ * isOpen - whether the modal is open
+ * setIsOpen - open/close the modal
+ * @returns {*} the modal as HTML
+ */
 function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen}){
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
@@ -304,27 +334,26 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                         <div className='flex'>
                             <div className='w-full'>
                                 <div>
-                                <Form.Label>Title (Required)</Form.Label>
-                                <Form.Control placeholder={"My Title"} onChange={(e)=>setItemLabel(e.target.value)} required></Form.Control>
-                                </div>
-                               <div>
-                                <Form.Label>Content</Form.Label>
-                                <Form.Control as="textarea" onChange={(e)=>setItemBody(e.target.value)}>
-                                    {/* TODO Replace this with Rich Text Editor */}
-                                </Form.Control>
-                               </div>
-                                <div>
                                 <Form.Label>Material Type</Form.Label>
                                 <Form.Select onChange={(e)=>setItemType(e.target.value)}>
                                 <option>Topic/Lecture</option>
                                 <option>Class Activity</option>
                                 <option>Reading/Resources</option>
                                 <option>Projects & Practica</option>
-                                <option>Class Activity</option>
                                 <option>Group Assignment</option>
                                 <option>Individual Assignment</option>
                                 {!sessionData.find(data => data.sessionNum === sessionNum && data.column==="Personal Notes") ? <option>Personal Notes</option> : <></>} 
                                 </Form.Select>
+                                </div>
+                                <div>
+                                <Form.Label>Title (Required)</Form.Label>
+                                <Form.Control placeholder={"My Title"} onChange={(e)=>setItemLabel(e.target.value)} required></Form.Control>
+                                </div>
+                                <div>
+                                <Form.Label>Content</Form.Label>
+                                <Form.Control as="textarea" onChange={(e)=>setItemBody(e.target.value)}>
+                                    {/* TODO Replace this with Rich Text Editor */}
+                                </Form.Control>
                                 </div>
                             </div>
                         </div>
@@ -345,11 +374,24 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
     );
 }
 
+/**
+ * A component that generates a session table
+ * Displays all material/notes for one specific session
+ *
+ * @param {{ sessionData: Array; sessionNum: number; }} param0 
+ *  sessionData the data that contains the materials
+ *  sessionNum  the identifying session number to only get data from that specific session
+ * @returns {*} the table in HTML
+ */
 function SessionTable( {sessionData, sessionNum} ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
-    const allCols = ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Class Activity", "Group Assignment", "Individual Assignment"];
+    const allCols = ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"];
     // TODO: maybe... change how this works, currently updates all columns for every session but that may be ok.
     // It'll look a bit more clumped, but it is closer to realistic for what a prof. may want.
+    
+    /** Checks if there's any data in any of the columns and show them.
+     * There's a bunch of columns so it's mainly just to reduce how much is shown
+     */
     function determineCols(){
         sessionData.map(data => {
             const i = allCols.indexOf(data.column);
@@ -359,6 +401,11 @@ function SessionTable( {sessionData, sessionNum} ) {
         )
     }
 
+    /**
+     * Helper function to determine the total amount of rows there'll be in one session
+     *
+     * @returns {number} the max rows in one session
+     */
     function determineRows(){
         var maxRows = 1;
         allCols.forEach(col => {
@@ -369,6 +416,14 @@ function SessionTable( {sessionData, sessionNum} ) {
         return maxRows;
     }
 
+    /**
+     * Helper function to display the items labels/titles 
+     * Could technically be inline, but you can't define variables in the return so it gets annoying
+     *
+     * @param {number} col the column of the item
+     * @param {number} index the current index of the item
+     * @returns {string} the title of the item, or a blank string if it doesn't exist
+     */
     function displayLabel(col, index){
         const labels = sessionData.filter(data => data.column === allCols[col] && data.sessionNum === sessionNum);
         if (labels[index])
@@ -380,15 +435,14 @@ function SessionTable( {sessionData, sessionNum} ) {
 
     return (
             <Table bordered>
-                <thead>
+                <thead className='[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]'>
                     <tr>
-                        {cols[0] ? <td>Topic/Lecture</td> : <></>}
-                        {cols[1] ? <td>Class Activity</td> : <></>}
-                        {cols[2] ? <td>Reading/Resources</td> : <></>}
-                        {cols[3] ? <td>Projects & Practica</td> : <></>}
-                        {cols[4] ? <td>Class Activity</td> : <></>}
-                        {cols[5] ? <td>Group Assignment</td> : <></>}
-                        {cols[6] ? <td>Individual Assignment</td> : <></>}
+                        {cols[0] ? <th>Topic/Lecture</th> : <></>}
+                        {cols[1] ? <th>Class Activity</th> : <></>}
+                        {cols[2] ? <th>Reading/Resources</th> : <></>}
+                        {cols[3] ? <th>Projects & Practica</th> : <></>}
+                        {cols[4] ? <th>Group Assignment</th> : <></>}
+                        {cols[5] ? <th>Individual Assignment</th> : <></>}
                     </tr>
                 </thead>
                 <tbody>
@@ -400,7 +454,6 @@ function SessionTable( {sessionData, sessionNum} ) {
                         {cols[3] ? <td>{displayLabel(3,i)}</td> : <></>}
                         {cols[4] ? <td>{displayLabel(4,i)}</td> : <></>}
                         {cols[5] ? <td>{displayLabel(5,i)}</td> : <></>}
-                        {cols[6] ? <td>{displayLabel(6,i)}</td> : <></>}
                     </tr>
                     ))}
                 </tbody>
