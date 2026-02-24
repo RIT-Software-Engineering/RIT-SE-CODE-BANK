@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@components/Header";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import {
   Typography,
   Paper,
@@ -25,7 +26,9 @@ import {
   Chip,
   FormControl,
   InputLabel,
+  Stack,
 } from "@mui/material";
+
 
 const TYPE_LABELS = {
   prospect: "Prospect",
@@ -58,6 +61,8 @@ const StatusBadge = ({ active }) => (
   />
 );
 
+const generateId = () => Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+
 export default function ViewScooployees() {
   const router = useRouter();
 
@@ -76,6 +81,8 @@ export default function ViewScooployees() {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState("");
+
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
   const [addOpen, setAddOpen] = useState(false);
   const [newEmployee, setNewEmployee] = useState({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
@@ -267,21 +274,13 @@ export default function ViewScooployees() {
     const { fname, lname, email, type, semesterGroupId } = newEmployee;
     if (!fname || !lname || !email) return;
 
-    let user_id = ""
-    if (!newEmployee.email.includes('@')) {
-      user_id = newEmployee.fname.toLowerCase() + newEmployee.lname.toLowerCase()
-    }
-    else{
-      user_id = newEmployee.email.split('@')[0];
-    }
-
     setAddingEmployee(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: user_id,
+          id: generateId(),
           fname,
           lname,
           email,
@@ -325,7 +324,7 @@ export default function ViewScooployees() {
         View Scooployees
       </Typography>
 
-      {/* Toolbar: filters left, Add button right */}
+      {/* Toolbar */}
       <Box
         sx={{
           display: "flex",
@@ -335,51 +334,27 @@ export default function ViewScooployees() {
           gap: 2,
         }}
       >
-        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <InputLabel>Status</InputLabel>
-            <Select
-              value={filterStatus}
-              label="Status"
-              onChange={(e) => setFilterStatus(e.target.value)}
-              sx={{ borderRadius: 2 }}
-            >
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Type</InputLabel>
-            <Select
-              value={filterType}
-              label="Type"
-              onChange={(e) => setFilterType(e.target.value)}
-              sx={{ borderRadius: 2 }}
-            >
-              <MenuItem value="all">All Types</MenuItem>
-              <MenuItem value="prospect">Prospect</MenuItem>
-              <MenuItem value="scooployee">Scooployee</MenuItem>
-              <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
-              <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 170 }}>
-            <InputLabel>Semester Group</InputLabel>
-            <Select
-              value={filterSemesterGroup}
-              label="Semester Group"
-              onChange={(e) => setFilterSemesterGroup(e.target.value)}
-              sx={{ borderRadius: 2 }}
-            >
-              <MenuItem value="all">All Groups</MenuItem>
-              <MenuItem value="none">No Group</MenuItem>
-              {semesterGroups.map((sg) => (
-                <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+          <Button
+            variant="outlined"
+            startIcon={<FilterListIcon />}
+            onClick={() => setFilterDialogOpen(true)}
+          >
+            Filter
+          </Button>
+          {filterStatus !== "active" && (
+            <Chip size="small" label={`Status: ${filterStatus}`} onDelete={() => setFilterStatus("active")} />
+          )}
+          {filterType !== "all" && (
+            <Chip size="small" label={`Type: ${TYPE_LABELS[filterType]}`} onDelete={() => setFilterType("all")} />
+          )}
+          {filterSemesterGroup !== "all" && (
+            <Chip
+              size="small"
+              label={`Group: ${filterSemesterGroup === "none" ? "No Group" : (semesterGroups.find((sg) => String(sg.id) === filterSemesterGroup)?.name ?? filterSemesterGroup)}`}
+              onDelete={() => setFilterSemesterGroup("all")}
+            />
+          )}
         </Box>
 
         <Button variant="contained" onClick={() => setAddOpen(true)}>
@@ -748,6 +723,65 @@ export default function ViewScooployees() {
             }
           >
             {addingEmployee ? "Adding..." : "Add"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Filter Modal */}
+      <Dialog
+        open={filterDialogOpen}
+        onClose={() => setFilterDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ bgcolor: "#F76902", color: "#fff", fontWeight: 600 }}>
+          Filter Scooployees
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select value={filterStatus} label="Status" onChange={(e) => setFilterStatus(e.target.value)}>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>Type</InputLabel>
+              <Select value={filterType} label="Type" onChange={(e) => setFilterType(e.target.value)}>
+                <MenuItem value="all">All Types</MenuItem>
+                <MenuItem value="prospect">Prospect</MenuItem>
+                <MenuItem value="scooployee">Scooployee</MenuItem>
+                <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+                <MenuItem value="scoopdinator">Scoopdinator</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>Semester Group</InputLabel>
+              <Select value={filterSemesterGroup} label="Semester Group" onChange={(e) => setFilterSemesterGroup(e.target.value)}>
+                <MenuItem value="all">All Groups</MenuItem>
+                <MenuItem value="none">No Group</MenuItem>
+                {semesterGroups.map((sg) => (
+                  <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={() => {
+              setFilterStatus("active");
+              setFilterType("all");
+              setFilterSemesterGroup("all");
+            }}
+          >
+            Reset
+          </Button>
+          <Button variant="contained" onClick={() => setFilterDialogOpen(false)}>
+            Apply
           </Button>
         </DialogActions>
       </Dialog>
