@@ -134,13 +134,20 @@ export default function ViewScooployees() {
   }, []);
 
   const handleOpen = (emp) => {
+    // Resolve semesterGroupId: some users have it as an ID, newly added users have it stored as a name string
+    const resolvedSemesterGroupId =
+      emp.semesterGroupId ||
+      (emp.semester_group && emp.semester_group !== "null"
+        ? semesterGroups.find((sg) => sg.name === emp.semester_group)?.id ?? ""
+        : "");
+
     setSelectedEmployee({ ...emp, hasBeenRead: true });
     setEditFields({
       fname: emp.fname,
       lname: emp.lname,
       email: emp.email,
       type: emp.type || "",
-      semesterGroupId: emp.semesterGroupId || "",
+      semesterGroupId: String(resolvedSemesterGroupId),
       active: emp.active !== undefined ? String(emp.active) : "true",
     });
     setEditMode(false);
@@ -176,8 +183,17 @@ export default function ViewScooployees() {
     if (filterStatus === "inactive" && isActive(emp)) return false;
     if (filterType !== "all" && emp.type !== filterType) return false;
     if (filterSemesterGroup !== "all") {
-      const sgVal = emp.semester_group && emp.semester_group !== "null" ? String(emp.semester_group) : "none";
-      if (filterSemesterGroup === "none" ? sgVal !== "none" : sgVal !== filterSemesterGroup) return false;
+      const sg = emp.semester_group && emp.semester_group !== "null" ? emp.semester_group : null;
+      if (!sg) {
+        // User has no semester group
+        if (filterSemesterGroup !== "none") return false;
+      } else {
+        // Match by ID (existing users) or by name (newly added users whose semester_group stores the name)
+        const matched =
+          String(sg) === filterSemesterGroup ||
+          semesterGroups.find((s) => String(s.id) === filterSemesterGroup)?.name === sg;
+        if (!matched) return false;
+      }
     }
     return true;
   });
@@ -185,12 +201,18 @@ export default function ViewScooployees() {
   const handleEditClick = () => setEditMode(true);
 
   const handleCancelEdit = () => {
+    const resolvedSemesterGroupId =
+      selectedEmployee.semesterGroupId ||
+      (selectedEmployee.semester_group && selectedEmployee.semester_group !== "null"
+        ? semesterGroups.find((sg) => sg.name === selectedEmployee.semester_group)?.id ?? ""
+        : "");
+
     setEditFields({
       fname: selectedEmployee.fname,
       lname: selectedEmployee.lname,
       email: selectedEmployee.email,
       type: selectedEmployee.type || "",
-      semesterGroupId: selectedEmployee.semesterGroupId || "",
+      semesterGroupId: String(resolvedSemesterGroupId),
       active: selectedEmployee.active !== undefined ? String(selectedEmployee.active) : "true",
     });
     setEditMode(false);
@@ -450,7 +472,7 @@ export default function ViewScooployees() {
                       onChange={(e) => setEditFields((p) => ({ ...p, semesterGroupId: e.target.value }))}>
                       <MenuItem value="">No Semester Group</MenuItem>
                       {semesterGroups.map((sg) => (
-                        <MenuItem key={sg.id} value={sg.id}>{sg.name}</MenuItem>
+                        <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -567,7 +589,7 @@ export default function ViewScooployees() {
               fullWidth displayEmpty>
               <MenuItem value="">No Semester Group</MenuItem>
               {semesterGroups.map((sg) => (
-                <MenuItem key={sg.id} value={sg.id}>{sg.name}</MenuItem>
+                <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
               ))}
             </Select>
           </Box>
