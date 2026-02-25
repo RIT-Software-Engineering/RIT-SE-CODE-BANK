@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@components/Header";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import { useTheme } from "@mui/material/styles";
 import {
   Typography,
@@ -31,6 +30,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 
 const TYPE_LABELS = {
   prospect: "Prospect",
@@ -38,15 +38,15 @@ const TYPE_LABELS = {
   scoopervisor: "Scoopervisor",
 };
 
-const EMPLOYEE_TYPES = ["scooployee", "scoopervisor", "prospect"];
+const USER_TYPES = ["scooployee", "scoopervisor", "prospect"];
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-const isActive = (emp) => {
-  if (emp.active !== undefined && emp.active !== null) {
-    return emp.active === true || emp.active === "true" || emp.active === 1 || emp.active === "1";
+const isActive = (user) => {
+  if (user.active !== undefined && user.active !== null) {
+    return user.active === true || user.active === "true" || user.active === 1 || user.active === "1";
   }
-  if (emp.project === "null") return false;
+  if (user.project === "null") return false;
   return true;
 };
 
@@ -72,8 +72,8 @@ export default function ViewScooployees() {
   const router = useRouter();
   const theme = useTheme();
 
-  const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
 
@@ -92,8 +92,8 @@ export default function ViewScooployees() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [addOpen, setAddOpen] = useState(false);
-  const [newEmployee, setNewEmployee] = useState({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
-  const [addingEmployee, setAddingEmployee] = useState(false);
+  const [newUser, setNewUser] = useState({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
+  const [addingUser, setAddingUser] = useState(false);
   const [addErrors, setAddErrors] = useState({});
 
   // Edit state
@@ -111,20 +111,20 @@ export default function ViewScooployees() {
 
   // Delete state
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [deletingEmployee, setDeletingEmployee] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
 
-  const fetchAllEmployees = async () => {
+  const fetchAllUsers = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`);
       const data = await res.json();
-      setEmployees(data.filter((u) => EMPLOYEE_TYPES.includes(u.type)));
+      setUsers(data.filter((u) => USER_TYPES.includes(u.type)));
     } catch (err) {
-      console.error("Failed to fetch employees:", err);
+      console.error("Failed to fetch users:", err);
     }
   };
 
   useEffect(() => {
-    fetchAllEmployees();
+    fetchAllUsers();
   }, []);
 
   useEffect(() => {
@@ -140,35 +140,35 @@ export default function ViewScooployees() {
     fetchSemesterGroups();
   }, []);
 
-  const resolveGroupId = (emp) =>
-    emp.semesterGroupId ||
-    (emp.semester_group && emp.semester_group !== "null"
-      ? semesterGroups.find((sg) => sg.name === emp.semester_group)?.id ?? ""
+  const resolveGroupId = (user) =>
+    user.semesterGroupId ||
+    (user.semester_group && user.semester_group !== "null"
+      ? semesterGroups.find((sg) => sg.name === user.semester_group)?.id ?? ""
       : "");
 
-  const resolveGroupName = (emp) => {
-    if (!emp.semester_group || emp.semester_group === "null") return null;
+  const resolveGroupName = (user) => {
+    if (!user.semester_group || user.semester_group === "null") return null;
     return (
-      semesterGroups.find((sg) => String(sg.id) === String(emp.semester_group))?.name ??
-      emp.semester_group
+      semesterGroups.find((sg) => String(sg.id) === String(user.semester_group))?.name ??
+      user.semester_group
     );
   };
 
-  const handleOpen = (emp) => {
-    setSelectedEmployee(emp);
+  const handleOpen = (user) => {
+    setSelectedUser(user);
     setEditErrors({});
     setEditFields({
-      fname: emp.fname,
-      lname: emp.lname,
-      email: emp.email,
-      type: emp.type || "",
-      semesterGroupId: String(resolveGroupId(emp)),
-      active: emp.active !== undefined ? String(emp.active) : "true",
+      fname: user.fname,
+      lname: user.lname,
+      email: user.email,
+      type: user.type || "",
+      semesterGroupId: String(resolveGroupId(user)),
+      active: user.active !== undefined ? String(user.active) : "true",
     });
   };
 
   const handleClose = () => {
-    setSelectedEmployee(null);
+    setSelectedUser(null);
     setEditErrors({});
     setConfirmEditOpen(false);
     setConfirmDeleteOpen(false);
@@ -180,7 +180,7 @@ export default function ViewScooployees() {
     setSortOrder(isAsc ? "desc" : "asc");
   };
 
-  const sortedEmployees = [...employees].sort((a, b) => {
+  const sortedUsers = [...users].sort((a, b) => {
     if (!sortField) return 0;
     let aVal, bVal;
     if (sortField === "semester_group") {
@@ -198,12 +198,12 @@ export default function ViewScooployees() {
     return 0;
   });
 
-  const filteredEmployees = sortedEmployees.filter((emp) => {
-    if (filterStatus === "active" && !isActive(emp)) return false;
-    if (filterStatus === "inactive" && isActive(emp)) return false;
-    if (filterType !== "all" && emp.type !== filterType) return false;
+  const filteredUsers = sortedUsers.filter((user) => {
+    if (filterStatus === "active" && !isActive(user)) return false;
+    if (filterStatus === "inactive" && isActive(user)) return false;
+    if (filterType !== "all" && user.type !== filterType) return false;
     if (filterSemesterGroup !== "all") {
-      const sg = emp.semester_group && emp.semester_group !== "null" ? emp.semester_group : null;
+      const sg = user.semester_group && user.semester_group !== "null" ? user.semester_group : null;
       if (!sg) {
         if (filterSemesterGroup !== "none") return false;
       } else {
@@ -215,12 +215,12 @@ export default function ViewScooployees() {
     }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-      const groupName = resolveGroupName(emp)?.toLowerCase() ?? "";
+      const groupName = resolveGroupName(user)?.toLowerCase() ?? "";
       const matched =
-        emp.fname?.toLowerCase().includes(q) ||
-        emp.lname?.toLowerCase().includes(q) ||
-        emp.email?.toLowerCase().includes(q) ||
-        (TYPE_LABELS[emp.type] ?? "").toLowerCase().includes(q) ||
+        user.fname?.toLowerCase().includes(q) ||
+        user.lname?.toLowerCase().includes(q) ||
+        user.email?.toLowerCase().includes(q) ||
+        (TYPE_LABELS[user.type] ?? "").toLowerCase().includes(q) ||
         groupName.includes(q);
       if (!matched) return false;
     }
@@ -246,7 +246,7 @@ export default function ViewScooployees() {
     setSavingEdit(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${selectedEmployee.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${selectedUser.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -262,33 +262,33 @@ export default function ViewScooployees() {
           }),
         }
       );
-      if (!res.ok) throw new Error("Failed to update employee");
+      if (!res.ok) throw new Error("Failed to update user");
 
       const resolvedGroupName = editFields.semesterGroupId
         ? (semesterGroups.find((sg) => String(sg.id) === String(editFields.semesterGroupId))?.name ?? "null")
         : "null";
-      const updatedEmployee = { ...selectedEmployee, ...editFields, semester_group: resolvedGroupName };
-      setEmployees((prev) =>
-        prev.map((e) => e.id === selectedEmployee.id ? { ...e, ...editFields, semester_group: resolvedGroupName } : e)
+      const updatedUser = { ...selectedUser, ...editFields, semester_group: resolvedGroupName };
+      setUsers((prev) =>
+        prev.map((u) => u.id === selectedUser.id ? { ...u, ...editFields, semester_group: resolvedGroupName } : u)
       );
-      setSelectedEmployee(updatedEmployee);
+      setSelectedUser(updatedUser);
       setConfirmEditOpen(false);
       setSnackbarSeverity("success");
-      setSnackbarMsg("Employee updated successfully!");
+      setSnackbarMsg("User updated successfully!");
       setSnackbarOpen(true);
     } catch (err) {
       console.error(err);
-      alert("Failed to update employee. Please try again.");
+      alert("Failed to update user. Please try again.");
     } finally {
       setSavingEdit(false);
     }
   };
 
   const handleConfirmDelete = async () => {
-    setDeletingEmployee(true);
+    setDeletingUser(true);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${selectedEmployee.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${selectedUser.id}`,
         { method: "DELETE" }
       );
       if (!res.ok) {
@@ -296,24 +296,24 @@ export default function ViewScooployees() {
         const serverMsg = errorData?.error || errorData?.message || `HTTP ${res.status}`;
         throw new Error(serverMsg);
       }
-      setEmployees((prev) => prev.filter((e) => e.id !== selectedEmployee.id));
+      setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
       setConfirmDeleteOpen(false);
       handleClose();
       setSnackbarSeverity("success");
-      setSnackbarMsg("Employee deleted successfully.");
+      setSnackbarMsg("User deleted successfully.");
       setSnackbarOpen(true);
     } catch (err) {
       console.error("Delete error:", err);
       setSnackbarSeverity("error");
-      setSnackbarMsg(err.message || "Failed to delete employee. Please try again.");
+      setSnackbarMsg(err.message || "Failed to delete user. Please try again.");
       setSnackbarOpen(true);
     } finally {
-      setDeletingEmployee(false);
+      setDeletingUser(false);
     }
   };
 
-  const handleAddEmployee = async () => {
-    const { fname, lname, email, type, semesterGroupId } = newEmployee;
+  const handleAddUser = async () => {
+    const { fname, lname, email, type, semesterGroupId } = newUser;
 
     const errs = {};
     if (!fname.trim()) errs.fname = "First name is required.";
@@ -328,23 +328,23 @@ export default function ViewScooployees() {
     if (Object.keys(errs).length > 0) return;
 
     let user_id = "";
-    if (!newEmployee.email.includes("@")) {
-      user_id = newEmployee.fname.toLowerCase() + newEmployee.lname.toLowerCase();
+    if (!newUser.email.includes("@")) {
+      user_id = newUser.fname.toLowerCase() + newUser.lname.toLowerCase();
     } else {
-      user_id = newEmployee.email.split("@")[0];
+      user_id = newUser.email.split("@")[0];
     }
 
-    const isDuplicate = employees.some(
-      (emp) => emp.email.trim().toLowerCase() === email.trim().toLowerCase()
+    const isDuplicate = users.some(
+      (u) => u.email.trim().toLowerCase() === email.trim().toLowerCase()
     );
     if (isDuplicate) {
       setSnackbarSeverity("error");
-      setSnackbarMsg("An employee with this email already exists.");
+      setSnackbarMsg("A user with this email already exists.");
       setSnackbarOpen(true);
       return;
     }
 
-    setAddingEmployee(true);
+    setAddingUser(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
         method: "POST",
@@ -364,27 +364,27 @@ export default function ViewScooployees() {
           prev_login: "",
         }),
       });
-      if (!res.ok) throw new Error("Failed to add employee");
+      if (!res.ok) throw new Error("Failed to add user");
 
-      await fetchAllEmployees();
+      await fetchAllUsers();
       setSnackbarSeverity("success");
-      setSnackbarMsg("Employee added successfully!");
+      setSnackbarMsg("User added successfully!");
       setSnackbarOpen(true);
-      setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
+      setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
       setAddErrors({});
       setAddOpen(false);
     } catch (err) {
       console.error(err);
       setSnackbarSeverity("error");
-      setSnackbarMsg(err.message || "Failed to add employee. Please try again.");
+      setSnackbarMsg(err.message || "Failed to add user. Please try again.");
       setSnackbarOpen(true);
     } finally {
-      setAddingEmployee(false);
+      setAddingUser(false);
     }
   };
 
   const handleJournalClick = () => {
-    if (selectedEmployee?.id) router.push(`/journal`);
+    if (selectedUser?.id) router.push(`/journal`);
   };
 
   const filterChipSx = {
@@ -409,7 +409,7 @@ export default function ViewScooployees() {
       {/* Toolbar */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 2 }}>
         <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
-          <Button variant="outline-orange" startIcon={<FilterListIcon />} onClick={() => setFilterDialogOpen(true)}>
+          <Button variant="outline-orange" startIcon={<FilterAltOutlinedIcon />} onClick={() => setFilterDialogOpen(true)}>
             Filter
           </Button>
           {filterStatus !== "all" && (
@@ -496,20 +496,20 @@ export default function ViewScooployees() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredEmployees.map((employee) => (
-              <TableRow key={employee.id}>
-                <TableCell>{employee.fname}</TableCell>
-                <TableCell>{employee.lname}</TableCell>
-                <TableCell>{employee.email}</TableCell>
-                <TableCell>{TYPE_LABELS[employee.type] || "—"}</TableCell>
+            {filteredUsers.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.fname}</TableCell>
+                <TableCell>{user.lname}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{TYPE_LABELS[user.type] || "—"}</TableCell>
                 <TableCell>
-                  {resolveGroupName(employee) ?? (
+                  {resolveGroupName(user) ?? (
                     <span style={{ color: theme.ritColors.gray_2, fontStyle: "italic" }}>No Group</span>
                   )}
                 </TableCell>
-                <TableCell><StatusBadge active={isActive(employee)} /></TableCell>
+                <TableCell><StatusBadge active={isActive(user)} /></TableCell>
                 <TableCell align="right">
-                  <Button variant="outline-orange" onClick={() => handleOpen(employee)}>Edit</Button>
+                  <Button variant="outline-orange" onClick={() => handleOpen(user)}>Edit</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -518,11 +518,11 @@ export default function ViewScooployees() {
       </Paper>
 
       {/* Edit Modal */}
-      <Dialog open={!!selectedEmployee} onClose={handleClose} maxWidth="sm" fullWidth>
-        {selectedEmployee && (
+      <Dialog open={!!selectedUser} onClose={handleClose} maxWidth="sm" fullWidth>
+        {selectedUser && (
           <>
             <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600 }}>
-              Edit: {selectedEmployee.fname} {selectedEmployee.lname}
+              Edit: {selectedUser.fname} {selectedUser.lname}
             </DialogTitle>
             <DialogContent dividers>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
@@ -627,41 +627,41 @@ export default function ViewScooployees() {
         <DialogContent>
           <Typography>
             Are you sure you want to delete{" "}
-            <strong>{selectedEmployee?.fname} {selectedEmployee?.lname}</strong>? This action cannot be undone.
+            <strong>{selectedUser?.fname} {selectedUser?.lname}</strong>? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
-          <Button onClick={() => setConfirmDeleteOpen(false)} variant="outlined" color="inherit" disabled={deletingEmployee}>
+          <Button onClick={() => setConfirmDeleteOpen(false)} variant="outlined" color="inherit" disabled={deletingUser}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmDelete} variant="contained" color="error" disabled={deletingEmployee}>
-            {deletingEmployee ? "Deleting..." : "Confirm"}
+          <Button onClick={handleConfirmDelete} variant="contained" color="error" disabled={deletingUser}>
+            {deletingUser ? "Deleting..." : "Confirm"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Add Employee Modal */}
+      {/* Add User Modal */}
       <Dialog
         open={addOpen}
-        onClose={() => { setAddOpen(false); setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); setAddErrors({}); }}
+        onClose={() => { setAddOpen(false); setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); setAddErrors({}); }}
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Add Employee</DialogTitle>
+        <DialogTitle>Add User</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <TextField
               label="First Name *"
-              value={newEmployee.fname}
-              onChange={(e) => { setNewEmployee((p) => ({ ...p, fname: e.target.value })); setAddErrors((p) => ({ ...p, fname: undefined })); }}
+              value={newUser.fname}
+              onChange={(e) => { setNewUser((p) => ({ ...p, fname: e.target.value })); setAddErrors((p) => ({ ...p, fname: undefined })); }}
               fullWidth
               error={!!addErrors.fname}
               helperText={addErrors.fname}
             />
             <TextField
               label="Last Name *"
-              value={newEmployee.lname}
-              onChange={(e) => { setNewEmployee((p) => ({ ...p, lname: e.target.value })); setAddErrors((p) => ({ ...p, lname: undefined })); }}
+              value={newUser.lname}
+              onChange={(e) => { setNewUser((p) => ({ ...p, lname: e.target.value })); setAddErrors((p) => ({ ...p, lname: undefined })); }}
               fullWidth
               error={!!addErrors.lname}
               helperText={addErrors.lname}
@@ -669,8 +669,8 @@ export default function ViewScooployees() {
             <TextField
               label="Email *"
               type="email"
-              value={newEmployee.email}
-              onChange={(e) => { setNewEmployee((p) => ({ ...p, email: e.target.value })); setAddErrors((p) => ({ ...p, email: undefined })); }}
+              value={newUser.email}
+              onChange={(e) => { setNewUser((p) => ({ ...p, email: e.target.value })); setAddErrors((p) => ({ ...p, email: undefined })); }}
               fullWidth
               error={!!addErrors.email}
               helperText={addErrors.email}
@@ -678,11 +678,11 @@ export default function ViewScooployees() {
             <FormControl fullWidth error={!!addErrors.type}>
               <InputLabel shrink>Type *</InputLabel>
               <Select
-                value={newEmployee.type}
+                value={newUser.type}
                 label="Type *"
                 displayEmpty
                 notched
-                onChange={(e) => { setNewEmployee((p) => ({ ...p, type: e.target.value })); setAddErrors((p) => ({ ...p, type: undefined })); }}
+                onChange={(e) => { setNewUser((p) => ({ ...p, type: e.target.value })); setAddErrors((p) => ({ ...p, type: undefined })); }}
               >
                 <MenuItem value="" disabled>Select a Type</MenuItem>
                 <MenuItem value="prospect">Prospect</MenuItem>
@@ -694,11 +694,11 @@ export default function ViewScooployees() {
             <FormControl fullWidth>
               <InputLabel shrink>Semester Group</InputLabel>
               <Select
-                value={newEmployee.semesterGroupId}
+                value={newUser.semesterGroupId}
                 label="Semester Group"
                 displayEmpty
                 notched
-                onChange={(e) => setNewEmployee((p) => ({ ...p, semesterGroupId: e.target.value }))}
+                onChange={(e) => setNewUser((p) => ({ ...p, semesterGroupId: e.target.value }))}
               >
                 <MenuItem value="">No Semester Group</MenuItem>
                 {semesterGroups.map((sg) => (
@@ -710,12 +710,12 @@ export default function ViewScooployees() {
         </DialogContent>
         <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
           <Button
-            onClick={() => { setAddOpen(false); setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); setAddErrors({}); }}
+            onClick={() => { setAddOpen(false); setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); setAddErrors({}); }}
             variant="outlined" color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleAddEmployee} variant="solid-orange" disabled={addingEmployee}>
-            {addingEmployee ? "Adding..." : "Add"}
+          <Button onClick={handleAddUser} variant="solid-orange" disabled={addingUser}>
+            {addingUser ? "Adding..." : "Add"}
           </Button>
         </DialogActions>
       </Dialog>
