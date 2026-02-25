@@ -27,8 +27,10 @@ import {
   Chip,
   FormControl,
   InputLabel,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import SearchIcon from "@mui/icons-material/Search";
 
 const TYPE_LABELS = {
   prospect: "Prospect",
@@ -87,6 +89,7 @@ export default function ViewScooployees() {
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [addOpen, setAddOpen] = useState(false);
   const [newEmployee, setNewEmployee] = useState({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
@@ -209,6 +212,17 @@ export default function ViewScooployees() {
           semesterGroups.find((s) => String(s.id) === filterSemesterGroup)?.name === sg;
         if (!matched) return false;
       }
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      const groupName = resolveGroupName(emp)?.toLowerCase() ?? "";
+      const matched =
+        emp.fname?.toLowerCase().includes(q) ||
+        emp.lname?.toLowerCase().includes(q) ||
+        emp.email?.toLowerCase().includes(q) ||
+        (TYPE_LABELS[emp.type] ?? "").toLowerCase().includes(q) ||
+        groupName.includes(q);
+      if (!matched) return false;
     }
     return true;
   });
@@ -414,9 +428,25 @@ export default function ViewScooployees() {
           )}
         </Box>
 
-        <Button variant="solid-orange" onClick={() => setAddOpen(true)} startIcon={<AddIcon />}>
-          Add User
-        </Button>
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          <TextField
+            size="small"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{ width: 220, mt: 1.75 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button variant="solid-orange" onClick={() => setAddOpen(true)} startIcon={<AddIcon />}>
+            Add User
+          </Button>
+        </Box>
       </Box>
 
       {/* Table */}
