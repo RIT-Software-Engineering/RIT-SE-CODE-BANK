@@ -51,10 +51,11 @@ const StatusBadge = ({ active }) => {
   return (
     <Chip
       label={active ? "Active" : "Inactive"}
-      size="small"
+      size="medium"
       sx={{
-        fontWeight: 600,
-        fontSize: "0.7rem",
+        fontWeight: 400,
+        fontSize: "0.85rem",
+        px: 1,
         bgcolor: active ? theme.palette.success.main : theme.palette.error.main,
         color: theme.ritColors.white,
         border: "none",
@@ -90,7 +91,6 @@ export default function ViewScooployees() {
   const [addingEmployee, setAddingEmployee] = useState(false);
 
   // Edit state
-  const [editMode, setEditMode] = useState(false);
   const [editFields, setEditFields] = useState({
     fname: "",
     lname: "",
@@ -133,32 +133,34 @@ export default function ViewScooployees() {
     fetchSemesterGroups();
   }, []);
 
-  const handleOpen = (emp) => {
-    // Resolve semesterGroupId: some users have it as an ID, newly added users have it stored as a name string
-    const resolvedSemesterGroupId =
-      emp.semesterGroupId ||
-      (emp.semester_group && emp.semester_group !== "null"
-        ? semesterGroups.find((sg) => sg.name === emp.semester_group)?.id ?? ""
-        : "");
+  const resolveGroupId = (emp) =>
+    emp.semesterGroupId ||
+    (emp.semester_group && emp.semester_group !== "null"
+      ? semesterGroups.find((sg) => sg.name === emp.semester_group)?.id ?? ""
+      : "");
 
-    setSelectedEmployee({ ...emp, hasBeenRead: true });
+  const resolveGroupName = (emp) => {
+    if (!emp.semester_group || emp.semester_group === "null") return null;
+    return (
+      semesterGroups.find((sg) => String(sg.id) === String(emp.semester_group))?.name ??
+      emp.semester_group
+    );
+  };
+
+  const handleOpen = (emp) => {
+    setSelectedEmployee(emp);
     setEditFields({
       fname: emp.fname,
       lname: emp.lname,
       email: emp.email,
       type: emp.type || "",
-      semesterGroupId: String(resolvedSemesterGroupId),
+      semesterGroupId: String(resolveGroupId(emp)),
       active: emp.active !== undefined ? String(emp.active) : "true",
     });
-    setEditMode(false);
-    setEmployees((prev) =>
-      prev.map((e) => (e.id === emp.id ? { ...e, hasBeenRead: true } : e))
-    );
   };
 
   const handleClose = () => {
     setSelectedEmployee(null);
-    setEditMode(false);
     setConfirmEditOpen(false);
     setConfirmDeleteOpen(false);
   };
@@ -185,10 +187,8 @@ export default function ViewScooployees() {
     if (filterSemesterGroup !== "all") {
       const sg = emp.semester_group && emp.semester_group !== "null" ? emp.semester_group : null;
       if (!sg) {
-        // User has no semester group
         if (filterSemesterGroup !== "none") return false;
       } else {
-        // Match by ID (existing users) or by name (newly added users whose semester_group stores the name)
         const matched =
           String(sg) === filterSemesterGroup ||
           semesterGroups.find((s) => String(s.id) === filterSemesterGroup)?.name === sg;
@@ -197,26 +197,6 @@ export default function ViewScooployees() {
     }
     return true;
   });
-
-  const handleEditClick = () => setEditMode(true);
-
-  const handleCancelEdit = () => {
-    const resolvedSemesterGroupId =
-      selectedEmployee.semesterGroupId ||
-      (selectedEmployee.semester_group && selectedEmployee.semester_group !== "null"
-        ? semesterGroups.find((sg) => sg.name === selectedEmployee.semester_group)?.id ?? ""
-        : "");
-
-    setEditFields({
-      fname: selectedEmployee.fname,
-      lname: selectedEmployee.lname,
-      email: selectedEmployee.email,
-      type: selectedEmployee.type || "",
-      semesterGroupId: String(resolvedSemesterGroupId),
-      active: selectedEmployee.active !== undefined ? String(selectedEmployee.active) : "true",
-    });
-    setEditMode(false);
-  };
 
   const handleSaveEditClick = () => {
     if (!editFields.fname || !editFields.lname || !editFields.email) return;
@@ -241,7 +221,6 @@ export default function ViewScooployees() {
         prev.map((e) => e.id === selectedEmployee.id ? { ...e, ...editFields } : e)
       );
       setSelectedEmployee(updatedEmployee);
-      setEditMode(false);
       setConfirmEditOpen(false);
       setSnackbarSeverity("success");
       setSnackbarMsg("Employee updated successfully!");
@@ -264,7 +243,6 @@ export default function ViewScooployees() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => null);
         const serverMsg = errorData?.error || errorData?.message || `HTTP ${res.status}`;
-        console.error("Delete failed:", serverMsg);
         throw new Error(serverMsg);
       }
       setEmployees((prev) => prev.filter((e) => e.id !== selectedEmployee.id));
@@ -347,7 +325,9 @@ export default function ViewScooployees() {
   const filterChipSx = {
     bgcolor: theme.palette.info.main,
     color: theme.ritColors.white,
-    fontWeight: 500,
+    fontWeight: 400,
+    fontSize: "0.85rem",
+    px: 0.5,
     "& .MuiChip-deleteIcon": {
       color: "rgba(255,255,255,0.7)",
       "&:hover": { color: theme.ritColors.white },
@@ -368,14 +348,14 @@ export default function ViewScooployees() {
             Filter
           </Button>
           {filterStatus !== "active" && (
-            <Chip size="small" label={`Status: ${filterStatus}`} onDelete={() => setFilterStatus("active")} sx={filterChipSx} />
+            <Chip size="medium" label={`Status: ${filterStatus}`} onDelete={() => setFilterStatus("active")} sx={filterChipSx} />
           )}
           {filterType !== "all" && (
-            <Chip size="small" label={`Type: ${TYPE_LABELS[filterType]}`} onDelete={() => setFilterType("all")} sx={filterChipSx} />
+            <Chip size="medium" label={`Type: ${TYPE_LABELS[filterType]}`} onDelete={() => setFilterType("all")} sx={filterChipSx} />
           )}
           {filterSemesterGroup !== "all" && (
             <Chip
-              size="small"
+              size="medium"
               label={`Group: ${filterSemesterGroup === "none" ? "No Group" : (semesterGroups.find((sg) => String(sg.id) === filterSemesterGroup)?.name ?? filterSemesterGroup)}`}
               onDelete={() => setFilterSemesterGroup("all")}
               sx={filterChipSx}
@@ -411,20 +391,26 @@ export default function ViewScooployees() {
                 </TableCell>
               ))}
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Type</TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Semester Group</TableCell>
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Status</TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Details</TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredEmployees.map((employee) => (
-              <TableRow key={employee.id} sx={{ opacity: employee.hasBeenRead ? 0.6 : 1, transition: "opacity 0.3s" }}>
+              <TableRow key={employee.id}>
                 <TableCell>{employee.fname}</TableCell>
                 <TableCell>{employee.lname}</TableCell>
                 <TableCell>{employee.email}</TableCell>
                 <TableCell>{TYPE_LABELS[employee.type] || "—"}</TableCell>
+                <TableCell>
+                  {resolveGroupName(employee) ?? (
+                    <span style={{ color: theme.ritColors.gray_2, fontStyle: "italic" }}>No Group</span>
+                  )}
+                </TableCell>
                 <TableCell><StatusBadge active={isActive(employee)} /></TableCell>
                 <TableCell align="right">
-                  <Button variant="outline-orange" onClick={() => handleOpen(employee)}>View</Button>
+                  <Button variant="outline-orange" onClick={() => handleOpen(employee)}>Edit</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -432,93 +418,68 @@ export default function ViewScooployees() {
         </Table>
       </Paper>
 
-      {/* Employee View Modal */}
+      {/* Edit Modal */}
       <Dialog open={!!selectedEmployee} onClose={handleClose} maxWidth="sm" fullWidth>
         {selectedEmployee && (
           <>
             <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600 }}>
-              Employee: {selectedEmployee.fname} {selectedEmployee.lname}
+              Edit: {selectedEmployee.fname} {selectedEmployee.lname}
             </DialogTitle>
             <DialogContent dividers>
-              {editMode ? (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-                  <TextField label="First Name" value={editFields.fname}
-                    onChange={(e) => setEditFields((p) => ({ ...p, fname: e.target.value }))} fullWidth />
-                  <TextField label="Last Name" value={editFields.lname}
-                    onChange={(e) => setEditFields((p) => ({ ...p, lname: e.target.value }))} fullWidth />
-                  <TextField label="Email" type="email" value={editFields.email}
-                    onChange={(e) => setEditFields((p) => ({ ...p, email: e.target.value }))} fullWidth />
-                  <FormControl fullWidth>
-                    <InputLabel>Type</InputLabel>
-                    <Select value={editFields.type} label="Type"
-                      onChange={(e) => setEditFields((p) => ({ ...p, type: e.target.value }))}>
-                      <MenuItem value="" disabled>Select a Type</MenuItem>
-                      <MenuItem value="prospect">Prospect</MenuItem>
-                      <MenuItem value="scooployee">Scooployee</MenuItem>
-                      <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl fullWidth>
-                    <InputLabel>Status</InputLabel>
-                    <Select value={editFields.active} label="Status"
-                      onChange={(e) => setEditFields((p) => ({ ...p, active: e.target.value }))}>
-                      <MenuItem value="true">Active</MenuItem>
-                      <MenuItem value="false">Inactive</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl fullWidth>
-                    <InputLabel>Semester Group</InputLabel>
-                    <Select value={editFields.semesterGroupId} label="Semester Group"
-                      onChange={(e) => setEditFields((p) => ({ ...p, semesterGroupId: e.target.value }))}>
-                      <MenuItem value="">No Semester Group</MenuItem>
-                      {semesterGroups.map((sg) => (
-                        <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-              ) : (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Typography><strong>First Name:</strong> {selectedEmployee.fname}</Typography>
-                  <Typography><strong>Last Name:</strong> {selectedEmployee.lname}</Typography>
-                  <Typography><strong>Email:</strong> {selectedEmployee.email}</Typography>
-                  <Typography><strong>Type:</strong> {TYPE_LABELS[selectedEmployee.type] || "—"}</Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Typography component="span" sx={{ lineHeight: 1, display: "flex", alignItems: "center" }}>
-                      <strong>Status:</strong>
-                    </Typography>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <StatusBadge active={isActive(selectedEmployee)} />
-                    </Box>
-                  </Box>
-                  <Typography>
-                    <strong>Semester Group:</strong>{" "}
-                    {selectedEmployee.semester_group && selectedEmployee.semester_group !== "null"
-                      ? (semesterGroups.find((sg) => String(sg.id) === String(selectedEmployee.semester_group))?.name ?? selectedEmployee.semester_group)
-                      : <span style={{ color: theme.ritColors.gray_2, fontStyle: "italic" }}>No Semester Group</span>}
-                  </Typography>
-                </Box>
-              )}
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                <TextField label="First Name" value={editFields.fname}
+                  onChange={(e) => setEditFields((p) => ({ ...p, fname: e.target.value }))} fullWidth />
+                <TextField label="Last Name" value={editFields.lname}
+                  onChange={(e) => setEditFields((p) => ({ ...p, lname: e.target.value }))} fullWidth />
+                <TextField label="Email" type="email" value={editFields.email}
+                  onChange={(e) => setEditFields((p) => ({ ...p, email: e.target.value }))} fullWidth />
+                <FormControl fullWidth>
+                  <InputLabel>Type</InputLabel>
+                  <Select value={editFields.type} label="Type"
+                    onChange={(e) => setEditFields((p) => ({ ...p, type: e.target.value }))}>
+                    <MenuItem value="" disabled>Select a Type</MenuItem>
+                    <MenuItem value="prospect">Prospect</MenuItem>
+                    <MenuItem value="scooployee">Scooployee</MenuItem>
+                    <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select value={editFields.active} label="Status"
+                    onChange={(e) => setEditFields((p) => ({ ...p, active: e.target.value }))}>
+                    <MenuItem value="true">Active</MenuItem>
+                    <MenuItem value="false">Inactive</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel>Semester Group</InputLabel>
+                  <Select value={editFields.semesterGroupId} label="Semester Group"
+                    onChange={(e) => setEditFields((p) => ({ ...p, semesterGroupId: e.target.value }))}>
+                    <MenuItem value="">No Semester Group</MenuItem>
+                    {semesterGroups.map((sg) => (
+                      <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
             </DialogContent>
             <DialogActions sx={{ px: 3, py: 2, gap: 0.5 }}>
-              {editMode ? (
-                <>
-                  <Button onClick={handleCancelEdit} variant="outlined" color="inherit" disabled={savingEdit}>
-                    Cancel
-                  </Button>
-                  <Button variant="solid-orange" onClick={handleSaveEditClick}
-                    disabled={savingEdit || !editFields.fname || !editFields.lname || !editFields.email}>
-                    {savingEdit ? "Saving..." : "Save"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button onClick={handleClose} variant="outlined" color="inherit">Close</Button>
-                  <Button variant="contained" color="info" onClick={handleJournalClick}>Journal</Button>
-                  <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)}>Delete</Button>
-                  <Button variant="solid-orange" onClick={handleEditClick}>Edit</Button>
-                </>
-              )}
+              <Button onClick={handleClose} variant="outlined" color="inherit" disabled={savingEdit}>
+                Cancel
+              </Button>
+              <Button variant="contained" color="info" onClick={handleJournalClick}>
+                Journal
+              </Button>
+              <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)} disabled={savingEdit}>
+                Delete
+              </Button>
+              <Button
+                variant="solid-orange"
+                onClick={handleSaveEditClick}
+                disabled={savingEdit || !editFields.fname || !editFields.lname || !editFields.email}
+              >
+                {savingEdit ? "Saving..." : "Save"}
+              </Button>
             </DialogActions>
           </>
         )}
