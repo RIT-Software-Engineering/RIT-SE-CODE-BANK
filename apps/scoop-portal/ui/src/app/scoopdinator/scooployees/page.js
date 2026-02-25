@@ -38,6 +38,8 @@ const TYPE_LABELS = {
 
 const EMPLOYEE_TYPES = ["scooployee", "scoopervisor", "prospect"];
 
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
 const isActive = (emp) => {
   if (emp.active !== undefined && emp.active !== null) {
     return emp.active === true || emp.active === "true" || emp.active === 1 || emp.active === "1";
@@ -76,7 +78,7 @@ export default function ViewScooployees() {
   const [semesterGroups, setSemesterGroups] = useState([]);
 
   // Filters
-  const [filterStatus, setFilterStatus] = useState("active");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [filterSemesterGroup, setFilterSemesterGroup] = useState("all");
 
@@ -89,6 +91,7 @@ export default function ViewScooployees() {
   const [addOpen, setAddOpen] = useState(false);
   const [newEmployee, setNewEmployee] = useState({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
   const [addingEmployee, setAddingEmployee] = useState(false);
+  const [addErrors, setAddErrors] = useState({});
 
   // Edit state
   const [editFields, setEditFields] = useState({
@@ -101,6 +104,7 @@ export default function ViewScooployees() {
   });
   const [savingEdit, setSavingEdit] = useState(false);
   const [confirmEditOpen, setConfirmEditOpen] = useState(false);
+  const [editErrors, setEditErrors] = useState({});
 
   // Delete state
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -149,6 +153,7 @@ export default function ViewScooployees() {
 
   const handleOpen = (emp) => {
     setSelectedEmployee(emp);
+    setEditErrors({});
     setEditFields({
       fname: emp.fname,
       lname: emp.lname,
@@ -161,6 +166,7 @@ export default function ViewScooployees() {
 
   const handleClose = () => {
     setSelectedEmployee(null);
+    setEditErrors({});
     setConfirmEditOpen(false);
     setConfirmDeleteOpen(false);
   };
@@ -173,8 +179,17 @@ export default function ViewScooployees() {
 
   const sortedEmployees = [...employees].sort((a, b) => {
     if (!sortField) return 0;
-    const aVal = a[sortField]?.toString().toLowerCase();
-    const bVal = b[sortField]?.toString().toLowerCase();
+    let aVal, bVal;
+    if (sortField === "semester_group") {
+      aVal = (resolveGroupName(a) ?? "").toLowerCase();
+      bVal = (resolveGroupName(b) ?? "").toLowerCase();
+    } else if (sortField === "type") {
+      aVal = (TYPE_LABELS[a.type] ?? "").toLowerCase();
+      bVal = (TYPE_LABELS[b.type] ?? "").toLowerCase();
+    } else {
+      aVal = a[sortField]?.toString().toLowerCase() ?? "";
+      bVal = b[sortField]?.toString().toLowerCase() ?? "";
+    }
     if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
     if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
     return 0;
@@ -199,7 +214,17 @@ export default function ViewScooployees() {
   });
 
   const handleSaveEditClick = () => {
-    if (!editFields.fname || !editFields.lname || !editFields.email) return;
+    const errs = {};
+    if (!editFields.fname.trim()) errs.fname = "First name is required.";
+    if (!editFields.lname.trim()) errs.lname = "Last name is required.";
+    if (!editFields.email.trim()) {
+      errs.email = "Email is required.";
+    } else if (!isValidEmail(editFields.email)) {
+      errs.email = "Please enter a valid email address.";
+    }
+    if (!editFields.type) errs.type = "Type is required.";
+    setEditErrors(errs);
+    if (Object.keys(errs).length > 0) return;
     setConfirmEditOpen(true);
   };
 
@@ -211,14 +236,26 @@ export default function ViewScooployees() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type: editFields.type, active: editFields.active }),
+          body: JSON.stringify({
+            fname: editFields.fname,
+            lname: editFields.lname,
+            email: editFields.email,
+            type: editFields.type,
+            active: editFields.active,
+            semester_group: editFields.semesterGroupId
+              ? (semesterGroups.find((sg) => String(sg.id) === String(editFields.semesterGroupId))?.name ?? "null")
+              : "null",
+          }),
         }
       );
       if (!res.ok) throw new Error("Failed to update employee");
 
-      const updatedEmployee = { ...selectedEmployee, ...editFields };
+      const resolvedGroupName = editFields.semesterGroupId
+        ? (semesterGroups.find((sg) => String(sg.id) === String(editFields.semesterGroupId))?.name ?? "null")
+        : "null";
+      const updatedEmployee = { ...selectedEmployee, ...editFields, semester_group: resolvedGroupName };
       setEmployees((prev) =>
-        prev.map((e) => e.id === selectedEmployee.id ? { ...e, ...editFields } : e)
+        prev.map((e) => e.id === selectedEmployee.id ? { ...e, ...editFields, semester_group: resolvedGroupName } : e)
       );
       setSelectedEmployee(updatedEmployee);
       setConfirmEditOpen(false);
@@ -263,7 +300,18 @@ export default function ViewScooployees() {
 
   const handleAddEmployee = async () => {
     const { fname, lname, email, type, semesterGroupId } = newEmployee;
-    if (!fname || !lname || !email) return;
+
+    const errs = {};
+    if (!fname.trim()) errs.fname = "First name is required.";
+    if (!lname.trim()) errs.lname = "Last name is required.";
+    if (!email.trim()) {
+      errs.email = "Email is required.";
+    } else if (!isValidEmail(email)) {
+      errs.email = "Please enter a valid email address.";
+    }
+    if (!type) errs.type = "Type is required.";
+    setAddErrors(errs);
+    if (Object.keys(errs).length > 0) return;
 
     let user_id = "";
     if (!newEmployee.email.includes("@")) {
@@ -309,10 +357,13 @@ export default function ViewScooployees() {
       setSnackbarMsg("Employee added successfully!");
       setSnackbarOpen(true);
       setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
+      setAddErrors({});
       setAddOpen(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to add employee. Please try again.");
+      setSnackbarSeverity("error");
+      setSnackbarMsg(err.message || "Failed to add employee. Please try again.");
+      setSnackbarOpen(true);
     } finally {
       setAddingEmployee(false);
     }
@@ -347,8 +398,8 @@ export default function ViewScooployees() {
           <Button variant="outline-orange" startIcon={<FilterListIcon />} onClick={() => setFilterDialogOpen(true)}>
             Filter
           </Button>
-          {filterStatus !== "active" && (
-            <Chip size="medium" label={`Status: ${filterStatus}`} onDelete={() => setFilterStatus("active")} sx={filterChipSx} />
+          {filterStatus !== "all" && (
+            <Chip size="medium" label={`Status: ${filterStatus}`} onDelete={() => setFilterStatus("all")} sx={filterChipSx} />
           )}
           {filterType !== "all" && (
             <Chip size="medium" label={`Type: ${TYPE_LABELS[filterType]}`} onDelete={() => setFilterType("all")} sx={filterChipSx} />
@@ -390,10 +441,28 @@ export default function ViewScooployees() {
                   </TableSortLabel>
                 </TableCell>
               ))}
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Type</TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Semester Group</TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
+                <TableSortLabel
+                  active={sortField === "type"}
+                  direction={sortField === "type" ? sortOrder : "asc"}
+                  onClick={() => handleSort("type")}
+                  sx={{ color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } }}
+                >
+                  Type
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
+                <TableSortLabel
+                  active={sortField === "semester_group"}
+                  direction={sortField === "semester_group" ? sortOrder : "asc"}
+                  onClick={() => handleSort("semester_group")}
+                  sx={{ color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } }}
+                >
+                  Semester Group
+                </TableSortLabel>
+              </TableCell>
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Status</TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Actions</TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -427,25 +496,45 @@ export default function ViewScooployees() {
             </DialogTitle>
             <DialogContent dividers>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-                <TextField label="First Name" value={editFields.fname}
-                  onChange={(e) => setEditFields((p) => ({ ...p, fname: e.target.value }))} fullWidth />
-                <TextField label="Last Name" value={editFields.lname}
-                  onChange={(e) => setEditFields((p) => ({ ...p, lname: e.target.value }))} fullWidth />
-                <TextField label="Email" type="email" value={editFields.email}
-                  onChange={(e) => setEditFields((p) => ({ ...p, email: e.target.value }))} fullWidth />
-                <FormControl fullWidth>
-                  <InputLabel>Type</InputLabel>
-                  <Select value={editFields.type} label="Type"
-                    onChange={(e) => setEditFields((p) => ({ ...p, type: e.target.value }))}>
+                <TextField
+                  label="First Name *"
+                  value={editFields.fname}
+                  onChange={(e) => { setEditFields((p) => ({ ...p, fname: e.target.value })); setEditErrors((p) => ({ ...p, fname: undefined })); }}
+                  fullWidth
+                  error={!!editErrors.fname}
+                  helperText={editErrors.fname}
+                />
+                <TextField
+                  label="Last Name *"
+                  value={editFields.lname}
+                  onChange={(e) => { setEditFields((p) => ({ ...p, lname: e.target.value })); setEditErrors((p) => ({ ...p, lname: undefined })); }}
+                  fullWidth
+                  error={!!editErrors.lname}
+                  helperText={editErrors.lname}
+                />
+                <TextField
+                  label="Email *"
+                  type="email"
+                  value={editFields.email}
+                  onChange={(e) => { setEditFields((p) => ({ ...p, email: e.target.value })); setEditErrors((p) => ({ ...p, email: undefined })); }}
+                  fullWidth
+                  error={!!editErrors.email}
+                  helperText={editErrors.email}
+                />
+                <FormControl fullWidth error={!!editErrors.type}>
+                  <InputLabel>Type *</InputLabel>
+                  <Select value={editFields.type} label="Type *"
+                    onChange={(e) => { setEditFields((p) => ({ ...p, type: e.target.value })); setEditErrors((p) => ({ ...p, type: undefined })); }}>
                     <MenuItem value="" disabled>Select a Type</MenuItem>
                     <MenuItem value="prospect">Prospect</MenuItem>
                     <MenuItem value="scooployee">Scooployee</MenuItem>
                     <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
                   </Select>
+                  {editErrors.type && <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>{editErrors.type}</Typography>}
                 </FormControl>
                 <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
-                  <Select value={editFields.active} label="Status"
+                  <InputLabel>Status *</InputLabel>
+                  <Select value={editFields.active} label="Status *"
                     onChange={(e) => setEditFields((p) => ({ ...p, active: e.target.value }))}>
                     <MenuItem value="true">Active</MenuItem>
                     <MenuItem value="false">Inactive</MenuItem>
@@ -476,7 +565,7 @@ export default function ViewScooployees() {
               <Button
                 variant="solid-orange"
                 onClick={handleSaveEditClick}
-                disabled={savingEdit || !editFields.fname || !editFields.lname || !editFields.email}
+                disabled={savingEdit}
               >
                 {savingEdit ? "Saving..." : "Save"}
               </Button>
@@ -524,45 +613,78 @@ export default function ViewScooployees() {
       {/* Add Employee Modal */}
       <Dialog
         open={addOpen}
-        onClose={() => { setAddOpen(false); setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); }}
+        onClose={() => { setAddOpen(false); setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); setAddErrors({}); }}
         maxWidth="xs"
         fullWidth
       >
         <DialogTitle>Add Employee</DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <TextField label="First Name" value={newEmployee.fname}
-              onChange={(e) => setNewEmployee((p) => ({ ...p, fname: e.target.value }))} fullWidth />
-            <TextField label="Last Name" value={newEmployee.lname}
-              onChange={(e) => setNewEmployee((p) => ({ ...p, lname: e.target.value }))} fullWidth />
-            <TextField label="Email" type="email" value={newEmployee.email}
-              onChange={(e) => setNewEmployee((p) => ({ ...p, email: e.target.value }))} fullWidth />
-            <Select value={newEmployee.type}
-              onChange={(e) => setNewEmployee((p) => ({ ...p, type: e.target.value }))}
-              fullWidth displayEmpty>
-              <MenuItem value="" disabled>Select a Type</MenuItem>
-              <MenuItem value="prospect">Prospect</MenuItem>
-              <MenuItem value="scooployee">Scooployee</MenuItem>
-              <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
-            </Select>
-            <Select value={newEmployee.semesterGroupId}
-              onChange={(e) => setNewEmployee((p) => ({ ...p, semesterGroupId: e.target.value }))}
-              fullWidth displayEmpty>
-              <MenuItem value="">No Semester Group</MenuItem>
-              {semesterGroups.map((sg) => (
-                <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
-              ))}
-            </Select>
+            <TextField
+              label="First Name *"
+              value={newEmployee.fname}
+              onChange={(e) => { setNewEmployee((p) => ({ ...p, fname: e.target.value })); setAddErrors((p) => ({ ...p, fname: undefined })); }}
+              fullWidth
+              error={!!addErrors.fname}
+              helperText={addErrors.fname}
+            />
+            <TextField
+              label="Last Name *"
+              value={newEmployee.lname}
+              onChange={(e) => { setNewEmployee((p) => ({ ...p, lname: e.target.value })); setAddErrors((p) => ({ ...p, lname: undefined })); }}
+              fullWidth
+              error={!!addErrors.lname}
+              helperText={addErrors.lname}
+            />
+            <TextField
+              label="Email *"
+              type="email"
+              value={newEmployee.email}
+              onChange={(e) => { setNewEmployee((p) => ({ ...p, email: e.target.value })); setAddErrors((p) => ({ ...p, email: undefined })); }}
+              fullWidth
+              error={!!addErrors.email}
+              helperText={addErrors.email}
+            />
+            <FormControl fullWidth error={!!addErrors.type}>
+              <InputLabel shrink>Type *</InputLabel>
+              <Select
+                value={newEmployee.type}
+                label="Type *"
+                displayEmpty
+                notched
+                onChange={(e) => { setNewEmployee((p) => ({ ...p, type: e.target.value })); setAddErrors((p) => ({ ...p, type: undefined })); }}
+              >
+                <MenuItem value="" disabled>Select a Type</MenuItem>
+                <MenuItem value="prospect">Prospect</MenuItem>
+                <MenuItem value="scooployee">Scooployee</MenuItem>
+                <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+              </Select>
+              {addErrors.type && <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>{addErrors.type}</Typography>}
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel shrink>Semester Group</InputLabel>
+              <Select
+                value={newEmployee.semesterGroupId}
+                label="Semester Group"
+                displayEmpty
+                notched
+                onChange={(e) => setNewEmployee((p) => ({ ...p, semesterGroupId: e.target.value }))}
+              >
+                <MenuItem value="">No Semester Group</MenuItem>
+                {semesterGroups.map((sg) => (
+                  <MenuItem key={sg.id} value={String(sg.id)}>{sg.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
           <Button
-            onClick={() => { setAddOpen(false); setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); }}
+            onClick={() => { setAddOpen(false); setNewEmployee({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); setAddErrors({}); }}
             variant="outlined" color="inherit">
             Cancel
           </Button>
-          <Button onClick={handleAddEmployee} variant="solid-orange"
-            disabled={addingEmployee || !newEmployee.fname || !newEmployee.lname || !newEmployee.email}>
+          <Button onClick={handleAddEmployee} variant="solid-orange" disabled={addingEmployee}>
             {addingEmployee ? "Adding..." : "Add"}
           </Button>
         </DialogActions>
@@ -578,6 +700,7 @@ export default function ViewScooployees() {
             <FormControl fullWidth>
               <InputLabel>Status</InputLabel>
               <Select value={filterStatus} label="Status" onChange={(e) => setFilterStatus(e.target.value)}>
+                <MenuItem value="all">All</MenuItem>
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
               </Select>
@@ -605,7 +728,7 @@ export default function ViewScooployees() {
         </DialogContent>
         <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
           <Button variant="outlined" color="inherit"
-            onClick={() => { setFilterStatus("active"); setFilterType("all"); setFilterSemesterGroup("all"); }}>
+            onClick={() => { setFilterStatus("all"); setFilterType("all"); setFilterSemesterGroup("all"); }}>
             Reset
           </Button>
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
