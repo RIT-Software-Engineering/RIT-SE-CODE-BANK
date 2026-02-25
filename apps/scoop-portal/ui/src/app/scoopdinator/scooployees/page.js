@@ -189,6 +189,9 @@ export default function ViewScooployees() {
     } else if (sortField === "type") {
       aVal = (TYPE_LABELS[a.type] ?? "").toLowerCase();
       bVal = (TYPE_LABELS[b.type] ?? "").toLowerCase();
+    } else if (sortField === "active") {
+      aVal = isActive(a) ? "active" : "inactive";
+      bVal = isActive(b) ? "active" : "inactive";
     } else {
       aVal = a[sortField]?.toString().toLowerCase() ?? "";
       bVal = b[sortField]?.toString().toLowerCase() ?? "";
@@ -491,7 +494,16 @@ export default function ViewScooployees() {
                   Semester Group
                 </TableSortLabel>
               </TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Status</TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
+                <TableSortLabel
+                  active={sortField === "active"}
+                  direction={sortField === "active" ? sortOrder : "asc"}
+                  onClick={() => handleSort("active")}
+                  sx={{ color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } }}
+                >
+                  Status
+                </TableSortLabel>
+              </TableCell>
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
             </TableRow>
           </TableHead>
