@@ -90,7 +90,7 @@ const Field = ({ question, answer }) => {
  */
 const Section = ({ title, children }) => (
   <Box>
-    <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }} color="text.secondary">
+    <Typography variant="h6" fontWeight="bold" sx={{ mb: 1.5 }} color="text.secondary">
       {title}
     </Typography>
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -148,6 +148,21 @@ export default function ApplicationDetailPage() {
     } catch (error) {
       console.error("Error downloading resume:", error);
       setNotification({ open: true, message: "Failed to download resume", severity: "error" });
+    }
+  };
+
+  const openResume = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/application/${applicationId}/resume`
+      );
+      if (!response.ok) throw new Error("Failed to open resume");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error("Error opening resume:", error);
+      setNotification({ open: true, message: "Failed to open resume", severity: "error" });
     }
   };
 
@@ -386,14 +401,23 @@ export default function ApplicationDetailPage() {
 
           <Section title="Resume">
             {application.hasResume ? (
-              <Button
-                variant="outline-orange"
-                size="small"
-                onClick={downloadResume}
-                sx={{ alignSelf: "flex-start" }}
-              >
-                Download {application.resumeFileName || "Resume"}
-              </Button>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="outline-orange"
+                  size="small"
+                  onClick={openResume}
+                >
+                  View in Browser
+                </Button>
+                <Button
+                  variant="outline-orange"
+                  color="inherit"
+                  size="small"
+                  onClick={downloadResume}
+                >
+                  Download
+                </Button>
+              </Box>
             ) : (
               <Typography variant="body2" color="text.secondary" fontStyle="italic">
                 No resume uploaded
@@ -409,22 +433,24 @@ export default function ApplicationDetailPage() {
         <Button variant="outlined" color="inherit" onClick={() => router.back()}>
           Back
         </Button>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={() => handleStatusUpdate(STATUSES[2])}
-          disabled={application.status === "REJECTED"}
-        >
-          Reject
-        </Button>
-        <Button
-          variant="contained"
-          color="success"
-          onClick={() => handleStatusUpdate(STATUSES[1])}
-          disabled={application.status === "ACCEPTED"}
-        >
-          Accept
-        </Button>
+        {application.status !== "REJECTED" && (
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => handleStatusUpdate(STATUSES[2])}
+          >
+            Reject
+          </Button>
+        )}
+        {application.status !== "ACCEPTED" && (
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => handleStatusUpdate(STATUSES[1])}
+          >
+            Accept
+          </Button>
+        )}
       </Box>
 
       <Snackbar
