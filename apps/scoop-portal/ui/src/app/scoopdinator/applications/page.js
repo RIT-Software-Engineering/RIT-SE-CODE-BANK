@@ -25,6 +25,7 @@ import {
   FormControl,
   InputLabel,
   TextField,
+  InputAdornment,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
@@ -32,6 +33,7 @@ import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import ViewKanbanIcon from "@mui/icons-material/ViewKanban";
+import SearchIcon from "@mui/icons-material/Search";
 
 import Header from "@components/Header";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
@@ -106,6 +108,7 @@ export default function SupervisorApplicationsPage() {
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [notification, setNotification] = useState({
     open: false,
@@ -413,10 +416,18 @@ export default function SupervisorApplicationsPage() {
       if (filter !== "ALL" && app.status !== filter) return false;
       if (dateFrom && new Date(app.createdAt) < new Date(dateFrom)) return false;
       if (dateTo && new Date(app.createdAt) > new Date(dateTo + "T23:59:59")) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const matched =
+          app.firstName?.toLowerCase().includes(q) ||
+          app.lastName?.toLowerCase().includes(q) ||
+          app.ritEmail?.toLowerCase().includes(q);
+        if (!matched) return false;
+      }
       return true;
     });
     return [...filtered].sort(getComparator(order, orderBy));
-  }, [applications, filter, dateFrom, dateTo, order, orderBy]);
+  }, [applications, filter, dateFrom, dateTo, searchQuery, order, orderBy]);
 
   // Theme-aware toggle button styles — visible in both light and dark
   const toggleSx = {
@@ -463,7 +474,7 @@ export default function SupervisorApplicationsPage() {
                 </TableSortLabel>
               </TableCell>
             ))}
-            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
+            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -717,19 +728,35 @@ export default function SupervisorApplicationsPage() {
           Submit Accepted
         </Button> */}
 
-        <ToggleButtonGroup
-          value={view}
-          exclusive
-          onChange={(_, val) => val && setView(val)}
-          size="small"
-        >
-          <ToggleButton value="table" aria-label="table view" sx={toggleSx}>
-            <TableRowsIcon fontSize="small" />
-          </ToggleButton>
-          <ToggleButton value="kanban" aria-label="kanban view" sx={toggleSx}>
-            <ViewKanbanIcon fontSize="small" />
-          </ToggleButton>
-        </ToggleButtonGroup>
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+          <TextField
+            size="small"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{ width: 220, mt: 1.75 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <ToggleButtonGroup
+            value={view}
+            exclusive
+            onChange={(_, val) => val && setView(val)}
+            size="small"
+          >
+            <ToggleButton value="table" aria-label="table view" sx={toggleSx}>
+              <TableRowsIcon fontSize="small" />
+            </ToggleButton>
+            <ToggleButton value="kanban" aria-label="kanban view" sx={toggleSx}>
+              <ViewKanbanIcon fontSize="small" />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Box>
 
       {view === "table" && <TableView />}
