@@ -607,9 +607,9 @@ export default function SupervisorApplicationsPage() {
                 </Box>
               </Paper>
 
-              <Paper elevation={1} square sx={{ overflow: "hidden" }}>
+              <Paper elevation={1} square sx={{ height: 452, overflow: "auto" }}>
                 {apps.length === 0 ? (
-                  <Box sx={{ px: 2, py: 1.5 }}>
+                  <Box sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Typography variant="body2" color="text.secondary" fontStyle="italic">
                       No applications
                     </Typography>
