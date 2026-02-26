@@ -54,3 +54,11 @@ export async function createAction(userId, name, description, actionType, metada
     parentActionId: parentId
   })
 }
+
+export function makeMetadataSafeForWorkflows(metadata) {
+    let safeMetadata = {}
+    Object.entries(metadata).forEach(([key, value]) => {
+    safeMetadata[key] = JSON.stringify(value)
+    })
+    return safeMetadata
+}
