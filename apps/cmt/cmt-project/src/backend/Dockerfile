@@ -1,6 +1,8 @@
 FROM node:20-alpine
 WORKDIR /app
 
+# Need the package json from the root for prisma
+
 # Copy package files from backend
 COPY src/backend/package*.json ./
 
@@ -16,7 +18,7 @@ ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
 
 # Copy rest of backend application
-COPY src/backend/. .
+COPY src/backend/ ./backend
 
 # Copy external utils used by backend
 COPY src/utils/ ./utils
