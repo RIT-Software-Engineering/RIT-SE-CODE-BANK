@@ -25,6 +25,9 @@ COPY src/utils/ ./utils
 
 EXPOSE 5010 
 
-CMD ["node", "backend/server.js"]
+CMD ["npx prisma db push && node server.js"]
+
+# CMD ["node", "backend/server.js"]
+# CMD ["sh", "-c", "npx prisma db push  && node server.js"]
 # CMD node server.js
 # CMD sh -c "node seed.js && node server.js"
