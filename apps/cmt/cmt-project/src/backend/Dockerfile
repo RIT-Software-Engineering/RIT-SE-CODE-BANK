@@ -23,9 +23,5 @@ RUN npx prisma generate
 EXPOSE 5010
 
 # For dev: reset DB and run server
-CMD ["sh", "-c", "npx prisma db push --force-reset && node backend/server.js"]
+CMD ["sh", "-c", "npx prisma db push && node backend/server.js"]
 
-# CMD ["node", "backend/server.js"]
-# CMD ["sh", "-c", "npx prisma db push  && node server.js"]
-# CMD node server.js
-# CMD sh -c "node seed.js && node server.js"
