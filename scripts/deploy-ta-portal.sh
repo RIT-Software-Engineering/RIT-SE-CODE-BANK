@@ -28,6 +28,7 @@ ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" << ENDSSH
     sleep 10
 
     echo "Migrating the database..."
+    docker compose exec backend npm run prisma:deploy
     
     echo "Checking service status..."
     docker compose ps
