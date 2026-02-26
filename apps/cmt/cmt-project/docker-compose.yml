@@ -2,10 +2,10 @@ services:
   mariadb:
     image: mariadb:latest
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: cmt_root_pass
+      MYSQL_DATABASE: cmt_db
+      MYSQL_USER: cmt_user
+      MYSQL_PASSWORD: cmt_pass
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -21,11 +21,11 @@ services:
       context: ../../../apps/workflow/server
       dockerfile: Dockerfile
     ports:
-      - "${WORKFLOWS_PORT}:5011"
+      - "5011:5011"
     environment:
-      NODE_ENV: ${NODE_ENV}
+      NODE_ENV: production
       PORT: 5011
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: mysql://cmt_user:cmt_pass@mariadb:3306/workflows_db
     depends_on:
       mariadb:
         condition: service_healthy
@@ -36,13 +36,13 @@ services:
       context: .
       dockerfile: src/backend/Dockerfile
     ports:
-      - "${BACKEND_PORT}:5010"
+      - "5010:5010"
     env_file:
       - .env.staging
     environment:
-      NODE_ENV: ${NODE_ENV}
+      NODE_ENV: production
       PORT: 5010
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: mysql://cmt_user:cmt_pass@mariadb:3306/cmt_db
     depends_on:
       mariadb:
         condition: service_healthy
@@ -53,17 +53,17 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL}
-        REACT_APP_AUTH_BASE: ${REACT_APP_AUTH_BASE}
-        PUBLIC_URL: ${PUBLIC_URL}
+        REACT_APP_BACKEND_URL: /api
+        REACT_APP_AUTH_BASE: /cmt
+        PUBLIC_URL: /cmt
     ports:
-      - "${FRONTEND_PORT}:3010"
+      - "3010:3010"
     environment:
-      NODE_ENV: ${NODE_ENV}
+      NODE_ENV: production
       PORT: 3010
-      REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL}
-      REACT_APP_AUTH_BASE: ${REACT_APP_AUTH_BASE}
-      PUBLIC_URL: ${PUBLIC_URL}
+      REACT_APP_BACKEND_URL: /api
+      REACT_APP_AUTH_BASE: /cmt
+      PUBLIC_URL: /cmt
     depends_on:
       - cmt-backend
       - workflows-backend
