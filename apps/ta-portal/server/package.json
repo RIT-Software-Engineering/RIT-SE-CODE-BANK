@@ -1,5 +1,5 @@
 {
-  "name": "server",
+  "name": "ta-portal-server",
   "version": "1.0.0",
   "main": "main.js",
   "directories": {

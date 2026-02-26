@@ -48,3 +48,7 @@ node_modules/
 
 # deploy env for development
 !apps/ta-portal/deploy/.env
+
+
+.nx/cache
+.nx/workspace-data
