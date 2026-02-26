@@ -154,8 +154,8 @@ router.put("/:id", async (req, res) => {
     const updatedCourse = await prisma.course.update({
       where: { id: Number(id) },
       data: {
-        classId: updateData.classId,
-        name: updateData.name,
+        classId: updateData.courseCode,
+        name: updateData.courseName,
         semester: updateData.semester,
         color: updateData.color,
         students: (!updateData.students) ? null : parseInt(updateData.students),
