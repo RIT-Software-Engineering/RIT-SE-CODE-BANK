@@ -15,11 +15,13 @@ import {
   ListOrdered,
   PaintbrushVertical,
   PaintBucket,
+  TextAlignJustify,
   Underline,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { TableKit } from '@tiptap/extension-table'
 import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style';
+import TextAlign from '@tiptap/extension-text-align';
 
 export function RichTextEditor({ value, onChange }) {
   
@@ -32,6 +34,10 @@ export function RichTextEditor({ value, onChange }) {
       TextStyle,
       Color, // The current colors are very limited to basically the defaults. Maybe this could be changed in the future?
       BackgroundColor,
+      TextAlign.configure({
+        alignments: ['left', 'center'],
+        types: ['paragraph', 'heading']
+      })
     ],
     content: value || "Add content!",
     onUpdate: ({ editor }) => {
@@ -55,6 +61,7 @@ export function RichTextEditor({ value, onChange }) {
 
   const setLink = useCallback(() => {
     const previousUrl = editor.getAttributes('link').href;
+    // This could maybe be changed into a modal or something in the future? We don't want a double-modal though
     const url = window.prompt('URL', previousUrl);
 
     // cancelled
@@ -85,8 +92,8 @@ export function RichTextEditor({ value, onChange }) {
       <Accordion className="mb-3" alwaysOpen>
         <Accordion.Item eventKey="0">
           <Accordion.Header>Standard Toolbar</Accordion.Header>
-          <Accordion.Body>
-            <ButtonGroup className="flex">
+          <Accordion.Body className="overflow-x-scroll">
+            <ButtonGroup>
               <Button
                 variant="outline-dark"
                 active={editor.isActive("bold")}
@@ -174,9 +181,16 @@ export function RichTextEditor({ value, onChange }) {
                 variant="outline-dark"
                 active={editor.isActive("heading", {level:3})}
                 onClick={() => editor.chain().focus().toggleHeading({level: 3}).run()}
-              >
-                <Heading3 />
-              </Button>
+              ><Heading3 /></Button>
+
+              <Button
+                variant="outline-dark"
+                active={editor.isActive({textAlign: 'center'})}
+                onClick={() => {
+                  editor.chain().focus().toggleTextAlign('center').run();
+                }}
+              ><TextAlignJustify /></Button>
+
               <Button
                 variant="outline-dark"
                 active={editor.isActive("link")}
@@ -200,8 +214,8 @@ export function RichTextEditor({ value, onChange }) {
         </Accordion.Item>
         <Accordion.Item eventKey="1">
           <Accordion.Header>Table Toolbar</Accordion.Header>
-          <Accordion.Body>
-            <ButtonGroup className="flex">
+          <Accordion.Body className="overflow-x-scroll">
+            <ButtonGroup>
               <Button
               variant="outline-dark"
               onClick={()=>editor.chain().focus().insertTable({rows:3, cols:3, withHeaderRow:true}).run()}
@@ -262,7 +276,7 @@ export function RichTextEditor({ value, onChange }) {
       </Accordion>
 
       {/* Editor */}
-      <div className="border pl-2 prose">
+      <div className="border pl-2 prose w-full">
         <EditorContent editor={editor}/>
       </div>
     </div>
