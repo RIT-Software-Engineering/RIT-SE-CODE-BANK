@@ -24,6 +24,7 @@ import {
   ToggleButtonGroup,
   FormControl,
   InputLabel,
+  TextField,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
@@ -103,6 +104,8 @@ export default function SupervisorApplicationsPage() {
   const [order, setOrder] = useState("desc");
   const [orderBy, setOrderBy] = useState("createdAt");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const [notification, setNotification] = useState({
     open: false,
@@ -406,12 +409,14 @@ export default function SupervisorApplicationsPage() {
   };
 
   const filteredApps = useMemo(() => {
-    const filtered =
-      filter === "ALL"
-        ? applications
-        : applications.filter((app) => app.status === filter);
+    const filtered = applications.filter((app) => {
+      if (filter !== "ALL" && app.status !== filter) return false;
+      if (dateFrom && new Date(app.createdAt) < new Date(dateFrom)) return false;
+      if (dateTo && new Date(app.createdAt) > new Date(dateTo + "T23:59:59")) return false;
+      return true;
+    });
     return [...filtered].sort(getComparator(order, orderBy));
-  }, [applications, filter, order, orderBy]);
+  }, [applications, filter, dateFrom, dateTo, order, orderBy]);
 
   // Theme-aware toggle button styles — visible in both light and dark
   const toggleSx = {
@@ -436,6 +441,8 @@ export default function SupervisorApplicationsPage() {
     { id: "status", label: "Status" },
   ];
 
+  // ── View Components ──────────────────────────────────────────
+
   const TableView = () => (
     <Paper elevation={1} square sx={{ maxHeight: 500, overflow: "auto" }}>
       <Table stickyHeader>
@@ -456,7 +463,7 @@ export default function SupervisorApplicationsPage() {
                 </TableSortLabel>
               </TableCell>
             ))}
-            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Actions</TableCell>
+            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -648,6 +655,8 @@ export default function SupervisorApplicationsPage() {
     );
   };
 
+  // ── Render ────────────────────────────────────────────────────
+
   const filterChipSx = {
     bgcolor: theme.palette.info.main,
     color: theme.ritColors.white,
@@ -681,6 +690,14 @@ export default function SupervisorApplicationsPage() {
               size="medium"
               label={`Status: ${filter.charAt(0).toUpperCase() + filter.slice(1).toLowerCase()}`}
               onDelete={() => setFilter("ALL")}
+              sx={filterChipSx}
+            />
+          )}
+          {(dateFrom || dateTo) && (
+            <Chip
+              size="medium"
+              label={`Submitted: ${dateFrom || "…"} to ${dateTo || "…"}`}
+              onDelete={() => { setDateFrom(""); setDateTo(""); }}
               sx={filterChipSx}
             />
           )}
@@ -801,10 +818,28 @@ export default function SupervisorApplicationsPage() {
                 ))}
               </Select>
             </FormControl>
+            <TextField
+              label="Submitted From"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ max: dateTo || undefined }}
+            />
+            <TextField
+              label="Submitted To"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: dateFrom || undefined }}
+            />
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
-          <Button variant="outlined" color="inherit" onClick={() => setFilter("ALL")}>Reset</Button>
+          <Button variant="outlined" color="inherit" onClick={() => { setFilter("ALL"); setDateFrom(""); setDateTo(""); }}>Reset</Button>
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
         </DialogActions>
       </Dialog>
