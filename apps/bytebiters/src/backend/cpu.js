@@ -206,15 +206,33 @@ export class CPU {
             case 'CMP':
                 this.cmp(oper.src, oper.dst);
                 break;
+            case 'BIT':
+                this.bit(oper.src, oper.dst);
+                break;
+            case 'BIC':
+                this.bic(oper.src, oper.dst);
+                break;
+            case 'BIS':
+                this.bis(oper.src, oper.dst);
+                break;
+            case 'SUB':
+                this.sub(oper.src, oper.dst);
+                break;
+            case 'ADD':
+                this.add(oper.src, oper.dst);
+                break;
+            case 'CLR':
+                this.clr(oper.src);
+                break;
         }
     }
 
     mov(src, dst) {
-        const result = src.value;
+        const result = src.value & 0xFFFF;
         dst.write(result);
 
         this.N = (result & 0x8000) !== 0;
-        this.Z = (result & 0xFFFF) === 0;
+        this.Z = result === 0;
         this.V = 0;
         //C is not affected by move
     }
@@ -222,12 +240,81 @@ export class CPU {
     cmp(src, dst) {
         const srcValue = src.value & 0xFFFF;
         const dstValue = dst.value & 0xFFFF;
-        const cmpValue = (dstValue - srcValue) & 0xFFFF;
+        const cmpValue = (srcValue - dstValue) & 0xFFFF;
 
         this.N = (cmpValue & 0x8000) !== 0;
         this.Z = cmpValue === 0;
-        this.V = ((dstValue ^ srcValue) & (dstValue ^ cmpValue) & 0x8000) !== 0;
-        this.C = dstValue < srcValue;
+        this.V = ((srcValue ^ dstValue) & (srcValue ^ cmpValue) & 0x8000) !== 0;
+        this.C = srcValue < dstValue;
+    }
+
+    bit(src, dst) {
+        const srcValue = src.value & 0xFFFF;
+        const dstValue = dst.value & 0xFFFF;
+        const bitValue = (srcValue & dstValue) & 0xFFFF;
+
+        this.N = (bitValue & 0x8000) !== 0;
+        this.Z = bitValue === 0;
+        this.V = 0;
+        //C is not affected by move
+    }
+
+    bic(src, dst) {
+        const srcValue = src.value & 0xFFFF;
+        const dstValue = dst.value & 0xFFFF;
+        const bicValue = (~srcValue & dstValue) & 0xFFFF;
+        dst.write(bicValue);
+
+        this.N = (bicValue & 0x8000) !== 0;
+        this.Z = bicValue === 0;
+        this.V = 0;
+        //C is not affected by move
+    }
+
+    bis(src, dst) {
+        const srcValue = src.value & 0xFFFF;
+        const dstValue = dst.value & 0xFFFF;
+        const bisValue = (srcValue | dstValue) & 0xFFFF;
+        dst.write(bisValue);
+
+        this.N = (bisValue & 0x8000) !== 0;
+        this.Z = bisValue === 0;
+        this.V = 0;
+        //C is not affected by move
+    }
+
+    sub(src, dst) {
+        const srcValue = src.value & 0xFFFF;
+        const dstValue = dst.value & 0xFFFF;
+        const subValue = (dstValue - srcValue) & 0xFFFF;
+        dst.write(subValue);
+
+        this.N = (subValue & 0x8000) !== 0;
+        this.Z = subValue === 0;
+        this.V = ((dstValue ^ srcValue) & (dstValue ^ subValue) & 0x8000) !== 0;
+        this.C = (dstValue < srcValue);
+    }
+
+    add(src, dst) {
+        const srcValue = src.value & 0xFFFF;
+        const dstValue = dst.value & 0xFFFF;
+        const addValue = (dstValue + srcValue) & 0xFFFF;
+        const fullBitValue = dstValue + srcValue; //used to ensure the total value will not be greater than 16 bits
+        dst.write(addValue);
+
+        this.N = (addValue & 0x8000) !== 0;
+        this.Z = addValue === 0;
+        this.V = ((dstValue ^ addValue) & (srcValue ^ addValue) & 0x8000) !== 0;
+        this.C = fullBitValue > 0xFFFF;
+    }
+
+    clr(dst) {
+        dst.write(0);
+
+        this.N = 0;
+        this.Z = 1;
+        this.V = 0;
+        this.C = 0;
     }
 
 
