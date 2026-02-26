@@ -2,31 +2,28 @@ FROM node:18-alpine
 WORKDIR /app
 RUN apk add --no-cache openssl
 
-# Need the package json from the root for prisma
-
-# Copy package files from backend
+# Copy package.json first for caching
 COPY src/backend/package*.json ./
 
 # Install dependencies
 RUN npm ci --legacy-peer-deps
 
-# Copy prisma schema from project root
-COPY prisma ./prisma/  
-
-# Generate Prisma client
-ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
-RUN npx prisma generate
-
-# Copy rest of backend application
+# Copy prisma schema and backend code **before generating client**
+COPY prisma ./prisma/
 COPY src/backend/ ./backend
-
-# Copy external utils used by backend
 COPY src/utils/ ./utils
 
-EXPOSE 5010 
+# Set DB URL for Prisma
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 
-CMD ["sh", "-c", "npx prisma db push --force-reset  && node backend/server.js"]
+# Generate Prisma client AFTER backend is copied
+RUN npx prisma generate
+
+EXPOSE 5010
+
+# For dev: reset DB and run server
+CMD ["sh", "-c", "npx prisma db push --force-reset && node backend/server.js"]
 
 # CMD ["node", "backend/server.js"]
 # CMD ["sh", "-c", "npx prisma db push  && node server.js"]
