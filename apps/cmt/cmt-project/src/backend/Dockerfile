@@ -1,5 +1,6 @@
 FROM node:18-alpine
 WORKDIR /app
+RUN apk add --no-cache openssl
 
 # Need the package json from the root for prisma
 
