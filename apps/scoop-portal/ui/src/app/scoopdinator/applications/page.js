@@ -1,31 +1,29 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Alert,
   Box,
   Button,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogActions,
-  DialogContent,
+  Chip,
+  FormControl,
+  InputAdornment,
+  InputLabel,
   MenuItem,
   Paper,
   Select,
-  Snackbar,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   TableSortLabel,
-  Chip,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
-  FormControl,
-  InputLabel,
-  TextField,
-  InputAdornment,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
@@ -99,8 +97,6 @@ export default function SupervisorApplicationsPage() {
    * The list of applications to be displayed on the page.
    */
   const [applications, setApplications] = useState([]);
-  const [status, setStatus] = useState("");
-  const [selectedApp, setSelectedApp] = useState(null);
   const [filter, setFilter] = useState("ALL");
   const [view, setView] = useState("table"); // "table" | "kanban"
   const [order, setOrder] = useState("desc");
@@ -110,11 +106,6 @@ export default function SupervisorApplicationsPage() {
   const [dateTo, setDateTo] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [notification, setNotification] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
   const router = useRouter();
 
   useEffect(() => {
@@ -130,193 +121,20 @@ export default function SupervisorApplicationsPage() {
     fetchApps();
   }, []);
 
-  //For testing. Runs when setSelectApp and handleOpen are called
-  useEffect(() => {
-    if (selectedApp) console.log("opening app:", selectedApp);
-  }, [selectedApp]);
-
   /**
    * Handles the logic for opening a selected application.
    *
-   * This function sets the selectedApp constant to the application that was
-   * passed in and changes its hasBeenRead status to true. Next, it refelcts
-   * this change in the list of applications.
+   * This function marks the application as read locally and navigates
+   * to the application detail page.
    *
    * @param {*} app - The application that's been selected to be opened.
    * @returns {void}
    */
   const handleOpen = (app) => {
-    setSelectedApp({ ...app, hasBeenRead: true });
     setApplications((prev) =>
       prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
     );
-  };
-
-  const downloadResume = async (id) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/application/${id}/resume`);
-      if (!response.ok) throw new Error("Failed to download resume");
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      const app = applications.find((app) => app.id === id);
-      a.download = app?.resumeFileName || "resume.pdf";
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Error downloading resume:", error);
-      setNotification({ open: true, message: "Failed to download resume", severity: "error" });
-    }
-  };
-
-  /**
-   * Handles the logic for closing a selected application.
-   *
-   * This function simply sets the selectedApp constant to null.
-   *
-   * @returns {void}
-   */
-  const handleClose = () => setSelectedApp(null);
-
-  /**
-   * Updates the status of an application in the database.
-   *
-   * This function sends a PUT request to the API to update the status of
-   * a specific application. It expects the application ID to be in
-   * `selectedApp.id` and the new status to be passed as `newStatus`.
-   *
-   * @async
-   * @param {*} newStatus - The new status to set for the application.
-   * @throws {Error} If the update fails
-   * @returns {Promise<void>}
-   */
-  async function putApplicationStatus(newStatus) {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/application/${selectedApp.id}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      }
-    );
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || "Failed to update");
-  }
-
-  /**
-   * Handles the logic for updating the status of a selected application.
-   *
-   * @param {*} status - The new status to set the application to
-   * @returns {void}
-   */
-  const handleStatusUpdate = (status) => {
-    console.log("Updating status to:", status);
-    console.log("Updating status to:", status);
-    if (!selectedApp) return;
-    try {
-      //update in database
-      putApplicationStatus(status);
-      const selectedAppCopy = { ...selectedApp };
-      handleUserStatusUpdate(status, selectedAppCopy);
-      //update local state
-      setApplications((prev) =>
-        prev.map((a) => (a.id === selectedApp.id ? { ...a, status } : a))
-      );
-      //
-      setSelectedApp((prev) =>
-        prev ? { ...prev, accepted: status === "accepted", status } : prev
-      );
-      // console.log(selectedApp.firstName, "has been", status);
-      setStatus(status);
-      setNotification({
-        open: true,
-        message: `Application for ${selectedApp.firstName} has been ${status}.`,
-        severity: status === STATUSES[1] ? "success" : "error",
-      });
-      setSelectedApp(null);
-    } catch (err) {
-      setNotification({ open: true, message: `Failed to update status: ${err.message}`, severity: "error" });
-    }
-    // console.log("app status", selectedApp.status);
-  };
-
-  async function handleUserStatusUpdate(status, application) {
-    console.log("Handling user status update for", application.applicant_id);
-    let new_role = "";
-    if (status == "ACCEPTED") new_role = "scooployee";
-    else if (status == "REJECTED") new_role = "applicant";
-    try {
-      const userResponse = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + `/api/users/${application.applicant_id}`,
-        { method: "GET" }
-      );
-      if (userResponse.status === 404) {
-        console.log("User not found, creating new user:", application.applicant_id);
-        await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/users", {
-          method: "POST",
-          body: JSON.stringify({
-            id: application.applicant_id,
-            fname: application.firstName,
-            lname: application.lastName,
-            email: application.ritEmail,
-            type: new_role,
-            createdAt: new Date().toISOString(),
-            semester_group: "null",
-            project: "null",
-            active: "",
-            last_login: "null",
-            prev_login: "null",
-          }),
-          headers: { "Content-Type": "application/json" },
-        });
-      } else {
-        console.log("User found, updating role to:", new_role);
-        await fetch(process.env.NEXT_PUBLIC_API_URL + `/api/users/${application.applicant_id}`, {
-          method: "PUT",
-          body: JSON.stringify({ type: new_role }),
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-      console.log("Creating journal entry for status:", status);
-      handleJournalEntry(application, status);
-    } catch (error) {
-      console.error("Error updating user role:", error);
-    }
-  }
-
-  async function handleJournalEntry(application, status) {
-    console.log("Creating journal entry for", application.firstName, "with status", status);
-    let entry_string = "";
-    if (status == "ACCEPTED") entry_string = `${application.firstName} ${application.lastName} has been accepted for SCOOP.`;
-    else if (status == "REJECTED") entry_string = `${application.firstName} ${application.lastName} has been rejected for SCOOP.`;
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: new Date().toISOString(),
-          sender_id: application.applicant_id,
-          notes: entry_string,
-          recipient_ids: [],
-          topic_id: application.applicant_id,
-          semester_GroupId: null,
-          previous_entryid: null,
-          entry_type: "AUTOMATED",
-          visibility_level: 1,
-          privacy_level: "PUBLIC",
-        }),
-      });
-    } catch (error) {
-      console.error("Error creating journal entry:", error);
-    }
-  }
-
-  const handleNotificationClose = (event, reason) => {
-    if (reason === "clickaway") return;
-    setNotification({ ...notification, open: false });
+    router.push(`/scoopdinator/applications/${app.id}`);
   };
 
   /**
@@ -452,6 +270,8 @@ export default function SupervisorApplicationsPage() {
     { id: "status", label: "Status" },
   ];
 
+  // ── View Components ──────────────────────────────────────────
+
   const TableView = () => (
     <Paper elevation={1} square sx={{ maxHeight: 500, overflow: "auto" }}>
       <Table stickyHeader>
@@ -472,7 +292,7 @@ export default function SupervisorApplicationsPage() {
                 </TableSortLabel>
               </TableCell>
             ))}
-            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
+            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -664,6 +484,8 @@ export default function SupervisorApplicationsPage() {
     );
   };
 
+  // ── Render ────────────────────────────────────────────────────
+
   const filterChipSx = {
     bgcolor: theme.palette.info.main,
     color: theme.ritColors.white,
@@ -758,72 +580,6 @@ export default function SupervisorApplicationsPage() {
       {view === "table" && <TableView />}
       {view === "kanban" && <KanbanView />}
 
-      {/* Modal */}
-      <Dialog open={!!selectedApp} onClose={handleClose} maxWidth="sm" fullWidth>
-        {selectedApp && (
-          <>
-            <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600 }}>
-              Application: {selectedApp.firstName} {selectedApp.lastName}
-            </DialogTitle>
-            <DialogContent dividers>
-              <Typography variant="body2">
-                Submitted on: {new Date(selectedApp.createdAt).toLocaleDateString()}
-              </Typography>
-              <Typography margin={2}><strong>Email:</strong><br />{selectedApp.ritEmail}</Typography>
-              <Typography margin={2}><strong>Number of Co-op blocks completed?</strong><br />{selectedApp.coopsCompleted}</Typography>
-              <Typography margin={2}><strong>Which semester did you start at RIT?</strong><br />{selectedApp.startSemester}</Typography>
-              <Typography margin={2}><strong>Which courses have you already taken or are about to complete this term?</strong><br />{selectedApp.coursesTaken}</Typography>
-              <Typography margin={2}><strong>When did you start searching for this co-op?</strong><br />{selectedApp.coopSearchStartDate}</Typography>
-              {/* <Typography margin={2}>
-                  <strong>Semester Started:</strong>{" "}
-                  <br />
-                  {selectedApp.startSemester}
-              </Typography> */}
-              <Typography margin={2}><strong>What methods/platforms have you used in order to try and get this co-op?</strong><br />{selectedApp.coopSearchPlatforms}</Typography>
-              <Typography margin={2}><strong>Do you have any pending/open employer replies that you are waiting to hear back from at this time?</strong><br />{String(selectedApp.pendingOffers)}</Typography>
-              <Typography margin={2}><strong>If Yes, and these as a result of an interview, name each employer and your last date of contact for each.</strong><br />{selectedApp.pendingOffersDetails}</Typography>
-              <Typography margin={2}><strong>Have you received formal rejection letters/responses?</strong><br />{selectedApp.rejectionLetters}</Typography>
-              <Typography margin={2}><strong>If Yes, approximately how many?</strong><br />{selectedApp.rejectionLettersDetails}</Typography>
-              <Typography margin={2}><strong>SE does not currently have a co-op option for this summer. However, IF an approved unpaid opportunity became available, would you be interested in pursuing it?</strong><br />{String(selectedApp.SEcoopInterest)}</Typography>
-              <Typography margin={2}><strong>If an option were to become available, would you be able to participate in-person at RIT?</strong><br />{String(selectedApp.SEcoopAvailability)}</Typography>
-              <Typography margin={2}><strong>If Unable, please confirm that you can be remote by stating your capabilities</strong><br />{selectedApp.remoteAbility}</Typography>
-              <Typography margin={2}><strong>Is there anything else you&apos;d like to share with us?</strong><br />{selectedApp.additionalInfo}</Typography>
-              <Typography margin={2}>
-                <strong>Resume:</strong><br />
-                {selectedApp.hasResume ? (
-                  <Button variant="contained" size="small" onClick={() => downloadResume(selectedApp.id)} sx={{ mt: 1 }}>
-                    Download {selectedApp.resumeFileName || "Resume"}
-                  </Button>
-                ) : "No resume uploaded"}
-              </Typography>
-              <Box mt={3}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Current Status: {String(selectedApp.status)}
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{ color: "#7D55C7", fontWeight: 500 }}
-                >
-                  {/* {application} */}
-                  {/* {selectedApp.status.charAt(0).toUpperCase() + selectedApp.status.slice(1)} */}
-                </Typography>
-              </Box>
-            </DialogContent>
-            <DialogActions sx={{ px: 3, py: 2, gap: 0.5 }}>
-              <Button onClick={handleClose} variant="outlined" color="inherit">
-                Close
-              </Button>
-              <Button variant="contained" onClick={() => handleStatusUpdate(STATUSES[2])} color="error">
-                Reject
-              </Button>
-              <Button variant="contained" onClick={() => handleStatusUpdate(STATUSES[1])} color="success">
-                Accept
-              </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
-
       {/* Filter Dialog */}
       <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600 }}>
@@ -877,16 +633,6 @@ export default function SupervisorApplicationsPage() {
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
         </DialogActions>
       </Dialog>
-
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={4000}
-        onClose={handleNotificationClose}
-      >
-        <Alert onClose={handleNotificationClose} severity={notification.severity} sx={{ width: "100%" }}>
-          {notification.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 }

@@ -219,4 +219,38 @@ router.get("/:id/resume", async (req, res) => {
   }
 });
 
+/**
+ * GET a single application by ID
+ *
+ * @param {Object} req - The request object containing the application ID
+ * @param {Object} res - The response object that sends back the application or an error
+ */
+router.get("/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const application = await prisma.application.findUnique({
+            where: { id: Number(id) },
+        });
+
+        if (!application) {
+            return res.status(404).json({ error: "Application not found" });
+        }
+
+        // Transform to handle binary resume data
+        const transformedApplication = {
+            ...application,
+            hasResume: application.resumeFile ? true : false,
+            resumeFileName: application.resumeFileName,
+            resumeFileType: application.resumeFileType,
+            resumeFile: undefined,
+        };
+
+        res.json(transformedApplication);
+    } catch (error) {
+        console.error("Error fetching application:", error);
+        res.status(500).json({ error: "Failed to fetch application" });
+    }
+});
+
 export default router;
