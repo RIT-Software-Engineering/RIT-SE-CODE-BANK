@@ -3,13 +3,18 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+##Root package
+COPY package.json ./
+##Root lock
+COPY package-lock.json ./
+##Frontend package
+COPY apps/ta-portal/ui/package.json apps/ta-portal/ui/package.json
 
-# Clean install dependencies
-RUN npm ci
+# Clean install dependencies for only the frontend
+RUN npm ci --workspace=ta-portal-frontend
 
 # Copy application into container
-COPY . .
+COPY apps/ta-portal/ui ./apps/ta-portal/ui
 
 # Change build arguments into env variables
 ARG NEXT_PUBLIC_NODE_ENV
@@ -24,12 +29,9 @@ ENV NEXT_PUBLIC_API_EXTENSIONL=$NEXT_PUBLIC_API_EXTENSION
 ARG NEXT_PUBLIC_DATABASE_API_EXTENSION
 ENV NEXT_PUBLIC_DATABASE_API_EXTENSION=$NEXT_PUBLIC_DATABASE_API_EXTENSION
 
-RUN npm run build
+WORKDIR /app/apps/ta-portal/ui
 
 EXPOSE 3000
 
-# Run in dev mode
-#CMD ["npm", "run", "dev"]
-
-# Run in prod mode
+RUN npm run build
 CMD ["npm","start"]

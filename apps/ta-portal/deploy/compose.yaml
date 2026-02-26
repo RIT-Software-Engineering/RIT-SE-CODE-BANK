@@ -22,8 +22,8 @@ services:
 
   frontend:
     build: # Built within the context of the ui folder
-      context: ../ui
-      dockerfile: Dockerfile
+      context: ../../.. #Sets the context to the root of the project to allow the copying of the package-lock.json
+      dockerfile: apps/ta-portal/ui/Dockerfile
       args:
         NEXT_PUBLIC_NODE_ENV: ${NEXT_PUBLIC_NODE_ENV} # DEV or PROD, determines what login system is used
         NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
@@ -36,8 +36,8 @@ services:
 
   backend:
     build: # Built within the context of the server folder, requires database for prisma generation
-      context: ../server
-      dockerfile: Dockerfile
+      context: ../../.. #Sets the context to the root of the project to allow the copying of the package-lock.json
+      dockerfile: apps/ta-portal/server/Dockerfile
       args:
         DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@${DB_HOST}:${DB_CONTAINER_PORT}/${DB_NAME}"
     environment:

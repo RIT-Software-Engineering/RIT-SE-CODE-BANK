@@ -1,7 +1,6 @@
 {
-  "npmScope": "RIT-SE-CODE-BANK",
   "installation": {
-    "version": "19.8.4"
+    "version": "22.5.2"
   },
   "defaultBase": "main",
   "tasksRunnerOptions": {
@@ -48,6 +47,5 @@
         "projects": "dependencies"
       }
     ]
-  },
-  "projects": {}
+  }
 }
