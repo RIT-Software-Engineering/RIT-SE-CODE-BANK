@@ -1,6 +1,6 @@
 import express from "express";
 import { createAction, workflowsFetch } from "../utils/workflows.js";
-import { makeMetadataSafeForWorkflows } from "../../utils/workflows.js";
+import { makeMetadataSafeForWorkflows } from "../utils/workflows.js";
 
 const router = express.Router();
 export default router
