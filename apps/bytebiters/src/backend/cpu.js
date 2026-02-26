@@ -222,8 +222,13 @@ export class CPU {
                 this.add(oper.src, oper.dst);
                 break;
             case 'CLR':
-                this.clr(oper.src);
+                this.clr(oper.dst);
                 break;
+            case 'INC':
+                this.inc(oper.dst);
+                break;
+            case 'DEC':
+                this.dec(oper.dst);
         }
     }
 
@@ -256,7 +261,7 @@ export class CPU {
         this.N = (bitValue & 0x8000) !== 0;
         this.Z = bitValue === 0;
         this.V = 0;
-        //C is not affected by move
+        //C is not affected by bit test
     }
 
     bic(src, dst) {
@@ -268,7 +273,7 @@ export class CPU {
         this.N = (bicValue & 0x8000) !== 0;
         this.Z = bicValue === 0;
         this.V = 0;
-        //C is not affected by move
+        //C is not affected by bit clear
     }
 
     bis(src, dst) {
@@ -280,7 +285,7 @@ export class CPU {
         this.N = (bisValue & 0x8000) !== 0;
         this.Z = bisValue === 0;
         this.V = 0;
-        //C is not affected by move
+        //C is not affected by bit set
     }
 
     sub(src, dst) {
@@ -317,5 +322,26 @@ export class CPU {
         this.C = 0;
     }
 
+    inc(dst) {
+        const oldValue = dst.value & 0xFFFF;
+        const incValue = (oldValue + 1) & 0xFFFF;
+        dst.write(incValue);
+
+        this.N = (incValue & 0x8000) !== 0;
+        this.Z = incValue === 0;
+        this.V = oldValue === 0x7FFF;
+        //C is not affected by increment
+    }
+
+    dec(dst) {
+        const oldValue = dst.value & 0xFFFF;
+        const decValue = (oldValue - 1) & 0xFFFF;
+        dst.write(decValue);
+
+        this.N = (decValue & 0x8000) !== 0;
+        this.Z = decValue === 0;
+        this.V = oldValue === 0x8000;
+        //C is not affected by decrement
+    }
 
 }
