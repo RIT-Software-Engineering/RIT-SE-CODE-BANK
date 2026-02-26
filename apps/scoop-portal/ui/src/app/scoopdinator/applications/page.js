@@ -452,8 +452,6 @@ export default function SupervisorApplicationsPage() {
     { id: "status", label: "Status" },
   ];
 
-  // ── View Components ──────────────────────────────────────────
-
   const TableView = () => (
     <Paper elevation={1} square sx={{ maxHeight: 500, overflow: "auto" }}>
       <Table stickyHeader>
@@ -474,7 +472,7 @@ export default function SupervisorApplicationsPage() {
                 </TableSortLabel>
               </TableCell>
             ))}
-            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Actions</TableCell>
+            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -665,8 +663,6 @@ export default function SupervisorApplicationsPage() {
       </Box>
     );
   };
-
-  // ── Render ────────────────────────────────────────────────────
 
   const filterChipSx = {
     bgcolor: theme.palette.info.main,
