@@ -463,7 +463,7 @@ export default function SupervisorApplicationsPage() {
                 </TableSortLabel>
               </TableCell>
             ))}
-            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
+            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -696,7 +696,7 @@ export default function SupervisorApplicationsPage() {
           {(dateFrom || dateTo) && (
             <Chip
               size="medium"
-              label={`Submitted: ${dateFrom || "…"} to ${dateTo || "…"}`}
+              label={`Submitted: ${dateFrom || "…"} → ${dateTo || "…"}`}
               onDelete={() => { setDateFrom(""); setDateTo(""); }}
               sx={filterChipSx}
             />
@@ -810,7 +810,12 @@ export default function SupervisorApplicationsPage() {
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <FormControl fullWidth>
               <InputLabel>Status</InputLabel>
-              <Select value={filter} label="Status" onChange={(e) => setFilter(e.target.value)}>
+              <Select
+                value={filter}
+                label="Status"
+                onChange={(e) => setFilter(e.target.value)}
+              sx={{ "& .MuiSelect-icon": { color: isDark ? theme.ritColors.white : theme.ritColors.black } }}
+              >
                 {STATUSES.map((s) => (
                   <MenuItem key={s} value={s}>
                     {s === "ALL" ? "All" : s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()}
@@ -826,6 +831,9 @@ export default function SupervisorApplicationsPage() {
               fullWidth
               InputLabelProps={{ shrink: true }}
               inputProps={{ max: dateTo || undefined }}
+              sx={{
+                "& input[type='date']::-webkit-calendar-picker-indicator": { filter: isDark ? "invert(1)" : "invert(0.4) sepia(1) saturate(6) hue-rotate(5deg)", cursor: "pointer" },
+              }}
             />
             <TextField
               label="Submitted To"
@@ -835,6 +843,9 @@ export default function SupervisorApplicationsPage() {
               fullWidth
               InputLabelProps={{ shrink: true }}
               inputProps={{ min: dateFrom || undefined }}
+              sx={{
+                "& input[type='date']::-webkit-calendar-picker-indicator": { filter: isDark ? "invert(1)" : "invert(0.4) sepia(1) saturate(6) hue-rotate(5deg)", cursor: "pointer" },
+              }}
             />
           </Box>
         </DialogContent>
