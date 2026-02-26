@@ -64,9 +64,8 @@ export default function AdminPositions() {
 
   // Configuration for the tabs, linking them to their respective data states.
   const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-    { id: "all-positions", label: "Manage All Positions", data: allPositions },
+    { id: "all-positions", label: "All Positions", data: allPositions },
+    { id: "pending-positions", label: "Pending Positions", data: allPositions.filter(position => position.jobPositionStatus.includes('PENDING') )},
   ];
 
   // General state for loading, errors, and search/filter functionality.
@@ -90,9 +89,8 @@ export default function AdminPositions() {
   // Initialize the active tab based on URL search parameters for linkability.
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'my-positions') return 1;
-    if (tabParam === 'all-positions') return 2;
-    return 0; // Default to 'open-positions'.
+    if (tabParam === 'pending-positions') return 1;
+    return 0; // Default to 'all-positions'.
   });
 
   /**
@@ -136,7 +134,7 @@ export default function AdminPositions() {
    * @returns {object[]} The array of filter configurations to be displayed.
    */
   const visibleFilters = useMemo(() => {
-    if (activeTab === 0) { // open-positions tab
+    if (activeTab === 0) { // all-positions tab
       return filterConfig.filter((f) => f.id !== "status");
     }
     return filterConfig;
@@ -157,13 +155,10 @@ export default function AdminPositions() {
 
     try {
       let data;
-      if (tabId === "open-positions") {
+      if (tabId === "all-positions") {
         data = await getOpenJobPositions(currentSearch, currentFilters, null);
         setOpenPositions(data);
-      } else if (tabId === "my-positions") {
-        data = await getPositionsByOwner(currentUser.username, currentSearch, currentFilters);
-        setMyPositions(data);
-      } else if (tabId === "all-positions") {
+      } else if (tabId === "pending-positions") {
         data = await getAllPositions(currentSearch, currentFilters);
         setAllPositions(data);
       }
@@ -435,9 +430,9 @@ export default function AdminPositions() {
         onEdit={handleOpenModal}
         onApprove={(jobId) => handleStatusUpdate(jobId, 'OPEN')}
         onReject={(jobId) => handleStatusUpdate(jobId, 'REJECTED')}
-        showEditAction={activeTab === 1} // Only show edit on "My Positions" tab.
-        showApproveRejectActions={activeTab === 2} // Only show approve/reject on "Manage All" tab.
-        showTracker={activeTab !== 0} // Show tracker on all tabs except "Open Positions".
+        showEditAction={true}
+        showApproveRejectActions={activeTab === 1} // Only show approve/reject on "Pending" tab.
+        showTracker={true} 
       />
     ));
   };
@@ -480,8 +475,8 @@ export default function AdminPositions() {
                   {activeTabData?.label}
                 </Typography>
                 <Typography color="text.secondary">
-                  {activeTab !== 0 && "Search and filter all positions you have access to."}
-                  {activeTab === 0 && "Browse all publicly available positions."}
+                  {activeTab !== 0 && "Accept positions pending approval"}
+                  {activeTab === 0 && "Search and filter all positions."}
                 </Typography>
               </Box>
               {/* "Create New Position" button is only visible on the "My Positions" tab. */}

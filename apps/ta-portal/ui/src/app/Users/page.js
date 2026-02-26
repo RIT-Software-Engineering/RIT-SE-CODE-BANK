@@ -292,7 +292,7 @@ export default function AdminUsersPage() {
         />
         </Box>
         
-        <Box key={'renderedContentBox'} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box key='renderedContent' sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {renderContent()}
         </Box>
       </Paper>

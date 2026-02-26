@@ -489,8 +489,7 @@ export default function AdminApplicationsPage() {
                               onHire={() => handleOpenHireModal(app)}
                               isHighlighted={String(searchParams.get('applicationId') || '') === String(app.id)}
                             />
-                            <Button onClick={() => console.log(app)}>TEST1</Button>
-                          </Box>
+                            </Box>
                         ))
                       ) : (
                         <Typography sx={{ p: 2 }}>No matching applications for this position.</Typography>
@@ -556,7 +555,6 @@ export default function AdminApplicationsPage() {
                   showHireAction={true}
                   isHighlighted={String(searchParams.get('applicationId') || '') === String(application.id)}
                 />
-                <Button onClick={() => console.log(application)}>TEST2</Button>
               </Box>
             ))}
           </Box>

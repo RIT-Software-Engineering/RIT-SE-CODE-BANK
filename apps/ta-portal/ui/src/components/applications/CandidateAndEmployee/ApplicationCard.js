@@ -305,9 +305,6 @@ export default function CandidateApplicationCard({
             {jobApplicationStatus.toLowerCase() === "pending_offer" && (
               <Button variant="contained"color="error" onClick={() => handleOpenUpdateModal("DECLINED_OFFER", "Decline Position Offer")}>Decline Offer</Button>
             )}
-
-
-
           </Box>
 
 
