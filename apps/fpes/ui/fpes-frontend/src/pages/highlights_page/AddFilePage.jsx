@@ -27,7 +27,12 @@ export default function AddFileModal({ isOpen, closeModal, facultyId }) {
             console.log("Upload successful:", response.data);
             console.log("Parsed data:", response.data.data);
             if (response.data.data.pdfData) {
-                const blob = new Blob([Uint8Array.from(atob(response.data.data.pdfData), c => c.charCodeAt(0))], { type: 'application/pdf' });
+                const binaryString = atob(response.data.data.pdfData);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: 'application/pdf' });
                 setPdfUrl(URL.createObjectURL(blob));
             }
             setParsedData(response.data.data);

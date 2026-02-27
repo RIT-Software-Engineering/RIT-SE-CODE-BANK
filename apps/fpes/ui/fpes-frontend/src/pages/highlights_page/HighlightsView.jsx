@@ -1,11 +1,19 @@
 import "./HighlightsView.css"
+import { Button } from "@mui/material";
 
 export default function HighlightsView({formData}){
     console.log(formData);
 
+    const handleViewPDF = () => {
+        window.open(`http://localhost:3000/file/pdf/${formData.highlights.form_id}`, '_blank');
+    };
+
     return (
         <div style={{margin: "auto", overflow : "scroll", maxWidth:"800px", maxHeight:"400px"}}>
-            <h1>Highlights Statement for Calendar Year <i>{formData.highlights.last_saved.match(/^\d{4}/)}</i></h1>
+            <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+                <h1>Highlights Statement for Calendar Year <i>{formData.highlights.last_saved.match(/^\d{4}/)}</i></h1>
+                <Button variant="outlined" onClick={handleViewPDF}>View Original PDF</Button>
+            </div>
      
             <table>
                 <tbody>

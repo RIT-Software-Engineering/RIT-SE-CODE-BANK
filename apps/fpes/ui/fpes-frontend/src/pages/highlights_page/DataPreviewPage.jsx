@@ -34,7 +34,11 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
         const { pdfData, ...dataToSave } = formData;
         
         try {
-            await axios.post("http://localhost:3000/highlights/parsed", { ...dataToSave, faculty_id: facultyId });
+            await axios.post("http://localhost:3000/highlights/parsed", { 
+                ...dataToSave, 
+                faculty_id: facultyId,
+                pdf_data: pdfData || null
+            });
             alert("Data saved successfully");
             closeModal();
         } catch (error) {
