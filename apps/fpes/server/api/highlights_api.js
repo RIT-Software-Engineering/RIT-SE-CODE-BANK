@@ -38,9 +38,10 @@ async function getHighlightByFacultyId(facultyId){
   let connection;
   try {
     connection = await pool.getConnection();
-    const rows = await connection.query('SELECT forms.id, forms.time_submitted FROM forms INNER JOIN highlights ON forms.id = highlights.form_id WHERE forms.faculty_information_id = ?', [facultyId]);
-    console.log(rows);
-    return rows;
+    return await connection.query(
+      'SELECT forms.id, forms.time_submitted FROM forms INNER JOIN highlights ON forms.id = highlights.form_id WHERE forms.faculty_information_id = ?', 
+      [facultyId]
+    );
   } finally {
     if (connection) connection.release();
   }
@@ -51,9 +52,7 @@ async function getHighlightByFormId(formId){
   let connection;
   try {
     connection = await pool.getConnection();
-    const result = await connection.query(`SELECT * FROM highlights WHERE form_id = ?`, [formId]);
-    console.log(result);
-    return result;
+    return await connection.query('SELECT * FROM highlights WHERE form_id = ?', [formId]);
   } finally {
     if (connection) connection.release();
   }
@@ -128,98 +127,70 @@ async function deleteHighlight(id) {
   }
 }
 
-// SUBMISSION
-// This is the function that handles the logic for the highlights form submission
-// It converts the data into the expected format for the database as well as performs the creation of
-// the dynamic elements of the form (ie. services, publications, etc.)
+// SUBMISSION: Handle highlights form submission with all related data
 async function submitHighlightsForm(formData){
-  console.log(formData)
-  // Add record for student support
+  // Create student support record
   const result = await student_support_api.addStudentSupport(formData.student_support);
   const student_support_id = result[0].id;
   
-  formData.student_support_id = student_support_id;
-  formData.type = "Highlights";
-
-  // Create Form Record
-  const form_response = await createForm(formData);
+  // Create form record with PDF data
+  const pdfBuffer = formData.pdf_data ? Buffer.from(formData.pdf_data, 'base64') : null;
+  const form_response = await createForm({
+    faculty_information_id: formData.faculty_information_id,
+    isSubmission: formData.isSubmission,
+    pdf_data: pdfBuffer
+  });
   const form_id = form_response[0].id;
-  formData.form_id = form_id;
 
-  // Create Highlights Form Record
-  const highlights_response = await addHighlight(formData);
-  console.log("Succesfully Created Form");
+  // Create highlights record
+  await addHighlight({
+    form_id,
+    student_support_id,
+    collaborations_section: formData.collaborations_section,
+    professional_development: formData.professional_development,
+    significant_outcomes: formData.significant_outcomes
+  });
 
-  // Create Course Sections Records and assign course sections
-  for(let course_section of formData.course_sections){
-    course_section.form_id = form_id;
+  // Add course sections
+  for(const course_section of formData.course_sections){
     course_section.days_of_the_week = course_sections_api.getDaysOfTheWeek(course_section.days_of_the_week);
     course_section.course_id = course_section.course.value;
-    course_section.year = course_section.year.match(/^\d{4}/)[0]; //Extracts the year from the timestamp object
+    course_section.year = course_section.year.match(/^\d{4}/)[0];
     const res = await course_sections_api.createCourseSection(course_section);
-    const course_section_id = res[0].id;
-    // Adds Course Section to Form Relationship Table
-    await forms_to_dynamics_api.assignCourseSectionToForm(form_id, course_section_id);
+    await forms_to_dynamics_api.assignCourseSectionToForm(form_id, res[0].id);
   }
 
-  console.log("Successfully Added Course Sections")
-
-  // Create Services Records
-  for(let service of formData.services){
-    service.form_id = form_id;
+  // Add services
+  for(const service of formData.services){
     const res = await services_api.createService(service);
-    const service_id = res[0].id;
-    // Adds Service to Form Relationship Table
-    await forms_to_dynamics_api.assignServiceToForm(form_id, service_id);
+    await forms_to_dynamics_api.assignServiceToForm(form_id, res[0].id);
   }
 
-  console.log("Successfully Added Services")
-
-  // Create Grants Records
-  for(let grant of formData.grants){
-    grant.form_id = form_id;
+  // Add grants
+  for(const grant of formData.grants){
     const res = await grants_api.addGrant(grant);
-    console.log(res);
-    const grant_id = res[0].grant_id;
-    // Adds Grant to Form Relationship Table
-    await forms_to_dynamics_api.assignGrantToForm(form_id, grant_id);
+    await forms_to_dynamics_api.assignGrantToForm(form_id, res[0].grant_id);
   }
-
-  console.log("Successfully Added Grants")
   
-  // Create Publications Records
-  for(let publication of formData.publications){
-    publication.form_id = form_id;
+  // Add publications
+  for(const publication of formData.publications){
     publication.date_published = publication.date_published.match(/^\d{4}-\d{2}-\d{2}/)[0];
     const res = await publications_api.createPublication(publication);
-    const publication_id = res[0].id;
-    // Adds Publication to Form Relationship Table
-    await forms_to_dynamics_api.assignPublicationToForm(form_id, publication_id);
+    await forms_to_dynamics_api.assignPublicationToForm(form_id, res[0].id);
   }
-  
-  console.log("Successfully Added Publications")
-
-  return;
 }
 
-// Reset
+// Reset highlights table
 async function resetHighlightsTable(){
     let connection;
     try {
-        // Read sql file that rebuilds highlights table and inserts test data
-        const resetQuery = await fs.readFileSync("sql/highlights.sql", 'utf-8');
-        // Splits file into multiple queries
-        let queries = resetQuery.split(';');
-        // Removes the empty query at the end
-        queries.pop();
+        const resetQuery = fs.readFileSync("sql/highlights.sql", 'utf-8');
+        const queries = resetQuery.split(';').filter(q => q.trim());
 
         connection = await pool.getConnection();
-        let results = [];
         for (const query of queries){
             await connection.query(query);
         }
-
-        return;
     } finally {
         if (connection) connection.release();
     } 

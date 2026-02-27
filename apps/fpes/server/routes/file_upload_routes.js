@@ -3,12 +3,11 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { parsePDF, parseCSV } = require('../api/file_parser_api');
+const { getFormPDF } = require('../api/forms_api');
 
 const router = express.Router();
-
-// Ensure uploads directory exists
-// Under apps\fpes\server\uploads
 const uploadsDir = path.join(__dirname, '../uploads');
+
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
 }
@@ -16,10 +15,8 @@ if (!fs.existsSync(uploadsDir)) {
 const upload = multer({ dest: uploadsDir });
 
 router.post('/upload', upload.single('file'), async (req, res) => {
-    console.log('File upload request received');
     try {
         if (!req.file) {
-            console.log('No file in request');
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
@@ -28,17 +25,13 @@ router.post('/upload', upload.single('file'), async (req, res) => {
             return res.status(400).json({ error: 'faculty_id is required' });
         }
 
-        console.log('File received:', req.file.originalname, 'for faculty:', faculty_id);
         const filePath = req.file.path;
         const fileExt = path.extname(req.file.originalname).toLowerCase();
-
         let parsedData;
 
         if (fileExt === '.pdf') {
             parsedData = await parsePDF(filePath);
-            const pdfBuffer = fs.readFileSync(filePath);
-            const pdfBase64 = pdfBuffer.toString('base64');
-            parsedData.pdfData = pdfBase64;
+            parsedData.pdfData = fs.readFileSync(filePath).toString('base64');
         } else if (fileExt === '.csv') {
             parsedData = await parseCSV(filePath);
         } else {
@@ -52,23 +45,24 @@ router.post('/upload', upload.single('file'), async (req, res) => {
             success: true,
             filename: req.file.originalname,
             data: parsedData,
-            faculty_id: faculty_id
+            faculty_id
         });
-
-        
-
     } catch (error) {
         console.error('Error parsing file:', error);
         res.status(500).json({ error: 'Failed to parse file: ' + error.message });
     }
 });
 
-router.get('/pdf/:filename', (req, res) => {
-    const filePath = path.join(uploadsDir, req.params.filename);
-    if (fs.existsSync(filePath)) {
-        res.sendFile(filePath);
-    } else {
-        res.status(404).json({ error: 'PDF not found' });
+router.get('/pdf/:formId', async (req, res) => {
+    try {
+        const pdfData = await getFormPDF(req.params.formId);
+        if (!pdfData) {
+            return res.status(404).json({ error: 'PDF not found' });
+        }
+        res.contentType('application/pdf');
+        res.send(pdfData);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to retrieve PDF' });
     }
 });
 
