@@ -1,3 +1,7 @@
+// This component is no longer used. HighlightsViewModal now uses DataPreviewPage instead.
+// Keeping this file for reference in case the old format is needed.
+
+/*
 import "./HighlightsView.css"
 import { Button } from "@mui/material";
 
@@ -195,3 +199,4 @@ export default function HighlightsView({formData}){
         </div>
     )
 }
+*/

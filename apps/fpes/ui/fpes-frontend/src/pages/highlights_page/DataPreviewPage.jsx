@@ -1,11 +1,10 @@
-import { Modal, Box, Button, TextField, Typography, Paper, IconButton, colors } from "@mui/material";
+import { Modal, Box, Button, TextField, Typography, Paper, IconButton } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import { useState, useEffect } from "react";
 import axios from "axios";
 import FundingTable from "./FundingTable";
 
-export default function DataPreviewModal({ isOpen, closeModal, parsedData, facultyId, pdfUrl }) {
-    console.log("DataPreviewModal received:", parsedData);
+export default function DataPreviewModal({ isOpen, closeModal, parsedData, facultyId, pdfUrl, readOnly = false, formId = null }) {
     const [formData, setFormData] = useState(() => ({
         ...(parsedData || {}),
         scholarship: parsedData?.scholarship ?? []
@@ -19,27 +18,29 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
             });
         }
     }, [parsedData]);
-    
-    console.log("formData state:", formData);
-    console.log("scholarship value:", formData.scholarship);
-    console.log("service_hours value:", formData.service_hours);
 
     const handleChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
     };
 
     const handleSave = async () => {
-        console.log("Saving data:", formData);
-        
         const { pdfData, ...dataToSave } = formData;
         
         try {
-            await axios.post("http://localhost:3000/highlights/parsed", { 
-                ...dataToSave, 
-                faculty_id: facultyId,
-                pdf_data: pdfData || null
-            });
-            alert("Data saved successfully");
+            if (formId) {
+                await axios.put(`http://localhost:3000/highlights/parsed/${formId}`, { 
+                    ...dataToSave, 
+                    faculty_id: facultyId
+                });
+                alert("Data updated successfully");
+            } else {
+                const result = await axios.post("http://localhost:3000/highlights/parsed", { 
+                    ...dataToSave, 
+                    faculty_id: facultyId,
+                    pdf_data: pdfData || null
+                });
+                alert(result.data.replaced ? "Identical PDF found - existing form replaced" : "Data saved successfully");
+            }
             closeModal();
         } catch (error) {
             console.error("Save failed:", error);
@@ -65,42 +66,57 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                 
                 <h3>Basic Information</h3>
                 <TextField fullWidth label="Name" value={formData.name || ''} 
-                    onChange={(e) => handleChange('name', e.target.value)} sx={{ mb: 2 }} />
+                    onChange={(e) => handleChange('name', e.target.value)} 
+                    sx={{ mb: 2 }} 
+                    disabled={readOnly} />
                 
                 <TextField fullWidth label="Rank" value={formData.rank || ''} 
-                    onChange={(e) => handleChange('rank', e.target.value)} sx={{ mb: 2 }} />
+                    onChange={(e) => handleChange('rank', e.target.value)} 
+                    sx={{ mb: 2 }} 
+                    disabled={readOnly} />
                 
                 <TextField fullWidth label="Unit" value={formData.unit || ''} 
-                    onChange={(e) => handleChange('unit', e.target.value)} sx={{ mb: 2 }} />
+                    onChange={(e) => handleChange('unit', e.target.value)} 
+                    sx={{ mb: 2 }} 
+                    disabled={readOnly} />
                 
                 <TextField fullWidth label="Affiliations" value={formData.affiliations || ''} 
-                    onChange={(e) => handleChange('affiliations', e.target.value)} sx={{ mb: 2 }} />
+                    onChange={(e) => handleChange('affiliations', e.target.value)} 
+                    sx={{ mb: 2 }} 
+                    disabled={readOnly} />
                 
                 <TextField fullWidth label="Period" value={formData.period || ''} 
-                    onChange={(e) => handleChange('period', e.target.value)} sx={{ mb: 2 }} />
+                    onChange={(e) => handleChange('period', e.target.value)} 
+                    sx={{ mb: 2 }} 
+                    disabled={readOnly} />
                 
                 <h3>Scholarship</h3>
-                <FundingTable rows={formData.scholarship ?? []}></FundingTable>
-              
+                <FundingTable rows={formData.scholarship ?? []} />
                 
                 <h3>Teaching</h3>
                 <TextField fullWidth multiline rows={6} 
                     value={formData.teaching || ''} 
-                    onChange={(e) => handleChange('teaching', e.target.value)} sx={{ mb: 2 }} />
+                    onChange={(e) => handleChange('teaching', e.target.value)} 
+                    sx={{ mb: 2 }} 
+                    disabled={readOnly} />
                 
                 <h3>Service {formData.service_hours && <span style={{ color: "#555" }}>| Total hours:({formData.service_hours})</span>}</h3>
                 <TextField fullWidth multiline rows={6} 
                     value={formData.service || ''} 
-                    onChange={(e) => handleChange('service', e.target.value)} sx={{ mb: 2 }} />
+                    onChange={(e) => handleChange('service', e.target.value)} 
+                    sx={{ mb: 2 }} 
+                    disabled={readOnly} />
                 
                 <h3>Administrative</h3>
                 <TextField fullWidth multiline rows={6} 
                     value={formData.administrative || ''} 
-                    onChange={(e) => handleChange('administrative', e.target.value)} sx={{ mb: 2 }} />
+                    onChange={(e) => handleChange('administrative', e.target.value)} 
+                    sx={{ mb: 2 }} 
+                    disabled={readOnly} />
                 
                 <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                    <Button variant="contained" onClick={handleSave}>Save</Button>
-                    <Button variant="outlined" onClick={closeModal}>Cancel</Button>
+                    {!readOnly && <Button variant="contained" onClick={handleSave}>Save</Button>}
+                    <Button variant="outlined" onClick={closeModal}>{readOnly ? 'Close' : 'Cancel'}</Button>
                 </Box>
             </Paper>
         </Modal>

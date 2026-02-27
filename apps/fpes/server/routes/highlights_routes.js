@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db'); 
 const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highlights_api');
-const { saveParsedHighlights } = require('../api/parsed_highlights_api');
+const { saveParsedHighlights, updateParsedHighlights } = require('../api/parsed_highlights_api');
 
 // GET all
 router.get('/', async (_req, res) => {
@@ -24,11 +24,40 @@ router.get("/submitted_by/:facultyID", async(req, res) => {
   try{
     const facultyID = req.params.facultyID;
     const results = await getHighlightByFacultyId(facultyID);
-    // Only return data for the requested faculty
     return res.send(results);
   } catch (err){
     console.error(err)
     return res.status(500).json({ error : "Failed to get highlights forms"})
+  }
+});
+
+router.post("/parsed", async (req, res) => {
+  try {
+    const { faculty_id } = req.body;
+    if (!faculty_id) {
+      return res.status(400).json({ error: 'faculty_id is required' });
+    }
+    const result = await saveParsedHighlights(req.body);
+    res.json({ 
+      success: true, 
+      id: result.id, 
+      formId: result.formId,
+      replaced: result.replaced 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save parsed data" });
+  }
+});
+
+router.put("/parsed/:formId", async (req, res) => {
+  try {
+    const { formId } = req.params;
+    const result = await updateParsedHighlights(formId, req.body);
+    res.json({ success: true, formId: result.formId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update parsed data" });
   }
 });
 
@@ -161,20 +190,6 @@ router.post("/draft", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to save draft" });
-  }
-});
-
-router.post("/parsed", async (req, res) => {
-  try {
-    const { faculty_id } = req.body;
-    if (!faculty_id) {
-      return res.status(400).json({ error: 'faculty_id is required' });
-    }
-    const result = await saveParsedHighlights(req.body);
-    res.json({ success: true, id: result.insertId });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to save parsed data" });
   }
 });
 

@@ -30,7 +30,43 @@ function mapGrantStatus(status) {
 async function saveParsedHighlights(data) {
     const conn = await pool.getConnection();
     try {
-        // Update faculty affiliations if provided
+        const pdfBuffer = data.pdf_data ? Buffer.from(data.pdf_data, 'base64') : null;
+        
+        // Check if identical content already exists for this faculty
+        const existingForms = await conn.query(
+            `SELECT h.form_id, h.teaching_section, h.service_section, h.administrative_responsibilities 
+             FROM highlights h 
+             JOIN forms f ON h.form_id = f.id 
+             WHERE f.faculty_information_id = ?`,
+            [data.faculty_id]
+        );
+        
+        for (const form of existingForms) {
+            if (form.teaching_section === (data.teaching || '') &&
+                form.service_section === (data.service || '') &&
+                form.administrative_responsibilities === (data.administrative || '')) {
+                // Identical content found - update instead of create
+                if (data.affiliations !== undefined) {
+                    await conn.query(
+                        'UPDATE faculty_information SET affiliations = ? WHERE faculty_id = ?',
+                        [data.affiliations || null, data.faculty_id]
+                    );
+                }
+                
+                await conn.query(
+                    'UPDATE highlights SET service_hours = ?, last_saved = NOW() WHERE form_id = ?',
+                    [data.service_hours, form.form_id]
+                );
+                
+                if (pdfBuffer) {
+                    await conn.query('UPDATE forms SET pdf_data = ? WHERE id = ?', [pdfBuffer, form.form_id]);
+                }
+                
+                return { success: true, formId: form.form_id, replaced: true };
+            }
+        }
+        
+        // No duplicate found - create new form
         if (data.affiliations !== undefined) {
             await conn.query(
                 'UPDATE faculty_information SET affiliations = ? WHERE faculty_id = ?',
@@ -38,21 +74,17 @@ async function saveParsedHighlights(data) {
             );
         }
         
-        // Create form with PDF data
-        const pdfBuffer = data.pdf_data ? Buffer.from(data.pdf_data, 'base64') : null;
         const formResult = await conn.query(
             'INSERT INTO forms (faculty_information_id, time_submitted, pdf_data) VALUES (?, NOW(), ?)',
             [data.faculty_id, pdfBuffer]
         );
         const formId = Number(formResult.insertId);
         
-        // Create student support record
         const studentSupportResult = await conn.query(
             'INSERT INTO student_support (other_contributions) VALUES (\'\')'
         );
         const studentSupportId = Number(studentSupportResult.insertId);
         
-        // Save grants if provided
         if (data.scholarship && Array.isArray(data.scholarship)) {
             for (const grant of data.scholarship) {
                 const grantData = {
@@ -80,16 +112,38 @@ async function saveParsedHighlights(data) {
             }
         }
         
-        // Create highlights record
         const result = await conn.query(
-            'INSERT INTO highlights (form_id, student_support_id, administrative_responsibilities, professional_development, last_saved) VALUES (?, ?, ?, ?, NOW())',
-            [formId, studentSupportId, data.administrative, data.service]
+            'INSERT INTO highlights (form_id, student_support_id, administrative_responsibilities, professional_development, teaching_section, service_section, service_hours, last_saved) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
+            [formId, studentSupportId, data.administrative, data.professional_development, data.teaching, data.service, data.service_hours]
         );
         
-        return { success: true, id: Number(result.insertId), formId };
+        return { success: true, id: Number(result.insertId), formId, replaced: false };
     } finally {
         conn.release();
     }
 }
 
-module.exports = { saveParsedHighlights };
+async function updateParsedHighlights(formId, data) {
+    const conn = await pool.getConnection();
+    try {
+        // Update faculty affiliations if provided
+        if (data.affiliations !== undefined) {
+            await conn.query(
+                'UPDATE faculty_information SET affiliations = ? WHERE faculty_id = ?',
+                [data.affiliations || null, data.faculty_id]
+            );
+        }
+        
+        // Update highlights record
+        await conn.query(
+            'UPDATE highlights SET administrative_responsibilities = ?, professional_development = ?, teaching_section = ?, service_section = ?, service_hours = ?, last_saved = NOW() WHERE form_id = ?',
+            [data.administrative, data.professional_development, data.teaching, data.service, data.service_hours, formId]
+        );
+        
+        return { success: true, formId };
+    } finally {
+        conn.release();
+    }
+}
+
+module.exports = { saveParsedHighlights, updateParsedHighlights };

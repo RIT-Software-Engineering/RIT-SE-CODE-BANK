@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import HighlightsViewModal from "./HighlightsViewModal";
 import AddFileModal from "./AddFilePage";
 
-export default function HighlightsPage({facultyId}){
+export default function HighlightsPage({facultyId, isAdmin = false}){
     const [highlights, setHighlights] = useState([]);
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [viewModalForm, setViewModalForm] = useState({});
@@ -59,7 +59,14 @@ export default function HighlightsPage({facultyId}){
             initialState={{ pagination: { paginationModel } }}
         />
         </Paper>
-        <HighlightsViewModal formData={viewModalForm} isOpen={viewModalOpen} closeModal={() => setViewModalOpen(false)} onOverwrite={() => { setViewModalOpen(false); setAddFileModalOpen(true); }}/>
+        <HighlightsViewModal 
+            formData={viewModalForm} 
+            isOpen={viewModalOpen} 
+            closeModal={() => setViewModalOpen(false)} 
+            onOverwrite={() => { setViewModalOpen(false); setAddFileModalOpen(true); }}
+            currentUserId={facultyId}
+            isAdmin={isAdmin}
+        />
         <AddFileModal isOpen={addFileModalOpen} closeModal={() => { setAddFileModalOpen(false); loadHighlights(); }} facultyId={facultyId}/>
         </div>
     )
