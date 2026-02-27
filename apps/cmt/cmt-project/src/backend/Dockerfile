@@ -23,7 +23,8 @@ ENV DATABASE_URL=$DATABASE_URL
 
 # Generate Prisma client using the shared schema
 WORKDIR /app/src/backend
-RUN npx prisma generate --schema=../prisma/schema.prisma
+# schema lives two levels up from backend directory
+RUN npx prisma generate --schema=../../prisma/schema.prisma
 
 EXPOSE 5010
 
