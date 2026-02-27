@@ -229,6 +229,34 @@ export class CPU {
                 break;
             case 'DEC':
                 this.dec(oper.dst);
+                break;
+            case 'TST':
+                this.tst(oper.dst);
+                break;
+            case 'JMP':
+                this.jmp(oper.dst);
+                break;
+            case 'BR':
+                this.br(oper);
+                break;
+            case 'BNE':
+                this.bne(oper);
+                break;
+            case 'BEQ':
+                this.beq(oper);
+                break;
+            case 'BGE':
+                this.bge(oper);
+                break;
+            case 'BGT':
+                this.bgt(oper);
+                break;
+            case 'BLE':
+                this.ble(oper);
+                break;
+            case 'BLT':
+                this.blt(oper);
+                break;
         }
     }
 
@@ -238,7 +266,7 @@ export class CPU {
 
         this.N = (result & 0x8000) !== 0;
         this.Z = result === 0;
-        this.V = 0;
+        this.V = false;
         //C is not affected by move
     }
 
@@ -260,7 +288,7 @@ export class CPU {
 
         this.N = (bitValue & 0x8000) !== 0;
         this.Z = bitValue === 0;
-        this.V = 0;
+        this.V = false;
         //C is not affected by bit test
     }
 
@@ -272,7 +300,7 @@ export class CPU {
 
         this.N = (bicValue & 0x8000) !== 0;
         this.Z = bicValue === 0;
-        this.V = 0;
+        this.V = false;
         //C is not affected by bit clear
     }
 
@@ -284,7 +312,7 @@ export class CPU {
 
         this.N = (bisValue & 0x8000) !== 0;
         this.Z = bisValue === 0;
-        this.V = 0;
+        this.V = false;
         //C is not affected by bit set
     }
 
@@ -316,10 +344,10 @@ export class CPU {
     clr(dst) {
         dst.write(0);
 
-        this.N = 0;
-        this.Z = 1;
-        this.V = 0;
-        this.C = 0;
+        this.N = false;
+        this.Z = true;
+        this.V = false;
+        this.C = false;
     }
 
     inc(dst) {
@@ -344,4 +372,75 @@ export class CPU {
         //C is not affected by decrement
     }
 
+    //Used to test if a value is either negative or zero
+    tst(dst) {
+        const tstValue = dst.value & 0xFFFF;
+
+        this.N = (tstValue & 0x8000) !== 0;
+        this.Z = tstValue === 0;
+        this.V = false; //Inserted value could not be greater or less than max or minimum
+        this.C = false; //Cannot require a carry
+    }
+
+    //Used to jump the program counter to the new destination address
+    jmp(dst) {
+        this.registers[REG.PC] = dst.address & 0xFFFF;
+
+        //NZVC all remain unaffected
+    }
+
+    //Used to create a branch
+    br(oper) {
+        const pc = this.registers[REG.PC];
+        const displacement = oper.offset << 1;
+
+        this.registers[REG.PC] = (pc + displacement) & 0xFFFF;
+
+        //NZVC all remain unaffected
+    }
+
+    //Used to create a branch if the zero flag is not set
+    bne(oper) {
+        if(this.Z !== true) {
+            this.br(oper);
+        }
+        //NZVC all remain unaffected
+    }
+
+    //Used to create a branch if the zero flag is set
+    beq(oper) {
+        if(this.Z === true) {
+            this.br(oper);
+        }
+        //NZVC all remain unaffected
+    }
+
+    //Creates a branch if the zero and overflow flags are the same value
+    bge(oper) {
+        if(this.Z === this.V) {
+            this.br(oper);
+        }
+        //NZVC all remain unaffected
+    }
+
+    bgt(oper) {
+        if(this.Z === false && (this.V === this.N)) {
+            this.br(oper);
+        }
+        //NZVC all remain unaffected
+    }
+
+    ble(oper) {
+        if(this.Z === true || (this.N !== this.V)) {
+            this.br(oper);
+        }
+        //NZVC all remain unaffected
+    }
+
+    blt(oper) {
+        if(this.V ^ this.N) {
+            this.br(oper);
+        }
+        //NZVC all remain unaffected
+    }
 }
