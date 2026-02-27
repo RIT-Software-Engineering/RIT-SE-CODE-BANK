@@ -46,18 +46,23 @@ export function RichTextEditor({ value, onChange }) {
   });
 
   // Used purely just to update button state correctly when pressed or keyboard shortcut
-  const [x, setRerender] = useState(0);
+  const [_, setRerender] = useState(0);
   useEffect(() => {
     if (!editor) return;
 
-    editor.on('selectionUpdate', () => {
-      setRerender( x + 1); 
-    });
+    const handleUpdate = () => {
+      setRerender(prev => prev + 1);
+    }
+    
+    editor.on('selectionUpdate', handleUpdate);
+    editor.on('transaction', handleUpdate);
 
-    editor.on('transaction', () => {
-      setRerender( x + 1);
-    });
-  }, [x, editor]);
+    return () => {
+      editor.off('selectionUpdate', handleUpdate);
+      editor.off('transaction', handleUpdate);
+    }
+
+  }, [editor]);
 
   const setLink = useCallback(() => {
     const previousUrl = editor.getAttributes('link').href;
@@ -276,7 +281,7 @@ export function RichTextEditor({ value, onChange }) {
       </Accordion>
 
       {/* Editor */}
-      <div className="border pl-2 prose w-full">
+      <div className="border pl-2 prose min-w-full">
         <EditorContent editor={editor}/>
       </div>
     </div>
