@@ -48,6 +48,9 @@ export function CourseDashboard() {
                 <Session sessionCount={sessionCount} setSessionCount={setSessionCount} sessions={sessions} setSessions={setSessions}/>
                 <div className='flex justify-end pt-4'>
                     <Button onClick={() => {
+                        /** Makes a post request to add the session with no material.
+                         * ID is the class ID to identify where it belongs in the future
+                         */
                        CMTFetch('POST', 'session', {sessionCount, id}).then(async response=>{
                         const data = await response.json();
                         setSessionCount(sessionCount+1);
@@ -246,12 +249,10 @@ function InlineActionRenderer({ actionWithCallback, course, metadata, refresh })
  * @returns {*} the session accordion as HTML
  */
 function Session({sessionCount, setSessionCount, sessions, setSessions}) {
-    //TODO add implementation with the backend to hold and maintain session data
-
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
-     * column - the column where the material should go
+     * type - the column where the material should go
      * label - the title of the material
      * body - the content of the material
      */
@@ -260,6 +261,11 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
     const [sessionNum, setSessionNum] = useState(0);
     const { id } = useParams();
 
+    /**
+     * Initial GET request upon loading the page
+     * Sets the correct amount of sessions and the actual sessions themselves with useful data
+     * Also gets material if there is any and puts it in each session
+     */
     const update = useCallback(() => {
         return CMTFetch('GET', `session/${id}`).then(async response => {
             const data = await response.json()
@@ -323,6 +329,10 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
     const [itemBody, setItemBody] = useState('');
     const [itemType, setItemType] = useState('Topic/Lecture');
 
+    /** Makes a post request and updates the session data.
+     * Is it a little weird that it uses id and sessionNum? Yeah probably but it works
+     * If prisma has views you can use that but I wasn't aware of them if so when writing this
+     */
     function uploadSessionMaterial(){
         const id = sessions.find(session => session.sessionNum === (sessionNum+1)).id
         CMTFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(() =>
