@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTFetch } from '../../utils/api'
 import { Edit, X, Check, ArrowLeft } from 'lucide-react'
-import { Accordion, Button, Card, Form, Modal, Table} from 'react-bootstrap'
+import { Accordion, Button, Card, Form, Modal, Table } from 'react-bootstrap'
 import { OutputRenderer } from '../../components/workflows/OutputRenderers'
 import {RichTextEditor} from '../../components/RichTextEditor'
 
@@ -310,6 +310,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
     const [itemType, setItemType] = useState('Topic/Lecture');
+    const [warningVisible, setWarningVisible] = useState(false);
 
     //TODO Make POST request to save session material
     function uploadSessionMaterial(){
@@ -325,6 +326,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
         setItemType('Topic/Lecture');
         setItemLabel('');
         setItemBody('');
+        setWarningVisible(false);
     }
 
     return (
@@ -332,6 +334,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
             resetForm();}} centered size='lg'>
                 <Modal.Header closeButton>Add Material</Modal.Header>
                 <Modal.Body>
+                    <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Please create a title for the material!</div>
                     <Form onSubmit={uploadSessionMaterial}>
                         <div className='flex'>
                             <div className='w-full'>
@@ -366,6 +369,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                                 setIsOpen(false);
                                 resetForm();
                             }
+                            else setWarningVisible(true);
                             }}>Submit</Button>
                         </div>
                     </Form>
