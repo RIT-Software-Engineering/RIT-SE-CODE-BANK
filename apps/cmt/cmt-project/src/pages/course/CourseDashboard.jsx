@@ -5,6 +5,7 @@ import { CMTFetch } from '../../utils/api'
 import { Edit, X, Check, ArrowLeft } from 'lucide-react'
 import { Accordion, Button, Card, Form, Modal, Table } from 'react-bootstrap'
 import { OutputRenderer } from '../../components/workflows/OutputRenderers'
+import {RichTextEditor} from '../../components/RichTextEditor'
 
 export function CourseDashboard() {
     const { id } = useParams()
@@ -277,7 +278,8 @@ function Session({sessionCount, courseId}) {
                         <Card>
                             <Card.Body>
                                 <Card.Title>{sessionData.find(data => data.sessionNum === i && data.column==="Personal Notes").label} (Notes)</Card.Title>
-                                <Card.Text>{sessionData.find(data => data.sessionNum === i && data.column==="Personal Notes").body}</Card.Text>
+                                <Card.Text>
+                                    <span className="prose" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.column==="Personal Notes").body}}></span></Card.Text>
                             </Card.Body>
                         </Card> : <></>
                         }
@@ -354,9 +356,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                                 </div>
                                 <div>
                                 <Form.Label>Content</Form.Label>
-                                <Form.Control as="textarea" onChange={(e)=>setItemBody(e.target.value)}>
-                                    {/* TODO Replace this with Rich Text Editor */}
-                                </Form.Control>
+                                <RichTextEditor value={itemBody} onChange={setItemBody}/>
                                 </div>
                             </div>
                         </div>
