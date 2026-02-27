@@ -124,7 +124,7 @@ export default function AdminApplicationsPage() {
   useEffect(() => {
     if (currentUser) {
       updateAllApplicationsView(searchTerm, searchBy, appliedFilters);
-      
+
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
@@ -151,7 +151,7 @@ export default function AdminApplicationsPage() {
   // and we're on the Ready to Hire tab and the application is present.
   useEffect(() => {
     if (didAutoOpenFromLink.current) return;
-    
+
     const appIdParam = searchParams.get('applicationId');
     if (!appIdParam) return;
 
@@ -175,7 +175,7 @@ export default function AdminApplicationsPage() {
     if (!appIdParam) return;
 
     // Wait for data to load based on active tab
-    if (loading|| hiringLoading) return;
+    if (loading || hiringLoading) return;
 
     const el = document.getElementById(`application-${appIdParam}`);
     if (el) {
@@ -435,7 +435,7 @@ export default function AdminApplicationsPage() {
                               onHire={() => handleOpenHireModal(app)}
                               isHighlighted={String(searchParams.get('applicationId') || '') === String(app.id)}
                             />
-                            </Box>
+                          </Box>
                         ))
                       ) : (
                         <Typography sx={{ p: 2 }}>No matching applications for this position.</Typography>
@@ -525,11 +525,13 @@ export default function AdminApplicationsPage() {
         {/* Conditionally render content based on user role */}
         {currentUser && currentUser.role === 'ADMIN' ? (
           <>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-              
-            </Box>
+            {/* Main Content Paper */}
 
-            {renderAllApplicationsTab()}
+            <Box elevation={2} sx={{px:{lg:16},  m: { xs: 2, md: 4} }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4, flexWrap: 'wrap' }}>
+                {renderAllApplicationsTab()}
+              </Box>
+            </Box>
           </>
         ) : (
           <Paper sx={{ p: 4, textAlign: 'center' }}>

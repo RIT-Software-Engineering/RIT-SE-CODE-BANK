@@ -44,9 +44,8 @@ import {
 /**
  * Renders the main positions management page for Administrators.
  * This page provides a comprehensive view with three tabs:
- * 1. "All Open Positions": A public view of all available job positions.
- * 2. "My Created Positions": Positions created by the currently logged-in admin.
- * 3. "Manage All Positions": A view of all positions in the system for administrative actions.
+ * 1. "All Positions": A view of all job positions.
+ * 2. "Pending Positions": A view of all positions in the system needing approval
  */
 export default function AdminPositions() {
   // Core hooks for component references, authentication, and notifications.
@@ -57,15 +56,12 @@ export default function AdminPositions() {
   const { showNotification } = useNotification();
   const searchParams = useSearchParams();
 
-  // State for each of the three data tabs.
-  const [openPositions, setOpenPositions] = useState([]);
-  const [myPositions, setMyPositions] = useState([]);
   const [allPositions, setAllPositions] = useState([]);
 
   // Configuration for the tabs, linking them to their respective data states.
   const tabs = [
     { id: "all-positions", label: "All Positions", data: allPositions },
-    { id: "pending-positions", label: "Pending Positions", data: allPositions.filter(position => position.jobPositionStatus.includes('PENDING') )},
+    { id: "pending-positions", label: "Pending Positions", data: allPositions.filter(position => position.jobPositionStatus.includes('PENDING')) },
   ];
 
   // General state for loading, errors, and search/filter functionality.
@@ -130,11 +126,11 @@ export default function AdminPositions() {
 
   /**
    * A memoized value that determines which filters are visible based on the active tab.
-   * The 'status' filter is hidden on the "All Open Positions" tab since all positions there are 'Open'.
+   * The 'status' filter is hidden on the "Pending Positions" tab since all positions there are 'Pending'.
    * @returns {object[]} The array of filter configurations to be displayed.
    */
   const visibleFilters = useMemo(() => {
-    if (activeTab === 0) { // all-positions tab
+    if (activeTab === 1) { // pending-positions tab
       return filterConfig.filter((f) => f.id !== "status");
     }
     return filterConfig;
@@ -155,13 +151,9 @@ export default function AdminPositions() {
 
     try {
       let data;
-      if (tabId === "all-positions") {
-        data = await getOpenJobPositions(currentSearch, currentFilters, null);
-        setAllPositions(data);
-      } else if (tabId === "pending-positions") {
-        data = await getAllPositions(currentSearch, currentFilters);
-        setAllPositions(data);
-      }
+      data = await getAllPositions(currentSearch, currentFilters);
+      setAllPositions(data);
+
     } catch (err) {
       console.error(`Failed to fetch data for tab ${tabId}:`, err);
       setError(`Failed to load positions. Please try again later.`);
@@ -336,9 +328,10 @@ export default function AdminPositions() {
    * @param {string} newStatus - The new status to set (e.g., 'OPEN', 'REJECTED').
    */
   const handleStatusUpdate = async (jobId, newStatus) => {
+   
     setNoteModalState({
       isOpen: true,
-      title: newStatus === 'OPEN' ? 'Approve Position' : 'Reject Position',
+      title: `Change Position to ${newStatus}`,
       context: {
         action: 'statusUpdate',
         jobId,
@@ -346,6 +339,7 @@ export default function AdminPositions() {
       },
     });
   };
+
 
   /**
    * Handles the final confirmation from the note modal.
@@ -361,12 +355,12 @@ export default function AdminPositions() {
 
     try {
       if (action === 'statusUpdate') {
-        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment: note };
         await updatePositionStatus(context.jobId, context.newStatus, noteData);
         showNotification('Position status updated successfully!', 'success');
 
       } else if (action === 'update') {
-        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment: note };
         await updatePosition(context.jobId, context.positionData, noteData);
         showNotification('Position updated successfully!', 'success');
       }
@@ -378,6 +372,7 @@ export default function AdminPositions() {
       fetchData(activeTab, "", initialFilters);
 
     } catch (err) {
+      console.log(err)
       console.error("Failed to perform action:", err);
       showNotification(err.message || 'An unexpected error occurred.', 'error');
     } finally {
@@ -430,9 +425,15 @@ export default function AdminPositions() {
         onEdit={handleOpenModal}
         onApprove={(jobId) => handleStatusUpdate(jobId, 'OPEN')}
         onReject={(jobId) => handleStatusUpdate(jobId, 'REJECTED')}
+        onOnHold={(jobId) => handleStatusUpdate(jobId, 'ONHOLD')}
+        onInactive={(jobId) => handleStatusUpdate(jobId, 'INACTIVE')}
+        onReactivate={(jobId) => handleStatusUpdate(jobId, 'PENDING_APPROVAL')}
         showEditAction={true}
+        showInactive={true}
+        showOnHold={true}
+        showReactivate={true}
         showApproveRejectActions={activeTab === 1} // Only show approve/reject on "Pending" tab.
-        showTracker={true} 
+        showTracker={true}
       />
     ));
   };
