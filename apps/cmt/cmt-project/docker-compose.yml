@@ -49,7 +49,7 @@ services:
     # ensure backend waits for DB port to be open before starting
     entrypoint: ["sh", "-c", "\
       until nc -z mariadb 3306; do echo waiting for mariadb; sleep 1; done; \
-      node src/backend/server.js"]
+      node server.js"]
 
     restart: unless-stopped
   
