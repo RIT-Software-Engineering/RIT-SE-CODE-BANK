@@ -59,6 +59,7 @@ services:
       - "8080:80"    # bind to 8080 on the host to avoid conflicts
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    command: ["sh", "-c", "rm -f /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
     depends_on:
       - cmt-frontend
       - cmt-backend
