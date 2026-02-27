@@ -12,6 +12,7 @@ import courseRoutes from "./routes/course.js";
 import templateRoutes from "./routes/template.js";
 import makeTeamBuilderRouter from "./routes/teamBuilder.js";
 import workflowRoutes from "./routes/workflows.js";
+import sessionRoutes from './routes/session.js';
 
 import path from "path";
 import dotenv from "dotenv";
@@ -167,6 +168,7 @@ app.get("/", (req, res) => {
       templates: "/api/cmt/template",
       workflows: "/api/cmt/workflows",
       teamBuilder: "/api/cmt/team-builder",
+      session: "/api/cmt/session",
     },
   });
 });
@@ -178,6 +180,7 @@ app.use("/api/cmt/template", templateRoutes);
 app.use("/api/cmt/team-builder", teamBuilderRoutes);
 app.use("/api/cmt/course-website", courseWebsiteRoutes);
 app.use("/api/cmt/workflows", workflowRoutes);
+app.use("/api/cmt/session", sessionRoutes);
 
 // Legacy course routes (if not handled by courseRoutes)
 // get all courses from a professor
