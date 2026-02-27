@@ -40,6 +40,7 @@ services:
       dockerfile: apps/ta-portal/server/Dockerfile
       args:
         DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@${DB_HOST}:${DB_CONTAINER_PORT}/${DB_NAME}"
+        FRONTEND_URL: ${FRONTEND_URL}
     environment:
       DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@${DB_HOST}:${DB_CONTAINER_PORT}/${DB_NAME}" # Database access through the main user.
       PORT: ${BACK_HOST_PORT}
@@ -53,9 +54,9 @@ services:
       test: >
         sh -c "curl -f http://localhost:${BACK_HOST_PORT}/${NEXT_PUBLIC_API_EXTENSION}/health || curl -f -k https://localhost:${BACK_HOST_PORT}/${NEXT_PUBLIC_API_EXTENSION}/health"
       interval: 5s
-      timeout: 3s
+      timeout: 5s
       retries: 10
-      start_period: 15s
+      start_period: 20s
 
 volumes:
   ta_portal_mariadb_data: {} # Stores db info for when containers are reset or changed

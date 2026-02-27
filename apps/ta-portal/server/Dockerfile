@@ -21,6 +21,9 @@ ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate --schema=./apps/ta-portal/server/server/database/prisma/schema.prisma
 
+ARG FRONTEND_URL
+ENV FRONTEND_URL=$FRONTEND_URL
+
 # Copy the rest of the application
 COPY apps/ta-portal/server ./apps/ta-portal/server
 
