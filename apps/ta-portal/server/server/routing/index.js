@@ -58,6 +58,22 @@ router.use("/slack", async (req, res, next) => {
 // Mount dev notification and notifications API routes
 router.use('/dev', devNotifyRoutes);
 router.use('/notifications', notificationsApi);
+
+
+router.get("/health", async (req, res) => {
+  try {
+    res.status(200).json({
+      status: 'ok',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error'
+    });
+  }
+});
+
 // =============================================================================
 // EXPORTS
 // =============================================================================

@@ -26,6 +26,9 @@ COPY apps/ta-portal/server ./apps/ta-portal/server
 
 WORKDIR /app/apps/ta-portal/server
 
+COPY apps/ta-portal/server/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin//entrypoint.sh
+
 EXPOSE 3300
 
-CMD ["node", "main.js"]
+ENTRYPOINT sh /usr/local/bin/entrypoint.sh
