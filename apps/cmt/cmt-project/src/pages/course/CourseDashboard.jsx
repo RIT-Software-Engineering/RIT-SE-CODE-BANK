@@ -328,6 +328,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
     const [itemType, setItemType] = useState('Topic/Lecture');
+    const [warningVisible, setWarningVisible] = useState(false);
 
     /** Makes a post request and updates the session data.
      * Is it a little weird that it uses id and sessionNum? Yeah probably but it works
@@ -349,6 +350,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
         setItemType('Topic/Lecture');
         setItemLabel('');
         setItemBody('');
+        setWarningVisible(false);
     }
 
     return (
@@ -356,6 +358,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
             resetForm();}} centered size='lg'>
                 <Modal.Header closeButton>Add Material</Modal.Header>
                 <Modal.Body>
+                    <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Please create a title for the material!</div>
                     <Form onSubmit={uploadSessionMaterial}>
                         <div className='flex'>
                             <div className='w-full'>
@@ -390,6 +393,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                                 setIsOpen(false);
                                 resetForm();
                             }
+                            else setWarningVisible(true);
                             }}>Submit</Button>
                         </div>
                     </Form>
