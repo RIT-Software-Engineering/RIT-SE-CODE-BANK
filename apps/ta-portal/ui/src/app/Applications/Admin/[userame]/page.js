@@ -33,17 +33,12 @@ import {
   MenuItem,
   Paper,
   Select,
-  Tab,
-  Tabs,
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 /**
  * Renders the applications management page for Administrators.
- * Features two tabs:
- * 1. "Hire Candidates": Shows candidates who have accepted offers and are ready to be hired
- * 2. "All Applications": Shows all applications across the system with search and filter
  */
 export default function AdminApplicationsPage() {
   // Core hooks
@@ -52,31 +47,6 @@ export default function AdminApplicationsPage() {
   const filterRef = useRef();
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  // Initialize active tab from URL
-  const [activeTab, setActiveTab] = useState(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'all') return 1;
-    //if (tabParam === 'hiring') return 0;
-    // If we arrive via a deep link that includes application identifiers but
-    // no explicit tab, prefer landing on the "Ready to Hire" tab which is the
-    // typical admin action surface for notifications.
-    const hasDeepLink = !!(
-      searchParams.get('jobPositionId') || searchParams.get('applicationId')
-    );
-    return hasDeepLink ? 1 : 1;
-  });
-
-  // Watch for URL changes and update active tab
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'all') {
-      setActiveTab(1);
-    } else if (tabParam === 'hiring' || !tabParam) {
-      //setActiveTab(0);
-      setActiveTab(1);
-    }
-  }, [searchParams]);
 
   // State for Hire Candidates tab
   const [hiringApplications, setHiringApplications] = useState([]);
@@ -151,17 +121,13 @@ export default function AdminApplicationsPage() {
     }
   }, [currentUser]);
 
-  // Fetch data based on active tab
   useEffect(() => {
     if (currentUser) {
-      if (activeTab === 0) {
-        fetchHiringApplications();
-      } else if (activeTab === 1) {
-        updateAllApplicationsView(searchTerm, searchBy, appliedFilters);
-      }
+      updateAllApplicationsView(searchTerm, searchBy, appliedFilters);
+      
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, activeTab]);
+  }, [currentUser]);
 
   // If a user lands on the Admin route but is not an ADMIN, reroute them to
   // their role-correct Applications path while preserving query params.
@@ -185,8 +151,7 @@ export default function AdminApplicationsPage() {
   // and we're on the Ready to Hire tab and the application is present.
   useEffect(() => {
     if (didAutoOpenFromLink.current) return;
-    if (activeTab !== 0) return; // Only makes sense on Ready to Hire (tab 0)
-
+    
     const appIdParam = searchParams.get('applicationId');
     if (!appIdParam) return;
 
@@ -200,7 +165,7 @@ export default function AdminApplicationsPage() {
       didAutoOpenFromLink.current = true;
       handleOpenHireModal(target);
     }
-  }, [activeTab, searchParams, hiringApplications, hiringLoading]);
+  }, [searchParams, hiringApplications, hiringLoading]);
 
   // Auto-scroll to the deep-linked application card
   useEffect(() => {
@@ -210,8 +175,7 @@ export default function AdminApplicationsPage() {
     if (!appIdParam) return;
 
     // Wait for data to load based on active tab
-    if (activeTab === 0 && hiringLoading) return;
-    if (activeTab === 1 && loading) return;
+    if (loading|| hiringLoading) return;
 
     const el = document.getElementById(`application-${appIdParam}`);
     if (el) {
@@ -226,7 +190,7 @@ export default function AdminApplicationsPage() {
         el.focus({ preventScroll: true });
       }, 300);
     }
-  }, [activeTab, searchParams, hiringApplications, hiringLoading, displayData, loading]);
+  }, [searchParams, hiringApplications, hiringLoading, displayData, loading]);
 
   /**
    * Opens the hire confirmation modal and sets the selected application.
@@ -338,24 +302,6 @@ export default function AdminApplicationsPage() {
   );
 
   /**
-   * Handles tab switching between Hire Candidates and All Applications.
-   */
-  const handleTabChange = (event, newValue) => {
-    setSearchTerm('');
-    setSearchBy('course');
-    setAppliedFilters({
-      status: [],
-      level: [],
-      semester: '',
-      hasApplications: '',
-    });
-    if (filterRef.current && typeof filterRef.current.clearAll === 'function') {
-      filterRef.current.clearAll();
-    }
-    setActiveTab(newValue);
-  };
-
-  /**
    * Handles search/filter changes for All Applications tab.
    */
   const handleFilterChange = (filters) => {
@@ -460,7 +406,7 @@ export default function AdminApplicationsPage() {
                   ? "" : "--color-rit-gray"
               })}>
                 {displayData[semesterCode].map((position) => (
-                  <Accordion key={position.id} defaultExpanded sx={(theme) => ({
+                  <Accordion key={position.id} defaultExpanded={position.jobPositionApplicationHistory.length > 0} sx={(theme) => ({
                     background: theme.palette.mode === 'dark'
                       ? "" : "#e0e0e0"
                   })}>
@@ -580,13 +526,9 @@ export default function AdminApplicationsPage() {
         {currentUser && currentUser.role === 'ADMIN' ? (
           <>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-              {/*<Tabs value={activeTab} onChange={handleTabChange} centered>
-                <Tab label="Hire Candidates" />
-                <Tab label="All Applications" />
-              </Tabs>*/}
+              
             </Box>
 
-            {/*activeTab === 0 ? renderHiringView() : renderAllApplicationsTab()*/}
             {renderAllApplicationsTab()}
           </>
         ) : (

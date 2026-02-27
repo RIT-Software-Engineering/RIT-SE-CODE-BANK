@@ -334,7 +334,7 @@ export default function ApplicationCard({
             </Grid>
 
             {showRejectOption && (
-              <Button variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
+              <Button  sx = {{ height: 36, px:4, whiteSpace: "nowrap"  }} variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
             )}
 
 
