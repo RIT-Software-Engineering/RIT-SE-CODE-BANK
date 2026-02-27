@@ -186,7 +186,7 @@ export default function SupervisorApplicationsPage() {
       fname: app.firstName,
       lname: app.lastName,
       email: app.ritEmail,
-      type: "scooployee", //change to scooployee
+      type: "scooployee",
       semester_group: tempData.semester_group,
       project: tempData.project,
       active: tempData.active,
@@ -198,20 +198,11 @@ export default function SupervisorApplicationsPage() {
   /**
    * Handles the logic to submit accepted applicants as new users into the database.
    *
-   * This function filters the applications to find those that have been accepted, and then
-   * creates a new user object for each accepted application. It then posts each new user
-   * to the users API endpoint.
-   *
-   * For each application where accepted=true, format data into user and then do users post like how you would do application post.
    * @returns {void}
    */
   const handleSubmit = () => {
-    //   let data ;
-    //
     const acceptedApps = applications.filter((app) => app.status === "ACCEPTED");
-    // console.log(acceptedApps)
     for (let app of acceptedApps) {
-      // console.log(app)
       let newUser = createUserFromApp(app);
       console.log("Submitting user:", newUser);
       postNewUsers(newUser);
@@ -259,6 +250,14 @@ export default function SupervisorApplicationsPage() {
     },
     "&:hover": {
       backgroundColor: isDark ? "rgba(247,105,2,0.15)" : "rgba(247,105,2,0.08)",
+    },
+  };
+
+  // Date picker calendar icon — theme-aware via text color
+  const datePickerSx = {
+    "& input[type='date']::-webkit-calendar-picker-indicator": {
+      filter: isDark ? "invert(1)" : "none",
+      cursor: "pointer",
     },
   };
 
@@ -532,20 +531,6 @@ export default function SupervisorApplicationsPage() {
           )}
         </Box>
 
-        {/* <Button
-          onClick={() => handleSubmit()}
-          sx={{
-            bgcolor: "#F76902",
-            color: "white",
-            "&:hover": {
-              bgcolor: "#d95e00",
-            },
-            m: 1,
-          }}
-        >
-          Submit Accepted
-        </Button> */}
-
         <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
           <TextField
             size="small"
@@ -593,7 +578,6 @@ export default function SupervisorApplicationsPage() {
                 value={filter}
                 label="Status"
                 onChange={(e) => setFilter(e.target.value)}
-              sx={{ "& .MuiSelect-icon": { color: isDark ? theme.ritColors.white : theme.ritColors.black } }}
               >
                 {STATUSES.map((s) => (
                   <MenuItem key={s} value={s}>
@@ -610,9 +594,7 @@ export default function SupervisorApplicationsPage() {
               fullWidth
               InputLabelProps={{ shrink: true }}
               inputProps={{ max: dateTo || undefined }}
-              sx={{
-                "& input[type='date']::-webkit-calendar-picker-indicator": { filter: isDark ? "invert(1)" : "invert(0.4) sepia(1) saturate(6) hue-rotate(5deg)", cursor: "pointer" },
-              }}
+              sx={datePickerSx}
             />
             <TextField
               label="Submitted To"
@@ -622,9 +604,7 @@ export default function SupervisorApplicationsPage() {
               fullWidth
               InputLabelProps={{ shrink: true }}
               inputProps={{ min: dateFrom || undefined }}
-              sx={{
-                "& input[type='date']::-webkit-calendar-picker-indicator": { filter: isDark ? "invert(1)" : "invert(0.4) sepia(1) saturate(6) hue-rotate(5deg)", cursor: "pointer" },
-              }}
+              sx={datePickerSx}
             />
           </Box>
         </DialogContent>

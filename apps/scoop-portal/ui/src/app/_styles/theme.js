@@ -100,8 +100,8 @@ const baseTheme = createTheme({
             backgroundColor: "#F76902",
             color: "#FFFFFF",
             "&:hover": {
-              border: "1px solid #000000",
-              backgroundColor: "#000000",
+              border: "1px solid #C55400",
+              backgroundColor: "#C55400",
             },
           },
         },
@@ -179,6 +179,14 @@ export const lightTheme = createTheme({
   },
   components: {
     ...baseTheme.components,
+    MuiSelect: {
+      styleOverrides: {
+        ...baseTheme.components.MuiSelect?.styleOverrides,
+        icon: {
+          color: "#000000",
+        },
+      },
+    },
     MuiTableRow: {
       styleOverrides: {
         root: {
@@ -208,6 +216,14 @@ export const darkTheme = createTheme({
   },
   components: {
     ...baseTheme.components,
+    MuiSelect: {
+      styleOverrides: {
+        ...baseTheme.components.MuiSelect?.styleOverrides,
+        icon: {
+          color: "#FFFFFF",
+        },
+      },
+    },
     MuiTableRow: {
       styleOverrides: {
         root: {
