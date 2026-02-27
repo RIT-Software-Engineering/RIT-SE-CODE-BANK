@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../styles/devLogin.css";
-import { AUTH_BASE } from "../utils/api";
+import { CMTFetch } from "../utils/api";
 
 // const AUTH_BASE = "http://localhost:5010";
 // const AUTH_BASE = process.env.BASE_URL;
@@ -18,18 +18,7 @@ export default function DevLoginPage() {
     setLoggingIn(true);
 
     try {
-      const res = await fetch(`/api/dev/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Login failed (${res.status}): ${text}`);
-      }
-
+      await CMTFetch("POST", "/dev/login", { email, password });
       window.location.href = "/cmt/";
     } catch (err) {
       console.error(err);
