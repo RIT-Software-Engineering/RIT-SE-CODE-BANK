@@ -48,6 +48,16 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - cmt-frontend
+      - cmt-backend
+
   cmt-frontend:
     build:
       context: .
@@ -56,8 +66,6 @@ services:
         REACT_APP_BACKEND_URL: /api
         REACT_APP_AUTH_BASE: /cmt
         PUBLIC_URL: /cmt
-    ports:
-      - "3010:3010"
     environment:
       NODE_ENV: production
       PORT: 3010
