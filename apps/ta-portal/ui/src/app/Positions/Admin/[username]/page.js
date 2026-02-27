@@ -157,7 +157,7 @@ export default function AdminPositions() {
       let data;
       if (tabId === "all-positions") {
         data = await getOpenJobPositions(currentSearch, currentFilters, null);
-        setOpenPositions(data);
+        setAllPositions(data);
       } else if (tabId === "pending-positions") {
         data = await getAllPositions(currentSearch, currentFilters);
         setAllPositions(data);
