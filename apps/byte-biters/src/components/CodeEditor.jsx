@@ -9,16 +9,42 @@ export default function CodeEditor({ code, setCode }) {
     monaco.languages.setMonarchTokensProvider("pdp11", {
       tokenizer: {
         root: [
-
-          [/\b(mov|add|sub|cmp|clr|inc|dec|br|bne|beq|jsr|rts|halt)\b/i, "keyword"],
-
-          [/\b(r[0-7]|sp|pc)\b/i, "type"],
-
-          [/#?\b\d+\b/, "number"],
-
+          // Comments
           [/;.*$/, "comment"],
 
-          [/^[a-zA-Z_]\w*:/, "type.identifier"]
+          // Labels (allow indentation)
+          [/^\s*[a-zA-Z_]\w*:/, "type.identifier"],
+
+          // Directives
+          [/\.(word|byte|ascii|asciz|blkw|end)\b/i, "keyword.directive"],
+
+          // Instructions
+          [/\b(mov|movb|add|sub|cmp|cmpb|clr|inc|dec|tst|br|bne|beq|bpl|bmi|bcc|bcs|jsr|rts|jmp|halt)\b/i, "keyword"],
+
+          // Registers
+          [/\b(r[0-7]|sp|pc)\b/i, "variable.predefined"],
+
+          // Immediate values
+          [/#-?\d+/, "number"],
+
+          // Indirect
+          [/@/, "operator"],
+
+          // Auto increment / decrement
+          [/\((r[0-7]|sp|pc)\)\+?/i, "type"],
+          [/-\((r[0-7]|sp|pc)\)/i, "type"],
+
+          // Octal (PDP-11 default)
+          [/\b[0-7]+\b/, "number.octal"],
+
+          // Decimal
+          [/\b\d+\b/, "number"],
+
+          // Strings
+          [/".*?"/, "string"],
+
+          // Operators / punctuation
+          [/[,]/, "delimiter"],
         ]
       }
     })
@@ -28,10 +54,14 @@ export default function CodeEditor({ code, setCode }) {
       inherit: true,
       rules: [
         { token: "keyword", foreground: "569CD6" },
-        { token: "type", foreground: "C586C0" },
+        { token: "keyword.directive", foreground: "4EC9B0" },
+        { token: "variable.predefined", foreground: "C586C0" },
         { token: "number", foreground: "DCDCAA" },
+        { token: "number.octal", foreground: "B5CEA8" },
+        { token: "operator", foreground: "FFFFFF" },
         { token: "comment", foreground: "6A9955" },
-        { token: "type.identifier", foreground: "4EC9B0" }
+        { token: "string", foreground: "CE9178" },
+        { token: "type.identifier", foreground: "4FC1FF" }
       ],
       colors: {
         "editor.background": "#14161A",      // dark slate
