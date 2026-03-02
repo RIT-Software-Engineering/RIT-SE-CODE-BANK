@@ -297,13 +297,14 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
                         }
                         { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
                         <Card>
-                            <Card.Body className='group'>
+                            <Card.Body className='group max-h-96 overflow-y-scroll'>
                                 <Card.Title>
                                     <div className='flex justify-between'>
                                         <div>{sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} (Notes)</div>
-                                        <div className='justify-end size-12 hidden group-hover:block'><Button variant='outline-dark' onClick={() => {
+                                        <div className='justify-end size-12 opacity-0 group-hover:!opacity-100'><Button variant='outline-dark' onClick={(e) => {
                                             setCurSessionId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
                                             setIsEditOpen(true);
+                                            e.currentTarget.style.opacity = "100";
                                         }}><Edit /></Button></div>
                                     </div>
                                 </Card.Title>
