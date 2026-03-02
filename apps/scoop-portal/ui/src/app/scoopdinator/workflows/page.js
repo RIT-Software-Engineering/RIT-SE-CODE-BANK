@@ -452,18 +452,6 @@ export default function WorkflowsList() {
             margin="normal"
             disabled={creating}
           />
-          {/** This is the part of the modal where you can select SCOOPloyees*/}
-          <Autocomplete 
-            multiple 
-            options={users} 
-            getOptionLabel={(option)=> option.label}
-            onChange={(e, selected) => setAssignedUserID(selected.map(v => v.value))}
-            disabled={creating}
-            renderInput={(params) => (
-                <TextField {...params} label="Assign to SCOOPloyees" margin='normal' fullWidth/>
-            )}
-            sx={{mt:1}}
-          />
 
           {createError && (
             <Typography color="error" mt={1}>
