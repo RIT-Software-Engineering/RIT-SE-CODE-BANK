@@ -1028,19 +1028,19 @@ export async function getAllCourses() {
 }
 
 /**
- * Creates a new course with the provided data.
+ * Updates or Creates a new course with the provided data.
  * @param {object} courseData - The data for the new course.
  * @returns {Promise<object>} A promise that resolves to the newly created course object.
  */
-export async function createCourse(courseData) {
+export async function upsertCourse(courseData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error(
       "Backend API URL components are not defined. Check your .env.local file."
     );
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/create-course`;
-  console.log(`Creating course at: ${url}`);
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-course`;
+  console.log(`Upserting course at: ${url}`);
 
   const response = await fetch(url, {
     method: "POST",

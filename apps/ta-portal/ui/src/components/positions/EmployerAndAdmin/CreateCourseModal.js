@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { createCourse } from "@/services/db-apis";
+import { upsertCourse } from "@/services/db-apis";
 import {
   Button,
   CircularProgress,
@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 
 /**
+ * @deprecated use {@link EditCourseForm} instead
  * A modal dialog for creating a new course.
  * This component allows employers and administrators to create a new course to be used in job postings.
  * The dialog includes fields for course code, name, description, and a submit button.
@@ -42,7 +43,7 @@ export default function CreateCourseModal ({ isOpen, onClose, onCourseCreated, i
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const newCourse = await createCourse({ courseCode: initialCode, name, description });
+      const newCourse = await upsertCourse({ courseCode: initialCode, name, description });
       onCourseCreated(newCourse);
       onClose(); 
     } catch (error) {

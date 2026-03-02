@@ -130,13 +130,6 @@ export default function FormStepOne({
                     fieldState.error?.message === "NOT_FOUND" ? (
                       <span>
                         Course not found.{" "}
-                        <MuiLink
-                          component="button"
-                          type="button"
-                          onClick={() => setCreateModalOpen(true)}
-                        >
-                          Create new?
-                        </MuiLink>
                       </span>
                     ) : (
                       fieldState.error?.message
