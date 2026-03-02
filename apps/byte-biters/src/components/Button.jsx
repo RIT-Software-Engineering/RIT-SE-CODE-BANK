@@ -1,6 +1,6 @@
 import clsx from 'clsx'; // Utility for conditionally joining class names
 
-//styling for buttons!
+//styling for buttons! 
 const Button = ({ children, variant, ...props }) => {
   const baseStyles = 'px-4 py-2 rounded font-medium transition duration-150 ease-in-out';
 

@@ -1,8 +1,10 @@
 export default function MemoryPanel({ memory }) {
+  //stores the table headers for the columns
   const columns = Array.from({ length: 16 }, (_, i) =>
     i.toString(16).toUpperCase()
   )
 
+  //stores the table headers for the rows
   const rows = Array.from({ length: memory.length / 16 }, (_, i) =>
     (i * 16).toString(16).toUpperCase().padStart(3, "0")
   )

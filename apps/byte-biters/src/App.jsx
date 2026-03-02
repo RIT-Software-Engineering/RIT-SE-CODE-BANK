@@ -1,5 +1,5 @@
 import { useState } from "react"
-import Editor from "./components/Editor"
+import CodeEditor from "./components/CodeEditor"
 import Header from "./components/Header"
 import SidePanel from "./components/SidePanel"
 import MemoryPanel from "./components/MemoryPanel"
@@ -22,7 +22,7 @@ export default function App() {
         <Panel className="flex flex-col h-full">
           <Group orientation="vertical">
             <Panel>
-              <Editor code={code} setCode={setCode} />
+              <CodeEditor code={code} setCode={setCode} />
             </Panel>
             <Panel className="flex flex-col h-full">
               {/* temp border */}
