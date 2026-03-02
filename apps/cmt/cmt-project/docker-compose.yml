@@ -72,6 +72,8 @@ services:
         REACT_APP_BACKEND_URL: /cmt/api
         REACT_APP_AUTH_BASE: /cmt
         PUBLIC_URL: /cmt
+    ports:
+      - "3010:3010"
     environment:
       NODE_ENV: production
       PORT: 3010
