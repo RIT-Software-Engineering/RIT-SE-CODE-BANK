@@ -80,6 +80,11 @@ const workflows = [
         description: "Review current user details and statuses.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees",
       },
+    ],
+  },
+  {
+    title: "Scooployees",
+    steps: [
       {
         title: "View Scooployees",
         roles: ["scoopervisor"],
@@ -97,12 +102,6 @@ const workflows = [
         roles: ["scoopervisor"],
         description: "View your hired scooployees.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees/assign",
-      },
-      {
-        title: 'Onboarding Workflow',
-        roles: ["scoopdinator"],
-        description: 'To begin the total onboarding process, view the workflow dashboard.',
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+'/scoopdinator/workflows',
       },
     ],
   },
