@@ -24,6 +24,7 @@ export default function FilterDialog({
   onCancel,
   onSubmit,
   actionLabel,
+  secondaryAction
 }) {
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
@@ -33,6 +34,7 @@ export default function FilterDialog({
         <Button variant="outline-orange" onClick={onCancel}>
           Cancel
         </Button>
+        {secondaryAction}
         <Button variant="outline-orange" onClick={onSubmit}>
           {actionLabel}
         </Button>

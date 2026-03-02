@@ -234,7 +234,7 @@ export default function Bubbled(){
         if (cancelled) {
           return;
         }
-        const nextTeams = {};
+        const nextTeams = {}; //Incase a member is in multiple teams
         const nextUsers = {};
         data.forEach((team) => {
           nextTeams[team.id] = team;
@@ -439,7 +439,7 @@ export default function Bubbled(){
     setActiveWorkflowState(workflowState);
     setOpen(true);
   };
-
+//This needs to be fixed, so when a user clicks the bubble and clicks out it automaticly doesn.t complete it.
   const handleClose = async(shouldPromote = true) => {
     const shouldMarkInProgress =
       shouldPromote &&

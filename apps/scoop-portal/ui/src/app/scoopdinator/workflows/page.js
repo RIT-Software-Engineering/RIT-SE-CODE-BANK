@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Container, Grid, Paper,
-  Button, Modal, TextField,
+  Button, Modal, TextField, Autocomplete
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 
@@ -39,6 +39,11 @@ export default function WorkflowsList() {
   const [createError, setCreateError] = useState(null);
 
   const baseUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL;
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  //This is the users state vars
+  const [users, setUsers] = useState([]);
+  const [assignedUserID, setAssignedUserID] = useState([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,21 +81,28 @@ export default function WorkflowsList() {
           workflowsById[wf.id] = wf;
         });
 
-        const workflowsWithSteps = workflowStatesData.map(ws => {
-          const wf = workflowsById[ws.workflowId];
-          const wfName = wf?.name || actionsMap[wf?.baseActionId]?.name || 'Untitled Workflow';
+        const seen = new Set();
+        const workflowsWithSteps = workflowStatesData
+        .filter(ws => {
+            if (seen.has(ws.workflowId)) return false;
+            seen.add(ws.workflowId);
+            return true;
+        })
+        .map(ws => {
+            const wf = workflowsById[ws.workflowId];
+            const wfName = wf?.name || actionsMap[wf?.baseActionId]?.name || 'Untitled Workflow';
 
-          const steps = ws.actionStates.map(as => ({
+            const steps = ws.actionStates.map(as => ({
             actionId: as.actionId,
             title: actionsMap[as.actionId]?.name || 'Untitled Step',
             link: `/scoopdinator/workflows/${ws.workflowId}`,
-          }));
+            }));
 
-          return {
+            return {
             id: ws.workflowId,
             name: wfName,
             steps,
-          };
+            };
         });
 
         setWorkflows(workflowsWithSteps);
@@ -116,6 +128,23 @@ export default function WorkflowsList() {
     fetchData();
   }, [baseUrl]);
 
+  //This will retrieve the user
+  useEffect(() => {
+    const fetchUsers = async () => {
+        try{
+            const res = await fetch(`${publicApiUrl}/api/users`);
+            if(!res.ok){
+                throw new Error("Failed to fetch user in scoodinator/workflow/page.js, line: 130");
+            }
+            const data = await res.json();
+            setUsers(data.map(e => ({label: `${e.fname} ${e.lname}`, value: e.id})));
+        }catch(e){
+            console.log("Error in scoopdinator/workflow/page.js: "+e);
+        }
+    };
+    fetchUsers();
+  },[])
+
   const handleOpen = () => {
     setModalOpen(true);
     setCreateError(null);
@@ -127,6 +156,7 @@ export default function WorkflowsList() {
     setName('');
     setDescription('');
     setTags('');
+    setAssignedUserID([]);
     setCreateError(null);
   };
 
@@ -192,25 +222,28 @@ export default function WorkflowsList() {
         throw new Error('Failed to update workflow with rootActionId');
       }
 
-      // Step 4: Create workflow state for the user
-      const stateResponse = await fetch(`${baseUrl}/states/workflow`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          workflowId: workflow.id,
-          actionStates: [
-            {
-              actionId: action.id,
-              stateType: 'not_started',
-            },
-          ],
-        }),
-      });
+      // Step 4: Create workflow state for each assigned user
 
-      if (!stateResponse.ok) {
-        throw new Error('Failed to create workflow state');
-      }
+      const userIDs = assignedUserID.length > 0 ? assignedUserID : [userId];
+      await Promise.all(
+        userIDs.map(uid => fetch(`${baseUrl}/states/workflow`, {
+            method:"POST",
+            headers:{ 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: uid,
+                workflowId: workflow.id,
+                actionStates: [{actionId: action.id, stateType: "not_started"}]
+            }),
+        }).then(
+            res =>{
+                if(!res.ok){
+                    throw new Error(`Failed to create workflow state for UserId: ${uid}`);
+                }
+            })
+        )
+      );
+
+      
 
       handleClose();
       setLoading(true);
@@ -250,22 +283,25 @@ export default function WorkflowsList() {
             workflowsById[wf.id] = wf;
           });
 
-          const workflowsWithSteps = workflowStatesData.map(ws => {
+        // This si here because of the fact that there is a duplication of keys, 
+        // so two children had the same key, and this will generate a new key to resolve this issue
+        const seen2 = new Set();
+        const workflowsWithSteps = workflowStatesData
+        .filter(ws => {
+            if (seen2.has(ws.workflowId)) return false;
+            seen2.add(ws.workflowId);
+            return true;
+        })
+        .map(ws => {
             const wf = workflowsById[ws.workflowId];
             const wfName = wf?.name || actionsMap[wf?.baseActionId]?.name || 'Untitled Workflow';
-
             const steps = ws.actionStates.map(as => ({
-              actionId: as.actionId,
-              title: actionsMap[as.actionId]?.name || 'Untitled Step',
-              link: `/scoopdinator/workflows/${ws.workflowId}`,
+            actionId: as.actionId,
+            title: actionsMap[as.actionId]?.name || 'Untitled Step',
+            link: `/scoopdinator/workflows/${ws.workflowId}`,
             }));
-
-            return {
-              id: ws.workflowId,
-              name: wfName,
-              steps,
-            };
-          });
+            return { id: ws.workflowId, name: wfName, steps };
+        });
 
           setWorkflows(workflowsWithSteps);
 
@@ -415,6 +451,18 @@ export default function WorkflowsList() {
             fullWidth
             margin="normal"
             disabled={creating}
+          />
+          {/** This is the part of the modal where you can select SCOOPloyees*/}
+          <Autocomplete 
+            multiple 
+            options={users} 
+            getOptionLabel={(option)=> option.label}
+            onChange={(e, selected) => setAssignedUserID(selected.map(v => v.value))}
+            disabled={creating}
+            renderInput={(params) => (
+                <TextField {...params} label="Assign to SCOOPloyees" margin='normal' fullWidth/>
+            )}
+            sx={{mt:1}}
           />
 
           {createError && (

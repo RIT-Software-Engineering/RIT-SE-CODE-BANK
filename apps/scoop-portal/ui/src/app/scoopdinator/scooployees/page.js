@@ -208,7 +208,7 @@ export default function ViewScooployees() {
               semester_group: emp.semesterGroup || "",
               project: emp.project || "",
               active: emp.active !== undefined ? String(emp.active) : "true",
-              type: emp.type || "",
+              type: emp.type || "scooployee",
               last_login: emp.last_login || "",
               prev_login: emp.prev_login || "",
             };
