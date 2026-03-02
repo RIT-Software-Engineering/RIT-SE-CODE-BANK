@@ -88,7 +88,7 @@ app.use((req, res, next) => {
    ------------------------------------------------------------------ */
 
 // Dev login endpoint - creates a JWT token for testing
-app.post("/api/dev/login", async (req, res) => {
+app.post("/api/cmt/dev/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     
