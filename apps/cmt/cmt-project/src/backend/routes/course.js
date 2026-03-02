@@ -49,7 +49,6 @@ router.get('/:id', async (req, res) => {
         const actions = await workflowsFetch('GET', `actions?workflowId=${course.workflowId}`)
         const workflowState = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
         
-        // flatten action states to a simple 1:1 map (action id -> action state of corresponding action)
         const flattenedWorkflowState = flattenWorkflowState(workflowState)
         const actionWithContexts = actions.map(action => 
             actionToActionWithContext(action, flattenedWorkflowState, course.id, req.user?.uid)
