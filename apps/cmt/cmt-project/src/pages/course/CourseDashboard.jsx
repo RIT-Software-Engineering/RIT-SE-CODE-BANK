@@ -144,6 +144,8 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
     const [isOpen, setIsOpen] = useState(false);
     const [sessionNum, setSessionNum] = useState(0);
     const { id } = useParams();
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [curSessionId, setCurSessionId] = useState(0);
 
     /**
      * Initial GET request upon loading the page
@@ -164,6 +166,7 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
     return (
         <Accordion alwaysOpen>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions}/>
+        <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen}/>
         {
             Array.from({ length: sessionCount }, (_, i) => (
                 <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
@@ -173,13 +176,22 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
                         </Accordion.Header>
                     <Accordion.Body>
                         { sessionData.find(data => data.sessionNum === i) ?
-                        <SessionTable sessionData={sessionData} sessionNum={i}/> :
+                        <SessionTable sessionData={sessionData} sessionNum={i} setIsEditOpen={setIsEditOpen} setSessionId={setCurSessionId}/> :
                         <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                         }
                         { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
                         <Card>
-                            <Card.Body>
-                                <Card.Title>{sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} (Notes)</Card.Title>
+                            <Card.Body className='group max-h-96 overflow-y-scroll'>
+                                <Card.Title>
+                                    <div className='flex justify-between'>
+                                        <div>{sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} (Notes)</div>
+                                        <div className='justify-end size-12 opacity-0 group-hover:!opacity-100'><Button variant='outline-dark' onClick={(e) => {
+                                            setCurSessionId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
+                                            setIsEditOpen(true);
+                                            e.currentTarget.style.opacity = "100";
+                                        }}><Edit /></Button></div>
+                                    </div>
+                                </Card.Title>
                                 <Card.Text>
                                     <span className="prose" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
                             </Card.Body>
@@ -220,14 +232,10 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
      */
     function uploadSessionMaterial(){
         const id = sessions.find(session => session.sessionNum === (sessionNum+1)).id
-        CMTFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(() =>
-        setSessionData(sessionData => [...sessionData, {
-            sessionNum: sessionNum,
-            type: itemType,
-            label: itemLabel,
-            body: itemBody,
-        }])
-        )
+        CMTFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(async (response) => {
+        const data = await response.json();
+        setSessionData(sessionData => [...sessionData, data.material]);
+        })
     }
 
     function resetForm(){
@@ -287,16 +295,94 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
 }
 
 /**
+ * The modal to edit session data.
+ * The user can edit the title and the body content but not the material type.
+ * Maybe in the future they can edit that and which session it belongs to?
+ *
+ * @param {{ sessionData: any; setSessionData: any; materialId: any; isEditOpen: any; setIsEditOpen: any; }} param0 
+ * sessionData - the data of material in sessions. Used to get the existing content for editing
+ * setSessionData - sets the material for a session; in this case it updates it
+ * materialId - the ID of the material. Used mainly for the PUT request to know which item to update
+ * isEditOpen - whether the edit modal is open or not
+ * setIsEditOpen - sets the edit modal to be either opened or closed
+ * @returns {*} the modal as HTML
+ */
+function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen, setIsEditOpen }){
+    const [itemLabel, setItemLabel] = useState('');
+    const [itemBody, setItemBody] = useState('');
+    const [warningVisible, setWarningVisible] = useState(false);
+    const curMaterial = sessionData.find(material => material.id === materialId);
+
+    function resetForm(){
+        setItemLabel('');
+        setItemBody('');
+        setWarningVisible(false);
+    }
+
+    function setItems(){
+        setItemLabel(curMaterial.label);
+        setItemBody(curMaterial.body);
+    }
+
+    function updateMaterial(){
+        CMTFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody}).then(() => {
+            const sessionDataCopy = sessionData.map(material => {
+                if (material.id === materialId) 
+                    return {...material, label: itemLabel, body: itemBody}
+                return material
+            });
+            setSessionData(sessionDataCopy);
+        });
+    }
+
+    return (
+            <Modal show={isEditOpen} onShow={setItems} onHide={() => {setIsEditOpen(false); 
+            resetForm();}} centered size='lg'>
+                <Modal.Header closeButton>Edit Material</Modal.Header>
+                <Modal.Body>
+                    <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Material needs to have a title!</div>
+                    <Form onSubmit={updateMaterial}>
+                        <div className='flex'>
+                            <div className='w-full'>
+                                <div>
+                                <Form.Label>Title</Form.Label>
+                                <Form.Control defaultValue={itemLabel} onChange={(e)=>setItemLabel(e.target.value)} required></Form.Control>
+                                </div>
+                                <div>
+                                <Form.Label>Content</Form.Label>
+                                <RichTextEditor value={itemBody} onChange={setItemBody}/>
+                                </div>
+                            </div>
+                        </div>
+                        <div className='flex justify-end pt-3'>
+                            <Button type="submit" onClick={(e) => {
+                            e.preventDefault();
+                            if (itemLabel){
+                                updateMaterial();
+                                setIsEditOpen(false);
+                                resetForm();
+                            }
+                            else setWarningVisible(true);
+                            }}>Submit</Button>
+                        </div>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+    );
+}
+
+/**
  * A component that generates a session table
  * Displays all material/notes for one specific session
  *
- * @param {{ sessionData: Array; sessionNum: number; }} param0 
+ * @param {{ sessionData: Array; sessionNum: number; setIsEditOpen: any; setSessionId: any;}} param0 
  *  sessionData the data that contains the materials
  *  sessionNum  the identifying session number to only get data from that specific session
  * @returns {*} the table in HTML
  */
-function SessionTable( {sessionData, sessionNum} ) {
+function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
+    const tdClass = "hover:underline hover:text-blue-500 cursor-pointer";
     const allCols = ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"];
     // TODO: maybe... change how this works, currently updates all columns for every session but that may be ok.
     // It'll look a bit more clumped, but it is closer to realistic for what a prof. may want.
@@ -343,6 +429,13 @@ function SessionTable( {sessionData, sessionNum} ) {
         return '';
     }
 
+    function openEditModal(text, col){
+        // Not a foolproof way to find ID but it should match closely. It'd take a bunch of refactoring to be exact...
+        const id = sessionData.find(session => session.sessionNum === sessionNum && session.label === text && session.type === allCols[col]).id
+        setIsEditOpen(true);
+        setSessionId(id);
+    }
+
     determineCols();
 
     return (
@@ -360,12 +453,12 @@ function SessionTable( {sessionData, sessionNum} ) {
                 <tbody>
                     {Array.from({ length: determineRows() }, (_, i) => (
                     <tr>
-                        {cols[0] ? <td>{displayLabel(0,i)}</td> : <></>}
-                        {cols[1] ? <td>{displayLabel(1,i)}</td> : <></>}
-                        {cols[2] ? <td>{displayLabel(2,i)}</td> : <></>}
-                        {cols[3] ? <td>{displayLabel(3,i)}</td> : <></>}
-                        {cols[4] ? <td>{displayLabel(4,i)}</td> : <></>}
-                        {cols[5] ? <td>{displayLabel(5,i)}</td> : <></>}
+                        {cols[0] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 0)}>{displayLabel(0,i)}</span></td> : <></>}
+                        {cols[1] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 1)}>{displayLabel(1,i)}</span></td> : <></>}
+                        {cols[2] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 2)}>{displayLabel(2,i)}</span></td> : <></>}
+                        {cols[3] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 3)}>{displayLabel(3,i)}</span></td> : <></>}
+                        {cols[4] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 4)}>{displayLabel(4,i)}</span></td> : <></>}
+                        {cols[5] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 5)}>{displayLabel(5,i)}</span></td> : <></>}
                     </tr>
                     ))}
                 </tbody>
