@@ -130,7 +130,7 @@ jobs:
   
   build:
     name: Build Affected Projects
-    needs: [lint, test]
+    needs: [lint, test, setup]
     runs-on: ubuntu-latest
 
     steps:
