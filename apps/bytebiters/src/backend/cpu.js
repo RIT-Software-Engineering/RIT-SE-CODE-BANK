@@ -1,12 +1,12 @@
 import {REG} from "./registers.js";
 import {Decode} from "./decode.js";
-
-const decoder = new Decode();
+import {Memory} from "./memory.js";
 
 export class CPU {
     constructor() {
         this.registers = new Uint16Array(8);
-        this.memory = new Uint8Array(65536);
+        this.memory = new Memory();
+        this.decoder = new Decode();
 
         //flag setup
         this.N = 0;
@@ -19,17 +19,19 @@ export class CPU {
         this.registers[REG.PC] = 0o200;
     }
 
-    readWord(Addr) {
-        let lowWord = this.memory[Addr];
-        let HighWord = (this.memory[Addr + 1] << 8);
-        return HighWord + lowWord;
+    getState() {
+        return {
+            registers: [...this.registers],
+            flags: {N: this.N, Z: this.Z, V: this.V, C: this.C}
+        };
     }
 
-    writeWord(Word, Addr) {
-        let lowByte = Word & 0xFF;
-        let highByte = (Word >> 8) & 0xFF;
-        this.memory[Addr] = lowByte;
-        this.memory[Addr + 1] = highByte;
+    readWord(addr) {
+        return this.memory.readWord(addr);
+    }
+
+    writeWord(word, addr) {
+        this.memory.writeWord(addr, word)
     }
 
     fetch() {
