@@ -80,6 +80,12 @@ const workflows = [
         description: "Review current user details and statuses.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees",
       },
+      {
+        title: "Manage Semester Groups",
+        roles: ["scoopdinator"],
+        description: "Add upcoming semester groups for future sessions.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/semestersgroups",
+      },
     ],
   },
   {
