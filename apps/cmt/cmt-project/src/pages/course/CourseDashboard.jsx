@@ -348,14 +348,10 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
      */
     function uploadSessionMaterial(){
         const id = sessions.find(session => session.sessionNum === (sessionNum+1)).id
-        CMTFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(() =>
-        setSessionData(sessionData => [...sessionData, {
-            sessionNum: sessionNum,
-            type: itemType,
-            label: itemLabel,
-            body: itemBody,
-        }])
-        )
+        CMTFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(async (response) => {
+        const data = await response.json();
+        setSessionData(sessionData => [...sessionData, data.material]);
+        })
     }
 
     function resetForm(){
