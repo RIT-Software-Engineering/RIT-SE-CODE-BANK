@@ -83,7 +83,7 @@ const workflows = [
       {
         title: "Manage Semester Groups",
         roles: ["scoopdinator"],
-        description: "Add upcoming semester groups for future sessions.",
+        description: "Manage current and upcoming semester groups.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/semestergroups",
       },
     ],
