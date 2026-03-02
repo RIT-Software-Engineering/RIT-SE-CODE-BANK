@@ -47,8 +47,8 @@ model Professor {
 model CourseTemplate {
   id            Int            @id @default(autoincrement())
   name          String
-  season       String
-  year         Int
+  season        String
+  year          Int
   weeks         Int
   assignments   Int
   exams         Int
@@ -82,8 +82,8 @@ model TemplateItem {
 model Course {
   id           Int            @id @default(autoincrement())
   name         String
-  season       String
-  year         Int
+  season       String?
+  year         Int?
   classId      String
   color        String
   students     Int?
