@@ -15,7 +15,7 @@ export default function DevLoginPage() {
     setLoggingIn(true);
 
     try {
-      const res = await fetch(`/api/dev/login`, {
+      const res = await fetch(`/api/cmt/dev/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
