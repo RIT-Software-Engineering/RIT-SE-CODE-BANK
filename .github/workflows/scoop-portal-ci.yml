@@ -162,7 +162,7 @@ jobs:
         id: parse
         run: |
           BRANCH=${GITHUB_REF##*/}
-          if [[ "$BRANCH" == *-dev ]]; then
+          if [[ "$BRANCH" == *-dev || "$BRANCH" == *-cicd-testing ]]; then
             APP_NAME="${BRANCH%-dev}"
           elif [[ "$BRANCH" == "dev" || "$BRANCH" == "main" ]]; then
             APP_NAME="all"  # fallback or global deploy logic
