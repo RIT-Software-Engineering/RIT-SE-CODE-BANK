@@ -198,10 +198,10 @@ app.get("/api/course", async (req, res) => {
 // create a course
 app.post("/api/course", async (req, res) => {
   try {
-    let { id, name, semester, color, students, professorId } = req.body;
+    let { id, name, year, season, color, students, professorId } = req.body;
     students = parseInt(students, 10);
     const course = await prisma.course.create({
-      data: { id, name, semester, color, students, professorId },
+      data: { id, name, year, season, color, students, professorId },
     });
     res.json(course);
   } catch (err) {

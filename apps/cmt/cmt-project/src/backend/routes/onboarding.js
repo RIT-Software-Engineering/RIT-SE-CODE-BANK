@@ -117,7 +117,8 @@ router.get('/student/:studentId', async (req, res) => {
           course: {
             id: course.id,
             name: course.name,
-            semester: course.semester,
+            season: course.season,
+            year: course.year,
             color: course.color,
             students: course.students
           },

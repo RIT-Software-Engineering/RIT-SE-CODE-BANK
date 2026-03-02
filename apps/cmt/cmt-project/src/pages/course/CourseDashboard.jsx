@@ -102,7 +102,7 @@ function CourseInfo({ course, actionsWithContext, refresh }) {
                     onChange={e => setNewCourseCode(e.target.value)}
                 />
             </div>
-                {actionsWithContext.map(awc => 
+                {courseInfoActions.map(awc => 
                     <InlineActionRenderer
                         data={course}
                         actionWithContext={awc}

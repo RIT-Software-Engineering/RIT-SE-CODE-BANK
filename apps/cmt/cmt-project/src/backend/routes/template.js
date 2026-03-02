@@ -11,7 +11,8 @@ router.post("/", async (req, res) => {
   try {
     const {
       name,
-      semester,
+      year,
+      season,
       weeks,
       assignments,
       exams,
@@ -23,7 +24,8 @@ router.post("/", async (req, res) => {
     const newTemplate = await prisma.courseTemplate.create({
       data: {
         name,
-        semester,
+        year,
+        season,
         weeks: parseInt(weeks),
         assignments: parseInt(assignments),
         exams: parseInt(exams),

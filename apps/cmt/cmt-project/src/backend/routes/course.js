@@ -245,8 +245,11 @@ router.put('/:id', async (req, res) => {
             ...(updateData.courseName !== undefined 
                 && { name: updateData.courseName }
             ),
-            ...(updateData.semester !== undefined 
-                && { semester: updateData.semester }
+            ...(updateData.year !== undefined 
+                && { year: updateData.year }
+            ),
+            ...(updateData.season !== undefined 
+                && { season: updateData.season }
             ),
             ...(updateData.color !== undefined 
                 && { color: updateData.color }
@@ -393,7 +396,8 @@ router.post('/create-with-workflow', async (req, res) => {
             data: {
                 classId: course.classId,
                 name: course.name,
-                semester: course.semester,
+                season: course.season,
+                year: course.year,
                 color: course.color,
                 students: !course.students ? null : parseInt(course.students),
                 section: !course.section ? null : parseInt(course.section),

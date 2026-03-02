@@ -11,7 +11,8 @@ function CreateTemplatePage() {
   const [templates, setTemplates] = useState([]);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [templateName, setTemplateName] = useState("");
-  const [semester, setSemester] = useState("");
+  const [season, setSeason] = useState("");
+  const [year, setYear] = useState("");
   const [numWeeks, setNumWeeks] = useState("");
   const [numAssignments, setNumAssignments] = useState("");
   const [numExams, setNumExams] = useState("");
@@ -43,7 +44,8 @@ function CreateTemplatePage() {
   const handleEdit = (template) => {
     setEditingTemplate(template);
     setTemplateName(template.name);
-    setSemester(template.semester);
+    setSeason(template.season);
+    setYear(template.year.toString());
     setNumWeeks(template.weeks.toString());
     setNumAssignments(template.assignments.toString());
     setNumExams(template.exams.toString());
@@ -88,7 +90,8 @@ function CreateTemplatePage() {
     try {
       const templateData = {
         name: templateName,
-        semester: semester,
+        season: season,
+        year: parseInt(year),
         weeks: numWeeks,
         assignments: numAssignments,
         exams: numExams,
@@ -131,7 +134,8 @@ function CreateTemplatePage() {
       setTimeout(() => setShowAlert(false), 6000);
 
       setTemplateName("");
-      setSemester("");
+      setSeason("");
+      setYear("");
       setNumWeeks("");
       setNumAssignments("");
       setNumExams("");
@@ -148,7 +152,8 @@ function CreateTemplatePage() {
 
   const handleCancel = () => {
     setTemplateName("");
-    setSemester("");
+    setSeason("");
+    setYear("");
     setNumWeeks("");
     setNumAssignments("");
     setNumExams("");
@@ -218,7 +223,9 @@ function CreateTemplatePage() {
                   <Card.Body>
                     <Card.Title>{template.name}</Card.Title>
                     <Card.Text>
-                      <strong>Semester:</strong> {template.semester}
+                      <strong>Season:</strong> {template.season}
+                      <br />
+                      <strong>Year:</strong> {template.year}
                       <br />
                       <strong>Duration:</strong> {template.weeks} weeks
                       <br />
@@ -298,14 +305,27 @@ function CreateTemplatePage() {
           </Col>
 
           <Col>
-            <Form.Group id="formSemester">
-              <Form.Label>Semester: </Form.Label>
+            <Form.Group id="formSeason">
+              <Form.Label>Season: </Form.Label>
               <Form.Control
                 type="text"
                 required
-                value={semester}
-                onChange={(e) => setSemester(e.target.value)}
+                value={season}
+                onChange={(e) => setSeason(e.target.value)}
                 placeholder="ex. Fall"
+              />
+            </Form.Group>
+          </Col>
+
+          <Col>
+            <Form.Group id="formYear">
+              <Form.Label>Year: </Form.Label>
+              <Form.Control
+                type="number"
+                required
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                placeholder="ex. 2026"
               />
             </Form.Group>
           </Col>
