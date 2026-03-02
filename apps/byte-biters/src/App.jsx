@@ -12,9 +12,8 @@ export default function App() {
 
   const [code, setCode] = useState(`test code :D`)
 
-  //purple background is placeholder to see better
   return (
-    <div className="h-screen w-screen bg-purple-900 text-text-muted font-mono flex flex-col">
+    <div className="h-screen w-screen bg-main-primary text-text-muted font-mono flex flex-col">
       <Header></Header>
 
       <Group>

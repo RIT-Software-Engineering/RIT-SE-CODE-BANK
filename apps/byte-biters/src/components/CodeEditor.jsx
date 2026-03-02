@@ -64,7 +64,7 @@ export default function CodeEditor({ code, setCode }) {
         { token: "type.identifier", foreground: "4FC1FF" }
       ],
       colors: {
-        "editor.background": "#14161A",      // dark slate
+        "editor.background": "#14161A",
         "editorLineNumber.foreground": "#8E8E93",
         "editorCursor.foreground": "#ffffff",
         "editor.lineHighlightBackground": "#181B20"
@@ -77,6 +77,7 @@ export default function CodeEditor({ code, setCode }) {
       <Editor
         height="100%"
         language="pdp11"
+        defaultValue="Write PDP11 code here..."
         value={code}
         onChange={(value) => setCode(value || "")}
         beforeMount={handleEditorWillMount}
