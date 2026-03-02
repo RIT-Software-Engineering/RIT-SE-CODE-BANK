@@ -497,7 +497,7 @@ export default function AdminApplicationsPage() {
                   jobPosition={application.jobPosition}
                   application={application}
                   onStatusChange={() => fetchHiringApplications()}
-                  onHire={() => handleOpenHireModal(application)}
+                  onHire={() => {handleOpenHireModal(application)}}
                   showHireAction={true}
                   isHighlighted={String(searchParams.get('applicationId') || '') === String(application.id)}
                 />
