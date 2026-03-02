@@ -1,56 +1,36 @@
-import { metadataArrayToObject } from '../../utils/workflows'
-import { ArrowBigDown, PlusIcon } from 'lucide-react'
-import { StatusCardCompleted, StatusCardInProgress, StatusCardNotStarted } from './StatusCards'
-import { FormActionRenderer } from './ActionRenderers'
+import { Accordion } from 'react-bootstrap'
+import { CardActionRenderer } from './ActionRenderers/CardActionRenderer'
 
-export function WorkflowRenderer({ workflow, actionsWithCallbacks, workflowState, refresh }) {
+/**
+ * Renders a workflow using card action renderers.
+ */
+export function WorkflowRenderer({ workflow, actionsWithContext, data, refresh }) {
+
+    const firstIncompleteAction = actionsWithContext.find(awc => awc.actionState.stateType !== "completed")
+
     return (
-        <>
+        <Accordion
+            defaultActiveKey={firstIncompleteAction?.action?.id}
+            flush
+        >
             <div className='flex flex-col'>
-                <p className='text-xl'>{workflow.baseAction.name}</p>
-                <p className='text-lg'>{workflow.baseAction.description}</p>
-                {actionsWithCallbacks.map(actionWithCallback => {
-
-                    // Determine whether there will be arrows between the actions to represent sequential actions (simple)
-                    // or if there will be plus signs to represent complex actions
-                    let connectingElement
-                    if (actionWithCallback.action.nextActionId) {
-                        //TODO: i dont know how complex actions actually work
-                        if (actionWithCallback.action.actionType === 'simple') {
-                            connectingElement = <ArrowBigDown />
-                        } else if (actionWithCallback.action.actionType === 'complex') {
-                            connectingElement = <PlusIcon />
-                        }
-                    }
-
-                    let statusElement
-                    const actionState = workflowState.baseActionState.children.find(actionState => actionState.actionId === actionWithCallback.action.id)
-                    if (actionState.stateType === "notStarted") {
-                        statusElement = <StatusCardNotStarted />
-                    } else if (actionState.stateType === "inProgress") {
-                        statusElement = <StatusCardInProgress />
-                    } else if (actionState.stateType === "completed") {
-                        statusElement = <StatusCardCompleted />
-                    }
-
+                <p className='text-2xl mb-0'>{workflow.baseAction.name}</p>
+                <p className='text-gray-600 text-lg'>{workflow.baseAction.description}</p>
+                {actionsWithContext.map(actionWithContext => {
                     return (
-                        <>
-                            <div className='p-2 flex gap-10' key={actionWithCallback.action.actionId}>
-                                <div className="grow">
-                                    <FormActionRenderer
-                                        actionWithCallback={actionWithCallback}
-                                        metadata={metadataArrayToObject(actionWithCallback.action.metadata)}
-                                        refresh={refresh}
-                                    />
-                                </div>
-                                {statusElement}
+                        <div className='p-2 flex gap-10' key={actionWithContext.action.id}>
+                            <div className="grow">
+                                <CardActionRenderer
+                                    data={data}
+                                    actionWithContext={actionWithContext}
+                                    refresh={refresh}
+                                />
                             </div>
-                            <div className='flex justify-center'>{connectingElement}</div>
-                        </>
+                        </div>
                     )
                 })}
             </div>
-        </>
+        </Accordion>
     )
 }
 

@@ -2,48 +2,52 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTFetch } from '../../utils/api'
-import { Edit, X, Check, ArrowLeft } from 'lucide-react'
-import { Button, Form } from 'react-bootstrap'
-import { metadataArrayToObject, metadataObjectToState } from '../../utils/workflows'
-import { GenericActionRenderer } from '../../components/workflows/ActionRenderers'
+import { ArrowLeft } from 'lucide-react'
+import { Button } from 'react-bootstrap'
+import { InlineActionRenderer } from '../../components/workflows/ActionRenderers/InlineActionRenderer'
+import { InlineFormHoverable } from '../../components/forms/InlineForms'
+import { flattenActionsWithContext } from '../../utils/workflows'
 
 export function CourseDashboard() {
     const { id } = useParams()
 
     const [course, setCourse] = useState(null)
-    const [actionsWithCallbacks, setActionsWithCallbacks] = useState([])
-    const [actionStates, setActionStates] = useState(null)
+    const [actionsWithContext, setactionWithContexts] = useState([])
     const [workflow, setWorkflow] = useState(null)
 
-    const update = useCallback(() => {
+    const update = useCallback(async () => {
         return CMTFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
             setCourse(data.course)
-            setActionsWithCallbacks(data.actionsWithCallbacks)
-            setActionStates(data.actionStates)
+            setactionWithContexts(data.actionWithContexts)
             setWorkflow(data.workflow)
         })
     }, [id])
     useEffect(() => void update(), [id, update])
 
-    if (course === null || actionStates === null) return <p> Loading </p>
+    if (course === null || workflow === null) return <p> Loading </p>
 
     return (
         <>
-            <CourseInfo course={course} actionsWithCallbacks={actionsWithCallbacks} refresh={update} />
+            <CourseInfo course={course} actionsWithContext={actionsWithContext} refresh={update} />
             <div className="h-10"></div>
             <p className="text-4xl pb-2 border-b">Workflow Info</p>
-            <WorkflowRenderer
-                workflow={workflow}
-                actionsWithCallbacks={actionsWithCallbacks}
-                workflowState={actionStates}
-                refresh={update}
-            />
+            <div className="flex justify-center">
+
+                <div className="max-w-screen-xl w-full">
+                    <WorkflowRenderer
+                        workflow={workflow}
+                        actionsWithContext={actionsWithContext}
+                        data={course}
+                        refresh={update}
+                    />
+                </div>
+            </div>
         </>
     )
 }
 
-function CourseInfo({ course, actionsWithCallbacks, refresh }) {
+function CourseInfo({ course, actionsWithContext, refresh }) {
 
     const [newCourseName, setNewCourseName] = useState(course.name)
     const [newCourseCode, setNewCourseCode] = useState(course.classId)
@@ -58,14 +62,19 @@ function CourseInfo({ course, actionsWithCallbacks, refresh }) {
         return CMTFetch('PUT', `course/${course.id}`, { courseCode: newCourseCode }).then(async () => await refresh())
     }
 
+    // Only keep actions if they correspond to certain codes
+    const courseInfoKeys = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER"]
+    const courseInfoActions = flattenActionsWithContext(actionsWithContext).filter(
+        awc => courseInfoKeys.includes(awc.action.metadata.code)
+    )
+
     return (
         <>
             <div className='flex justify-between w-full pb-3 items-center'>
-                <Button onClick={() => navigate('/courses')}><div className='flex'><ArrowLeft/>{' '}Back</div></Button>
+                <Button onClick={() => navigate('/courses')}><div className='flex'><ArrowLeft/>Back</div></Button>
             </div>
             <h1 style={{ backgroundColor: course.color }} className='p-2'>
-                {' '}
-                Course Info{' '}
+                Course Info
             </h1>
             <div className='flex items-center hover:bg-gray-200 group pl-2'>
                 <InlineFormHoverable
@@ -83,123 +92,13 @@ function CourseInfo({ course, actionsWithCallbacks, refresh }) {
                     onChange={e => setNewCourseCode(e.target.value)}
                 />
             </div>
-                {actionsWithCallbacks.map(actionWithCallback => 
+                {courseInfoActions.map(actionWithContext => 
                     <InlineActionRenderer
-                        course={course}
-                        actionWithCallback={actionWithCallback}
+                        data={course}
+                        actionWithContext={actionWithContext}
                         refresh={refresh}
                     />
                 )}
-        </>
-    )
-}
-
-function InlineForm({ label, value, onReset, onChange, onSubmit }) {
-    return (
-        <Form onSubmit={onSubmit} onReset={onReset} className='flex items-center gapw'>
-            <Form.Label className='text-xl my-2 w-4/5'>{label}:</Form.Label>
-            <Form.Control defaultValue={value} onChange={onChange}></Form.Control>
-            <div className='flex'>
-                <Button className='mx-1' variant='outline-danger' type='reset'>
-                    <X />
-                </Button>
-                <Button className='mx-1' variant='outline-success' type='submit'>
-                    <Check />
-                </Button>
-            </div>
-        </Form>
-    )
-}
-
-function InlineFormHoverable({ label, value, onChange, onSubmit }) {
-    const [editing, setEditing] = useState(false)
-
-    return editing ? (
-        <InlineForm
-            label={label}
-            value={value}
-            onReset={() => setEditing(false)}
-            onChange={onChange}
-            onSubmit={async (e) => {
-                await onSubmit(e)
-                setEditing(false)
-            }}
-        />
-    ) : (
-        <div className="flex items-center gap-20">
-            <div className=''>
-                <p className={`text-xl my-2`}>
-                    {' '}
-                    {label}: {value}{' '}
-                </p>
-            </div>
-            <div className='hidden group-hover:block'>
-                <Button size='sm' title='Edit Course' variant='outline-secondary' onClick={() => setEditing(true)}>
-                    <Edit className='size-6' />
-                </Button>
-            </div>
-        </div>
-    )
-}
-
-function InlineActionRenderer({ actionWithCallback, course, refresh }) {
-    
-    const metadata = metadataArrayToObject(actionWithCallback.action.metadata)
-    const [outputValues, setOutputValues] = useState(metadataObjectToState(metadata))
-
-    function submitAction(e) {
-        e.preventDefault()
-        CMTFetch('PUT', actionWithCallback.callback, outputValues).then(() => {
-            setTimeout(async () => {
-                await refresh()
-                setIsEditing(false)
-            }, 500)
-        })
-    }
-
-    const [isEditing, setIsEditing] = useState(false)
-    return (
-        <>
-            {isEditing ? (
-                <div>
-                    <Form className='flex items-center gap-6' onSubmit={submitAction}>
-                        <GenericActionRenderer
-                            actionWithCallback={actionWithCallback}
-                            metadata={metadata}
-                            outputValues={outputValues}
-                            setOutputValues={setOutputValues}
-                        />
-                        <Button
-                            variant='outline-danger'
-                            type='reset'
-                            onClick={() => {
-                                setIsEditing(false)
-                            }}
-                        >
-                            <X />
-                        </Button>
-                        <Button variant='outline-success' type='submit'>
-                            <Check />
-                        </Button>
-                    </Form>
-                </div>
-            ) : (
-                metadata.outputs.map(output => (
-                    <div className='flex items-center hover:bg-gray-200 group pl-2'>
-                        <div className='w-1/5'>
-                            <p className='text-xl my-2'>
-                                {' '}
-                                {output.name} {course[output.key] ?? 'TBD'}{' '}
-                            </p>
-                        </div>
-                        <div className='hidden group-hover:block'>
-                            <Button size='sm' title='Edit Course' variant='outline-secondary' onClick={() => setIsEditing(true)}>
-                                <Edit size={24} />
-                            </Button>
-                        </div>
-                    </div>
-                ))
-            )}
         </>
     )
 }

@@ -1,6 +1,27 @@
 import { Check, Pencil, X } from "lucide-react";
 import { Card } from "react-bootstrap";
 
+/**
+ * TODO: this should be in a design choices document? but its so small >w<
+ * 
+ * These functions would be difficult to merge because tailwind classes cannot be dynamic unless you:
+ *  * manually specified colors, which would make it harder to change the colors without copy-pasting from an online color palette
+ *  * preloaded every tailwind class, which would be a terribly large css file
+ * 
+ * If you want to change something about all 3 of these and really don't want to copy-paste, you can hold alt, then click at the same point of each card.
+ * Then, you will have 3 cursors editing in parallel!
+ */
+export function StatusCard({ stateType }) {
+    if (stateType === "notStarted") 
+        return <StatusCardNotStarted />
+    else if (stateType === "inProgress")
+        return <StatusCardInProgress />
+    else if (stateType === "completed")
+        return <StatusCardCompleted />
+    else
+        throw Error(`Unrecognized stateType: ${stateType}`)
+}
+
 export function StatusCardCompleted() {
     return <Card>
         <Card.Body 

@@ -1,6 +1,6 @@
 import express from 'express'
-import {  workflowsFetch } from '../utils/workflows.js'
-import { objectToNewWorkflow } from '../utils/workflows.js'
+import { objectToNewWorkflow, workflowsFetch } from '../utils/workflows/api.js'
+import { actionToActionWithContext, flattenActionStates as flattenWorkflowState } from '../utils/workflows/actionPipeline.js'
 
 const router = express.Router()
 export default router
@@ -47,27 +47,15 @@ router.get('/:id', async (req, res) => {
 
         const workflow = await workflowsFetch('GET', `workflows/${course.workflowId}`)
         const actions = await workflowsFetch('GET', `actions?workflowId=${course.workflowId}`)
-        const actionStates = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
+        const workflowState = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
+        
+        // flatten action states to a simple 1:1 map (action id -> action state of corresponding action)
+        const flattenedWorkflowState = flattenWorkflowState(workflowState)
+        const actionWithContexts = actions.map(action => 
+            actionToActionWithContext(action, flattenedWorkflowState, course.id, req.user?.uid)
+        )
 
-        function determineCallback(code, asid) {
-            switch (code) {
-                case 'COURSE_SECTION':
-                    return `course/${course.id}?uid=${req.user.uid}&asid=${asid}`
-                case 'NUMBER_STUDENTS':
-                    return `course/${course.id}?uid=${req.user.uid}&asid=${asid}`
-                default:
-                    throw Error('Unrecognized action metadata code ' + code)
-            }
-        }
-        const actionsWithCallbacks = actions.map(action => ({
-            action,
-            callback: determineCallback(
-                JSON.parse(action.metadata.code),
-                actionStates.baseActionState.children.find(actionState => actionState.actionId === action.id).id, // Find the action state's matching action
-            ),
-        }))
-
-        res.json({ course, workflow, actionsWithCallbacks, actionStates })
+        res.json({ course, workflow, actionWithContexts, actionStates: workflowState })
     } catch (err) {
         console.error('course creation failed: ', err)
         res.status(500).json({ error: err.message })
@@ -92,47 +80,123 @@ router.post('/', async (req, res) => {
         const workflow = {
             name: 'Create Course',
             description: 'Default course creation template',
-            rootAction: {
-                name: 'Course Section',
-                description: 'Enter your courses section (If you know it)',
-                actionType: 'simple',
-                metadata: {
-                    code: 'COURSE_SECTION',
-                    outputs: [
+            actions: [
+                {
+                    name: 'Course Details',
+                    description: 'Enter your course details',
+                    actionType: 'complex',
+                    childActions: [
                         {
                             name: 'Course Section',
-                            key: 'section',
-                            type: 'text',
-                            isRequired: true,
-                            placeholder: '1',
-                            validation: {
-                                maxLength: 30,
+                            description: 'Enter your courses section',
+                            actionType: 'simple',
+                            metadata: {
+                                code: 'COURSE_SECTION',
+                                outputs: [
+                                    {
+                                        name: 'Course Section',
+                                        key: 'section',
+                                        type: 'text',
+                                        isRequired: true,
+                                        placeholder: '1',
+                                        validation: {
+                                            maxLength: 30,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            name: 'Number of Students',
+                            description: 'Enter the number of students enrolled in your course',
+                            actionType: 'simple',
+                            metadata: {
+                                code: 'NUMBER_STUDENTS',
+                                outputs: [
+                                    {
+                                        name: 'Number of Students',
+                                        key: 'students',
+                                        type: 'number',
+                                        isRequired: true,
+                                        placeholder: 20,
+                                        validation: {
+                                            max: 999,
+                                            min: 1,
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            name: 'Section Semester',
+                            description: 'Enter the semester the section will take place in',
+                            actionType: 'simple',
+                            metadata: {
+                                code: 'COURSE_SEMESTER',
+                                outputs: [
+                                    {
+                                        name: 'Year',
+                                        key: 'year',
+                                        type: 'select',
+                                        isRequired: true,
+                                        validation: {
+                                            options: [2027, 2028, 2029, 2030],
+                                        },
+                                    },
+                                    {
+                                        name: 'Season',
+                                        key: 'season',
+                                        type: 'select',
+                                        isRequired: true,
+                                        validation: {
+                                            options: ['Fall', 'Spring', 'Summer 1', 'Summer 2'],
+                                        },
+                                    },
+                                ],
                             },
                         },
                     ],
                 },
-                nextAction: {
-                    name: 'Number of Students',
-                    description: 'Enter the number of students enrolled in your course (If you know it)',
-                    actionType: 'simple',
-                    metadata: {
-                        code: 'NUMBER_STUDENTS',
-                        outputs: [
-                            {
-                                name: 'Number of Students',
-                                key: 'students',
-                                type: 'number',
-                                isRequired: true,
-                                placeholder: 20,
-                                validation: {
-                                    max: 999,
-                                    min: 1,
-                                },
+                {
+                    name: 'Create Sessions',
+                    description: 'Create sessions for your course',
+                    actionType: 'workflow',
+                    actions: Array.from({ length: 4 }, (_, index) => {
+                        return {
+                            name: `Create session ${index}`,
+                            description:
+                                'Create a session. In the workflow editor, more specific details could be given for certain sessions, like if a session should have an exam.',
+                            actionType: 'simple',
+                            metadata: {
+                                code: 'CHECKBOX',
                             },
-                        ],
-                    },
+                        }
+                    }),
                 },
-            },
+                {
+                    name: 'Publish Course Website',
+                    description: 'Navigate to the course generation page and publish your website!',
+                    actionType: 'workflow',
+                    actions: [
+                        {
+                            name: 'Set Column visibilities',
+                            description: 'Hide columns that contain internal information',
+                            actionType: 'simple',
+                            metadata: {
+                                code: 'CHECKBOX',
+                            },
+                        },
+                        {
+                            name: 'Publish Course Website',
+                            description: "You're all ready to publish!",
+                            actionType: 'simple',
+                            metadata: {
+                                code: 'CHECKBOX',
+                            },
+                        },
+                    ],
+                },
+            ],
         }
 
         const createdWorkflow = await objectToNewWorkflow(workflow, professorId)
@@ -175,22 +239,38 @@ router.put('/:id', async (req, res) => {
 
         console.log('PUT /api/cmt/course/:id called with:', id, updateData)
 
+        const mappedData = {
+            ...(updateData.courseCode !== undefined 
+                && { classId: updateData.courseCode }
+            ),
+            ...(updateData.courseName !== undefined 
+                && { name: updateData.courseName }
+            ),
+            ...(updateData.semester !== undefined 
+                && { semester: updateData.semester }
+            ),
+            ...(updateData.color !== undefined 
+                && { color: updateData.color }
+            ),
+            ...(updateData.students !== undefined 
+                && !isNaN(parseInt(updateData.students)) 
+                && { students: parseInt(updateData.students) }
+            ),
+            ...(updateData.section !== undefined 
+                && !isNaN(parseInt(updateData.section))
+                && { section: parseInt(updateData.section) }
+            ),
+        }
+
         const updatedCourse = await prisma.course.update({
             where: { id: Number(id) },
-            data: {
-                classId: updateData.courseCode,
-                name: updateData.courseName,
-                semester: updateData.semester,
-                color: updateData.color,
-                students: !updateData.students ? null : parseInt(updateData.students),
-                section: !updateData.section ? null : parseInt(updateData.section),
-            },
+            data: mappedData
         })
 
         console.log('Course updated successfully:', updatedCourse)
 
         const { uid: userId, asid: actionStateId } = req.query
-        if (actionStateId) await workflowsFetch('PUT', `/states/action/${actionStateId}`, { stateType: 'completed' })
+        if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
 
         res.json({
             success: true,

@@ -1,25 +1,43 @@
- /**
- * Workflows will take the object you give to it as the metadata and turn it into an array of key value pairs.
- * This makes it very hard to access by key, so this function will take that array and turn it back into an object.
- * It is meant for usage with `makeMetadataSafeForWorkflows` when uploading metadata 
- * 
- * @param {Array} metadataArray array of metadata given by the workflows API (and our endpoints)
- */
-export function metadataArrayToObject(metadataArray) {
-    let metadata = {}
-    Object.keys(metadataArray).forEach(key => {
-        metadata[key] = JSON.parse(metadataArray[key])
-    })
-    return metadata
-}
-
 /**
  * The various output renderers need to manage their state, so this complex snippet has been shared across them.
  * This code is in a function and not centralized in one component because otherwise it is difficult to control styling across output renderers
  * 
  * @param {object} metadata Metadata returned from {@link metadataArrayToObject} 
+ * @param {object} data An object with keys matching those defined in the metadata. Used to display values after user submission
  * @returns object that has all of the keys defined by output with their corresponding initial values
  */
-export function metadataObjectToState(metadata) {
-    return Object.fromEntries(metadata.outputs.map(output => [output.key, output.initialValue]))
+export function metadataObjectToState(metadata, data) {
+    if (!metadata.outputs) return null
+    return Object.fromEntries(metadata.outputs.map(
+        output => [
+            output.key, 
+            (data && data[output.key]) ?? output.initialValue
+        ]
+    ))
+}
+
+/**
+ * Transforms the nested representation of ActionsWithContext into a 
+ * flat array of all of the ActionsWithContext contained in the given ActionsWithContext
+ * 
+ * Takes an array because the backend gives them in an array. The backend gives them in an array because the workflows API does too.
+ * 
+ * @param {array} actionsWithContext 
+ * @returns Array containing all of the actionsWithContext that were nested inside of the given array.
+ */
+export function flattenActionsWithContext(actionsWithContext) {
+    const flattenedActionsWithContext = []
+
+    function traverse(awc) {
+        flattenedActionsWithContext.push(awc)
+        if (awc.action.childActionsWithContext)
+            for (const childAwc of awc.action.childActionsWithContext)
+                traverse(childAwc)
+    }
+
+    for (const awc of actionsWithContext)
+        traverse(awc)
+
+    console.log(flattenedActionsWithContext)
+    return flattenedActionsWithContext
 }
