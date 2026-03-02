@@ -69,18 +69,16 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
  * @returns callback URL string
  */
 function determineCallback(code, asid, courseId, userId) {
-  switch (code) {
-    case 'COURSE_SECTION':
-      return `course/${courseId}?uid=${userId}&asid=${asid}`
-    case 'NUMBER_STUDENTS':
-      return `course/${courseId}?uid=${userId}&asid=${asid}`
-    case 'COURSE_SEMESTER':
-      return `course/${courseId}?uid=${userId}&asid=${asid}`
-    case 'CHECKBOX':
-      return `workflony/editCheckmarkAction?uid=${userId}&asid=${asid}`
-    default:
-      throw Error('Unrecognized action metadata code ' + code)
+  if (code === 'COURSE_SECTION') {
+    return `course/${courseId}?uid=${userId}&asid=${asid}`
+  } if (code === 'NUMBER_STUDENTS') {
+    return `course/${courseId}?uid=${userId}&asid=${asid}`
+  } if (code === 'COURSE_SEMESTER') {
+    return `course/${courseId}?uid=${userId}&asid=${asid}`
+  } if (code === 'CHECKBOX' || code.includes("SESSION_")) {
+    return `workflony/editCheckmarkAction?uid=${userId}&asid=${asid}`
   }
+  throw Error('Unrecognized action metadata code ' + code)
 }
 
 /**

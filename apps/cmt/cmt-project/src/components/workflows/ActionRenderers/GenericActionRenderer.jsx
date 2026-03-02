@@ -30,13 +30,11 @@ export function CheckmarkActionRenderer({ actionWithContext, refresh }) {
     );
     
     return (
-        <div className="-mt-4">
-            <Button
-                variant={checked ? "outline-secondary" : "primary"}
-                onClick={() => submit(!checked)}
-            >
-                {checked ? "Mark as Incomplete" : "Mark as Complete"}
-            </Button>
-        </div>
+        <Button
+            variant={checked ? "outline-secondary" : "primary"}
+            onClick={() => submit(!checked)}
+        >
+            {checked ? "Mark as Incomplete" : "Mark as Complete"}
+        </Button>
     );
 }

@@ -167,7 +167,7 @@ router.post('/', async (req, res) => {
                                 'Create a session. In the workflow editor, more specific details could be given for certain sessions, like if a session should have an exam.',
                             actionType: 'simple',
                             metadata: {
-                                code: 'CHECKBOX',
+                                code: `SESSION_${index}`,
                             },
                         }
                     }),

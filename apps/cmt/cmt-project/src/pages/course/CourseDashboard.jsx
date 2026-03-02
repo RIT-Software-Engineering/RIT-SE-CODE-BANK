@@ -5,9 +5,10 @@ import { CMTFetch } from '../../utils/api'
 import { InlineActionRenderer } from '../../components/workflows/ActionRenderers/InlineActionRenderer'
 import { InlineFormHoverable } from '../../components/forms/InlineForms'
 import { flattenActionsWithContext } from '../../utils/workflows'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Edit } from 'lucide-react'
 import { Accordion, Button, Card, Form, Modal, Table} from 'react-bootstrap'
 import { RichTextEditor } from '../../components/RichTextEditor'
+import { CheckmarkActionRenderer } from '../../components/workflows/ActionRenderers/GenericActionRenderer'
 
 export function CourseDashboard() {
     const { id } = useParams()
@@ -30,6 +31,8 @@ export function CourseDashboard() {
 
     if (course === null || workflow === null) return <p> Loading </p>
 
+    const sessionActions = flattenActionsWithContext(actionsWithContext).filter(awc => awc?.action?.metadata?.code?.includes("SESSION_"))
+    
     return (
         <>
             <CourseInfo course={course} actionsWithContext={actionsWithContext} refresh={update} />
@@ -48,7 +51,7 @@ export function CourseDashboard() {
             </div>
 
             <div>
-                <Session sessionCount={sessionCount} setSessionCount={setSessionCount} sessions={sessions} setSessions={setSessions}/>
+                <Session sessionCount={sessionCount} setSessionCount={setSessionCount} sessions={sessions} setSessions={setSessions} sessionActions={sessionActions} updateWorkflow={update}/>
                 <div className='flex justify-end pt-4'>
                     <Button onClick={() => {
                         /** Makes a post request to add the session with no material.
@@ -127,12 +130,12 @@ function CourseInfo({ course, actionsWithContext, refresh }) {
  * The session component is an accordion that dynamically adds more items the higher the count. 
  * Displays a modal (when opened) and a table of uploaded resources. 
  *
- * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; }} param0
+ * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; sessionActions:any, updateWorkflow: function }} param0
  * sessionCount - the number of sessions a user has created
  * courseId - the identifier for which sessionData to obtain
  * @returns {*} the session accordion as HTML
  */
-function Session({sessionCount, setSessionCount, sessions, setSessions}) {
+function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow}) {
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
@@ -168,41 +171,48 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions}/>
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen}/>
         {
-            Array.from({ length: sessionCount }, (_, i) => (
-                <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
-                    <Accordion.Header>
-                        <Form.Check onClick={(e)=>e.stopPropagation()} className='mr-3 text-xl'></Form.Check>
-                        <span className='text-2xl'>Session {i+1}</span>
+            Array.from({ length: sessionCount }, (_, i) => {
+                const sessionAction = sessionActions?.find(sessionAction => sessionAction.action.metadata.code === `SESSION_${i}`)
+                
+                return (
+                    <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
+                        <Accordion.Header>
+                            <div className="flex items-center gap-2">
+                                {/* TODO: completion should be tracked in the DB in case a professor wants to create more sessions than required */}
+                                {sessionAction && <CheckmarkActionRenderer actionWithContext={sessionAction} refresh={updateWorkflow}/>}
+                                <span className='text-2xl'>Session {i+1}</span>
+                            </div>
                         </Accordion.Header>
-                    <Accordion.Body>
-                        { sessionData.find(data => data.sessionNum === i) ?
-                        <SessionTable sessionData={sessionData} sessionNum={i} setIsEditOpen={setIsEditOpen} setSessionId={setCurSessionId}/> :
-                        <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
-                        }
-                        { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
-                        <Card>
-                            <Card.Body className='group max-h-96 overflow-y-scroll'>
-                                <Card.Title>
-                                    <div className='flex justify-between'>
-                                        <div>{sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} (Notes)</div>
-                                        <div className='justify-end size-12 opacity-0 group-hover:!opacity-100'><Button variant='outline-dark' onClick={(e) => {
-                                            setCurSessionId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
-                                            setIsEditOpen(true);
-                                            e.currentTarget.style.opacity = "100";
-                                        }}><Edit /></Button></div>
-                                    </div>
-                                </Card.Title>
-                                <Card.Text>
-                                    <span className="prose" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
-                            </Card.Body>
-                        </Card> : <></>
-                        }
-                        <div className='flex justify-end pt-3'>
-                            <Button onClick={() => setIsOpen(true)}>Add Material</Button>
-                        </div>
-                    </Accordion.Body>
-                </Accordion.Item>
-            ))
+                        <Accordion.Body>
+                            { sessionData.find(data => data.sessionNum === i) ?
+                            <SessionTable sessionData={sessionData} sessionNum={i} setIsEditOpen={setIsEditOpen} setSessionId={setCurSessionId}/> :
+                            <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
+                            }
+                            { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
+                            <Card>
+                                <Card.Body className='group max-h-96 overflow-y-scroll'>
+                                    <Card.Title>
+                                        <div className='flex justify-between'>
+                                            <div>{sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} (Notes)</div>
+                                            <div className='justify-end size-12 opacity-0 group-hover:!opacity-100'><Button variant='outline-dark' onClick={(e) => {
+                                                setCurSessionId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
+                                                setIsEditOpen(true);
+                                                e.currentTarget.style.opacity = "100";
+                                            }}><Edit /></Button></div>
+                                        </div>
+                                    </Card.Title>
+                                    <Card.Text>
+                                        <span className="prose" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
+                                </Card.Body>
+                            </Card> : <></>
+                            }
+                            <div className='flex justify-end pt-3'>
+                                <Button onClick={() => setIsOpen(true)}>Add Material</Button>
+                            </div>
+                        </Accordion.Body>
+                    </Accordion.Item>
+                )
+            })
         }
       </Accordion>
   );

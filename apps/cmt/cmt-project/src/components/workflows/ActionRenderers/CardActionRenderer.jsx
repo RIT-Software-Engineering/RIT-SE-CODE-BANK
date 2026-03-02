@@ -73,7 +73,9 @@ function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
         })
     }
 
-    const isCheckbox = actionWithContext.action.metadata.code === "CHECKBOX"
+    const isCheckbox = 
+        actionWithContext.action.metadata.code === "CHECKBOX"
+        || actionWithContext.action.metadata.code.includes("SESSION_")
 
     return (<>
         <Card>
@@ -84,7 +86,7 @@ function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
                         <p className='text-gray-600 mb-4'>{actionWithContext.action.description}</p>
                         {/* If its a checkmark-only action, then skip the normal form stuff and have it update the action whenever clicked. */}
                         {isCheckbox
-                            ? <CheckmarkActionRenderer actionWithContext={actionWithContext} refresh={refresh} />
+                            ? <div className="-mt-4"><CheckmarkActionRenderer actionWithContext={actionWithContext} refresh={refresh} /></div>
                             : <Form onSubmit={submitAction}  className='flex gap-4'>
                                 <GenericActionRenderer
                                     metadata={actionWithContext.action.metadata}
