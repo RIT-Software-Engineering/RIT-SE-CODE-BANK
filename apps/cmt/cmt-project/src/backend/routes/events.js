@@ -109,13 +109,14 @@ router.get("/", async (req, res) => {
 router.get("/courses", async (req, res) => {
   const user = requireUser(req, res);
   if (!user) return;
+  const profId = req.user.uid;
 
   try {
     // If user is a professor, get their courses by professorId
-    if (user.professorId) {
+    if (profId) {
       const courses = await prisma.course.findMany({
         where: {
-          professorId: parseInt(user.professorId), // Convert string to integer
+          professorId: profId,
         },
         include: {
           _count: {

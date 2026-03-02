@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import "../styles/devLogin.css";
+<<<<<<< HEAD
 import { CMTFetch } from "../utils/api";
 
 // const AUTH_BASE = "http://localhost:5010";
 // const AUTH_BASE = process.env.BASE_URL;
+=======
+import { AUTH_BASE } from "../utils/api";
+>>>>>>> cmt-dev
 
 export default function DevLoginPage() {
   const [email, setEmail] = useState("");
