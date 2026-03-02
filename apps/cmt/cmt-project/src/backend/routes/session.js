@@ -74,13 +74,14 @@ router.post("/", async (req, res) => {
 router.post("/:sessionId", async (req, res) => {
     try {
         const { sessionId } = req.params;
+        const item = req.body;
         const material = await prisma.sessionMaterial.create({
             data: {
-                type: req.body.itemType,
-                label: req.body.itemLabel,
-                body: req.body.itemBody,
+                type: item.itemType,
+                label:item.itemLabel,
+                body: item.itemBody,
                 sessionId: parseInt(sessionId),
-                sessionNum: req.body.sessionNum,
+                sessionNum: item.sessionNum,
             }
         });
 
@@ -92,6 +93,34 @@ router.post("/:sessionId", async (req, res) => {
         res.json({
             success: false,
             error: error.message
+        })
+    }
+})
+
+router.put("/material/:materialId", async (req, res) => {
+    try {
+        const {materialId} = req.params;
+        const updateData = req.body;
+        console.log(updateData)
+        
+        // TODO maybe add a way to update the session the material is in?
+        const material = await prisma.sessionMaterial.update({
+            where: {id: Number(materialId)},
+            data: {
+                label: updateData.itemLabel,
+                body: updateData.itemBody,
+            }
+        })
+
+        res.json({
+            success: true,
+            message: "Successfully updated material",
+            material: material,
+        })
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message,
         })
     }
 })
