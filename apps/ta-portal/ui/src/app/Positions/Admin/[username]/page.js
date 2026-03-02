@@ -73,6 +73,7 @@ export default function AdminPositions() {
 
   // State for managing modals (edit/create position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+    const [isEdit, setIsEdit]=useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -240,6 +241,7 @@ export default function AdminPositions() {
    */
   const handleOpenModal = (job = null) => {
     setSelectedJob(job);
+    setIsEdit((job!=null));
     setIsModalOpen(true);
   };
 
@@ -481,7 +483,7 @@ export default function AdminPositions() {
                 </Typography>
               </Box>
               {/* "Create New Position" button is only visible on the "My Positions" tab. */}
-              {activeTab === 1 && (
+              
                 <Button
                   variant="contained"
                   color="primary"
@@ -491,7 +493,7 @@ export default function AdminPositions() {
                 >
                   {isProcessing ? <CircularProgress size={24} /> : 'Create New Position'}
                 </Button>
-              )}
+              
             </Box>
 
             {/* Search and Filter Bar */}
@@ -549,11 +551,13 @@ export default function AdminPositions() {
           onSave={handleSaveJob}
         />
       )}
-      {showClearConfirm && (
-        <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Cancel Position Creation">
-          Are you sure you want to cancel this job application? This action cannot be undone.
-        </ConfirmationModal>
-      )}
+      {
+              showClearConfirm && (
+                <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title={isEdit ? "Cancel Edits to Position" : "Cancel Position Creation"}>
+                 {isEdit ? "Leaving now will permanently discard your edits. This action cannot be undone." : "Are you sure you want to cancel this job application? This action cannot be undone."}
+                </ConfirmationModal>
+              )
+            }
 
 
       <EditableNoteForm

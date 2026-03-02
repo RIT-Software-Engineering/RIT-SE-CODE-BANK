@@ -77,6 +77,7 @@ function EmployerPositionsContent() {
 
   // State for managing modals (edit/create position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [isEdit, setIsEdit]=useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -218,25 +219,12 @@ function EmployerPositionsContent() {
   };
 
   /**
-   * Handles the user switching between tabs.
-   * Resets search and filter states and fetches data for the new tab.
-   * @param {React.SyntheticEvent} event - The event source of the callback.
-   * @param {number} newTabIndex - The index of the newly selected tab.
-   */
-  const handleTabChange = (event, newTabIndex) => {
-    setIsLoading(true);
-    setSearchTerm("");
-    const initialFilters = createInitialState(filterConfig);
-    setAppliedFilters(initialFilters);
-    setActiveTab(newTabIndex);
-  };
-
-  /**
    * Opens the EditPositionModal for creating a new position or editing an existing one.
    * @param {object | null} job - The job object to edit, or null for creation.
    */
   const handleOpenModal = (job = null) => {
     setSelectedJob(job);
+    setIsEdit((job!=null));
     setIsModalOpen(true);
   };
 
@@ -509,8 +497,8 @@ function EmployerPositionsContent() {
       }
       {
         showClearConfirm && (
-          <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Cancel Position Creation">
-            Are you sure you want to cancel this job application? This action cannot be undone.
+          <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title={isEdit ? "Cancel Edits to Position" : "Cancel Position Creation"}>
+           {isEdit ? "Leaving now will permanently discard your edits. This action cannot be undone." : "Are you sure you want to cancel this job application? This action cannot be undone."}
           </ConfirmationModal>
         )
       }
