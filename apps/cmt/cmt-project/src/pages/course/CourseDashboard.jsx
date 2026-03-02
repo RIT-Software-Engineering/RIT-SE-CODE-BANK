@@ -6,7 +6,8 @@ import { InlineActionRenderer } from '../../components/workflows/ActionRenderers
 import { InlineFormHoverable } from '../../components/forms/InlineForms'
 import { flattenActionsWithContext } from '../../utils/workflows'
 import { ArrowLeft } from 'lucide-react'
-import { Accordion, Button, Card, Form, Modal, Table } from 'react-bootstrap'
+import { Accordion, Button, Card, Form, Modal, Table} from 'react-bootstrap'
+import { RichTextEditor } from '../../components/RichTextEditor'
 
 export function CourseDashboard() {
     const { id } = useParams()
@@ -15,6 +16,7 @@ export function CourseDashboard() {
     const [actionsWithContext, setactionWithContexts] = useState([])
     const [workflow, setWorkflow] = useState(null)
     const [sessionCount, setSessionCount] = useState(0)
+    const [sessions, setSessions] = useState([]);
 
     const update = useCallback(async () => {
         return CMTFetch('GET', `course/${id}`).then(async response => {
@@ -46,10 +48,17 @@ export function CourseDashboard() {
             </div>
 
             <div>
-                <Session sessionCount={sessionCount} courseId={course.courseId}/>
+                <Session sessionCount={sessionCount} setSessionCount={setSessionCount} sessions={sessions} setSessions={setSessions}/>
                 <div className='flex justify-end pt-4'>
                     <Button onClick={() => {
-                       setSessionCount(sessionCount+1)
+                        /** Makes a post request to add the session with no material.
+                         * ID is the class ID to identify where it belongs in the future
+                         */
+                       CMTFetch('POST', 'session', {sessionCount, id}).then(async response=>{
+                        const data = await response.json();
+                        setSessionCount(sessionCount+1);
+                        setSessions([...sessions, data.session])
+                    })
                     }}>Add session</Button>
                 </div>
             </div>
@@ -118,33 +127,43 @@ function CourseInfo({ course, actionsWithContext, refresh }) {
  * The session component is an accordion that dynamically adds more items the higher the count. 
  * Displays a modal (when opened) and a table of uploaded resources. 
  *
- * @param {{ sessionCount: number; courseId: number; }} param0
+ * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; }} param0
  * sessionCount - the number of sessions a user has created
  * courseId - the identifier for which sessionData to obtain
  * @returns {*} the session accordion as HTML
  */
-function Session({sessionCount, courseId}) {
-    //TODO add implementation with the backend to hold and maintain session data
-
+function Session({sessionCount, setSessionCount, sessions, setSessions}) {
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
-     * column - the column where the material should go
+     * type - the column where the material should go
      * label - the title of the material
      * body - the content of the material
      */
     const [sessionData, setSessionData] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [sessionNum, setSessionNum] = useState(0);
+    const { id } = useParams();
 
-    //TODO add GET request to set the session data
-    function getSessionData(){
-
-    }
+    /**
+     * Initial GET request upon loading the page
+     * Sets the correct amount of sessions and the actual sessions themselves with useful data
+     * Also gets material if there is any and puts it in each session
+     */
+    const update = useCallback(() => {
+        return CMTFetch('GET', `session/${id}`).then(async response => {
+            const data = await response.json()
+            setSessionCount(data.sessions.length)
+            setSessions(data.sessions);
+            const materialsArray = data.sessionMaterials.filter(m => m.material).map(m => m.material);
+            setSessionData(materialsArray.flat());
+        })
+    }, [id, setSessions, setSessionCount])
+    useEffect(() => void update(), [id, update])
 
     return (
         <Accordion alwaysOpen>
-        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen}/>
+        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions}/>
         {
             Array.from({ length: sessionCount }, (_, i) => (
                 <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
@@ -157,11 +176,12 @@ function Session({sessionCount, courseId}) {
                         <SessionTable sessionData={sessionData} sessionNum={i}/> :
                         <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                         }
-                        { sessionData.find(data => data.sessionNum === i && data.column==="Personal Notes") ?
+                        { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
                         <Card>
                             <Card.Body>
-                                <Card.Title>{sessionData.find(data => data.sessionNum === i && data.column==="Personal Notes").label} (Notes)</Card.Title>
-                                <Card.Text>{sessionData.find(data => data.sessionNum === i && data.column==="Personal Notes").body}</Card.Text>
+                                <Card.Title>{sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} (Notes)</Card.Title>
+                                <Card.Text>
+                                    <span className="prose" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
                             </Card.Body>
                         </Card> : <></>
                         }
@@ -180,7 +200,7 @@ function Session({sessionCount, courseId}) {
  * The modal to create session material. 
  * The modal makes the user select the material type, material title and they can add material content.
  *
- * @param {{ sessionNum: any; sessionData: any; setSessionData: any; isOpen: any; setIsOpen: any; }} param0 
+ * @param {{ sessionNum: any; sessionData: any; setSessionData: any; isOpen: any; setIsOpen: any; sessions: any;}} param0 
  * sessionNum - the number of the session (used as an identifier in sessionData)
  * sessionData - the data of sessions in a course. Used to check if a user has created a personal note or not since we restrict to 1 note per session
  * setSessionData - function to set the sessionData. Used upon upload to keep track of the session
@@ -188,20 +208,26 @@ function Session({sessionCount, courseId}) {
  * setIsOpen - open/close the modal
  * @returns {*} the modal as HTML
  */
-function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen}){
+function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions}){
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
     const [itemType, setItemType] = useState('Topic/Lecture');
     const [warningVisible, setWarningVisible] = useState(false);
 
-    //TODO Make POST request to save session material
+    /** Makes a post request and updates the session data.
+     * Is it a little weird that it uses id and sessionNum? Yeah probably but it works
+     * If prisma has views you can use that but I wasn't aware of them if so when writing this
+     */
     function uploadSessionMaterial(){
+        const id = sessions.find(session => session.sessionNum === (sessionNum+1)).id
+        CMTFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(() =>
         setSessionData(sessionData => [...sessionData, {
             sessionNum: sessionNum,
-            column: itemType,
+            type: itemType,
             label: itemLabel,
             body: itemBody,
-        }]);
+        }])
+        )
     }
 
     function resetForm(){
@@ -229,7 +255,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                                 <option>Projects & Practica</option>
                                 <option>Group Assignment</option>
                                 <option>Individual Assignment</option>
-                                {!sessionData.find(data => data.sessionNum === sessionNum && data.column==="Personal Notes") ? <option>Personal Notes</option> : <></>} 
+                                {!sessionData.find(data => data.sessionNum === sessionNum && data.type==="Personal Notes") ? <option>Personal Notes</option> : <></>} 
                                 </Form.Select>
                                 </div>
                                 <div>
@@ -238,9 +264,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                                 </div>
                                 <div>
                                 <Form.Label>Content</Form.Label>
-                                <Form.Control as="textarea" onChange={(e)=>setItemBody(e.target.value)}>
-                                    {/* TODO Replace this with Rich Text Editor */}
-                                </Form.Control>
+                                <RichTextEditor value={itemBody} onChange={setItemBody}/>
                                 </div>
                             </div>
                         </div>
@@ -282,7 +306,7 @@ function SessionTable( {sessionData, sessionNum} ) {
      */
     function determineCols(){
         sessionData.map(data => {
-            const i = allCols.indexOf(data.column);
+            const i = allCols.indexOf(data.type);
             if (cols[i] === 0)
             setCols([...cols.slice(0, i), 1, ...cols.slice(i+1)]) ;
             return null;}
@@ -297,7 +321,7 @@ function SessionTable( {sessionData, sessionNum} ) {
     function determineRows(){
         var maxRows = 1;
         allCols.forEach(col => {
-            const result = sessionData.filter(data => data.sessionNum === sessionNum && data.column === col).length;
+            const result = sessionData.filter(data => data.sessionNum === sessionNum && data.type === col).length;
             if (result > maxRows)
                 maxRows = result;
         });
@@ -313,7 +337,7 @@ function SessionTable( {sessionData, sessionNum} ) {
      * @returns {string} the title of the item, or a blank string if it doesn't exist
      */
     function displayLabel(col, index){
-        const labels = sessionData.filter(data => data.column === allCols[col] && data.sessionNum === sessionNum);
+        const labels = sessionData.filter(data => data.type === allCols[col] && data.sessionNum === sessionNum);
         if (labels[index])
             return labels[index].label;
         return '';

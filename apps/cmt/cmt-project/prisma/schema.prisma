@@ -90,11 +90,30 @@ model Course {
   section      Int?
   professorId  String
   professors   Professor      @relation(fields: [professorId], references: [id])
+  sessions     Session[]
   events       Event[]
   tbenrollment TBEnrollment[]
   tbteamset    TBTeamSet[]
   workflowId   String
   workflowStateId String
+}
+
+model Session {
+  id          Int        @id @default(autoincrement())
+  sessionNum  Int
+  courseId    Int
+  course      Course  @relation(fields: [courseId], references: [id])
+  material    SessionMaterial[]
+}
+
+model SessionMaterial {
+  id          Int        @id @default(autoincrement())
+  type        String
+  label       String
+  body        String?   @db.Text
+  sessionId   Int
+  sessionNum  Int
+  session     Session @relation(fields: [sessionId], references: [id])
 }
 
 model TBEnrollment {
