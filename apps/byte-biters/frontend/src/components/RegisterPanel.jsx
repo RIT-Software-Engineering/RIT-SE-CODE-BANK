@@ -1,20 +1,17 @@
 import Register from "./Register";
 
-export default function RegisterPanel () {
+export default function RegisterPanel ({ registers }) {
     return (
         <div className="bg-main-secondary h-24 flex flex-col items-center justify-between py-4 gap-4">
             <div className="flex flex-row gap-8">
-                <Register name="R0" number="000"></Register>
-                <Register name="R1"></Register>
-                <Register name="R2"></Register>
-                <Register name="R3"></Register>
-                <Register name="R4"></Register>
-                <Register name="R5"></Register>
+                {registers.slice(0,6).map((reg, i) => (
+                    <Register key={i} name={`R${i}`} value={reg.toString().padStart(4, "0")}/>
+                ))}
             </div>
             {/* special registers */}
             <div className="flex flex-row gap-8">
-                <Register name="SP"></Register>
-                <Register name="PC"></Register>
+                <Register key="sp" name="SP" value={registers[6].toString().padStart(4, "0")}/>
+                <Register key="pc" name="PC" value={registers[7].toString().padStart(4, "0")}/>
                 <Register name="SR"></Register>
             </div>
             

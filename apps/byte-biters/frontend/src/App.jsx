@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import CodeEditor from "./components/CodeEditor"
 import Header from "./components/Header"
 import SidePanel from "./components/SidePanel"
@@ -6,9 +6,11 @@ import MemoryPanel from "./components/MemoryPanel"
 import RegisterPanel from "./components/RegisterPanel"
 import ControlPanel from "./components/ControlPanel"
 import {Group, Panel} from "react-resizable-panels"
+import { CPU } from "../../backend/cpu"
 
 export default function App() {
-  const memory = new Array(256).fill(0)
+  const cpuRef = useRef(new CPU())
+  const [cpuState, setCpuState] = useState(cpuRef.current.getState())
 
   const [code, setCode] = useState(`test code :D`)
 
@@ -27,8 +29,8 @@ export default function App() {
               {/* temp border */}
               <div className="bg-border-primary min-h-2 "></div>
               <ControlPanel></ControlPanel>
-              <RegisterPanel></RegisterPanel>
-              <MemoryPanel memory={memory}></MemoryPanel>
+              <RegisterPanel registers={cpuState.registers}></RegisterPanel>
+              {/* <MemoryPanel memory={cpuState.memory}></MemoryPanel> */}
             </Panel>
           </Group>
           
