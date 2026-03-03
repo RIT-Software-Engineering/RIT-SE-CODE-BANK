@@ -12,6 +12,7 @@ VM_USER="${SCOOP_PORTAL_DEPLOY_USER:-zim1902}"
 echo "Deploying Scoop Portal application..."
 
 ssh -i  "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
+	sudo usermod -aG docker zim1902
 	cd $APP_DIR
 
 	git fetch origin
