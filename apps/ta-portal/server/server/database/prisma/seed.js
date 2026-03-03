@@ -1,4 +1,4 @@
-// File: apps/ta-portal/server/server/database/prisma/ta-portal/seed.js
+// File: apps/ta-portal/server/server/database/prisma/seed.js
 
 const os = require('os');
 const { PrismaClient } = require('@prisma/client');
@@ -43,6 +43,7 @@ async function seedMacLinux() {
         const statements = Array.isArray(ast) ? ast : [ast];
 
         for (const stmt of statements) {
+            console.log(JSON.stringify(stmt.values, null, 2));
             if (stmt.type === 'insert') {
                 const modelName = sqlTableToPrismaModel(stmt.table[0].table);
                 const prismaModelKey = modelName.charAt(0).toLowerCase() + modelName.slice(1);
@@ -53,7 +54,16 @@ async function seedMacLinux() {
                 }
 
                 const columns = stmt.columns;
-                let dataObjects = stmt.values.map(valueSet => {
+                let rawValues = [];
+                if (Array.isArray(stmt.values)){
+                    rawValues = stmt.values;
+                } else if (stmt.values?.values){
+                    rawValues = stmt.values.values;
+                } else {
+                    console.warn('Unexpected INSERT format in ${file}. Skipping');
+                    continue;
+                }
+                let dataObjects = rawValues.map(valueSet => {
                     const obj = {};
                     columns.forEach((col, index) => {
                         obj[col] = valueSet.value[index].value;
