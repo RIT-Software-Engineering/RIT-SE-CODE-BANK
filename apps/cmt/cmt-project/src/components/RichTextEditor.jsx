@@ -39,7 +39,6 @@ export function RichTextEditor({ value, onChange }) {
         types: ['paragraph', 'heading']
       })
     ],
-    content: value || "Add content!",
     onUpdate: ({ editor }) => {
       onChange && onChange(editor.getHTML());
     },
@@ -63,6 +62,13 @@ export function RichTextEditor({ value, onChange }) {
     }
 
   }, [editor]);
+
+  useEffect(() => {
+  if (editor && value !== editor.getHTML() && value) {
+    editor.commands.setContent(value);
+  }
+  else if (!value) editor.commands.setContent("Add content here!")
+  }, [value, editor]);
 
   const setLink = useCallback(() => {
     const previousUrl = editor.getAttributes('link').href;
@@ -281,8 +287,8 @@ export function RichTextEditor({ value, onChange }) {
       </Accordion>
 
       {/* Editor */}
-      <div className="border pl-2 prose min-w-full">
-        <EditorContent editor={editor}/>
+      <div className="border pl-2 prose min-w-full overflow-y-scroll max-h-96">
+        <EditorContent editor={editor} className="h-full"/>
       </div>
     </div>
   );
