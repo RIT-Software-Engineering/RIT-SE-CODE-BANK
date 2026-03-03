@@ -262,6 +262,7 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
     const { id } = useParams();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [curSessionId, setCurSessionId] = useState(0);
+    const [deleteOpen, isDeleteOpen] = useState(false);
 
     /**
      * Initial GET request upon loading the page
@@ -279,10 +280,44 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
     }, [id, setSessions, setSessionCount])
     useEffect(() => void update(), [id, update])
 
+    function DeleteModal(){
+        return (
+            <>
+            <Modal show={deleteOpen} onHide={()=>isDeleteOpen(false)} centered>
+            <Modal.Header>
+                Delete All Session Materials
+            </Modal.Header>
+            <Modal.Body>
+            <div className='alert alert-danger'>
+                <h2>Warning!</h2>
+                <p>Confirming will delete ALL of the session material you've created! Are you sure you want to continue? This cannot be undone!</p>
+            </div>
+            <div className='flex justify-between'>
+                <Button className='justify-start' onClick={()=>isDeleteOpen(false)}>Cancel</Button>
+                <Button variant='danger' className='justify-end' onClick={()=> {
+                    CMTFetch('DELETE', `session/${id}/${sessionNum+1}`).then(async response => {
+                        const data = await response.json();
+                        const ids = data.materials.map(item => item.id)
+                        const sessionDataCopy = sessionData.map(material => {
+                        if (ids.includes(material.id)) 
+                            return {...material, active: false}
+                        return material});
+                        setSessionData(sessionDataCopy);
+                    });
+                    isDeleteOpen(false);
+                }}>Delete All Materials</Button>
+            </div>
+            </Modal.Body>
+            </Modal>
+            </>
+        )
+    }
+
     return (
         <Accordion alwaysOpen>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions}/>
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen}/>
+        <DeleteModal />
         {
             Array.from({ length: sessionCount }, (_, i) => (
                 <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
@@ -291,11 +326,11 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
                         <span className='text-2xl'>Session {i+1}</span>
                         </Accordion.Header>
                     <Accordion.Body>
-                        { sessionData.find(data => data.sessionNum === i) ?
+                        { sessionData.find(data => data.sessionNum === i && data.active) ?
                         <SessionTable sessionData={sessionData} sessionNum={i} setIsEditOpen={setIsEditOpen} setSessionId={setCurSessionId}/> :
                         <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                         }
-                        { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
+                        { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes" && data.active) ?
                         <Card>
                             <Card.Body className='group max-h-96 overflow-y-scroll'>
                                 <Card.Title>
@@ -313,8 +348,13 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
                             </Card.Body>
                         </Card> : <></>
                         }
-                        <div className='flex justify-end pt-3'>
+                        <div className='flex justify-between pt-3'>
+                        <div className={`justify-start ${sessionData.find(data => data.sessionNum === i && data.active) ? 'visible' : 'invisible'}`}>
+                            <Button variant='danger' onClick={()=>isDeleteOpen(true)}>Delete All Material</Button>
+                        </div>
+                        <div className='justify-end'>
                             <Button onClick={() => setIsOpen(true)}>Add Material</Button>
+                        </div>
                         </div>
                     </Accordion.Body>
                 </Accordion.Item>
@@ -348,14 +388,10 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
      */
     function uploadSessionMaterial(){
         const id = sessions.find(session => session.sessionNum === (sessionNum+1)).id
-        CMTFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(() =>
-        setSessionData(sessionData => [...sessionData, {
-            sessionNum: sessionNum,
-            type: itemType,
-            label: itemLabel,
-            body: itemBody,
-        }])
-        )
+        CMTFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(async response => {
+        const data = await response.json();
+        setSessionData(sessionData => [...sessionData, data.material])
+        })
     }
 
     function resetForm(){
@@ -383,7 +419,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                                 <option>Projects & Practica</option>
                                 <option>Group Assignment</option>
                                 <option>Individual Assignment</option>
-                                {!sessionData.find(data => data.sessionNum === sessionNum && data.type==="Personal Notes") ? <option>Personal Notes</option> : <></>} 
+                                {!sessionData.find(data => data.sessionNum === sessionNum && data.type==="Personal Notes" && data.active) ? <option>Personal Notes</option> : <></>} 
                                 </Form.Select>
                                 </div>
                                 <div>
@@ -431,12 +467,14 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
     const [warningVisible, setWarningVisible] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const curMaterial = sessionData.find(material => material.id === materialId);
 
     function resetForm(){
         setItemLabel('');
         setItemBody('');
         setWarningVisible(false);
+        setDeleting(false);
     }
 
     function setItems(){
@@ -455,11 +493,23 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
         });
     }
 
+    function deleteMaterial(){
+        CMTFetch("DELETE", `/session/material/${materialId}`).then(() => {
+            const sessionDataCopy = sessionData.map(material => {
+                if (material.id === materialId) 
+                    return {...material, active: false}
+                return material
+            });
+            setSessionData(sessionDataCopy);
+        });
+    }
+
     return (
             <Modal show={isEditOpen} onShow={setItems} onHide={() => {setIsEditOpen(false); 
             resetForm();}} centered size='lg'>
                 <Modal.Header closeButton>Edit Material</Modal.Header>
                 <Modal.Body>
+                {!deleting ? <>
                     <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Material needs to have a title!</div>
                     <Form onSubmit={updateMaterial}>
                         <div className='flex'>
@@ -474,7 +524,14 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                                 </div>
                             </div>
                         </div>
-                        <div className='flex justify-end pt-3'>
+                        <div className='flex justify-between pt-3'>
+                        <div className='justify-start'>
+                            <Button variant="danger" type="submit" onClick={(e)=> {
+                                e.preventDefault();
+                                setDeleting(true);
+                            }}>Delete Item</Button>
+                        </div>
+                        <div className='justify-end'>
                             <Button type="submit" onClick={(e) => {
                             e.preventDefault();
                             if (itemLabel){
@@ -485,7 +542,21 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                             else setWarningVisible(true);
                             }}>Submit</Button>
                         </div>
-                    </Form>
+                        </div>
+                    </Form></> : 
+                    <>
+                    <div className='alert alert-danger'>
+                        <h2>Warning!</h2>
+                        <p>Confirming will delete the session material you've created! Are you sure you want to continue? This cannot be undone!</p>
+                    </div>
+                    <div className='flex justify-between'>
+                        <Button className='justify-start' onClick={()=>setDeleting(false)}>Cancel</Button>
+                        <Button variant='danger' className='justify-end' onClick={()=> {
+                            deleteMaterial();
+                            setIsEditOpen(false);
+                            resetForm();}}>Delete Item</Button>
+                    </div>
+                    </>}
                 </Modal.Body>
             </Modal>
     );
@@ -527,7 +598,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
     function determineRows(){
         var maxRows = 1;
         allCols.forEach(col => {
-            const result = sessionData.filter(data => data.sessionNum === sessionNum && data.type === col).length;
+            const result = sessionData.filter(data => data.sessionNum === sessionNum && data.type === col && data.active).length;
             if (result > maxRows)
                 maxRows = result;
         });
@@ -543,7 +614,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
      * @returns {string} the title of the item, or a blank string if it doesn't exist
      */
     function displayLabel(col, index){
-        const labels = sessionData.filter(data => data.type === allCols[col] && data.sessionNum === sessionNum);
+        const labels = sessionData.filter(data => data.type === allCols[col] && data.sessionNum === sessionNum && data.active);
         if (labels[index])
             return labels[index].label;
         return '';

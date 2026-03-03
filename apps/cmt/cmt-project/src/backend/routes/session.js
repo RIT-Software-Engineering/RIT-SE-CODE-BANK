@@ -124,3 +124,50 @@ router.put("/material/:materialId", async (req, res) => {
         })
     }
 })
+
+router.delete('/material/:materialId', async (req, res) => {
+    try {
+        const {materialId} = req.params;
+        const material = await prisma.sessionMaterial.update({
+            where: {id: parseInt(materialId)},
+            data: {active: false},
+        });
+        res.json({
+            success: true,
+            material: material,
+        })
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message,
+        })
+    }
+})
+
+router.delete("/:courseId/:sessionNum", async (req, res) => {
+    try {
+        const {courseId, sessionNum} = req.params;
+        const session  = await prisma.session.findFirstOrThrow({
+        where: {courseId: parseInt(courseId), sessionNum: parseInt(sessionNum)}
+        });
+        let sessionId = session.id; 
+        await prisma.sessionMaterial.updateMany({
+            where: {sessionId: sessionId },
+            data: {active: false}
+        });
+        // Have to get it in a second findmany because prisma is a hater like that
+        const deletedMaterials = await prisma.sessionMaterial.findMany({
+            where: {sessionId: sessionId, active: false}
+        })
+        res.json({
+            success: true,
+            materials: deletedMaterials,
+            message: `Successfully deleted materials all materials for session ID ${sessionId}`,
+        })
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message
+        })
+    }
+});
