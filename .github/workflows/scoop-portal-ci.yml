@@ -172,6 +172,14 @@ jobs:
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "::notice ::Branch '$BRANCH' targets app '$APP_NAME'"
 
+      - name: Setup SSH Key
+        if: env.APP_NAME != ''
+        run: |
+          mkdir -p ~/ssh
+          echo "${{ secrets.SCOOP_PORTAL_DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "DEPLOY_KEY=$HOME/.ssh/deploy_key" >> $GITHUB_ENV
+
       - name: Deploy script
         run: |
           if [ "$APP_NAME" = "all" ]; then
