@@ -175,11 +175,14 @@ jobs:
       - name: Setup SSH Key
         if: env.APP_NAME != ''
         run: |
-          mkdir -p ~/ssh
-          echo "${{ secrets.SCOOP_PORTAL_DEPLOY_SSH_KEY }}" > ../github-actions-deploy
-          chmod 600 ../github-actions-deploy
-          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
-          # echo "DEPLOY_KEY=../github-actions-deploy" >> $GITHUB_ENV
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SCOOP_PORTAL_DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "DEPLOY_KEY=$HOME/.ssh/deploy-key" >> $GITHUB_ENV
+
+      - name: Add staging server to known hosts
+        run: |
+          ssh-keyscan -H apps-staging.se.rit.edu >> ~/.ssh/known_hosts
 
       - name: Deploy script
         run: |
