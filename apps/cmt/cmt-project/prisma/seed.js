@@ -33,6 +33,8 @@ async function main() {
   await prisma.tBEnrollment.deleteMany({});
   await prisma.templateItem.deleteMany({});
   await prisma.courseTemplate.deleteMany({});
+  await prisma.sessionMaterial.deleteMany({});
+  await prisma.session.deleteMany({});
   await prisma.course.deleteMany({});
   await prisma.professor.deleteMany({});
 

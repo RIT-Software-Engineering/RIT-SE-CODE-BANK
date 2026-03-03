@@ -97,6 +97,10 @@ router.post("/:sessionId", async (req, res) => {
     }
 })
 
+/** PUT /api/cmt/session/material/:materialId
+ * Updates session material. Upon success returns the session material.
+ * Will always update the label and body even if no changes are actually made to them upon submission.
+ */ 
 router.put("/material/:materialId", async (req, res) => {
     try {
         const {materialId} = req.params;
@@ -125,6 +129,10 @@ router.put("/material/:materialId", async (req, res) => {
     }
 })
 
+/** DELETE /api/cmt/session/material/:materialId
+ * Sets a specific session material to inactive. Upon success returns the session material to be updated
+ * Not a true delete, but users cannot see inactive items so basically functions like one
+ */ 
 router.delete('/material/:materialId', async (req, res) => {
     try {
         const {materialId} = req.params;
@@ -144,6 +152,10 @@ router.delete('/material/:materialId', async (req, res) => {
     }
 })
 
+/** DELETE /api/cmt/session/:courseId/:sessionNum
+ * Sets material for one session to inactive. Upon success returns the session materials to be updated
+ * Not a true delete, but users cannot see inactive items so basically functions like one
+ */ 
 router.delete("/:courseId/:sessionNum", async (req, res) => {
     try {
         const {courseId, sessionNum} = req.params;
