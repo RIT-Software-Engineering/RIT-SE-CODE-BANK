@@ -81,4 +81,4 @@ ssh -i  "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
 	docker compose ps
 ENDSSH
 
-echo "SCOOP Portal deployment complete!"
+echo "SCOOP Portal deployment complete!!"
