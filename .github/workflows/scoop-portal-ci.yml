@@ -178,7 +178,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SCOOP_PORTAL_DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          echo "DEPLOY_KEY=$HOME/.ssh/deploy-key" >> $GITHUB_ENV
+          echo "DEPLOY_KEY=$HOME/.ssh/deploy_key" >> $GITHUB_ENV
 
       - name: Add staging server to known hosts
         run: |
