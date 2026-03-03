@@ -43,7 +43,6 @@ async function seedMacLinux() {
         const statements = Array.isArray(ast) ? ast : [ast];
 
         for (const stmt of statements) {
-            console.log(JSON.stringify(stmt.values, null, 2));
             if (stmt.type === 'insert') {
                 const modelName = sqlTableToPrismaModel(stmt.table[0].table);
                 const prismaModelKey = modelName.charAt(0).toLowerCase() + modelName.slice(1);
