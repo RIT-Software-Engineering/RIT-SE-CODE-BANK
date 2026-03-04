@@ -6,14 +6,17 @@ import { Button } from "react-bootstrap";
 /**
  * Barebones output renderer, meant to be extended by other action renderers
  */
-export function GenericActionRenderer({ metadata, outputValues, setOutputValues }) {
+export function GenericActionRenderer({ metadata, outputValues, setOutputValues, submitted, validatorRegistry }) {
     return (
         <>
             {metadata.outputs.map(output => (
                 <OutputRenderer
+                    key={output.key}
                     output={output}
                     value={outputValues[output.key]}
                     setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
+                    submitted={submitted}
+                    validatorRegistry={validatorRegistry}
                 />
             ))}
         </>

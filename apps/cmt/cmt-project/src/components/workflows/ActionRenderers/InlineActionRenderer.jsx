@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { CMTFetch } from '../../../utils/api'
 import { GenericActionRenderer } from './GenericActionRenderer'
 import { Button, Form } from 'react-bootstrap'
@@ -15,13 +15,26 @@ import { metadataObjectToState } from '../../../utils/workflows'
  */
 export function InlineActionRenderer({ actionWithContext, data, refresh }) {
     const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, data))
+    
+    const validatorRegistry = useRef({})
+    const [submitted, setSubmitted] = useState(false)
 
     function submitAction(e) {
         e.preventDefault()
+
+        setSubmitted(true)
+        const allValid = Object.values(validatorRegistry.current).every(validateFn => {
+            const value = outputValues[validateFn.key]
+            return validateFn(value) === null
+        })
+        if (!allValid)
+            return
+        
         CMTFetch('PUT', actionWithContext.callback, outputValues).then(() => {
             setTimeout(async () => {
                 await refresh()
                 setIsEditing(false)
+                setSubmitted(false)
             }, 500)
         })
     }
@@ -37,6 +50,8 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
                                 metadata={actionWithContext.action.metadata}
                                 outputValues={outputValues}
                                 setOutputValues={setOutputValues}
+                                submitted={submitted}
+                                validatorRegistry={validatorRegistry}
                             />
                         </div>
                         <Button
@@ -44,6 +59,7 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
                             type='reset'
                             onClick={() => {
                                 setIsEditing(false)
+                                setSubmitted(false)
                             }}
                         >
                             <X />
