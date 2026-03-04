@@ -10,7 +10,7 @@ import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ApplicationCard from '@/components/applications/EmployerAndAdmin/ApplicationCard';
 import EditButton from '../common/buttons/EditButton';
-import { TablePagination, Box, Paper, Button, Modal, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { TablePagination, Divider, Box, Paper, Button, Modal, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
 export function UserRow({ user, role, onEdit }) {
 
@@ -71,11 +71,11 @@ export function UserRow({ user, role, onEdit }) {
         if (getOffersToMake(positions) == 0) {
             return (
                 <Box>
-                    Congrats you have made all your offers!
+                    No open positions.
                 </Box>
             )
         }
-        return positions.map((position) => {
+         return positions.map((position) => {
             if (position.jobPositionStatus == "OPEN") {
                 let offers = 0;
                 let offers_made = 0;
@@ -88,7 +88,7 @@ export function UserRow({ user, role, onEdit }) {
                     });
                     offers_made = position.maxTAs - offers;
                     return (
-                        <Paper key={position.id} elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
+                        <Paper key={position.id} elevation={3} sx={(theme) => ({ p: { xs: 2, md: 3 }, background: theme.palette.mode === 'dark' ? "" : "white" })}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
                                 <Box flexGrow={1}>
                                     <Typography variant="h2" component="h2" gutterBottom>
@@ -99,6 +99,7 @@ export function UserRow({ user, role, onEdit }) {
                                     </Typography>
                                     <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', mt: 1 }}>
                                         <Typography variant="body2">
+                                            {/*maybe change to open slots */}
                                             Offers to Make: {offers}
                                         </Typography>
                                     </Box>
@@ -115,7 +116,7 @@ export function UserRow({ user, role, onEdit }) {
                 else {
                     offers_made = position.maxTAs - offers;
                     return (
-                        <Paper key={position.id} elevation={3} sx={{ p: { xs: 2, md: 3 } }}>
+                        <Paper key={position.id} elevation={3} sx={(theme) => ({ p: { xs: 2, md: 3 }, background: theme.palette.mode === 'dark' ? "" : "white" })}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}>
                                 <Box flexGrow={1}>
                                     <Typography variant="h2" component="h2" gutterBottom>
@@ -141,36 +142,36 @@ export function UserRow({ user, role, onEdit }) {
                 }
             };
         });
+    
     };
 
     const renderMadeOffersModalContent = (positions) => {
-        return positions.flatMap((position) => {
-            if (position.jobPositionApplicationHistory.length > 0) {
-                return position.jobPositionApplicationHistory
-                    .filter(
-                        (application) =>
-                            application.jobApplicationStatus === "HIRED" ||
-                            application.jobApplicationStatus === "ACCEPTED_OFFER" ||
-                            application.jobApplicationStatus === "PENDING_OFFER"
-                    )
-                    .map((application) => (
-                        <ApplicationCard
-                            currentUser={user}
-                            key={application.username + application.jobPositionId}
-                            jobPosition={position}
-                            application={application}
-                        />
-                    ));
-            } else {
-                return []
-            }
-        });
-    };
+    const matchingApplications = positions.flatMap((position) =>
+        position.jobPositionApplicationHistory
+            ?.filter((application) =>
+                ["HIRED", "ACCEPTED_OFFER", "PENDING_OFFER"].includes(
+                    application.jobApplicationStatus
+                )
+            )
+            .map((application) => (
+                <ApplicationCard
+                    currentUser={user}
+                    key={application.username + application.jobPositionId}
+                    jobPosition={position}
+                    application={application}
+                />
+            )) ?? []
+    );
 
+    if (matchingApplications.length === 0) {
+        return <Box>No offers made.</Box>;
+    }
+
+    return matchingApplications;
+};
 
     return (
         <>
-
             <TableRow>
                 <TableCell>{user.fname} {user.lname}</TableCell>
                 <TableCell>{user.uid}</TableCell>
@@ -207,30 +208,33 @@ export function UserRow({ user, role, onEdit }) {
                                     overflowY: 'auto',
                                     background: theme.palette.mode === 'dark'
                                         ? ""
-                                        : "white"
-                                })}
-
-                            >
+                                        : "#e0e0e0e"
+                                })}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                    <Typography variant="h2" component="div">
+                                        {user.fname} {user.lname}'s Made Offers
+                                    </Typography>
+                                    <Divider />
                                     {renderMadeOffersModalContent(user.employer.jobPositions)}
                                 </Box>
-                                <Button onClick={() => handleMadeOffersModal()}
-                                    sx={(theme) => ({
-                                        backgroundColor:
-                                            theme.palette.mode === "dark"
-                                                ? ""
-                                                : "white",
-                                        "&:hover": {
+                                <Box sx={{display: 'flex', justifyContent: 'flex-end' }}>
+                                    <Button onClick={() => handleMadeOffersModal()}
+                                        sx={(theme) => ({
                                             backgroundColor:
                                                 theme.palette.mode === "dark"
                                                     ? ""
-                                                    : "#f5f5f5"
-                                        }
-                                    })}
-                                >
-                                    Close
-                                </Button>
-
+                                                    : "white",
+                                            "&:hover": {
+                                                backgroundColor:
+                                                    theme.palette.mode === "dark"
+                                                        ? ""
+                                                        : "#f5f5f5"
+                                            }
+                                        })}
+                                    >
+                                        Close
+                                    </Button>
+                                </Box>
                             </Paper>
                         </Modal>
                         <Modal
@@ -251,9 +255,32 @@ export function UserRow({ user, role, onEdit }) {
                                 overflowY: 'auto'
                             }}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                    <Typography variant="h2" component="div">
+                                        {user.fname} {user.lname}'s Open Positions
+                                    </Typography>
+                                    <Divider />
                                     {renderOffersToMakeModalContent(user.employer.jobPositions)}
                                 </Box>
-                                <Button onClick={() => handleOffersToMakeModalContent()}>close </Button>
+
+                                <Box sx={{display: 'flex', justifyContent: 'flex-end', pt:3}}>
+                                    <Button onClick={() => handleOffersToMakeModalContent()}
+                                        sx={(theme) => ({
+                                            backgroundColor:
+                                                theme.palette.mode === "dark"
+                                                    ? ""
+                                                    : "white",
+                                            "&:hover": {
+                                                backgroundColor:
+                                                    theme.palette.mode === "dark"
+                                                        ? ""
+                                                        : "#f5f5f5"
+                                            }
+                                        })}
+                                    >
+                                        Close
+                                    </Button>
+                                </Box>
+                                
                             </Paper>
                         </Modal>
                     </>)
@@ -332,7 +359,7 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
                                     {role === 'EMPLOYER' && (<>
                                         <TableCell>Department</TableCell>
                                         <TableCell>Offers Made</TableCell>
-                                        <TableCell>Offers To Make</TableCell></>)}
+                                        <TableCell>Open Positions</TableCell></>)}
                                     {/* employee info */}
                                     {role === 'EMPLOYEE' && (<>
                                         <TableCell>Year</TableCell>

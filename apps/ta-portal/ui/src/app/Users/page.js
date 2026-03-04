@@ -126,9 +126,8 @@ export default function AdminUsersPage() {
     // Search matches against user ID, full name, or email.
     return users.filter((user) => {
       const uidString = String(user.uid);
-      const name = `${user.fname?.toLowerCase() || ''} ${
-        user.lname?.toLowerCase() || ''
-      }`;
+      const name = `${user.fname?.toLowerCase() || ''} ${user.lname?.toLowerCase() || ''
+        }`;
       const email = user.email?.toLowerCase() || '';
       return (
         uidString.includes(lowerTerm) ||
@@ -167,7 +166,7 @@ export default function AdminUsersPage() {
 
     // Show a message if no users exist in the system at all.
     if (filteredRoles.length === 0 && !searchTerm) {
-        return <Typography sx={{textAlign: 'center', p: 4}}>No users found.</Typography>
+      return <Typography sx={{ textAlign: 'center', p: 4 }}>No users found.</Typography>
     }
 
     // Map over the roles to render a UserGroup for each.
@@ -185,74 +184,64 @@ export default function AdminUsersPage() {
           acc[status].push(user);
           return acc;
         }, {});
+        const employeeGroups = [
+          { key: 'Active', title: 'Active', users: groupedByStatus['ACTIVE'] },
+          { key: 'Unknown', title: 'Unknown', users: groupedByStatus['UNKNOWN'] },
+          { key: 'Inactive', title: 'Inactive', users: groupedByStatus['INACTIVE'] },
+        ];
 
         return (
           <Accordion sx={(theme) => ({
             background: theme.palette.mode === 'dark'
-                ? ""
-                : "#e0e0e0"
-        })}
-        >
+              ? ""
+              : "#e0e0e0"
+          })}
+          >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Typography variant="h6" fontWeight={600}>
-                    EMPLOYEES ({filtered.length})
-                </Typography>
+              <Typography variant="h6" fontWeight={600}>
+                EMPLOYEES ({filtered.length})
+              </Typography>
             </AccordionSummary>
             <AccordionDetails>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <UserTable
-            key='Active'
-            title='Active'
-            users={groupedByStatus['ACTIVE']}
-            role='EMPLOYEE'
-            onEdit={handleEditClick}
-          />
-
-          <UserTable
-            key='Unknown'
-            title='Unknown'
-            users={groupedByStatus['UNKNOWN']}
-            role='EMPLOYEE'
-            onEdit={handleEditClick}
-          />
-
-          
-          <UserTable
-            key='Inactive'
-            title='Inactive'
-            users={groupedByStatus['INACTIVE']}
-            role='EMPLOYEE'
-            onEdit={handleEditClick}
-          />
-</Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {employeeGroups.map(group => (
+                  <UserTable
+                    key={group.key}
+                    title={group.title}
+                    users={group.users}
+                    role="EMPLOYEE"
+                    onEdit={handleEditClick}
+                  />
+                ))}
+              </Box>
             </AccordionDetails>
-        </Accordion>
+          </Accordion>
         );
       }
 
       if (role === 'EMPLOYER') {
-      
+
         return (
           <>
-          <UserTable
-            key='employer'
-            title={role}
-            users={groupedUsers['EMPLOYER']}
-            role={role}
-            onEdit={handleEditClick}
-          /></>
+            <UserTable
+              key='employer'
+              title={role}
+              users={groupedUsers['EMPLOYER']}
+              role={role}
+              onEdit={handleEditClick}
+            /></>
         );
       }
 
       // Render a standard UserGroup for all other roles.
       return (
-        roleOrder.includes(role)?
+        roleOrder.includes(role) ?
           <UserTable
-          key={role}
-          title={role}
-          users={filtered}
-          onEditUser={handleEditClick}
-        />:<></>
+            key={role}
+            title={role}
+            users={filtered}
+            onEdit={handleEditClick}
+          /> : <></>
       );
     });
   };
@@ -263,10 +252,10 @@ export default function AdminUsersPage() {
   // This prevents non-admins from seeing any part of the page.
   if (!isAdministrator && !isLoading) {
     return (
-        <Container maxWidth="sm" sx={{py: 8, textAlign: 'center'}}>
-            <Typography variant="h1" color="error">Access Denied</Typography>
-            <Typography variant="h3" color="text.secondary" sx={{mt: 2}}>You do not have permission to view this page.</Typography>
-        </Container>
+      <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
+        <Typography variant="h1" color="error">Access Denied</Typography>
+        <Typography variant="h3" color="text.secondary" sx={{ mt: 2 }}>You do not have permission to view this page.</Typography>
+      </Container>
     )
   }
 
@@ -282,18 +271,18 @@ export default function AdminUsersPage() {
         </Typography>
       </Box>
 
-      <Paper elevation={2} sx={{ p: 2,gap: 2 }}>
-        <Box sx={{pb:3}}>
+      <Paper elevation={2} sx={{ p: 2, gap: 2 }}>
+        <Box sx={{ pb: 3 }}>
           <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder='Search by name, email, or UID...'
-          sx={{ mb: 3 }}
-        />
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder='Search by name, email, or UID...'
+            sx={{ mb: 3 }}
+          />
         </Box>
-        
+
         <Box key='renderedContent' sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {renderContent()}
+          {renderContent()}
         </Box>
       </Paper>
 
@@ -303,27 +292,28 @@ export default function AdminUsersPage() {
         onClose={handleCloseModal}
         aria-labelledby="edit-user-modal-title"
         sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
       >
         <Paper
-          sx={(theme)=>({ 
-            p: {xs: 2, md: 4},
+          sx={(theme) => ({
+            p: { xs: 2, md: 4 },
             width: '90%',
             maxWidth: '800px',
             maxHeight: '90vh',
             overflowY: 'auto',
             background: theme.palette.mode === 'dark'
-                    ? ""
-                    : "#e0e0e0" })}
+              ? ""
+              : "#e0e0e0"
+          })}
         >
-            <AdminEditUserForm
-                user={selectedUser}
-                onClose={handleCloseModal}
-                onUpdateSuccess={fetchData}
-            />
+          <AdminEditUserForm
+            user={selectedUser}
+            onClose={handleCloseModal}
+            onUpdateSuccess={fetchData}
+          />
         </Paper>
       </Modal>
     </Container>
