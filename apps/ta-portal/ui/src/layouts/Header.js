@@ -649,7 +649,7 @@ export default function Header() {
             {/* RIT Logo - Using actual RIT logo image */}
             <Link href="/" style={{ display: "flex", alignItems: "center" }}>
               <Image
-                src="ta-portal/rit-logo.png"
+                src="/rit-logo.png"
                 alt="RIT Logo"
                 width={100}
                 height={100}
