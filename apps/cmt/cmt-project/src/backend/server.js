@@ -126,7 +126,8 @@ app.post("/api/cmt/dev/login", async (req, res) => {
     // Set cookie (httpOnly: false so frontend can read it)
     res.cookie("cmt_id", token, {
       httpOnly: false, // Allow JavaScript access for dev
-      secure: process.env.NODE_ENV === "production",
+      // secure: process.env.NODE_ENV === "production",
+      secure: false, // For staging rn
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
