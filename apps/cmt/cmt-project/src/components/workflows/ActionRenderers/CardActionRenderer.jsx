@@ -5,6 +5,8 @@ import { CheckmarkActionRenderer, GenericActionRenderer } from "./GenericActionR
 import { StatusIcon } from "../Statuses/StatusIcons"
 import { StatusCard } from "../Statuses/StatusCards"
 import { metadataObjectToState } from "../../../utils/workflows"
+import { InlineActionRenderer } from "./InlineActionRenderer"
+import { InlineFormHoverable } from "../../forms/InlineForms"
 
 export function CardActionRenderer({ actionWithContext, data, refresh }) {
     if (
@@ -77,16 +79,25 @@ function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
         actionWithContext.action.metadata.code === "CHECKBOX"
         || actionWithContext.action.metadata.code.includes("SESSION_")
 
+    const isCompleted = actionWithContext.actionState.stateType === "completed"
+
     return (<>
         <Card>
             <Card.Body>
                 <div className="flex justify-between">
-                    <div>
+                    <div className="grow">
                         <p className='text-2xl mb-0'>{actionWithContext.action.name}</p>
                         <p className='text-gray-600 mb-4'>{actionWithContext.action.description}</p>
-                        {/* If its a checkmark-only action, then skip the normal form stuff and have it update the action whenever clicked. */}
-                        {isCheckbox
+                        <div className="pr-10">
+                        {isCheckbox // If its a checkmark-only action, then skip the normal form stuff and have it update the action whenever clicked.
                             ? <div className="-mt-4"><CheckmarkActionRenderer actionWithContext={actionWithContext} refresh={refresh} /></div>
+                            :
+                        isCompleted // If the action is already completed, then use a less visually strong form
+                            ? <InlineActionRenderer
+                                    actionWithContext={actionWithContext}
+                                    data={data}
+                                    refresh={refresh}
+                                />
                             : <Form onSubmit={submitAction}  className='flex gap-4'>
                                 <GenericActionRenderer
                                     metadata={actionWithContext.action.metadata}
@@ -98,6 +109,7 @@ function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
                                 </Button>
                             </Form>
                         }
+                        </div>
                     </div>
                     <StatusCard stateType={actionWithContext.actionState.stateType} />
                 </div>
