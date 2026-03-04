@@ -41,7 +41,7 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${FRONTEND_PORT}`;
 const allowedOrigins = [
   `http://localhost:${FRONTEND_PORT}`, // from .env (e.g., 3010)
   "http://localhost:3000",            // CRA default
-  BASE_URL                           // staging
+  "http://apps-staging.se.rit.edu",   // staging
 ];
 if (process.env.REMOTE_DEV_SERVER_ORIGIN) allowedOrigins.push(process.env.REMOTE_DEV_SERVER_ORIGIN)
 
