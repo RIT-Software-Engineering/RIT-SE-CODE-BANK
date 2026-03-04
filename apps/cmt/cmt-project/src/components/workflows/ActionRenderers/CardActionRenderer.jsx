@@ -72,7 +72,7 @@ function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
                         {isCheckbox // If its a checkmark-only action, then skip the normal form stuff and have it update the action whenever clicked.
                             ? <div className="-mt-4"><CheckmarkActionRenderer actionWithContext={actionWithContext} refresh={refresh} /></div>
                             :
-                        isCompleted // If the action is already completed, then use a less visually strong form
+                        isCompleted // If the action is already completed, then use a less visually strong renderer
                             ? <InlineActionRenderer
                                 actionWithContext={actionWithContext}
                                 data={data}
