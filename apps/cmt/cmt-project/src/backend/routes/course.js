@@ -246,7 +246,7 @@ router.put('/:id', async (req, res) => {
                 && { name: updateData.courseName }
             ),
             ...(updateData.year !== undefined 
-                && { year: updateData.year }
+                && { year: parseInt(updateData.year) }
             ),
             ...(updateData.season !== undefined 
                 && { season: updateData.season }
@@ -397,7 +397,7 @@ router.post('/create-with-workflow', async (req, res) => {
                 classId: course.classId,
                 name: course.name,
                 season: course.season,
-                year: course.year,
+                year: parseInt(course.year),
                 color: course.color,
                 students: !course.students ? null : parseInt(course.students),
                 section: !course.section ? null : parseInt(course.section),

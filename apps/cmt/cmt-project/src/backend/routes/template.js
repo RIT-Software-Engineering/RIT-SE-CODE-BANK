@@ -24,7 +24,7 @@ router.post("/", async (req, res) => {
     const newTemplate = await prisma.courseTemplate.create({
       data: {
         name,
-        year,
+        year: parseInt(year),
         season,
         weeks: parseInt(weeks),
         assignments: parseInt(assignments),
@@ -92,7 +92,7 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, semester, weeks, assignments, exams, labs, projects } =
+    const { name, season, year, weeks, assignments, exams, labs, projects } =
       req.body;
 
     const updatedTemplate = await prisma.courseTemplate.update({
@@ -101,7 +101,8 @@ router.put("/:id", async (req, res) => {
       },
       data: {
         name,
-        semester,
+        season,
+        year: parseInt(year),
         weeks: parseInt(weeks),
         assignments: parseInt(assignments),
         exams: parseInt(exams),
