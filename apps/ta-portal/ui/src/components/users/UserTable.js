@@ -75,7 +75,7 @@ export function UserRow({ user, role, onEdit }) {
                 </Box>
             )
         }
-         return positions.map((position) => {
+        return positions.map((position) => {
             if (position.jobPositionStatus == "OPEN") {
                 let offers = 0;
                 let offers_made = 0;
@@ -142,33 +142,33 @@ export function UserRow({ user, role, onEdit }) {
                 }
             };
         });
-    
+
     };
 
     const renderMadeOffersModalContent = (positions) => {
-    const matchingApplications = positions.flatMap((position) =>
-        position.jobPositionApplicationHistory
-            ?.filter((application) =>
-                ["HIRED", "ACCEPTED_OFFER", "PENDING_OFFER"].includes(
-                    application.jobApplicationStatus
+        const matchingApplications = positions.flatMap((position) =>
+            position.jobPositionApplicationHistory
+                ?.filter((application) =>
+                    ["HIRED", "ACCEPTED_OFFER", "PENDING_OFFER"].includes(
+                        application.jobApplicationStatus
+                    )
                 )
-            )
-            .map((application) => (
-                <ApplicationCard
-                    currentUser={user}
-                    key={application.username + application.jobPositionId}
-                    jobPosition={position}
-                    application={application}
-                />
-            )) ?? []
-    );
+                .map((application) => (
+                    <ApplicationCard
+                        currentUser={user}
+                        key={application.username + application.jobPositionId}
+                        jobPosition={position}
+                        application={application}
+                    />
+                )) ?? []
+        );
 
-    if (matchingApplications.length === 0) {
-        return <Box>No offers made.</Box>;
-    }
+        if (matchingApplications.length === 0) {
+            return <Box>No offers made.</Box>;
+        }
 
-    return matchingApplications;
-};
+        return matchingApplications;
+    };
 
     return (
         <>
@@ -212,12 +212,12 @@ export function UserRow({ user, role, onEdit }) {
                                 })}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                                     <Typography variant="h2" component="div">
-                                        {user.fname} {user.lname}'s Made Offers
+                                        {user.fname} {user.lname}&apos;s Made Offers
                                     </Typography>
                                     <Divider />
                                     {renderMadeOffersModalContent(user.employer.jobPositions)}
                                 </Box>
-                                <Box sx={{display: 'flex', justifyContent: 'flex-end' }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                     <Button onClick={() => handleMadeOffersModal()}
                                         sx={(theme) => ({
                                             backgroundColor:
@@ -256,13 +256,13 @@ export function UserRow({ user, role, onEdit }) {
                             }}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                                     <Typography variant="h2" component="div">
-                                        {user.fname} {user.lname}'s Open Positions
+                                        {user.fname} {user.lname}&apos;s Open Positions
                                     </Typography>
                                     <Divider />
                                     {renderOffersToMakeModalContent(user.employer.jobPositions)}
                                 </Box>
 
-                                <Box sx={{display: 'flex', justifyContent: 'flex-end', pt:3}}>
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 3 }}>
                                     <Button onClick={() => handleOffersToMakeModalContent()}
                                         sx={(theme) => ({
                                             backgroundColor:
@@ -280,7 +280,7 @@ export function UserRow({ user, role, onEdit }) {
                                         Close
                                     </Button>
                                 </Box>
-                                
+
                             </Paper>
                         </Modal>
                     </>)
@@ -304,7 +304,7 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
     const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
+    const [copied, setCopied] = React.useState(false);
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
@@ -316,6 +316,12 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
     const handleCopy = async (emails) => {
         try {
             await navigator.clipboard.writeText(emails);
+            setCopied(true);
+
+            setTimeout(() => {
+                setCopied(false);
+            }, 5000);
+
         } catch (err) {
             console.error('Failed to copy text: ', err);
             alert('Failed to copy text.');
@@ -387,21 +393,31 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
                             rowsPerPageOptions={[5, 10, 25, 50]}
                             variant='outlined'
                         />
-                        <Button variant='outlined' sx={(theme) => ({
-                            backgroundColor:
-                                theme.palette.mode === "dark"
-                                    ? ""
-                                    : "white",
-                            "&:hover": {
+
+                        <Box sx={{ display: "flex", flexDirection:"column", alignItems: "center" }}>
+                            <Button variant='outlined' sx={(theme) => ({
                                 backgroundColor:
                                     theme.palette.mode === "dark"
                                         ? ""
-                                        : "#f5f5f5"
-                            }
-                        })}
-                            onClick={() => handleCopy(users.map((user) => user.email).join())}>Copy all emails</Button>
+                                        : "white",
+                                "&:hover": {
+                                    backgroundColor:
+                                        theme.palette.mode === "dark"
+                                            ? ""
+                                            : "#f5f5f5"
+                                }
+                            })}
+                                onClick={() => handleCopy(users.map((user) => user.email).join())}>Copy all emails</Button>
+
+                            {copied && (
+                                <Typography variant='body2' sx={{height:20, py:1}}>
+                                    Emails copied!
+                                </Typography>
+                            )}
+                        </Box>
                     </Box>
                 </Box>
+
             </AccordionDetails>
         </Accordion>
     );

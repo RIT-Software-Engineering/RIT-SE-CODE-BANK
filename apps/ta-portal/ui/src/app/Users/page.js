@@ -191,7 +191,7 @@ export default function AdminUsersPage() {
         ];
 
         return (
-          <Accordion sx={(theme) => ({
+          <Accordion key='employees' sx={(theme) => ({
             background: theme.palette.mode === 'dark'
               ? ""
               : "#e0e0e0"
@@ -199,7 +199,7 @@ export default function AdminUsersPage() {
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h6" fontWeight={600}>
-                EMPLOYEES ({filtered.length})
+                EMPLOYEE ({filtered.length})
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
@@ -220,30 +220,32 @@ export default function AdminUsersPage() {
       }
 
       if (role === 'EMPLOYER') {
-
         return (
-          <>
+          <React.Fragment key={role}>
             <UserTable
-              key='employer'
               title={role}
               users={groupedUsers['EMPLOYER']}
               role={role}
               onEdit={handleEditClick}
-            /></>
+            />
+          </React.Fragment>
         );
       }
 
+
       // Render a standard UserGroup for all other roles.
       return (
-        roleOrder.includes(role) ?
+        roleOrder.includes(role) ? (
           <UserTable
             key={role}
             title={role}
             users={filtered}
             onEdit={handleEditClick}
-          /> : <></>
+          />
+        ) : null
       );
     });
+
   };
 
   // --- AUTHORIZATION CHECK ---
@@ -281,7 +283,7 @@ export default function AdminUsersPage() {
           />
         </Box>
 
-        <Box key='renderedContent' sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {renderContent()}
         </Box>
       </Paper>
