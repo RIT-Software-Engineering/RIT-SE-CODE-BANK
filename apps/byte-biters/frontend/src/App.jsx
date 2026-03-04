@@ -30,7 +30,7 @@ export default function App() {
               <div className="bg-border-primary min-h-2 "></div>
               <ControlPanel></ControlPanel>
               <RegisterPanel registers={cpuState.registers}></RegisterPanel>
-              {/* <MemoryPanel memory={cpuState.memory}></MemoryPanel> */}
+              <MemoryPanel memory={cpuState.memory}></MemoryPanel>
             </Panel>
           </Group>
           

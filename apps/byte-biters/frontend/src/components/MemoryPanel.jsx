@@ -1,4 +1,4 @@
-export default function MemoryPanel({ memory }) {
+export default function MemoryPanel({ memory = [] }) {
   //stores the table headers for the columns
   const columns = Array.from({ length: 16 }, (_, i) =>
     i.toString(16).toUpperCase()
