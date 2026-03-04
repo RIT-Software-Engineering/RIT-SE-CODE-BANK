@@ -55,7 +55,7 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
                 </div>
             ) : (
                 actionWithContext.action.metadata.outputs.map(output => (
-                    <div className='flex items-center hover:bg-gray-200 group pl-2'>
+                    <div className='flex items-center hover:bg-gray-200 group pl-2' key={output.name}>
                         <div className='w-1/5'>
                             <p className='text-xl my-2'>
                                 {output.name}: {data[output.key] ?? 'TBD'}
