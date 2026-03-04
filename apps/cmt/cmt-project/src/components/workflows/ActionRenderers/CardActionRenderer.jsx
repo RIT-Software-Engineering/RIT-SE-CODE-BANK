@@ -1,12 +1,9 @@
-import { Accordion, Button, Card, Form } from "react-bootstrap"
-import { CMTFetch } from "../../../utils/api"
-import { useState } from "react"
-import { CheckmarkActionRenderer, GenericActionRenderer } from "./GenericActionRenderer"
+import { Accordion, Card } from "react-bootstrap"
+import { CheckmarkActionRenderer } from "./GenericActionRenderer"
 import { StatusIcon } from "../Statuses/StatusIcons"
 import { StatusCard } from "../Statuses/StatusCards"
-import { metadataObjectToState } from "../../../utils/workflows"
 import { InlineActionRenderer } from "./InlineActionRenderer"
-import { InlineFormHoverable } from "../../forms/InlineForms"
+import { FormActionRenderer } from "./FormActionRenderer"
 
 export function CardActionRenderer({ actionWithContext, data, refresh }) {
     if (
@@ -57,24 +54,7 @@ function ComplexCardActionRenderer({ actionWithContext, data, refresh }) {
 }
 
 function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
-    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, data))
-
-    const [submitButtonName, setSubmitButtonName] = useState('Submit')
-    const [submitButtonVariant, setSubmitButtonVariant] = useState('primary')
-
-    function submitAction(e) {
-        e.preventDefault()
-        CMTFetch('PUT', actionWithContext.callback, outputValues).then(() => {
-            setSubmitButtonName('Submitted!')
-            setSubmitButtonVariant('success')
-            setTimeout(async () => {
-                await refresh()
-                setSubmitButtonName('Submit')
-                setSubmitButtonVariant('primary')
-            }, 500)
-        })
-    }
-
+    
     const isCheckbox = 
         actionWithContext.action.metadata.code === "CHECKBOX"
         || actionWithContext.action.metadata.code.includes("SESSION_")
@@ -94,20 +74,15 @@ function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
                             :
                         isCompleted // If the action is already completed, then use a less visually strong form
                             ? <InlineActionRenderer
-                                    actionWithContext={actionWithContext}
-                                    data={data}
-                                    refresh={refresh}
+                                actionWithContext={actionWithContext}
+                                data={data}
+                                refresh={refresh}
+                            />
+                            : <FormActionRenderer
+                                actionWithContext={actionWithContext}
+                                data={data}
+                                refresh={refresh}
                                 />
-                            : <Form onSubmit={submitAction}  className='flex gap-4'>
-                                <GenericActionRenderer
-                                    metadata={actionWithContext.action.metadata}
-                                    outputValues={outputValues}
-                                    setOutputValues={setOutputValues}
-                                />
-                                <Button type='submit' variant={submitButtonVariant}>
-                                    {submitButtonName}
-                                </Button>
-                            </Form>
                         }
                         </div>
                     </div>
