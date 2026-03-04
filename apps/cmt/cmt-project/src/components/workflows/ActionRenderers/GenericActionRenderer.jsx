@@ -32,7 +32,10 @@ export function CheckmarkActionRenderer({ actionWithContext, refresh }) {
     return (
         <Button
             variant={checked ? "outline-secondary" : "primary"}
-            onClick={() => submit(!checked)}
+            onClick={e => {
+                e.stopPropagation()
+                submit(!checked)
+            }}
         >
             {checked ? "Mark as Incomplete" : "Mark as Complete"}
         </Button>
