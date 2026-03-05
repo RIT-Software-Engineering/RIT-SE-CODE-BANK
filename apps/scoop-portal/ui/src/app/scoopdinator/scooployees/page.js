@@ -34,18 +34,19 @@ import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 
 const TYPE_LABELS = {
   prospect: "Prospect",
+  applicant: "Applicant",
   scooployee: "Scooployee",
   scoopervisor: "Scoopervisor",
 };
 
-const USER_TYPES = ["scooployee", "scoopervisor", "prospect"];
+const USER_TYPES = ["scooployee", "scoopervisor", "prospect", "applicant"];
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
 const getActiveState = (user) => {
   const val = user.active;
   if (val === "pending") return "pending";
-  if (val === true || val === "true" || val === 1 || val === "1") return "active";
+  if (val === "active" || val === true || val === "true" || val === 1 || val === "1") return "active";
   return "inactive";
 };
 
@@ -704,7 +705,6 @@ export default function ViewScooployees() {
               >
                 <MenuItem value="" disabled>Select a Type</MenuItem>
                 <MenuItem value="prospect">Prospect</MenuItem>
-                <MenuItem value="scooployee">Scooployee</MenuItem>
                 <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
               </Select>
               {addErrors.type && <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>{addErrors.type}</Typography>}
