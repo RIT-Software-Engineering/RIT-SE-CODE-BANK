@@ -212,47 +212,19 @@ export default function ApplicationDetailPage() {
     }
   };
 
+  // Users are guaranteed to exist in the DB as 'prospect' before they can apply,
+  // so we just update their role directly without checking for existence first.
   async function handleUserStatusUpdate(status, app) {
-    console.log("Handling user status update for", app.applicant_id);
-    let new_role = "";
-    if (status === "ACCEPTED") new_role = "scooployee";
-    else if (status === "REJECTED") new_role = "applicant";
+    const new_role = status === "ACCEPTED" ? "scooployee" : "applicant";
     try {
-      const userResponse = await fetch(
+      await fetch(
         process.env.NEXT_PUBLIC_API_URL + `/api/users/${app.applicant_id}`,
-        { method: "GET" }
-      );
-      if (userResponse.status === 404) {
-        console.log("User not found, creating new user:", app.applicant_id);
-        await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/users", {
-          method: "POST",
-          body: JSON.stringify({
-            id: app.applicant_id,
-            fname: app.firstName,
-            lname: app.lastName,
-            email: app.ritEmail,
-            type: new_role,
-            createdAt: new Date().toISOString(),
-            semester_group: "null",
-            project: "null",
-            active: "",
-            last_login: "null",
-            prev_login: "null",
-          }),
+        {
+          method: "PUT",
+          body: JSON.stringify({ type: new_role }),
           headers: { "Content-Type": "application/json" },
-        });
-      } else {
-        console.log("User found, updating role to:", new_role);
-        await fetch(
-          process.env.NEXT_PUBLIC_API_URL + `/api/users/${app.applicant_id}`,
-          {
-            method: "PUT",
-            body: JSON.stringify({ type: new_role }),
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-      }
-      console.log("Creating journal entry for status:", status);
+        }
+      );
       handleJournalEntry(app, status);
     } catch (error) {
       console.error("Error updating user role:", error);
