@@ -199,33 +199,15 @@ function ApplicationPage() {
 
             if (response.status === 200) {
                 try{
-                    //see if the user exists
-                    const userResponse = await fetch(
+                    //user is a confirmed prospect, update their type to applicant
+                    await fetch(
                         process.env.NEXT_PUBLIC_API_URL + `/api/users/${user_id}`,
-                        { method: "GET" }
+                        {
+                            method: "PUT",
+                            body: JSON.stringify({ type: "applicant" }),
+                            headers: { "Content-Type": "application/json" },
+                        }
                     );
-                    if (userResponse.status === 404){ 
-                        const createUserRes = await fetch(
-                            process.env.NEXT_PUBLIC_API_URL + "/api/users",
-                            {
-                                method: "POST",
-                                body: JSON.stringify({
-                                    id: user_id,
-                                    fname: formValues.firstName,
-                                    lname: formValues.lastName,
-                                    email: formValues.ritEmail,
-                                    type: "applicant",
-                                    createdAt: new Date().toISOString(),
-                                    semester_group: "null",
-                                    project: "null",
-                                    active: "",
-                                    last_login: "null",
-                                    prev_login: "null",
-                                }),
-                                headers: { "Content-Type": "application/json" },
-                            }
-                        );   
-                    }
 
                     try{
                         const entry = {

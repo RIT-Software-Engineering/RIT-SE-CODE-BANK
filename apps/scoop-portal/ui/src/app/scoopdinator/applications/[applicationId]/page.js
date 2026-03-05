@@ -213,15 +213,16 @@ export default function ApplicationDetailPage() {
   };
 
   // Users are guaranteed to exist in the DB as 'prospect' before they can apply,
-  // so we just update their role directly without checking for existence first.
+  // so we just update their role and active state directly without checking for existence first.
   async function handleUserStatusUpdate(status, app) {
     const new_role = status === "ACCEPTED" ? "scooployee" : "applicant";
+    const new_active = status === "ACCEPTED" ? "active" : "pending";
     try {
       await fetch(
         process.env.NEXT_PUBLIC_API_URL + `/api/users/${app.applicant_id}`,
         {
           method: "PUT",
-          body: JSON.stringify({ type: new_role }),
+          body: JSON.stringify({ type: new_role, active: new_active }),
           headers: { "Content-Type": "application/json" },
         }
       );

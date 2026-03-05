@@ -43,11 +43,19 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { type } = req.body;
+  const { type, fname, lname, email, active, semester_group, project } = req.body;
   try{
     const updatedUser = await prisma.users.update({
       where: { id },
-      data: { type },
+      data: {
+        ...(type !== undefined && { type }),
+        ...(fname !== undefined && { fname }),
+        ...(lname !== undefined && { lname }),
+        ...(email !== undefined && { email }),
+        ...(active !== undefined && { active }),
+        ...(semester_group !== undefined && { semester_group }),
+        ...(project !== undefined && { project }),
+      },
     });
     return res.status(200).json({ message: "User updated", user: updatedUser });
 

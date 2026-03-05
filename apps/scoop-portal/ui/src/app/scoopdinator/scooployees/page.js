@@ -42,25 +42,30 @@ const USER_TYPES = ["scooployee", "scoopervisor", "prospect"];
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-const isActive = (user) => {
-  if (user.active !== undefined && user.active !== null) {
-    return user.active === true || user.active === "true" || user.active === 1 || user.active === "1";
-  }
-  if (user.project === "null") return false;
-  return true;
+const getActiveState = (user) => {
+  const val = user.active;
+  if (val === "pending") return "pending";
+  if (val === true || val === "true" || val === 1 || val === "1") return "active";
+  return "inactive";
 };
 
-const StatusBadge = ({ active }) => {
+const StatusBadge = ({ activeState }) => {
   const theme = useTheme();
+  const config = {
+    active:   { label: "Active",   color: theme.palette.success.main },
+    inactive: { label: "Inactive", color: theme.palette.error.main },
+    pending:  { label: "Pending",  color: theme.palette.warning.main },
+  };
+  const { label, color } = config[activeState] ?? config.inactive;
   return (
     <Chip
-      label={active ? "Active" : "Inactive"}
+      label={label}
       size="medium"
       sx={{
         fontWeight: 400,
         fontSize: "0.85rem",
         px: 1,
-        bgcolor: active ? theme.palette.success.main : theme.palette.error.main,
+        bgcolor: color,
         color: theme.ritColors.white,
         border: "none",
       }}
@@ -103,7 +108,7 @@ export default function ViewScooployees() {
     email: "",
     type: "",
     semesterGroupId: "",
-    active: "true",
+    active: "pending",
   });
   const [savingEdit, setSavingEdit] = useState(false);
   const [confirmEditOpen, setConfirmEditOpen] = useState(false);
@@ -163,7 +168,7 @@ export default function ViewScooployees() {
       email: user.email,
       type: user.type || "",
       semesterGroupId: String(resolveGroupId(user)),
-      active: user.active !== undefined ? String(user.active) : "true",
+      active: user.active !== undefined ? String(user.active) : "pending",
     });
   };
 
@@ -190,8 +195,8 @@ export default function ViewScooployees() {
       aVal = (TYPE_LABELS[a.type] ?? "").toLowerCase();
       bVal = (TYPE_LABELS[b.type] ?? "").toLowerCase();
     } else if (sortField === "active") {
-      aVal = isActive(a) ? "active" : "inactive";
-      bVal = isActive(b) ? "active" : "inactive";
+      aVal = getActiveState(a);
+      bVal = getActiveState(b);
     } else {
       aVal = a[sortField]?.toString().toLowerCase() ?? "";
       bVal = b[sortField]?.toString().toLowerCase() ?? "";
@@ -202,8 +207,8 @@ export default function ViewScooployees() {
   });
 
   const filteredUsers = sortedUsers.filter((user) => {
-    if (filterStatus === "active" && !isActive(user)) return false;
-    if (filterStatus === "inactive" && isActive(user)) return false;
+    const activeState = getActiveState(user);
+    if (filterStatus !== "all" && activeState !== filterStatus) return false;
     if (filterType !== "all" && user.type !== filterType) return false;
     if (filterSemesterGroup !== "all") {
       const sg = user.semester_group && user.semester_group !== "null" ? user.semester_group : null;
@@ -361,7 +366,7 @@ export default function ViewScooployees() {
             ? (semesterGroups.find((sg) => String(sg.id) === String(semesterGroupId))?.name ?? "null")
             : "null",
           project: "null",
-          active: "true",
+          active: "pending",
           type: type || "prospect",
           last_login: "",
           prev_login: "",
@@ -519,7 +524,7 @@ export default function ViewScooployees() {
                     <span style={{ color: theme.ritColors.gray_2, fontStyle: "italic" }}>No Group</span>
                   )}
                 </TableCell>
-                <TableCell><StatusBadge active={isActive(user)} /></TableCell>
+                <TableCell><StatusBadge activeState={getActiveState(user)} /></TableCell>
                 <TableCell align="right">
                   <Button variant="outline-orange" onClick={() => handleOpen(user)}>Edit</Button>
                 </TableCell>
@@ -578,8 +583,9 @@ export default function ViewScooployees() {
                   <InputLabel>Status *</InputLabel>
                   <Select value={editFields.active} label="Status *"
                     onChange={(e) => setEditFields((p) => ({ ...p, active: e.target.value }))}>
-                    <MenuItem value="true">Active</MenuItem>
-                    <MenuItem value="false">Inactive</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
                   </Select>
                 </FormControl>
                 <FormControl fullWidth>
@@ -745,6 +751,7 @@ export default function ViewScooployees() {
                 <MenuItem value="all">All</MenuItem>
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth>
