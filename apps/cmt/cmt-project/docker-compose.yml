@@ -43,10 +43,10 @@ services:
       DB_HOST: mariadb
       DB_PORT: 3306
       DB_ROOT_PASSWORD: cmt_root_pass
-      DB_NAME_WORKFLOWS: cmt_db
+      DB_NAME_WORKFLOWS: workflows_db
       DB_APP_USER: cmt_user
       DB_APP_PASSWORD: cmt_pass
-      DATABASE_URL: mysql://cmt_user:cmt_pass@mariadb:3306/cmt_db
+      DATABASE_URL: mysql://cmt_user:cmt_pass@mariadb:3306/workflows_db
     depends_on:
       mariadb:
         condition: service_healthy
