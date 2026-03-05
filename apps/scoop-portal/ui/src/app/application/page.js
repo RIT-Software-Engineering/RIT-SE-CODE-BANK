@@ -51,26 +51,10 @@ function ApplicationPage() {
     const [courseData, setCourseData] = useState([]);
 
     useEffect(() => {
-        // SecureFetch(config.url.API_GET_SEMESTERS)
-        // .then((res) => res.json())
-        // .then((data) => setSemesterData(data))
-        // .catch((err) => console.error("Failed to fetch semesters:", err));
-
-        // Temporary hardcoded dates:
-        let data = [
-            { semester_id: 1, name: "Fall 2019" },
-            { semester_id: 2, name: "Spring 2019" },
-            { semester_id: 3, name: "Fall 2020" },
-            { semester_id: 4, name: "Spring 2021" },
-            { semester_id: 5, name: "Fall 2021" },
-            { semester_id: 6, name: "Spring 2022" },
-            { semester_id: 7, name: "Fall 2022" },
-            { semester_id: 8, name: "Spring 2023" },
-            { semester_id: 9, name: "Fall 2023" },
-            { semester_id: 10, name: "Spring 2024" },
-            { semester_id: 11, name: "Fall 2024" },
-        ];
-        setSemesterData(data);
+        fetch(process.env.NEXT_PUBLIC_API_URL + "/api/semestergroup")
+            .then((res) => res.json())
+            .then((data) => setSemesterData(data))
+            .catch((err) => console.error("Failed to fetch semesters:", err));
     }, []);
 
     useEffect(() => {
@@ -437,7 +421,7 @@ function ApplicationPage() {
                         >
                             {semesterData.map((startSemester) => (
                                 <MenuItem
-                                    key={startSemester.semester_id}
+                                    key={startSemester.id}
                                     value={startSemester.name}
                                 >
                                     {startSemester.name}
