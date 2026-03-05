@@ -82,6 +82,7 @@ export default function SiteNav() {
         { to: "/teambuilder", label: "Team Builder" },
         { to: "/calendar", label: "Calendar" },
         { to: "/onboarding", label: "Student Onboarding" },
+        { to: "/workflowbuilder", label: "Workflow Builder"},
       ]
     }
   ];
