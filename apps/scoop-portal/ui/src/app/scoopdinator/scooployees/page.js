@@ -98,7 +98,7 @@ export default function ViewScooployees() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [addOpen, setAddOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
+  const [newUser, setNewUser] = useState({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "", active: "pending" });
   const [addingUser, setAddingUser] = useState(false);
   const [addErrors, setAddErrors] = useState({});
 
@@ -322,7 +322,7 @@ export default function ViewScooployees() {
   };
 
   const handleAddUser = async () => {
-    const { fname, lname, email, type, semesterGroupId } = newUser;
+    const { fname, lname, email, type, semesterGroupId, active } = newUser;
 
     const errs = {};
     if (!fname.trim()) errs.fname = "First name is required.";
@@ -367,7 +367,7 @@ export default function ViewScooployees() {
             ? (semesterGroups.find((sg) => String(sg.id) === String(semesterGroupId))?.name ?? "null")
             : "null",
           project: "null",
-          active: "pending",
+          active: active || "pending",
           type: type || "prospect",
           last_login: "",
           prev_login: "",
@@ -379,7 +379,7 @@ export default function ViewScooployees() {
       setSnackbarSeverity("success");
       setSnackbarMsg("User added successfully!");
       setSnackbarOpen(true);
-      setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" });
+      setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "", active: "pending" });
       setAddErrors({});
       setAddOpen(false);
     } catch (err) {
@@ -662,7 +662,7 @@ export default function ViewScooployees() {
       {/* Add User Modal */}
       <Dialog
         open={addOpen}
-        onClose={() => { setAddOpen(false); setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); setAddErrors({}); }}
+        onClose={() => { setAddOpen(false); setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "", active: "pending" }); setAddErrors({}); }}
         maxWidth="xs"
         fullWidth
       >
@@ -711,6 +711,20 @@ export default function ViewScooployees() {
               {addErrors.type && <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>{addErrors.type}</Typography>}
             </FormControl>
             <FormControl fullWidth>
+              <InputLabel shrink>Status</InputLabel>
+              <Select
+                value={newUser.active}
+                label="Status"
+                displayEmpty
+                notched
+                onChange={(e) => setNewUser((p) => ({ ...p, active: e.target.value }))}
+              >
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
               <InputLabel shrink>Semester Group</InputLabel>
               <Select
                 value={newUser.semesterGroupId}
@@ -729,7 +743,7 @@ export default function ViewScooployees() {
         </DialogContent>
         <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
           <Button
-            onClick={() => { setAddOpen(false); setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "" }); setAddErrors({}); }}
+            onClick={() => { setAddOpen(false); setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "", active: "pending" }); setAddErrors({}); }}
             variant="outlined" color="inherit">
             Cancel
           </Button>
