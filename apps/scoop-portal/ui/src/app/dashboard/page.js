@@ -70,7 +70,7 @@ const workflows = [
     steps: [
       {
         title: "Review Applications",
-        roles: ["scoopdinator","advisor"],
+        roles: ["scoopdinator"],
         description: "Approve or reject scooployee applications.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/applications",
       },
