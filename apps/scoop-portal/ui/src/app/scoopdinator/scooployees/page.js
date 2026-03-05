@@ -46,7 +46,7 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 const getActiveState = (user) => {
   const val = user.active;
   if (val === "pending") return "pending";
-  if (val === "active" || val === true || val === "true" || val === 1 || val === "1") return "active";
+  if (val === "active") return "active";
   return "inactive";
 };
 
