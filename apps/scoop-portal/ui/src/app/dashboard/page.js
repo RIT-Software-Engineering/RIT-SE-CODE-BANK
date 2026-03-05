@@ -76,27 +76,38 @@ const workflows = [
       },
       {
         title: "Manage Users",
-        roles: ["scoopdinator", "scoopervisor", "advisor"],
+        roles: ["scoopdinator"],
         description: "Review current user details and statuses.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees",
+      },
+      {
+        title: "Manage Semester Groups",
+        roles: ["scoopdinator"],
+        description: "Manage current and upcoming semester groups.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/semestergroups",
+      },
+    ],
+  },
+  {
+    title: "Scooployees",
+    steps: [
+      {
+        title: "View Scooployees",
+        roles: ["scoopervisor"],
+        description: "Review current scooployee details and statuses.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopervisor/scooployees",
       },
       {
         title: "View Available Employees",
         roles: ["scoopervisor"],
         description: "Review available scooployees for team assignment.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees/view", // Same question as above, but slightly different page mirroring.
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees/view",
       },
       {
         title: "View My Employees",
         roles: ["scoopervisor"],
         description: "View your hired scooployees.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees/assign", // Question above ++
-      },
-      {
-        title: 'Onboarding Workflow',
-        roles: ["scoopdinator"],
-        description: 'To begin the total onboarding process, view the workflow dashboard.',
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+'/scoopdinator/workflows',
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees/assign",
       },
     ],
   },

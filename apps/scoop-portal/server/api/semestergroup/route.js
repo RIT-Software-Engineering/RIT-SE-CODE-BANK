@@ -22,7 +22,7 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * Create a new semseter group
+ * Create a new semester group
  * @param {Object} req - The request object
  * @param {Object} res - The response object
  */
@@ -37,15 +37,15 @@ router.post("/", async (req, res) => {
       semesterGroup: newSemester,
     });
   } catch (error) {
-    console.error("Error creating semsester group: ", error);
-    res
-      .status(500)
-      .json({ message: "Error creating semester group", error: error.message });
+    console.error("Error creating semester group: ", error);
+    res.status(500).json({ message: "Error creating semester group", error: error.message });
   }
 });
 
 /**
- * GET a specific semester group
+ * Get a specific semester group
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
  */
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
@@ -63,6 +63,45 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// TODO: put method for semester group
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, dept, start_date, end_date } = req.body;
+  try {
+    const updatedSemester = await prisma.semesterGroup.update({
+      where: { id: Number(id) },
+      data: {
+        name,
+        dept,
+        start_date: new Date(start_date),
+        end_date: new Date(end_date),
+      },
+    });
+    res.status(200).json({
+      message: "Semester group updated.",
+      semesterGroup: updatedSemester,
+    });
+  } catch (error) {
+    console.error("Error updating semester group: ", error);
+    res.status(500).json({ message: "Error updating semester group", error: error.message });
+  }
+});
+
+/**
+ * Delete a specific semester group
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ */
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.semesterGroup.delete({
+      where: { id: Number(id) },
+    });
+    res.status(200).json({ message: "Semester group deleted." });
+  } catch (error) {
+    console.error("Error deleting semester group: ", error);
+    res.status(500).json({ message: "Error deleting semester group", error: error.message });
+  }
+});
 
 export default router;
