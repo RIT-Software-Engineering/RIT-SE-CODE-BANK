@@ -67,10 +67,10 @@ function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
                 <div className="flex justify-between">
                     <div className="grow">
                         <p className='text-2xl mb-0'>{actionWithContext.action.name}</p>
-                        <p className='text-gray-600'>{actionWithContext.action.description}</p>
+                        <p className='text-gray-600 mb-2'>{actionWithContext.action.description}</p>
                         <div className="pr-10">
                         {isCheckbox // If its a checkmark-only action, then skip the normal form stuff and have it update the action whenever clicked.
-                            ? <div className="-mt-4"><CheckmarkActionRenderer actionWithContext={actionWithContext} refresh={refresh} /></div>
+                            ? <CheckmarkActionRenderer actionWithContext={actionWithContext} refresh={refresh} />
                             :
                         isCompleted // If the action is already completed, then use a less visually strong renderer
                             ? <InlineActionRenderer

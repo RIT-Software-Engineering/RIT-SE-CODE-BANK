@@ -45,7 +45,7 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
             {isEditing ? (
                 <div>
                     <Form className='flex items-center gap-6 pl-2' onSubmit={submitAction}>
-                        <div className='flex flex-col gap-2'>
+                        <div className='flex gap-4'>
                             <GenericActionRenderer
                                 metadata={actionWithContext.action.metadata}
                                 outputValues={outputValues}
@@ -70,20 +70,20 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
                     </Form>
                 </div>
             ) : (
-                actionWithContext.action.metadata.outputs.map(output => (
-                    <div className='flex items-center hover:bg-gray-200 group pl-2' key={output.name}>
-                        <div>
-                            <p className='text-xl my-2'>
-                                {output.name}: {data[output.key] ?? 'TBD'}
-                            </p>
-                        </div>
-                        <div className='hidden group-hover:block ml-10'>
-                            <Button size='sm' title='Edit' variant='outline-secondary' onClick={() => setIsEditing(true)}>
-                                <Edit size={24} />
-                            </Button>
-                        </div>
+                <div className='flex items-center hover:bg-gray-200 group pl-2'>
+                    <div className="flex gap-4">
+                        {actionWithContext.action.metadata.outputs.map(output => (
+                                <p className='text-xl my-2'>
+                                    {output.name}: {data[output.key] ?? 'TBD'}
+                                </p>
+                        ))}
                     </div>
-                ))
+                    <div className='hidden group-hover:block ml-10'>
+                        <Button size='sm' title='Edit' variant='outline-secondary' onClick={() => setIsEditing(true)}>
+                            <Edit size={24} />
+                        </Button>
+                    </div>
+                </div>
             )}
         </>
     )
