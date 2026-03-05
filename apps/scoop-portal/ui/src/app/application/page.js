@@ -169,19 +169,6 @@ function ApplicationPage() {
         e.preventDefault();
         if (modalOpen) return;
 
-        // const body = new FormData();
-        // Object.keys(formData).forEach((key) => body.append(key, formData[key]));
-        // if (formFiles) {
-        //   for (let i = 0; i < formFiles.length; i++) {
-        //     body.append("attachments", formFiles[i]);
-        //   }
-        // }
-
-        //array to string
-        //  completeFormData = {
-        // ...formValues,
-        // coursesTaken: selectedCourses.join(", "),
-
         const selectedCourses = courseData
             .filter((course) => formValues[course.name])
             .map((course) => course.name)
@@ -202,6 +189,25 @@ function ApplicationPage() {
         };
 
         try {
+            //check that user exists in DB and has role 'prospect' before submitting
+            const userCheckResponse = await fetch(
+                process.env.NEXT_PUBLIC_API_URL + `/api/users/${user_id}`,
+                { method: "GET" }
+            );
+            if (userCheckResponse.status === 404) {
+                setErrors({ _form: "You are not registered in our system. Please contact the SE Department to be added before applying." });
+                return;
+            }
+            if (!userCheckResponse.ok) {
+                setErrors({ _form: "Unable to verify your account. Please try again later." });
+                return;
+            }
+            const userCheckData = await userCheckResponse.json();
+            if (userCheckData?.type !== "prospect") {
+                setErrors({ _form: "You are not eligible to submit an application. Please contact the SE Department." });
+                return;
+            }
+
             const response = await postFormData(completeFormData);
             const result = await response.json();
             console.log("Response from server:", result);
@@ -619,7 +625,6 @@ function ApplicationPage() {
                             aria-labelledby="SEcoopAvailability-buttons-group-label"
                             name="SEcoopAvailability"
                             onChange={handleChange}
-                            //SEcoopAvailability
                         >
                             <FormControlLabel
                                 value="true"
@@ -707,6 +712,12 @@ function ApplicationPage() {
                             onChange={handleChange}
                         />
                     </Button>
+
+                    {errors._form && (
+                        <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+                            {errors._form}
+                        </Typography>
+                    )}
 
                     <Box mt={2} textAlign="center">
                         <Button
