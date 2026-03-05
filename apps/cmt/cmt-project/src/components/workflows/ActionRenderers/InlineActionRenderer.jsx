@@ -12,11 +12,11 @@ import { metadataObjectToState } from '../../../utils/workflows'
 /**
  * Renders an action as a card. Supports simple actions.
  * @template T
- * @param {ActionRendererProps<T>} props 
+ * @param {ActionRendererProps<T>} props
  */
 export function InlineActionRenderer({ actionWithContext, previousValues, refresh }) {
     const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, previousValues))
-    
+
     const validatorRegistry = useRef({})
     const [submitted, setSubmitted] = useState(false)
 
@@ -28,9 +28,8 @@ export function InlineActionRenderer({ actionWithContext, previousValues, refres
             const value = outputValues[validateFn.key]
             return validateFn(value) === null
         })
-        if (!allValid)
-            return
-        
+        if (!allValid) return
+
         CMTFetch('PUT', actionWithContext.callback, outputValues).then(() => {
             setTimeout(async () => {
                 await refresh()
@@ -72,11 +71,11 @@ export function InlineActionRenderer({ actionWithContext, previousValues, refres
                 </div>
             ) : (
                 <div className='flex items-center hover:bg-gray-200 group pl-2'>
-                    <div className="flex gap-4">
+                    <div className='flex gap-4'>
                         {actionWithContext.action.metadata.outputs.map(output => (
-                                <p className='text-xl my-2'>
-                                    {output.name}: {previousValues[output.key] ?? 'TBD'}
-                                </p>
+                            <p className='text-xl my-2'>
+                                {output.name}: {previousValues[output.key] ?? 'TBD'}
+                            </p>
                         ))}
                     </div>
                     <div className='hidden group-hover:block ml-10'>

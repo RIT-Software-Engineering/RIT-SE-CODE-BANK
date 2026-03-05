@@ -1,15 +1,15 @@
-import { useState, useRef } from "react"
-import { metadataObjectToState } from "../../../utils/workflows"
-import { Button, Form } from "react-bootstrap"
-import { AbstractActionRenderer } from "./GenericActionRenderer"
+import { useState, useRef } from 'react'
+import { metadataObjectToState } from '../../../utils/workflows'
+import { Button, Form } from 'react-bootstrap'
+import { AbstractActionRenderer } from './GenericActionRenderer'
 
 /** @import { ActionRendererProps } from "./GenericActionRenderer" */
 
 /**
  * Renders an action as a form. Only supports simple actions.
- * 
+ *
  * @template T
- * @param {ActionRendererProps<T>} props 
+ * @param {ActionRendererProps<T>} props
  */
 export function FormActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback }) {
     const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, previousValues))
@@ -22,14 +22,13 @@ export function FormActionRenderer({ actionWithContext, previousValues, refresh,
 
     function submitAction(e) {
         e.preventDefault()
-        
+
         setSubmitted(true)
         const allValid = Object.values(validatorRegistry.current).every(validateFn => {
             const value = outputValues[validateFn.key]
             return validateFn(value) === null
         })
-        if (!allValid) 
-            return
+        if (!allValid) return
 
         fetchToCallback(actionWithContext.callback, outputValues).then(() => {
             setSubmitButtonName('Submitted!')

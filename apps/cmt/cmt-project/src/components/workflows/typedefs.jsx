@@ -7,11 +7,14 @@ export {}
  * @import { makeMetadataSafeForWorkflows } from "../../backend/utils/workflows/api"
  * @import { metadataArrayToObject, actionToActionWithContext, determineCallback } from "../../backend/utils/workflows/actionPipeline"
  * @import { CheckmarkActionRenderer } from "./ActionRenderers/GenericActionRenderer"
+ * @import { OutputRenderer } from "./OutputRenderer"
  */
 
 /**
  * Backend-centric types. In CMT, actions are usually handled with these types in the backend for convenience.
- * 
+ */
+
+/**
  * @typedef {{ action: ProcessedAction, callback: string, actionState: WorkflowsActionState }} ActionWithContext
  * Used in all Workflows Components. When using Workflows Components, the callback is a URL that will be called via "PUT" to both mark the completion of an action
  * and update your database with the user's input.
@@ -31,6 +34,7 @@ export {}
  *     name: string
  *     isRequired: boolean
  *     placeholder: any
+ *     initialValue: any
  *     type: "number" | "text" | "select" | "checkmark" | "file"
  *     validation: {[index: string]: any}
  *  }[]
@@ -39,12 +43,26 @@ export {}
  * 
  * After retriving an action, to turn the returned plain metadata object to a ParsedMetadata object, use {@link actionToActionWithContext} as described in {@link ProcessedAction}
  * If for some reason you don't want the rest of the action to be processed, you could also use {@link metadataArrayToObject}.
- */
+ * 
+ * A short explanation of each field:
+ * * Code: an action's code will map directly to it's callback URL. An example is CMT's {@link determineCallback} function
+ * * Outputs: an array, each one indicating the user will need to enter one value.
+ *      * key: the internal name of the value, which should be respected across any associated {@link previousValues} and callback-targeted endpoints
+ *      * name: the external label for the value
+ *      * isRequired: whether or not validation will require the user to fill out this output
+ *      * placeholder: the value that will be shown as the html placeholder for the element
+ *      * initialValue: the value that will be initially populated into the form if none existed in previousValues
+ *      * type: the form type, which usually matches with html form types.
+ *      * validation: an object with validation details. Keys vary between type. Check the various {@link OutputRenderer}s for the exact keys that are supported.
+ * * [index: string: any]: this means that other information can potentially exist alongside these values, but that Workflows Components don't rely on them.
+ */ 
 
 
 /** 
  * Frontend-centric types.
- * 
+ */
+
+/**
  * @typedef {(callback: string, outputValues: any) => Promise<Response>} FetchToCallback
  * Used in places like {@link FormActionRenderer} to make the request to the action's callback.
  * 
