@@ -188,7 +188,7 @@ export async function workflowToObject(workflow) {
  * @param {Object} metadata 
  * @return Metadata object ready to be sent to the Workflows API
  */
-function makeMetadataSafeForWorkflows(metadata) {
+export function makeMetadataSafeForWorkflows(metadata) {
   let safeMetadata = {}
   Object.entries(metadata).forEach(([key, value]) => {
     safeMetadata[key] = JSON.stringify(value)

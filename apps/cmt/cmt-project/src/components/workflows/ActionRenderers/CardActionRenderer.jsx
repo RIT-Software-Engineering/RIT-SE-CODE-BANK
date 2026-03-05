@@ -5,27 +5,45 @@ import { StatusCard } from "../Statuses/StatusCards"
 import { InlineActionRenderer } from "./InlineActionRenderer"
 import { FormActionRenderer } from "./FormActionRenderer"
 
-export function CardActionRenderer({ actionWithContext, data, refresh }) {
+/**
+ * @import { ActionRendererProps } from "./GenericActionRenderer"
+ * @import { IsCheckmark } from "../typedefs"
+ */
+
+/**
+ * Renders an action as a card. Supports all types except branching.
+ * @template T
+ * @param {ActionRendererProps<T> & { isCheckmark: IsCheckmark }} props 
+ */
+export function CardActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, isCheckmark }) {
     if (
         actionWithContext.action.actionType === "complex"
         || actionWithContext.action.actionType === "workflow"
     ) 
         return <ComplexCardActionRenderer
-            data={data}
+            previousValues={previousValues}
             actionWithContext={actionWithContext}
             refresh={refresh}
+            fetchToCallback={fetchToCallback}
+            isCheckmark={isCheckmark}
         />
     else if (actionWithContext.action.actionType === "simple")
-        return <SimpleCardActionRenderer 
-            data={data}
+        return <SimpleCardActionRenderer    
+            previousValues={previousValues}
             actionWithContext={actionWithContext}
             refresh={refresh}
+            fetchToCallback={fetchToCallback}
+            checkmark={actionWithContext.action.metadata.code && isCheckmark(actionWithContext.action.metadata.code)}
         />
     else
         throw Error(`Unrecognized action type ${actionWithContext.action.actionType}`)
 }
 
-function ComplexCardActionRenderer({ actionWithContext, data, refresh }) {
+/**
+ * @template T
+ * @param {ActionRendererProps<T> & { isCheckmark: IsCheckmark }} props 
+ */
+function ComplexCardActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, isCheckmark }) {
     return (<>
         <Accordion.Item eventKey={actionWithContext.action.id}>
             <Accordion.Header>
@@ -41,10 +59,12 @@ function ComplexCardActionRenderer({ actionWithContext, data, refresh }) {
                 <div className="flex flex-col gap-4">
                     {actionWithContext.action.childActionsWithContext.map(childActionWithContext => (
                         <CardActionRenderer
-                            data={data}
+                            previousValues={previousValues}
                             key={childActionWithContext.action.id}
                             actionWithContext={childActionWithContext}
                             refresh={refresh}
+                            fetchToCallback={fetchToCallback}
+                            isCheckmark={isCheckmark}
                         />
                     ))}
                 </div>
@@ -53,11 +73,11 @@ function ComplexCardActionRenderer({ actionWithContext, data, refresh }) {
     </>)
 }
 
-function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
-    
-    const isCheckbox = 
-        actionWithContext.action.metadata.code === "CHECKBOX"
-        || actionWithContext.action.metadata.code.includes("SESSION_")
+/**
+ * @template T
+ * @param {ActionRendererProps<T> & { checkmark: boolean | undefined }} props 
+ */
+function SimpleCardActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, checkmark }) {
 
     const isCompleted = actionWithContext.actionState.stateType === "completed"
 
@@ -69,19 +89,21 @@ function SimpleCardActionRenderer({ actionWithContext, data, refresh }) {
                         <p className='text-2xl mb-0'>{actionWithContext.action.name}</p>
                         <p className='text-gray-600 mb-2'>{actionWithContext.action.description}</p>
                         <div className="pr-10">
-                        {isCheckbox // If its a checkmark-only action, then skip the normal form stuff and have it update the action whenever clicked.
-                            ? <CheckmarkActionRenderer actionWithContext={actionWithContext} refresh={refresh} />
+                        {checkmark // If its a checkmark-only action, then skip the normal form stuff and have it update the action whenever clicked.
+                            ? <CheckmarkActionRenderer actionWithContext={actionWithContext} refresh={refresh} fetchToCallback={fetchToCallback}/>
                             :
                         isCompleted // If the action is already completed, then use a less visually strong renderer
                             ? <InlineActionRenderer
                                 actionWithContext={actionWithContext}
-                                data={data}
+                                previousValues={previousValues}
                                 refresh={refresh}
+                                fetchToCallback={fetchToCallback}
                             />
                             : <FormActionRenderer
                                 actionWithContext={actionWithContext}
-                                data={data}
+                                previousValues={previousValues}
                                 refresh={refresh}
+                                fetchToCallback={fetchToCallback}
                                 />
                         }
                         </div>

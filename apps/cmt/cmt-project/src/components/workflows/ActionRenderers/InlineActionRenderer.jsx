@@ -1,20 +1,21 @@
 import { useState, useRef } from 'react'
 import { CMTFetch } from '../../../utils/api'
-import { GenericActionRenderer } from './GenericActionRenderer'
+import { AbstractActionRenderer } from './GenericActionRenderer'
 import { Button, Form } from 'react-bootstrap'
 import { Check, Edit, X } from 'lucide-react'
 import { metadataObjectToState } from '../../../utils/workflows'
 
 //TODO: complex inline action renderer?
 
+/** @import { ActionRendererProps } from "./GenericActionRenderer" */
+
 /**
- *
- * @param {{ actionWithContext: object, data: object, refresh: function }} args
- * Data is the object that contains the same keys as the action's metadata.
- *
+ * Renders an action as a card. Supports simple actions.
+ * @template T
+ * @param {ActionRendererProps<T>} props 
  */
-export function InlineActionRenderer({ actionWithContext, data, refresh }) {
-    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, data))
+export function InlineActionRenderer({ actionWithContext, previousValues, refresh }) {
+    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, previousValues))
     
     const validatorRegistry = useRef({})
     const [submitted, setSubmitted] = useState(false)
@@ -46,7 +47,7 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
                 <div>
                     <Form className='flex items-center gap-6 pl-2' onSubmit={submitAction}>
                         <div className='flex gap-4'>
-                            <GenericActionRenderer
+                            <AbstractActionRenderer
                                 metadata={actionWithContext.action.metadata}
                                 outputValues={outputValues}
                                 setOutputValues={setOutputValues}
@@ -74,7 +75,7 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
                     <div className="flex gap-4">
                         {actionWithContext.action.metadata.outputs.map(output => (
                                 <p className='text-xl my-2'>
-                                    {output.name}: {data[output.key] ?? 'TBD'}
+                                    {output.name}: {previousValues[output.key] ?? 'TBD'}
                                 </p>
                         ))}
                     </div>

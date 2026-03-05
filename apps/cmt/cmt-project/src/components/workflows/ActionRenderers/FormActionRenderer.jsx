@@ -1,11 +1,18 @@
 import { useState, useRef } from "react"
-import { CMTFetch } from "../../../utils/api"
 import { metadataObjectToState } from "../../../utils/workflows"
 import { Button, Form } from "react-bootstrap"
-import { GenericActionRenderer } from "./GenericActionRenderer"
+import { AbstractActionRenderer } from "./GenericActionRenderer"
 
-export function FormActionRenderer({ actionWithContext, data, refresh }) {
-    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, data))
+/** @import { ActionRendererProps } from "./GenericActionRenderer" */
+
+/**
+ * Renders an action as a form. Only supports simple actions.
+ * 
+ * @template T
+ * @param {ActionRendererProps<T>} props 
+ */
+export function FormActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback }) {
+    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, previousValues))
 
     const validatorRegistry = useRef({})
 
@@ -24,8 +31,7 @@ export function FormActionRenderer({ actionWithContext, data, refresh }) {
         if (!allValid) 
             return
 
-        // Proceed with submission
-        CMTFetch('PUT', actionWithContext.callback, outputValues).then(() => {
+        fetchToCallback(actionWithContext.callback, outputValues).then(() => {
             setSubmitButtonName('Submitted!')
             setSubmitButtonVariant('success')
             setTimeout(async () => {
@@ -39,7 +45,7 @@ export function FormActionRenderer({ actionWithContext, data, refresh }) {
 
     return (
         <Form onSubmit={submitAction} className='flex gap-4'>
-            <GenericActionRenderer
+            <AbstractActionRenderer
                 metadata={actionWithContext.action.metadata}
                 outputValues={outputValues}
                 setOutputValues={setOutputValues}

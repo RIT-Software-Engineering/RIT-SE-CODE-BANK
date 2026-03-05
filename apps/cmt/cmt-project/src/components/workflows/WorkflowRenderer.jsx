@@ -2,9 +2,23 @@ import { Accordion } from 'react-bootstrap'
 import { CardActionRenderer } from './ActionRenderers/CardActionRenderer'
 
 /**
- * Renders a workflow using card action renderers.
+ * @import { WorkflowsWorkflow, ActionWithContext, IsCheckmark, FetchToCallback, PreviousValues } from "../../components/workflows/typedefs"
  */
-export function WorkflowRenderer({ workflow, actionsWithContext, data, refresh }) {
+
+/**
+ * Renders a workflow using card action renderers.
+ * 
+ * @template T
+ * @param {{
+ *  workflow: WorkflowsWorkflow
+ *  actionsWithContext: (ActionWithContext & { action: { metadata: T }})[],
+ *  previousValues: PreviousValues & Record<keyof T, any>,
+ *  refresh: () => void,
+ *  fetchToCallback: FetchToCallback,
+ *  isCheckmark: IsCheckmark
+ * }} args
+ */
+export function WorkflowRenderer({ workflow, actionsWithContext, previousValues, refresh, fetchToCallback, isCheckmark }) {
 
     const firstIncompleteAction = actionsWithContext.find(awc => awc.actionState.stateType !== "completed")
 
@@ -21,9 +35,11 @@ export function WorkflowRenderer({ workflow, actionsWithContext, data, refresh }
                         <div className='p-2 flex gap-10' key={actionWithContext.action.id}>
                             <div className="grow">
                                 <CardActionRenderer
-                                    data={data}
+                                    previousValues={previousValues}
                                     actionWithContext={actionWithContext}
                                     refresh={refresh}
+                                    fetchToCallback={fetchToCallback}
+                                    isCheckmark={isCheckmark}
                                 />
                             </div>
                         </div>

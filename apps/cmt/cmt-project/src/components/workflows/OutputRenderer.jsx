@@ -1,6 +1,27 @@
 import { useState, useEffect, useCallback } from "react";
 import { Form } from "react-bootstrap";
 
+/**
+ * @import { ParsedMetadata } from "./typedefs"
+ * @import { AbstractActionRenderer } from "./ActionRenderers/GenericActionRenderer"
+ */
+
+/**
+ * @typedef {{
+ *  output: ParsedMetadata["outputs"][number],
+ *  value: any,
+ *  setValue: React.Dispatch<React.SetStateAction<any>>,
+ *  submitted: boolean,
+ *  validatorRegistry: React.RefObject<Object>
+ * }} OutputRendererProps 
+ */
+
+/**
+ * A controlled form element that renders an input field based on the given output.
+ * A description of the purpose of the validatorRegistry can be seen in {@link AbstractActionRenderer}
+ * 
+ * @param {OutputRendererProps} props
+ */
 export function OutputRenderer({ output, value, setValue, submitted, validatorRegistry }) {
     
     let inputElement
@@ -11,7 +32,7 @@ export function OutputRenderer({ output, value, setValue, submitted, validatorRe
         case "select":
             inputElement = <SelectOutputRenderer output={output} value={value} setValue={setValue} submitted={submitted} validatorRegistry={validatorRegistry} />
             break
-        case "checkbox":
+        case "checkmark":
             inputElement = <CheckboxOutputRenderer output={output} value={value} setValue={setValue} />
             break
         default: // case "text"
@@ -27,7 +48,9 @@ export function OutputRenderer({ output, value, setValue, submitted, validatorRe
 }
 
 
-// Text output renderer with its own validation
+/**
+ * @param {OutputRendererProps} props
+ */
 export function TextOutputRenderer({ output, value, setValue, submitted, validatorRegistry }) {
     const [touched, setTouched] = useState(false)
 
@@ -67,7 +90,9 @@ export function TextOutputRenderer({ output, value, setValue, submitted, validat
     );
 }
 
-// Number output renderer with its own validation
+/**
+ * @param {OutputRendererProps} props
+ */
 export function NumberOutputRenderer({ output, value, setValue, submitted, validatorRegistry }) {
     const [touched, setTouched] = useState(false)
 
@@ -108,7 +133,9 @@ export function NumberOutputRenderer({ output, value, setValue, submitted, valid
     );
 }
 
-// Checkbox output renderer - no validation needed
+/**
+ * @param {Omit<OutputRendererProps, "submitted" | "validatorRegistry">} props
+ */
 export function CheckboxOutputRenderer({ output, value, setValue }) {
     return (
         <div className="shrink">
@@ -122,7 +149,9 @@ export function CheckboxOutputRenderer({ output, value, setValue }) {
     );
 }
 
-// Select output renderer with its own validation
+/**
+ * @param {OutputRendererProps} props
+ */
 export function SelectOutputRenderer({ output, value, setValue, submitted, validatorRegistry }) {
     const [touched, setTouched] = useState(false)
 
