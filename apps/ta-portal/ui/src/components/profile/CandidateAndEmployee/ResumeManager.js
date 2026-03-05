@@ -55,7 +55,7 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
     isProcessing: false,
   });
 
-  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION + process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 
   const handleStartEditing = (resume) => {
     setEditingResumeId(resume.id);
