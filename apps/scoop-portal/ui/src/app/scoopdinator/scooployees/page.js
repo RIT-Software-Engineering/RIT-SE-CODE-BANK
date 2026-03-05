@@ -34,12 +34,12 @@ import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 
 const TYPE_LABELS = {
   prospect: "Prospect",
-  applicant: "Applicant",
   scooployee: "Scooployee",
   scoopervisor: "Scoopervisor",
+  advisor: "Advisor",
 };
 
-const USER_TYPES = ["scooployee", "scoopervisor", "prospect", "applicant"];
+const USER_TYPES = ["scooployee", "scoopervisor", "prospect", "advisor"];
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
@@ -80,8 +80,8 @@ export default function ViewScooployees() {
 
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [sortField, setSortField] = useState(null);
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortField, setSortField] = useState("semester_group");
+  const [sortOrder, setSortOrder] = useState("dsc");
 
   const [semesterGroups, setSemesterGroups] = useState([]);
 
@@ -705,6 +705,7 @@ export default function ViewScooployees() {
               >
                 <MenuItem value="" disabled>Select a Type</MenuItem>
                 <MenuItem value="prospect">Prospect</MenuItem>
+                <MenuItem value="scooployee">Scooployee</MenuItem>
                 <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
               </Select>
               {addErrors.type && <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>{addErrors.type}</Typography>}
