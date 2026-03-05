@@ -350,7 +350,6 @@ export default function EmployerApplicationsPage() {
               display: 'flex',
               alignItems: 'center',
               gap: 2,
-              position: 'sticky',
               top: 0,
               zIndex: 10,
               backgroundColor: 'background.paper',

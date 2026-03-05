@@ -6,3 +6,5 @@ node_modules
 /resources
 /server/database/prisma/migrations
 /generated/prisma
+
+/generated/prisma

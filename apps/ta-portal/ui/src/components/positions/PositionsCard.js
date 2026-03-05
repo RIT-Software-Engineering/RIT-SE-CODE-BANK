@@ -208,7 +208,7 @@ export default function PositionsCard({
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
           <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
-          {showActionItems && <Divider />}
+          {(showReactivate || showOnHold||showInactive)&& <Divider />}
           {(showOnHold && status !== 'ONHOLD') && (<MenuItem onClick={() => { onOnHold(position.id); handleMenuClose(); }}>Put Position on Hold </MenuItem>)}
           {(showInactive && status !== 'INACTIVE') && (<MenuItem onClick={() => { onInactive(position.id); handleMenuClose(); }}> Mark Position Inactive</MenuItem>)}
           {showReactivate && (status === 'ONHOLD' || status === 'INACTIVE') && <MenuItem onClick={() => { onReactivate(position.id); handleMenuClose(); }}>Reactivate Position</MenuItem>}
@@ -275,47 +275,6 @@ export default function PositionsCard({
             </Box>
           </Box>
         </Box>
-        {/*(currentUser && (role === "ADMIN" || currentUser?.role === "EMPLOYER")) && (
-          <Box>
-            <Typography variant="body2" color="text.secondary">Actions:</Typography>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
-                <Button
-                  variant="outlined"
-                  onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details
-                </Button>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <Button
-                  variant="outlined"
-                  onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes
-                </Button>
-              </Grid>
-
-              {showEdit && (
-                <Grid item xs={12} sm={6}>
-                  <Button variant="outlined" onClick={() => { onEdit(position); handleMenuClose(); }}>Edit Position
-                  </Button>
-                </Grid>
-              )}
-              {showApprove && (
-                <Grid item xs={12} sm={6}>
-                  <Button variant="outlined" onClick={() => { onApprove(position.id); handleMenuClose(); }}>Approve Position
-                  </Button>
-                </Grid>
-              )}
-              {showReject && (
-                <Grid item xs={12} sm={6}>
-                  <Button variant="contained" color="error" onClick={() => { onReject(position.id); handleMenuClose(); }} sx={{ color: 'error.main' }}>Reject Position
-                  </Button>
-                </Grid>
-              )}
-
-
-            </Grid>
-          </Box>
-        )*/}
         {(currentUser?.role === 'CANDIDATE' || currentUser?.role === 'EMPLOYEE') && eligibilityDetails.details.length > 0 && (
           <Paper variant="outlined" sx={{ mt: 2, p: 2, bgcolor: 'action.hover' }}>
             <Typography variant="h3" sx={{ mb: 1 }}>Job Requirements</Typography>
