@@ -577,6 +577,7 @@ export default function ViewScooployees() {
                     <MenuItem value="prospect">Prospect</MenuItem>
                     <MenuItem value="scooployee">Scooployee</MenuItem>
                     <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+                    <MenuItem value="advisor">Advisor</MenuItem>
                   </Select>
                   {editErrors.type && <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>{editErrors.type}</Typography>}
                 </FormControl>
@@ -707,6 +708,7 @@ export default function ViewScooployees() {
                 <MenuItem value="prospect">Prospect</MenuItem>
                 <MenuItem value="scooployee">Scooployee</MenuItem>
                 <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+                <MenuItem value="advisor">Advisor</MenuItem>
               </Select>
               {addErrors.type && <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>{addErrors.type}</Typography>}
             </FormControl>
@@ -776,6 +778,7 @@ export default function ViewScooployees() {
                 <MenuItem value="prospect">Prospect</MenuItem>
                 <MenuItem value="scooployee">Scooployee</MenuItem>
                 <MenuItem value="scoopervisor">Scoopervisor</MenuItem>
+                <MenuItem value="advisor">Advisor</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth>
