@@ -89,7 +89,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        REACT_APP_BACKEND_URL: /api
+        REACT_APP_BACKEND_URL: /api/cmt
         REACT_APP_AUTH_BASE: ""
         PUBLIC_URL: /cmt
     ports:
@@ -97,7 +97,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3010
-      REACT_APP_BACKEND_URL: /api
+      REACT_APP_BACKEND_URL: /api/cmt
       REACT_APP_AUTH_BASE: ""
       PUBLIC_URL: /cmt
     depends_on:
