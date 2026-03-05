@@ -25,8 +25,6 @@ services:
       context: ../../.. #Sets the context to the root of the project to allow the copying of the package-lock.json
       dockerfile: apps/ta-portal/ui/Dockerfile
       args:
-        NEXT_PUBLIC_NODE_ENV: ${NEXT_PUBLIC_NODE_ENV} # DEV or PROD, determines what login system is used
-        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
         NEXT_PUBLIC_API_EXTENSION: ${NEXT_PUBLIC_API_EXTENSION}
         NEXT_PUBLIC_DATABASE_API_EXTENSION: ${NEXT_PUBLIC_DATABASE_API_EXTENSION}
         NEXT_PUBLIC_SLACK_API_EXTENSION: ${NEXT_PUBLIC_SLACK_API_EXTENSION}
@@ -40,20 +38,16 @@ services:
       context: ../../.. #Sets the context to the root of the project to allow the copying of the package-lock.json
       dockerfile: apps/ta-portal/server/Dockerfile
       args:
-        DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@${DB_HOST}:${DB_CONTAINER_PORT}/${DB_NAME}"
-        FRONTEND_URL: ${FRONTEND_URL}
+        DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@mariadb:${DB_CONTAINER_PORT}/${DB_NAME}"
     environment:
-      DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@${DB_HOST}:${DB_CONTAINER_PORT}/${DB_NAME}" # Database access through the main user.
+      DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD}@mariadb:${DB_CONTAINER_PORT}/${DB_NAME}" # Database access through the main user.
       PORT: ${BACK_HOST_PORT}
-      NODE_ENV: ${BACK_NODE_ENV} # DEV or PROD
-      BACK_CONTAINER_PORT: ${BACK_CONTAINER_PORT}
-      NEXT_PUBLIC_API_EXTENSION: ${NEXT_PUBLIC_API_EXTENSION}
     ports:
       - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
     restart: unless-stopped
     depends_on:
       - mariadb
-    healthcheck: #Will need to change in production, as -k is not secure
+    healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:${BACK_CONTAINER_PORT}${NEXT_PUBLIC_API_EXTENSION}/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval: 5s
       timeout: 5s

@@ -22,7 +22,7 @@ ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" << ENDSSH
     
     echo "Rebuilding and restarting Docker containers..."
     cd ./apps/ta-portal/deploy
-    docker compose up -d --build
+    docker compose -f compose.yaml -f compose.prod.yaml up -d --build
     
     echo "Waiting for services to be healthy..."
     sleep 10

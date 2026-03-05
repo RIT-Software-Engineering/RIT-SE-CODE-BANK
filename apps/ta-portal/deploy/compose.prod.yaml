@@ -1,0 +1,14 @@
+services:
+  frontend:
+    build:
+      dockerfile: apps/ta-portal/ui/Dockerfile.prod
+      args:
+        NEXT_PUBLIC_NODE_ENV: "DEV"
+        NEXT_PUBLIC_BACKEND_URL: ""
+
+  backend:
+    build:
+      args:
+        FRONTEND_URL: "http://apps-staging.se.rit.edu"
+    environment:
+      NODE_ENV: "production"
