@@ -13,7 +13,7 @@ DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
 ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
     DB_ROOT_PASSWORD="$DB_ROOT_PASSWORD" \
     DB_APP_PASSWORD="$DB_APP_PASSWORD" \
-    'bash -s' << 'ENDSSH'
+    'bash -s' << ENDSSH
     
     set -e
     
