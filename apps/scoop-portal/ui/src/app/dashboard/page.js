@@ -10,7 +10,7 @@ import Header from '@components/Header';
 
 const workflows = [
     {
-    title: "Project",
+    title: "Onboarding",
     steps: [
       {
         title: "Join the GitHub",
@@ -148,12 +148,6 @@ const workflows = [
         title: "Manage Projects",
         roles: ["scoopdinator"],
         description: "Create, edit, and archive scoop projects.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/projects",
-      },
-      {
-        title: "View Projects",
-        roles: ["scoopdinator"],
-        description: "View existing projects and their statuses.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/projects",
       },
       {
