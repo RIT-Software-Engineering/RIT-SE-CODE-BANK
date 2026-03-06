@@ -33,5 +33,5 @@ RUN npx prisma generate
 
 EXPOSE 5010
 
-# For dev: reset DB and run server
-CMD ["sh", "-c", "npx prisma db push && node /app/src/backend/server.js"]
+WORKDIR /app/src/backend
+CMD ["sh", "-c", "npx prisma db push && node server.js"]
