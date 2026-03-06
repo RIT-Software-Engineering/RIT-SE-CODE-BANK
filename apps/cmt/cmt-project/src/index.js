@@ -11,7 +11,7 @@ import CourseWebsitePage from "./pages/CourseWebsitePage.jsx";
 import "./styles/global.css";
 import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { CoursePageWorkflony } from "./pages/course/CourseOverview.jsx";
+import { CourseOverview } from "./pages/course/CourseOverview.jsx";
 import { CourseDashboard } from "./pages/course/CourseDashboard.jsx";
 
 /* ------------------------------------------------------------------
@@ -80,7 +80,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           />
           <Route 
             path="courses" 
-            element={<CoursePageWorkflony />} 
+            element={<CourseOverview />} 
           />
           <Route 
             path="courses/:id" 
