@@ -2,50 +2,98 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTFetch } from '../../utils/api'
-import { Edit, X, Check, ArrowLeft } from 'lucide-react'
+import { InlineActionRenderer } from '../../components/workflows/ActionRenderers/InlineActionRenderer'
+import { InlineFormHoverable } from '../../components/forms/InlineForms'
+import { flattenActionsWithContext } from '../../utils/workflows'
+import { ArrowLeft, Edit } from 'lucide-react'
 import { Accordion, Button, Card, Form, Modal, Table} from 'react-bootstrap'
-import { OutputRenderer } from '../../components/workflows/OutputRenderers'
-import {RichTextEditor} from '../../components/RichTextEditor'
+import { RichTextEditor } from '../../components/RichTextEditor'
+import { CheckmarkActionRenderer } from '../../components/workflows/ActionRenderers/GenericActionRenderer'
 
+/**
+ * @import { IsCheckmark, FetchToCallback, WorkflowsWorkflow, ActionWithContext } from "../../components/workflows/typedefs"
+ */
+
+/**
+ * This component heavily utilizes the Workflows Components.
+ * 
+ * To act as an example, JSDoc annotations are used with Workflows-related variables to add context to their usage.
+ * If you hover over the Type name in the comment, you can see a description of the type's meaning.
+ * 
+ * If you wish to also use Workflows Components, these JSDoc annotations are **NOT NECCESARY**, because a function's types
+ * can often be implied. If you pass in the wrong type to a Workflows Component, it will give you an error in the component's attributes,
+ * assuming your environment is set up correctly.
+ */
 export function CourseDashboard() {
     const { id } = useParams()
 
     const [course, setCourse] = useState(null)
-    const [actionsWithCallbacks, setActionsWithCallbacks] = useState([])
-    const [workflowState, setWorkflowState] = useState(null)
+    /** @type [ActionWithContext[], any] */
+    const [actionsWithContext, setactionWithContexts] = useState([])
+    /** @type [WorkflowsWorkflow, any] */
     const [workflow, setWorkflow] = useState(null)
     const [sessionCount, setSessionCount] = useState(0)
     const [sessions, setSessions] = useState([]);
 
-    const update = useCallback(() => {
+    const update = useCallback(async () => {
         return CMTFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
             setCourse(data.course)
-            setActionsWithCallbacks(data.actionsWithCallbacks)
-            setWorkflowState(data.actionStates)
+            setactionWithContexts(data.actionWithContexts)
             setWorkflow(data.workflow)
         })
     }, [id])
     useEffect(() => void update(), [id, update])
 
-    if (course === null || workflowState === null) return <p> Loading </p>
+    /** @type FetchToCallback */
+    const fetchToCallback = useCallback(
+        (callback, outputValues) => CMTFetch('PUT', callback, outputValues),
+        []
+    )
+
+    /** @type IsCheckmark */
+    const isCheckmark = useCallback(
+        code => code === "CHECKBOX" || code.includes("SESSION_"),
+        []
+    )
+
+    if (course === null || workflow === null) return <p> Loading </p>
+
+    const sessionActions = flattenActionsWithContext(actionsWithContext).filter(
+        awc => awc?.action?.metadata?.code?.includes("SESSION_")
+    )
+
+    const courseInfoKeys = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER"]
+    const courseInfoActions = flattenActionsWithContext(actionsWithContext).filter(
+        awc => courseInfoKeys.includes(awc.action.metadata.code)
+    )
 
     return (
         <>
-            <CourseInfo course={course} actionsWithCallbacks={actionsWithCallbacks} refresh={update} />
+            <CourseInfo course={course} actionsWithContext={courseInfoActions} refresh={update} fetchToCallback={fetchToCallback}/>
             <div className="h-10"></div>
-            <p className="text-4xl">Workflow Info</p>
-            <p className="text-2xl">Next Action:</p>
-
-            <WorkflowRenderer
-                actionsWithCallbacks={actionsWithCallbacks}
-                workflowState={workflowState}
-                workflow={workflow}
-                refresh={update}
-            />
+            <p className="text-4xl pb-2 border-b">Workflow Info</p>
+            <div className="flex justify-center">
+                <div className="max-w-screen-xl w-full">
+                    <WorkflowRenderer
+                        workflow={workflow}
+                        actionsWithContext={actionsWithContext}
+                        previousValues={course}
+                        refresh={update}
+                        fetchToCallback={fetchToCallback}
+                        isCheckmark={isCheckmark}
+                    />
+                </div>
+            </div>
 
             <div>
-                <Session sessionCount={sessionCount} setSessionCount={setSessionCount} sessions={sessions} setSessions={setSessions}/>
+                <Session 
+                    sessionCount={sessionCount} setSessionCount={setSessionCount}
+                    sessions={sessions} setSessions={setSessions}
+                    sessionActions={sessionActions}
+                    updateWorkflow={update}
+                    fetchToCallback={fetchToCallback}
+                />
                 <div className='flex justify-end pt-4'>
                     <Button onClick={() => {
                         /** Makes a post request to add the session with no material.
@@ -63,7 +111,7 @@ export function CourseDashboard() {
     )
 }
 
-function CourseInfo({ course, actionsWithCallbacks, refresh }) {
+function CourseInfo({ course, actionsWithContext, refresh, fetchToCallback }) {
 
     const [newCourseName, setNewCourseName] = useState(course.name)
     const [newCourseCode, setNewCourseCode] = useState(course.classId)
@@ -76,16 +124,15 @@ function CourseInfo({ course, actionsWithCallbacks, refresh }) {
     function updateCourseCode(e) {
         e.preventDefault()
         return CMTFetch('PUT', `course/${course.id}`, { courseCode: newCourseCode }).then(async () => await refresh())
+        
     }
-
     return (
         <>
             <div className='flex justify-between w-full pb-3 items-center'>
-                <Button onClick={() => navigate('/courses')}><div className='flex'><ArrowLeft/>{' '}Back</div></Button>
+                <Button onClick={() => navigate('/courses')}><div className='flex'><ArrowLeft/>Back</div></Button>
             </div>
             <h1 style={{ backgroundColor: course.color }} className='p-2'>
-                {' '}
-                Course Info{' '}
+                Course Info
             </h1>
             <div className='flex items-center hover:bg-gray-200 group pl-2'>
                 <InlineFormHoverable
@@ -103,137 +150,14 @@ function CourseInfo({ course, actionsWithCallbacks, refresh }) {
                     onChange={e => setNewCourseCode(e.target.value)}
                 />
             </div>
-                {actionsWithCallbacks.map(actionWithCallback => {
-                    // Flatten array of objects to simplify later usage
-                    let metadata = {}
-                    Object.keys(actionWithCallback.action.metadata).forEach(key => {
-                        metadata[key] = JSON.parse(actionWithCallback.action.metadata[key])
-                    })
-
-                    return (
-                        <InlineActionRenderer
-                            course={course}
-                            actionWithCallback={actionWithCallback}
-                            metadata={metadata}
-                            refresh={refresh}
-                        />
-                    )
-                })}
-        </>
-    )
-}
-
-function InlineForm({ label, value, onReset, onChange, onSubmit }) {
-    return (
-        <Form onSubmit={onSubmit} onReset={onReset} className='flex items-center gapw'>
-            <Form.Label className='text-xl my-2 w-4/5'>{label}:</Form.Label>
-            <Form.Control defaultValue={value} onChange={onChange}></Form.Control>
-            <div className='flex'>
-                <Button className='mx-1' variant='outline-danger' type='reset'>
-                    <X />
-                </Button>
-                <Button className='mx-1' variant='outline-success' type='submit'>
-                    <Check />
-                </Button>
-            </div>
-        </Form>
-    )
-}
-
-function InlineFormHoverable({ label, value, onChange, onSubmit }) {
-    const [editing, setEditing] = useState(false)
-
-    return editing ? (
-        <InlineForm
-            label={label}
-            value={value}
-            onReset={() => setEditing(false)}
-            onChange={onChange}
-            onSubmit={async (e) => {
-                await onSubmit(e)
-                setEditing(false)
-            }}
-        />
-    ) : (
-        <div className="flex items-center gap-20">
-            <div className=''>
-                <p className={`text-xl my-2`}>
-                    {' '}
-                    {label}: {value}{' '}
-                </p>
-            </div>
-            <div className='hidden group-hover:block'>
-                <Button size='sm' title='Edit Course' variant='outline-secondary' onClick={() => setEditing(true)}>
-                    <Edit className='size-6' />
-                </Button>
-            </div>
-        </div>
-    )
-}
-
-function InlineActionRenderer({ actionWithCallback, course, metadata, refresh }) {
-    const [outputValues, setOutputValues] = useState(Object.fromEntries(metadata.outputs.map(output => [output.key, output.initialValue]))) // Initialize with array of the Workflows specified initial (or default) values
-
-    const [submitButtonName, setSubmitButtonName] = useState('Submit')
-    const [submitButtonVariant, setSubmitButtonVariant] = useState('primary')
-
-    function submitAction(e) {
-        e.preventDefault()
-        CMTFetch('PUT', actionWithCallback.callback, outputValues).then(() => {
-            setSubmitButtonName('Submitted!')
-            setSubmitButtonVariant('success')
-            setTimeout(async () => {
-                await refresh()
-                setIsEditing(false)
-            }, 500)
-        })
-    }
-
-    const [isEditing, setIsEditing] = useState(false)
-
-    return (
-        <>
-            {isEditing ? (
-                <div>
-                    <Form className='flex items-center gap-6' onSubmit={submitAction}>
-                        {metadata.outputs.map((output, i) => (
-                            <OutputRenderer
-                                output={output}
-                                value={outputValues[i]}
-                                setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
-                            />
-                        ))}
-                        <Button
-                            variant='outline-danger'
-                            type='reset'
-                            onClick={() => {
-                                setIsEditing(false)
-                            }}
-                        >
-                            <X />
-                        </Button>
-                        <Button variant='outline-success' type='submit'>
-                            <Check />
-                        </Button>
-                    </Form>
-                </div>
-            ) : (
-                metadata.outputs.map(output => (
-                    <div className='flex items-center hover:bg-gray-200 group pl-2'>
-                        <div className='w-1/5'>
-                            <p className='text-xl my-2'>
-                                {' '}
-                                {actionWithCallback.action.name} {course[output.key] ?? 'TBD'}{' '}
-                            </p>
-                        </div>
-                        <div className='hidden group-hover:block'>
-                            <Button size='sm' title='Edit Course' variant='outline-secondary' onClick={() => setIsEditing(true)}>
-                                <Edit size={24} />
-                            </Button>
-                        </div>
-                    </div>
-                ))
-            )}
+                {actionsWithContext.map(awc => 
+                    <InlineActionRenderer
+                        previousValues={course}
+                        actionWithContext={awc}
+                        refresh={refresh}
+                        fetchToCallback={fetchToCallback}
+                    />   
+                )}
         </>
     )
 }
@@ -243,12 +167,12 @@ function InlineActionRenderer({ actionWithCallback, course, metadata, refresh })
  * The session component is an accordion that dynamically adds more items the higher the count. 
  * Displays a modal (when opened) and a table of uploaded resources. 
  *
- * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; }} param0
+ * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; sessionActions:any, updateWorkflow: () => void, fetchToCallback: FetchToCallback }} param0
  * sessionCount - the number of sessions a user has created
  * courseId - the identifier for which sessionData to obtain
  * @returns {*} the session accordion as HTML
  */
-function Session({sessionCount, setSessionCount, sessions, setSessions}) {
+function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback}) {
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
@@ -284,41 +208,48 @@ function Session({sessionCount, setSessionCount, sessions, setSessions}) {
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions}/>
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen}/>
         {
-            Array.from({ length: sessionCount }, (_, i) => (
-                <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
-                    <Accordion.Header>
-                        <Form.Check onClick={(e)=>e.stopPropagation()} className='mr-3 text-xl'></Form.Check>
-                        <span className='text-2xl'>Session {i+1}</span>
+            Array.from({ length: sessionCount }, (_, i) => {
+                const sessionAction = sessionActions?.find(sessionAction => sessionAction.action.metadata.code === `SESSION_${i}`)
+                
+                return (
+                    <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
+                        <Accordion.Header>
+                            <div className="flex items-center gap-2">
+                                {/* TODO: completion should be tracked in the DB in case a professor wants to create more sessions than required */}
+                                {sessionAction && <CheckmarkActionRenderer actionWithContext={sessionAction} refresh={updateWorkflow} fetchToCallback={fetchToCallback}/>}
+                                <span className='text-2xl'>Session {i+1}</span>
+                            </div>
                         </Accordion.Header>
-                    <Accordion.Body>
-                        { sessionData.find(data => data.sessionNum === i) ?
-                        <SessionTable sessionData={sessionData} sessionNum={i} setIsEditOpen={setIsEditOpen} setSessionId={setCurSessionId}/> :
-                        <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
-                        }
-                        { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
-                        <Card>
-                            <Card.Body className='group max-h-96 overflow-y-scroll'>
-                                <Card.Title>
-                                    <div className='flex justify-between'>
-                                        <div>{sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} (Notes)</div>
-                                        <div className='justify-end size-12 opacity-0 group-hover:!opacity-100'><Button variant='outline-dark' onClick={(e) => {
-                                            setCurSessionId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
-                                            setIsEditOpen(true);
-                                            e.currentTarget.style.opacity = "100";
-                                        }}><Edit /></Button></div>
-                                    </div>
-                                </Card.Title>
-                                <Card.Text>
-                                    <span className="prose" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
-                            </Card.Body>
-                        </Card> : <></>
-                        }
-                        <div className='flex justify-end pt-3'>
-                            <Button onClick={() => setIsOpen(true)}>Add Material</Button>
-                        </div>
-                    </Accordion.Body>
-                </Accordion.Item>
-            ))
+                        <Accordion.Body>
+                            { sessionData.find(data => data.sessionNum === i) ?
+                            <SessionTable sessionData={sessionData} sessionNum={i} setIsEditOpen={setIsEditOpen} setSessionId={setCurSessionId}/> :
+                            <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
+                            }
+                            { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
+                            <Card>
+                                <Card.Body className='group max-h-96 overflow-y-scroll'>
+                                    <Card.Title>
+                                        <div className='flex justify-between'>
+                                            <div>{sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} (Notes)</div>
+                                            <div className='justify-end size-12 opacity-0 group-hover:!opacity-100'><Button variant='outline-dark' onClick={(e) => {
+                                                setCurSessionId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
+                                                setIsEditOpen(true);
+                                                e.currentTarget.style.opacity = "100";
+                                            }}><Edit /></Button></div>
+                                        </div>
+                                    </Card.Title>
+                                    <Card.Text>
+                                        <span className="prose" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
+                                </Card.Body>
+                            </Card> : <></>
+                            }
+                            <div className='flex justify-end pt-3'>
+                                <Button onClick={() => setIsOpen(true)}>Add Material</Button>
+                            </div>
+                        </Accordion.Body>
+                    </Accordion.Item>
+                )
+            })
         }
       </Accordion>
   );
