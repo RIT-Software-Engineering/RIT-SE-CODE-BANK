@@ -196,7 +196,7 @@ export default function CourseWebsitePage() {
           <option value="" disabled>Select a course</option>
           {courses.map((course) => (
             <option key={course.id} value={course.id}>
-              {course.name} ({course.semester})
+              {course.name} ({course.season} {course.year})
             </option>
           ))}
         </select>

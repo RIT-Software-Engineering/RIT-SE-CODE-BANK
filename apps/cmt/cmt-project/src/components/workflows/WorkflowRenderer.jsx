@@ -1,53 +1,52 @@
-import { useState } from "react"
-import { Button, Card, Form } from "react-bootstrap"
-import { CMTFetch } from "../../utils/api"
-import { OutputRenderer } from "./OutputRenderers"
+import { Accordion } from 'react-bootstrap'
+import { CardActionRenderer } from './ActionRenderers/CardActionRenderer'
 
-export function WorkflowRenderer({ actionsWithCallbacks, workflowState, workflow, refresh }) {
-    const nextActionState = workflowState.baseActionState.children.find(actionState => actionState.stateType === "notStarted")
-    if (!nextActionState) return <h1> All Done! </h1>
-    
-    const nextActionWithCallback = actionsWithCallbacks.find(awc => awc.action.id === nextActionState.actionId)
-    return <ActionRenderer actionWithCallback={nextActionWithCallback} refresh={refresh} />
+/**
+ * @import { WorkflowsWorkflow, ActionWithContext, IsCheckmark, FetchToCallback, PreviousValues } from "../../components/workflows/typedefs"
+ */
+
+/**
+ * Renders a workflow using card action renderers.
+ * 
+ * @template T
+ * @param {{
+ *  workflow: WorkflowsWorkflow
+ *  actionsWithContext: (ActionWithContext & { action: { metadata: T }})[],
+ *  previousValues: PreviousValues & Record<keyof T, any>,
+ *  refresh: () => void,
+ *  fetchToCallback: FetchToCallback,
+ *  isCheckmark: IsCheckmark
+ * }} args
+ */
+export function WorkflowRenderer({ workflow, actionsWithContext, previousValues, refresh, fetchToCallback, isCheckmark }) {
+
+    const firstIncompleteAction = actionsWithContext.find(awc => awc.actionState.stateType !== "completed")
+
+    return (
+        <Accordion
+            defaultActiveKey={firstIncompleteAction?.action?.id}
+            flush
+        >
+            <div className='flex flex-col'>
+                <p className='text-2xl mb-0'>{workflow.baseAction.name}</p>
+                <p className='text-gray-600 text-lg'>{workflow.baseAction.description}</p>
+                {actionsWithContext.map(actionWithContext => {
+                    return (
+                        <div className='p-2 flex gap-10' key={actionWithContext.action.id}>
+                            <div className="grow">
+                                <CardActionRenderer
+                                    previousValues={previousValues}
+                                    actionWithContext={actionWithContext}
+                                    refresh={refresh}
+                                    fetchToCallback={fetchToCallback}
+                                    isCheckmark={isCheckmark}
+                                />
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+        </Accordion>
+    )
 }
 
-export function ActionRenderer({ actionWithCallback, refresh }) {
-    // Flatten array of objects to simplify later usage
-    let metadata = {};
-    Object.keys(actionWithCallback.action.metadata).forEach(key => {
-        console.log(actionWithCallback.action.metadata[key])
-        metadata[key] = JSON.parse(actionWithCallback.action.metadata[key])
-    })
-    
-    const [outputValues, setOutputValues] = useState(Object.fromEntries(metadata.outputs.map(output => [output.key, output.initialValue]))) // Initialize with array of the Workflows specified initial (or default) values
-    
-    const [submitButtonName, setSubmitButtonName] = useState("Submit")
-    const [submitButtonVariant, setSubmitButtonVariant] = useState("primary")
-    
-    function submitAction (e) {
-        e.preventDefault()
-        CMTFetch("PUT", actionWithCallback.callback, outputValues).then(() => {
-            setSubmitButtonName("Submitted!")
-            setSubmitButtonVariant("success")
-            setTimeout(refresh, 500)
-        })
-    }
-
-    return (<>
-        <Card className="w-fit">
-            <Card.Body>
-                <p className="text-2xl">{actionWithCallback.action.name}</p>
-                <Form onSubmit={submitAction} className="flex gap-4">
-                    {metadata.outputs.map((output, i) =>
-                        <OutputRenderer
-                        output={output}
-                        value={outputValues[i]}
-                        setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
-                        />
-                    )}
-                    <Button type="submit" variant={submitButtonVariant}>{submitButtonName}</Button>
-                </Form>
-            </Card.Body>
-        </Card>
-    </>)
-}

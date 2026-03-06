@@ -396,7 +396,7 @@ function CourseCreationWorkflow({
     setError(null);
 
     try {
-      // Call backend API to create course with all data
+      // Call backend API to create course with all data TODO: is this stuff used anymore
       var courseSemester; 
       switch (courseData.semester){
         case "fall":

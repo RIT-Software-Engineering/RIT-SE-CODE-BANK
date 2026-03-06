@@ -69,7 +69,8 @@ async function main() {
   await prisma.courseTemplate.create({
     data: {
       name: 'Standard Software Engineering Course',
-      semester: 'Fall',
+      season: 'Fall',
+      year: 2020,
       weeks: 14,
       assignments: 8,
       exams: 2,
@@ -129,7 +130,8 @@ async function main() {
   await prisma.courseTemplate.create({
     data: {
       name: 'Project-Based Course Template',
-      semester: 'Spring',
+      season: 'Fall',
+      year: 2020,
       weeks: 15,
       assignments: 5,
       exams: 1,
@@ -183,7 +185,8 @@ async function main() {
   await prisma.courseTemplate.create({
     data: {
       name: 'Advanced Topics Template',
-      semester: 'Fall',
+      season: 'Fall',
+      year: 2020,
       weeks: 14,
       assignments: 6,
       exams: 2,

@@ -66,7 +66,7 @@ export default function makeTeamBuilderRouter(prisma) {
       const courses = await prisma.course.findMany({
         where: { professorId: professor.id },
         orderBy: [{ id: "asc" }],
-        select: { id: true, professorId: true, name: true, semester: true, classId: true },
+        select: { id: true, professorId: true, name: true, year: true, season: true, classId: true },
       });
 
       res.json(courses);
