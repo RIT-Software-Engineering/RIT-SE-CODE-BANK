@@ -13,7 +13,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_APP_USER}
-      MYSQL_PASSWORD: ${DB_APP_PASSWORD:-app_password}
+      MYSQL_PASSWORD: ${DB_USER_PASSWORD:-user_password}
     # This connects a docker volume to the container directory that stores the SQL information. 
     # If this container is closed the database will be stored inside the persistant docker volume.
     volumes:
@@ -57,7 +57,7 @@ services:
       dockerfile: apps/ta-portal/server/Dockerfile
     environment:
       # This DATABASE_URL overrides the placeholder url defined in the dockerfile.
-      DATABASE_URL: "mysql://${DB_APP_USER}:${DB_APP_PASSWORD:-app_password}@mariadb:3306/${DB_NAME}"
+      DATABASE_URL: "mysql://${DB_APP_USER}:${DB_USER_PASSWORD:-user_password}@mariadb:3306/${DB_NAME}"
       # The variable is used in main.js so that the application knows what port to listen to. This is needed since the app has no context of the host port from inside the container
       PORT: ${BACK_HOST_PORT}
     ports:

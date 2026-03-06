@@ -126,7 +126,7 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_KEY: ${{ github.workspace }}/../github-actions-deploy
           DB_ROOT_PASSWORD: ${{ secrets.TA_PORTAL_DB_ROOT_PASSWORD }}
-          DB_APP_PASSWORD: ${{ secrets.TA_PORTAL_DB_USER_PASSWORD }}
+          DB_USER_PASSWORD: ${{ secrets.TA_PORTAL_DB_USER_PASSWORD }}
         run: |
           if [ "$APP_NAME" = "all" ]; then
             echo "Deploying all apps"

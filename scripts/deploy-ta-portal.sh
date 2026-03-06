@@ -12,9 +12,9 @@ DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
 
 ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
     DB_ROOT_PASSWORD="$DB_ROOT_PASSWORD" \
-    DB_APP_PASSWORD="$DB_APP_PASSWORD" \
+    DB_USER_PASSWORD="$DB_USER_PASSWORD" \
     'bash -s' << ENDSSH
-    
+
     set -e
     
     echo "Navigating to deployment directory..."
@@ -23,9 +23,11 @@ ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
     echo "Pulling latest changes from ${DEPLOY_BRANCH}..."
     git fetch origin
     git reset --hard origin/${DEPLOY_BRANCH}
-    
+
     echo "Rebuilding and restarting Docker containers..."
     cd ./apps/ta-portal/deploy
+    echo "test root password: $DB_ROOT_PASSWORD"
+    echo "test app password: $DB_USER_PASSWORD"
     docker compose -f compose.yaml -f compose.prod.yaml up -d --build
     
     echo "Waiting for services to be healthy..."
