@@ -1,27 +1,40 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { CMTFetch } from '../../../utils/api'
-import { GenericActionRenderer } from './GenericActionRenderer'
+import { AbstractActionRenderer } from './GenericActionRenderer'
 import { Button, Form } from 'react-bootstrap'
 import { Check, Edit, X } from 'lucide-react'
 import { metadataObjectToState } from '../../../utils/workflows'
 
 //TODO: complex inline action renderer?
 
+/** @import { ActionRendererProps } from "./GenericActionRenderer" */
+
 /**
- *
- * @param {{ actionWithContext: object, data: object, refresh: function }} args
- * Data is the object that contains the same keys as the action's metadata.
- *
+ * Renders an action as a card. Supports simple actions.
+ * @template T
+ * @param {ActionRendererProps<T>} props
  */
-export function InlineActionRenderer({ actionWithContext, data, refresh }) {
-    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, data))
+export function InlineActionRenderer({ actionWithContext, previousValues, refresh }) {
+    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, previousValues))
+
+    const validatorRegistry = useRef({})
+    const [submitted, setSubmitted] = useState(false)
 
     function submitAction(e) {
         e.preventDefault()
+
+        setSubmitted(true)
+        const allValid = Object.values(validatorRegistry.current).every(validateFn => {
+            const value = outputValues[validateFn.key]
+            return validateFn(value) === null
+        })
+        if (!allValid) return
+
         CMTFetch('PUT', actionWithContext.callback, outputValues).then(() => {
             setTimeout(async () => {
                 await refresh()
                 setIsEditing(false)
+                setSubmitted(false)
             }, 500)
         })
     }
@@ -32,11 +45,13 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
             {isEditing ? (
                 <div>
                     <Form className='flex items-center gap-6 pl-2' onSubmit={submitAction}>
-                        <div className='flex flex-col gap-2'>
-                            <GenericActionRenderer
+                        <div className='flex gap-4'>
+                            <AbstractActionRenderer
                                 metadata={actionWithContext.action.metadata}
                                 outputValues={outputValues}
                                 setOutputValues={setOutputValues}
+                                submitted={submitted}
+                                validatorRegistry={validatorRegistry}
                             />
                         </div>
                         <Button
@@ -44,6 +59,7 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
                             type='reset'
                             onClick={() => {
                                 setIsEditing(false)
+                                setSubmitted(false)
                             }}
                         >
                             <X />
@@ -54,20 +70,20 @@ export function InlineActionRenderer({ actionWithContext, data, refresh }) {
                     </Form>
                 </div>
             ) : (
-                actionWithContext.action.metadata.outputs.map(output => (
-                    <div className='flex items-center hover:bg-gray-200 group pl-2'>
-                        <div className='w-1/5'>
+                <div className='flex items-center hover:bg-gray-200 group pl-2'>
+                    <div className='flex gap-4'>
+                        {actionWithContext.action.metadata.outputs.map(output => (
                             <p className='text-xl my-2'>
-                                {output.name}: {data[output.key] ?? 'TBD'}
+                                {output.name}: {previousValues[output.key] ?? 'TBD'}
                             </p>
-                        </div>
-                        <div className='hidden group-hover:block'>
-                            <Button size='sm' title='Edit' variant='outline-secondary' onClick={() => setIsEditing(true)}>
-                                <Edit size={24} />
-                            </Button>
-                        </div>
+                        ))}
                     </div>
-                ))
+                    <div className='hidden group-hover:block ml-10'>
+                        <Button size='sm' title='Edit' variant='outline-secondary' onClick={() => setIsEditing(true)}>
+                            <Edit size={24} />
+                        </Button>
+                    </div>
+                </div>
             )}
         </>
     )

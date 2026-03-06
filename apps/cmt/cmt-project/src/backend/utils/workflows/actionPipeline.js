@@ -68,7 +68,7 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
  * @param {string} userId the user ID for building callback URLs
  * @returns callback URL string
  */
-function determineCallback(code, asid, courseId, userId) {
+export function determineCallback(code, asid, courseId, userId) {
   if (code === 'COURSE_SECTION') {
     return `course/${courseId}?uid=${userId}&asid=${asid}`
   } if (code === 'NUMBER_STUDENTS') {
@@ -88,7 +88,7 @@ function determineCallback(code, asid, courseId, userId) {
 * 
 * @param {any} metadataArray array of metadata given by the workflows API (and our endpoints)
 */
-function metadataArrayToObject(metadataArray) {
+export function metadataArrayToObject(metadataArray) {
   // If its not an array, such as the case of empty metadata, which is somehow an object, return a blank object.
   if (!metadataArray.reduce) return {}
 

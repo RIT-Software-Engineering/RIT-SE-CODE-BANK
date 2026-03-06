@@ -178,7 +178,7 @@ router.post('/', async (req, res) => {
                     actionType: 'workflow',
                     actions: [
                         {
-                            name: 'Set Column visibilities',
+                            name: 'Set Column Visibilities',
                             description: 'Hide columns that contain internal information',
                             actionType: 'simple',
                             metadata: {
