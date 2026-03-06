@@ -28,4 +28,4 @@ ENV PORT=5011
 
 # Start the server
 # CMD ["sh", "-c", "npx prisma db push  && node server.js"]
-CMD ["sh", "-c", "npx prisma db push && node index.js"]
+CMD ["sh", "-c", "node index.js"]
