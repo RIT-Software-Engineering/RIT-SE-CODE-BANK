@@ -16,8 +16,8 @@ WORKDIR /app
 COPY prisma ./prisma
 
 # also place the schema inside the backend folder so generation can run locally
-# RUN mkdir -p src/backend/prisma
-# COPY prisma/schema.prisma src/backend/prisma/
+RUN mkdir -p src/backend/prisma
+COPY prisma/schema.prisma src/backend/prisma/
 
 COPY src/backend ./src/backend
 COPY src/utils ./src/utils
@@ -27,11 +27,10 @@ ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
 # Generate Prisma client using the schema now located in backend/prisma
-# WORKDIR /app/src/backend
+WORKDIR /app/src/backend
 
 RUN npx prisma generate
 
 EXPOSE 5010
 
-WORKDIR /app/src/backend
 CMD ["sh", "-c", "npx prisma db push && node server.js"]
