@@ -648,17 +648,6 @@ export default function Header() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0 }}>
             {/* RIT Logo - Using actual RIT logo image */}
             <Link href="/" style={{ display: "flex", alignItems: "center" }}>
-              {/* <Box
-                component="img"
-                src={"/ta-portal/rit-logo.png"}
-                alt="RIT Logo"
-                sx={{
-                  height: 100,
-                  width: "auto",
-                  cursor: "pointer",
-                }}
-              /> */}
-              
               <Image
                 src={"/ta-portal/rit-logo.png"}
                 alt="RIT Logo"
