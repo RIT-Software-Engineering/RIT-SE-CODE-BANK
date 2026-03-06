@@ -11,7 +11,6 @@ import eventRoutes from "./routes/events.js";
 import courseRoutes from "./routes/course.js";
 import templateRoutes from "./routes/template.js";
 import makeTeamBuilderRouter from "./routes/teamBuilder.js";
-import onboardingRoutes from "./routes/onboarding.js";
 import workflonyRoutes from "./routes/workflows.js";
 import sessionRoutes from './routes/session.js';
 
@@ -180,7 +179,6 @@ app.use("/api/cmt/course", courseRoutes);
 app.use("/api/cmt/template", templateRoutes);
 app.use("/api/cmt/team-builder", teamBuilderRoutes);
 app.use("/api/cmt/course-website", courseWebsiteRoutes);
-app.use("/api/cmt/workflows", onboardingRoutes);
 app.use("/api/cmt/workflony", workflonyRoutes)
 app.use("/api/cmt/session", sessionRoutes);
 
