@@ -14,9 +14,11 @@ RUN npm ci --legacy-peer-deps
 # Copy Prisma schema and backend source
 WORKDIR /app
 COPY prisma ./prisma
+
 # also place the schema inside the backend folder so generation can run locally
-RUN mkdir -p src/backend/prisma
-COPY prisma/schema.prisma src/backend/prisma/
+# RUN mkdir -p src/backend/prisma
+# COPY prisma/schema.prisma src/backend/prisma/
+
 COPY src/backend ./src/backend
 COPY src/utils ./src/utils
 
@@ -25,10 +27,11 @@ ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
 # Generate Prisma client using the schema now located in backend/prisma
-WORKDIR /app/src/backend
+# WORKDIR /app/src/backend
+
 RUN npx prisma generate
 
 EXPOSE 5010
 
 # For dev: reset DB and run server
-CMD ["sh", "-c", "npx prisma db push && node server.js"]
+CMD ["sh", "-c", "npx prisma db push && node /app/src/backend/server.js"]
