@@ -648,7 +648,18 @@ export default function Header() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0 }}>
             {/* RIT Logo - Using actual RIT logo image */}
             <Link href="/" style={{ display: "flex", alignItems: "center" }}>
-              <Image
+              <Box
+                component="img"
+                src={"/ta-portal/rit-logo.png"}
+                alt="RIT Logo"
+                sx={{
+                  height: 100,
+                  width: 100,
+                  cursor: "pointer",
+                }}
+              />
+              
+              {/* <Image
                 src="/rit-logo.png"
                 alt="RIT Logo"
                 width={100}
@@ -659,7 +670,7 @@ export default function Header() {
                   flexShrink: 0,
                   cursor: "pointer",
                 }}
-              />
+              /> */}
             </Link>
 
             {/* Title Section - Software Engineering Department */}
