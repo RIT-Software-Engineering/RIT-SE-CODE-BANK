@@ -9,6 +9,8 @@ services:
       - ${DB_HOST_PORT}:3306 
     # MYSQL_DATABASE defines the name of the database created on container start. USER and PASSWORD define the login information for the default user created. 
     # The root and app passwords should be set during deployment by the github workflow script. Defaults are here for local running.
+    # TA_PORTAL_DB_ROOT_PASSWORD and TA_PORTAL_DB_USER_PASSWORD are github secrets that replace these in deployment. 
+    # If changing the secrets, keep in mind that the volume and image may retain the old ones and may need to be changed manually.
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
       MYSQL_DATABASE: ${DB_NAME}
