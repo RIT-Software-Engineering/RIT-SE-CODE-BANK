@@ -12,29 +12,29 @@ import {
 } from "@mui/material";
 
 import Link from "@mui/material/Link";
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 
 export default function ResourcesPage() {
     const LINKS = [
         {
             title: "RIT Student Employment Website",
-            desc: "sefh lsghe flawuehf ialwehfliawehf liaweuhf liuefhl iauweh raiwuefh liahewfliuaewhflkaedloawehflriauwehrliuawrkjawn ekfresf jf aslfi agwefljs jldf sjef alsue",
+            desc: "RIT's Student Employment Office supports students throughout their on‑campus job experience, from hiring to understanding payroll, timesheets, and employment policies. Learn about RIT's hiring policies on their website.",
             link: "https://www.rit.edu/careerservices/students/on-campus-employment"
         },
         {
             title: "Training Website",
-            desc: "",
+            desc: "Access information about the mandatory trainings all Teachers Assistants have to complete through RIT's training website. ",
             link: "https://www.rit.edu/fa/compliance/training-and-education"
         },
         {
-            title: "Employee Rights",
-            desc: "",
-            link: ""
-        },
-        {
             title: "Title IX",
-            desc: "",
+            desc: "RIT's Title IX Office is a neutral entity, dedicated to maintaining a safe and inclusive environment that is free from harassment and discrimination against any member of the RIT Community on the basis of their sex or gender.",
             link: "https://www.rit.edu/fa/compliance/title-ix-home"
+        }, 
+        {
+            title: "Employee Rights",
+            desc: "Learn about your rights as an worker.",
+            link: "https://www.justice.gov/crt/immigrant-and-employee-rights-section"
         },
     ];
 
@@ -56,14 +56,14 @@ export default function ResourcesPage() {
                                 underline="none"
                                 color="text.primary"
                                 sx={{
-                                    outline: 'none',
-                                    gap: '0.25rem',
-                                    textDecoration: 'none',
-                                    '&:hover': {
-                                        textDecoration: 'underline',
-                                        textDecorationColor: 'var(--color-rit-orange)',
-                                        textDecorationThickness: '0.125rem',
-                                        textUnderlineOffset: '0.125rem',
+                                    outline: "none",
+                                    gap: "0.25rem",
+                                    textDecoration: "none",
+                                    "&:hover": {
+                                        textDecoration: "underline",
+                                        textDecorationColor: "var(--color-rit-orange)",
+                                        textDecorationThickness: "0.125rem",
+                                        textUnderlineOffset: "0.125rem",
                                     },
                                 }}
                             >

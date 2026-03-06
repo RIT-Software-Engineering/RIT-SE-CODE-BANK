@@ -81,11 +81,9 @@ export default function PositionsCard({
   onInactive,
   onReactivate,
   showEditAction,
-  showReactivate,
-  showOnHold,
-  showInactive,
   showApproveRejectActions,
   showTracker,
+  onCopy
 }) {
   const { currentUser, refreshUserProfile } = useAuth();
   const { showNotification } = useNotification();
@@ -208,10 +206,10 @@ export default function PositionsCard({
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
           <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
-          {(showReactivate || showOnHold||showInactive)&& <Divider />}
-          {(showOnHold && status !== 'ONHOLD') && (<MenuItem onClick={() => { onOnHold(position.id); handleMenuClose(); }}>Put Position on Hold </MenuItem>)}
-          {(showInactive && status !== 'INACTIVE') && (<MenuItem onClick={() => { onInactive(position.id); handleMenuClose(); }}> Mark Position Inactive</MenuItem>)}
-          {showReactivate && (status === 'ONHOLD' || status === 'INACTIVE') && <MenuItem onClick={() => { onReactivate(position.id); handleMenuClose(); }}>Reactivate Position</MenuItem>}
+          {(onReactivate || onOnHold||onInactive)&& <Divider />}
+          {(onOnHold && status !== 'ONHOLD') && (<MenuItem onClick={() => { onOnHold(position.id); handleMenuClose(); }}>Put Position on Hold </MenuItem>)}
+          {(onInactive && status !== 'INACTIVE') && (<MenuItem onClick={() => { onInactive(position.id); handleMenuClose(); }}> Mark Position Inactive</MenuItem>)}
+          {onReactivate && (status === 'ONHOLD' || status === 'INACTIVE') && <MenuItem onClick={() => { onReactivate(position.id); handleMenuClose(); }}>Reactivate Position</MenuItem>}
           {showActionItems && <Divider />}
           {showEdit && <MenuItem onClick={() => { onEdit(position); handleMenuClose(); }}>Edit Position</MenuItem>}
           {showApprove && <MenuItem onClick={() => { onApprove(position.id); handleMenuClose(); }}>Approve Position</MenuItem>}
@@ -285,7 +283,8 @@ export default function PositionsCard({
             </List>
           </Paper>
         )}
-
+<Button onClick={()=>console.log(position)} >HELLO</Button> 
+<Button onClick={()=>onCopy(position)} >COPY</Button> 
         {showTracker && (
           <>
             <Divider sx={{ my: 2 }} />

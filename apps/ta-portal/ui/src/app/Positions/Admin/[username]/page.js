@@ -73,7 +73,8 @@ export default function AdminPositions() {
 
   // State for managing modals (edit/create position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
-    const [isEdit, setIsEdit]=useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [isCopy, setIsCopy] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -241,7 +242,7 @@ export default function AdminPositions() {
    */
   const handleOpenModal = (job = null) => {
     setSelectedJob(job);
-    setIsEdit((job!=null));
+    setIsEdit((job != null));
     setIsModalOpen(true);
   };
 
@@ -274,6 +275,32 @@ export default function AdminPositions() {
     setNoteModalState({ isOpen: false, title: '', context: {} });
   };
 
+  const handleCopyPosition = (originalJob) => {
+    const employerData = {
+          username: currentUser.username,
+          fname: currentUser.fname,
+          lname: currentUser.lname,
+        };
+    const copiedData = {
+      jobSchedules: originalJob.jobSchedules,
+      location: originalJob.location,
+      locationType: originalJob.locationType,
+      maxTAs: originalJob.maxTAs,
+      endDate: originalJob.endDate,
+      gradeRequirement: originalJob.gradeRequirement,
+      startDate: originalJob.startDate,
+      graduateStatusRequirement: originalJob.graduateStatusRequirement,
+      course: {...originalJob.course},
+      courseCode: originalJob.courseCode,
+      courseTakenRequirement: originalJob.courseTakenRequirement,
+      jobPositionStatus: 'OPEN',
+      username: currentUser.username
+    };
+    console.log('copy');
+    setSelectedJob(copiedData);
+    setIsCopy(true);
+    setIsModalOpen(true);
+  };
   /**
    * Handles saving a job position from the EditPositionModal.
    * It determines whether to perform a CREATE or UPDATE action.
@@ -284,7 +311,7 @@ export default function AdminPositions() {
     if (!currentUser) return;
 
     // If no job is selected, this is a CREATE action.
-    if (!selectedJob) {
+    if (!selectedJob || isCopy==true) {
       setIsProcessing(true);
       try {
         const employerData = {
@@ -330,7 +357,7 @@ export default function AdminPositions() {
    * @param {string} newStatus - The new status to set (e.g., 'OPEN', 'REJECTED').
    */
   const handleStatusUpdate = async (jobId, newStatus) => {
-   
+
     setNoteModalState({
       isOpen: true,
       title: `Change Position to ${newStatus}`,
@@ -431,11 +458,9 @@ export default function AdminPositions() {
         onInactive={(jobId) => handleStatusUpdate(jobId, 'INACTIVE')}
         onReactivate={(jobId) => handleStatusUpdate(jobId, 'PENDING_APPROVAL')}
         showEditAction={true}
-        showInactive={true}
-        showOnHold={true}
-        showReactivate={true}
         showApproveRejectActions={activeTab === 1} // Only show approve/reject on "Pending" tab.
         showTracker={true}
+        onCopy={handleCopyPosition}
       />
     ));
   };
@@ -483,17 +508,17 @@ export default function AdminPositions() {
                 </Typography>
               </Box>
               {/* "Create New Position" button is only visible on the "My Positions" tab. */}
-              
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleOpenModal()}
-                  disabled={isProcessing}
-                  sx={{ mt: { xs: 2, md: 0 } }}
-                >
-                  {isProcessing ? <CircularProgress size={24} /> : 'Create New Position'}
-                </Button>
-              
+
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleOpenModal()}
+                disabled={isProcessing}
+                sx={{ mt: { xs: 2, md: 0 } }}
+              >
+                {isProcessing ? <CircularProgress size={24} /> : 'Create New Position'}
+              </Button>
+
             </Box>
 
             {/* Search and Filter Bar */}
@@ -549,15 +574,16 @@ export default function AdminPositions() {
           job={selectedJob}
           onClose={handleCloseModal}
           onSave={handleSaveJob}
+          isCopyMode={isCopy}
         />
       )}
       {
-              showClearConfirm && (
-                <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title={isEdit ? "Cancel Edits to Position" : "Cancel Position Creation"}>
-                 {isEdit ? "Leaving now will permanently discard your edits. This action cannot be undone." : "Are you sure you want to cancel this job application? This action cannot be undone."}
-                </ConfirmationModal>
-              )
-            }
+        showClearConfirm && (
+          <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title={isEdit ? "Cancel Edits to Position" : "Cancel Position Creation"}>
+            {isEdit ? "Leaving now will permanently discard your edits. This action cannot be undone." : "Are you sure you want to cancel this job application? This action cannot be undone."}
+          </ConfirmationModal>
+        )
+      }
 
 
       <EditableNoteForm

@@ -66,32 +66,34 @@ export default function EditPositionModal({
   job,
   onClose,
   onSave,
+  isCopyMode
 }) {
-  const isEditMode = !!job; 
+  const isEditMode = !!job && isCopyMode == false;
 
   const formMethods = useForm({
-    defaultValues: isEditMode
+    defaultValues: (isEditMode || isCopyMode)
       ? {
-          ...job,
-          startDate: formatDateToInputValue(job.startDate),
-          endDate: formatDateToInputValue(job.endDate),
-          jobSchedules: (job.jobSchedules || []).map((sch) => ({
-            ...sch,
-            startTime: convertDisplayTimeToInputValue(formatTime(sch.startTime)),
-            endTime: convertDisplayTimeToInputValue(formatTime(sch.endTime)),
-          })),
-        }
+        ...job,
+        startDate: formatDateToInputValue(job.startDate),
+        endDate: formatDateToInputValue(job.endDate),
+        jobSchedules: (job.jobSchedules || []).map((sch) => ({
+          ...sch,
+          startTime: convertDisplayTimeToInputValue(formatTime(sch.startTime)),
+          endTime: convertDisplayTimeToInputValue(formatTime(sch.endTime)),
+        })),
+      }
       : newJobTemplate,
   });
 
   const onSubmit = async (data) => {
+    console.log(data)
     try {
       const payload = { ...data };
 
       if (payload.jobPositionStatus === 'REJECTED') {
         payload.jobPositionStatus = 'PENDING_APPROVAL';
       }
-      
+
       payload.maxTAs = parseInt(data.maxTAs, 10) || 0;
 
       if (payload.startDate)
@@ -119,7 +121,11 @@ export default function EditPositionModal({
     <Dialog open={true} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>
         <Typography variant="h2" component="div">
-          {isEditMode ? "Edit Job Position" : "Create New Job Position"}
+          {isCopyMode
+            ? "Copy Position"
+            : isEditMode
+              ? "Edit Job Position"
+              : "Create New Job Position"}
         </Typography>
       </DialogTitle>
       <DialogContent>
