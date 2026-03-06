@@ -14,7 +14,7 @@ RUN npm ci --only=production --legacy-peer-deps
 COPY prisma ./prisma/
 
 # Generate Prisma Client
-RUN npx prisma generate
+# RUN npx prisma generate
 
 # Copy application code
 COPY . .
