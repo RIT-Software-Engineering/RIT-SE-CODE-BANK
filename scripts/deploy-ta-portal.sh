@@ -26,8 +26,6 @@ ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
 
     echo "Rebuilding and restarting Docker containers..."
     cd ./apps/ta-portal/deploy
-    echo "test root password: $DB_ROOT_PASSWORD"
-    echo "test app password: $DB_USER_PASSWORD"
     docker compose -f compose.yaml -f compose.prod.yaml up -d --build
     
     echo "Waiting for services to be healthy..."
