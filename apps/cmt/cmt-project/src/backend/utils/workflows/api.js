@@ -124,21 +124,20 @@ export async function createAction(userId, name, description, actionType, metada
  * @returns the response from the "/workflows" POST endpoint
  */
 export async function objectToNewWorkflow(workflow, ownerId) {
-  if (workflow.actions.length === 0) {
-    throw Error(`Cannot create workflow from object ${workflow}: actions array is empty. Workflows must have at least 1 action.`)
-  }
-  if (workflow.actions[0].parentActionId) {
-    throw Error(`Cannot create workflow from object ${workflow}: parentActionId is specified in the root action. It should not be!`)
-  }
-  if (workflow.userId || workflow.actions[0].userId) {
-    throw Error(`Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!`)
+  if (workflow.actions.length !== 0) {
+    if (workflow.actions[0].parentActionId) {
+      throw Error(`Cannot create workflow from object ${workflow}: parentActionId is specified in the root action. It should not be!`)
+    }
+    if (workflow.userId || workflow.actions[0].userId) {
+      throw Error(`Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!`)
+    }
   }
   if (!ownerId) {
     throw Error(`Cannot create workflow from object ${workflow}: Missing ownerId argument: ${ownerId}! If you are specifying ownerId in the object, instead pass it as a second argument to this function.`)
   }
 
   // Create actions
-  let rootActionId
+  let rootActionId;
   let previousActionId
   // Start from the end of the list so we can associate each action with the one after it
   for (let index = workflow.actions.length - 1; index >= 0; index--) {
@@ -161,6 +160,7 @@ export async function objectToNewWorkflow(workflow, ownerId) {
     description: workflow.description,
     metadata: workflow.metadata ? makeMetadataSafeForWorkflows(workflow.metadata) : {},
     rootActionId: rootActionId,
+    tags: workflow.tags
   })
 
   return createdWorkflow
