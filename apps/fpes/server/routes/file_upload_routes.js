@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { parsePDF, parseCSV } = require('../api/file_parser_api');
+const { parsePDF, parseTeachingEvalPDF, parseCSV } = require('../api/file_parser_api');
 const { getFormPDF } = require('../api/forms_api');
 
 const router = express.Router();
@@ -29,8 +29,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         const fileExt = path.extname(req.file.originalname).toLowerCase();
         let parsedData;
 
+        const { file_type } = req.body;
+
         if (fileExt === '.pdf') {
-            parsedData = await parsePDF(filePath);
+            parsedData = file_type === 'teaching_eval'
+                ? await parseTeachingEvalPDF(filePath)
+                : await parsePDF(filePath);
             parsedData.pdfData = fs.readFileSync(filePath).toString('base64');
         } else if (fileExt === '.csv') {
             parsedData = await parseCSV(filePath);

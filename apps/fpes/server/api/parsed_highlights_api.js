@@ -85,6 +85,25 @@ async function saveParsedHighlights(data) {
         );
         const studentSupportId = Number(studentSupportResult.insertId);
         
+        if (data.publication && Array.isArray(data.publication)){
+            for (const pub of data.publication) {
+                const pubData = {
+                    title: pub.title || '',
+                    type: pub.type || '',
+                    authors: JSON.stringify(pub.authors ?? [])
+                }
+                const pubResult = await conn.query(
+                    'INSERT INTO publications (title, type, authors) VALUES (?, ?, ?) RETURNING id',
+                    [pubData.title, pubData.type, pubData.authors]
+                );
+
+                await conn.query(
+                    'INSERT INTO forms_publications (form_id, publication_id) VALUES (?,?)',
+                    [formId, Number(pubResult[0].id)]
+                );
+            }
+        }
+
         if (data.scholarship && Array.isArray(data.scholarship)) {
             for (const grant of data.scholarship) {
                 const grantData = {

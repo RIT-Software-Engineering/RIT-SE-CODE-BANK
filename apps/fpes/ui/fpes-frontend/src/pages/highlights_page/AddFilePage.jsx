@@ -1,10 +1,11 @@
-import { Modal, Box, Button, Typography, CircularProgress } from "@mui/material";
+import { Modal, Box, Button, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import { useState } from "react";
 import axios from "axios";
 import DataPreviewModal from "./DataPreviewPage";
 
 export default function AddFileModal({ isOpen, closeModal, facultyId }) {
     const [selectedFile, setSelectedFile] = useState(null);
+    const [fileType, setFileType] = useState('highlights');
     const [parsedData, setParsedData] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
     const [pdfUrl, setPdfUrl] = useState(null);
@@ -17,6 +18,7 @@ export default function AddFileModal({ isOpen, closeModal, facultyId }) {
         const formData = new FormData();
         formData.append("file", selectedFile);
         formData.append("faculty_id", facultyId);
+        formData.append("file_type", fileType);
 
         try {
             const response = await axios.post("http://localhost:3000/file/upload", formData, {
@@ -64,21 +66,32 @@ export default function AddFileModal({ isOpen, closeModal, facultyId }) {
                 boxShadow: 24,
                 p: 4,
             }}>
-                <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                <Typography color="primary" variant="h6" component="h2" sx={{ mb: 2 }}>
                     Upload File
                 </Typography>
                 {isLoading ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 3 }}>
                         <CircularProgress />
-                        <Typography>Processing file...</Typography>
+                        <Typography color="success">Processing file...</Typography>
                     </Box>
                 ) : (
                     <>
+                        <FormControl fullWidth sx={{ mb: 2 }}>
+                            <InputLabel>File Type</InputLabel>
+                            <Select
+                                value={fileType}
+                                label="File Type"
+                                onChange={(e) => setFileType(e.target.value)}
+                            >
+                                <MenuItem value="highlights">Highlights</MenuItem>
+                                <MenuItem value="teaching_eval">Teaching Evaluation</MenuItem>
+                            </Select>
+                        </FormControl>
                         <input
                             type="file"
                             accept=".pdf,.csv"
                             onChange={(e) => setSelectedFile(e.target.files[0])}
-                            style={{ marginBottom: '20px' }}
+                            style={{ marginBottom: '20px' , color: "black"}}
                         />
                         <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                             <Button variant="contained" onClick={handleUpload} disabled={!selectedFile}>

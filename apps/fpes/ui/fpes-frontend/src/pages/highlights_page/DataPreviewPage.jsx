@@ -3,18 +3,21 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useState, useEffect } from "react";
 import axios from "axios";
 import FundingTable from "./FundingTable";
+import PublicationTable from "./PublicationTable";
 
 export default function DataPreviewModal({ isOpen, closeModal, parsedData, facultyId, pdfUrl, readOnly = false, formId = null }) {
     const [formData, setFormData] = useState(() => ({
         ...(parsedData || {}),
-        scholarship: parsedData?.scholarship ?? []
+        scholarship: parsedData?.scholarship ?? [],
+        publication: parsedData?.publication ?? [],
     }));
     
     useEffect(() => {
         if (parsedData) {
             setFormData({
                 ...parsedData,
-                scholarship: parsedData.scholarship ?? []
+                scholarship: parsedData.scholarship ?? [],
+                publication: parsedData.publication ?? [],
             });
         }
     }, [parsedData]);
@@ -92,7 +95,7 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                 
                 <h3>Scholarship</h3>
                 <FundingTable rows={formData.scholarship ?? []} />
-                
+                <PublicationTable rows={formData.publication ?? []}/>
                 <h3>Teaching</h3>
                 <TextField fullWidth multiline rows={6} 
                     value={formData.teaching || ''} 

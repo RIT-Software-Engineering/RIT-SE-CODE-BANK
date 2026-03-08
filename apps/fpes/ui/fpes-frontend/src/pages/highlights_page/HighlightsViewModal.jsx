@@ -12,6 +12,7 @@ export default function HighlightsViewModal({formData, isOpen, closeModal, onOve
         affiliations: formData?.faculty_information?.affiliations || '',
         period: formData?.highlights?.last_saved?.match(/^\d{4}/) || '',
         scholarship: formData?.grants || [],
+        publication: formData?.publications || [],
         teaching: formData?.highlights?.teaching_section || '',
         service: formData?.highlights?.service_section || '',
         service_hours: formData?.highlights?.service_hours || null,

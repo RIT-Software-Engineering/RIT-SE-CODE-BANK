@@ -25,7 +25,8 @@ function Row(props) {
           <IconButton
             aria-label="expand row"
             size="small"
-            onClick={() => setOpen(!open)}>
+            onClick={() => setOpen(!open)}
+          >
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
@@ -42,37 +43,30 @@ function Row(props) {
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
               <Typography variant="h6" gutterBottom component="div">
-                Status: {row.progress}
+                
               </Typography>
               <Table size="small" aria-label="purchases">
                 <TableHead>
-                  <TableRow style={{ backgroundColor: "orange"}}>
-                    <TableCell> <b>Funder: </b> </TableCell>  
-                    <TableCell> <b>Amount: </b> </TableCell>
-                    <TableCell> <b>Period: </b> </TableCell>
-                    <TableCell> <b>Role: </b></TableCell>
-                    <TableCell> <b>Share: </b></TableCell>
-                    <TableCell> <b>Comments: </b> </TableCell>
-
+                  <TableRow style={{ backgroundColor: "orange" }}>
+                    <TableCell>
+                      {" "}
+                      <b>Authors: </b>{" "}
+                    </TableCell>
+                    <TableCell>
+                      {" "}
+                      <b>Type: </b>{" "}
+                    </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell contentEditable="true"> {row.funder}</TableCell>  
-                    <TableCell contentEditable="true"> {row.amount}</TableCell>
-                    <TableCell contentEditable="true"> {row.period}</TableCell>
-                    <TableCell contentEditable="true"> {row.role}</TableCell>
-                    <TableCell contentEditable="true"> {row.share}</TableCell>
-                    <TableCell contentEditable="true"> {row.additional_comments}</TableCell>
+                    <TableCell contentEditable="true">
+                      {row.authors?.join(", ")}
+                    </TableCell>{" "}
+                    <TableCell contentEditable="true"> {row.type}</TableCell>
                   </TableRow>
                 </TableHead>
-                
               </Table>
-              <TableRow style={{ width: "fit-content"}}>
-                  <TableCell style={{ backgroundColor: "orange"}}><b>URL: </b></TableCell>
-                  <TableCell contentEditable="true"> {row.url} </TableCell>
-                </TableRow>
-                {/* <button>Confirm</button> */}
+              {/* <button>Confirm</button> */}
             </Box>
-
           </Collapse>
         </TableCell>
       </TableRow>
@@ -85,27 +79,21 @@ Row.propTypes = {
     title: PropTypes.string,
     data: PropTypes.arrayOf(
       PropTypes.shape({
-        funder: PropTypes.string,
-        amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        period: PropTypes.string,
-        role: PropTypes.string,
-        share: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        comments: PropTypes.string,
+        authors: PropTypes.arrayOf(PropTypes.string),
+        type: PropTypes.string,
       }),
     ),
   }).isRequired,
 };
 
-export default function FundingTable({ rows = [] }) {
-  // console.log("FundingTable received rows:", rows);
-
+export default function PublicationTable({ rows = [] }) {
   return (
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
         <TableHead>
           <TableRow style={{background:"orange"}}>
-            <TableCell style={{fontWeight: "bold"}}>Grants</TableCell>
-                        <TableCell />
+            <TableCell style={{fontWeight: "bold"}}>Publications</TableCell>
+            <TableCell />
           </TableRow>
         </TableHead>
         <TableBody>

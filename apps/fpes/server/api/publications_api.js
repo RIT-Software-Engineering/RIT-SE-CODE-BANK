@@ -27,10 +27,10 @@ async function createPublication(body) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const {title, venue, proof_of_significance, date_published, status} = body;
+        const {title, type, authors} = body;
         const results = connection.query(
-            `INSERT INTO publications (title, venue, proof_of_significance, date_published, status)
-             VALUES (?,?,?,?,?) RETURNING id`, [title, venue, proof_of_significance, date_published, status]);
+            `INSERT INTO publications (title, type, authors)
+             VALUES (?,?,?) RETURNING id`, [title, type, authors]);
         return results;
     } finally {
         if (connection) connection.release();
@@ -41,7 +41,7 @@ async function updatePublication(title, body) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const allowed = ["title", "venue", "proof_of_significance", "date_published", "status"];
+        const allowed = ["title", "type", "authors"];
         sets = []
         params = []
 
