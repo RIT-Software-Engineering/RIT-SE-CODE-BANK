@@ -2,6 +2,10 @@
 CREATE TABLE IF NOT EXISTS teaching_evals (
     id INT UNIQUE AUTO_INCREMENT PRIMARY KEY,
     form_id INT,
+    course_name VARCHAR(255),
+    professor_name VARCHAR(255),
+    semester VARCHAR(50),
+    year VARCHAR(10),
     FOREIGN KEY (form_id) REFERENCES forms(id)
 );
 

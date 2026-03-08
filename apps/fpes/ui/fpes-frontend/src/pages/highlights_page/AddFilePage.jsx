@@ -105,7 +105,7 @@ export default function AddFileModal({ isOpen, closeModal, facultyId }) {
                 )}
             </Box>
         </Modal>
-        <DataPreviewModal isOpen={showPreview} closeModal={handlePreviewClose} parsedData={parsedData} facultyId={facultyId} pdfUrl={pdfUrl} />
+        <DataPreviewModal isOpen={showPreview} closeModal={handlePreviewClose} parsedData={parsedData} facultyId={facultyId} pdfUrl={pdfUrl} fileType={fileType} />
         </>
     );
 }

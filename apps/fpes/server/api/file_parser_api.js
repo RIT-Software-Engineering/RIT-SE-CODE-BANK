@@ -320,9 +320,33 @@ async function parseTeachingEvalPDF(filePath) {
     const dataBuffer = fs.readFileSync(filePath);
     const data = await pdfParse(dataBuffer);
     const text = data.text;
+    
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+    
+    // Simple regex extraction
+    const firstLine = lines[0] || '';
+    const semesterMatch = firstLine.match(/(Fall|Spring|Summer)\s+(\d{4})/);
+    const courseMatch = firstLine.match(/([A-Z]+\s+\d+)\s+(.+?)\s+Section/);
+    
+    let professor_name = null;
+    for (const line of lines) {
+        if (line.includes('Instructor:')) {
+            const match = line.match(/Instructor:\s*([^(]+)/);
+            if (match) professor_name = match[1].trim();
+            break;
+        }
+    }
+    
     const table = parseTeachEvalTable(text);
-    console.log(table);
-    return { table };
+    
+    return {
+        semester: semesterMatch ? semesterMatch[1] : null,
+        year: semesterMatch ? semesterMatch[2] : null,
+        course_code: courseMatch ? courseMatch[1] : null,
+        course_name: courseMatch ? courseMatch[2].trim() : null,
+        professor_name,
+        table
+    };
 }
 
 function parseCSV(filePath) {
