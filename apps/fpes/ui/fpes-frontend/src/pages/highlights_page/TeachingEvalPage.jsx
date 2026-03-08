@@ -1,3 +1,5 @@
 export default function TeachingEvalPage() {
-    // View stats such aas
+    // Just show pdf and stats gathered
+
+    // future implementation: multiple files show stats
 }

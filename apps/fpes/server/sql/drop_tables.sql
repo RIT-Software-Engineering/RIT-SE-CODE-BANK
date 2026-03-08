@@ -25,3 +25,7 @@ DROP TABLE IF EXISTS courses;
 DROP TABLE IF EXISTS departments;
 
 DROP TABLE IF EXISTS faculty_information;
+
+DROP TABLE IF EXISTS teaching_eval_questions;
+
+DROP TABLE IF EXISTS teaching_evals;

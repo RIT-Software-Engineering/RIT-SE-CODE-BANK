@@ -11,6 +11,7 @@ const { resetPublicationsTable } = require('./publications_api');
 const { resetServicesTable } = require('./service_api');
 const { resetStudentSupportTable } = require('./student_support_api');
 const { buildRelationshipTables } = require('./forms_to_dynamics_tables_api');
+const { resetTeachingEvalsTables } = require('./teaching_eval_api');
 
 async function rebuildTables(){
     let connection;
@@ -58,6 +59,8 @@ async function rebuildTables(){
         await resetPublicationsTable();
 
         await buildRelationshipTables();
+
+        await resetTeachingEvalsTables();
 
         console.log("All tables successfully rebuilt...");
 
