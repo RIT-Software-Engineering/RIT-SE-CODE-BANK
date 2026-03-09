@@ -1,11 +1,17 @@
 // prisma/seed.js
+import dotenv from 'dotenv';
 import path from 'path';
-require('dotenv').config({
-  // Load .env from the cmt-project root (two levels up from prisma/)
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
+  // Load .env from the project root (one level up from prisma/)
   path: path.join(__dirname, '..', '.env'),
 });
 
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
