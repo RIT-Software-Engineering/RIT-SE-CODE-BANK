@@ -52,7 +52,7 @@ services:
       workflows-mariadb:
         condition: service_healthy
     restart: unless-stopped
-    entrypoint: ["sh", "-c", "until nc -z workflows-mariadb 3306; do echo waiting for workflows-mariadb; sleep 1; done; node server.js"]
+    entrypoint: ["sh", "-c", "until nc -z workflows-mariadb 3306; do echo waiting for workflows-mariadb; sleep 1; done; node index.js"]
 
   cmt-backend:
     build:
