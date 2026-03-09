@@ -43,9 +43,10 @@ services:
       DB_APP_PASSWORD: workflows_pass
       DATABASE_URL: mysql://workflows_user:workflows_pass@workflows-mariadb:3306/workflows
     depends_on:
-      mariadb:
+      workflows-mariadb:
         condition: service_healthy
     restart: unless-stopped
+    entrypoint: ["sh", "-c", "until nc -z workflows-mariadb 3306; do echo waiting for workflows-mariadb; sleep 1; done; node server.js"]
 
   cmt-backend:
     build:
