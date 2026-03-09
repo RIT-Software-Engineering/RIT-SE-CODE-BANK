@@ -18,6 +18,7 @@ COPY prisma ./prisma
 # also place the schema inside the backend folder so generation can run locally
 RUN mkdir -p src/backend/prisma
 COPY prisma/schema.prisma src/backend/prisma/
+COPY prisma/seed.js src/backend/prisma/
 
 COPY src/backend ./src/backend
 COPY src/utils ./src/utils
