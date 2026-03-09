@@ -103,3 +103,4 @@ services:
 
 volumes:
   mariadb_data:
+  workflows_data:
