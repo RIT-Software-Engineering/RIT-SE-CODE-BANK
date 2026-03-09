@@ -1,5 +1,5 @@
 // prisma/seed.js
-const path = require('path');
+import path from 'path';
 require('dotenv').config({
   // Load .env from the cmt-project root (two levels up from prisma/)
   path: path.join(__dirname, '..', '.env'),
