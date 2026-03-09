@@ -4,15 +4,10 @@ import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTFetch } from '../../utils/api'
 import { Edit, X, Check, ArrowLeft } from 'lucide-react'
 import { Button, Form} from 'react-bootstrap'
-import { OutputRenderer } from '../../components/workflows/OutputRenderers'
 import {Session} from './Session';
 import { InlineActionRenderer } from '../../components/workflows/ActionRenderers/InlineActionRenderer'
 import { InlineFormHoverable } from '../../components/forms/InlineForms'
 import { flattenActionsWithContext } from '../../utils/workflows'
-import { ArrowLeft, Edit } from 'lucide-react'
-import { Accordion, Button, Card, Form, Modal, Table} from 'react-bootstrap'
-import { RichTextEditor } from '../../components/RichTextEditor'
-import { CheckmarkActionRenderer } from '../../components/workflows/ActionRenderers/GenericActionRenderer'
 
 /**
  * @import { IsCheckmark, FetchToCallback, WorkflowsWorkflow, ActionWithContext } from "../../components/workflows/typedefs"
