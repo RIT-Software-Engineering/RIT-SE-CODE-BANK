@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { saveParsedTeachingEval } = require('../api/teaching_eval_api');
+const { saveParsedTeachingEval, getFacultyTeachingEvalPercentiles, getFacultyPercentileById } = require('../api/teaching_eval_api');
 
 router.get('/submitted_by/:facultyId', async (req, res) => {
   try {
@@ -25,7 +25,7 @@ router.get('/:formId/view', async (req, res) => {
   try {
     const conn = await pool.getConnection();
     const evalData = await conn.query(
-      `SELECT te.*, f.time_submitted
+      `SELECT te.*, f.time_submitted, f.faculty_information_id
        FROM teaching_evals te
        JOIN forms f ON te.form_id = f.id
        WHERE f.id = ?`,
@@ -65,6 +65,43 @@ router.post("/parsed", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to save teaching eval" });
+  }
+});
+
+router.get('/percentiles', async (req, res) => {
+  try {
+    const result = await getFacultyTeachingEvalPercentiles();
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch percentiles' });
+  }
+});
+
+router.get('/all', async (req, res) => {
+  try {
+    const conn = await pool.getConnection();
+    const rows = await conn.query(
+      `SELECT te.*, f.time_submitted
+       FROM teaching_evals te
+       JOIN forms f ON te.form_id = f.id
+       ORDER BY f.time_submitted DESC`
+    );
+    conn.release();
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch teaching evals' });
+  }
+});
+
+router.get('/percentile/faculty/:facultyId', async (req, res) => {
+  try {
+    const result = await getFacultyPercentileById(req.params.facultyId);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch percentile' });
   }
 });
 
