@@ -15,5 +15,8 @@
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "nodemailer": "^7.0.9"
-  }
+  },
+  "workspaces":[
+    "services/notification-service"
+  ]
 }
