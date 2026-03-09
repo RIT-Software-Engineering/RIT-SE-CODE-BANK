@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@layer utilities {
+    .collapse {
+        visibility: visible
+    }
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: transparent !important;
+    color: inherit;
+}
+
+button.accordion-button:focus{
+    box-shadow: inherit;
+}
+
+.accordion-button:hover {
+    background-color: hsla(0, 0%, 0%, 0.05)
+}
+
+.accordion-header:hover {
+    background-color: hsla(0, 0%, 0%, 0.05)
+}   
