@@ -24,11 +24,11 @@ import {
   Link as MuiLink,
 } from '@mui/material';
 import {
-    Delete as DeleteIcon, 
-    Check as CheckIcon, 
-    Close as CancelIcon,
-    Star as PrimaryIcon,
-    UploadFile as UploadFileIcon
+  Delete as DeleteIcon,
+  Check as CheckIcon,
+  Close as CancelIcon,
+  Star as PrimaryIcon,
+  UploadFile as UploadFileIcon
 } from '@mui/icons-material';
 
 /**
@@ -147,11 +147,25 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
       <Typography variant="h3" component="h3" gutterBottom>
         My Resumes
       </Typography>
-      
+
       <List sx={{ mb: 3 }}>
         {resumes.length > 0 ? (
           resumes.map((resume) => (
-            <Paper key={resume.id} variant="outlined" sx={{ p: 1.5, mb: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Paper
+              key={resume.id}
+              variant="outlined"
+              sx={(theme) => ({
+                p: 1.5,
+                mb: 1.5,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? theme.palette.background.paper
+                    : "white",
+              })}
+            >
               {editingResumeId === resume.id ? (
                 <>
                   <TextField
@@ -160,7 +174,14 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
                     size="small"
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                    sx={{ flexGrow: 1, mr: 2 }}
+                    sx={(theme) => ({
+                      flexGrow: 1, mr: 2, "& .MuiOutlinedInput-root": {
+                        background: theme.palette.mode === 'dark'
+                          ? ""
+                          : "white"
+                      }
+                    })}
+
                   />
                   <Box>
                     <IconButton onClick={handleSaveName} size="small" color="success"><CheckIcon /></IconButton>
@@ -201,11 +222,24 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
           onChange={(e) => setNewResumeName(e.target.value)}
           placeholder="e.g., Software Engineering Resume"
           fullWidth
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
         <Button
           component="label"
           variant="outlined"
           startIcon={<UploadFileIcon />}
+          sx={(theme) => ({
+            background: theme.palette.mode === 'dark'
+              ? ""
+              : "white"
+          })}
         >
           {newResumeFile ? newResumeFile.name : 'Select Resume File (PDF)'}
           <input type="file" hidden onChange={(e) => setNewResumeFile(e.target.files[0])} accept=".pdf" />

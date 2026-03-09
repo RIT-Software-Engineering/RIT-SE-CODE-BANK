@@ -20,17 +20,17 @@ import { Close as XIcon } from '@mui/icons-material';
 /**
  * HireModal component for finalizing the hiring process of a candidate.
  * Displays candidate and job position details, collects an Employee ID
- * and a hiring comment, validates the form, and triggers confirmation.
+ * and a hiring note, validates the form, and triggers confirmation.
  *
  * @param {Object} props - Component props
  * @param {Object} props.application - Candidate's application data
  * @param {Function} props.onClose - Callback to close the modal
- * @param {Function} props.onConfirm - Callback fired when hire is confirmed, receives (employeeId: number, comment: string)
+ * @param {Function} props.onConfirm - Callback fired when hire is confirmed, receives (employeeId: number, note: string)
  * @param {boolean} props.isProcessing - Whether a hire action is currently being processed (disables inputs/buttons)
  */
 export default function HireModal({ application, onClose, onConfirm, isProcessing }) {
   const [employeeId, setEmployeeId] = useState('');
-  const [comment, setComment] = useState('');
+  const [note, setNote] = useState('');
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
@@ -42,8 +42,8 @@ export default function HireModal({ application, onClose, onConfirm, isProcessin
       newErrors.employeeId = 'Employee ID must be a number';
     }
 
-    if (!comment.trim()) {
-      newErrors.comment = 'Comment is required';
+    if (!note.trim()) {
+      newErrors.note = 'Note is required';
     }
 
     setErrors(newErrors);
@@ -55,12 +55,12 @@ export default function HireModal({ application, onClose, onConfirm, isProcessin
     if (!validateForm()) return;
 
     const employeeIdNumber = parseInt(employeeId.trim(), 10);
-    onConfirm(employeeIdNumber, comment.trim());
+    onConfirm(employeeIdNumber, note.trim());
   };
 
   return (
     <Dialog open={true} onClose={onClose} fullWidth maxWidth="sm">
-      
+
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h2" component="div">
           Hire Candidate
@@ -106,22 +106,40 @@ export default function HireModal({ application, onClose, onConfirm, isProcessin
             helperText={errors.employeeId}
             disabled={isProcessing}
             required
+            sx={(theme) => ({
+              "& .MuiOutlinedInput-root": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? ""
+                    : "white",
+              },
+            })}
+
           />
           <TextField
             fullWidth
             margin="normal"
-            id="comment"
-            name="comment"
-            label="Hiring Comment"
+            id="note"
+            name="note"
+            label="Hiring Note"
             multiline
             rows={4}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
             placeholder="Provide details on why the candidate is being hired"
-            error={!!errors.comment}
-            helperText={errors.comment}
+            error={!!errors.note}
+            helperText={errors.note}
             disabled={isProcessing}
             required
+            sx={(theme) => ({
+              "& .MuiOutlinedInput-root": {
+                backgroundColor:
+                  theme.palette.mode === "dark"
+                    ? ""
+                    : "white",
+              },
+            })}
+
           />
         </Box>
       </DialogContent>

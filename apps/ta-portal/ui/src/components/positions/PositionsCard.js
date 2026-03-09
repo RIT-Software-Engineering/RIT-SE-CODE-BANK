@@ -14,7 +14,7 @@ import {
 } from '@/constants/gradeConstants';
 import PositionTracker from './EmployerAndAdmin/PositionTracker';
 import ViewablePositionForm from './EmployerAndAdmin/ViewablePositionForm';
-import ViewableCommentForm from '../comments/ViewableCommentForm';
+import ViewableNoteForm from '../notes/ViewableNoteForm';
 import { positionStatusEnumToString } from '@/constants/positionStatusConstants';
 
 import {
@@ -84,7 +84,7 @@ export default function PositionsCard({
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewingDetails, setIsViewingDetails] = useState(false);
-  const [isViewingComments, setIsViewingComments] = useState(false);
+  const [isViewingNotes, setIsViewingNotes] = useState(false);
   const [isConfirmingApplication, setIsConfirmingApplication] = useState(false);
   const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
@@ -199,7 +199,7 @@ export default function PositionsCard({
         </IconButton>
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
-          <MenuItem onClick={() => { setIsViewingComments(true); handleMenuClose(); }}>View Comments</MenuItem>
+          <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
           {showActionItems && <Divider />}
           {showEdit && <MenuItem onClick={() => { onEdit(position); handleMenuClose(); }}>Edit Position</MenuItem>}
           {showApprove && <MenuItem onClick={() => { onApprove(position.id); handleMenuClose(); }}>Approve Position</MenuItem>}
@@ -212,7 +212,7 @@ export default function PositionsCard({
   return (
     <>
       <Paper elevation={3} sx={(theme)=>({  p: { xs: 2, md: 3 } , background: theme.palette.mode === 'dark'
-                    ? "" : "white" })}> 
+          ? "" : "white" })}> 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }} >
           <Box flexGrow={1} >
             <Typography variant="h2" component="h2" gutterBottom>
@@ -287,15 +287,15 @@ export default function PositionsCard({
       {isViewingDetails && (
         <ViewablePositionForm position={position} onClose={() => setIsViewingDetails(false)} />
       )}
-      {isViewingComments && (
-        <ViewableCommentForm
+      {isViewingNotes && (
+        <ViewableNoteForm
           foreignKey={position.id}
           foreignTableName="JobPosition"
-          itemTitle="Position Comment History"
+          itemTitle="Position Note History"
           itemSubtitle={position.course.name}
           statusEnumMap={positionStatusEnumToString}
           userRole={currentUser.role}
-          onClose={() => setIsViewingComments(false)}
+          onClose={() => setIsViewingNotes(false)}
         />
       )}
 

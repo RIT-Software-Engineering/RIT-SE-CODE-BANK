@@ -42,6 +42,14 @@ export default function Step1CandidateAndEmployee({
           registerProps={register("fname", { required: "First name is required." })}
           required
           error={errors.fname}
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
         <InputField
           id="lname"
@@ -50,6 +58,14 @@ export default function Step1CandidateAndEmployee({
           registerProps={register("lname", { required: "Last name is required." })}
           required
           error={errors.lname}
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
       </div>
 
@@ -66,6 +82,14 @@ export default function Step1CandidateAndEmployee({
             maxLength={9}
             required
             error={errors.uid}
+            sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
           />
           <Typography variant="smalltext" mt={1} fontStyle="italic">
             Enter your 9-digit RIT ID number
@@ -80,6 +104,14 @@ export default function Step1CandidateAndEmployee({
             registerProps={register("email", { required: "An email is required." })}
             required
             error={errors.email}
+            sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
           />
           <Typography variant="smalltext" mt={1} fontStyle="italic">
             Use your RIT email address
@@ -96,6 +128,14 @@ export default function Step1CandidateAndEmployee({
           registerProps={register("pronouns", { required: "Pronouns are required." })}
           required
           error={errors.pronouns}
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
         <InputField
           id="major"
@@ -104,6 +144,14 @@ export default function Step1CandidateAndEmployee({
           registerProps={register("major", { required: "Major is required." })}
           required
           error={errors.major}
+          sx={(theme) => ({
+            "& .MuiOutlinedInput-root": {
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white",
+            }
+          })}
         />
       </div>
 
@@ -130,6 +178,12 @@ export default function Step1CandidateAndEmployee({
             })}
             value={currentValues.graduateStatus || ""}
             error={errors.graduateStatus}
+            sx={(theme) => ({
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white"
+            })}
           >
             <MenuItem value="">
               <em>Select Status...</em>
@@ -149,6 +203,12 @@ export default function Step1CandidateAndEmployee({
                 })}
                 value={currentValues.yearLevel || ""}
                 error={errors.yearLevel}
+                sx={(theme) => ({
+              backgroundColor:
+                theme.palette.mode === "dark"
+                  ? ""
+                  : "white"
+            })}
               >
                 <MenuItem value="">
                   <em>Select Year...</em>

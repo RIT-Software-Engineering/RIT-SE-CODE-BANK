@@ -94,8 +94,8 @@ export default function FormStepOne({
           control={control}
           rules={{
             required: "A course code is required.",
-            minLength: { value: 8, message: "Course code must be 8 characters long (e.g. SWEN-261)." },
-            maxLength: { value: 8, message: "Course code must be 8 characters long (e.g. SWEN-261)." },
+            minLength: { value: 7, message: "Course code must be at least 7 characters long (e.g. SWEN-261)." },
+            maxLength: { value: 8, message: "Course code must be a maximum of 8 characters long (e.g. SWEN-261)." },
             pattern: { value: /^[A-Z]+-\d+$/, message: "Format: DEPT-NUM (e.g., SWEN-261)." },
             validate: (value) =>
               availableCourses.some((course) => course.courseCode === value) || "NOT_FOUND",
@@ -130,13 +130,6 @@ export default function FormStepOne({
                     fieldState.error?.message === "NOT_FOUND" ? (
                       <span>
                         Course not found.{" "}
-                        <MuiLink
-                          component="button"
-                          type="button"
-                          onClick={() => setCreateModalOpen(true)}
-                        >
-                          Create new?
-                        </MuiLink>
                       </span>
                     ) : (
                       fieldState.error?.message

@@ -29,6 +29,7 @@ export const FEATURES = {
   PROFILES: "PROFILES",
   KRONOS: "KRONOS",
   ORACLE: "ORACLE",
+  WORKDAY: "WORKDAY"
 };
 
 // Cache for feature flags to avoid excessive API calls

@@ -42,13 +42,31 @@ export default function CoursesWorkedCard({ coursesTaken, onEdit }) {
           {coursesWorked.map((course, index) => (
             <React.Fragment key={`${course.courseCode}-${index}`}>
               <ListItem sx={{ px: 0, py: 1.5 }}>
-                <ListItemText
-                  primary={`${course.courseCode} - ${course.name || 'No course name available'}`}
-                  secondary={course.description || 'No description provided'}
-                  primaryTypographyProps={{ fontWeight: 'medium' }}
-                />
+                <Paper
+                  key={course.courseCode}
+                  elevation={2}
+                  sx={(theme) => ({
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: "8px",
+                    width:"100%",
+                    transition: "box-shadow 0.2s ease, transform 0.1s ease",
+                    "&:hover": {
+                      boxShadow: 4,
+                      transform: "translateY(-1px)",
+                    }, background: theme.palette.mode === 'dark'
+                      ? ""
+                      : "white"
+                  })}
+                >
+                  <ListItemText
+                    primary={`${course.courseCode} - ${course.name || 'No course name available'}`}
+                    secondary={course.description || 'No description provided'}
+                    primaryTypographyProps={{ fontWeight: 'medium' }}
+                  />
+                </Paper>
               </ListItem>
-              {index < coursesWorked.length - 1 && <Divider />}
             </React.Fragment>
           ))}
         </List>

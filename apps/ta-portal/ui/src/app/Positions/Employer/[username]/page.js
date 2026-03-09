@@ -26,7 +26,7 @@ import { Filter } from "@/components/common/searchAndFilter/Filter";
 import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
-import EditableCommentForm from "@/components/comments/EditableCommentForm";
+import EditableNoteForm from "@/components/notes/EditableNoteForm";
 import ConfirmationModal from "@/components/common/models/ConfirmationModal";
 
 import {
@@ -66,6 +66,12 @@ function EmployerPositionsContent() {
   const [openPositions, setOpenPositions] = useState([]);
   const [myPositions, setMyPositions] = useState([]);
 
+  // Configuration for the tabs, linking them to their respective data states.
+  const tabs = [
+    { id: "open-positions", label: "All Open Positions", data: openPositions },
+    { id: "my-positions", label: "My Created Positions", data: myPositions },
+  ];
+
   // General state for loading, errors, and search/filter functionality.
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -73,12 +79,12 @@ function EmployerPositionsContent() {
   const [appliedFilters, setAppliedFilters] = useState({});
   const [filterConfig, setFilterConfig] = useState([]);
 
-  // State for managing modals (edit/create position and comment confirmation).
+  // State for managing modals (edit/create position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [commentModalState, setCommentModalState] = useState({
+  const [noteModalState, setNoteModalState] = useState({
     isOpen: false,
     title: '',
     context: {},
@@ -256,10 +262,10 @@ function EmployerPositionsContent() {
     setShowClearConfirm(false);
   };
   /**
-   * Closes the comment confirmation modal.
+   * Closes the note confirmation modal.
    */
-  const handleCloseCommentModal = () => {
-    setCommentModalState({ isOpen: false, title: '', context: {} });
+  const handleCloseNoteModal = () => {
+    setNoteModalState({ isOpen: false, title: '', context: {} });
   };
 
   /**
@@ -297,9 +303,9 @@ function EmployerPositionsContent() {
       } finally {
         setIsProcessing(false);
       }
-    } else { // Otherwise, it's an UPDATE action, which requires a comment.
+    } else { // Otherwise, it's an UPDATE action, which requires a note.
       closeModalImmediately();
-      setCommentModalState({
+      setNoteModalState({
         isOpen: true,
         title: 'Confirm Position Update',
         context: { 
@@ -312,24 +318,24 @@ function EmployerPositionsContent() {
   };
 
   /**
-   * Handles the final confirmation from the comment modal for position updates.
-   * @param {string} comment - The comment entered by the user.
+   * Handles the final confirmation from the note modal for position updates.
+   * @param {string} note - The note entered by the user.
    */
-  const handleConfirmComment = async (comment) => {
+  const handleConfirmNote = async (note) => {
     if (!currentUser) return;
     setIsProcessing(true);
 
-    const { action, ...context } = commentModalState.context;
+    const { action, ...context } = noteModalState.context;
 
     try {
       if (action === 'update') {
-        const commentData = { fname: currentUser.fname, lname: currentUser.lname, comment };
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
         // Any update sends the position back to 'PENDING_APPROVAL' status.
         const updatedPositionData = { 
           ...context.positionData, 
           jobPositionStatus: 'PENDING_APPROVAL' 
         };
-        await updatePosition(context.jobId, updatedPositionData, commentData);
+        await updatePosition(context.jobId, updatedPositionData, noteData);
         showNotification('Position updated and submitted for re-approval!', 'success');
       }
       
@@ -344,15 +350,11 @@ function EmployerPositionsContent() {
       showNotification(err.message || 'An unexpected error occurred.', 'error');
     } finally {
       setIsProcessing(false);
-      handleCloseCommentModal();
+      handleCloseNoteModal();
     }
   };
     
-  // Configuration for the tabs, linking them to their respective data states.
-  const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-  ];
+
 
   // Get the data for the currently active tab.
   const activeTabData = tabs[activeTab];
@@ -516,11 +518,11 @@ function EmployerPositionsContent() {
               </ConfirmationModal>
             )}
       
-      <EditableCommentForm
-        isOpen={commentModalState.isOpen}
-        onClose={handleCloseCommentModal}
-        onConfirm={handleConfirmComment}
-        title={commentModalState.title}
+      <EditableNoteForm
+        isOpen={noteModalState.isOpen}
+        onClose={handleCloseNoteModal}
+        onConfirm={handleConfirmNote}
+        title={noteModalState.title}
         isProcessing={isProcessing}
       />
     </Container>

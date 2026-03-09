@@ -79,6 +79,7 @@ export async function authenticateUser(username, password) {
     body: JSON.stringify({ username, password }),
   });
 
+  print(response)
   return handleApiResponse(response);
 }
 
@@ -392,7 +393,7 @@ export async function createPosition(positionData, employerData) {
 }
 
 /**
- * Updates an existing job position's details and adds an update comment.
+ * Updates an existing job position's details and adds an update note (refered to as a comment).
  * @param {string} jobID - The ID of the job position to update.
  * @param {object} positionData - An object with the new data for the position.
  * @param {object} commentData - An object with details for the update comment.
@@ -1027,19 +1028,19 @@ export async function getAllCourses() {
 }
 
 /**
- * Creates a new course with the provided data.
+ * Updates or Creates a new course with the provided data.
  * @param {object} courseData - The data for the new course.
  * @returns {Promise<object>} A promise that resolves to the newly created course object.
  */
-export async function createCourse(courseData) {
+export async function upsertCourse(courseData) {
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
     throw new Error(
       "Backend API URL components are not defined. Check your .env.local file."
     );
   }
 
-  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/create-course`;
-  console.log(`Creating course at: ${url}`);
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/upsert-course`;
+  console.log(`Upserting course at: ${url}`);
 
   const response = await fetch(url, {
     method: "POST",

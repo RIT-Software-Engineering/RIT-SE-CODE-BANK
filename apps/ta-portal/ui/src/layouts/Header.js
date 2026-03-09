@@ -147,6 +147,12 @@ const HEADER_LINKS = [
     icon: <People />,
     roles: [ROLES.ADMIN],
   },
+  {
+    text: "Course List",
+    href: "/courses",
+    icon: <Description />,
+    roles: [ROLES.ADMIN]
+  }
 ];
 
 
@@ -691,7 +697,7 @@ export default function Header() {
                   mr: 2,
                 }}
               >
-                {availableLinks.slice(0, 5).map((link) => {
+                {availableLinks.slice(0, 6).map((link) => {
                   const finalHref =
                     link.href.includes("[username]") && currentUser
                       ? link.href.replace("[username]", currentUser.username)
