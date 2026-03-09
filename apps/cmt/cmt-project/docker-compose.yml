@@ -23,6 +23,12 @@ services:
       MYSQL_DATABASE: workflows
       MYSQL_USER: workflows_user
       MYSQL_PASSWORD: workflows_pass
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     volumes:
       - workflows_data:/var/lib/mysql
 
