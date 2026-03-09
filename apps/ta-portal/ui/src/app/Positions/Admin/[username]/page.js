@@ -142,13 +142,6 @@ export default function AdminPositions() {
     return filterConfig;
   }, [activeTab, filterConfig]);
 
-  // Configuration for the tabs, linking them to their respective data states.
-  const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-    { id: "all-positions", label: "Manage All Positions", data: allPositions },
-  ];
-
   /**
    * A centralized function to fetch data for any of the three tabs based on the current
    * search and filter criteria.
