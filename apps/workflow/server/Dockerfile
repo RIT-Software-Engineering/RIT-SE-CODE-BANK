@@ -11,10 +11,10 @@ COPY package*.json ./
 RUN npm ci --only=production --legacy-peer-deps
 
 # Copy prisma schema
-# COPY prisma ./prisma/
+COPY prisma ./prisma/
 
 # Generate Prisma Client
-# RUN npx prisma generate
+RUN npx prisma generate
 
 # Copy application code
 COPY . .
@@ -28,4 +28,4 @@ ENV PORT=5011
 
 # Start the server
 # CMD ["sh", "-c", "npx prisma db push  && node server.js"]
-CMD ["sh", "-c", "node index.js"]
+CMD ["sh", "-c", "npx prisma db push && node index.js"]
