@@ -1,5 +1,7 @@
 # CA-Portal Frontend Setup
 
+# NOTE: THE TA_PORTAL NOW RUNS ENTIRLY WITHIN DOCKER CONTAINERS FOR EASIER DEPLOYMENT. THE SETUP METHOD DESCRIBED HERE NO LONGER FUNCTIONS CORRECLTY. SEE [ta-portal/deploy/README.md](../../deploy/README.md) FOR MORE INFORMATION.
+
 ## Setup Steps {#setup-steps}
 
 1. Navigate to the `/ui/` folder.
