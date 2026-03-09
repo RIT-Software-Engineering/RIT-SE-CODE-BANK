@@ -4,5 +4,5 @@ node_modules
 /generated/prisma
 .pem
 /resources
-/server/database/prisma/migrations
+#/server/database/prisma/migrations
 /generated/prisma

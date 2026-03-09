@@ -34,7 +34,7 @@ const FEATURE_LABELS = {
   PROFILES: "User Profiles",
   KRONOS: "Kronos Link",
   ORACLE: "Oracle Link",
-  WORKDAY: "Workday Link"
+  WORKDAY: "Workday Link",
   SLACK_WORKSPACE_URL: "Show Slack Workspace Join Link",
 };
 
@@ -46,7 +46,7 @@ const FEATURE_DESCRIPTIONS = {
   PROFILES: "Enable user profile viewing and editing",
   KRONOS: "Enable quick access link to Kronos timecard system",
   ORACLE: "Enable quick access link to Oracle MyInfo portal",
-  WORKDAY: "Enable quick access link to Workday timecard system"
+  WORKDAY: "Enable quick access link to Workday timecard system",
   SLACK_WORKSPACE_URL: "Show Slack workspace join link in notification settings. When disabled, users must contact the department for access.",
 };
 

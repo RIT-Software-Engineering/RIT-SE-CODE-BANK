@@ -1,5 +1,7 @@
 # TA-Portal Backend Setup
 
+# NOTE: THE TA_PORTAL NOW RUNS ENTIRLY WITHIN DOCKER CONTAINERS FOR EASIER DEPLOYMENT. THE SETUP METHOD DESCRIBED HERE NO LONGER FUNCTIONS CORRECLTY. SEE [ta-portal/deploy/README.md](../../deploy/README.md) FOR MORE INFORMATION.
+
 ## Prerequisites
 1.  **Node.js**
     * Download from: [https://nodejs.org/en/download](https://nodejs.org/en/download)

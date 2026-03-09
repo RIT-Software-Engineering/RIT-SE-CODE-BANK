@@ -18,7 +18,7 @@ SET "APP_SERVER_PORT=3300"
 
 SET "SLACK_CLIENT_ID=10396992313508.10377970588951"
 SET "SLACK_CLIENT_SECRET=1ddef826bc513f3b11d50e14135f1f28"
-SET "SLACK_REDIRECT_URI=https://localhost:3300/api/slack/oauth_redirect"
+SET "SLACK_REDIRECT_URI=https://localhost:3300/ta-portal-api/slack/oauth_redirect"
 
 SET "ENV_FILE=.env"
 REM --- End Configuration ---

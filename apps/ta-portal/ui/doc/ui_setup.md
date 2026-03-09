@@ -1,5 +1,7 @@
 # CA-Portal Frontend Setup
 
+# NOTE: THE TA_PORTAL NOW RUNS ENTIRLY WITHIN DOCKER CONTAINERS FOR EASIER DEPLOYMENT. THE SETUP METHOD DESCRIBED HERE NO LONGER FUNCTIONS CORRECLTY. SEE [ta-portal/deploy/README.md](../../deploy/README.md) FOR MORE INFORMATION.
+
 ## Setup Steps {#setup-steps}
 
 1. Navigate to the `/ui/` folder.
@@ -20,7 +22,7 @@ To navigate to the correct setup steps, for **Windows** please see the [Windows 
 Once the `.env` file has been created, please ensure that it contains the following information (p.s. the `NEXT_PUBLIC_NODE_ENV` can either be `DEV` or `PROD` based on previous step)
 ```shell
 NEXT_PUBLIC_BACKEND_URL="https://localhost:3300"
-NEXT_PUBLIC_API_EXTENSION="/api"
+NEXT_PUBLIC_API_EXTENSION="/ta-portal-api"
 NEXT_PUBLIC_DATABASE_API_EXTENSION="/db"
 NEXT_PUBLIC_SLACK_API_EXTENSION="/slack"
 NEXT_PUBLIC_NODE_ENV="DEV"
@@ -38,7 +40,7 @@ After confirming that the information matches, proceed to the [final steps](#run
 Once the `.env` file has been created, please ensure that it contains the following information (p.s. the `NEXT_PUBLIC_NODE_ENV` can either be `DEV` or `PROD` based on previous step)
 ```shell
 NEXT_PUBLIC_BACKEND_URL="https://localhost:3300"
-NEXT_PUBLIC_API_EXTENSION="/api"
+NEXT_PUBLIC_API_EXTENSION="/ta-portal-api"
 NEXT_PUBLIC_DATABASE_API_EXTENSION="/db"
 NEXT_PUBLIC_SLACK_API_EXTENSION="/slack"
 NEXT_PUBLIC_NODE_ENV="DEV"
