@@ -1,7 +1,7 @@
 import {useState, useEffect} from "react";
 import axios from 'axios';
 import { DataGrid } from "@mui/x-data-grid";
-import { Button, Paper } from "@mui/material";
+import { Button, Paper, Box, Card, CardContent, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import HighlightsViewModal from "./HighlightsViewModal";
 import AddFileModal from "./AddFilePage";
@@ -14,6 +14,7 @@ export default function HighlightsPage({facultyId, isAdmin = false}){
     const [viewModalForm, setViewModalForm] = useState({});
     const [viewModalType, setViewModalType] = useState('highlights');
     const [addFileModalOpen, setAddFileModalOpen] = useState(false);
+    const [percentile, setPercentile] = useState(null);
 
     function loadHighlights() {
         axios.get("http://localhost:3000/highlights/submitted_by/" + facultyId)
@@ -42,10 +43,29 @@ export default function HighlightsPage({facultyId, isAdmin = false}){
         .catch(() => console.log("Error Retrieving Teaching Evals"))
     }
 
+    // Load percentile data for faculty member on component mount
+    function loadPercentile() {
+        axios.get("http://localhost:3000/teaching_evals/percentile/faculty/" + facultyId)
+        .then(response => {
+            if (response.data) {
+                setPercentile(response.data);
+            }
+        })
+        .catch(err => console.log("Error Retrieving Percentile:", err))
+    }
+
     useEffect(() => {
         loadHighlights();
         loadTeachingEvals();
-    }, []);
+        loadPercentile();
+    }, [facultyId]);
+
+    // Reload percentile when returning to the page
+    useEffect(() => {
+        const handleFocus = () => loadPercentile();
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
+    }, [facultyId]);
 
     const columns = [
         {field : "id", headerName : "ID", flex:.2},
@@ -56,7 +76,12 @@ export default function HighlightsPage({facultyId, isAdmin = false}){
                 if (params.row.type === 'Teaching Eval') {
                     axios.get("http://localhost:3000/teaching_evals/" + params.row.id + "/view")
                     .then(response => {
-                        setViewModalForm(response.data);
+                        const data = response.data;
+                        if (!isAdmin && data.faculty_information_id !== facultyId) {
+                            alert('You do not have permission to view this teaching evaluation');
+                            return;
+                        }
+                        setViewModalForm(data);
                         setViewModalType('teaching_eval');
                         setViewModalOpen(true);
                     });
@@ -78,6 +103,15 @@ export default function HighlightsPage({facultyId, isAdmin = false}){
     return (
         <div>
         <h1>Highlights</h1>
+        {percentile && (
+            <Card sx={{ position: 'absolute', top: 80, right: 20, minWidth: 150, bgcolor: '#f5f5f5', boxShadow: 1 }}>
+                <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <Typography variant="caption" color="text.secondary">Teaching Eval Percentile</Typography>
+                    <Typography variant="h6" color="text.primary">{percentile.percentile?.toFixed(1)}%</Typography>
+                    <Typography variant="caption" color="text.secondary">Avg: {percentile.overall_avg?.toFixed(2)}</Typography>
+                </CardContent>
+            </Card>
+        )}
         <div>
         <Button component={Link} to="/highlights_form" variant="contained" style={{margin:"2%"}}>Create New Form</Button>
         <Button variant="contained" style={{margin:"2%"}} onClick={() => setAddFileModalOpen(true)}>Add File</Button>
