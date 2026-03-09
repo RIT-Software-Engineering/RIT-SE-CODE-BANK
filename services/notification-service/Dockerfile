@@ -23,6 +23,10 @@ COPY services/notification-service ./services/notification-service
 
 WORKDIR /app/services/notification-service
 
+COPY services/notification-service/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 EXPOSE 4000
 
-CMD ["node", "src/index.js"]
+ENTRYPOINT sh /usr/local/bin/entrypoint.sh
