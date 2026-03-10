@@ -1,25 +1,60 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Accordion, Button, Card, Form, Modal } from "react-bootstrap";
+import { CMTFetch } from "../utils/api";
+import { workflowsFetch } from "../backend/utils/workflows/api";
+
 
 export function BuilderPage(){
     const [workflows, setWorkflows] = useState([]);
     const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
     const [actionModalOpen, setActionModalOpen] = useState(false);
-    const [index, setIndex] = useState(0);
+    const [index, setIndex] = useState(-1);
     const availCodes = [["COURSE_SECTION", "Course Section"], 
     ["NUMBER_STUDENTS", "Number of Students"], 
     ["COURSE_SEMESTER", "Course Semester"],
-    ["CHECKBOX", "Checkbox"]]
+    ["CHECKBOX", "Checkbox"]];
+    const [loading, setLoading] = useState(true);
+
+    const update = useCallback(async () => {
+        return CMTFetch("GET", "/workflony/workflowTemplate").then(async response => {
+                const data = await response.json();
+                console.log(data)
+                const workflowPromises = data.workflows.map(async workflow => {
+                    const info = workflow.baseAction;
+                    let actions = [];
+                    if (workflow.rootActionId){
+                        const actionResponse = await CMTFetch("GET", `workflony/actionTemplate/${workflow.id}`)
+                        const returnedActions = await actionResponse.json();
+                        actions = returnedActions.actions;
+                    }
+                    return {
+                        id: info.id,
+                        attributeId: workflow.id,
+                        name: info.name,
+                        description: info.description,
+                        actions: actions || [],
+                    }
+                });
+                const resolvedWorkflows = await Promise.all(workflowPromises);
+                setWorkflows(resolvedWorkflows.sort());
+                console.log(resolvedWorkflows)
+                setLoading(false);
+            });
+        }, [])
+        useEffect(() => void update(), [update])
+    
 
     return (<>
         <Button onClick={()=>setWorkflowModalOpen(true)}>Add new Workflow</Button>
-        <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} setWorkflows={setWorkflows}/>
+        <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} 
+        setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit}/>
         <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} 
-        workflows={workflows} setWorkflows={setWorkflows} availCodes={availCodes} outputHelper={BuilderOutputsHelper}/>
+        workflows={workflows} setWorkflows={setWorkflows} availCodes={availCodes} 
+        outputHelper={BuilderOutputsHelper} simpleSubmit={simpleAdd}/>
         <Accordion>
-        {Array.from({length: workflows.length}, (_, i) => {
-            return (<div className="pt-2" onClick={()=>setIndex(i)}><WorkflowComponent index={index} workflows={workflows} setIsOpen={setActionModalOpen}/></div>)
-        })}
+        {workflows ? Array.from({length: workflows.length}, (_, i) => {
+            return (<div className="pt-2" onClick={()=>setIndex(i)}><WorkflowComponent loading={loading} index={i} workflows={workflows} setIsOpen={setActionModalOpen}/></div>)
+        }) : <></>}
         </Accordion>
     </>);
 }
@@ -166,13 +201,81 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
     return output;
 }
 
-function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows} ){
+async function workflowSubmit(name, description, workflows, setWorkflows){
+    const workflow = {
+        name: name,
+        description: description,
+        actions: [],
+        tags: ["CMT_Template"]
+    };
+    CMTFetch("POST", "/workflony/workflowTemplate", {workflow}).then(async response => {
+        const data = await response.json();
+        setWorkflows([...workflows, {
+            id: data.workflow.baseActionId,
+            attributeId: data.workflow.id, // The ID is for the WorkflowAttribute, not the actual workflow
+            name: name,
+            description: description,
+            actions: [],
+        }]);
+        console.log(data)
+    });
+}
+
+async function simpleAdd(outputs, index, workflows, setWorkflows, name, description, code, parentActionId){
+    await CMTFetch("POST", "workflony/actionTemplate", {name, description, actionType: "simple", metadata: {code, outputs}, parentActionId}).then(async response => {
+        const data = await response.json();
+        console.log(data.action);
+        let workflowsCopy = [];
+        for (let j = 0; j < workflows.length; j++) {
+        if (j !== index)
+            workflowsCopy.push(workflows[j])
+        else {
+            const actions = workflows[j].actions.slice(0,-1);
+            if (workflows[j].actions.length > 0){
+                let prevAction = workflows[j].actions[workflows[j].actions.length - 1];
+                await CMTFetch("PUT", `workflony/actionTemplate/${prevAction.id}`, {name: null, description: null, nextActionId: data.action.id});
+                actions.push({...prevAction, nextActionId: data.action.id});
+            }
+            workflowsCopy.push({
+                    id: workflows[j].id,
+                    attributeId: workflows[j].attributeId,
+                    name: workflows[j].name,
+                    description: workflows[j].description,
+                    actions: [...actions, {
+                        id: data.action.id,
+                        name: name,
+                        description: description,
+                        actionType: "simple",
+                        nextActionId: null,
+                        parentActionId: parentActionId,
+                        metadata: {
+                            code: code,
+                            outputs: outputs
+                        }
+                    }]
+                });
+        }}
+        console.log(workflowsCopy)
+        // If this is the first action then we set the root action
+        if (workflowsCopy[index].actions.length === 1)
+            workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
+            rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
+        else 
+            setWorkflows(workflowsCopy);
+    });
+}
+
+function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSubmit} ){
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
 
     function clearForm(){
         setName('');
         setDescription('');
+    }
+
+    async function submitWorkflow(){
+        await WorkflowSubmit(name, description, workflows, setWorkflows);
     }
 
     return (<>
@@ -192,11 +295,7 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows} ){
                         e.preventDefault();
                         clearForm();
                         setIsOpen(false);
-                        setWorkflows([...workflows, {
-                            name: name,
-                            description: description,
-                            actions: [],
-                        }]);
+                        submitWorkflow();
                     }}>Add Workflow</Button>
                 </div>
             </Form>
@@ -205,7 +304,7 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows} ){
     </>)
 }
 
-function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCodes, outputHelper}){
+function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCodes, outputHelper, simpleSubmit}){
     const [actionType, setActionType] = useState("simple");
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -224,35 +323,15 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
         setRequired(false);
     }
 
-    function updateWorkflowSimple(e){
+    async function createActionSimple(e){
         let outputs;
         outputs = outputHelper(code, required, placeholder, validation);
-
-        let workflowsCopy = [];
-        for (let j = 0; j < workflows.length; j++) {
-        if (j !== index)
-            workflowsCopy.push(workflows[j])
-        else {
-            workflowsCopy.push({
-                name: workflows[j].name,
-                description: workflows[j].description,
-                actions: [{
-                    name: name,
-                    description: description,
-                    actionType: "simple",
-                    metadata: {
-                        code: code,
-                        outputs: outputs
-                    }
-                }]
-            });
-            if (workflows[j].actions.length !== 0) workflowsCopy[workflowsCopy.length-1]['actions'].unshift(...workflows[j].actions)
-        }}
-        setWorkflows(workflowsCopy);
         e.preventDefault();
-        clearForm();
-        setIsOpen(false);
-        console.log(workflowsCopy)
+        // TODO change the null at the end to be a parentActionId if it's a complex action
+        await simpleSubmit(outputs, index, workflows, setWorkflows, name, description, code, null).then(() => {
+            clearForm();
+            setIsOpen(false);
+        })
     }
 
     return (<>
@@ -274,6 +353,7 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
                 </Form.Select>
                 {actionType === "simple" ? // if simple action
                 <>
+                {/* TODO make this part of the form not hardcoded for CMT */}
                 <Form.Label>Code</Form.Label>
                 <Form.Select onChange={(e)=>setCode(e.target.value)}>
                     {availCodes.map(codeInfo => {
@@ -286,7 +366,7 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
                 </div>
                 <BuilderOutputRenderer code={code} setPlaceholder={setPlaceholder} validation={validation} setValidation={setValidation}/>
                 <div className="flex justify-end pt-2">
-                    <Button type="submit" onClick={(e) => updateWorkflowSimple(e)}>Add action</Button>
+                    <Button type="submit" onClick={(e) => createActionSimple(e)}>Add action</Button>
                 </div>
                 </> : 
                 actionType === "complex" ? // if complex action 
@@ -299,7 +379,10 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
     </>)
 }
 
-function WorkflowComponent({index, workflows, setIsOpen}){
+function WorkflowComponent({index, workflows, setIsOpen, loading}){
+    if (loading)
+        return <><h1>Loading...</h1></>
+    else
     return (<>
     <Accordion.Item eventKey={index}>
         <Accordion.Header><span className="text-4xl">{workflows[index].name}</span></Accordion.Header>
@@ -307,7 +390,7 @@ function WorkflowComponent({index, workflows, setIsOpen}){
             <div className="text-3xl">
                 <p>Description: {workflows[index].description}</p>
             </div>
-            {workflows[index].actions.map(action => {
+            {(workflows[index].actions || []).map(action => {
                 let value;
                 switch (action.actionType) {
                     case "simple":
@@ -315,6 +398,7 @@ function WorkflowComponent({index, workflows, setIsOpen}){
                             <Card.Header className="text-xl">{action.name} (Simple Action)</Card.Header>
                             <Card.Body>
                                 <div><p>Description: {action.description}</p></div>
+                                {/* TODO make this not CMT-specific (e.g. no metadata) */}
                                 <div>
                                     <p>Code: {action.metadata.code}</p>
                                     {action.metadata.outputs.map(output => {
@@ -322,7 +406,7 @@ function WorkflowComponent({index, workflows, setIsOpen}){
                                             <p>Required? {output.isRequired ? 'Yes' : 'No'}</p>
                                             <p>Key: {output.key}</p>
                                             <p>Name: {output.name}</p>
-                                            <p>Placeholder: {output.placeholder}</p>
+                                            {output.placeholder ? <p>Placeholder: {output.placeholder}</p> : <></>}
                                             <p>Type: {output.type}</p>
                                             {output.validation && Object.keys(output.validation).map(key => {
                                                 const value = output.validation;
@@ -340,7 +424,7 @@ function WorkflowComponent({index, workflows, setIsOpen}){
                     case "workflow":
                         break;
                     default:
-                        value = <></>
+                        value = <p>Unknown Type {action.actionType}</p>
                         break;
                 }
                 return value;

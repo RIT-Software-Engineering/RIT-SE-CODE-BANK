@@ -40,7 +40,7 @@ export async function workflowsFetch(method, url, body, headers) {
  * @param {string} description 
  * @param {string} actionType 
  * @param {object} metadata 
- * @param {*} parentId 
+ * @param {*|null} parentId 
  * @returns response from /action
  */
 export async function createAction(userId, name, description, actionType, metadata, parentId) {
@@ -49,9 +49,23 @@ export async function createAction(userId, name, description, actionType, metada
     name: name || 'New Action',
     description: description || 'No description provided.',
     actionType: actionType || 'simple',
-    metadata: metadata || {},
+    metadata: makeMetadataSafeForWorkflows(metadata) || {},
     parentActionId: parentId
   })
+}
+
+/**
+ * Updates an action with relevant data.
+ * Either name and description should be filled in or nextActionId.
+ *
+ * @param {string|null} name 
+ * @param {string|null} description 
+ * @param {*|null} nextActionId 
+ * @param {*} actionId 
+ * @returns response from /action 
+ */
+export async function updateAction(name, description, nextActionId, actionId){
+  return await workflowsFetch("PUT", `actions/${actionId}`, {name, description, nextActionId});
 }
 
 /**
