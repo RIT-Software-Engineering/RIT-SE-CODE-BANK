@@ -68,22 +68,12 @@ export default function SiteNav() {
       label: "Course Management",
       icon: <GraduationCap size={18} />,
       items: [
-        { to: "/coursebuilder", label: "Course Builder" },
-        { to: "/courses", label: "Course Builder (Workflony style)"},
+        { to: "/courses", label: "Course Overview"},
         { to: "/createtemplate", label: "Create Template" },
         { to: "/coursewebsite", label: "Course Website" },
+        { to: "/teambuilder", label: "Team Builder" },
       ]
     },
-    {
-      id: "tools",
-      label: "Tools",
-      icon: <Wrench size={18} />,
-      items: [
-        { to: "/teambuilder", label: "Team Builder" },
-        { to: "/calendar", label: "Calendar" },
-        { to: "/onboarding", label: "Student Onboarding" },
-      ]
-    }
   ];
 
   return (

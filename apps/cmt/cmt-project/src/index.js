@@ -4,9 +4,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App.jsx";
 import HomePage from "./pages/Homepage.jsx";
 import TeamBuilderPage from "./pages/TeamBuilderPage.jsx";
-import CalPage from "./pages/CalPage.jsx";
-import CoursePage from "./pages/CoursePage.jsx";
-import StudentOnboardingPage from "./pages/StudentOnboardingPage.jsx";
 import CreateTemplatePage from "./pages/CreateTemplatePage.jsx";
 import DevLoginPage from "./pages/DevLoginPage.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
@@ -14,7 +11,7 @@ import CourseWebsitePage from "./pages/CourseWebsitePage.jsx";
 import "./styles/global.css";
 import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { CoursePageWorkflony } from "./pages/course/CourseOverview.jsx";
+import { CourseOverview } from "./pages/course/CourseOverview.jsx";
 import { CourseDashboard } from "./pages/course/CourseDashboard.jsx";
 
 /* ------------------------------------------------------------------
@@ -66,14 +63,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             } 
           />
           <Route 
-            path="coursebuilder" 
-            element={
-              <RequireAuth roles={['instructor', 'professor']}>
-                <CoursePage />
-              </RequireAuth>
-            } 
-          />
-          <Route 
             path="createtemplate" 
             element={
               <RequireAuth roles={['instructor', 'professor']}>
@@ -91,15 +80,12 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           />
           <Route 
             path="courses" 
-            element={<CoursePageWorkflony />} 
+            element={<CourseOverview />} 
           />
           <Route 
             path="courses/:id" 
             element={<CourseDashboard />} 
           />
-          {/* All authenticated users can access these */}
-          <Route path="calendar" element={<CalPage />} />
-          <Route path="onboarding" element={<StudentOnboardingPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

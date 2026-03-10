@@ -7,7 +7,7 @@ import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
 
 
-export function CoursePageWorkflony() {
+export function CourseOverview() {
     const [courseOverview, setCourseOverview] = useState([{
     id: 0,
     classId: "",
