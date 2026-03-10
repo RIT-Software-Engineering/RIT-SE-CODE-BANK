@@ -45,3 +45,6 @@ replay_pid*
 *.node_modules
 node_modules/
 .vite
+
+# Commit notification env
+!services/notification-service/.env
