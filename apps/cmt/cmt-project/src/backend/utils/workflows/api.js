@@ -228,12 +228,20 @@ async function objectToNewAction(action, ownerId, parentActionId) {
     parentActionId: parentActionId,
   })
 
+  // The below complex action won't work with node 18 which is what the staging enviorment uses
   // Link complex action's children
+  // if (action.childActions) {
+  //   for (const childAction of action.childActions.toReversed()) {
+  //     await objectToNewAction(childAction, ownerId, createdAction.id)
+  //   }
+  // }
+
+  // Updated version for the staging environment's node version
   if (action.childActions) {
-    for (const childAction of action.childActions.toReversed()) {
-      await objectToNewAction(childAction, ownerId, createdAction.id)
-    }
+  for (const childAction of [...action.childActions].reverse()) {
+    await objectToNewAction(childAction, ownerId, createdAction.id)
   }
+}
 
   return createdAction
 }
