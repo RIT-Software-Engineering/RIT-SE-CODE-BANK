@@ -33,6 +33,8 @@ services:
     ports:
       - ${NOTIF_HOST_PORT}:${NOTIF_CONTAINER_PORT}
     restart: unless-stopped
+    depends_on:
+      - mariadb
 
 volumes:
   notification_data: {}
