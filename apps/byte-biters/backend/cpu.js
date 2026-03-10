@@ -7,6 +7,7 @@ export class CPU {
         this.registers = new Uint16Array(8);
         this.memory = new Memory();
         this.decoder = new Decode();
+        this.halted = false;
 
         //flag setup
         this.N = 0;
@@ -19,11 +20,34 @@ export class CPU {
         this.registers[REG.PC] = 0o200;
     }
 
+    loadProgram(words) {
+        let addr = 0;
+        for(let word of words) {
+            this.memory[addr] = word & 0xFF; //low byte
+            this.memory[addr + 1] = (word >> 8) & 0xFF; //high byte
+            addr += 2;
+        }
+
+
+    }
+
     getState() {
         return {
             registers: [...this.registers],
             flags: {N: this.N, Z: this.Z, V: this.V, C: this.C}
         };
+    }
+
+    getRegisters() {
+        return [...this.registers];
+    }
+
+    getFlags() {
+        return {N: this.N, Z: this.Z, V: this.V, C: this.C};
+    }
+
+    getMemory() {
+        return new Uint8Array(this.memory.bytes);
     }
 
     readWord(addr) {
@@ -53,6 +77,27 @@ export class CPU {
         }
 
         this.execute(oper);
+    }
+
+    reset() {
+        //reset the pointers
+        this.registers = new Uint16Array(8);
+
+        //reset the stack pointer and program counter
+        this.registers[REG.SP] = 0o10000;
+        this.registers[REG.PC] = 0o200;
+
+        //clear the flags
+        this.N = 0;
+        this.Z = 0;
+        this.V = 0;
+        this.C = 0;
+
+        //reset memory
+        this.memory = new Memory();
+
+        //reset halted
+        this.halted = false;
     }
 
     resolveSource(mode, reg){
@@ -258,6 +303,12 @@ export class CPU {
                 break;
             case 'BLT':
                 this.blt(oper);
+                break;
+            case 'HALT':
+                this.halted = true;
+                break;
+            case 'RESET':
+                this.reset();
                 break;
         }
     }

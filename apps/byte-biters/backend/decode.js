@@ -147,5 +147,15 @@ export class Decode{
         else if((instr & 0o000200) === 0o000200) {
             return this.fromSubRoutineReturn(instr, 'RTS')
         }
+
+        //Used for the Halt instruction
+        else if(instr === 0o000000) {
+            return { type: 'HALT' };
+        }
+
+        //Used for the reset Instrution
+        else if(instr === 0o000005) {
+            return {type: 'RESET' };
+        }
     }
 }

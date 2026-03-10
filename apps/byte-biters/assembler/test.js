@@ -9,7 +9,7 @@ const data = "   MOV R1     , R2      ; move R1 into R2\n" +
                 "\n" +
                 "    ; a full-line comment\n" +
                 "SUB (R2)+, R4   ; subtract\n" +
-                "CLR 100(R5);"
+                "RESET;"
 
 const data2 = "MOV R1, R2";
 

@@ -27,12 +27,12 @@ function twoEncoder(opcodeInfo, src, dst) {
     wordArray.push(word);
 
     if(src.offset !== null) {
-        const extraWordSrc = src.offset;
+        const extraWordSrc = Number(src.offset);
         wordArray.push(extraWordSrc);
     }
 
     if(dst.offset !== null) {
-        const extraWordDst = dst.offset;
+        const extraWordDst = Number(dst.offset);
         wordArray.push(extraWordDst);
     }
     return wordArray;
@@ -45,7 +45,7 @@ function oneEncoder(opcodeInfo, dst) {
     wordArray.push(word);
 
     if(dst.offset !== null) {
-        const extraWord = dst.offset;
+        const extraWord = Number(dst.offset);
         wordArray.push(extraWord);
     }
     return wordArray
