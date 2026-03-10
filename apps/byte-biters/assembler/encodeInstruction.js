@@ -5,10 +5,21 @@ export function encodeInstruction(parsedData) {
     const {mnemonic, src, dst} = parsedData;
     
     const opcodeInfo = OPCODES[mnemonic];
-    return twoEncoder(opcodeInfo, src, dst);
+    if(opcodeInfo !== undefined) {
+        switch(opcodeInfo.type) {
+            case 'two':
+                return twoEncoder(opcodeInfo, src, dst);
+            case 'one':
+                return oneEncoder(opcodeInfo, dst);
+            case 'zero':
+                return zeroEncoder(opcodeInfo);
+            //create case for br
+            //create case for rts and jsr
+        }
+    }
 }
 
-function twoEncoder(opcodeInfo, dst, src) {
+function twoEncoder(opcodeInfo, src, dst) {
     const wordArray = [];
     const srcEncoded = encodeOperand(src);
     const dstEncoded = encodeOperand(dst);
@@ -43,7 +54,3 @@ function oneEncoder(opcodeInfo, dst) {
 function zeroEncoder(opcodeInfo) {
     return [opcodeInfo.code];
 }
-
-//Should check if the mnenomic matches the something in the opcode array.
-//If it does, it should then return the opcode and put you down the correct encoder path - two, one, branch, etc.
-//It should then add the values based on what each one needs, for example, for two, it should then add the src and dst info

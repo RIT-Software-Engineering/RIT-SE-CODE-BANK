@@ -1,26 +1,3 @@
-export function instructionLevel(tokenArray) {
-    const mnemonic = tokenArray[0];
-    const srcTokens = [];
-    const dstTokens = [];
-    let srcCheck = true;
-    for(let i = 1; i < tokenArray.length; i++) {
-        if(srcCheck) {
-            if(tokenArray[i] === ','){
-                srcCheck = false;
-            } else{
-                srcTokens.push(tokenArray[i]);
-            }
-        } else {
-            dstTokens.push(tokenArray[i]);
-        }
-    }
-    return {
-        mnemonic: mnemonic,
-        srcTokens: srcTokens.length === 0 ? null : srcTokens,
-        dstTokens: dstTokens.length === 0 ? null : dstTokens
-    }
-}
-
 export function parseInstruction(tokens) {
     const {mnemonic, srcTokens, dstTokens} = instructionLevel(tokens);
 
@@ -29,6 +6,43 @@ export function parseInstruction(tokens) {
         src: srcTokens ? parseOperand(srcTokens) : null,
         dst: dstTokens ? parseOperand(dstTokens) : null
     };
+}
+
+function instructionLevel(tokenArray) { //Needs a better check in case if it is one value only, like clr
+    const mnemonic = tokenArray[0];
+    const rest = tokenArray.slice(1);
+    const srcTokens = [];
+    const dstTokens = [];
+    let srcCheck = true;
+
+    //used if the tokenArray does not contain a comma
+    //determines if an instruction should have a source token or not
+    //returns either the destination token if included or just a mnemonic
+    if(!rest.includes(',')){
+        return {
+            mnemonic: mnemonic,
+            srcTokens: null,
+            dstTokens: rest.length === 0 ? null : rest
+        };
+    }
+    
+    //This finds the comma and splits the dst and src tokens
+    for(const token of rest) {
+        if(token === ','){
+            srcCheck = false;
+            continue; //done to make sure comma isn't added to a token array
+        }
+        if(srcCheck) {
+            srcTokens.push(token);
+        } else {
+            dstTokens.push(token);
+        }
+    }
+    return {
+        mnemonic: mnemonic,
+        srcTokens: srcTokens.length === 0 ? null : srcTokens,
+        dstTokens: dstTokens.length === 0 ? null : dstTokens
+    }
 }
 
 //Used to determine the type of mode given and to return the appropriate values for each
@@ -114,6 +128,12 @@ export function parseOperand(tokens) {
             offset: tokens[2]
         };
     }
+
+    //error in case if nothing matches
+    else {
+        throw new Error("Invalid operand: " + tokens.join(" "));
+    }
+
 }
 
 

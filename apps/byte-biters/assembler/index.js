@@ -1,13 +1,19 @@
-//Takes in the users code to get each line and cleans it
-export function index(input) {
-    const lines = input.split("\n");
-    const updatedLines = [];
+import { preProcess } from "./pre_process.js";
+import { lexer } from "./lexer.js";
+import { parseInstruction } from "./parser.js";
+import { encodeInstruction } from "./encodeInstruction.js";
 
-    for(let i = 0; i < lines.length; i++) {
-        const updatedLine = lines[i].replace(/\s+/g,' ').replace(/ *, */g, ", ").split(";")[0].trim();
-        if(updatedLine != ""){
-            updatedLines.push(updatedLine);
-        }
+export function assemble(text) {
+    const lines = preProcess(text);
+    const words = [];
+
+    for(let line of lines) {
+        const tokens = lexer(line);
+        const parsed = parseInstruction(tokens);
+        const encoded = encodeInstruction(parsed);
+
+        words.push(...encoded);
     }
-    return updatedLines;
+
+    return words;
 }
