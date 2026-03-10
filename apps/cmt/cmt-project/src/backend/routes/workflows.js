@@ -59,12 +59,10 @@ router.put("/actionTemplate/:actionId", async (req, res) => {
 router.get("/actionTemplate/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
-        console.log("=".repeat(50))
         const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
         actions.forEach(action => {
             if (action.metadata?.outputs){
-                action.metadata.outputs = JSON.parse(action.metadata.outputs);
-            console.log(action)
+                action.metadata.outputs = JSON.parse(action.metadata.outputs)
             return action
         }
         })
