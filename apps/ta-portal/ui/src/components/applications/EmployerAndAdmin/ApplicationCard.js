@@ -82,7 +82,7 @@ export default function ApplicationCard({
   const { id, jobApplicationStatus, resume } = application;
 
   const statusColor = getStatusChipColor(jobApplicationStatus);
-  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION + process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);

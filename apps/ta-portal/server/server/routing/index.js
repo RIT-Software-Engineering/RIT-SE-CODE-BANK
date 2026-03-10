@@ -9,8 +9,8 @@
  * and mounts them on specific base paths. This modular approach keeps the
  * routing logic clean, organized, and easy to maintain.
  *
- * All routes defined here will be prefixed with `/api`. For example, a route
- * defined as `/users` in `db_routes.js` will be accessible at `/api/db/users`.
+ * All routes defined here will be prefixed with `/ta-portal-api`. For example, a route
+ * defined as `/users` in `db_routes.js` will be accessible at `/ta-portal-api/db/users`.
  * =============================================================================
  */
 
@@ -42,11 +42,11 @@ const { isFeatureEnabled, FEATURES } = require("../config/featureFlags");
 // =============================================================================
 
 // Mount the database router. All routes defined in `db_routes.js` will now
-// be accessible under the `/api/db` path.
+// be accessible under the `/ta-portal-api/db` path.
 router.use("/db", db_router);
 
 // Mount the Slack router conditionally based on MESSAGING feature flag
-// All routes defined in `slack_routes.js` will be accessible under `/api/slack`
+// All routes defined in `slack_routes.js` will be accessible under `/ta-portal-api/slack`
 // only if the messaging feature is enabled.
 router.use("/slack", async (req, res, next) => {
   if (await isFeatureEnabled(FEATURES.MESSAGING)) {
@@ -58,10 +58,26 @@ router.use("/slack", async (req, res, next) => {
 // Mount dev notification and notifications API routes
 router.use('/dev', devNotifyRoutes);
 router.use('/notifications', notificationsApi);
+
+
+router.get("/health", async (req, res) => {
+  try {
+    res.status(200).json({
+      status: 'ok',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error'
+    });
+  }
+});
+
 // =============================================================================
 // EXPORTS
 // =============================================================================
 
-// Export the router directly so it can be mounted at `/api` in main.js
+// Export the router directly so it can be mounted at `/ta-portal-api` in main.js
 // For tests, create a separate app instance when needed
 module.exports = router;

@@ -243,7 +243,7 @@ router.post('/message-history', async (req, res) => {
 });
 
 /**
- * GET /api/slack/session
+ * GET /ta-portal-api/slack/session
  * Check if user has an active Slack session
  */
 router.get('/session', (req, res) => {
@@ -253,7 +253,7 @@ router.get('/session', (req, res) => {
 });
 
 /**
- * GET /api/slack/recent-dms
+ * GET /ta-portal-api/slack/recent-dms
  * Get list of recent DM conversations (excludes bots)
  */
 router.get('/recent-dms', async (req, res) => {
@@ -338,7 +338,7 @@ router.get('/recent-dms', async (req, res) => {
 });
 
 /**
- * POST /api/slack/logout
+ * POST /ta-portal-api/slack/logout
  * Clear Slack auth cookies
  */
 router.post('/logout', (req, res) => {

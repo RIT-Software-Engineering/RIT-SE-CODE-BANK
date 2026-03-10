@@ -2,7 +2,7 @@
 
 # --- Configuration Variables (MODIFY THESE) ---
 BACKEND_URL="https://localhost:3300"
-API_EXTENSION="/api"
+API_EXTENSION="/ta-portal-api"
 DATABASE_API_EXTENSION="/db"
 SLACK_API_EXTENSION="/slack"
 ENV_FILE=".env"

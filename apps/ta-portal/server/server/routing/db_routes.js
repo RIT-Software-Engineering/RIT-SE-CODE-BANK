@@ -22,7 +22,7 @@ const {
   getAllJobPositions,
   getAllUsers,
   getAllCourses,
-  createCourse,
+  upsertCourse,
   authenticateUser,
   resetPassword,
   getUser,
@@ -127,7 +127,7 @@ const upload = multer({
 // =============================================================================
 
 /**
- * @route   GET /api/db/positions
+ * @route   GET /ta-portal-api/db/positions
  * @desc    Searches all job positions, or retrieves all if no queries are provided.
  * @access  Public (Admins get more powerful filtering on the frontend)
  * @query   {string} [searchTerm] - Optional search term.
@@ -158,7 +158,7 @@ router.get("/positions", async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/positions/open
+ * @route   GET /ta-portal-api/db/positions/open
  * @desc    Searches and filters all OPEN job positions.
  * @access  Public
  * @query   {string} [searchTerm] - Optional search term.
@@ -189,7 +189,7 @@ router.get("/positions/open", async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/positions/owner/:username
+ * @route   GET /ta-portal-api/db/positions/owner/:username
  * @desc    Retrieves job positions owned by a specific user, with optional filters.
  * @access  Public (should be protected by auth middleware)
  * @param   {string} username - The username of the position owner.
@@ -221,7 +221,7 @@ router.get("/positions/owner/:username", async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/positions
+ * @route   POST /ta-portal-api/db/positions
  * @desc    Creates a new job position record.
  * @access  Public
  * @body    {Object} positionData - An object containing job position details.
@@ -252,7 +252,7 @@ router.post("/positions", async (req, res) => {
 });
 
 /**
- * @route   PUT /api/db/positions/:id
+ * @route   PUT /ta-portal-api/db/positions/:id
  * @desc    Updates an existing job position record.
  * @access  Public
  * @param   {string} id - The ID of the job position to update.
@@ -284,7 +284,7 @@ router.put("/positions/:id", async (req, res) => {
 });
 
 /**
- * @route   PUT /api/db/positions/:id/status
+ * @route   PUT /ta-portal-api/db/positions/:id/status
  * @desc    Updates only the status of a specific job position.
  * @access  Public (should be protected by auth middleware)
  * @param   {string} id - The ID of the job position to update.
@@ -311,7 +311,7 @@ router.put("/positions/:id/status", async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/apply
+ * @route   POST /ta-portal-api/db/apply
  * @desc    Creates a new job application record for a candidate using an existing resume.
  * @access  Public
  * @body    {object} jobPositionApplicationData - The application details.
@@ -338,7 +338,7 @@ router.post('/apply', async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/apply-with-uploads
+ * @route   POST /ta-portal-api/db/apply-with-uploads
  * @desc    Handles a job application that may include a new resume and/or a cover letter.
  * @access  Public
  */
@@ -407,7 +407,7 @@ router.post(
 );
   
 /**
- * @route   DELETE /api/db/applications/:username
+ * @route   DELETE /ta-portal-api/db/applications/:username
  * @desc    Deletes a job application record for a candidate.
  * @access  Public
  * @param   {string} username - The username of the candidate.
@@ -451,7 +451,7 @@ router.delete('/applications/:username', async (req, res) => {
     ) {
       return res.status(404).json({ message: 'Application not found.' });
     }
-    console.error('API Error deleting application:', error);
+    console.error('ta-portal-api Error deleting application:', error);
     res
       .status(500)
       .json({ message: 'An error occurred while deleting the application.' });
@@ -459,7 +459,7 @@ router.delete('/applications/:username', async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/candidate/:username/hired-status
+ * @route   GET /ta-portal-api/db/candidate/:username/hired-status
  * @desc    Retrieves the hired status of a candidate for a specific semester.
  * @access  Public
  * @param   {string} username - The username of the candidate.
@@ -486,7 +486,7 @@ router.get('/candidate/:username/hired-status', async (req, res) => {
 });
 
 /**
- * @route   PUT /api/db/applications/:id
+ * @route   PUT /ta-portal-api/db/applications/:id
  * @desc    Updates an existing job application record's status and comments that was initially created by a candidate.
  * @access  Public
  * @param   {string} id - The id of the application.
@@ -538,7 +538,7 @@ router.put('/applications/:id', async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/applications/candidate
+ * @route   GET /ta-portal-api/db/applications/candidate
  * @desc    Retrieves and searches and filters job applications based on query parameters.
  * @access  Public
  * @query   {string} [searchTerm] - Text to search in course names/codes.
@@ -562,7 +562,7 @@ router.get('/applications/candidate', async (req, res) => {
 })
 
 /**
- * @route   GET /api/db/applications/employer
+ * @route   GET /ta-portal-api/db/applications/employer
  * @desc    Retrieves and searches and filters job applications based on query parameters.
  * @access  Public
  * @query   {string} [searchTerm] - Text to search in course names/codes.
@@ -589,7 +589,7 @@ router.get('/applications/employer', async (req, res) => {
 
 
 /**
- * @route   GET /api/db/semester-codes
+ * @route   GET /ta-portal-api/db/semester-codes
  * @desc    Retrieves all unique semester codes. Can be filtered by status or employer.
  * @access  Public
  * @query   {string} [status] - Optional. Filter by job position status.
@@ -609,7 +609,7 @@ router.get('/semester-codes', async (req, res) => {
 
 
 /**
- * @route   GET /api/db/applications/admin
+ * @route   GET /ta-portal-api/db/applications/admin
  * @desc    Gets all applications with status "ACCEPTED_OFFER" for admin hiring review.
  * @access  Public (should be protected by admin auth middleware)
  * @returns {Array} An array of application objects with job position and resume details.
@@ -625,7 +625,7 @@ router.get("/applications/admin", async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/applications/admin/all
+ * @route   GET /ta-portal-api/db/applications/admin/all
  * @desc    Gets ALL applications across the system for admin viewing, with search and filters.
  * @access  Public (should be protected by admin auth middleware)
  * @query   {string} search - Search term for course code/name or student name.
@@ -666,7 +666,7 @@ router.get("/applications/admin/all", async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/positions/:id/is-full
+ * @route   GET /ta-portal-api/db/positions/:id/is-full
  * @desc    Checks if a job position is full (status is 'FILLED' or 'ACTIVE').
  * @access  Public (should be protected by auth middleware)
  * @param   {string} id - The ID of the job position to check.
@@ -689,7 +689,7 @@ router.get("/positions/:id/is-full", async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/hire
+ * @route   POST /ta-portal-api/db/hire
  * @desc    Hires a candidate for a job position and promotes them to employee.
  * @access  Public (should be protected by admin auth middleware)
  * @body    {string} candidateUsername - The username of the candidate to hire.
@@ -750,7 +750,7 @@ router.post("/hire", async (req, res) => {
 // =============================================================================
 
 /**
- * @route   GET /api/db/users
+ * @route   GET /ta-portal-api/db/users
  * @desc    Retrieves a list of all users.
  * @access  Public
  */
@@ -766,7 +766,7 @@ router.get('/users', async (req, res, next) => {
 });
 
 /**
- * @route   GET /api/db/user/:username
+ * @route   GET /ta-portal-api/db/user/:username
  * @desc    Retrieves a user's profile by their username.
  * @access  Public
  * @param   {string} username - The user's unique identifier.
@@ -787,7 +787,7 @@ router.get('/user/:username', async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/login
+ * @route   POST /ta-portal-api/db/login
  * @desc    Authenticates a user and returns their profile.
  * @access  Public
  * @body    {string} username - The username of the user.
@@ -810,7 +810,7 @@ router.post('/login', async (req, res) => {
 })
 
 /**
- * @route   POST /api/db/reset-password
+ * @route   POST /ta-portal-api/db/reset-password
  * @desc    Sets a new password using a reset token.
  * @access  Public
  * @body    {string} token - The password reset token.
@@ -837,7 +837,7 @@ router.post('/reset-password', async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/users/:username
+ * @route   GET /ta-portal-api/db/users/:username
  * @desc    Retrieves a single user's profile by their username.
  * @access  Public
  * @param   {string} username - The user's unique identifier.
@@ -853,7 +853,7 @@ router.get('/user-profile/:username', async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/candidate-profile
+ * @route   POST /ta-portal-api/db/candidate-profile
  * @desc    Creates a new candidate profile.
  * @access  Public (or protected, depending on your auth rules)
  * @body    {object} candidateData - The full profile data for the new candidate.
@@ -882,7 +882,7 @@ router.post('/candidate-profile', async (req, res) => {
 });
 
 /**
- * @route   PUT /api/db/candidate-profile/:username
+ * @route   PUT /ta-portal-api/db/candidate-profile/:username
  * @desc    Updates an existing candidate's profile.
  * @access  Public (or protected)
  * @param   {string} username - The unique identifier of the user to update.
@@ -902,7 +902,7 @@ router.put('/candidate-profile/:username', async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/employer-profile
+ * @route   POST /ta-portal-api/db/employer-profile
  * @desc    Creates a new employer profile.
  * @access  Public (or protected)
  * @body    {object} employerData - The full profile data for the new employer.
@@ -922,7 +922,7 @@ router.post("/employer-profile", async (req, res) => {
 });
 
 /**
- * @route   PUT /api/db/employer-profile/:username
+ * @route   PUT /ta-portal-api/db/employer-profile/:username
  * @desc    Updates an existing employer's profile.
  * @access  Public (or protected)
  * @param   {string} username - The unique identifier of the user to update.
@@ -942,7 +942,7 @@ router.put("/employer-profile/:username", async (req, res) => {
 });
 
 /**
- * @route   PUT /api/db/terminate-employee/:username
+ * @route   PUT /ta-portal-api/db/terminate-employee/:username
  * @desc    Terminates an employee by updating their job history to 'TERMINATED'.
  * @access  Public
  * @param   {number} username - The employee's username.
@@ -967,7 +967,7 @@ router.put('/terminate-employee/:username', async (req, res) => {
 // =============================================================================
 
 /**
- * @route   POST /api/db/resume
+ * @route   POST /ta-portal-api/db/resume
  * @desc    Adds a new resume for a candidate.
  * @access  Public
  */
@@ -1005,7 +1005,7 @@ router.post('/resume', upload.single('resumeFile'), async (req, res) => {
 );
 
 /**
- * @route   Update /api/db/primary-resume/:candidateUsername/:resumeId
+ * @route   Update /ta-portal-api/db/primary-resume/:candidateUsername/:resumeId
  * @desc    Updates the primary resume by its ID.
  * @access  Public
  */
@@ -1022,7 +1022,7 @@ router.put('/primary-resume/:candidateUsername/:resumeId', async (req, res) => {
 );
 
 /**
- * @route Update /api/db/resume-name/:resumeId
+ * @route Update /ta-portal-api/db/resume-name/:resumeId
  * @desc Updates the name of a resume by its ID.
  * @access Public
  */
@@ -1039,7 +1039,7 @@ router.put('/resume-name/:resumeId', async (req, res) => {
 })
 
 /**
- * @route   DELETE /api/db/resume/:resumeId
+ * @route   DELETE /ta-portal-api/db/resume/:resumeId
  * @desc    Deletes a resume by its ID and its associated file.
  * @access  Public
  */
@@ -1105,7 +1105,7 @@ router.delete('/resume/:resumeId', async (req, res) => {
 // =============================================================================
 
 /**
- * @route   GET /api/db/courses
+ * @route   GET /ta-portal-api/db/courses
  * @desc    Retrieves a list of all available courses.
  * @access  Public
  */
@@ -1120,7 +1120,7 @@ router.get('/courses', async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/comments
+ * @route   GET /ta-portal-api/db/comments
  * @desc    Retrieves comments for a specific table and foreign key.
  * @access  Public
  */
@@ -1137,18 +1137,18 @@ router.get('/comments', async (req, res) => {
 });
 
 /**
- * @route   POST /api/db/create-course
- * @desc    Creates a new course with the provided data.
+ * @route   POST /ta-portal-api/db/upsert-course
+ * @desc    Updates or Creates a new course with the provided data.
  * @access  Public
  */
-router.post("/create-course", async (req, res) => {
+router.post("/upsert-course", async (req, res) => {
   try {
     const courseData = req.body;
-    const newCourse = await createCourse(courseData);
+    const newCourse = await upsertCourse(courseData);
     res.status(201).json(newCourse);
   } catch (error) {
-    console.error("Error in /create-course route:", error);
-    res.status(500).json({ error: "Failed to create course." });
+    console.error("Error in /upsert-course route:", error);
+    res.status(500).json({ error: "Failed to upsert course." });
   }
 });
 
@@ -1178,7 +1178,7 @@ router.post("/upsert-timecard", async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/timecard/all/:jobPositionHistoryId
+ * @route   GET /ta-portal-api/db/timecard/all/:jobPositionHistoryId
  * @desc    Retrieves all timecards for a specific job position history.
  * @access  Public
  */
@@ -1201,7 +1201,7 @@ router.get('/timecard/all/:jobPositionHistoryId', async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/timecard/admin/all
+ * @route   GET /ta-portal-api/db/timecard/admin/all
  * @desc    Retrieves all timecards for the admin view.
  */
 router.get("/timecard/admin/all", async (req, res) => {
@@ -1215,7 +1215,7 @@ router.get("/timecard/admin/all", async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/timecard/employer/:employerUsername
+ * @route   GET /ta-portal-api/db/timecard/employer/:employerUsername
  * @desc    Retrieves all timecards for a specific employer's employees.
  * @param   {string} employerUsername - The RIT username of the employer.
  */
@@ -1234,7 +1234,7 @@ router.get("/timecard/employer/:employerUsername", async (req, res) => {
 });
 
 /**
- * @route   GET /api/db/notifications/preferences
+ * @route   GET /ta-portal-api/db/notifications/preferences
  * @desc    Returns the current user's notification preferences.
  * @access  Public (replace with auth middleware when available)
  */
@@ -1250,7 +1250,7 @@ router.get("/notifications/preferences", async (req, res) => {
 });
 
 /**
- * @route   PUT /api/db/notifications/preferences
+ * @route   PUT /ta-portal-api/db/notifications/preferences
  * @desc    Creates or updates the user's notification preferences.
  * @body    {string} username - The user’s username.
  * @body    {boolean} notifyEmail
@@ -1272,7 +1272,7 @@ router.put("/notifications/preferences", async (req, res) => {
 // =============================================================================
 
 /**
- * @route   GET /api/db/feature-flags
+ * @route   GET /ta-portal-api/db/feature-flags
  * @desc    Get all feature flags and their current status
  * @access  Admin only (should add authentication middleware in production)
  * @returns {JSON} Object mapping feature names to enabled status
@@ -1288,7 +1288,7 @@ router.get("/feature-flags", async (req, res) => {
 });
 
 /**
- * @route   PUT /api/db/feature-flags/:featureName
+ * @route   PUT /ta-portal-api/db/feature-flags/:featureName
  * @desc    Update a feature flag's enabled status
  * @access  Admin only (should add authentication middleware in production)
  * @body    {boolean} enabled - Whether the feature should be enabled

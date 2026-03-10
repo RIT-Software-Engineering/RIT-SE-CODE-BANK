@@ -16,7 +16,7 @@ export APP_SERVER_PORT="3300"
 
 export SLACK_CLIENT_ID="8356401273568.9110035154276"
 export SLACK_CLIENT_SECRET="03750f2fb26d6cc604010e4d306dafdc"
-export SLACK_REDIRECT_URI="https://localhost:3300/api/slack/oauth_redirect"
+export SLACK_REDIRECT_URI="https://localhost:3300/ta-portal-api/slack/oauth_redirect"
 
 ENV_FILE=".env"
 # --- End Configuration ---

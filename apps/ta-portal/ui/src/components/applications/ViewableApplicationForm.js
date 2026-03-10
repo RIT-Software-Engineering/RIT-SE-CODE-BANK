@@ -28,8 +28,8 @@ import { Close as CloseIcon, Article as DocumentIcon } from '@mui/icons-material
  * @param {Object} props.application - The candidate's submitted application data
  * @param {Function} props.onClose - Callback to close the dialog
  */
-export default function ViewableApplicationForm({ position, application, onClose }) {
-  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
+export default function ViewableApplicationForm({position, application, onClose }) {
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION + process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 
   const submittedResume = application.resume;
 

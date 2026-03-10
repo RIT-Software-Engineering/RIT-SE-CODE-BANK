@@ -154,6 +154,12 @@ const HEADER_LINKS = [
     icon: <InfoIcon />,
     roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE ]
   },
+  {
+    text: "Course List",
+    href: "/courses",
+    icon: <Description />,
+    roles: [ROLES.ADMIN]
+  }
 ];
 
 
@@ -656,7 +662,7 @@ export default function Header() {
             {/* RIT Logo - Using actual RIT logo image */}
             <Link href="/" style={{ display: "flex", alignItems: "center" }}>
               <Image
-                src="/rit-logo.png"
+                src={"/ta-portal/rit-logo.png"}
                 alt="RIT Logo"
                 width={100}
                 height={100}
@@ -698,7 +704,7 @@ export default function Header() {
                   mr: 2,
                 }}
               >
-                {availableLinks.slice(0, 5).map((link) => {
+                {availableLinks.slice(0, 6).map((link) => {
                   const finalHref =
                     link.href.includes("[username]") && currentUser
                       ? link.href.replace("[username]", currentUser.username)

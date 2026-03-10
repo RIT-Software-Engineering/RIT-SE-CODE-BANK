@@ -2411,6 +2411,7 @@ async function getAllCourses() {
       select: {
         courseCode: true,
         name: true,
+        description: true
       },
     });
   } catch (error) {
@@ -2420,22 +2421,29 @@ async function getAllCourses() {
 }
 
 /**
- * Creates a new course in the database.
+ * Updates a course in the database or creates a new one if one does not exist with the given course code.
  * @param {object} courseData - An object containing the course code, name, and description.
  * @returns {Promise<object>} A promise that resolves to the created course object.
  */
-async function createCourse(courseData) {
+async function upsertCourse(courseData) {
   const { courseCode, name, description } = courseData;
   try {
-    return await prisma.course.create({
-      data: {
+    return await prisma.course.upsert({
+      where: {
+        courseCode: courseCode
+      },
+      update: {
+        name: name,
+        description: description,
+      },
+      create: {
         courseCode: courseCode,
         name: name,
         description: description,
       },
     });
   } catch (error) {
-    console.error("Error creating course:", error);
+    console.error("Error creating or editing course:", error);
     throw error;
   }
 }
@@ -2718,7 +2726,7 @@ module.exports = {
   getOpenJobPositions,
   getJobPositionsByOwner,
   getAllJobPositions,
-  createCourse,
+  upsertCourse,
   getComments,
   terminateEmployee,
   upsertTimecard,

@@ -1,4 +1,4 @@
-// File: apps/ta-portal/server/server/database/prisma/ta-portal/seed.js
+// File: apps/ta-portal/server/server/database/prisma/seed.js
 
 const os = require('os');
 const { PrismaClient } = require('@prisma/client');
@@ -53,7 +53,16 @@ async function seedMacLinux() {
                 }
 
                 const columns = stmt.columns;
-                let dataObjects = stmt.values.map(valueSet => {
+                let rawValues = [];
+                if (Array.isArray(stmt.values)){
+                    rawValues = stmt.values;
+                } else if (stmt.values?.values){
+                    rawValues = stmt.values.values;
+                } else {
+                    console.warn('Unexpected INSERT format in ${file}. Skipping');
+                    continue;
+                }
+                let dataObjects = rawValues.map(valueSet => {
                     const obj = {};
                     columns.forEach((col, index) => {
                         obj[col] = valueSet.value[index].value;
