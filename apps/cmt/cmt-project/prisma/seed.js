@@ -31,14 +31,39 @@ async function main() {
   };
 
   // Clear existing data (in reverse order of dependencies)
+  // console.log('🗑️  Clearing existing data...');
+  // await prisma.event.deleteMany({});
+  // await prisma.tBMember.deleteMany({});
+  // await prisma.tBTeam.deleteMany({});
+  // await prisma.tBTeamSet.deleteMany({});
+  // await prisma.tBEnrollment.deleteMany({});
+  // await prisma.templateItem.deleteMany({});
+  // await prisma.courseTemplate.deleteMany({});
+  // await prisma.course.deleteMany({});
+  // await prisma.professor.deleteMany({});
+
   console.log('🗑️  Clearing existing data...');
-  await prisma.event.deleteMany({});
+
+  // deepest dependencies
+  await prisma.sessionMaterial.deleteMany({});
   await prisma.tBMember.deleteMany({});
+
+  // next level
+  await prisma.session.deleteMany({});
   await prisma.tBTeam.deleteMany({});
-  await prisma.tBTeamSet.deleteMany({});
+
+  // next
   await prisma.tBEnrollment.deleteMany({});
+  await prisma.tBTeamSet.deleteMany({});
+
+  // course-related
+  await prisma.event.deleteMany({});
+
+  // templates
   await prisma.templateItem.deleteMany({});
   await prisma.courseTemplate.deleteMany({});
+
+  // parent tables
   await prisma.course.deleteMany({});
   await prisma.professor.deleteMany({});
 
