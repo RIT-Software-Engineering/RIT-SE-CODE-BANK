@@ -4,18 +4,19 @@ import { RichTextEditor } from "../../components/RichTextEditor";
 import { CMTFetch } from "../../utils/api";
 import { Edit } from "lucide-react";
 import { useParams } from "react-router-dom";
+import { CheckmarkActionRenderer } from "../../components/workflows/ActionRenderers/GenericActionRenderer";
 
 /**
  * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
  * The session component is an accordion that dynamically adds more items the higher the count. 
  * Displays a modal (when opened) and a table of uploaded resources. 
  *
- * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; }} param0
+ * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; sessionActions:any, updateWorkflow: () => void, fetchToCallback: any }} param0
  * sessionCount - the number of sessions a user has created
  * courseId - the identifier for which sessionData to obtain
  * @returns {*} the session accordion as HTML
  */
-export function Session({sessionCount, setSessionCount, sessions, setSessions}) {
+export function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback}) {
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
@@ -86,11 +87,18 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions}) 
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen}/>
         <DeleteModal />
         {
-            Array.from({ length: sessionCount }, (_, i) => (
-                <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
-                    <Accordion.Header>
-                        <Form.Check onClick={(e)=>e.stopPropagation()} className='mr-3 text-xl'></Form.Check>
-                        <span className='text-2xl'>Session {i+1}</span>
+            Array.from({ length: sessionCount }, (_, i) => {
+                const sessionAction = sessionActions?.find(sessionAction => sessionAction.action.metadata.code === `SESSION_${i}`)
+                
+                return (
+                    <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
+                        <Accordion.Header>
+                            <div className="flex items-center gap-2">
+                                {/* TODO: completion should be tracked in the DB in case a professor wants to create more sessions than required */}
+                                {sessionAction && <CheckmarkActionRenderer actionWithContext={sessionAction} refresh={updateWorkflow} fetchToCallback={fetchToCallback}/>}
+                                <span className='text-2xl'>Session {i+1}</span>
+                            </div>
+
                         </Accordion.Header>
                     <Accordion.Body>
                         { sessionData.find(data => data.sessionNum === i && data.active) ?
@@ -125,7 +133,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions}) 
                         </div>
                     </Accordion.Body>
                 </Accordion.Item>
-            ))
+            )
+            })
         }
       </Accordion>
   );
