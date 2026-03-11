@@ -47,6 +47,9 @@ export default function WorkflowPage() {
   const [allUsers, setAllUsers] = useState([]);
   const [assignedUsers, setAssignedUsers] = useState([]);
   const [userSearch, setUserSearch] = useState([]);
+  
+  //this is for the selected workflow data
+  const [workflowData, setWorkflowData] = useState(null);
 
   const baseUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL;
   const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -96,10 +99,16 @@ export default function WorkflowPage() {
       const workflowResponse = await fetch(workflowUrl.toString());
       if (!workflowResponse.ok) throw new Error('Failed to fetch workflow state');
       const states = await workflowResponse.json();
+      
       if (!states.length) throw new Error('No workflow state found for user');
 
       const state = states[0];
       setWorkflowState(state);
+      const workflowRes = await fetch(`${baseUrl}/workflows/${workflowId}`);
+      if(workflowRes.ok){
+        const workflow_data = await workflowRes.json();
+        setWorkflowData(workflow_data);
+      }
 
       const idsMap = {};
       state.actionStates.forEach(as => {
@@ -185,9 +194,31 @@ export default function WorkflowPage() {
       }
 
       setCompletedSteps((prev) => {
+        const rootActionId = workflowData?.rootActionId;
         const newSet = new Set(prev);
         if (newCompleted) newSet.add(actionId);
         else newSet.delete(actionId);
+
+        if(rootActionId){
+            const nonRootSteps = workflowState.actionStates.filter(s => s.actionId !== rootActionId);
+            const completed = nonRootSteps.every(s => newSet.has(s.actionId));
+            if(completed && nonRootSteps.length > 0){
+                newSet.add(rootActionId);
+                const rootStateActionId = actionStateIdsMap[rootActionId];
+                if(rootStateActionId){
+                    fetch(`${baseUrl}/states/handleSubmit`, {
+                        method: "POST",
+                        headers: {"Content-Type":"application/json"},
+                        body:JSON.stringify({
+                            actionStateId: rootStateActionId, userId,
+                            workflowStateId: workflowState?.id
+                        })
+                    }).catch(console.error);
+                }
+            }else{
+                newSet.delete(rootActionId);
+            }
+        }
         return newSet;
       });
     } catch (error) {
@@ -221,7 +252,6 @@ export default function WorkflowPage() {
   };
 
 //This will handle the removing of multiple users
-
 const handleRemoveAssignee = async (userId) => {
     try{
         //find the workflow state for this user and delete it
@@ -262,62 +292,103 @@ const handleRemoveAssignee = async (userId) => {
     setEditingActionName('');
     setEditingActionDescription('');
   };
-
-
+  
+  //This function used actionMaps which fetches asyncronasly, but now instead we will fetch directly from the db, so the 
+  //newly added data is can't be linked and finding the tail of the list is difficult, but now we start from the head and build
+  //the list from there so each and every tail is correctly set, and so no linking is messed up.
   const handleCreateAction = async () => {
     if (!newActionName.trim()) return;
-    if (!workflowState?.id) {
-      alert('No workflow state loaded');
-      return;
-    }
-    
+    if (!workflowState?.id) return alert('No workflow state loaded');
+
     try {
-      const response = await fetch(`${baseUrl}/actions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          workflowId,
-          name: newActionName.trim(),
-          description: newActionDescription.trim(),
-          userId,
-          metadata: { title: newActionName.trim() }
-        })
-      });
-    
-      if (!response.ok) throw new Error('Failed to create action');
-      const newAction = await response.json();
+        const rootActionId = workflowData?.rootActionId;
+        const baseActionId = workflowData?.baseActionId;
 
-      const lastStep = workflowState.actionStates[workflowState.actionStates.length - 1];
-      if (lastStep) {
-        await fetch(`${baseUrl}/actions/${lastStep.actionId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nextActionId: newAction.id })
+        //Fetches actions from the server doesn't rely on actionMaps anymore.
+        const nonRootStates = workflowState.actionStates.filter(
+            s => s.actionId !== rootActionId && s.actionId !== baseActionId
+        );
+        const actionIds = nonRootStates.map(s => s.actionId);
+
+        let freshActionsMap = {};
+        if(actionIds.length > 0){
+            const actionsUrl = new URL(`${baseUrl}/actions`);
+            actionsUrl.searchParams.append('ids', actionIds.join(','));
+            const res = await fetch(actionsUrl.toString());
+            const freshActions = await res.json();
+            freshActions.forEach(a => {freshActionsMap[a.id] = a;});
+        }
+
+        //Walks through the linked list from root to find the tailm instead of relying on state to hold previous tail.
+        let tailActionId = rootActionId;
+        const rootAction = await fetch(`${baseUrl}/actions/${rootActionId}`).then(r => r.json());
+        let currentId = rootAction?.nextActionId;
+
+        while(currentId && freshActionsMap[currentId]){
+            tailActionId = currentId;
+            currentId = freshActionsMap[currentId]?.nextActionId ?? null;
+        }
+
+        //Creates the new action
+        const response = await fetch(`${baseUrl}/actions`,{
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                workflowId,
+                name: newActionName.trim(),
+                description: newActionDescription.trim(),
+                userId,
+                metadata: {title: newActionName.trim()}
+            })
+        });
+        if (!response.ok) throw new Error('Failed to create action');
+        const newAction = await response.json();
+
+        //(Link tail) goes to (new action) which goes to (nothing yet)
+        await fetch(`${baseUrl}/actions/${tailActionId}`,{
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({nextActionId: newAction.id})
+        });
+        await fetch(`${baseUrl}/actions/${newAction.id}`,{
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({parentActionId: tailActionId})
         });
 
-        await fetch(`${baseUrl}/actions/${newAction.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ parentActionId: lastStep.actionId })
+        //Attaches to the workflow state and refreshs, so the data updates
+        // After attaching to workflow state and before fetchWorkflowAndActions()
+        const attachRes = await fetch(`${baseUrl}/states/workflow/${workflowState.id}`,{
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
         });
-      }
-    
-      const attachRes = await fetch(`${baseUrl}/states/workflow/${workflowState.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          actionId: newAction.id,
-          stateType: 'notStarted'
-        })
-      });
-      if (!attachRes.ok) throw new Error('Failed to attach action to workflow state');
-    
-      await fetchWorkflowAndActions();
-    
-      handleCloseModal();
-    } catch (error) {
-      console.error('Error creating action:', error);
-      alert(error.message);
+        if (!attachRes.ok) throw new Error('Failed to attach action to workflow state');
+
+        //syncing new action to ALL assigned users workflow states
+        const allStatesRes = await fetch(`${baseUrl}/states/workflow?workflowId=${workflowId}`);
+        if (allStatesRes.ok) {
+            const allStates = await allStatesRes.json();
+            await Promise.all(
+                allStates
+                    .filter(s => s.id !== workflowState.id) //skipping current user
+                    .map(s => fetch(`${baseUrl}/states/workflow/${s.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            newActionState: {
+                                actionId: newAction.id,
+                                stateType: 'notStarted'
+                            }
+                        })
+                    }))
+            );
+        }
+
+        await fetchWorkflowAndActions();
+        handleCloseModal();
+    }catch (error){
+        console.error('Error creating action:', error);
+        alert(error.message);
     }
   };
 
@@ -371,7 +442,29 @@ const handleRemoveAssignee = async (userId) => {
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
   if (!workflowState) return <Typography sx={{ p: 4 }}>No workflow state available</Typography>;
 
-  const steps = workflowState.actionStates;
+  const rootActionId = workflowData?.rootActionId;
+  const baseActionId = workflowData?.baseActionId;
+  const userSteps = workflowState.actionStates.filter(
+    s => s.actionId !== rootActionId && s.actionId !== baseActionId
+  );
+  const sortedSteps = [];
+  if (userSteps.length > 0) {
+    const stepsByActionId = {};
+    userSteps.forEach(s => { stepsByActionId[s.actionId] = s; });
+    const rootAction = actionsMap[rootActionId];
+    let currentActionId = rootAction?.nextActionId;
+    while (currentActionId && stepsByActionId[currentActionId]) {
+        sortedSteps.push(stepsByActionId[currentActionId]);
+        currentActionId = actionsMap[currentActionId]?.nextActionId ?? null;
+    }
+    userSteps.forEach(s => {
+        if (!sortedSteps.find(ss => ss.id === s.id)) sortedSteps.push(s);
+    });
+   }
+   const steps = sortedSteps;
+   
+//    console.log('userSteps count:', userSteps.length);
+// console.log('sortedSteps count:', sortedSteps.length);
 
   return (
     <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
@@ -395,7 +488,7 @@ const handleRemoveAssignee = async (userId) => {
                   maxWidth: 'max-content',
                 }}
               >
-                {workflowState.workflow?.name ?? actionsMap[workflowState.workflow?.rootActionId]?.name ?? 'Untitled Workflow'}
+                {workflowData?.baseAction?.name ?? 'Untitled Workflow'}
               </Typography>
 
               <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
@@ -423,7 +516,7 @@ const handleRemoveAssignee = async (userId) => {
                   size="small"
                   color="error"
                   sx={{ textTransform: 'none' }}
-                  onClick={() => handleDeleteWorkflow(workflowState.workflow?.id)}
+                  onClick={() => handleDeleteWorkflow(workflowId)}
                 >
                   Delete
                 </Button>

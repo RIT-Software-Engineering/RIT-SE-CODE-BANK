@@ -103,6 +103,10 @@ export default function WorkflowsList() {
             name: wfName,
             steps,
             };
+        }).sort((a,b) => {
+            const dateA = new Date(workflowsById[a.id]?.createdAt ?? 0);
+            const dateB = new Date(workflowsById[b.id]?.createdAt ?? 0);
+            return dateB - dateA;
         });
 
         setWorkflows(workflowsWithSteps);
@@ -170,7 +174,7 @@ export default function WorkflowsList() {
     setCreateError(null);
 
     try {
-      // Step 1: Create the workflow
+      //Create the workflow
       const workflowResponse = await fetch(`${baseUrl}/workflows`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -191,13 +195,13 @@ export default function WorkflowsList() {
 
       const workflow = await workflowResponse.json();
 
-      // Step 2: Create the root action
+      //Create the root action
       const actionResponse = await fetch(`${baseUrl}/actions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          name: `${name.trim()} Root Action`, // or any name convention
+          name: `${name.trim()} Root Action`,
           description: `Root action for workflow ${name.trim()}`,
           metadata: {},
         }),
@@ -209,7 +213,7 @@ export default function WorkflowsList() {
 
       const action = await actionResponse.json();
 
-      // Step 3: Attach rootActionId to the workflow via PUT request
+      //Attach rootActionId to the workflow via PUT request
       const updateResponse = await fetch(`${baseUrl}/workflows/${workflow.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -222,8 +226,7 @@ export default function WorkflowsList() {
         throw new Error('Failed to update workflow with rootActionId');
       }
 
-      // Step 4: Create workflow state for each assigned user
-
+      //Create workflow state for each assigned user
       const userIDs = assignedUserID.length > 0 ? assignedUserID : [userId];
       await Promise.all(
         userIDs.map(uid => fetch(`${baseUrl}/states/workflow`, {
@@ -243,13 +246,6 @@ export default function WorkflowsList() {
         )
       );
 
-      
-
-      handleClose();
-      setLoading(true);
-      setError(null);
-      setWorkflows([]);
-      setCompletedStepsMap({});
       const fetchDataAgain = async () => {
         try {
           const workflowsRes = await fetch(`${baseUrl}/workflows`);
@@ -301,8 +297,11 @@ export default function WorkflowsList() {
             link: `/scoopdinator/workflows/${ws.workflowId}`,
             }));
             return { id: ws.workflowId, name: wfName, steps };
+        }).sort((a,b) => {
+            const dateA = new Date(workflowsById[a.id]?.createdAt ?? 0);
+            const dateB = new Date(workflowsById[b.id]?.createdAt ?? 0);
+            return dateB - dateA;
         });
-
           setWorkflows(workflowsWithSteps);
 
           const completedMap = {};
@@ -322,8 +321,11 @@ export default function WorkflowsList() {
           setLoading(false);
         }
       };
-
-      fetchDataAgain();
+      
+      //This is to fix the add workflow modal issue, where the text fields disappear after creating a workflow
+      await fetchDataAgain();
+      setCreating(false);
+      handleClose();
 
     } catch (err) {
       setCreateError(err.message || 'Error creating workflow');
@@ -413,17 +415,28 @@ export default function WorkflowsList() {
       </Container>
 
       <Modal
+        key={modalOpen ? 'open' : 'closed'}
         open={modalOpen}
         onClose={handleClose}
         aria-labelledby="create-workflow-modal"
         disableEscapeKeyDown={creating}
       >
-        <Box sx={modalStyle} component="form" onSubmit={handleCreate}>
+        <Box
+            component="form" 
+            onSubmit={handleCreate} 
+            sx={{
+                ...modalStyle,
+                fontSize: '1rem',
+                '& .MuiInputLabel-root': {fontSize: '1rem'},
+                '& .MuiInputBase-input': {fontSize: '1rem'},
+                '& .MuiButton-root': {fontSize: '0.875rem'},
+            }}>
           <Typography id="create-workflow-modal" variant="h6" component="h2" mb={2}>
             Create New Workflow
           </Typography>
 
           <TextField
+            variant="outlined"
             label="Workflow Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -434,6 +447,7 @@ export default function WorkflowsList() {
           />
 
           <TextField
+            variant="outlined"
             label="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -445,6 +459,7 @@ export default function WorkflowsList() {
           />
 
           <TextField
+            variant="outlined"
             label="Tags (comma separated)"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
