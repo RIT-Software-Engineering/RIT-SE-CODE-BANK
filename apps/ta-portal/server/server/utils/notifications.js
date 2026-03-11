@@ -1,11 +1,11 @@
-const DEFAULT_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4000';
+const DEFAULT_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL;
+const NOTIFICATION_API_EXTENSION = process.env.NOTIFICATION_API_EXTENSION
 if (process.env.NODE_ENV !== 'test') {
   // One-time debug log to aid diagnosing proxy target
   // eslint-disable-next-line no-console
-  console.log(`[notifications-proxy] Using notification service at: ${DEFAULT_SERVICE_URL}`);
+  console.log(`[notifications-proxy] Using notification service at: ${DEFAULT_SERVICE_URL}${NOTIFICATION_API_EXTENSION}`);
 }
 const APP_ID = process.env.NOTIFICATION_CLIENT_APP_ID || 'ta-portal';
-const NOTIFICATION_API_EXTENSION = process.env.NOTIFICATION_API_EXTENSION
 
 let fetchImpl;
 try {
