@@ -272,78 +272,89 @@ function Session({sessionCount, setSessionCount, sessions, setSessions, sessionA
  * courseId - the course ID for resource linking
  * @returns {*} the modal as HTML
  */
-function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions, courseId}){
-    const [itemLabel, setItemLabel] = useState('');
-    const [itemBody, setItemBody] = useState('');
-    const [itemType, setItemType] = useState('Topic/Lecture');
-    const [warningVisible, setWarningVisible] = useState(false);
+function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions, courseId }) {
+    const [itemLabel, setItemLabel] = useState('')
+    const [itemBody, setItemBody] = useState('')
+    const [itemType, setItemType] = useState('Topic/Lecture')
+    const [warningVisible, setWarningVisible] = useState(false)
 
     /** Makes a post request and updates the session data.
      * Is it a little weird that it uses id and sessionNum? Yeah probably but it works
      * If prisma has views you can use that but I wasn't aware of them if so when writing this
      */
-    function uploadSessionMaterial(){
-        const id = sessions.find(session => session.sessionNum === (sessionNum+1)).id
-        CMTJsonFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(async (response) => {
-        const data = await response.json();
-        setSessionData(sessionData => [...sessionData, data.material]);
+    function uploadSessionMaterial() {
+        const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
+        CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody, sessionNum }).then(async response => {
+            const data = await response.json()
+            setSessionData(sessionData => [...sessionData, data.material])
         })
     }
 
-    function resetForm(){
-        setItemType('Topic/Lecture');
-        setItemLabel('');
-        setItemBody('');
-        setWarningVisible(false);
+    function resetForm() {
+        setItemType('Topic/Lecture')
+        setItemLabel('')
+        setItemBody('')
+        setWarningVisible(false)
     }
 
     return (
-            <Modal show={isOpen} onHide={() => {setIsOpen(false); 
-            resetForm();}} centered size='lg'>
-                <Modal.Header closeButton>Add Material</Modal.Header>
-                <Modal.Body>
-                    <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Please create a title for the material!</div>
-                    <Form onSubmit={uploadSessionMaterial}>
-                        <div className='flex'>
-                            <div className='w-full'>
-                                <div>
+        <Modal
+            show={isOpen}
+            onHide={() => {
+                setIsOpen(false)
+                resetForm()
+            }}
+            centered
+            size='lg'
+        >
+            <Modal.Header closeButton>Add Material</Modal.Header>
+            <Modal.Body>
+                <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Please create a title for the material!</div>
+                <Form onSubmit={uploadSessionMaterial}>
+                    <div className='flex'>
+                        <div className='w-full'>
+                            <div>
                                 <Form.Label>Material Type</Form.Label>
-                                <Form.Select onChange={(e)=>setItemType(e.target.value)}>
-                                <option>Topic/Lecture</option>
-                                <option>Class Activity</option>
-                                <option>Reading/Resources</option>
-                                <option>Projects & Practica</option>
-                                <option>Group Assignment</option>
-                                <option>Individual Assignment</option>
-                                {!sessionData.find(data => data.sessionNum === sessionNum && data.type==="Personal Notes") ? <option>Personal Notes</option> : <></>} 
+                                <Form.Select onChange={e => setItemType(e.target.value)}>
+                                    <option>Topic/Lecture</option>
+                                    <option>Class Activity</option>
+                                    <option>Reading/Resources</option>
+                                    <option>Projects & Practica</option>
+                                    <option>Group Assignment</option>
+                                    <option>Individual Assignment</option>
+                                    {!sessionData.find(data => data.sessionNum === sessionNum && data.type === 'Personal Notes') ? <option>Personal Notes</option> : <></>}
                                 </Form.Select>
-                                </div>
-                                <div>
+                            </div>
+                            <div>
                                 <Form.Label>Title (Required)</Form.Label>
-                                <Form.Control placeholder={"My Title"} onChange={(e)=>setItemLabel(e.target.value)} required></Form.Control>
-                                </div>
-                                <div>
+                                <Form.Control placeholder={'My Title'} onChange={e => setItemLabel(e.target.value)} required></Form.Control>
+                            </div>
+                            <div>
                                 <Form.Label>Content</Form.Label>
-                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId}/>
-                                </div>
+                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId} />
                             </div>
                         </div>
-                       
-                        <div className='flex justify-end pt-3'>
-                            <Button type="submit" onClick={(e) => {
-                            e.preventDefault();
-                            if (itemLabel){
-                                uploadSessionMaterial();
-                                setIsOpen(false);
-                                resetForm();
-                            }
-                            else setWarningVisible(true);
-                            }}>Submit</Button>
-                        </div>
-                    </Form>
-                </Modal.Body>
-            </Modal>
-    );
+                    </div>
+
+                    <div className='flex justify-end pt-3'>
+                        <Button
+                            type='submit'
+                            onClick={e => {
+                                e.preventDefault()
+                                if (itemLabel) {
+                                    uploadSessionMaterial()
+                                    setIsOpen(false)
+                                    resetForm()
+                                } else setWarningVisible(true)
+                            }}
+                        >
+                            Submit
+                        </Button>
+                    </div>
+                </Form>
+            </Modal.Body>
+        </Modal>
+    )
 }
 
 /**
