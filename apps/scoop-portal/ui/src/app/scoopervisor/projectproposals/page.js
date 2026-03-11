@@ -1,57 +1,49 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Header from "@components/Header";
+import { useTheme } from "@mui/material/styles";
 import {
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
+  Typography,
   Paper,
   Table,
-  TableBody,
-  TableCell,
   TableHead,
+  TableCell,
   TableRow,
+  TableBody,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Box,
+  DialogActions,
   TableSortLabel,
+  Snackbar,
+  Alert,
   TextField,
-  Typography,
-  Tooltip,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  InputAdornment,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { useRouter } from "next/navigation";
 import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
-import Header from "@components/Header";
 import { useUser } from "../../utils/user-context/page";
-import Snackbar from "@components/Snackbar";
-
-const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED"];
-const STATUS_COLORS = {
-  APPROVED: "success",
-  REJECTED: "error",
-  PENDING: "warning",
-};
 
 const StatusBadge = ({ status }) => {
   const theme = useTheme();
-  const label = status
-    ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    : "Pending";
-  const color = STATUS_COLORS[status] ?? "warning";
-  const bgColor =
-    color === "success"
-      ? theme.palette.success.main
-      : color === "error"
-      ? theme.palette.error.main
-      : theme.palette.warning.main;
+  const config = {
+    APPROVED: { label: "Approved", color: theme.palette.success.main },
+    REJECTED: { label: "Rejected", color: theme.palette.error.main },
+    PENDING:  { label: "Pending",  color: theme.palette.warning.main },
+  };
+  const { label, color } = config[status] ?? config.PENDING;
   return (
     <Chip
       label={label}
@@ -60,7 +52,7 @@ const StatusBadge = ({ status }) => {
         fontWeight: 400,
         fontSize: "0.85rem",
         px: 1,
-        bgcolor: bgColor,
+        bgcolor: color,
         color: theme.ritColors.white,
         border: "none",
       }}
@@ -68,59 +60,37 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-function descendingComparator(a, b, orderBy) {
-  const aVal = orderBy === "createdAt" ? new Date(a[orderBy]) : (a[orderBy] ?? "");
-  const bVal = orderBy === "createdAt" ? new Date(b[orderBy]) : (b[orderBy] ?? "");
-  if (bVal < aVal) return -1;
-  if (bVal > aVal) return 1;
-  return 0;
-}
-
-function getComparator(order, orderBy) {
-  return order === "desc"
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
-const EMPTY_FORM = {
-  title: "",
-  description: "",
-};
-
 export default function ProposalsPage() {
+  const router = useRouter();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
-  const router = useRouter();
 
   const { user } = useUser();
   const currentUserId = user?.id;
 
   const [proposals, setProposals] = useState([]);
-  const [filter, setFilter] = useState("ALL");
-  const [order, setOrder] = useState("desc");
-  const [orderBy, setOrderBy] = useState("createdAt");
+  const [selectedProposal, setSelectedProposal] = useState(null);
+  const [sortField, setSortField] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+
+  const [filterStatus, setFilterStatus] = useState("ALL");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-
-  const [submitOpen, setSubmitOpen] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [formErrors, setFormErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [detailProposal, setDetailProposal] = useState(null);
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
-  useEffect(() => {
-    fetchProposals();
-  }, []);
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [newProposal, setNewProposal] = useState({ title: "", description: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitErrors, setSubmitErrors] = useState({});
 
   const fetchProposals = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/scoop-portal/api/projectproposal`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projectproposal`);
       const data = await res.json();
       setProposals(data.filter((p) => p.submittedById === currentUserId));
     } catch (err) {
@@ -128,82 +98,81 @@ export default function ProposalsPage() {
     }
   };
 
-  const handleSort = (column) => {
-    if (orderBy === column) {
-      setOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setOrderBy(column);
-      setOrder("asc");
-    }
+  useEffect(() => {
+    if (currentUserId) fetchProposals();
+  }, [currentUserId]);
+
+  const handleOpen = (proposal) => {
+    setSelectedProposal(proposal);
   };
 
-  const filteredProposals = useMemo(() => {
-    const filtered = proposals.filter((p) => {
-      if (filter !== "ALL" && p.status !== filter) return false;
-      if (dateFrom && new Date(p.createdAt) < new Date(dateFrom)) return false;
-      if (dateTo && new Date(p.createdAt) > new Date(dateTo + "T23:59:59")) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const matched =
-          p.title?.toLowerCase().includes(q);
-        if (!matched) return false;
-      }
-      return true;
-    });
-    return [...filtered].sort(getComparator(order, orderBy));
-  }, [proposals, filter, dateFrom, dateTo, searchQuery, order, orderBy]);
-
-  const handleFormChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    if (formErrors[field]) setFormErrors((prev) => ({ ...prev, [field]: null }));
+  const handleClose = () => {
+    setSelectedProposal(null);
   };
 
-  const validate = () => {
-    const next = {};
-    if (!form.title.trim()) next.title = "Title is required";
-    if (!form.description.trim()) next.description = "Description is required";
-    return next;
+  const handleSort = (field) => {
+    const isAsc = sortField === field && sortOrder === "asc";
+    setSortField(field);
+    setSortOrder(isAsc ? "desc" : "asc");
+  };
+
+  const sortedProposals = [...proposals].sort((a, b) => {
+    if (!sortField) return 0;
+    let aVal = sortField === "createdAt"
+      ? new Date(a[sortField])
+      : a[sortField]?.toString().toLowerCase() ?? "";
+    let bVal = sortField === "createdAt"
+      ? new Date(b[sortField])
+      : b[sortField]?.toString().toLowerCase() ?? "";
+    if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const filteredProposals = sortedProposals.filter((p) => {
+    if (filterStatus !== "ALL" && p.status !== filterStatus) return false;
+    if (dateFrom && new Date(p.createdAt) < new Date(dateFrom)) return false;
+    if (dateTo && new Date(p.createdAt) > new Date(dateTo + "T23:59:59")) return false;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.trim().toLowerCase();
+    return p.title?.toLowerCase().includes(q);
+  });
+
+  const validateSubmit = (fields) => {
+    const errs = {};
+    if (!fields.title.trim()) errs.title = "Title is required.";
+    if (!fields.description.trim()) errs.description = "Description is required.";
+    return errs;
   };
 
   const handleSubmit = async () => {
-    const next = validate();
-    if (Object.keys(next).length > 0) {
-      setFormErrors(next);
-      return;
-    }
+    const errs = validateSubmit(newProposal);
+    setSubmitErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
     setSubmitting(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/scoop-portal/api/projectproposal`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projectproposal`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          teamSize: form.teamSize ? Number(form.teamSize) : null,
-          submittedById: currentUserId,
-        }),
+        body: JSON.stringify({ ...newProposal, submittedById: currentUserId }),
       });
       if (!res.ok) throw new Error("Failed to submit");
+      await fetchProposals();
       setSnackbarSeverity("success");
       setSnackbarMsg("Proposal submitted successfully!");
       setSnackbarOpen(true);
+      setNewProposal({ title: "", description: "" });
+      setSubmitErrors({});
       setSubmitOpen(false);
-      setForm(EMPTY_FORM);
-      setFormErrors({});
-      fetchProposals();
     } catch (err) {
-      console.error("Error submitting proposal:", err);
+      console.error(err);
       setSnackbarSeverity("error");
-      setSnackbarMsg("Failed to submit proposal. Please try again.");
+      setSnackbarMsg(err.message || "Failed to submit proposal. Please try again.");
       setSnackbarOpen(true);
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleCloseSubmit = () => {
-    setSubmitOpen(false);
-    setForm(EMPTY_FORM);
-    setFormErrors({});
   };
 
   const datePickerSx = {
@@ -225,14 +194,11 @@ export default function ProposalsPage() {
     },
   };
 
-  const columns = [
-    { id: "title", label: "Title" },
-    { id: "createdAt", label: "Submitted" },
-    { id: "status", label: "Status" },
-  ];
+  const tableCellSx = { backgroundColor: theme.palette.primary.main, color: theme.ritColors.white };
+  const sortLabelSx = { color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } };
 
   return (
-    <Box>
+    <>
       <Header />
       <IconButton onClick={() => router.back()} aria-label="back">
         <ArrowBackIcon />
@@ -241,20 +207,17 @@ export default function ProposalsPage() {
         My Project Proposals
       </Typography>
 
+      {/* Toolbar */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 2 }}>
         <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
-          <Button
-            variant="outline-orange"
-            startIcon={<FilterAltOutlinedIcon />}
-            onClick={() => setFilterDialogOpen(true)}
-          >
+          <Button variant="outline-orange" startIcon={<FilterAltOutlinedIcon />} onClick={() => setFilterDialogOpen(true)}>
             Filter
           </Button>
-          {filter !== "ALL" && (
+          {filterStatus !== "ALL" && (
             <Chip
               size="medium"
-              label={`Status: ${filter.charAt(0).toUpperCase() + filter.slice(1).toLowerCase()}`}
-              onDelete={() => setFilter("ALL")}
+              label={`Status: ${filterStatus.charAt(0) + filterStatus.slice(1).toLowerCase()}`}
+              onDelete={() => setFilterStatus("ALL")}
               sx={filterChipSx}
             />
           )}
@@ -267,7 +230,6 @@ export default function ProposalsPage() {
             />
           )}
         </Box>
-
         <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
           <TextField
             size="small"
@@ -283,50 +245,40 @@ export default function ProposalsPage() {
               ),
             }}
           />
-          <Button
-            variant="solid-orange"
-            startIcon={<AddIcon />}
-            onClick={() => setSubmitOpen(true)}
-          >
+          <Button variant="solid-orange" onClick={() => setSubmitOpen(true)} startIcon={<AddIcon />}>
             New Proposal
           </Button>
         </Box>
       </Box>
 
+      {/* Table */}
       <Paper elevation={1} square sx={{ maxHeight: 500, overflow: "auto" }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {columns.map((col) => (
-                <TableCell
-                  key={col.id}
-                  sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}
-                >
-                  <TableSortLabel
-                    active={orderBy === col.id}
-                    direction={orderBy === col.id ? order : "asc"}
-                    onClick={() => handleSort(col.id)}
-                    sx={{
-                      color: `${theme.ritColors.white} !important`,
-                      "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` },
-                    }}
-                  >
-                    {col.label}
-                  </TableSortLabel>
-                </TableCell>
-              ))}
-              <TableCell
-                sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}
-                align="right"
-              >
-                Details
+              <TableCell sx={{ ...tableCellSx, width: "25%" }}>
+                <TableSortLabel active={sortField === "title"} direction={sortField === "title" ? sortOrder : "asc"} onClick={() => handleSort("title")} sx={sortLabelSx}>
+                  Title
+                </TableSortLabel>
               </TableCell>
+              <TableCell sx={{ ...tableCellSx, width: "35%" }}>Description</TableCell>
+              <TableCell sx={{ ...tableCellSx, width: "15%" }}>
+                <TableSortLabel active={sortField === "createdAt"} direction={sortField === "createdAt" ? sortOrder : "asc"} onClick={() => handleSort("createdAt")} sx={sortLabelSx}>
+                  Submitted
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ ...tableCellSx, width: "12%" }}>
+                <TableSortLabel active={sortField === "status"} direction={sortField === "status" ? sortOrder : "asc"} onClick={() => handleSort("status")} sx={sortLabelSx}>
+                  Status
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ ...tableCellSx, width: "13%" }} align="right">Options</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredProposals.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 6, color: "text.secondary", fontStyle: "italic" }}>
+                <TableCell colSpan={5} align="center" sx={{ py: 6, color: "text.secondary", fontStyle: "italic" }}>
                   No proposals found
                 </TableCell>
               </TableRow>
@@ -334,22 +286,21 @@ export default function ProposalsPage() {
               filteredProposals.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>{p.title}</TableCell>
+                  <TableCell sx={{ color: "text.secondary", maxWidth: 0 }}>
+                    <Typography variant="body2" noWrap sx={{ overflow: "hidden", textOverflow: "ellipsis", maxWidth: 260 }}>
+                      {p.description}
+                    </Typography>
+                  </TableCell>
                   <TableCell>
                     {new Date(p.createdAt).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
+                      year: "numeric", month: "long", day: "numeric",
                     })}
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={p.status} />
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="View details">
-                      <IconButton size="small" onClick={() => setDetailProposal(p)}>
-                        <InfoOutlinedIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                    <Button variant="outline-orange" onClick={() => handleOpen(p)}>View</Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -358,53 +309,13 @@ export default function ProposalsPage() {
         </Table>
       </Paper>
 
-      <Dialog open={submitOpen} onClose={handleCloseSubmit} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600 }}>
-          Submit Project Proposal
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, mt: 1 }}>
-            <TextField
-              label="Project Title"
-              value={form.title}
-              onChange={handleFormChange("title")}
-              error={!!formErrors.title}
-              helperText={formErrors.title}
-              fullWidth
-              required
-            />
-            <TextField
-              label="Description"
-              value={form.description}
-              onChange={handleFormChange("description")}
-              error={!!formErrors.description}
-              helperText={formErrors.description}
-              fullWidth
-              required
-              multiline
-              minRows={4}
-              maxRows={8}
-              inputProps={{ maxLength: 2000 }}
-            />
-
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
-          <Button variant="outlined" color="inherit" onClick={handleCloseSubmit}>
-            Cancel
-          </Button>
-          <Button variant="solid-orange" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? "Submitting..." : "Submit Proposal"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={!!detailProposal} onClose={() => setDetailProposal(null)} maxWidth="sm" fullWidth>
-        {detailProposal && (
+      {/* Detail Modal */}
+      <Dialog open={!!selectedProposal} onClose={handleClose} maxWidth="sm" fullWidth>
+        {selectedProposal && (
           <>
             <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              {detailProposal.title}
-              <StatusBadge status={detailProposal.status} />
+              {selectedProposal.title}
+              <StatusBadge status={selectedProposal.status} />
             </DialogTitle>
             <DialogContent dividers>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
@@ -413,59 +324,155 @@ export default function ProposalsPage() {
                     Description
                   </Typography>
                   <Typography variant="body2" sx={{ mt: 0.5 }}>
-                    {detailProposal.description}
+                    {selectedProposal.description}
                   </Typography>
                 </Box>
                 <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
-                      Submitted
-                    </Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    Submitted
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 0.5 }}>
+                    {new Date(selectedProposal.createdAt).toLocaleDateString(undefined, {
+                      year: "numeric", month: "long", day: "numeric",
+                    })}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 1,
+                    bgcolor: isDark ? "rgba(255,255,255,0.05)" : "grey.100",
+                    borderLeft: `4px solid ${
+                      selectedProposal.status === "APPROVED"
+                        ? theme.palette.success.main
+                        : selectedProposal.status === "REJECTED"
+                        ? theme.palette.error.main
+                        : theme.palette.warning.main
+                    }`,
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    Reviewer Notes
+                    {selectedProposal.reviewedBy && (
+                      <span style={{ fontWeight: 400, textTransform: "none" }}>
+                        {" "}— {selectedProposal.reviewedBy.fname} {selectedProposal.reviewedBy.lname}
+                      </span>
+                    )}
+                  </Typography>
+                  {selectedProposal.reviewNotes ? (
                     <Typography variant="body2" sx={{ mt: 0.5 }}>
-                      {new Date(detailProposal.createdAt).toLocaleDateString(undefined, {
-                        year: "numeric", month: "long", day: "numeric",
-                      })}
+                      {selectedProposal.reviewNotes}
                     </Typography>
-                  </Box>
-                {detailProposal.reviewNotes && (
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: isDark ? "rgba(255,255,255,0.05)" : "grey.100",
-                      borderLeft: `4px solid ${
-                        detailProposal.status === "APPROVED"
-                          ? theme.palette.success.main
-                          : detailProposal.status === "REJECTED"
-                          ? theme.palette.error.main
-                          : theme.palette.warning.main
-                      }`,
-                    }}
-                  >
-                    <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
-                      Reviewer Notes
-                      {detailProposal.reviewedBy && (
-                        <span style={{ fontWeight: 400, textTransform: "none" }}>
-                          {" "}— {detailProposal.reviewedBy.fname} {detailProposal.reviewedBy.lname}
-                        </span>
-                      )}
+                  ) : (
+                    <Typography variant="body2" sx={{ mt: 0.5, fontStyle: "italic", color: "text.secondary" }}>
+                      No review notes yet.
                     </Typography>
-                    <Typography variant="body2" sx={{ mt: 0.5 }}>
-                      {detailProposal.reviewNotes}
-                    </Typography>
-                  </Box>
-                )}
+                  )}
+                </Box>
               </Box>
             </DialogContent>
             <DialogActions sx={{ px: 2, py: 1.5 }}>
-              <Button variant="solid-orange" onClick={() => setDetailProposal(null)}>
-                Close
-              </Button>
+              <Button variant="solid-orange" onClick={handleClose}>Close</Button>
             </DialogActions>
           </>
         )}
       </Dialog>
 
-      <Snackbar open={snackbarOpen} message={snackbarMsg} severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)} />
-    </Box>
+      {/* Submit Proposal Dialog */}
+      <Dialog
+        open={submitOpen}
+        onClose={() => { setSubmitOpen(false); setNewProposal({ title: "", description: "" }); setSubmitErrors({}); }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Submit Project Proposal</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              label="Project Title *"
+              value={newProposal.title}
+              onChange={(e) => { setNewProposal((p) => ({ ...p, title: e.target.value })); setSubmitErrors((p) => ({ ...p, title: undefined })); }}
+              fullWidth
+              error={!!submitErrors.title}
+              helperText={submitErrors.title}
+            />
+            <TextField
+              label="Description *"
+              value={newProposal.description}
+              onChange={(e) => { setNewProposal((p) => ({ ...p, description: e.target.value })); setSubmitErrors((p) => ({ ...p, description: undefined })); }}
+              fullWidth
+              multiline
+              minRows={4}
+              maxRows={8}
+              inputProps={{ maxLength: 2000 }}
+              error={!!submitErrors.description}
+              helperText={submitErrors.description}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
+          <Button
+            onClick={() => { setSubmitOpen(false); setNewProposal({ title: "", description: "" }); setSubmitErrors({}); }}
+            variant="outlined" color="inherit"
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} variant="solid-orange" disabled={submitting}>
+            {submitting ? "Submitting..." : "Submit"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Filter Dialog */}
+      <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600 }}>
+          Filter Proposals
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select value={filterStatus} label="Status" onChange={(e) => setFilterStatus(e.target.value)}>
+                <MenuItem value="ALL">All</MenuItem>
+                <MenuItem value="PENDING">Pending</MenuItem>
+                <MenuItem value="APPROVED">Approved</MenuItem>
+                <MenuItem value="REJECTED">Rejected</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label="From"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              sx={datePickerSx}
+            />
+            <TextField
+              label="To"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              sx={datePickerSx}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
+          <Button variant="outlined" color="inherit"
+            onClick={() => { setFilterStatus("ALL"); setDateFrom(""); setDateTo(""); }}>
+            Reset
+          </Button>
+          <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)}>
+        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: "100%" }}>
+          {snackbarMsg}
+        </Alert>
+      </Snackbar>
+    </>
   );
 }
