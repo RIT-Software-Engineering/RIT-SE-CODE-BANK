@@ -19,5 +19,5 @@ services:
       # Is used mainly in errorHandlerTest.js and featureFlags.js.
       NODE_ENV: "DEV"
       # URL used to access the notification service
-      NOTIFICATION_SERVICE_URL: "htp://localhost:4000"
+      NOTIFICATION_SERVICE_URL: "http://localhost:4001"
     
