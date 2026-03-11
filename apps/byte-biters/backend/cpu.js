@@ -23,12 +23,9 @@ export class CPU {
     loadProgram(words) {
         let addr = 0;
         for(let word of words) {
-            this.memory[addr] = word & 0xFF; //low byte
-            this.memory[addr + 1] = (word >> 8) & 0xFF; //high byte
+            this.memory.writeWord(addr, word);
             addr += 2;
         }
-
-
     }
 
     getState() {
