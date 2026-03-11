@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
  * @param {Object} res - The response object to send back the saved proposal or an error
  */
 router.post("/", async (req, res) => {
-    const { title, description, techStack, teamSize, duration, submittedById } = req.body;
+    const { title, description, submittedById } = req.body;
 
     if (!title || !description || !submittedById) {
         return res.status(400).json({ error: "title, description, and submittedById are required" });
@@ -20,9 +20,6 @@ router.post("/", async (req, res) => {
             data: {
                 title,
                 description,
-                techStack: techStack || null,
-                teamSize: teamSize ? Number(teamSize) : null,
-                duration: duration || null,
                 submittedById,
             },
         });
