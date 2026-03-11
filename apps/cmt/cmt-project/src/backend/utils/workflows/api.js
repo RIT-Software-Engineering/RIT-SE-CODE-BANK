@@ -219,7 +219,7 @@ export function makeMetadataSafeForWorkflows(metadata) {
  * @param {string|null} parentActionId - The parent action ID (null for root actions)
  * @returns The created action (or nested workflow's baseAction for workflow actions)
  */
-async function objectToNewAction(action, ownerId, parentActionId) {
+export async function objectToNewAction(action, ownerId, parentActionId) {
 
   if (action.actionType === "workflow") {
     const nestedWorkflow = await objectToNewWorkflow(action, ownerId)

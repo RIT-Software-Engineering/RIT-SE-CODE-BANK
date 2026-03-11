@@ -1,5 +1,5 @@
 import express from "express";
-import { createAction, objectToNewWorkflow, updateAction, workflowsFetch, workflowToObject } from "../utils/workflows/api.js";
+import { createAction, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch, workflowToObject } from "../utils/workflows/api.js";
 const router = express.Router();
 export default router
 
@@ -34,7 +34,7 @@ router.post("/workflowTemplate", async(req, res) => {
     }
 })
 
-router.post("/actionTemplate/", async (req, res) => {
+router.post("/actionTemplate/action", async (req, res) => {
     try {
         const professorId = req.user.uid;
         const {name, description, actionType, metadata, parentActionId} = req.body;
@@ -45,7 +45,18 @@ router.post("/actionTemplate/", async (req, res) => {
     }
 })
 
-router.put("/actionTemplate/:actionId", async (req, res) => {
+router.post("/actionTemplate/workflow", async (req, res) => {
+    try {
+        const {workflow, parentActionId} = req.body; 
+        const professorId = req.user.uid;
+        const newWorkflow = await objectToNewAction(workflow, professorId, parentActionId);
+        return res.status(200).json({action: newWorkflow});
+    } catch (error) {
+        return res.status(500).json({error: error.message})
+    }
+})
+
+router.put("/actionTemplate/action/:actionId", async (req, res) => {
     try {
         const {actionId} = req.params;
         const {name, description, nextActionId} = req.body;
@@ -56,7 +67,7 @@ router.put("/actionTemplate/:actionId", async (req, res) => {
     }
 })
 
-router.get("/actionTemplate/:workflowId", async (req, res) => {
+router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
         const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
