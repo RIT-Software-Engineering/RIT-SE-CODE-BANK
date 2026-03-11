@@ -1,7 +1,7 @@
 import { Check, Loader2, PlusIcon, Palette } from 'lucide-react'
 import { useEffect, useState, Fragment } from 'react'
 import { Button, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap'
-import { CMTFetch } from '../../utils/api'
+import { CMTJsonFetch } from '../../utils/api'
 import { useNavigate } from 'react-router-dom'
 import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
@@ -28,7 +28,7 @@ export function CourseOverview() {
     }, []);
 
     const fetchCourses = async () => {
-        CMTFetch("GET", `events/courses`).then(async response => {
+        CMTJsonFetch("GET", `events/courses`).then(async response => {
             const result = await response.json();
             if (result.data) {
             setCourseOverview(result.data);
@@ -125,7 +125,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
             return false;
         }
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
-        CMTFetch('POST', '/course', { courseCode, courseName, color }).then(async response => {
+        CMTJsonFetch('POST', '/course', { courseCode, courseName, color }).then(async response => {
             setSubmitButtonElement(<><Check />Created!</>)
             const json = await response.json()
             setTimeout(async () => navigate(`/courses/${json.course.id}`), 500)
@@ -141,7 +141,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
             return false;
         }
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Submitting...</>)
-        CMTFetch('PUT', `course/${courseId}`, {color: color}).then(async()=>{
+        CMTJsonFetch('PUT', `course/${courseId}`, {color: color}).then(async()=>{
             setTimeout(async() => window.location.reload(), 500)
         });
     }

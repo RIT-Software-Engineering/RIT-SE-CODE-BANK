@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { CMTFetch } from '../../../utils/api'
+import { CMTJsonFetch } from '../../../utils/api'
 import { AbstractActionRenderer } from './GenericActionRenderer'
 import { Button, Form } from 'react-bootstrap'
 import { Check, Edit, X } from 'lucide-react'
@@ -30,7 +30,7 @@ export function InlineActionRenderer({ actionWithContext, previousValues, refres
         })
         if (!allValid) return
 
-        CMTFetch('PUT', actionWithContext.callback, outputValues).then(() => {
+        CMTJsonFetch('PUT', actionWithContext.callback, outputValues).then(() => {
             setTimeout(async () => {
                 await refresh()
                 setIsEditing(false)

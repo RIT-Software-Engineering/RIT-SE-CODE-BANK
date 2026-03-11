@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
-import { CMTFetch } from '../../utils/api'
+import { CMTJsonFetch } from '../../utils/api'
 import { InlineActionRenderer } from '../../components/workflows/ActionRenderers/InlineActionRenderer'
 import { InlineFormHoverable } from '../../components/forms/InlineForms'
 import { flattenActionsWithContext } from '../../utils/workflows'
@@ -36,7 +36,7 @@ export function CourseDashboard() {
     const [sessions, setSessions] = useState([]);
 
     const update = useCallback(async () => {
-        return CMTFetch('GET', `course/${id}`).then(async response => {
+        return CMTJsonFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
             setCourse(data.course)
             setactionWithContexts(data.actionWithContexts)
@@ -47,7 +47,7 @@ export function CourseDashboard() {
 
     /** @type FetchToCallback */
     const fetchToCallback = useCallback(
-        (callback, outputValues) => CMTFetch('PUT', callback, outputValues),
+        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues),
         []
     )
 
@@ -99,7 +99,7 @@ export function CourseDashboard() {
                         /** Makes a post request to add the session with no material.
                          * ID is the class ID to identify where it belongs in the future
                          */
-                       CMTFetch('POST', 'session', {sessionCount, id}).then(async response=>{
+                       CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async response=>{
                         const data = await response.json();
                         setSessionCount(sessionCount+1);
                         setSessions([...sessions, data.session])
@@ -119,11 +119,11 @@ function CourseInfo({ course, actionsWithContext, refresh, fetchToCallback }) {
 
     function updateCourseName(e) {
         e.preventDefault()
-        return CMTFetch('PUT', `course/${course.id}`, { courseName: newCourseName }).then(async () => await refresh())
+        return CMTJsonFetch('PUT', `course/${course.id}`, { courseName: newCourseName }).then(async () => await refresh())
     }
     function updateCourseCode(e) {
         e.preventDefault()
-        return CMTFetch('PUT', `course/${course.id}`, { courseCode: newCourseCode }).then(async () => await refresh())
+        return CMTJsonFetch('PUT', `course/${course.id}`, { courseCode: newCourseCode }).then(async () => await refresh())
         
     }
     return (
@@ -193,7 +193,7 @@ function Session({sessionCount, setSessionCount, sessions, setSessions, sessionA
      * Also gets material if there is any and puts it in each session
      */
     const update = useCallback(() => {
-        return CMTFetch('GET', `session/${id}`).then(async response => {
+        return CMTJsonFetch('GET', `session/${id}`).then(async response => {
             const data = await response.json()
             setSessionCount(data.sessions.length)
             setSessions(data.sessions);
@@ -279,7 +279,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
      */
     function uploadSessionMaterial(){
         const id = sessions.find(session => session.sessionNum === (sessionNum+1)).id
-        CMTFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(async (response) => {
+        CMTJsonFetch("POST", `/session/${id}`, {itemType, itemLabel, itemBody, sessionNum}).then(async (response) => {
         const data = await response.json();
         setSessionData(sessionData => [...sessionData, data.material]);
         })
@@ -372,7 +372,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
     }
 
     function updateMaterial(){
-        CMTFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody}).then(() => {
+        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody}).then(() => {
             const sessionDataCopy = sessionData.map(material => {
                 if (material.id === materialId) 
                     return {...material, label: itemLabel, body: itemBody}
