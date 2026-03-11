@@ -148,6 +148,12 @@ const workflows = [
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/projects",
       },
       {
+        title: "Review Project Proposals",
+        roles: ["scoopdinator"],
+        description: "Review project proposals submitted by scoopervisors.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/projectproposals",
+      },
+      {
         title:"Manage Project Proposals",
         roles: ["scoopervisor"],
         description: "Propose projects for teams to work on.",
