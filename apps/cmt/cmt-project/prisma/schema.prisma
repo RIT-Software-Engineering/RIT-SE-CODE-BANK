@@ -111,6 +111,7 @@ model SessionMaterial {
   type        String
   label       String
   body        String?   @db.Text
+  active      Boolean   @default(true)
   sessionId   Int
   sessionNum  Int
   session     Session @relation(fields: [sessionId], references: [id])
