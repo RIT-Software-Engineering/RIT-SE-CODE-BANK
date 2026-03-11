@@ -256,13 +256,17 @@ async function parsePDF(filePath) {
     const scholarship = extractSection(text, 'Scholarship', 'Teaching');
 
     const publications_lines = extractSection(text, 'Publications, scholarly outcomes, or creative works:', 'Teaching');
-    const [scholarshipData, publicationData] = await Promise.all([
-        parseGrantAI(scholarship),
-        parsePublicationAI(publications_lines)
-    ]);
-    
+
+    // const serviceSection = extractSection(text, 'Service', 'Professional Development');
+    // const [scholarshipData, publicationData, serviceSection] = await Promise.all([
+    //     parseGrantAI(scholarship),
+    //     parsePublicationAI(publications_lines),
+    //     parseServiceHoursAI(serviceHours) 
+    // ]);
     const serviceSection = extractSection(text, 'Service', 'Professional Development');
     const serviceHours = await parseServiceHoursAI(serviceSection);
+    const scholarshipData = await parseGrantAI(scholarship);
+    const publicationData = await parsePublicationAI(publications_lines);
 
     const extracted = {
         name: extractField(lines, 'Name'),
