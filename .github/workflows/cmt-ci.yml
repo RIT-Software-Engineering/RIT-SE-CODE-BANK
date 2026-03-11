@@ -69,69 +69,6 @@ jobs:
         working-directory: apps/cmt/cmt-project
       - run: npm run lint
         working-directory: apps/cmt/cmt-project
-
-  # test:
-  #   name: Test Affected Projects
-  #   needs: setup
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 18
-  #     - run: npm ci
-  #     - run: npx nx affected:test --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }} --code-coverage
-  #     - name: Upload coverage report
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: coverage-report
-  #         path: coverage/
-
-#   sonarqube:
-#     name: SonarQube Analysis
-#     needs: test
-#     runs-on: ubuntu-latest
-#     if: github.event_name != 'pull_request'
-
-#     steps:
-#       - uses: actions/checkout@v4
-#       - name: Install dependencies
-#         run: npm ci
-#       - name: Run SonarQube Scanner
-#         env:
-#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#         run: |
-#           npx sonar-scanner \
-#             -Dsonar.projectKey=my-nx-monorepo \
-#             -Dsonar.organization=my-org \
-#             -Dsonar.sources=. \
-#             -Dsonar.host.url=https://sonarcloud.io \
-#             -Dsonar.login=$SONAR_TOKEN \
-#             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-
-#   codecov:
-#     name: Upload to Codecov
-#     needs: test
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - uses: actions/checkout@v4
-#       - name: Download coverage artifact
-#         uses: actions/download-artifact@v4
-#         with:
-#           name: coverage-report
-#           path: coverage/
-#       - name: Upload coverage to Codecov
-#         uses: codecov/codecov-action@v4
-#         with:
-#           token: ${{ secrets.CODECOV_TOKEN }}
-#           files: coverage/lcov.info
-#           flags: unittests
-#           name: RIT-SE-CODE-BANK
-#           fail_ci_if_error: true
   
   build:
     name: Build Affected Projects
@@ -157,7 +94,6 @@ jobs:
           path: dist/
 
   deploy:
-    # Placeholder for deployment. Reliant on deployment scripts that don't yet exist.
     name: Deploy Affected Apps
     if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev' || endsWith(github.ref, '-cicd-testing')
     needs: build
