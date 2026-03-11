@@ -6,7 +6,7 @@ on:
       - main
       - dev
       - '*-dev'
-      - '*-cicd-testing'
+      - 'services-notifications-shared'
   pull_request:
     branches:
       - main
@@ -77,16 +77,16 @@ jobs:
   deploy:
     # Placeholder for deployment. Reliant on deployment scripts that don't yet exist.
     name: Deploy Affected Apps
-    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev' || endswith(github.ref,'-cicd-testing')
+    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/services-notifications-shared'
     needs: build
     runs-on: ubuntu-latest
-    # Uses TA_portal ssh key, change in future
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+      # hardcoded
       - name: Extract App Name from Branch
         id: parse
         run: |
@@ -94,7 +94,7 @@ jobs:
           APP_NAME="notification-service"
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "::notice ::Branch '$BRANCH' targets app '$APP_NAME'"
-
+      # Uses TA_portal ssh key, change in the future
       - name: Setup SSH Key
         if: env.APP_NAME != ''
         run: |
