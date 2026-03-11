@@ -139,9 +139,6 @@ model ProjectProposal {
   id              Int      @id @default(autoincrement())
   title           String   @db.VarChar(255)
   description     String   @db.Text
-  techStack       String?  @db.VarChar(500)
-  teamSize        Int?
-  duration        String?  @db.VarChar(100)
   status          String   @default("PENDING")
   submittedById   String
   submittedBy     users    @relation("SubmittedProposals", fields: [submittedById], references: [id])
