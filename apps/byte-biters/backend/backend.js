@@ -1,4 +1,4 @@
-import { assemble } from "./assembler/index.js";
+import { assemble } from "../assembler/index.js";
 import { CPU } from "./cpu.js";
 
 const cpu = new CPU();
@@ -6,7 +6,9 @@ const cpu = new CPU();
 export const backend = {
     loadAssembly(text) {
         const words = assemble(text);
-        
+        cpu.loadProgram(words);
+        // cpu.reset();
+        return this.getState();
     },
 
     step() {
