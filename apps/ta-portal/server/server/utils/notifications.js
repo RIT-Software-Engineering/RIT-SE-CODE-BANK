@@ -5,6 +5,7 @@ if (process.env.NODE_ENV !== 'test') {
   console.log(`[notifications-proxy] Using notification service at: ${DEFAULT_SERVICE_URL}`);
 }
 const APP_ID = process.env.NOTIFICATION_CLIENT_APP_ID || 'ta-portal';
+const NOTIFICATION_API_EXTENSION = process.env.NOTIFICATION_API_EXTENSION
 
 let fetchImpl;
 try {
@@ -39,7 +40,7 @@ try {
  * @returns String containing url to the preferences of the given user
  */
 function prefUrl(userId) {
-  return `${DEFAULT_SERVICE_URL}/api/notifications/preferences/${encodeURIComponent(APP_ID)}/${encodeURIComponent(userId)}`;
+  return `${DEFAULT_SERVICE_URL}${NOTIFICATION_API_EXTENSION}/preferences/${encodeURIComponent(APP_ID)}/${encodeURIComponent(userId)}`;
 }
 
 /**
@@ -81,7 +82,7 @@ async function setPreferences(userId, body) {
  * @returns Status based on success
  */
 async function dispatchNotification(userId, { subject, message, userEmail }) {
-  const url = `${DEFAULT_SERVICE_URL}/api/notifications/dispatch/${encodeURIComponent(APP_ID)}`;
+  const url = `${DEFAULT_SERVICE_URL}${NOTIFICATION_API_EXTENSION}/dispatch/${encodeURIComponent(APP_ID)}`;
   const res = await fetchImpl(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, userEmail, subject, message }) });
   if (!res.ok) {
     const txt = await res.text().catch(() => '<unreadable>');
@@ -97,7 +98,7 @@ async function dispatchNotification(userId, { subject, message, userEmail }) {
  * @returns Status based on success
  */
 async function dispatchTemplated(userId, { event, context = {}, role, subject, userEmail }) {
-  const url = `${DEFAULT_SERVICE_URL}/api/notifications/dispatch/${encodeURIComponent(APP_ID)}`;
+  const url = `${DEFAULT_SERVICE_URL}${NOTIFICATION_API_EXTENSION}/dispatch/${encodeURIComponent(APP_ID)}`;
   const payload = { userId, userEmail, event, context, ...(role ? { role } : {}), ...(subject ? { subject } : {}) };
   const res = await fetchImpl(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   if (!res.ok) {
@@ -108,7 +109,7 @@ async function dispatchTemplated(userId, { event, context = {}, role, subject, u
 }
 
 async function checkSlackStatus(email, userId) {
-  const url = `${DEFAULT_SERVICE_URL}/api/notifications/preferences/${encodeURIComponent(APP_ID)}/${encodeURIComponent(userId)}/slack-status?email=${encodeURIComponent(email)}`;
+  const url = `${DEFAULT_SERVICE_URL}${NOTIFICATION_API_EXTENSION}/preferences/${encodeURIComponent(APP_ID)}/${encodeURIComponent(userId)}/slack-status?email=${encodeURIComponent(email)}`;
   const res = await fetchImpl(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => '<unreadable>');
