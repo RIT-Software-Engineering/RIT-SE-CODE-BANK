@@ -9,6 +9,7 @@ import { ArrowLeft, Edit } from 'lucide-react'
 import { Accordion, Button, Card, Form, Modal, Table} from 'react-bootstrap'
 import { RichTextEditor } from '../../components/RichTextEditor'
 import { CheckmarkActionRenderer } from '../../components/workflows/ActionRenderers/GenericActionRenderer'
+import { ResourceManager } from '../../components/resources/ResourceManager'
 
 /**
  * @import { IsCheckmark, FetchToCallback, WorkflowsWorkflow, ActionWithContext } from "../../components/workflows/typedefs"
@@ -72,6 +73,8 @@ export function CourseDashboard() {
         <>
             <CourseInfo course={course} actionsWithContext={courseInfoActions} refresh={update} fetchToCallback={fetchToCallback}/>
             <div className="h-10"></div>
+            <ResourceManager courseId={course.id} />
+            <div className="h-10"></div>
             <p className="text-4xl pb-2 border-b">Workflow Info</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
@@ -93,6 +96,7 @@ export function CourseDashboard() {
                     sessionActions={sessionActions}
                     updateWorkflow={update}
                     fetchToCallback={fetchToCallback}
+                    courseId={course.id}
                 />
                 <div className='flex justify-end pt-4'>
                     <Button onClick={() => {
@@ -167,12 +171,12 @@ function CourseInfo({ course, actionsWithContext, refresh, fetchToCallback }) {
  * The session component is an accordion that dynamically adds more items the higher the count. 
  * Displays a modal (when opened) and a table of uploaded resources. 
  *
- * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; sessionActions:any, updateWorkflow: () => void, fetchToCallback: FetchToCallback }} param0
+ * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; sessionActions:any, updateWorkflow: () => void, fetchToCallback: FetchToCallback, courseId: number }} param0
  * sessionCount - the number of sessions a user has created
  * courseId - the identifier for which sessionData to obtain
  * @returns {*} the session accordion as HTML
  */
-function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback}) {
+function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback, courseId}) {
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
@@ -205,8 +209,8 @@ function Session({sessionCount, setSessionCount, sessions, setSessions, sessionA
 
     return (
         <Accordion alwaysOpen>
-        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions}/>
-        <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen}/>
+        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} courseId={courseId}/>
+        <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId}/>
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.action.metadata.code === `SESSION_${i}`)
@@ -259,15 +263,16 @@ function Session({sessionCount, setSessionCount, sessions, setSessions, sessionA
  * The modal to create session material. 
  * The modal makes the user select the material type, material title and they can add material content.
  *
- * @param {{ sessionNum: any; sessionData: any; setSessionData: any; isOpen: any; setIsOpen: any; sessions: any;}} param0 
+ * @param {{ sessionNum: any; sessionData: any; setSessionData: any; isOpen: any; setIsOpen: any; sessions: any; courseId: number;}} param0 
  * sessionNum - the number of the session (used as an identifier in sessionData)
  * sessionData - the data of sessions in a course. Used to check if a user has created a personal note or not since we restrict to 1 note per session
  * setSessionData - function to set the sessionData. Used upon upload to keep track of the session
  * isOpen - whether the modal is open
  * setIsOpen - open/close the modal
+ * courseId - the course ID for resource linking
  * @returns {*} the modal as HTML
  */
-function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions}){
+function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions, courseId}){
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
     const [itemType, setItemType] = useState('Topic/Lecture');
@@ -319,7 +324,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                                 </div>
                                 <div>
                                 <Form.Label>Content</Form.Label>
-                                <RichTextEditor value={itemBody} onChange={setItemBody}/>
+                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId}/>
                                 </div>
                             </div>
                         </div>
@@ -346,7 +351,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
  * The user can edit the title and the body content but not the material type.
  * Maybe in the future they can edit that and which session it belongs to?
  *
- * @param {{ sessionData: any; setSessionData: any; materialId: any; isEditOpen: any; setIsEditOpen: any; }} param0 
+ * @param {{ sessionData: any; setSessionData: any; materialId: any; isEditOpen: any; setIsEditOpen: any; courseId: number }} props 
  * sessionData - the data of material in sessions. Used to get the existing content for editing
  * setSessionData - sets the material for a session; in this case it updates it
  * materialId - the ID of the material. Used mainly for the PUT request to know which item to update
@@ -354,7 +359,7 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
  * setIsEditOpen - sets the edit modal to be either opened or closed
  * @returns {*} the modal as HTML
  */
-function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen, setIsEditOpen }){
+function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen, setIsEditOpen, courseId }){
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
     const [warningVisible, setWarningVisible] = useState(false);
@@ -397,7 +402,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                                 </div>
                                 <div>
                                 <Form.Label>Content</Form.Label>
-                                <RichTextEditor value={itemBody} onChange={setItemBody}/>
+                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId}/>
                                 </div>
                             </div>
                         </div>

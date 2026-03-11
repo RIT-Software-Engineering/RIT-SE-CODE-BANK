@@ -1,10 +1,11 @@
 import { EditorContent, useEditor, } from "@tiptap/react";
 import {StarterKit} from "@tiptap/starter-kit";
-import { ButtonGroup, Button, Accordion } from "react-bootstrap";
+import { ButtonGroup, Button, Accordion, Modal, Spinner, Form, Row, Col, Card, Popover, Overlay } from "react-bootstrap";
 import {
   Baseline,
   Bold,
   Code,
+  FileSymlink,
   Heading1,
   Heading2,
   Heading3,
@@ -18,12 +19,34 @@ import {
   TextAlignJustify,
   Underline,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TableKit } from '@tiptap/extension-table'
 import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
+import { CMTJsonFetch } from "../utils/api";
+import { getResourceDownloadUrl } from "./resources/ResourceManager";
+import { SelectableResourceCard } from "./resources/resourceRenderers";
 
-export function RichTextEditor({ value, onChange }) {
+export function RichTextEditorController({ value, onChange, courseId }) {
+    const [step, setStep] = useState("main");
+
+    <Modal>
+        <Modal.Body>
+            {step === "main" && <MainStep goConfirm={() => setStep("confirm")} />}
+            {step === "confirm" && <ConfirmStep goBack={() => setStep("main")} />}
+        </Modal.Body>
+    </Modal>
+}
+
+function MainStep({ goConfirm }) {
+  return <Button onClick={goConfirm}>Delete</Button>;
+}
+
+function ConfirmStep({ goBack }) {
+  return <Button onClick={goBack}>Back</Button>;
+}
+
+export function RichTextEditor({ value, onChange, courseId }) {
   
   const editor = useEditor({
     extensions: [
@@ -208,6 +231,8 @@ export function RichTextEditor({ value, onChange }) {
                 onClick={setLink}
               ><Link2 /></Button>
 
+              <LinkResourcePopover courseId={courseId} editor={editor}/>
+
               <Button
                 variant="outline-dark"
                 onClick={() => {
@@ -292,4 +317,151 @@ export function RichTextEditor({ value, onChange }) {
       </div>
     </div>
   );
+}
+
+function LinkResourcePopover({ editor, courseId, modalRef }) {
+    const [show, setShow] = useState(false)
+
+    const [resources, setResources] = useState([])
+    const [selectedResource, setSelectedResource] = useState(null)
+    const [linkText, setLinkText] = useState('')
+    const [loading, setLoading] = useState(false)
+
+    const loadResources = useCallback(async () => {
+        setLoading(true)
+
+        CMTJsonFetch('GET', `resources/${courseId}`)
+            .then(async response => setResources((await response.json()) || []))
+            .catch(error => {
+                console.error('Failed to load resources', error)
+            }) // TODO: central error notifs
+            .finally(() => setLoading(false))
+    }, [courseId])
+
+    const handleInsert = () => {
+        if (!selectedResource) {
+            return
+        }
+
+        const displayText = linkText.trim() || selectedResource.name
+        const linkUrl = getResourceDownloadUrl(selectedResource.id)
+
+        editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl, target: '_blank' }).run()
+
+        // Set the display text if provided
+        if (displayText && displayText !== editor.getHTML()) {
+            // Replace the selected text with the display text
+            editor.chain().focus().insertContent(displayText).run()
+        }
+
+        // Set color to blue for consistency with external links
+        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' }))
+            editor.chain().focus().setColor('#0000FF').run()
+
+        handleReset()
+    }
+
+    const handleReset = () => {
+        setShow(false)
+        setSelectedResource(null)
+        setLinkText('')
+    }
+
+    useEffect(() => {
+        if (courseId) loadResources()
+    }, [courseId, loadResources])
+
+    const overlayRef = useRef(null)
+
+    return (
+        <>
+                <Button
+                    variant='outline-dark'
+                    onClick={() => setShow(true)}
+                    ref={overlayRef}
+                    >
+                    <FileSymlink />
+                </Button>
+
+                {/* <Overlay target={overlayRef.current} show={show} placement="right">
+                    {({
+                    placement: _placement,
+                    arrowProps: _arrowProps,
+                    show: _show,
+                    popper: _popper,
+                    hasDoneInitialMeasure: _hasDoneInitialMeasure,
+                    ...props
+                    }) => (
+                    <div
+                        {...props}
+                        style={{
+                        zIndex: 2000, // React bootstraps default for modals is like 1080 or smthn so we gotta pick something really high
+                        backgroundColor: 'rgba(255, 100, 100, 0.85)',
+                        padding: '2px 10px',
+                        color: 'white',
+                        borderRadius: 3,
+                        ...props.style,
+                        }}
+                    >
+                        Simple tooltip
+                    </div>
+                    )}
+                </Overlay> */}
+
+                <Modal target={overlayRef} show={show} onHide={handleReset} size='lg'>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Insert Resource Link</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {loading ? (
+                            <div className='text-center'>
+                                <Spinner animation='border' />
+                            </div>
+                        ) : resources.length === 0 ? (
+                            <div className='text-center text-muted'>
+                                <p>No resources found for this course.</p>
+                                <p>Upload resources in the course dashboard to use them here.</p>
+                            </div>
+                        ) : (
+                            <>
+                                <Form.Group className='mb-3'>
+                                    <Form.Label>Select Resource</Form.Label>
+                                    <Row>
+                                        {resources.map(resource => (
+                                            <Col md={6} lg={4} key={resource.id} className='mb-3'>
+                                                <SelectableResourceCard refresh={loadResources} resource={resource} selected={selectedResource} setSelected={setSelectedResource}/>
+                                            </Col>
+                                        ))}
+                                    </Row>
+                                </Form.Group>
+
+                                {selectedResource && (
+                                    <Form.Group className='mb-3'>
+                                        <Form.Label>Link Display Text</Form.Label>
+                                        <Form.Control
+                                            type='text'
+                                            placeholder={`${selectedResource.name}`}
+                                            value={linkText}
+                                            onChange={e => setLinkText(e.target.value)}
+                                        />
+                                        <Form.Text className='text-muted'>
+                                            This is the text that will be displayed as the clickable link
+                                        </Form.Text>
+                                    </Form.Group>
+                                )}
+                            </>
+                        )}
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant='secondary' onClick={handleReset}>
+                            Cancel
+                        </Button>
+                        <Button variant='primary' onClick={handleInsert} disabled={!selectedResource || loading}>
+                            Insert Link
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+
+        </>
+    )
 }
