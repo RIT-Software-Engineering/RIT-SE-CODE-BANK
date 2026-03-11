@@ -355,7 +355,7 @@ export default function ProposalsPage() {
                     Reviewer Notes
                     {selectedProposal.reviewedBy && (
                       <span style={{ fontWeight: 400, textTransform: "none" }}>
-                        {" "}— {selectedProposal.reviewedBy.fname} {selectedProposal.reviewedBy.lname}
+                        {" "}- {selectedProposal.reviewedBy.fname} {selectedProposal.reviewedBy.lname}
                       </span>
                     )}
                   </Typography>
