@@ -7,6 +7,7 @@ import journalRoutes from "./api/journal/route.js";
 import teamRoutes from "./api/teams/route.js";
 import authRoutes from "./api/auth/route.js";
 import projectRoutes from "./api/project/route.js";
+import proposalRoutes from "./api/projectproposal/route.js";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -25,6 +26,7 @@ app.use("/scoop-portal/api/journal", journalRoutes);
 app.use("/scoop-portal/api/teams", teamRoutes);
 app.use("/scoop-portal/api/auth", authRoutes);
 app.use("/scoop-portal/api/project", projectRoutes);
+app.use("/scoop-portal/api/projectproposal", proposalRoutes);
 
 (async () => {
   // // const workflowsRoutesModule = await import('../../workflow/server/api/routes/workflows.js');
