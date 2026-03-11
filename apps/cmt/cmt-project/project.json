@@ -1,0 +1,13 @@
+{
+  "name": "cmt",
+  "root": "apps/cmt/cmt-project",
+  "sourceRoot": "apps/cmt/cmt-project/src",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["apps/cmt/**/*.{ts,tsx,js,jsx}"]
+      }
+    }
+  }
+}

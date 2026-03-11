@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "../styles/devLogin.css";
-import { AUTH_BASE } from "../utils/api";
+// import { AUTH_BASE } from "../utils/api";
 
 export default function DevLoginPage() {
   const [email, setEmail] = useState("");
@@ -15,7 +15,7 @@ export default function DevLoginPage() {
     setLoggingIn(true);
 
     try {
-      const res = await fetch(`${AUTH_BASE}/api/dev/login`, {
+      const res = await fetch(`/api/cmt/dev/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

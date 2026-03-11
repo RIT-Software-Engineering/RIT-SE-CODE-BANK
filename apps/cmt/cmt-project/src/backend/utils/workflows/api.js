@@ -229,11 +229,12 @@ async function objectToNewAction(action, ownerId, parentActionId) {
   })
 
   // Link complex action's children
+  // Updated version for the staging environment's node version
   if (action.childActions) {
-    for (const childAction of action.childActions.toReversed()) {
-      await objectToNewAction(childAction, ownerId, createdAction.id)
-    }
+  for (const childAction of [...action.childActions].reverse()) {
+    await objectToNewAction(childAction, ownerId, createdAction.id)
   }
+}
 
   return createdAction
 }

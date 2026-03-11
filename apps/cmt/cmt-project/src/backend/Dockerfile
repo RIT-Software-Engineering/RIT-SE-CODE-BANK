@@ -1,21 +1,37 @@
-FROM node:20-alpine
+FROM node:18-alpine
 WORKDIR /app
+RUN apk add --no-cache openssl
 
-# Copy package files from backend
-COPY src/backend/package*.json ./
+# Copy root package files (if any) and backend package.json for caching
+COPY package*.json ./
+COPY src/backend/package*.json src/backend/
 
-# Copy prisma schema from project root
-COPY prisma ./prisma/  
+# Install root deps (if needed) and backend deps
+RUN npm ci --legacy-peer-deps || true    # ignore if root has no deps
+WORKDIR /app/src/backend
+RUN npm ci --legacy-peer-deps
 
-# Install dependencies
-RUN npm ci
+# Copy Prisma schema and backend source
+WORKDIR /app
+COPY prisma ./prisma
 
-# Generate Prisma client
+# also place the schema inside the backend folder so generation can run locally
+RUN mkdir -p src/backend/prisma
+COPY prisma/schema.prisma src/backend/prisma/
+COPY prisma/seed.js src/backend/prisma/
+
+COPY src/backend ./src/backend
+COPY src/utils ./src/utils
+
+# Set DB URL for Prisma
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+# Generate Prisma client using the schema now located in backend/prisma
+WORKDIR /app/src/backend
+
 RUN npx prisma generate
 
-# Copy rest of backend application
-COPY src/backend/ .
+EXPOSE 5010
 
-EXPOSE 5010 
-
-CMD node server.js
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node prisma/seed.js && node server.js"]
