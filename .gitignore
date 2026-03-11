@@ -48,3 +48,7 @@ node_modules/
 
 # Commit notification env
 !services/notification-service/.env
+
+
+.nx/cache
+.nx/workspace-data
