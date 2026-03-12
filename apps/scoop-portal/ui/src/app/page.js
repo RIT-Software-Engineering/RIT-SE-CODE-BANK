@@ -44,10 +44,11 @@ const NavButton = ({ href, children }) => {
 const LandingPage = () => {
   return (
     <Box display="flex" flexDirection="column" minHeight="100vh"
-    sx={{
-    width: '100vw',
-    overflowX: 'hidden',
-  }}
+        sx={{
+        width: '100vw',
+        overflowX: 'hidden',
+        
+    }}
       // style={{
       //   minHeight: "100vh",
       //   backgroundColor: "fff",
@@ -61,46 +62,47 @@ const LandingPage = () => {
       // }}
     >
       <LandingHeader />
-      
-
-      <div style={{ height: "64px" }} />
 
       <main
         style={{
           flexGrow: 1,
-          padding: "80px 20px",
-          // display: "flex",
+          backgroundImage: "url('/scoop-portal/aerial_drone_09-web.png')",
+          backgroundSize:"cover",
+          backgroundPosition:"center",
+          width:"100%",
+          minHeight:"430px",
           textAlign: "center",
-          maxWidth: "800px",
-          margin: "0 auto",
-          // minHeight: "100vw",
-          // justifyContent: "center",
-          // alignItems: "center",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
         }}
       >
-        <h1 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>
-                    Software Coop Program SCOOP
-                </h1>
-                <p style={{ fontSize: "1.2rem", marginBottom: "40px" }}>
-                    The Software Engineering department&apos;s SCOOP Program connects
-                    students with real-world software development experiences,
-                    interdisciplinary teams, and mentorship from faculty.
-                </p>
-                <Box gap={2} sx={{ display: "flex", justifyContent: "center"}}>
-                    <NavButton href="/application" >Apply Now</NavButton>
-                    <NavButton href="/interest-form">Interest Form</NavButton>
-                </Box>
-        <Box 
-        sx={{
-          backgroundImage: 'url("/RIT_rgb_vert_w.png")',
-          backgroundSize: 'contain',
-          backgroundColor: 'black',
-          backgroundRepeat: 'no-repeat',
-          // height: '40px',
-
-        }}/>
-        
-        
+        <div style={{
+            maxWidth: "800px",
+            margin: "0 auto",
+            padding: "60px 20px",
+        }}>
+            <h1 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>
+                Software Coop Program SCOOP
+            </h1>
+            <p style={{ fontSize: "1.2rem", marginBottom: "40px" , fontWeight:"bold"}}>
+                The Software Engineering department&apos;s SCOOP Program connects
+                students with real-world software development experiences,
+                interdisciplinary teams, and mentorship from faculty.
+            </p>
+            <Box gap={2} sx={{ display: "flex", justifyContent: "center"}}>
+                <NavButton href="/application" >Apply Now</NavButton>
+                <NavButton href="/interest-form">Interest Form</NavButton>
+            </Box>
+            <Box 
+                sx={{
+                backgroundImage: 'url("/scoop-portal/RIT_rgb_vert_w.png")',
+                backgroundSize: 'contain',
+                backgroundColor: 'black',
+                backgroundRepeat: 'no-repeat',
+                //   height: '40px',
+            }}/>
+        </div>
       </main>
       <Footer/>
     </Box>
