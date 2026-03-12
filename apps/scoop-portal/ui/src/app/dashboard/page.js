@@ -10,7 +10,7 @@ import Header from '@components/Header';
 
 const workflows = [
     {
-    title: "Project",
+    title: "Onboarding",
     steps: [
       {
         title: "Join the GitHub",
@@ -69,12 +69,6 @@ const workflows = [
     title: "Admin",
     steps: [
       {
-        title: "Review Applications",
-        roles: ["scoopdinator","advisor"],
-        description: "Approve or reject scooployee applications.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/applications",
-      },
-      {
         title: "Manage Users",
         roles: ["scoopdinator"],
         description: "Review current user details and statuses.",
@@ -92,34 +86,37 @@ const workflows = [
     title: "Scooployees",
     steps: [
       {
-        title: "View Scooployees",
+        title: "Review Applications",
+        roles: ["scoopdinator"],
+        description: "Approve or reject scooployee applications.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/applications",
+      },
+      {
+        title: "View All Scooployees",
         roles: ["scoopervisor"],
         description: "Review current scooployee details and statuses.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopervisor/scooployees",
       },
       {
-        title: "View Available Employees",
-        roles: ["scoopervisor"],
-        description: "Review available scooployees for team assignment.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees/view",
-      },
-      {
-        title: "View My Employees",
+        title: "View My Scooployees",
         roles: ["scoopervisor"],
         description: "View your hired scooployees.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/scooployees/assign",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopervisor/scooployees/",
       },
     ],
   },
   {
     title: "Teams",
     steps: [
+      /** 
+       * SCOOPdinators should only have the ability to view and modify existing scoop teams in the future.
+       * But for now, they will have the ability to fully manage them because they act as SCOOPversior too.
+       */
       {
-        title: "Create New Team",
-        roles: ["scoopervisor"],
-        description:
-          "Create a new team from available scooployees and projects.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopervisor/teams/manage/create",
+        title: "Manage Teams",
+        roles: ["scoopdinator"],
+        description: "View and modify existing scoop teams and project assignments.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/teams",
       },
       {
         title: "Manage Teams",
@@ -151,22 +148,10 @@ const workflows = [
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/projects",
       },
       {
-        title: "View Projects",
-        roles: ["scoopdinator"],
-        description: "View existing projects and their statuses.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/projects",
-      },
-      {
-        title: "Assign Teams",
-        roles: ["scoopdinator"],
-        description: "Assign teams to existing projects.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/projects/assign/team",
-      },
-      {
-        title: "View Teams",
-        roles: ["scoopdinator"],
-        description: "View and modify existing scoop teams and project assignments.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/teams",
+        title:"Manage Project Proposals",
+        roles: ["scoopervisor"],
+        description: "Propose projects for teams to work on.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopervisor/projectproposals"
       },
     ],
   },
