@@ -126,8 +126,8 @@ export default function LandingHeader() {
 
             <Button variant="outline-orange">About</Button>
             <Button variant="outline-orange">Contact</Button>
-
-            <Link href="/user-roles" passHref>
+            {/** This is where the home dashboard login takes us to */}
+            <Link href="/user-login" passHref>
               <Button variant="outline-orange">Log In</Button>
             </Link>
           </Box>
