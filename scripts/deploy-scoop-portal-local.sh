@@ -1,7 +1,7 @@
 set -e
 
 APP_DIR="/d/RIT-SE-CODE-BANK"
-BRANCH="scoop-portal-dev"
+BRANCH="scoop-portal-dev-cicd-testing"
 PORTAL_SERVER_DIR="$APP_DIR/apps/scoop-portal/server"
 PORTAL_UI_DIR="$APP_DIR/apps/scoop-portal/ui"
 WORKFLOW_SERVER_DIR="$APP_DIR/apps/workflow/server"
@@ -14,6 +14,23 @@ cd $APP_DIR
 git fetch origin
 git checkout $BRANCH
 git pull origin $BRANCH
+
+cd $APP_DIR
+npm install
+
+cd $PORTAL_SERVER_DIR
+npm install
+
+cd $PORTAL_UI_DIR
+npm install
+
+cd $WORKFLOW_SERVER_DIR
+npm install
+
+cd $NOTIFICATIONS_SERVER_DIR
+npm install
+
+cd $APP_DIR
 
 docker compose -f docker-compose.staging.yml down
 
