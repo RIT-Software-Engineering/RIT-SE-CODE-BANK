@@ -7,36 +7,30 @@ import RegisterPanel from "./components/RegisterPanel"
 import ControlPanel from "./components/ControlPanel"
 import {Group, Panel} from "react-resizable-panels"
 import { CPU } from "../../backend/cpu"
+import { backend } from "../../backend/backend"
 
 export default function App() {
-  const cpuRef = useRef(new CPU())
-  const [cpuState, setCpuState] = useState(cpuRef.current.getState())
+  const [cpuState, setCpuState] = useState(backend.getState())
 
   const [code, setCode] = useState(`test code :D`)
-  const onAssemble = (code) => {
-      // assembler code goes here
-      alert("Assemble button clicked! (placeholder)")
-      //where the index function goes
+  const onAssemble = () => {
+    const state = backend.loadAssembly(code)
+    setCpuState(state)
   }
-  const onRun = (code) => {
-      // assembler code goes here
-      alert("Run button clicked! (placeholder)")
-      //where the index function goes
+  const onRun = () => {
+    const state = backend.run()
+    setCpuState(state)
   }
-  const onStepForward = (code) => {
-      // assembler code goes here
-      alert("Step Forward button clicked! (placeholder)")
-      //where the index function goes
+  const onStepForward = () => {
+    const state = backend.step()
+    setCpuState(state)
   }
-  const onStepBackward = (code) => {
-      // assembler code goes here
-      alert("Step Backward button clicked! (placeholder)")
-      //where the index function goes
+  const onStepBackward = () => {
+    alert("Step Backward button clicked! (placeholder)")
   }
-  const onRestart = (code) => {
-      // assembler code goes here
-      alert("Restart button clicked! (placeholder)")
-      //where the index function goes
+  const onRestart = () => {
+    const state = backend.reset()
+    setCpuState(state)
   }
  
 
