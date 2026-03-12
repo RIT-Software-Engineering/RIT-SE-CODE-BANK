@@ -176,6 +176,7 @@ export default function Bubbled(){
   const workflowsApiUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL || "http://localhost:5001";
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
   const participantsSyncMapRef = useRef({});
+  const [workflowsById, setWorkflowsById] = useState({});
 
   useEffect(() => {
     let cancelled = false;
@@ -196,7 +197,15 @@ export default function Bubbled(){
         const data = await res.json();
         if (!cancelled) {
           setWorkflowStates(Array.isArray(data) ? data : []);
-        }
+          // ← this block should be here in the try, NOT in the catch
+          const uniqueWorkflowIds = [...new Set(data.map(s => s.workflowId))];
+          const workflowResults = await Promise.all(
+            uniqueWorkflowIds.map(id => fetch(`${workflowsApiUrl}/workflows/${id}`).then(r => r.json()))
+          );
+          const wfMap = {};
+          workflowResults.forEach(wf => { wfMap[wf.id] = wf; });
+          setWorkflowsById(wfMap);
+        }   
       } catch (error) {
         if (!cancelled) {
           console.error("Error loading workflow states:", error);
@@ -234,7 +243,7 @@ export default function Bubbled(){
         if (cancelled) {
           return;
         }
-        const nextTeams = {};
+        const nextTeams = {}; //Incase a member is in multiple teams
         const nextUsers = {};
         data.forEach((team) => {
           nextTeams[team.id] = team;
@@ -439,7 +448,7 @@ export default function Bubbled(){
     setActiveWorkflowState(workflowState);
     setOpen(true);
   };
-
+//This needs to be fixed, so when a user clicks the bubble and clicks out it automaticly doesn.t complete it.
   const handleClose = async(shouldPromote = true) => {
     const shouldMarkInProgress =
       shouldPromote &&
@@ -657,7 +666,11 @@ export default function Bubbled(){
   };
 
   const renderActionChips = (workflowState) => {
+    const workflow = workflowsById[workflowState.workflowId];
+    const rootActionId = workflow?.rootActionId;
+    const baseActionId = workflow?.baseActionId;
     const sortedStates = (workflowState.actionStates || [])
+      .filter(a => a.actionId !== rootActionId && a.actionId !== baseActionId)
       .slice()
       .sort((a, b) => a.index - b.index);
 

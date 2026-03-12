@@ -51,26 +51,10 @@ function ApplicationPage() {
     const [courseData, setCourseData] = useState([]);
 
     useEffect(() => {
-        // SecureFetch(config.url.API_GET_SEMESTERS)
-        // .then((res) => res.json())
-        // .then((data) => setSemesterData(data))
-        // .catch((err) => console.error("Failed to fetch semesters:", err));
-
-        // Temporary hardcoded dates:
-        let data = [
-            { semester_id: 1, name: "Fall 2019" },
-            { semester_id: 2, name: "Spring 2019" },
-            { semester_id: 3, name: "Fall 2020" },
-            { semester_id: 4, name: "Spring 2021" },
-            { semester_id: 5, name: "Fall 2021" },
-            { semester_id: 6, name: "Spring 2022" },
-            { semester_id: 7, name: "Fall 2022" },
-            { semester_id: 8, name: "Spring 2023" },
-            { semester_id: 9, name: "Fall 2023" },
-            { semester_id: 10, name: "Spring 2024" },
-            { semester_id: 11, name: "Fall 2024" },
-        ];
-        setSemesterData(data);
+        fetch(process.env.NEXT_PUBLIC_API_URL + "/api/semestergroup")
+            .then((res) => res.json())
+            .then((data) => setSemesterData(data))
+            .catch((err) => console.error("Failed to fetch semesters:", err));
     }, []);
 
     useEffect(() => {
@@ -169,19 +153,6 @@ function ApplicationPage() {
         e.preventDefault();
         if (modalOpen) return;
 
-        // const body = new FormData();
-        // Object.keys(formData).forEach((key) => body.append(key, formData[key]));
-        // if (formFiles) {
-        //   for (let i = 0; i < formFiles.length; i++) {
-        //     body.append("attachments", formFiles[i]);
-        //   }
-        // }
-
-        //array to string
-        //  completeFormData = {
-        // ...formValues,
-        // coursesTaken: selectedCourses.join(", "),
-
         const selectedCourses = courseData
             .filter((course) => formValues[course.name])
             .map((course) => course.name)
@@ -202,6 +173,25 @@ function ApplicationPage() {
         };
 
         try {
+            //check that user exists in DB and has role 'prospect' before submitting
+            const userCheckResponse = await fetch(
+                process.env.NEXT_PUBLIC_API_URL + `/api/users/${user_id}`,
+                { method: "GET" }
+            );
+            if (userCheckResponse.status === 404) {
+                setErrors({ _form: "You are not registered in our system. Please contact the SE Department to be added before applying." });
+                return;
+            }
+            if (!userCheckResponse.ok) {
+                setErrors({ _form: "Unable to verify your account. Please try again later." });
+                return;
+            }
+            const userCheckData = await userCheckResponse.json();
+            if (userCheckData?.type !== "prospect") {
+                setErrors({ _form: "You are not eligible to submit an application. Please contact the SE Department." });
+                return;
+            }
+
             const response = await postFormData(completeFormData);
             const result = await response.json();
             console.log("Response from server:", result);
@@ -209,33 +199,15 @@ function ApplicationPage() {
 
             if (response.status === 200) {
                 try{
-                    //see if the user exists
-                    const userResponse = await fetch(
+                    //user is a confirmed prospect, update their type to applicant
+                    await fetch(
                         process.env.NEXT_PUBLIC_API_URL + `/api/users/${user_id}`,
-                        { method: "GET" }
+                        {
+                            method: "PUT",
+                            body: JSON.stringify({ type: "applicant" }),
+                            headers: { "Content-Type": "application/json" },
+                        }
                     );
-                    if (userResponse.status === 404){ 
-                        const createUserRes = await fetch(
-                            process.env.NEXT_PUBLIC_API_URL + "/api/users",
-                            {
-                                method: "POST",
-                                body: JSON.stringify({
-                                    id: user_id,
-                                    fname: formValues.firstName,
-                                    lname: formValues.lastName,
-                                    email: formValues.ritEmail,
-                                    type: "applicant",
-                                    createdAt: new Date().toISOString(),
-                                    semester_group: "null",
-                                    project: "null",
-                                    active: "",
-                                    last_login: "null",
-                                    prev_login: "null",
-                                }),
-                                headers: { "Content-Type": "application/json" },
-                            }
-                        );   
-                    }
 
                     try{
                         const entry = {
@@ -431,7 +403,7 @@ function ApplicationPage() {
                         >
                             {semesterData.map((startSemester) => (
                                 <MenuItem
-                                    key={startSemester.semester_id}
+                                    key={startSemester.id}
                                     value={startSemester.name}
                                 >
                                     {startSemester.name}
@@ -619,7 +591,6 @@ function ApplicationPage() {
                             aria-labelledby="SEcoopAvailability-buttons-group-label"
                             name="SEcoopAvailability"
                             onChange={handleChange}
-                            //SEcoopAvailability
                         >
                             <FormControlLabel
                                 value="true"
@@ -707,6 +678,12 @@ function ApplicationPage() {
                             onChange={handleChange}
                         />
                     </Button>
+
+                    {errors._form && (
+                        <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+                            {errors._form}
+                        </Typography>
+                    )}
 
                     <Box mt={2} textAlign="center">
                         <Button

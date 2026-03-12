@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Autocomplete
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
@@ -41,8 +42,50 @@ export default function WorkflowPage() {
   const [editingActionName, setEditingActionName] = useState('');
   const [editingActionDescription, setEditingActionDescription] = useState('');
 
+  //this is so i can edit and the users I assign to my workflow
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [assignedUsers, setAssignedUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState([]);
+  
+  //this is for the selected workflow data
+  const [workflowData, setWorkflowData] = useState(null);
 
   const baseUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL;
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+// fetching all users
+  useEffect(()=>{
+    const fetchUsers = async() => {
+        try{
+            const res = await fetch(`${publicApiUrl}/api/users`);
+            const data = await res.json();
+            setAllUsers(data);
+        }catch(e){
+            console.log("faield to fetch users in scoopdinator/workflow/[id]/page.js");
+        }
+    };
+    fetchUsers();
+  }, [])
+
+  // fetching all workflow states for this workflow so we know who its asssigned to
+  useEffect(() => {
+    if(!workflowId){
+        return;
+    }
+    const fetchAssigned = async() =>{
+        try{
+            const res = await fetch(`${baseUrl}/states/workflow?workflowId=${workflowId}`);
+            const data = await res.json();
+            //each state has a user id, we gotta catch'em all!
+            setAssignedUsers(Array.isArray(data) ? data.map(e => e.userId):[]);
+        }catch(e){
+            console.log("faield to fetch workflow states in scoopdinator/workflow/[id]/page.js");
+        }
+    };
+    fetchAssigned();
+  },[workflowId, baseUrl]);
+
 
   const fetchWorkflowAndActions = async () => {
     try {
@@ -56,10 +99,16 @@ export default function WorkflowPage() {
       const workflowResponse = await fetch(workflowUrl.toString());
       if (!workflowResponse.ok) throw new Error('Failed to fetch workflow state');
       const states = await workflowResponse.json();
+      
       if (!states.length) throw new Error('No workflow state found for user');
 
       const state = states[0];
       setWorkflowState(state);
+      const workflowRes = await fetch(`${baseUrl}/workflows/${workflowId}`);
+      if(workflowRes.ok){
+        const workflow_data = await workflowRes.json();
+        setWorkflowData(workflow_data);
+      }
 
       const idsMap = {};
       state.actionStates.forEach(as => {
@@ -145,15 +194,83 @@ export default function WorkflowPage() {
       }
 
       setCompletedSteps((prev) => {
+        const rootActionId = workflowData?.rootActionId;
         const newSet = new Set(prev);
         if (newCompleted) newSet.add(actionId);
         else newSet.delete(actionId);
+
+        if(rootActionId){
+            const nonRootSteps = workflowState.actionStates.filter(s => s.actionId !== rootActionId);
+            const completed = nonRootSteps.every(s => newSet.has(s.actionId));
+            if(completed && nonRootSteps.length > 0){
+                newSet.add(rootActionId);
+                const rootStateActionId = actionStateIdsMap[rootActionId];
+                if(rootStateActionId){
+                    fetch(`${baseUrl}/states/handleSubmit`, {
+                        method: "POST",
+                        headers: {"Content-Type":"application/json"},
+                        body:JSON.stringify({
+                            actionStateId: rootStateActionId, userId,
+                            workflowStateId: workflowState?.id
+                        })
+                    }).catch(console.error);
+                }
+            }else{
+                newSet.delete(rootActionId);
+            }
+        }
         return newSet;
       });
     } catch (error) {
       alert(`Error updating step: ${error.message}`);
     }
   };
+
+  // This will handle the adding of multiple users
+  const handleAddAssignee = async (user) =>{
+    try{
+        const rootActionId = workflowState.actionStates[0].actionId;
+        const res = await fetch(`${baseUrl}/states/workflow`, {
+            method:"POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                userId: user.id,
+                workflowId,
+                actionStates: workflowState.actionStates.map(a => ({
+                    actionId: a.actionId,
+                    stateType: "not_started"
+                })) 
+            }),
+        });
+        if(!res.ok){
+            throw new Error("Failed to assign user in scoopdinator/workflow/[id]/page.js");
+        }
+        setAssignedUsers(prev => [...prev, user.id]);
+    }catch(e){
+        alert(e.message);
+    }
+  };
+
+//This will handle the removing of multiple users
+const handleRemoveAssignee = async (userId) => {
+    try{
+        //find the workflow state for this user and delete it
+        const res = await fetch(`${baseUrl}/states/workflow?userId=${userId}&workflowId=${workflowId}`);
+        const data = await res.json();
+        const stateToDelete = data[0];
+        if(!stateToDelete){
+            throw new Error("No workflow state found for user");
+        }
+
+        const deleteRes = await fetch(`${baseUrl}/states/workflow/${stateToDelete.id}`, {method: "DELETE"});
+        if(!deleteRes){
+            throw new Error("Failed to remove user in scoopdinator/workflow/[id]/pages, in handleRemoveAssignee");
+        }
+        setAssignedUsers(prev => prev.filter(id => id !== userId));
+    }catch(e){
+        alert(e.message);
+    }
+}
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => {
@@ -175,62 +292,103 @@ export default function WorkflowPage() {
     setEditingActionName('');
     setEditingActionDescription('');
   };
-
-
+  
+  //This function used actionMaps which fetches asyncronasly, but now instead we will fetch directly from the db, so the 
+  //newly added data is can't be linked and finding the tail of the list is difficult, but now we start from the head and build
+  //the list from there so each and every tail is correctly set, and so no linking is messed up.
   const handleCreateAction = async () => {
     if (!newActionName.trim()) return;
-    if (!workflowState?.id) {
-      alert('No workflow state loaded');
-      return;
-    }
-    
+    if (!workflowState?.id) return alert('No workflow state loaded');
+
     try {
-      const response = await fetch(`${baseUrl}/actions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          workflowId,
-          name: newActionName.trim(),
-          description: newActionDescription.trim(),
-          userId,
-          metadata: { title: newActionName.trim() }
-        })
-      });
-    
-      if (!response.ok) throw new Error('Failed to create action');
-      const newAction = await response.json();
+        const rootActionId = workflowData?.rootActionId;
+        const baseActionId = workflowData?.baseActionId;
 
-      const lastStep = workflowState.actionStates[workflowState.actionStates.length - 1];
-      if (lastStep) {
-        await fetch(`${baseUrl}/actions/${lastStep.actionId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nextActionId: newAction.id })
+        //Fetches actions from the server doesn't rely on actionMaps anymore.
+        const nonRootStates = workflowState.actionStates.filter(
+            s => s.actionId !== rootActionId && s.actionId !== baseActionId
+        );
+        const actionIds = nonRootStates.map(s => s.actionId);
+
+        let freshActionsMap = {};
+        if(actionIds.length > 0){
+            const actionsUrl = new URL(`${baseUrl}/actions`);
+            actionsUrl.searchParams.append('ids', actionIds.join(','));
+            const res = await fetch(actionsUrl.toString());
+            const freshActions = await res.json();
+            freshActions.forEach(a => {freshActionsMap[a.id] = a;});
+        }
+
+        //Walks through the linked list from root to find the tailm instead of relying on state to hold previous tail.
+        let tailActionId = rootActionId;
+        const rootAction = await fetch(`${baseUrl}/actions/${rootActionId}`).then(r => r.json());
+        let currentId = rootAction?.nextActionId;
+
+        while(currentId && freshActionsMap[currentId]){
+            tailActionId = currentId;
+            currentId = freshActionsMap[currentId]?.nextActionId ?? null;
+        }
+
+        //Creates the new action
+        const response = await fetch(`${baseUrl}/actions`,{
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                workflowId,
+                name: newActionName.trim(),
+                description: newActionDescription.trim(),
+                userId,
+                metadata: {title: newActionName.trim()}
+            })
+        });
+        if (!response.ok) throw new Error('Failed to create action');
+        const newAction = await response.json();
+
+        //(Link tail) goes to (new action) which goes to (nothing yet)
+        await fetch(`${baseUrl}/actions/${tailActionId}`,{
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({nextActionId: newAction.id})
+        });
+        await fetch(`${baseUrl}/actions/${newAction.id}`,{
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({parentActionId: tailActionId})
         });
 
-        await fetch(`${baseUrl}/actions/${newAction.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ parentActionId: lastStep.actionId })
+        //Attaches to the workflow state and refreshs, so the data updates
+        // After attaching to workflow state and before fetchWorkflowAndActions()
+        const attachRes = await fetch(`${baseUrl}/states/workflow/${workflowState.id}`,{
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
         });
-      }
-    
-      const attachRes = await fetch(`${baseUrl}/states/workflow/${workflowState.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          actionId: newAction.id,
-          stateType: 'notStarted'
-        })
-      });
-      if (!attachRes.ok) throw new Error('Failed to attach action to workflow state');
-    
-      await fetchWorkflowAndActions();
-    
-      handleCloseModal();
-    } catch (error) {
-      console.error('Error creating action:', error);
-      alert(error.message);
+        if (!attachRes.ok) throw new Error('Failed to attach action to workflow state');
+
+        //syncing new action to ALL assigned users workflow states
+        const allStatesRes = await fetch(`${baseUrl}/states/workflow?workflowId=${workflowId}`);
+        if (allStatesRes.ok) {
+            const allStates = await allStatesRes.json();
+            await Promise.all(
+                allStates
+                    .filter(s => s.id !== workflowState.id) //skipping current user
+                    .map(s => fetch(`${baseUrl}/states/workflow/${s.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            newActionState: {
+                                actionId: newAction.id,
+                                stateType: 'notStarted'
+                            }
+                        })
+                    }))
+            );
+        }
+
+        await fetchWorkflowAndActions();
+        handleCloseModal();
+    }catch (error){
+        console.error('Error creating action:', error);
+        alert(error.message);
     }
   };
 
@@ -284,7 +442,29 @@ export default function WorkflowPage() {
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
   if (!workflowState) return <Typography sx={{ p: 4 }}>No workflow state available</Typography>;
 
-  const steps = workflowState.actionStates;
+  const rootActionId = workflowData?.rootActionId;
+  const baseActionId = workflowData?.baseActionId;
+  const userSteps = workflowState.actionStates.filter(
+    s => s.actionId !== rootActionId && s.actionId !== baseActionId
+  );
+  const sortedSteps = [];
+  if (userSteps.length > 0) {
+    const stepsByActionId = {};
+    userSteps.forEach(s => { stepsByActionId[s.actionId] = s; });
+    const rootAction = actionsMap[rootActionId];
+    let currentActionId = rootAction?.nextActionId;
+    while (currentActionId && stepsByActionId[currentActionId]) {
+        sortedSteps.push(stepsByActionId[currentActionId]);
+        currentActionId = actionsMap[currentActionId]?.nextActionId ?? null;
+    }
+    userSteps.forEach(s => {
+        if (!sortedSteps.find(ss => ss.id === s.id)) sortedSteps.push(s);
+    });
+   }
+   const steps = sortedSteps;
+   
+//    console.log('userSteps count:', userSteps.length);
+// console.log('sortedSteps count:', sortedSteps.length);
 
   return (
     <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
@@ -308,7 +488,7 @@ export default function WorkflowPage() {
                   maxWidth: 'max-content',
                 }}
               >
-                {actionsMap[workflowState.workflow?.baseActionId]?.name ?? workflowState.workflow?.name ?? 'Untitled Workflow'}
+                {workflowData?.baseAction?.name ?? 'Untitled Workflow'}
               </Typography>
 
               <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
@@ -320,16 +500,26 @@ export default function WorkflowPage() {
                 >
                   Add Action
                 </Button>
+
+                {/** This is the button that will add users to workflows */}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{ textTransform: 'none' }}
+                  onClick={() => setAssignModalOpen(true)}
+                >
+                  Manage Users
+                </Button>
+              </Box>
                 <Button
                   variant="outlined"
                   size="small"
                   color="error"
                   sx={{ textTransform: 'none' }}
-                  onClick={() => handleDeleteWorkflow(workflowState.workflow?.id)}
+                  onClick={() => handleDeleteWorkflow(workflowId)}
                 >
                   Delete
                 </Button>
-              </Box>
 
               {/* Steps rendering */}
               <Box>
@@ -508,6 +698,50 @@ export default function WorkflowPage() {
             Save
           </Button>
         </DialogActions>
+      </Dialog>
+
+      <Dialog open={assignModalOpen} onClose={() => setAssignModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Manage Users</DialogTitle>
+        <DialogContent>
+            {/** This includes current assignes with remove button next to them */}
+            <Typography variant='subtitle2' sx={{mb:1, fontWeight: 600}}>Currently Assigned</Typography>
+            {assignedUsers.length === 0 && (
+                <Typography variant='body2' color="secondary" sx={{mb:2}}>No one is assigned yet</Typography>
+            )}
+            {assignedUsers.map(uid => {
+                const user = allUsers.find(u => u.id === uid);
+                if(!user){
+                    return null;
+                }
+                return(
+                    <Box key={uid} sx={{display:"flex", justifyContent:"space-between", alignItems: "center", mb: 1}}>
+                        <Typography>{user.fname} {user.lname}</Typography>
+                        <Button size="small" color='error' variant='contained' onClick={()=>handleRemoveAssignee(uid)}>
+                            Remove
+                        </Button>
+                    </Box>
+                );
+            })}
+
+            {/** drop down of all users, to add new users */}
+            <Typography variant='subtitle2' sx={{mt:2, mb:1, fontWeight:600}}>Add Users</Typography>
+            <Autocomplete
+                options={allUsers.filter(u => !assignedUsers.includes(u.id))}
+                getOptionLabel={(u) => `${u.fname} ${u.lname}`}
+                onChange={(e, selected) => {if(selected){
+                    handleAddAssignee(selected);
+                }}}
+                componentsProps={{
+                    popper: {
+                    placement: 'bottom-start',
+                    modifiers: [{ name: 'flip', enabled: false }],
+                    }
+                }}
+                renderInput={(params) => <TextField {...params} label="Select a SCOOPloyee" size='small'/>}
+            />
+            
+        </DialogContent>
+        <Button onClick={() => {setAssignModalOpen(false); setUserSearch('');}}>Close</Button>
       </Dialog>
     </Box>
   );

@@ -85,6 +85,7 @@ model WorkflowAttributes {
   id           String  @id @default(uuid()) @db.Char(36)
   baseActionId String  @unique @db.Char(36) // The action that these attributes are added to
   rootActionId String? @db.Char(36) // The root action of the workflow, which is the base action
+  createdAt DateTime @default(now()) //This is to keep track of the workflows and when they were created
 
   baseAction     Action          @relation("baseAction", fields: [baseActionId], references: [id], onDelete: Cascade)
   rootAction     Action?         @relation("rootAction", fields: [rootActionId], references: [id], onDelete: Cascade)

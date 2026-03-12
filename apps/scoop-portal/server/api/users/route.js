@@ -43,11 +43,19 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { type } = req.body;
+  const { type, fname, lname, email, active, semester_group, project } = req.body;
   try{
     const updatedUser = await prisma.users.update({
       where: { id },
-      data: { type },
+      data: {
+        ...(type !== undefined && { type }),
+        ...(fname !== undefined && { fname }),
+        ...(lname !== undefined && { lname }),
+        ...(email !== undefined && { email }),
+        ...(active !== undefined && { active }),
+        ...(semester_group !== undefined && { semester_group }),
+        ...(project !== undefined && { project }),
+      },
     });
     return res.status(200).json({ message: "User updated", user: updatedUser });
 
@@ -149,6 +157,55 @@ router.get("/:id", async (req, res) => {
       message: "Failed to fetch user",
       error: error.message,
     });
+  }
+});
+
+// DELETE user by ID
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Remove user from journal entries where they are a recipient (many-to-many)
+    await prisma.journalEntry.updateMany({
+      where: { recipients: { some: { id } } },
+      data: {},
+    });
+    // Disconnect recipient relation explicitly
+    await prisma.users.update({
+      where: { id },
+      data: {
+        receivedEntries: { set: [] },
+      },
+    });
+
+    // Delete journal entries where user is the sender or topic
+    await prisma.journalEntry.deleteMany({
+      where: { OR: [{ sender_id: id }, { topic_id: id }] },
+    });
+
+    // Disconnect user from teams they are a member of
+    await prisma.users.update({
+      where: { id },
+      data: {
+        teams: { set: [] },
+      },
+    });
+
+    // Nullify scoopervisor references on teams they supervise
+    await prisma.teams.updateMany({
+      where: { scoopervisorId: id },
+      data: { scoopervisorId: null },
+    });
+
+    // Delete associated login if exists
+    await prisma.login.deleteMany({ where: { user: { id } } });
+
+    // Finally delete the user
+    await prisma.users.delete({ where: { id } });
+
+    res.status(200).json({ message: "User deleted" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: "Error deleting user", error: error.message });
   }
 });
 

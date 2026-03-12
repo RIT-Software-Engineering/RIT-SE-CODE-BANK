@@ -71,13 +71,13 @@ function Footer() {
         justifyContent="center"
         flexWrap="wrap"
       >
-        <h3>
+        <p style={{fontSize: "13px", margin: 0, fontWeight:"bold", lineHeight: "1.4"}}>
           B. THOMAS GOLISANO <br />
           COLLEGE OF COMPUTING & <br />
           INFORMATION SCIENCES
-        </h3>
+        </p>
 
-        <h4>
+        <p style={{fontSize: "13px", margin: 0, fontWeight:"bold", lineHeight: "1.4"}}>
           Department of Software Engineering
           <br />
           Golisano Building 70, Room 1690
@@ -85,18 +85,18 @@ function Footer() {
           134 Lomb Memorial Drive
           <br />
           Rochester, NY 14623-5608
-        </h4>
+        </p>
 
         <div>
-          <h4>
+          <p style={{fontSize: "13px", margin: 0, fontWeight:"bold"}}>
             <i className="ui mail icon"></i> scoop@se.rit.edu
-          </h4>
+          </p>
         </div>
       </Box>
-      <h5>
+      <p style={{ fontSize: "13px", margin: 5, fontWeight:"bold"}}>
         <i className="ui icon copyright"></i> Rochester Institute of Technology,
         All Rights Reserved
-      </h5>
+      </p>
     </Box>
   );
 }

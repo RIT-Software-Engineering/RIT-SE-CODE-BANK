@@ -63,7 +63,7 @@ export default function Journal() {
   const [filterRecipientValue, setFilterRecipientValue] = useState("");
   const [filterTopicValue, setFilterTopicValue] = useState("");
   const [filterEntryTypeValue, setFilterEntryTypeValue] = useState("");
-  const [filterTimeValue, setFilterTimeValue] = useState("");
+  const [filterTimeValue, setFilterTimeValue] = useState("newest_first");
 
   // New Entry States
   const [newEntrySemester, setNewEntrySemester] = useState("");
@@ -118,6 +118,22 @@ export default function Journal() {
     fetchEntries();
   }, [user]);
 
+  //This is how the JSON download of all of the Journal entresi for a person will be done
+
+  const handleJSONDownload = () =>{
+    const JSONString = JSON.stringify(journalEntries,null,2);
+    const blob = new Blob([JSONString],{type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `journal_entries_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // -- Filters --
   const handleFilterSemesterChange = (e) => setFilterSemesterValue(e.target.value || "");
   const handleFilterRecipientChange = (e) => setFilterRecipientValue(e.target.value || "");
@@ -134,8 +150,8 @@ export default function Journal() {
     if(filterSenderValue) baseArray = baseArray.filter((entry) => entry.sender_id == filterSenderValue);
     if(filterEntryTypeValue) baseArray = baseArray.filter((entry) => entry.entry_type == filterEntryTypeValue);
     
-    if(filterTimeValue === "newest_first") baseArray.sort((a,b) => new Date(b.date) - new Date(a.date));
     if(filterTimeValue === "oldest_first") baseArray.sort((a,b) => new Date(a.date) - new Date(b.date));
+    if(filterTimeValue === "newest_first") baseArray.sort((a,b) => new Date(b.date) - new Date(a.date));
     
     setFilteredJournalEntries(baseArray)
   };
@@ -259,6 +275,19 @@ export default function Journal() {
     return `${fname ? fname[0] : ""}${lname ? lname[0] : ""}`.toUpperCase();
   };
 
+  //This function will set the filter states back to their base, effectivily clearing the filter
+const handleClearFilter = () =>{
+    setFilterSemesterValue("");
+    setFilterSenderValue("");
+    setFilterRecipientValue("");
+    setFilterTopicValue("");
+    setFilterEntryTypeValue("");
+    setFilterTimeValue("newest_first");
+
+    const fullArray = Array.from(journalEntries).sort((a, b) => new Date(b.date) - new Date(a.date));
+    setFilteredJournalEntries(fullArray);
+}
+
   /**
    * Component: EntriesList
    * Renders the Timeline with dark-mode support and readable avatars
@@ -358,8 +387,9 @@ export default function Journal() {
                     </Box>
                     
                     {isSender && (
-                      <IconButton size="small" onClick={() => handleEditClick(entry)} sx={{ color: 'text.secondary' }}>
-                        <EditNoteIcon fontSize="small" />
+                      <IconButton size="small" onClick={() => handleEditClick(entry)} sx={{ color: '#FF6A00' }}>
+                        {/* <EditNoteIcon fontSize="small" /> */}
+                        Edit
                       </IconButton>
                     )}
                   </Box>
@@ -409,9 +439,9 @@ export default function Journal() {
                     <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                       <Button
                         size="small"
-                        disabled={!entry.next_entries || entry.next_entries.length === 0}
+                        // disabled={!entry.next_entries || entry.next_entries.length === 0}
                         onClick={() => setReplyEntry(entry)}
-                        sx={{ color: 'text.secondary' }}
+                        sx={{ color: 'background' }}
                       >
                         {entry.next_entries.length || 0} Replies
                       </Button>
@@ -448,6 +478,7 @@ export default function Journal() {
         <JournalHeader
           setFilterDialogOpen={setFilterDialogOpen}
           setNewEntryOpen={setNewEntryOpen}
+          handleJSONDownload={handleJSONDownload}
         />
         
         <EntriesList entries={filteredJournalEntries.filter(entry => entry.previous_entryid == null)} commentView={true} />
@@ -526,6 +557,7 @@ export default function Journal() {
         onCancel={() => setFilterDialogOpen(false)}
         onSubmit={() => handleApplyFilter()}
         actionLabel="Apply Filter"
+        secondaryAction={<Button variant="outlined" onClick={handleClearFilter}>Clear FIlter</Button>}
       >
         <Stack spacing={2}>
            <Box>
@@ -603,7 +635,15 @@ export default function Journal() {
         <>
             <DialogTitle>Thread</DialogTitle>
             <DialogContent dividers>
-                <EntriesList entries={replyEntry.next_entries} commentView={false} />
+                {replyEntry.next_entries.length > 0 ? (
+                    <EntriesList entries={replyEntry.next_entries} commentView={false} />
+                    ) : (
+                    <Typography color="text.secondary" sx={{ py: 2, textAlign: "center" }}>
+                        No replies found
+                        <br/>
+                        Be the first to reply!
+                    </Typography>
+                )}
             </DialogContent>
             <DialogActions>
                 <Button onClick={() => setReplyEntry(null)}>Close</Button>
