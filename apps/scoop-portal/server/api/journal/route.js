@@ -75,7 +75,7 @@ router.post("/", async (req, res) => {
       },
     });
 
-    notifyStatus({ userId: "jjm6490", context: { journalEntryId: newEntry.id, notes: newEntry.notes } })
+    notifyStatus({ userId: "zim1902", context: { journalEntryId: newEntry.id, notes: newEntry.notes } })
       .then(summary => {
         console.log('Notification sent:', summary)
       })
