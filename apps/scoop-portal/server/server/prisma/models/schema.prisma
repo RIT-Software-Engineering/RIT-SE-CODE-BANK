@@ -57,6 +57,9 @@ model users {
   receivedEntries JournalEntry[] @relation("ReceivedUserEntries")
   topicEntries    JournalEntry[] @relation("TopicUserEntries")
   Teams           Teams[]
+
+  submittedProposals  ProjectProposal[] @relation("SubmittedProposals")
+  reviewedProposals   ProjectProposal[] @relation("ReviewedProposals")
 }
 enum PrivacyEnum {
   PERSONAL
@@ -109,7 +112,7 @@ model Application {
   resumeFile              Bytes?
   resumeFileName          String?
   resumeFileType          String?
-  status                  String   @default("UNPROCESSED")
+  status                  String   @default("PENDING")
   createdAt               DateTime @default(now())
 }
 
@@ -130,4 +133,18 @@ model Login {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      users?
+}
+
+model ProjectProposal {
+  id              Int      @id @default(autoincrement())
+  title           String   @db.VarChar(255)
+  description     String   @db.Text
+  status          String   @default("PENDING")
+  submittedById   String
+  submittedBy     users    @relation("SubmittedProposals", fields: [submittedById], references: [id])
+  reviewedById    String?
+  reviewedBy      users?   @relation("ReviewedProposals", fields: [reviewedById], references: [id])
+  reviewNotes     String?  @db.VarChar(500)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

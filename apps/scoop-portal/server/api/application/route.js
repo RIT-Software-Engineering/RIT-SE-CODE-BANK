@@ -121,7 +121,7 @@ router.put("/:id", async (req, res) => {
     const { status } = req.body;
     console.log("Updating application ID:", id, "to status:", status);
     // Validate status
-    const validStatuses = ["UNPROCESSED", "ACCEPTED", "REJECTED"];
+    const validStatuses = ["PENDING", "ACCEPTED", "REJECTED"];
     if (!validStatuses.includes(status)) {
         return res.status(400).json({ 
             error: "Invalid status. Must be one of: " + validStatuses.join(", ") 
@@ -144,7 +144,7 @@ router.get("/status/:status", async (req, res) => {
   const { status } = req.params;
   
   // Validate status
-  const validStatuses = ["UNPROCESSED", "ACCEPTED", "REJECTED", "ALL"];
+  const validStatuses = ["PENDING", "ACCEPTED", "REJECTED", "ALL"];
   if (!validStatuses.includes(status)) {
       return res.status(400).json({ 
           error: "Invalid status. Must be one of: " + validStatuses.join(", ") 

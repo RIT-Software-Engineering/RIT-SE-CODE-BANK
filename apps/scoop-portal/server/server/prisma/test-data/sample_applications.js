@@ -238,7 +238,7 @@ export const sampleApplications = [
     remoteAbility: "Yes",
     additionalComments: null,
     resumeFile: null,
-    status: "UNPROCESSED",
+    status: "PENDING",
     createdAt: new Date("2025-07-15T10:00:00Z"),
   },
   {
@@ -260,7 +260,7 @@ export const sampleApplications = [
     remoteAbility: "No",
     additionalComments: "Looking for on-site co-op",
     resumeFile: null,
-    status: "UNPROCESSED",
+    status: "PENDING",
     createdAt: new Date("2025-07-20T14:30:00Z"),
   },
 ];
