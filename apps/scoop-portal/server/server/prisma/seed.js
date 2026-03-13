@@ -4,6 +4,7 @@ import { sampleJournalEntries } from "./test-data/sample_journal_entries.js";
 import { sampleSemesterGroups } from "./test-data/sample_semester_groups.js";
 import { sampleProjects } from "./test-data/sample_projects.js";
 import { sampleApplications } from "./test-data/sample_applications.js";
+import crypto from "crypto";
 const prisma = new PrismaClient();
 // Use prisma.<model> to interact with your database
 
@@ -14,6 +15,7 @@ async function main() {
   await prisma.journalEntry.deleteMany();
   await prisma.project.deleteMany();
   await prisma.users.deleteMany();
+  await prisma.login.deleteMany();
   await prisma.application.deleteMany();
   await prisma.semesterGroup.deleteMany();
   await prisma.fruit.deleteMany();
@@ -93,7 +95,29 @@ async function main() {
         connect: [{ id: galgirl.id }, { id: edison.id }],
       },
     },
-  });
+  }); 
+
+  console.log("Seeding logins...");
+
+  function hashPassword(password){
+    return crypto.createHash("sha256").update(password).digest("hex");
+  }
+
+  for(const user of sampleUsers){
+    const login = await prisma.login.create({
+      data: {
+        email: user.email,
+        password: hashPassword(user.fname)
+      }
+    });
+
+    await prisma.users.update({
+      where: {email: user.email},
+      data: {loginId: login.id}
+    });
+  }
+
+  console.log("Logins seeded.");
 
   console.log("Seed finished.");
 }

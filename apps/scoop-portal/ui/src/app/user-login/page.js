@@ -4,18 +4,21 @@ import { Box, TextField, Button, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Snackbar, Alert } from "@mui/material";
+import { Snackbar, Alert,CircularProgress } from "@mui/material";
+import {useUser} from "../utils/user-context/page";
 
 
 export default function AuthPage() {
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const {setUser} = useUser();
   const router = useRouter();
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // "success" or "error"
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     try {
@@ -32,10 +35,15 @@ export default function AuthPage() {
 
       if (res.ok) {
         setSnackbarMessage(
-          isSignup ? "Account created successfully!" : "Login successful!"
+          isSignup ? "Account created successfully!" : "Logging in!"
         );
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
+        setLoading(true);
+
+        if(!isSignup){
+            setUser(data.user);
+        }
 
         setTimeout(() => {
           router.push("/dashboard");
@@ -70,6 +78,10 @@ export default function AuthPage() {
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
           sx={{ width: "100%" }}
+          icon={loading && snackbarSeverity === "success"
+                ? <CircularProgress size={20} sx={{color: "inherit"}} />
+                : undefined
+            }
         >
           {snackbarMessage}
         </Alert>
@@ -136,11 +148,12 @@ export default function AuthPage() {
                 >
                     {isSignup ? "Create" : "Login"}
                 </Button>
-                <Button variant="text" onClick={() => setIsSignup(!isSignup)}>
+                {/** This is incase we want to give anyone who visits the site, the ability to create an account */}
+                {/* <Button variant="text" onClick={() => setIsSignup(!isSignup)}>
                 {isSignup
                     ? "Already have an account? Log in"
                     : "Don't have an account? Sign up"}
-                </Button>
+                </Button> */}
             </Box>
         </Box>
       </Box>
