@@ -60,15 +60,9 @@ services:
 
     environment:
       # This DATABASE_URL overrides the placeholder url defined in the dockerfile.
-      # DATABASE_URL: "mysql://${DB_APP_USER}:${DB_USER_PASSWORD:-user_password}@mariadb:3306/${DB_NAME}"
+      DATABASE_URL: "mysql://${DB_APP_USER}:${DB_USER_PASSWORD:-user_password}@mariadb:3306/${DB_NAME}"
       # The variable is used in main.js so that the application knows what port to listen to. This is needed since the app has no context of the host port from inside the container
-      environment:
-      DATABASE_URL: "mysql://${DB_APP_USER}:${DB_USER_PASSWORD}@mariadb:3306/${DB_NAME}"
-      DB_APP_USER: ${DB_APP_USER}
-      DB_USER_PASSWORD: ${DB_USER_PASSWORD}
-      DB_NAME: ${DB_NAME}
       PORT: ${BACK_HOST_PORT}
-
     ports:
       - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
     # Unless the service is stopped or removed, restart the database in the event of a crash.

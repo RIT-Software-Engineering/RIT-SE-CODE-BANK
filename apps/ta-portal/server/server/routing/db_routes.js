@@ -1277,7 +1277,7 @@ router.put("/notifications/preferences", async (req, res) => {
  * @access  Admin only (should add authentication middleware in production)
  * @returns {JSON} Object mapping feature names to enabled status
  */
-router.get("/db/feature-flags", async (req, res) => {
+router.get("/feature-flags", async (req, res) => {
   try {
     const flags = await getAllFeatureFlags();
     res.json(flags);
@@ -1294,7 +1294,7 @@ router.get("/db/feature-flags", async (req, res) => {
  * @body    {boolean} enabled - Whether the feature should be enabled
  * @returns {JSON} Updated feature flag record
  */
-router.put("/db/feature-flags/:featureName", async (req, res) => {
+router.put("/feature-flags/:featureName", async (req, res) => {
   try {
     const { featureName } = req.params;
     const { enabled } = req.body;
