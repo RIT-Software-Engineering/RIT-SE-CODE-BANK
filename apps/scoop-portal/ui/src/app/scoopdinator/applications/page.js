@@ -39,26 +39,26 @@ import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 /**
  * The statuses to filter applications by.
  */
-const STATUSES = ["ALL", "ACCEPTED", "REJECTED", "UNPROCESSED"];
+const STATUSES = ["ALL", "ACCEPTED", "REJECTED", "PENDING"];
 
 const STATUS_COLORS = {
   ACCEPTED: "success",
   REJECTED: "error",
-  UNPROCESSED: "default",
+  PENDING: "warning",
 };
 
 const StatusBadge = ({ status }) => {
   const theme = useTheme();
   const label = status
     ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    : "Unprocessed";
+    : "Pending";
   const color = STATUS_COLORS[status] ?? "default";
   const bgColor =
     color === "success"
       ? theme.palette.success.main
       : color === "error"
       ? theme.palette.error.main
-      : theme.palette.grey[500];
+      : theme.palette.warning.main;
   return (
     <Chip
       label={label}
@@ -68,7 +68,7 @@ const StatusBadge = ({ status }) => {
         fontSize: "0.85rem",
         px: 1,
         bgcolor: bgColor,
-        color: theme.ritColors.white,
+        color: "rgba(0,0,0,0.87)",
         border: "none",
       }}
     />
@@ -328,7 +328,7 @@ export default function SupervisorApplicationsPage() {
 
   const KanbanView = () => {
     const kanbanColumns = [
-      { label: "Unprocessed", key: "UNPROCESSED", color: theme.palette.grey[500], defaultOrder: "desc" },
+      { label: "Pending", key: "PENDING", color: theme.palette.warning.main, defaultOrder: "desc" },
       { label: "Accepted", key: "ACCEPTED", color: theme.palette.success.main, defaultOrder: "desc" },
       { label: "Rejected", key: "REJECTED", color: theme.palette.error.main, defaultOrder: "desc" },
     ];
@@ -356,7 +356,7 @@ export default function SupervisorApplicationsPage() {
 
     const columnApps = (key) => {
       const apps = filteredApps.filter((a) =>
-        key === "UNPROCESSED" ? !a.status || a.status === "UNPROCESSED" : a.status === key
+        key === "PENDING" ? !a.status || a.status === "PENDING" : a.status === key
       );
       const { field, order } = colSort[key];
       return [...apps].sort((a, b) => {

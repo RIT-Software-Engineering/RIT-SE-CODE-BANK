@@ -112,7 +112,7 @@ model Application {
   resumeFile              Bytes?
   resumeFileName          String?
   resumeFileType          String?
-  status                  String   @default("UNPROCESSED")
+  status                  String   @default("PENDING")
   createdAt               DateTime @default(now())
 }
 
