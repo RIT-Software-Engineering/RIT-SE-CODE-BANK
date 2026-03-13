@@ -6,7 +6,7 @@ require('dotenv').config();
 const key = process.env.GEMINI_KEY
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(key);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash"});
+const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview"});
 
 async function parseGrantAI(scholarship_section) {
     // console.log(scholarship_section)
@@ -257,16 +257,16 @@ async function parsePDF(filePath) {
 
     const publications_lines = extractSection(text, 'Publications, scholarly outcomes, or creative works:', 'Teaching');
 
-    // const serviceSection = extractSection(text, 'Service', 'Professional Development');
-    // const [scholarshipData, publicationData, serviceSection] = await Promise.all([
-    //     parseGrantAI(scholarship),
-    //     parsePublicationAI(publications_lines),
-    //     parseServiceHoursAI(serviceHours) 
-    // ]);
     const serviceSection = extractSection(text, 'Service', 'Professional Development');
-    const serviceHours = await parseServiceHoursAI(serviceSection);
-    const scholarshipData = await parseGrantAI(scholarship);
-    const publicationData = await parsePublicationAI(publications_lines);
+    const [scholarshipData, publicationData, serviceHours] = await Promise.all([
+        parseGrantAI(scholarship),
+        parsePublicationAI(publications_lines),
+        parseServiceHoursAI(serviceSection) 
+    ]);
+    // const serviceSection = extractSection(text, 'Service', 'Professional Development');
+    // const serviceHours = await parseServiceHoursAI(serviceSection);
+    // const scholarshipData = await parseGrantAI(scholarship);
+    // const publicationData = await parsePublicationAI(publications_lines);
 
     const extracted = {
         name: extractField(lines, 'Name'),
