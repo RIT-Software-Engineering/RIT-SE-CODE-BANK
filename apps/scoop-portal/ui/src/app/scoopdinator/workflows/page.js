@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Typography, Container, Grid, Paper,
-  Button, Modal, TextField,
+  Button, Modal, TextField, Autocomplete
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 
@@ -39,6 +39,11 @@ export default function WorkflowsList() {
   const [createError, setCreateError] = useState(null);
 
   const baseUrl = process.env.NEXT_PUBLIC_WORKFLOWS_API_URL;
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  //This is the users state vars
+  const [users, setUsers] = useState([]);
+  const [assignedUserID, setAssignedUserID] = useState([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,21 +81,32 @@ export default function WorkflowsList() {
           workflowsById[wf.id] = wf;
         });
 
-        const workflowsWithSteps = workflowStatesData.map(ws => {
-          const wf = workflowsById[ws.workflowId];
-          const wfName = wf?.name || actionsMap[wf?.baseActionId]?.name || 'Untitled Workflow';
+        const seen = new Set();
+        const workflowsWithSteps = workflowStatesData
+        .filter(ws => {
+            if (seen.has(ws.workflowId)) return false;
+            seen.add(ws.workflowId);
+            return true;
+        })
+        .map(ws => {
+            const wf = workflowsById[ws.workflowId];
+            const wfName = wf?.name || actionsMap[wf?.baseActionId]?.name || 'Untitled Workflow';
 
-          const steps = ws.actionStates.map(as => ({
+            const steps = ws.actionStates.map(as => ({
             actionId: as.actionId,
             title: actionsMap[as.actionId]?.name || 'Untitled Step',
             link: `/scoopdinator/workflows/${ws.workflowId}`,
-          }));
+            }));
 
-          return {
+            return {
             id: ws.workflowId,
             name: wfName,
             steps,
-          };
+            };
+        }).sort((a,b) => {
+            const dateA = new Date(workflowsById[a.id]?.createdAt ?? 0);
+            const dateB = new Date(workflowsById[b.id]?.createdAt ?? 0);
+            return dateB - dateA;
         });
 
         setWorkflows(workflowsWithSteps);
@@ -116,6 +132,23 @@ export default function WorkflowsList() {
     fetchData();
   }, [baseUrl]);
 
+  //This will retrieve the user
+  useEffect(() => {
+    const fetchUsers = async () => {
+        try{
+            const res = await fetch(`${publicApiUrl}/api/users`);
+            if(!res.ok){
+                throw new Error("Failed to fetch user in scoodinator/workflow/page.js, line: 130");
+            }
+            const data = await res.json();
+            setUsers(data.map(e => ({label: `${e.fname} ${e.lname}`, value: e.id})));
+        }catch(e){
+            console.log("Error in scoopdinator/workflow/page.js: "+e);
+        }
+    };
+    fetchUsers();
+  },[])
+
   const handleOpen = () => {
     setModalOpen(true);
     setCreateError(null);
@@ -127,6 +160,7 @@ export default function WorkflowsList() {
     setName('');
     setDescription('');
     setTags('');
+    setAssignedUserID([]);
     setCreateError(null);
   };
 
@@ -140,7 +174,7 @@ export default function WorkflowsList() {
     setCreateError(null);
 
     try {
-      // Step 1: Create the workflow
+      //Create the workflow
       const workflowResponse = await fetch(`${baseUrl}/workflows`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -161,13 +195,13 @@ export default function WorkflowsList() {
 
       const workflow = await workflowResponse.json();
 
-      // Step 2: Create the root action
+      //Create the root action
       const actionResponse = await fetch(`${baseUrl}/actions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          name: `${name.trim()} Root Action`, // or any name convention
+          name: `${name.trim()} Root Action`,
           description: `Root action for workflow ${name.trim()}`,
           metadata: {},
         }),
@@ -179,7 +213,7 @@ export default function WorkflowsList() {
 
       const action = await actionResponse.json();
 
-      // Step 3: Attach rootActionId to the workflow via PUT request
+      //Attach rootActionId to the workflow via PUT request
       const updateResponse = await fetch(`${baseUrl}/workflows/${workflow.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -192,31 +226,26 @@ export default function WorkflowsList() {
         throw new Error('Failed to update workflow with rootActionId');
       }
 
-      // Step 4: Create workflow state for the user
-      const stateResponse = await fetch(`${baseUrl}/states/workflow`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          workflowId: workflow.id,
-          actionStates: [
-            {
-              actionId: action.id,
-              stateType: 'not_started',
-            },
-          ],
-        }),
-      });
+      //Create workflow state for each assigned user
+      const userIDs = assignedUserID.length > 0 ? assignedUserID : [userId];
+      await Promise.all(
+        userIDs.map(uid => fetch(`${baseUrl}/states/workflow`, {
+            method:"POST",
+            headers:{ 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: uid,
+                workflowId: workflow.id,
+                actionStates: [{actionId: action.id, stateType: "not_started"}]
+            }),
+        }).then(
+            res =>{
+                if(!res.ok){
+                    throw new Error(`Failed to create workflow state for UserId: ${uid}`);
+                }
+            })
+        )
+      );
 
-      if (!stateResponse.ok) {
-        throw new Error('Failed to create workflow state');
-      }
-
-      handleClose();
-      setLoading(true);
-      setError(null);
-      setWorkflows([]);
-      setCompletedStepsMap({});
       const fetchDataAgain = async () => {
         try {
           const workflowsRes = await fetch(`${baseUrl}/workflows`);
@@ -250,23 +279,29 @@ export default function WorkflowsList() {
             workflowsById[wf.id] = wf;
           });
 
-          const workflowsWithSteps = workflowStatesData.map(ws => {
+        // This si here because of the fact that there is a duplication of keys, 
+        // so two children had the same key, and this will generate a new key to resolve this issue
+        const seen2 = new Set();
+        const workflowsWithSteps = workflowStatesData
+        .filter(ws => {
+            if (seen2.has(ws.workflowId)) return false;
+            seen2.add(ws.workflowId);
+            return true;
+        })
+        .map(ws => {
             const wf = workflowsById[ws.workflowId];
             const wfName = wf?.name || actionsMap[wf?.baseActionId]?.name || 'Untitled Workflow';
-
             const steps = ws.actionStates.map(as => ({
-              actionId: as.actionId,
-              title: actionsMap[as.actionId]?.name || 'Untitled Step',
-              link: `/scoopdinator/workflows/${ws.workflowId}`,
+            actionId: as.actionId,
+            title: actionsMap[as.actionId]?.name || 'Untitled Step',
+            link: `/scoopdinator/workflows/${ws.workflowId}`,
             }));
-
-            return {
-              id: ws.workflowId,
-              name: wfName,
-              steps,
-            };
-          });
-
+            return { id: ws.workflowId, name: wfName, steps };
+        }).sort((a,b) => {
+            const dateA = new Date(workflowsById[a.id]?.createdAt ?? 0);
+            const dateB = new Date(workflowsById[b.id]?.createdAt ?? 0);
+            return dateB - dateA;
+        });
           setWorkflows(workflowsWithSteps);
 
           const completedMap = {};
@@ -286,8 +321,11 @@ export default function WorkflowsList() {
           setLoading(false);
         }
       };
-
-      fetchDataAgain();
+      
+      //This is to fix the add workflow modal issue, where the text fields disappear after creating a workflow
+      await fetchDataAgain();
+      setCreating(false);
+      handleClose();
 
     } catch (err) {
       setCreateError(err.message || 'Error creating workflow');
@@ -377,17 +415,28 @@ export default function WorkflowsList() {
       </Container>
 
       <Modal
+        key={modalOpen ? 'open' : 'closed'}
         open={modalOpen}
         onClose={handleClose}
         aria-labelledby="create-workflow-modal"
         disableEscapeKeyDown={creating}
       >
-        <Box sx={modalStyle} component="form" onSubmit={handleCreate}>
+        <Box
+            component="form" 
+            onSubmit={handleCreate} 
+            sx={{
+                ...modalStyle,
+                fontSize: '1rem',
+                '& .MuiInputLabel-root': {fontSize: '1rem'},
+                '& .MuiInputBase-input': {fontSize: '1rem'},
+                '& .MuiButton-root': {fontSize: '0.875rem'},
+            }}>
           <Typography id="create-workflow-modal" variant="h6" component="h2" mb={2}>
             Create New Workflow
           </Typography>
 
           <TextField
+            variant="outlined"
             label="Workflow Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -398,6 +447,7 @@ export default function WorkflowsList() {
           />
 
           <TextField
+            variant="outlined"
             label="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -409,6 +459,7 @@ export default function WorkflowsList() {
           />
 
           <TextField
+            variant="outlined"
             label="Tags (comma separated)"
             value={tags}
             onChange={(e) => setTags(e.target.value)}

@@ -5,6 +5,8 @@ import AddIcon from "@mui/icons-material/Add";
 export default function JournalHeader({
   setFilterDialogOpen,
   setNewEntryOpen,
+  handleJSONDownload
+
 }) {
   const handleOpenFilterDialog = () => setFilterDialogOpen(true);
 
@@ -19,6 +21,7 @@ export default function JournalHeader({
         >
           Filter
         </Button>
+        <Button variant="outline-orange" onClick={handleJSONDownload}>Export</Button>
       </Box>
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
         <Button

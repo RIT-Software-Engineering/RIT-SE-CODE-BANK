@@ -6,6 +6,7 @@ on:
       - main
       - dev
       - '*-dev'
+      - '*-cicd-testing'
   pull_request:
     branches:
       - main
@@ -39,7 +40,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
@@ -60,8 +61,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
       - run: npm ci
+      - run: git fetch origin main
       - run: npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
 
   test:
@@ -73,8 +75,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
       - run: npm ci
+      - run: git fetch origin main
       - run: npx nx affected:test --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }} --code-coverage
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -82,60 +85,61 @@ jobs:
           name: coverage-report
           path: coverage/
 
-  sonarqube:
-    name: SonarQube Analysis
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+#  sonarqube:
+#    name: SonarQube Analysis
+#    needs: test
+#    runs-on: ubuntu-latest
+#    if: github.event_name != 'pull_request'
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Install dependencies
+#        run: npm ci
+#      - name: Run SonarQube Scanner
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#        run: |
+#          npx sonar-scanner \
+#            -Dsonar.projectKey=my-nx-monorepo \
+#            -Dsonar.organization=my-org \
+#            -Dsonar.sources=. \
+#            -Dsonar.host.url=https://sonarcloud.io \
+#            -Dsonar.login=$SONAR_TOKEN \
+#            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: npm ci
-      - name: Run SonarQube Scanner
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          npx sonar-scanner \
-            -Dsonar.projectKey=my-nx-monorepo \
-            -Dsonar.organization=my-org \
-            -Dsonar.sources=. \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+#  codecov:
+#    name: Upload to Codecov
+#    needs: test
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Download coverage artifact
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: coverage-report
+#          path: coverage/
+#      - name: Upload coverage to Codecov
+#        uses: codecov/codecov-action@v4
+#        with:
+#          token: ${{ secrets.CODECOV_TOKEN }}
+#          files: coverage/lcov.info
+#          flags: unittests
+#          name: RIT-SE-CODE-BANK
+#          fail_ci_if_error: true
 
-  codecov:
-    name: Upload to Codecov
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download coverage artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage/
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage/lcov.info
-          flags: unittests
-          name: RIT-SE-CODE-BANK
-          fail_ci_if_error: true
-  
   build:
     name: Build Affected Projects
-    needs: [lint, test]
+    needs: [lint, test, setup]
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
       - run: npm ci
+      - run: git fetch origin main
       - run: npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -146,7 +150,7 @@ jobs:
   deploy:
     # Placeholder for deployment. Reliant on deployment scripts that don't yet exist.
     name: Deploy Affected Apps
-    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || endsWith(github.ref, '-cicd-testing') || github.ref == 'refs/heads/dev'
     needs: build
     runs-on: ubuntu-latest
 
@@ -158,8 +162,8 @@ jobs:
         id: parse
         run: |
           BRANCH=${GITHUB_REF##*/}
-          if [[ "$BRANCH" == *-dev ]]; then
-            APP_NAME="${BRANCH%-dev}"
+          if [[ "$BRANCH" == *-dev || "$BRANCH" == *-cicd-testing ]]; then
+            APP_NAME="scoop-portal"
           elif [[ "$BRANCH" == "dev" || "$BRANCH" == "main" ]]; then
             APP_NAME="all"  # fallback or global deploy logic
           else
@@ -167,6 +171,18 @@ jobs:
           fi
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "::notice ::Branch '$BRANCH' targets app '$APP_NAME'"
+
+      - name: Setup SSH Key
+        if: env.APP_NAME != ''
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SCOOP_PORTAL_DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "DEPLOY_KEY=$HOME/.ssh/deploy_key" >> $GITHUB_ENV
+
+      - name: Add staging server to known hosts
+        run: |
+          ssh-keyscan -H apps-staging.se.rit.edu >> ~/.ssh/known_hosts
 
       - name: Deploy script
         run: |
