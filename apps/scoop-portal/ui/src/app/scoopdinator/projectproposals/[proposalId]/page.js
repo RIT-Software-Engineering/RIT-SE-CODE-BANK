@@ -43,7 +43,7 @@ const StatusBadge = ({ status }) => {
       ? theme.palette.success.main
       : color === "error"
       ? theme.palette.error.main
-      : theme.palette.warning.main;
+      : theme.palette.grey[500];
   return (
     <Chip
       label={label}

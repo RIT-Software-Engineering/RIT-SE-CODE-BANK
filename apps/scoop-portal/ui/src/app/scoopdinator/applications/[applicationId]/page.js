@@ -38,7 +38,7 @@ const StatusBadge = ({ status }) => {
       ? theme.palette.success.main
       : color === "error"
       ? theme.palette.error.main
-      : theme.palette.warning.main;
+      : theme.palette.grey[500];
   return (
     <Chip
       label={label}
@@ -48,7 +48,7 @@ const StatusBadge = ({ status }) => {
         fontSize: "0.85rem",
         px: 1,
         bgcolor: bgColor,
-        color: "rgba(0,0,0,0.87)",
+        color: theme.ritColors.white,
         border: "none",
       }}
     />
