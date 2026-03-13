@@ -197,12 +197,7 @@ export default function ApplicationDetailPage() {
     try {
       await putApplicationStatus(newStatus);
       await handleUserStatusUpdate(newStatus, application);
-      setApplication((prev) => ({ ...prev, status: newStatus }));
-      setNotification({
-        open: true,
-        message: `Application has been ${newStatus.toLowerCase()}.`,
-        severity: newStatus === "ACCEPTED" ? "success" : "error",
-      });
+      router.back();
     } catch (err) {
       setNotification({
         open: true,
