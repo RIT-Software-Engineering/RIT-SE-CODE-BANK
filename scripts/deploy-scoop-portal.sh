@@ -14,7 +14,8 @@ echo "Deploying Scoop Portal application..."
 ssh -i  "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
 	set -e
 	cd $APP_DIR
-
+	git restore .
+	
 	git fetch origin
 	git checkout $BRANCH
 	git pull origin $BRANCH
