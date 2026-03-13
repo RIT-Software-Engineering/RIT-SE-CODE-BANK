@@ -31,7 +31,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 
 import Header from "@components/Header";
-import { useUser } from "../../utils/user-context/page";
 
 const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED"];
 
@@ -88,11 +87,7 @@ export default function ReviewProposalsPage() {
   const isDark = theme.palette.mode === "dark";
   const router = useRouter();
 
-  const { user } = useUser();
-  const currentUserId = user?.id;
-
   const [proposals, setProposals] = useState([]);
-  const [selectedProposal, setSelectedProposal] = useState(null);
   const [filter, setFilter] = useState("ALL");
   const [order, setOrder] = useState("desc");
   const [orderBy, setOrderBy] = useState("createdAt");
@@ -100,15 +95,6 @@ export default function ReviewProposalsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-
-  const [reviewFields, setReviewFields] = useState({ status: "", reviewNotes: "" });
-  const [reviewErrors, setReviewErrors] = useState({});
-  const [saving, setSaving] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   useEffect(() => {
     fetchProposals();
@@ -125,18 +111,7 @@ export default function ReviewProposalsPage() {
   };
 
   const handleOpen = (proposal) => {
-    setSelectedProposal(proposal);
-    setReviewErrors({});
-    setReviewFields({
-      status: proposal.status ?? "PENDING",
-      reviewNotes: proposal.reviewNotes ?? "",
-    });
-  };
-
-  const handleClose = () => {
-    setSelectedProposal(null);
-    setReviewErrors({});
-    setConfirmOpen(false);
+    router.push(`/scoopdinator/projectproposals/${proposal.id}`);
   };
 
   const handleSort = (column) => {
@@ -165,46 +140,6 @@ export default function ReviewProposalsPage() {
     });
     return [...filtered].sort(getComparator(order, orderBy));
   }, [proposals, filter, dateFrom, dateTo, searchQuery, order, orderBy]);
-
-  const handleSaveClick = () => {
-    const errs = {};
-    if (!reviewFields.status) errs.status = "Status is required.";
-    setReviewErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-    setConfirmOpen(true);
-  };
-
-  const handleConfirmSave = async () => {
-    setSaving(true);
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projectproposal/${selectedProposal.id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            status: reviewFields.status,
-            reviewNotes: reviewFields.reviewNotes,
-            reviewedById: currentUserId,
-          }),
-        }
-      );
-      if (!res.ok) throw new Error("Failed to update proposal");
-      await fetchProposals();
-      setConfirmOpen(false);
-      handleClose();
-      setSnackbarSeverity("success");
-      setSnackbarMsg("Proposal updated successfully!");
-      setSnackbarOpen(true);
-    } catch (err) {
-      console.error(err);
-      setSnackbarSeverity("error");
-      setSnackbarMsg(err.message || "Failed to update proposal. Please try again.");
-      setSnackbarOpen(true);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const datePickerSx = {
     "& input[type='date']::-webkit-calendar-picker-indicator": {
@@ -340,102 +275,6 @@ export default function ReviewProposalsPage() {
           </TableBody>
         </Table>
       </Paper>
-
-      {/* Review Modal */}
-      <Dialog open={!!selectedProposal} onClose={handleClose} maxWidth="sm" fullWidth>
-        {selectedProposal && (
-          <>
-            <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              {selectedProposal.title}
-              <StatusBadge status={selectedProposal.status} />
-            </DialogTitle>
-            <DialogContent dividers>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    Submitted By
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 0.5 }}>
-                    {selectedProposal.submittedBy
-                      ? `${selectedProposal.submittedBy.fname} ${selectedProposal.submittedBy.lname} — ${selectedProposal.submittedBy.email}`
-                      : "—"}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    Submitted
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 0.5 }}>
-                    {new Date(selectedProposal.createdAt).toLocaleDateString(undefined, {
-                      year: "numeric", month: "long", day: "numeric",
-                    })}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    Description
-                  </Typography>
-                  <Typography variant="body2" sx={{ mt: 0.5 }}>
-                    {selectedProposal.description}
-                  </Typography>
-                </Box>
-                <FormControl fullWidth error={!!reviewErrors.status}>
-                  <InputLabel>Status *</InputLabel>
-                  <Select
-                    value={reviewFields.status}
-                    label="Status *"
-                    onChange={(e) => { setReviewFields((p) => ({ ...p, status: e.target.value })); setReviewErrors((p) => ({ ...p, status: undefined })); }}
-                  >
-                    <MenuItem value="PENDING">Pending</MenuItem>
-                    <MenuItem value="APPROVED">Approved</MenuItem>
-                    <MenuItem value="REJECTED">Rejected</MenuItem>
-                  </Select>
-                  {reviewErrors.status && (
-                    <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-                      {reviewErrors.status}
-                    </Typography>
-                  )}
-                </FormControl>
-                <TextField
-                  label="Review Notes"
-                  value={reviewFields.reviewNotes}
-                  onChange={(e) => setReviewFields((p) => ({ ...p, reviewNotes: e.target.value }))}
-                  fullWidth
-                  multiline
-                  minRows={3}
-                  maxRows={6}
-                  inputProps={{ maxLength: 500 }}
-                />
-              </Box>
-            </DialogContent>
-            <DialogActions sx={{ px: 3, py: 2, gap: 0.5 }}>
-              <Button onClick={handleClose} variant="outlined" color="inherit" disabled={saving}>
-                Cancel
-              </Button>
-              <Button variant="solid-orange" onClick={handleSaveClick} disabled={saving}>
-                {saving ? "Saving..." : "Save"}
-              </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
-
-      {/* Confirm Dialog */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>Confirm Review</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Save review for <strong>{selectedProposal?.title}</strong> with status{" "}
-            <strong>{reviewFields.status.charAt(0).toUpperCase() + reviewFields.status.slice(1).toLowerCase()}</strong>?
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
-          <Button onClick={() => setConfirmOpen(false)} variant="outlined" color="inherit">Cancel</Button>
-          <Button onClick={handleConfirmSave} variant="solid-orange" disabled={saving}>
-            {saving ? "Saving..." : "Confirm"}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Filter Dialog */}
       <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} maxWidth="xs" fullWidth>
