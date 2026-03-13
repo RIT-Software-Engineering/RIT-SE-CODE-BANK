@@ -1277,7 +1277,7 @@ router.put("/notifications/preferences", async (req, res) => {
  * @access  Admin only (should add authentication middleware in production)
  * @returns {JSON} Object mapping feature names to enabled status
  */
-router.get("/feature-flags", async (req, res) => {
+router.get("/db/feature-flags", async (req, res) => {
   try {
     const flags = await getAllFeatureFlags();
     res.json(flags);
@@ -1289,22 +1289,22 @@ router.get("/feature-flags", async (req, res) => {
 
 /**
  * @route   PUT /ta-portal-api/db/feature-flags/:featureName
- * @desc    Update a feature flag's enabled status
+* @desc    Update a feature flag's enabled status
  * @access  Admin only (should add authentication middleware in production)
  * @body    {boolean} enabled - Whether the feature should be enabled
  * @returns {JSON} Updated feature flag record
  */
-router.put("/feature-flags/:featureName", async (req, res) => {
+router.put("/db/feature-flags/:featureName", async (req, res) => {
   try {
     const { featureName } = req.params;
     const { enabled } = req.body;
 
-    // Validate feature name
+// Validate feature name
     if (!Object.values(FEATURES).includes(featureName)) {
       return res.status(400).json({ error: "Invalid feature name." });
     }
 
-    // Validate enabled value
+// Validate enabled value
     if (typeof enabled !== "boolean") {
       return res.status(400).json({ error: "Enabled must be a boolean value." });
     }
