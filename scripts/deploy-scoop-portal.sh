@@ -19,22 +19,22 @@ ssh -i  "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
 	git checkout $BRANCH
 	git pull origin $BRANCH
 
-  cd $APP_DIR
-  npm install
+	cd $APP_DIR
+	npm install
 
-  cd $PORTAL_SERVER_DIR
-  npm install
+	cd $PORTAL_SERVER_DIR
+	npm install
 
-  cd $PORTAL_UI_DIR
-  npm install
+	cd $PORTAL_UI_DIR
+	npm install
 
-  cd $WORKFLOW_SERVER_DIR
-  npm install
+	cd $WORKFLOW_SERVER_DIR
+	npm install
 
-  cd $NOTIFICATIONS_SERVER_DIR
-  npm install
+	cd $NOTIFICATIONS_SERVER_DIR
+	npm install
 
-  cd $APP_DIR
+	cd $APP_DIR
 
 	docker compose -f docker-compose.staging.yml down
 

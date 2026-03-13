@@ -16,8 +16,8 @@ import {
 import { ArrowBack, EditOutlined } from "@mui/icons-material";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Header from "@components/Header";
-import { useUser } from "../../utils/user-context/page";
-import UnauthorizedPage from "../../unauthorized/page";
+import { useUser } from "../../../utils/user-context/page";
+import UnauthorizedPage from "../../../unauthorized/page";
 
 const truthyStrings = new Set(["true", "1", "yes", "y", "on"]);
 const requireAllKeys = ["requireallparticipants", "requiresallparticipants"];
