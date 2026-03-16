@@ -146,7 +146,7 @@ function isRegister(token) {
 }
 
 function isNumber(token) {
-    return /^-?\d+$/.test(token);
+    return /(^-?\d+$)|(^0x[0-9A-Fa-f]+$)/.test(token);
 }
 
 function getRegisterNumber(token) {

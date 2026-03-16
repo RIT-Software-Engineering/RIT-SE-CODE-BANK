@@ -46,23 +46,23 @@ function readWordFromBytes(mem, addr) {
 // test("001002");   // BNE
 // test("000207");   // BMI
 
-// const program = `
-// MOV #200, R3
-// MOV #1234, 10(R3)   ; store at 210
+//MOV #5, R0
+// CMP #10, R0
 // HALT
-// `; issue with this one, look into
 
-//currently fails, look into
+//these currently fail, look into
+
+
 const program = `
-MOV #0, R0
-DEC R0
+MOV #0x0001, R0
+ADD #0x000F, R0
 HALT
 `;
 
 backend.loadAssembly(program);
 const result = backend.run();
-// console.log(readWordFromBytes(result.memory, 1002));
-// console.log(result.flags);
+console.log(readWordFromBytes(result.memory, 210));
+console.log(result.flags);
 console.log(result.registers);
 
 
