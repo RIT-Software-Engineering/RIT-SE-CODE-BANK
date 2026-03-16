@@ -15,3 +15,5 @@ echo "Waiting for services to start..."
 sleep 15
 docker compose ps
 echo "CMT deployment complete!"
+
+

@@ -1,11 +1,17 @@
 // prisma/seed.js
-const path = require('path');
-require('dotenv').config({
-  // Load .env from the cmt-project root (two levels up from prisma/)
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
+  // Load .env from the project root (one level up from prisma/)
   path: path.join(__dirname, '..', '.env'),
 });
 
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -24,15 +30,28 @@ async function main() {
     return date;
   };
 
-  // Clear existing data (in reverse order of dependencies)
   console.log('🗑️  Clearing existing data...');
-  await prisma.event.deleteMany({});
+
+  // deepest dependencies
+  await prisma.sessionMaterial.deleteMany({});
   await prisma.tBMember.deleteMany({});
+
+  // next level
+  await prisma.session.deleteMany({});
   await prisma.tBTeam.deleteMany({});
-  await prisma.tBTeamSet.deleteMany({});
+
+  // next
   await prisma.tBEnrollment.deleteMany({});
+  await prisma.tBTeamSet.deleteMany({});
+
+  // course-related
+  await prisma.event.deleteMany({});
+
+  // templates
   await prisma.templateItem.deleteMany({});
   await prisma.courseTemplate.deleteMany({});
+
+  // parent tables
   await prisma.course.deleteMany({});
   await prisma.professor.deleteMany({});
 
