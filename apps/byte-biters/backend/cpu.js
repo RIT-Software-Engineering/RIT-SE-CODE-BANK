@@ -21,21 +21,11 @@ export class CPU {
     }
 
     loadProgram(words) {
-        let addr = 0;
+        let addr = 0o200;
         for(let word of words) {
-            this.memory[addr] = word & 0xFF; //low byte
-            this.memory[addr + 1] = (word >> 8) & 0xFF; //high byte
+            this.memory.writeWord(addr, word);
             addr += 2;
         }
-
-
-    }
-
-    getState() {
-        return {
-            registers: [...this.registers],
-            flags: {N: this.N, Z: this.Z, V: this.V, C: this.C}
-        };
     }
 
     getRegisters() {
@@ -74,8 +64,7 @@ export class CPU {
         }
         if(oper.dst) {
             oper.dst = this.resolveDestination(oper.dst.mode, oper.dst.REG);
-        }
-
+        }      
         this.execute(oper);
     }
 

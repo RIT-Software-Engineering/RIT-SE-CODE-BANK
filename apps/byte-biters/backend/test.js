@@ -16,6 +16,12 @@ function test(oct) {
     console.log(`INSTR ${oct} →`, decoded);
 }
 
+function readWordFromBytes(mem, addr) {
+    const low  = mem[addr];
+    const high = mem[addr + 1];
+    return (high << 8) | low;
+}
+
 // --- REAL PDP‑11 INSTRUCTIONS ---
 
 // Double operand
@@ -40,15 +46,23 @@ function test(oct) {
 // test("001002");   // BNE
 // test("000207");   // BMI
 
+//MOV #5, R0
+// CMP #10, R0
+// HALT
+
+//these currently fail, look into
+
+
 const program = `
-    MOV #5, R0
-    MOV #3, R1
-    ADD R1, R0
-    HALT
+MOV #0x0001, R0
+ADD #0x000F, R0
+HALT
 `;
 
 backend.loadAssembly(program);
 const result = backend.run();
+console.log(readWordFromBytes(result.memory, 210));
+console.log(result.flags);
 console.log(result.registers);
 
 

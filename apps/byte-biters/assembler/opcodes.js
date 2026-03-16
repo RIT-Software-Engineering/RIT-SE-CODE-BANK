@@ -19,6 +19,7 @@ export const OPCODES = {
 
     //one operand
     INC: {code: 0o005200, type: "one"},
+    DEC: {code: 0o005300, type: "one"},
     JMP: {code: 0o000100, type: "one"},
     CLR: {code: 0o005000, type: "one"},
     TST: {code: 0o005700, type: "one"},
