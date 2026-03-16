@@ -66,6 +66,7 @@ export function SelectableResourceCard({ resource, refresh, selected, setSelecte
                             >
                                 <Download size={16} />
                             </Button>
+                            {/* TODO: make these not require modals so that they can be uncommented (avoid double modal in session internal resource select)  */}
                             {/* <EditResourceModal resource={resource} refresh={refresh} />
                             <DeleteResourceModal resource={resource} refresh={refresh} /> */}
                         </div>
