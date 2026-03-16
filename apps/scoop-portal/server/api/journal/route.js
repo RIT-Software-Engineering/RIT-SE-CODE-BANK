@@ -3,6 +3,12 @@ const router = Router();
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
+/**
+ * GET all journal entries
+ *
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object to send all journal entries or an error
+ */
 router.get("/", async (req, res) => {
   try {
     const entries = await prisma.journalEntry.findMany();
@@ -13,6 +19,12 @@ router.get("/", async (req, res) => {
   }
 });
 
+/**
+ * POST (create) a new journal entry
+ *
+ * @param {Object} req - The request object containing the journal entry data
+ * @param {Object} res - The response object to send back the created entry or an error
+ */
 router.post("/", async (req, res) => {
   const {
     date,
@@ -71,6 +83,12 @@ router.post("/", async (req, res) => {
   }
 });
 
+/**
+ * PUT (update) an existing journal entry
+ *
+ * @param {Object} req - The request object containing the journal entry id and notes data
+ * @param {Object} res - The response object to send back the updated journal entry or an error
+ */
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { notes } = req.body;
@@ -86,6 +104,12 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+/**
+ * GET journal entries for scoopdinator
+ *
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object to send scoopdinator journal entries or an error
+ */
 router.get("/scoopdinator", async (req, res) => {
   const { semester_GroupId, contactee_fname, contactee_lname } = req.query;
   const whereClause = { journal_owner_type: "scoopdinator" };
@@ -104,6 +128,12 @@ router.get("/scoopdinator", async (req, res) => {
   }
 });
 
+/**
+ * GET journal entries for scoopervisor
+ *
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object to send scoopervisor journal entries or an error
+ */
 router.get("/scoopervisor", async (req, res) => {
   try {
     const scoopervisorEntries = await prisma.journalEntry.findMany({
@@ -116,6 +146,12 @@ router.get("/scoopervisor", async (req, res) => {
   }
 });
 
+/**
+ * GET journal entries for scooployee
+ *
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object to send scooployee journal entries or an error
+ */
 router.get("/scooployee", async (req, res) => {
   try {
     const scooployeeEntries = await prisma.journalEntry.findMany({
@@ -128,6 +164,12 @@ router.get("/scooployee", async (req, res) => {
   }
 });
 
+/**
+ * GET journal entries for user with id
+ *
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object to send user's journal entries or an error
+ */
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -136,8 +178,7 @@ router.get("/:id", async (req, res) => {
     let entries = [];
 
     if (user.type == "scooployee") {
-      // Direct recipients always see the entry regardless of visibility_level —
-      // they were explicitly named on it. Visibility only gates general access.
+      // Direct recipients always see the entry regardless of visibility_level
       const recipientEntries = await prisma.journalEntry.findMany({
         where: {
           recipients: { some: { id } },
@@ -203,7 +244,7 @@ router.get("/:id", async (req, res) => {
       entries = entries.concat(dinatorEntries);
 
     } else if (user.type == "scoopervisor") {
-      // Direct recipient entries — always visible regardless of visibility_level
+      // Direct recipients always see the entry regardless of visibility_level
       const recipientEntries = await prisma.journalEntry.findMany({
         where: {
           recipients: { some: { id } },
@@ -261,6 +302,7 @@ router.get("/:id", async (req, res) => {
       entries = entries.concat(recipientEntries, teamEntries);
 
     } else if (user.type == "advisor") {
+      // Direct recipients always see the entry regardless of visibility_level
       const recipientEntries = await prisma.journalEntry.findMany({
         where: {
           recipients: { some: { id } },
@@ -319,6 +361,7 @@ router.get("/:id", async (req, res) => {
     });
     entries = entries.concat(privateEntries);
 
+    // Deduplicate entries
     const seen = new Set();
     const deduped = entries.filter(entry => {
       if (seen.has(entry.id)) return false;
