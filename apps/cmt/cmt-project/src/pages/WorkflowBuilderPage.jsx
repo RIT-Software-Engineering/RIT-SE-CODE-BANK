@@ -236,7 +236,8 @@ async function workflowSubmit(name, description, workflows, setWorkflows){
  */
 function findParent(actions, parentActionId){
     let result = null;
-    for (let index = 0; index < actions.length; index++) {
+    console.log(actions)
+    for (let index = 0; index < actions?.length; index++) {
         const action = actions[index];
         if (action.id === parentActionId){
             result = action;
@@ -325,6 +326,7 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
                 if (workflows[index].actions.length > 0){
                     let prevAction = workflows[index].actions[workflows[index].actions.length - 1];
                     prevAction.action.nextActionId = data.action.id;
+                    await CMTFetch("PUT", `workflony/actionTemplate/action/${prevAction.action.id}`, {name: null, description: null, nextActionId: data.action.id});
                     actions.push({...prevAction});
                 }
                 workflowActions = workflows[index].actions
@@ -430,6 +432,7 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
                 if (workflows[index].actions.length > 0){
                     let prevAction = workflows[index].actions[workflows[index].actions.length - 1];
                     prevAction.action.nextActionId = data.action.id;
+                    await CMTFetch("PUT", `workflony/actionTemplate/action/${prevAction.action.id}`, {name: null, description: null, nextActionId: data.action.id});
                     actions.push({...prevAction});
                 }
                 workflowActions = workflows[index].actions
@@ -487,10 +490,10 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
         }
         else {
             console.log(workflowParent)
-            if (workflowParent.actions.length > 1)
+            if (workflowParent.childActions.length > 1)
                 setWorkflows(workflowsCopy);
             else 
-                await workflowsFetch("PUT", `workflows/${workflowParent.attributeId}`, {
+                await workflowsFetch("PUT", `workflows/action/${workflowParent.id}`, {
                 rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
         }
     })
