@@ -2,7 +2,7 @@ services:
   frontend:
     build:
       # Point to the prod dockerfile, which builds and starts the app instead of running next dev
-      dockerfile: apps/ta-portal/ui/Dockerfile.prod
+      dockerfile: apps/ta-portal/ui/Dockerfile.staging
       args:
         # If NODE_ENV is DEV, uses testing login, otherwise uses prod login
         NEXT_PUBLIC_NODE_ENV: "DEV"

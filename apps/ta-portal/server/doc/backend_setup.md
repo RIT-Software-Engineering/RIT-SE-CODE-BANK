@@ -1,7 +1,5 @@
 # TA-Portal Backend Setup
 
-# NOTE: THE TA_PORTAL NOW RUNS ENTIRLY WITHIN DOCKER CONTAINERS FOR EASIER DEPLOYMENT. THE SETUP METHOD DESCRIBED HERE NO LONGER FUNCTIONS CORRECLTY. SEE [ta-portal/deploy/README.md](../../deploy/README.md) FOR MORE INFORMATION.
-
 ## Prerequisites
 1.  **Node.js**
     * Download from: [https://nodejs.org/en/download](https://nodejs.org/en/download)
@@ -12,30 +10,41 @@
 * **Note 2:** Libraries like express and prisma we're installed in our code base under our package.json file
 
 ## Setup Steps
-1.  Run the following command to install the node packages: `npm install` within the `\server\` folder
-2.  Run the following command to install a new Docker image container for a MariaDB instance.
-    * **Important:** Remember to change the `project-name-maria-db-instance` and `newPassword` values to your desired settings:
-        ```bash
-        docker run --name ta-portal-maria-db-instance -e MARIADB_ROOT_PASSWORD=newPassword -p 8000:3306 -d mariadb:latest
-        ```
-> **Note:** Our backend does require you to have a setup of a slack app configuration for the messaging feature. There was one setup for the initial team, but for future scooployees, they might meed to set a new one up if the current one is deprecated. To verify it has been decrepted, check if you have access to this [slack app](https://api.slack.com/apps/A0938114J84). If you don't then please refer to the file here to create your own [messaging_feature.md](messaging_feature.md). If you done have access, then proceed with the setup steps.
+1.  Within the root of the repo(`RIT-SE-CODE-BANK\`), run the following command to install the node packages. If you had already done this as part of setting up the frontend you do not need to run the command again.
+```bash
+npm install
+```
 
-3.  Navigate to the `config_backend` files in the `/server` folder and update the `DB_ROOT_PASSWORD` variable with the password you set in the previous step (e.g., `newPassword`). You can change some other attributes depending on the situation (e.g. changing port numbers if needed, if you want to create a new database user as well, you can that the DB_USER and DB_USER_PASSWORD).
-    * For Windows, navigate to specifically the `config_backend.bat` file and make the changes neccessary there. Since it's a `.bat` file you don't need to set permissions.
-    * For MacOS/Linux, navigate to specifically the `config_backend.sh` file and make the changes neccessary there. After you made the changes, set execute permissions for the script by running `chmod +x config_backend.sh`.
+2.  Run the following command to install a new Docker image container for a MariaDB instance:
+```bash
+docker run --name ta-portal-maria-db-instance -e MARIADB_ROOT_PASSWORD=root_password -e MYSQL_DATABASE=ta_portal_db -p 3306:3306 -d mariadb:11 
+```
+> **Note:** In order to use https instead of http you will need to generate certificates within the `/ta-portal/server` directory. To do this, follow the instructions reguarding mkcert within [messaging_feature.md](messaging_feature.md). You do not need to set up a slack app.
 
-**NOTE** It will prompt you to choose what database user you want to configure with for your application. Chose either the root user (1) or the application user (2) created within the config files.
+3.  Navigate to the server directory:
+```bash
+cd apps/ta-portal/server
+```
 
-4. Then, execute the script itself. This will create an `.env` file with default permissions suitable for a development server.
+4. Run the following command to copy the `example.env` file:
+```bash
+cp example.env .env
+```
 
-    **WARNING** if you have an existing .env file in the backend, delete it first beforew executing that scripts.
-    * For Windows, it's `./config_backend.bat`. If it runs into an error (i.e. 'mysql' is not recognized), try navigating to a powershell terminal outside of vscode and run the script there.
-    * For MacOS/Linux, it's `./config_backend.sh`.
+5. Then, run this command to create a new migration of our current database schema. You may be prompted to name the migration if one is not present/out of date within the `/prisma/migrations` directory. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
+```bash
+npm run prisma:migrate
+```
 
-5. Then, run `npm run prisma:migrate` to create a new migration of our current database schema. You will be prompted to name the migration. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
-6. Then, run `npm run prisma:reset` to dropping, creating, and then populating the data tables with dummy data in our `apps/ta-portal/server/server/database/test_data` folder.
-7. Then, run `npm run prisma:reset` to generate the Prisma client instance to query our database.
-8. Finally, run `npm run dev` to execute the backend.
+6. Then, run the following command to populate the data tables with dummy data in our `apps/ta-portal/server/server/database/test_data`.
+```bash
+npm run prisma:seed
+```
+
+7. Finally, execute the backend in dev mode.
+```bash
+npm run dev
+```
 
 ---
 ## Extra Documentation about backend

@@ -132,13 +132,21 @@ async function seedWindows() {
                     continue;
                 }
 
-                const values = stmt.values;
                 const columns = stmt.columns.map(col => {
                     const cleanCol = col.replace(/`/g, '');
                     return cleanCol === 'maxCAs' ? 'maxTAs' : cleanCol;
                 });
 
-                let dataObjects = values.map(valueSet => {
+                let rawValues = [];
+                if (Array.isArray(stmt.values)){
+                    rawValues = stmt.values;
+                } else if (stmt.values?.values){
+                    rawValues = stmt.values.values;
+                } else {
+                    console.warn('Unexpected INSERT format in ${file}. Skipping');
+                    continue;
+                }
+                let dataObjects = rawValues.map(valueSet => {
                     const obj = {};
                     if (valueSet && valueSet.value) {
                         columns.forEach((col, index) => {
