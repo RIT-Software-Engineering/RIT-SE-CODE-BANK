@@ -134,8 +134,7 @@ function CourseInfo({ course, actionsWithContext, refresh, fetchToCallback }) {
             <div className='flex items-center mb-4'>
                 <Button onClick={() => navigate('/courses')}><div className='flex items-center'><ArrowLeft/>Back</div></Button>
             </div>
-            <div className="w-full h-6" style={{ backgroundColor: course.color }}></div>
-            <div className="flex items-end h-16 gap-14 mt-2">
+            <div className="flex items-end h-16 gap-14 mt-2 w-max pb-2" style={{ borderBottomWidth: "6px", borderBottomColor: course.color }}>
                 <div>
                     <p className="text-3xl mb-0">{course.classId}</p>
                     <div className="flex gap-10 text-gray-600">
