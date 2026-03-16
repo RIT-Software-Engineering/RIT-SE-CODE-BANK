@@ -236,8 +236,6 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
     }, [curMaterial, materialId])
 
     function resetForm(){
-        setItemLabel('');
-        setItemBody('');
         setWarningVisible(false);
     }
 

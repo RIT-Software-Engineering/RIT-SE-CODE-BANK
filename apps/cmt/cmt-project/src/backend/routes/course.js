@@ -160,9 +160,9 @@ router.post('/', async (req, res) => {
                     name: 'Create Sessions',
                     description: 'Create sessions for your course',
                     actionType: 'workflow',
-                    actions: Array.from({ length: 4 }, (_, index) => {
+                    actions: Array.from({ length: 5 }, (_, index) => {
                         return {
-                            name: `Create session ${index}`,
+                            name: `Create session ${index + 1}`,
                             description:
                                 'Create a session. In the workflow editor, more specific details could be given for certain sessions, like if a session should have an exam.',
                             actionType: 'simple',
