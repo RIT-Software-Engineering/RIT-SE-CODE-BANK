@@ -274,14 +274,16 @@ export default function Journal() {
 
   const handleCancelNewEntry = () => {
     setNewEntryOpen(false);
-    setNewEntryNotes("");
-    setNewEntrySemester("");
-    setNewEntryRecipientIds([]);
-    setNewEntryRecipientObjects([]);
-    setNewEntryTopicId("");
-    setNewEntryPreviousId(null);
-    setNewEntryVisibilityLevel("");
-    setNewEntryIsComment(false);
+    setTimeout(() => {
+      setNewEntryNotes("");
+      setNewEntrySemester("");
+      setNewEntryRecipientIds([]);
+      setNewEntryRecipientObjects([]);
+      setNewEntryTopicId("");
+      setNewEntryPreviousId(null);
+      setNewEntryVisibilityLevel("");
+      setNewEntryIsComment(false);
+    }, 200);
   };
 
   const handleCreateNewEntry = () => {
@@ -440,15 +442,17 @@ export default function Journal() {
                         size="small"
                         variant={isDarkMode ? "outlined" : "contained"}
                         onClick={() => {
+                          setReplyEntry(null);
                           setNewEntryPreviousId(entry.id);
                           setNewEntryIsComment(true);
                           setNewEntryTopicId(entry.topic_id);
                           setNewEntryRecipientIds(entry.recipients.map(r => r.id));
                           setNewEntryRecipientObjects(entry.recipients);
                           setNewEntrySemester(entry.semester_GroupId);
-                          const visibilityOptions = getVisibilityOptions();
-                          if (visibilityOptions.length === 1 && visibilityOptions[0].value === "PERSONAL") {
+                          if (entry.privacy_level === "PERSONAL") {
                             setNewEntryVisibilityLevel("PERSONAL");
+                          } else {
+                            setNewEntryVisibilityLevel(String(entry.visibility_level));
                           }
                           setNewEntryOpen(true);
                         }}
@@ -482,23 +486,25 @@ export default function Journal() {
         <DialogTitle>{newEntryIsComment ? "Add Reply" : "Create New Journal Entry"}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 1 }}>
-            <TextField
-              select
-              label="Visibility"
-              required
-              fullWidth
-              value={newEntryVisibilityLevel}
-              onChange={(e) => {
-                setNewEntryVisibilityLevel(e.target.value);
-                setNewEntryRecipientIds([]);
-                setNewEntryRecipientObjects([]);
-              }}
-              sx={{ mb: 2 }}
-            >
-              {getVisibilityOptions().map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-              ))}
-            </TextField>
+            {!newEntryIsComment && (
+              <TextField
+                select
+                label="Visibility"
+                required
+                fullWidth
+                value={newEntryVisibilityLevel}
+                onChange={(e) => {
+                  setNewEntryVisibilityLevel(e.target.value);
+                  setNewEntryRecipientIds([]);
+                  setNewEntryRecipientObjects([]);
+                }}
+                sx={{ mb: 2 }}
+              >
+                {getVisibilityOptions().map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                ))}
+              </TextField>
+            )}
 
             {!newEntryIsComment && (
               <Autocomplete
