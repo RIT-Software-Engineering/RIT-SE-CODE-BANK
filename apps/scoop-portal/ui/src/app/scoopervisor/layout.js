@@ -5,7 +5,7 @@ import { Box } from "@mui/material";
 export default function scoopervisorLayout({ children }) {
   return (
     // add admin to required role?
-    <ProtectedRoute requiredRole={["scoopervisor"]}> 
+    <ProtectedRoute requiredRoles={["scoopervisor"]}> 
       <Box sx={{ m:3, px:4}}>
         {children}
       </Box>
