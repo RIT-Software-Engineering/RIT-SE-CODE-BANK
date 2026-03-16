@@ -111,6 +111,7 @@ jobs:
           DEPLOY_KEY: ${{ github.workspace }}/../github-actions-deploy
           DB_ROOT_PASSWORD: ${{ secrets.NOTIFICATION_DB_ROOT_PASSWORD }}
           DB_USER_PASSWORD: ${{ secrets.NOTIFICATION_DB_USER_PASSWORD }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
           if [ "$APP_NAME" = "all" ]; then
             echo "Deploying all apps"

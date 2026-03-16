@@ -13,6 +13,7 @@ DEPLOY_BRANCH="${GITHUB_REF_NAME:-services-notifications-shared}"
 ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
     DB_ROOT_PASSWORD="$DB_ROOT_PASSWORD" \
     DB_USER_PASSWORD="$DB_USER_PASSWORD" \
+    SLACK_BOT_TOKEN="$SLACK_BOT_TOKEN" \
     'bash -s' << ENDSSH
 
     set -e
