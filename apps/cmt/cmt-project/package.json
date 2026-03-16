@@ -9,6 +9,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "@tiptap/core": "^3.20.0",
+    "@tiptap/extension-highlight": "^3.20.1",
     "@tiptap/extension-placeholder": "^3.20.0",
     "@tiptap/extension-table": "^3.20.0",
     "@tiptap/extension-text-align": "^3.20.0",
