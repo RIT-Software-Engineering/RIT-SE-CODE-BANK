@@ -1,10 +1,11 @@
 import { Check, Loader2, PlusIcon, Palette } from 'lucide-react'
-import { useEffect, useState, Fragment } from 'react'
+import { useEffect, useState } from 'react'
 import { Button, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap'
 import { CMTJsonFetch } from '../../utils/api'
 import { useNavigate } from 'react-router-dom'
 import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
+import { ColorOption } from '../../components/forms/ColorPicker'
 
 
 export function CourseOverview() {
@@ -88,18 +89,18 @@ function isDarkColor(hex) {
 }
 
 
-function ColorWheel({setColor}) {
+export function ColorWheel({setColor}) {
     const [hsva, setHsva] = useState({ h: 122, s: 0, v: 90, a: 1 });
     return (
-        <Fragment>
-        <div className='flex items-center'>
+        <>
+        <div className='flex items-center mt-4'>
             <Wheel color={hsva} onChange={(color) => {
-            setHsva(color.hsva)
-            setColor(hsvaToHex(color.hsva))
+                setHsva(color.hsva)
+                setColor(hsvaToHex(color.hsva))
             }} />
             <div style={{ width: '50%', height: 34, marginTop: 20, background: hsvaToHex(hsva), marginLeft: "2rem"}}></div>
         </div>
-        </Fragment>
+        </>
     );
 }
 
@@ -112,7 +113,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
 
     const [submitButtonElement, setSubmitButtonElement] = useState(<><PlusIcon />Submit</>)
 
-    const [colorHidden, setColorHidden] = useState(true);
+    const [showWheel, setShowWheel] = useState(false);
     const [warnHidden, setWarnHidden] = useState(true);
 
     const navigate = useNavigate()
@@ -150,7 +151,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
         setCourseCode("");
         setCourseName("");
         setColor("");
-        setColorHidden(true);
+        setShowWheel(true);
         setWarnHidden(true);
     }
 
@@ -176,11 +177,11 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
                         <div className="flex gap-2 mb-4">
                             {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
                             {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
-                                <ColorRadioOption color={color} setColor={setColor} hex={hex} setColorHidden={setColorHidden}/>
+                                <ColorOption color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
                             )}
                             
                         </div>
-                        {colorHidden ? <></> : <div className='mb-3'>{<ColorWheel setColor={setColor}/>}</div>}
+                        {showWheel && <div className='mb-3'>{<ColorWheel setColor={setColor}/>}</div>}
                         <Button type='submit'>
                             <div className='flex gap-1 -ml-1 mr-1'>
                                 {submitButtonElement}
@@ -190,36 +191,5 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
                 </Modal.Body>
             </Modal>
         </>
-    )
-}
-
-function ColorRadioOption({ color, setColor, hex, setColorHidden}) {
-    return (
-        <div key={hex}>
-            <Form.Check
-                // required
-                type='radio'
-                name='color'
-                id={`color-${hex}`}
-                value={hex}
-                checked={color === hex}
-                onChange={e => { if (hex === "rainbow"){setColorHidden(false); setColor(e.target.value)} 
-                else{setColor(e.target.value); setColorHidden(true)}}}
-                className='d-none'
-            />
-            <label htmlFor={`color-${hex}`}>
-                <div
-                    className="w-8 h-8 rounded-full cursor-pointer"
-                    style={{
-                        backgroundImage:
-                            hex === "rainbow"
-                                ? "conic-gradient(red, orange, yellow, green, cyan, blue, violet, red)"
-                                : undefined,
-                        backgroundColor: hex !== "rainbow" ? hex : undefined,
-                        border: color === hex ? `4px solid color-mix(in oklab, #eee, ${hex}` : '4px solid #eee',
-                    }}
-                />
-            </label>
-        </div>
     )
 }

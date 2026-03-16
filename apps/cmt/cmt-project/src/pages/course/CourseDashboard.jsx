@@ -6,10 +6,17 @@ import { InlineActionRenderer } from '../../components/workflows/ActionRenderers
 import { InlineFormHoverable } from '../../components/forms/InlineForms'
 import { flattenActionsWithContext } from '../../utils/workflows'
 import { ArrowLeft, Edit } from 'lucide-react'
-import { Accordion, Button, Card, Form, Modal, Table} from 'react-bootstrap'
-import { RichTextEditor } from '../../components/RichTextEditor'
+import { Accordion, Button, Card, Form, Modal, Offcanvas, Table} from 'react-bootstrap'
+import { RichTextEditor } from '../../components/RichTextEditor/RichTextEditor'
 import { CheckmarkActionRenderer } from '../../components/workflows/ActionRenderers/GenericActionRenderer'
 import { ResourceManager } from '../../components/resources/ResourceManager'
+import { Editor } from '@tiptap/core'
+import { EditorContent, useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { TableKit } from '@tiptap/extension-table'
+import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style'
+import TextAlign from '@tiptap/extension-text-align'
+import Highlight from '@tiptap/extension-highlight'
 
 /**
  * @import { IsCheckmark, FetchToCallback, WorkflowsWorkflow, ActionWithContext } from "../../components/workflows/typedefs"
@@ -29,9 +36,9 @@ export function CourseDashboard() {
     const { id } = useParams()
 
     const [course, setCourse] = useState(null)
-    /** @type [ActionWithContext[], any] */
-    const [actionsWithContext, setactionWithContexts] = useState([])
-    /** @type [WorkflowsWorkflow, any] */
+    /** @type [ActionWithContext[], function] */
+    const [actionsWithContext, setActionsWithContext] = useState([])
+    /** @type [WorkflowsWorkflow, function] */
     const [workflow, setWorkflow] = useState(null)
     const [sessionCount, setSessionCount] = useState(0)
     const [sessions, setSessions] = useState([]);
@@ -39,8 +46,9 @@ export function CourseDashboard() {
     const update = useCallback(async () => {
         return CMTJsonFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
+            console.log(data)
             setCourse(data.course)
-            setactionWithContexts(data.actionWithContexts)
+            setActionsWithContext(data.actionsWithContext)
             setWorkflow(data.workflow)
         })
     }, [id])
@@ -278,10 +286,6 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
     const [itemType, setItemType] = useState('Topic/Lecture')
     const [warningVisible, setWarningVisible] = useState(false)
 
-    /** Makes a post request and updates the session data.
-     * Is it a little weird that it uses id and sessionNum? Yeah probably but it works
-     * If prisma has views you can use that but I wasn't aware of them if so when writing this
-     */
     function uploadSessionMaterial() {
         const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
         CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody, sessionNum }).then(async response => {
@@ -297,25 +301,33 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
         setWarningVisible(false)
     }
 
+    function handleClose() {
+        setIsOpen(false)
+        resetForm()
+    }
+
     return (
-        <Modal
+        <Offcanvas
             show={isOpen}
-            onHide={() => {
-                setIsOpen(false)
-                resetForm()
-            }}
-            centered
-            size='lg'
+            onHide={handleClose}
+            placement="end"
+            style={{ width: '100%', maxWidth: '1040px' }}
         >
-            <Modal.Header closeButton>Add Material</Modal.Header>
-            <Modal.Body>
-                <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Please create a title for the material!</div>
+            <Offcanvas.Header closeButton>
+                <Offcanvas.Title>Add Material</Offcanvas.Title>
+            </Offcanvas.Header>
+
+            <Offcanvas.Body className="overflow-auto">
+                <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>
+                    Please create a title for the material!
+                </div>
+
                 <Form onSubmit={uploadSessionMaterial}>
                     <div className='flex'>
                         <div className='w-full'>
-                            <div>
+                            <div className="mb-3">
                                 <Form.Label>Material Type</Form.Label>
-                                <Form.Select onChange={e => setItemType(e.target.value)}>
+                                <Form.Select onChange={e => setItemType(e.target.value)} value={itemType}>
                                     <option>Topic/Lecture</option>
                                     <option>Class Activity</option>
                                     <option>Reading/Resources</option>
@@ -325,13 +337,15 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                                     {!sessionData.find(data => data.sessionNum === sessionNum && data.type === 'Personal Notes') ? <option>Personal Notes</option> : <></>}
                                 </Form.Select>
                             </div>
-                            <div>
+
+                            <div className="mb-3">
                                 <Form.Label>Title (Required)</Form.Label>
-                                <Form.Control placeholder={'My Title'} onChange={e => setItemLabel(e.target.value)} required></Form.Control>
+                                <RichTextEditor value={itemLabel} onChange={setItemLabel} courseId={courseId} showTables={false} />
                             </div>
-                            <div>
+
+                            <div className="mb-3">
                                 <Form.Label>Content</Form.Label>
-                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId} />
+                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId} showTables={true}/>
                             </div>
                         </div>
                     </div>
@@ -352,8 +366,8 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
                         </Button>
                     </div>
                 </Form>
-            </Modal.Body>
-        </Modal>
+            </Offcanvas.Body>
+        </Offcanvas>
     )
 }
 
@@ -371,20 +385,21 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
  * @returns {*} the modal as HTML
  */
 function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen, setIsEditOpen, courseId }){
-    const [itemLabel, setItemLabel] = useState('');
-    const [itemBody, setItemBody] = useState('');
-    const [warningVisible, setWarningVisible] = useState(false);
     const curMaterial = sessionData.find(material => material.id === materialId);
+    
+    const [itemLabel, setItemLabel] = useState(curMaterial?.label ?? "");
+    const [itemBody, setItemBody] = useState(curMaterial?.body ?? "");
+    const [warningVisible, setWarningVisible] = useState(false);
+
+    useEffect(() => {
+        setItemLabel(curMaterial?.label ?? "")
+        setItemBody(curMaterial?.body ?? "")
+    }, [curMaterial, materialId])
 
     function resetForm(){
         setItemLabel('');
         setItemBody('');
         setWarningVisible(false);
-    }
-
-    function setItems(){
-        setItemLabel(curMaterial.label);
-        setItemBody(curMaterial.body);
     }
 
     function updateMaterial(){
@@ -399,21 +414,29 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
     }
 
     return (
-            <Modal show={isEditOpen} onShow={setItems} onHide={() => {setIsEditOpen(false); 
-            resetForm();}} centered size='lg'>
-                <Modal.Header closeButton>Edit Material</Modal.Header>
-                <Modal.Body>
+        <Offcanvas
+            show={isEditOpen}
+            onHide={() => { setIsEditOpen(false); resetForm(); }}
+            placement="end"
+            style={{ width: '100%', maxWidth: '1040px' }}
+        >
+            <Offcanvas.Header closeButton>
+                <Offcanvas.Title>Edit Material</Offcanvas.Title>
+            </Offcanvas.Header>
+
+            <Offcanvas.Body className="overflow-auto">
+        
                     <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Material needs to have a title!</div>
                     <Form onSubmit={updateMaterial}>
                         <div className='flex'>
                             <div className='w-full'>
                                 <div>
                                 <Form.Label>Title</Form.Label>
-                                <Form.Control defaultValue={itemLabel} onChange={(e)=>setItemLabel(e.target.value)} required></Form.Control>
+                                <RichTextEditor value={itemLabel} onChange={setItemLabel} courseId={courseId} showTables={false}/>
                                 </div>
                                 <div>
                                 <Form.Label>Content</Form.Label>
-                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId}/>
+                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId} showTables={true}/>
                                 </div>
                             </div>
                         </div>
@@ -429,8 +452,8 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                             }}>Submit</Button>
                         </div>
                     </Form>
-                </Modal.Body>
-            </Modal>
+                    </Offcanvas.Body>
+                </Offcanvas>
     );
 }
 
@@ -478,21 +501,61 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
     }
 
     /**
+     * Helper function to get the raw content of the corresponding material's label
+     *
+     * @param {number} col the column of the item
+     * @param {number} index the current index of the item
+     * @returns raw html that can be fed into an editor
+     */
+    function getLabelContent(col, index) {
+        const labels = sessionData.filter(data => data.type === allCols[col] && data.sessionNum === sessionNum);
+
+        if (labels[index])
+            return labels[index].label
+        return ""
+    }
+
+    /**
      * Helper function to display the items labels/titles 
      * Could technically be inline, but you can't define variables in the return so it gets annoying
      *
      * @param {number} col the column of the item
      * @param {number} index the current index of the item
-     * @returns {string} the title of the item, or a blank string if it doesn't exist
+     * @returns read only editor with the contents of the label
      */
-    function displayLabel(col, index){
-        const labels = sessionData.filter(data => data.type === allCols[col] && data.sessionNum === sessionNum);
-        if (labels[index])
-            return labels[index].label;
-        return '';
+    function Label(col, index){
+        const editor = new Editor({
+            editable: false,
+            content: getLabelContent(col, index),
+            editorProps: {
+                attributes: {
+                    spellcheck: 'true',
+                },
+            },
+            extensions: [
+                StarterKit,
+                TableKit.configure({
+                    table: { resizable: true },
+                }),
+                TextStyle,
+                Highlight.configure({ multicolor: true }),
+                Color, // The current colors are very limited to basically the defaults. Maybe this could be changed in the future?
+                BackgroundColor,
+                TextAlign.configure({
+                    alignments: ['left', 'center'],
+                    types: ['paragraph', 'heading'],
+                }),
+            ],
+        })
+            
+        return <EditorContent className="*:pl-2 pt-2" editor={editor} /> 
+        
+        
     }
 
     function openEditModal(text, col){
+        console.log(sessionData)
+        console.log(text, col)
         // Not a foolproof way to find ID but it should match closely. It'd take a bunch of refactoring to be exact...
         const id = sessionData.find(session => session.sessionNum === sessionNum && session.label === text && session.type === allCols[col]).id
         setIsEditOpen(true);
@@ -515,13 +578,13 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                 </thead>
                 <tbody>
                     {Array.from({ length: determineRows() }, (_, i) => (
-                    <tr>
-                        {cols[0] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 0)}>{displayLabel(0,i)}</span></td> : <></>}
-                        {cols[1] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 1)}>{displayLabel(1,i)}</span></td> : <></>}
-                        {cols[2] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 2)}>{displayLabel(2,i)}</span></td> : <></>}
-                        {cols[3] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 3)}>{displayLabel(3,i)}</span></td> : <></>}
-                        {cols[4] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 4)}>{displayLabel(4,i)}</span></td> : <></>}
-                        {cols[5] ? <td><span className={`${tdClass}`} onClick={(e) => openEditModal(e.currentTarget.textContent, 5)}>{displayLabel(5,i)}</span></td> : <></>}
+                    <tr> 
+                        {cols[0] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(0, i), 0)}>{Label(0,i)}</span></td> : <></>}
+                        {cols[1] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(1, i), 1)}>{Label(1,i)}</span></td> : <></>}
+                        {cols[2] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(2, i), 2)}>{Label(2,i)}</span></td> : <></>}
+                        {cols[3] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(3, i), 3)}>{Label(3,i)}</span></td> : <></>}
+                        {cols[4] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(4, i), 4)}>{Label(4,i)}</span></td> : <></>}
+                        {cols[5] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(5, i), 5)}>{Label(5,i)}</span></td> : <></>}
                     </tr>
                     ))}
                 </tbody>

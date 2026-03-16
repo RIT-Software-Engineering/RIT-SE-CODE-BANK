@@ -12,7 +12,7 @@ export function ResourceCard({ resource, refresh }) {
     return (
         <Card className='h-100'>
             <Card.Body className='flex flex-column'>
-                <div className='flex align-items-start mb-2'>
+                <div className='flex align-items-start mb-2 w-max'>
                     <ResourceInfo resource={resource} />
                 </div>
                 <div>
@@ -50,9 +50,9 @@ export function SelectableResourceCard({ resource, refresh, selected, setSelecte
             onClick={() => setSelected(resource)}
         >
             <Card.Body className='flex flex-column'>
-                <div className='flex items-center mb-2'>
+                <div className='flex items-center mb-2 w-max'>
                     <ResourceInfo resource={resource} />
-                    {isSelected && <Badge pill>Selected</Badge>}
+                    {isSelected && <Badge pill className="ml-4">Selected</Badge>}
                 </div>
                 <div>
                     <div className='flex justify-content-between'>
@@ -66,8 +66,8 @@ export function SelectableResourceCard({ resource, refresh, selected, setSelecte
                             >
                                 <Download size={16} />
                             </Button>
-                            <EditResourceModal resource={resource} refresh={refresh} />
-                            <DeleteResourceModal resource={resource} refresh={refresh} />
+                            {/* <EditResourceModal resource={resource} refresh={refresh} />
+                            <DeleteResourceModal resource={resource} refresh={refresh} /> */}
                         </div>
                     </div>
                 </div>
