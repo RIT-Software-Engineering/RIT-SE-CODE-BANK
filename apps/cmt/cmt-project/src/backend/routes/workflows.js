@@ -1,5 +1,6 @@
 import express from "express";
-import { createAction, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch, workflowToObject } from "../utils/workflows/api.js";
+import { combineActionWorkflow, createAction, getWorkflowActions, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch, workflowToObject } from "../utils/workflows/api.js";
+import { actionToActionWithContext } from "../utils/workflows/actionPipeline.js";
 const router = express.Router();
 export default router
 
@@ -70,14 +71,26 @@ router.put("/actionTemplate/action/:actionId", async (req, res) => {
 router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
+        console.log("=".repeat(50))
         const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
-        actions.forEach(action => {
-            if (action.metadata?.outputs){
-                action.metadata.outputs = JSON.parse(action.metadata.outputs)
-            return action
-        }
-        })
-        return res.status(200).json({actions: actions})
+        // console.log("all actions: ", actions)
+        // const returnedActions = await Promise.all(actions.map(async action => {
+        //     if (action.actionType === "workflow"){
+        //         action = await getWorkflowActions(action.id)
+        //         console.log("Returned stuff: ", action)
+        //     }
+           
+        //     else if (action.metadata?.outputs){
+        //         action.metadata.outputs = JSON.parse(action.metadata.outputs)
+        //     }
+        //     console.log("With context: ", actionToActionWithContext(action, null, null, req.user?.uid))
+        //     return action
+        // }))
+        // console.log(returnedActions)
+        const actionWithContexts = actions.map(action => 
+            actionToActionWithContext(action, null, null, req.user?.uid)
+        )
+        return res.status(200).json({actions: actionWithContexts, awc: actionWithContexts})
     } catch (error) {
         return res.status(500).json({error: error.message});
     }

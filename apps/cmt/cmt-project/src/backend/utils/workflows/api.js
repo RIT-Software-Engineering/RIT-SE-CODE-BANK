@@ -189,8 +189,8 @@ export async function objectToNewWorkflow(workflow, ownerId) {
 export async function workflowToObject(workflow) {
   return {
     ...workflow,
-    baseActionId: undefined, // Remove these since baseAction/rootAction exists and also has an id field
-    rootActionId: undefined,
+    baseActionId: workflow.id, // Remove these since baseAction/rootAction exists and also has an id field
+    rootActionId: null,
   }
 }
 
@@ -208,6 +208,53 @@ export function makeMetadataSafeForWorkflows(metadata) {
     safeMetadata[key] = JSON.stringify(value)
   })
   return safeMetadata
+}
+
+export async function getWorkflowActions(workflowId){
+  let action;
+  await workflowsFetch("GET", `workflows/action/${workflowId}`).then(async response => {
+    // console.log("Workflow ID:", workflowId)
+    // console.log("Response:", response)
+    if (response.rootAction?.id){
+      action = await combineActionWorkflow(response);
+      if (response.rootAction.actionType === "workflow"){
+        // console.log("My new action: ", action)
+        action.actions = [await getWorkflowActions(response.rootAction.id)]
+        // console.log("My action of actions: ", action.actions)
+      }
+      else{
+        action.actions = [response.rootAction];
+        console.log('My actions are the root actions')
+        if (response.rootAction.metadata){
+          if (response.rootAction.metadata?.outputs){
+            action.metadata.outputs = JSON.parse(action.metadata.outputs)
+          }
+        }
+        else {
+          action.actions[0].metadata = {};
+        }
+      }
+      
+    }
+    else {
+      console.log("Nothing at", response.baseActionId)
+      action = await combineActionWorkflow(response);
+      console.log(action)
+    }
+  })
+  return action
+}
+
+export async function combineActionWorkflow(workflow){
+  const baseAction = workflow.baseAction;
+  return {
+    id: baseAction.id,
+    attributeId: workflow.id,
+    name: baseAction.name,
+    description: baseAction.description,
+    actionType: "workflow",
+    actions: []
+  }
 }
 
 /**
@@ -231,7 +278,7 @@ export async function objectToNewAction(action, ownerId, parentActionId) {
     
     // Just as a complex action represents its children, the workflows base action represents its children too.
     // But in this case, getting the base action ID isnt as simple, so we format it more nicely
-    return { id: nestedWorkflow.baseActionId }
+    return { id: nestedWorkflow.baseActionId, workflow: nestedWorkflow }
   }
 
   // Create simple or complex action

@@ -15,17 +15,20 @@ export function BuilderPage(){
     ["CHECKBOX", "Checkbox"]];
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
+    const [depthLevel, setDepthLevel] = useState(0);
 
     const update = useCallback(async () => {
         return CMTFetch("GET", "/workflony/workflowTemplate").then(async response => {
                 const data = await response.json();
-                console.log(data)
+                console.log("data:", data)
                 const workflowPromises = data.workflows.map(async workflow => {
+                    console.log("Workflow:", workflow)
                     const info = workflow.baseAction;
                     let actions = [];
                     if (workflow.rootActionId){
                         const actionResponse = await CMTFetch("GET", `workflony/actionTemplate/workflow/${workflow.id}`)
                         const returnedActions = await actionResponse.json();
+                        console.log("actions: ", returnedActions.actions)
                         actions = returnedActions.actions;
                     }
                     return {
@@ -38,7 +41,7 @@ export function BuilderPage(){
                 });
                 const resolvedWorkflows = await Promise.all(workflowPromises);
                 setWorkflows(resolvedWorkflows.sort());
-                console.log(resolvedWorkflows)
+                console.log("Resolved workflows:", resolvedWorkflows)
                 setLoading(false);
             });
         }, [])
@@ -51,12 +54,12 @@ export function BuilderPage(){
         <Button onClick={()=>setWorkflowModalOpen(true)}>Add new Workflow</Button>
         <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} 
         setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit}/>
-        <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} 
-        workflows={workflows} setWorkflows={setWorkflows} availCodes={availCodes} parentId={parentId}
+        <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} workflows={workflows} setWorkflows={setWorkflows} 
+        availCodes={availCodes} parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
         outputHelper={BuilderOutputsHelper} addAction={addStandardAction} addWorkflowAction={addWorkflowAction}/>
         <Accordion>
         {workflows ? Array.from({length: workflows.length}, (_, i) => {
-            return (<div key={i} className="pt-2" onClick={()=>setIndex(i)}><WorkflowComponent loading={loading} index={i} workflows={workflows} setIsOpen={setActionModalOpen} setParentId={setParentId}/></div>)
+            return (<div key={i} className="pt-2" onClick={()=>setIndex(i)}><WorkflowComponent loading={loading} index={i} workflows={workflows} setIsOpen={setActionModalOpen} setParentId={setParentId} depthLevel={0} setDepthLevel={setDepthLevel}/></div>)
         }) : <></>}
         </Accordion>
     </>);
@@ -224,13 +227,91 @@ async function workflowSubmit(name, description, workflows, setWorkflows){
     });
 }
 
+/**
+ * Recursive function to find a workflow.
+ * Used for the action adders to find if the parentId is a complex or workflow action. 
+ *
+ * @param {Array} actions
+ * @param {string} parentActionId 
+ */
+function findParent(actions, parentActionId){
+    let result = null;
+    for (let index = 0; index < actions.length; index++) {
+        const action = actions[index];
+        if (action.id === parentActionId){
+            result = action;
+            break;
+        }
+        else {
+            if (action.childActions) {
+                result = findParent(action.childActions, parentActionId);
+                if (result)
+                    break
+            }
+        }
+    }
+    return result;
+}
+
+async function setNextActionInfo(action, actions, workflowId, id, name, description, actionType, parentActionId, metadata){
+    if (action.id === workflowId) {
+        const actionList = action.childActions.slice(0,-1);
+        if (action.childActions?.length > 0){
+            let prevAction = action.childActions[action.childActions.length - 1];
+            prevAction.nextActionId = id;
+            await CMTFetch("PUT", `workflony/actionTemplate/action/${prevAction.id}`, {name: null, description: null, nextActionId: id});
+            actionList.push({...prevAction});
+        }
+        actionList.push({
+            id: id,
+            name: name,
+            description: description,
+            actionType: actionType,
+            nextActionId: null,
+            parentActionId: parentActionId,
+            metadata: metadata
+        })
+        actions = actionList;
+    } 
+    // AI-modified code
+    else {
+        if (action.childActions && action.childActions.length > 0) {
+            for (let index = 0; index < action.childActions.length; index++) {
+                action.childActions[index].childActions = await setNextActionInfo(
+                    action.childActions[index], 
+                    action.childActions[index].childActions || [], 
+                    workflowId, id, name, description, actionType, parentActionId, metadata
+                );
+            }
+        }
+        actions = action.childActions || []; 
+    }
+    
+    return actions;
+}
+
 async function addStandardAction(outputs, index, workflows, setWorkflows, name, description, code, actionType, parentActionId) {
     let metadata = {};
+    let isWorkflowChild = false;
+    let workflowParent = workflows[index];
+    if (parentActionId){
+        workflowParent = null;
+        workflowParent = workflows[index].actions.find(action => action.action.id === parentActionId)?.action;
+        if (!workflowParent){
+            for (let j = 0; j < workflows[index].actions.length; j++) {
+                const actions = workflows[index].actions[j];
+                if (!workflowParent)
+                    workflowParent = findParent(actions.action?.childActions, parentActionId)
+            }
+        }
+        
+        isWorkflowChild = workflowParent?.actionType === "workflow";
+    }
     if (code)
         metadata.code = code;
     if (outputs)
         metadata.outputs = outputs;
-    await CMTFetch("POST", "workflony/actionTemplate/action", {name, description, actionType, metadata, parentActionId}).then(async response => {
+    await CMTFetch("POST", "workflony/actionTemplate/action", {name, description, actionType, metadata, parentActionId: !isWorkflowChild ? parentActionId : null}).then(async response => {
         const data = await response.json();
         console.log(data.action);
         let workflowsCopy = [];
@@ -238,35 +319,78 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
         if (j !== index)
             workflowsCopy.push(workflows[j])
         else {
-            const actions = workflows[j].actions.slice(0,-1);
-            if (workflows[j].actions.length > 0){
-                let prevAction = workflows[j].actions[workflows[j].actions.length - 1];
-                await CMTFetch("PUT", `workflony/actionTemplate/action/${prevAction.id}`, {name: null, description: null, nextActionId: data.action.id});
-                actions.push({...prevAction, nextActionId: data.action.id});
+            let workflowActions = [];
+            if (workflowParent.id === workflows[index].id){
+                const actions = workflows[index].actions.slice(0,-1);
+                if (workflows[index].actions.length > 0){
+                    let prevAction = workflows[index].actions[workflows[index].actions.length - 1];
+                    prevAction.action.nextActionId = data.action.id;
+                    actions.push({...prevAction});
+                }
+                workflowActions = workflows[index].actions
+                workflowActions.push({action: {
+                        id: data.action.id,
+                        name: name,
+                        description: description,
+                        actionType: actionType,
+                        nextActionId: null,
+                        parentActionId: null,
+                        metadata: metadata
+                }})
+            }
+            else {
+                // Check if we have any other child actions
+                if (workflowParent.childActions?.length > 0){
+                    for (let j = 0; j < workflows[index].actions.length; j++) {
+                        const actions = workflows[index].actions[j];
+                        actions.action.childActions = await setNextActionInfo(
+                            actions.action, [], workflowParent.id, data.action.id,
+                            name, description, actionType, parentActionId, metadata
+                        )
+                        workflowActions.push(actions)
+                    }
+                } 
+                else {
+                    workflowActions = workflows[index].actions
+                    workflowParent.childActions = [];
+                    workflowParent.childActions.push({
+                            id: data.action.id,
+                            name: name,
+                            description: description,
+                            actionType: actionType,
+                            nextActionId: null,
+                            parentActionId: parentActionId,
+                            metadata: metadata
+                    });
+                }
             }
             workflowsCopy.push({
                     id: workflows[j].id,
                     attributeId: workflows[j].attributeId,
                     name: workflows[j].name,
                     description: workflows[j].description,
-                    actions: [...actions, {
-                        id: data.action.id,
-                        name: name,
-                        description: description,
-                        actionType: actionType,
-                        nextActionId: null,
-                        parentActionId: parentActionId,
-                        metadata: metadata
-                    }]
+                    actions: workflowActions
                 });
         }}
-        console.log(workflowsCopy)
-        // If this is the first action then we set the root action
-        if (workflowsCopy[index].actions.length === 1)
-            workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
-            rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
-        else 
-            setWorkflows(workflowsCopy);
+        console.log("The copy:", workflowsCopy)
+        if (!isWorkflowChild){
+            // If this is the first action then we set the root action
+            console.log("The thing", workflowsCopy[index])
+            if (workflowsCopy[index].actions.length === 1)
+                await workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
+                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
+            else 
+                setWorkflows(workflowsCopy);
+        }
+        else {
+            console.log(workflowParent)
+            if (workflowParent.childActions.length > 1)
+                setWorkflows(workflowsCopy);
+            else {
+                await workflowsFetch("PUT", `workflows/action/${workflowParent.id}`, {
+                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
+            }
+        }
     });
 }
 
@@ -277,7 +401,22 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
         actionType: "workflow",
         actions: []
     };
-    await CMTFetch("POST", "workflony/actionTemplate/workflow", {workflow, parentActionId}).then(async response => {
+    let isWorkflowChild = false;
+    let workflowParent = workflows[index];
+    if (parentActionId){
+        workflowParent = null;
+        workflowParent = workflows[index].actions.find(action => action.action.id === parentActionId)?.action;
+        if (!workflowParent){
+            for (let j = 0; j < workflows[index].actions.length; j++) {
+                const actions = workflows[index].actions[j];
+                if (!workflowParent)
+                    workflowParent = findParent(actions.action?.childActions, parentActionId)
+            }
+        }
+        
+        isWorkflowChild = workflowParent?.actionType === "workflow";
+    }
+    await CMTFetch("POST", "workflony/actionTemplate/workflow", {workflow, parentActionId:!isWorkflowChild ? parentActionId : null}).then(async response => {
         const data = await response.json();
         console.log(data.action);
         let workflowsCopy = [];
@@ -285,35 +424,75 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
         if (j !== index)
             workflowsCopy.push(workflows[j])
         else {
-            const actions = workflows[j].actions.slice(0,-1);
-            if (workflows[j].actions.length > 0){
-                let prevAction = workflows[j].actions[workflows[j].actions.length - 1];
-                await CMTFetch("PUT", `workflony/actionTemplate/action/${prevAction.id}`, {name: null, description: null, nextActionId: data.action.id});
-                actions.push({...prevAction, nextActionId: data.action.id});
+            let workflowActions = [];
+            if (workflowParent.id === workflows[index].id){
+                const actions = workflows[index].actions.slice(0,-1);
+                if (workflows[index].actions.length > 0){
+                    let prevAction = workflows[index].actions[workflows[index].actions.length - 1];
+                    prevAction.action.nextActionId = data.action.id;
+                    actions.push({...prevAction});
+                }
+                workflowActions = workflows[index].actions
+                workflowActions.push({action: {
+                        id: data.action.id,
+                        name: name,
+                        description: description,
+                        actionType: 'workflow',
+                        nextActionId: null,
+                        parentActionId: null,
+                    }})
+            }
+            else {
+                // Check if we have any other child actions
+                if (workflowParent.childActions?.length > 0){
+                    for (let j = 0; j < workflows[index].actions.length; j++) {
+                        const actions = workflows[index].actions[j];
+                        actions.action.childActions = await setNextActionInfo(
+                            actions.action, [], workflowParent.id, data.action.id,
+                            name, description, "workflow", parentActionId, null
+                        )
+                        workflowActions.push(actions)
+                    }
+                } 
+                else {
+                    workflowActions = workflows[index].actions
+                    workflowParent.childActions = [];
+                    workflowParent.childActions.push({
+                            id: data.action.id,
+                            name: name,
+                            description: description,
+                            actionType: "workflow",
+                            nextActionId: null,
+                            parentActionId: parentActionId
+                    });
+                }
             }
             workflowsCopy.push({
                     id: workflows[j].id,
                     attributeId: workflows[j].attributeId,
                     name: workflows[j].name,
                     description: workflows[j].description,
-                    actions: [...actions, {
-                        id: data.action.id,
-                        name: name,
-                        description: description,
-                        nextActionId: null,
-                        actionType: "workflow",
-                        parentActionId: parentActionId,
-                        actions: []
-                    }]
+                    parentActionId: parentActionId,
+                    actions: workflowActions
                 });
         }}
-        console.log(workflowsCopy)
-        // If this is the first action then we set the root action
-        if (workflowsCopy[index].actions.length === 1)
-            workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
-            rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
-        else 
-            setWorkflows(workflowsCopy);
+        console.log("The copy:", workflowsCopy)
+        if (!isWorkflowChild){
+            // If this is the first action then we set the root action
+            if (workflowsCopy[index].actions.length === 1)
+                await workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
+                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
+            else 
+                setWorkflows(workflowsCopy);
+        }
+        else {
+            console.log(workflowParent)
+            if (workflowParent.actions.length > 1)
+                setWorkflows(workflowsCopy);
+            else 
+                await workflowsFetch("PUT", `workflows/${workflowParent.attributeId}`, {
+                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
+        }
     })
 }
 
@@ -356,8 +535,8 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSub
     </>)
 }
 
-function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCodes, parentId,
-    outputHelper, addAction, addWorkflowAction}){
+function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCodes, parentId, 
+    depthLevel, setDepthLevel, outputHelper, addAction, addWorkflowAction}){
     const [actionType, setActionType] = useState("simple");
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -374,6 +553,7 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
         setValidation([]);
         setPlaceholder('');
         setRequired(false);
+        setDepthLevel(depthLevel-1);
     }
 
     async function createSimpleAction(e){
@@ -416,8 +596,9 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
                 <Form.Label>Action Type</Form.Label>
                 <Form.Select onChange={e=>setActionType(e.target.value)}>
                     <option key="simple" value="simple">Simple</option>
-                    <option key="complex" value="complex">Complex</option>
-                    <option key="workflow" value="workflow">Workflow</option>
+                    {/* it's tested you can make up to 7 children before the workflows API fails to return. We'll do 6 to be safe though. */}
+                    <option key="complex" value="complex" disabled={depthLevel>=6}>Complex</option>
+                    <option key="workflow" value="workflow" disabled={depthLevel>=6}>Workflow</option>
                 </Form.Select>
                 {actionType === "simple" ? // if simple action
                 <>
@@ -452,10 +633,7 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
     </>)
 }
 
-// TODO Bug: workflows REALLY doesn't like it if there's too many child actions and it times you out
-// The page then doesn't load. We need to put a cap on the amount of complex actions or modify the original API
-// The limit is 7, once you go down to depth 8 the workflows API sends an error and nothing displays
-function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId}){
+function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, depthLevel, setDepthLevel}){
     return (<>
         {(actions||[]).map((action) => {
         let value;
@@ -487,21 +665,44 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId}){
                 </Card>
                 break;
             case "workflow": // basically the same as a complex action
+            value = 
+            <Accordion className="mt-2">
+                <Accordion.Item eventKey={action.id}>
+                <Accordion.Header><span className="text-3xl">{action.name} (Workflow)</span></Accordion.Header>
+                <Accordion.Body>
+                    <div className="text-2xl"><p>Description: {action.description}</p></div>
+                    <ComplexRenderer 
+                    workflows={workflows}
+                    index={index}
+                    actions={action.childActions}
+                    setIsOpen={setIsOpen} 
+                    setParentId={setParentId}
+                    depthLevel={depthLevel+1}
+                    setDepthLevel={setDepthLevel}/>
+                    <div className="flex justify-end pt-3">
+                        <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
+                    </div>
+                </Accordion.Body>
+            </Accordion.Item>
+            </Accordion>
+            break;
             case "complex":
                 value = 
                 <Accordion className="mt-2">
                     <Accordion.Item eventKey={action.id} className={action.id}>
-                    <Accordion.Header><span className="text-3xl">{action.name} {action.actionType === "complex" ? "(Complex Action)" : "Workflow"}</span></Accordion.Header>
+                    <Accordion.Header><span className="text-3xl">{action.name} (Complex Action)</span></Accordion.Header>
                     <Accordion.Body>
                         <div className="text-2xl"><p>Description: {action.description}</p></div>
                         <ComplexRenderer 
                             workflows={workflows}
                             index={index}
-                            actions={workflows[index].actions.filter(childAction => childAction?.parentActionId === action.id)}
+                            actions={action.childActions}
                             setIsOpen={setIsOpen} 
-                            setParentId={setParentId}/>
+                            setParentId={setParentId}
+                            depthLevel={depthLevel+1}
+                            setDepthLevel={setDepthLevel}/>
                         <div className="flex justify-end pt-3">
-                            <Button onClick={()=>{setIsOpen(true);setParentId(action.id);}}>Add New Child Action</Button>
+                            <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
                         </div>
                     </Accordion.Body>
                 </Accordion.Item>
@@ -516,7 +717,7 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId}){
     </>)
 }
 
-function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId}){
+function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, depthLevel, setDepthLevel}){
     if (loading)
         return <><h1>Loading...</h1></> // Here so a lot of stuff just doesn't break while it loads everything
     else
@@ -527,7 +728,8 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId}){
             <div className="text-3xl">
                 <p>Description: {workflows[index].description}</p>
             </div>
-            {(workflows[index].actions || []).map(action => {
+            {(workflows[index].actions || []).map(actione => {
+                let action = actione.action;
                 let value;
                 if (!action.parentActionId)
                 switch (action.actionType) {
@@ -558,21 +760,45 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId}){
                         </Card>
                         break;
                     case "workflow": // basically the same as a complex action
-                    case "complex":
-                        value = 
+                    // console.log("Action within actions:", action.name, action.actions)
+                    value = 
                         <Accordion className="mt-2">
                             <Accordion.Item eventKey={action.id}>
-                            <Accordion.Header><span className="text-3xl">{action.name} {action.actionType === "complex" ? "(Complex Action)" : "(Workflow)"}</span></Accordion.Header>
+                            <Accordion.Header><span className="text-3xl">{action.name} (Workflow)</span></Accordion.Header>
                             <Accordion.Body>
                                 <div className="text-2xl"><p>Description: {action.description}</p></div>
                                 <ComplexRenderer 
                                 workflows={workflows}
                                 index={index}
-                                actions={workflows[index].actions.filter(childAction => childAction?.parentActionId === action.id)}
+                                actions={action.childActions}
                                 setIsOpen={setIsOpen} 
-                                setParentId={setParentId}/>
+                                setParentId={setParentId}
+                                depthLevel={depthLevel+1}
+                                setDepthLevel={setDepthLevel}/>
                                 <div className="flex justify-end pt-3">
-                                    <Button onClick={()=>{setIsOpen(true);setParentId(action.id);}}>Add New Child Action</Button>
+                                    <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
+                                </div>
+                            </Accordion.Body>
+                        </Accordion.Item>
+                        </Accordion>
+                        break;
+                    case "complex":
+                        value = 
+                        <Accordion className="mt-2">
+                            <Accordion.Item eventKey={action.id}>
+                            <Accordion.Header><span className="text-3xl">{action.name} (Complex Action)</span></Accordion.Header>
+                            <Accordion.Body>
+                                <div className="text-2xl"><p>Description: {action.description}</p></div>
+                                <ComplexRenderer 
+                                workflows={workflows}
+                                index={index}
+                                actions={action.childActions}
+                                setIsOpen={setIsOpen} 
+                                setParentId={setParentId}
+                                depthLevel={depthLevel+1}
+                                setDepthLevel={setDepthLevel}/>
+                                <div className="flex justify-end pt-3">
+                                    <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
                                 </div>
                             </Accordion.Body>
                         </Accordion.Item>
@@ -585,7 +811,7 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId}){
                 return value;
             })}
             <div className="flex justify-end pt-3">
-                <Button onClick={()=>{setIsOpen(true);setParentId(null)}}>Add New Action</Button>
+                <Button onClick={()=>{setIsOpen(true);setParentId(null);setDepthLevel(depthLevel+1);}}>Add New Action</Button>
             </div>
         </Accordion.Body>
     </Accordion.Item>

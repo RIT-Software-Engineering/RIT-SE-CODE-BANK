@@ -24,8 +24,8 @@
  * ### This mutates the given action!
  * 
  * @param {object} action an action as given by the workflows API 
- * @param {Map} flattenedWorkflowState flattened map of the workflow state
- * @param {number|string} courseId the CMT course ID for building callback URLs
+ * @param {Map|null} flattenedWorkflowState flattened map of the workflow state
+ * @param {number|string|null} courseId the CMT course ID for building callback URLs
  * @param {string} userId the user ID for building callback URLs
  * @returns action with context including callback for simple actions
  */
@@ -36,29 +36,40 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
     action.metadata = metadataArrayToObject(action.metadata)
   }
 
-  const actionState = flattenedWorkflowState.get(action.id)
+  let returnAction;
+  if (flattenedWorkflowState && courseId){
+    const actionState = flattenedWorkflowState.get(action.id)
 
-  // Base case
-  if (action.actionType === "simple") {
-    return {
-      action,
-      callback: determineCallback(action.metadata.code, actionState.id, courseId, userId),
-      actionState,
+    // Base case
+    if (action.actionType === "simple") {
+      return {
+        action,
+        callback: determineCallback(action.metadata.code, actionState.id, courseId, userId),
+        actionState,
+      }
     }
-  }
 
-  // Recursive case. Both complex and workflow actions behave the same here
-  const childActionsWithContext = action.childActions.map(child =>
-    actionToActionWithContext(child, flattenedWorkflowState, courseId, userId)
-  )
+    // Recursive case. Both complex and workflow actions behave the same here
+    const childActionsWithContext = action.childActions.map(child =>
+      actionToActionWithContext(child, flattenedWorkflowState, courseId, userId)
+    ) 
 
-  return {
+    returnAction = {
     action: {
       ...action,
       childActionsWithContext,
     },
     actionState,
+    };
   }
+
+  else { 
+    const childActionsWithContext = (action.childActions||[]).map(child =>
+      actionToActionWithContext(child, null, null, userId)
+    ) 
+    returnAction = {action: {...action,}}
+  }
+  return returnAction
 }
 
 /**
