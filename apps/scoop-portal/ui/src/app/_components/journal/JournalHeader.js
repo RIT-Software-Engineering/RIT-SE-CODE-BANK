@@ -6,7 +6,6 @@ export default function JournalHeader({
   setFilterDialogOpen,
   setNewEntryOpen,
   handleJSONDownload
-
 }) {
   const handleOpenFilterDialog = () => setFilterDialogOpen(true);
 

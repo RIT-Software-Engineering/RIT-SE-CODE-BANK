@@ -37,8 +37,6 @@ import TimelineOppositeContent, { timelineOppositeContentClasses } from "@mui/la
 
 import toast, { Toaster } from "react-hot-toast";
 
-const CAN_CREATE_JOURNAL = ["scoopdinator", "advisor", "scoopervisor"];
-
 export default function Journal() {
   const theme = useTheme();
 
@@ -52,7 +50,6 @@ export default function Journal() {
   const [newEntryOpen, setNewEntryOpen] = useState(false);
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
-  // Filter States
   const [filterSemesterValue, setFilterSemesterValue] = useState("");
   const [filterSenderValue, setFilterSenderValue] = useState("");
   const [filterRecipientValue, setFilterRecipientValue] = useState("");
@@ -60,7 +57,6 @@ export default function Journal() {
   const [filterEntryTypeValue, setFilterEntryTypeValue] = useState("");
   const [filterTimeValue, setFilterTimeValue] = useState("newest_first");
 
-  // New Entry States
   const [newEntryNotes, setNewEntryNotes] = useState("");
   const [newEntrySemester, setNewEntrySemester] = useState("");
   const [newEntryRecipientIds, setNewEntryRecipientIds] = useState([]);
@@ -70,7 +66,6 @@ export default function Journal() {
   const [newEntryVisibilityLevel, setNewEntryVisibilityLevel] = useState("");
   const [newEntryIsComment, setNewEntryIsComment] = useState(false);
 
-  // Edit States
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [replyEntry, setReplyEntry] = useState(null);
@@ -134,7 +129,6 @@ export default function Journal() {
     URL.revokeObjectURL(url);
   };
 
-  // -- Filters --
   const handleFilterSemesterChange = (e) => setFilterSemesterValue(e.target.value || "");
   const handleFilterRecipientChange = (e) => setFilterRecipientValue(e.target.value || "");
   const handleFilterSenderChange = (e) => setFilterSenderValue(e.target.value || "");
@@ -169,7 +163,7 @@ export default function Journal() {
     const roleRank = { scooployee: 1, advisor: 2, scoopervisor: 3, scoopdinator: 4 };
     const rank = user?.type ? (roleRank[user.type] ?? 0) : 0;
     const options = [{ value: "PERSONAL", label: "Private Note" }];
-    if (rank >= 1) options.push({ value: "1", label: "Everyone" });
+    if (rank >= 2) options.push({ value: "1", label: "Everyone" });
     if (rank >= 2) options.push({ value: "2", label: "Advisors and higher" });
     if (rank >= 3) options.push({ value: "3", label: "Scoopervisors and higher" });
     if (rank >= 4) options.push({ value: "4", label: "Scoopdinators only" });
@@ -191,7 +185,6 @@ export default function Journal() {
       .map(([id, name]) => ({ label: name, value: id }));
   };
 
-  // -- Edit Logic --
   const handleEditClick = (entry) => {
     setEditingEntry(entry);
     setEditValue(entry.notes);
@@ -222,7 +215,6 @@ export default function Journal() {
     setEditValue("");
   };
 
-  // -- New Entry Logic --
   const postNewEntry = async () => {
     const privacy_level = newEntryVisibilityLevel === "PERSONAL" ? "PERSONAL" : "PUBLIC";
     const visibility_level = newEntryVisibilityLevel !== "PERSONAL" ? parseInt(newEntryVisibilityLevel) : 1;
@@ -270,6 +262,14 @@ export default function Journal() {
       console.error("Failed to create a new journal entry: ", error);
       throw error;
     }
+  };
+
+  const handleOpenNewEntry = () => {
+    const visibilityOptions = getVisibilityOptions();
+    if (visibilityOptions.length === 1 && visibilityOptions[0].value === "PERSONAL") {
+      setNewEntryVisibilityLevel("PERSONAL");
+    }
+    setNewEntryOpen(true);
   };
 
   const handleCancelNewEntry = () => {
@@ -446,6 +446,10 @@ export default function Journal() {
                           setNewEntryRecipientIds(entry.recipients.map(r => r.id));
                           setNewEntryRecipientObjects(entry.recipients);
                           setNewEntrySemester(entry.semester_GroupId);
+                          const visibilityOptions = getVisibilityOptions();
+                          if (visibilityOptions.length === 1 && visibilityOptions[0].value === "PERSONAL") {
+                            setNewEntryVisibilityLevel("PERSONAL");
+                          }
                           setNewEntryOpen(true);
                         }}
                       >
@@ -468,18 +472,16 @@ export default function Journal() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <JournalHeader
           setFilterDialogOpen={setFilterDialogOpen}
-          setNewEntryOpen={CAN_CREATE_JOURNAL.includes(user?.type) ? setNewEntryOpen : null}
+          setNewEntryOpen={handleOpenNewEntry}
           handleJSONDownload={handleJSONDownload}
         />
         <EntriesList entries={filteredJournalEntries.filter(entry => entry.previous_entryid == null)} commentView={true} />
       </Container>
 
-      {/* Add Entry / Reply Dialog */}
       <Dialog open={newEntryOpen} onClose={handleCancelNewEntry} maxWidth="sm" fullWidth>
         <DialogTitle>{newEntryIsComment ? "Add Reply" : "Create New Journal Entry"}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 1 }}>
-            {/* Visibility first — drives whether recipient field shows */}
             <TextField
               select
               label="Visibility"
@@ -508,31 +510,30 @@ export default function Journal() {
               />
             )}
 
-            {/* Recipients — hidden for private notes, locked chips on reply, autocomplete on new */}
-            {!isPrivateEntry && (
-              !newEntryIsComment ? (
-                <Autocomplete
-                  multiple
-                  options={getEligibleRecipients()}
-                  getOptionLabel={(option) => option.label}
-                  value={Object.entries(users).filter(([id]) => newEntryRecipientIds.includes(id)).map(([id, name]) => ({ label: name, value: id }))}
-                  onChange={(e, s) => setNewEntryRecipientIds(s.map(sn => sn.value))}
-                  isOptionEqualToValue={(option, value) => option.value === value.value}
-                  renderInput={(params) => <TextField {...params} label="Recipient" required />}
-                  sx={{ mb: 2 }}
-                />
-              ) : (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                    Recipients
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                    {newEntryRecipientObjects.map(r => (
-                      <Chip key={r.id} label={`${r.fname} ${r.lname}`} size="small" />
-                    ))}
-                  </Stack>
-                </Box>
-              )
+            {!isPrivateEntry && !newEntryIsComment && (
+              <Autocomplete
+                multiple
+                options={getEligibleRecipients()}
+                getOptionLabel={(option) => option.label}
+                value={Object.entries(users).filter(([id]) => newEntryRecipientIds.includes(id)).map(([id, name]) => ({ label: name, value: id }))}
+                onChange={(e, s) => setNewEntryRecipientIds(s.map(sn => sn.value))}
+                isOptionEqualToValue={(option, value) => option.value === value.value}
+                renderInput={(params) => <TextField {...params} label="Recipient" required />}
+                sx={{ mb: 2 }}
+              />
+            )}
+
+            {!isPrivateEntry && newEntryIsComment && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                  Recipients
+                </Typography>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  {newEntryRecipientObjects.map(r => (
+                    <Chip key={r.id} label={`${r.fname} ${r.lname}`} size="small" />
+                  ))}
+                </Stack>
+              </Box>
             )}
 
             {!newEntryIsComment && (
@@ -563,7 +564,6 @@ export default function Journal() {
         </DialogActions>
       </Dialog>
 
-      {/* Filter Dialog */}
       <FilterDialog
         open={filterDialogOpen}
         title="Filter Journal Entries"
@@ -619,7 +619,6 @@ export default function Journal() {
         </Stack>
       </FilterDialog>
 
-      {/* Edit Dialog */}
       <Dialog open={!!editingEntry} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
         {editingEntry && (
           <>
@@ -642,7 +641,6 @@ export default function Journal() {
         )}
       </Dialog>
 
-      {/* Reply Dialog */}
       <Dialog open={replyEntry != null} onClose={() => setReplyEntry(null)} maxWidth="md" fullWidth>
         {replyEntry && (
           <>
