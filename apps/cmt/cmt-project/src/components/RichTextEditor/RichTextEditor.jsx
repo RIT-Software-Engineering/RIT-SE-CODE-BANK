@@ -1,7 +1,7 @@
 import { Editor, EditorContent, useEditor, } from "@tiptap/react";
 import Highlight from '@tiptap/extension-highlight'
 import {StarterKit} from "@tiptap/starter-kit";
-import { ButtonGroup, Button, Tooltip, OverlayTrigger, Dropdown } from "react-bootstrap";
+import { ButtonGroup, Button, Tooltip, OverlayTrigger, Dropdown, Modal, Form } from "react-bootstrap";
 import {
     ArrowDown,
   Baseline,
@@ -28,6 +28,7 @@ import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style'
 import TextAlign from '@tiptap/extension-text-align';
 import { ResourceLinkModal } from "./ResourceLinkModal";
 import { HighlightPicker, TextPicker } from "./Pickers";
+import { useResources } from "../resources/ResourceManager";
 
 
 export function ReadOnlyEditor({ value }) {
@@ -224,6 +225,8 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
               </Button>
 
               <ResourceLinkModal courseId={courseId} editor={editor} />
+
+              <ExternalLinkModal editor={editor} />
               
               <Button variant='outline-secondary' active={editor.isActive('link')} onClick={setLink}>
                   <Link2 />
@@ -292,6 +295,81 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
     )
 }
 
+export function ExternalLinkModal({ editor }) {
+    const [show, setShow] = useState(false)
+
+    const [linkText, setLinkText] = useState('')
+    const [linkURL, setLinkURL] = useState('')
+
+    const handleInsert = () => {
+
+        const displayText = linkText.trim() || linkURL
+
+        editor.chain().focus().extendMarkRange('link').setLink({ href: linkURL, target: '_blank' }).run()
+
+        // Replace the selected text with the display text
+        if (displayText && displayText !== editor.getHTML()) {
+            editor.chain().focus().insertContent(displayText).run()
+        }
+
+        // Set color
+        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' }))
+            editor.chain().focus().setColor('#0000FF').run()
+
+        handleReset()
+    }
+
+    const handleReset = () => {
+        setShow(false)
+        setLinkText('')
+        setLinkURL('')
+    }
+
+    return (<>
+        <Button
+            variant='outline-secondary'
+            onClick={() => setShow(true)}
+            >
+                <Link2/>
+        </Button>
+
+        <Modal show={show} onHide={handleReset} size='lg'>
+            <Modal.Header closeButton>
+                <Modal.Title>Insert Resource Link</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <div className="flex flex-col gap-4">
+                    <Form.Group>
+                        <Form.Label>Link URL</Form.Label>
+                        <Form.Control
+                            type='text'
+                            placeholder={`https://www.google.com`}
+                            value={linkURL}
+                            onChange={e => setLinkURL(e.target.value)}
+                        />
+                    </Form.Group>
+                    <Form.Group>
+                        <Form.Label>Link Display Text</Form.Label>
+                        <Form.Control
+                            type='text'
+                            placeholder={`This text will be what the link appears as.`}
+                            value={linkText}
+                            onChange={e => setLinkText(e.target.value)}
+                        />
+                    </Form.Group>
+                </div>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant='secondary' onClick={handleReset}>
+                    Cancel
+                </Button>
+                <Button variant='primary' onClick={handleInsert} disabled={!linkURL}>
+                    Insert Link
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    </>)
+}
 
 
 
