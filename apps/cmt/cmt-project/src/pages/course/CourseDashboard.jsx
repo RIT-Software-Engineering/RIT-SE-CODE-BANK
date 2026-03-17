@@ -138,9 +138,9 @@ function CourseInfo({ course, actionsWithContext, refresh, fetchToCallback }) {
             <div className='flex items-center mb-4'>
                 <Button onClick={() => navigate('/courses')}><div className='flex items-center'><ArrowLeft/>Back</div></Button>
             </div>
-            <div className="flex items-end gap-14 mt-2 w-max py-2 pl-2 pr-8 rounded-t" style={{ borderBottomWidth: "6px", borderBottomColor: course.color, backgroundColor: `color-mix(in oklab, #fff 85%, ${course.color})` }}>
+            <div className="flex items-end gap-14 mt-2 w-max p-6 pb-4 rounded-t-lg text-xl" style={{ borderBottomWidth: "6px", borderBottomColor: course.color, backgroundColor: `color-mix(in oklab, #fff 85%, ${course.color})` }}>
                 <div>
-                    <p className="text-3xl mb-0">{course.classId}</p>
+                    <p className="text-4xl mb-0">{course.classId}</p>
                     <div className="flex gap-10 text-gray-600">
                         <p className="mb-0">{course.name}</p>
                     </div>
