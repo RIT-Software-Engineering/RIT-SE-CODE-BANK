@@ -48,11 +48,11 @@ services:
       context: ./apps/workflow/server
       dockerfile: Dockerfile
     ports:
-      - "3003:3003"
+      - "5001:5001"
     environment:
       NODE_ENV: production
-      PORT: 3003
-      DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_workflows:3306/scoop_portal_demo
+      PORT: 5001
+      DATABASE_URL: mysql://root:password@mariadb_workflows:3306/scoop_portal_demo
     depends_on: 
       - mariadb_workflows
     restart: unless-stopped
@@ -84,7 +84,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5020
-      DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_main:3306/scoop_portal_demo
+      DATABASE_URL: mysql://root:password@mariadb_main:3306/scoop_portal_demo
     depends_on:
       mariadb_main:
         condition: service_healthy
