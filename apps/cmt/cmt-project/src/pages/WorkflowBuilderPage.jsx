@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Accordion, Button, Card, Form, Modal } from "react-bootstrap";
 import { CMTFetch } from "../utils/api";
 import { workflowsFetch } from "../backend/utils/workflows/api";
+import { Edit } from "lucide-react";
+import { CoursePageWorkflony } from "./course/CourseOverview";
 
 
 export function BuilderPage(){
@@ -17,6 +19,9 @@ export function BuilderPage(){
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
     const [depthLevel, setDepthLevel] = useState(0);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [curAction, setCurAction] = useState({});
+    const [isWorkflowModalEdit, setIsWorkflowModalEdit] = useState(false);
 
     const update = useCallback(async () => {
         return CMTFetch("GET", "/workflony/workflowTemplate").then(async response => {
@@ -48,19 +53,29 @@ export function BuilderPage(){
         }, [])
         useEffect(() => void update(), [update])
     
+    function setWorkflowModalAsOpen(){
+        setWorkflowModalOpen(true);
+        setIsWorkflowModalEdit(true);
+    }
 
     return (
     loading ? <><h1>Loading...</h1></> :
     <>
         <Button onClick={()=>setWorkflowModalOpen(true)}>Add new Workflow</Button>
         <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} 
-        setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit}/>
+        setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit} isEdit={isWorkflowModalEdit} curWorkflow={curAction}
+        setIsEdit={setIsWorkflowModalEdit} workflowEditSubmit={workflowEditSubmit}/>
         <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} workflows={workflows} setWorkflows={setWorkflows} 
         availCodes={availCodes} parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
         outputHelper={BuilderOutputsHelper} addAction={addStandardAction} addWorkflowAction={addWorkflowAction}/>
         <Accordion>
         {workflows ? Array.from({length: workflows.length}, (_, i) => {
-            return (<div key={i} className="pt-2" onClick={()=>setIndex(i)}><WorkflowComponent loading={loading} index={i} workflows={workflows} setIsOpen={setActionModalOpen} setParentId={setParentId} depthLevel={0} setDepthLevel={setDepthLevel}/></div>)
+            return (<div key={i} className="pt-2" onClick={()=>setIndex(i)}>
+                <WorkflowComponent loading={loading} index={i} workflows={workflows} 
+                setIsOpen={setActionModalOpen} setParentId={setParentId} depthLevel={0} 
+                setDepthLevel={setDepthLevel} setEditModalOpen={setEditModalOpen} 
+                setCurAction={setCurAction} setWorkflowModalEdit={setWorkflowModalAsOpen}/>
+                </div>)
         }) : <></>}
         </Accordion>
     </>);
@@ -254,6 +269,26 @@ async function workflowSubmit(name, description, workflows, setWorkflows){
             description: description,
             actions: [],
         }]);
+        console.log(data)
+    });
+}
+
+async function workflowEditSubmit(name, description, workflows, setWorkflows, workflowToUpdate){
+    CMTFetch("PUT", `/workflony/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description}).then(async response => {
+        const data = await response.json();
+        const workflowsCopy = workflows.map(workflow => {
+            if (workflow.id !== data.workflow.baseActionId)
+                return workflow
+            else
+                return {
+                    id: data.workflow.baseActionId,
+                    attributeId: data.workflow.id,
+                    name: name,
+                    description: description,
+                    actions: workflowToUpdate.actions
+                    }
+        })
+        setWorkflows(workflowsCopy);
         console.log(data)
     });
 }
@@ -551,29 +586,34 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
     })
 }
 
-function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSubmit} ){
+function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSubmit, curWorkflow ,isEdit, setIsEdit, workflowEditSubmit} ){
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
 
     function clearForm(){
         setName('');
         setDescription('');
+        setIsEdit(false);
     }
 
     async function submitWorkflow(){
         await WorkflowSubmit(name, description, workflows, setWorkflows);
     }
 
+    async function editWorkflow(){
+        await workflowEditSubmit(name, description, workflows, setWorkflows, curWorkflow)
+    }
+
     return (<>
-    <Modal size="lg" show={isOpen} centered onHide={()=>{setIsOpen(false); clearForm()}} onExit={()=>setIsOpen(false)}>
-        <Modal.Header closeButton>New Workflow</Modal.Header>
+    <Modal size="lg" show={isOpen} onShow={()=>{if (isEdit){setName(curWorkflow.name);setDescription(curWorkflow.description)}}} centered onHide={()=>{setIsOpen(false); clearForm()}} onExit={()=>{setIsOpen(false);clearForm()}}>
+        <Modal.Header closeButton>{isEdit ? 'Edit': 'New'} Workflow</Modal.Header>
         <Modal.Body>
             <Form>
                 <div>
                     <Form.Label>Workflow Name</Form.Label>
-                    <Form.Control required onChange={e=>setName(e.target.value)} />
+                    <Form.Control required onChange={e=>setName(e.target.value)} defaultValue={isEdit ? curWorkflow.name : ""}/>
                     <Form.Label>Workflow Description</Form.Label>
-                    <Form.Control required onChange={e=>setDescription(e.target.value)} />
+                    <Form.Control required onChange={e=>setDescription(e.target.value)} defaultValue={isEdit ? curWorkflow.description : ""}/>
                 </div>
                 
                 <div className="flex pt-2 justify-end">
@@ -581,8 +621,11 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSub
                         e.preventDefault();
                         clearForm();
                         setIsOpen(false);
-                        submitWorkflow();
-                    }}>Add Workflow</Button>
+                        if (isEdit)
+                            editWorkflow();
+                        else
+                            submitWorkflow();
+                    }}>{isEdit ? "Submit" : "Add Workflow"}</Button>
                 </div>
             </Form>
         </Modal.Body>
@@ -751,13 +794,25 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, dep
     </>)
 }
 
-function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, depthLevel, setDepthLevel}){
+function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, depthLevel, setDepthLevel, setEditModalOpen, setCurAction, setWorkflowModalEdit}){
     if (loading)
         return <><h1>Loading...</h1></> // Here so a lot of stuff just doesn't break while it loads everything
     else
     return (<>
     <Accordion.Item eventKey={workflows[index].id}>
-        <Accordion.Header><span className="text-4xl">{workflows[index].name}</span></Accordion.Header>
+        <Accordion.Header className="w-full [&_.accordion-button::after]:hidden">
+            <div className="flex w-full justify-between">
+            <span className="text-4xl">{workflows[index].name}</span>
+            <Button className="justify-end" variant="outline-dark" 
+            onClick={(e) => {
+                e.stopPropagation();
+                setEditModalOpen(true);
+                setCurAction(workflows[index]);
+                console.log(workflows[index]);
+                setWorkflowModalEdit();
+            }}><Edit /></Button>
+            </div>
+        </Accordion.Header>
         <Accordion.Body>
             <div className="text-3xl">
                 <p>Description: {workflows[index].description}</p>

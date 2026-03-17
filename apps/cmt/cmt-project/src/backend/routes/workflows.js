@@ -35,6 +35,18 @@ router.post("/workflowTemplate", async(req, res) => {
     }
 })
 
+router.put("/workflowTemplate/:workflowId", async(req, res) => {
+    try {
+        const {name, description} = req.body; 
+        const professorId = req.user.uid;
+        const {workflowId} = req.params;
+        const updatedWorkflow = await workflowsFetch("PUT", `workflows/${workflowId}`, {name:name, description:description});
+        return res.status(200).json({workflow: updatedWorkflow});
+    } catch (error) {
+        return res.status(500).json({error: error.message})
+    }
+})
+
 router.post("/actionTemplate/action", async (req, res) => {
     try {
         const professorId = req.user.uid;
