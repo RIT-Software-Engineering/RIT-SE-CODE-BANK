@@ -303,7 +303,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
  *  sessionNum  the identifying session number to only get data from that specific session
  * @returns {*} the table in HTML
  */
-function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} ) {
+function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
     const tdClass = "hover:underline hover:text-blue-500 cursor-pointer";
     const allCols = ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"];
