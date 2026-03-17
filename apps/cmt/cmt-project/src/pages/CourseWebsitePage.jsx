@@ -105,57 +105,24 @@ export default function CourseWebsitePage() {
   };
 
   const generateCourseHTML = (course, sessions) => {
-    return `<!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>${course.id} - ${course.name}</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 24px;
-      }
-      h1 {
-        text-align: center;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 24px;
-      }
-      th, td {
-        border: 1px solid #ccc;
-        padding: 10px;
-        text-align: left;
-      }
-      th {
-        background: #d7d2cb;
-      }
-    </style>
-  </head>
-  <body>
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${course.id} - ${course.name}</title>
+    </head>
+    <body>
 
-  <h1>${course.id} – ${course.name}</h1>
+      <h1>${course.id} - ${course.name}</h1>
 
-  ${sessions.map(session => `
-    <h2>Session ${session.sessionNum}</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Topic/Lecture</th>
-          <th>Class Activity</th>
-          <th>Reading/Resources</th>
-          <th>Assignments</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${generateSessionRows(session.materials)}
-      </tbody>
-    </table>
-  `).join("")}
+      ${sessions
+        .sort((a, b) => a.sessionNum - b.sessionNum)
+        .map(generateSessionHTML)
+        .join("")}
 
-  </body>
-  </html>`;
+    </body>
+    </html>
+    `;
   };
 
   const downloadHTML = () => {
@@ -172,6 +139,12 @@ export default function CourseWebsitePage() {
 
     URL.revokeObjectURL(url);
   };
+
+  const visibleColumns = MATERIAL_COLUMNS.filter(col =>
+    sessions.some(session =>
+      (session.materials || []).some(m => m.type === col && m.active)
+    )
+  );
 
   return (
     <div>
@@ -199,19 +172,18 @@ export default function CourseWebsitePage() {
       {/* Events Table */}
       {loading ? (
         <div className="text-center p-6">Loading events...</div>
-      ) : Object.keys(sessions).length === 0 ? (
+      ) : sessions.length === 0 ? (
         <p className="text-gray-500 text-center">No events found for this course.</p>
       ) : (
         <table className="mx-auto w-full border-collapse">
           <thead className="bg-[#D7D2CB]">
             <tr>
               <th className="border border-gray-300 p-3 text-left">Session</th>
-              <th className="border border-gray-300 p-3 text-left">Topics</th>
-              <th className="border border-gray-300 p-3 text-left">Class Activities</th>
-              <th className="border border-gray-300 p-3 text-left">Reading/Resources</th>
-              <th className="border border-gray-300 p-3 text-left">Projects & Practica</th>
-              <th className="border border-gray-300 p-3 text-left">Group Assignment</th>
-              <th className="border border-gray-300 p-3 text-left">Individual Assignment</th>
+                {visibleColumns.map(col => (
+                  <th key={col} className="border border-gray-300 p-3 text-left">
+                    {col}
+                  </th>
+                ))}
             </tr>
           </thead>
           <tbody>
@@ -219,70 +191,22 @@ export default function CourseWebsitePage() {
               .sort((a, b) => a.sessionNum - b.sessionNum)
               .map((session, index) => {
                 const materials = session.materials || [];
-
+                const grouped = visibleColumns.map(col => materials.filter(m => m.type === col && m.active));
                 return (
-                  <tr key={session.id} className={index % 2 === 0 ? "bg-red-100" : "bg-blue-100"}>
-                    
-                    {/* Session column */}
+                  <tr key={session.id} className={index % 2 === 0 ? "bg-red-100" : "bg-blue-100"}>   
+
                     <td className="border border-gray-300 p-3 font-semibold text-center">
                       Session {session.sessionNum}
                     </td>
 
-                    {/* Topics */}
-                    <td className="border border-gray-300 p-3 align-top">
-                      {materials
-                        .filter(m => m.type === "Topic/Lecture" && m.active)
-                        .map(m => (
-                          <div key={m.id} className="mb-1">{m.label}</div>
+                    {grouped.map((colItems, colIndex) => (
+                      <td key={colIndex} className="border border-gray-300 p-3 align-top">
+                        {colItems.map(item => (
+                          <div key={item.id} className="mb-1">{item.label}</div>
                         ))}
-                    </td>
-
-                    {/* Class Activities */}
-                    <td className="border border-gray-300 p-3 align-top">
-                      {materials
-                        .filter(m => m.type === "Class Activity" && m.active)
-                        .map(m => (
-                          <div key={m.id} className="mb-1">{m.label}</div>
-                        ))}
-                    </td>
-
-                    {/* Reading/Resources */}
-                    <td className="border border-gray-300 p-3 align-top">
-                      {materials
-                        .filter(m => m.type === "Reading/Resources" && m.active)
-                        .map(m => (
-                          <div key={m.id} className="mb-1">{m.label}</div>
-                        ))}
-                    </td>
-
-                     {/* Projects & Practica */}
-                     <td className="border border-gray-300 p-3 align-top">
-                      {materials
-                        .filter(m => m.type === "Projects & Practica" && m.active)
-                        .map(m => (
-                          <div key={m.id} className="mb-1">{m.label}</div>
-                        ))}
-                    </td>
-
-                     {/* Group Assignment */}
-                     <td className="border border-gray-300 p-3 align-top">
-                      {materials
-                        .filter(m => m.type === "Group Assignment" && m.active)
-                        .map(m => (
-                          <div key={m.id} className="mb-1">{m.label}</div>
-                        ))}
-                    </td>
-
-                     {/* Individual Assignment */}
-                     <td className="border border-gray-300 p-3 align-top">
-                      {materials
-                        .filter(m => m.type === "Individual Assignment" && m.active)
-                        .map(m => (
-                          <div key={m.id} className="mb-1">{m.label}</div>
-                        ))}
-                    </td>
-
-                  </tr>
+                      </td>
+                    ))}
+                </tr>
                 );
               })}
           </tbody>
@@ -323,5 +247,27 @@ function buildSessionTableData(materials) {
     columns: MATERIAL_COLUMNS,
     rows
   };
+}
+
+function generateSessionHTML(session) {
+  const { columns, rows } = buildSessionTableData(session.materials);
+
+  return `
+    <h2>Session ${session.sessionNum}</h2>
+    <table>
+      <thead>
+        <tr>
+          ${columns.map(col => `<th>${col}</th>`).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(row => `
+          <tr>
+            ${row.map(cell => `<td>${cell ? cell.label : ""}</td>`).join("")}
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
 }
 
