@@ -12,6 +12,10 @@ import { RefreshCcw } from 'lucide-react'
  */
 export function getResourceDownloadUrl(resourceId) {
     console.log(process.env.REACT_APP_BASE_URL)
+    console.log(process.env.REACT_APP_BACKEND_URL)
+    console.log(process.env.PUBLIC_URL)
+    console.log(process.env.REACT_APP_AUTH_BASE)
+    console.log(process.env.NODE_ENV) 
     return `${process.env.REACT_APP_BASE_URL}/api/cmt/resources/download/${resourceId}`
 }
 
