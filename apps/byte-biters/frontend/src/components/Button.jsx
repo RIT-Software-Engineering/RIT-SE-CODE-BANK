@@ -6,6 +6,7 @@ const Button = ({ children, variant, ...props }) => {
 
   const variantStyles = {
     primary: 'bg-button-default text-button-text rounded-full hover:bg-button-hover',
+    secondary: 'bg-main-secondary text-button-text rounded-full hover:bg-main-secondary/80'
   };
 
   return (
