@@ -3,10 +3,8 @@ import Highlight from '@tiptap/extension-highlight'
 import {StarterKit} from "@tiptap/starter-kit";
 import { ButtonGroup, Button, Tooltip, OverlayTrigger, Dropdown, Modal, Form } from "react-bootstrap";
 import {
-    ArrowDown,
   Baseline,
   Bold,
-  ChevronUp,
   Code,
   Heading,
   Heading1,
@@ -28,7 +26,6 @@ import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style'
 import TextAlign from '@tiptap/extension-text-align';
 import { ResourceLinkModal } from "./ResourceLinkModal";
 import { HighlightPicker, TextPicker } from "./Pickers";
-import { useResources } from "../resources/ResourceManager";
 
 
 export function ReadOnlyEditor({ value }) {
@@ -227,11 +224,6 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
               <ResourceLinkModal courseId={courseId} editor={editor} />
 
               <ExternalLinkModal editor={editor} />
-              
-              <Button variant='outline-secondary' active={editor.isActive('link')} onClick={setLink}>
-                  <Link2 />
-              </Button>
-
 
               <Button
                   variant='outline-secondary'
