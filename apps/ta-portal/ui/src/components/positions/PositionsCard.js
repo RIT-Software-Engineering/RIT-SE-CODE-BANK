@@ -212,6 +212,7 @@ export default function PositionsCard({
           {onReactivate && (status === 'ONHOLD' || status === 'INACTIVE') && <MenuItem onClick={() => { onReactivate(position.id); handleMenuClose(); }}>Reactivate Position</MenuItem>}
           {showActionItems && <Divider />}
           {showEdit && <MenuItem onClick={() => { onEdit(position); handleMenuClose(); }}>Edit Position</MenuItem>}
+          {/*showEdit && <MenuItem onClick={() => { onCopy(position); handleMenuClose(); }}>Copy Position</MenuItem>*/}
           {showApprove && <MenuItem onClick={() => { onApprove(position.id); handleMenuClose(); }}>Approve Position</MenuItem>}
           {showReject && <MenuItem onClick={() => { onReject(position.id); handleMenuClose(); }} sx={{ color: 'error.main' }}>Reject Position</MenuItem>}
         </Menu>
@@ -283,10 +284,6 @@ export default function PositionsCard({
             </List>
           </Paper>
         )}
-        {/*
-<Button onClick={()=>console.log(position)} >HELLO</Button> 
-<Button onClick={()=>onCopy(position)} >COPY</Button> 
-*/}
         {showTracker && (
           <>
             <Divider sx={{ my: 2 }} />
