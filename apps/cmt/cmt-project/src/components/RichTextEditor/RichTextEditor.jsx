@@ -118,32 +118,6 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
         }
     }, [value, editor])
 
-    const setLink = useCallback(() => {
-        const previousUrl = editor.getAttributes('link').href
-        // This could maybe be changed into a modal or something in the future? We don't want a double-modal though
-        const url = window.prompt('URL', previousUrl)
-
-        // cancelled
-        if (url === null) {
-            return
-        }
-
-        // empty
-        if (url === '') {
-            editor.chain().focus().extendMarkRange('link').unsetLink().run()
-            return
-        }
-
-        // update link
-        try {
-            // TODO add checkbox in future for user to select whether the link opens in a new tab or the same tab
-            editor.chain().focus().extendMarkRange('link').setLink({ href: url, target: '_blank' }).run()
-            if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' })) editor.chain().focus().setColor('#0000FF').run()
-        } catch (e) {
-            alert(e.message)
-        }
-    }, [editor])
-
     return (
         <div className="flex flex-col">
                   
