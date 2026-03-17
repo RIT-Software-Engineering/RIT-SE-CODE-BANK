@@ -7,6 +7,7 @@ export default function CodeEditor({ code, setCode }) {
     monaco.languages.register({ id: "pdp11" })
 
     monaco.languages.setMonarchTokensProvider("pdp11", {
+      ignoreCase: true,
       tokenizer: {
         root: [
           // Comments
@@ -19,10 +20,10 @@ export default function CodeEditor({ code, setCode }) {
           [/\.(word|byte|ascii|asciz|blkw|end)\b/i, "keyword.directive"],
 
           // Instructions
-          [/\b(mov|movb|add|sub|cmp|cmpb|clr|inc|dec|tst|br|bne|beq|bpl|bmi|bcc|bcs|jsr|rts|jmp|halt)\b/i, "keyword"],
+          [/\b(MOV|MOVB|ADD|SUB|CMP|CMPB|CLR|INC|DEC|TST|BR|BNE|BEQ|BPL|BMI|BCC|BCS|BIC|JSR|RTS|JMP|HALT)\b/i, "keyword"],
 
           // Registers
-          [/\b(r[0-7]|sp|pc)\b/i, "variable.predefined"],
+          [/\b(R[0-7]|sp|pc)\b/i, "variable.predefined"],
 
           // Immediate values
           [/#-?\d+/, "number"],
@@ -31,8 +32,8 @@ export default function CodeEditor({ code, setCode }) {
           [/@/, "operator"],
 
           // Auto increment / decrement
-          [/\((r[0-7]|sp|pc)\)\+?/i, "type"],
-          [/-\((r[0-7]|sp|pc)\)/i, "type"],
+          [/\((R[0-7]|SP|PC)\)\+?/i, "type"],
+          [/-\((R[0-7]|SP|PC)\)/i, "type"],
 
           // Octal (PDP-11 default)
           [/\b[0-7]+\b/, "number.octal"],
