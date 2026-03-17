@@ -14,7 +14,7 @@ import { metadataObjectToState } from '../../../utils/workflows'
  * @template T
  * @param {ActionRendererProps<T>} props
  */
-export function InlineActionRenderer({ actionWithContext, previousValues, refresh }) {
+export function InlineActionRenderer({ actionWithContext, previousValues, refresh, onNavigateFactory }) {
     const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, previousValues))
 
     const validatorRegistry = useRef({})
@@ -52,6 +52,7 @@ export function InlineActionRenderer({ actionWithContext, previousValues, refres
                                 setOutputValues={setOutputValues}
                                 submitted={submitted}
                                 validatorRegistry={validatorRegistry}
+                                onNavigateFactory={onNavigateFactory}
                             />
                         </div>
                         <Button

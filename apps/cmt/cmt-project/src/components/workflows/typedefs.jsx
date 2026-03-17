@@ -97,6 +97,16 @@ export {}
  * 
  * In this case, "course" and its fields are previously entered values, and so when passed alongside that action, Workflows Components will use
  * it to populate those previously entered values.
+ * 
+ * 
+ * @typedef {(code: string) => () => void} onNavigateFactory
+ * If this function is provided to an action renderer, the form that would be presented to the user is instead replaced with a button that the user can
+ * click on to be navigated to the correct place to complete the action.
+ * 
+ * This function will receive the code of the action as a string. How that string is used is up to you, but here are reccomendations:
+ * 1. For in-page navigation, use the code to find an element by its ID, then use window.scroll or something similar to show it to the user.
+ * 2. For out-of-page navigation, use the code to get the url that the user should be redirected to.
+ * 
  */
 
 /**

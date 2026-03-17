@@ -2,7 +2,7 @@ import { Accordion } from 'react-bootstrap'
 import { CardActionRenderer } from './ActionRenderers/CardActionRenderer'
 
 /**
- * @import { WorkflowsWorkflow, ActionWithContext, IsCheckmark, FetchToCallback, PreviousValues } from "../../components/workflows/typedefs"
+ * @import { WorkflowsWorkflow, ActionWithContext, IsCheckmark, FetchToCallback, PreviousValues, onNavigateFactory } from "../../components/workflows/typedefs"
  */
 
 /**
@@ -15,10 +15,11 @@ import { CardActionRenderer } from './ActionRenderers/CardActionRenderer'
  *  previousValues: PreviousValues & Record<keyof T, any>,
  *  refresh: () => void,
  *  fetchToCallback: FetchToCallback,
- *  isCheckmark: IsCheckmark
+ *  isCheckmark: IsCheckmark,
+ *  onNavigateFactory: onNavigateFactory
  * }} args
  */
-export function WorkflowRenderer({ workflow, actionsWithContext, previousValues, refresh, fetchToCallback, isCheckmark }) {
+export function WorkflowRenderer({ workflow, actionsWithContext, previousValues, refresh, fetchToCallback, isCheckmark, onNavigateFactory }) {
 
     const firstIncompleteAction = actionsWithContext.find(awc => awc.actionState.stateType !== "completed")
 
@@ -40,6 +41,7 @@ export function WorkflowRenderer({ workflow, actionsWithContext, previousValues,
                                     refresh={refresh}
                                     fetchToCallback={fetchToCallback}
                                     isCheckmark={isCheckmark}
+                                    onNavigateFactory={onNavigateFactory}
                                 />
                             </div>
                         </div>
