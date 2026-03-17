@@ -9,7 +9,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: 'http://localhost:3020',
+    origin: 'http://apps-staging.se.rit.edu/',
     credentials: true,
   }),
 );
