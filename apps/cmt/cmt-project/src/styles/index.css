@@ -24,6 +24,6 @@ button.accordion-button:focus{
     background-color: hsla(0, 0%, 0%, 0.05)
 }   
 
-th, tbody, tr, td {
-    @apply !border-2
+.tiptap th, .tiptap tbody, .tiptap tr, .tiptap td {
+    @apply !border
 }
