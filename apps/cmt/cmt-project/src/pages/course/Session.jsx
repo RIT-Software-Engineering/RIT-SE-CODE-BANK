@@ -1,9 +1,3 @@
-import { Editor } from "@tiptap/core";
-import { TableKit } from "@tiptap/extension-table";
-import TextAlign from "@tiptap/extension-text-align";
-import { TextStyle, Color, BackgroundColor } from "@tiptap/extension-text-style";
-import { EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { Edit } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { Accordion, Card, Button, Offcanvas, Form, Table } from "react-bootstrap";
@@ -11,7 +5,6 @@ import { useParams } from "react-router-dom";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { CheckmarkActionRenderer } from "../../components/workflows/ActionRenderers/GenericActionRenderer";
 import { CMTJsonFetch } from "../../utils/api";
-import Highlight from "@tiptap/extension-highlight";
 
 /**
  * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
