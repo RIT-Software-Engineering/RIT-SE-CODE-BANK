@@ -122,99 +122,121 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
         <div className="flex flex-col">
                   
           <ButtonGroup className='*:!rounded-none *:!flex *:!justify-center'>
-              <Button variant='outline-secondary' active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
-                  <Bold />
-              </Button>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Bold</Tooltip>}>
+                <Button variant='outline-secondary' active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
+                    <Bold />
+                </Button>
+              </OverlayTrigger>
 
-              <Button variant='outline-secondary' active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
-                  <Italic />
-              </Button>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Italics</Tooltip>}>
+                <Button variant='outline-secondary' active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
+                    <Italic />
+                </Button>
+              </OverlayTrigger>
 
-              <Button variant='outline-secondary' active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
-                  <Underline />
-              </Button>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Underline</Tooltip>}>
+                <Button variant='outline-secondary' active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+                    <Underline />
+                </Button>
+              </OverlayTrigger>
 
-              <Button variant='outline-secondary' active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-                  <List />
-              </Button>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Dot list</Tooltip>}>
+                <Button variant='outline-secondary' active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+                    <List />
+                </Button>
+              </OverlayTrigger>
 
-              <Button variant='outline-secondary' active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-                  <ListOrdered />
-              </Button>
-
+              <OverlayTrigger delay={200} overlay={<Tooltip>Ordered List</Tooltip>}>
+                <Button variant='outline-secondary' active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+                    <ListOrdered />
+                </Button>
+              </OverlayTrigger>
               
-              <OverlayTrigger delay={200} overlay={<Tooltip>tooled tip</Tooltip>}>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Code Block</Tooltip>}>
                 <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
                     <Code /> {/* TODO: make sure this darn thing renders properly in both the editor and in read only editors */}
                 </Button>
               </OverlayTrigger>
 
-              <Button
-                  variant='outline-secondary'
-                  active={extraToShow === Extras.TextPicker || editor.isActive('textStyle')}
-                  onClick={e => { e.stopPropagation(); setExtraToShow(current => current === Extras.TextPicker ? Extras.None : Extras.TextPicker) }}
-                  className="group"
-              >
-                <div className="flex flex-col items-center">
-                  <Baseline />
-                  {extraToShow === Extras.TextPicker && <div className="w-full border-b-4 border-b-gray-300 -mb-2 group-hover:border-b-gray-100 duration-200" />}
-                </div>
-              </Button>
-
-              <Button
-                  variant='outline-secondary'
-                  active={extraToShow === Extras.HighlightPicker || editor.isActive('highlight')}
-                  onClick={e => { e.stopPropagation(); setExtraToShow(current => current === Extras.HighlightPicker ? Extras.None : Extras.HighlightPicker) }}
-                  className="group"
-              >
-                <div className="flex flex-col items-center">
-                  <PaintBucket />
-                  {extraToShow === Extras.HighlightPicker && <div className="w-full border-b-4 border-b-gray-300 -mb-2 group-hover:border-b-gray-100 duration-200" />}
-                </div>
-              </Button>
-
-              <Dropdown as={ButtonGroup} className="grow">
-                <Dropdown.Toggle
-                  variant="outline-secondary"
-                  active={editor.isActive("heading")}
+              <OverlayTrigger delay={200} overlay={<Tooltip>Text Color</Tooltip>}>
+                <Button
+                    variant='outline-secondary'
+                    active={extraToShow === Extras.TextPicker || editor.isActive('textStyle')}
+                    onClick={e => { e.stopPropagation(); setExtraToShow(current => current === Extras.TextPicker ? Extras.None : Extras.TextPicker) }}
+                    className="group"
                 >
-                  <Heading className="inline-block" />
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item eventKey="1" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}><Heading1 /></Dropdown.Item>
-                  <Dropdown.Item eventKey="2" active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading2 /></Dropdown.Item>
-                  <Dropdown.Item eventKey="3" active={editor.isActive('heading', { level: 5 })} onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}><Heading3 /></Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
+                <div className="flex flex-col items-center">
+                    <Baseline />
+                    {extraToShow === Extras.TextPicker && <div className="w-full border-b-4 border-b-gray-300 -mb-2 group-hover:border-b-gray-100 duration-200" />}
+                </div>
+                </Button>
+              </OverlayTrigger>
 
-              <Button
-                variant="outline-secondary"
-                active={editor.isActive({ textAlign: "center" })}
-                onClick={() => editor.chain().focus().toggleTextAlign("center").run()}
-              >
-                <TextAlignCenter className="inline-block" />
-              </Button>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Highlight</Tooltip>}>
+                <Button
+                    variant='outline-secondary'
+                    active={extraToShow === Extras.HighlightPicker || editor.isActive('highlight')}
+                    onClick={e => { e.stopPropagation(); setExtraToShow(current => current === Extras.HighlightPicker ? Extras.None : Extras.HighlightPicker) }}
+                    className="group"
+                >
+                <div className="flex flex-col items-center">
+                    <PaintBucket />
+                    {extraToShow === Extras.HighlightPicker && <div className="w-full border-b-4 border-b-gray-300 -mb-2 group-hover:border-b-gray-100 duration-200" />}
+                </div>
+                </Button>
+              </OverlayTrigger>
+
+              <OverlayTrigger delay={200} overlay={<Tooltip>Header</Tooltip>}>
+                <Dropdown as={ButtonGroup} className="grow">
+                    <Dropdown.Toggle
+                    variant="outline-secondary"
+                    active={editor.isActive("heading")}
+                    >
+                    <Heading className="inline-block" />
+                    </Dropdown.Toggle>
+                    <Dropdown.Menu>
+                    <Dropdown.Item eventKey="1" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}><Heading1 /></Dropdown.Item>
+                    <Dropdown.Item eventKey="2" active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading2 /></Dropdown.Item>
+                    <Dropdown.Item eventKey="3" active={editor.isActive('heading', { level: 5 })} onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}><Heading3 /></Dropdown.Item>
+                    </Dropdown.Menu>
+                </Dropdown>
+              </OverlayTrigger>
+
+              <OverlayTrigger delay={200} overlay={<Tooltip>Center Text</Tooltip>}>
+                <Button
+                    variant="outline-secondary"
+                    active={editor.isActive({ textAlign: "center" })}
+                    onClick={() => editor.chain().focus().toggleTextAlign("center").run()}
+                >
+                    <TextAlignCenter className="inline-block" />
+                </Button>
+              </OverlayTrigger>
 
               <ResourceLinkModal courseId={courseId} editor={editor} />
 
               <ExternalLinkModal editor={editor} />
 
-              <Button
-                  variant='outline-secondary'
-                  onClick={() => {
-                      editor.chain().focus().unsetLink().run()
-                      if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' })) editor.chain().focus().setColor('black').run()
-                      else if (editor.isActive('textStyle', { color: '#0484c9' })) editor.chain().focus().setColor('#0484c9').run()
-                      else if (editor.isActive('textStyle', { backgroundColor: '#0484c9' })) editor.chain().focus().setColor('white').run()
-                  }}
-              >
-                  <Link2Off />
-              </Button>
-
-              {showTables && 
-                <Button variant="outline-secondary" onClick={() => setExtraToShow(current => current === Extras.Table ? Extras.None : Extras.Table)}>
-                  <Table />
+              <OverlayTrigger delay={200} overlay={<Tooltip>Unlink selection</Tooltip>}>
+                <Button
+                    variant='outline-secondary'
+                    onClick={() => {
+                        editor.chain().focus().unsetLink().run()
+                        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' })) editor.chain().focus().setColor('black').run()
+                        else if (editor.isActive('textStyle', { color: '#0484c9' })) editor.chain().focus().setColor('#0484c9').run()
+                        else if (editor.isActive('textStyle', { backgroundColor: '#0484c9' })) editor.chain().focus().setColor('white').run()
+                    }}
+                >
+                    <Link2Off />
                 </Button>
+              </OverlayTrigger>
+
+              
+              {showTables && 
+                <OverlayTrigger delay={200} overlay={<Tooltip>Table</Tooltip>}>
+                    <Button variant="outline-secondary" onClick={() => setExtraToShow(current => current === Extras.Table ? Extras.None : Extras.Table)}>
+                        <Table />
+                    </Button>
+                </OverlayTrigger>
               }
           </ButtonGroup>
           {extraToShow === Extras.Table 
@@ -291,13 +313,15 @@ export function ExternalLinkModal({ editor }) {
         setLinkURL('')
     }
 
-    return (<>
-        <Button
-            variant='outline-secondary'
-            onClick={() => setShow(true)}
-            >
-                <Link2/>
-        </Button>
+    return (<>          
+        <OverlayTrigger delay={200} overlay={<Tooltip>External Link</Tooltip>}>
+            <Button
+                variant='outline-secondary'
+                onClick={() => setShow(true)}
+                >
+                    <Link2/>
+            </Button>
+        </OverlayTrigger>
 
         <Modal show={show} onHide={handleReset} size='lg'>
             <Modal.Header closeButton>

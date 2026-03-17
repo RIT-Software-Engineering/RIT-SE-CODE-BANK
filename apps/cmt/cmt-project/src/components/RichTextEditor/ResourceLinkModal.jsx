@@ -1,6 +1,6 @@
 import { FileSymlink } from "lucide-react"
 import { useState } from "react"
-import { Button, Modal, Form, Col, Row, Spinner } from "react-bootstrap"
+import { Button, Modal, Form, Col, Row, Spinner, OverlayTrigger, Tooltip } from "react-bootstrap"
 import { getResourceDownloadUrl, useResources } from "../resources/ResourceManager"
 import { SelectableResourceCard } from "../resources/resourceRenderers"
 import { CMTFormFetch } from "../../utils/api"
@@ -74,12 +74,14 @@ export function ResourceLinkModal({ editor, courseId }) {
 
     return (
         <>
-                <Button
-                    variant='outline-secondary'
-                    onClick={() => setShow(true)}
-                    >
-                    <FileSymlink />
-                </Button>
+                <OverlayTrigger delay={200} overlay={<Tooltip>Resource Link</Tooltip>}>
+                    <Button
+                        variant='outline-secondary'
+                        onClick={() => setShow(true)}
+                        >
+                        <FileSymlink />
+                    </Button>
+                </OverlayTrigger>
 
                 <Modal show={show} onHide={handleReset} size='xl'>
                     <Modal.Header closeButton>
