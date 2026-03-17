@@ -1,55 +1,60 @@
-export default function MemoryPanel({ memory = [] }) {
-   const formatWord = (value) =>
-    (value & 0xFFFF).toString(16).toUpperCase().padStart(4, "0")
+import React from "react"
+import { List } from "react-window"
 
-  const columns = Array.from({ length: 16 }, (_, i) =>
-    i.toString(16).toUpperCase()
-  )
+const COLUMNS = Array.from({ length: 16 }, (_, i) =>
+  i.toString(16).toUpperCase()
+)
 
-  const rowCount = Math.ceil(memory.length / 16)
-
-  const rows = Array.from({ length: rowCount }, (_, i) =>
-    (i * 16).toString(16).toUpperCase().padStart(4, "0")
-  )
+function MemoryRow({ index, style, memory }) {
+  const baseAddress = index * 16
 
   return (
-    <div className="bg-main-secondary flex justify-center px-4 h-full overflow-auto pb-4">
-      <table className="w-full text-center border-separate border-spacing-0">
-        <thead >
-          <tr>
-            <th className="p-2 border border-border-secondary bg-main-secondary sticky top-0 z-10"></th>
-            {columns.map((col) => (
-              <th key={col} className="p-2 border border-border-secondary bg-main-secondary sticky top-0 z-10">
-                +{col}
-              </th>
-            ))}
-          </tr>
-        </thead>
+    <div style={style} className="flex">
+      {/* Address column */}
+      <div className="w-16 p-2 border text-center border-border-secondary bg-main-secondary">
+        {baseAddress.toString(16).toUpperCase().padStart(4, "0")}
+      </div>
 
-        <tbody>
-          {rows.map((rowLabel, rowIndex) => (
-            <tr key={rowLabel}>
-              <td className="p-2 border border-border-secondary">
-                {rowLabel}
-              </td>
-
-              {columns.map((_, colIndex) => {
-                const address = rowIndex * 16 + colIndex
-                const value = memory[address]
-
-                return (
-                  <td key={colIndex} className="p-2 border border-border-secondary hover:bg-main-primary">
-                    {value
-                      .toString(16)
-                      .toUpperCase()
-                      .padStart(3, "0")}
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/*Memory*/}
+      {COLUMNS.map((_, colIndex) => {
+        const address = baseAddress + colIndex
+        const value = memory[address] ?? 0
+        return (
+          <div key={colIndex} className="w-16 p-2 text-center border border-border-secondary hover:bg-main-primary">
+            {value.toString(16).toUpperCase().padStart(4, "0")}
+          </div>
+        )})}
     </div>
   )
 }
+
+function MemoryPanel({ memory = [] }) {
+  const rowCount = Math.ceil(memory.length / 16)
+
+  return (
+    <div className="h-full bg-main-secondary items-center flex flex-col">
+      <List
+        rowComponent={MemoryRow}
+        rowCount={rowCount}
+        rowHeight={32}
+        rowProps={{ memory }}
+        style={{ height: "100%" }}
+      >
+      <div className="flex sticky top-0 bg-main-secondary  border-border-secondary">
+        <div className="w-16 p-2 flex"></div>
+        {COLUMNS.map((col) => (
+          <div
+            key={col}
+            className="w-16 p-2 text-center border border-border-secondary"
+          >
+             +{col} 
+          </div>
+        ))}
+      </div>
+
+      </List>
+    </div>
+  )
+}
+
+export default React.memo(MemoryPanel)

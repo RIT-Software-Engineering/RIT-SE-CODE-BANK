@@ -6,7 +6,6 @@ import MemoryPanel from "./components/MemoryPanel"
 import RegisterPanel from "./components/RegisterPanel"
 import ControlPanel from "./components/ControlPanel"
 import {Group, Panel} from "react-resizable-panels"
-import { CPU } from "../../backend/cpu"
 import { backend } from "../../backend/backend"
 
 export default function App() {

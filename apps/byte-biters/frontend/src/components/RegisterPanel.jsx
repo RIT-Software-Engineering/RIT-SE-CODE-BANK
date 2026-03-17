@@ -1,6 +1,7 @@
+import React from "react"
 import Register from "./Register";
 
-export default function RegisterPanel ({ registers }) {
+function RegisterPanel ({ registers }) {
     return (
         <div className="bg-main-secondary h-24 flex flex-col items-center justify-between py-4 gap-4">
             <div className="flex flex-row gap-8">
@@ -18,3 +19,4 @@ export default function RegisterPanel ({ registers }) {
         </div>
     )
 }
+export default React.memo(RegisterPanel)
