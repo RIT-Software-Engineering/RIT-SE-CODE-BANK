@@ -283,8 +283,10 @@ export default function PositionsCard({
             </List>
           </Paper>
         )}
+        {/*
 <Button onClick={()=>console.log(position)} >HELLO</Button> 
 <Button onClick={()=>onCopy(position)} >COPY</Button> 
+*/}
         {showTracker && (
           <>
             <Divider sx={{ my: 2 }} />
