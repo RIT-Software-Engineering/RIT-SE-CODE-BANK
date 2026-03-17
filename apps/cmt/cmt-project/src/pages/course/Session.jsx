@@ -152,7 +152,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
  * setIsOpen - open/close the modal
  * @returns {*} the modal as HTML
  */
-function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions}){
+export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions}){
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
     const [itemType, setItemType] = useState('Topic/Lecture');
@@ -347,7 +347,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
  *  sessionNum  the identifying session number to only get data from that specific session
  * @returns {*} the table in HTML
  */
-function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} ) {
+export function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
     const tdClass = "hover:underline hover:text-blue-500 cursor-pointer";
     const allCols = ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"];
