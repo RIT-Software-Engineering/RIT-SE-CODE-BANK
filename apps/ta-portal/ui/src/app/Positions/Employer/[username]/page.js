@@ -64,13 +64,9 @@ function EmployerPositionsContent() {
 
   // State for each of the two data tabs.
   const [openPositions, setOpenPositions] = useState([]);
+  const [otherOpenPositions, setOtherOpenPositions] = useState([]);
   const [myPositions, setMyPositions] = useState([]);
-
-  // Configuration for the tabs, linking them to their respective data states.
-  const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-  ];
+  const [results, setResults] = useState(0);
 
   // General state for loading, errors, and search/filter functionality.
   const [isLoading, setIsLoading] = useState(true);
@@ -81,6 +77,7 @@ function EmployerPositionsContent() {
 
   // State for managing modals (edit/create position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [isEdit, setIsEdit]=useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -155,25 +152,29 @@ function EmployerPositionsContent() {
     if (!currentUser) return;
     setIsLoading(true);
     setError(null);
-    const tabId = tabs[tabIndex].id;
 
     try {
-      let data;
-      if (tabId === "open-positions") {
-        data = await getOpenJobPositions(currentSearch, currentFilters, null);
-        setOpenPositions(data);
-      } else if (tabId === "my-positions") {
-        data = await getPositionsByOwner(currentUser.username, currentSearch, currentFilters);
-        setMyPositions(data);
-      }
+      let openJobs;
+      let myJobs;
+      let otherJobs;
+      let res;
+      openJobs = await getOpenJobPositions(currentSearch, currentFilters, null);
+      setOpenPositions(openJobs);
+      myJobs = await getPositionsByOwner(currentUser.username, currentSearch, currentFilters);
+      setMyPositions(myJobs);
+
+      otherJobs=openJobs.filter(item => !myJobs.includes(item))
+      setOtherOpenPositions(otherJobs);
+      res=otherJobs.length+myJobs.length;
+      setResults(res)
     } catch (err) {
       console.error(`Failed to fetch data for tab ${tabId}:`, err);
       setError(`Failed to load positions. Please try again later.`);
     } finally {
       setIsLoading(false);
     }
-  // Disabling exhaustive-deps because `tabs` is a stable, locally defined array.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Disabling exhaustive-deps because `tabs` is a stable, locally defined array.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
   // Effect to trigger the initial data fetch when the component mounts or the active tab changes.
@@ -207,7 +208,7 @@ function EmployerPositionsContent() {
       fetchData(activeTab, "", latestFilters);
     }
   };
-  
+
   /**
    * Handles updates from the Filter component, triggering a data refresh.
    * @param {object} newFilters - The new set of applied filters.
@@ -218,25 +219,12 @@ function EmployerPositionsContent() {
   };
 
   /**
-   * Handles the user switching between tabs.
-   * Resets search and filter states and fetches data for the new tab.
-   * @param {React.SyntheticEvent} event - The event source of the callback.
-   * @param {number} newTabIndex - The index of the newly selected tab.
-   */
-  const handleTabChange = (event, newTabIndex) => {
-    setIsLoading(true);
-    setSearchTerm("");
-    const initialFilters = createInitialState(filterConfig);
-    setAppliedFilters(initialFilters);
-    setActiveTab(newTabIndex);
-  };
-  
-  /**
    * Opens the EditPositionModal for creating a new position or editing an existing one.
    * @param {object | null} job - The job object to edit, or null for creation.
    */
   const handleOpenModal = (job = null) => {
     setSelectedJob(job);
+    setIsEdit((job!=null));
     setIsModalOpen(true);
   };
 
@@ -253,9 +241,9 @@ function EmployerPositionsContent() {
     setIsModalOpen(false);
     setSelectedJob(null);
   };
-    /**
- * Closes the EditPositionModal and resets the selected job state.
- */
+  /**
+* Closes the EditPositionModal and resets the selected job state.
+*/
   const handleClearConfirm = () => {
     setIsModalOpen(false);
     setSelectedJob(null);
@@ -275,7 +263,7 @@ function EmployerPositionsContent() {
    */
   const handleSaveJob = async (positionData) => {
     if (!currentUser) return;
-  
+
     // If no job is selected, this is a CREATE action.
     if (!selectedJob) {
       setIsProcessing(true);
@@ -290,7 +278,7 @@ function EmployerPositionsContent() {
         await createPosition(finalPositionData, employerData);
         showNotification('Position created and submitted for approval!', 'success');
         closeModalImmediately();
-        
+
         // Refresh the data grid after creation.
         setSearchTerm("");
         const initialFilters = createInitialState(filterConfig);
@@ -308,9 +296,9 @@ function EmployerPositionsContent() {
       setNoteModalState({
         isOpen: true,
         title: 'Confirm Position Update',
-        context: { 
+        context: {
           action: 'update',
-          positionData: positionData, 
+          positionData: positionData,
           jobId: selectedJob.id,
         },
       });
@@ -329,16 +317,16 @@ function EmployerPositionsContent() {
 
     try {
       if (action === 'update') {
-        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment: note };
         // Any update sends the position back to 'PENDING_APPROVAL' status.
-        const updatedPositionData = { 
-          ...context.positionData, 
-          jobPositionStatus: 'PENDING_APPROVAL' 
+        const updatedPositionData = {
+          ...context.positionData,
+          jobPositionStatus: 'PENDING_APPROVAL'
         };
         await updatePosition(context.jobId, updatedPositionData, noteData);
         showNotification('Position updated and submitted for re-approval!', 'success');
       }
-      
+
       // Refresh the data grid after the action is complete.
       setSearchTerm("");
       const initialFilters = createInitialState(filterConfig);
@@ -353,18 +341,14 @@ function EmployerPositionsContent() {
       handleCloseNoteModal();
     }
   };
-    
 
-
-  // Get the data for the currently active tab.
-  const activeTabData = tabs[activeTab];
 
   /**
    * Renders the main content area, handling loading, error, and no-data states.
    * @param {object[]} positions - The array of positions to render.
    * @returns {React.ReactNode} The JSX for the content area.
    */
-  const renderContent = (positions) => {
+  const renderContent = (otherJobs, myJobs) => {
     // Show a loading spinner while data is being fetched.
     if (isLoading) {
       return (
@@ -382,7 +366,7 @@ function EmployerPositionsContent() {
       );
     }
     // Show a message if no positions match the current filters.
-    if (positions.length === 0) {
+    if (otherJobs.length === 0 && myJobs.length === 0) {
       return (
         <Paper sx={{ textAlign: 'center', p: 4, mt: 2 }}>
           <Typography variant="h6">No Positions Found</Typography>
@@ -391,16 +375,37 @@ function EmployerPositionsContent() {
     }
 
     // Render the list of position cards.
-    return positions.map((position) => (
-      <PositionsCard 
-        key={position.id}
-        position={position} 
-        onEdit={handleOpenModal}
-        showEditAction={activeTab === 1} // Only show edit on "My Positions" tab.
-        showApproveRejectActions={false} // Employers cannot approve/reject.
-        showTracker={activeTab !== 0} // Show tracker on "My Positions" tab.
-      />
-    ));
+    return (
+      <>
+        {/* my positions */}
+        {otherJobs
+          .filter(item => !myJobs.includes(item))
+          .map((position) => (
+            <PositionsCard
+              key={position.id}
+              position={position}
+              onEdit={handleOpenModal}
+              showEditAction={true}
+              showApproveRejectActions={false}
+              showTracker={true}
+            />
+          ))}
+
+
+        {/* all other positions */}
+
+        {myJobs.map((position) => (
+          <PositionsCard
+            key={position.id}
+            position={position}
+            onEdit={handleOpenModal}
+            showEditAction={false}
+            showApproveRejectActions={false}
+            showTracker={false}
+          />
+        ))}
+      </>
+    );
   };
 
   // Main component render method.
@@ -412,53 +417,18 @@ function EmployerPositionsContent() {
           Positions
         </Typography>
         <Typography variant="h3" color="text.secondary">
-          Browse and manage job positions.
+          Browse all publicly available positions and and manage your created positions. Updates require admin re-approval.
         </Typography>
       </Box>
 
       {/* Conditionally render content based on user role. */}
       {currentUser && currentUser.role === 'EMPLOYER' ? (
         <>
-          {/* Tab Navigation */}
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              aria-label="position tabs"
-              centered
-            >
-              {tabs.map((tab) => (
-                <Tab key={tab.id} label={tab.label} />
-              ))}
-            </Tabs>
-          </Box>
 
           {/* Main Content Paper */}
           <Paper elevation={2} sx={{ p: { xs: 2, md: 4 } }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4, flexWrap: 'wrap' }}>
-              <Box>
-                <Typography variant="h2" component="h1" gutterBottom>
-                  {activeTabData?.label}
-                </Typography>
-                <Typography color="text.secondary">
-                  {activeTab === 1 && "Manage your created positions. Updates require admin re-approval."}
-                  {activeTab === 0 && "Browse all publicly available positions."}
-                </Typography>
-              </Box>
-              {/* "Create New Position" button is only visible on the "My Positions" tab. */}
-              {activeTab === 1 && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleOpenModal()}
-                  disabled={isProcessing}
-                  sx={{ mt: { xs: 2, md: 0 } }}
-                >
-                  {isProcessing ? <CircularProgress size={24} /> : 'Create New Position'}
-                </Button>
-              )}
-            </Box>
-            
+
+
             {/* Search and Filter Bar */}
             <Box component="form" onSubmit={handleSearch} sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
               <SearchBar
@@ -467,11 +437,11 @@ function EmployerPositionsContent() {
                 placeholder="Search via course code or name:"
                 sx={{ flexGrow: 1 }}
               />
-              <Filter 
+              <Filter
                 key={`${activeTab}-${filterConfig.length}`} // Key ensures filter re-renders if config changes.
-                ref={filterRef} 
-                onFilterChange={handleFilterChange} 
-                filterConfig={visibleFilters} 
+                ref={filterRef}
+                onFilterChange={handleFilterChange}
+                filterConfig={visibleFilters}
               />
               <Button
                 type="submit"
@@ -482,18 +452,28 @@ function EmployerPositionsContent() {
                 Search
               </Button>
             </Box>
-            
-            {/* Result Count */}
-            {!isLoading && !error && (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                <strong>{activeTabData?.data?.length || 0}</strong>
-                {` ${activeTabData?.data?.length === 1 ? 'result' : 'results'} found`}
-              </Typography>
-            )}
 
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', mb: 4, flexWrap: 'wrap' }}>
+              {/* Result Count */}
+              {!isLoading && !error && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  <strong>{results || 0}</strong>
+                  {` ${results === 1 ? 'result' : 'results'} found`}
+                </Typography>
+              )}
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleOpenModal()}
+                disabled={isProcessing}
+                sx={{ mt: { xs: 2, md: 0 } }}
+              >
+                {isProcessing ? <CircularProgress size={24} /> : 'Create New Position'}
+              </Button>
+            </Box>
             {/* Content Area */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {renderContent(activeTabData?.data)}
+              {renderContent(myPositions, otherOpenPositions)}
             </Box>
           </Paper>
         </>
@@ -502,22 +482,27 @@ function EmployerPositionsContent() {
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Typography>Please make sure you are logged in as an EMPLOYER to view this page.</Typography>
         </Paper>
-      )}
+      )
+      }
 
       {/* Modals are rendered conditionally outside the main content flow. */}
-      {isModalOpen && (
-        <EditPositionModal
-          job={selectedJob}
-          onClose={handleCloseModal}
-          onSave={handleSaveJob}
-        />
-      )}
-      {showClearConfirm && (
-              <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Cancel Position Creation">
-                Are you sure you want to cancel this job application? This action cannot be undone.
-              </ConfirmationModal>
-            )}
-      
+      {
+        isModalOpen && (
+          <EditPositionModal
+            job={selectedJob}
+            onClose={handleCloseModal}
+            onSave={handleSaveJob}
+          />
+        )
+      }
+      {
+        showClearConfirm && (
+          <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title={isEdit ? "Cancel Edits to Position" : "Cancel Position Creation"}>
+           {isEdit ? "Leaving now will permanently discard your edits. This action cannot be undone." : "Are you sure you want to cancel this job application? This action cannot be undone."}
+          </ConfirmationModal>
+        )
+      }
+
       <EditableNoteForm
         isOpen={noteModalState.isOpen}
         onClose={handleCloseNoteModal}
@@ -525,6 +510,6 @@ function EmployerPositionsContent() {
         title={noteModalState.title}
         isProcessing={isProcessing}
       />
-    </Container>
+    </Container >
   );
 }

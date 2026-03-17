@@ -44,9 +44,8 @@ import {
 /**
  * Renders the main positions management page for Administrators.
  * This page provides a comprehensive view with three tabs:
- * 1. "All Open Positions": A public view of all available job positions.
- * 2. "My Created Positions": Positions created by the currently logged-in admin.
- * 3. "Manage All Positions": A view of all positions in the system for administrative actions.
+ * 1. "All Positions": A view of all job positions.
+ * 2. "Pending Positions": A view of all positions in the system needing approval
  */
 export default function AdminPositions() {
   // Core hooks for component references, authentication, and notifications.
@@ -57,16 +56,12 @@ export default function AdminPositions() {
   const { showNotification } = useNotification();
   const searchParams = useSearchParams();
 
-  // State for each of the three data tabs.
-  const [openPositions, setOpenPositions] = useState([]);
-  const [myPositions, setMyPositions] = useState([]);
   const [allPositions, setAllPositions] = useState([]);
 
   // Configuration for the tabs, linking them to their respective data states.
   const tabs = [
-    { id: "open-positions", label: "All Open Positions", data: openPositions },
-    { id: "my-positions", label: "My Created Positions", data: myPositions },
-    { id: "all-positions", label: "Manage All Positions", data: allPositions },
+    { id: "all-positions", label: "All Positions", data: allPositions },
+    { id: "pending-positions", label: "Pending Positions", data: allPositions.filter(position => position.jobPositionStatus.includes('PENDING')) },
   ];
 
   // General state for loading, errors, and search/filter functionality.
@@ -78,6 +73,8 @@ export default function AdminPositions() {
 
   // State for managing modals (edit/create position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [isEdit, setIsEdit] = useState(false);
+  const [isCopy, setIsCopy] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -90,9 +87,8 @@ export default function AdminPositions() {
   // Initialize the active tab based on URL search parameters for linkability.
   const [activeTab, setActiveTab] = useState(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'my-positions') return 1;
-    if (tabParam === 'all-positions') return 2;
-    return 0; // Default to 'open-positions'.
+    if (tabParam === 'pending-positions') return 1;
+    return 0; // Default to 'all-positions'.
   });
 
   /**
@@ -132,11 +128,11 @@ export default function AdminPositions() {
 
   /**
    * A memoized value that determines which filters are visible based on the active tab.
-   * The 'status' filter is hidden on the "All Open Positions" tab since all positions there are 'Open'.
+   * The 'status' filter is hidden on the "Pending Positions" tab since all positions there are 'Pending'.
    * @returns {object[]} The array of filter configurations to be displayed.
    */
   const visibleFilters = useMemo(() => {
-    if (activeTab === 0) { // open-positions tab
+    if (activeTab === 1) { // pending-positions tab
       return filterConfig.filter((f) => f.id !== "status");
     }
     return filterConfig;
@@ -157,16 +153,9 @@ export default function AdminPositions() {
 
     try {
       let data;
-      if (tabId === "open-positions") {
-        data = await getOpenJobPositions(currentSearch, currentFilters, null);
-        setOpenPositions(data);
-      } else if (tabId === "my-positions") {
-        data = await getPositionsByOwner(currentUser.username, currentSearch, currentFilters);
-        setMyPositions(data);
-      } else if (tabId === "all-positions") {
-        data = await getAllPositions(currentSearch, currentFilters);
-        setAllPositions(data);
-      }
+      data = await getAllPositions(currentSearch, currentFilters);
+      setAllPositions(data);
+
     } catch (err) {
       console.error(`Failed to fetch data for tab ${tabId}:`, err);
       setError(`Failed to load positions. Please try again later.`);
@@ -253,6 +242,7 @@ export default function AdminPositions() {
    */
   const handleOpenModal = (job = null) => {
     setSelectedJob(job);
+    setIsEdit((job != null));
     setIsModalOpen(true);
   };
 
@@ -285,6 +275,32 @@ export default function AdminPositions() {
     setNoteModalState({ isOpen: false, title: '', context: {} });
   };
 
+  const handleCopyPosition = (originalJob) => {
+    const employerData = {
+          username: currentUser.username,
+          fname: currentUser.fname,
+          lname: currentUser.lname,
+        };
+    const copiedData = {
+      jobSchedules: originalJob.jobSchedules,
+      location: originalJob.location,
+      locationType: originalJob.locationType,
+      maxTAs: originalJob.maxTAs,
+      endDate: originalJob.endDate,
+      gradeRequirement: originalJob.gradeRequirement,
+      startDate: originalJob.startDate,
+      graduateStatusRequirement: originalJob.graduateStatusRequirement,
+      course: {...originalJob.course},
+      courseCode: originalJob.courseCode,
+      courseTakenRequirement: originalJob.courseTakenRequirement,
+      jobPositionStatus: 'OPEN',
+      username: currentUser.username
+    };
+    console.log('copy');
+    setSelectedJob(copiedData);
+    setIsCopy(true);
+    setIsModalOpen(true);
+  };
   /**
    * Handles saving a job position from the EditPositionModal.
    * It determines whether to perform a CREATE or UPDATE action.
@@ -295,7 +311,7 @@ export default function AdminPositions() {
     if (!currentUser) return;
 
     // If no job is selected, this is a CREATE action.
-    if (!selectedJob) {
+    if (!selectedJob || isCopy==true) {
       setIsProcessing(true);
       try {
         const employerData = {
@@ -341,9 +357,10 @@ export default function AdminPositions() {
    * @param {string} newStatus - The new status to set (e.g., 'OPEN', 'REJECTED').
    */
   const handleStatusUpdate = async (jobId, newStatus) => {
+
     setNoteModalState({
       isOpen: true,
-      title: newStatus === 'OPEN' ? 'Approve Position' : 'Reject Position',
+      title: `Change Position to ${newStatus}`,
       context: {
         action: 'statusUpdate',
         jobId,
@@ -351,6 +368,7 @@ export default function AdminPositions() {
       },
     });
   };
+
 
   /**
    * Handles the final confirmation from the note modal.
@@ -366,12 +384,12 @@ export default function AdminPositions() {
 
     try {
       if (action === 'statusUpdate') {
-        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment: note };
         await updatePositionStatus(context.jobId, context.newStatus, noteData);
         showNotification('Position status updated successfully!', 'success');
 
       } else if (action === 'update') {
-        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment:note };
+        const noteData = { fname: currentUser.fname, lname: currentUser.lname, comment: note };
         await updatePosition(context.jobId, context.positionData, noteData);
         showNotification('Position updated successfully!', 'success');
       }
@@ -383,6 +401,7 @@ export default function AdminPositions() {
       fetchData(activeTab, "", initialFilters);
 
     } catch (err) {
+      console.log(err)
       console.error("Failed to perform action:", err);
       showNotification(err.message || 'An unexpected error occurred.', 'error');
     } finally {
@@ -435,9 +454,13 @@ export default function AdminPositions() {
         onEdit={handleOpenModal}
         onApprove={(jobId) => handleStatusUpdate(jobId, 'OPEN')}
         onReject={(jobId) => handleStatusUpdate(jobId, 'REJECTED')}
-        showEditAction={activeTab === 1} // Only show edit on "My Positions" tab.
-        showApproveRejectActions={activeTab === 2} // Only show approve/reject on "Manage All" tab.
-        showTracker={activeTab !== 0} // Show tracker on all tabs except "Open Positions".
+        onOnHold={(jobId) => handleStatusUpdate(jobId, 'ONHOLD')}
+        onInactive={(jobId) => handleStatusUpdate(jobId, 'INACTIVE')}
+        onReactivate={(jobId) => handleStatusUpdate(jobId, 'PENDING_APPROVAL')}
+        showEditAction={true}
+        showApproveRejectActions={activeTab === 1} // Only show approve/reject on "Pending" tab.
+        showTracker={true}
+        onCopy={handleCopyPosition}
       />
     ));
   };
@@ -480,22 +503,22 @@ export default function AdminPositions() {
                   {activeTabData?.label}
                 </Typography>
                 <Typography color="text.secondary">
-                  {activeTab !== 0 && "Search and filter all positions you have access to."}
-                  {activeTab === 0 && "Browse all publicly available positions."}
+                  {activeTab !== 0 && "Accept positions pending approval"}
+                  {activeTab === 0 && "Search and filter all positions."}
                 </Typography>
               </Box>
               {/* "Create New Position" button is only visible on the "My Positions" tab. */}
-              {activeTab === 1 && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleOpenModal()}
-                  disabled={isProcessing}
-                  sx={{ mt: { xs: 2, md: 0 } }}
-                >
-                  {isProcessing ? <CircularProgress size={24} /> : 'Create New Position'}
-                </Button>
-              )}
+
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleOpenModal()}
+                disabled={isProcessing}
+                sx={{ mt: { xs: 2, md: 0 } }}
+              >
+                {isProcessing ? <CircularProgress size={24} /> : 'Create New Position'}
+              </Button>
+
             </Box>
 
             {/* Search and Filter Bar */}
@@ -551,13 +574,16 @@ export default function AdminPositions() {
           job={selectedJob}
           onClose={handleCloseModal}
           onSave={handleSaveJob}
+          isCopyMode={isCopy}
         />
       )}
-      {showClearConfirm && (
-        <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title="Cancel Position Creation">
-          Are you sure you want to cancel this job application? This action cannot be undone.
-        </ConfirmationModal>
-      )}
+      {
+        showClearConfirm && (
+          <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title={isEdit ? "Cancel Edits to Position" : "Cancel Position Creation"}>
+            {isEdit ? "Leaving now will permanently discard your edits. This action cannot be undone." : "Are you sure you want to cancel this job application? This action cannot be undone."}
+          </ConfirmationModal>
+        )
+      }
 
 
       <EditableNoteForm

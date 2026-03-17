@@ -303,7 +303,6 @@ export default function CandidateApplicationsPage() {
                 flexDirection: { xs: 'column', md: 'row' },
                 alignItems: 'center',
                 gap: 2,
-                position: 'sticky',
                 top: 0,
                 zIndex: 10,
                 backgroundColor: 'background.paper',

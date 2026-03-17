@@ -280,7 +280,7 @@ export default function EmployerApplicationsPage() {
         <AccordionDetails  sx={(theme)=>({ p: { xs: 1, md: 2 }, background: theme.palette.mode === 'dark'
                             ? "" : "--color-rit-gray" })}>
           {displayData[semesterCode].map((position) => (
-            <Accordion key={position.id} defaultExpanded sx={(theme)=>({ background: theme.palette.mode === 'dark'
+            <Accordion key={position.id} defaultExpanded={position.jobPositionApplicationHistory.length > 0} sx={(theme)=>({ background: theme.palette.mode === 'dark'
                                 ? "" : "#e0e0e0" })}> 
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography variant="h6">
@@ -350,7 +350,6 @@ export default function EmployerApplicationsPage() {
               display: 'flex',
               alignItems: 'center',
               gap: 2,
-              position: 'sticky',
               top: 0,
               zIndex: 10,
               backgroundColor: 'background.paper',

@@ -33,17 +33,12 @@ import {
   MenuItem,
   Paper,
   Select,
-  Tab,
-  Tabs,
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 /**
  * Renders the applications management page for Administrators.
- * Features two tabs:
- * 1. "Hire Candidates": Shows candidates who have accepted offers and are ready to be hired
- * 2. "All Applications": Shows all applications across the system with search and filter
  */
 export default function AdminApplicationsPage() {
   // Core hooks
@@ -52,30 +47,6 @@ export default function AdminApplicationsPage() {
   const filterRef = useRef();
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  // Initialize active tab from URL
-  const [activeTab, setActiveTab] = useState(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'all') return 1;
-    if (tabParam === 'hiring') return 0;
-    // If we arrive via a deep link that includes application identifiers but
-    // no explicit tab, prefer landing on the "Ready to Hire" tab which is the
-    // typical admin action surface for notifications.
-    const hasDeepLink = !!(
-      searchParams.get('jobPositionId') || searchParams.get('applicationId')
-    );
-    return hasDeepLink ? 0 : 0;
-  });
-
-  // Watch for URL changes and update active tab
-  useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'all') {
-      setActiveTab(1);
-    } else if (tabParam === 'hiring' || !tabParam) {
-      setActiveTab(0);
-    }
-  }, [searchParams]);
 
   // State for Hire Candidates tab
   const [hiringApplications, setHiringApplications] = useState([]);
@@ -150,17 +121,13 @@ export default function AdminApplicationsPage() {
     }
   }, [currentUser]);
 
-  // Fetch data based on active tab
   useEffect(() => {
     if (currentUser) {
-      if (activeTab === 0) {
-        fetchHiringApplications();
-      } else if (activeTab === 1) {
-        updateAllApplicationsView(searchTerm, searchBy, appliedFilters);
-      }
+      updateAllApplicationsView(searchTerm, searchBy, appliedFilters);
+
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, activeTab]);
+  }, [currentUser]);
 
   // If a user lands on the Admin route but is not an ADMIN, reroute them to
   // their role-correct Applications path while preserving query params.
@@ -184,7 +151,6 @@ export default function AdminApplicationsPage() {
   // and we're on the Ready to Hire tab and the application is present.
   useEffect(() => {
     if (didAutoOpenFromLink.current) return;
-    if (activeTab !== 0) return; // Only makes sense on Ready to Hire (tab 0)
 
     const appIdParam = searchParams.get('applicationId');
     if (!appIdParam) return;
@@ -199,9 +165,9 @@ export default function AdminApplicationsPage() {
       didAutoOpenFromLink.current = true;
       handleOpenHireModal(target);
     }
-  }, [activeTab, searchParams, hiringApplications, hiringLoading]);
+  }, [searchParams, hiringApplications, hiringLoading]);
 
-    // Auto-scroll to the deep-linked application card
+  // Auto-scroll to the deep-linked application card
   useEffect(() => {
     if (scrolledRef.current) return;
 
@@ -209,8 +175,7 @@ export default function AdminApplicationsPage() {
     if (!appIdParam) return;
 
     // Wait for data to load based on active tab
-    if (activeTab === 0 && hiringLoading) return;
-    if (activeTab === 1 && loading) return;
+    if (loading || hiringLoading) return;
 
     const el = document.getElementById(`application-${appIdParam}`);
     if (el) {
@@ -218,14 +183,14 @@ export default function AdminApplicationsPage() {
       // Try to expand any parent accordions
       try {
         el.closest('[role="region"]')?.previousElementSibling?.click?.();
-      } catch (_) {}
+      } catch (_) { }
       // Scroll to the card
       setTimeout(() => {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.focus({ preventScroll: true });
       }, 300);
     }
-  }, [activeTab, searchParams, hiringApplications, hiringLoading, displayData, loading]);
+  }, [searchParams, hiringApplications, hiringLoading, displayData, loading]);
 
   /**
    * Opens the hire confirmation modal and sets the selected application.
@@ -290,22 +255,29 @@ export default function AdminApplicationsPage() {
 
       try {
         const data = await getAllApplicationsForAdmin(search, searchType, filters);
-        
+        const hireableData = await getCandidateApplicationsAsAdmin();
+
+        const hireableMap = Object.fromEntries(
+          hireableData.map(app => [app.id, app])
+        );
+
         // Process positions to convert grade enums
         const positions = data.map((position) => {
           const applicationsHistory = position.jobPositionApplicationHistory.map((app) => {
-            if (app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]) {
-              return {
-                ...app,
-                candidateGrade: gradeEnumToStringValue[app.candidateGrade],
-              };
-            }
-            return app;
+            // Convert grade enum
+            const updatedApp = app.candidateGrade && gradeEnumToStringValue[app.candidateGrade]
+              ? { ...app, candidateGrade: gradeEnumToStringValue[app.candidateGrade] }
+              : app;
+
+            // Merge hireable data if this application is approved
+            const approved = hireableMap[app.id];
+            return approved ? { ...updatedApp, ...approved } : updatedApp;
           });
           return {
             ...position,
             jobPositionApplicationHistory: applicationsHistory,
           };
+
         });
 
         // Group by semester
@@ -328,24 +300,6 @@ export default function AdminApplicationsPage() {
     },
     [currentUser]
   );
-
-  /**
-   * Handles tab switching between Hire Candidates and All Applications.
-   */
-  const handleTabChange = (event, newValue) => {
-    setSearchTerm('');
-    setSearchBy('course');
-    setAppliedFilters({
-      status: [],
-      level: [],
-      semester: '',
-      hasApplications: '',
-    });
-    if (filterRef.current && typeof filterRef.current.clearAll === 'function') {
-      filterRef.current.clearAll();
-    }
-    setActiveTab(newValue);
-  };
 
   /**
    * Handles search/filter changes for All Applications tab.
@@ -400,8 +354,10 @@ export default function AdminApplicationsPage() {
         >
           <FormControl sx={{ minWidth: 150 }}>
             <Select value={searchBy} onChange={handleSearchByChange} size="small"
-            sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "white" })}>
+              sx={(theme) => ({
+                background: theme.palette.mode === 'dark'
+                  ? "" : "white"
+              })}>
               <MenuItem value="course">By Course</MenuItem>
               <MenuItem value="student">By Student</MenuItem>
             </Select>
@@ -439,15 +395,21 @@ export default function AdminApplicationsPage() {
         ) : (
           Object.keys(displayData).map((semesterCode) => (
             <Accordion key={semesterCode} defaultExpanded>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "--color-rit-gray" })}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={(theme) => ({
+                background: theme.palette.mode === 'dark'
+                  ? "" : "--color-rit-gray"
+              })}>
                 <Typography variant="h5">Semester {semesterCode}</Typography>
               </AccordionSummary>
-              <AccordionDetails  sx={(theme)=>({ p: { xs: 1, md: 2 }, background: theme.palette.mode === 'dark'
-                    ? "" : "--color-rit-gray" })}>
+              <AccordionDetails sx={(theme) => ({
+                p: { xs: 1, md: 2 }, background: theme.palette.mode === 'dark'
+                  ? "" : "--color-rit-gray"
+              })}>
                 {displayData[semesterCode].map((position) => (
-                  <Accordion key={position.id} defaultExpanded sx={(theme)=>({ background: theme.palette.mode === 'dark'
-                    ? "" : "#e0e0e0" })}> 
+                  <Accordion key={position.id} defaultExpanded={position.jobPositionApplicationHistory.length > 0} sx={(theme) => ({
+                    background: theme.palette.mode === 'dark'
+                      ? "" : "#e0e0e0"
+                  })}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="h6">
                         {position.courseCode}-{String(position.sectionNumber).padStart(2, '0')}: {position.course?.name}
@@ -469,7 +431,9 @@ export default function AdminApplicationsPage() {
                               jobPosition={position}
                               application={app}
                               onStatusChange={handleStatusChange}
-                              isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
+                              showHireAction={true}
+                              onHire={() => handleOpenHireModal(app)}
+                              isHighlighted={String(searchParams.get('applicationId') || '') === String(app.id)}
                             />
                           </Box>
                         ))
@@ -533,9 +497,9 @@ export default function AdminApplicationsPage() {
                   jobPosition={application.jobPosition}
                   application={application}
                   onStatusChange={() => fetchHiringApplications()}
-                  onHire={() => handleOpenHireModal(application)}
+                  onHire={() => {handleOpenHireModal(application)}}
                   showHireAction={true}
-                  isHighlighted={String(searchParams.get('applicationId')||'')===String(application.id)}
+                  isHighlighted={String(searchParams.get('applicationId') || '') === String(application.id)}
                 />
               </Box>
             ))}
@@ -548,44 +512,43 @@ export default function AdminApplicationsPage() {
   // Main component render method.
   return (
     <FeatureGate feature={FEATURES.APPLICATIONS}>
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h1" component="h1" gutterBottom>
-          Manage Applications
-        </Typography>
-        <Typography variant="h3" color="text.secondary">
-          Review all applications and hire candidates who have accepted job offers.
-        </Typography>
-      </Box>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography variant="h1" component="h1" gutterBottom>
+            Manage Applications
+          </Typography>
+          <Typography variant="h3" color="text.secondary">
+            Review all applications and hire candidates who have accepted job offers.
+          </Typography>
+        </Box>
 
-      {/* Conditionally render content based on user role */}
-      {currentUser && currentUser.role === 'ADMIN' ? (
-        <>
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-            <Tabs value={activeTab} onChange={handleTabChange} centered>
-              <Tab label="Hire Candidates" />
-              <Tab label="All Applications" />
-            </Tabs>
-          </Box>
+        {/* Conditionally render content based on user role */}
+        {currentUser && currentUser.role === 'ADMIN' ? (
+          <>
+            {/* Main Content Paper */}
 
-          {activeTab === 0 ? renderHiringView() : renderAllApplicationsTab()}
-        </>
-      ) : (
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography>Please make sure you are logged in as an ADMIN.</Typography>
-        </Paper>
-      )}
+            <Box elevation={2} sx={{px:{lg:16},  m: { xs: 2, md: 4} }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4, flexWrap: 'wrap' }}>
+                {renderAllApplicationsTab()}
+              </Box>
+            </Box>
+          </>
+        ) : (
+          <Paper sx={{ p: 4, textAlign: 'center' }}>
+            <Typography>Please make sure you are logged in as an ADMIN.</Typography>
+          </Paper>
+        )}
 
-      {/* Render the modal conditionally */}
-      {isHireModalOpen && selectedApplication && (
-        <HireModal
-          application={selectedApplication}
-          onClose={handleCloseHireModal}
-          onConfirm={handleConfirmHire}
-          isProcessing={isProcessing}
-        />
-      )}
-    </Container>
+        {/* Render the modal conditionally */}
+        {isHireModalOpen && selectedApplication && (
+          <HireModal
+            application={selectedApplication}
+            onClose={handleCloseHireModal}
+            onConfirm={handleConfirmHire}
+            isProcessing={isProcessing}
+          />
+        )}
+      </Container>
     </FeatureGate>
   );
 }

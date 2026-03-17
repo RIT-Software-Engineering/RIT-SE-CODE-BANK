@@ -9,8 +9,8 @@ export default function SettingsPage() {
   const identifier = currentUser?.username;
 
   // Don't initialize the hook at all if no user is logged in
-  const hookResult = useNotifications({ 
-    appId: 'ta-portal', 
+  const hookResult = useNotifications({
+    appId: 'ta-portal',
     identifier: identifier || '__skip__' // Special value to prevent API calls
   });
 
@@ -90,7 +90,10 @@ export default function SettingsPage() {
               sx={{ m: 0 }}
               control={
                 <Switch
-                  checked={!!prefs.notifySlack && slackStatus.inWorkspace}
+                  checked={
+                    (prefs.notifySlack ?? false) &&
+                    (slackStatus.inWorkspace ?? false)
+                  }
                   onChange={() => updatePreferences({ notifySlack: !prefs.notifySlack })}
                   disabled={loadingPrefs || slackStatus.loading || !slackStatus.inWorkspace}
                 />
@@ -113,7 +116,7 @@ export default function SettingsPage() {
                 ' Contact the Software Engineering department to request access to the workspace.'
               )}
             </Alert>
-          )}          
+          )}
           <Typography variant="caption" color="text.secondary">
             Changes save automatically.
           </Typography>
