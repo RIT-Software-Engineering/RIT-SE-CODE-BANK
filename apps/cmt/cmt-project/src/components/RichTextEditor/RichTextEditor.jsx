@@ -285,7 +285,7 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
           : <></>
           }
           
-          <div className='border-x border-b p-3'>
+          <div className='border-x border-b p-3 prose max-w-none'>
               <EditorContent className="*:p-3" editor={editor} />
           </div>
         </div>
