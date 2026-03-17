@@ -75,7 +75,7 @@ export function determineCallback(code, asid, courseId, userId) {
     return `course/${courseId}?uid=${userId}&asid=${asid}`
   } if (code === 'COURSE_SEMESTER') {
     return `course/${courseId}?uid=${userId}&asid=${asid}`
-  } if (code === 'CHECKBOX' || code.includes("SESSION_")) {
+  } if (code.includes('CHECKMARK') || code.includes("SESSION_")) {
     return `workflow/editCheckmarkAction?uid=${userId}&asid=${asid}`
   }
   throw Error('Unrecognized action metadata code ' + code)

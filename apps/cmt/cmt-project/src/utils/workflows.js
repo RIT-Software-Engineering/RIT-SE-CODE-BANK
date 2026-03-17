@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom"
+
 /**
  * The various output renderers need to manage their state, so this complex snippet has been shared across them.
  * This code is in a function and not centralized in one component because otherwise it is difficult to control styling across output renderers
@@ -40,4 +42,22 @@ export function flattenActionsWithContext(actionsWithContext) {
 
     console.log(flattenedActionsWithContext)
     return flattenedActionsWithContext
+}
+
+/**
+ * CMT's onNavigateFactory, which will return navigation functions for certain codes.
+ * 
+ * @param {string} code 
+ * @returns {() => void | null} onNavigate
+ */
+export function UseCMTOnNavigateFactory(code) {
+    const navigate = useNavigate()
+    let getEl;
+
+    if (code.includes("SESSION_")) getEl = () => document.getElementById(`WORKFLOW_JUMPPOINT_${code}`) 
+    if (code === "CHECKMARK_PUBLISH_SITE" || code === "CHECKMARK_COLUMN_VISIBILITIES") return () => navigate("/coursewebsite")
+
+    if (getEl) return () => getEl()?.scrollIntoView({ behavior: "smooth" })
+
+    return null
 }
