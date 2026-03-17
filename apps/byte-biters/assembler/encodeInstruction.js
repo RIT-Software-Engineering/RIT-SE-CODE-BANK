@@ -4,7 +4,8 @@ import { OPCODES } from "./opcodes.js";
 export function encodeInstruction(parsedData) {
     const {mnemonic, src, dst} = parsedData;
     
-    const opcodeInfo = OPCODES[mnemonic];
+    const UpperMnemonic = mnemonic.toUpperCase();
+    const opcodeInfo = OPCODES[UpperMnemonic];
     if(opcodeInfo !== undefined) {
         switch(opcodeInfo.type) {
             case 'two':
