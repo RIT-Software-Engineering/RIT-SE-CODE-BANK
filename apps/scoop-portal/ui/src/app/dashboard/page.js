@@ -145,7 +145,13 @@ const workflows = [
         title: "Manage Projects",
         roles: ["scoopdinator"],
         description: "Create, edit, and archive scoop projects.",
-        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/projects",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/projects",
+      },
+      {
+        title: "Review Project Proposals",
+        roles: ["scoopdinator"],
+        description: "Review project proposals submitted by scoopervisors.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/projectproposals",
       },
       {
         title:"Manage Project Proposals",

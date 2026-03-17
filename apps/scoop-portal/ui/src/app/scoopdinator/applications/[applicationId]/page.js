@@ -19,19 +19,19 @@ import Header from "@components/Header";
 /**
  * The statuses available for an application.
  */
-const STATUSES = ["ALL", "ACCEPTED", "REJECTED", "UNPROCESSED"];
+const STATUSES = ["ALL", "ACCEPTED", "REJECTED", "PENDING"];
 
 const STATUS_COLORS = {
   ACCEPTED: "success",
   REJECTED: "error",
-  UNPROCESSED: "default",
+  PENDING: "warning",
 };
 
 const StatusBadge = ({ status }) => {
   const theme = useTheme();
   const label = status
     ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    : "Unprocessed";
+    : "Pending";
   const color = STATUS_COLORS[status] ?? "default";
   const bgColor =
     color === "success"
@@ -197,12 +197,7 @@ export default function ApplicationDetailPage() {
     try {
       await putApplicationStatus(newStatus);
       await handleUserStatusUpdate(newStatus, application);
-      setApplication((prev) => ({ ...prev, status: newStatus }));
-      setNotification({
-        open: true,
-        message: `Application has been ${newStatus.toLowerCase()}.`,
-        severity: newStatus === "ACCEPTED" ? "success" : "error",
-      });
+      router.back();
     } catch (err) {
       setNotification({
         open: true,

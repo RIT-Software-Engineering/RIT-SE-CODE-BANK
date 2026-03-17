@@ -55,7 +55,7 @@ const StatusBadge = ({ activeState }) => {
   const config = {
     active:   { label: "Active",   color: theme.palette.success.main },
     inactive: { label: "Inactive", color: theme.palette.error.main },
-    pending:  { label: "Pending",  color: theme.palette.warning.main },
+    pending:  { label: "Pending",  color: theme.palette.grey[500] },
   };
   const { label, color } = config[activeState] ?? config.inactive;
   return (
@@ -612,11 +612,7 @@ export default function ViewScooployees() {
               <Button variant="contained" color="error" onClick={() => setConfirmDeleteOpen(true)} disabled={savingEdit}>
                 Delete
               </Button>
-              <Button
-                variant="solid-orange"
-                onClick={handleSaveEditClick}
-                disabled={savingEdit}
-              >
+              <Button variant="solid-orange" onClick={handleSaveEditClick} disabled={savingEdit}>
                 {savingEdit ? "Saving..." : "Save"}
               </Button>
             </DialogActions>
