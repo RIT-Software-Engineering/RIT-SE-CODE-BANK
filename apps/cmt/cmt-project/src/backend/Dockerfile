@@ -34,4 +34,4 @@ RUN npx prisma generate
 
 EXPOSE 5010
 
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node prisma/seed.js && node server.js"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx prisma migrate reset --force --skip-seed && node prisma/seed.js && node server.js"]
