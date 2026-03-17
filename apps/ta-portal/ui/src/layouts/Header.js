@@ -45,6 +45,7 @@ import {
   Close as CloseIcon,
   Notifications,
 } from "@mui/icons-material";
+import InfoIcon from '@mui/icons-material/Info';
 import { ROLES } from "@/configuration/dashboard.config";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeContext } from "@/styles/ThemeRegistry";
@@ -146,6 +147,12 @@ const HEADER_LINKS = [
     href: "/Users",
     icon: <People />,
     roles: [ROLES.ADMIN],
+  },
+  {
+    text: "Resources",
+    href: "/Resources",
+    icon: <InfoIcon />,
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE ]
   },
   {
     text: "Course List",

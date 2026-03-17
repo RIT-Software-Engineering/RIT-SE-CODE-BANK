@@ -72,11 +72,11 @@ export default function EmployeeApplicationsPage() {
             { status: [], level: '', semester: '' },
             currentUser.username
           );
-          
+
           // Use a Set to get unique semester codes, then sort them in descending order.
           const semesterCodes = [...new Set(allApps.map(app => app.jobPositionId.split('-')[0]))]
-            .sort((a,b) => b.localeCompare(a));
-          
+            .sort((a, b) => b.localeCompare(a));
+
           const newConfig = generateApplicationsFilterConfig(semesterCodes);
           setFilterConfig(newConfig);
         } catch (err) {
@@ -107,7 +107,7 @@ export default function EmployeeApplicationsPage() {
         filters,
         currentUser.username
       );
-      
+
       // Process applications to convert grade enums to human-readable strings.
       const applications = data.map(application => {
         if (application.candidateGrade && gradeEnumToStringValue[application.candidateGrade]) {
@@ -154,7 +154,7 @@ export default function EmployeeApplicationsPage() {
       scrolledRef.current = true;
       try {
         el.closest('[role="region"]')?.previousElementSibling?.click?.();
-      } catch (_) {}
+      } catch (_) { }
       setTimeout(() => {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         el.focus({ preventScroll: true });
@@ -178,7 +178,7 @@ export default function EmployeeApplicationsPage() {
     setAppliedFilters(filters);
     updateApplicationsView(searchTerm, filters);
   };
-  
+
   /**
    * Updates the search term state as the user types.
    * If the search bar is cleared, it refreshes the view.
@@ -190,7 +190,7 @@ export default function EmployeeApplicationsPage() {
       updateApplicationsView('', appliedFilters);
     }
   };
-  
+
   /**
    * Triggers a search when the search form is submitted.
    * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
@@ -223,7 +223,7 @@ export default function EmployeeApplicationsPage() {
         </Typography>
       );
     }
-    
+
     // Sort semester codes in descending order for display.
     const semesterCodes = Object.keys(displayData).sort((a, b) => b.localeCompare(a));
 
@@ -263,7 +263,7 @@ export default function EmployeeApplicationsPage() {
                     onStatusChange={handleStatusChange}
                     refreshUserProfile={refreshUserProfile}
                     cardId={`app-${app.id}`}
-                    isHighlighted={String(searchParams.get('applicationId')||'')===String(app.id)}
+                    isHighlighted={String(searchParams.get('applicationId') || '') === String(app.id)}
                   />
                 ))}
               </Box>
@@ -280,82 +280,82 @@ export default function EmployeeApplicationsPage() {
   // Main component render method.
   return (
     <FeatureGate feature={FEATURES.APPLICATIONS}>
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h1" component="h1" gutterBottom>
-          {pageTitle}
-        </Typography>
-        <Typography variant="h3" color="text.secondary">
-          {pageSubtitle}
-        </Typography>
-      </Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography variant="h1" component="h1" gutterBottom>
+            {pageTitle}
+          </Typography>
+          <Typography variant="h3" color="text.secondary">
+            {pageSubtitle}
+          </Typography>
+        </Box>
 
-      {/* Conditionally render content based on user role. */}
-      {currentUser && currentUser.role === 'EMPLOYEE' ? (
-        <>
-          {/* Search and Filter Bar */}
-          <Paper
-            component="form"
-            onSubmit={handleSearch}
-            elevation={2}
-            sx={{
-              p: 2,
-              mb: 4,
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              alignItems: 'center',
-              gap: 2,
-              position: 'sticky',
-              top: 0,
-              zIndex: 10,
-              backgroundColor: 'background.paper',
-            }}
-          >
-            <SearchBar
-              value={searchTerm}
-              onChange={handleSearchTermChange}
-              placeholder="Search by Course Name or Code..."
-              sx={{ width: '100%' }}
-            />
-            {/* Show a placeholder skeleton while the filter config is loading. */}
-            {filterConfig.length > 0 ? (
-              <Filter
-                ref={filterRef}
-                onFilterChange={handleFilterChange}
-                filterConfig={filterConfig}
-              />
-            ) : (
-              <Box sx={{ width: 120, height: 40, bgcolor: 'action.disabledBackground', borderRadius: 1 }} />
-            )}
-            <Button
-              type='submit'
-              variant='contained'
-              color='primary'
-              sx={{ height: 40, width: { xs: '100%', md: 'auto' } }}
+        {/* Conditionally render content based on user role. */}
+        {currentUser && currentUser.role === 'EMPLOYEE' ? (
+          <>
+            {/* Search and Filter Bar */}
+            <Paper
+              component="form"
+              onSubmit={handleSearch}
+              elevation={2}
+              sx={{
+                p: 2,
+                mb: 4,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                top: 0,
+                zIndex: 10,
+                backgroundColor: 'background.paper',
+              }}
             >
-              Search
-            </Button>
-          </Paper>
+              <SearchBar
+                value={searchTerm}
+                onChange={handleSearchTermChange}
+                placeholder="Search by Course Name or Code..."
+                sx={{ width: '100%' }}
+              />
+              {/* Show a placeholder skeleton while the filter config is loading. */}
+              {filterConfig.length > 0 ? (
+                <Filter
+                  ref={filterRef}
+                  onFilterChange={handleFilterChange}
+                  filterConfig={filterConfig}
+                />
+              ) : (
+                <Box sx={{ width: 120, height: 40, bgcolor: 'action.disabledBackground', borderRadius: 1 }} />
+              )}
+              <Button
+                type='submit'
+                variant='contained'
+                color='primary'
+                sx={{ height: 40}}
+              >
+                Search
+              </Button>
 
-          {/* Main Content Area */}
-          <Box>
-            {!loading && !error && (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                <strong>
-                  {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
-                </strong>
-              </Typography>
-            )}
-            {renderContent()}
-          </Box>
-        </>
-      ) : (
-        // Render a fallback message if the user is not an employee or not logged in.
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography>Please make sure you are logged in as an EMPLOYEE to view this page.</Typography>
-        </Paper>
-      )}
-    </Container>
+
+            </Paper>
+
+            {/* Main Content Area */}
+            <Box>
+              {!loading && !error && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  <strong>
+                    {totalApplications} {totalApplications === 1 ? 'application' : 'applications'} found
+                  </strong>
+                </Typography>
+              )}
+              {renderContent()}
+            </Box>
+          </>
+        ) : (
+          // Render a fallback message if the user is not an employee or not logged in.
+          <Paper sx={{ p: 4, textAlign: 'center' }}>
+            <Typography>Please make sure you are logged in as an EMPLOYEE to view this page.</Typography>
+          </Paper>
+        )}
+      </Container>
     </FeatureGate>
   );
 }

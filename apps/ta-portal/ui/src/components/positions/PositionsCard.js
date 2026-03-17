@@ -28,6 +28,8 @@ import {
   Paper,
   Tooltip,
   Typography,
+  Grid,
+  GridItem,
   List,
   ListItem,
   ListItemIcon,
@@ -75,9 +77,13 @@ export default function PositionsCard({
   onEdit,
   onApprove,
   onReject,
+  onOnHold,
+  onInactive,
+  onReactivate,
   showEditAction,
   showApproveRejectActions,
   showTracker,
+  onCopy
 }) {
   const { currentUser, refreshUserProfile } = useAuth();
   const { showNotification } = useNotification();
@@ -200,6 +206,10 @@ export default function PositionsCard({
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
           <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
+          {(onReactivate || onOnHold||onInactive)&& <Divider />}
+          {(onOnHold && status !== 'ONHOLD') && (<MenuItem onClick={() => { onOnHold(position.id); handleMenuClose(); }}>Put Position on Hold </MenuItem>)}
+          {(onInactive && status !== 'INACTIVE') && (<MenuItem onClick={() => { onInactive(position.id); handleMenuClose(); }}> Mark Position Inactive</MenuItem>)}
+          {onReactivate && (status === 'ONHOLD' || status === 'INACTIVE') && <MenuItem onClick={() => { onReactivate(position.id); handleMenuClose(); }}>Reactivate Position</MenuItem>}
           {showActionItems && <Divider />}
           {showEdit && <MenuItem onClick={() => { onEdit(position); handleMenuClose(); }}>Edit Position</MenuItem>}
           {showApprove && <MenuItem onClick={() => { onApprove(position.id); handleMenuClose(); }}>Approve Position</MenuItem>}
@@ -211,8 +221,10 @@ export default function PositionsCard({
 
   return (
     <>
-      <Paper elevation={3} sx={(theme)=>({  p: { xs: 2, md: 3 } , background: theme.palette.mode === 'dark'
-          ? "" : "white" })}> 
+      <Paper elevation={3} sx={(theme) => ({
+        p: { xs: 2, md: 3 }, background: theme.palette.mode === 'dark'
+          ? "" : "white"
+      })}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }} >
           <Box flexGrow={1} >
             <Typography variant="h2" component="h2" gutterBottom>
@@ -245,7 +257,7 @@ export default function PositionsCard({
             <Typography variant="body2">{position.location}</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-            <Person sx={{ mr: 1 }}/>
+            <Person sx={{ mr: 1 }} />
             <Typography variant="body2">
               {position.employer.user.fname} {position.employer.user.lname} ({position.employer.user.email})
             </Typography>
@@ -261,7 +273,6 @@ export default function PositionsCard({
             </Box>
           </Box>
         </Box>
-
         {(currentUser?.role === 'CANDIDATE' || currentUser?.role === 'EMPLOYEE') && eligibilityDetails.details.length > 0 && (
           <Paper variant="outlined" sx={{ mt: 2, p: 2, bgcolor: 'action.hover' }}>
             <Typography variant="h3" sx={{ mb: 1 }}>Job Requirements</Typography>
@@ -272,7 +283,8 @@ export default function PositionsCard({
             </List>
           </Paper>
         )}
-
+<Button onClick={()=>console.log(position)} >HELLO</Button> 
+<Button onClick={()=>onCopy(position)} >COPY</Button> 
         {showTracker && (
           <>
             <Divider sx={{ my: 2 }} />

@@ -18,14 +18,15 @@ export default function DisplayField({ label, value }) {
       InputProps={{
         readOnly: true,
       }}
+      disabled={true}
       sx={(theme) => ({
         "& .MuiFilledInput-root": {
-          backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+          backgroundColor: theme.palette.mode === "dark" ? "" : "#e0e0e0",
           "&:hover": {
-            backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+            backgroundColor: theme.palette.mode === "dark" ? "" : "#e0e0e0",
           },
           "&.Mui-focused": {
-            backgroundColor: theme.palette.mode === "dark" ? "" : "white",
+            backgroundColor: theme.palette.mode === "dark" ? "" : "#e0e0e0",
           },
         },
       })}
