@@ -50,11 +50,11 @@ router.get('/:id', async (req, res) => {
         const workflowState = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
         
         const flattenedWorkflowState = flattenWorkflowState(workflowState)
-        const actionWithContexts = actions.map(action => 
+        const actionsWithContext = actions.map(action => 
             actionToActionWithContext(action, flattenedWorkflowState, course.id, req.user?.uid)
         )
 
-        res.json({ course, workflow, actionWithContexts, actionStates: workflowState })
+        res.json({ course, workflow, actionsWithContext, actionStates: workflowState })
     } catch (err) {
         console.error('course creation failed: ', err)
         res.status(500).json({ error: err.message })
@@ -160,9 +160,9 @@ router.post('/', async (req, res) => {
                     name: 'Create Sessions',
                     description: 'Create sessions for your course',
                     actionType: 'workflow',
-                    actions: Array.from({ length: 4 }, (_, index) => {
+                    actions: Array.from({ length: 5 }, (_, index) => {
                         return {
-                            name: `Create session ${index}`,
+                            name: `Create session ${index + 1}`,
                             description:
                                 'Create a session. In the workflow editor, more specific details could be given for certain sessions, like if a session should have an exam.',
                             actionType: 'simple',

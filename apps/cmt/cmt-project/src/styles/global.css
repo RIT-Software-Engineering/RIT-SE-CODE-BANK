@@ -131,3 +131,6 @@ html, body, #root {
   overflow: auto;
 }
 
+mark {
+  @apply !p-0
+}

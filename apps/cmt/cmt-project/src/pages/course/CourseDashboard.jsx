@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
-import { CMTFetch } from '../../utils/api'
-import { Edit, X, Check, ArrowLeft } from 'lucide-react'
-import { Button, Form} from 'react-bootstrap'
-import {Session} from './Session';
+import { CMTJsonFetch } from '../../utils/api'
+import { Session } from './Session';
 import { InlineActionRenderer } from '../../components/workflows/ActionRenderers/InlineActionRenderer'
 import { InlineFormHoverable } from '../../components/forms/InlineForms'
 import { flattenActionsWithContext } from '../../utils/workflows'
+import { ArrowLeft } from 'lucide-react'
+import { Button} from 'react-bootstrap'
+import { ResourceManager } from '../../components/resources/ResourceManager'
 
 /**
  * @import { IsCheckmark, FetchToCallback, WorkflowsWorkflow, ActionWithContext } from "../../components/workflows/typedefs"
@@ -27,18 +28,19 @@ export function CourseDashboard() {
     const { id } = useParams()
 
     const [course, setCourse] = useState(null)
-    /** @type [ActionWithContext[], any] */
-    const [actionsWithContext, setactionWithContexts] = useState([])
-    /** @type [WorkflowsWorkflow, any] */
+    /** @type [ActionWithContext[], function] */
+    const [actionsWithContext, setActionsWithContext] = useState([])
+    /** @type [WorkflowsWorkflow, function] */
     const [workflow, setWorkflow] = useState(null)
     const [sessionCount, setSessionCount] = useState(0)
     const [sessions, setSessions] = useState([]);
 
     const update = useCallback(async () => {
-        return CMTFetch('GET', `course/${id}`).then(async response => {
+        return CMTJsonFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
+            console.log(data)
             setCourse(data.course)
-            setactionWithContexts(data.actionWithContexts)
+            setActionsWithContext(data.actionsWithContext)
             setWorkflow(data.workflow)
         })
     }, [id])
@@ -46,7 +48,7 @@ export function CourseDashboard() {
 
     /** @type FetchToCallback */
     const fetchToCallback = useCallback(
-        (callback, outputValues) => CMTFetch('PUT', callback, outputValues),
+        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues),
         []
     )
 
@@ -69,9 +71,12 @@ export function CourseDashboard() {
 
     return (
         <>
+            
             <CourseInfo course={course} actionsWithContext={courseInfoActions} refresh={update} fetchToCallback={fetchToCallback}/>
             <div className="h-10"></div>
-            <p className="text-4xl pb-2 border-b">Workflow Info</p>
+            <ResourceManager courseId={course.id} />
+            <div className="h-10"></div>
+            <p className="text-3xl pb-2 border-b">Course Creation Workflow</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
                     <WorkflowRenderer
@@ -84,26 +89,29 @@ export function CourseDashboard() {
                     />
                 </div>
             </div>
-
-            <div>
-                <Session 
-                    sessionCount={sessionCount} setSessionCount={setSessionCount}
-                    sessions={sessions} setSessions={setSessions}
-                    sessionActions={sessionActions}
-                    updateWorkflow={update}
-                    fetchToCallback={fetchToCallback}
-                />
-                <div className='flex justify-end pt-4'>
-                    <Button onClick={() => {
-                        /** Makes a post request to add the session with no material.
-                         * ID is the class ID to identify where it belongs in the future
-                         */
-                       CMTFetch('POST', 'session', {sessionCount, id}).then(async response=>{
-                        const data = await response.json();
-                        setSessionCount(sessionCount+1);
-                        setSessions([...sessions, data.session])
-                    })
-                    }}>Add session</Button>
+            <p className="text-3xl pb-2 border-b mt-10">Sessions</p>
+            <div className="flex justify-center">
+                <div className="max-w-screen-xl w-full">
+                    <Session
+                        sessionCount={sessionCount} setSessionCount={setSessionCount}
+                        sessions={sessions} setSessions={setSessions}
+                        sessionActions={sessionActions}
+                        updateWorkflow={update}
+                        fetchToCallback={fetchToCallback}
+                        courseId={course.id}
+                    />
+                    <div className='flex justify-end pt-4'>
+                        <Button onClick={() => {
+                            /** Makes a post request to add the session with no material.
+                             * ID is the class ID to identify where it belongs in the future
+                             */
+                        CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async response=>{
+                            const data = await response.json();
+                            setSessionCount(sessionCount+1);
+                            setSessions([...sessions, data.session])
+                        })
+                        }}>Add session</Button>
+                    </div>
                 </div>
             </div>
         </>
@@ -111,52 +119,38 @@ export function CourseDashboard() {
 }
 
 function CourseInfo({ course, actionsWithContext, refresh, fetchToCallback }) {
+    const navigate = useNavigate();
 
     const [newCourseName, setNewCourseName] = useState(course.name)
     const [newCourseCode, setNewCourseCode] = useState(course.classId)
-    const navigate = useNavigate();
 
     function updateCourseName(e) {
         e.preventDefault()
-        return CMTFetch('PUT', `course/${course.id}`, { courseName: newCourseName }).then(async () => await refresh())
+        return CMTJsonFetch('PUT', `course/${course.id}`, { courseName: newCourseName }).then(async () => await refresh())
     }
     function updateCourseCode(e) {
         e.preventDefault()
-        return CMTFetch('PUT', `course/${course.id}`, { courseCode: newCourseCode }).then(async () => await refresh())
-        
+        return CMTJsonFetch('PUT', `course/${course.id}`, { courseCode: newCourseCode }).then(async () => await refresh())
     }
+
     return (
         <>
-            <div className='flex justify-between w-full pb-3 items-center'>
-                <Button onClick={() => navigate('/courses')}><div className='flex'><ArrowLeft/>Back</div></Button>
+            <div className='flex items-center mb-4'>
+                <Button onClick={() => navigate('/courses')}><div className='flex items-center'><ArrowLeft/>Back</div></Button>
             </div>
-            <h1 style={{ backgroundColor: course.color }} className='p-2'>
-                Course Info
-            </h1>
-            <div className='flex items-center hover:bg-gray-200 group pl-2'>
-                <InlineFormHoverable
-                    label={'Course Name'}
-                    value={course.name}
-                    onSubmit={e => updateCourseName(e)}
-                    onChange={e => setNewCourseName(e.target.value)}
-                />
+            <div className="flex items-end gap-14 mt-2 w-max p-6 pb-4 rounded-t-lg text-xl" style={{ borderBottomWidth: "6px", borderBottomColor: course.color, backgroundColor: `color-mix(in oklab, #fff 85%, ${course.color})` }}>
+                <div>
+                    <p className="text-4xl mb-0">{course.classId}</p>
+                    <div className="flex gap-10 text-gray-600">
+                        <p className="mb-0">{course.name}</p>
+                    </div>
+                </div>
+                <div className="flex gap-10">
+                    <p className="mb-0">Section: {course.section ?? "TBD"} </p>
+                    <p className="mb-0">Semester: {course.season ?? "TBD"} {course.year}</p>
+                    <p className="mb-0">Number of Students: {course.students ?? "TBD"}</p>
+                </div>
             </div>
-            <div className='flex items-center hover:bg-gray-200 group pl-2'>
-                <InlineFormHoverable
-                    label={'Course Code'}
-                    value={course.classId}
-                    onSubmit={e => updateCourseCode(e)}
-                    onChange={e => setNewCourseCode(e.target.value)}
-                />
-            </div>
-                {actionsWithContext.map(awc => 
-                    <InlineActionRenderer
-                        previousValues={course}
-                        actionWithContext={awc}
-                        refresh={refresh}
-                        fetchToCallback={fetchToCallback}
-                    />   
-                )}
         </>
     )
 }
