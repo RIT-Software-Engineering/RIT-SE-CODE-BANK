@@ -145,7 +145,7 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
               
               <OverlayTrigger delay={200} overlay={<Tooltip>tooled tip</Tooltip>}>
                 <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
-                    <Code />
+                    <Code /> {/* TODO: make sure this darn thing renders properly in both the editor and in read only editors */}
                 </Button>
               </OverlayTrigger>
 
