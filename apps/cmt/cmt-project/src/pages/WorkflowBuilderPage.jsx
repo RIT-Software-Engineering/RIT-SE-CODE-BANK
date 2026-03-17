@@ -12,7 +12,8 @@ export function BuilderPage(){
     const availCodes = [["COURSE_SECTION", "Course Section"], 
     ["NUMBER_STUDENTS", "Number of Students"], 
     ["COURSE_SEMESTER", "Course Semester"],
-    ["CHECKBOX", "Checkbox"]];
+    ["CHECKBOX", "Checkbox"],
+    ["SESSION", "Sessions"]];
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
     const [depthLevel, setDepthLevel] = useState(0);
@@ -67,6 +68,8 @@ export function BuilderPage(){
 
 function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation}){
     const [hasValidation, setHasValidation] = useState(false);
+    // We only use this in the sessions tab
+    const [multipleSessions, setMultipleSessions] = useState(false);
     let returnOutput;
     switch (code) {
         case "COURSE_SECTION":
@@ -75,7 +78,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation}
             <Form.Control placeholder="e.g. 1" onChange={e=>setPlaceholder(e.target.value)}/>
             <div className="flex">
                 <Form.Label>Has Validation?</Form.Label>
-                <Form.Check className="pl-2" onChange={(e)=>setHasValidation(e.target.checked)}/>
+                <Form.Check className="pl-2" checked={hasValidation} onChange={(e)=>setHasValidation(e.target.checked)}/>
             </div>
             {hasValidation ? <>
             <Form.Label>Max Length?</Form.Label>
@@ -93,7 +96,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation}
             <Form.Control placeholder="e.g. 1" onChange={e=>setPlaceholder(e.target.value)}/>
             <div className="flex">
                 <Form.Label>Has Validation?</Form.Label>
-                <Form.Check className="pl-2" onChange={(e)=>setHasValidation(e.target.checked)}/>
+                <Form.Check className="pl-2" checked={hasValidation} onChange={(e)=>setHasValidation(e.target.checked)}/>
             </div>
             {hasValidation ? <>
             <div className="flex">
@@ -117,7 +120,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation}
             returnOutput = <>
             <div className="flex pt-2">
                 <Form.Label>Validation?</Form.Label>
-                <Form.Check className="pl-2" onChange={(e)=>setHasValidation(e.target.checked)}/>
+                <Form.Check className="pl-2" checked={hasValidation} onChange={(e)=>setHasValidation(e.target.checked)}/>
             </div>
             {hasValidation ? <>
             <div className="flex ">
@@ -136,6 +139,25 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation}
             </div>
             </>
             : <></>}
+            </>
+            break;
+        
+        case "SESSION":
+            if (validation.length === 0)
+                setValidation([[],[]]);
+            returnOutput = <>
+            <Form.Label>{multipleSessions ? 'From ' : ''}Session Number:</Form.Label>
+            <Form.Control type="number" placeholder="e.g. 1" onChange={e=>setValidation(prev => [[e.target.value], prev[1]])}/>
+            {multipleSessions ? <>
+                <Form.Label>To Session Number:</Form.Label>
+                <Form.Control type="number" placeholder="e.g. 5" onChange={e=>setValidation(prev => [prev[0], [e.target.value]])}/>
+                <span className="text-red-500"> Please note that the name you put in will be overwritten and auto-generated names will replace it.</span>
+            </>
+            : <></>}
+            <div className="flex">
+                <Form.Label>Multiple sessions?</Form.Label>
+                <Form.Check className="pl-2" checked={multipleSessions} onChange={(e)=>setMultipleSessions(e.target.checked)}/>
+            </div>
             </>
             break;
 
@@ -196,7 +218,16 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
             break;
 
         case "CHECKBOX":
-            output = null;
+            output = [{isRequired: isRequired}];
+            break;
+
+        case "SESSION":
+            output = [{
+                isRequired: isRequired,
+                fromSessionNum: validation[0][0]
+            }];
+            if (validation.length > 1)
+                output[0]['toSessionNum'] = validation[1][0];
             break;
 
         default:
@@ -310,8 +341,29 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
     }
     if (code)
         metadata.code = code;
-    if (outputs)
+    if (outputs){
+        console.log("Output:",outputs)
+        if (outputs[0].fromSessionNum){
+            if (outputs[0].toSessionNum){
+                const fromSessionNum = parseInt(outputs[0].fromSessionNum)-1;
+                const toSessionNum = parseInt(outputs[0].toSessionNum)-1;
+                outputs = [{isRequired: outputs[0].isRequired}];
+                for (let j = fromSessionNum; j <= toSessionNum; j++) {
+                    await addStandardAction(outputs, index, workflows, setWorkflows,
+                        `Create Session ${j+1}`, description, `SESSION_${j}`, "simple", parentActionId
+                    )
+                }
+                // We call the function a bunch of times but don't want to create a duplicate once completed so we return nothing
+                return;
+            }
+            else{
+                metadata.code = `SESSION_${parseInt(outputs[0].fromSessionNum)-1}`;
+                outputs = [{isRequired: outputs[0].isRequired}];
+            }
+            
+        }
         metadata.outputs = outputs;
+    }
     await CMTFetch("POST", "workflony/actionTemplate/action", {name, description, actionType, metadata, parentActionId: !isWorkflowChild ? parentActionId : null}).then(async response => {
         const data = await response.json();
         console.log(data.action);
@@ -652,10 +704,10 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, dep
                             {(action.metadata.outputs||[]).map(output => {
                                 return (<>
                                     <p>Required? {output.isRequired ? 'Yes' : 'No'}</p>
-                                    <p>Key: {output.key}</p>
-                                    <p>Name: {output.name}</p>
+                                    {output.key? <p>Key: {output.key}</p> : <></>}
+                                    {output.name? <p>Name: {output.name}</p> : <></>}
+                                    {output.type? <p>Type: {output.type}</p> : <></>}
                                     {output.placeholder ? <p>Placeholder: {output.placeholder}</p> : <></>}
-                                    <p>Type: {output.type}</p>
                                     {output.validation && Object.keys(output.validation).map(key => {
                                         const value = output.validation;
                                         const displayValue = (output.validation.options) ? value.options.join(', ') : value[key];
@@ -668,32 +720,11 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, dep
                 </Card>
                 break;
             case "workflow": // basically the same as a complex action
-            value = 
-            <Accordion className="mt-2">
-                <Accordion.Item eventKey={action.id}>
-                <Accordion.Header><span className="text-3xl">{action.name} (Workflow)</span></Accordion.Header>
-                <Accordion.Body>
-                    <div className="text-2xl"><p>Description: {action.description}</p></div>
-                    <ComplexRenderer 
-                    workflows={workflows}
-                    index={index}
-                    actions={action.childActions}
-                    setIsOpen={setIsOpen} 
-                    setParentId={setParentId}
-                    depthLevel={depthLevel+1}
-                    setDepthLevel={setDepthLevel}/>
-                    <div className="flex justify-end pt-3">
-                        <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
-                    </div>
-                </Accordion.Body>
-            </Accordion.Item>
-            </Accordion>
-            break;
             case "complex":
                 value = 
                 <Accordion className="mt-2">
                     <Accordion.Item eventKey={action.id} className={action.id}>
-                    <Accordion.Header><span className="text-3xl">{action.name} (Complex Action)</span></Accordion.Header>
+                    <Accordion.Header><span className="text-3xl">{action.name} {action.actionType === 'complex' ? '(Complex Action)' : '(Workflow'}</span></Accordion.Header>
                     <Accordion.Body>
                         <div className="text-2xl"><p>Description: {action.description}</p></div>
                         <ComplexRenderer 
@@ -747,10 +778,10 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, d
                                     {(action.metadata.outputs||[]).map(output => {
                                         return (<>
                                             <p>Required? {output.isRequired ? 'Yes' : 'No'}</p>
-                                            <p>Key: {output.key}</p>
-                                            <p>Name: {output.name}</p>
+                                            {output.key? <p>Key: {output.key}</p> : <></>}
+                                            {output.name? <p>Name: {output.name}</p> : <></>}
+                                            {output.type? <p>Type: {output.type}</p> : <></>}
                                             {output.placeholder ? <p>Placeholder: {output.placeholder}</p> : <></>}
-                                            <p>Type: {output.type}</p>
                                             {output.validation && Object.keys(output.validation).map(key => {
                                                 const value = output.validation;
                                                 const displayValue = (output.validation.options) ? value.options.join(', ') : value[key];
@@ -763,33 +794,11 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, d
                         </Card>
                         break;
                     case "workflow": // basically the same as a complex action
-                    // console.log("Action within actions:", action.name, action.actions)
-                    value = 
-                        <Accordion className="mt-2">
-                            <Accordion.Item eventKey={action.id}>
-                            <Accordion.Header><span className="text-3xl">{action.name} (Workflow)</span></Accordion.Header>
-                            <Accordion.Body>
-                                <div className="text-2xl"><p>Description: {action.description}</p></div>
-                                <ComplexRenderer 
-                                workflows={workflows}
-                                index={index}
-                                actions={action.childActions}
-                                setIsOpen={setIsOpen} 
-                                setParentId={setParentId}
-                                depthLevel={depthLevel+1}
-                                setDepthLevel={setDepthLevel}/>
-                                <div className="flex justify-end pt-3">
-                                    <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
-                                </div>
-                            </Accordion.Body>
-                        </Accordion.Item>
-                        </Accordion>
-                        break;
                     case "complex":
                         value = 
                         <Accordion className="mt-2">
                             <Accordion.Item eventKey={action.id}>
-                            <Accordion.Header><span className="text-3xl">{action.name} (Complex Action)</span></Accordion.Header>
+                            <Accordion.Header><span className="text-3xl">{action.name} {action.actionType === 'complex' ? '(Complex Action)' : '(Workflow)'}</span></Accordion.Header>
                             <Accordion.Body>
                                 <div className="text-2xl"><p>Description: {action.description}</p></div>
                                 <ComplexRenderer 
