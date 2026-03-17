@@ -1,7 +1,6 @@
+// @ts-ignore
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../utils/api";
-import { Session, SessionModal, SessionTable } from "./course/Session";
-import { Card } from "react-bootstrap";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
@@ -66,43 +65,20 @@ export default function CourseWebsitePage() {
     return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
-  const EventLink = ({event}) => {
-    // if event doesn't have a url, just return title
-    if (!event.url) {
-      return <span>{event.title}</span>;
-    }
 
-    return (
-      <a href = {event.url} target = "_blank" rel="noreferrer" className = "text-blue-600 no-underline hover:no-underline visited:no-underline">
-        {event.title}
-      </a>
-    );
-  };
+  // Helper component to render event title as a link if URL exists - not currently used but may be useful in the future if we want to link to external resources
+  // const EventLink = ({event}) => {
+  //   // if event doesn't have a url, just return title
+  //   if (!event.url) {
+  //     return <span>{event.title}</span>;
+  //   }
 
-  const generateSessionRows = (materials) => {
-    const cols = [
-      "Topic/Lecture",
-      "Class Activity",
-      "Reading/Resources",
-      "Projects & Practica",
-      "Group Assignment",
-      "Individual Assignment"
-    ];
-
-    const grouped = cols.map(col =>
-      materials.filter(m => m.type === col && m.active)
-    );
-
-    const maxRows = Math.max(1, ...grouped.map(g => g.length));
-
-    return Array.from({ length: maxRows }, (_, i) => `
-      <tr>
-        ${grouped.map(colItems => `
-          <td>${colItems[i]?.label || ""}</td>
-        `).join("")}
-      </tr>
-    `).join("");
-  };
+  //   return (
+  //     <a href = {event.url} target = "_blank" rel="noreferrer" className = "text-blue-600 no-underline hover:no-underline visited:no-underline">
+  //       {event.title}
+  //     </a>
+  //   );
+  // };
 
   const generateCourseHTML = (course, sessions) => {
     return `
@@ -176,11 +152,11 @@ export default function CourseWebsitePage() {
         <p className="text-gray-500 text-center">No events found for this course.</p>
       ) : (
         <table className="mx-auto w-full border-collapse">
-          <thead className="bg-[#D7D2CB]">
+          <thead className="[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]">
             <tr>
-              <th className="border border-gray-300 p-3 text-left">Session</th>
+              <th className="border border-blue-300 p-3 text-center">Session</th>
                 {visibleColumns.map(col => (
-                  <th key={col} className="border border-gray-300 p-3 text-left">
+                  <th key={col} className="border border-blue-300 p-3 text-center">
                     {col}
                   </th>
                 ))}
@@ -193,14 +169,14 @@ export default function CourseWebsitePage() {
                 const materials = session.materials || [];
                 const grouped = visibleColumns.map(col => materials.filter(m => m.type === col && m.active));
                 return (
-                  <tr key={session.id} className={index % 2 === 0 ? "bg-red-100" : "bg-blue-100"}>   
+                  <tr key={session.id} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>   
 
-                    <td className="border border-gray-300 p-3 font-semibold text-center">
-                      Session {session.sessionNum}
+                    <td className="border border-blue-300 p-3 font-semibold text-center">
+                      {session.sessionNum}
                     </td>
 
                     {grouped.map((colItems, colIndex) => (
-                      <td key={colIndex} className="border border-gray-300 p-3 align-top">
+                      <td key={colIndex} className="border border-blue-300 p-3 align-top">
                         {colItems.map(item => (
                           <div key={item.id} className="mb-1">{item.label}</div>
                         ))}
