@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import "../styles/devLogin.css";
 import { API_BASE } from "../utils/api";
-// import { AUTH_BASE } from "../utils/api";
 
 export default function DevLoginPage() {
   const [email, setEmail] = useState("");

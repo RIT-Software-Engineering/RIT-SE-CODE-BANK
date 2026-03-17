@@ -96,6 +96,7 @@ model Course {
   tbteamset    TBTeamSet[]
   workflowId   String
   workflowStateId String
+  Resource     Resource[]
 }
 
 model Session {
@@ -175,6 +176,21 @@ model TBTeamSet {
   @@unique([courseId, name])
   @@index([courseId, status])
   @@index([createdByProfessorId])
+}
+
+model Resource {
+  id        Int      @id @default(autoincrement())
+  name      String
+  filename  String
+  mimeType  String
+  filePath  String
+  courseId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  course    Course   @relation(fields: [courseId], references: [id])
+
+  @@index([courseId])
+  @@map("resources")
 }
 
 enum EventType {

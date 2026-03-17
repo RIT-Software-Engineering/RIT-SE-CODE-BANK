@@ -13,6 +13,7 @@ import templateRoutes from "./routes/template.js";
 import makeTeamBuilderRouter from "./routes/teamBuilder.js";
 import workflowRoutes from "./routes/workflows.js";
 import sessionRoutes from './routes/session.js';
+import resourceRoutes from './routes/resources.js';
 
 import path from "path";
 import dotenv from "dotenv";
@@ -184,6 +185,7 @@ app.use("/api/cmt/team-builder", teamBuilderRoutes);
 app.use("/api/cmt/course-website", courseWebsiteRoutes);
 app.use("/api/cmt/workflow", workflowRoutes)
 app.use("/api/cmt/session", sessionRoutes);
+app.use("/api/cmt/resources", resourceRoutes);
 
 // Legacy course routes (if not handled by courseRoutes)
 // get all courses from a professor
