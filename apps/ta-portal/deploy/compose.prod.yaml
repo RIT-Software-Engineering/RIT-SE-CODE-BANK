@@ -18,3 +18,5 @@ services:
     environment:
       # Is used mainly in errorHandlerTest.js and featureFlags.js.
       NODE_ENV: "production"
+      # URL used to access the notification service
+      NOTIFICATION_SERVICE_URL: "http://apps-staging.se.rit.edu"

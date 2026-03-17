@@ -61,7 +61,7 @@ function mockPutPreferences(appId, identifier, prefs) {
 export default function useNotifications({ appId = 'ta-portal', identifier = 'current-user' } = {}) {
   // API base for ta-portal server. In dev your server runs on 3300; the Next.js UI runs on 3000.
   // Set NEXT_PUBLIC_BACKEND_URL in your .env (e.g. https://localhost:3300) to override.
-  const API_BASE = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_BACKEND_URL) || 'https://localhost:3300';
+  const BASE_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION;
   const [recent, setRecent] = useState([]); // recent 5 for popup
   const [history, setHistory] = useState([]); // full history
   const [prefs, setPrefs] = useState({ notifyEmail: true, notifySlack: true });
@@ -86,7 +86,7 @@ export default function useNotifications({ appId = 'ta-portal', identifier = 'cu
     setLoadingPrefs(true);
     try {
       try {
-  const r = await fetch(`${API_BASE}/api/notifications/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}`);
+  const r = await fetch(`${BASE_API_URL}/notifications/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}`);
         if (!r.ok) throw new Error(`status ${r.status}`);
         const json = await r.json();
         setPrefs(json);
@@ -95,7 +95,7 @@ export default function useNotifications({ appId = 'ta-portal', identifier = 'cu
         // warn to make it obvious in console when the proxy is unreachable
         // (helps distinguish CORS vs network vs server errors)
         // eslint-disable-next-line no-console
-        console.warn('useNotifications: failed to load preferences from', `${API_BASE}/api/notifications/preferences/${appId}/${identifier}`, e?.message || e);
+        console.warn('useNotifications: failed to load preferences from', `${BASE_API_URL}/notifications/preferences/${appId}/${identifier}`, e?.message || e);
         const json = await mockFetchPreferences(appId, identifier);
         setPrefs(json);
       }
@@ -116,7 +116,7 @@ export default function useNotifications({ appId = 'ta-portal', identifier = 'cu
       try {
     // Only send toggles to the backend; contact fields are managed server-side.
     const body = { notifyEmail: !!next.notifyEmail, notifySlack: !!next.notifySlack };
-    const r = await fetch(`${API_BASE}/api/notifications/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const r = await fetch(`${BASE_API_URL}/notifications/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (!r.ok) throw new Error(`status ${r.status}`);
         const resp = await r.json();
         // notification-service returns { ok: true, preference: { ... } }
@@ -134,7 +134,7 @@ export default function useNotifications({ appId = 'ta-portal', identifier = 'cu
       } catch (e) {
         // fallback to mock and return
         // eslint-disable-next-line no-console
-        console.warn('useNotifications: failed to update preferences via', `${API_BASE}/api/notifications/preferences/${appId}/${identifier}`, e?.message || e);
+        console.warn('useNotifications: failed to update preferences via', `${BASE_API_URL}/notifications/preferences/${appId}/${identifier}`, e?.message || e);
         const resp = await mockPutPreferences(appId, identifier, next);
         setPrefs(resp);
         try {
@@ -160,13 +160,13 @@ export default function useNotifications({ appId = 'ta-portal', identifier = 'cu
     setLoadingRecent(true);
     try {
       try {
-  const r = await fetch(`${API_BASE}/api/notifications/recent/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}?limit=${encodeURIComponent(limit)}&page=0`);
+  const r = await fetch(`${BASE_API_URL}/notifications/recent/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}?limit=${encodeURIComponent(limit)}&page=0`);
         if (!r.ok) throw new Error(`status ${r.status}`);
         const items = await r.json();
         setRecent((items && Array.isArray(items) ? items.slice(0, limit) : []));
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn('useNotifications: failed to load recent from', `${API_BASE}/api/notifications/recent/${appId}/${identifier}`, e?.message || e);
+        console.warn('useNotifications: failed to load recent from', `${BASE_API_URL}/notifications/recent/${appId}/${identifier}`, e?.message || e);
         const items = await mockFetchRecent(appId, identifier, limit, 0);
         setRecent(items.slice(0, limit));
       }
@@ -179,7 +179,7 @@ export default function useNotifications({ appId = 'ta-portal', identifier = 'cu
     setLoadingHistory(true);
     try {
       try {
-        const r = await fetch(`${API_BASE}/api/notifications/recent/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}?limit=${encodeURIComponent(pageSize)}&page=${encodeURIComponent(pageToLoad)}`);
+        const r = await fetch(`${BASE_API_URL}/notifications/recent/${encodeURIComponent(appId)}/${encodeURIComponent(identifier)}?limit=${encodeURIComponent(pageSize)}&page=${encodeURIComponent(pageToLoad)}`);
         if (!r.ok) throw new Error(`status ${r.status}`);
         const items = await r.json();
         if (pageToLoad === 0) setHistory(items);
@@ -189,7 +189,7 @@ export default function useNotifications({ appId = 'ta-portal', identifier = 'cu
       } catch (e) {
         // fallback to mock for dev/offline
         // eslint-disable-next-line no-console
-        console.warn('useNotifications: failed to load history from', `${API_BASE}/api/notifications/recent/${appId}/${identifier}`, e?.message || e);
+        console.warn('useNotifications: failed to load history from', `${BASE_API_URL}/notifications/recent/${appId}/${identifier}`, e?.message || e);
         const items = await mockFetchRecent(appId, identifier, pageSize, pageToLoad);
         if (pageToLoad === 0) setHistory(items);
         else setHistory((prev) => [...prev, ...items]);

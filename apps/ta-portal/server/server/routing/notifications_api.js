@@ -4,12 +4,12 @@ const router = express.Router();
 // Local notifications util that calls the service directly
 const notificationClient = require('../utils/notifications');
 
-// GET /api/notifications/preferences/:appId/:identifier
+// GET /ta-portal-api/notifications/preferences/:appId/:identifier
 router.get('/preferences/:appId/:identifier', async (req, res) => {
   const { appId, identifier } = req.params;
   try {
     console.log(`[notifications_api] GET prefs appId=${appId} id=${identifier}`);
-    const prefs = await notificationClient.getPreferences(identifier, appId);
+    const prefs = await notificationClient.getPreferences(identifier);
     console.log(`[notifications_api] GET prefs ->`, prefs);
     return res.json(prefs);
   } catch (err) {
@@ -18,7 +18,7 @@ router.get('/preferences/:appId/:identifier', async (req, res) => {
   }
 });
 
-// PUT /api/notifications/preferences/:appId/:identifier
+// PUT /ta-portal-api/notifications/preferences/:appId/:identifier
 router.put('/preferences/:appId/:identifier', async (req, res) => {
   const { appId, identifier } = req.params;
   const body = req.body || {};
@@ -32,7 +32,7 @@ router.put('/preferences/:appId/:identifier', async (req, res) => {
 
     try {
       console.log(`[notifications_api] PUT prefs appId=${appId} id=${identifier} payload=`, payload);
-      const result = await notificationClient.setPreferences(identifier, payload, appId);
+      const result = await notificationClient.setPreferences(identifier, payload);
       console.log(`[notifications_api] PUT prefs ->`, result);
       return res.json(result);
     } catch (err) {
@@ -47,7 +47,7 @@ router.put('/preferences/:appId/:identifier', async (req, res) => {
   }
 });
 
-// GET /api/notifications/preferences/:appId/:identifier/slack-status
+// GET /ta-portal-api/notifications/preferences/:appId/:identifier/slack-status
 router.get('/preferences/:appId/:identifier/slack-status', async (req, res) => {
   const { appId, identifier } = req.params;
   const { email } = req.query;
@@ -58,7 +58,7 @@ router.get('/preferences/:appId/:identifier/slack-status', async (req, res) => {
 
   try {
     console.log(`[notifications_api] GET slack-status appId=${appId} id=${identifier} email=${email}`);
-    const result = await notificationClient.checkSlackStatus(email, appId, identifier);
+    const result = await notificationClient.checkSlackStatus(email, identifier);
     console.log(`[notifications_api] GET slack-status ->`, result);
     return res.json(result);
   } catch (err) {
@@ -72,7 +72,7 @@ if (process.env.NODE_ENV !== 'production') {
   router.post('/preferences/:appId/:identifier/reset-contacts', async (req, res) => {
     const { appId, identifier } = req.params;
     try {
-      const result = await notificationClient.setPreferences(identifier, { userEmail: null, slackUsername: null }, appId);
+      const result = await notificationClient.setPreferences(identifier, { userEmail: null, slackUsername: null });
       return res.json({ ok: true, result });
     } catch (e) {
       return res.status(500).json({ ok: false, error: String(e && e.message || e) });
@@ -80,13 +80,13 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// GET /api/notifications/recent/:appId/:identifier
+// GET /ta-portal-api/notifications/recent/:appId/:identifier
 // Recent notifications removed — return empty list to maintain compatibility
 router.get('/recent/:appId/:identifier', async (req, res) => {
   return res.json([]);
 });
 
-// POST /api/notifications/dispatch/:appId
+// POST /ta-portal-api/notifications/dispatch/:appId
 // Proxies dispatch to the notification service. Supports simple and templated payloads.
 router.post('/dispatch/:appId', async (req, res) => {
   const { appId } = req.params;
@@ -105,7 +105,6 @@ router.post('/dispatch/:appId', async (req, res) => {
       result = await notificationClient.dispatchTemplated(
         userId || null,
         { event, context, role, subject, userEmail: userEmail || null },
-        appId
       );
     } else {
       const { subject, message } = body;
@@ -113,7 +112,6 @@ router.post('/dispatch/:appId', async (req, res) => {
       result = await notificationClient.dispatchNotification(
         userId || null,
         { subject, message, userEmail: userEmail || null },
-        appId
       );
     }
     return res.json(result);
