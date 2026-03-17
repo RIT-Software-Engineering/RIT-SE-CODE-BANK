@@ -29,10 +29,11 @@ function MemoryRow({ index, style, memory }) {
 }
 
 function MemoryPanel({ memory = [] }) {
-  const rowCount = Math.ceil(memory.length / 16)
+  const rowCount = Math.ceil(memory.length / 16) 
 
   return (
     <div className="h-full bg-main-secondary items-center flex flex-col">
+      
       <List
         rowComponent={MemoryRow}
         rowCount={rowCount}
@@ -40,13 +41,10 @@ function MemoryPanel({ memory = [] }) {
         rowProps={{ memory }}
         style={{ height: "100%" }}
       >
-      <div className="flex sticky top-0 bg-main-secondary  border-border-secondary">
-        <div className="w-16 p-2 flex"></div>
+      <div className="flex sticky top-0 bg-main-secondary border-border-secondary">
+        <div className="w-16 flex"></div>
         {COLUMNS.map((col) => (
-          <div
-            key={col}
-            className="w-16 p-2 text-center border border-border-secondary"
-          >
+          <div key={col} className="w-16 text-center border border-border-secondary">
              +{col} 
           </div>
         ))}
