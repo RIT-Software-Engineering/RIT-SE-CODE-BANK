@@ -42,7 +42,7 @@ export function ReadOnlyEditor({ value }) {
         extensions: [
             StarterKit,
             TableKit.configure({
-                table: { resizable: true, cellMinWidth: 4000 },
+                table: { resizable: true },
                 
             }),
             TextStyle,
