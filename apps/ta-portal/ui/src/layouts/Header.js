@@ -152,7 +152,7 @@ const HEADER_LINKS = [
     text: "Resources",
     href: "/Resources",
     icon: <InfoIcon />,
-    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE ]
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN]
   },
   {
     text: "Course List",
