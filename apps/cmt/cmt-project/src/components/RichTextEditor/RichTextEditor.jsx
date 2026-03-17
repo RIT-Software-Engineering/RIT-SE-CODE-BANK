@@ -1,4 +1,4 @@
-import { EditorContent, useEditor, } from "@tiptap/react";
+import { Editor, EditorContent, useEditor, } from "@tiptap/react";
 import Highlight from '@tiptap/extension-highlight'
 import {StarterKit} from "@tiptap/starter-kit";
 import { ButtonGroup, Button, Tooltip, OverlayTrigger, Dropdown } from "react-bootstrap";
@@ -29,8 +29,36 @@ import TextAlign from '@tiptap/extension-text-align';
 import { ResourceLinkModal } from "./ResourceLinkModal";
 import { HighlightPicker, TextPicker } from "./Pickers";
 
+
+export function ReadOnlyEditor({ value }) {
+    const editor = new Editor({
+        editable: false,
+        content: value,
+        editorProps: {
+            attributes: {
+                spellcheck: 'true',
+            },
+        },
+        extensions: [
+            StarterKit,
+            TableKit.configure({
+                table: { resizable: true, cellMinWidth: 4000 },
+                
+            }),
+            TextStyle,
+            Highlight.configure({ multicolor: true }),
+            Color,
+            BackgroundColor,
+            TextAlign.configure({
+                alignments: ['left', 'center'],
+                types: ['paragraph', 'heading'],
+            }),
+        ],
+    })
+    return <EditorContent className="*:pl-2 pt-2" editor={editor} /> 
+}
+
 /**
- * 
  * @param {{ value: any, onChange: function, courseId: number, showTables: boolean }} props 
  */
 export function RichTextEditor({ value, onChange, courseId, showTables }) {

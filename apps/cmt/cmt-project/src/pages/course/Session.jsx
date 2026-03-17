@@ -8,7 +8,7 @@ import { Edit } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { Accordion, Card, Button, Offcanvas, Form, Table } from "react-bootstrap";
 import { useParams } from "react-router-dom";
-import { RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
+import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { CheckmarkActionRenderer } from "../../components/workflows/ActionRenderers/GenericActionRenderer";
 import { CMTJsonFetch } from "../../utils/api";
 import Highlight from "@tiptap/extension-highlight";
@@ -81,7 +81,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                 <Card.Body className='group max-h-96 overflow-y-scroll'>
                                     <Card.Title>
                                         <div className='flex justify-between'>
-                                            <div>{sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} (Notes)</div>
+                                            <div><ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} /></div>
                                             <div className='justify-end size-12 opacity-0 group-hover:!opacity-100'><Button variant='outline-dark' onClick={(e) => {
                                                 setCurSessionId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
                                                 setIsEditOpen(true);
@@ -352,47 +352,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
         return ""
     }
 
-    /**
-     * Helper function to display the items labels/titles 
-     * Could technically be inline, but you can't define variables in the return so it gets annoying
-     *
-     * @param {number} col the column of the item
-     * @param {number} index the current index of the item
-     * @returns read only editor with the contents of the label
-     */
-    function Label(col, index){
-        const editor = new Editor({
-            editable: false,
-            content: getLabelContent(col, index),
-            editorProps: {
-                attributes: {
-                    spellcheck: 'true',
-                },
-            },
-            extensions: [
-                StarterKit,
-                TableKit.configure({
-                    table: { resizable: true },
-                }),
-                TextStyle,
-                Highlight.configure({ multicolor: true }),
-                Color, // The current colors are very limited to basically the defaults. Maybe this could be changed in the future?
-                BackgroundColor,
-                TextAlign.configure({
-                    alignments: ['left', 'center'],
-                    types: ['paragraph', 'heading'],
-                }),
-            ],
-        })
-            
-        return <EditorContent className="*:pl-2 pt-2" editor={editor} /> 
-        
-        
-    }
-
     function openEditModal(text, col){
-        console.log(sessionData)
-        console.log(text, col)
         // Not a foolproof way to find ID but it should match closely. It'd take a bunch of refactoring to be exact...
         const id = sessionData.find(session => session.sessionNum === sessionNum && session.label === text && session.type === allCols[col]).id
         setIsEditOpen(true);
@@ -416,12 +376,12 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                 <tbody>
                     {Array.from({ length: determineRows() }, (_, i) => (
                     <tr> 
-                        {cols[0] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(0, i), 0)}>{Label(0,i)}</span></td> : <></>}
-                        {cols[1] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(1, i), 1)}>{Label(1,i)}</span></td> : <></>}
-                        {cols[2] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(2, i), 2)}>{Label(2,i)}</span></td> : <></>}
-                        {cols[3] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(3, i), 3)}>{Label(3,i)}</span></td> : <></>}
-                        {cols[4] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(4, i), 4)}>{Label(4,i)}</span></td> : <></>}
-                        {cols[5] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(5, i), 5)}>{Label(5,i)}</span></td> : <></>}
+                        {cols[0] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(0, i), 0)}><ReadOnlyEditor value={getLabelContent(0, i)} /></span></td> : <></>}
+                        {cols[1] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(1, i), 1)}><ReadOnlyEditor value={getLabelContent(1, i)} /></span></td> : <></>}
+                        {cols[2] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(2, i), 2)}><ReadOnlyEditor value={getLabelContent(2, i)} /></span></td> : <></>}
+                        {cols[3] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(3, i), 3)}><ReadOnlyEditor value={getLabelContent(3, i)} /></span></td> : <></>}
+                        {cols[4] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(4, i), 4)}><ReadOnlyEditor value={getLabelContent(4, i)} /></span></td> : <></>}
+                        {cols[5] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(5, i), 5)}><ReadOnlyEditor value={getLabelContent(5, i)} /></span></td> : <></>}
                     </tr>
                     ))}
                 </tbody>
