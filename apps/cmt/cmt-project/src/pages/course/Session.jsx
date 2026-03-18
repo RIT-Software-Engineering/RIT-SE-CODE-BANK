@@ -6,7 +6,7 @@ import { EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Edit } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
-import { Accordion, Card, Button, Offcanvas, Form, Table } from "react-bootstrap";
+import { Accordion, Card, Button, Offcanvas, Form, Table, Modal } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { CheckmarkActionRenderer } from "../../components/workflows/ActionRenderers/GenericActionRenderer";
@@ -48,16 +48,54 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
             const data = await response.json()
             setSessionCount(data.sessions.length)
             setSessions(data.sessions);
-            const materialsArray = data.sessionMaterials.filter(m => m.material).map(m => m.material);
+            console.log(data.sessionMaterials)
+            const materialsArray = data.sessionMaterials.filter(m => m.material && m.material.active).map(m => m.material);
             setSessionData(materialsArray.flat());
         })
     }, [id, setSessions, setSessionCount])
     useEffect(() => void update(), [id, update])
 
+    const [deleteOpen, isDeleteOpen] = useState(false)
+    function DeleteModal() {
+        return (
+            <>
+            <Button variant="danger" onClick={() => isDeleteOpen(true)}>
+                Delete All Session Materials
+            </Button>
+            <Modal show={deleteOpen} onHide={()=>isDeleteOpen(false)} centered>
+                <Modal.Header>
+                    Delete All Session Materials
+                </Modal.Header>
+                <Modal.Body>
+                <div className='alert alert-danger'>
+                    <h2>Warning!</h2>
+                    <p>Confirming will delete ALL of the session material you've created! Are you sure you want to continue? This cannot be undone!</p>
+                </div>
+                <div className='flex justify-between'>
+                    <Button className='justify-start' onClick={()=>isDeleteOpen(false)}>Cancel</Button>
+                    <Button variant='danger' className='justify-end' onClick={()=> {
+                        CMTJsonFetch('DELETE', `session/${id}/${sessionNum+1}`).then(async response => {
+                            const data = await response.json();
+                            const ids = data.materials.map(item => item.id)
+                            const sessionDataCopy = sessionData.map(material => {
+                            if (ids.includes(material.id)) 
+                                return {...material, active: false}
+                            return material});
+                            setSessionData(sessionDataCopy);
+                        });
+                        isDeleteOpen(false);
+                    }}>Delete All Materials</Button>
+                </div>
+                </Modal.Body>
+            </Modal>
+            </>
+        )
+    }
+
     return (
         <Accordion alwaysOpen>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} courseId={courseId}/>
-        <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId}/>
+        <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} update={update}/>
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.action.metadata.code === `SESSION_${i}`)
@@ -94,7 +132,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                 </Card.Body>
                             </Card> : <></>
                             }
-                            <div className='flex justify-end pt-3'>
+                            <div className='flex justify-end pt-3 gap-4'>
+                                {sessionData.length > 1 ? <DeleteModal /> : <></>}
                                 <Button onClick={() => setIsOpen(true)}>Add Material</Button>
                             </div>
                         </Accordion.Body>
@@ -223,12 +262,13 @@ function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOp
  * setIsEditOpen - sets the edit modal to be either opened or closed
  * @returns {*} the modal as HTML
  */
-function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen, setIsEditOpen, courseId }){
+function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen, setIsEditOpen, courseId, update }){
     const curMaterial = sessionData.find(material => material.id === materialId);
     
     const [itemLabel, setItemLabel] = useState(curMaterial?.label ?? "");
     const [itemBody, setItemBody] = useState(curMaterial?.body ?? "");
     const [warningVisible, setWarningVisible] = useState(false);
+    const [deleting, setDeleting] = useState(false)
 
     useEffect(() => {
         setItemLabel(curMaterial?.label ?? "")
@@ -237,16 +277,32 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
 
     function resetForm(){
         setWarningVisible(false);
+        setDeleting(false);
     }
 
     function updateMaterial(){
         CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody}).then(() => {
+            
             const sessionDataCopy = sessionData.map(material => {
+                console.log(material)
                 if (material.id === materialId) 
                     return {...material, label: itemLabel, body: itemBody}
                 return material
             });
             setSessionData(sessionDataCopy);
+            update()
+        });
+    }
+
+    function deleteMaterial(){
+        CMTJsonFetch("DELETE", `/session/material/${materialId}`).then(() => {
+            const sessionDataCopy = sessionData.map(material => {
+                if (material.id === materialId) 
+                    return {...material, active: false}
+                return material
+            });
+            setSessionData(sessionDataCopy);
+            update()
         });
     }
 
@@ -277,6 +333,13 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                                 </div>
                             </div>
                         </div>
+                        <div className='justify-start'>
+                            <Button variant="danger" type="submit" onClick={(e)=> {
+                                e.preventDefault();
+                                setDeleting(true);
+                            }}>Delete Item</Button>
+                        </div>
+                        <div className='justify-end'></div>
                         <div className='flex justify-end pt-3'>
                             <Button type="submit" onClick={(e) => {
                             e.preventDefault();
@@ -289,8 +352,23 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                             }}>Submit</Button>
                         </div>
                     </Form>
-                    </Offcanvas.Body>
-                </Offcanvas>
+                    <Modal show={deleting}>
+                            <Modal.Body>
+                                <div className='alert alert-danger'>
+                                    <h2>Warning!</h2>
+                                    <p>Confirming will delete the session material you've created! Are you sure you want to continue? This cannot be undone!</p>
+                                </div>
+                                <div className='flex justify-between'>
+                                    <Button className='justify-start' onClick={()=>setDeleting(false)}>Cancel</Button>
+                                    <Button variant='danger' className='justify-end' onClick={()=> {
+                                        deleteMaterial();
+                                        setIsEditOpen(false);
+                                        resetForm();}}>Delete Item</Button>
+                                </div>
+                            </Modal.Body>
+                    </Modal>
+                </Offcanvas.Body>
+            </Offcanvas>
     );
 }
 
