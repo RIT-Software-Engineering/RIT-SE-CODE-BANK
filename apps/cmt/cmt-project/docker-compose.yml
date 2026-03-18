@@ -95,6 +95,7 @@ services:
       PORT: 3010
       REACT_APP_BACKEND_URL: /api/cmt
       REACT_APP_AUTH_BASE: ""
+      REACT_APP_BASE_URL: http://apps-staging.se.rit.edu
       PUBLIC_URL: /cmt
     depends_on:
       - cmt-backend
