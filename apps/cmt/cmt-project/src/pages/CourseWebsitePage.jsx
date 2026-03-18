@@ -1,6 +1,7 @@
 // @ts-ignore
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../utils/api";
+import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
@@ -178,7 +179,9 @@ export default function CourseWebsitePage() {
                     {grouped.map((colItems, colIndex) => (
                       <td key={colIndex} className="border border-blue-300 p-3 align-top">
                         {colItems.map(item => (
-                          <div key={item.id} className="mb-1">{item.label}</div>
+                          <div key={item.id} className="mb-1">
+                            <ReadOnlyEditor value={item.label} />
+                          </div>
                         ))}
                       </td>
                     ))}
