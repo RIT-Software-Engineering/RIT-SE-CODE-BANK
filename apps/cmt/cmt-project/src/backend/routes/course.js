@@ -182,7 +182,7 @@ router.post('/', async (req, res) => {
                             description: 'Hide columns that contain internal information',
                             actionType: 'simple',
                             metadata: {
-                                code: 'CHECKMARK_COLUMN_VISIBILITIES',
+                                code: 'CHECKMARK',
                             },
                         },
                         {
@@ -190,7 +190,7 @@ router.post('/', async (req, res) => {
                             description: "You're all ready to publish!",
                             actionType: 'simple',
                             metadata: {
-                                code: 'CHECKMARK_PUBLISH_SITE',
+                                code: 'CHECKMARK',
                             },
                         },
                     ],
