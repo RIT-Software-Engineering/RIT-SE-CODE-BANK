@@ -400,12 +400,72 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                 <tbody>
                     {Array.from({ length: determineRows() }, (_, i) => (
                     <tr> 
-                        {cols[0] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(0, i), 0)}><ReadOnlyEditor value={getLabelContent(0, i)} /></span></td> : <></>}
-                        {cols[1] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(1, i), 1)}><ReadOnlyEditor value={getLabelContent(1, i)} /></span></td> : <></>}
-                        {cols[2] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(2, i), 2)}><ReadOnlyEditor value={getLabelContent(2, i)} /></span></td> : <></>}
-                        {cols[3] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(3, i), 3)}><ReadOnlyEditor value={getLabelContent(3, i)} /></span></td> : <></>}
-                        {cols[4] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(4, i), 4)}><ReadOnlyEditor value={getLabelContent(4, i)} /></span></td> : <></>}
-                        {cols[5] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(5, i), 5)}><ReadOnlyEditor value={getLabelContent(5, i)} /></span></td> : <></>}
+                        {cols[0] ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(0, i), 0)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(0, i)} />
+                                </div>
+                            </td>
+                        ) : <></>}
+                        {cols[1] ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(1, i), 1)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(1, i)} />
+                                </div>
+                            </td>
+                        ) : <></>}
+                        {cols[2] ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(2, i), 2)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(2, i)} />
+                                </div>
+                            </td>
+                        ) : <></>}
+                        {cols[3] ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(3, i), 3)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(3, i)} />
+                                </div>
+                            </td>
+                        ) : <></>}
+                        {cols[4] ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(4, i), 4)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(4, i)} />
+                                </div>
+                            </td>
+                        ) : <></>}
+                        {cols[5] ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(5, i), 5)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(5, i)} />
+                                </div>
+                            </td>
+                        ) : <></>}
                     </tr>
                     ))}
                 </tbody>
