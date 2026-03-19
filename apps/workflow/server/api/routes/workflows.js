@@ -150,7 +150,7 @@ router.post("/", async (req, res) => {
   });
 });
 
-// PUT /workflows/:id
+// PUT /workflows/action/:id
 router.put("/action/:id", async (req, res) => {
   const { name, description, metadata, tags, rootActionId } = req.body;
   const { id } = req.params;

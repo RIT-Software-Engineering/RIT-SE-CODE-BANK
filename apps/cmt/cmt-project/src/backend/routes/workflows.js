@@ -1,5 +1,5 @@
 import express from "express";
-import { combineActionWorkflow, createAction, getWorkflowActions, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch, workflowToObject } from "../utils/workflows/api.js";
+import { combineActionWorkflow, createAction, getWorkflowActions, makeMetadataSafeForWorkflows, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch, workflowToObject } from "../utils/workflows/api.js";
 import { actionToActionWithContext } from "../utils/workflows/actionPipeline.js";
 const router = express.Router();
 export default router
@@ -72,6 +72,29 @@ router.post("/actionTemplate/workflow", async (req, res) => {
 router.put("/actionTemplate/action/:actionId", async (req, res) => {
     try {
         const {actionId} = req.params;
+        const {name, description, metadata} = req.body;
+        const safeMetadata = makeMetadataSafeForWorkflows(metadata);
+        const action = workflowsFetch("PUT", `/actions/${actionId}`, {name:name, description: description, metadata: safeMetadata});
+        return res.status(200).json({action: action})
+    } catch (error) {
+        return res.status(500).json({error: error.message});
+    }
+});
+
+router.put("/actionTemplate/workflow/:workflowId", async (req, res) => {
+    try {
+        const {workflowId} = req.params;
+        const {name, description} = req.body;
+        const workflow = workflowsFetch("PUT", `workflows/action/${workflowId}`, {name:name, description: description});
+        return res.status(200).json({action: workflow});
+    } catch (error) { 
+        return res.status(500).json({error: error.message});
+    }
+});
+
+router.put("/actionTemplate/nextAction/:actionId", async (req, res) => {
+    try {
+        const {actionId} = req.params;
         const {name, description, nextActionId} = req.body;
         const action = await updateAction(name, description, nextActionId, actionId);
         return res.status(200).json({action: action})
@@ -85,23 +108,11 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
         const {workflowId} = req.params;
         console.log("=".repeat(50))
         const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
-        // console.log("all actions: ", actions)
-        // const returnedActions = await Promise.all(actions.map(async action => {
-        //     if (action.actionType === "workflow"){
-        //         action = await getWorkflowActions(action.id)
-        //         console.log("Returned stuff: ", action)
-        //     }
-           
-        //     else if (action.metadata?.outputs){
-        //         action.metadata.outputs = JSON.parse(action.metadata.outputs)
-        //     }
-        //     console.log("With context: ", actionToActionWithContext(action, null, null, req.user?.uid))
-        //     return action
-        // }))
-        // console.log(returnedActions)
+        // console.log(actions)
         const actionWithContexts = actions.map(action => 
             actionToActionWithContext(action, null, null, req.user?.uid)
-        )
+        );
+        // console.log(actionWithContexts)
         return res.status(200).json({actions: actionWithContexts, awc: actionWithContexts})
     } catch (error) {
         return res.status(500).json({error: error.message});

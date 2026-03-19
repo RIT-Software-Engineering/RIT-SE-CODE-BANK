@@ -6,6 +6,11 @@ import { Edit } from "lucide-react";
 import { CoursePageWorkflony } from "./course/CourseOverview";
 
 
+/**
+ * CMT-Specific function
+ *
+ * @export
+ */
 export function BuilderPage(){
     const [workflows, setWorkflows] = useState([]);
     const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
@@ -66,8 +71,8 @@ export function BuilderPage(){
         setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmit}/>
         <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} workflows={workflows} setWorkflows={setWorkflows} 
         availCodes={availCodes} parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
-        isEdit={isEdit} setIsEdit={setIsEdit} curAction={curAction}
-        outputHelper={BuilderOutputsHelper} addAction={addStandardAction} addWorkflowAction={addWorkflowAction}/>
+        isEdit={isEdit} setIsEdit={setIsEdit} curAction={curAction} outputHelper={BuilderOutputsHelper} 
+        addAction={addStandardAction} addWorkflowAction={addWorkflowAction} editAction={editStandardAction} editWorkflowActionFunction={editWorkflowAction}/>
         <Accordion>
         {workflows ? Array.from({length: workflows.length}, (_, i) => {
             return (<div key={i} className="pt-2" onClick={()=>setIndex(i)}>
@@ -81,7 +86,14 @@ export function BuilderPage(){
     </>);
 }
 
+/**
+ * CMT-Specific function
+ *
+ * @param {{ code: any; setPlaceholder: any; validation: any; setValidation: any; isEdit: any; curAction: any; }} param0 
+ * 
+ */
 function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation, isEdit, curAction}){
+    // Why do this complicated mess? Because curAction and isEdit will definitely will be set while validation may not be :)
     const [hasValidation, setHasValidation] = useState(curAction && curAction.metadata?.outputs ? curAction.metadata.outputs[0]?.validation !== undefined : false);
     // We only use this in the sessions tab
     const [multipleSessions, setMultipleSessions] = useState(false);
@@ -90,14 +102,14 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
         case "COURSE_SECTION":
             returnOutput = <>
             <Form.Label>Placeholder?</Form.Label>
-            <Form.Control placeholder="e.g. 1" onChange={e=>setPlaceholder(e.target.value)}/>
+            <Form.Control placeholder="e.g. 1" onChange={e=>setPlaceholder(e.target.value)} defaultValue={curAction && curAction.metadata?.outputs ? curAction.metadata.outputs[0]?.placeholder : ''}/>
             <div className="flex">
                 <Form.Label>Has Validation?</Form.Label>
                 <Form.Check className="pl-2" checked={hasValidation} onChange={(e)=>setHasValidation(e.target.checked)} defaultChecked={true}/>
             </div>
             {hasValidation ? <>
             <Form.Label>Max Length?</Form.Label>
-            <Form.Control type="number" placeholder="e.g. 30" onChange={e=>setValidation([e.target.value])}/>
+            <Form.Control type="number" placeholder="e.g. 30" onChange={e=>setValidation([e.target.value])} defaultValue={isEdit ? validation[0] : ''}/>
             </>
             : <></>}
             </>
@@ -108,7 +120,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
                 setValidation([[],[]]);
             returnOutput = <>
             <Form.Label>Has a Placeholder?</Form.Label>
-            <Form.Control placeholder="e.g. 1" onChange={e=>setPlaceholder(e.target.value)}/>
+            <Form.Control placeholder="e.g. 30" onChange={e=>setPlaceholder(e.target.value)} defaultValue={curAction && curAction.metadata?.outputs ? curAction.metadata.outputs[0]?.placeholder : ''}/>
             <div className="flex">
                 <Form.Label>Has Validation?</Form.Label>
                 <Form.Check className="pl-2" checked={hasValidation} onChange={(e)=>setHasValidation(e.target.checked)} defaultChecked={true}/>
@@ -117,11 +129,13 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             <div className="flex">
                 <div>
                 <Form.Label>Min: </Form.Label>
-                <Form.Control type="number" placeholder="e.g. 10" onChange={(e)=>setValidation(prev => [[e.target.value], prev[1]])}/>
+                <Form.Control type="number" placeholder="e.g. 10" 
+                onChange={(e)=>setValidation(prev => [[e.target.value], prev[1]])} defaultValue={isEdit ? validation[0] : ''}/>
                 </div>
                 <div className="pl-10">
                 <Form.Label>Max:</Form.Label>
-                <Form.Control type="number" placeholder="e.g. 100" onChange={e=>setValidation(prev => [prev[0], [e.target.value]])}/>
+                <Form.Control type="number" placeholder="e.g. 100" 
+                onChange={e=>setValidation(prev => [prev[0], [e.target.value]])} defaultValue={isEdit ?  (validation.length > 1 ? validation[1] : '') : ''}/>
                 </div>
             </div>
             </>
@@ -143,13 +157,13 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
                 <Form.Label>Year Options (seperate each by a comma)</Form.Label>
                 <Form.Control placeholder="e.g. 2027, 2028, 2029, 2030" onChange={e => {
                     setValidation(prev => [e.target.value.split(/, ?/).map(Number), prev[1]])
-                }}/>
+                }} defaultValue={isEdit ? validation[0] : ''}/>
                 </div>
                 <div className="pl-10 w-3/5">
                 <Form.Label>Season Options (seperate each by a comma)</Form.Label>
                 <Form.Control placeholder="e.g Fall, Spring, Summer 1, Summer 2, Summer 3" onChange={e => {
                     setValidation(prev => [prev[0], e.target.value.split(/, ?/)])
-                }}/>
+                }} defaultValue={isEdit ? (validation.length > 1 ? validation[1] : '') : ''}/>
                 </div>
             </div>
             </>
@@ -162,7 +176,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
                 setValidation([[],[]]);
             returnOutput = <>
             <Form.Label>{multipleSessions ? 'From ' : ''}Session Number:</Form.Label>
-            <Form.Control type="number" placeholder="e.g. 1" onChange={e=>setValidation(prev => [[e.target.value], prev[1]])}/>
+            <Form.Control type="number" placeholder="e.g. 1" onChange={e=>setValidation(prev => [[e.target.value], prev[1]])} defaultValue={isEdit ? validation[0] : ''}/>
             {multipleSessions && !isEdit ? // If we had multiple sessions that would definitely cause issues. They can just delete and regenerate them.
             <> 
                 <Form.Label>To Session Number:</Form.Label>
@@ -179,11 +193,21 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             break;
 
         default:
+            console.log(code)
             returnOutput = <></>
     }
     return returnOutput
 }
 
+/**
+ * CMT-Specific function
+ *
+ * @param {*} code 
+ * @param {*} isRequired 
+ * @param {*} placeholder 
+ * @param {*} validation 
+ * @returns {Array} 
+ */
 function BuilderOutputsHelper(code, isRequired, placeholder, validation){
     let output;
     switch (code) {
@@ -255,6 +279,15 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
     return output;
 }
 
+/**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} name 
+ * @param {*} description 
+ * @param {*} workflows 
+ * @param {*} setWorkflows 
+ */
 async function workflowSubmit(name, description, workflows, setWorkflows){
     const workflow = {
         name: name,
@@ -296,6 +329,7 @@ async function workflowEditSubmit(name, description, workflows, setWorkflows, wo
 }
 
 /**
+ * CMT-Specific function
  * Recursive function to find a workflow.
  * Used for the action adders to find if the parentId is a complex or workflow action. 
  *
@@ -322,13 +356,27 @@ function findParent(actions, parentActionId){
     return result;
 }
 
+/**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} action 
+ * @param {*} actions 
+ * @param {*} workflowId 
+ * @param {*} id 
+ * @param {*} name 
+ * @param {*} description 
+ * @param {*} actionType 
+ * @param {*} parentActionId 
+ * @param {*} metadata 
+ */
 async function setNextActionInfo(action, actions, workflowId, id, name, description, actionType, parentActionId, metadata){
     if (action.id === workflowId) {
         const actionList = action.childActions.slice(0,-1);
         if (action.childActions?.length > 0){
             let prevAction = action.childActions[action.childActions.length - 1];
             prevAction.nextActionId = id;
-            await CMTFetch("PUT", `workflony/actionTemplate/action/${prevAction.id}`, {name: null, description: null, nextActionId: id});
+            await CMTFetch("PUT", `/workflony/actionTemplate/nextAction/${prevAction.id}`, {name: null, description: null, nextActionId: id});
             actionList.push({...prevAction});
         }
         actionList.push({
@@ -359,10 +407,68 @@ async function setNextActionInfo(action, actions, workflowId, id, name, descript
     return actions;
 }
 
+/**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} action 
+ * @param {*} actions 
+ * @param {*} id 
+ * @param {*} name 
+ * @param {*} description 
+ * @param {*} metadata 
+ * @param {*} actionToUpdate 
+ */
+async function setUpdatedAction(action, actions, id, name, description, metadata, actionToUpdate){
+    if (action.id === id) {
+        const actionList = [{
+            id: actionToUpdate.id,
+            name: name,
+            description: description,
+            actionType: actionToUpdate.actionType,
+            nextActionId: actionToUpdate.nextActionId,
+            parentActionId: actionToUpdate.parentActionId,
+            metadata: metadata,
+        }];
+        actions = actionList;
+    }
+    else {
+        if (action.childActions && action.childActions.length > 0) {
+            for (let index = 0; index < action.childActions.length; index++) {
+                action.childActions[index].childActions = await setUpdatedAction(
+                    action.childActions[index], 
+                    action.childActions[index].childActions || [], 
+                    id, name, description, metadata, actionToUpdate
+                );
+            }
+        }
+        actions = action.childActions || []; 
+    }
+    return actions
+}
+
+/**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} outputs 
+ * @param {*} index 
+ * @param {*} workflows 
+ * @param {*} setWorkflows 
+ * @param {*} name 
+ * @param {*} description 
+ * @param {*} code 
+ * @param {*} actionType 
+ * @param {*} parentActionId 
+ */
 async function addStandardAction(outputs, index, workflows, setWorkflows, name, description, code, actionType, parentActionId) {
     let metadata = {};
     let isWorkflowChild = false;
     let workflowParent = workflows[index];
+    if (!name)
+        name = 'New Action';
+    if (!description)
+        description = 'No description provided.'
     if (parentActionId){
         workflowParent = null;
         workflowParent = workflows[index].actions.find(action => action.action.id === parentActionId)?.action;
@@ -384,7 +490,7 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
             if (outputs[0].toSessionNum){
                 const fromSessionNum = parseInt(outputs[0].fromSessionNum)-1;
                 const toSessionNum = parseInt(outputs[0].toSessionNum)-1;
-                outputs = [{isRequired: outputs[0].isRequired,  validation: {fromSessionNum: outputs[0].fromSessionNum}}];
+                outputs = [{isRequired: outputs[0].isRequired,  validation: {sessionNum: outputs[0].fromSessionNum}}];
                 console.log("New outputs:", outputs)
                 for (let j = fromSessionNum; j <= toSessionNum; j++) {
                     await addStandardAction(outputs, index, workflows, setWorkflows,
@@ -396,13 +502,13 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
             }
             else{
                 metadata.code = `SESSION_${parseInt(outputs[0].fromSessionNum)-1}`;
-                outputs = [{isRequired: outputs[0].isRequired, validation: {fromSessionNum: outputs[0].fromSessionNum}}];
+                outputs = [{isRequired: outputs[0].isRequired, validation: {sessionNum: outputs[0].fromSessionNum}}];
             }
             
         }
         metadata.outputs = outputs;
     }
-    await CMTFetch("POST", "workflony/actionTemplate/action", {name, description, actionType, metadata, parentActionId: !isWorkflowChild ? parentActionId : null}).then(async response => {
+    await CMTFetch("POST", "/workflony/actionTemplate/action", {name, description, actionType, metadata, parentActionId: !isWorkflowChild ? parentActionId : null}).then(async response => {
         const data = await response.json();
         console.log(data.action);
         let workflowsCopy = [];
@@ -416,7 +522,7 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
                 if (workflows[index].actions.length > 0){
                     let prevAction = workflows[index].actions[workflows[index].actions.length - 1];
                     prevAction.action.nextActionId = data.action.id;
-                    await CMTFetch("PUT", `workflony/actionTemplate/action/${prevAction.action.id}`, {name: null, description: null, nextActionId: data.action.id});
+                    await CMTFetch("PUT", `/workflony/actionTemplate/nextAction/${prevAction.action.id}`, {name: prevAction.action.name, description: prevAction.action.description, nextActionId: data.action.id});
                     actions.push({...prevAction});
                 }
                 workflowActions = workflows[index].actions
@@ -486,6 +592,102 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
     });
 }
 
+/**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} outputs 
+ * @param {*} index 
+ * @param {*} workflows 
+ * @param {*} setWorkflows 
+ * @param {*} name 
+ * @param {*} description 
+ * @param {*} code 
+ * @param {*} actionToUpdate 
+ */
+async function editStandardAction(outputs, index, workflows, setWorkflows, name, description, code, actionToUpdate){
+    let metadata = {};
+    let isWorkflowChild = false;
+    let workflowParent = workflows[index];
+    if (!name)
+        name = 'New Action';
+    if (!description)
+        description = 'No description provided.';
+    if (code)
+        metadata.code = code;
+    if (outputs)
+        metadata.outputs = outputs;
+
+    await CMTFetch("PUT", `/workflony/actionTemplate/action/${actionToUpdate.id}`, {name, description, metadata}).then(async response => {
+        const data = await response.json();
+        // let workflowsCopy = [];
+        // for (let j = 0; j < workflows.length; j++){
+        //     if (j !== index) {
+        //         workflowsCopy.push(workflows[j]);
+        //     }
+        //     else {
+        //         for (let k = 0; k < workflows[index].actions.length; k++) {
+        //                 const actions = workflows[index].actions[k];
+        //                 actions.action.childActions = await setUpdatedAction(
+        //                     actions.action, [], actionToUpdate.id,
+        //                     name, description, metadata, actionToUpdate
+        //                 )
+        //                 workflowsCopy.push(actions)
+        //             }
+        //     }
+        // }
+        // console.log("WC:", workflowsCopy);
+        // setWorkflows(workflowsCopy);
+        // AI-generated functionality
+//         setWorkflows(prevData => {
+//     // We create a helper function to walk through the tree
+//     const updateRecursive = (items) => {
+//       return items.map(item => {
+//         // 1. Identify the action object (handle the 'action' wrapper vs direct object)
+//         const isWrapped = !!item.action;
+//         const currentAction = isWrapped ? item.action : item;
+
+//         // 2. If this is the ID we want, merge the new values
+//         if (currentAction.id === data.action.id) {
+//           const updatedAction = { ...currentAction, ...newValues };
+//           return isWrapped ? { ...item, action: updatedAction } : updatedAction;
+//         }
+
+//         // 3. If it has children, recurse into them
+//         if (currentAction.childActions) {
+//           const updatedChildren = updateRecursive(currentAction.childActions);
+          
+//           // Only update if children actually changed to preserve references
+//           if (updatedChildren !== currentAction.childActions) {
+//             const updatedAction = { ...currentAction, childActions: updatedChildren };
+//             return isWrapped ? { ...item, action: updatedAction } : updatedAction;
+//           }
+//         }
+
+//         return item; // Return unchanged if no match
+//       });
+//     };
+
+//     // Apply the recursion to the top-level actions array
+//     return {
+//       ...prevData,
+//       actions: updateRecursive(prevData.actions)
+//     };
+//   })
+    });
+}
+
+/**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} index 
+ * @param {*} name 
+ * @param {*} description 
+ * @param {*} workflows 
+ * @param {*} setWorkflows 
+ * @param {*} parentActionId 
+ */
 async function addWorkflowAction(index, name, description, workflows, setWorkflows, parentActionId){
     const workflow = {
         name: name,
@@ -522,7 +724,7 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
                 if (workflows[index].actions.length > 0){
                     let prevAction = workflows[index].actions[workflows[index].actions.length - 1];
                     prevAction.action.nextActionId = data.action.id;
-                    await CMTFetch("PUT", `workflony/actionTemplate/action/${prevAction.action.id}`, {name: null, description: null, nextActionId: data.action.id});
+                    await CMTFetch("PUT", `workflony/actionTemplate/nextAction/${prevAction.action.id}`, {name: null, description: null, nextActionId: data.action.id});
                     actions.push({...prevAction});
                 }
                 workflowActions = workflows[index].actions
@@ -590,19 +792,29 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
 }
 
 /**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} index 
+ * @param {*} name 
+ * @param {*} description 
+ * @param {*} workflows 
+ * @param {*} setWorkflows 
+ * @param {*} workflowToUpdate 
+ */
+async function editWorkflowAction(index, name, description, workflows, setWorkflows, workflowToUpdate){
+    if (!name)
+        name = 'New Action';
+    if (!description)
+        description = 'No description provided.';
+
+    await CMTFetch("PUT", `/workflony/actionTemplate/workflow/${workflowToUpdate.id}`, {name, description}).then(async response => {});
+}
+
+/**
  * Generic component applicable to all applications
  *
  * @param {{ isOpen: any; setIsOpen: any; workflows: any; setWorkflows: any; WorkflowSubmit: any; curWorkflow: any; isEdit: any; setIsEdit: any; workflowEditSubmit: any; }} param0 
- * param 
- * param 
- * param 
- * param 
- * param 
- * param 
- * param 
- * param 
- * param 
- * returns
  */
 function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSubmit, curWorkflow ,isEdit, setIsEdit, workflowEditSubmit} ){
     const [name, setName] = useState('');
@@ -651,8 +863,14 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSub
     </>)
 }
 
+/**
+ * Generic component applicable to all applications
+ *
+ * @param {{ isOpen: any; setIsOpen: any; index: any; workflows: any; setWorkflows: any; availCodes: any; parentId: any; depthLevel: any; setDepthLevel: any; isEdit: any; setIsEdit: any; curAction: any; outputHelper: any; addAction: any; addWorkflowAction: any; editAction: any; editWorkflowActionFunction: any; }} param0 
+ */
 function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCodes, parentId, 
-    depthLevel, setDepthLevel, isEdit, setIsEdit, curAction, outputHelper, addAction, addWorkflowAction}){
+    depthLevel, setDepthLevel, isEdit, setIsEdit, curAction, outputHelper, 
+    addAction, addWorkflowAction, editAction, editWorkflowActionFunction}){
     const [actionType, setActionType] = useState("simple");
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -687,7 +905,8 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
                 if (validation){
                     switch (renderMetadataCodes()) {
                         case "NUMBER_STUDENTS":
-                            setValidation(Object.values(validation).map(item => {return [item]}));
+                            // Sort because it starts with max then min normally while we want the opposite
+                            setValidation(Object.values(validation).sort().map(item => {return [item]}));
                             break;
                         case "SESSION":
                         case "COURSE_SECTION":
@@ -712,8 +931,8 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
 
     function renderMetadataCodes(){
         if (curAction.metadata){
-            // Strips any numbers at the end of the string
-            return curAction.metadata.code?.replace(/_[\d]+$/, '');
+            // Strips any numbers at the end of the string and strips any double quotes
+            return curAction.metadata.code?.replace(/_[\d]+$/, '').replace(/^"(.*)"$/, '$1');
         }
     }
 
@@ -731,6 +950,11 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
         let outputs;
         outputs = outputHelper(code, required, placeholder, validation);
         e.preventDefault();
+        await editAction(outputs, index, workflows, setWorkflows, name, description, code, curAction).then(() => {
+            clearForm();
+            setIsOpen(false);
+            window.location.reload(); // TODO remove
+        })
     }
 
     async function createComplexAction(e) {
@@ -743,6 +967,11 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
 
     async function editComplexAction(e){
         e.preventDefault();
+        await editAction(null, index, workflows, setWorkflows, name, description, null, curAction).then(() => {
+            clearForm();
+            setIsOpen(false);
+            window.location.reload(); // TODO remove
+        })
     }
 
     async function createWorkflowAction(e){
@@ -755,6 +984,11 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
 
     async function editWorkflowAction(e){
         e.preventDefault();
+        await editWorkflowActionFunction(index, name, description, workflows, setWorkflows, curAction).then(() => {
+            clearForm();
+            setIsOpen(false);
+            window.location.reload(); // TODO remove
+        })
     }
 
     return (<>
@@ -769,13 +1003,17 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
                 <Form.Label>Action Description</Form.Label>
                 <Form.Control required onChange={e=>setDescription(e.target.value)} defaultValue={isEdit ? curAction.description : ''}/>
 
-                <Form.Label>Action Type</Form.Label>
+                
+                {!isEdit ? // I refuse to let the user edit the action type. That would cause so many problems (e.g. complex => simple).
+                <><Form.Label>Action Type</Form.Label>
                 <Form.Select onChange={e=>setActionType(e.target.value)} defaultValue={isEdit ? curAction.actionType : ''}>
                     <option key="simple" value="simple">Simple</option>
                     {/* it's tested you can make up to 7 children before the workflows API fails to return. Though it says 6 in reality it is indeed 7 layers */}
                     <option key="complex" value="complex" disabled={depthLevel>=6}>Complex</option>
                     <option key="workflow" value="workflow" disabled={depthLevel>=6}>Workflow</option>
                 </Form.Select>
+                </>
+                : <></>}   
                 {actionType === "simple" ? // if simple action
                 <>
 
@@ -811,6 +1049,11 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
     </>)
 }
 
+/**
+ * Generic component applicable to all applications
+ *
+ * @param {{ workflows: any; index: any; actions: any; setIsOpen: any; setParentId: any; depthLevel: any; setDepthLevel: any; setCurAction: any; setIsEdit: any; }} param0 
+ */
 function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, depthLevel, setDepthLevel, setCurAction, setIsEdit}){
     return (<>
         {(actions||[]).map((action) => {
@@ -897,6 +1140,11 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, dep
     </>)
 }
 
+/**
+ * Generic component applicable to all applications
+ *
+ * @param {{ index: any; workflows: any; setIsOpen: any; loading: any; setParentId: any; depthLevel: any; setDepthLevel: any; setIsEdit: any; setCurAction: any; setWorkflowModalEdit: any; }} param0 
+ */
 function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, depthLevel, setDepthLevel, setIsEdit, setCurAction, setWorkflowModalEdit}){
     if (loading)
         return <><h1>Loading...</h1></> // Here so a lot of stuff just doesn't break while it loads everything

@@ -71,7 +71,7 @@ async function getFullActionTree(rootActionId) {
           throw Error("Unexpected action type");
       }
 
-      actions.push(action);
+      actions.push(exportAction(action));
       currentActionId = null;
       if (action.nextActionId) currentActionId = action.nextActionId; // Move to the next action in the chain
     }

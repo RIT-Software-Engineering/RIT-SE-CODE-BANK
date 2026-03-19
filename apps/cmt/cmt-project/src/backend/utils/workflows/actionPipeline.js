@@ -33,7 +33,7 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
 
   // Parse metadata from array to object (workflows API returns it as array)
   if (action.metadata) {
-    action.metadata = metadataArrayToObject(action.metadata)
+      action.metadata = metadataArrayToObject(action.metadata)
   }
 
   let returnAction;
@@ -67,7 +67,7 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
     const childActionsWithContext = (action.childActions||[]).map(child =>
       actionToActionWithContext(child, null, null, userId)
     ) 
-    returnAction = {action: {...action,}}
+    returnAction = {action: {...action, childActionsWithContext}}
   }
   return returnAction
 }
@@ -101,11 +101,12 @@ export function determineCallback(code, asid, courseId, userId) {
 */
 export function metadataArrayToObject(metadataArray) {
   // If its not an array, such as the case of empty metadata, which is somehow an object, return a blank object.
-  if (!metadataArray.reduce) return {}
-
-  return metadataArray.reduce((metadata, entry) => {
-    return { ...metadata, [entry.key]: JSON.parse(entry.value) }
-  }, {})
+  // if (!metadataArray.reduce) return {}
+  
+  console.log(metadataArray)
+  return Object.fromEntries(Object.entries(metadataArray).map(([key, value]) => {
+    return [key, JSON.parse(value)];
+  }));
 }
 
 /**
