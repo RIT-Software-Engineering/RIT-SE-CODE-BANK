@@ -21,5 +21,5 @@ export function LogError(description, error, setError, userFacingDescription) {
  * @returns React Bootstrap Alert
  */
 export function CMTDangerAlert({ error, ...props }) {
-    return error && <Alert variant="danger" {...props}>{error}</Alert>
+    return error && <Alert className="my-3" variant="danger" {...props}>{error}</Alert>
 }
