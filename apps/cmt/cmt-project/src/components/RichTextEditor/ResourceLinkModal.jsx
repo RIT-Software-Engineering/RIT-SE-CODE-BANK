@@ -131,7 +131,12 @@ export function ResourceLinkModal({ editor, courseId }) {
                                             <Form.Label>File</Form.Label>
                                             <Form.Control
                                                 type='file'
-                                                onChange={e => setFile(e.target.files?.[0] || null)}
+                                                onChange={(e) => {
+                                                    const target = e.target;
+                                                    if ('files' in target) {
+                                                        setFile(target.files?.[0] || null);
+                                                    }
+                                                }}
                                                 required
                                             />
                                         </Form.Group>
