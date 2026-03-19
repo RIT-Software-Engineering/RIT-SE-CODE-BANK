@@ -1,6 +1,6 @@
 import { FileSymlink } from "lucide-react"
 import { useState } from "react"
-import { Button, Modal, Form, Col, Row, Spinner, OverlayTrigger, Tooltip } from "react-bootstrap"
+import { Button, Modal, Form, Spinner, OverlayTrigger, Tooltip } from "react-bootstrap"
 import { getResourceDownloadUrl, useResources } from "../resources/ResourceManager"
 import { SelectableResourceCard } from "../resources/resourceRenderers"
 import { CMTFormFetch } from "../../utils/api"
@@ -15,26 +15,24 @@ export function ResourceLinkModal({ editor, courseId }) {
     const [resources, loading, loadResources, loadingError] = useResources(courseId)
 
     const handleInsert = () => {
-        if (!selectedResource) {
-            return
-        }
+    if (!selectedResource) return
 
-        const displayText = linkText.trim() || selectedResource.name
-        const linkUrl = getResourceDownloadUrl(selectedResource.id)
+    const { selection } = editor.state
 
-        editor.chain().focus().extendMarkRange('link').setLink({ href: linkUrl, target: '_blank' }).run()
+    const linkUrl = getResourceDownloadUrl(selectedResource.id)
+    const displayText = linkText?.trim() || selectedResource.name
 
-        // Replace the selected text with the display text
-        if (displayText && displayText !== editor.getHTML()) {
-            editor.chain().focus().insertContent(displayText).run()
-        }
+    const hasSelection = !selection.empty
+    const chain = editor.chain().focus()
 
-        // Set color
-        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' }))
-            editor.chain().focus().setColor('#0000FF').run()
-
-        handleReset()
+    if (hasSelection && !linkText) {
+        chain.setLink({ href: linkUrl, target: '_blank' }).setColor('#3b82f6').run()
+    } else {
+        chain.insertContent(displayText).setLink({ href: linkUrl, target: '_blank' }).setColor('#3b82f6').run()
     }
+
+    handleReset()
+}
 
     const handleReset = () => {
         setShow(false)

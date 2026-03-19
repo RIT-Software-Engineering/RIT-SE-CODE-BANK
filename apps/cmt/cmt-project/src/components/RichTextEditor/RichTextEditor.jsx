@@ -20,7 +20,7 @@ import {
   TextAlignCenter,
   Underline,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { TableKit } from '@tiptap/extension-table'
 import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
@@ -221,9 +221,13 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
                     variant='outline-secondary'
                     onClick={() => {
                         editor.chain().focus().unsetLink().run()
-                        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' })) editor.chain().focus().setColor('black').run()
-                        else if (editor.isActive('textStyle', { color: '#0484c9' })) editor.chain().focus().setColor('#0484c9').run()
-                        else if (editor.isActive('textStyle', { backgroundColor: '#0484c9' })) editor.chain().focus().setColor('white').run()
+                        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' })) {
+                            editor.chain().focus().setColor('black').run()
+                        } else if (editor.isActive('textStyle', { color: '#0484c9' })) {
+                            editor.chain().focus().setColor('#0484c9').run()
+                        } else if (editor.isActive('textStyle', { backgroundColor: '#0484c9' })) {
+                            editor.chain().focus().setColor('white').run()
+                        }
                     }}
                 >
                     <Link2Off />
@@ -290,19 +294,16 @@ export function ExternalLinkModal({ editor }) {
     const [linkURL, setLinkURL] = useState('')
 
     const handleInsert = () => {
+        if (!linkURL) return
 
-        const displayText = linkText.trim() || linkURL
+        const { selection } = editor.state
+        const selectedText = editor.state.doc.textBetween(selection.from, selection.to)
 
-        editor.chain().focus().extendMarkRange('link').setLink({ href: linkURL, target: '_blank' }).run()
+        const text = linkText?.trim() || selectedText || linkURL
 
-        // Replace the selected text with the display text
-        if (displayText && displayText !== editor.getHTML()) {
-            editor.chain().focus().insertContent(displayText).run()
-        }
-
-        // Set color
-        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' }))
-            editor.chain().focus().setColor('#0000FF').run()
+        !selection.empty && !linkText
+            ? editor.chain().focus().setLink({ href: linkURL, target: '_blank' }).setColor('#3b82f6').run()
+            : editor.chain().focus().insertContent(text).setLink({ href: linkURL, target: '_blank' }).setColor('#3b82f6').run()
 
         handleReset()
     }
@@ -312,7 +313,6 @@ export function ExternalLinkModal({ editor }) {
         setLinkText('')
         setLinkURL('')
     }
-
     return (<>          
         <OverlayTrigger delay={200} overlay={<Tooltip>External Link</Tooltip>}>
             <Button
