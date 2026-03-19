@@ -57,9 +57,9 @@ export function ReadOnlyEditor({ value }) {
 }
 
 /**
- * @param {{ value: any, onChange: function, courseId: number, showTables: boolean }} props 
+ * @param {{ value: any, onChange: function, courseId: number, showTables: boolean, onEditor?: function, disabled?: boolean }} props 
  */
-export function RichTextEditor({ value, onChange, courseId, showTables }) {
+export function RichTextEditor({ value, onChange, courseId, showTables, onEditor, disabled = false }) {
 
   const Extras = {
     Table: "Table",
@@ -92,6 +92,7 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
         onUpdate: ({ editor }) => {
             onChange && onChange(editor.getHTML())
         },
+        editable: !disabled,
     })
 
     // Used purely just to update button state correctly when pressed or keyboard shortcut
@@ -118,8 +119,14 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
         }
     }, [value, editor])
 
+    useEffect(() => {
+        if (editor && onEditor) {
+            onEditor(editor)
+        }
+    }, [editor, onEditor])
+
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col" style={{ opacity: disabled ? 0.5 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
                   
           <ButtonGroup className='*:!rounded-none *:!flex *:!justify-center'>
               <OverlayTrigger delay={200} overlay={<Tooltip>Bold</Tooltip>}>

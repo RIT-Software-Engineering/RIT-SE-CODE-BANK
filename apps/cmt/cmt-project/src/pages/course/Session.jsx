@@ -1,8 +1,9 @@
 import { Edit } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
-import { Accordion, Card, Button, Offcanvas, Form, Table } from "react-bootstrap";
+import { Accordion, Card, Button, Offcanvas, Form, Table, Alert } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
+import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
 import { CheckmarkActionRenderer } from "../../components/workflows/ActionRenderers/GenericActionRenderer";
 import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, LogError } from "../../utils/error";
@@ -118,16 +119,18 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
     const [itemBody, setItemBody] = useState('')
     const [itemType, setItemType] = useState('Topic/Lecture')
     const [error, setError] = useState('')
+    const [titleEditor, setTitleEditor] = useState(null);
+    const hasLinksInTitle = useLinkDetection(titleEditor);
 
-    function uploadSessionMaterial() {
+    const uploadSessionMaterial = useCallback(() => {
         const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
-        CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody, sessionNum })
+        CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody: hasLinksInTitle ? undefined : itemBody, sessionNum })
             .then(async response => {
                 const data = await response.json()
                 setSessionData(sessionData => [...sessionData, data.material])
             })
             .catch(error => LogError("Error uploading material", error, setError))
-    }
+    }, [hasLinksInTitle, itemBody, itemLabel, itemType, sessionNum, sessions, setSessionData])
 
     function resetForm() {
         setItemType('Topic/Lecture')
@@ -171,12 +174,25 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
 
                             <div className="mb-3">
                                 <Form.Label>Title (Required)</Form.Label>
-                                <RichTextEditor value={itemLabel} onChange={setItemLabel} courseId={courseId} showTables={false} />
+                                <RichTextEditor 
+                                    value={itemLabel} 
+                                    onChange={setItemLabel} 
+                                    courseId={courseId} 
+                                    showTables={false} 
+                                    onEditor={setTitleEditor}
+                                />
                             </div>
 
                             <div className="mb-3">
                                 <Form.Label>Content</Form.Label>
-                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId} showTables={true}/>
+                                <RichTextEditor 
+                                    value={itemBody} 
+                                    onChange={setItemBody} 
+                                    courseId={courseId} 
+                                    showTables={true}
+                                    disabled={hasLinksInTitle}
+                                />
+                                {hasLinksInTitle && <Alert variant="warning" className="my-2">Content editor is disabled because the title contains links. If a title contains a link, material content will be ignored.</Alert>}
                             </div>
                         </div>
                     </div>
@@ -222,6 +238,8 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
     const [itemLabel, setItemLabel] = useState(curMaterial?.label ?? "");
     const [itemBody, setItemBody] = useState(curMaterial?.body ?? "");
     const [warningVisible, setWarningVisible] = useState(false);
+    const [titleEditor, setTitleEditor] = useState(null);
+    const hasLinksInTitle = useLinkDetection(titleEditor);
 
     useEffect(() => {
         setItemLabel(curMaterial?.label ?? "")
@@ -261,12 +279,25 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                         <div className='flex'>
                             <div className='w-full'>
                                 <div>
-                                <Form.Label>Title</Form.Label>
-                                <RichTextEditor value={itemLabel} onChange={setItemLabel} courseId={courseId} showTables={false}/>
+                                    <Form.Label>Title</Form.Label>
+                                    <RichTextEditor 
+                                        value={itemLabel} 
+                                        onChange={setItemLabel} 
+                                        courseId={courseId} 
+                                        showTables={false}
+                                        onEditor={setTitleEditor}
+                                    />
                                 </div>
                                 <div>
-                                <Form.Label>Content</Form.Label>
-                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId} showTables={true}/>
+                                    <Form.Label>Content</Form.Label>
+                                    <RichTextEditor 
+                                        value={itemBody} 
+                                        onChange={setItemBody} 
+                                        courseId={courseId} 
+                                        showTables={true}
+                                        disabled={hasLinksInTitle}
+                                    />
+                                    {hasLinksInTitle && <Alert variant="warning" className="my-2">Content editor is disabled because the title contains links. If a title contains a link, material content will be ignored.</Alert>}
                                 </div>
                             </div>
                         </div>
