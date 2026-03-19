@@ -1,3 +1,5 @@
+import { LogError } from "./error";
+
 export const API_BASE = process.env.REACT_APP_BACKEND_URL || "http://localhost:5010/api/cmt";
 export const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || "http://localhost:5010";
 
@@ -60,8 +62,7 @@ export async function CMTFetch(method, url, body, headers, allowedErrorCodes = [
         if (body !== undefined) options.body = body
         response = await fetch(fullURL, { ...options, credentials: 'include'})
     } catch (error) {
-        // TODO: Use central notification system to show error
-        console.error(`🥕 Error when fetching to url ${fullURL}: ${error} with body ${body} and headers ${headersJSON} and method ${method}`)
+        LogError(`🥕 Error when fetching to url ${fullURL} with body ${body} and headers ${headersJSON} and method ${method}`, error)
         throw Error(`🐦‍🔥 Error when fetching to url ${fullURL}: ${error} with body ${body} and headers ${headersJSON} and method ${method}`)
     }
         
@@ -71,8 +72,7 @@ export async function CMTFetch(method, url, body, headers, allowedErrorCodes = [
 
     // Only notify the user if the error code is not allowed,
     if(!allowedErrorCodes.includes(response.status)) {    
-        // TODO: Use central notification system to show error
-        console.log("😨 New Error just dropped")
+        LogError("😨 New Error just dropped", response)
     }
     
     // Create specially formatted error so consumer can access the codes easily

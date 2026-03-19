@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { CheckmarkActionRenderer } from "../../components/workflows/ActionRenderers/GenericActionRenderer";
 import { CMTJsonFetch } from "../../utils/api";
+import { CMTDangerAlert, LogError } from "../../utils/error";
 
 /**
  * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
@@ -116,21 +117,23 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
     const [itemLabel, setItemLabel] = useState('')
     const [itemBody, setItemBody] = useState('')
     const [itemType, setItemType] = useState('Topic/Lecture')
-    const [warningVisible, setWarningVisible] = useState(false)
+    const [error, setError] = useState('')
 
     function uploadSessionMaterial() {
         const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
-        CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody, sessionNum }).then(async response => {
-            const data = await response.json()
-            setSessionData(sessionData => [...sessionData, data.material])
-        })
+        CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody, sessionNum })
+            .then(async response => {
+                const data = await response.json()
+                setSessionData(sessionData => [...sessionData, data.material])
+            })
+            .catch(error => LogError("Error uploading material", error, setError))
     }
 
     function resetForm() {
         setItemType('Topic/Lecture')
         setItemLabel('')
         setItemBody('')
-        setWarningVisible(false)
+        setError('')
     }
 
     function handleClose() {
@@ -150,10 +153,6 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
             </Offcanvas.Header>
 
             <Offcanvas.Body className="overflow-auto">
-                <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>
-                    Please create a title for the material!
-                </div>
-
                 <Form onSubmit={uploadSessionMaterial}>
                     <div className='flex'>
                         <div className='w-full'>
@@ -181,7 +180,8 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                             </div>
                         </div>
                     </div>
-
+                    
+                    <CMTDangerAlert error={error} />
                     <div className='flex justify-end pt-3'>
                         <Button
                             type='submit'
@@ -191,7 +191,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                                     uploadSessionMaterial()
                                     setIsOpen(false)
                                     resetForm()
-                                } else setWarningVisible(true)
+                                } else setError("Please create a title for the material!")
                             }}
                         >
                             Submit

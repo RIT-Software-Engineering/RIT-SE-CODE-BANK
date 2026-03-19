@@ -4,6 +4,7 @@ import { Button, Modal, Form, Col, Row, Spinner, OverlayTrigger, Tooltip } from 
 import { getResourceDownloadUrl, useResources } from "../resources/ResourceManager"
 import { SelectableResourceCard } from "../resources/resourceRenderers"
 import { CMTFormFetch } from "../../utils/api"
+import { CMTDangerAlert, LogError } from "../../utils/error"
 
 export function ResourceLinkModal({ editor, courseId }) {
     const [show, setShow] = useState(false)
@@ -11,7 +12,7 @@ export function ResourceLinkModal({ editor, courseId }) {
     const [selectedResource, setSelectedResource] = useState(null)
     const [linkText, setLinkText] = useState('')
 
-    const [resources, loading, loadResources] = useResources(courseId)
+    const [resources, loading, loadResources, loadingError] = useResources(courseId)
 
     const handleInsert = () => {
         if (!selectedResource) {
@@ -45,6 +46,7 @@ export function ResourceLinkModal({ editor, courseId }) {
     const [uploading, setUploading] = useState(false)
     const [file, setFile] = useState(null)
     const [resourceName, setResourceName] = useState('')
+    const [uploadError, setUploadError] = useState(null)
     
     const handleFileUpload = async e => {
         e.preventDefault()
@@ -53,6 +55,7 @@ export function ResourceLinkModal({ editor, courseId }) {
         }
 
         setUploading(true)
+        setUploadError(null)
 
         const formData = new FormData()
         formData.append('file', file)
@@ -67,8 +70,11 @@ export function ResourceLinkModal({ editor, courseId }) {
                 setResourceName('')
             })
             .catch(error => {
-                console.error('Error uploading', error)
-            }) //TODO: central error notif
+                let message;
+                if (error.message && error.message.includes('Invalid file type'))
+                    message = 'Invalid file type. Please upload a supported file (PDF, DOC, TXT, images, etc.).'
+                LogError("Error uploading file.", error, setUploadError, message)
+            })
             .finally(() => setUploading(false))
     }
 
@@ -97,8 +103,9 @@ export function ResourceLinkModal({ editor, courseId }) {
                                             <Spinner animation='border' />
                                             <p className='mt-2'>Loading resources...</p>
                                         </div>
-                                        : 
-                                        resources.map(resource => (
+                                    : loadingError 
+                                        ? <CMTDangerAlert error={loadingError} />
+                                    : resources.map(resource => (
                                             <div className="mb-3">
                                                 <SelectableResourceCard resource={resource} refresh={loadResources} selected={selectedResource} setSelected={setSelectedResource}/>
                                             </div>
@@ -110,7 +117,7 @@ export function ResourceLinkModal({ editor, courseId }) {
                                 </div>
                                 <div className="w-1/2 h-full flex flex-col">
                                     <p className="text-xl"> Upload New Resource </p>
-                                    {/* TODO: not copy paste this from resources/modals.jsx */}
+                                {/* TODO: not copy paste this from resources/modals.jsx */}
                                     <Form onSubmit={e => { handleFileUpload(e); e.stopPropagation(); }}>
                                         <Form.Group className='mb-3'>
                                             <Form.Label>Resource Name</Form.Label>
@@ -130,6 +137,7 @@ export function ResourceLinkModal({ editor, courseId }) {
                                                 required
                                             />
                                         </Form.Group>
+                                        <CMTDangerAlert error={uploadError} />
                                         <Button variant='primary' type='submit' disabled={uploading || !file}>
                                             {uploading ? (
                                                 <>
