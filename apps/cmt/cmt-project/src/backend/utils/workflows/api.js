@@ -55,7 +55,8 @@ export async function createAction(userId, name, description, actionType, metada
 }
 
 /**
- * Turns the object (JSON) representation of a workflow into a workflow.
+ * Turns the object (JSON) representation of a workflow into a workflow. It is only really useful for having hard coded, predefined workflows.
+ * though, this CAN be useful if you want to add actions/workflows to an existing workflow.
  * 
  * This is intended to work alongside {@link workflowToObject}
  * 
@@ -167,6 +168,8 @@ export async function objectToNewWorkflow(workflow, ownerId) {
 }
 
 /**
+ * TODO: This function is currently useless
+ * 
  * Turns the result of a Workflows API "/workflows" GET call into an object.
  * // TODO: make this include all nested things. Unless workflows/
  * @param {Object} workflow 

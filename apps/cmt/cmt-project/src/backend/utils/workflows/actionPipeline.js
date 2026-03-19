@@ -5,6 +5,10 @@
  *  * Creates a `callback` field with the callback URL to complete the action
  *  * Creates a `state` field with `userId`'s action state
  * 
+ * This could be extended to add a teamState object perhaps, that contains all the stuff relating to teams you might need.
+ * This function is CMT-specific, but highly abstractable. it is really just a series of transformations the action goes through
+ * to make it convenient for the frontend.
+ * 
  * It is given in the following structure:
  * ```
  * {
@@ -33,7 +37,7 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
 
   // Parse metadata from array to object (workflows API returns it as array)
   if (action.metadata) {
-    action.metadata = metadataArrayToObject(action.metadata)
+    action.metadata = parseMetadata(action.metadata)
   }
 
   const actionState = flattenedWorkflowState.get(action.id)
@@ -62,6 +66,13 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
 }
 
 /**
+ * CMT-Specific function, this maps action codes to callback URLs.
+ * The point of this is so that an action with a code COURSE_SECTION will send the user's input to the POST endpoint for the course.
+ * If this isn't neccesary, than all codes can point to the same endpoint.
+ * 
+ * Note that the ASID query parameter is important, since it lets the endpoint know what action got completed. The endpoint
+ * must mark the action as completed.
+ * 
  * @param {string} code code from the metadata, so that we can generate the correct callback URL
  * @param {string} asid action state id, so that we can mark the correct action as completed
  * @param {number|string} courseId the CMT course ID for building callback URLs
@@ -88,7 +99,7 @@ export function determineCallback(code, asid, courseId, userId) {
 * 
 * @param {any} metadataArray array of metadata given by the workflows API (and our endpoints)
 */
-export function metadataArrayToObject(metadataArray) {
+export function parseMetadata(metadataArray) {
   // If its not an array, such as the case of empty metadata, which is somehow an object, return a blank object.
   if (!metadataArray.reduce) return {}
 

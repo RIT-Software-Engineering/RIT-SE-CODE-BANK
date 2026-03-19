@@ -260,6 +260,9 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
             setSessionData(sessionDataCopy);
         });
     }
+    // materials that dont exist shouldnt be clickable
+    // editing allows for removing title
+    // session table overflows if too wide
 
     return (
         <Offcanvas
@@ -386,8 +389,8 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
     determineCols();
 
     return (
-            <Table bordered>
-                <thead className='[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]'>
+            <Table bordered className="max-w-30">
+                <thead className='max-w-30 [&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]'>
                     <tr>
                         {cols[0] ? <th>Topic/Lecture</th> : <></>}
                         {cols[1] ? <th>Class Activity</th> : <></>}
