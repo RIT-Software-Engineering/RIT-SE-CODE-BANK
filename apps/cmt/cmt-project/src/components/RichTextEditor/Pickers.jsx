@@ -23,7 +23,7 @@ function EditorPicker({ editor, attributeName, applyChange }) {
   const [color, setColor] = useState("")
   const [showWheel, setShowWheel] = useState(false)
 
-  const colors = useMemo(() => ["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380"], [])
+  const colors = useMemo(() => ["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#0484c9", "#405cc9", "#88e4bd", "#76d380"], [])
 
   const handleColorChange = color => {
     setColor(colors.includes(color) || color === "" ? color : "rainbow")
@@ -50,7 +50,7 @@ function EditorPicker({ editor, attributeName, applyChange }) {
         <Button variant="outline-secondary" onClick={() => handleColorChange("")}>
           <Eraser />
         </Button>
-        {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(
+        {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#0484c9", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(
           hex => (
             <ColorOption
               key={hex}
