@@ -18,6 +18,10 @@ export class CPU {
         //initial values for the Stack pointer and Point Counter Registers
         this.registers[REG.SP] = 0o10000;
         this.registers[REG.PC] = 0o200;
+
+        //Used to move backwards to previous states
+        this.pastState = [];
+        this.currentState = null;
     }
 
     loadProgram(words) {
@@ -32,8 +36,19 @@ export class CPU {
         return [...this.registers];
     }
 
+    setRegisters(newRegisters) {
+        this.registers.set(newRegisters);
+    }
+
     getFlags() {
         return {N: this.N, Z: this.Z, V: this.V, C: this.C};
+    }
+
+    setFlags(newN, newZ, newV, newC) {
+        this.N = newN;
+        this.Z = newZ;
+        this.V = newV;
+        this.C = newC;
     }
 
     getMemory() {
@@ -45,7 +60,12 @@ export class CPU {
     }
 
     writeWord(word, addr) {
-        this.memory.writeWord(addr, word)
+        const oldWord = this.readWord(addr);
+        if(this.currentState){
+            this.currentState.memoryChange.push({oldWord, addr});
+        }
+
+        this.memory.writeWord(addr, word);
     }
 
     fetch() {
@@ -56,6 +76,12 @@ export class CPU {
     }
 
     step() {
+        this.currentState = {
+            registers: this.getRegisters(),
+            flags: this.getFlags(),
+            memoryChange: []
+        };
+
         const instr = this.fetch();
         const oper = this.decoder.decode(instr);
 
@@ -66,6 +92,24 @@ export class CPU {
             oper.dst = this.resolveDestination(oper.dst.mode, oper.dst.REG);
         }      
         this.execute(oper);
+
+        this.pastState.push(this.currentState);
+        this.currentState = null;
+    }
+
+    backStep(){
+        const lastState = this.pastState.pop();
+
+        this.setRegisters(lastState.registers);
+        this.setFlags(
+            lastState.flags.N,
+            lastState.flags.Z,
+            lastState.flags.V,
+            lastState.flags.C
+        );
+        for(const change of lastState.memoryChange){
+            this.memory.writeWord(change.addr, change.oldValue); 
+        }        
     }
 
     reset() {
