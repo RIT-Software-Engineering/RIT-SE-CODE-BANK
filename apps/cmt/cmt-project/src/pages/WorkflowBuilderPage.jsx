@@ -47,6 +47,7 @@ export function BuilderPage(){
                         name: info.name,
                         description: info.description,
                         actions: actions || [],
+                        tags: workflow.tags.filter(tag => tag !== "workflowFirstTheRestNowhere_CMT_Template"),
                     }
                 });
                 const resolvedWorkflows = await Promise.all(workflowPromises);
@@ -294,12 +295,12 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
  * @param {*} workflows 
  * @param {*} setWorkflows 
  */
-async function workflowSubmit(name, description, workflows, setWorkflows){
+async function workflowSubmit(name, description, tags, workflows, setWorkflows){
     const workflow = {
         name: name,
         description: description,
         actions: [],
-        tags: ["CMT_Template"]
+        tags: [...tags, "workflowFirstTheRestNowhere_CMT_Template"]
     };
     CMTFetch("POST", "/workflony/workflowTemplate", {workflow}).then(async response => {
         const data = await response.json();
@@ -314,9 +315,11 @@ async function workflowSubmit(name, description, workflows, setWorkflows){
     });
 }
 
-async function workflowEditSubmit(name, description, workflows, setWorkflows, workflowToUpdate){
-    CMTFetch("PUT", `/workflony/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description}).then(async response => {
+async function workflowEditSubmit(name, description, tags, workflows, setWorkflows, workflowToUpdate){
+    tags.push("workflowFirstTheRestNowhere_CMT_Template");
+    CMTFetch("PUT", `/workflony/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags}).then(async response => {
         const data = await response.json();
+        tags = tags.slice(0, -1);
         const workflowsCopy = workflows.map(workflow => {
             if (workflow.id !== data.workflow.baseActionId)
                 return workflow
@@ -326,7 +329,8 @@ async function workflowEditSubmit(name, description, workflows, setWorkflows, wo
                     attributeId: data.workflow.id,
                     name: name,
                     description: description,
-                    actions: workflowToUpdate.actions
+                    actions: workflowToUpdate.actions,
+                    tags: tags
                     }
         })
         setWorkflows(workflowsCopy);
@@ -752,23 +756,33 @@ async function deleteWorkflow(workflowToDelete, refresh){
 function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSubmit, curWorkflow ,isEdit, setIsEdit, workflowEditSubmit} ){
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [tags, setTags] = useState('');
 
     function clearForm(){
         setName('');
         setDescription('');
+        setTags('');
         setIsEdit(false);
     }
 
+    function loadForm(){
+        setName(curWorkflow.name);
+        setDescription(curWorkflow.description);
+        setTags(curWorkflow.tags);
+    }
+
     async function submitWorkflow(){
-        await WorkflowSubmit(name, description, workflows, setWorkflows);
+        const uploadTags = tags.split(",").map(tag => tag.trim());
+        await WorkflowSubmit(name, description, uploadTags, workflows, setWorkflows);
     }
 
     async function editWorkflow(){
-        await workflowEditSubmit(name, description, workflows, setWorkflows, curWorkflow)
+        const uploadTags = tags.split(",").map(tag => tag.trim());
+        await workflowEditSubmit(name, description, uploadTags, workflows, setWorkflows, curWorkflow)
     }
 
     return (<>
-    <Modal size="lg" show={isOpen} onShow={()=>{if (isEdit){setName(curWorkflow.name);setDescription(curWorkflow.description)}}} centered onHide={()=>{setIsOpen(false); clearForm()}} onExit={()=>{setIsOpen(false);clearForm()}}>
+    <Modal size="lg" show={isOpen} onShow={()=>{if (isEdit){loadForm()}}} centered onHide={()=>{setIsOpen(false); clearForm()}} onExit={()=>{setIsOpen(false);clearForm()}}>
         <Modal.Header closeButton>{isEdit ? 'Edit': 'New'} Workflow</Modal.Header>
         <Modal.Body>
             <Form>
@@ -777,6 +791,8 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSub
                     <Form.Control required onChange={e=>setName(e.target.value)} defaultValue={isEdit ? curWorkflow.name : ""}/>
                     <Form.Label>Workflow Description</Form.Label>
                     <Form.Control required onChange={e=>setDescription(e.target.value)} defaultValue={isEdit ? curWorkflow.description : ""}/>
+                    <Form.Label>Workflow Tags (Seperate by commas)</Form.Label>
+                    <Form.Control required onChange={e=>setTags(e.target.value)} defaultValue={isEdit ? curWorkflow.tags : ""}/>
                 </div>
                 
                 <div className="flex pt-2 justify-end">
@@ -1161,6 +1177,9 @@ function WorkflowComponent({index, workflows, setIsOpen, loading,
         <Accordion.Body>
             <div className="text-3xl">
                 <p>Description: {workflows[index].description}</p>
+            </div>
+            <div className="text-2xl">
+                Tags: {workflows[index].tags.length > 0 ? workflows[index].tags.map(tag => {return `${tag}, `}) : 'None'}
             </div>
             {(workflows[index].actions || []).map(actione => {
                 let action = actione.action;

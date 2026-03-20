@@ -168,7 +168,7 @@ router.put("/action/:id", async (req, res) => {
     baseActionData.description = description;
   }
   if (tags) {
-    baseActionData.tags = {
+    workflowData.tags = {
       // Clear existing connections
       set: [],
 
@@ -231,7 +231,7 @@ router.put("/:id", async (req, res) => {
     baseActionData.description = description;
   }
   if (tags) {
-    baseActionData.tags = {
+    workflowData.tags = {
       // Clear existing connections
       set: [],
 

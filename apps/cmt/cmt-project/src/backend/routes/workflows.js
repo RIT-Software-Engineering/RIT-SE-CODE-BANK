@@ -1,5 +1,5 @@
 import express from "express";
-import { combineActionWorkflow, createAction, getWorkflowActions, makeMetadataSafeForWorkflows, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch, workflowToObject } from "../utils/workflows/api.js";
+import { createAction, makeMetadataSafeForWorkflows, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch } from "../utils/workflows/api.js";
 import { actionToActionWithContext } from "../utils/workflows/actionPipeline.js";
 const router = express.Router();
 export default router
@@ -17,7 +17,7 @@ router.put("/editCheckmarkAction", async (req, res) => {
 
 router.get("/workflowTemplate", async(_, res) => {
     try {
-        const workflows = await workflowsFetch("GET", "workflows/?tags=CMT_Template");
+        const workflows = await workflowsFetch("GET", "workflows/?tags=workflowFirstTheRestNowhere_CMT_Template");
         return res.status(200).json({workflows: workflows})
     } catch (error) {
         return res.status(500).json({error: error.message});
@@ -37,10 +37,9 @@ router.post("/workflowTemplate", async(req, res) => {
 
 router.put("/workflowTemplate/:workflowId", async(req, res) => {
     try {
-        const {name, description} = req.body; 
-        const professorId = req.user.uid;
+        const {name, description, tags} = req.body; 
         const {workflowId} = req.params;
-        const updatedWorkflow = await workflowsFetch("PUT", `workflows/${workflowId}`, {name:name, description:description});
+        const updatedWorkflow = await workflowsFetch("PUT", `workflows/${workflowId}`, {name:name, description:description, tags: tags});
         return res.status(200).json({workflow: updatedWorkflow});
     } catch (error) {
         return res.status(500).json({error: error.message})
