@@ -16,6 +16,11 @@ export const backend = {
         return this.getState();
     },
 
+    backStep() {
+        cpu.backStep();
+        return this.getState();
+    },
+
     run() {
         while(!cpu.halted){
             cpu.step();
