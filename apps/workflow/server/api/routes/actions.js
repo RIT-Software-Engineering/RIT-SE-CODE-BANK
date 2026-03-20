@@ -179,10 +179,57 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
     const { id } = req.params;
 
+    await prisma.$transaction(async () => {
+    const actionInfo = await prisma.action.findUnique({
+        where: {id: id},
+        select: {previousAction: true, nextAction:true, rootActionOf: true}
+    })
+
+    const previousActionId = actionInfo.previousAction?.id;
+    const nextActionId = actionInfo.nextAction?.id;
+    const rootActionId = actionInfo.rootActionOf ? actionInfo.rootActionOf[0]?.id : null;
+
     await prisma.action.delete({
         where: { id: id },
     });
 
+    if (previousActionId){
+        if (nextActionId){
+            await prisma.action.update({
+                where: {id: previousActionId},
+                data: {
+                    nextActionId: nextActionId
+                }
+            });
+        }
+        else {
+            await prisma.action.update({
+                where: {id: previousActionId},
+                data: {
+                    nextActionId: null
+                }
+            });
+        }
+    }
+    else if (rootActionId){
+        if (nextActionId){
+            await prisma.workflowAttributes.update({
+                where: {id: rootActionId},
+                data: {
+                    rootAction: {connect: {id: nextActionId}}
+                }
+            });
+        }
+        else {
+            await prisma.workflowAttributes.update({
+                where: {id: rootActionId},
+                data: {
+                    rootActionId: null
+                }
+            });
+        }
+    }
+    });
     res.json({ message: "Deleted" });
 });
 

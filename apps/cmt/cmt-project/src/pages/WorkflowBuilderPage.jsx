@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Accordion, Button, Card, Form, Modal } from "react-bootstrap";
 import { CMTFetch } from "../utils/api";
 import { workflowsFetch } from "../backend/utils/workflows/api";
-import { Edit } from "lucide-react";
-import { CoursePageWorkflony } from "./course/CourseOverview";
+import { Edit, Trash2 } from "lucide-react";
 
 
 /**
@@ -26,6 +25,7 @@ export function BuilderPage(){
     const [depthLevel, setDepthLevel] = useState(0);
     const [curAction, setCurAction] = useState({});
     const [isEdit, setIsEdit] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
 
     const update = useCallback(async () => {
         return CMTFetch("GET", "/workflony/workflowTemplate").then(async response => {
@@ -66,20 +66,26 @@ export function BuilderPage(){
     loading ? <><h1>Loading...</h1></> :
     <>
         <Button onClick={()=>setWorkflowModalOpen(true)}>Add new Workflow</Button>
+
         <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} 
         setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit} isEdit={isEdit} curWorkflow={curAction}
         setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmit}/>
+
         <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} workflows={workflows} setWorkflows={setWorkflows} 
         availCodes={availCodes} parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
-        isEdit={isEdit} setIsEdit={setIsEdit} curAction={curAction} outputHelper={BuilderOutputsHelper} 
+        isEdit={isEdit} setIsEdit={setIsEdit} curAction={curAction} outputHelper={BuilderOutputsHelper} refresh={update}
         addAction={addStandardAction} addWorkflowAction={addWorkflowAction} editAction={editStandardAction} editWorkflowActionFunction={editWorkflowAction}/>
+        
+        <DeleteModal isOpen={deleteOpen} setIsOpen={setDeleteOpen} action={curAction} 
+        actionDelete={deleteStandardAction} workflowDelete={deleteWorkflow} refresh={update}/>
+
         <Accordion>
         {workflows ? Array.from({length: workflows.length}, (_, i) => {
             return (<div key={i} className="pt-2" onClick={()=>setIndex(i)}>
                 <WorkflowComponent loading={loading} index={i} workflows={workflows} 
                 setIsOpen={setActionModalOpen} setParentId={setParentId} depthLevel={0} 
                 setDepthLevel={setDepthLevel} setIsEdit={setIsEdit} 
-                setCurAction={setCurAction} setWorkflowModalEdit={setWorkflowModalAsOpen}/>
+                setCurAction={setCurAction} setWorkflowModalEdit={setWorkflowModalAsOpen} setDeleteOpen={setDeleteOpen}/>
                 </div>)
         }) : <></>}
         </Accordion>
@@ -94,7 +100,7 @@ export function BuilderPage(){
  */
 function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation, isEdit, curAction}){
     // Why do this complicated mess? Because curAction and isEdit will definitely will be set while validation may not be :)
-    const [hasValidation, setHasValidation] = useState(curAction && curAction.metadata?.outputs ? curAction.metadata.outputs[0]?.validation !== undefined : false);
+    const [hasValidation, setHasValidation] = useState(curAction && curAction.metadata?.outputs ? Object.keys(curAction.metadata.outputs[0]?.validation).length > 0 : false);
     // We only use this in the sessions tab
     const [multipleSessions, setMultipleSessions] = useState(false);
     let returnOutput;
@@ -155,7 +161,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             <div className="flex ">
                 <div className="w-2/5">
                 <Form.Label>Year Options (seperate each by a comma)</Form.Label>
-                <Form.Control placeholder="e.g. 2027, 2028, 2029, 2030" onChange={e => {
+                <Form.Control placeholder={`e.g. ${[0,1,2,3].map(i => {return new Date().getFullYear()+i})}`} onChange={e => {
                     setValidation(prev => [e.target.value.split(/, ?/).map(Number), prev[1]])
                 }} defaultValue={isEdit ? validation[0] : ''}/>
                 </div>
@@ -411,46 +417,6 @@ async function setNextActionInfo(action, actions, workflowId, id, name, descript
  * CMT-Specific function
  *
  * @async
- * @param {*} action 
- * @param {*} actions 
- * @param {*} id 
- * @param {*} name 
- * @param {*} description 
- * @param {*} metadata 
- * @param {*} actionToUpdate 
- */
-async function setUpdatedAction(action, actions, id, name, description, metadata, actionToUpdate){
-    if (action.id === id) {
-        const actionList = [{
-            id: actionToUpdate.id,
-            name: name,
-            description: description,
-            actionType: actionToUpdate.actionType,
-            nextActionId: actionToUpdate.nextActionId,
-            parentActionId: actionToUpdate.parentActionId,
-            metadata: metadata,
-        }];
-        actions = actionList;
-    }
-    else {
-        if (action.childActions && action.childActions.length > 0) {
-            for (let index = 0; index < action.childActions.length; index++) {
-                action.childActions[index].childActions = await setUpdatedAction(
-                    action.childActions[index], 
-                    action.childActions[index].childActions || [], 
-                    id, name, description, metadata, actionToUpdate
-                );
-            }
-        }
-        actions = action.childActions || []; 
-    }
-    return actions
-}
-
-/**
- * CMT-Specific function
- *
- * @async
  * @param {*} outputs 
  * @param {*} index 
  * @param {*} workflows 
@@ -597,18 +563,14 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
  *
  * @async
  * @param {*} outputs 
- * @param {*} index 
- * @param {*} workflows 
- * @param {*} setWorkflows 
  * @param {*} name 
  * @param {*} description 
  * @param {*} code 
  * @param {*} actionToUpdate 
+ * @param {() => void} refresh
  */
-async function editStandardAction(outputs, index, workflows, setWorkflows, name, description, code, actionToUpdate){
+async function editStandardAction(outputs, name, description, code, actionToUpdate, refresh){
     let metadata = {};
-    let isWorkflowChild = false;
-    let workflowParent = workflows[index];
     if (!name)
         name = 'New Action';
     if (!description)
@@ -618,63 +580,21 @@ async function editStandardAction(outputs, index, workflows, setWorkflows, name,
     if (outputs)
         metadata.outputs = outputs;
 
-    await CMTFetch("PUT", `/workflony/actionTemplate/action/${actionToUpdate.id}`, {name, description, metadata}).then(async response => {
-        const data = await response.json();
-        // let workflowsCopy = [];
-        // for (let j = 0; j < workflows.length; j++){
-        //     if (j !== index) {
-        //         workflowsCopy.push(workflows[j]);
-        //     }
-        //     else {
-        //         for (let k = 0; k < workflows[index].actions.length; k++) {
-        //                 const actions = workflows[index].actions[k];
-        //                 actions.action.childActions = await setUpdatedAction(
-        //                     actions.action, [], actionToUpdate.id,
-        //                     name, description, metadata, actionToUpdate
-        //                 )
-        //                 workflowsCopy.push(actions)
-        //             }
-        //     }
-        // }
-        // console.log("WC:", workflowsCopy);
-        // setWorkflows(workflowsCopy);
-        // AI-generated functionality
-//         setWorkflows(prevData => {
-//     // We create a helper function to walk through the tree
-//     const updateRecursive = (items) => {
-//       return items.map(item => {
-//         // 1. Identify the action object (handle the 'action' wrapper vs direct object)
-//         const isWrapped = !!item.action;
-//         const currentAction = isWrapped ? item.action : item;
+    console.log(metadata)
 
-//         // 2. If this is the ID we want, merge the new values
-//         if (currentAction.id === data.action.id) {
-//           const updatedAction = { ...currentAction, ...newValues };
-//           return isWrapped ? { ...item, action: updatedAction } : updatedAction;
-//         }
+    await CMTFetch("PUT", `/workflony/actionTemplate/action/${actionToUpdate.id}`, {name, description, metadata}).then(async _ => await refresh());
+}
 
-//         // 3. If it has children, recurse into them
-//         if (currentAction.childActions) {
-//           const updatedChildren = updateRecursive(currentAction.childActions);
-          
-//           // Only update if children actually changed to preserve references
-//           if (updatedChildren !== currentAction.childActions) {
-//             const updatedAction = { ...currentAction, childActions: updatedChildren };
-//             return isWrapped ? { ...item, action: updatedAction } : updatedAction;
-//           }
-//         }
-
-//         return item; // Return unchanged if no match
-//       });
-//     };
-
-//     // Apply the recursion to the top-level actions array
-//     return {
-//       ...prevData,
-//       actions: updateRecursive(prevData.actions)
-//     };
-//   })
-    });
+/**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} actionToDelete 
+ * @param {() => void} refresh 
+ */
+async function deleteStandardAction(actionToDelete, refresh){
+    // TODO works with simple and complex actions, but for complex actions does not delete child actions. We may want that so we don't have stranded child actions in the DB as cleanup.
+    await CMTFetch("DELETE", `workflony/actionTemplate/action/${actionToDelete.id}`).then(async _ => await refresh());
 }
 
 /**
@@ -795,20 +715,33 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
  * CMT-Specific function
  *
  * @async
- * @param {*} index 
  * @param {*} name 
  * @param {*} description 
- * @param {*} workflows 
- * @param {*} setWorkflows 
  * @param {*} workflowToUpdate 
+ * @param {() => void} refresh
  */
-async function editWorkflowAction(index, name, description, workflows, setWorkflows, workflowToUpdate){
+async function editWorkflowAction(name, description, workflowToUpdate, refresh){
     if (!name)
         name = 'New Action';
     if (!description)
         description = 'No description provided.';
 
-    await CMTFetch("PUT", `/workflony/actionTemplate/workflow/${workflowToUpdate.id}`, {name, description}).then(async response => {});
+    await CMTFetch("PUT", `/workflony/actionTemplate/workflow/${workflowToUpdate.id}`, {name, description}).then(async _ => await refresh());
+}
+
+/**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} workflowToDelete 
+ * @param {() => void} refresh 
+ */
+async function deleteWorkflow(workflowToDelete, refresh){
+    // TODO deletes but does not cleanup any actions with the workflow
+    if (workflowToDelete.attributeId)
+        await CMTFetch("DELETE", `workflony/workflowTemplate/workflow/${workflowToDelete.id}`).then(async _ => await refresh());
+    else
+        await CMTFetch("DELETE", `workflony/actionTemplate/workflow/${workflowToDelete.id}`).then(async _ => await refresh())
 }
 
 /**
@@ -866,10 +799,13 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSub
 /**
  * Generic component applicable to all applications
  *
- * @param {{ isOpen: any; setIsOpen: any; index: any; workflows: any; setWorkflows: any; availCodes: any; parentId: any; depthLevel: any; setDepthLevel: any; isEdit: any; setIsEdit: any; curAction: any; outputHelper: any; addAction: any; addWorkflowAction: any; editAction: any; editWorkflowActionFunction: any; }} param0 
+ * @param {{ isOpen: any; setIsOpen: any; index: any; workflows: any; setWorkflows: any; 
+ * availCodes: any; parentId: any; depthLevel: any; setDepthLevel: any;
+ * isEdit: any; setIsEdit: any; curAction: any; outputHelper: any; refresh: ()=>void;
+ * addAction: any; addWorkflowAction: any; editAction: any; editWorkflowActionFunction: any; }} param0 
  */
 function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCodes, parentId, 
-    depthLevel, setDepthLevel, isEdit, setIsEdit, curAction, outputHelper, 
+    depthLevel, setDepthLevel, isEdit, setIsEdit, curAction, outputHelper, refresh,
     addAction, addWorkflowAction, editAction, editWorkflowActionFunction}){
     const [actionType, setActionType] = useState("simple");
     const [name, setName] = useState('');
@@ -901,8 +837,9 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
             const outputs = curAction.metadata.outputs;
             if (outputs){
                 setRequired(outputs[0].isRequired);
+                setPlaceholder(outputs[0].placeholder);
                 let validation = outputs[0].validation
-                if (validation){
+                if (Object.keys(validation).length > 0){
                     switch (renderMetadataCodes()) {
                         case "NUMBER_STUDENTS":
                             // Sort because it starts with max then min normally while we want the opposite
@@ -931,8 +868,8 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
 
     function renderMetadataCodes(){
         if (curAction.metadata){
-            // Strips any numbers at the end of the string and strips any double quotes
-            return curAction.metadata.code?.replace(/_[\d]+$/, '').replace(/^"(.*)"$/, '$1');
+            // Strips any numbers at the end of the string
+            return curAction.metadata.code?.replace(/_[\d]+$/, '');
         }
     }
 
@@ -950,10 +887,9 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
         let outputs;
         outputs = outputHelper(code, required, placeholder, validation);
         e.preventDefault();
-        await editAction(outputs, index, workflows, setWorkflows, name, description, code, curAction).then(() => {
+        await editAction(outputs, name, description, code, curAction, refresh).then(() => {
             clearForm();
             setIsOpen(false);
-            window.location.reload(); // TODO remove
         })
     }
 
@@ -967,10 +903,9 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
 
     async function editComplexAction(e){
         e.preventDefault();
-        await editAction(null, index, workflows, setWorkflows, name, description, null, curAction).then(() => {
+        await editAction(null, name, description, null, curAction, refresh).then(() => {
             clearForm();
             setIsOpen(false);
-            window.location.reload(); // TODO remove
         })
     }
 
@@ -984,10 +919,9 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
 
     async function editWorkflowAction(e){
         e.preventDefault();
-        await editWorkflowActionFunction(index, name, description, workflows, setWorkflows, curAction).then(() => {
+        await editWorkflowActionFunction(name, description, curAction, refresh).then(() => {
             clearForm();
             setIsOpen(false);
-            window.location.reload(); // TODO remove
         })
     }
 
@@ -1049,12 +983,49 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
     </>)
 }
 
+
 /**
  * Generic component applicable to all applications
  *
- * @param {{ workflows: any; index: any; actions: any; setIsOpen: any; setParentId: any; depthLevel: any; setDepthLevel: any; setCurAction: any; setIsEdit: any; }} param0 
+ * @param {{ isOpen: any; setIsOpen: (boolean)=>void; action: any; actionDelete: any; workflowDelete: any; refresh: ()=>void}} param0 
  */
-function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, depthLevel, setDepthLevel, setCurAction, setIsEdit}){
+function DeleteModal({isOpen, setIsOpen, action, actionDelete, workflowDelete, refresh}){
+
+    async function deleteAction(){
+        if (action.actionType === 'workflow'){
+            await workflowDelete(action, refresh).then(() => setIsOpen(false))
+        }
+        else {
+            await actionDelete(action, refresh).then(() => setIsOpen(false)) 
+        }
+    }
+
+    return (<Modal centered show={isOpen} onHide={()=>setIsOpen(false)} onExit={()=>setIsOpen(false)}>
+        <Modal.Header>Delete Action</Modal.Header>
+        <Modal.Body>
+            <div className="alert alert-danger">
+                <p>You are about to permanently delete a{action.attributeId ? ' workflow' : 'n action'}!</p> 
+                <p>Are you sure you'd like to delete "{action?.name}"? This cannot be undone!</p>
+            </div>
+            <div className="flex justify-between pt-4">
+                <Button onClick={() => setIsOpen(false)}>Cancel</Button>
+                <Button variant="danger" className="justify-end" onClick={() => deleteAction()}>Confirm</Button>
+            </div>
+        </Modal.Body>
+    </Modal>)
+}
+
+/**
+ * Generic component applicable to all applications
+ *
+ * @param {{ workflows: any; index: any; actions: any; setIsOpen: any; 
+ * setParentId: any; depthLevel: any; setDepthLevel: any; 
+ * setCurAction: any; setIsEdit: any; setDeleteOpen: any;}} param0 
+ */
+function ComplexRenderer({workflows, index, actions, setIsOpen, 
+    setParentId, depthLevel, setDepthLevel, 
+    setCurAction, setIsEdit, setDeleteOpen}){
+    // console.log("Actions", actions)
     return (<>
         {(actions||[]).map((action) => {
         let value;
@@ -1064,12 +1035,18 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, dep
                     <Card.Header className="text-xl">
                     <div className="flex justify-between">
                     <span>{action.name} (Simple Action)</span>
-                    <Button variant="outline-secondary" onClick={() => {
-                        setCurAction(action);
-                        setIsEdit(true);
-                        setIsOpen(true);
-                        console.log(action)
-                    }}><Edit /></Button>
+                    <div>
+                        <Button variant="outline-secondary" onClick={() => {
+                            setCurAction(action);
+                            setIsOpen(true);
+                            setIsEdit(true);
+                            console.log(action)
+                        }}><Edit /></Button>
+                        <Button variant="outline-danger" className="ml-2" onClick={async ()=> {
+                            setCurAction(action);
+                            setDeleteOpen(true);
+                        }}><Trash2 /></Button>
+                    </div>
                     </div>
                     </Card.Header>
                     <Card.Body>
@@ -1103,6 +1080,7 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, dep
                     <Accordion.Header className="w-full [&_.accordion-button::after]:hidden">
                         <div className="flex w-full justify-between">
                         <span className="text-3xl">{action.name} {action.actionType === 'complex' ? '(Complex Action)' : '(Workflow)'}</span>
+                        <div>
                         <Button className="justify-end" variant="outline-dark" 
                         onClick={(e) => {
                             e.stopPropagation();
@@ -1110,6 +1088,12 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, dep
                             setCurAction(action);
                             setIsOpen(true);
                         }}><Edit /></Button>
+                         <Button variant="outline-danger" className="ml-2" onClick={(e) => {
+                            e.stopPropagation();
+                            setCurAction(action);
+                            setDeleteOpen(true);
+                        }}><Trash2 /></Button>
+                        </div>
                         </div>
                     </Accordion.Header>
                     <Accordion.Body>
@@ -1123,7 +1107,8 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, dep
                             depthLevel={depthLevel+1}
                             setDepthLevel={setDepthLevel}
                             setCurAction={setCurAction}
-                            setIsEdit={setIsEdit}/>
+                            setIsEdit={setIsEdit}
+                            setDeleteOpen={setDeleteOpen}/>
                         <div className="flex justify-end pt-3">
                             <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);setCurAction(null);}}>Add New Child Action</Button>
                         </div>
@@ -1143,9 +1128,13 @@ function ComplexRenderer({workflows, index, actions, setIsOpen, setParentId, dep
 /**
  * Generic component applicable to all applications
  *
- * @param {{ index: any; workflows: any; setIsOpen: any; loading: any; setParentId: any; depthLevel: any; setDepthLevel: any; setIsEdit: any; setCurAction: any; setWorkflowModalEdit: any; }} param0 
+ * @param {{ index: any; workflows: any; setIsOpen: any; loading: any; 
+ * setParentId: any; depthLevel: any; setDepthLevel: any; setIsEdit: any; 
+ * setCurAction: any; setWorkflowModalEdit: any; setDeleteOpen: any;}} param0 
  */
-function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, depthLevel, setDepthLevel, setIsEdit, setCurAction, setWorkflowModalEdit}){
+function WorkflowComponent({index, workflows, setIsOpen, loading, 
+    setParentId, depthLevel, setDepthLevel, setIsEdit, 
+    setCurAction, setWorkflowModalEdit, setDeleteOpen}){
     if (loading)
         return <><h1>Loading...</h1></> // Here so a lot of stuff just doesn't break while it loads everything
     else
@@ -1154,12 +1143,19 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, d
         <Accordion.Header className="w-full [&_.accordion-button::after]:hidden">
             <div className="flex w-full justify-between">
             <span className="text-4xl">{workflows[index].name}</span>
+            <div>
             <Button className="justify-end" variant="outline-dark" 
             onClick={(e) => {
                 e.stopPropagation();
                 setCurAction(workflows[index]);
                 setWorkflowModalEdit();
             }}><Edit /></Button>
+            <Button variant="outline-danger" className="ml-2" onClick={(e) => {
+                e.stopPropagation();
+                setCurAction(workflows[index]);
+                setDeleteOpen(true);
+            }}><Trash2 /></Button>
+            </div>            
             </div>
         </Accordion.Header>
         <Accordion.Body>
@@ -1176,12 +1172,18 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, d
                             <Card.Header className="text-xl">
                                 <div className="flex justify-between">
                                 <span>{action.name} (Simple Action)</span>
-                                <Button variant="outline-secondary" onClick={() => {
-                                    setCurAction(action);
-                                    setIsOpen(true);
-                                    setIsEdit(true);
-                                    console.log(action)
-                                }}><Edit /></Button>
+                                <div>
+                                    <Button variant="outline-secondary" onClick={() => {
+                                        setCurAction(action);
+                                        setIsOpen(true);
+                                        setIsEdit(true);
+                                        console.log(action)
+                                    }}><Edit /></Button>
+                                    <Button variant="outline-danger" className="ml-2" onClick={()=> {
+                                        setCurAction(action);
+                                        setDeleteOpen(true);
+                                    }}><Trash2 /></Button>
+                                </div>
                                 </div>
                                 </Card.Header>
                             <Card.Body>
@@ -1215,6 +1217,7 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, d
                             <Accordion.Header className="w-full [&_.accordion-button::after]:hidden">
                                 <div className="flex w-full justify-between">
                                 <span className="text-3xl">{action.name} {action.actionType === 'complex' ? '(Complex Action)' : '(Workflow)'}</span>
+                                <div>
                                 <Button className="justify-end" variant="outline-dark" 
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -1222,6 +1225,12 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, d
                                     setCurAction(action);
                                     setIsOpen(true);
                                 }}><Edit /></Button>
+                                <Button variant="outline-danger" className="ml-2" onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCurAction(action);
+                                    setDeleteOpen(true);
+                                }}><Trash2 /></Button>
+                                </div>
                                 </div>
                             </Accordion.Header>
                             <Accordion.Body>
@@ -1235,7 +1244,8 @@ function WorkflowComponent({index, workflows, setIsOpen, loading, setParentId, d
                                 depthLevel={depthLevel+1}
                                 setDepthLevel={setDepthLevel}
                                 setCurAction={setCurAction}
-                                setIsEdit={setIsEdit}/>
+                                setIsEdit={setIsEdit}
+                                setDeleteOpen={setDeleteOpen}/>
                                 <div className="flex justify-end pt-3">
                                     <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
                                 </div>

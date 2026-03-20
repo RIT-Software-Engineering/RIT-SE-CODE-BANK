@@ -45,7 +45,17 @@ router.put("/workflowTemplate/:workflowId", async(req, res) => {
     } catch (error) {
         return res.status(500).json({error: error.message})
     }
-})
+});
+
+router.delete("/workflowTemplate/:workflowId", async(req, res) => {
+    try {
+        const {workflowId} = req.params;
+        const msg = workflowsFetch("DELETE", `workflows/${workflowId}`);
+        return res.status(200).json({message: msg})
+    } catch (error) {
+        return res.status(500).json({error: error.message});
+    }
+});
 
 router.post("/actionTemplate/action", async (req, res) => {
     try {
@@ -85,12 +95,32 @@ router.put("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
         const {name, description} = req.body;
-        const workflow = workflowsFetch("PUT", `workflows/action/${workflowId}`, {name:name, description: description});
+        const workflow = workflowsFetch("PUT", `/actions/${workflowId}`, {name:name, description: description});
         return res.status(200).json({action: workflow});
     } catch (error) { 
         return res.status(500).json({error: error.message});
     }
 });
+
+router.delete("/actionTemplate/action/:actionId", async (req, res) => {
+    try {
+        const {actionId} = req.params;
+        const msg = workflowsFetch("DELETE", `/actions/${actionId}`);
+        return res.status(200).json({message: msg});
+    } catch (error){
+        return res.status(500).json({error: error.message});
+    }
+});
+
+router.delete("/actionTemplate/workflow/:workflowId", async (req, res) => {
+    try {
+        const {workflowId} = req.params;
+        const msg = workflowsFetch("DELETE", `/actions/${workflowId}`);
+        return res.status(200).json({message: msg});
+    } catch (error) {
+        return res.status(500).json({error: error.message});
+    }
+})
 
 router.put("/actionTemplate/nextAction/:actionId", async (req, res) => {
     try {
