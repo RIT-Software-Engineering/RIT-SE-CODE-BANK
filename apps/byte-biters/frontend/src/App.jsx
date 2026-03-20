@@ -44,12 +44,12 @@ export default function App() {
             <Panel>
               <CodeEditor code={code} setCode={setCode} />
             </Panel>
-            <Panel className="flex flex-col h-full" collapsible minSize={100}>
+            <Panel className="flex flex-col h-full min-h-0 w-full" collapsible minSize={100}>
               {/* temp border */}
               <div className="bg-border-primary min-h-2 "></div>
               <ControlPanel onAssemble={onAssemble} onRun={onRun} onStepForward={onStepForward} onStepBackward={onStepBackward} onRestart={onRestart}></ControlPanel>
               <RegisterPanel registers={cpuState.registers}></RegisterPanel>
-              <MemoryPanel memory={cpuState.memory}></MemoryPanel>
+              <div className="flex min-h-0 w-full"><MemoryPanel memory={cpuState.memory} /></div>
             </Panel>
           </Group>
           

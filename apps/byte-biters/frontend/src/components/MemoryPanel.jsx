@@ -9,9 +9,9 @@ function MemoryRow({ index, style, memory }) {
   const baseAddress = index * 16
 
   return (
-    <div style={style} className="flex">
+    <div style={style} className="flex w-full ">
       {/* Address column */}
-      <div className="w-16 p-2 border text-center border-border-secondary bg-main-secondary">
+      <div className="w-16 border text-center border-border-secondary bg-main-secondary">
         {baseAddress.toString(16).toUpperCase().padStart(4, "0")}
       </div>
 
@@ -20,7 +20,7 @@ function MemoryRow({ index, style, memory }) {
         const address = baseAddress + colIndex
         const value = memory[address] ?? 0
         return (
-          <div key={colIndex} className="w-16 p-2 text-center border border-border-secondary hover:bg-main-primary">
+          <div key={colIndex} className="flex-1 text-center border border-border-secondary hover:bg-main-primary w-full">
             {value.toString(16).toUpperCase().padStart(4, "0")}
           </div>
         )})}
@@ -29,28 +29,33 @@ function MemoryRow({ index, style, memory }) {
 }
 
 function MemoryPanel({ memory = [] }) {
-  const rowCount = Math.ceil(memory.length / 16) 
+  const rowCount = Math.ceil(memory.length / 16)
 
   return (
-    <div className="h-full bg-main-secondary items-center flex flex-col">
+    <div className="h-full w-full bg-main-secondary  flex flex-col">
       
-      <List
-        rowComponent={MemoryRow}
-        rowCount={rowCount}
-        rowHeight={32}
-        rowProps={{ memory }}
-        style={{ height: "100%" }}
-      >
-      <div className="flex sticky top-0 bg-main-secondary border-border-secondary">
-        <div className="w-16 flex"></div>
+      <div className="flex shrink-0 w-full pr-5 pl-5">
+        <div className="w-16 border border-border-secondary bg-main-secondary"></div>
         {COLUMNS.map((col) => (
-          <div key={col} className="w-16 text-center border border-border-secondary">
-             +{col} 
+          <div
+            key={col}
+            className="flex-1 text-center border border-border-secondary w-full"
+          >
+            +{col}
           </div>
         ))}
       </div>
 
-      </List>
+      <div className="flex-1 min-h-0 w-full overflow-y-scroll pl-5">
+        <List
+          rowComponent={MemoryRow}
+          rowCount={rowCount}
+          rowHeight={32}
+          rowProps={{ memory }}
+          height={500} 
+          width="100%"
+        />
+      </div>
     </div>
   )
 }
