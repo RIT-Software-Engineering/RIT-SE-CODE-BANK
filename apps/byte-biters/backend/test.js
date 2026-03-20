@@ -54,24 +54,28 @@ function readWordFromBytes(mem, addr) {
 
 
 const program = `
-MOV #5, R0
-MOV #7, R1
-ADD R1, R0
+MOV #0x3000, R1
+MOV #0x4000, R2
+MOV #0xBEEF, @#0x3000
+MOV #0x0000, @#0x4000
+MOV (R1)+, (R2)+
 HALT
 `;
 
 backend.loadAssembly(program);
 
-const result = backend.step();
-console.log(result.registers);
-console.log(result.flags);
+backend.step();
+backend.step();
+backend.step();
+backend.step();
+let s1 = backend.step();
+console.log("Step:", s1.registers, s1.flags);
+console.log("Memory[0x4000] =", readWordFromBytes(s1.memory, 0x4000));
 
-const result2 = backend.step();
-console.log(result2.registers);
-console.log(result2.flags);
+let b1 = backend.backStep();
+console.log("Backstep:", b1.registers, b1.flags);
+console.log("Memory[0x4000] =", readWordFromBytes(b1.memory, 0x4000));
 
-const result3 = backend.backStep();
-console.log(result3.registers);
-console.log(result3.flags);
+
 
 
