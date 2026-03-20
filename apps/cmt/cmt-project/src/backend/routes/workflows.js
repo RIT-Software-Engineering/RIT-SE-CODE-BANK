@@ -1,6 +1,6 @@
 import express from "express";
 import { createAction, makeMetadataSafeForWorkflows, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch } from "../utils/workflows/api.js";
-import { actionToActionWithContext } from "../utils/workflows/actionPipeline.js";
+import { actionToActionWithContext, metadataArrayToObject } from "../utils/workflows/actionPipeline.js";
 const router = express.Router();
 export default router
 
@@ -17,7 +17,10 @@ router.put("/editCheckmarkAction", async (req, res) => {
 
 router.get("/workflowTemplate", async(_, res) => {
     try {
-        const workflows = await workflowsFetch("GET", "workflows/?tags=workflowFirstTheRestNowhere_CMT_Template");
+        const workflows = await workflowsFetch("GET", "workflows/?tags=WorkflonyFirstTheRestNowhere_CMT_Template");
+        workflows.forEach(workflow => {
+            workflow.baseAction.metadata = metadataArrayToObject(workflow.baseAction.metadata);
+        });
         return res.status(200).json({workflows: workflows})
     } catch (error) {
         return res.status(500).json({error: error.message});
@@ -28,6 +31,15 @@ router.post("/workflowTemplate", async(req, res) => {
     try {
         const {workflow} = req.body; 
         const professorId = req.user.uid;
+        const workflows = await workflowsFetch("GET", "workflows/?tags=WorkflonyFirstTheRestNowhere_CMT_Template");
+        console.log("NEw meta code:", workflow.metadata?.code)
+        workflows.forEach(prevWorkflows => {
+            const prevMetaCode = JSON.parse(prevWorkflows.baseAction.metadata?.code)
+            console.log(prevMetaCode)
+            console.log(prevMetaCode === workflow.metadata?.code)
+            if (prevMetaCode !== "None" && prevMetaCode === workflow.metadata?.code)
+                throw new Error("A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again.")
+        });
         const newWorkflow = await objectToNewWorkflow(workflow, professorId);
         return res.status(200).json({workflow: newWorkflow});
     } catch (error) {
@@ -37,9 +49,18 @@ router.post("/workflowTemplate", async(req, res) => {
 
 router.put("/workflowTemplate/:workflowId", async(req, res) => {
     try {
-        const {name, description, tags} = req.body; 
+        const {name, description, tags, metadata} = req.body; 
         const {workflowId} = req.params;
-        const updatedWorkflow = await workflowsFetch("PUT", `workflows/${workflowId}`, {name:name, description:description, tags: tags});
+        const workflows = await workflowsFetch("GET", "workflows/?tags=WorkflonyFirstTheRestNowhere_CMT_Template");
+        workflows.forEach(prevWorkflows => {
+            const prevMetaCode = JSON.parse(prevWorkflows.baseAction.metadata?.code)
+            if (prevMetaCode !== "None" && prevMetaCode === metadata?.code)
+                throw new Error("A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again.")
+        });
+        let safeMetadata;
+        if (metadata)
+            safeMetadata = makeMetadataSafeForWorkflows(metadata);
+        const updatedWorkflow = await workflowsFetch("PUT", `workflows/${workflowId}`, {name:name, description:description, tags: tags, metadata: safeMetadata});
         return res.status(200).json({workflow: updatedWorkflow});
     } catch (error) {
         return res.status(500).json({error: error.message})
@@ -137,11 +158,9 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
         const {workflowId} = req.params;
         console.log("=".repeat(50))
         const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
-        // console.log(actions)
         const actionWithContexts = actions.map(action => 
             actionToActionWithContext(action, null, null, req.user?.uid)
         );
-        // console.log(actionWithContexts)
         return res.status(200).json({actions: actionWithContexts, awc: actionWithContexts})
     } catch (error) {
         return res.status(500).json({error: error.message});

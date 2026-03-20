@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Accordion, Button, Card, Form, Modal } from "react-bootstrap";
+import { Accordion, Button, Card, Form, FormLabel, Modal } from "react-bootstrap";
 import { CMTFetch } from "../utils/api";
 import { workflowsFetch } from "../backend/utils/workflows/api";
 import { Edit, Trash2 } from "lucide-react";
@@ -26,6 +26,7 @@ export function BuilderPage(){
     const [curAction, setCurAction] = useState({});
     const [isEdit, setIsEdit] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [metaWorkflow, setMetaWorkflow] = useState('None');
 
     const update = useCallback(async () => {
         return CMTFetch("GET", "/workflony/workflowTemplate").then(async response => {
@@ -47,7 +48,8 @@ export function BuilderPage(){
                         name: info.name,
                         description: info.description,
                         actions: actions || [],
-                        tags: workflow.tags.filter(tag => tag !== "workflowFirstTheRestNowhere_CMT_Template"),
+                        metadata: info.metadata,
+                        tags: workflow.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"),
                     }
                 });
                 const resolvedWorkflows = await Promise.all(workflowPromises);
@@ -70,7 +72,13 @@ export function BuilderPage(){
 
         <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} 
         setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit} isEdit={isEdit} curWorkflow={curAction}
-        setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmit}/>
+        setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmit} metaWorkflow={metaWorkflow} setMetaWorkflow={setMetaWorkflow}>
+            <Form.Label>What Meta-workflow should this be used for?</Form.Label>
+            <Form.Select onChange={e=>setMetaWorkflow(e.target.value)}>
+                <option>None</option>
+                <option>Course Creation Workflow</option>
+            </Form.Select>
+        </WorkflowModal>
 
         <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} workflows={workflows} setWorkflows={setWorkflows} 
         availCodes={availCodes} parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
@@ -294,14 +302,19 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
  * @param {*} description 
  * @param {*} workflows 
  * @param {*} setWorkflows 
+ * @param {(error:string) => void} setError
  */
-async function workflowSubmit(name, description, tags, workflows, setWorkflows){
+async function workflowSubmit(name, description, tags, metaWorkflow, workflows, setWorkflows, setError){
     const workflow = {
         name: name,
         description: description,
         actions: [],
-        tags: [...tags, "workflowFirstTheRestNowhere_CMT_Template"]
+        tags: [...tags, "WorkflonyFirstTheRestNowhere_CMT_Template"],
+        metadata: {
+            code: metaWorkflow,
+        },
     };
+    let returnVal;
     CMTFetch("POST", "/workflony/workflowTemplate", {workflow}).then(async response => {
         const data = await response.json();
         setWorkflows([...workflows, {
@@ -312,14 +325,40 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows){
             actions: [],
         }]);
         console.log(data)
+        returnVal = "Good";
+    }).catch(async error => {
+        const data = await error.response.json();
+        setError(data.error);
+        returnVal = "Bad";
     });
+    return returnVal;
 }
 
-async function workflowEditSubmit(name, description, tags, workflows, setWorkflows, workflowToUpdate){
-    tags.push("workflowFirstTheRestNowhere_CMT_Template");
-    CMTFetch("PUT", `/workflony/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags}).then(async response => {
+/**
+ * CMT-Specific function
+ *
+ * @async
+ * @param {*} name 
+ * @param {*} description 
+ * @param {*} tags 
+ * @param {*} metaWorkflow 
+ * @param {*} workflows 
+ * @param {*} setWorkflows 
+ * @param {(error:string) => void} setError
+ * @param {*} workflowToUpdate 
+ */
+async function workflowEditSubmit(name, description, tags, metaWorkflow, workflows, setWorkflows, setError, workflowToUpdate){
+    if (tags)
+        tags.push("WorkflonyFirstTheRestNowhere_CMT_Template");
+    let metadata;
+    if (metaWorkflow)
+        metadata = {code: metaWorkflow};
+    let returnVal;
+    await CMTFetch("PUT", `/workflony/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags, metadata}).then(async response => {
         const data = await response.json();
-        tags = tags.slice(0, -1);
+        console.log("Fart", data.error)
+        if (tags)
+            tags = tags.slice(0, -1);
         const workflowsCopy = workflows.map(workflow => {
             if (workflow.id !== data.workflow.baseActionId)
                 return workflow
@@ -335,7 +374,13 @@ async function workflowEditSubmit(name, description, tags, workflows, setWorkflo
         })
         setWorkflows(workflowsCopy);
         console.log(data)
+        returnVal = "Good";
+    }).catch(async error => {
+        const data = await error.response.json();
+        setError(data.error);
+        returnVal = data.error;
     });
+    return returnVal;
 }
 
 /**
@@ -751,40 +796,60 @@ async function deleteWorkflow(workflowToDelete, refresh){
 /**
  * Generic component applicable to all applications
  *
- * @param {{ isOpen: any; setIsOpen: any; workflows: any; setWorkflows: any; WorkflowSubmit: any; curWorkflow: any; isEdit: any; setIsEdit: any; workflowEditSubmit: any; }} param0 
+ * @param {{ isOpen: any; setIsOpen: any; workflows: any; setWorkflows: any; 
+ * WorkflowSubmit: any; curWorkflow: any; isEdit: any; setIsEdit: any; 
+ * workflowEditSubmit: any; metaWorkflow: any; setMetaWorkflow: any; children : any; }} param0 
  */
-function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSubmit, curWorkflow ,isEdit, setIsEdit, workflowEditSubmit} ){
+function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, 
+    WorkflowSubmit, curWorkflow ,isEdit, setIsEdit, 
+    workflowEditSubmit, metaWorkflow, setMetaWorkflow, children} ){
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [tags, setTags] = useState('');
+    const [error, setError] = useState('');
 
     function clearForm(){
         setName('');
         setDescription('');
         setTags('');
         setIsEdit(false);
+        setMetaWorkflow('None');
+        setError('');
     }
 
     function loadForm(){
-        setName(curWorkflow.name);
-        setDescription(curWorkflow.description);
-        setTags(curWorkflow.tags);
+        setName(curWorkflow.name?.trim());
+        setDescription(curWorkflow.description?.trim());
+        setTags(curWorkflow.tags?.join(", "));
     }
 
     async function submitWorkflow(){
         const uploadTags = tags.split(",").map(tag => tag.trim());
-        await WorkflowSubmit(name, description, uploadTags, workflows, setWorkflows);
+        const submission = await WorkflowSubmit(name, description, uploadTags, metaWorkflow, workflows, setWorkflows, setError);
+        if (submission === "Good"){
+            clearForm();
+            setIsOpen(false);
+        }
     }
 
     async function editWorkflow(){
-        const uploadTags = tags.split(",").map(tag => tag.trim());
-        await workflowEditSubmit(name, description, uploadTags, workflows, setWorkflows, curWorkflow)
+        const uploadTags = tags?.split(",").map(tag => tag.trim());
+        const submission = await workflowEditSubmit(name, description, uploadTags, metaWorkflow, workflows, setWorkflows, setError, curWorkflow);
+        if (submission === "Good"){
+            clearForm();
+            setIsOpen(false);
+        }
     }
 
     return (<>
     <Modal size="lg" show={isOpen} onShow={()=>{if (isEdit){loadForm()}}} centered onHide={()=>{setIsOpen(false); clearForm()}} onExit={()=>{setIsOpen(false);clearForm()}}>
         <Modal.Header closeButton>{isEdit ? 'Edit': 'New'} Workflow</Modal.Header>
         <Modal.Body>
+            {error ? 
+            <div className="alert alert-danger">
+                {error}
+            </div>
+            : <></>}
             <Form>
                 <div>
                     <Form.Label>Workflow Name</Form.Label>
@@ -793,13 +858,12 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, WorkflowSub
                     <Form.Control required onChange={e=>setDescription(e.target.value)} defaultValue={isEdit ? curWorkflow.description : ""}/>
                     <Form.Label>Workflow Tags (Seperate by commas)</Form.Label>
                     <Form.Control required onChange={e=>setTags(e.target.value)} defaultValue={isEdit ? curWorkflow.tags : ""}/>
+                    {children}
                 </div>
                 
                 <div className="flex pt-2 justify-end">
                     <Button type="submit" onClick={(e) => {
                         e.preventDefault();
-                        clearForm();
-                        setIsOpen(false);
                         if (isEdit)
                             editWorkflow();
                         else
@@ -1179,7 +1243,7 @@ function WorkflowComponent({index, workflows, setIsOpen, loading,
                 <p>Description: {workflows[index].description}</p>
             </div>
             <div className="text-2xl">
-                Tags: {workflows[index].tags.length > 0 ? workflows[index].tags.map(tag => {return `${tag}, `}) : 'None'}
+                Tags: {workflows[index].tags?.length > 0 ? workflows[index].tags.join(", ") : 'None'}
             </div>
             {(workflows[index].actions || []).map(actione => {
                 let action = actione.action;

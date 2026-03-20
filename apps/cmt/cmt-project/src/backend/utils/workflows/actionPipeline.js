@@ -100,6 +100,7 @@ export function determineCallback(code, asid, courseId, userId) {
 * @param {any} metadataArray array of metadata given by the workflows API (and our endpoints)
 */
 export function metadataArrayToObject(metadataArray) {
+  if (!metadataArray) return {}
 
   return Object.fromEntries(Object.entries(metadataArray).map(([key, value]) => {
     return [key, JSON.parse(value)];

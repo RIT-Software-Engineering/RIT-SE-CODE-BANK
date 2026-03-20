@@ -78,8 +78,9 @@ export async function CMTFetch(method, url, body, headers, allowedErrorCodes = [
     }
     
     // Create specially formatted error so consumer can access the codes easily
+    const clonedResponse = response.clone();
     throw new CMTFetchError(
-        `🐘 Error status ${response.status}: ${JSON.stringify(await response.json())} from url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`, 
+        `🐘 Error status ${response.status}: ${JSON.stringify(await clonedResponse.json())} from url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`, 
         response
     )
 }
