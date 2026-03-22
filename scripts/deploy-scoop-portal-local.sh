@@ -43,12 +43,12 @@ docker compose -f docker-compose.staging.yml down
 #   fi
 # }
 
-# create_env_file "$PORTAL_SERVER_DIR/.env" \
+# create_env_file "$PORTAL_SERVER_DIR/.env.development.development" \
 # 'DATABASE_URL="mysql://root:password@localhost:3308/scoop_portal_demo"
 # WORKFLOWS_URL="mysql://root:password@127.0.0.1:3307/scoop_portal_demo"
 # PORT=5000'
 
-# create_env_file "$PORTAL_UI_DIR/.env" \
+# create_env_file "$PORTAL_UI_DIR/.env.development.development" \
 # 'PORT=3020
 # API_PORT=5020
 # NEXT_PUBLIC_URL_BASE_PATH=/scoop-portal'
@@ -74,7 +74,7 @@ docker compose -f docker-compose.staging.yml down
 
 
 
-docker compose -f docker-compose.staging.yml up -d --build
+docker compose -f docker-compose.development.yml up -d --build
 echo "we made it"
 cd ./apps/scoop-portal/server
 echo $(pwd)

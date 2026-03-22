@@ -25,6 +25,8 @@ replay_pid*
 
 # vs code individual workspace settings
 .env
+.env.development
+.env.production
 *.code-workspace
 *.vscode
 
