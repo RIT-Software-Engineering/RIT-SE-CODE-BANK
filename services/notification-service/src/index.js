@@ -4,12 +4,14 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-dotenv.config({ path: "../.env" });
+const env = process.env.NODE_ENV || "development";
+dotenv.config({ path: `../.env.${env}` });
+
 const app = express();
 
 app.use(
   cors({
-    origin: 'http://apps-staging.se.rit.edu/',
+    origin: process.env.BASE_URL || "http://localhost:3000",
     credentials: true,
   }),
 );
