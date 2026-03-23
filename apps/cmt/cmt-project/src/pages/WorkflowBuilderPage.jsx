@@ -437,7 +437,8 @@ async function setNextActionInfo(action, actions, workflowId, id, name, descript
         if (action.childActions?.length > 0){
             let prevAction = action.childActions[action.childActions.length - 1];
             prevAction.nextActionId = id;
-            await CMTFetch("PUT", `/workflony/actionTemplate/nextAction/${prevAction.id}`, {name: null, description: null, nextActionId: id});
+            if (action.actionType !== 'complex')
+                await CMTFetch("PUT", `/workflony/actionTemplate/nextAction/${prevAction.id}`, {name: null, description: null, nextActionId: id});
             actionList.push({...prevAction});
         }
         actionList.push({
@@ -500,7 +501,6 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
                     workflowParent = findParent(actions.action?.childActions, parentActionId)
             }
         }
-        
         isWorkflowChild = workflowParent?.actionType === "workflow";
     }
     if (code)
@@ -597,15 +597,14 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
         if (!isWorkflowChild){
             // If this is the first action then we set the root action
             console.log("The thing", workflowsCopy[index])
-            if (workflowsCopy[index].actions.length === 1)
+            if (workflowsCopy[index].actions.length === 1 && workflowParent.id === workflowsCopy[index].id)
                 await workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
                 rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
             else 
                 setWorkflows(workflowsCopy);
         }
         else {
-            console.log(workflowParent)
-            if (workflowParent.childActions.length > 1)
+            if (workflowParent.childActions.length > 0)
                 setWorkflows(workflowsCopy);
             else {
                 await workflowsFetch("PUT", `workflows/action/${workflowParent.id}`, {
