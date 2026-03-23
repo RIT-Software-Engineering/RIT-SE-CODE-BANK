@@ -2,10 +2,10 @@
 import { useUser } from "utils/user-context/page";
 import UnauthorizedPage from "unauthorized/page";
 
-export default function ProtectedRoute({ children, requiredRole }) {
+export default function ProtectedRoute({ children, requiredRoles = [] }) {
   const { user } = useUser();
 
-  if (!user || user.type !== requiredRole) {
+  if (!user || !requiredRoles.includes(user.type)) {
     return <UnauthorizedPage />;
   }
 
