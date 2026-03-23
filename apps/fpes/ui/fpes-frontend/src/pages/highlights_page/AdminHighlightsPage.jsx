@@ -60,7 +60,7 @@ export default function AdminHighlightsPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {highlights.map((row, idx) => (
+                        {highlights.map((row) => (
                         <Fragment key={row.form_id}>
                             <TableRow>
                                 <TableCell>{row.form_id}</TableCell>

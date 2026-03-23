@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper} from "@mui/material";
 import ServiceForm from "./ServiceForm";
 import { Controller, useFieldArray } from "react-hook-form";
 
-export default function ServicesFormStep({form_id, control, errors, handle}){
+export default function ServicesFormStep({form_id, control, errors}){
     const [number_of_services, setNumberOfServices] = useState(0);
 
     function Service(form_id){

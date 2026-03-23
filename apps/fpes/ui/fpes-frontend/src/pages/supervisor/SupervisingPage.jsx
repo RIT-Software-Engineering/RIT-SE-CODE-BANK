@@ -1,4 +1,3 @@
-import { useState, useEffect} from 'react';
 import SupervisedFacultyTable from './SupervisedFacultyTable';
 import AssignRemoveSupervisorsForm from './AssignRemoveSupervisorsForm';
 import SupervisedFormsTable from './SupervisedFormsTable';

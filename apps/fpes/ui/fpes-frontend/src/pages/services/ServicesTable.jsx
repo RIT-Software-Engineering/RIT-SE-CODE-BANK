@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { DataGrid, renderActionsCell} from '@mui/x-data-grid';
+import { useState } from "react";
+import { DataGrid } from '@mui/x-data-grid';
 import {Paper, Button, IconButton, Modal, Box, Typography} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
@@ -45,7 +45,7 @@ export default function ServicesTable({services, setServices}) {
         {field : "delete", headerName : "", width: 40, renderCell:(params) => {
         return (
           <IconButton
-            onClick={(e) => onDeleteClick(params.row)}
+            onClick={() => onDeleteClick(params.row)}
             variant="contained"
             color="text.primary"
             sx={{left:"50%", transform:"translate(-50%, 0%)"}}
@@ -78,7 +78,7 @@ export default function ServicesTable({services, setServices}) {
                 <Typography id="modal-modal-description" sx={{ mt: 2 }}>
                     This cannot be undone...
                 </Typography>
-                <Button variant="outlined" onClick={(e) => setDeleteModalOpen(false)}>Cancel</Button>
+                <Button variant="outlined" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
                 <Button sx={{left: '65%', transform: 'translate(-50%, 0%)'}} variant="contained" color="error" onClick={() => removeRecord(deleteModalId)}>Delete</Button>
             </Box>
             </Modal>

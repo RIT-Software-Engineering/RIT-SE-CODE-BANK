@@ -1,5 +1,5 @@
 import { useState, useEffect} from 'react';
-import { DataGrid, renderActionsCell} from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import { Box, Typography } from '@mui/material';
 
@@ -12,7 +12,7 @@ export default function SupervisedFacultyTable({supervisorId}){
             setSupervised(res.data); 
             console.log("http://localhost:3000/faculty/supervised_by/" + supervisorId);
         })
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const columns = [
         {field : "faculty_id", headerName : "Faculty ID", flex:.5},

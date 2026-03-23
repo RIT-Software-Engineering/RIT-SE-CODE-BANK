@@ -1,27 +1,10 @@
-import { useEffect, useState } from "react";
 import { Select, TextField, Button, MenuItem, Box, Grid, Paper, Autocomplete, Radio, InputLabel, FormControl, FormHelperText} from "@mui/material";
 import { Form, useForm } from "react-hook-form"
 
 import axios from "axios";
 
-const modal_box_style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-};
-
-const text_field_style = {
-    left: '0%'
-}
-
 export default function CourseSectionsForm({setCourseSections, courses}){
-    const {register, handleSubmit, reset, formState:{errors}} = useForm();
+    const {register, handleSubmit, formState:{errors}} = useForm();
 
     function createCourseIDDictionary(courses){
         const course_ids = new Map();

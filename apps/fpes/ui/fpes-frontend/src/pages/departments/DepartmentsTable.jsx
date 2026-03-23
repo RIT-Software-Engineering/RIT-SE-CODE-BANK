@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
-import { DataGrid, renderActionsCell} from '@mui/x-data-grid';
+import { useState } from "react";
+import { DataGrid } from '@mui/x-data-grid';
 import {Paper, Button, IconButton, Modal, Box, Typography} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
 import DepartmentsForm from "./DepartmentsForm";
-import { editingStateInitializer } from "@mui/x-data-grid/internals";
 
 
 
@@ -45,7 +44,7 @@ export default function DepartmentsTable({departments, setDepartments}) {
     // Updates state to remove record
     const removeRecord = (id) => {
         axios.delete("http://localhost:3000/departments" + `/${id}`)
-        .then((res) => {
+        .then(() => {
             const newDepartments = departments.filter(record => record.id != (id));
             setDepartments(newDepartments);
             setDeleteModalOpen(false);
@@ -59,7 +58,7 @@ export default function DepartmentsTable({departments, setDepartments}) {
 
     const updateDepartment = (data) => {
         axios.put("http://localhost:3000/departments" + `/${editModalValues.id}`, data)
-        .then((res) => {
+        .then(() => {
             setDepartments(prevDepartments => prevDepartments.map((department) => {
                 if(department.id == editModalValues.id){
                     data.id = editModalValues.id;
@@ -79,7 +78,7 @@ export default function DepartmentsTable({departments, setDepartments}) {
         {field : "edit", headerName : "", width: 40, renderCell:(params) => {
         return (
           <IconButton
-            onClick={(e) => onEditClick(params.row)}
+            onClick={() => onEditClick(params.row)}
             variant="contained"
             color="text.primary"
             sx={{left:"50%", transform:"translate(-50%, 0%)"}}
@@ -91,7 +90,7 @@ export default function DepartmentsTable({departments, setDepartments}) {
         {field : "delete", headerName : "", width: 40, renderCell:(params) => {
         return (
           <IconButton
-            onClick={(e) => onDeleteClick(params.row)}
+            onClick={() => onDeleteClick(params.row)}
             variant="contained"
             color="text.primary"
             sx={{left:"50%", transform:"translate(-50%, 0%)"}}
@@ -125,7 +124,7 @@ export default function DepartmentsTable({departments, setDepartments}) {
                 <Typography id="modal-modal-description" sx={{ mt: 2 }}>
                     This cannot be undone...
                 </Typography>
-                <Button variant="outlined" onClick={(e) => setDeleteModalOpen(false)}>Cancel</Button>
+                <Button variant="outlined" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
                 <Button sx={{left: '65%', transform: 'translate(-50%, 0%)'}} variant="contained" color="error" onClick={() => removeRecord(deleteModalId)}>Delete</Button>
             </Box>
             </Modal>
@@ -133,9 +132,9 @@ export default function DepartmentsTable({departments, setDepartments}) {
             <Modal open={editModalOpen}>
                 <Box sx={modal_box_style}>
                     <div>
-                        <DepartmentsForm departments={departments} setDepartments={setDepartments} isUpdate={true} defaultValues={editModalValues} onSubmit={updateDepartment}/>
+                        <DepartmentsForm setDepartments={setDepartments} isUpdate={true} defaultValues={editModalValues} onSubmit={updateDepartment}/>
                     </div>
-                    <Button variant="outlined" onClick={(e) => setEditModalOpen(false)}>Cancel</Button>
+                    <Button variant="outlined" onClick={() => setEditModalOpen(false)}>Cancel</Button>
                 </Box>
             </Modal>
         </span>

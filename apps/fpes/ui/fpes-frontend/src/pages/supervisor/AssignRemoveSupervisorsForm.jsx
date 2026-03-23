@@ -15,19 +15,17 @@ export default function AssignRemoveSupervisorsForm(){
 
     useEffect(() => {
         axios.get("http://localhost:3000/faculty")
-        .then(
-            (response) => {
+        .then((response) => {
                 setFaculty(response.data);
                 console.log(faculty);
-            } 
-        );
+            });
         axios.get("http://localhost:3000/faculty/supervisors")
         .then(
             (response) => {
                 setSupervisors(response.data);
             }
         );
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     function getAvailableFacultyToAssign(){
         let availableFaculty = [];

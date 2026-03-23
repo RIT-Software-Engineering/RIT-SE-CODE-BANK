@@ -1,8 +1,7 @@
 import { AppBar, Box, Button, FormControl, InputLabel, MenuItem, Select, Toolbar } from '@mui/material'
-import react from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
-export default function Header({ pages, adminView, isAuthenticated, onLogout, roles }) {
+export default function Header({ pages, isAuthenticated, onLogout, roles }) {
     
     const profilePage = pages.find(page => page.name === "Profile");
     const navigate = useNavigate()

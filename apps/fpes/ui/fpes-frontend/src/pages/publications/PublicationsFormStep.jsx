@@ -7,7 +7,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 
 
-export default function PublicationsFormStep({form_id, control, errors, handle}){
+export default function PublicationsFormStep({form_id, control, errors}){
     const [numberOfPublications, setNumberOfPublications] = useState(0);
 
     function Publication(form_id){

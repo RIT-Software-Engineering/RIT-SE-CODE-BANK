@@ -17,19 +17,19 @@ export default function SupervisedFormsTable({facultyId}){
         axios.get("http://localhost:3000/forms/supervisor/" + facultyId)
         .then((response) => {
             const data = response.data;
-            data.map((form, index) => {
+            data.map((form) => {
                 form.time_submitted = form.time_submitted.match(/^\d{4}-\d{2}-\d{2}/)
             })
             setForms(data);
         })
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const columns = [
         {field : "name", headerName : "Faculty Name", flex:1},
         {field : "type", headerName : "Form Type", flex:.5},
         {field : "time_submitted", headerName : "Submitted On", flex:1},
         {field : "Open", flex: .5, sortable: false, renderCell : (params) => {
-            const onClick = (e) => {
+            const onClick = () => {
                 axios.get("http://localhost:3000/forms/" + params.row.id + "/view_format")
                 .then( (response) => {
                     setViewModalForm(response.data);

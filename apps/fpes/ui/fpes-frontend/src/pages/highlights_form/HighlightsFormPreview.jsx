@@ -1,7 +1,6 @@
 import { Box, Card, CardContent, Grid, Paper, Typography } from "@mui/material";
-import { useState } from "react";
 
-export default function HighlightsFormPreview({formData, idToLookup = null}){
+export default function HighlightsFormPreview({formData}){
     
 
     function CourseSectionCard({courseSectionData}){

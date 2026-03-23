@@ -7,16 +7,12 @@ import ServicesFormStep from "./ServicesFormStep.jsx";
 export default function ServicesPage() {
     const [services, setServices] = useState([]);
 
-    const getAllServices = () => {
-        useEffect(() => {
-            getServices()
-            .then((response) => {
-                setServices(response.data);
-            })
-        }, []);
-    }
-
-    getAllServices();
+    useEffect(() => {
+        getServices()
+        .then((response) => {
+            setServices(response.data);
+        })
+    }, []);
     return(
         <div>
             <h2>Services Page</h2>
