@@ -11,7 +11,7 @@ import { AbstractActionRenderer } from './GenericActionRenderer'
  * @template T
  * @param {ActionRendererProps<T>} props
  */
-export function FormActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback }) {
+export function FormActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, onNavigateFactory }) {
     const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContext.action.metadata, previousValues))
 
     const validatorRegistry = useRef({})
@@ -50,6 +50,7 @@ export function FormActionRenderer({ actionWithContext, previousValues, refresh,
                 setOutputValues={setOutputValues}
                 submitted={submitted}
                 validatorRegistry={validatorRegistry}
+                onNavigateFactory={onNavigateFactory}
             />
             <Button type='submit' variant={submitButtonVariant}>
                 {submitButtonName}

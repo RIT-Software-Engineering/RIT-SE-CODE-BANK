@@ -58,7 +58,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 return (
                     <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
                         <Accordion.Header>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
                                 {/* TODO: completion should be tracked in the DB in case a professor wants to create more sessions than required */}
                                 {sessionAction && <CheckmarkActionRenderer actionWithContext={sessionAction} refresh={updateWorkflow} fetchToCallback={fetchToCallback}/>}
                                 <span className='text-2xl'>Session {i+1}</span>

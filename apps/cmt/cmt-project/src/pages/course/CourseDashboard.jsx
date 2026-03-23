@@ -5,7 +5,7 @@ import { CMTJsonFetch } from '../../utils/api'
 import { Session } from './Session';
 import { InlineActionRenderer } from '../../components/workflows/ActionRenderers/InlineActionRenderer'
 import { InlineFormHoverable } from '../../components/forms/InlineForms'
-import { flattenActionsWithContext } from '../../utils/workflows'
+import { UseCMTOnNavigateFactory, flattenActionsWithContext } from '../../utils/workflows'
 import { ArrowLeft } from 'lucide-react'
 import { Button} from 'react-bootstrap'
 import { ResourceManager } from '../../components/resources/ResourceManager'
@@ -54,7 +54,7 @@ export function CourseDashboard() {
 
     /** @type IsCheckmark */
     const isCheckmark = useCallback(
-        code => code === "CHECKBOX" || code.includes("SESSION_"),
+        code => code.includes("CHECKMARK") || code.includes("SESSION_"),
         []
     )
 
@@ -86,6 +86,7 @@ export function CourseDashboard() {
                         refresh={update}
                         fetchToCallback={fetchToCallback}
                         isCheckmark={isCheckmark}
+                        onNavigateFactory={UseCMTOnNavigateFactory}
                     />
                 </div>
             </div>
