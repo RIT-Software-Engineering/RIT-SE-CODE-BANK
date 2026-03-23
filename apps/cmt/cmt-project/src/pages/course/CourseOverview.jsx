@@ -111,9 +111,10 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
     const [color, setColor] = useState('')
 
     const [submitButtonElement, setSubmitButtonElement] = useState(<><PlusIcon />Submit</>)
+    const [submitting, setSubmitting] = useState(false);
 
     const [colorHidden, setColorHidden] = useState(true);
-    const [warnHidden, setWarnHidden] = useState(true);
+    const [warning, setWarning] = useState('');
 
     const navigate = useNavigate()
 
@@ -121,15 +122,21 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
         e.preventDefault()
         if (color === "rainbow" || !color){
             console.log("Pick a color!")
-            setWarnHidden(false);
+            setWarning('Please select a color!');
             return false;
         }
+        setSubmitting(true);
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
         CMTFetch('POST', '/course', { courseCode, courseName, color }).then(async response => {
             setSubmitButtonElement(<><Check />Created!</>)
-            const json = await response.json()
-            setTimeout(async () => navigate(`/courses/${json.course.id}`), 500)
-        })
+            const json = await response.json();
+            setTimeout(async () => navigate(`/courses/${json.course.id}`), 500);
+        }).catch(async error => {
+            const data = await error.response.json();
+            setWarning(data.details);
+            setSubmitButtonElement(<><PlusIcon />Submit</>)
+            setSubmitting(false);
+        });
     }
 
     function handleColorEdit(e){
@@ -137,7 +144,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
         if (color === "rainbow" || !color){
             console.log("Pick a color!")
             e.preventDefault();
-            setWarnHidden(false);
+            setWarning('Please select a color!');
             return false;
         }
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Submitting...</>)
@@ -151,7 +158,8 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
         setCourseName("");
         setColor("");
         setColorHidden(true);
-        setWarnHidden(true);
+        setWarning('');
+        setSubmitting(false);
     }
 
 
@@ -160,7 +168,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
             <Modal show={isOpen} onExit={resetForm} onHide={() => setIsOpen(false)} centered>
                 <Modal.Header closeButton>{!isEdit ? 'Create Course' : 'Edit Color'}</Modal.Header>
                 <Modal.Body>
-                    <div className={`${warnHidden ? 'hidden' : 'block'} alert alert-danger`}>Please select a color!</div>
+                    <div className={`${warning ? 'block' : 'hidden'} alert alert-danger`}>{warning}</div>
                     <Form onSubmit={!isEdit ? handleCourseCreation : handleColorEdit}>
                         <div className={`flex gap-10 mb-4 ${isEdit ? 'hidden' : 'block'}`}>
                             <div>
@@ -181,7 +189,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
                             
                         </div>
                         {colorHidden ? <></> : <div className='mb-3'>{<ColorWheel setColor={setColor}/>}</div>}
-                        <Button type='submit'>
+                        <Button type='submit' disabled={submitting}>
                             <div className='flex gap-1 -ml-1 mr-1'>
                                 {submitButtonElement}
                             </div>

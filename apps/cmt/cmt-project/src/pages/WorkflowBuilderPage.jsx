@@ -74,7 +74,7 @@ export function BuilderPage(){
         setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit} isEdit={isEdit} curWorkflow={curAction}
         setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmit} metaWorkflow={metaWorkflow} setMetaWorkflow={setMetaWorkflow}>
             <Form.Label>What Meta-workflow should this be used for?</Form.Label>
-            <Form.Select onChange={e=>setMetaWorkflow(e.target.value)}>
+            <Form.Select onChange={e=>setMetaWorkflow(e.target.value)} value={metaWorkflow}>
                 <option>None</option>
                 <option>Course Creation Workflow</option>
             </Form.Select>
@@ -170,7 +170,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             <div className="flex ">
                 <div className="w-2/5">
                 <Form.Label>Year Options (seperate each by a comma)</Form.Label>
-                <Form.Control placeholder={`e.g. ${[0,1,2,3].map(i => {return new Date().getFullYear()+i})}`} onChange={e => {
+                <Form.Control placeholder={`e.g. ${[0,1,2,3].map(i => {return new Date().getFullYear()+i}).join(', ')}`} onChange={e => {
                     setValidation(prev => [e.target.value.split(/, ?/).map(Number), prev[1]])
                 }} defaultValue={isEdit ? validation[0] : ''}/>
                 </div>
@@ -315,7 +315,7 @@ async function workflowSubmit(name, description, tags, metaWorkflow, workflows, 
         },
     };
     let returnVal;
-    CMTFetch("POST", "/workflony/workflowTemplate", {workflow}).then(async response => {
+    await CMTFetch("POST", "/workflony/workflowTemplate", {workflow}).then(async response => {
         const data = await response.json();
         setWorkflows([...workflows, {
             id: data.workflow.baseActionId,
@@ -323,6 +323,10 @@ async function workflowSubmit(name, description, tags, metaWorkflow, workflows, 
             name: name,
             description: description,
             actions: [],
+            tags: tags, // We do original tags here to not include the special tag
+            metadata: {
+                code: metaWorkflow
+            }
         }]);
         console.log(data)
         returnVal = "Good";
@@ -356,7 +360,6 @@ async function workflowEditSubmit(name, description, tags, metaWorkflow, workflo
     let returnVal;
     await CMTFetch("PUT", `/workflony/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags, metadata}).then(async response => {
         const data = await response.json();
-        console.log("Fart", data.error)
         if (tags)
             tags = tags.slice(0, -1);
         const workflowsCopy = workflows.map(workflow => {
@@ -369,7 +372,10 @@ async function workflowEditSubmit(name, description, tags, metaWorkflow, workflo
                     name: name,
                     description: description,
                     actions: workflowToUpdate.actions,
-                    tags: tags
+                    tags: tags,
+                     metadata: {
+                        code: metaWorkflow,
+                    },
                     }
         })
         setWorkflows(workflowsCopy);
@@ -582,7 +588,9 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
                     attributeId: workflows[j].attributeId,
                     name: workflows[j].name,
                     description: workflows[j].description,
-                    actions: workflowActions
+                    actions: workflowActions,
+                    tags: workflows[j].tags,
+                    metadata: workflows[j].metadata
                 });
         }}
         console.log("The copy:", workflowsCopy)
@@ -662,7 +670,7 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
         name: name,
         description: description,
         actionType: "workflow",
-        actions: []
+        childActions: []
     };
     let isWorkflowChild = false;
     let workflowParent = workflows[index];
@@ -737,7 +745,9 @@ async function addWorkflowAction(index, name, description, workflows, setWorkflo
                     name: workflows[j].name,
                     description: workflows[j].description,
                     parentActionId: parentActionId,
-                    actions: workflowActions
+                    actions: workflowActions,
+                    tags: workflows[j].tags,
+                    metadata: workflows[j].metadata
                 });
         }}
         console.log("The copy:", workflowsCopy)
@@ -821,10 +831,11 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
         setName(curWorkflow.name?.trim());
         setDescription(curWorkflow.description?.trim());
         setTags(curWorkflow.tags?.join(", "));
+        setMetaWorkflow(curWorkflow.metadata?.code);
     }
 
     async function submitWorkflow(){
-        const uploadTags = tags.split(",").map(tag => tag.trim());
+        const uploadTags = tags ? tags.split(",").map(tag => tag.trim()) : [];
         const submission = await WorkflowSubmit(name, description, uploadTags, metaWorkflow, workflows, setWorkflows, setError);
         if (submission === "Good"){
             clearForm();
@@ -833,7 +844,7 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
     }
 
     async function editWorkflow(){
-        const uploadTags = tags?.split(",").map(tag => tag.trim());
+        const uploadTags = tags ? tags?.split(",").map(tag => tag.trim()) : [];
         const submission = await workflowEditSubmit(name, description, uploadTags, metaWorkflow, workflows, setWorkflows, setError, curWorkflow);
         if (submission === "Good"){
             clearForm();
@@ -1084,7 +1095,7 @@ function DeleteModal({isOpen, setIsOpen, action, actionDelete, workflowDelete, r
         <Modal.Header>Delete Action</Modal.Header>
         <Modal.Body>
             <div className="alert alert-danger">
-                <p>You are about to permanently delete a{action.attributeId ? ' workflow' : 'n action'}!</p> 
+                <p>You are about to permanently delete a{action?.attributeId ? ' workflow' : 'n action'}!</p> 
                 <p>Are you sure you'd like to delete "{action?.name}"? This cannot be undone!</p>
             </div>
             <div className="flex justify-between pt-4">
@@ -1222,7 +1233,7 @@ function WorkflowComponent({index, workflows, setIsOpen, loading,
     <Accordion.Item eventKey={workflows[index].id}>
         <Accordion.Header className="w-full [&_.accordion-button::after]:hidden">
             <div className="flex w-full justify-between">
-            <span className="text-4xl">{workflows[index].name}</span>
+            <span className="text-4xl">{workflows[index].name} {workflows[index]?.metadata?.code === "None" ? "(Inactive)" : `(${workflows[index]?.metadata?.code})`}</span>
             <div>
             <Button className="justify-end" variant="outline-dark" 
             onClick={(e) => {

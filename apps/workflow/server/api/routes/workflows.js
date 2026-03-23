@@ -11,7 +11,6 @@ const { permissionTypes } = require("../consts.js") || [];
  */
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
-  console.log(id)
 
   const workflow = await prisma.workflowAttributes.findUnique({
     where: { id: id },
@@ -26,7 +25,6 @@ router.get("/:id", async (req, res) => {
       rootAction: true,
     },
   });
-  console.log(workflow)
 
   res.json(exportWorkflow(workflow));
 });

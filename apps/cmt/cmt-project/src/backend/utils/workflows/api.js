@@ -138,11 +138,13 @@ export async function updateAction(name, description, nextActionId, actionId){
  * @returns the response from the "/workflows" POST endpoint
  */
 export async function objectToNewWorkflow(workflow, ownerId) {
-  if (workflow.actions.length !== 0) {
-    if (workflow.actions[0].parentActionId) {
+  if (!workflow.childActions)
+    throw new Error(`There was a workflow action with no simple action attached. Please contact Kenn Martinez to have this addressed. Action name: ${workflow.name}`)
+  if (workflow.childActions.length !== 0) {
+    if (workflow.childActions[0].parentActionId) {
       throw Error(`Cannot create workflow from object ${workflow}: parentActionId is specified in the root action. It should not be!`)
     }
-    if (workflow.userId || workflow.actions[0].userId) {
+    if (workflow.userId || workflow.childActions[0].userId) {
       throw Error(`Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!`)
     }
   }
@@ -154,8 +156,8 @@ export async function objectToNewWorkflow(workflow, ownerId) {
   let rootActionId;
   let previousActionId
   // Start from the end of the list so we can associate each action with the one after it
-  for (let index = workflow.actions.length - 1; index >= 0; index--) {
-    const action = workflow.actions[index]
+  for (let index = workflow.childActions.length - 1; index >= 0; index--) {
+    const action = workflow.childActions[index]
 
     const createdAction = await objectToNewAction(action, ownerId, null)
 
@@ -177,7 +179,35 @@ export async function objectToNewWorkflow(workflow, ownerId) {
     tags: workflow.tags
   })
 
-  return createdWorkflow
+  return createdWorkflow;
+}
+
+/**
+ * Basically the same as the function above but for the Workflow builder.
+ * The Workflow Builder never starts with any actions so all that code is cut out.
+ * Created so that we can create a workflow without actions unlike when creating a course.
+ *
+ * @export
+ * @async
+ * @param {Object} workflow The whole workflow, as shown above.
+ * @param {string} ownerId The userId that will be recorded as the workflow's and actions' creator.
+ * @returns the response from the "/workflows" POST endpoint
+ */
+export async function newBuilderWorkflow(workflow, ownerId){
+  if (!ownerId) {
+    throw Error(`Cannot create workflow from object ${workflow}: Missing ownerId argument: ${ownerId}! If you are specifying ownerId in the object, instead pass it as a second argument to this function.`)
+  }
+
+  const createdWorkflow = await workflowsFetch("POST", "workflows", {
+    userId: ownerId,
+    name: workflow.name,
+    description: workflow.description,
+    metadata: workflow.metadata ? makeMetadataSafeForWorkflows(workflow.metadata) : {},
+    rootActionId: null,
+    tags: workflow.tags
+  })
+
+  return createdWorkflow;
 }
 
 /**
@@ -213,14 +243,10 @@ export function makeMetadataSafeForWorkflows(metadata) {
 export async function getWorkflowActions(workflowId){
   let action;
   await workflowsFetch("GET", `workflows/action/${workflowId}`).then(async response => {
-    // console.log("Workflow ID:", workflowId)
-    // console.log("Response:", response)
     if (response.rootAction?.id){
       action = await combineActionWorkflow(response);
       if (response.rootAction.actionType === "workflow"){
-        // console.log("My new action: ", action)
         action.actions = [await getWorkflowActions(response.rootAction.id)]
-        // console.log("My action of actions: ", action.actions)
       }
       else{
         action.actions = [response.rootAction];
@@ -290,11 +316,17 @@ export async function objectToNewAction(action, ownerId, parentActionId) {
   })
 
   // Link complex action's children
-  if (action.childActions) {
-    for (const childAction of action.childActions.toReversed()) {
-      await objectToNewAction(childAction, ownerId, createdAction.id)
+  if (action.actionType === 'complex'){
+    if (action.childActions.length > 0) {
+      for (const childAction of action.childActions.toReversed()) {
+        await objectToNewAction(childAction, ownerId, createdAction.id)
+      }
+    }
+    else {
+      throw new Error(`There was a complex action with no simple actions attached. Please contact Kenn Martinez to have this addressed. Action name: ${action.name}`)
     }
   }
+
 
   return createdAction
 }

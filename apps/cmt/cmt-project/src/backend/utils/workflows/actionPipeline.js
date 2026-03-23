@@ -64,10 +64,10 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
   }
 
   else { 
-    const childActionsWithContext = (action.childActions||[]).map(child =>
+    (action.childActions||[]).forEach(child =>
       actionToActionWithContext(child, null, null, userId)
     ) 
-    returnAction = {action: {...action, childActionsWithContext}}
+    returnAction = {action: {...action}}
   }
   return returnAction
 }

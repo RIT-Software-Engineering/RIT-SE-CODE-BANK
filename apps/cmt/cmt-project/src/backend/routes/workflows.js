@@ -1,5 +1,5 @@
 import express from "express";
-import { createAction, makeMetadataSafeForWorkflows, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch } from "../utils/workflows/api.js";
+import { createAction, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch } from "../utils/workflows/api.js";
 import { actionToActionWithContext, metadataArrayToObject } from "../utils/workflows/actionPipeline.js";
 const router = express.Router();
 export default router
@@ -40,7 +40,7 @@ router.post("/workflowTemplate", async(req, res) => {
             if (prevMetaCode !== "None" && prevMetaCode === workflow.metadata?.code)
                 throw new Error("A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again.")
         });
-        const newWorkflow = await objectToNewWorkflow(workflow, professorId);
+        const newWorkflow = await newBuilderWorkflow(workflow, professorId);
         return res.status(200).json({workflow: newWorkflow});
     } catch (error) {
         return res.status(500).json({error: error.message})
@@ -54,7 +54,7 @@ router.put("/workflowTemplate/:workflowId", async(req, res) => {
         const workflows = await workflowsFetch("GET", "workflows/?tags=WorkflonyFirstTheRestNowhere_CMT_Template");
         workflows.forEach(prevWorkflows => {
             const prevMetaCode = JSON.parse(prevWorkflows.baseAction.metadata?.code)
-            if (prevMetaCode !== "None" && prevMetaCode === metadata?.code)
+            if (prevMetaCode !== "None" && prevMetaCode === metadata?.code && workflowId !== prevWorkflows.id)
                 throw new Error("A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again.")
         });
         let safeMetadata;
