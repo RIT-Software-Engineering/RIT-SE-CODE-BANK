@@ -1,0 +1,109 @@
+name: FPES CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - '*-dev'
+  pull_request:
+    branches:
+      - main
+      - dev
+      - '*-dev'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-frontend:
+    name: Lint Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/fpes/ui/fpes-frontend
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/fpes/ui/fpes-frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/fpes/server
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/fpes/server/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  build-frontend:
+    name: Build Frontend
+    needs: lint-frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/fpes/ui/fpes-frontend
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/fpes/ui/fpes-frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: fpes-frontend-dist
+          path: apps/fpes/ui/fpes-frontend/dist/
+
+  deploy:
+    name: Deploy FPES
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || endsWith(github.ref, '-dev')
+    needs: [build-frontend, test-backend]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: fpes-frontend-dist
+          path: apps/fpes/ui/fpes-frontend/dist/
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          if [ -f "./scripts/deploy-fpes.sh" ]; then
+            chmod +x ./scripts/deploy-fpes.sh
+            ./scripts/deploy-fpes.sh
+          else
+            echo "No deploy script found at ./scripts/deploy-fpes.sh, skipping."
+          fi
