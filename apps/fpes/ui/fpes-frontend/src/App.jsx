@@ -22,6 +22,8 @@ import HomePage from "./pages/home/HomePage";
 import HighlightsPage from './pages/highlights_page/HighlightsPage.jsx';
 import SupervisedFacultyTable from './pages/supervisor/SupervisedFacultyTable.jsx';
 import SupervisingPage from './pages/supervisor/SupervisingPage.jsx';
+import TeachingEvalPage from './pages/highlights_page/TeachingEvalPage.jsx';
+import AdminHighlightsPage from './pages/highlights_page/AdminHighlightsPage.jsx';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -62,6 +64,16 @@ function App() {
       name : "Supervising",
       route : "/supervising",
       roles_with_access : new Set(["Supervisor", "Admin"])
+    },
+    {
+      name : "All Highlights",
+      route : "/admin-highlights",
+      roles_with_access : new Set(["Admin"])
+    },
+    {
+      name : "Teaching Evals",
+      route : "/teaching-evals",
+      roles_with_access : new Set(["Admin", "Supervisor"])
     },
   ]
 
@@ -106,9 +118,11 @@ return (
           <Route path="/course_sections" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <CourseSectionsPage/> </ProtectedRoute>} />
           <Route path="/student_support" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <StudentSupportPage/> </ProtectedRoute> } />
           <Route path="/profile" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <ProfilePage facultyId={facultyId} /> </ProtectedRoute> } />
-          <Route path="/highlights" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsPage facultyId={facultyId}/> </ProtectedRoute> } />
+          <Route path="/highlights" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsPage facultyId={facultyId} isAdmin={roles.has('Admin')}/> </ProtectedRoute> } />
           <Route path="/highlights_form" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <HighlightsFormPage facultyId={facultyId}/> </ProtectedRoute> } />
           <Route path="/supervising" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <SupervisingPage facultyId={facultyId} roles={roles}/> </ProtectedRoute>} />
+          <Route path="/admin-highlights" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <AdminHighlightsPage /> </ProtectedRoute>} />
+          <Route path="/teaching-evals" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <TeachingEvalPage/> </ProtectedRoute>} />
           {/* <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } /> */}
         </Routes>
       </BrowserRouter>

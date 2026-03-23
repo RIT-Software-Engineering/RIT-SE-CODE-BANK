@@ -4,7 +4,7 @@ const app = express();
 
 require('dotenv').config();
 // app.use(express.json()); // <-- needed for POST/PUT JSON bodies
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(cors());
 
 const facultyRoutes = require('./routes/faculty_routes.js');
@@ -37,6 +37,12 @@ app.use('/highlights', highlightsRoutes);
 
 const formsRoutes = require('./routes/forms_routes.js');
 app.use('/forms', formsRoutes);
+
+const fileUploadRoutes = require('./routes/file_upload_routes.js');
+app.use('/file', fileUploadRoutes);
+
+const teachingEvalRoutes = require('./routes/teaching_eval_routes.js');
+app.use('/teaching_evals', teachingEvalRoutes);
 
 
 // Test route (just to confirm server is alive)

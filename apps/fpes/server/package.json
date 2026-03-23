@@ -9,12 +9,17 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
+    "csv-parser": "^3.2.0",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
-    "mariadb": "^3.4.5"
+    "mariadb": "^3.4.5",
+    "multer": "^2.0.2",
+    "pdf-parse": "^1.1.4"
   },
   "devDependencies": {
+    "baseline-browser-mapping": "^2.10.0",
     "jest": "^30.2.0",
     "supertest": "^7.1.4"
   }

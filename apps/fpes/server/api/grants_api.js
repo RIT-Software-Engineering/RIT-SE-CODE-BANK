@@ -28,6 +28,7 @@ async function getGrantsById(id){
 }
 
 async function addGrant(grantData){ //Create
+  let conn;
   try {
     conn = await pool.getConnection();
     const { title, amount, funder, start_date, end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
@@ -44,6 +45,7 @@ async function addGrant(grantData){ //Create
 
 //Update
 async function updateGrant(id, grantData) {
+  let conn;
   try {
     conn = await pool.getConnection();
     const { title, funder, amount, start_date,  end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
@@ -62,6 +64,7 @@ async function updateGrant(id, grantData) {
 
 //Delete
 async function deleteGrant(id) {
+  let conn;
   try {
     conn = await pool.getConnection();
     const result = await conn.query("DELETE FROM grants WHERE grant_id = ?", [id]);

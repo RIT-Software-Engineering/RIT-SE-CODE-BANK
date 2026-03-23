@@ -1,0 +1,1 @@
+ALTER TABLE forms ADD COLUMN pdf_data LONGBLOB;

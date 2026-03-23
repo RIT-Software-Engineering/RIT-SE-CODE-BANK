@@ -16,6 +16,10 @@ DROP TABLE IF EXISTS grants;
 
 DROP TABLE IF EXISTS highlights;
 
+DROP TABLE IF EXISTS teaching_eval_questions;
+
+DROP TABLE IF EXISTS teaching_evals;
+
 DROP TABLE IF EXISTS forms;
 
 DROP TABLE IF EXISTS student_support;

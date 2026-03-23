@@ -36,11 +36,19 @@ async function getFormByIdInViewFormat(id){
 
     // Gets the basic form information like facultyId
     const formResponse = await getFormById(id);
+    
+    if (!formResponse || formResponse.length === 0) {
+        throw new Error('Form not found');
+    }
 
     const facultyId = formResponse[0].faculty_information_id;
     const highlightsData = await getHighlightByFormId(id);
 
-    const studentSupportId = highlightsData[0].student_support_id;
+    if (!highlightsData || highlightsData.length === 0) {
+        throw new Error('No highlights data found for this form');
+    }
+
+    const studentSupportId = highlightsData[0]?.student_support_id || null;
 
     formData.highlights = highlightsData[0];
 
@@ -59,7 +67,7 @@ async function getFormByIdInViewFormat(id){
     const services = await getServicesOfForm(id);
     formData.services = services;
 
-    const studentSupport = await getStudentSupportById(studentSupportId);
+    const studentSupport = studentSupportId ? await getStudentSupportById(studentSupportId) : null;
     formData.student_support = studentSupport;
 
     return formData;
@@ -92,20 +100,16 @@ async function getFormsBySupervisorId(supervisorId){
     }
 }
 
-// CREATE : create form record with a timestamp and faculty id
-async function createForm(formData){
+// CREATE : create form record with a timestamp, faculty id, and optional PDF data
+async function createForm({ faculty_information_id, isSubmission = true, pdf_data = null }){
     let connection;
     try {
         connection = await pool.getConnection();
-        const {
-            faculty_information_id,
-            isSubmission = true,
-        } = formData;
-        let submissionTimestamp = 0;
-        if (isSubmission){
-            submissionTimestamp = Date.now();
-        }
-        return await connection.query('INSERT INTO forms (faculty_information_id, time_submitted) VALUES (?,FROM_UNIXTIME(?)) RETURNING id', [faculty_information_id, submissionTimestamp / 1000]);
+        const submissionTimestamp = isSubmission ? Date.now() / 1000 : 0;
+        return await connection.query(
+            'INSERT INTO forms (faculty_information_id, time_submitted, pdf_data) VALUES (?, FROM_UNIXTIME(?), ?) RETURNING id', 
+            [faculty_information_id, submissionTimestamp, pdf_data]
+        );
     } finally {
         if (connection) connection.release();
     }
@@ -126,23 +130,28 @@ async function deleteForm(id){
 async function resetFormsTable(){
     let connection;
     try {
-        // Read sql file that rebuilds forms table
-        const resetQuery = await fs.readFileSync("sql/forms.sql", 'utf-8');
-        // Splits file into multiple queries
-        let queries = resetQuery.split(';');
-        // Removes the empty query at the end
-        queries.pop();
+        const resetQuery = fs.readFileSync("sql/forms.sql", 'utf-8');
+        const queries = resetQuery.split(';').filter(q => q.trim());
 
         connection = await pool.getConnection();
-        let results = [];
         for (const query of queries){
             await connection.query(query);
         }
-
-        return;
     } finally {
         if (connection) connection.release();
     } 
+}
+
+// READ : get PDF data for a form
+async function getFormPDF(id){
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const result = await connection.query('SELECT pdf_data FROM forms WHERE id = ?', [id]);
+        return result[0]?.pdf_data || null;
+    } finally {
+        if (connection) connection.release();
+    }
 }
 
 module.exports = {
@@ -151,6 +160,7 @@ module.exports = {
     getFormsBySupervisorId,
     getFormById,
     getFormByIdInViewFormat,
+    getFormPDF,
     createForm,
     deleteForm,
     resetFormsTable,
