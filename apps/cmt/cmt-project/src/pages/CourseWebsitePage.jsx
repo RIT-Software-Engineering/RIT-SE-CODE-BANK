@@ -87,15 +87,60 @@ export default function CourseWebsitePage() {
     <html>
     <head>
       <title>${course.id} - ${course.name}</title>
+
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          padding: 20px;
+        }
+
+        h1 {
+          text-align: center;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        th {
+          background-color: #0484c9;
+          color: white;
+          padding: 10px;
+          border: 1px solid #93c5fd;
+          text-align: center;
+        }
+
+        td {
+          border: 1px solid #93c5fd;
+          padding: 10px;
+          vertical-align: top;
+        }
+
+        tr:nth-child(even) {
+          background-color: #f3f4f6;
+        }
+      </style>
     </head>
     <body>
 
       <h1>${course.id} - ${course.name}</h1>
 
-      ${sessions
-        .sort((a, b) => a.sessionNum - b.sessionNum)
-        .map(generateSessionHTML)
-        .join("")}
+      <table>
+        <thead>
+          <tr>
+            <th>Session</th>
+            ${MATERIAL_COLUMNS.map(col => `<th>${col}</th>`).join("")}
+          </tr>
+        </thead>
+
+        <tbody>
+          ${sessions
+            .sort((a, b) => a.sessionNum - b.sessionNum)
+            .map(generateSessionRowHTML)
+            .join("")}
+        </tbody>
+      </table>
 
     </body>
     </html>
@@ -112,7 +157,12 @@ export default function CourseWebsitePage() {
     const a = document.createElement("a");
     a.href = url;
     a.download = `${selectedCourseObj.id}-course-website.html`;
+
+    document.body.appendChild(a);
+
     a.click();
+
+    document.body.removeChild(a);
 
     URL.revokeObjectURL(url);
   };
@@ -130,7 +180,7 @@ export default function CourseWebsitePage() {
         <select
           className="border rounded-lg p-2 text-lg"
           value={selectedCourse || ""}
-          onChange={(e) => setSelectedCourse(e.target.value)}>
+          onChange={(e) => setSelectedCourse(Number(e.target.value))}>
           <option value="" disabled>Select a course</option>
           {courses.map((course) => (
             <option key={course.id} value={course.id}>
@@ -211,42 +261,23 @@ const MATERIAL_COLUMNS = [
   "Individual Assignment"
 ];
 
-function buildSessionTableData(materials) {
+function generateSessionRowHTML(session) {
+  const materials = session.materials || [];
+
   const grouped = MATERIAL_COLUMNS.map(col =>
     materials.filter(m => m.type === col && m.active)
   );
 
-  const maxRows = Math.max(1, ...grouped.map(g => g.length));
-
-  const rows = Array.from({ length: maxRows }, (_, i) =>
-    grouped.map(colItems => colItems[i] || null)
-  );
-
-  return {
-    columns: MATERIAL_COLUMNS,
-    rows
-  };
-}
-
-function generateSessionHTML(session) {
-  const { columns, rows } = buildSessionTableData(session.materials);
-
   return `
-    <h2>Session ${session.sessionNum}</h2>
-    <table>
-      <thead>
-        <tr>
-          ${columns.map(col => `<th>${col}</th>`).join("")}
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.map(row => `
-          <tr>
-            ${row.map(cell => `<td>${cell ? cell.label : ""}</td>`).join("")}
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
+    <tr>
+      <td><strong>${session.sessionNum}</strong></td>
+
+      ${grouped.map(colItems => `
+        <td>
+          ${colItems.map(item => `<div>${item.label}</div>`).join("")}
+        </td>
+      `).join("")}
+    </tr>
   `;
 }
 
