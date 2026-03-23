@@ -86,7 +86,7 @@ export default function CourseWebsitePage() {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>${course.id} - ${course.name}</title>
+      <title>${course.classId}-${course.section} | ${course.name}</title>
 
       <style>
         body {
@@ -111,6 +111,12 @@ export default function CourseWebsitePage() {
           text-align: center;
         }
 
+        td:first-child {
+          text-align: center;
+          vertical-align: middle;
+          font-weight: bold;
+        }
+
         td {
           border: 1px solid #93c5fd;
           padding: 10px;
@@ -124,20 +130,19 @@ export default function CourseWebsitePage() {
     </head>
     <body>
 
-      <h1>${course.id} - ${course.name}</h1>
+      <h1>${course.classId}-${course.section} | ${course.name}</h1>
 
       <table>
         <thead>
           <tr>
             <th>Session</th>
-            ${MATERIAL_COLUMNS.map(col => `<th>${col}</th>`).join("")}
+            ${visibleColumns.map(col => `<th>${col}</th>`).join("")}
           </tr>
         </thead>
-
         <tbody>
           ${sessions
             .sort((a, b) => a.sessionNum - b.sessionNum)
-            .map(generateSessionRowHTML)
+            .map(session => generateSessionRowHTML(session, visibleColumns))
             .join("")}
         </tbody>
       </table>
@@ -156,7 +161,7 @@ export default function CourseWebsitePage() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${selectedCourseObj.id}-course-website.html`;
+    a.download = `${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`;
 
     document.body.appendChild(a);
 
@@ -184,7 +189,7 @@ export default function CourseWebsitePage() {
           <option value="" disabled>Select a course</option>
           {courses.map((course) => (
             <option key={course.id} value={course.id}>
-              {course.name} ({course.season} {course.year})
+              {course.name} ({course.season} {course.year} )
             </option>
           ))}
         </select>
@@ -193,7 +198,7 @@ export default function CourseWebsitePage() {
       <hr></hr>
 
       <h1 className="text-center">
-        {selectedCourseObj ? `${selectedCourseObj.id} - ${selectedCourseObj.name}` : ""}
+        {selectedCourseObj ? `${selectedCourseObj.classId}-${selectedCourseObj.section} | ${selectedCourseObj.name}` : ""}
       </h1>
 
       {/* Events Table */}
@@ -261,16 +266,16 @@ const MATERIAL_COLUMNS = [
   "Individual Assignment"
 ];
 
-function generateSessionRowHTML(session) {
+function generateSessionRowHTML(session, visibleColumns) {
   const materials = session.materials || [];
 
-  const grouped = MATERIAL_COLUMNS.map(col =>
+  const grouped = visibleColumns.map(col =>
     materials.filter(m => m.type === col && m.active)
   );
 
   return `
     <tr>
-      <td><strong>${session.sessionNum}</strong></td>
+      <td>${session.sessionNum}</td>
 
       ${grouped.map(colItems => `
         <td>
