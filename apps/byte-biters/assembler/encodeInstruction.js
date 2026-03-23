@@ -1,8 +1,16 @@
 import {encodeOperand} from "./encoder.js";
 import { OPCODES } from "./opcodes.js";
 
+export function encodeLine(parsedData) {
+
+}
+
+function encodeDirective(parsedData) {
+
+}
+
 export function encodeInstruction(parsedData) {
-    const {mnemonic, src, dst} = parsedData;
+    const {type, label, mnemonic, src, dst} = parsedData;
     
     const UpperMnemonic = mnemonic.toUpperCase();
     const opcodeInfo = OPCODES[UpperMnemonic];

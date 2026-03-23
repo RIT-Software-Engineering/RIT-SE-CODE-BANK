@@ -1,7 +1,27 @@
-export function parseInstruction(tokens) {
+export function parseLine(tokens) {
+    let label = null;
+    if(tokens[1] === ":") {
+        label = tokens[0];
+        tokens = tokens.slice(2);
+    }
+    
+    if(tokens[0][0] === "."){
+        return parseDirective(tokens, label);
+    } else {
+        return parseInstruction(tokens, label);
+    }
+}
+
+function parseDirective(tokens, label) {
+    console.log(label);
+}
+
+function parseInstruction(tokens, label) {
     const {mnemonic, srcTokens, dstTokens} = instructionLevel(tokens);
 
     return {
+        type: "instruction",
+        label: label,
         mnemonic: mnemonic,
         src: srcTokens ? parseOperand(srcTokens) : null,
         dst: dstTokens ? parseOperand(dstTokens) : null
@@ -10,7 +30,7 @@ export function parseInstruction(tokens) {
 
 function instructionLevel(tokenArray) { //Needs a better check in case if it is one value only, like clr
     const mnemonic = tokenArray[0];
-    const rest = tokenArray.slice(1);
+    const rest = tokenArray.slice(1); //this needs to be updated to allow variables
     const srcTokens = [];
     const dstTokens = [];
     let srcCheck = true;
