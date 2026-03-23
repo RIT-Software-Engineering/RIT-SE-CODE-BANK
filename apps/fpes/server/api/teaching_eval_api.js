@@ -8,6 +8,13 @@
 
 const pool = require('../db')
 const fs = require('fs')
+const { GoogleGenerativeAI } = require('@google/generative-ai')
+require('dotenv').config()
+
+function getModel() {
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
+  return genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
+}
 
 
 async function resetTeachingEvalsTables(){
@@ -203,10 +210,59 @@ async function getFacultyPercentileById(facultyId) {
     }
 }
 
+async function summarizeTeachingEval(formId) {
+    const conn = await pool.getConnection();
+    try {
+        const evalData = await conn.query(
+            `SELECT te.professor_name, te.course_name, te.semester, te.year
+             FROM teaching_evals te JOIN forms f ON te.form_id = f.id WHERE f.id = ?`,
+            [formId]
+        );
+        if (!evalData[0]) throw new Error('Teaching eval not found');
+
+        const questions = await conn.query(
+            `SELECT question, avg, swen_avg, top_two
+             FROM teaching_eval_questions teq
+             JOIN teaching_evals te ON teq.teaching_eval_id = te.id
+             JOIN forms f ON te.form_id = f.id
+             WHERE f.id = ? ORDER BY CAST(question_number AS UNSIGNED)`,
+            [formId]
+        );
+
+        const { professor_name, course_name, semester, year } = evalData[0];
+        const questionLines = questions.map(q =>
+            `- ${q.question}: avg=${q.avg}, dept_avg=${q.swen_avg}, top_two=${q.top_two}%`
+        ).join('\n');
+
+        const prompt = `You are summarizing a teaching evaluation for a faculty review system.
+
+Professor: ${professor_name}
+Course: ${course_name} (${semester} ${year})
+
+Question scores (avg out of 5, dept avg, % top-two responses):
+${questionLines}
+
+Write a concise 2-3 sentence summary covering:
+1. Overall teaching performance (above/average/below average vs department)
+2. Specific strengths based on high scores
+3. Any areas of concern based on low scores or low top-two percentages
+Be factual and professional.`;
+
+        const result = await getModel().generateContent(prompt);
+        return result.response.text();
+    } catch (err) {
+        if (err.status === 429) throw new Error('AI quota exceeded. Please try again later.');
+        throw err;
+    } finally {
+        conn.release();
+    }
+}
+
 module.exports = {
     resetTeachingEvalsTables,
     saveParsedTeachingEval,
     getFacultyTeachingEvalPercentiles,
     getFacultyPercentileByName,
-    getFacultyPercentileById
+    getFacultyPercentileById,
+    summarizeTeachingEval
 }
