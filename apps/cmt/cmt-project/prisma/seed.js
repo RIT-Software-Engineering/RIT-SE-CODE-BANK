@@ -51,6 +51,9 @@ async function main() {
   await prisma.templateItem.deleteMany({});
   await prisma.courseTemplate.deleteMany({});
 
+  // delete recources
+  await prisma.resource.deleteMany({});
+
   // parent tables
   await prisma.course.deleteMany({});
   await prisma.professor.deleteMany({});
