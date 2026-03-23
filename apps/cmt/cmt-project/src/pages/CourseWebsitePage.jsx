@@ -107,7 +107,7 @@ export default function CourseWebsitePage() {
           background-color: #0484c9;
           color: white;
           padding: 10px;
-          border: 1px solid #93c5fd;
+          border: 1px solid #e5e7eb;
           text-align: center;
         }
 
@@ -118,7 +118,7 @@ export default function CourseWebsitePage() {
         }
 
         td {
-          border: 1px solid #93c5fd;
+          border: 1px solid #e5e7eb;
           padding: 10px;
           vertical-align: top;
         }
