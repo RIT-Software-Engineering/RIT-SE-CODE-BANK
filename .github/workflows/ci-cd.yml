@@ -6,11 +6,13 @@ on:
       - main
       - dev
       - '*-dev'
+      - fpes-staging
   pull_request:
     branches:
       - main
       - dev
       - '*-dev'
+      - fpes-staging
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
