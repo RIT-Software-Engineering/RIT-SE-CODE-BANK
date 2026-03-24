@@ -38,10 +38,10 @@ model Project {
 }
 
 model users {
-  id             String @id @default(uuid())
+  id             String  @id @default(uuid())
   fname          String
   lname          String
-  email          String @unique
+  email          String  @unique
   type           String
   semester_group String?
   project        String?
@@ -58,62 +58,73 @@ model users {
   topicEntries    JournalEntry[] @relation("TopicUserEntries")
   Teams           Teams[]
 
-  submittedProposals  ProjectProposal[] @relation("SubmittedProposals")
-  reviewedProposals   ProjectProposal[] @relation("ReviewedProposals")
+  submittedProposals ProjectProposal[] @relation("SubmittedProposals")
+  reviewedProposals  ProjectProposal[] @relation("ReviewedProposals")
 }
+
 enum PrivacyEnum {
   PERSONAL
   PUBLIC
 }
+
 enum EntryType {
   MANUAL
   AUTOMATED
 }
+
 model JournalEntry {
-  id                  Int      @id @default(autoincrement())
-  date                DateTime
-  notes               String?  @db.VarChar(500)
-  visibility_level       Int?
-  privacy_level          PrivacyEnum?
-  entry_type             EntryType?
-  sender_id           String
-  topic_id            String
-  recipients    users[]     @relation("ReceivedUserEntries")
-  sender        users     @relation("SentUserEntries", fields: [sender_id], references: [id])
-  topic         users     @relation("TopicUserEntries", fields: [topic_id], references: [id])
+  id               Int          @id @default(autoincrement())
+  date             DateTime
+  notes            String?      @db.VarChar(500)
+  visibility_level Int?
+  privacy_level    PrivacyEnum?
+  entry_type       EntryType?
+  sender_id        String
+  topic_id         String
+  recipients       users[]      @relation("ReceivedUserEntries")
+  sender           users        @relation("SentUserEntries", fields: [sender_id], references: [id])
+  topic            users        @relation("TopicUserEntries", fields: [topic_id], references: [id])
 
   previous_entryid Int?
-  previous_entry    JournalEntry? @relation("PreviousEntry", fields: [previous_entryid], references: [id])
-  next_entries      JournalEntry[] @relation("PreviousEntry")
-  
+  previous_entry   JournalEntry?  @relation("PreviousEntry", fields: [previous_entryid], references: [id])
+  next_entries     JournalEntry[] @relation("PreviousEntry")
+
   Semester_Group   SemesterGroup? @relation(fields: [semester_GroupId], references: [id])
   semester_GroupId Int?
 }
 
 model Application {
-  id                      Int      @id @default(autoincrement())
-  applicant_id            String?
-  lastName                String
-  firstName               String?
-  ritEmail                String
-  coopsCompleted          Int?
-  startSemester           String
-  coursesTaken            String
-  coopSearchStartDate     String?
-  coopSearchPlatforms     String?
-  pendingOffers           Boolean
-  pendingOffersDetails    String?
-  rejectionLetters        Boolean
-  rejectionLettersDetails String?
-  SEcoopInterest          Boolean
-  SEcoopAvailability      Boolean?
-  remoteAbility           String?
-  additionalComments      String?
-  resumeFile              Bytes?
-  resumeFileName          String?
-  resumeFileType          String?
-  status                  String   @default("PENDING")
-  createdAt               DateTime @default(now())
+  id                             Int      @id @default(autoincrement())
+  applicant_id                   String?
+  lastName                       String
+  firstName                      String?
+  ritEmail                       String
+  userID                         String?
+  academicAdvisor                String?
+  creditsRemaining               String?
+  cumulativeGPA                  String?
+  coopsCompleted                 Int?
+  startSemester                  String
+  SEcoopReferral                 String?
+  SEcoopReferralDetails          String?
+  coursesTaken                   String
+  coopSearchStartDate            String?
+  coopSearchPlatforms            String?
+  pendingOffers                  Boolean
+  pendingOffersDetails           String?
+  rejectionLetters               Boolean
+  rejectionLettersDetails        String?
+  jobSearchAcknowledgment        String?
+  jobSearchAcknowledgmentDetails String?
+  // SEcoopInterest          Boolean
+  // SEcoopAvailability      Boolean?
+  // remoteAbility           String?
+  additionalComments             String?
+  resumeFile                     Bytes?
+  resumeFileName                 String?
+  resumeFileType                 String?
+  status                         String   @default("PENDING")
+  createdAt                      DateTime @default(now())
 }
 
 model Teams {
@@ -136,15 +147,15 @@ model Login {
 }
 
 model ProjectProposal {
-  id              Int      @id @default(autoincrement())
-  title           String   @db.VarChar(255)
-  description     String   @db.Text
-  status          String   @default("PENDING")
-  submittedById   String
-  submittedBy     users    @relation("SubmittedProposals", fields: [submittedById], references: [id])
-  reviewedById    String?
-  reviewedBy      users?   @relation("ReviewedProposals", fields: [reviewedById], references: [id])
-  reviewNotes     String?  @db.VarChar(500)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(255)
+  description   String   @db.Text
+  status        String   @default("PENDING")
+  submittedById String
+  submittedBy   users    @relation("SubmittedProposals", fields: [submittedById], references: [id])
+  reviewedById  String?
+  reviewedBy    users?   @relation("ReviewedProposals", fields: [reviewedById], references: [id])
+  reviewNotes   String?  @db.VarChar(500)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
