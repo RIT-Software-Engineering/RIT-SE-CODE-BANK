@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Accordion, Button, Card, Form, FormLabel, Modal } from "react-bootstrap";
+import { Accordion, Button, Card, Form, Modal } from "react-bootstrap";
 import { CMTFetch } from "../utils/api";
 import { workflowsFetch } from "../backend/utils/workflows/api";
 import { Edit, Trash2 } from "lucide-react";
@@ -162,7 +162,8 @@ export function BuilderPage(){
                 <WorkflowComponent loading={loading} index={i} workflows={workflows} 
                 setIsOpen={setActionModalOpen} setParentId={setParentId} depthLevel={0} 
                 setDepthLevel={setDepthLevel} setIsEdit={setIsEdit} 
-                setCurAction={setCurAction} setWorkflowModalEdit={setWorkflowModalAsOpen} setDeleteOpen={setDeleteOpen}/>
+                setCurAction={setCurAction} setWorkflowModalEdit={setWorkflowModalAsOpen} 
+                setDeleteOpen={setDeleteOpen} simpleExtraDataRenderer={simpleActionRenderer}/>
                 </div>)
         }) : <></>}
         </Accordion>
@@ -359,6 +360,32 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
     }
 
     return output;
+}
+
+/**
+ * CMT-Specific function
+ *
+ * @param {*} action 
+ * @returns {React.ReactElement} 
+ */
+function simpleActionRenderer(action) {
+    return <div>
+            <p>Code: {action.metadata.code}</p>
+            {(action.metadata.outputs||[]).map(output => {
+                return (<>
+                    <p>Required? {output.isRequired ? 'Yes' : 'No'}</p>
+                    {output.key? <p>Key: {output.key}</p> : <></>}
+                    {output.name? <p>Name: {output.name}</p> : <></>}
+                    {output.type? <p>Type: {output.type}</p> : <></>}
+                    {output.placeholder ? <p>Placeholder: {output.placeholder}</p> : <></>}
+                    {output.validation && Object.keys(output.validation).map(key => {
+                        const value = output.validation;
+                        const displayValue = (output.validation.options) ? value.options.join(', ') : value[key];
+                        return <p key={key}>{key}: {displayValue}</p>;
+                    })}
+                </>)
+            })}
+        </div>
 }
 
 /**
@@ -1124,11 +1151,11 @@ function DeleteModal({isOpen, setIsOpen, action, actionDelete, workflowDelete, r
  *
  * @param {{ workflows: any; index: any; actions: any; setIsOpen: any; 
  * setParentId: any; depthLevel: any; setDepthLevel: any; 
- * setCurAction: any; setIsEdit: any; setDeleteOpen: any;}} param0 
+ * setCurAction: any; setIsEdit: any; setDeleteOpen: any; simpleExtraDataRenderer: (action: Object) => React.ReactElement;}} param0 
  */
 function ComplexRenderer({workflows, index, actions, setIsOpen, 
     setParentId, depthLevel, setDepthLevel, 
-    setCurAction, setIsEdit, setDeleteOpen}){
+    setCurAction, setIsEdit, setDeleteOpen, simpleExtraDataRenderer}){
     // console.log("Actions", actions)
     return (<>
         {(actions||[]).map((action) => {
@@ -1155,24 +1182,7 @@ function ComplexRenderer({workflows, index, actions, setIsOpen,
                     </Card.Header>
                     <Card.Body>
                         <div><p>Description: {action.description}</p></div>
-                        {/* TODO make this not CMT-specific (e.g. no metadata) */}
-                        <div>
-                            <p>Code: {action.metadata.code}</p>
-                            {(action.metadata.outputs||[]).map(output => {
-                                return (<>
-                                    <p>Required? {output.isRequired ? 'Yes' : 'No'}</p>
-                                    {output.key? <p>Key: {output.key}</p> : <></>}
-                                    {output.name? <p>Name: {output.name}</p> : <></>}
-                                    {output.type? <p>Type: {output.type}</p> : <></>}
-                                    {output.placeholder ? <p>Placeholder: {output.placeholder}</p> : <></>}
-                                    {output.validation && Object.keys(output.validation).map(key => {
-                                        const value = output.validation;
-                                        const displayValue = (output.validation.options) ? value.options.join(', ') : value[key];
-                                        return <p key={key}>{key}: {displayValue}</p>;
-                                    })}
-                                </>)
-                            })}
-                        </div>
+                        {simpleExtraDataRenderer(action)}
                     </Card.Body>
                 </Card>
                 break;
@@ -1212,7 +1222,8 @@ function ComplexRenderer({workflows, index, actions, setIsOpen,
                             setDepthLevel={setDepthLevel}
                             setCurAction={setCurAction}
                             setIsEdit={setIsEdit}
-                            setDeleteOpen={setDeleteOpen}/>
+                            setDeleteOpen={setDeleteOpen}
+                            simpleExtraDataRenderer={simpleExtraDataRenderer}/>
                         <div className="flex justify-end pt-3">
                             <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);setCurAction(null);}}>Add New Child Action</Button>
                         </div>
@@ -1234,11 +1245,11 @@ function ComplexRenderer({workflows, index, actions, setIsOpen,
  *
  * @param {{ index: any; workflows: any; setIsOpen: any; loading: any; 
  * setParentId: any; depthLevel: any; setDepthLevel: any; setIsEdit: any; 
- * setCurAction: any; setWorkflowModalEdit: any; setDeleteOpen: any;}} param0 
+ * setCurAction: any; setWorkflowModalEdit: any; setDeleteOpen: any; simpleExtraDataRenderer: (action: Object) => React.ReactElement;}} param0 
  */
 function WorkflowComponent({index, workflows, setIsOpen, loading, 
     setParentId, depthLevel, setDepthLevel, setIsEdit, 
-    setCurAction, setWorkflowModalEdit, setDeleteOpen}){
+    setCurAction, setWorkflowModalEdit, setDeleteOpen, simpleExtraDataRenderer}){
     if (loading)
         return <><h1>Loading...</h1></> // Here so a lot of stuff just doesn't break while it loads everything
     else
@@ -1295,24 +1306,7 @@ function WorkflowComponent({index, workflows, setIsOpen, loading,
                                 </Card.Header>
                             <Card.Body>
                                 <div><p>Description: {action.description}</p></div>
-                                {/* TODO make this not CMT-specific (e.g. no metadata) */}
-                                <div>
-                                    <p>Code: {action.metadata.code}</p>
-                                    {(action.metadata.outputs||[]).map(output => {
-                                        return (<>
-                                            <p>Required? {output.isRequired ? 'Yes' : 'No'}</p>
-                                            {output.key? <p>Key: {output.key}</p> : <></>}
-                                            {output.name? <p>Name: {output.name}</p> : <></>}
-                                            {output.type? <p>Type: {output.type}</p> : <></>}
-                                            {output.placeholder ? <p>Placeholder: {output.placeholder}</p> : <></>}
-                                            {output.validation && Object.keys(output.validation).map(key => {
-                                                const value = output.validation;
-                                                const displayValue = (output.validation.options) ? value.options.join(', ') : value[key];
-                                                return <p key={key}>{key}: {displayValue}</p>;
-                                            })}
-                                        </>)
-                                    })}
-                                </div>
+                                {simpleExtraDataRenderer(action)}
                             </Card.Body>
                         </Card>
                         break;
@@ -1352,7 +1346,8 @@ function WorkflowComponent({index, workflows, setIsOpen, loading,
                                 setDepthLevel={setDepthLevel}
                                 setCurAction={setCurAction}
                                 setIsEdit={setIsEdit}
-                                setDeleteOpen={setDeleteOpen}/>
+                                setDeleteOpen={setDeleteOpen}
+                                simpleExtraDataRenderer={simpleExtraDataRenderer}/>
                                 <div className="flex justify-end pt-3">
                                     <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
                                 </div>
