@@ -266,6 +266,26 @@ const MATERIAL_COLUMNS = [
   "Individual Assignment"
 ];
 
+// function generateSessionRowHTML(session, visibleColumns) {
+//   const materials = session.materials || [];
+
+//   const grouped = visibleColumns.map(col =>
+//     materials.filter(m => m.type === col && m.active)
+//   );
+
+//   return `
+//     <tr>
+//       <td>${session.sessionNum}</td>
+
+//       ${grouped.map(colItems => `
+//         <td>
+//           ${colItems.map(item => `<div>${item.label} ${item.body}</div>`).join("")}
+//         </td>
+//       `).join("")}
+//     </tr>
+//   `;
+// }
+
 function generateSessionRowHTML(session, visibleColumns) {
   const materials = session.materials || [];
 
@@ -279,7 +299,11 @@ function generateSessionRowHTML(session, visibleColumns) {
 
       ${grouped.map(colItems => `
         <td>
-          ${colItems.map(item => `<div>${item.label}</div>`).join("")}
+          ${colItems.map(item => 
+              item.body
+                ? `<a href="#" onclick="window.open('', '_blank').document.write('${item.body.replace(/'/g, "\\'")}'); return false;">${item.label}</a>`
+                : `<span>${item.label}</span>`
+            ).join("")}
         </td>
       `).join("")}
     </tr>

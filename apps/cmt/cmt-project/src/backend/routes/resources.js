@@ -36,6 +36,7 @@ const upload = multer({
         const allowedTypes = [
             'application/pdf',
             'text/plain',
+            'text/html',
             'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'application/vnd.ms-excel',
