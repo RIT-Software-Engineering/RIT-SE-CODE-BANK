@@ -258,10 +258,10 @@ export function WorkflowComponent({index, workflows, setIsOpen, loading,
     else
     return (<>
     <Accordion.Item eventKey={workflows[index].id}>
-        <Accordion.Header className="w-full [&_.accordion-button::after]:hidden">
+        <Accordion.Header className="w-full">
             <div className="flex w-full justify-between">
-            <span className="text-4xl">{workflows[index].name} {workflows[index]?.metadata?.code === "None" ? "(Inactive)" : `(${workflows[index]?.metadata?.code})`}</span>
-            <div>
+            <span className="text-4xl">{workflows[index].name} {workflows[index]?.metadata?.code === "None" ? "(Inactive)" : (workflows[index]?.metadata?.code ? `(${workflows[index]?.metadata?.code})` : '')}</span>
+            <div className="mr-4">
             <Button className="justify-end" variant="outline-dark" 
             onClick={(e) => {
                 e.stopPropagation();
@@ -317,10 +317,10 @@ export function WorkflowComponent({index, workflows, setIsOpen, loading,
                         value = 
                         <Accordion className="mt-2">
                             <Accordion.Item eventKey={action.id}>
-                            <Accordion.Header className="w-full [&_.accordion-button::after]:hidden">
+                            <Accordion.Header className="w-full">
                                 <div className="flex w-full justify-between">
                                 <span className="text-3xl">{action.name} {action.actionType === 'complex' ? '(Complex Action)' : '(Workflow)'}</span>
-                                <div>
+                                <div className="mr-4">
                                 <Button className="justify-end" variant="outline-dark" 
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -414,10 +414,10 @@ function ComplexRenderer({workflows, index, actions, setIsOpen,
                 value = 
                 <Accordion className="mt-2">
                     <Accordion.Item eventKey={action.id} className={action.id}>
-                    <Accordion.Header className="w-full [&_.accordion-button::after]:hidden">
+                    <Accordion.Header className="w-full">
                         <div className="flex w-full justify-between">
                         <span className="text-3xl">{action.name} {action.actionType === 'complex' ? '(Complex Action)' : '(Workflow)'}</span>
-                        <div>
+                        <div className="mr-4">
                         <Button className="justify-end" variant="outline-dark" 
                         onClick={(e) => {
                             e.stopPropagation();
