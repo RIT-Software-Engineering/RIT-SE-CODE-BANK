@@ -15,7 +15,7 @@ import { FormActionRenderer } from './FormActionRenderer'
  * @template T
  * @param {ActionRendererProps<T> & { isCheckmark: IsCheckmark }} props
  */
-export function CardActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, isCheckmark }) {
+export function CardActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, isCheckmark, onNavigateFactory }) {
     if (actionWithContext.action.actionType === 'complex' || actionWithContext.action.actionType === 'workflow')
         return (
             <ComplexCardActionRenderer
@@ -24,6 +24,7 @@ export function CardActionRenderer({ actionWithContext, previousValues, refresh,
                 refresh={refresh}
                 fetchToCallback={fetchToCallback}
                 isCheckmark={isCheckmark}
+                onNavigateFactory={onNavigateFactory}
             />
         )
     else if (actionWithContext.action.actionType === 'simple')
@@ -34,6 +35,7 @@ export function CardActionRenderer({ actionWithContext, previousValues, refresh,
                 refresh={refresh}
                 fetchToCallback={fetchToCallback}
                 checkmark={actionWithContext.action.metadata.code && isCheckmark(actionWithContext.action.metadata.code)}
+                onNavigateFactory={onNavigateFactory}
             />
         )
     else throw Error(`Unrecognized action type ${actionWithContext.action.actionType}`)
@@ -43,7 +45,7 @@ export function CardActionRenderer({ actionWithContext, previousValues, refresh,
  * @template T
  * @param {ActionRendererProps<T> & { isCheckmark: IsCheckmark }} props
  */
-function ComplexCardActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, isCheckmark }) {
+function ComplexCardActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, isCheckmark, onNavigateFactory }) {
     return (
         <>
             <Accordion.Item eventKey={actionWithContext.action.id}>
@@ -66,6 +68,7 @@ function ComplexCardActionRenderer({ actionWithContext, previousValues, refresh,
                                 refresh={refresh}
                                 fetchToCallback={fetchToCallback}
                                 isCheckmark={isCheckmark}
+                                onNavigateFactory={onNavigateFactory}
                             />
                         ))}
                     </div>
@@ -79,7 +82,7 @@ function ComplexCardActionRenderer({ actionWithContext, previousValues, refresh,
  * @template T
  * @param {ActionRendererProps<T> & { checkmark: boolean | undefined }} props
  */
-function SimpleCardActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, checkmark }) {
+function SimpleCardActionRenderer({ actionWithContext, previousValues, refresh, fetchToCallback, checkmark, onNavigateFactory }) {
     const isCompleted = actionWithContext.actionState.stateType === 'completed'
 
     return (
@@ -96,6 +99,7 @@ function SimpleCardActionRenderer({ actionWithContext, previousValues, refresh, 
                                         actionWithContext={actionWithContext}
                                         refresh={refresh}
                                         fetchToCallback={fetchToCallback}
+                                        onNavigateFactory={onNavigateFactory}
                                     />
                                 ) : isCompleted ? ( // If the action is already completed, then use a less visually strong renderer
                                     <InlineActionRenderer
@@ -103,6 +107,7 @@ function SimpleCardActionRenderer({ actionWithContext, previousValues, refresh, 
                                         previousValues={previousValues}
                                         refresh={refresh}
                                         fetchToCallback={fetchToCallback}
+                                        onNavigateFactory={onNavigateFactory}
                                     />
                                 ) : (
                                     <FormActionRenderer
@@ -110,6 +115,7 @@ function SimpleCardActionRenderer({ actionWithContext, previousValues, refresh, 
                                         previousValues={previousValues}
                                         refresh={refresh}
                                         fetchToCallback={fetchToCallback}
+                                        onNavigateFactory={onNavigateFactory}
                                     />
                                 )}
                             </div>

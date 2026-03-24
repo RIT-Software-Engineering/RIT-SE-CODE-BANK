@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Form } from 'react-bootstrap'
 
 /**
- * @import { ParsedMetadata } from "./typedefs"
+ * @import { onNavigateFactory, ParsedMetadata } from "./typedefs"
  * @import { AbstractActionRenderer } from "./ActionRenderers/GenericActionRenderer"
  */
 
@@ -64,7 +64,7 @@ export function OutputRenderer({ output, value, setValue, submitted, validatorRe
 
     return (
         <Form.Group className='flex gap-2 items-center'>
-            <Form.Label className='w-max text-xl mb-0'>{output.name}</Form.Label>
+            <Form.Label className='w-max mb-0'>{output.name}</Form.Label>
             {inputElement}
         </Form.Group>
     )

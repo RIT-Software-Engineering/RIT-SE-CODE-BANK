@@ -36,9 +36,8 @@ export function InlineFormHoverable({ label, value, onChange, onSubmit }) {
     ) : (
         <div className="flex items-center gap-20">
             <div className=''>
-                <p className={`text-xl my-2`}>
-                    {' '}
-                    {label}: {value}{' '}
+                <p className={`my-2`}>
+                    {label}: {value}
                 </p>
             </div>
             <div className='hidden group-hover:block'>

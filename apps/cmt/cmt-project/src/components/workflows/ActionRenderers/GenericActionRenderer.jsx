@@ -3,7 +3,7 @@ import { OutputRenderer } from '../OutputRenderer'
 import { Button } from 'react-bootstrap'
 
 /**
- * @import { ParsedMetadata, ActionWithContext, FetchToCallback } from "../typedefs"
+ * @import { ParsedMetadata, ActionWithContext, FetchToCallback, onNavigateFactory } from "../typedefs"
  * @import { CourseDashboard } from "../../../pages/course/CourseDashboard"
  */
 
@@ -17,7 +17,8 @@ import { Button } from 'react-bootstrap'
  *  actionWithContext: ActionWithContext & { action: { metadata: T } },
  *  previousValues: Record<keyof T, any>,
  *  refresh: () => void,
- *  fetchToCallback: FetchToCallback
+ *  fetchToCallback: FetchToCallback,
+ *  onNavigateFactory?: onNavigateFactory
  * }} ActionRendererProps
  */
 
@@ -32,12 +33,20 @@ import { Button } from 'react-bootstrap'
  *  outputValues: Object,
  *  setOutputValues: React.Dispatch<React.SetStateAction<Object>>,
  *  submitted: boolean,
- *  validatorRegistry: React.RefObject<Object>
+ *  validatorRegistry: React.RefObject<Object>,
+ *  onNavigateFactory?: onNavigateFactory 
  * }} props
  */
-export function AbstractActionRenderer({ metadata, outputValues, setOutputValues, submitted, validatorRegistry }) {
+export function AbstractActionRenderer({ metadata, outputValues, setOutputValues, submitted, validatorRegistry, onNavigateFactory }) {
+    const onNavigate = onNavigateFactory && onNavigateFactory(metadata.code)
     return (
-        <>
+        onNavigate
+        ? <>
+            <Button onClick={onNavigate}>
+                Navigate
+            </Button>
+        </>
+        : <>
             {metadata.outputs.map(output => (
                 <OutputRenderer
                     key={output.key}
@@ -53,12 +62,12 @@ export function AbstractActionRenderer({ metadata, outputValues, setOutputValues
 }
 
 /**
- * A slight exception from the standard Action Renderer. Checkmark actions, in order to be as flexible as possible, don't have any keys in their metadata. Since there's no form, there are also no outputs, or any related fields.
+ * A slight exception from the standard Action Renderer. Checkmark actions, in order to be as flexible as possible, don't require any keys in their metadata. Since there's no form, there are also no outputs, or any related fields.
  * This means they aren't tied to a consumer and are tracked entirely in the Workflows API. the "fetchToCallback" function given to this renderer should actually expect a boolean as the value.
  * @template T
  * @param {Omit<ActionRendererProps<T>, "previousValues">} props
  */
-export function CheckmarkActionRenderer({ actionWithContext, refresh, fetchToCallback }) {
+export function CheckmarkActionRenderer({ actionWithContext, refresh, fetchToCallback, onNavigateFactory }) {
     const checked = actionWithContext.actionState.stateType === 'completed'
 
     const submit = useCallback(
@@ -66,7 +75,15 @@ export function CheckmarkActionRenderer({ actionWithContext, refresh, fetchToCal
         [actionWithContext.callback, fetchToCallback, refresh],
     )
 
+    const code = actionWithContext.action?.metadata?.code
+    const onNavigate = code && onNavigateFactory && onNavigateFactory(code)
+
     return (
+        onNavigate 
+        ? <Button onClick={onNavigate}>
+            Navigate
+        </Button>
+        :
         <Button
             variant={checked ? 'outline-secondary' : 'primary'}
             onClick={e => {

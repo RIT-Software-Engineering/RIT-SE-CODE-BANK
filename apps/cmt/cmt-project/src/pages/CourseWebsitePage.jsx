@@ -1,22 +1,14 @@
+// @ts-ignore
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../utils/api";
-
-// Helper to get week number relative to semester start
-const getWeekNumber = (date, start) => {
-  const diff = new Date(date) - new Date(start);
-  const week = Math.floor(diff / (1000 * 60 * 60 * 24 * 7)) + 1;
-  return week > 0 ? week : 1;
-};
+import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [events, setEvents] = useState([]);
+  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   // headers: schedule, syllabus, project, resources
-
-  // need to change
-  const [semesterStart] = useState("2025-08-25");
 
   // Fetch courses
   useEffect(() => {
@@ -33,25 +25,38 @@ export default function CourseWebsitePage() {
     })();
   }, []);
 
-  // Fetch events for selected course
+  // Fetch sessions and materials for selected course
   useEffect(() => {
     if (!selectedCourse) return;
-    const fetchEvents = async () => {
+
+    const fetchSessions = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/course-website/${selectedCourse}/events`, {
+        const res = await fetch(`${API_BASE}/session/${selectedCourse}`, {
           credentials: 'include',
         });
         const result = await res.json();
-        if (result.success) setEvents(result.data);
-        else setEvents([]);
+
+        if (result.success) {
+          // Combine sessions with their materials for easier use in UI
+          const combined = result.sessions.map((session, index) => ({
+            ...session,
+            materials: result.sessionMaterials[index]?.material || [],
+          }));
+          setSessions(combined);
+        } else {
+          setSessions([]);
+          console.error("Failed to fetch sessions:", result.error);
+        }
       } catch (err) {
-        console.error("Error fetching events:", err);
+        console.error("Error fetching sessions:", err);
+        setSessions([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchEvents();
+
+    fetchSessions();
   }, [selectedCourse]);
 
   // the full course object to get course name & course id
@@ -61,119 +66,46 @@ export default function CourseWebsitePage() {
     return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
-  // Group events by week
-  const eventsByWeek = useMemo(() => {
-    const grouped = {};
-    for (const e of events) {
-      const week = getWeekNumber(e.date, semesterStart);
-      if (!grouped[week]) grouped[week] = [];
-      grouped[week].push(e);
-    }
-    // Sort events by date within each week
-    for (const week in grouped) {
-      grouped[week].sort((a, b) => new Date(a.date) - new Date(b.date));
-    }
-    return grouped;
-  }, [events, semesterStart]);
 
+  // Helper component to render event title as a link if URL exists - not currently used but may be useful in the future if we want to link to external resources
+  // const EventLink = ({event}) => {
+  //   // if event doesn't have a url, just return title
+  //   if (!event.url) {
+  //     return <span>{event.title}</span>;
+  //   }
 
-  const EventLink = ({event}) => {
-    // if event doesn't have a url, just return title
-    if (!event.url) {
-      return <span>{event.title}</span>;
-    }
+  //   return (
+  //     <a href = {event.url} target = "_blank" rel="noreferrer" className = "text-blue-600 no-underline hover:no-underline visited:no-underline">
+  //       {event.title}
+  //     </a>
+  //   );
+  // };
 
-    return (
-      <a href = {event.url} target = "_blank" rel="noreferrer" className = "text-blue-600 no-underline hover:no-underline visited:no-underline">
-        {event.title}
-      </a>
-    );
-  };
+  const generateCourseHTML = (course, sessions) => {
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${course.id} - ${course.name}</title>
+    </head>
+    <body>
 
-  const generateCourseHTML = (course, eventsByWeek) => {
-    return `<!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>${course.id} - ${course.name}</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        padding: 24px;
-      }
-      h1 {
-        text-align: center;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th, td {
-        border: 1px solid #ccc;
-        padding: 10px;
-        text-align: left;
-      }
-      th {
-        background: #d7d2cb;
-      }
-      tr:nth-child(even) td {
-        background: #f9f9f9;
-      }
-      a {
-        color: #1d4ed8;
-        text-decoration: none;
-      }
-    </style>
-  </head>
-  <body>
+      <h1>${course.id} - ${course.name}</h1>
 
-  <h1>${course.id} – ${course.name}</h1>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Week</th>
-        <th>Topics</th>
-        <th>Class Activities</th>
-        <th>Assignments</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${Object.entries(eventsByWeek)
-        .map(([week, events]) => `
-          <tr>
-            <td>Week ${week}</td>
-            <td>
-              ${events
-                .filter(e => e.type === "lecture" || e.type === "exam")
-                .map(e => e.url ? `<a href="${e.url}">${e.title}</a>` : e.title)
-                .join("<br />")}
-            </td>
-            <td>
-              ${events
-                .filter(e => e.type === "class_activity")
-                .map(e => e.url ? `<a href="${e.url}">${e.title}</a>` : e.title)
-                .join("<br />")}
-            </td>
-            <td>
-              ${events
-                .filter(e => ["assignment", "quiz", "project", "lab"].includes(e.type))
-                .map(e => `${e.url ? `<a href="${e.url}">${e.title}</a>` : e.title} (Due ${new Date(e.date).toLocaleDateString("en-US",{month:"numeric",day:"numeric"})})`)
-                .join("<br />")}
-            </td>
-          </tr>
-        `)
+      ${sessions
+        .sort((a, b) => a.sessionNum - b.sessionNum)
+        .map(generateSessionHTML)
         .join("")}
-    </tbody>
-  </table>
-  </body>
-  </html>`
+
+    </body>
+    </html>
+    `;
   };
 
   const downloadHTML = () => {
     if (!selectedCourseObj) return;
 
-    const html = generateCourseHTML(selectedCourseObj, eventsByWeek);
+    const html = generateCourseHTML(selectedCourseObj, sessions);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
 
@@ -184,6 +116,12 @@ export default function CourseWebsitePage() {
 
     URL.revokeObjectURL(url);
   };
+
+  const visibleColumns = MATERIAL_COLUMNS.filter(col =>
+    sessions.some(session =>
+      (session.materials || []).some(m => m.type === col && m.active)
+    )
+  );
 
   return (
     <div>
@@ -211,64 +149,45 @@ export default function CourseWebsitePage() {
       {/* Events Table */}
       {loading ? (
         <div className="text-center p-6">Loading events...</div>
-      ) : Object.keys(eventsByWeek).length === 0 ? (
+      ) : sessions.length === 0 ? (
         <p className="text-gray-500 text-center">No events found for this course.</p>
       ) : (
         <table className="mx-auto w-full border-collapse">
-          <thead className="bg-[#D7D2CB]">
+          <thead className="[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]">
             <tr>
-              <th className="border border-gray-300 p-3 text-left">Week</th>
-              <th className="border border-gray-300 p-3 text-left">Topics</th>
-              <th className="border border-gray-300 p-3 text-left">Class Activities</th>
-              <th className="border border-gray-300 p-3 text-left">Assignments</th>
+              <th className="border border-blue-300 p-3 text-center">Session</th>
+                {visibleColumns.map(col => (
+                  <th key={col} className="border border-blue-300 p-3 text-center">
+                    {col}
+                  </th>
+                ))}
             </tr>
           </thead>
           <tbody>
-            {Object.entries(eventsByWeek)
-              .sort(([aWeek], [bWeek]) => Number(aWeek) - Number(bWeek))
-              .map(([week, weekEvents], index) => (
-              <tr key={week} className={index % 2 === 0 ? "bg-red-100" : "bg-blue-100"}>
-                {/* Week number column */}
-                <td className="border border-gray-300 p-3 font-semibold text-center">
-                  Week {week}
-                </td>
+            {sessions
+              .sort((a, b) => a.sessionNum - b.sessionNum)
+              .map((session, index) => {
+                const materials = session.materials || [];
+                const grouped = visibleColumns.map(col => materials.filter(m => m.type === col && m.active));
+                return (
+                  <tr key={session.id} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>   
 
-                {/* Lectures */}
-                <td className="border border-gray-300 p-3 align-top">
-                  {weekEvents
-                    .filter(e => e.type === "lecture" || e.type === "exam")
-                    .map(e => (
-                      <div key={e.id} className="mb-1"><EventLink event = {e}></EventLink></div>
-                    ))}
-                </td>
+                    <td className="border border-blue-300 p-3 font-semibold text-center">
+                      {session.sessionNum}
+                    </td>
 
-                {/* Class activities */}
-                <td className="border border-gray-300 p-3 align-top">
-                  {weekEvents
-                    .filter(e => e.type === "class_activity")
-                    .map(e => (
-                      <div key={e.id} className="mb-1"><EventLink event = {e}></EventLink></div>
+                    {grouped.map((colItems, colIndex) => (
+                      <td key={colIndex} className="border border-blue-300 p-3 align-top">
+                        {colItems.map(item => (
+                          <div key={item.id} className="mb-1">
+                            <ReadOnlyEditor value={item.label} />
+                          </div>
+                        ))}
+                      </td>
                     ))}
-                </td>
-
-                {/* Assignments + other things */}
-                <td className="border border-gray-300 p-3 align-top">
-                  {weekEvents
-                    .filter(e =>
-                      ["assignment", "quiz", "project", "lab"].includes(e.type)
-                    )
-                    .map(e => (
-                      <div key={e.id} className="mb-1">
-                        <EventLink event = {e}></EventLink> - Due:{" "} 
-                        {new Date(e.date).toLocaleDateString("en-US", {
-                          month: "numeric",
-                          day: "numeric",
-                          })}
-                        </div>
-                    ))}
-                </td>
-              </tr>
-            ))}
+                </tr>
+                );
+              })}
           </tbody>
         </table>
       )}
@@ -282,3 +201,52 @@ export default function CourseWebsitePage() {
     </div>
   );
 }
+
+const MATERIAL_COLUMNS = [
+  "Topic/Lecture",
+  "Class Activity",
+  "Reading/Resources",
+  "Projects & Practica",
+  "Group Assignment",
+  "Individual Assignment"
+];
+
+function buildSessionTableData(materials) {
+  const grouped = MATERIAL_COLUMNS.map(col =>
+    materials.filter(m => m.type === col && m.active)
+  );
+
+  const maxRows = Math.max(1, ...grouped.map(g => g.length));
+
+  const rows = Array.from({ length: maxRows }, (_, i) =>
+    grouped.map(colItems => colItems[i] || null)
+  );
+
+  return {
+    columns: MATERIAL_COLUMNS,
+    rows
+  };
+}
+
+function generateSessionHTML(session) {
+  const { columns, rows } = buildSessionTableData(session.materials);
+
+  return `
+    <h2>Session ${session.sessionNum}</h2>
+    <table>
+      <thead>
+        <tr>
+          ${columns.map(col => `<th>${col}</th>`).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(row => `
+          <tr>
+            ${row.map(cell => `<td>${cell ? cell.label : ""}</td>`).join("")}
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+

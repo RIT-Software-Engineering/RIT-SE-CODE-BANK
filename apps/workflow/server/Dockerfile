@@ -27,4 +27,4 @@ ENV NODE_ENV=production
 ENV PORT=5011
 
 # Start the server
-CMD ["sh", "-c", "npx prisma db push ** node prisma/cmtSeed.js && node server.js"]
+CMD ["sh", "-c", "npx prisma db push && node prisma/cmtSeed.js && node index.js"]

@@ -11,9 +11,9 @@ import eventRoutes from "./routes/events.js";
 import courseRoutes from "./routes/course.js";
 import templateRoutes from "./routes/template.js";
 import makeTeamBuilderRouter from "./routes/teamBuilder.js";
-import onboardingRoutes from "./routes/onboarding.js";
-import workflonyRoutes from "./routes/workflows.js";
+import workflowRoutes from "./routes/workflows.js";
 import sessionRoutes from './routes/session.js';
+import resourceRoutes from './routes/resources.js';
 
 import path from "path";
 import dotenv from "dotenv";
@@ -34,6 +34,7 @@ const app = express();
 
 const BACKEND_PORT = Number(process.env.BACKEND_PORT) || 5010; // API server
 const FRONTEND_PORT = Number(process.env.PORT) || 3010;        // React dev server
+const BASE_URL = process.env.BASE_URL || `http://localhost:${FRONTEND_PORT}`;
 
 /* ------------------------------------------------------------------
    MIDDLEWARE
@@ -42,6 +43,7 @@ const FRONTEND_PORT = Number(process.env.PORT) || 3010;        // React dev serv
 const allowedOrigins = [
   `http://localhost:${FRONTEND_PORT}`, // from .env (e.g., 3010)
   "http://localhost:3000",            // CRA default
+  "http://apps-staging.se.rit.edu",   // staging
 ];
 if (process.env.REMOTE_DEV_SERVER_ORIGIN) allowedOrigins.push(process.env.REMOTE_DEV_SERVER_ORIGIN)
 
@@ -58,7 +60,7 @@ app.use(
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS: " + origin));
+      return callback(new Error("Not allowed by CORS: " + origin + ", Allowed origins: " + allowedOrigins.join(", ")));
     },
     credentials: true,
   })
@@ -88,7 +90,7 @@ app.use((req, res, next) => {
    ------------------------------------------------------------------ */
 
 // Dev login endpoint - creates a JWT token for testing
-app.post("/api/dev/login", async (req, res) => {
+app.post("/api/cmt/dev/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     
@@ -126,7 +128,8 @@ app.post("/api/dev/login", async (req, res) => {
     // Set cookie (httpOnly: false so frontend can read it)
     res.cookie("cmt_id", token, {
       httpOnly: false, // Allow JavaScript access for dev
-      secure: process.env.NODE_ENV === "production",
+      // secure: process.env.NODE_ENV === "production",
+      secure: false, // For staging rn
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
@@ -180,9 +183,9 @@ app.use("/api/cmt/course", courseRoutes);
 app.use("/api/cmt/template", templateRoutes);
 app.use("/api/cmt/team-builder", teamBuilderRoutes);
 app.use("/api/cmt/course-website", courseWebsiteRoutes);
-app.use("/api/cmt/workflows", onboardingRoutes);
-app.use("/api/cmt/workflony", workflonyRoutes)
+app.use("/api/cmt/workflow", workflowRoutes)
 app.use("/api/cmt/session", sessionRoutes);
+app.use("/api/cmt/resources", resourceRoutes);
 
 // Legacy course routes (if not handled by courseRoutes)
 // get all courses from a professor
@@ -283,8 +286,14 @@ app.use("*", (req, res) => {
    START SERVER
    ------------------------------------------------------------------ */
 
+// app.listen(BACKEND_PORT, () => {
+//   console.log(`🚀 Server running on port ${BACKEND_PORT}`);
+//   console.log(`📚 Course Calendar Backend is ready!`);
+//   console.log(`🔗 API endpoints available at http://localhost:${BACKEND_PORT}/api`);
+// });
+
+// Start server
 app.listen(BACKEND_PORT, () => {
   console.log(`🚀 Server running on port ${BACKEND_PORT}`);
-  console.log(`📚 Course Calendar Backend is ready!`);
-  console.log(`🔗 API endpoints available at http://localhost:${BACKEND_PORT}/api`);
+  console.log(`🔗 API endpoints available at ${BASE_URL}/api`);
 });

@@ -318,7 +318,7 @@ export async function objectToNewAction(action, ownerId, parentActionId) {
   // Link complex action's children
   if (action.actionType === 'complex'){
     if (action.childActions.length > 0) {
-      for (const childAction of action.childActions.toReversed()) {
+      for (const childAction of [...action.childActions].reverse()) {
         await objectToNewAction(childAction, ownerId, createdAction.id)
       }
     }
@@ -326,7 +326,6 @@ export async function objectToNewAction(action, ownerId, parentActionId) {
       throw new Error(`There was a complex action with no simple actions attached. Please contact Kenn Martinez to have this addressed. Action name: ${action.name}`)
     }
   }
-
 
   return createdAction
 }

@@ -50,21 +50,19 @@ class CMTFetchError extends Error {
 export async function CMTFetch(method, url, body, headers, allowedErrorCodes = []) {
     
     const fullURL = `${API_BASE}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
-    const bodyJSON = body ? JSON.stringify(body) : undefined
-    const fullHeaders = { ...headers, "Content-Type": "application/json", }
-    const headersJSON = JSON.stringify(fullHeaders)
+    const headersJSON = JSON.stringify(headers)
 
-    console.log(`🐖 Fetching to url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
+    console.log(`🐖 Fetching to url ${fullURL} with body ${body} and headers ${headersJSON} and method ${method}`)
     
     let response
     try {
-        const options = { method, headers: fullHeaders }
-        if (bodyJSON !== undefined) options.body = bodyJSON
+        const options = { method, headers }
+        if (body !== undefined) options.body = body
         response = await fetch(fullURL, { ...options, credentials: 'include'})
     } catch (error) {
         // TODO: Use central notification system to show error
-        console.error(`🥕 Error when fetching to url ${fullURL}: ${error} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
-        throw Error(`🐦‍🔥 Error when fetching to url ${fullURL}: ${error} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
+        console.error(`🥕 Error when fetching to url ${fullURL}: ${error} with body ${body} and headers ${headersJSON} and method ${method}`)
+        throw Error(`🐦‍🔥 Error when fetching to url ${fullURL}: ${error} with body ${body} and headers ${headersJSON} and method ${method}`)
     }
         
     if (response.ok) {
@@ -80,7 +78,37 @@ export async function CMTFetch(method, url, body, headers, allowedErrorCodes = [
     // Create specially formatted error so consumer can access the codes easily
     const clonedResponse = response.clone();
     throw new CMTFetchError(
-        `🐘 Error status ${response.status}: ${JSON.stringify(await clonedResponse.json())} from url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`, 
+        `🐘 Error status ${response.status}: ${JSON.stringify(await clonedResponse.json())} from url ${fullURL} with body ${body} and headers ${headersJSON} and method ${method}`, 
         response
+    )
+}
+
+/**
+ * Uses {@link CMTFetch}
+ * 
+ * @param {Object} body 
+ */
+export async function CMTJsonFetch(method, url, body, headers, allowedErrorCodes = []) {
+    return CMTFetch(
+        method,
+        url,
+        body ? JSON.stringify(body) : undefined,
+        { ...headers, "Content-Type": "application/json" },
+        allowedErrorCodes
+    )
+}
+
+/**
+ * Uses {@link CMTFetch}
+ * 
+ * @param {FormData} body
+ */
+export async function CMTFormFetch(method, url, body, headers, allowedErrorCodes = []) {
+    return CMTFetch(
+        method,
+        url,
+        body,
+        headers,
+        allowedErrorCodes
     )
 }

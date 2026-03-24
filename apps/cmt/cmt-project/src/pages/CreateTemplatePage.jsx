@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Card } from "react-bootstrap";
 import Alert from "react-bootstrap/Alert";
-import "../styles/course.css";
 import { API_BASE } from "../utils/api";
 
 function CreateTemplatePage() {
