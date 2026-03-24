@@ -21,11 +21,12 @@ import {
     Typography,
     Box,
     Paper,
-    Grid,
+    Grid, FormHelperText,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 import { redirect, RedirectType, useRouter } from 'next/navigation';
+import Image from "next/image";
 
 
 
@@ -357,6 +358,79 @@ function ApplicationPage() {
                         onChange={handleChange}
                         error={!!errors.ritEmail}
                     />
+                    <TextField
+                        required
+                        fullWidth
+                        margin="normal"
+                        label="UID"
+                        name="userID"
+                        value={formValues["userID"] || ""}
+                        onChange={handleChange}
+                        error={!!errors["userID"]}
+                    />
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel required >Who is your Academic Advisor?</FormLabel>
+                        <Select
+                            required
+                            // margin="normal"
+                            label="academicAdvisor"
+                            name="academicAdvisor"
+                            value={formValues["academicAdvisor"] ?? ""}
+                            onChange={(e) =>
+                                handleDropdownChange(
+                                    "academicAdvisor",
+                                    e.target.value
+                                )
+                            }
+                            error={!!errors["academicAdvisor"]}
+                            // helperText={errors.description}
+                        >
+                            <MenuItem value={0}>Carrie Koneski</MenuItem>
+                            <MenuItem value={1}>Sarah Mittiga</MenuItem>
+                            <MenuItem value={2}>Joe Rozak</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel required >How many credits are remaining in your degree?</FormLabel>
+                        <FormHelperText>Can be seen in SIS -&gt; Academic requirements</FormHelperText>
+
+                        <Select
+                            required
+                            // margin="normal"
+                            label="creditsRemaining"
+                            name="creditsRemaining"
+                            value={formValues["creditsRemaining"] ?? ""}
+                            onChange={(e) =>
+                                handleDropdownChange(
+                                    "creditsRemaining",
+                                    e.target.value
+                                )
+                            }
+                            error={!!errors["creditsRemaining"]}
+                            // helperText={errors.description}
+                        >
+                            <MenuItem value={0}>13-30 credits</MenuItem>
+                            <MenuItem value={1}>31-40 credits</MenuItem>
+                            <MenuItem value={2}>40+ credits</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel required id="cumulativeGPA-label">
+                            What is your cumulative GPA?
+                        </FormLabel>
+                        <TextField
+                            fullWidth
+                            label=""
+                            name="cumulativeGPA"
+                            value={formValues["cumulativeGPA"] || ""}
+                            onChange={handleChange}
+                            error={!!errors["cumulativeGPA"]}
+                        />
+                    </FormControl>
+
                     <FormControl fullWidth margin="normal">
                         <FormLabel required >Number of Co-op blocks completed?</FormLabel>
                         <Select
@@ -364,7 +438,7 @@ function ApplicationPage() {
                             // margin="normal"
                             label="coopsCompleted"
                             name="coopsCompleted"
-                            value={formValues["coopsCompleted"] || ""}
+                            value={formValues["coopsCompleted"] ?? ""}
                             onChange={(e) =>
                                 handleDropdownChange(
                                     "coopsCompleted",
@@ -377,10 +451,48 @@ function ApplicationPage() {
                             <MenuItem value={0}>None</MenuItem>
                             <MenuItem value={1}>1</MenuItem>
                             <MenuItem value={2}>2</MenuItem>
-                            <MenuItem value={3}>3</MenuItem>
-                            <MenuItem value={4}>4</MenuItem>
-                            <MenuItem value={5}>5</MenuItem>
+                            <MenuItem value={3}>3+</MenuItem>
                         </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel required id="referral-label">
+                            How did you hear about the SCOOP program?
+                        </FormLabel>
+
+                        <Select
+                            required
+                            // margin="normal"
+                            label="referral"
+                            name="referral"
+                            value={formValues["referral"] ?? ""}
+                            onChange={(e) =>
+                                handleDropdownChange(
+                                    "referral",
+                                    e.target.value
+                                )
+                            }
+                            error={!!errors["referral"]}
+                            // helperText={errors.description}
+                        >
+                            <MenuItem value={0}>Academic Advisor</MenuItem>
+                            <MenuItem value={1}>Faculty</MenuItem>
+                            <MenuItem value={2}>Friend</MenuItem>
+                            <MenuItem value={3}>Co-op & Career Services</MenuItem>
+                            <MenuItem value={4}>Other</MenuItem>
+                        </Select>
+
+                        {formValues["referral"] === 4 && (
+                            <TextField
+                                fullWidth
+                                margin="normal"
+                                label="Please specify:"
+                                name="referralOther"
+                                value={formValues["referralOther"] || ""}
+                                onChange={handleChange}
+                                error={!!errors["referralOther"]}
+                            />
+                        )}
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
@@ -603,6 +715,43 @@ function ApplicationPage() {
                                 label="No"
                             />
                         </RadioGroup>
+                    </FormControl>
+
+                    <FormControl>
+                        <FormLabel required id="jobSearchAcknowledgment-label">
+                            It is imperative that you continue your search between now and the beginning of your SCOOP term.
+                            Students often find jobs at the very last minute before a term starts,
+                            so there is no such thing as too late to do your search. Please acknowledge this below:
+                        </FormLabel>
+                        <RadioGroup
+                            aria-labelledby="jobSearchAcknowledgment-buttons-group-label"
+                            name="jobSearchAcknowledgment"
+                            value={formValues["jobSearchAcknowledgment"] ?? ""}
+                            onChange={handleChange}
+                        >
+                            <FormControlLabel
+                                value={true}
+                                control={<Radio />}
+                                label="I agree that I will continue my job search until the beginning of my SCOOP term."
+                            />
+                            <FormControlLabel
+                                value={false}
+                                control={<Radio />}
+                                label="Other"
+                            />
+                        </RadioGroup>
+
+                        {formValues["jobSearchAcknowledgment"] === false && (
+                            <TextField
+                                fullWidth
+                                margin="normal"
+                                label="Please specify:"
+                                name="jobSearchAcknowledgmentOther"
+                                value={formValues["jobSearchAcknowledgmentOther"] || ""}
+                                onChange={handleChange}
+                                error={!!errors["jobSearchAcknowledgmentOther"]}
+                            />
+                        )}
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
