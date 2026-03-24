@@ -99,9 +99,8 @@ export function BuilderPage(){
                             break;
                         case "COURSE_SEMESTER":
                             const validationArray = [];
-                            for (let index = 0; index < outputs.length; index++) {
-                                validationArray.push([Object.values(outputs[index].validation.options).join(", ")]);
-                            }
+                            validationArray.push([Object.values(outputs[0].validation.options).join(", ")]);
+                            validationArray.push(Object.values(outputs[1].validation.options));
                             setValidation(validationArray);
                             break;
                         default:
@@ -214,8 +213,8 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
                     {
                         setHasValidation(e.target.checked)
                         if (!e.target.checked)
-                             setValidation([[],[]])
-                    }} defaultChecked={true}/>
+                            setValidation([[],[]])
+                    }}/>
             </div>
             {hasValidation ? <>
             <div className="flex">
@@ -244,8 +243,8 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
                 <Form.Check className="pl-2" checked={hasValidation} onChange={(e)=>{
                     setHasValidation(e.target.checked);
                     if (!e.target.checked)
-                         setValidation([[],[]])
-                }} defaultChecked={true}/>
+                        setValidation([[],[]])
+                }}/>
             </div>
             {hasValidation ? <>
             <div className="flex ">
@@ -257,9 +256,26 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
                 </div>
                 <div className="pl-10 w-3/5">
                 <Form.Label>Season Options (seperate each by a comma)</Form.Label>
-                <Form.Control placeholder="e.g Fall, Spring, Summer 1, Summer 2, Summer 3" onChange={e => {
-                    setValidation(prev => [prev[0], e.target.value.split(/, ?/)])
-                }} defaultValue={isEdit ? (validation.length > 1 ? validation[1] : '') : ''}/>
+                {['Fall', 'Spring', 'Summer 1', 'Summer 2', 'Summer 3'].map(option =>
+                (
+                    <Form.Check  
+                    key={option}
+                    type="checkbox"
+                    label={option}
+                    value={option}
+                    id={`checkbox-${option}`}
+                    checked={validation[1].includes(option)}
+                    onChange={(e) => {
+                        // AI-generated code
+                        const { value, checked } = e.target
+                        if (checked && !validation[1].includes(value)) {
+                            setValidation(prev => [prev[0], [...prev[1], value]]);
+                        } else {
+                            setValidation(prev => [prev[0], prev[1].filter((option) => option !== value)]);
+                        }
+                    }}
+                    />
+                ))}
                 </div>
             </div>
             </>
@@ -359,7 +375,7 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 type: "select",
                 isRequired: isRequired
             }]
-            if (validation[0][0] && validation[0][1]){
+            if (validation[0].length > 0 && validation[1].length > 0){
                 console.log("has validation:", validation)
                 let yearIndex = output.findIndex(obj => obj.name === "Year");
                 output[yearIndex]['validation'] = {options: validation[0].split(/, ?/).map(year => parseInt(year))};
