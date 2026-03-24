@@ -379,9 +379,9 @@ function ApplicationPage() {
                         margin="normal"
                         label="UID"
                         name="userID"
-                        value={formValues["userID"] || ""}
+                        value={formValues.userID || ""}
                         onChange={handleChange}
-                        error={!!errors["userID"]}
+                        error={!!errors.userID}
                     />
 
                     <FormControl fullWidth margin="normal">
@@ -391,19 +391,19 @@ function ApplicationPage() {
                             // margin="normal"
                             label="academicAdvisor"
                             name="academicAdvisor"
-                            value={formValues["academicAdvisor"] ?? ""}
+                            value={formValues.academicAdvisor ?? ""}
                             onChange={(e) =>
                                 handleDropdownChange(
                                     "academicAdvisor",
                                     e.target.value
                                 )
                             }
-                            error={!!errors["academicAdvisor"]}
+                            error={!!errors.academicAdvisor}
                             // helperText={errors.description}
                         >
-                            <MenuItem value={0}>Carrie Koneski</MenuItem>
-                            <MenuItem value={1}>Sarah Mittiga</MenuItem>
-                            <MenuItem value={2}>Joe Rozak</MenuItem>
+                            <MenuItem value="Carrie Koneski">Carrie Koneski</MenuItem>
+                            <MenuItem value="Sarah Mittiga">Sarah Mittiga</MenuItem>
+                            <MenuItem value="Joe Rozak">Joe Rozak</MenuItem>
                         </Select>
                     </FormControl>
 
@@ -416,14 +416,14 @@ function ApplicationPage() {
                             // margin="normal"
                             label="creditsRemaining"
                             name="creditsRemaining"
-                            value={formValues["creditsRemaining"] ?? ""}
+                            value={formValues.creditsRemaining ?? ""}
                             onChange={(e) =>
                                 handleDropdownChange(
                                     "creditsRemaining",
                                     e.target.value
                                 )
                             }
-                            error={!!errors["creditsRemaining"]}
+                            error={!!errors.creditsRemaining}
                             // helperText={errors.description}
                         >
                             <MenuItem value={0}>13-30 credits</MenuItem>
@@ -440,9 +440,9 @@ function ApplicationPage() {
                             fullWidth
                             label=""
                             name="cumulativeGPA"
-                            value={formValues["cumulativeGPA"] || ""}
+                            value={formValues.cumulativeGPA || ""}
                             onChange={handleChange}
-                            error={!!errors["cumulativeGPA"]}
+                            error={!!errors.cumulativeGPA}
                         />
                     </FormControl>
 
@@ -658,41 +658,41 @@ function ApplicationPage() {
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required id="referral-label">
+                        <FormLabel required id="SEcoopReferral-label">
                             How did you hear about the SCOOP program?
                         </FormLabel>
 
                         <Select
                             required
                             // margin="normal"
-                            label="referral"
-                            name="referral"
-                            value={formValues["referral"] ?? ""}
+                            label="SEcoopReferral"
+                            name="SEcoopReferral"
+                            value={formValues.SEcoopReferral ?? ""}
                             onChange={(e) =>
                                 handleDropdownChange(
-                                    "referral",
+                                    "SEcoopReferral",
                                     e.target.value
                                 )
                             }
-                            error={!!errors["referral"]}
+                            error={!!errors.SEcoopReferral}
                             // helperText={errors.description}
                         >
-                            <MenuItem value={0}>Academic Advisor</MenuItem>
-                            <MenuItem value={1}>Faculty</MenuItem>
-                            <MenuItem value={2}>Friend</MenuItem>
-                            <MenuItem value={3}>Co-op & Career Services</MenuItem>
-                            <MenuItem value={4}>Other</MenuItem>
+                            <MenuItem value="Academic Advisor">Academic Advisor</MenuItem>
+                            <MenuItem value="Faculty">Faculty</MenuItem>
+                            <MenuItem value="Friend">Friend</MenuItem>
+                            <MenuItem value="Co-op & Career Services">Co-op & Career Services</MenuItem>
+                            <MenuItem value="Other">Other</MenuItem>
                         </Select>
 
-                        {formValues["referral"] === 4 && (
+                        {formValues.SEcoopReferral === "Other" && (
                             <TextField
                                 fullWidth
                                 margin="normal"
                                 label="Please specify:"
-                                name="referralOther"
-                                value={formValues["referralOther"] ?? ""}
+                                name="SEcoopReferralDetails"
+                                value={formValues.SEcoopReferralDetails ?? ""}
                                 onChange={handleChange}
-                                error={!!errors["referralOther"]}
+                                error={!!errors.SEcoopReferralDetails}
                             />
                         )}
                     </FormControl>
@@ -756,7 +756,7 @@ function ApplicationPage() {
                         <RadioGroup
                             aria-labelledby="jobSearchAcknowledgment-buttons-group-label"
                             name="jobSearchAcknowledgment"
-                            value={formValues["jobSearchAcknowledgment"] ?? ""}
+                            value={formValues.jobSearchAcknowledgment ?? ""}
                             onChange={handleChange}
                         >
                             <FormControlLabel
@@ -771,16 +771,16 @@ function ApplicationPage() {
                             />
                         </RadioGroup>
 
-                        {formValues["jobSearchAcknowledgment"] === false && (
+                        {formValues.jobSearchAcknowledgment === false && (
                             <TextField
                                 fullWidth
                                 margin="normal"
                                 multiline
                                 label="Please specify:"
-                                name="jobSearchAcknowledgmentOther"
-                                value={formValues["jobSearchAcknowledgmentOther"] ?? ""}
+                                name="jobSearchAcknowledgmentDetails"
+                                value={formValues.jobSearchAcknowledgmentDetails ?? ""}
                                 onChange={handleChange}
-                                error={!!errors["jobSearchAcknowledgmentOther"]}
+                                error={!!errors.jobSearchAcknowledgmentDetails}
                             />
                         )}
                     </FormControl>
