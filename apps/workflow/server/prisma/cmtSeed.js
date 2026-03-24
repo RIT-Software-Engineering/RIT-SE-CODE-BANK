@@ -350,12 +350,18 @@ async function main() {
             userId: users[0].id,
             actions: Array.from({ length: 28 }, (_, index) => {
                 return {
-                    name: `Create session ${index}`,
+                    name: `Create session ${index+1}`,
                     description:
                         'Create a session. In the workflow editor, more specific details could be given for certain sessions, like if a session should have an exam.',
                     actionType: 'simple',
                     metadata: {
                         code: `SESSION_${index}`,
+                        outputs: [{
+                          isRequired: true,
+                          validation: {
+                            sessionNum: index+1
+                          },
+                        }]
                     },
                 }
             }),

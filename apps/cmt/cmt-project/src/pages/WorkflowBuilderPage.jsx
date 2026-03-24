@@ -23,10 +23,17 @@ export function BuilderPage(){
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
     const [depthLevel, setDepthLevel] = useState(0);
-    const [curAction, setCurAction] = useState({});
+    const [curAction, setCurAction] = useState({metadata: null}); // We only set this to avoid unnecessary warnings
     const [isEdit, setIsEdit] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [metaWorkflow, setMetaWorkflow] = useState('None');
+
+    // Action modal info
+    const [code, setCode] = useState(availCodes ? availCodes[0][0] : '');
+    const [required, setRequired] = useState(false);
+    const [placeholder, setPlaceholder] = useState('');
+    const [validation, setValidation] = useState([]);
+    const extraData = {code, required, placeholder, validation};
 
     const update = useCallback(async () => {
         return CMTFetch("GET", "/workflony/workflowTemplate").then(async response => {
@@ -65,6 +72,54 @@ export function BuilderPage(){
         setIsEdit(true);
     }
 
+    function renderMetadataCodes(){
+        if (curAction.metadata){
+            // Strips any numbers at the end of the string
+            return curAction.metadata.code?.replace(/_[\d]+$/, '');
+        }
+    }
+
+    function loadActionForm(){
+        if (curAction.metadata){
+            setCode(renderMetadataCodes());
+            const outputs = curAction.metadata.outputs;
+            if (outputs){
+                setRequired(outputs[0].isRequired);
+                setPlaceholder(outputs[0].placeholder);
+                let validation = outputs[0].validation
+                if (Object.keys(validation).length > 0){
+                    switch (renderMetadataCodes()) {
+                        case "NUMBER_STUDENTS":
+                            // Sort because it starts with max then min normally while we want the opposite
+                            setValidation(Object.values(validation).sort().map(item => {return [item]}));
+                            break;
+                        case "SESSION":
+                        case "COURSE_SECTION":
+                            console.log(Object.values(validation))
+                            setValidation(Object.values(validation));
+                            break;
+                        case "COURSE_SEMESTER":
+                            const validationArray = [];
+                            for (let index = 0; index < outputs.length; index++) {
+                                validationArray.push([Object.values(outputs[index].validation.options).join(", ")]);
+                            }
+                            setValidation(validationArray);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    function clearActionForm(){
+        setCode(availCodes[0][0]); 
+        setValidation([]);
+        setPlaceholder('');
+        setRequired(false);
+    }
+
     return (
     loading ? <><h1>Loading...</h1></> :
     <>
@@ -81,9 +136,22 @@ export function BuilderPage(){
         </WorkflowModal>
 
         <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} workflows={workflows} setWorkflows={setWorkflows} 
-        availCodes={availCodes} parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
-        isEdit={isEdit} setIsEdit={setIsEdit} curAction={curAction} outputHelper={BuilderOutputsHelper} refresh={update}
-        addAction={addStandardAction} addWorkflowAction={addWorkflowAction} editAction={editStandardAction} editWorkflowActionFunction={editWorkflowAction}/>
+        parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
+        isEdit={isEdit} setIsEdit={setIsEdit} curAction={curAction} refresh={update}
+        addAction={addStandardAction} addWorkflowAction={addWorkflowAction} editAction={editStandardAction} editWorkflowActionFunction={editWorkflowAction}
+        loadFunction={loadActionForm} clearFunction={clearActionForm} extraData={extraData}>
+            <Form.Label>Code</Form.Label>
+            <Form.Select onChange={(e)=>setCode(e.target.value)} value={code}>
+                {availCodes.map(codeInfo => {
+                    return <option key={codeInfo[0]} value={codeInfo[0]}>{codeInfo[1]}</option>
+                })}
+            </Form.Select>
+            <div className="flex pt-2">
+                <Form.Label>Is Required?</Form.Label>
+                <Form.Check className="pl-2" onChange={(e)=>setRequired(e.target.checked)} defaultChecked={isEdit ? (curAction.metadata?.outputs?.length > 0 ? curAction.metadata.outputs[0].isRequired : false) : false}/>
+            </div>
+            <BuilderOutputRenderer code={code} setPlaceholder={setPlaceholder} validation={validation} setValidation={setValidation} isEdit={isEdit} curAction={curAction}/>
+        </ActionModal>
         
         <DeleteModal isOpen={deleteOpen} setIsOpen={setDeleteOpen} action={curAction} 
         actionDelete={deleteStandardAction} workflowDelete={deleteWorkflow} refresh={update}/>
@@ -208,7 +276,6 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             break;
 
         default:
-            console.log(code)
             returnOutput = <></>
     }
     return returnOutput
@@ -225,7 +292,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
  */
 function BuilderOutputsHelper(code, isRequired, placeholder, validation){
     let output;
-    switch (code) {
+    switch (code.replace(/_[\d]+$/, '')) {
         case "COURSE_SECTION":
             output = [{
                 name: "Course Section",
@@ -473,17 +540,21 @@ async function setNextActionInfo(action, actions, workflowId, id, name, descript
  * CMT-Specific function
  *
  * @async
- * @param {*} outputs 
  * @param {*} index 
  * @param {*} workflows 
  * @param {*} setWorkflows 
  * @param {*} name 
  * @param {*} description 
- * @param {*} code 
  * @param {*} actionType 
  * @param {*} parentActionId 
+ * @param {Object} extraData
  */
-async function addStandardAction(outputs, index, workflows, setWorkflows, name, description, code, actionType, parentActionId) {
+async function addStandardAction(index, workflows, setWorkflows, name, description, actionType, parentActionId, extraData) {
+    let code, outputs;
+    if (actionType === 'simple'){
+        code = extraData.code;
+        outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)
+    }
     let metadata = {};
     let isWorkflowChild = false;
     let workflowParent = workflows[index];
@@ -511,11 +582,11 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
             if (outputs[0].toSessionNum){
                 const fromSessionNum = parseInt(outputs[0].fromSessionNum)-1;
                 const toSessionNum = parseInt(outputs[0].toSessionNum)-1;
-                outputs = [{isRequired: outputs[0].isRequired,  validation: {sessionNum: outputs[0].fromSessionNum}}];
-                console.log("New outputs:", outputs)
                 for (let j = fromSessionNum; j <= toSessionNum; j++) {
-                    await addStandardAction(outputs, index, workflows, setWorkflows,
-                        `Create Session ${j+1}`, description, `SESSION_${j}`, "simple", parentActionId
+                    extraData.code = `SESSION_${j}`;
+                    extraData.validation = [[`${j+1}`]]
+                    await addStandardAction(index, workflows, setWorkflows,
+                        `Create Session ${j+1}`, description, "simple", parentActionId, extraData
                     )
                 }
                 // We call the function a bunch of times but don't want to create a duplicate once completed
@@ -604,7 +675,7 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
                 setWorkflows(workflowsCopy);
         }
         else {
-            if (workflowParent.childActions.length > 0)
+            if (workflowParent.childActions.length > 1)
                 setWorkflows(workflowsCopy);
             else {
                 await workflowsFetch("PUT", `workflows/action/${workflowParent.id}`, {
@@ -618,14 +689,18 @@ async function addStandardAction(outputs, index, workflows, setWorkflows, name, 
  * CMT-Specific function
  *
  * @async
- * @param {*} outputs 
  * @param {*} name 
  * @param {*} description 
- * @param {*} code 
  * @param {*} actionToUpdate 
+ * @param {Object} extraData
  * @param {() => void} refresh
  */
-async function editStandardAction(outputs, name, description, code, actionToUpdate, refresh){
+async function editStandardAction(name, description, actionToUpdate, extraData, refresh){
+    let code, outputs;
+    if (actionToUpdate.actionType === 'simple'){
+        code = extraData.code;
+        outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)
+    }
     let metadata = {};
     if (!name)
         name = 'New Action';
@@ -890,30 +965,25 @@ function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
  * Generic component applicable to all applications
  *
  * @param {{ isOpen: any; setIsOpen: any; index: any; workflows: any; setWorkflows: any; 
- * availCodes: any; parentId: any; depthLevel: any; setDepthLevel: any;
- * isEdit: any; setIsEdit: any; curAction: any; outputHelper: any; refresh: ()=>void;
- * addAction: any; addWorkflowAction: any; editAction: any; editWorkflowActionFunction: any; }} param0 
+ * parentId: any; depthLevel: any; setDepthLevel: any;
+ * isEdit: any; setIsEdit: any; curAction: any; refresh: ()=>void;
+ * addAction: any; addWorkflowAction: any; editAction: any; editWorkflowActionFunction: any;
+ * loadFunction: ()=>void; clearFunction: ()=>void; extraData: Object; children: any;}} param0 
  */
-function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCodes, parentId, 
-    depthLevel, setDepthLevel, isEdit, setIsEdit, curAction, outputHelper, refresh,
-    addAction, addWorkflowAction, editAction, editWorkflowActionFunction}){
+function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, parentId, 
+    depthLevel, setDepthLevel, isEdit, setIsEdit, curAction, refresh,
+    addAction, addWorkflowAction, editAction, editWorkflowActionFunction,
+    loadFunction, clearFunction, extraData, children}){
     const [actionType, setActionType] = useState("simple");
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [code, setCode] = useState(availCodes ? availCodes[0][0] : ''); // Sorry SCOOPortal, CMT needs this or our lives become hell :(
-    const [required, setRequired] = useState(false);
-    const [placeholder, setPlaceholder] = useState('');
-    const [validation, setValidation] = useState([]);
 
     function clearForm(){
         setName('');
         setDescription('');
         setActionType('simple');
-        setCode(availCodes ? availCodes[0][0] : ''); 
-        setValidation([]);
-        setPlaceholder('');
-        setRequired(false);
         setDepthLevel(depthLevel-1);
+        clearFunction();
     }
 
     /** Loads data from the current action. Only called on edit. */
@@ -921,63 +991,20 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
         setName(curAction.name);
         setDescription(curAction.description);
         setActionType(curAction.actionType);
-        // TODO remove this for generic workflow builder
-        if (curAction.metadata){
-            setCode(renderMetadataCodes());
-            const outputs = curAction.metadata.outputs;
-            if (outputs){
-                setRequired(outputs[0].isRequired);
-                setPlaceholder(outputs[0].placeholder);
-                let validation = outputs[0].validation
-                if (Object.keys(validation).length > 0){
-                    switch (renderMetadataCodes()) {
-                        case "NUMBER_STUDENTS":
-                            // Sort because it starts with max then min normally while we want the opposite
-                            setValidation(Object.values(validation).sort().map(item => {return [item]}));
-                            break;
-                        case "SESSION":
-                        case "COURSE_SECTION":
-                            console.log(Object.values(validation))
-                            setValidation(Object.values(validation));
-                            break;
-                        case "COURSE_SEMESTER":
-                            const validationArray = [];
-                            for (let index = 0; index < outputs.length; index++) {
-                                validationArray.push([Object.values(outputs[index].validation.options).join(", ")]);
-                            }
-                            setValidation(validationArray);
-                            console.log(validationArray)
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-        }
-    }
-
-    function renderMetadataCodes(){
-        if (curAction.metadata){
-            // Strips any numbers at the end of the string
-            return curAction.metadata.code?.replace(/_[\d]+$/, '');
-        }
+        loadFunction();
     }
 
     async function createSimpleAction(e){
-        let outputs;
-        outputs = outputHelper(code, required, placeholder, validation);
         e.preventDefault();
-        await addAction(outputs, index, workflows, setWorkflows, name, description, code, "simple", parentId).then(() => {
+        await addAction(index, workflows, setWorkflows, name, description,"simple", parentId, extraData).then(() => {
             clearForm();
             setIsOpen(false);
         })
     }
 
     async function editSimpleAction(e){
-        let outputs;
-        outputs = outputHelper(code, required, placeholder, validation);
         e.preventDefault();
-        await editAction(outputs, name, description, code, curAction, refresh).then(() => {
+        await editAction(name, description, curAction, extraData, refresh).then(() => {
             clearForm();
             setIsOpen(false);
         })
@@ -985,7 +1012,7 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
 
     async function createComplexAction(e) {
         e.preventDefault();
-        await addAction(null, index, workflows, setWorkflows, name, description, null, "complex", parentId).then(()=>{
+        await addAction(index, workflows, setWorkflows, name, description, "complex", parentId, extraData).then(()=>{
             clearForm();
             setIsOpen(false);
         })
@@ -993,7 +1020,7 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
 
     async function editComplexAction(e){
         e.preventDefault();
-        await editAction(null, name, description, null, curAction, refresh).then(() => {
+        await editAction(name, description, curAction, extraData, refresh).then(() => {
             clearForm();
             setIsOpen(false);
         })
@@ -1040,20 +1067,7 @@ function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, availCo
                 : <></>}   
                 {actionType === "simple" ? // if simple action
                 <>
-
-                {/* TODO make this part of the form not hardcoded for CMT */}
-                <Form.Label>Code</Form.Label>
-                <Form.Select onChange={(e)=>setCode(e.target.value)} defaultValue={isEdit ? renderMetadataCodes() : ''}>
-                    {availCodes.map(codeInfo => {
-                        return <option key={codeInfo[0]} value={codeInfo[0]}>{codeInfo[1]}</option>
-                    })}
-                </Form.Select>
-                <div className="flex pt-2">
-                    <Form.Label>Is Required?</Form.Label>
-                    <Form.Check className="pl-2" onChange={(e)=>setRequired(e.target.checked)} defaultChecked={isEdit ? (curAction.metadata?.outputs?.length > 0 ? curAction.metadata.outputs[0].isRequired : false) : false}/>
-                </div>
-                <BuilderOutputRenderer code={code} setPlaceholder={setPlaceholder} validation={validation} setValidation={setValidation} isEdit={isEdit} curAction={curAction}/>
-                
+                {children}
                 <div className="flex justify-end pt-2">
                     <Button type="submit" onClick={(e) => isEdit ? editSimpleAction(e) : createSimpleAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
                 </div>
