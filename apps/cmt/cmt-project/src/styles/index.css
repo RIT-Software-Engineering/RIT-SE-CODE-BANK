@@ -27,3 +27,7 @@ button.accordion-button:focus{
 .tiptap th, .tiptap tbody, .tiptap tr, .tiptap td {
     @apply !border
 }
+
+.tableWrapper {
+    @apply overflow-x-auto
+}
