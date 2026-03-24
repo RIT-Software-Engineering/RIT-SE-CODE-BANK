@@ -82,7 +82,7 @@ export function RichTextEditor({ value, onChange, courseId, showTables, onEditor
             }),
             TextStyle,
             Highlight.configure({ multicolor: true }),
-            Color, // The current colors are very limited to basically the defaults. Maybe this could be changed in the future?
+            Color,
             BackgroundColor,
             TextAlign.configure({
                 alignments: ['left', 'center'],
@@ -287,7 +287,7 @@ export function RichTextEditor({ value, onChange, courseId, showTables, onEditor
           : <></>
           }
           
-          <div className='border-x border-b p-3 prose max-w-none'>
+          <div className='border-x border-b p-3 prose prose-strong:text-inherit max-w-none'>
               <EditorContent className="*:p-3" editor={editor} />
           </div>
         </div>

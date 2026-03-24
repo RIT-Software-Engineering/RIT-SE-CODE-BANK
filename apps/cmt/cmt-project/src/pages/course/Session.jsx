@@ -85,7 +85,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                         </div>
                                     </Card.Title>
                                     <Card.Text>
-                                        <span className="prose" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
+                                        <span className="prose prose-strong:text-inherit" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
                                 </Card.Body>
                             </Card> : <></>
                             }
