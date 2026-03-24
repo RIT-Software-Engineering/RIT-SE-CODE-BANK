@@ -11,9 +11,7 @@ import { RefreshCcw } from 'lucide-react'
  * @returns {string}
  */
 export function getResourceDownloadUrl(resourceId) {
-    const isDevelopment = process.env.NODE_ENV === 'development'
-    const baseUrl = isDevelopment ? 'http://localhost:5010' : ''
-    return `${baseUrl}/api/cmt/resources/download/${resourceId}`
+    return `${process.env.REACT_APP_BASE_URL}/api/cmt/resources/download/${resourceId}`
 }
 
 /**
