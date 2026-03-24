@@ -75,9 +75,10 @@ function EmployerPositionsContent() {
   const [appliedFilters, setAppliedFilters] = useState({});
   const [filterConfig, setFilterConfig] = useState([]);
 
-  // State for managing modals (edit/create position and note confirmation).
+  // State for managing modals (edit/create/copy position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
-  const [isEdit, setIsEdit]=useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [isCopy, setIsCopy] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -163,9 +164,9 @@ function EmployerPositionsContent() {
       myJobs = await getPositionsByOwner(currentUser.username, currentSearch, currentFilters);
       setMyPositions(myJobs);
 
-      otherJobs=openJobs.filter(item => !myJobs.includes(item))
+      otherJobs = openJobs.filter(item => !myJobs.includes(item))
       setOtherOpenPositions(otherJobs);
-      res=otherJobs.length+myJobs.length;
+      res = otherJobs.length + myJobs.length;
       setResults(res)
     } catch (err) {
       console.error(`Failed to fetch data for tab ${tabId}:`, err);
@@ -224,7 +225,7 @@ function EmployerPositionsContent() {
    */
   const handleOpenModal = (job = null) => {
     setSelectedJob(job);
-    setIsEdit((job!=null));
+    setIsEdit((job != null));
     setIsModalOpen(true);
   };
 
@@ -257,15 +258,45 @@ function EmployerPositionsContent() {
   };
 
   /**
+     * Handles copying a position
+     * @param {object} originalJob - the original job to copy
+     */
+  const handleCopyPosition = (originalJob) => {
+    const employerData = {
+      username: currentUser.username,
+      fname: currentUser.fname,
+      lname: currentUser.lname,
+    };
+    const copiedData = {
+      jobSchedules: originalJob.jobSchedules,
+      location: originalJob.location,
+      locationType: originalJob.locationType,
+      maxTAs: originalJob.maxTAs,
+      endDate: originalJob.endDate,
+      gradeRequirement: originalJob.gradeRequirement,
+      startDate: originalJob.startDate,
+      graduateStatusRequirement: originalJob.graduateStatusRequirement,
+      course: { ...originalJob.course },
+      courseCode: originalJob.courseCode,
+      courseTakenRequirement: originalJob.courseTakenRequirement,
+      jobPositionStatus: 'OPEN',
+      username: currentUser.username
+    };
+    setSelectedJob(copiedData);
+    setIsCopy(true);
+    setIsModalOpen(true);
+  };
+  /**
    * Handles saving a job position from the EditPositionModal.
-   * Differentiates between CREATE and UPDATE actions.
+   * It determines whether to perform a CREATE or UPDATE action.
+   * For updates, it opens a note modal for confirmation.
    * @param {object} positionData - The data of the position to be saved.
    */
   const handleSaveJob = async (positionData) => {
     if (!currentUser) return;
 
     // If no job is selected, this is a CREATE action.
-    if (!selectedJob) {
+    if (!selectedJob || isCopy == true) {
       setIsProcessing(true);
       try {
         const employerData = {
@@ -388,6 +419,7 @@ function EmployerPositionsContent() {
               showEditAction={true}
               showApproveRejectActions={false}
               showTracker={true}
+              onCopy={handleCopyPosition}
             />
           ))}
 
@@ -486,19 +518,19 @@ function EmployerPositionsContent() {
       }
 
       {/* Modals are rendered conditionally outside the main content flow. */}
-      {
-        isModalOpen && (
-          <EditPositionModal
-            job={selectedJob}
-            onClose={handleCloseModal}
-            onSave={handleSaveJob}
-          />
-        )
+      {isModalOpen && (
+        <EditPositionModal
+          job={selectedJob}
+          onClose={handleCloseModal}
+          onSave={handleSaveJob}
+          isCopyMode={isCopy}
+        />
+      )
       }
       {
         showClearConfirm && (
           <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={handleClearConfirm} title={isEdit ? "Cancel Edits to Position" : "Cancel Position Creation"}>
-           {isEdit ? "Leaving now will permanently discard your edits. This action cannot be undone." : "Are you sure you want to cancel this job application? This action cannot be undone."}
+            {isEdit ? "Leaving now will permanently discard your edits. This action cannot be undone." : "Are you sure you want to cancel this job application? This action cannot be undone."}
           </ConfirmationModal>
         )
       }

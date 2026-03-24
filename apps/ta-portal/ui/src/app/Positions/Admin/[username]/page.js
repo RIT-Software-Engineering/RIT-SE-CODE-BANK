@@ -71,7 +71,7 @@ export default function AdminPositions() {
   const [appliedFilters, setAppliedFilters] = useState({});
   const [filterConfig, setFilterConfig] = useState([]);
 
-  // State for managing modals (edit/create position and note confirmation).
+  // State for managing modals (edit/create/copy position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isEdit, setIsEdit] = useState(false);
   const [isCopy, setIsCopy] = useState(false);
@@ -275,6 +275,10 @@ export default function AdminPositions() {
     setNoteModalState({ isOpen: false, title: '', context: {} });
   };
 
+  /**
+   * Handles copying a position
+   * @param {object} originalJob - the original job to copy
+   */
   const handleCopyPosition = (originalJob) => {
     const employerData = {
           username: currentUser.username,
@@ -296,7 +300,6 @@ export default function AdminPositions() {
       jobPositionStatus: 'OPEN',
       username: currentUser.username
     };
-    console.log('copy');
     setSelectedJob(copiedData);
     setIsCopy(true);
     setIsModalOpen(true);
