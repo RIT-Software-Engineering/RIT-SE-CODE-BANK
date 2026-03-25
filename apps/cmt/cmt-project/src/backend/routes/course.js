@@ -76,8 +76,9 @@ router.post('/', async (req, res) => {
         const professorId = req.user.uid
 
         let metaCourseWorkflow;
-        await workflowsFetch("GET", "workflows/").then(async response => {
-            const workflowBase = response.find(workflow => metadataArrayToObject(workflow.baseAction?.metadata)?.code === "Course Creation Workflow");
+        await workflowsFetch("GET", `workflows/metadata?key=code&value=${JSON.stringify('Course Creation Workflow')}`,).then(async response => {
+            console.log(response)
+            const workflowBase = response.length > 0 ? response[0] : null;
             if (!workflowBase)
                 throw new Error("Unable to find the standard course creation template. Please contact Kenn Martinez so that it can be set.")
             let actions = [];

@@ -6,29 +6,6 @@ const { exportWorkflow } = require("../helpers/workflows.js");
 const prisma = new PrismaClient();
 const { permissionTypes } = require("../consts.js") || [];
 
-/**
- * Get a specific workflow by id
- */
-router.get("/:id", async (req, res) => {
-  const { id } = req.params;
-
-  const workflow = await prisma.workflowAttributes.findUnique({
-    where: { id: id },
-    include: {
-      tags: true,
-      baseAction: {
-        include: {
-          metadata: true,
-          permissions: true,
-        },
-      },
-      rootAction: true,
-    },
-  });
-
-  res.json(exportWorkflow(workflow));
-});
-
 router.get("/action/:id", async (req, res) => {
   const {id} = req.params;
   const workflow = await prisma.workflowAttributes.findUnique({
@@ -51,6 +28,59 @@ router.get("/action/:id", async (req, res) => {
 
   res.json(exportWorkflow(workflow));
 })
+
+// GET /workflows/metadata
+// Used to get workflows by matching metadata
+router.get("/metadata", async (req, res) => {
+  const {key, value} = req.query;
+  console.log(key, value)
+  const baseAction = await prisma.metadata.findMany({
+    where: {key: key, value: value},
+  });
+
+  if (!baseAction)
+    throw new Error("No base action found.")
+
+  console.log(baseAction[0].actionId)
+
+  const workflows = [];
+  for (let index = 0; index < baseAction.length; index++) {
+    const workflow = (await prisma.workflowAttributes.findUnique({
+      where: {baseActionId: baseAction[index].actionId}
+    }));
+
+    // Only add to workflows if it's not null/undefined
+    if (workflow)
+      workflows.push(workflow)
+  }
+  
+
+  console.log("Workflow", workflows)
+  res.json(workflows.map((w) => exportWorkflow(w)));
+})
+
+/**
+ * Get a specific workflow by id
+ */
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const workflow = await prisma.workflowAttributes.findUnique({
+    where: { id: id },
+    include: {
+      tags: true,
+      baseAction: {
+        include: {
+          metadata: true,
+          permissions: true,
+        },
+      },
+      rootAction: true,
+    },
+  });
+
+  res.json(exportWorkflow(workflow));
+});
 
 // GET /workflows
 router.get("/", async (req, res) => {

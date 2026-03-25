@@ -103,7 +103,7 @@ router.put("/actionTemplate/action/:actionId", async (req, res) => {
     try {
         const {actionId} = req.params;
         const {name, description, metadata} = req.body;
-        const safeMetadata = makeMetadataSafeForWorkflows(metadata);
+        const safeMetadata = metadata ? makeMetadataSafeForWorkflows(metadata) : makeMetadataSafeForWorkflows({});
         const action = workflowsFetch("PUT", `/actions/${actionId}`, {name:name, description: description, metadata: safeMetadata});
         return res.status(200).json({action: action})
     } catch (error) {

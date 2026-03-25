@@ -102,6 +102,7 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     const [actionType, setActionType] = useState("simple");
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [loading, setLoading] = useState(false);
 
     function clearForm(){
         setName('');
@@ -121,49 +122,61 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
 
     async function createSimpleAction(e){
         e.preventDefault();
+        setLoading(true);
         await addAction(index, workflows, setWorkflows, name, description,"simple", parentId, extraData).then(() => {
             clearForm();
             setIsOpen(false);
+            setLoading(false);
         })
     }
 
     async function editSimpleAction(e){
         e.preventDefault();
+        setLoading(true);
         await editAction(name, description, curAction, extraData, refresh).then(() => {
             clearForm();
             setIsOpen(false);
+            setLoading(false);
         })
     }
 
     async function createComplexAction(e) {
         e.preventDefault();
+        setLoading(true);
         await addAction(index, workflows, setWorkflows, name, description, "complex", parentId, extraData).then(()=>{
             clearForm();
             setIsOpen(false);
+            setLoading(false);
         })
     }
 
     async function editComplexAction(e){
         e.preventDefault();
+        setLoading(true);
         await editAction(name, description, curAction, extraData, refresh).then(() => {
             clearForm();
             setIsOpen(false);
+            setLoading(false);
         })
     }
 
     async function createWorkflowAction(e){
         e.preventDefault();
+        setLoading(true);
         await addWorkflowAction(index, name, description, workflows, setWorkflows, parentId).then(()=>{
             clearForm();
             setIsOpen(false);
+            setLoading(false);
         })
     }
 
     async function editWorkflowAction(e){
         e.preventDefault();
+        setLoading(true);
         await editWorkflowActionFunction(name, description, curAction, refresh).then(() => {
             clearForm();
             setIsOpen(false);
+            setLoading(false);
         })
     }
 
@@ -194,16 +207,16 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
                 <>
                 {children}
                 <div className="flex justify-end pt-2">
-                    <Button type="submit" onClick={(e) => isEdit ? editSimpleAction(e) : createSimpleAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
+                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editSimpleAction(e) : createSimpleAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
                 </div>
                 </> : 
                 actionType === "complex" ? // if complex action 
                 <div className="flex justify-end pt-2">
-                    <Button type="submit" onClick={(e) => isEdit ? editComplexAction(e) : createComplexAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
+                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editComplexAction(e) : createComplexAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
                 </div> : 
                 // if workflow action
                 <div className="flex justify-end pt-2">
-                    <Button type="submit" onClick={(e) => isEdit ? editWorkflowAction(e) : createWorkflowAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
+                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editWorkflowAction(e) : createWorkflowAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
                 </div>
                 }
             </Form>
