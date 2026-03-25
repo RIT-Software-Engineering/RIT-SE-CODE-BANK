@@ -133,7 +133,7 @@ model Application {
   pendingOffersDetails           String?
   rejectionLetters               Boolean
   rejectionLettersDetails        String?
-  jobSearchAcknowledgment        String?
+  jobSearchAcknowledgment        Boolean?
   jobSearchAcknowledgmentDetails String?
   // SEcoopInterest          Boolean
   // SEcoopAvailability      Boolean?
