@@ -240,49 +240,6 @@ export function makeMetadataSafeForWorkflows(metadata) {
   return safeMetadata
 }
 
-export async function getWorkflowActions(workflowId){
-  let action;
-  await workflowsFetch("GET", `workflows/action/${workflowId}`).then(async response => {
-    if (response.rootAction?.id){
-      action = await combineActionWorkflow(response);
-      if (response.rootAction.actionType === "workflow"){
-        action.actions = [await getWorkflowActions(response.rootAction.id)]
-      }
-      else{
-        action.actions = [response.rootAction];
-        console.log('My actions are the root actions')
-        if (response.rootAction.metadata){
-          if (response.rootAction.metadata?.outputs){
-            action.metadata.outputs = JSON.parse(action.metadata.outputs)
-          }
-        }
-        else {
-          action.actions[0].metadata = {};
-        }
-      }
-      
-    }
-    else {
-      console.log("Nothing at", response.baseActionId)
-      action = await combineActionWorkflow(response);
-      console.log(action)
-    }
-  })
-  return action
-}
-
-export async function combineActionWorkflow(workflow){
-  const baseAction = workflow.baseAction;
-  return {
-    id: baseAction.id,
-    attributeId: workflow.id,
-    name: baseAction.name,
-    description: baseAction.description,
-    actionType: "workflow",
-    actions: []
-  }
-}
-
 /**
  * Recursively creates an action and its children.
  * Supports simple, complex, branching, and nested workflow actions
