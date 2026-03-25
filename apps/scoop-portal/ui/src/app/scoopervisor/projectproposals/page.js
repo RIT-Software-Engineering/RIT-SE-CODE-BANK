@@ -33,6 +33,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 import { useUser } from "../../utils/user-context/page";
 
@@ -285,7 +286,14 @@ export default function ProposalsPage() {
             ) : (
               filteredProposals.map((p) => (
                 <TableRow key={p.id}>
-                  <TableCell>{p.title}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      {p.title}
+                      {p.project && (
+                        <CheckCircleIcon fontSize="small" sx={{ color: theme.palette.success.main }} />
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell sx={{ color: "text.secondary", maxWidth: 0 }}>
                     <Typography variant="body2" noWrap sx={{ overflow: "hidden", textOverflow: "ellipsis", maxWidth: 260 }}>
                       {p.description}
@@ -318,6 +326,29 @@ export default function ProposalsPage() {
               <StatusBadge status={selectedProposal.status} />
             </DialogTitle>
             <DialogContent dividers>
+              {selectedProposal.project && (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 1.5,
+                    mb: 2,
+                    bgcolor: isDark ? "rgba(46, 125, 50, 0.15)" : "rgba(46, 125, 50, 0.1)",
+                    border: "1px solid",
+                    borderColor: theme.palette.success.main,
+                    borderRadius: 1,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <CheckCircleIcon fontSize="small" sx={{ color: theme.palette.success.main }} />
+                    <Typography variant="body2" sx={{ color: theme.palette.success.main, fontWeight: 600 }}>
+                      Converted to Project
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, ml: 3.5 }}>
+                    {selectedProposal.project.display_name}
+                  </Typography>
+                </Paper>
+              )}
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
                 <Box>
                   <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
