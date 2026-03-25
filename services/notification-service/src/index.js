@@ -11,7 +11,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: process.env.BASE_URL || "http://localhost:3000",
+    origin: process.env.BASE_URL || "http://localhost:3020",
     credentials: true,
   }),
 );
