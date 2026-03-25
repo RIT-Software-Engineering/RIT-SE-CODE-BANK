@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@components/Header";
+import StatusBadge from "@components/StatusBadge";
+import SortableTableHeader from "@components/SortableTableHeader";
 import { useTheme } from "@mui/material/styles";
 import {
   Typography,
@@ -17,11 +19,9 @@ import {
   DialogContent,
   Box,
   DialogActions,
-  TableSortLabel,
   Snackbar,
   Alert,
   TextField,
-  Chip,
   FormControl,
   InputLabel,
   Select,
@@ -36,30 +36,6 @@ import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 import { useUser } from "../../utils/user-context/page";
-
-const StatusBadge = ({ status }) => {
-  const theme = useTheme();
-  const config = {
-    APPROVED: { label: "Approved", color: theme.palette.success.main },
-    REJECTED: { label: "Rejected", color: theme.palette.error.main },
-    PENDING:  { label: "Pending",  color: theme.palette.warning.main },
-  };
-  const { label, color } = config[status] ?? config.PENDING;
-  return (
-    <Chip
-      label={label}
-      size="medium"
-      sx={{
-        fontWeight: 400,
-        fontSize: "0.85rem",
-        px: 1,
-        bgcolor: color,
-        color: theme.ritColors.white,
-        border: "none",
-      }}
-    />
-  );
-};
 
 export default function ProposalsPage() {
   const router = useRouter();
@@ -257,23 +233,27 @@ export default function ProposalsPage() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ ...tableCellSx, width: "25%" }}>
-                <TableSortLabel active={sortField === "title"} direction={sortField === "title" ? sortOrder : "asc"} onClick={() => handleSort("title")} sx={sortLabelSx}>
-                  Title
-                </TableSortLabel>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "25%" }}>
+                <SortableTableHeader
+                  id="title"
+                  label="Title"
+                  isActive={sortField === "title"}
+                  sortDirection={sortOrder}
+                  onSort={handleSort}
+                />
               </TableCell>
-              <TableCell sx={{ ...tableCellSx, width: "35%" }}>Description</TableCell>
-              <TableCell sx={{ ...tableCellSx, width: "15%" }}>
-                <TableSortLabel active={sortField === "createdAt"} direction={sortField === "createdAt" ? sortOrder : "asc"} onClick={() => handleSort("createdAt")} sx={sortLabelSx}>
-                  Submitted
-                </TableSortLabel>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "35%" }}>Description</TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "15%" }}>
+                <SortableTableHeader
+                  id="createdAt"
+                  label="Submitted"
+                  isActive={sortField === "createdAt"}
+                  sortDirection={sortOrder}
+                  onSort={handleSort}
+                />
               </TableCell>
-              <TableCell sx={{ ...tableCellSx, width: "12%" }}>
-                <TableSortLabel active={sortField === "status"} direction={sortField === "status" ? sortOrder : "asc"} onClick={() => handleSort("status")} sx={sortLabelSx}>
-                  Status
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ ...tableCellSx, width: "13%" }} align="right">Options</TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "12%" }}>Status</TableCell>
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "13%" }} align="right">Options</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -305,7 +285,7 @@ export default function ProposalsPage() {
                     })}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={p.status} />
+                    <StatusBadge value={p.status} type="proposal" />
                   </TableCell>
                   <TableCell align="right">
                     <Button variant="outline-orange" onClick={() => handleOpen(p)}>View</Button>

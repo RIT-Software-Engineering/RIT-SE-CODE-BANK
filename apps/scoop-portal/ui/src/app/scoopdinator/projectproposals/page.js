@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
-  Chip,
   FormControl,
   InputAdornment,
   InputLabel,
@@ -15,7 +14,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TableSortLabel,
   TextField,
   Typography,
   Dialog,
@@ -31,56 +29,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 
 import Header from "@components/Header";
+import StatusBadge from "@components/StatusBadge";
+import SortableTableHeader from "@components/SortableTableHeader";
+import { getComparator } from "@utils/sortingUtils";
 
 const STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED"];
-
-const STATUS_COLORS = {
-  APPROVED: "success",
-  REJECTED: "error",
-  PENDING: "warning",
-};
-
-const StatusBadge = ({ status }) => {
-  const theme = useTheme();
-  const label = status
-    ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    : "Pending";
-  const color = STATUS_COLORS[status] ?? "warning";
-  const bgColor =
-    color === "success"
-      ? theme.palette.success.main
-      : color === "error"
-      ? theme.palette.error.main
-      : theme.palette.grey[500];
-  return (
-    <Chip
-      label={label}
-      size="medium"
-      sx={{
-        fontWeight: 400,
-        fontSize: "0.85rem",
-        px: 1,
-        bgcolor: bgColor,
-        color: theme.ritColors.white,
-        border: "none",
-      }}
-    />
-  );
-};
-
-function descendingComparator(a, b, orderBy) {
-  const aVal = orderBy === "createdAt" ? new Date(a[orderBy]) : (a[orderBy] ?? "");
-  const bVal = orderBy === "createdAt" ? new Date(b[orderBy]) : (b[orderBy] ?? "");
-  if (bVal < aVal) return -1;
-  if (bVal > aVal) return 1;
-  return 0;
-}
-
-function getComparator(order, orderBy) {
-  return order === "desc"
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
 
 export default function ReviewProposalsPage() {
   const theme = useTheme();
@@ -223,19 +176,14 @@ export default function ReviewProposalsPage() {
           <TableHead>
             <TableRow>
               {columns.map((col) => (
-                <TableCell key={col.id} sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                  <TableSortLabel
-                    active={orderBy === col.id}
-                    direction={orderBy === col.id ? order : "asc"}
-                    onClick={() => handleSort(col.id)}
-                    sx={{
-                      color: `${theme.ritColors.white} !important`,
-                      "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` },
-                    }}
-                  >
-                    {col.label}
-                  </TableSortLabel>
-                </TableCell>
+                <SortableTableHeader
+                  key={col.id}
+                  id={col.id}
+                  label={col.label}
+                  isActive={orderBy === col.id}
+                  sortDirection={order}
+                  onSort={handleSort}
+                />
               ))}
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">
                 Options
@@ -262,7 +210,7 @@ export default function ReviewProposalsPage() {
                     })}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={p.status} />
+                    <StatusBadge value={p.status} type="proposal" />
                   </TableCell>
                   <TableCell align="right">
                     <Button variant="outline-orange" onClick={() => handleOpen(p)}>

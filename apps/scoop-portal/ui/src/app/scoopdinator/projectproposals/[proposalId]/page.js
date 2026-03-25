@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -25,41 +24,8 @@ import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Header from "@components/Header";
+import StatusBadge from "@components/StatusBadge";
 import { useUser } from "../../../utils/user-context/page";
-
-const STATUS_COLORS = {
-  APPROVED: "success",
-  REJECTED: "error",
-  PENDING: "warning",
-};
-
-const StatusBadge = ({ status }) => {
-  const theme = useTheme();
-  const label = status
-    ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    : "Pending";
-  const color = STATUS_COLORS[status] ?? "warning";
-  const bgColor =
-    color === "success"
-      ? theme.palette.success.main
-      : color === "error"
-      ? theme.palette.error.main
-      : theme.palette.grey[500];
-  return (
-    <Chip
-      label={label}
-      size="medium"
-      sx={{
-        fontWeight: 400,
-        fontSize: "0.85rem",
-        px: 1,
-        bgcolor: bgColor,
-        color: theme.ritColors.white,
-        border: "none",
-      }}
-    />
-  );
-};
 
 const Field = ({ label, value }) => {
   const theme = useTheme();
@@ -205,7 +171,7 @@ export default function ProposalDetailPage() {
         <Typography variant="h4" sx={{ fontWeight: 600 }}>
           {proposal.title}
         </Typography>
-        <StatusBadge status={proposal.status} />
+        <StatusBadge value={proposal.status} type="proposal" />
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3, ml: 6 }}>
         Submitted on{" "}

@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@components/Header";
+import StatusBadge from "@components/StatusBadge";
+import SortableTableHeader from "@components/SortableTableHeader";
 import { useTheme } from "@mui/material/styles";
 import {
   Typography,
@@ -19,11 +21,9 @@ import {
   DialogActions,
   Select,
   MenuItem,
-  TableSortLabel,
   Snackbar,
   Alert,
   TextField,
-  Chip,
   FormControl,
   InputLabel,
   InputAdornment,
@@ -48,30 +48,6 @@ const getActiveState = (user) => {
   if (val === "pending") return "pending";
   if (val === "active") return "active";
   return "inactive";
-};
-
-const StatusBadge = ({ activeState }) => {
-  const theme = useTheme();
-  const config = {
-    active:   { label: "Active",   color: theme.palette.success.main },
-    inactive: { label: "Inactive", color: theme.palette.error.main },
-    pending:  { label: "Pending",  color: theme.palette.grey[500] },
-  };
-  const { label, color } = config[activeState] ?? config.inactive;
-  return (
-    <Chip
-      label={label}
-      size="medium"
-      sx={{
-        fontWeight: 400,
-        fontSize: "0.85rem",
-        px: 1,
-        bgcolor: color,
-        color: theme.ritColors.white,
-        border: "none",
-      }}
-    />
-  );
 };
 
 export default function ViewScooployees() {
@@ -463,53 +439,48 @@ export default function ViewScooployees() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {["fname", "lname", "email"].map((field) => (
-                <TableCell key={field} sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                  <TableSortLabel
-                    active={sortField === field}
-                    direction={sortField === field ? sortOrder : "asc"}
-                    onClick={() => handleSort(field)}
-                    sx={{
-                      color: theme.ritColors.white,
-                      "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` },
-                    }}
-                  >
-                    {field === "fname" && "First Name"}
-                    {field === "lname" && "Last Name"}
-                    {field === "email" && "Email"}
-                  </TableSortLabel>
-                </TableCell>
-              ))}
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                <TableSortLabel
-                  active={sortField === "type"}
-                  direction={sortField === "type" ? sortOrder : "asc"}
-                  onClick={() => handleSort("type")}
-                  sx={{ color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } }}
-                >
-                  Type
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                <TableSortLabel
-                  active={sortField === "semester_group"}
-                  direction={sortField === "semester_group" ? sortOrder : "asc"}
-                  onClick={() => handleSort("semester_group")}
-                  sx={{ color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } }}
-                >
-                  Semester Group
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                <TableSortLabel
-                  active={sortField === "active"}
-                  direction={sortField === "active" ? sortOrder : "asc"}
-                  onClick={() => handleSort("active")}
-                  sx={{ color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } }}
-                >
-                  Status
-                </TableSortLabel>
-              </TableCell>
+              <SortableTableHeader
+                id="fname"
+                label="First Name"
+                isActive={sortField === "fname"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="lname"
+                label="Last Name"
+                isActive={sortField === "lname"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="email"
+                label="Email"
+                isActive={sortField === "email"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="type"
+                label="Type"
+                isActive={sortField === "type"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="semester_group"
+                label="Semester Group"
+                isActive={sortField === "semester_group"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="active"
+                label="Status"
+                isActive={sortField === "active"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
             </TableRow>
           </TableHead>
@@ -525,7 +496,7 @@ export default function ViewScooployees() {
                     <span style={{ color: theme.ritColors.gray_2, fontStyle: "italic" }}>No Group</span>
                   )}
                 </TableCell>
-                <TableCell><StatusBadge activeState={getActiveState(user)} /></TableCell>
+                <TableCell><StatusBadge value={getActiveState(user)} type="active" /></TableCell>
                 <TableCell align="right">
                   <Button variant="outline-orange" onClick={() => handleOpen(user)}>Edit</Button>
                 </TableCell>

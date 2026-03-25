@@ -1,10 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Header from "@components/Header";
+import StatusBadge from "@components/StatusBadge";
+import SortableTableHeader from "@components/SortableTableHeader";
 import { useTheme } from "@mui/material/styles";
 import {
   Typography, Paper, Table, TableHead, TableCell, TableRow, TableBody,
-  Box, Select, MenuItem, TableSortLabel, TextField, Chip, FormControl,
+  Box, Select, MenuItem, TextField, FormControl,
   InputLabel, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, Button,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -16,21 +18,6 @@ const isActive = (user) => {
   }
   if (user.project === "null") return false;
   return true;
-};
-
-const StatusBadge = ({ active }) => {
-  const theme = useTheme();
-  return (
-    <Chip
-      label={active ? "Active" : "Inactive"}
-      size="medium"
-      sx={{
-        fontWeight: 400, fontSize: "0.85rem", px: 1,
-        bgcolor: active ? theme.palette.success.main : theme.palette.error.main,
-        color: theme.ritColors.white, border: "none",
-      }}
-    />
-  );
 };
 
 export default function ViewScooployees() {
@@ -213,7 +200,7 @@ export default function ViewScooployees() {
                 <TableCell>
                   {resolveGroupName(user) ?? <span style={{ color: theme.ritColors.gray_2, fontStyle: "italic" }}>No Group</span>}
                 </TableCell>
-                <TableCell><StatusBadge active={isActive(user)} /></TableCell>
+                <TableCell><StatusBadge value={isActive(user) ? "active" : "inactive"} type="active" /></TableCell>
               </TableRow>
             ))}
           </TableBody>
