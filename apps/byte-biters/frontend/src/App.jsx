@@ -25,7 +25,8 @@ export default function App() {
     setCpuState(state)
   }
   const onStepBackward = () => {
-    alert("Step Backward button clicked! (placeholder)")
+    const state = backend.backStep()
+    setCpuState(state)
   }
   const onRestart = () => {
     const state = backend.reset()
@@ -48,7 +49,7 @@ export default function App() {
               {/* temp border */}
               <div className="bg-border-primary min-h-2 "></div>
               <ControlPanel onAssemble={onAssemble} onRun={onRun} onStepForward={onStepForward} onStepBackward={onStepBackward} onRestart={onRestart}></ControlPanel>
-              <RegisterPanel registers={cpuState.registers}></RegisterPanel>
+              <RegisterPanel registers={cpuState.registers} flags={cpuState.flags}></RegisterPanel>
               <div className="flex min-h-0 w-full"><MemoryPanel memory={cpuState.memory} /></div>
             </Panel>
           </Group>

@@ -32,7 +32,7 @@ function MemoryPanel({ memory = [] }) {
   const rowCount = Math.ceil(memory.length / 16)
 
   return (
-    <div className="h-full w-full bg-main-secondary  flex flex-col">
+    <div className="h-full w-full bg-main-secondary flex flex-col">
       
       <div className="flex shrink-0 w-full pr-5 pl-5">
         <div className="w-16 border border-border-secondary bg-main-secondary"></div>
