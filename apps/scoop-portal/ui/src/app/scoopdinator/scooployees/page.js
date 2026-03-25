@@ -5,6 +5,7 @@ import Header from "@components/Header";
 import StatusBadge from "@components/StatusBadge";
 import SortableTableHeader from "@components/SortableTableHeader";
 import { useTheme } from "@mui/material/styles";
+import { notify } from "utils/notify";
 import {
   Typography,
   Paper,
@@ -14,6 +15,7 @@ import {
   TableRow,
   TableBody,
   Button,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -21,8 +23,6 @@ import {
   DialogActions,
   Select,
   MenuItem,
-  Snackbar,
-  Alert,
   TextField,
   FormControl,
   InputLabel,
@@ -65,10 +65,6 @@ export default function ViewScooployees() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [filterSemesterGroup, setFilterSemesterGroup] = useState("all");
-
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -247,7 +243,9 @@ export default function ViewScooployees() {
           }),
         }
       );
-      if (!res.ok) throw new Error("Failed to update user");
+      if (!res.ok) {
+        throw new Error(await notify.getErrorMessageFromResponse(res));
+      }
 
       const resolvedGroupName = editFields.semesterGroupId
         ? (semesterGroups.find((sg) => String(sg.id) === String(editFields.semesterGroupId))?.name ?? "null")
@@ -258,12 +256,10 @@ export default function ViewScooployees() {
       );
       setSelectedUser(updatedUser);
       setConfirmEditOpen(false);
-      setSnackbarSeverity("success");
-      setSnackbarMsg("User updated successfully!");
-      setSnackbarOpen(true);
+      notify.success("User updated.");
     } catch (err) {
       console.error(err);
-      alert("Failed to update user. Please try again.");
+      notify.error(err);
     } finally {
       setSavingEdit(false);
     }
@@ -277,21 +273,15 @@ export default function ViewScooployees() {
         { method: "DELETE" }
       );
       if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-        const serverMsg = errorData?.error || errorData?.message || `HTTP ${res.status}`;
-        throw new Error(serverMsg);
+        throw new Error(await notify.getErrorMessageFromResponse(res));
       }
       setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
       setConfirmDeleteOpen(false);
       handleClose();
-      setSnackbarSeverity("success");
-      setSnackbarMsg("User deleted successfully.");
-      setSnackbarOpen(true);
+      notify.success("User deleted.");
     } catch (err) {
       console.error("Delete error:", err);
-      setSnackbarSeverity("error");
-      setSnackbarMsg(err.message || "Failed to delete user. Please try again.");
-      setSnackbarOpen(true);
+      notify.error(err);
     } finally {
       setDeletingUser(false);
     }
@@ -323,9 +313,7 @@ export default function ViewScooployees() {
       (u) => u.email.trim().toLowerCase() === email.trim().toLowerCase()
     );
     if (isDuplicate) {
-      setSnackbarSeverity("error");
-      setSnackbarMsg("A user with this email already exists.");
-      setSnackbarOpen(true);
+      notify.error("A user with this email already exists.");
       return;
     }
 
@@ -349,20 +337,18 @@ export default function ViewScooployees() {
           prev_login: "",
         }),
       });
-      if (!res.ok) throw new Error("Failed to add user");
+      if (!res.ok) {
+        throw new Error(await notify.getErrorMessageFromResponse(res));
+      }
 
       await fetchAllUsers();
-      setSnackbarSeverity("success");
-      setSnackbarMsg("User added successfully!");
-      setSnackbarOpen(true);
+      notify.success("User added.");
       setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "", active: "pending" });
       setAddErrors({});
       setAddOpen(false);
     } catch (err) {
       console.error(err);
-      setSnackbarSeverity("error");
-      setSnackbarMsg(err.message || "Failed to add user. Please try again.");
-      setSnackbarOpen(true);
+      notify.error(err);
     } finally {
       setAddingUser(false);
     }
@@ -768,12 +754,6 @@ export default function ViewScooployees() {
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
         </DialogActions>
       </Dialog>
-
-      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)}>
-        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: "100%" }}>
-          {snackbarMsg}
-        </Alert>
-      </Snackbar>
     </>
   );
 }

@@ -23,7 +23,7 @@ import {
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import toast, { Toaster } from "react-hot-toast";
+import { notify } from "utils/notify";
 import JournalLoading from "./loading";
 
 /**
@@ -251,8 +251,8 @@ export default function Journal() {
    * @param {*} entry - The entry to be updated in the database
    */
   const handleSaveEdit = (entry) => {
-    toast.promise(saveEntryNotes(entry), {
-      loading: "Saving...",
+    notify.promise(saveEntryNotes(entry), {
+      loading: "Saving…",
       success: "Notes saved!",
       error: "Failed to save notes.",
     });
@@ -314,12 +314,12 @@ export default function Journal() {
    */
   const handleCreateNewEntry = () => {
     if (!newEntrySemester || !newEntryContactee) {
-      toast.error("Please fill out all fields.");
+      notify.error("Please fill out all fields.");
       return;
     }
 
-    toast.promise(postNewEntry(), {
-      loading: "Creating new journal entry...",
+    notify.promise(postNewEntry(), {
+      loading: "Creating journal entry…",
       success: "Journal entry created!",
       error: "Failed to create a new journal entry.",
     });
@@ -586,25 +586,6 @@ export default function Journal() {
         )}
       </Dialog>
 
-      <Toaster
-        position="top-center"
-        reverseOrder={false}
-        toastOptions={{
-          style: { borderRadius: "0px" },
-          success: {
-            style: {
-              backgroundColor: theme.palette.success.main,
-              color: theme.palette.success.contrastText,
-            },
-          },
-          error: {
-            style: {
-              backgroundColor: theme.palette.error.main,
-              color: theme.palette.error.contrastText,
-            },
-          },
-        }}
-      />
       {/* TODO: Add footer? */}
     </>
   );

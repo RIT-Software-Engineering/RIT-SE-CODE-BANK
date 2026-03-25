@@ -39,7 +39,7 @@ import TimelineContent from "@mui/lab/TimelineContent";
 import TimelineDot from "@mui/lab/TimelineDot";
 import TimelineOppositeContent, { timelineOppositeContentClasses } from "@mui/lab/TimelineOppositeContent";
 
-import toast, { Toaster } from "react-hot-toast";
+import { notify } from "../utils/notify";
 
 /**
  * Renders the content for the Journal Page
@@ -198,7 +198,11 @@ export default function Journal() {
   };
 
   const handleSaveEdit = (entry) => {
-    toast.promise(saveEntryNotes(entry), { loading: "Saving...", success: "Notes saved!", error: "Failed to save notes."});
+    notify.promise(saveEntryNotes(entry), {
+      loading: "Saving…",
+      success: "Notes saved!",
+      error: "Failed to save notes.",
+    });
     setEditValue("");
   };
 
@@ -265,10 +269,14 @@ export default function Journal() {
   }
   const handleCreateNewEntry = () => {
     if (!newEntrySemester || !newEntryRecipientIds || !newEntryTopicId || !newEntryVisibilityLevel) {
-      toast.error("Please fill out all fields.");
+      notify.error("Please fill out all fields.");
       return;
     }
-    toast.promise(postNewEntry(), { loading: "Creating new journal entry...", success: "Journal entry created!", error: "Failed to create a new journal entry."});
+    notify.promise(postNewEntry(), {
+      loading: "Creating journal entry…",
+      success: "Journal entry created!",
+      error: "Failed to create a journal entry.",
+    });
   };
 
   const getInitials = (fname, lname) => {
@@ -652,7 +660,6 @@ const handleClearFilter = () =>{
         )}
       </Dialog>
 
-      <Toaster position="top-center" reverseOrder={false} />
     </>
   );
 }
