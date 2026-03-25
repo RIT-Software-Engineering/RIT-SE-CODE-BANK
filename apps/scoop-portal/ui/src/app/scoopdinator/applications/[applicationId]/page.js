@@ -300,18 +300,19 @@ export default function ApplicationDetailPage() {
 
           <Section title="Contact">
             <Field question="Email" answer={application.ritEmail} />
+            <Field question="UID" answer={application.userID} />
           </Section>
 
           <Divider />
 
           <Section title="Academic Background">
-            <Field question="Which semester did you start at RIT?" answer={application.startSemester} />
-            <Field question="Number of co-op blocks completed?" answer={application.coopsCompleted} />
+            <Field question="Who is your academic advisor?" answer={application.academicAdvisor} />
+            <Field question="How many credits are remaining in your degree?" answer={application.creditsRemaining} />
+            <Field question="What is your cumulative GPA?" answer={application.cumulativeGPA} />
             <Field
               question="Which courses have you already taken or are about to complete this term?"
               answer={application.coursesTaken}
             />
-            <Field question="What is your cumulative GPA?" answer={application.cumulativeGPA} />
           </Section>
 
           <Divider />
@@ -338,22 +339,22 @@ export default function ApplicationDetailPage() {
               question="If yes, approximately how many? Name as many as you can recall."
               answer={application.rejectionLettersDetails}
             />
+            <Field question="Number of co-op blocks completed?" answer={application.coopsCompleted} />
+            <Field question="Which semester did you start at RIT?" answer={application.startSemester} />
           </Section>
 
           <Divider />
 
-          <Section title="SE Co-op Interest">
+          <Section title="Job Search Acknowledgment">
             <Field
-              question="If an approved unpaid opportunity became available, would you be interested in pursuing it?"
-              answer={application.SEcoopInterest}
+              question="It is imperative that you continue your search between now and the beginning of your SCOOP term.
+                            Students often find jobs at the very last minute before a term starts,
+                            so there is no such thing as too late to do your search. Please acknowledge this below:"
+              answer={application.jobSearchAcknowledgment}
             />
             <Field
-              question="Would you be able to participate in-person at RIT for the duration of the co-op?"
-              answer={application.SEcoopAvailability}
-            />
-            <Field
-              question="If unable to attend in-person, please confirm your remote capabilities."
-              answer={application.remoteAbility}
+              question="Why the student chose 'Other':"
+              answer={application.jobSearchAcknowledgmentDetails}
             />
           </Section>
 
