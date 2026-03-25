@@ -118,6 +118,14 @@ export function BuilderPage(){
         setRequired(false);
     }
 
+    function loadWorkflowForm(){
+        setMetaWorkflow(curAction.metadata?.code);
+    }
+
+    function clearWorkflowForm(){
+        setMetaWorkflow('None');
+    }
+
     return (
     loading ? <><h1>Loading...</h1></> :
     <>
@@ -125,7 +133,8 @@ export function BuilderPage(){
 
         <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} 
         setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit} isEdit={isEdit} curWorkflow={curAction}
-        setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmit} metaWorkflow={metaWorkflow} setMetaWorkflow={setMetaWorkflow}>
+        setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmit} extraData={{metaWorkflow}}
+        loadFunction={loadWorkflowForm} clearFunction={clearWorkflowForm}>
             <Form.Label>What Meta-workflow should this be used for?</Form.Label>
             <Form.Select onChange={e=>setMetaWorkflow(e.target.value)} value={metaWorkflow}>
                 <option>None</option>
@@ -439,9 +448,11 @@ function simpleActionRenderer(action) {
  * @param {*} description 
  * @param {*} workflows 
  * @param {*} setWorkflows 
+ * @param {Object} extraData
  * @param {(error:string) => void} setError
  */
-async function workflowSubmit(name, description, tags, metaWorkflow, workflows, setWorkflows, setError){
+async function workflowSubmit(name, description, tags, workflows, setWorkflows, extraData, setError){
+    const metaWorkflow = extraData?.metaWorkflow;
     const workflow = {
         name: name,
         description: description,
@@ -488,12 +499,12 @@ async function workflowSubmit(name, description, tags, metaWorkflow, workflows, 
  * @param {(error:string) => void} setError
  * @param {*} workflowToUpdate 
  */
-async function workflowEditSubmit(name, description, tags, metaWorkflow, workflows, setWorkflows, setError, workflowToUpdate){
+async function workflowEditSubmit(name, description, tags, workflows, setWorkflows, extraData, setError, workflowToUpdate){
     if (tags)
         tags.push("WorkflonyFirstTheRestNowhere_CMT_Template");
     let metadata;
-    if (metaWorkflow)
-        metadata = {code: metaWorkflow};
+    if (extraData.metaWorkflow)
+        metadata = {code: extraData.metaWorkflow};
     let returnVal;
     await CMTJsonFetch("PUT", `/workflow/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags, metadata}).then(async response => {
         const data = await response.json();

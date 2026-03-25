@@ -7,11 +7,12 @@ import { Accordion, Button, Card, Form, Modal } from "react-bootstrap";
  *
  * @param {{ isOpen: any; setIsOpen: any; workflows: any; setWorkflows: any; 
  * WorkflowSubmit: any; curWorkflow: any; isEdit: any; setIsEdit: any; 
- * workflowEditSubmit: any; metaWorkflow: any; setMetaWorkflow: any; children : any; }} param0 
+ * workflowEditSubmit: any; extraData: Object; 
+ * clearFunction: () => void; loadFunction: () => void; children : any; }} param0 
  */
 export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, 
     WorkflowSubmit, curWorkflow ,isEdit, setIsEdit, 
-    workflowEditSubmit, metaWorkflow, setMetaWorkflow, children} ){
+    workflowEditSubmit, extraData, loadFunction, clearFunction, children} ){
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [tags, setTags] = useState('');
@@ -22,20 +23,20 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
         setDescription('');
         setTags('');
         setIsEdit(false);
-        setMetaWorkflow('None');
         setError('');
+        clearFunction();
     }
 
     function loadForm(){
         setName(curWorkflow.name?.trim());
         setDescription(curWorkflow.description?.trim());
         setTags(curWorkflow.tags?.join(", "));
-        setMetaWorkflow(curWorkflow.metadata?.code);
+        loadFunction();
     }
 
     async function submitWorkflow(){
         const uploadTags = tags ? tags.split(",").map(tag => tag.trim()) : [];
-        const submission = await WorkflowSubmit(name, description, uploadTags, metaWorkflow, workflows, setWorkflows, setError);
+        const submission = await WorkflowSubmit(name, description, uploadTags, workflows, setWorkflows, extraData, setError);
         if (submission === "Good"){
             clearForm();
             setIsOpen(false);
@@ -44,7 +45,7 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
 
     async function editWorkflow(){
         const uploadTags = tags ? tags?.split(",").map(tag => tag.trim()) : [];
-        const submission = await workflowEditSubmit(name, description, uploadTags, metaWorkflow, workflows, setWorkflows, setError, curWorkflow);
+        const submission = await workflowEditSubmit(name, description, uploadTags, workflows, setWorkflows, extraData, setError, curWorkflow);
         if (submission === "Good"){
             clearForm();
             setIsOpen(false);
