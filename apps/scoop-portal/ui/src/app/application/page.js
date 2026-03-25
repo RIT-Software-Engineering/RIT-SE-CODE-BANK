@@ -426,9 +426,9 @@ function ApplicationPage() {
                             error={!!errors.creditsRemaining}
                             // helperText={errors.description}
                         >
-                            <MenuItem value={0}>13-30 credits</MenuItem>
-                            <MenuItem value={1}>31-40 credits</MenuItem>
-                            <MenuItem value={2}>40+ credits</MenuItem>
+                            <MenuItem value="13-30 credits">13-30 credits</MenuItem>
+                            <MenuItem value="31-40 credits">31-40 credits</MenuItem>
+                            <MenuItem value="40+ credits">40+ credits</MenuItem>
                         </Select>
                     </FormControl>
 
