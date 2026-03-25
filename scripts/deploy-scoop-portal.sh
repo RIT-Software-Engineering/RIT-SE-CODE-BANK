@@ -90,7 +90,7 @@ ssh -i  "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
 	cd $APP_DIR
 	cd $WORKFLOW_SERVER_DIR
 	npx prisma migrate deploy
-	npx prisma db seed
+	# npx prisma db seed
 	cd $APP_DIR
 	cd $NOTIFICATIONS_SERVER_DIR
 	npx prisma migrate deploy
