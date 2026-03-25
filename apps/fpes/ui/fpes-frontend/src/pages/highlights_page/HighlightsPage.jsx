@@ -58,14 +58,14 @@ export default function HighlightsPage({facultyId, isAdmin = false}){
         loadHighlights();
         loadTeachingEvals();
         loadPercentile();
-    }, [facultyId]);
+    }, [facultyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Reload percentile when returning to the page
     useEffect(() => {
         const handleFocus = () => loadPercentile();
         window.addEventListener('focus', handleFocus);
         return () => window.removeEventListener('focus', handleFocus);
-    }, [facultyId]);
+    }, [facultyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const columns = [
         {field : "id", headerName : "ID", flex:.2},

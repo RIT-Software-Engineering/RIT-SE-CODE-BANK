@@ -7,26 +7,19 @@ export default function CourseSectionsPage(){
     const [course_sections, setCourseSections] = useState([]);
     const [courses, setCourses] = useState([])
 
-    const getAllCourseSections = () => {
-        useEffect(() => {
-            axios.get("http://localhost:3000/course_sections")
-            .then((response) => {
-                setCourseSections(response.data);
-            })
-        }, []);
-    }
+    useEffect(() => {
+        axios.get("http://localhost:3000/course_sections")
+        .then((response) => {
+            setCourseSections(response.data);
+        })
+    }, []);
 
-    const getAllCourses = () => {
-        useEffect(() => {
-            axios.get("http://localhost:3000/courses")
-            .then((response) => {
-                setCourses(response.data);
-            })
-        }, []);
-    }
-
-    getAllCourseSections();
-    getAllCourses();
+    useEffect(() => {
+        axios.get("http://localhost:3000/courses")
+        .then((response) => {
+            setCourses(response.data);
+        })
+    }, []);
 
     return(
         <div>

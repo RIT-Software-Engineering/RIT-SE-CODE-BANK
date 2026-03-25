@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import ServicesFormStep from "../services/ServicesFormStep";
 import { Link, useNavigate } from "react-router-dom";
-import { validateProps } from "@mui/x-data-grid/internals";
 import axios from "axios";
 import CourseSectionFormStep from "../course_sections/CourseSectionsFormStep";
 import PublicationsFormStep from "../publications/PublicationsFormStep";
@@ -41,7 +40,7 @@ export default function HighlightsFormPage({facultyId}) {
         }
     }
 
-    const {control, handleSubmit, getValues, reset, trigger, formState:{errors}} = useForm({defaultValues :
+    const {control, handleSubmit, getValues, trigger, formState:{errors}} = useForm({defaultValues :
         {
             services : [
                 {

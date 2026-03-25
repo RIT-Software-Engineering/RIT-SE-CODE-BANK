@@ -1,26 +1,9 @@
-import { useEffect, useState } from "react";
-import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper} from "@mui/material";
+import { FormControl, TextField, Button, MenuItem, Box, Grid} from "@mui/material";
 import { useForm } from "react-hook-form"
 
 import axios from "axios";
 
-const modal_box_style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-};
-
-const text_field_style = {
-    left: '0%'
-}
-
-export default function ServicesForm({services, setServices, defaultValues, isUpdate}) {
+export default function ServicesForm({setServices, defaultValues, isUpdate}) {
     const {register, handleSubmit, reset, formState:{errors}} = useForm({defaultValues : isUpdate ? defaultValues : 
         {
             title : "",
@@ -30,8 +13,6 @@ export default function ServicesForm({services, setServices, defaultValues, isUp
             other_contributions : ""
         }
     });
-
-    const [addModalOpen, setAddModalOpen] = useState(false);
 
     const addService = (data) => {
         axios.post("http://localhost:3000/services", data)

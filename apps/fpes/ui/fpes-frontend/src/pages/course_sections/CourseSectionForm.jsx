@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react"
-import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper, IconButton, Icon, Autocomplete, FormControlLabel, InputLabel, FormHelperText, filledInputClasses, Checkbox} from "@mui/material";
+import React from "react"
+import { FormGroup, FormControl, Input, Select, TextField, Button, MenuItem, Alert, Modal, Box, Typography, Grid, Paper, IconButton, Icon, Autocomplete, FormControlLabel, InputLabel, FormHelperText, Checkbox} from "@mui/material";
 import { Controller } from "react-hook-form";
 import CloseIcon from '@mui/icons-material/Close';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -8,7 +8,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from "dayjs";
 
 
-export default function CourseSectionForm({courses, control, section, handleRemoveSection, handleDuplicateSection, index, errors}){
+export default function CourseSectionForm({courses, control, section, handleRemoveSection, index, errors}){
     // Handles Menu Item of (M,W,F) and (T,TH) presets for days of the week selection
     const handlePresetClick = (e, preset, field) => {
         e.preventDefault();
