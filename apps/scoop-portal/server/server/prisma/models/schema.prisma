@@ -164,17 +164,3 @@ model Login {
   updatedAt DateTime @updatedAt
   user      users?
 }
-
-model ProjectProposal {
-  id            Int      @id @default(autoincrement())
-  title         String   @db.VarChar(255)
-  description   String   @db.Text
-  status        String   @default("PENDING")
-  submittedById String
-  submittedBy   users    @relation("SubmittedProposals", fields: [submittedById], references: [id])
-  reviewedById  String?
-  reviewedBy    users?   @relation("ReviewedProposals", fields: [reviewedById], references: [id])
-  reviewNotes   String?  @db.VarChar(500)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
