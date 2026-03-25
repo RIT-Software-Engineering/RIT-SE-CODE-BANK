@@ -14,7 +14,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { ArrowBack, EditOutlined } from "@mui/icons-material";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, use } from "react";
 import Header from "@components/Header";
 import { useUser } from "../../../utils/user-context/page";
 import UnauthorizedPage from "../../../unauthorized/page";
@@ -119,7 +119,7 @@ const extractTeamMemberIds = (team) => {
 export default function ProjectDetails({ params }) {
   const theme = useTheme();
   const { user } = useUser();
-  const { projectId } = params;
+  const { projectId } = use(params);
   const [isLoading, setIsLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [accessChecked, setAccessChecked] = useState(false);
@@ -608,7 +608,7 @@ export default function ProjectDetails({ params }) {
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Button
-          href="/projects"
+          href="/scoop-portal/scoopdinator/projects"
           startIcon={<ArrowBack />}
           variant="outline-orange"
           sx={{ mb: 2 }}

@@ -23,6 +23,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import Header from "@components/Header";
 import { useUser } from "../../../utils/user-context/page";
 
@@ -100,6 +101,7 @@ export default function ProposalDetailPage() {
   const { proposalId } = useParams();
   const router = useRouter();
   const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
   const { user } = useUser();
 
   const [proposal, setProposal] = useState(null);
@@ -154,8 +156,16 @@ export default function ProposalDetailPage() {
         }
       );
       if (!res.ok) throw new Error("Failed to update proposal");
+      const updatedData = await res.json();
+      setProposal(updatedData.proposal);
       setConfirmOpen(false);
-      router.back();
+      setSnackbar({ 
+        open: true, 
+        message: updatedData.proposal.project 
+          ? "Proposal approved and project created successfully!" 
+          : "Proposal updated successfully!", 
+        severity: "success" 
+      });
     } catch (err) {
       console.error(err);
       setConfirmOpen(false);
@@ -203,6 +213,40 @@ export default function ProposalDetailPage() {
           year: "numeric", month: "long", day: "numeric",
         })}
       </Typography>
+
+      {/* Project Created Alert */}
+      {proposal.project && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 3,
+            bgcolor: isDark ? "rgba(46, 125, 50, 0.15)" : "rgba(46, 125, 50, 0.1)",
+            border: "1px solid",
+            borderColor: theme.palette.success.main,
+            borderRadius: 1,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <CheckCircleIcon sx={{ color: theme.palette.success.main }} />
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body1" fontWeight={600} sx={{ color: theme.palette.success.main }}>
+                Project Created
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This proposal has been converted to a project: <strong>{proposal.project.display_name}</strong>
+              </Typography>
+            </Box>
+            <Button
+              variant="solid-orange"
+              size="small"
+              onClick={() => router.push(`/scoopdinator/projects/${proposal.project.id}`)}
+            >
+              View Project
+            </Button>
+          </Box>
+        </Paper>
+      )}
 
       {/* Content */}
       <Paper elevation={1} square sx={{ p: 3 }}>
@@ -290,6 +334,11 @@ export default function ProposalDetailPage() {
               {reviewFields.status.charAt(0).toUpperCase() + reviewFields.status.slice(1).toLowerCase()}
             </strong>?
           </Typography>
+          {reviewFields.status === "APPROVED" && !proposal.project && (
+            <Typography sx={{ mt: 1.5, fontStyle: "italic", color: "text.secondary" }}>
+              Note: Approving this proposal will automatically create a new project.
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
           <Button onClick={() => setConfirmOpen(false)} variant="outlined" color="inherit">Cancel</Button>

@@ -44,6 +44,9 @@ router.get("/", async (req, res) => {
                 reviewedBy: {
                     select: { id: true, fname: true, lname: true, email: true },
                 },
+                project: {
+                    select: { id: true, title: true, display_name: true },
+                },
             },
             orderBy: { createdAt: "desc" },
         });
@@ -70,6 +73,9 @@ router.get("/:id", async (req, res) => {
                 },
                 reviewedBy: {
                     select: { id: true, fname: true, lname: true, email: true },
+                },
+                project: {
+                    select: { id: true, title: true, display_name: true },
                 },
             },
         });
@@ -101,19 +107,46 @@ router.patch("/:id", async (req, res) => {
     }
 
     try {
-        const updated = await prisma.projectProposal.update({
-            where: { id: Number(id) },
-            data: {
-                ...(status && { status }),
-                ...(reviewNotes !== undefined && { reviewNotes }),
-                ...(reviewedById && { reviewedById }),
-            },
+        const updated = await prisma.$transaction(async (tx) => {
+            const freshProposal = await tx.projectProposal.findUnique({
+                where: { id: Number(id) },
+            });
+
+            if (!freshProposal) throw new Error("Proposal not found");
+
+            let projectId = freshProposal.projectId;
+
+            if (status === "APPROVED" && !projectId) {
+                const newProject = await tx.project.create({
+                    data: {
+                        title: freshProposal.title,
+                        display_name: freshProposal.title,
+                        description: freshProposal.description,
+                    },
+                });
+                projectId = newProject.id;
+            }
+
+            return tx.projectProposal.update({
+                where: { id: Number(id) },
+                data: {
+                    ...(status && { status }),
+                    ...(reviewNotes !== undefined && { reviewNotes }),
+                    ...(reviewedById && { reviewedById }),
+                    ...(projectId && { projectId }),
+                },
+                include: {
+                    submittedBy: { select: { id: true, fname: true, lname: true, email: true } },
+                    reviewedBy: { select: { id: true, fname: true, lname: true, email: true } },
+                    project: { select: { id: true, title: true, display_name: true } },
+                },
+            });
         });
 
         res.json({ message: "Proposal updated", proposal: updated });
     } catch (error) {
         console.error("Error updating proposal:", error);
-        res.status(500).json({ error: "Failed to update proposal" });
+        res.status(500).json({ error: "Failed to update proposal", details: error.message });
     }
 });
 

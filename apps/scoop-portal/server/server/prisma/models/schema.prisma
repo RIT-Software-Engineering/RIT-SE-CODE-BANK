@@ -36,6 +36,25 @@ model Project {
   teams           Teams[]
   SemesterGroup   SemesterGroup? @relation(fields: [semesterGroupId], references: [id])
   semesterGroupId Int?
+
+  proposal ProjectProposal?
+}
+model ProjectProposal {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String   @db.Text
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewNotes   String?  @db.Text
+  createdAt     DateTime @default(now())
+
+  submittedById String
+  submittedBy   users    @relation("SubmittedProposals", fields: [submittedById], references: [id])
+
+  reviewedById  String?
+  reviewedBy    users?   @relation("ReviewedProposals", fields: [reviewedById], references: [id])
+
+  projectId Int?   @unique
+  project   Project? @relation(fields: [projectId], references: [id])
 }
 
 model users {
@@ -145,18 +164,4 @@ model Login {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      users?
-}
-
-model ProjectProposal {
-  id            Int      @id @default(autoincrement())
-  title         String   @db.VarChar(255)
-  description   String   @db.Text
-  status        String   @default("PENDING")
-  submittedById String
-  submittedBy   users    @relation("SubmittedProposals", fields: [submittedById], references: [id])
-  reviewedById  String?
-  reviewedBy    users?   @relation("ReviewedProposals", fields: [reviewedById], references: [id])
-  reviewNotes   String?  @db.VarChar(500)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 }
