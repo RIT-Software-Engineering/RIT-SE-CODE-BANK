@@ -1623,14 +1623,14 @@ async function getAllApplicationsForAdmin(search = '', searchType = 'course', fi
   // Handle search by course code or name
   if (search && searchType === 'course') {
     whereClause.OR = [
-      { courseCode: { contains: search, mode: 'insensitive' } },
-      { course: { name: { contains: search, mode: 'insensitive' } } },
-    ];
+  { courseCode: { contains: search } },
+  { course: { is: { name: { contains: search } } } }
+];
   }
 
   // Filter by semester
   if (filters.semester) {
-    whereClause.semesterCode = filters.semester;
+    whereClause.semesterCode = Number(filters.semester);
   }
 
   // Build the query
