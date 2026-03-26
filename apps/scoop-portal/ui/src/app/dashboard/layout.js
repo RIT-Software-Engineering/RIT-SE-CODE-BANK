@@ -4,9 +4,7 @@ import { Box } from "@mui/material";
 export default function dashboardLayout({ children }) {
   return (
     <ProtectedRoute requiredRoles={["scoopdinator", "scoopervisor", "scooployee", "advisor"]}>
-      <Box sx={{ m:3, px:4}}>
         {children}
-      </Box>
     </ProtectedRoute>
   );
 }

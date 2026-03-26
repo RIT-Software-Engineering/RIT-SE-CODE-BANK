@@ -1,27 +1,109 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
+  /* RIT color palette */
+  --rit-orange: #F76902;
+  --rit-white: #FFFFFF;
+  --rit-black: #000000;
+  --rit-gray-1: #D0D3D4;
+  --rit-gray-2: #A2AAAD;
+  --rit-gray-3: #7C878E;
+  --rit-gray-4: #D7D2CB;
+  --rit-gray-5: #ACA39A;
+  --rit-green: #84BD00;
+  --rit-lime: #C4D600;
+  --rit-blue: #009CBD;
+  --rit-purple: #7D55C7;
+  --rit-red: #DA291C;
+  --rit-yellow: #F6BE00;
+
+  /* Spacing scale (8px grid) */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-2xl: 64px;
+
+  /* Layout */
+  --container-max-width: 1280px;
+  --page-margin-desktop: 24px;
+  --page-margin-mobile: 16px;
+
+  /* Breakpoints */
+  --breakpoint-xs: 0px;
+  --breakpoint-sm: 600px;
+  --breakpoint-md: 960px;
+  --breakpoint-lg: 1280px;
+  --breakpoint-xl: 1920px;
+
+  /* Typography */
+  --font-stack: "Helvetica Neue", "Helvetica", "Roboto", "Arial", sans-serif;
+  --font-stack-mobile: "Roboto", "Arial", sans-serif;
+
+  /* Transitions */
+  --transition-fast: 150ms;
+  --transition-medium: 250ms;
+  --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --background: var(--rit-white);
+  --foreground: #212121;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #000000;
-    --foreground: #ffffff;
+    --foreground: #FFFFFF;
   }
 }
 
-/* Uncomment this to use Tailwind CSS custom variables */
-/* @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-} */
+@media (max-width: 768px) {
+  body {
+    font-family: var(--font-stack-mobile);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
 
 body {
+  margin: 0;
+  min-height: 100vh;
   background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-stack);
+  line-height: 1.5;
 }
+
+h1, .h1 {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 900;
+}
+
+h2, .h2 {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+}
+
+h3, .h3 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 300;
+}
+
+p, body, .body {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  margin-bottom: 16px;
+}
+
+.small, small {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 300;
+}
+

@@ -30,6 +30,7 @@ import {
   Skeleton,
   List
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 // Icons
 import SearchIcon from "@mui/icons-material/Search";
@@ -47,8 +48,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import { useUser } from "../utils/user-context/page";
 
 // --- Theme Colors ---
-const RIT_ORANGE = "#F76902";
-const RIT_DEEP_ORANGE = "#d15800";
+// theme values are used directly in the header for consistency
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard", submenu: [] },
@@ -86,6 +86,7 @@ const searchablePages = [
 ];
 
 export default function Header() {
+  const theme = useTheme();
   const [anchorEls, setAnchorEls] = useState({});
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -231,9 +232,10 @@ export default function Header() {
       <AppBar
         position="fixed"
         sx={{
-          bgcolor: "#fff",
-          color: "#212121",
-          boxShadow: 2,
+          bgcolor: theme.palette.background.default,
+          color: theme.palette.text.primary,
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+          borderBottom: `1px solid ${theme.ritColors.gray_1}`,
         }}
       >
         <Toolbar sx={{ justifyContent: "space-between", px: { xs: 2, md: 3 } }}>
@@ -256,7 +258,7 @@ export default function Header() {
                   <Button
                     component={Link}
                     href={path}
-                    sx={{ color: "#212121", fontWeight: 600, textTransform: "none", '&:hover': { bgcolor: "rgba(0,0,0,0.04)" } }}
+                    sx={{ color: theme.palette.text.primary, fontWeight: 600, textTransform: "none", '&:hover': { bgcolor: theme.palette.action.hover } }}
                   >
                     {label}
                   </Button>
@@ -267,7 +269,7 @@ export default function Header() {
                       aria-haspopup="true"
                       onClick={(e) => handleMenuOpen(e, label)}
                       endIcon={<ArrowDropDownIcon />}
-                      sx={{ color: "#212121", fontWeight: 600, textTransform: "none" }}
+                      sx={{ color: theme.palette.text.primary, fontWeight: 600, textTransform: "none" }}
                     >
                       {label}
                     </Button>
@@ -307,10 +309,10 @@ export default function Header() {
                       p: "2px 4px",
                       display: "flex",
                       alignItems: "center",
-                      bgcolor: "#f1f1f1",
+                      bgcolor: theme.ritColors.warm_gray_1,
                       borderRadius: 4,
                       width: 240,
-                      border: "1px solid #ddd"
+                      border: `1px solid ${theme.palette.divider}`
                     }}
                   >
                     <InputBase
@@ -361,7 +363,7 @@ export default function Header() {
             {/* Profile Avatar Button */}
             <Tooltip title="Profile">
                 <IconButton onClick={handleProfileOpen} sx={{ ml: 1, p: 0.5 }}>
-                   <Avatar sx={{ bgcolor: RIT_ORANGE, width: 36, height: 36, fontSize: '1rem' }}>
+                   <Avatar sx={{ bgcolor: theme.ritColors.orange, width: 36, height: 36, fontSize: '1rem' }}>
                       {user && user.fname ? user.fname[0] : <PersonIcon />}
                    </Avatar>
                 </IconButton>
@@ -373,7 +375,7 @@ export default function Header() {
               variant="outlined"
               color="inherit"
               startIcon={<LogoutIcon />}
-              sx={{ textTransform: "none", borderRadius: 4, borderColor: "#ddd" }}
+              sx={{ textTransform: "none", borderRadius: 4, borderColor: theme.palette.divider }}
             >
               Logout
             </Button>
@@ -406,7 +408,7 @@ export default function Header() {
             {user && user.fname ? (
               <>
                 {/* Header Banner */}
-                <Box sx={{ bgcolor: RIT_ORANGE, height: 100, position: 'relative' }}>
+                <Box sx={{ bgcolor: theme.ritColors.orange, height: 100, position: 'relative' }}>
                     <IconButton 
                         onClick={handleProfileClose} 
                         sx={{ position: 'absolute', top: 8, right: 8, color: 'white' }}
@@ -424,7 +426,7 @@ export default function Header() {
                                 width: 100, 
                                 height: 100, 
                                 bgcolor: "background.paper", // Matches card background 
-                                color: RIT_ORANGE,
+                                color: theme.ritColors.orange,
                                 border: "4px solid",
                                 borderColor: "background.paper",
                                 boxShadow: 2,
@@ -442,7 +444,7 @@ export default function Header() {
                             size="small" 
                             color="primary" 
                             variant="outlined" 
-                            sx={{ mt: 0.5, borderColor: RIT_ORANGE, color: RIT_ORANGE }} 
+                            sx={{ mt: 0.5, borderColor: theme.ritColors.orange, color: theme.ritColors.orange }} 
                         />
                     </Box>
 
@@ -505,7 +507,7 @@ export default function Header() {
                                         startIcon={<EditIcon />} 
                                         size="small" 
                                         onClick={() => setEditMode(true)}
-                                        sx={{ color: RIT_ORANGE }}
+                                        sx={{ color: theme.ritColors.orange }}
                                     >
                                         Edit
                                     </Button>
@@ -585,7 +587,7 @@ export default function Header() {
                                             variant="contained" 
                                             startIcon={<SaveIcon />}
                                             onClick={handleSavePreferences}
-                                            sx={{ bgcolor: RIT_ORANGE, '&:hover': { bgcolor: RIT_DEEP_ORANGE } }}
+                                            sx={{ bgcolor: theme.ritColors.orange, '&:hover': { bgcolor: RIT_DEEP_ORANGE } }}
                                         >
                                             Save
                                         </Button>

@@ -1,5 +1,7 @@
-import { AppBar, Box, Container } from "@mui/material";
-import React, { useContext, useEffect, useState } from "react";
+import { Box, Typography, Grid, Container, useTheme } from "@mui/material";
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import CopyrightOutlinedIcon from '@mui/icons-material/CopyrightOutlined';
+import React from "react";
 // import "../../../css/footer.css";
 // import { UserContext } from "../../util/functions/UserContext";
 
@@ -8,8 +10,7 @@ import React, { useContext, useEffect, useState } from "react";
  *
  * @returns {JSX.Element}
  */
-function Footer() {
-  //   const { user } = useContext(UserContext);
+function Footer() {  const theme = useTheme();  //   const { user } = useContext(UserContext);
   //   const [signedIn, setSignedIn] = useState(false);
   //   useEffect(() => {
   // A user is considered signed in if the user object has a value
@@ -47,56 +48,80 @@ function Footer() {
   return (
     <Box
       sx={{
-        bgcolor: "#000",
-        color: "#fff",
-        height: "fit",
-        // maxHeight: "fit",
-        width: "100%",
-        // position: "fixed",
+        bgcolor: theme.ritColors.black,
+        color: theme.ritColors.white,
+        width: '100%',
         left: 0,
         bottom: 0,
-        p: 2,
-
-        textAlign: "center",
-        boxShadow: 2,
-        // position: "relative",
-
-        overflowX: "hidden",
+        py: 4,
+        overflowX: 'hidden',
+        position: 'sticky',
+        zIndex: 30,
       }}
     >
-      <Box
-        display="flex"
-        alignItems="center"
-        gap={2}
-        justifyContent="center"
-        flexWrap="wrap"
-      >
-        <p style={{fontSize: "13px", margin: 0, fontWeight:"bold", lineHeight: "1.4"}}>
-          B. THOMAS GOLISANO <br />
-          COLLEGE OF COMPUTING & <br />
-          INFORMATION SCIENCES
-        </p>
+      <Container maxWidth="lg">
+        <Grid container spacing={4} alignItems="flex-start">
+          <Grid item xs={12} md={4}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 900,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                lineHeight: 1.2,
+              }}
+            >
+              B. Thomas Golisano
+              <br />
+              College of Computing &
+              <br />
+              Information Sciences
+            </Typography>
+          </Grid>
 
-        <p style={{fontSize: "13px", margin: 0, fontWeight:"bold", lineHeight: "1.4"}}>
-          Department of Software Engineering
-          <br />
-          Golisano Building 70, Room 1690
-          <br />
-          134 Lomb Memorial Drive
-          <br />
-          Rochester, NY 14623-5608
-        </p>
+          <Grid item xs={12} md={4}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              Department of Software Engineering
+            </Typography>
+            <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+              Golisano Building 70, Room 1690
+              <br />
+              134 Lomb Memorial Drive
+              <br />
+              Rochester, NY 14623-5608
+            </Typography>
+          </Grid>
 
-        <div>
-          <p style={{fontSize: "13px", margin: 0, fontWeight:"bold"}}>
-            <i className="ui mail icon"></i> scoop@se.rit.edu
-          </p>
-        </div>
-      </Box>
-      <p style={{ fontSize: "13px", margin: 5, fontWeight:"bold"}}>
-        <i className="ui icon copyright"></i> Rochester Institute of Technology,
-        All Rights Reserved
-      </p>
+          <Grid item xs={12} md={4}>
+            <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', bgcolor: theme.ritColors.white, color: theme.ritColors.black }}>
+                <EmailOutlinedIcon sx={{ fontSize: '1rem' }} />
+              </Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                scoop@se.rit.edu
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+
+        <Box
+          sx={{
+            borderTop: `1px solid ${theme.ritColors.gray_1}`,
+            mt: 3,
+            pt: 2,
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+          }}
+        >
+          <CopyrightOutlinedIcon sx={{ fontSize: '1rem' }} />
+          <Typography variant="caption" sx={{ fontWeight: 400 }}>
+            {new Date().getFullYear()} Rochester Institute of Technology. All rights reserved.
+          </Typography>
+        </Box>
+      </Container>
     </Box>
   );
 }

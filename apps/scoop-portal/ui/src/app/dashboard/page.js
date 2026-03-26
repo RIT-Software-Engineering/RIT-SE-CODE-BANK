@@ -215,21 +215,22 @@ export default function WorkflowDashboard() {
 
   useEffect(() => {
     async function fetchTeammates() {
-      if (user == null || user.fname == null){
+      if (user == null || user.fname == null) {
         return;
       }
-      const filteredWorkflows = workflows.map((workflow) => {
-      const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
-      if (filteredSteps.length > 0) {
-      return {
-        ...workflow,
-        steps: filteredSteps
-      };
-    }
-    return null;
-  }).filter(Boolean);
+      const filteredWorkflows = workflows
+        .map((workflow) => {
+          const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
+          if (filteredSteps.length > 0) {
+            return {
+              ...workflow,
+              steps: filteredSteps,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
       setfilteredWorkflows(filteredWorkflows);
-
     }
     fetchTeammates();
   }, [user]);
@@ -238,6 +239,8 @@ export default function WorkflowDashboard() {
     <Box
       sx={{
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
       }}
     >
       <Header /> 
@@ -245,7 +248,8 @@ export default function WorkflowDashboard() {
         <Typography
           variant="h1"
           sx={{
-            mb: 5,
+            mb: 3,
+            color: (theme) => theme.palette.text.primary,
           }}
         >
           Dashboard
@@ -254,13 +258,13 @@ export default function WorkflowDashboard() {
         <Grid container spacing={4} direction="column">
           {filteredWorkflows.map((workflow) => (
             <Grid item xs={12} key={workflow.title}>
-              <Paper elevation={1} sx={{ p: 3 }}>
+              <Paper elevation={1} sx={{ p: 3, borderRadius: 0, border: (theme) => `1px solid ${theme.palette.divider}`, backgroundColor: (theme) => theme.palette.background.paper }}>
                 <Typography
                   variant="h2"
                   sx={{
                     fontWeight: 700,
                     mb: 3,
-                    borderBottom: "2px solid #F76902",
+                    borderBottom: (theme) => `2px solid ${theme.palette.primary.main}`,
                     pb: 1,
                     maxWidth: "max-content",
                   }}
@@ -285,8 +289,8 @@ export default function WorkflowDashboard() {
                           minWidth: 32,
                           minHeight: 32,
                           borderRadius: "50%",
-                          bgcolor: "#F76902",
-                          color: "#fff",
+                          bgcolor: (theme) => theme.palette.primary.main,
+                          color: (theme) => theme.palette.common.white,
                           fontWeight: 700,
                           display: "flex",
                           alignItems: "center",
@@ -321,7 +325,7 @@ export default function WorkflowDashboard() {
                         <Typography
                           variant="body1"
                           sx={{
-                            color: "#555",
+                            color: (theme) => theme.palette.text.secondary,
                             whiteSpace: "normal",
                           }}
                         >
@@ -331,7 +335,8 @@ export default function WorkflowDashboard() {
 
                       <Button
                         href={step.link}
-                        variant="solid-orange"
+                        variant="contained"
+                        color="primary"
                         sx={{
                           textTransform: "none",
                           ml: 2,
@@ -354,8 +359,8 @@ export default function WorkflowDashboard() {
         component="footer"
         sx={{
           height: "80px",
-          bgcolor: "#212121",
-          color: "#fff",
+          bgcolor: (theme) => theme.palette.grey[900],
+          color: (theme) => theme.palette.common.white,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

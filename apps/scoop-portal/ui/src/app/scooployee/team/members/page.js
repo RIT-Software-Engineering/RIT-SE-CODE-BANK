@@ -14,11 +14,13 @@ import {
   Modal,
   TextField,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 
 export default function ViewTeamMembers() {
   const [teams, setTeams] = useState([]);
   const {user} = useUser();
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState('');
   const [selectedFname, setSelectedFname] = useState('');
@@ -74,14 +76,14 @@ export default function ViewTeamMembers() {
                 lg={4}
                 key={team.id ?? `temp-team-${index}`}
               >
-                <Paper elevation={2} sx={{ borderRadius: 4, p: 3 }}>
+                <Paper elevation={2} sx={{ borderRadius: 0, p: 3 }}>
                   <Typography
                     variant="h2"
                     sx={{ fontSize: "1.5rem", fontWeight: 700, mb: 1 }}
                   >
                     {team.name}
                   </Typography>
-                  <Typography sx={{ fontSize: "1rem", color: "#666", mb: 2 }}>
+                  <Typography sx={{ fontSize: "1rem", color: theme.palette.text.secondary, mb: 2 }}>
                     Project:{" "}
                     {team.project?.display_name || "No project assigned"}
                   </Typography>
@@ -96,12 +98,12 @@ export default function ViewTeamMembers() {
                         <Chip
                           key={team.scoopervisor.id}
                           label={`${team.scoopervisor.fname} ${team.scoopervisor.lname}`}
-                          sx={{ backgroundColor: "#F76902", color: "#fff" }}
+                          sx={{ backgroundColor: theme.palette.primary.main, color: theme.palette.primary.contrastText }}
                           onClick={() => handleOpen(team.scoopervisor.fname,team.scoopervisor.lname,team.scoopervisor.email)}
                         />
                     </Box>
                   ) : (
-                    <Typography variant="body2" sx={{ color: "#999" }}>
+                    <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
                       No scoopervisor assigned
                     </Typography>
                   )}
@@ -117,7 +119,7 @@ export default function ViewTeamMembers() {
                         <Chip
                           key={member.id}
                           label={`${member.fname} ${member.lname}`}
-                          sx={{ backgroundColor: "#F76902", color: "#fff" }}
+                          sx={{ backgroundColor: theme.palette.primary.main, color: theme.palette.primary.contrastText }}
                           onClick={() => handleOpen(member.fname,member.lname,member.email)}
                         />
                         

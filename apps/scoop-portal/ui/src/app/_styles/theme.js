@@ -24,12 +24,21 @@ const baseTheme = createTheme({
     purple: "#7D55C7",
     red: "#DA291C",
   },
+  shape: {
+    borderRadius: 0,
+  },
   palette: {
     primary: {
       main: "#F76902",
+      contrastText: "#FFFFFF",
     },
     secondary: {
       main: "#000000",
+      contrastText: "#FFFFFF",
+    },
+    text: {
+      primary: "#212121",
+      secondary: "#7C878E",
     },
     success: {
       main: "#84BD00",
@@ -92,16 +101,65 @@ const baseTheme = createTheme({
   },
   components: {
     MuiButton: {
+      styleOverrides: {
+        root: {
+          boxShadow: "none",
+          transition: "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), border-color 300ms cubic-bezier(0.4, 0, 0.2, 1), color 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+          "&:hover": {
+            boxShadow: "none",
+          },
+        },
+      },
       variants: [
+        {
+          props: { variant: "contained" },
+          style: {
+            backgroundColor: "#F76902",
+            color: "#FFFFFF",
+            border: "1px solid #F76902",
+            height: "40px",
+            fontWeight: 600,
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: "#000000",
+              border: "1px solid #000000",
+              boxShadow: "none",
+            },
+          },
+        },
+        {
+          props: { variant: "outlined" },
+          style: {
+            border: "1px solid #7C878E",
+            color: "#212121",
+            backgroundColor: "#FFFFFF",
+            "&:hover": {
+              backgroundColor: "rgba(247,105,2,0.08)",
+            },
+          },
+        },
+        {
+          props: { variant: "text" },
+          style: {
+            color: "#F76902",
+            "&:hover": {
+              textDecoration: "underline",
+              backgroundColor: "rgba(247,105,2,0.08)",
+            },
+          },
+        },
         {
           props: { variant: "solid-orange" },
           style: {
             border: "1px solid #F76902",
             backgroundColor: "#F76902",
             color: "#FFFFFF",
+            boxShadow: "none",
             "&:hover": {
-              border: "1px solid #C55400",
-              backgroundColor: "#C55400",
+              border: "1px solid #000000",
+              backgroundColor: "#000000",
+              color: "#FFFFFF",
+              boxShadow: "none",
             },
           },
         },
@@ -132,13 +190,15 @@ const baseTheme = createTheme({
       styleOverrides: {
         root: {
           textTransform: "none",
-          borderRadius: "0px",
+          borderRadius: 0,
+          fontWeight: 500,
         },
       },
     },
     MuiSelect: {
       styleOverrides: {
         root: {
+          borderRadius: 0,
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: "#F76902",
           },
@@ -148,6 +208,7 @@ const baseTheme = createTheme({
     MuiAutocomplete: {
       styleOverrides: {
         inputRoot: {
+          borderRadius: 0,
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: "#F76902",
           },
@@ -157,6 +218,21 @@ const baseTheme = createTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: { "&.Mui-focused": { color: "#F76902" } },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+          boxShadow: "none",
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+        },
       },
     },
   },
@@ -175,7 +251,10 @@ export const lightTheme = createTheme({
       default: "#FFFFFF",
       paper: baseTheme.ritColors.warm_gray_1,
     },
-    text: { primary: "#000000" },
+    text: {
+      primary: "#212121",
+      secondary: "#7C878E",
+    },
   },
   components: {
     ...baseTheme.components,
