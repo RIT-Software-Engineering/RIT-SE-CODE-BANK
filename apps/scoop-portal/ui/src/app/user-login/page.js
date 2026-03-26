@@ -20,9 +20,35 @@ export default function AuthPage() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // "success" or "error"
   const [loading, setLoading] = useState(false);
+
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [formError, setFormError] = useState("");
+
   const theme = useTheme();
 
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
   const handleSubmit = async () => {
+    setEmailError("");
+    setPasswordError("");
+    setFormError("");
+
+    if (!email.trim()) {
+      setEmailError("Email is required.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!password.trim()) {
+      setPasswordError("Password is required.");
+      return;
+    }
+
     try {
       const endpoint = isSignup
         ? `${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`
@@ -51,16 +77,10 @@ export default function AuthPage() {
           router.push("/dashboard");
         }, 1500);
       } else {
-        setSnackbarMessage(
-          data.error || "Incorrect credentials. Please try again."
-        );
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
+        setFormError(data.error || "Incorrect credentials. Please try again.");
       }
     } catch (error) {
-      setSnackbarMessage("Server error. Please try again later.");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
+      setFormError("Server error. Please try again later.");
     }
   };
 
@@ -130,6 +150,8 @@ export default function AuthPage() {
                     label="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    error={Boolean(emailError)}
+                    helperText={emailError}
                     sx={{
                         mb: 2,
                         width: "300px",
@@ -158,6 +180,8 @@ export default function AuthPage() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    error={Boolean(passwordError)}
+                    helperText={passwordError}
                     sx={{
                         mb: 2,
                         width: "300px",
@@ -193,6 +217,13 @@ export default function AuthPage() {
                 >
                     {isSignup ? "Create" : "Login"}
                 </Button>
+
+                {formError && (
+                  <Typography color="error" sx={{ mt: 1, fontWeight: 600 }}>
+                    {formError}
+                  </Typography>
+                )}
+
                 {/** This is incase we want to give anyone who visits the site, the ability to create an account */}
                 {/* <Button variant="text" onClick={() => setIsSignup(!isSignup)}>
                 {isSignup

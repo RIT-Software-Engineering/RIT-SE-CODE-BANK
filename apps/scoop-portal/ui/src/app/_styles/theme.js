@@ -38,7 +38,7 @@ const baseTheme = createTheme({
     },
     text: {
       primary: "#212121",
-      secondary: "#7C878E",
+      secondary: "#4F4F4F", // less grey for better readability
     },
     success: {
       main: "#84BD00",
@@ -167,11 +167,11 @@ const baseTheme = createTheme({
           props: { variant: "solid-gray" },
           style: {
             border: "1px solid #D0D3D4",
-            backgroundColor: "#D0D3D4",
-            color: "#000000",
+            backgroundColor: "#FFFFFF",
+            color: "#212121",
             "&:hover": {
               border: "1px solid #A2AAAD",
-              backgroundColor: "#A2AAAD",
+              backgroundColor: "#F7F7F7",
             },
           },
         },
@@ -205,12 +205,50 @@ const baseTheme = createTheme({
         },
       },
     },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          borderLeft: "1px solid #D0D3D4",
+          borderRight: "1px solid #D0D3D4",
+          borderBottom: "1px solid #D0D3D4",
+          borderTop: "none",
+          borderRadius: 0,
+          margin: 0,
+          backgroundColor: "#FFFFFF",
+          "&:first-of-type": {
+            borderTop: "1px solid #D0D3D4",
+          },
+          "&.Mui-selected": {
+            backgroundColor: "rgba(247,105,2,0.12)",
+          },
+          "&:hover": {
+            backgroundColor: "rgba(247,105,2,0.08)",
+          },
+        },
+      },
+    },
     MuiAutocomplete: {
       styleOverrides: {
         inputRoot: {
           borderRadius: 0,
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: "#F76902",
+          },
+        },
+        option: {
+          borderLeft: "1px solid #D0D3D4",
+          borderRight: "1px solid #D0D3D4",
+          borderBottom: "1px solid #D0D3D4",
+          borderTop: "none",
+          borderRadius: 0,
+          margin: 0,
+          padding: "0.75rem 1rem",
+          backgroundColor: "#FFFFFF",
+          "&:first-of-type": {
+            borderTop: "1px solid #D0D3D4",
+          },
+          "&.Mui-focused, &:hover": {
+            backgroundColor: "rgba(247,105,2,0.08)",
           },
         },
       },
@@ -249,11 +287,11 @@ export const lightTheme = createTheme({
     mode: "light",
     background: {
       default: "#FFFFFF",
-      paper: baseTheme.ritColors.warm_gray_1,
+      paper: "#FFFFFF", // remove warm gray paper background
     },
     text: {
       primary: "#212121",
-      secondary: "#7C878E",
+      secondary: "#4F4F4F",
     },
   },
   components: {
