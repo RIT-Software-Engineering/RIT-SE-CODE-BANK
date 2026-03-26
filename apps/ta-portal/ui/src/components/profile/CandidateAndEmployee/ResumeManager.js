@@ -7,6 +7,7 @@ import {
   updatePrimaryResume,
   deleteResume,
   updateResumeName,
+  getResumeById,
 } from '@/services/db-apis';
 import { useNotification } from '@/contexts/NotificationContext';
 import ConfirmationModal from '@/components/common/models/ConfirmationModal';
@@ -55,8 +56,6 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
     isProcessing: false,
   });
 
-  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION + process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
-
   const handleStartEditing = (resume) => {
     setEditingResumeId(resume.id);
     setEditingResumeName(resume.name);
@@ -66,6 +65,23 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
     setEditingResumeId(null);
     setEditingResumeName('');
   };
+
+  const handleResumeClick = async (resumeId) => {
+    try{
+      const response = await getResumeById(resumeId);
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+
+      window.addEventListener('beforeunload', () => {
+        URL.revokeObjectURL(url);
+      });
+    }catch(error){
+      showNotification(error.message || 'An error occurred. Failed to fetch resume.', 'error');
+    }
+  }
 
   const handleSaveName = async () => {
     if (!editingResumeName.trim()) {
@@ -149,8 +165,8 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
       </Typography>
 
       <List sx={{ mb: 3 }}>
-        {resumes.length > 0 ? (
-          resumes.map((resume) => (
+        {resumes.filter(resume => !resume.isSoftDeleted).length > 0 ? (
+          resumes.filter(resume => !resume.isSoftDeleted).map((resume) => (
             <Paper
               key={resume.id}
               variant="outlined"
@@ -191,9 +207,19 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
               ) : (
                 <>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <MuiLink href={`${backendURL}${resume.resumeURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
+                    <Typography
+                      sx={{
+                        color: 'primary.main',
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          textDecoration: 'none',
+                        }
+                      }}
+                      onClick={()=> handleResumeClick(resume.id)}
+                    >
                       {resume.name}
-                    </MuiLink>
+                    </Typography>
                     {resume.isPrimary && <Chip label="Primary" color="primary" size="small" icon={<PrimaryIcon />} sx={{ ml: 2 }} />}
                   </Box>
                   <Box>
@@ -242,7 +268,27 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
           })}
         >
           {newResumeFile ? newResumeFile.name : 'Select Resume File (PDF)'}
-          <input type="file" hidden onChange={(e) => setNewResumeFile(e.target.files[0])} accept=".pdf" />
+          <input 
+            type="file" 
+            hidden
+            accept=".pdf"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (!file){
+                return;
+              }
+
+              const maxSize = 5 * 1024 * 1024;
+
+              if (file.size > maxSize){
+                alert("File must be less than 5MB");
+                e.target.value = "";
+                return;
+              }
+
+              setNewResumeFile(file)
+            }}
+          />
         </Button>
         <Button
           type="submit"

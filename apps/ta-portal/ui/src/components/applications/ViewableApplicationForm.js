@@ -14,6 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Close as CloseIcon, Article as DocumentIcon } from '@mui/icons-material';
+import { getCoverLetterById, getResumeById } from "@/services/db-apis";
 
 /**
  * ViewableApplicationForm component for displaying a submitted job application.
@@ -29,9 +30,9 @@ import { Close as CloseIcon, Article as DocumentIcon } from '@mui/icons-material
  * @param {Function} props.onClose - Callback to close the dialog
  */
 export default function ViewableApplicationForm({position, application, onClose }) {
-  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION + process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 
   const submittedResume = application.resume;
+  const submittedCoverLetter = application?.coverLetter;
 
   const displayValues = {
     uid: application.candidateUID || 0,
@@ -45,9 +46,41 @@ export default function ViewableApplicationForm({position, application, onClose 
     wasPriorEmployeeForThisCourse: application.wasPriorEmployeeForThisCourse || false,
     wasPriorEmployeeForOtherCourses: application.wasPriorEmployeeForOtherCourses || false,
     priorEmploymentHistory: application.priorEmploymentHistory || 'None',
-    coverLetterName: application.coverLetterName || '',
-    coverLetterURL: application.coverLetterURL || '',
   };
+
+  const handleResumeClick = async (resumeId) => {
+    try{
+      const response = await getResumeById(resumeId);
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+
+      window.addEventListener('beforeunload', () => {
+        URL.revokeObjectURL(url);
+      });
+    }catch(error){
+      showNotification(error.message || 'An error occurred. Failed to fetch resume.', 'error');
+    }
+  }
+
+  const handleCoverLetterClick = async (coverLetterId) => {
+    try{
+      const response = await getCoverLetterById(coverLetterId);
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+
+      window.addEventListener('beforeunload', () => {
+        URL.revokeObjectURL(url);
+      });
+    }catch(error){
+      showNotification(error.message || 'An error occurred. Failed to fetch cover letter.', 'error');
+    }
+  }
 
   return (
     <Dialog open={true} onClose={onClose} fullWidth maxWidth="md">
@@ -85,35 +118,43 @@ export default function ViewableApplicationForm({position, application, onClose 
             value={displayValues.priorEmploymentHistory}
           />
 
-          {submittedResume?.resumeURL && (
+          {submittedResume?.id && (
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Submitted Resume</Typography>
-              <MuiLink
-                href={`${backendURL}${submittedResume.resumeURL}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                underline="hover"
-                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              <Typography
+                sx={{
+                  color: 'primary.main',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    textDecoration: 'none',
+                  }
+                }}
+                onClick={()=> handleResumeClick(submittedResume.id)}
               >
                 <DocumentIcon fontSize="small" />
                 {submittedResume.name || 'View Submitted Resume'}
-              </MuiLink>
+              </Typography>
             </Box>
           )}
 
-          {displayValues.coverLetterURL && (
+          {submittedCoverLetter?.id && (
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Submitted Cover Letter</Typography>
-              <MuiLink
-                href={`${backendURL}${displayValues.coverLetterURL}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                underline="hover"
-                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              <Typography
+                sx={{
+                  color: 'primary.main',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    textDecoration: 'none',
+                  }
+                }}
+                onClick={()=> handleCoverLetterClick(submittedCoverLetter.id)}
               >
                 <DocumentIcon fontSize="small" />
-                {displayValues.coverLetterName || 'View Submitted Cover Letter'}
-              </MuiLink>
+                {submittedCoverLetter.name || 'View Submitted Cover Letter'}
+              </Typography>
             </Box>
           )}
         </Box>
