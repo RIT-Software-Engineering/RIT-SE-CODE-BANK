@@ -295,7 +295,7 @@ function EmployerPositionsContent() {
   const handleSaveJob = async (positionData) => {
     if (!currentUser) return;
 
-    // If no job is selected, this is a CREATE action.
+    // If no job is selected or if copying a position, this is a CREATE action.
     if (!selectedJob || isCopy == true) {
       setIsProcessing(true);
       try {
