@@ -1,23 +1,38 @@
 import { Edit, Trash2 } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Accordion, Button, Card, Form, Modal } from "react-bootstrap";
 
 /**
- * Generic component applicable to all applications
+ * Component for top-level workflows
+ * This component has a modal that can act as both a creation modal and editing modal
+ * Since different projects have different needs, extra data can be passed in 
+ * This also means that custom functions to submit and edit need to be passed in
  *
- * @param {{ isOpen: any; setIsOpen: any; workflows: any; setWorkflows: any; 
- * WorkflowSubmit: any; curWorkflow: any; isEdit: any; setIsEdit: any; 
- * workflowEditSubmit: any; extraData: Object; 
- * clearFunction: () => void; loadFunction: () => void; children : any; }} param0 
+ * @param {Object} props
+ * @param {Boolean} props.isOpen - whether the modal is open or not
+ * @param {(isOpen: Boolean) => void} props.setIsOpen - state setter for the modal being open
+ * @param {Array} props.workflows - the top-level workflows 
+ * @param {(workflows: Array) => void} props.setWorkflows - state setter for the top-level workflows
+ * @param {Function} props.WorkflowSubmit - function to submit the workflow
+ * @param {Object} props.curWorkflow - the current workflow, used for editing purposes. null if not editing
+ * @param {Boolean} props.isEdit - whether the user is currently editing
+ * @param {(isEdit: Boolean) => void} props.setIsEdit - state setter for whether the user is editing
+ * @param {Function} props.workflowEditSubmit - function to edit the workflow
+ * @param {Object} props.extraData - any extra data that may need to be passed in when submitting
+ * @param {() => void} props.clearFunction - function to clear any extra data when exiting the modal
+ * @param {() => void} props.loadFunction - function to load any extra data when loading the modal while editing
+ * @param {*} props.children - customizable part of the form for any extra data
  */
 export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows, 
     WorkflowSubmit, curWorkflow ,isEdit, setIsEdit, 
     workflowEditSubmit, extraData, loadFunction, clearFunction, children} ){
+
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [tags, setTags] = useState('');
     const [error, setError] = useState('');
 
+    // Called when finished submitting or exiting the modal
     function clearForm(){
         setName('');
         setDescription('');
@@ -27,6 +42,7 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
         clearFunction();
     }
 
+    // Loads data from the current workflow. Only called on edit.
     function loadForm(){
         setName(curWorkflow.name?.trim());
         setDescription(curWorkflow.description?.trim());
@@ -35,8 +51,10 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
     }
 
     async function submitWorkflow(){
-        const uploadTags = tags ? tags.split(",").map(tag => tag.trim()) : [];
+        // Splits the tags by commas (and the spaces if there are any)
+        const uploadTags = tags ? tags.split(/, ?/).map(tag => tag.trim()) : [];
         const submission = await WorkflowSubmit(name, description, uploadTags, workflows, setWorkflows, extraData, setError);
+        // Only clear the form and close the modal if we succeeded in our submission
         if (submission === "Good"){
             clearForm();
             setIsOpen(false);
@@ -44,8 +62,10 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
     }
 
     async function editWorkflow(){
-        const uploadTags = tags ? tags?.split(",").map(tag => tag.trim()) : [];
+        // Splits the tags by commas (and the spaces if there are any)
+        const uploadTags = tags ? tags?.split(/, ?/).map(tag => tag.trim()) : [];
         const submission = await workflowEditSubmit(name, description, uploadTags, workflows, setWorkflows, extraData, setError, curWorkflow);
+        // Only clear the form and close the modal if we succeeded in our edit
         if (submission === "Good"){
             clearForm();
             setIsOpen(false);
@@ -88,28 +108,49 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
 }
 
 /**
- * Generic component applicable to all applications
- *
- * @param {{ isOpen: any; setIsOpen: any; index: any; workflows: any; setWorkflows: any; 
- * parentId: any; depthLevel: any; setDepthLevel: any;
- * isEdit: any; setIsEdit: any; curAction: any; refresh: ()=>void;
- * addAction: any; addWorkflowAction: any; editAction: any; editWorkflowActionFunction: any;
- * loadFunction: ()=>void; clearFunction: ()=>void; extraData: Object; children: any;}} param0 
+ * Component for all things actions. Works for simple, complex, and workflow actions (branching actions are not supported.)
+ * This component has a modal that can act as both a creation modal and an editing modal
+ * Since different projects have different needs, extra data can be passed in
+ * This also mean that custom functions to submit and edit need to be passed in
+ * 
+ * @param {Object} props
+ * @param {Boolean} props.isOpen - whether the modal is open or not
+ * @param {(isOpen: Boolean) => void} props.setIsOpen - state setter for the modal being open
+ * @param {Number} props.index - the current top-level workflow the user is working in
+ * @param {Array} props.workflows - the top-level workflows
+ * @param {(workflows: Array) => void} props.setWorkflows - state setter for the top-level workflows
+ * @param {string} props.parentId - the ID of the parent where the action is being created (may be null)
+ * @param {Number} props.depthLevel - the depth level of the action being created. Needed to prevent too many layers and going too deep into a workflow
+ * @param {(depthLevel: Number) => void} props.setDepthLevel - state setter for the depth level
+ * @param {Boolean} props.isEdit - whether the user is currently editing
+ * @param {(isEdit: Boolean) => void} props.setIsEdit - state setter for whether the user is editing
+ * @param {Object} props.curAction - the current action. Used for editing purposes, will be null if not editing.
+ * @param {() => void} props.refresh - a function to refresh the page. Can be used to avoid tricky logic and rely on the API
+ * @param {Function} props.addAction - function to submit a simple or complex action
+ * @param {Function} props.addWorkflowAction - function to submit a workflow action
+ * @param {Function} props.editAction - function to edit a simple or complex action
+ * @param {Function} props.editWorkflowActionFunction - function to edit a workflow action
+ * @param {() => void} props.loadFunction - function to load any extra data when loading the modal while editing
+ * @param {() => void} props.clearFunction - function to clear any extra data when exiting the modal
+ * @param {Object} props.extraData - any extra data that may need to be passed in when submitting
+ * @param {*} props.children - customizable part of the form for any extra data
  */
 export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, parentId, 
     depthLevel, setDepthLevel, isEdit, setIsEdit, curAction, refresh,
     addAction, addWorkflowAction, editAction, editWorkflowActionFunction,
     loadFunction, clearFunction, extraData, children}){
+
     const [actionType, setActionType] = useState("simple");
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false); // Used to prevent double-submitting for actions that may take longer to submit
 
+    // Called when finished submitting or exiting the modal
     function clearForm(){
         setName('');
         setDescription('');
         setActionType('simple');
-        setDepthLevel(depthLevel-1);
+        setDepthLevel(depthLevel-1); // Remove a depth layer of one since we're done in the modal
         clearFunction();
     }
 
@@ -124,7 +165,8 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     async function createSimpleAction(e){
         e.preventDefault();
         setLoading(true);
-        await addAction(index, workflows, setWorkflows, name, description,"simple", parentId, extraData).then(() => {
+        // TODO maybe make more generic so it's an almost empty function being passed?
+        await addAction(index, workflows, setWorkflows, name, description, "simple", parentId, extraData, refresh).then(() => {
             clearForm();
             setIsOpen(false);
             setLoading(false);
@@ -134,6 +176,7 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     async function editSimpleAction(e){
         e.preventDefault();
         setLoading(true);
+        // TODO maybe make more generic so it's an almost empty function being passed?
         await editAction(name, description, curAction, extraData, refresh).then(() => {
             clearForm();
             setIsOpen(false);
@@ -144,7 +187,8 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     async function createComplexAction(e) {
         e.preventDefault();
         setLoading(true);
-        await addAction(index, workflows, setWorkflows, name, description, "complex", parentId, extraData).then(()=>{
+        // TODO maybe make more generic so it's an almost empty function being passed?
+        await addAction(index, workflows, setWorkflows, name, description, "complex", parentId, extraData, refresh).then(()=>{
             clearForm();
             setIsOpen(false);
             setLoading(false);
@@ -154,6 +198,7 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     async function editComplexAction(e){
         e.preventDefault();
         setLoading(true);
+        // TODO maybe make more generic so it's an almost empty function being passed?
         await editAction(name, description, curAction, extraData, refresh).then(() => {
             clearForm();
             setIsOpen(false);
@@ -164,7 +209,8 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     async function createWorkflowAction(e){
         e.preventDefault();
         setLoading(true);
-        await addWorkflowAction(index, name, description, workflows, setWorkflows, parentId).then(()=>{
+        // TODO maybe make more generic so it's an almost empty function being passed?
+        await addWorkflowAction(index, name, description, workflows, setWorkflows, parentId, refresh).then(()=>{
             clearForm();
             setIsOpen(false);
             setLoading(false);
@@ -174,6 +220,7 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     async function editWorkflowAction(e){
         e.preventDefault();
         setLoading(true);
+        // TODO maybe make more generic so it's an almost empty function being passed?
         await editWorkflowActionFunction(name, description, curAction, refresh).then(() => {
             clearForm();
             setIsOpen(false);
@@ -227,9 +274,18 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
 }
 
 /**
- * Generic component applicable to all applications
+ * Component to delete workflows and actions. 
+ * It can be a top level workflow or a workflow action, this modal can delete them all!
+ * Functions for the deletion need to be passed in.
  *
- * @param {{ isOpen: any; setIsOpen: (boolean)=>void; action: any; actionDelete: any; workflowDelete: any; refresh: ()=>void}} param0 
+ * @param {Object} props
+ * @param {Boolean} props.isOpen - whether the modal is open or not
+ * @param {(isOpen: Boolean) => void} props.setIsOpen - state setter for the modal being open
+ * @param {Object} props.action - the action that will be deleted
+ * @param {Function} props.actionDelete - function to delete simple or complex actions
+ * @param {Function} props.workflowDelete - function to delete workflows/workflow actions
+ * @param {() => void} props.refresh - a function to refresh the page. Can be used to avoid tricky logic and rely on the API
+ * 
  */
 export function DeleteModal({isOpen, setIsOpen, action, actionDelete, workflowDelete, refresh}){
 
@@ -258,17 +314,30 @@ export function DeleteModal({isOpen, setIsOpen, action, actionDelete, workflowDe
 }
 
 /**
- * Generic component applicable to all applications
+ * The component that renders all of the actions and workflows! 
+ * Starts with the top level workflows and its' actions then builds down recursively through {@link ComplexRenderer}
  *
- * @param {{ index: any; workflows: any; setIsOpen: any; loading: any; 
- * setParentId: any; depthLevel: any; setDepthLevel: any; setIsEdit: any; 
- * setCurAction: any; setWorkflowModalEdit: any; setDeleteOpen: any; simpleExtraDataRenderer: (action: Object) => React.ReactElement;}} param0 
+ * @param {Object} props 
+ * @param {Number} props.index - the index of the top-level workflow in the giant top-level workflows array
+ * @param {Array} props.workflows - an array of the top-level workflows
+ * @param {(isOpen: Boolean) => void} props.setIsOpen - state setter for the action modal for creating/editing actions being open
+ * @param {Boolean} props.loading - whether all workflows stuff is being loaded. We have this to prevent display errors and to prevent the user from creating a workflow when still getting
+ * @param {(parentId: string) => void} props.setParentId - sets the parent ID. We do this for workflows too, even though they aren't actually parents. There should be logic in the action adders to address this
+ * @param {Number} props.depthLevel - the depth level of the selected action. Needed to prevent too many layers and going too deep into a workflow
+ * @param {(depthLevel: Number) => void} props.setDepthLevel - state setter for the depth level
+ * @param {(isEdit: Boolean) => void} props.setIsEdit - state setter for whether or not things are edits
+ * @param {(curAction: Object) => void} props.setCurAction - state setter to set the current action. Used mainly for edits
+ * @param {() => void} props.setWorkflowModalEdit - function to open the workflow modal as an edit. We do this since it's one less thing to pass in
+ * @param {(deleteOpen: Boolean) => void} props.setDeleteOpen - state setter for whether the deletion modal is open or not
+ * @param {(action: Object) => React.ReactElement} props.simpleExtraDataRenderer - We have basic rendering for simple actions, but this is used for any extra data that not all projects may use.
  */
 export function WorkflowComponent({index, workflows, setIsOpen, loading, 
     setParentId, depthLevel, setDepthLevel, setIsEdit, 
     setCurAction, setWorkflowModalEdit, setDeleteOpen, simpleExtraDataRenderer}){
+
     if (loading)
         return <><h1>Loading...</h1></> // Here so a lot of stuff just doesn't break while it loads everything
+
     else
     return (<>
     <Accordion.Item eventKey={workflows[index].id}>
@@ -386,11 +455,23 @@ export function WorkflowComponent({index, workflows, setIsOpen, loading,
 }
 
 /**
- * Generic component applicable to all applications
+ * Component that renders actions! 
+ * Used in {@link WorkflowComponent} for the complex and workflow actions.
+ * Also recursively calls itself for complex and workflow actions inside. 
+ * We have this as its own function since what we deal with here is slightly different than the workflows at the top-level.
  *
- * @param {{ workflows: any; index: any; actions: any; setIsOpen: any; 
- * setParentId: any; depthLevel: any; setDepthLevel: any; 
- * setCurAction: any; setIsEdit: any; setDeleteOpen: any; simpleExtraDataRenderer: (action: Object) => React.ReactElement;}} param0 
+ * @param {Object} props 
+ * @param {Array} props.workflows - an array of the top-level workflows
+ * @param {Number} props.index - the index of the top-level workflow in the giant top-level workflows array
+ * @param {Array} props.actions - The next subset of actions we're working with. When called, the current iteration of the action's childActions are passed in 
+ * @param {(isOpen: Boolean) => void} props.setIsOpen - state setter for the action modal for creating/editing actions being open
+ * @param {(parentId: string) => void} props.setParentId - sets the parent ID. We do this for workflows too, even though they aren't actually parents. There should be logic in the action adders to address this
+ * @param {Number} props.depthLevel - the depth level of the selected action. Needed to prevent too many layers and going too deep into a workflow
+ * @param {(depthLevel: Number) => void} props.setDepthLevel - state setter for the depth level
+ * @param {(curAction: Object) => void} props.setCurAction - state setter to set the current action. Used mainly for edits
+ * @param {(isEdit: Boolean) => void} props.setIsEdit - state setter for whether or not things are edits
+ * @param {(deleteOpen: Boolean) => void} props.setDeleteOpen - state setter for whether the deletion modal is open or not
+ * @param {(action: Object) => React.ReactElement} props.simpleExtraDataRenderer - We have basic rendering for simple actions, but this is used for any extra data that not all projects may use.
  */
 function ComplexRenderer({workflows, index, actions, setIsOpen, 
     setParentId, depthLevel, setDepthLevel, 
