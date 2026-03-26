@@ -282,16 +282,19 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
  * @param {Boolean} props.isOpen - whether the modal is open or not
  * @param {(isOpen: Boolean) => void} props.setIsOpen - state setter for the modal being open
  * @param {Object} props.action - the action that will be deleted
+ * @param {Array} props.workflows - the top-level workflows
+ * @param {(workflows: Array) => void} props.setWorkflows - state setter for the top-level workflows 
  * @param {Function} props.actionDelete - function to delete simple or complex actions
  * @param {Function} props.workflowDelete - function to delete workflows/workflow actions
  * @param {() => void} props.refresh - a function to refresh the page. Can be used to avoid tricky logic and rely on the API
  * 
  */
-export function DeleteModal({isOpen, setIsOpen, action, actionDelete, workflowDelete, refresh}){
+export function DeleteModal({isOpen, setIsOpen, action, workflows, setWorkflows, actionDelete, workflowDelete, refresh}){
 
     async function deleteAction(){
-        if (action.actionType === 'workflow'){
-            await workflowDelete(action, refresh).then(() => setIsOpen(false))
+        // Top level workflows don't actually have the actionType key/value pair, so we can also check if it's undefined.
+        if (action.actionType === 'workflow' || !action.actionType){
+            await workflowDelete(workflows, setWorkflows, action, refresh).then(() => setIsOpen(false))
         }
         else {
             await actionDelete(action, refresh).then(() => setIsOpen(false)) 

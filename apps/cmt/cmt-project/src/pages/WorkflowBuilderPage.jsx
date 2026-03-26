@@ -191,6 +191,7 @@ export function BuilderPage(){
         </ActionModal>
         
         <DeleteModal isOpen={deleteOpen} setIsOpen={setDeleteOpen} action={curAction} 
+        workflows={workflows} setWorkflows={setWorkflows}
         actionDelete={deleteStandardAction} workflowDelete={deleteWorkflow} refresh={update}/>
 
         <Accordion>
@@ -1088,14 +1089,23 @@ async function editWorkflowAction(name, description, workflowToUpdate, refresh){
  * Makes a DELETE request to add the workflow template and updates our workflows if successful
  *
  * @async
+ * @param {Array} workflows - the top-level workflows
+ * @param {(workflows: Array) => void} setWorkflows - state setter for the top-level workflows
  * @param {Object} workflowToDelete - the workflow we are deleting. Can be either a workflow action or a template workflow
  * @param {() => void} refresh - Function to refresh the page upon completion. Used so we don't have to do complicated logic and let the API handle stuff
  */
-async function deleteWorkflow(workflowToDelete, refresh){
+async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh){
     // TODO deletes but does not cleanup any actions with the workflow
     if (workflowToDelete.attributeId)
-        await CMTJsonFetch("DELETE", `workflow/workflowTemplate/workflow/${workflowToDelete.id}`).then(async _ => refresh());
+        await CMTJsonFetch("DELETE", `workflow/workflowTemplate/${workflowToDelete.attributeId}`).then(async _ => {
+            const workflowsCopy = [];
+            for (let index = 0; index < workflows.length; index++) {
+                if (workflows[index].attributeId !== workflowToDelete.attributeId)
+                    workflowsCopy.push(workflows[index]);
+            }
+            setWorkflows(workflowsCopy);
+        });
     else
-        await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`).then(async _ => refresh())
+        await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`).then(async _ => refresh());
 }
 
