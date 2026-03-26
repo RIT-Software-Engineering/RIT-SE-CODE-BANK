@@ -1,5 +1,4 @@
 // src/app/Positions/Admin/[username]/page.js
-
 "use client";
 
 import React, {
@@ -20,7 +19,7 @@ import {
   updatePosition,
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNotification } from "@/contexts/NotificationContext";
+
 import { useFeatureFlags, FEATURES } from "@/configuration/featureFlags";
 import PositionsCard from "@/components/positions/PositionsCard";
 import { Filter } from "@/components/common/searchAndFilter/Filter";
@@ -29,6 +28,9 @@ import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
 import EditableNoteForm from "@/components/notes/EditableNoteForm";
 import ConfirmationModal from "@/components/common/models/ConfirmationModal";
+
+import { useNotification } from '@/contexts/NotificationContext';
+
 
 import {
   Box,
