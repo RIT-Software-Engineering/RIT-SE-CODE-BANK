@@ -1,5 +1,5 @@
 import { Accordion, Button, Card, Form } from "react-bootstrap"
-import { BasicStatusCard, BasicStatusIcon } from "./misc"
+import { StatusCard, StatusIcon } from "./misc"
 
 /**
  * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, EditableActionViewProps } from '@se-code-bank/workflows-components'
@@ -17,7 +17,7 @@ export function ComplexCardContainer(props) {
 						<p className='text-2xl mb-0'>{props.actionWithContexts.action.name}</p>
 						<p className='text-gray-600 mb-0'>{props.actionWithContexts.action.description}</p>
 					</div>
-					<BasicStatusIcon stateType={props.actionWithContexts.actionState.stateType} />
+					<StatusIcon stateType={props.actionWithContexts.actionState.stateType} />
 				</div>
 			</Accordion.Header>
 			<Accordion.Body>
@@ -44,7 +44,7 @@ export function SimpleCardContainer(props) {
 							{props.children}
 						</div>
 					</div>
-					<BasicStatusCard stateType={props.actionWithContexts.actionState.stateType} />
+					<StatusCard stateType={props.actionWithContexts.actionState.stateType} />
 				</div>
 			</Card.Body>
 		</Card>

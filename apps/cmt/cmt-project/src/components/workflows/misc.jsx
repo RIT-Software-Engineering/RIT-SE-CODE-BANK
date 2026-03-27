@@ -5,31 +5,29 @@ import { Button, Card } from "react-bootstrap"
  * @import { CheckmarkActionProps, NavigateButtonProps } from '@se-code-bank/workflows-components'
  */
 
-export function BasicStatusIcon({ stateType }) {
-	const stylesByState = {
-		completed: {
-			icon: <CheckCircle2 className='text-green-500' />,
-			label: 'Completed!',
-			textClassName: 'text-green-500',
-		},
-		inProgress: {
-			icon: <MinusCircle className='text-yellow-500' />,
-			label: 'In Progress',
-			textClassName: 'text-yellow-500',
-		},
-		notStarted: {
-			icon: <XCircle className='text-red-500' />,
-			label: 'Not Started',
-			textClassName: 'text-red-500',
-		},
+export function StatusIcon({ stateType }) {
+	if (stateType === 'completed') {
+		return (
+			<div className='flex items-center gap-2'>
+				<CheckCircle2 className='text-green-500' />
+				<p className='mb-0 text-green-500'>Completed!</p>
+			</div>
+		)
 	}
 
-	const status = stylesByState[stateType] ?? stylesByState.notStarted
+	if (stateType === 'inProgress') {
+		return (
+			<div className='flex items-center gap-2'>
+				<MinusCircle className='text-yellow-500' />
+				<p className='mb-0 text-yellow-500'>In Progress</p>
+			</div>
+		)
+	}
 
 	return (
 		<div className='flex items-center gap-2'>
-			{status.icon}
-			<p className={`mb-0 ${status.textClassName}`}>{status.label}</p>
+			<XCircle className='text-red-500' />
+			<p className='mb-0 text-red-500'>Not Started</p>
 		</div>
 	)
 }
@@ -59,33 +57,39 @@ export function NavigateButton(props) {
 
 
 
-export function BasicStatusCard({ stateType }) {
-	const stylesByState = {
-		completed: {
-			cardClassName: 'bg-green-500 text-white',
-			icon: <Check size={20} />,
-			label: 'Completed!',
-		},
-		inProgress: {
-			cardClassName: 'bg-yellow-500 text-white',
-			icon: <Pencil size={20} />,
-			label: 'In Progress',
-		},
-		notStarted: {
-			cardClassName: 'bg-red-500 text-white',
-			icon: <X size={20} />,
-			label: 'Not Started',
-		},
+export function StatusCard({ stateType }) {
+	if (stateType === 'completed') {
+		return (
+			<Card>
+				<Card.Body className='bg-green-500 text-white flex items-center'>
+					<div className='flex flex-col items-center gap-2'>
+						<Check size={20} />
+						<p className='my-0'>Completed!</p>
+					</div>
+				</Card.Body>
+			</Card>
+		)
 	}
 
-	const status = stylesByState[stateType] ?? stylesByState.notStarted
+	if (stateType === 'inProgress') {
+		return (
+			<Card>
+				<Card.Body className='bg-yellow-500 text-white flex items-center'>
+					<div className='flex flex-col items-center gap-2'>
+						<Pencil size={20} />
+						<p className='my-0'>In Progress</p>
+					</div>
+				</Card.Body>
+			</Card>
+		)
+	}
 
 	return (
 		<Card>
-			<Card.Body className={status.cardClassName}>
-				<div className='flex w-32 items-center gap-2'>
-					{status.icon}
-					<p className='my-0'>{status.label}</p>
+			<Card.Body className='bg-red-500 text-white flex items-center'>
+				<div className='flex flex-col items-center gap-2'>
+					<X size={20} />
+					<p className='my-0'>Not Started</p>
 				</div>
 			</Card.Body>
 		</Card>
