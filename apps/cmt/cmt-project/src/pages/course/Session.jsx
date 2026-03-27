@@ -11,7 +11,7 @@ import { CMTJsonFetch } from "../../utils/api";
  * The session component is an accordion that dynamically adds more items the higher the count. 
  * Displays a modal (when opened) and a table of uploaded resources. 
  *
- * @import { FetchToCallback } from "@se-code-bank/workflows-components/types/workflowProps"
+ * @import { FetchToCallback } from "@se-code-bank/workflows-components"
  */
 
 /**
