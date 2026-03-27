@@ -10,6 +10,7 @@ export function assemble(text) {
     for(let line of lines) {
         const tokens = lexer(line);
         const parsed = parseLine(tokens);
+        console.log(parsed);
         const encoded = encodeLine(parsed);
 
         words.push(...encoded);

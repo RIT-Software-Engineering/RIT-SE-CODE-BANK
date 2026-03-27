@@ -55,7 +55,7 @@ function readWordFromBytes(mem, addr) {
 
 const program = `
 MOV #0x05, R1
-VALUE: .ASCIZ "HELLO""WORLD"
+.ASCIZ 1, 2, 3, 4
 `;
 
 backend.loadAssembly(program);

@@ -16,13 +16,9 @@ function parseDirective(tokens, label) {
     return {
         type: "directive",
         label: label,
-        directive: null,
-        args: []
+        directive: tokens[0],
+        args: tokens.slice(1)
     };
-}
-
-function directiveLevel(tokenArray) {
-    
 }
 
 function parseInstruction(tokens, label) {
