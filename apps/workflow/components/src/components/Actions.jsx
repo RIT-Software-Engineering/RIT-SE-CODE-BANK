@@ -94,7 +94,8 @@ export function ViewEditAction(props) {
         if (!allValid) return
 
         await fetchToCallback(actionWithContexts.callback, outputValues)
-        refresh()
+        await refresh()
+        setIsEditing(false)
     }
 
     const [isEditing, setIsEditing] = useState(false)

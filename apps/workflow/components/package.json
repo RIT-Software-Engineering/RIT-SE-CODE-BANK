@@ -1,6 +1,6 @@
 {
   "name": "@se-code-bank/workflows-components",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A Workflows Ecosystem package for rendering workflows (and actions) on your frontend. Utilizes the Workflows Context system.",
   "type": "module",
   "main": "./dist/index.js",
