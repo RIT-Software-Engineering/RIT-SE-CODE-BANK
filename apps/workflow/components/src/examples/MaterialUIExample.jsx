@@ -34,6 +34,9 @@ function onNavigateFactory(_code) {
 	return null
 }
 
+/**
+ * This is AI generated and doesnt look good but it is material UI yay
+ */
 export function MaterialUIExample() {
 	const workflowRenderers = createWorkflowRenderers({
 		WorkflowContainer,
