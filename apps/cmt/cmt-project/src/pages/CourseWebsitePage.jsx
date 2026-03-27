@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../utils/api";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor";
+import JSZip from "jszip";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
@@ -65,21 +66,6 @@ export default function CourseWebsitePage() {
     console.log("courses:", courses);
     return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
-
-
-  // Helper component to render event title as a link if URL exists - not currently used but may be useful in the future if we want to link to external resources
-  // const EventLink = ({event}) => {
-  //   // if event doesn't have a url, just return title
-  //   if (!event.url) {
-  //     return <span>{event.title}</span>;
-  //   }
-
-  //   return (
-  //     <a href = {event.url} target = "_blank" rel="noreferrer" className = "text-blue-600 no-underline hover:no-underline visited:no-underline">
-  //       {event.title}
-  //     </a>
-  //   );
-  // };
 
   const generateCourseHTML = (course, sessions) => {
     return `
@@ -172,6 +158,36 @@ export default function CourseWebsitePage() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadCourseZIP = async () => {
+    if (!selectedCourseObj) return;
+
+    const zip = new JSZip();
+
+    // Generate HTML
+    const html = generateCourseHTML(selectedCourseObj, sessions);
+
+    // Add HTML file to zip
+    zip.file(
+      `${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`,
+      html
+    );
+
+    // Generate and download zip
+    const content = await zip.generateAsync({ type: "blob" });
+
+    const url = URL.createObjectURL(content);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = `${selectedCourseObj.classId}-${selectedCourseObj.section}.zip`;
+
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const visibleColumns = MATERIAL_COLUMNS.filter(col =>
     sessions.some(session =>
       (session.materials || []).some(m => m.type === col && m.active)
@@ -253,6 +269,14 @@ export default function CourseWebsitePage() {
           Download Course Website (HTML)
         </button>
       </div>
+      <div className = "text-center">
+        <button
+          onClick={downloadCourseZIP}
+          className="mt-6 px-4 py-2 text-black rounded">
+          Download Course Website (ZIP)
+        </button>
+      </div>
+
     </div>
   );
 }
@@ -265,26 +289,6 @@ const MATERIAL_COLUMNS = [
   "Group Assignment",
   "Individual Assignment"
 ];
-
-// function generateSessionRowHTML(session, visibleColumns) {
-//   const materials = session.materials || [];
-
-//   const grouped = visibleColumns.map(col =>
-//     materials.filter(m => m.type === col && m.active)
-//   );
-
-//   return `
-//     <tr>
-//       <td>${session.sessionNum}</td>
-
-//       ${grouped.map(colItems => `
-//         <td>
-//           ${colItems.map(item => `<div>${item.label} ${item.body}</div>`).join("")}
-//         </td>
-//       `).join("")}
-//     </tr>
-//   `;
-// }
 
 function generateSessionRowHTML(session, visibleColumns) {
   const materials = session.materials || [];
