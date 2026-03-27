@@ -1,47 +1,41 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTJsonFetch } from '../../utils/api'
 import { Session } from './Session';
-import { InlineActionRenderer } from '../../components/workflows/ActionRenderers/InlineActionRenderer'
-import { InlineFormHoverable } from '../../components/forms/InlineForms'
-import { UseCMTOnNavigateFactory, flattenActionsWithContext } from '../../utils/workflows'
+import { flattenActionsWithContext } from '../../utils/workflows'
 import { ArrowLeft } from 'lucide-react'
 import { Button} from 'react-bootstrap'
 import { ResourceManager } from '../../components/resources/ResourceManager'
+import { CMTWorkflow } from '../../components/workflows/workflow';
 
 /**
- * @import { IsCheckmark, FetchToCallback, WorkflowsWorkflow, ActionWithContext } from "../../components/workflows/typedefs"
+ * @import { FetchToCallback, ActionWithContexts } from "@se-code-bank/workflows-components"
  */
 
 /**
- * This component heavily utilizes the Workflows Components.
+ * This component heavily utilizes the generic workflow renderers.
  * 
- * To act as an example, JSDoc annotations are used with Workflows-related variables to add context to their usage.
+ * To act as an example, JSDoc annotations are used with workflow-related variables to add context to their usage.
  * If you hover over the Type name in the comment, you can see a description of the type's meaning.
  * 
- * If you wish to also use Workflows Components, these JSDoc annotations are **NOT NECCESARY**, because a function's types
- * can often be implied. If you pass in the wrong type to a Workflows Component, it will give you an error in the component's attributes,
+ * If you wish to also use these renderers, these JSDoc annotations are **NOT NECCESARY**, because a function's types
+ * can often be implied. If you pass in the wrong type to a workflow renderer, it will give you an error in the component's attributes,
  * assuming your environment is set up correctly.
  */
 export function CourseDashboard() {
     const { id } = useParams()
 
     const [course, setCourse] = useState(null)
-    /** @type [ActionWithContext[], function] */
+    /** @type [ActionWithContexts[], function] */
     const [actionsWithContext, setActionsWithContext] = useState([])
-    /** @type [WorkflowsWorkflow, function] */
-    const [workflow, setWorkflow] = useState(null)
     const [sessionCount, setSessionCount] = useState(0)
     const [sessions, setSessions] = useState([]);
 
     const update = useCallback(async () => {
         return CMTJsonFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
-            console.log(data)
             setCourse(data.course)
             setActionsWithContext(data.actionsWithContext)
-            setWorkflow(data.workflow)
         })
     }, [id])
     useEffect(() => void update(), [id, update])
@@ -52,42 +46,23 @@ export function CourseDashboard() {
         []
     )
 
-    /** @type IsCheckmark */
-    const isCheckmark = useCallback(
-        code => code.includes("CHECKMARK") || code.includes("SESSION_"),
-        []
-    )
-
-    if (course === null || workflow === null) return <p> Loading </p>
+    if (course === null) return <p> Loading </p>
 
     const sessionActions = flattenActionsWithContext(actionsWithContext).filter(
         awc => awc?.action?.metadata?.code?.includes("SESSION_")
     )
 
-    const courseInfoKeys = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER"]
-    const courseInfoActions = flattenActionsWithContext(actionsWithContext).filter(
-        awc => courseInfoKeys.includes(awc.action.metadata.code)
-    )
-
     return (
         <>
             
-            <CourseInfo course={course} actionsWithContext={courseInfoActions} refresh={update} fetchToCallback={fetchToCallback}/>
+            <CourseInfo course={course} />
             <div className="h-10"></div>
             <ResourceManager courseId={course.id} />
             <div className="h-10"></div>
             <p className="text-3xl pb-2 border-b">Course Creation Workflow</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
-                    <WorkflowRenderer
-                        workflow={workflow}
-                        actionsWithContext={actionsWithContext}
-                        previousValues={course}
-                        refresh={update}
-                        fetchToCallback={fetchToCallback}
-                        isCheckmark={isCheckmark}
-                        onNavigateFactory={UseCMTOnNavigateFactory}
-                    />
+                    <CMTWorkflow />
                 </div>
             </div>
             <p className="text-3xl pb-2 border-b mt-10">Sessions</p>
@@ -119,20 +94,8 @@ export function CourseDashboard() {
     )
 }
 
-function CourseInfo({ course, actionsWithContext, refresh, fetchToCallback }) {
+function CourseInfo({ course }) {
     const navigate = useNavigate();
-
-    const [newCourseName, setNewCourseName] = useState(course.name)
-    const [newCourseCode, setNewCourseCode] = useState(course.classId)
-
-    function updateCourseName(e) {
-        e.preventDefault()
-        return CMTJsonFetch('PUT', `course/${course.id}`, { courseName: newCourseName }).then(async () => await refresh())
-    }
-    function updateCourseCode(e) {
-        e.preventDefault()
-        return CMTJsonFetch('PUT', `course/${course.id}`, { courseCode: newCourseCode }).then(async () => await refresh())
-    }
 
     return (
         <>

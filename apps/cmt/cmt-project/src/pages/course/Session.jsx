@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Accordion, Card, Button, Offcanvas, Form, Table } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
-import { CheckmarkActionRenderer } from "../../components/workflows/ActionRenderers/GenericActionRenderer";
+import { CheckmarkAction as WorkflowCheckmarkAction } from "@se-code-bank/workflows-components";
 import { CMTJsonFetch } from "../../utils/api";
 
 /**
@@ -11,7 +11,11 @@ import { CMTJsonFetch } from "../../utils/api";
  * The session component is an accordion that dynamically adds more items the higher the count. 
  * Displays a modal (when opened) and a table of uploaded resources. 
  *
- * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; sessionActions:any, updateWorkflow: () => void, fetchToCallback: import("../../components/workflows/typedefs").FetchToCallback, courseId: number }} param0
+ * @import { FetchToCallback } from "@se-code-bank/workflows-components/types/workflowProps"
+ */
+
+/**
+ * @param {{ sessionCount: number; setSessionCount: any; sessions:Object; setSessions:any; sessionActions:any, updateWorkflow: () => void, fetchToCallback: FetchToCallback, courseId: number }} param0
  * sessionCount - the number of sessions a user has created
  * courseId - the identifier for which sessionData to obtain
  * @returns {*} the session accordion as HTML
@@ -60,7 +64,14 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                         <Accordion.Header>
                             <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
                                 {/* TODO: completion should be tracked in the DB in case a professor wants to create more sessions than required */}
-                                {sessionAction && <CheckmarkActionRenderer actionWithContext={sessionAction} refresh={updateWorkflow} fetchToCallback={fetchToCallback}/>}
+                                {sessionAction && (
+                                    <WorkflowCheckmarkAction
+                                        actionWithContexts={sessionAction}
+                                        refresh={updateWorkflow}
+                                        fetchToCallback={fetchToCallback}
+                                        renderers={sessionCheckmarkRenderers}
+                                    />
+                                )}
                                 <span className='text-2xl'>Session {i+1}</span>
                             </div>
                         </Accordion.Header>
@@ -97,6 +108,23 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         }
       </Accordion>
   );
+}
+
+const sessionCheckmarkRenderers = {
+    NavigateButton: function SessionNavigateButton(props) {
+        return <Button onClick={props.onClick}>{props.children}</Button>
+    },
+    CheckmarkAction: function SessionCheckmarkButton(props) {
+        return (
+            <Button
+                size="sm"
+                variant={props.checked ? 'outline-secondary' : 'primary'}
+                onClick={props.onClick}
+            >
+                {props.checked ? 'Done' : 'Mark Done'}
+            </Button>
+        )
+    }
 }
 
 /**
