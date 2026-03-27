@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback } from 'react'
 import { Accordion } from 'react-bootstrap'
-import { useParams } from 'react-router-dom'
-import { CMTJsonFetch } from '../../utils/api'
 import { createWorkflowRenderers, Workflow } from '@se-code-bank/workflows-components'
 import { ActionEditForm, CancellableEditActionForm, ComplexCardContainer, EditableActionView, SimpleCardContainer } from './actions'
 import { CheckmarkAction, NavigateButton } from './misc'
@@ -9,41 +7,16 @@ import { UseCMTOnNavigateFactory } from '../../utils/workflows'
 import { OutputView, OutputContainer, NumberOutput, TextOutput, SelectOutput, CheckmarkOutput } from './outputs'
 
 /**
- * @import { WorkflowContainerProps, ActionWithContexts, WorkflowsWorkflow, FetchToCallback, IsCheckmark } from '@se-code-bank/workflows-components'
+ * @import { WorkflowContainerProps, IsCheckmark } from '@se-code-bank/workflows-components'
  */
 
-export function CMTWorkflow() {
-	const { id } = useParams()
-  
-	const [course, setCourse] = useState(null)
-	/** @type [ActionWithContexts[], function] */
-	const [actionsWithContexts, setActionsWithContexts] = useState([])
-	/** @type [WorkflowsWorkflow, function] */
-	const [workflow, setWorkflow] = useState(null)
-
-	const update = useCallback(async () => {
-		return CMTJsonFetch('GET', `course/${id}`).then(async response => {
-			const data = await response.json()
-			setCourse(data.course)
-			setActionsWithContexts(data.actionsWithContext)
-			setWorkflow(data.workflow)
-		})
-	}, [id])
-	useEffect(() => void update(), [id, update])
-
-	/** @type FetchToCallback */
-	const fetchToCallback = useCallback(
-		(callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues),
-		[]
-	)
+export function CMTWorkflow({ refresh, fetchToCallback, workflow, actionsWithContexts, course }) {
 
 	/** @type IsCheckmark */
 	const isCheckmark = useCallback(
 		code => code.includes("CHECKMARK") || code.includes("SESSION_"),
 		[]
 	)
-
-	if (course === null || workflow === null) return <p> Loading </p>
 
 	const workflowRenderers = createWorkflowRenderers({
 		WorkflowContainer,
@@ -67,7 +40,7 @@ export function CMTWorkflow() {
 			workflow={workflow}
 			actionsWithContexts={actionsWithContexts}
 			previousValues={course}
-			refresh={update}
+			refresh={refresh}
 			fetchToCallback={fetchToCallback}
 			isCheckmark={isCheckmark}
 			onNavigateFactory={UseCMTOnNavigateFactory}

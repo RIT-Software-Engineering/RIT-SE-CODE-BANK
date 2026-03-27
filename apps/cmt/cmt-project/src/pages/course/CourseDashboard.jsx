@@ -9,25 +9,15 @@ import { ResourceManager } from '../../components/resources/ResourceManager'
 import { CMTWorkflow } from '../../components/workflows/workflow';
 
 /**
- * @import { FetchToCallback, ActionWithContexts } from "@se-code-bank/workflows-components"
+ * @import { FetchToCallback } from "@se-code-bank/workflows-components"
  */
 
-/**
- * This component heavily utilizes the generic workflow renderers.
- * 
- * To act as an example, JSDoc annotations are used with workflow-related variables to add context to their usage.
- * If you hover over the Type name in the comment, you can see a description of the type's meaning.
- * 
- * If you wish to also use these renderers, these JSDoc annotations are **NOT NECCESARY**, because a function's types
- * can often be implied. If you pass in the wrong type to a workflow renderer, it will give you an error in the component's attributes,
- * assuming your environment is set up correctly.
- */
 export function CourseDashboard() {
     const { id } = useParams()
 
     const [course, setCourse] = useState(null)
-    /** @type [ActionWithContexts[], function] */
     const [actionsWithContext, setActionsWithContext] = useState([])
+    const [workflow, setWorkflow] = useState(null)
     const [sessionCount, setSessionCount] = useState(0)
     const [sessions, setSessions] = useState([]);
 
@@ -36,11 +26,12 @@ export function CourseDashboard() {
             const data = await response.json()
             setCourse(data.course)
             setActionsWithContext(data.actionsWithContext)
+            setWorkflow(data.workflow)
         })
     }, [id])
     useEffect(() => void update(), [id, update])
 
-    /** @type FetchToCallback */
+    /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
     const fetchToCallback = useCallback(
         (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues),
         []
@@ -62,7 +53,7 @@ export function CourseDashboard() {
             <p className="text-3xl pb-2 border-b">Course Creation Workflow</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
-                    <CMTWorkflow />
+                    <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContext} course={course} workflow={workflow}/>
                 </div>
             </div>
             <p className="text-3xl pb-2 border-b mt-10">Sessions</p>
