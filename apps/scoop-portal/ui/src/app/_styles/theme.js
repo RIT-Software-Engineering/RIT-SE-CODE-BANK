@@ -219,10 +219,12 @@ const baseTheme = createTheme({
             borderTop: "1px solid #D0D3D4",
           },
           "&.Mui-selected": {
-            backgroundColor: "rgba(247,105,2,0.12)",
+            backgroundColor: "#F76902",
+            color: "#FFFFFF",
           },
           "&:hover": {
-            backgroundColor: "rgba(247,105,2,0.08)",
+            backgroundColor: "#F76902",
+            color: "#FFFFFF",
           },
         },
       },
