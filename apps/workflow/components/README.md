@@ -123,7 +123,7 @@ This means that the renderer needs to use these 3 arguments somewhere, as in, yo
  */
 function CancellableEditActionForm(props) {
 	return (
-		<Form className='flex items-center gap-6 bg-indigo-300 pl-2' onSubmit={props.onSubmit}>
+		<Form className='flex items-center gap-6 pl-2' onSubmit={props.onSubmit}>
 			<div className='flex gap-4'>
 				{props.children}
 			</div>
