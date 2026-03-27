@@ -149,6 +149,25 @@ The flexibility of the renderer system is that you can calls these functions abs
 A low-level component, like a Text Output, will only take one or two renderers, but a high-level component like a Workflow will take many. You must provide Workflow with a full tree of renderers, but redundancy can be avoided (see Examples' usage of `CreateWorkflowRenderers`)
 
 
+## Editing This Package
+
+Because this is an npm package, its not as simple as refreshing the frontend. Whenever a change is made, the following must be done:
+1. Increment the version number in this `package.json` (semver, plz)
+2. In this directory, run:
+	1. `npm run build`
+	2. `npm pack`
+3. Stop your frontend server
+4. Change your project's `package.json` to match the new version number
+5. In your project root, run `npm i`
+6. Restart your frontend
+
+This may seem cumbersome, especially when faced with the alternative of symlinks. A symlink would allow multiple projects to act as though the Workflows Components files were just another file in the project that could be imported totally normally, but there are some greater concerns there:
+1. Changes to the package may break other projects
+2. Symlinks are OS specific
+
+Mainly point 1 is the issue. There could definitely be scripts to make this process of updating easier, but it is an important process.
+
+
 # Advanced
 
 ## Adding Components
