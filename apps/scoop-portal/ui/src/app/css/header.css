@@ -1,12 +1,12 @@
 :root {
-    --background-header: #f76902;
-    --foreground-header: white;
+    --background-header: #000000;
+    --foreground-header: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --background-header: #e66c14;
-        --foreground-header: #ededed;
+        --background-header: #ffffff;
+        --foreground-header: #000000;
     }
 }
 

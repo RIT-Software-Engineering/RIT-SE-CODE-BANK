@@ -232,8 +232,8 @@ export default function Header() {
       <AppBar
         position="fixed"
         sx={{
-          bgcolor: theme.palette.background.default,
-          color: theme.palette.text.primary,
+          bgcolor: theme.ritColors.white,
+          color: theme.palette.mode === "light" ? theme.ritColors.black : theme.ritColors.white,
           boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
           borderBottom: `1px solid ${theme.ritColors.gray_1}`,
         }}
@@ -258,7 +258,18 @@ export default function Header() {
                   <Button
                     component={Link}
                     href={path}
-                    sx={{ color: theme.palette.text.primary, fontWeight: 600, textTransform: "none", '&:hover': { bgcolor: theme.palette.action.hover } }}
+                    sx={{
+                      color: theme.palette.mode === "light" ? theme.ritColors.black : theme.ritColors.white,
+                      fontWeight: 600,
+                      textTransform: "none",
+                      '&:hover': {
+                        bgcolor: 'transparent',
+                        textDecoration: 'underline',
+                        textDecorationColor: theme.ritColors.orange,
+                        textDecorationThickness: '2px',
+                        textUnderlineOffset: '4px',
+                      },
+                    }}
                   >
                     {label}
                   </Button>
@@ -269,7 +280,18 @@ export default function Header() {
                       aria-haspopup="true"
                       onClick={(e) => handleMenuOpen(e, label)}
                       endIcon={<ArrowDropDownIcon />}
-                      sx={{ color: theme.palette.text.primary, fontWeight: 600, textTransform: "none" }}
+                      sx={{
+                        color: theme.palette.mode === "light" ? theme.ritColors.black : theme.ritColors.white,
+                        fontWeight: 600,
+                        textTransform: "none",
+                        '&:hover': {
+                          bgcolor: 'transparent',
+                          textDecoration: 'underline',
+                          textDecorationColor: theme.ritColors.orange,
+                          textDecorationThickness: '2px',
+                          textUnderlineOffset: '4px',
+                        },
+                      }}
                     >
                       {label}
                     </Button>
@@ -375,7 +397,17 @@ export default function Header() {
               variant="outlined"
               color="inherit"
               startIcon={<LogoutIcon />}
-              sx={{ textTransform: "none", borderRadius: 4, borderColor: theme.palette.divider }}
+              sx={{
+                textTransform: "none",
+                borderRadius: 4,
+                borderColor: theme.palette.divider,
+                color: theme.palette.mode === "light" ? theme.ritColors.black : theme.ritColors.white,
+                '&:hover': {
+                  backgroundColor: theme.ritColors.orange,
+                  color: theme.ritColors.white,
+                  borderColor: theme.ritColors.orange,
+                },
+              }}
             >
               Logout
             </Button>

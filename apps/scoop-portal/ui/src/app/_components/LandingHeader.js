@@ -149,8 +149,8 @@ export default function LandingHeader() {
       <AppBar
         position="fixed"
         sx={{
-          bgcolor: "rgba(255, 255, 255, 0.9)",
-          color: theme.palette.text.primary,
+          bgcolor: theme.ritColors.white,
+          color: theme.palette.mode === "light" ? theme.ritColors.white : theme.ritColors.black,
           height: "64px",
           boxShadow: "none",
           backdropFilter: "blur(10px)",

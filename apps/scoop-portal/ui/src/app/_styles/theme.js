@@ -130,11 +130,13 @@ const baseTheme = createTheme({
         {
           props: { variant: "outlined" },
           style: {
-            border: "1px solid #7C878E",
-            color: "#212121",
-            backgroundColor: "#FFFFFF",
+            border: "1px solid #F76902",
+            color: "#F76902",
+            backgroundColor: "transparent",
             "&:hover": {
-              backgroundColor: "rgba(247,105,2,0.08)",
+              border: "1px solid #F76902",
+              backgroundColor: "#F76902",
+              color: "#FFFFFF",
             },
           },
         },

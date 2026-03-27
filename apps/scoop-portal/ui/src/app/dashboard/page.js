@@ -7,6 +7,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useUser } from "../utils/user-context/page";
 
 import Header from '@components/Header';
+import Footer from '@components/Footer';
 
 const workflows = [
     {
@@ -357,20 +358,8 @@ export default function WorkflowDashboard() {
 
       <Box
         component="footer"
-        sx={{
-          height: "80px",
-          bgcolor: (theme) => theme.palette.grey[900],
-          color: (theme) => theme.palette.common.white,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          px: { xs: 2, md: 3 },
-          mt: 8,
-        }}
-      >
-        <Typography variant="body2" sx={{ fontWeight: 300 }}>
-          © {new Date().getFullYear()} RIT | Contact | Terms
-        </Typography>
+        >
+          <Footer />
       </Box>
     </Box>
   );
