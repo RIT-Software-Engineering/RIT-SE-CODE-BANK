@@ -1,6 +1,6 @@
 import express from "express";
 import { createAction, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, objectToNewWorkflow, updateAction, workflowsFetch } from "../utils/workflows/api.js";
-import { actionToActionWithContext, metadataArrayToObject } from "../utils/workflows/actionPipeline.js";
+import { actionToActionWithContext, compressedMetadataToObject } from "../utils/workflows/actionPipeline.js";
 const router = express.Router();
 export default router
 
@@ -19,7 +19,7 @@ router.get("/workflowTemplate", async(_, res) => {
     try {
         const workflows = await workflowsFetch("GET", "workflows/?tags=WorkflonyFirstTheRestNowhere_CMT_Template");
         workflows.forEach(workflow => {
-            workflow.baseAction.metadata = metadataArrayToObject(workflow.baseAction.metadata);
+            workflow.baseAction.metadata = compressedMetadataToObject(workflow.baseAction.metadata);
         });
         return res.status(200).json({workflows: workflows})
     } catch (error) {

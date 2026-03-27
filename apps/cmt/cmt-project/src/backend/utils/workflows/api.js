@@ -227,7 +227,7 @@ export async function workflowToObject(workflow) {
 /**
  * The Workflows API calls .toString on every value of the metadata object passed in.
  * This function converts an arbitrary metadata object into an object where each value is a JSON object, so that .toString doesnt wreck it.
- * Convert back with {@link metadataArrayToObject}
+ * Convert back with {@link compressedMetadataToObject}
  * 
  * @param {Object} metadata 
  * @return Metadata object ready to be sent to the Workflows API

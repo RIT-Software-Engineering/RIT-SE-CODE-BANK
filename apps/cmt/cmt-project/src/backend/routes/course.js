@@ -1,6 +1,6 @@
 import express from 'express'
 import { objectToNewWorkflow, workflowsFetch } from '../utils/workflows/api.js'
-import { actionToActionWithContext, flattenActionStates as flattenWorkflowState, metadataArrayToObject } from '../utils/workflows/actionPipeline.js'
+import { actionToActionWithContext, flattenActionStates as flattenWorkflowState } from '../utils/workflows/actionPipeline.js'
 
 const router = express.Router()
 export default router

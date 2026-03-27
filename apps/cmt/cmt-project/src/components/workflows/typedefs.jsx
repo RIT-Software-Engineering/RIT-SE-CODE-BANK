@@ -5,7 +5,7 @@ export {}
  * @import { WorkflowRenderer } from "./WorkflowRenderer"
  * @import { FormActionRenderer } from "./ActionRenderers/FormActionRenderer"
  * @import { makeMetadataSafeForWorkflows } from "../../backend/utils/workflows/api"
- * @import { metadataArrayToObject, actionToActionWithContext, determineCallback } from "../../backend/utils/workflows/actionPipeline"
+ * @import { compressedMetadataToObject, actionToActionWithContext, determineCallback } from "../../backend/utils/workflows/actionPipeline"
  * @import { CheckmarkActionRenderer } from "./ActionRenderers/GenericActionRenderer"
  * @import { OutputRenderer } from "./OutputRenderer"
  */
@@ -42,7 +42,7 @@ export {}
  * Used in all Workflows Components in favor of plain metadata. When putting metadata in an action, {@link makeMetadataSafeForWorkflows} should be used.
  * 
  * After retriving an action, to turn the returned plain metadata object to a ParsedMetadata object, use {@link actionToActionWithContext} as described in {@link ProcessedAction}
- * If for some reason you don't want the rest of the action to be processed, you could also use {@link metadataArrayToObject}.
+ * If for some reason you don't want the rest of the action to be processed, you could also use {@link compressedMetadataToObject}.
  * 
  * A short explanation of each field:
  * * Code: an action's code will map directly to it's callback URL. An example is CMT's {@link determineCallback} function

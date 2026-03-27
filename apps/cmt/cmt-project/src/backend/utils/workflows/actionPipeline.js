@@ -33,7 +33,7 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
 
   // Parse metadata from array to object (workflows API returns it as array)
   if (action.metadata) {
-      action.metadata = metadataArrayToObject(action.metadata)
+      action.metadata = compressedMetadataToObject(action.metadata)
   }
 
   let returnAction;
@@ -93,16 +93,16 @@ export function determineCallback(code, asid, courseId, userId) {
 }
 
 /**
-* Workflows will take the object you give to it as the metadata and turn it into an array of key value pairs.
-* This makes it very hard to access by key, so this function will take that array and turn it back into an object.
+* Workflows will take the object you give to it as the metadata and turn it into an object with a key and a JSONified value.
+* This function goes through each key value pair and turns the value back into an Object instead of a string
 * It is meant for usage with {@link makeMetadataSafeForWorkflows} when uploading metadata 
 * 
-* @param {any} metadataArray array of metadata given by the workflows API (and our endpoints)
+* @param {any} compressedMetadata  metadata given by the workflows API (and our endpoints)
 */
-export function metadataArrayToObject(metadataArray) {
-  if (!metadataArray) return {}
+export function compressedMetadataToObject(compressedMetadata) {
+  if (!compressedMetadata) return {}
 
-  return Object.fromEntries(Object.entries(metadataArray).map(([key, value]) => {
+  return Object.fromEntries(Object.entries(compressedMetadata).map(([key, value]) => {
     return [key, JSON.parse(value)];
   }));
 }
