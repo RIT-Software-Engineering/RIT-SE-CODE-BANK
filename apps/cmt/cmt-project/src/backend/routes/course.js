@@ -97,7 +97,7 @@ router.post('/', async (req, res) => {
                                         key: 'section',
                                         type: 'text',
                                         isRequired: true,
-                                        placeholder: '1',
+                                        placeholder: '03',
                                         validation: {
                                             maxLength: 30,
                                         },
@@ -259,8 +259,7 @@ router.put('/:id', async (req, res) => {
                 && { students: parseInt(updateData.students) }
             ),
             ...(updateData.section !== undefined 
-                && !isNaN(parseInt(updateData.section))
-                && { section: parseInt(updateData.section) }
+                && { section: updateData.section }
             ),
         }
 
@@ -400,7 +399,7 @@ router.post('/create-with-workflow', async (req, res) => {
                 year: parseInt(course.year),
                 color: course.color,
                 students: !course.students ? null : parseInt(course.students),
-                section: !course.section ? null : parseInt(course.section),
+                section: course.section,
                 professors: { connect: { id: course.professorId } },
             },
         })

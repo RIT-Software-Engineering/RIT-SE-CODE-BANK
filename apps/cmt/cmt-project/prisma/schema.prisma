@@ -87,7 +87,7 @@ model Course {
   classId      String
   color        String
   students     Int?
-  section      Int?
+  section      String?
   professorId  String
   professors   Professor      @relation(fields: [professorId], references: [id])
   sessions     Session[]
