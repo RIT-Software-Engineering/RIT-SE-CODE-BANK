@@ -1014,8 +1014,9 @@ router.post('/resume', upload.single('resumeFile'), async (req, res) => {
 );
 
 /**
- * @route GET /ta-portal-api/db/resume/:resumeId
- * 
+ * @route   GET /ta-portal-api/db/resume/:resumeId
+ * @desc    Retrieves the resume with the matching id
+ * @access  Public
  */
 router.get('/resume/:resumeId', async (req, res) => {
     try{
@@ -1041,6 +1042,11 @@ router.get('/resume/:resumeId', async (req, res) => {
   }
 );
 
+/**
+ * @route   GET /ta-portal-api/db/cover-letter/:coverLetterId
+ * @desc    Retrieves the coverletter with the matching id
+ * @access  Public
+ */
 router.get('/cover-letter/:coverLetterId', async (req, res) => {
     try{
       const coverLetterEntry = await getCoverLetterById(parseInt(req.params.coverLetterId));
@@ -1100,7 +1106,7 @@ router.put('/resume-name/:resumeId', async (req, res) => {
 
 /**
  * @route   DELETE /ta-portal-api/db/resume/:resumeId
- * @desc    Deletes a resume by its ID and its associated file.
+ * @desc    Marks resume as deleted, removing the file and entry only if it is not used in any applications
  * @access  Public
  */
 router.delete('/resume/:resumeId', async (req, res) => {
@@ -1115,7 +1121,6 @@ router.delete('/resume/:resumeId', async (req, res) => {
 
     // --- File Cleanup Step ---
     // If resume was hard deleted, remove the pdf file as well
-    // (Assuming the property is `resumeURL` as used in your path creation)
     if ((!deletedResume.isSoftDeleted) && deletedResume.resumeURL) {
         const filePath = path.join(resumeStoragePath, deletedResume.resumeURL);
         if (fs.existsSync(filePath)) {

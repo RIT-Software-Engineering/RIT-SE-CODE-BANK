@@ -2307,6 +2307,11 @@ async function updatePrimaryResume(candidateUsername, resumeId) {
   }
 }
 
+/**
+ * Searches the db for the resume with the matching id
+ * @param {number} resumeId 
+ * @returns {Promise<object>} A promise that resolves to the resume with the matching id.
+ */
 async function getResumeById(resumeId){
   try{
     return await prisma.resume.findUnique({
@@ -2363,6 +2368,7 @@ async function resetResumesToNonPrimary(candidateUsername) {
 /**
  * Deletes a resume by its ID.
  * If the deleted resume was primary, it promotes another resume to primary.
+ * If the resume is used in an application, mark it as isSoftDeleted instead of removing the entry.
  * @param {number} resumeId The ID of the resume to delete.
  * @returns {Promise<object>} The deleted resume object.
  */
@@ -2426,6 +2432,11 @@ async function deleteResume(resumeId) {
   }
 }
 
+/**
+ * Checks to see if the given resume is soft deleted and deletes it only if there are no applications that use it.
+ * @param {number} resumeId 
+ * @returns {boolean} Was the resume entry deleted?
+ */
 async function checkResumeDeleteStatus(resumeId) {
   const resume = await prisma.resume.findUnique({
     where:{
@@ -2457,6 +2468,13 @@ async function checkResumeDeleteStatus(resumeId) {
 // COVER LETTER QUERIES
 // =============================================================================
 
+/**
+ * creates a cover letter entry.
+ * @param {string} username 
+ * @param {string} coverLetterURL 
+ * @param {string} name 
+ * @returns {Promise<object>} A promise that resolves to the newly created cover letter record.
+ */
 async function addNewCoverLetter(username, coverLetterURL, name) {
   try {
     return await prisma.CoverLetter.create({
@@ -2472,6 +2490,11 @@ async function addNewCoverLetter(username, coverLetterURL, name) {
   }
 }
 
+/**
+ * Searches the db for the cover letter with the matching id
+ * @param {number} coverLetterId 
+ * @returns {Promise<object>} A promise that resolves to the cover letter with the matching id.
+ */
 async function getCoverLetterById(coverLetterId){
   try{
     return await prisma.CoverLetter.findUnique({
@@ -2485,6 +2508,11 @@ async function getCoverLetterById(coverLetterId){
   }
 }
 
+/**
+ * Deletes the cover letter entry
+ * @param {number} coverLetterId 
+ * @returns {Promise<object>} A promise that resolves to the deleted cover letter entry.
+ */
 async function deleteCoverLetter(coverLetterId) {
   try{
     return await prisma.CoverLetter.delete({

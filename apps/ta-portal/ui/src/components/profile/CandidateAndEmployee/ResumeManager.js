@@ -307,7 +307,8 @@ export default function ResumeManager({ resumes, candidateUsername, onProfileRef
         title="Delete Resume"
         isConfirming={deleteModalState.isProcessing}
       >
-        Are you sure you want to delete this resume? This action cannot be undone.
+        Are you sure you want to delete this resume? This action cannot be undone.<br /><br />
+        <b>Deleted resumes will remain attached to any active applications and viewable by employers who have received them.</b>
       </ConfirmationModal>
     </Box>
   );
