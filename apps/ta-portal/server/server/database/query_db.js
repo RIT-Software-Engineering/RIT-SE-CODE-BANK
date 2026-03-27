@@ -516,8 +516,7 @@ async function applyForJobPosition(applicationDetails) {
       jobPositionId,
       resumeId,
       jobPositionApplicationFormData,
-      coverLetterURL,
-      coverLetterName,
+      coverLetterId
     } = applicationDetails;
 
     if (
@@ -591,7 +590,7 @@ async function applyForJobPosition(applicationDetails) {
         candidatePronouns: formData.pronouns,
         candidateEmail: formData.email,
         candidateMajor: formData.major,
-  candidateYear: parsedYear,
+        candidateYear: parsedYear,
         candidateGrade: formData.grade,
         wasPriorEmployeeForThisCourse: formData.wasPriorEmployeeForThisCourse,
         wasPriorEmployeeForOtherCourses:
@@ -599,8 +598,7 @@ async function applyForJobPosition(applicationDetails) {
         priorEmploymentHistory: formData.priorEmploymentHistory
           ?.map((i) => i.courseCode)
           .join(", "),
-        coverLetterName,
-        coverLetterURL,
+        coverLetterId: coverLetterId,
       },
     });
 
@@ -1479,8 +1477,11 @@ async function getCandidateApplications(
         },
       },
       resume: {
-        select: { name: true, resumeURL: true },
+        select: { name: true, id: true },
       },
+      coverLetter: {
+        select: { name: true, id: true }
+      }
     },
   });
 
@@ -1559,8 +1560,11 @@ async function getCandidateApplicationsAsEmployer(
         where: nestedApplicationWhereClause,
         include: {
           resume: {
-            select: { name: true, resumeURL: true },
+            select: { name: true, id: true },
           },
+          coverLetter: {
+            select: { name: true, id: true }
+          }
         },
       },
     },
@@ -1599,8 +1603,11 @@ async function getCandidateApplicationsAsAdmin() {
         },
       },
       resume: {
-        select: { name: true, resumeURL: true },
+        select: { name: true, id: true },
       },
+      coverLetter: {
+        select: { name: true, id: true }
+      }
     },
   });
 }
@@ -1668,8 +1675,11 @@ async function getAllApplicationsForAdmin(search = '', searchType = 'course', fi
             },
           },
           resume: {
-            select: { name: true, resumeURL: true },
+            select: { name: true, id: true },
           },
+          coverLetter: {
+            select: { name: true, id: true }
+          }
         },
       },
     },
@@ -2298,6 +2308,24 @@ async function updatePrimaryResume(candidateUsername, resumeId) {
 }
 
 /**
+ * Searches the db for the resume with the matching id
+ * @param {number} resumeId 
+ * @returns {Promise<object>} A promise that resolves to the resume with the matching id.
+ */
+async function getResumeById(resumeId){
+  try{
+    return await prisma.resume.findUnique({
+      where:{
+        id: resumeId,
+      },
+    });
+  } catch(error){
+    console.error("Error getting resume:", error);
+    throw error;
+  }
+}
+
+/**
  * Gets all resumes for a candidate.
  * @param {string} candidateUsername - The unique identifier of the candidate.
  * @returns {Promise<object>} A promise that resolves to an array of resume records.
@@ -2340,6 +2368,7 @@ async function resetResumesToNonPrimary(candidateUsername) {
 /**
  * Deletes a resume by its ID.
  * If the deleted resume was primary, it promotes another resume to primary.
+ * If the resume is used in an application, mark it as isSoftDeleted instead of removing the entry.
  * @param {number} resumeId The ID of the resume to delete.
  * @returns {Promise<object>} The deleted resume object.
  */
@@ -2351,11 +2380,6 @@ async function deleteResume(resumeId) {
         await tx.jobPositionApplicationHistory.findFirst({
           where: { resumeId: resumeId },
         });
-
-      // If an application uses this resume, throw a specific error
-      if (associatedApplication) {
-        throw new Error("DELETE_FAILED_ASSOCIATED");
-      }
 
       // Find the resume to be deleted.
       const resumeToDelete = await tx.resume.findUnique({
@@ -2372,6 +2396,7 @@ async function deleteResume(resumeId) {
           where: {
             username: resumeToDelete.username,
             id: { not: resumeId }, // Find all OTHER resumes for this user
+            isSoftDeleted: false
           },
         });
 
@@ -2383,19 +2408,124 @@ async function deleteResume(resumeId) {
           });
         }
       }
-
-      // Delete the actual resume record.
-      const deletedResume = await tx.resume.delete({
-        where: { id: resumeId },
-      });
-
-      return deletedResume;
+      // If an application uses this resume, soft delete the resume
+      if (associatedApplication) {
+        const softDeletedResume = await tx.resume.update({
+          where: { id: resumeId },
+          data: { 
+            isSoftDeleted: true,
+            isPrimary: false
+          }
+        })
+        return softDeletedResume
+      } else{
+        // Otherwise, delete the actual resume record.
+        const deletedResume = await tx.resume.delete({
+          where: { id: resumeId },
+        });
+        return deletedResume
+      }
     });
   } catch (error) {
     console.error("Error deleting resume:", error);
     throw error;
   }
 }
+
+/**
+ * Checks to see if the given resume is soft deleted and deletes it only if there are no applications that use it.
+ * @param {number} resumeId 
+ * @returns {boolean} Was the resume entry deleted?
+ */
+async function checkResumeDeleteStatus(resumeId) {
+  const resume = await prisma.resume.findUnique({
+    where:{
+      id: resumeId
+    }
+  })
+  
+  if (resume.isSoftDeleted){
+    const resumeCount = await prisma.jobPositionApplicationHistory.count({
+      where: {
+        resumeId: resume.id,
+      }
+    });
+    
+    // If no other applications use it, fully delete it
+    if (resumeCount === 0) {
+      await prisma.resume.delete({
+        where:{
+          id: resume.id
+        }
+      })
+      return true
+    }
+  }
+  return false
+}
+
+// =============================================================================
+// COVER LETTER QUERIES
+// =============================================================================
+
+/**
+ * creates a cover letter entry.
+ * @param {string} username 
+ * @param {string} coverLetterURL 
+ * @param {string} name 
+ * @returns {Promise<object>} A promise that resolves to the newly created cover letter record.
+ */
+async function addNewCoverLetter(username, coverLetterURL, name) {
+  try {
+    return await prisma.CoverLetter.create({
+      data: {
+        username: username,
+        coverLetterURL: coverLetterURL,
+        name: name,
+      },
+    });
+  } catch (error) {
+    console.error("Error adding new cover letter:", error);
+    throw error;
+  }
+}
+
+/**
+ * Searches the db for the cover letter with the matching id
+ * @param {number} coverLetterId 
+ * @returns {Promise<object>} A promise that resolves to the cover letter with the matching id.
+ */
+async function getCoverLetterById(coverLetterId){
+  try{
+    return await prisma.CoverLetter.findUnique({
+      where:{
+        id: coverLetterId,
+      },
+    });
+  } catch(error){
+    console.error("Error getting cover letter:", error);
+    throw error;
+  }
+}
+
+/**
+ * Deletes the cover letter entry
+ * @param {number} coverLetterId 
+ * @returns {Promise<object>} A promise that resolves to the deleted cover letter entry.
+ */
+async function deleteCoverLetter(coverLetterId) {
+  try{
+    return await prisma.CoverLetter.delete({
+      where:{
+        id: coverLetterId
+      },
+    });
+  } catch(error){
+    console.error("Error deleting cover letter:", error);
+    throw error;
+  }
+}
+
 
 // =============================================================================
 // GENERAL & UTILITY QUERIES
@@ -2717,7 +2847,12 @@ module.exports = {
   updatePrimaryResume,
   deleteResume,
   updateResumeName,
+  getResumeById,
   getCandidateResumes,
+  addNewCoverLetter,
+  getCoverLetterById,
+  deleteCoverLetter,
+  checkResumeDeleteStatus,
   getAllUsers,
   getAllCourses,
   createJobPosition,

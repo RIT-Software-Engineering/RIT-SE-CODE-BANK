@@ -4,9 +4,6 @@ services:
   # Mariadb container used for the database. Environment includes root and user login information.
   mariadb:
     image: mariadb:11
-    # The container port used by mariadb is always 3306. As long as mariadb containers use different host ports there is no risk of conflicting ports.
-    ports:
-      - ${DB_HOST_PORT}:3306
     # MYSQL_DATABASE defines the name of the database created on container start. USER and PASSWORD define the login information for the default user created. 
     # The root and app passwords should be set during deployment by the github workflow script. Defaults are here for local running.
     # TA_PORTAL_DB_ROOT_PASSWORD and TA_PORTAL_DB_USER_PASSWORD are github secrets that replace these in deployment. 

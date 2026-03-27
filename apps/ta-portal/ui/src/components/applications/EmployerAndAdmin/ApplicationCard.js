@@ -10,7 +10,9 @@ import EditableNoteForm from "@/components/notes/EditableNoteForm";
 import {
   updateCandidateApplicationStatus,
   getCandidateHiredStatus,
-  checkJobPositionIsFull
+  checkJobPositionIsFull,
+  getCoverLetterById,
+  getResumeById
 } from "@/services/db-apis";
 import ConfirmationModal from "@/components/common/models/ConfirmationModal";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -79,10 +81,9 @@ export default function ApplicationCard({
 
   const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
-  const { id, jobApplicationStatus, resume } = application;
+  const { id, jobApplicationStatus, resume, coverLetter } = application;
 
   const statusColor = getStatusChipColor(jobApplicationStatus);
-  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL + process.env.NEXT_PUBLIC_API_EXTENSION + process.env.NEXT_PUBLIC_DATABASE_API_EXTENSION;
 
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -100,6 +101,40 @@ export default function ApplicationCard({
   const handleCloseUpdateModal = () => {
     setModalState({ isOpen: false, status: null, title: "" });
   };
+
+  const handleResumeClick = async (resumeId) => {
+    try{
+      const response = await getResumeById(resumeId);
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+
+      window.addEventListener('beforeunload', () => {
+        URL.revokeObjectURL(url);
+      });
+    }catch(error){
+      showNotification(error.message || 'An error occurred. Failed to fetch resume.', 'error');
+    }
+  }
+
+  const handleCoverLetterClick = async (coverLetterId) => {
+    try{
+      const response = await getCoverLetterById(coverLetterId);
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      window.open(url, '_blank', 'noopener,noreferrer');
+
+      window.addEventListener('beforeunload', () => {
+        URL.revokeObjectURL(url);
+      });
+    }catch(error){
+      showNotification(error.message || 'An error occurred. Failed to fetch cover letter.', 'error');
+    }
+  }
 
   const handleOfferPosition = async () => {
     if (!jobPosition?.semesterCode) {
@@ -264,19 +299,39 @@ export default function ApplicationCard({
                 <Typography variant="body2" color="text.secondary">Resume</Typography>
                 <DocumentIcon fontSize="small" />
               </Box>
-              <MuiLink href={`${backendURL}${resume.resumeURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
+              <Typography
+                sx={{
+                  color: 'primary.main',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    textDecoration: 'none',
+                  }
+                }}
+                onClick={()=> handleResumeClick(resume.id)}
+              >
                 {resume.name}
-              </MuiLink>
+              </Typography>
             </Grid>
-            {application.coverLetterURL && (
+            {coverLetter?.id && (
               <Grid item xs={12} sm={6}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography variant="body2" color="text.secondary">Cover Letter</Typography>
                   <DocumentIcon fontSize="small" />
                 </Box>
-                <MuiLink href={`${backendURL}${application.coverLetterURL}`} target="_blank" rel="noopener noreferrer" underline="hover">
-                  {application.coverLetterName || 'View Cover Letter'}
-                </MuiLink>
+                <Typography
+                  sx={{
+                    color: 'primary.main',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      textDecoration: 'none',
+                    }
+                  }}
+                  onClick={()=> handleCoverLetterClick(coverLetter.id)}
+                >
+                  {coverLetter.name || 'View Cover Letter'}
+                </Typography>
               </Grid>
             )}
             <Grid item xs={12} sm={6}>

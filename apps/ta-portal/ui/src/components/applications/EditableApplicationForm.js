@@ -42,7 +42,7 @@ import { Close as CloseIcon, UploadFile as UploadFileIcon } from '@mui/icons-mat
  */
 export default function EditableApplicationForm({ user, position, onClose, onApplySuccess }) {
     const { showNotification } = useNotification();
-    const existingResumes = user?.candidate?.resumes || [];
+    const existingResumes = user?.candidate?.resumes.filter(resume => !resume.isSoftDeleted) || [];
     const primaryResume = existingResumes.find(r => r.isPrimary) || existingResumes[0];
 
     const initialValues = {
@@ -262,7 +262,18 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                                         }
                                     })}>
                                         {resumeFile && resumeFile[0] ? resumeFile[0].name : 'Upload Resume (PDF)'}
-                                        <input type="file" hidden {...register("resumeFile", { validate: (v) => v.length > 0 || "A PDF resume is required." })} accept=".pdf" />
+                                        <input type="file" 
+                                            hidden
+                                            accept=".pdf"
+                                            {...register("resumeFile", {
+                                                validate: {
+                                                    required: (v) => 
+                                                        v.length > 0 || "A PDF resume is required.",
+                                                    filesize: (v) =>
+                                                        !v[0] || v[0].size <= 5*1024*1024 || "File size must be less than 5MB"
+                                                }
+                                            })}
+                                        />
                                     </Button>
                                     {errors.resumeFile && <Typography color="error" variant="caption" sx={{ ml: 2 }}>{errors.resumeFile.message}</Typography>}
                                 </Box>
@@ -307,11 +318,19 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                                     }
                                 })}
                             >
-
                                 {coverLetterFile && coverLetterFile[0] ? coverLetterFile[0].name : 'Upload Cover Letter (PDF)'}
-                                <input type="file" hidden {...register("coverLetterFile", {
-                                    validate: (v) => (getValues("coverLetterName") && v.length === 0) ? "File is required for cover letter." : true
-                                })} accept=".pdf" />
+                                <input type="file" 
+                                    hidden
+                                    accept=".pdf"
+                                    {...register("coverLetterFile", {
+                                        validate: {
+                                            required: (v) => 
+                                                (getValues("coverLetterName") && v.length === 0) ? "File is required for cover letter." : true,
+                                            filesize: (v) =>
+                                                !v[0] || v[0].size <= 5*1024*1024 || "File size must be less than 5MB"
+                                        }
+                                    })}
+                                />
                             </Button>
                             {errors.coverLetterFile && <Typography color="error" variant="caption" sx={{ ml: 2 }}>{errors.coverLetterFile.message}</Typography>}
                         </Box>

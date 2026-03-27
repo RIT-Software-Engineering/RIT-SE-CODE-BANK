@@ -828,6 +828,106 @@ export async function terminateEmployee(username) {
 // Resume Management
 // ====================================================================================
 
+export async function getResumeById(resumeId) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/resume/${resumeId}`;
+  console.log(`Getting candidate resume with id: ${resumeId}`)
+
+  const response = await fetch(url, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const errorBody = await response
+      .json()
+      .catch(() => ({ message: "Unknown error" }));
+    console.log("API error body:", errorBody);
+
+    // Prefer a concise 'name' from the backend when available
+    const conciseName = errorBody.name || null;
+    const errorMessage =
+      errorBody.error ||
+      errorBody.message ||
+      `HTTP error! status: ${response.status}`;
+
+    sessionStorage.setItem(
+      "errorDetails",
+      JSON.stringify({
+        // Use name if available (short label), else fall back to the concise message
+        name: conciseName,
+        error: errorMessage,
+        statusCode: response.status,
+        url: response.url,
+        timestamp: new Date().toISOString(),
+        // prefer backend stack if provided, else fallback to frontend
+        stack:
+          typeof errorBody.stack === "string"
+            ? errorBody.stack // backend trace in dev
+            : new Error().stack, // fallback frontend trace
+      })
+    );
+
+    window.location.href = "/Error";
+    // Throw the concise name (if present) or the message to keep console errors readable
+    throw new Error(conciseName || errorMessage);
+  }
+
+  return response;
+}
+
+export async function getCoverLetterById(coverLetterId) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error("Backend API URL components are not defined.");
+  }
+
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/cover-letter/${coverLetterId}`;
+  console.log(`Getting candidate cover letter with id: ${coverLetterId}`)
+
+  const response = await fetch(url, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const errorBody = await response
+      .json()
+      .catch(() => ({ message: "Unknown error" }));
+    console.log("API error body:", errorBody);
+
+    // Prefer a concise 'name' from the backend when available
+    const conciseName = errorBody.name || null;
+    const errorMessage =
+      errorBody.error ||
+      errorBody.message ||
+      `HTTP error! status: ${response.status}`;
+
+    sessionStorage.setItem(
+      "errorDetails",
+      JSON.stringify({
+        // Use name if available (short label), else fall back to the concise message
+        name: conciseName,
+        error: errorMessage,
+        statusCode: response.status,
+        url: response.url,
+        timestamp: new Date().toISOString(),
+        // prefer backend stack if provided, else fallback to frontend
+        stack:
+          typeof errorBody.stack === "string"
+            ? errorBody.stack // backend trace in dev
+            : new Error().stack, // fallback frontend trace
+      })
+    );
+
+    window.location.href = "/Error";
+    // Throw the concise name (if present) or the message to keep console errors readable
+    throw new Error(conciseName || errorMessage);
+  }
+
+  return response;
+}
+
 /**
  * Uploads a new resume file for a candidate.
  * @param {FormData} formData - The form data containing the file and candidate username.

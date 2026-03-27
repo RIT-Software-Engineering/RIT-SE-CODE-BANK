@@ -18,7 +18,6 @@ model User {
   role      Role       @default(GUEST)
   candidate Candidate?
   employer  Employer?
-  
 }
 
 model Candidate {
@@ -32,6 +31,7 @@ model Candidate {
   employee                      Employee[]
   jobPositionApplicationHistory JobPositionApplicationHistory[]
   resumes                       Resume[]
+  coverLetters                  CoverLetter[]
 }
 
 model Comment {
@@ -45,21 +45,33 @@ model Comment {
 }
 
 model Resume {
-  id                            Int                             @id @default(autoincrement())
-  name                          String                          @db.Text
-  username                      String
-  isPrimary                     Boolean
-  resumeURL                     String
-  jobPositionApplicationHistory JobPositionApplicationHistory[]
-  candidate                     Candidate                       @relation(fields: [username], references: [username])
+  id                              Int                             @id @default(autoincrement())
+  name                            String                          @db.Text
+  username                        String
+  isPrimary                       Boolean
+  isSoftDeleted                   Boolean                         @default(false)
+  resumeURL                       String
+  candidate                       Candidate                       @relation(fields: [username], references: [username])
+  jobPositionApplicationHistories JobPositionApplicationHistory[]
 
   @@index([username], map: "Resume_username_fkey")
 }
 
+model CoverLetter {
+  id                              Int                             @id @default(autoincrement())
+  name                            String                          @db.Text
+  username                        String
+  coverLetterURL                  String
+  candidate                       Candidate                       @relation(fields: [username], references: [username])
+  jobPositionApplicationHistories JobPositionApplicationHistory[]
+
+  @@index([username], map: "Cover_Letter_username_fkey")
+}
+
 model Employer {
-  username    String        @id
-  department  String        @db.Text
-  user        User          @relation(fields: [username], references: [username])
+  username     String        @id
+  department   String        @db.Text
+  user         User          @relation(fields: [username], references: [username])
   jobPositions JobPosition[]
 }
 
@@ -103,14 +115,15 @@ model JobPositionApplicationHistory {
   wasPriorEmployeeForThisCourse   Boolean
   wasPriorEmployeeForOtherCourses Boolean
   priorEmploymentHistory          String?              @db.Text
-  coverLetterName                 String?              @db.Text
-  coverLetterURL                  String?
+  coverLetterId                   Int?
   jobPosition                     JobPosition          @relation(fields: [jobPositionId], references: [id])
   resume                          Resume               @relation(fields: [resumeId], references: [id])
+  coverLetter                     CoverLetter?         @relation(fields: [coverLetterId], references: [id])
   candidate                       Candidate            @relation(fields: [username], references: [username])
 
   @@index([jobPositionId], map: "JobPositionApplicationHistory_jobPositionId_fkey")
   @@index([resumeId], map: "JobPositionApplicationHistory_resumeId_fkey")
+  @@index([coverLetterId], map: "JobPositionApplicationHistory_coverLetterId_fkey")
   @@index([username], map: "JobPositionApplicationHistory_username_fkey")
 }
 
@@ -206,8 +219,6 @@ model FeatureFlag {
   enabled   Boolean  @default(true)
   updatedAt DateTime @updatedAt
 }
-
-
 
 enum Role {
   GUEST

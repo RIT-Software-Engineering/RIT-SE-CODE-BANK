@@ -40,6 +40,7 @@ const {
   addNewCandidateResume,
   updatePrimaryResume,
   deleteResume,
+  getResumeById,
   getCandidateResumes,
   updateResumeName,
   getCandidateApplications,
@@ -56,6 +57,10 @@ const {
   fetchEmployerViewData,
   getUserNotificationPreferences,
   upsertUserNotificationPreferences,
+  addNewCoverLetter,
+  getCoverLetterById,
+  deleteCoverLetter,
+  checkResumeDeleteStatus,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -374,7 +379,7 @@ router.post(
           return res.status(400).json({ error: 'New resume name is required.' });
         }
         const resumeFile = req.files.resumeFile[0];
-        const newResumeUrl = `/resources/resumes/${candidateUsername}/${resumeFile.filename}`;
+        const newResumeUrl = `/${candidateUsername}/${resumeFile.filename}`;
         
         const existingResumes = await getCandidateResumes(candidateUsername);
         const isPrimary = existingResumes.length === 0;
@@ -390,9 +395,12 @@ router.post(
 
       // --- Handle Cover Letter (if uploaded) ---
       if (req.files && req.files.coverLetterFile) {
+
         const coverLetterFile = req.files.coverLetterFile[0];
-        applicationDetails.coverLetterURL = `/resources/cover-letters/${candidateUsername}/${coverLetterFile.filename}`;
-        applicationDetails.coverLetterName = coverLetterName || 'Cover Letter';
+        const newCoverLetterUrl = `/${candidateUsername}/${coverLetterFile.filename}`;
+
+        const newCoverLetter = await addNewCoverLetter(candidateUsername,newCoverLetterUrl,(coverLetterName || 'Cover Letter'));
+        applicationDetails.coverLetterId = newCoverLetter.id;
       }
 
       // --- Create the Application ---
@@ -422,12 +430,11 @@ router.delete('/applications/:username', async (req, res) => {
 
     // Get the application details
     const application = await getCandidateApplication(req.params.username, jobPositionId);
-
     // Delete the cover letter file if it exists
-    if (application.coverLetterURL) {
+    if (application.coverLetterId) {
       try {
-        const serverRootPath = path.join(__dirname, '..', '..');
-        const filePath = path.join(serverRootPath, application.coverLetterURL);
+        const coverLetter = await deleteCoverLetter(application.coverLetterId)
+        const filePath = path.join(coverLetterStoragePath, coverLetter.coverLetterURL);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
           console.log(`Successfully deleted cover letter: ${filePath}`);
@@ -443,14 +450,16 @@ router.delete('/applications/:username', async (req, res) => {
     // Call the service to delete the database records, using the unique ID
     const deletedApplication = await deleteCandidateApplication(application.id);
 
+    const relatedResume = await getResumeById(deletedApplication.resumeId)
+    if (await checkResumeDeleteStatus(deletedApplication.resumeId)){
+      const filePath = path.join(resumeStoragePath, relatedResume.resumeURL);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
     res.status(200).json(deletedApplication);
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === 'P2025'
-    ) {
-      return res.status(404).json({ message: 'Application not found.' });
-    }
     console.error('ta-portal-api Error deleting application:', error);
     res
       .status(500)
@@ -974,7 +983,7 @@ router.put('/terminate-employee/:username', async (req, res) => {
 router.post('/resume', upload.single('resumeFile'), async (req, res) => {
     try {
 
-      console.log("🔥 Incoming /resume request");
+      console.log("Incoming /resume request");
       console.log("Body:", req.body);
       console.log("File:", req.file);
       if (!req.file) {
@@ -989,17 +998,74 @@ router.post('/resume', upload.single('resumeFile'), async (req, res) => {
           .json({ error: 'Candidate Username and resume name are required.' });
       }
 
-      const resumeURL = `/resources/resumes/${candidateUsername}/${req.file.filename}`;
+      const resumeURL = `/${candidateUsername}/${req.file.filename}`;
 
       const existingResumes = await getCandidateResumes(candidateUsername);
-      const isPrimary = existingResumes.length === 0;
+      const isPrimary = existingResumes.filter(resume => !resume.isSoftDeleted).length === 0;
 
       const newResume = await addNewCandidateResume(candidateUsername, isPrimary, resumeURL, name);
 
       res.status(201).json(newResume);
     } catch (error) {
       console.error('Error in /add-new-candidate-resume route:', error);
-      res.status(500).json({ error: 'Failed to upload and save resume.' });
+      res.status(500).json({error: 'Failed to upload and save resume.'});
+    }
+  }
+);
+
+/**
+ * @route   GET /ta-portal-api/db/resume/:resumeId
+ * @desc    Retrieves the resume with the matching id
+ * @access  Public
+ */
+router.get('/resume/:resumeId', async (req, res) => {
+    try{
+      console.log("Attempt to get resume with id",req.params.resumeId);
+      const resumeEntry = await getResumeById(parseInt(req.params.resumeId));
+
+      if(!resumeEntry){
+        return res.status(404).json({error: 'Resume with given ID cannot be found in database.'});
+      }
+
+      const filePath = path.join(resumeStoragePath,resumeEntry.resumeURL);
+
+      if(!fs.existsSync(filePath)){
+        return res.status(404).json({error: 'Resume with given ID does not have corresponding file.'});
+      }
+
+      res.sendFile(filePath);
+
+    } catch (error) {
+      console.error('Error in getting resume:', error);
+      res.status(500).json({ error: 'Failed to get resume.'});
+    }
+  }
+);
+
+/**
+ * @route   GET /ta-portal-api/db/cover-letter/:coverLetterId
+ * @desc    Retrieves the coverletter with the matching id
+ * @access  Public
+ */
+router.get('/cover-letter/:coverLetterId', async (req, res) => {
+    try{
+      const coverLetterEntry = await getCoverLetterById(parseInt(req.params.coverLetterId));
+
+      if(!coverLetterEntry){
+        return res.status(404).json({error: 'Cover letter with given ID cannot be found in database.'});
+      }
+
+      const filePath = path.join(coverLetterStoragePath,coverLetterEntry.coverLetterURL);
+
+      if(!fs.existsSync(filePath)){
+        return res.status(404).json({error: 'Cover letter with given ID does not have corresponding file.'});
+      }
+
+      res.sendFile(filePath);
+
+    } catch (error) {
+      console.error('Error in getting cover letter:', error);
+      res.status(500).json({ error: 'Failed to get cover letter.'});
     }
   }
 );
@@ -1040,7 +1106,7 @@ router.put('/resume-name/:resumeId', async (req, res) => {
 
 /**
  * @route   DELETE /ta-portal-api/db/resume/:resumeId
- * @desc    Deletes a resume by its ID and its associated file.
+ * @desc    Marks resume as deleted, removing the file and entry only if it is not used in any applications
  * @access  Public
  */
 router.delete('/resume/:resumeId', async (req, res) => {
@@ -1054,10 +1120,9 @@ router.delete('/resume/:resumeId', async (req, res) => {
     const deletedResume = await deleteResume(resumeId);
 
     // --- File Cleanup Step ---
-    // (Assuming the property is `resumeURL` as used in your path creation)
-    if (deletedResume.resumeURL) {
-        const serverRootPath = path.join(__dirname, '..', '..');
-        const filePath = path.join(serverRootPath, deletedResume.resumeURL);
+    // If resume was hard deleted, remove the pdf file as well
+    if ((!deletedResume.isSoftDeleted) && deletedResume.resumeURL) {
+        const filePath = path.join(resumeStoragePath, deletedResume.resumeURL);
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
           //Success: DB entry and file were deleted. Send response and stop.
@@ -1074,9 +1139,9 @@ router.delete('/resume/:resumeId', async (req, res) => {
           });
         }
     } else {
-      // Success: DB entry deleted, no file to remove. Send response and stop.
+      // Success: Resume soft deleted or there is no file to delete.
       return res.status(200).json({ 
-        message: 'Resume deleted successfully. There was no associated file to remove.', 
+        message: 'Resume marked as deleted. No file to remove or file is still used in applications.', 
         deletedResume 
       });
     }
@@ -1085,11 +1150,6 @@ router.delete('/resume/:resumeId', async (req, res) => {
     console.error('Error in /delete-resume route:', error.message);
 
     // Handle specific errors from the DB function
-    if (error.message === 'DELETE_FAILED_ASSOCIATED') {
-      return res.status(409).json({ 
-        error: 'This resume cannot be deleted because it is associated with a job application.' 
-      });
-    }
 
     if (error.message === 'Resume not found.') {
         return res.status(404).json({ error: 'Resume not found.' });
