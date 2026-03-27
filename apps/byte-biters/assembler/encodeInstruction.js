@@ -2,14 +2,19 @@ import {encodeOperand} from "./encoder.js";
 import { OPCODES } from "./opcodes.js";
 
 export function encodeLine(parsedData) {
-
+    if(parsedData.type === "instruction") {
+        return encodeInstruction(parsedData);
+    }
+    else if(parsedData.type === "directive") {
+        return encodeDirective(parsedData);
+    } //add else for label-only
 }
 
 function encodeDirective(parsedData) {
 
 }
 
-export function encodeInstruction(parsedData) {
+function encodeInstruction(parsedData) {
     const {type, label, mnemonic, src, dst} = parsedData;
     
     const UpperMnemonic = mnemonic.toUpperCase();

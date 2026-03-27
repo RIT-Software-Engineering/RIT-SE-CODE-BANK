@@ -76,25 +76,27 @@ export class CPU {
     }
 
     step() {
-        this.currentState = {
-            registers: this.getRegisters(),
-            flags: this.getFlags(),
-            memoryChange: []
-        };
+        if(!this.halted){
+            this.currentState = {
+                registers: this.getRegisters(),
+                flags: this.getFlags(),
+                memoryChange: []
+            };
 
-        const instr = this.fetch();
-        const oper = this.decoder.decode(instr);
+            const instr = this.fetch();
+            const oper = this.decoder.decode(instr);
 
-        if(oper.src) {
-            oper.src = this.resolveSource(oper.src.mode, oper.src.REG);
+            if(oper.src) {
+                oper.src = this.resolveSource(oper.src.mode, oper.src.REG);
+            }
+            if(oper.dst) {
+                oper.dst = this.resolveDestination(oper.dst.mode, oper.dst.REG);
+            }      
+            this.execute(oper);
+
+            this.pastState.push(this.currentState);
+            this.currentState = null;
         }
-        if(oper.dst) {
-            oper.dst = this.resolveDestination(oper.dst.mode, oper.dst.REG);
-        }      
-        this.execute(oper);
-
-        this.pastState.push(this.currentState);
-        this.currentState = null;
     }
 
     backStep(){

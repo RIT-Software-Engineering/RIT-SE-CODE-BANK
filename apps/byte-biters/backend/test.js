@@ -54,16 +54,8 @@ function readWordFromBytes(mem, addr) {
 
 
 const program = `
-MOV #0x3000, R1
-MOV #5, R2
-MOV #5, R4
-CLR R4
-MOV #0xBEEF, @#0x3000
-MOV #0x0000, @#0x4000
-MOV (R1)+, @-(R2)
-HALT
-
-label: .WORD 5
+MOV #0x05, R1
+VALUE: .ASCIZ "HELLO""WORLD"
 `;
 
 backend.loadAssembly(program);

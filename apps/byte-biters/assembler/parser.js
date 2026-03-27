@@ -13,7 +13,16 @@ export function parseLine(tokens) {
 }
 
 function parseDirective(tokens, label) {
-    console.log(label);
+    return {
+        type: "directive",
+        label: label,
+        directive: null,
+        args: []
+    };
+}
+
+function directiveLevel(tokenArray) {
+    
 }
 
 function parseInstruction(tokens, label) {
@@ -117,7 +126,7 @@ export function parseOperand(tokens) {
     }
     //Both versions of index need to be edited to allow for the use of variables when those are implemented
     //Used to return the mode, register, and offset from index for an indexed mode
-    else if(tokens.length === 4 && isNumber(tokens[0]) && tokens[1] === "(" &&  isRegister(tokens[2]) && tokens[3] === ")") {
+    else if(tokens.length === 4 && (isNumber(tokens[0]) || isLabel(tokens[0])) && tokens[1] === "(" &&  isRegister(tokens[2]) && tokens[3] === ")") {
         return {
             mode: "indexed",
             reg: getRegisterNumber(tokens[2]),
@@ -125,7 +134,7 @@ export function parseOperand(tokens) {
         };
     }
     //Used to return the mode, register, and offset from index for an indexed deferred mode
-    else if(tokens.length === 5 && tokens[0] === "@" && isNumber(tokens[1]) && tokens[2] === "(" &&  isRegister(tokens[3]) && tokens[4] === ")") {
+    else if(tokens.length === 5 && tokens[0] === "@" && (isNumber(tokens[1]) || isLabel(tokens[1])) && tokens[2] === "(" &&  isRegister(tokens[3]) && tokens[4] === ")") {
         return {
             mode: "indexed_deferred",
             reg: getRegisterNumber(tokens[3]),
@@ -133,7 +142,7 @@ export function parseOperand(tokens) {
         };
     }
     //Used to return the mode and register value for an immediate mode
-    else if(tokens.length === 2 && tokens[0] === "#" && isNumber(tokens[1])) {
+    else if(tokens.length === 2 && tokens[0] === "#" && (isNumber(tokens[1]) || isLabel(tokens[1]))) {
         return {
             mode: "autoincrement",
             reg: 7,
@@ -141,12 +150,20 @@ export function parseOperand(tokens) {
         };
     }
     //Used to return the mode and register value for an absolute mode
-    else if(tokens.length === 3 && tokens[0] === "@" && tokens[1] === "#" && isNumber(tokens[2])) {
+    else if(tokens.length === 3 && tokens[0] === "@" && tokens[1] === "#" && (isNumber(tokens[2]) || isLabel(tokens[2]))) {
         return {
             mode: "autoincrement_deferred",
             reg: 7,
             offset: tokens[2]
         };
+    }
+
+    else if(tokens.length === 1 && isLabel(tokens[0])) {
+        return {
+            mode: "indexed",
+            reg: 7,
+            offset: tokens[0]
+        }
     }
 
     //error in case if nothing matches
@@ -167,6 +184,10 @@ function isRegister(token) {
 
 function isNumber(token) {
     return /(^-?\d+$)|(^0x[0-9A-Fa-f]+$)/.test(token);
+}
+
+function isLabel(token) {
+    return /^[a-zA-Z._][a-zA-Z0-9._]*$/.test(token);
 }
 
 function getRegisterNumber(token) {

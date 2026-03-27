@@ -1,7 +1,7 @@
 import { preProcess } from "./pre_process.js";
 import { lexer } from "./lexer.js";
 import { parseLine } from "./parser.js";
-import { encodeInstruction } from "./encodeInstruction.js";
+import { encodeLine } from "./encodeInstruction.js";
 
 export function assemble(text) {
     const lines = preProcess(text);
@@ -10,7 +10,7 @@ export function assemble(text) {
     for(let line of lines) {
         const tokens = lexer(line);
         const parsed = parseLine(tokens);
-        const encoded = encodeInstruction(parsed);
+        const encoded = encodeLine(parsed);
 
         words.push(...encoded);
     }
