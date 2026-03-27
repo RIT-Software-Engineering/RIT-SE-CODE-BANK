@@ -127,7 +127,7 @@ export const placeholderActionWithContexts = [
 					name: 'Section Semester',
 					description: 'Enter the semester the section will take place in',
 					code: 'COURSE_SEMESTER',
-					actionState: createActionState('asid-course-semester', 'action-course-semester', 'inProgress'),
+					actionState: createActionState('asid-course-semester', 'action-course-semester', 'notStarted'),
 					outputs: [
 						{
 							name: 'Year',
@@ -168,7 +168,7 @@ export const placeholderActionWithContexts = [
 					actionState: createActionState(
 						`asid-session-${index + 1}`,
 						`action-session-${index + 1}`,
-						index < 2 ? 'completed' : index === 2 ? 'inProgress' : 'notStarted'
+						index < 2 ? 'completed' : index === 2 ? 'notStarted' : 'notStarted'
 					),
 				})
 			),
