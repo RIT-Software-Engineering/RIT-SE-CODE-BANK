@@ -42,9 +42,20 @@ export default function AdminHighlightsPage() {
         } catch (err) {
             const msg = err.response?.data?.error || 'Failed to generate summary';
             setSummaries(prev => ({ ...prev, [formId]: msg }));
+        } finally {
             setLoading(prev => ({ ...prev, [formId]: false }));
         }
     };
+
+    const SummarySection = ({ label, data, showDisseminated }) => (
+        <Box sx={{ mb: 1.5 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                {label}{data?.rating != null ? ` — Rating: ${data.rating}` : ''}
+                {showDisseminated && data?.disseminated ? `  |  Disseminated? ${data.disseminated}` : ''}
+            </Typography>
+            <Typography variant="body2">{data?.comments || ''}</Typography>
+        </Box>
+    );
 
     return (
         <div style={{ padding: '20px', paddingTop: '80px' }}>
@@ -86,7 +97,17 @@ export default function AdminHighlightsPage() {
                                 <TableCell colSpan={4} sx={{ py: 0 }}>
                                     <Collapse in={!!summaries[row.form_id]}>
                                         <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, my: 1 }}>
-                                            <Typography variant="body2">{summaries[row.form_id]}</Typography>
+                                            {typeof summaries[row.form_id] === 'object' ? (
+                                                <>
+                                                    <SummarySection label="Teaching" data={summaries[row.form_id].teaching} />
+                                                    <SummarySection label="Scholarship" data={summaries[row.form_id].scholarship} showDisseminated />
+                                                    <SummarySection label="Service" data={summaries[row.form_id].service} />
+                                                    <SummarySection label="Administrative" data={summaries[row.form_id].administrative} />
+                                                    <SummarySection label="Overall" data={summaries[row.form_id].overall} />
+                                                </>
+                                            ) : (
+                                                <Typography variant="body2">{summaries[row.form_id]}</Typography>
+                                            )}
                                         </Box>
                                     </Collapse>
                                 </TableCell>

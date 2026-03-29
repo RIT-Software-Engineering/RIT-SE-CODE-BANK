@@ -132,8 +132,8 @@ async function saveParsedHighlights(data) {
         }
         
         const result = await conn.query(
-            'INSERT INTO highlights (form_id, student_support_id, administrative_responsibilities, professional_development, teaching_section, service_section, service_hours, last_saved) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())',
-            [formId, studentSupportId, data.administrative, data.professional_development, data.teaching, data.service, data.service_hours]
+            'INSERT INTO highlights (form_id, student_support_id, administrative_responsibilities, professional_development, teaching_section, service_section, service_hours, student_mentoring, last_saved) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+            [formId, studentSupportId, data.administrative, data.professional_development, data.teaching, data.service, data.service_hours, data.student_mentoring || null]
         );
         
         return { success: true, id: Number(result.insertId), formId, replaced: false };
@@ -155,8 +155,8 @@ async function updateParsedHighlights(formId, data) {
         
         // Update highlights record
         await conn.query(
-            'UPDATE highlights SET administrative_responsibilities = ?, professional_development = ?, teaching_section = ?, service_section = ?, service_hours = ?, last_saved = NOW() WHERE form_id = ?',
-            [data.administrative, data.professional_development, data.teaching, data.service, data.service_hours, formId]
+            'UPDATE highlights SET administrative_responsibilities = ?, professional_development = ?, teaching_section = ?, service_section = ?, service_hours = ?, student_mentoring = ?, last_saved = NOW() WHERE form_id = ?',
+            [data.administrative, data.professional_development, data.teaching, data.service, data.service_hours, data.student_mentoring || null, formId]
         );
         
         return { success: true, formId };
