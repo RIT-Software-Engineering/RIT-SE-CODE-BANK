@@ -56,6 +56,7 @@ router.post("/", async (req, res) => {
     title,
     display_name,
     description,
+    status,
     teams,
     SemesterGroup,
     semesterGroupId
@@ -66,6 +67,7 @@ router.post("/", async (req, res) => {
       title,
       display_name,
       description,
+      status,
       teams: { connect: teams.map((teamId) => ({ id: teamId })) },
       SemesterGroup,
       semesterGroupId
@@ -96,6 +98,7 @@ router.put("/:id", async (req, res) => {
     title,
     display_name,
     description,
+    status,
     teams,
     SemesterGroup,
     semesterGroupId
@@ -107,6 +110,7 @@ router.put("/:id", async (req, res) => {
       title,
       display_name,
       description,
+      status,
       teams: { set: teams.map((teamId) => ({ id: teamId })) },
       SemesterGroup,
       semesterGroupId

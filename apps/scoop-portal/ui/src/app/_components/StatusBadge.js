@@ -29,6 +29,14 @@ export default function StatusBadge({ value, type = "application", size = "mediu
       PENDING: theme.palette.warning.main,
       default: theme.palette.grey[500],
     },
+    project: {
+      active: theme.palette.success.main,
+      "in progress": theme.palette.warning.main,
+      completed: theme.palette.primary.main,
+      inactive: theme.palette.error.main,
+      pending: theme.palette.grey[500],
+      default: theme.palette.grey[500],
+    },
     active: {
       active: theme.palette.success.main,
       true: theme.palette.success.main,
@@ -54,6 +62,13 @@ export default function StatusBadge({ value, type = "application", size = "mediu
       APPROVED: "Approved",
       REJECTED: "Rejected",
       PENDING: "Pending",
+    },
+    project: {
+      active: "Active",
+      "in progress": "In Progress",
+      completed: "Completed",
+      inactive: "Inactive",
+      pending: "Pending",
     },
     active: {
       active: "Active",

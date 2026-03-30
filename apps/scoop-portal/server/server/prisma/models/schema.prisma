@@ -31,6 +31,7 @@ model Project {
   title        String
   display_name String
   description  String @db.VarChar(255)
+  status       String @default("active") @db.VarChar(50)
 
   teams           Teams[]
   SemesterGroup   SemesterGroup? @relation(fields: [semesterGroupId], references: [id])

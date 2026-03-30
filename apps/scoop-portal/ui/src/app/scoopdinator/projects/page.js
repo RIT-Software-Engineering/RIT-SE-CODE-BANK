@@ -16,10 +16,13 @@ import {
   TextField,
   FormControl,
   Autocomplete,
+  MenuItem,
   useTheme,
   Chip,
   Paper,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import StatusBadge from "@components/StatusBadge";
 
 /**
  * This is the component that fetches and displays a list of projects.
@@ -34,13 +37,12 @@ export default function Projects() {
   const [semesterGroups, setSemesterGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [viewingProject, setViewingProject] = useState([]);
   const [editingProject, setEditingProject] = useState(null);
   const [form, setForm] = useState({
     title: "",
     display_name: "",
     description: "",
+    status: "active",
     teams: "",
     semesterGroupId: "",
   });
@@ -85,7 +87,7 @@ export default function Projects() {
 
   const openCreateModal = () => {
     setEditingProject(null);
-    setForm({ title: "", display_name: "", description: "", teams: "", semesterGroupId: "" });
+    setForm({ title: "", display_name: "", description: "", status: "active", teams: "", semesterGroupId: "" });
     setCreateModalOpen(true);
   };
 
@@ -95,6 +97,7 @@ export default function Projects() {
       title: project.title || "",
       display_name: project.display_name || "",
       description: project.description || "",
+      status: project.status || "active",
       teams: (project.teams || []).map(t => (t && t.id) ? t.id.toString() : t),
       semesterGroupId: project.semesterGroupId ?? "",
     });
@@ -105,16 +108,6 @@ export default function Projects() {
     setCreateModalOpen(false);
   };
 
-  const openViewModal = (project) => {
-    setViewingProject(project);
-    setViewModalOpen(true);
-  }
-
-
-  const closeViewModal = () => {
-    setViewingProject([]);
-    setViewModalOpen(false);
-  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -128,6 +121,7 @@ export default function Projects() {
       title: form.title,
       display_name: form.display_name,
       description: form.description,
+      status: form.status,
       teams: teamsArray,
       semesterGroupId: form.semesterGroupId ? Number(form.semesterGroupId) : undefined,
     };
@@ -159,6 +153,18 @@ export default function Projects() {
     }
   };
 
+  const projectCounts = {
+    total: projects.length,
+    active: projects.filter((project) => (project.status || "").toLowerCase() === "active").length,
+    inProgress: projects.filter((project) => (project.status || "").toLowerCase() === "in progress").length,
+    completed: projects.filter((project) => (project.status || "").toLowerCase() === "completed").length,
+    inactive: projects.filter((project) => (project.status || "").toLowerCase() === "inactive").length,
+    other: projects.filter(
+      (project) => !["active", "in progress", "completed", "inactive"].includes((project.status || "").toLowerCase())
+    ).length,
+  };
+
+
   if (loading) {
     return <ProjectsLoading />;
   }
@@ -167,68 +173,91 @@ export default function Projects() {
     <>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography variant="h1">Projects</Typography>
-          <Button variant="contained" onClick={openCreateModal}>Create Project</Button>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 2, mb: 3 }}>
+          <Box>
+            <Typography variant="h1">Projects</Typography>
+          </Box>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateModal}>Create Project</Button>
+        </Box>
+
+        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 2, mb: 4 }}>
+          {[
+            { label: "Total Projects", value: projectCounts.total },
+            { label: "Active", value: projectCounts.active },
+            { label: "In Progress", value: projectCounts.inProgress },
+            { label: "Completed", value: projectCounts.completed },
+            { label: "Inactive", value: projectCounts.inactive },
+          ].map((stat) => (
+            <Paper
+              key={stat.label}
+              variant="outlined"
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                bgcolor: theme.palette.mode === "light" ? theme.palette.grey[50] : theme.palette.background.paper,
+                borderColor: theme.palette.divider,
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+              }}
+            >
+              <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>{stat.value}</Typography>
+            </Paper>
+          ))}
         </Box>
 
         {projects.length === 0 ? (
-          <Typography variant="body1">
-            No projects found. Please check back later.
+          <Typography variant="body1" color="text.secondary">
+            No projects found. Check back later or create a new project.
           </Typography>
         ) : (
-          projects.map((project) => (
-            <Card
-              square
-              key={project.id}
-              sx={{
-                padding: "1em",
-                margin: "0.5rem",
-              }}
-            >
-              <Box
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 3 }}>
+            {projects.map((project) => (
+              <Card
+                square
+                key={project.id}
                 sx={{
+                  p: 3,
+                  borderRadius: 3,
+                  border: `1px solid ${theme.palette.divider}`,
+                  bgcolor: theme.palette.background.paper,
+                  boxShadow: theme.palette.mode === "light" ? "0 12px 24px rgba(15, 23, 42, 0.04)" : "0 10px 20px rgba(0, 0, 0, 0.16)",
                   display: "flex",
+                  flexDirection: "column",
                   justifyContent: "space-between",
+                  minHeight: 280,
                 }}
               >
-                <Typography variant="h2">
-                  {project.display_name || project.title || "Unknown Project"}
-                </Typography>
                 <Box>
-                  <Button sx={{ mr: 1 }} variant="outlined" onClick={() => openEditModal(project)}>Edit</Button>
-                  <Button variant="solid-orange" onClick={() => openViewModal(project)}>View</Button>
+                  <Typography variant="h2" sx={{ fontSize: "1.25rem", fontWeight: 700, mb: 1 }}>
+                    {project.display_name || project.title || "Untitled Project"}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 72 }}>
+                    {project.description || "No project description available."}
+                  </Typography>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
+                    <Chip size="small" label={semesterGroups[project.semesterGroupId] || "No semester"} variant="outlined" />
+                    {project.teams && project.teams.length > 0 ? (
+                      project.teams.map((team) => (
+                        <Chip key={team.id} size="small" label={team.name} variant="outlined" />
+                      ))
+                    ) : (
+                      <Chip size="small" label="No teams" variant="outlined" />
+                    )}
+                    {project.status ? (
+                      <StatusBadge value={project.status} type="project" size="small" />
+                    ) : null}
+                  </Box>
                 </Box>
-              </Box>
-              <Box
-                sx={{
-                  padding: "0.25em 0.75em",
-                  display: "inline-block",
-                  backgroundColor:
-                    project.status === "active"
-                      ? "rgba(0, 156, 189, 0.2)"
-                      : project.status === "in progress"
-                        ? "rgba(246, 190, 0, 0.2)"
-                        : project.status === "completed"
-                          ? "rgba(132, 189, 0, 0.2)"
-                          : "rgba(124, 135, 142, 0.2)",
-                  color:
-                    project.status === "active"
-                      ? theme.palette.info.main
-                      : project.status === "in progress"
-                        ? theme.palette.warning.main
-                        : project.status === "completed"
-                          ? theme.palette.success.main
-                          : "rgb(124, 135, 142)",
-                }}
-              >
-                <Typography sx={{ margin: "0" }}>
-                  {project.status ? project.status.toUpperCase() : "UNKNOWN"}
-                </Typography>
-              </Box>
-              <Typography>{project.description}</Typography>
-            </Card>
-          ))
+                <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2, flexWrap: "wrap" }}>
+                  <Button variant="outline-orange" onClick={() => openEditModal(project)}>
+                    Edit
+                  </Button>
+                </Box>
+              </Card>
+            ))}
+          </Box>
         )}
       </Container>
 
@@ -262,6 +291,26 @@ export default function Projects() {
               multiline
               minRows={3}
             />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Status"
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              select
+            >
+              {[
+                { value: "active", label: "Active" },
+                { value: "in progress", label: "In Progress" },
+                { value: "completed", label: "Completed" },
+                { value: "inactive", label: "Inactive" },
+              ].map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
              <FormControl fullWidth>
               <Autocomplete
                 multiple
@@ -325,39 +374,6 @@ export default function Projects() {
             <Button type="submit" variant="contained">Save</Button>
           </DialogActions>
         </form>
-      </Dialog>
-      <Dialog open={viewModalOpen} onClose={closeViewModal} fullWidth maxWidth="sm">
-        <Paper elevation={2} sx={{ borderRadius: 4, p: 3 }}>
-          <Typography
-            variant="h2"
-            sx={{ fontSize: "1.5rem", fontWeight: 700, mb: 1 }}
-            >
-          {viewingProject.display_name}
-          </Typography>
-          <Typography sx={{ fontSize: "1rem", color: "#666", mb: 2 }}>
-            Description:{" "}
-            {viewingProject.description}
-          </Typography>
-          <Typography sx={{ fontWeight: 500, mb: 1 }}>
-            Teams assigned:
-          </Typography>
-          {Array.isArray(viewingProject.teams) && viewingProject.teams.length > 0 ? (
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {viewingProject.teams.map((team) => (
-                  <Chip
-                    key={team.id}
-                    label={team.name}
-                    sx={{ backgroundColor: "#F76902", color: "#fff" }}
-                    
-                    />
-                ))}
-            </Box>                   
-          ) : (
-            <Typography variant="body2" sx={{ color: "#999" }}>
-              No teams assigned
-            </Typography>
-          )}
-        </Paper>
       </Dialog>
     </>
   );
