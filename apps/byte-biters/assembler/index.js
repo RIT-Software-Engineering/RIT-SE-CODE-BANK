@@ -1,18 +1,28 @@
 import { preProcess } from "./pre_process.js";
 import { lexer } from "./lexer.js";
 import { parseLine } from "./parser.js";
-import { encodeLine } from "./encodeInstruction.js";
+import { encodeLine } from "./encodeLine.js/index.js";
+import { firstPass } from "./pass1.js";
 
 export function assemble(text) {
     const lines = preProcess(text);
-    const words = [];
+    const ast = [];
 
     for(let line of lines) {
         const tokens = lexer(line);
         const parsed = parseLine(tokens);
-        console.log(parsed);
-        const encoded = encodeLine(parsed);
+        ast.push(parsed);
+    }
 
+    //console.log(ast);
+    
+    const {symbols, annotatedAst} = firstPass(ast);
+
+    console.log(annotatedAst);
+    //Works as pass two instead of creating a new file
+    const words = [];
+    for(let data of annotatedAst) {
+        const encoded = encodeLine(data, symbols);
         words.push(...encoded);
     }
 

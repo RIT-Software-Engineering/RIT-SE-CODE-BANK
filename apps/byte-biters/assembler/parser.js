@@ -2,23 +2,25 @@ export function parseLine(tokens) {
     let label = null;
     if(tokens[1] === ":") {
         label = tokens[0];
+        if(tokens.length == 2) {
+            return {
+                type: "label-only",
+                label: label
+            }
+        }
         tokens = tokens.slice(2);
     }
     
     if(tokens[0][0] === "."){
-        return parseDirective(tokens, label);
+        return {
+            type: "directive",
+            label: label,
+            directive: tokens[0],
+            args: tokens.slice(1)
+        };
     } else {
         return parseInstruction(tokens, label);
     }
-}
-
-function parseDirective(tokens, label) {
-    return {
-        type: "directive",
-        label: label,
-        directive: tokens[0],
-        args: tokens.slice(1)
-    };
 }
 
 function parseInstruction(tokens, label) {

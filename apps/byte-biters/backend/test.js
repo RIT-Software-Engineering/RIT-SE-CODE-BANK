@@ -55,12 +55,14 @@ function readWordFromBytes(mem, addr) {
 
 const program = `
 MOV #0x05, R1
-.ASCIZ 1, 2, 3, 4
+MOV #0x05, R1
+MOV #0x05, R1
+;.ASCIZ 1, 2, 3, 4
 `;
 
 backend.loadAssembly(program);
 const result = backend.run();
-console.log(result.registers);
+//console.log(result.registers);
 
 // backend.step();
 // backend.step();
