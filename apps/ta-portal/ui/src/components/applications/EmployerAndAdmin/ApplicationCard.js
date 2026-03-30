@@ -212,7 +212,7 @@ export default function ApplicationCard({
 
   const status = jobApplicationStatus?.toLowerCase();
   const showHireOption = showHireAction && currentUser?.role === 'ADMIN' && status === "accepted_offer";
-  const showRejectOption = ["applied", "interview", "pending_offer", "accepted_offer", "hired"].includes(status);
+  const showRejectOption = ["applied", "interview", "pending_offer", "accepted_offer"].includes(status);
   const showInterviewOption = status === "applied";
   const showOfferOption = ["applied", "interview"].includes(status);
   const showActionMenuItems = showHireOption || showRejectOption || showInterviewOption || showOfferOption;
@@ -277,7 +277,7 @@ export default function ApplicationCard({
               {showActionMenuItems && <Divider />}
 
               {showHireOption && (
-                <MenuItem onClick={() => {console.log('click'); if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</MenuItem>
+                <MenuItem onClick={() => { if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</MenuItem>
               )}
               {showRejectOption && (
                 <MenuItem onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} sx={{ color: 'error.main' }}>Reject Application</MenuItem>
@@ -386,14 +386,12 @@ export default function ApplicationCard({
               {showOfferOption && (<Grid item xs={12} sm={6}>
                 <Button variant="outlined" onClick={handleOfferPosition}>Offer Position</Button>
               </Grid>)}
-            </Grid>
-
-            {showRejectOption && (
-              <Button  sx = {{ height: 36, px:4, whiteSpace: "nowrap"  }} variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
+              {showRejectOption && (
+                <Grid item xs={12} sm={6} >
+              <Button  sx = {{ height: 36,  whiteSpace: "nowrap" }} variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
+              </Grid>
             )}
-
-
-
+            </Grid>
           </Box>
         </Box>
       </Paper>

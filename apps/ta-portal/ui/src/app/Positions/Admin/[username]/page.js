@@ -1,5 +1,4 @@
 // src/app/Positions/Admin/[username]/page.js
-
 "use client";
 
 import React, {
@@ -20,7 +19,7 @@ import {
   updatePosition,
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNotification } from "@/contexts/NotificationContext";
+
 import { useFeatureFlags, FEATURES } from "@/configuration/featureFlags";
 import PositionsCard from "@/components/positions/PositionsCard";
 import { Filter } from "@/components/common/searchAndFilter/Filter";
@@ -29,6 +28,9 @@ import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
 import EditableNoteForm from "@/components/notes/EditableNoteForm";
 import ConfirmationModal from "@/components/common/models/ConfirmationModal";
+
+import { useNotification } from '@/contexts/NotificationContext';
+
 
 import {
   Box,
@@ -71,7 +73,7 @@ export default function AdminPositions() {
   const [appliedFilters, setAppliedFilters] = useState({});
   const [filterConfig, setFilterConfig] = useState([]);
 
-  // State for managing modals (edit/create position and note confirmation).
+  // State for managing modals (edit/create/copy position and note confirmation).
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [isEdit, setIsEdit] = useState(false);
   const [isCopy, setIsCopy] = useState(false);
@@ -275,6 +277,10 @@ export default function AdminPositions() {
     setNoteModalState({ isOpen: false, title: '', context: {} });
   };
 
+  /**
+   * Handles copying a position
+   * @param {object} originalJob - the original job to copy
+   */
   const handleCopyPosition = (originalJob) => {
     const employerData = {
           username: currentUser.username,
@@ -296,7 +302,6 @@ export default function AdminPositions() {
       jobPositionStatus: 'OPEN',
       username: currentUser.username
     };
-    console.log('copy');
     setSelectedJob(copiedData);
     setIsCopy(true);
     setIsModalOpen(true);

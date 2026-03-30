@@ -12,6 +12,7 @@ import ApplicationCard from '@/components/applications/EmployerAndAdmin/Applicat
 import EditButton from '../common/buttons/EditButton';
 import { TablePagination, Divider, Box, Paper, Button, Modal, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
+import { useNotification } from '@/contexts/NotificationContext';
 export function UserRow({ user, role, onEdit }) {
 
     const [isMadeOffersModalOpen, setIsMadeOffersModalOpen] = useState(false);
@@ -304,7 +305,7 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
     const paginatedUsers = users.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-    const [copied, setCopied] = React.useState(false);
+    const { showNotification } = useNotification();
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
@@ -316,15 +317,12 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
     const handleCopy = async (emails) => {
         try {
             await navigator.clipboard.writeText(emails);
-            setCopied(true);
-
-            setTimeout(() => {
-                setCopied(false);
-            }, 5000);
+            showNotification("Emails copied successfully!", "success");
 
         } catch (err) {
             console.error('Failed to copy text: ', err);
-            alert('Failed to copy text.');
+            
+            showNotification("Failed to copy emails", "error");
         }
     };
 
@@ -408,12 +406,6 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
                                 }
                             })}
                                 onClick={() => handleCopy(users.map((user) => user.email).join())}>Copy all emails</Button>
-
-                            {copied && (
-                                <Typography variant='body2' sx={{height:20, py:1}}>
-                                    Emails copied!
-                                </Typography>
-                            )}
                         </Box>
                     </Box>
                 </Box>
