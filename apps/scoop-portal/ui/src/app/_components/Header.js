@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AppBar,
@@ -104,9 +104,11 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const [teams, setTeams] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [profileImage, setProfileImage] = useState("");
+  const fileInputRef = useRef(null);
   
   const [notificationPrefs, setNotificationPrefs] = useState({
     notifyEmail: false,
@@ -115,7 +117,6 @@ export default function Header() {
     slackUsername: "",
   });
   
-  const [editMode, setEditMode] = useState(false);
   const [tempPrefs, setTempPrefs] = useState({ ...notificationPrefs });
   const [statusMsg, setStatusMsg] = useState({ open: false, msg: "", severity: "info" });
 
@@ -139,7 +140,6 @@ export default function Header() {
 
   const handleProfileClose = () => {
     setProfileOpen(false);
-    setEditMode(false);
   };
 
   const getBaseUrl = (url) => url ? url.replace(/\/$/, "") : "";
@@ -211,7 +211,6 @@ export default function Header() {
       if (res.ok) {
         setNotificationPrefs({ ...payload });
         setTempPrefs(payload); 
-        setEditMode(false);
         setStatusMsg({ open: true, msg: "Preferences saved successfully", severity: "success" });
       } else {
         setStatusMsg({ open: true, msg: `Error saving: ${res.status}`, severity: "error" });
@@ -223,6 +222,35 @@ export default function Header() {
 
   const handlePrefChange = (field, value) => {
     setTempPrefs((prev) => ({ ...prev, [field]: value }));
+  };
+
+  useEffect(() => {
+    if (user?.profilePicture) {
+      setProfileImage(user.profilePicture);
+    } else {
+      setProfileImage("");
+    }
+  }, [user]);
+
+  const handleProfilePictureClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleProfilePictureSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      if (typeof dataUrl === "string") {
+        setProfileImage(dataUrl);
+        if (user && setUser) {
+          setUser({ ...user, profilePicture: dataUrl });
+        }
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const filteredResults = query
@@ -469,26 +497,70 @@ export default function Header() {
                 <Box sx={{ px: 4, pb: 4, mt: -6 }}>
                     {/* Avatar & Name */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                        <Avatar 
-                            sx={{ 
-                                width: 100, 
-                                height: 100, 
-                                bgcolor: "background.paper", // Matches card background 
-                                color: theme.ritColors.orange,
-                                border: "4px solid",
-                                borderColor: "background.paper",
-                                boxShadow: 2,
-                                fontSize: "2.5rem",
-                                mb: 1
+                        <Box
+                            sx={{
+                                position: 'relative',
+                                mb: 1,
+                                cursor: 'pointer',
+                                '&:hover .profilePictureOverlay': {
+                                    opacity: 1,
+                                },
                             }}
+                            onClick={handleProfilePictureClick}
                         >
-                            {user.fname[0]}{user.lname[0]}
-                        </Avatar>
+                            <Avatar
+                                src={profileImage || undefined}
+                                sx={{
+                                    width: 100,
+                                    height: 100,
+                                    bgcolor: profileImage ? theme.ritColors.gray_1 : "background.paper",
+                                    color: theme.ritColors.orange,
+                                    border: "4px solid",
+                                    borderColor: "background.paper",
+                                    boxShadow: 2,
+                                    fontSize: "2.5rem",
+                                }}
+                            >
+                                {user.fname[0]}{user.lname[0]}
+                            </Avatar>
+                            <Box
+                                className="profilePictureOverlay"
+                                sx={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    bgcolor: 'rgba(0, 0, 0, 0.75)',
+                                    color: theme.ritColors.white,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: '50%',
+                                    opacity: 0,
+                                    transition: 'opacity 0.2s ease-in-out',
+                                    px: 1,
+                                    textAlign: 'center',
+                                    fontWeight: 600,
+                                }}
+                            >
+                                <Typography variant="caption" textAlign="center">
+                                    Edit Profile Picture
+                                </Typography>
+                            </Box>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                onChange={handleProfilePictureSelect}
+                            />
+                        </Box>
                         <Typography variant="h5" fontWeight="bold">
                             {user.fname} {user.lname}
                         </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+                            Click the profile picture to change your photo
+                        </Typography>
                         <Chip 
-                            label={user.type} 
+                            label={user.type ? `${user.type.charAt(0).toUpperCase()}${user.type.slice(1)}` : user.type} 
                             size="small" 
                             color="primary" 
                             variant="outlined" 
@@ -499,8 +571,8 @@ export default function Header() {
                     {/* Basic Info */}
                     <Stack spacing={2}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <EmailIcon color="action" />
-                            <Typography variant="body1">{user.email}</Typography>
+                            <EmailIcon color="action" fontSize="small" />
+                            <Typography variant="body1" sx={{ lineHeight: 1.25 }}>{user.email}</Typography>
                         </Box>
                         
                         <Divider />
@@ -539,121 +611,98 @@ export default function Header() {
                         variant="outlined" 
                         sx={{ 
                             mt: 3, 
-                            // CHANGED: Use theme-aware background instead of hardcoded white
                             bgcolor: "background.default", 
-                            color: "text.primary" 
+                            color: "text.primary", 
+                            borderColor: theme.ritColors.gray_2,
                         }}
                     >
                         <CardContent>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <NotificationsActiveIcon color="white" fontSize="small" />
-                                    <Typography variant="subtitle1" fontWeight="600">Preferences</Typography>
-                                </Box>
-                                {!editMode && (
-                                    <Button 
-                                        startIcon={<EditIcon />} 
-                                        size="small" 
-                                        onClick={() => setEditMode(true)}
-                                        sx={{ color: theme.ritColors.orange }}
-                                    >
-                                        Edit
-                                    </Button>
-                                )}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                <NotificationsActiveIcon sx={{ color: theme.ritColors.orange }} fontSize="small" />
+                                <Typography variant="subtitle1" fontWeight="600">Notification preferences</Typography>
                             </Box>
-
-                            {!editMode ? (
-                                <Stack spacing={1}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="text.secondary">Email Alerts</Typography>
-                                        <Typography variant="body2" fontWeight="500">{notificationPrefs.notifyEmail ? "On" : "Off"}</Typography>
+                            <Stack spacing={2}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <Typography variant="body2" color="text.secondary">Email alerts</Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Typography variant="body2" fontWeight="500">{tempPrefs.notifyEmail ? "On" : "Off"}</Typography>
+                                        <Switch
+                                            size="small"
+                                            checked={tempPrefs.notifyEmail}
+                                            onChange={(e) => handlePrefChange("notifyEmail", e.target.checked)}
+                                            color="warning"
+                                        />
                                     </Box>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <Typography variant="body2" color="text.secondary">Slack Alerts</Typography>
-                                        <Typography variant="body2" fontWeight="500">{notificationPrefs.notifySlack ? "On" : "Off"}</Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <Typography variant="body2" color="text.secondary">Slack alerts</Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Typography variant="body2" fontWeight="500">{tempPrefs.notifySlack ? "On" : "Off"}</Typography>
+                                        <Switch
+                                            size="small"
+                                            checked={tempPrefs.notifySlack}
+                                            onChange={(e) => handlePrefChange("notifySlack", e.target.checked)}
+                                            color="warning"
+                                        />
                                     </Box>
-                                    {notificationPrefs.slackUsername && (
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <Typography variant="body2" color="text.secondary">Slack ID</Typography>
-                                            <Typography variant="body2">{notificationPrefs.slackUsername}</Typography>
-                                        </Box>
-                                    )}
-                                </Stack>
-                            ) : (
-                                <Stack spacing={2}>
-                                    <FormControlLabel
-                                        control={
-                                            <Switch
-                                                size="small"
-                                                checked={tempPrefs.notifyEmail}
-                                                onChange={(e) => handlePrefChange("notifyEmail", e.target.checked)}
-                                                color="warning"
-                                            />
-                                        }
-                                        label={<Typography variant="body2">Enable Email Notifications</Typography>}
-                                    />
-                                    <FormControlLabel
-                                        control={
-                                            <Switch
-                                                size="small"
-                                                checked={tempPrefs.notifySlack}
-                                                onChange={(e) => handlePrefChange("notifySlack", e.target.checked)}
-                                                color="warning"
-                                            />
-                                        }
-                                        label={<Typography variant="body2">Enable Slack Notifications</Typography>}
-                                    />
-                                    
-                                    <TextField
-                                        label="Notification Email"
-                                        variant="outlined"
-                                        size="small"
+                                </Box>
+                                {tempPrefs.slackUsername && (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <Typography variant="body2" color="text.secondary">Slack username</Typography>
+                                        <Typography variant="body2">{tempPrefs.slackUsername}</Typography>
+                                    </Box>
+                                )}
+                                <TextField
+                                    label="Notification email"
+                                    variant="outlined"
+                                    size="small"
+                                    fullWidth
+                                    value={tempPrefs.userEmail}
+                                    onChange={(e) => handlePrefChange("userEmail", e.target.value)}
+                                    InputProps={{
+                                        startAdornment: <InputAdornment position="start"><EmailIcon fontSize="small"/></InputAdornment>,
+                                    }}
+                                />
+                                <TextField
+                                    label="Slack username"
+                                    variant="outlined"
+                                    size="small"
+                                    fullWidth
+                                    placeholder="@username"
+                                    value={tempPrefs.slackUsername}
+                                    onChange={(e) => handlePrefChange("slackUsername", e.target.value)}
+                                    InputProps={{
+                                        startAdornment: <InputAdornment position="start"><TagIcon fontSize="small"/></InputAdornment>,
+                                    }}
+                                />
+                                <Box sx={{ display: 'flex', gap: 1, pt: 1, flexWrap: 'wrap' }}>
+                                    <Button 
                                         fullWidth
-                                        value={tempPrefs.userEmail}
-                                        onChange={(e) => handlePrefChange("userEmail", e.target.value)}
-                                        InputProps={{
-                                            startAdornment: <InputAdornment position="start"><EmailIcon fontSize="small"/></InputAdornment>,
+                                        variant="contained" 
+                                        startIcon={<SaveIcon />}
+                                        onClick={handleSavePreferences}
+                                        sx={{
+                                            bgcolor: theme.ritColors.orange,
+                                            color: theme.ritColors.white,
+                                            '&:hover': {
+                                                bgcolor: theme.ritColors.black,
+                                                color: theme.ritColors.white,
+                                            },
                                         }}
-                                    />
-                                    
-                                    <TextField
-                                        label="Slack Username"
-                                        variant="outlined"
-                                        size="small"
+                                    >
+                                        Save
+                                    </Button>
+                                    <Button 
                                         fullWidth
-                                        placeholder="@username"
-                                        value={tempPrefs.slackUsername}
-                                        onChange={(e) => handlePrefChange("slackUsername", e.target.value)}
-                                        InputProps={{
-                                            startAdornment: <InputAdornment position="start"><TagIcon fontSize="small"/></InputAdornment>,
-                                        }}
-                                    />
-
-                                    <Box sx={{ display: 'flex', gap: 1, pt: 1 }}>
-                                        <Button 
-                                            fullWidth
-                                            variant="contained" 
-                                            startIcon={<SaveIcon />}
-                                            onClick={handleSavePreferences}
-                                            sx={{ bgcolor: theme.ritColors.orange, '&:hover': { bgcolor: RIT_DEEP_ORANGE } }}
-                                        >
-                                            Save
-                                        </Button>
-                                        <Button 
-                                            fullWidth
-                                            variant="outlined" 
-                                            startIcon={<CancelIcon />}
-                                            onClick={() => {
-                                                setEditMode(false);
-                                                setTempPrefs({ ...notificationPrefs });
-                                            }}
-                                            color="inherit"
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </Box>
-                                </Stack>
-                            )}
+                                        variant="outlined" 
+                                        startIcon={<CancelIcon />}
+                                        onClick={() => setTempPrefs({ ...notificationPrefs })}
+                                        color="inherit"
+                                    >
+                                        Reset
+                                    </Button>
+                                </Box>
+                            </Stack>
                         </CardContent>
                     </Card>
                 </Box>

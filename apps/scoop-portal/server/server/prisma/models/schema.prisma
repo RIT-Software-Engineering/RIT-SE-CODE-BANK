@@ -61,6 +61,7 @@ model users {
   fname          String
   lname          String
   email          String  @unique
+  profilePicture String? @db.Text
   type           String
   semester_group String?
   project        String?
