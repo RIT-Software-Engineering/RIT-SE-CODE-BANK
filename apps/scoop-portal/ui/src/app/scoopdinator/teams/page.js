@@ -729,28 +729,6 @@ export default function TeamsPage() {
           </Button>
         </Box>
       </Modal>
-
-      <Box
-        component="footer"
-        sx={{
-          width: "100%",
-          height: "80px",
-          bgcolor: "#212121",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          px: { xs: 2, md: 3 },
-          mt: 8,
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-        }}
-      >
-        <Typography variant="body2" sx={{ fontWeight: 300 }}>
-          © {new Date().getFullYear()} RIT | Contact | Terms
-        </Typography>
-      </Box>
     </Box>
   );
 }
