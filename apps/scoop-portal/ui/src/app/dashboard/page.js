@@ -315,6 +315,7 @@ export default function WorkflowDashboard() {
                           variant="h3"
                           sx={{
                             mb: 0.5,
+                            fontWeight: 700,
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",

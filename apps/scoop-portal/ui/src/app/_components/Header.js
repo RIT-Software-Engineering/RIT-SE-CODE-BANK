@@ -85,6 +85,19 @@ const searchablePages = [
     { label: "Manage Co-op Reports", path: "/scoopdinator/administrative/reports" },
 ];
 
+const getFilteredWorkflowItems = (role, submenu) => {
+  const normalizedRole = (role || "").toLowerCase();
+  if (normalizedRole === "scooployee") {
+    return submenu.filter((item) => ["Scooployee", "Bubbles"].includes(item.label));
+  }
+
+  if (normalizedRole === "scoopdinator") {
+    return submenu.filter((item) => ["Scoopdinator", "Submission", "Bubbles"].includes(item.label));
+  }
+
+  return submenu.filter((item) => item.label === "Bubbles");
+};
+
 export default function Header() {
   const theme = useTheme();
   const [anchorEls, setAnchorEls] = useState({});
@@ -252,34 +265,14 @@ export default function Header() {
               </Box>
             </Link>
 
-            {navItems.map(({ label, submenu, path }) => (
-              <Box key={label} sx={{ position: "relative", mr: 1 }}>
-                {path ? (
-                  <Button
-                    component={Link}
-                    href={path}
-                    sx={{
-                      color: theme.palette.mode === "light" ? theme.ritColors.black : theme.ritColors.white,
-                      fontWeight: 600,
-                      textTransform: "none",
-                      '&:hover': {
-                        bgcolor: 'transparent',
-                        textDecoration: 'underline',
-                        textDecorationColor: theme.ritColors.orange,
-                        textDecorationThickness: '2px',
-                        textUnderlineOffset: '4px',
-                      },
-                    }}
-                  >
-                    {label}
-                  </Button>
-                ) : (
-                  <>
+            {navItems.map(({ label, submenu, path }) => {
+              const visibleSubmenu = label === "Workflows" ? getFilteredWorkflowItems(user?.type, submenu) : submenu;
+              return (
+                <Box key={label} sx={{ position: "relative", mr: 1 }}>
+                  {path ? (
                     <Button
-                      aria-controls={anchorEls[label] ? `${label}-menu` : undefined}
-                      aria-haspopup="true"
-                      onClick={(e) => handleMenuOpen(e, label)}
-                      endIcon={<ArrowDropDownIcon />}
+                      component={Link}
+                      href={path}
                       sx={{
                         color: theme.palette.mode === "light" ? theme.ritColors.black : theme.ritColors.white,
                         fontWeight: 600,
@@ -295,28 +288,51 @@ export default function Header() {
                     >
                       {label}
                     </Button>
-                    <Menu
-                      id={`${label}-menu`}
-                      anchorEl={anchorEls[label]}
-                      open={Boolean(anchorEls[label])}
-                      onClose={() => handleMenuClose(label)}
-                      PaperProps={{ elevation: 3, sx: { mt: 1 } }}
-                    >
-                      {submenu.map((item) => (
-                        <MenuItem
-                          key={item.path}
-                          component={Link}
-                          href={item.path}
-                          onClick={() => handleMenuClose(label)}
-                        >
-                          {item.label}
-                        </MenuItem>
-                      ))}
-                    </Menu>
-                  </>
-                )}
-              </Box>
-            ))}
+                  ) : (
+                    <>
+                      <Button
+                        aria-controls={anchorEls[label] ? `${label}-menu` : undefined}
+                        aria-haspopup="true"
+                        onClick={(e) => handleMenuOpen(e, label)}
+                        endIcon={<ArrowDropDownIcon />}
+                        sx={{
+                          color: theme.palette.mode === "light" ? theme.ritColors.black : theme.ritColors.white,
+                          fontWeight: 600,
+                          textTransform: "none",
+                          '&:hover': {
+                            bgcolor: 'transparent',
+                            textDecoration: 'underline',
+                            textDecorationColor: theme.ritColors.orange,
+                            textDecorationThickness: '2px',
+                            textUnderlineOffset: '4px',
+                          },
+                        }}
+                      >
+                        {label}
+                      </Button>
+                      <Menu
+                        id={`${label}-menu`}
+                        anchorEl={anchorEls[label]}
+                        open={Boolean(anchorEls[label])}
+                        onClose={() => handleMenuClose(label)}
+                        PaperProps={{ elevation: 3, sx: { mt: 1 } }}
+                      >
+                        {visibleSubmenu.map((item) => (
+                          <MenuItem
+                            key={item.path}
+                            component={Link}
+                            href={item.path}
+                            onClick={() => handleMenuClose(label)}
+                          >
+                            {item.label}
+                          </MenuItem>
+                        ))}
+                      </Menu>
+                    </>
+                  )}
+                </Box>
+              );
+            })}
           </Box>
 
           {/* Search, Profile, Logout */}
