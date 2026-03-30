@@ -556,7 +556,7 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
             metadata: {
                 code: metaWorkflow
             }
-        }]);
+        }].sort((a, b) => a.name.localeCompare(b.name))); // Just sort them
         returnVal = "Good";
     }).catch(async error => {
         const data = await error.response.json();
