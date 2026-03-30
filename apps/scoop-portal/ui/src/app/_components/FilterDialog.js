@@ -24,18 +24,21 @@ export default function FilterDialog({
   onCancel,
   onSubmit,
   actionLabel,
-  secondaryAction
+  secondaryAction,
+  actionButtonProps = {},
+  actionsSx = {},
 }) {
+  const { variant, sx, ...restActionButtonProps } = actionButtonProps;
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>{children}</DialogContent>
-      <DialogActions sx={{ display: "flex", justifyContent: "space-around" }}>
+      <DialogActions sx={{ display: "flex", justifyContent: "flex-end", gap: 1, px: 2, ...actionsSx }}>
         <Button variant="outline-orange" onClick={onCancel}>
           Cancel
         </Button>
         {secondaryAction}
-        <Button variant="outline-orange" onClick={onSubmit}>
+        <Button variant={variant || "outline-orange"} onClick={onSubmit} sx={sx} {...restActionButtonProps}>
           {actionLabel}
         </Button>
       </DialogActions>

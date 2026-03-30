@@ -42,6 +42,37 @@ import { notify } from "../utils/notify";
 
 export default function Journal() {
   const theme = useTheme();
+  const journalSelectMenuProps = {
+    PaperProps: {
+      sx: {
+        '& .MuiMenuItem-root:hover': {
+          bgcolor: theme.ritColors.orange,
+          color: theme.ritColors.white,
+        },
+        '& .MuiMenuItem-root.Mui-selected:hover': {
+          bgcolor: theme.ritColors.orange,
+          color: theme.ritColors.white,
+        },
+      },
+    },
+  };
+
+  const autocompleteListboxProps = {
+    sx: {
+      '& .MuiAutocomplete-option:hover': {
+        bgcolor: theme.ritColors.orange,
+        color: theme.ritColors.white,
+      },
+      '& .MuiAutocomplete-option[aria-selected="true"]': {
+        bgcolor: alpha(theme.ritColors.orange, 0.16),
+        color: theme.palette.mode === 'light' ? theme.ritColors.black : theme.ritColors.white,
+      },
+      '& .MuiAutocomplete-option[aria-selected="true"]:hover': {
+        bgcolor: theme.ritColors.orange,
+        color: theme.ritColors.white,
+      },
+    },
+  };
   
   const [journalEntries, setJournalEntries] = useState([]);
   const [filteredJournalEntries, setFilteredJournalEntries] = useState([]);
@@ -420,14 +451,14 @@ export default function Journal() {
                     <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                       <Button
                         size="small"
+                        variant="outline-orange"
                         onClick={() => setReplyEntry(entry)}
-                        sx={{ color: 'background' }}
                       >
                         {entry.next_entries.length || 0} Replies
                       </Button>
                       <Button
                         size="small"
-                        variant={isDarkMode ? "outlined" : "contained"}
+                        variant="solid-orange"
                         onClick={() => { 
                           setNewEntryPreviousId(entry.id); 
                           setNewEntryIsComment(true); 
@@ -475,6 +506,7 @@ export default function Journal() {
                 onChange={(e, v) => setNewEntrySemester(v ? v.value : "")}
                 renderInput={(params) => <TextField {...params} label="Semester" required />}
                 sx={{ mb: 2 }}
+                ListboxProps={autocompleteListboxProps}
               />
               )}
             </FormControl>
@@ -487,6 +519,7 @@ export default function Journal() {
                 getOptionLabel={(option) => option.label}
                 onChange={(e, s) => setNewEntryRecipientIds(s.map(sn => sn.value))}
                 renderInput={(params) => <TextField {...params} label="Recipient" required />}
+                ListboxProps={autocompleteListboxProps}
               />
             </FormControl>
             )}
@@ -498,6 +531,7 @@ export default function Journal() {
                 getOptionLabel={(option) => option.label}
                 onChange={(e, v) => setNewEntryTopicId(v ? v.value : "")}
                 renderInput={(params) => <TextField {...params} label="Topic" required />}
+                ListboxProps={autocompleteListboxProps}
               />
             </FormControl>
             )}
@@ -508,6 +542,7 @@ export default function Journal() {
                 getOptionLabel={(option) => option.label}
                 onChange={(e, v) => setNewEntryVisibilityLevel(v ? v.value : "")}
                 renderInput={(params) => <TextField {...params} label="Visibility Level" required />}
+                ListboxProps={autocompleteListboxProps}
               />
             </FormControl>
 
@@ -523,7 +558,7 @@ export default function Journal() {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => handleCancelNewEntry()}>Cancel</Button>
+          <Button variant="outline-orange" onClick={() => handleCancelNewEntry()}>Cancel</Button>
           <Button variant="contained" onClick={handleCreateNewEntry}>Save</Button>
         </DialogActions>
       </Dialog>
@@ -534,40 +569,42 @@ export default function Journal() {
         onCancel={() => setFilterDialogOpen(false)}
         onSubmit={() => handleApplyFilter()}
         actionLabel="Apply Filter"
-        secondaryAction={<Button variant="outlined" onClick={handleClearFilter}>Clear FIlter</Button>}
+        actionButtonProps={{ variant: "solid-orange", sx: { textTransform: 'none' } }}
+        actionsSx={{ justifyContent: 'flex-end', gap: 1 }}
+        secondaryAction={<Button variant="outline-orange" onClick={handleClearFilter}>Clear Filter</Button>}
       >
         <Stack spacing={2}>
            <Box>
             <Typography variant="caption" color="text.secondary">Semester</Typography>
-            <Select fullWidth size="small" value={filterSemesterValue} onChange={handleFilterSemesterChange} displayEmpty>
+            <Select fullWidth size="small" value={filterSemesterValue} onChange={handleFilterSemesterChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               {Object.entries(semesterGroups).map(([id, name]) => <MenuItem key={id} value={id}>{name}</MenuItem>)}
             </Select>
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Sender</Typography>
-            <Select fullWidth size="small" value={filterSenderValue} onChange={handleFilterSenderChange} displayEmpty>
+            <Select fullWidth size="small" value={filterSenderValue} onChange={handleFilterSenderChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               {Object.entries(users).map(([id, name]) => <MenuItem key={id} value={id}>{name}</MenuItem>)}
             </Select>
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Recipient</Typography>
-            <Select fullWidth size="small" value={filterRecipientValue} onChange={handleFilterRecipientChange} displayEmpty>
+            <Select fullWidth size="small" value={filterRecipientValue} onChange={handleFilterRecipientChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               {Object.entries(users).map(([id, name]) => <MenuItem key={id} value={id}>{name}</MenuItem>)}
             </Select>
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Topic</Typography>
-            <Select fullWidth size="small" value={filterTopicValue} onChange={handleFilterTopicChange} displayEmpty>
+            <Select fullWidth size="small" value={filterTopicValue} onChange={handleFilterTopicChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               {Object.entries(users).map(([id, name]) => <MenuItem key={id} value={id}>{name}</MenuItem>)}
             </Select>
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Entry Type</Typography>
-            <Select fullWidth size="small" value={filterEntryTypeValue} onChange={handleFilterEntryTypeChange} displayEmpty>
+            <Select fullWidth size="small" value={filterEntryTypeValue} onChange={handleFilterEntryTypeChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               <MenuItem value="AUTOMATED">AUTOMATED</MenuItem>
               <MenuItem value="MANUAL">MANUAL</MenuItem>
@@ -575,7 +612,7 @@ export default function Journal() {
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Time</Typography>
-            <Select fullWidth size="small" value={filterTimeValue} onChange={handleFilterTimeChange} displayEmpty>
+            <Select fullWidth size="small" value={filterTimeValue} onChange={handleFilterTimeChange} displayEmpty MenuProps={journalSelectMenuProps}>
                <MenuItem value="newest_first">Newest First</MenuItem>
                <MenuItem value="oldest_first">Oldest First</MenuItem>
             </Select>
@@ -598,7 +635,7 @@ export default function Journal() {
                 />
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleCancelEdit}>Cancel</Button>
+              <Button variant="outline-orange" onClick={handleCancelEdit}>Cancel</Button>
               <Button variant="contained" onClick={() => handleSaveEdit(editingEntry)}>Save</Button>
             </DialogActions>
           </>
@@ -621,7 +658,7 @@ export default function Journal() {
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={() => setReplyEntry(null)}>Close</Button>
+                <Button variant="solid-orange" onClick={() => setReplyEntry(null)}>Close</Button>
             </DialogActions>
         </>
         )}
