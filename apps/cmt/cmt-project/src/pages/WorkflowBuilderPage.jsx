@@ -387,14 +387,18 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
             if (validation[0]){
                 if (parseInt(validation[0]) < 1)
                     // Skip validation since the user won't be able to put anything in
-                    break
+                    break;
 
                 // Our validation here is the max length of the string
                 output[0]['validation'] = {maxLength: validation[0]}
                 // Add a placeholder if the placeholder fits the given constraints
-                if (placeholder && (placeholder.length <= parseInt(validation[0] || validation.length < 1))) 
+                if (placeholder && (placeholder.length <= parseInt(validation[0]))) 
                     output[0]['placeholder'] = placeholder
             } 
+            else {
+                if (placeholder)
+                    output[0]['placeholder'] = placeholder;
+            }
             break;
         
         case "NUMBER_STUDENTS":
@@ -417,7 +421,11 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 }
 
                 // If the placeholder fits within the validation constraints
-                if (placeholder && ((placeholder >= validation[0][0] && placeholder <= validation[1][0]) || validation.length < 1))
+                if (placeholder && ((placeholder >= validation[0][0] && placeholder <= validation[1][0])))
+                    output[0]['placeholder'] = placeholder;
+            }
+            else {
+                if (placeholder)
                     output[0]['placeholder'] = placeholder;
             }
             break;
