@@ -144,6 +144,7 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false); // Used to prevent double-submitting for actions that may take longer to submit
+    const [error, setError] = useState('');
 
     // Called when finished submitting or exiting the modal
     function clearForm(){
@@ -151,6 +152,7 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
         setDescription('');
         setActionType('simple');
         setDepthLevel(depthLevel-1); // Remove a depth layer of one since we're done in the modal
+        setError('');
         clearFunction();
     }
 
@@ -166,44 +168,48 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
         e.preventDefault();
         setLoading(true);
         // TODO maybe make more generic so it's an almost empty function being passed?
-        await addAction(index, workflows, setWorkflows, name, description, "simple", parentId, extraData, refresh).then(() => {
+        const submission = await addAction(index, workflows, setWorkflows, name, description, "simple", parentId, extraData, setError, refresh);
+        setLoading(false);
+        if (submission === "Good"){
             clearForm();
             setIsOpen(false);
-            setLoading(false);
-        })
+        }
     }
 
     async function editSimpleAction(e){
         e.preventDefault();
         setLoading(true);
         // TODO maybe make more generic so it's an almost empty function being passed?
-        await editAction(name, description, curAction, extraData, refresh).then(() => {
+        const submission = await editAction(name, description, curAction, extraData, setError, refresh);
+        setLoading(false);
+        if (submission === "Good"){
             clearForm();
             setIsOpen(false);
-            setLoading(false);
-        })
+        }
     }
 
     async function createComplexAction(e) {
         e.preventDefault();
         setLoading(true);
         // TODO maybe make more generic so it's an almost empty function being passed?
-        await addAction(index, workflows, setWorkflows, name, description, "complex", parentId, extraData, refresh).then(()=>{
+        const submission = await addAction(index, workflows, setWorkflows, name, description, "complex", parentId, extraData, setError, refresh);
+        setLoading(false);
+        if (submission === "Good"){
             clearForm();
             setIsOpen(false);
-            setLoading(false);
-        })
+        }
     }
 
     async function editComplexAction(e){
         e.preventDefault();
         setLoading(true);
         // TODO maybe make more generic so it's an almost empty function being passed?
-        await editAction(name, description, curAction, extraData, refresh).then(() => {
+        const submission = await editAction(name, description, curAction, extraData, setError, refresh);
+        setLoading(false);
+        if (submission === "Good"){
             clearForm();
             setIsOpen(false);
-            setLoading(false);
-        })
+        }
     }
 
     async function createWorkflowAction(e){
@@ -233,6 +239,12 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     onHide={()=>{setIsOpen(false); clearForm(); setIsEdit(false);}} onExit={()=>{setIsOpen(false); clearForm(); setIsEdit(false);}}>
         <Modal.Header closeButton>{isEdit ? 'Edit' : 'New'} Action</Modal.Header>
         <Modal.Body>
+            {error ? 
+            <div className="alert alert-danger">
+                {error}
+            </div>
+            : <></>}
+
             <Form>
                 <Form.Label>Action Name</Form.Label>
                 <Form.Control required onChange={e=>setName(e.target.value)} defaultValue={isEdit ? curAction.name : ''}/>

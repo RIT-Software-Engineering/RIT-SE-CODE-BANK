@@ -215,7 +215,7 @@ export function BuilderPage(){
  *
  * @param {Object} props
  * @param {string} props.code - The metadata code that needs to be rendered. These are CMT-specific and have different kinds of placeholders and validation for each code
- * @param {(string) => void} props.setPlaceholder - If there's a placeholder for the action set it. E.g. Placeholder 30 for number of students
+ * @param {(placeholer: string) => void} props.setPlaceholder - If there's a placeholder for the action set it. E.g. Placeholder 30 for number of students
  * @param {Array} props.validation - An array that contains values that the user input is constrained to. Used here to set the proper array if needed.
  * @param {(Array) => void} props.setValidation - Sets the validation array. Called onChange and sets it.
  * @param {Boolean} props.isEdit - Whether the user is editing or creating. Used to check and load curAction if it is an edit
@@ -394,6 +394,8 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 // Add a placeholder if the placeholder fits the given constraints
                 if (placeholder && (placeholder.length <= parseInt(validation[0]))) 
                     output[0]['placeholder'] = placeholder
+                else if (placeholder)
+                    throw new Error("Length of placeholder string must be less than validation length.s")
             } 
             else {
                 if (placeholder)
@@ -413,7 +415,7 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
             if (validation[0][0] && validation[1][0]) {
                 if (validation[0][0] > validation[1][0])
                     // Just skip and don't set validation if the min is greater than the max
-                    break
+                    throw new Error("Max must be greater than min.")
 
                 output[0]['validation'] = {
                 max: validation[1][0],
@@ -423,6 +425,8 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 // If the placeholder fits within the validation constraints
                 if (placeholder && ((placeholder >= validation[0][0] && placeholder <= validation[1][0])))
                     output[0]['placeholder'] = placeholder;
+                else if (placeholder)
+                    throw new Error("Placeholder must fall between validation options.")
             }
             else {
                 if (placeholder)
@@ -461,7 +465,8 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 isRequired: isRequired,
                 fromSessionNum: validation[0][0]
             }];
-            if (validation.length > 1)
+            console.log(validation)
+            if (validation[1])
                 output[0]['toSessionNum'] = validation[1][0];
             break;
 
@@ -724,14 +729,20 @@ async function setNextActionInfo(action, actions, workflowId, id, name, descript
  * @param {string} actionType - the action type. We either pass in "simple" or "complex"
  * @param {string} parentActionId - the parentActionId if it exists. We leave it at that for complex parents, but if it's a "workflow parent", we do some work on it
  * @param {Object} extraData - Extra data that was passed into {@link WorkflowComponent} and {@link ComplexRenderer} that was passed into the {@link ActionModal}. In this case, it's metadata stuff.
+ * @param {(error: String) => void} setError - Error that will be displayed on the ActionModal component if something goes wrong
  * @param {() => void} refresh - function that would avoid tricky logic, but we don't use it here since the logic has already been completed. Used mainly to maintain abstraction. 
 */
-async function addStandardAction(index, workflows, setWorkflows, name, description, actionType, parentActionId, extraData, refresh) {
+async function addStandardAction(index, workflows, setWorkflows, name, description, actionType, parentActionId, extraData, setError, refresh) {
     let code, outputs;
     // Since complex actions don't have any codes or outputs, we only set it for simple actions
     if (actionType === 'simple'){
         code = extraData.code;
-        outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)
+        try {
+            outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)
+        } catch (error) {
+            setError(error.message);
+            return "Bad";   
+        }
     }
 
     if (!name)
@@ -780,7 +791,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                     extraData.code = `SESSION_${j}`;
                     extraData.validation = [[`${j+1}`]]
                     await addStandardAction(index, workflows, setWorkflows,
-                        `Create Session ${j+1}`, description, "simple", parentActionId, extraData, refresh
+                        `Create Session ${j+1}`, description, "simple", parentActionId, extraData, setError, refresh
                     )
                 }
                 // We call the function a bunch of times but don't want to create a duplicate once completed
@@ -796,6 +807,12 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
         metadata.outputs = outputs;
     }
 
+    if (code === "SESSION" && metadata.code === code){
+        setError("Please input a session number.");
+        return "Bad";
+    }
+
+    let returnVal;
     await CMTJsonFetch("POST", "/workflow/actionTemplate/action", {name, description, actionType, metadata, parentActionId: !isWorkflowChild ? parentActionId : null}).then(async response => {
         const data = await response.json();
 
@@ -885,7 +902,13 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                 rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
             }
         }
+        returnVal = "Good";
+    }).catch(async error => {
+        const data = await error.response.json();
+        setError(data.error);
+        returnVal = "Bad";
     });
+    return returnVal;
 }
 
 /**
@@ -898,14 +921,21 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
  * @param {string} description - the description of our action
  * @param {Object} actionToUpdate - the action we are updating
  * @param {Object} extraData - Extra data that was passed into {@link WorkflowComponent} and {@link ComplexRenderer} that was passed into the {@link ActionModal}. In this case, it's metadata stuff.
+ * @param {(error: String) => void} setError - Error that will be displayed on the ActionModal component if something goes wrong
  * @param {() => void} refresh - Function to refresh the page upon completion. Used so we don't have to do complicated logic and let the API handle stuff
  */
-async function editStandardAction(name, description, actionToUpdate, extraData, refresh){
+async function editStandardAction(name, description, actionToUpdate, extraData, setError, refresh){
     let code, outputs;
     // Since complex actions don't have any codes or outputs, we only set it for simple actions
     if (actionToUpdate.actionType === 'simple'){
         code = extraData.code;
-        outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)
+        try {
+            outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)
+        } catch (error) {
+            setError(error.message);
+            return "Bad";
+        }
+        
     }
 
     if (!name)
@@ -917,10 +947,25 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
 
     if (code)
         metadata.code = code;
-    if (outputs)
+    if (outputs){
+        if (outputs[0].fromSessionNum){
+            metadata.code = `SESSION_${parseInt(outputs[0].fromSessionNum)-1}`;
+            outputs = [{isRequired: outputs[0].isRequired, validation: {sessionNum: outputs[0].fromSessionNum}}];
+        }
         metadata.outputs = outputs;
+    }
 
-    await CMTJsonFetch("PUT", `/workflow/actionTemplate/action/${actionToUpdate.id}`, {name, description, metadata}).then(async _ => await refresh());
+    let returnVal;
+    await CMTJsonFetch("PUT", `/workflow/actionTemplate/action/${actionToUpdate.id}`, {name, description, metadata}).then(async _ => {
+            await refresh();
+            returnVal = "Good";
+    }).catch(async error => {
+        const data = await error.response.json();
+        setError(data.error);
+        returnVal = "Bad";
+    });
+
+    return returnVal;
 }
 
 /**
