@@ -1,7 +1,7 @@
 import { preProcess } from "./pre_process.js";
 import { lexer } from "./lexer.js";
 import { parseLine } from "./parser.js";
-import { encodeLine } from "./encodeLine.js/index.js";
+import { encodeLine } from "./encodeLine.js";
 import { firstPass } from "./pass1.js";
 
 export function assemble(text) {
@@ -18,7 +18,6 @@ export function assemble(text) {
     
     const {symbols, annotatedAst} = firstPass(ast);
 
-    console.log(annotatedAst);
     //Works as pass two instead of creating a new file
     const words = [];
     for(let data of annotatedAst) {

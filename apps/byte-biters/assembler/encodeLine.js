@@ -1,27 +1,36 @@
 import {encodeOperand} from "./encoder.js";
 import { OPCODES } from "./opcodes.js";
 
-export function encodeLine(parsedData) {
+export function encodeLine(parsedData, symbols) {
     if(parsedData.type === "instruction") {
-        return encodeInstruction(parsedData);
+        return encodeInstruction(parsedData, symbols);
     }
     else if(parsedData.type === "directive") {
-        return encodeDirective(parsedData);
-    } //add else for label-only
+        return encodeDirective(parsedData, symbols);
+    } else {
+        return [];
+    }
 }
 
 function encodeDirective(parsedData) {
 
 }
 
-function encodeInstruction(parsedData) {
+function encodeInstruction(parsedData, symbols) {
     const {type, label, mnemonic, src, dst} = parsedData;
     
     const UpperMnemonic = mnemonic.toUpperCase();
     const opcodeInfo = OPCODES[UpperMnemonic];
+    if(src.offset != null && isLabel(src.offset)) {
+        src.offset = symbols[src.offset];
+    }
+    if(dst.offset != null && isLabel(dst.offset)) {
+        dst.offset = symbols[dst.offset];
+    }
     if(opcodeInfo !== undefined) {
         switch(opcodeInfo.type) {
             case 'two':
+                console.log(src);
                 return twoEncoder(opcodeInfo, src, dst);
             case 'one':
                 return oneEncoder(opcodeInfo, dst);
@@ -67,4 +76,8 @@ function oneEncoder(opcodeInfo, dst) {
 
 function zeroEncoder(opcodeInfo) {
     return [opcodeInfo.code];
+}
+
+function isLabel(token) {
+    return /^[a-zA-Z._][a-zA-Z0-9._]*$/.test(token);
 }

@@ -1,7 +1,7 @@
 import {preProcess} from "./pre_process.js";
 import {lexer} from "./lexer.js";
 import {parseLine} from "./parser.js";
-import {encodeLine} from "./encodeLine.js/index.js";
+import {encodeLine} from "./encodeLine.js";
 import { assemble } from "./index.js";
 import { firstPass } from "./pass1.js";
 
@@ -13,9 +13,8 @@ const data = "   MOV R1     , R2      ; move R1 into R2\n" +
                 ";CLR 100(R2);"
 
 const data2 = `
-START:
-MOV #5, R0
-.ASCIZ 1, 2, 3, 4
+VALUE:
+MOV @#VALUE, R0
 `;
 
 assemble(data2);
