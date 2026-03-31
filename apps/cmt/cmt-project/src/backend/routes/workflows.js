@@ -32,11 +32,8 @@ router.post("/workflowTemplate", async(req, res) => {
         const {workflow} = req.body; 
         const professorId = req.user.uid;
         const workflows = await workflowsFetch("GET", "workflows/?tags=WorkflonyFirstTheRestNowhere_CMT_Template");
-        console.log("NEw meta code:", workflow.metadata?.code)
         workflows.forEach(prevWorkflows => {
             const prevMetaCode = JSON.parse(prevWorkflows.baseAction.metadata?.code)
-            console.log(prevMetaCode)
-            console.log(prevMetaCode === workflow.metadata?.code)
             if (prevMetaCode !== "None" && prevMetaCode === workflow.metadata?.code)
                 throw new Error("A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again.")
         });
@@ -156,7 +153,7 @@ router.put("/actionTemplate/nextAction/:actionId", async (req, res) => {
 router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
-        console.log("=".repeat(50))
+        console.log("=".repeat(10))
         const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
         const actionWithContexts = actions.map(action => 
             actionToActionWithContext(action, null, null, req.user?.uid)

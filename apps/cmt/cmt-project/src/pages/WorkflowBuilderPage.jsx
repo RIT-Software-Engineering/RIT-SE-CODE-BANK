@@ -65,7 +65,6 @@ export function BuilderPage(){
                 }
             });
             const resolvedWorkflows = await Promise.all(workflowPromises);
-            console.log(resolvedWorkflows)
             setWorkflows(resolvedWorkflows.sort((a, b) => a.name.localeCompare(b.name)));
             setLoading(false);
         });
@@ -465,7 +464,6 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 isRequired: isRequired,
                 fromSessionNum: validation[0][0]
             }];
-            console.log(validation)
             if (validation[1])
                 output[0]['toSessionNum'] = validation[1][0];
             break;

@@ -33,15 +33,12 @@ router.get("/action/:id", async (req, res) => {
 // Used to get workflows by matching metadata
 router.get("/metadata", async (req, res) => {
   const {key, value} = req.query;
-  console.log(key, value)
   const baseAction = await prisma.metadata.findMany({
     where: {key: key, value: value},
   });
 
   if (!baseAction)
     throw new Error("No base action found.")
-
-  console.log(baseAction[0].actionId)
 
   const workflows = [];
   for (let index = 0; index < baseAction.length; index++) {
@@ -55,7 +52,6 @@ router.get("/metadata", async (req, res) => {
   }
   
 
-  console.log("Workflow", workflows)
   res.json(workflows.map((w) => exportWorkflow(w)));
 })
 
