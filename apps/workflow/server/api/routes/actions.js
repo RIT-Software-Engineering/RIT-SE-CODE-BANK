@@ -194,40 +194,20 @@ router.delete("/:id", async (req, res) => {
     });
 
     if (previousActionId){
-        if (nextActionId){
-            await prisma.action.update({
+        await prisma.action.update({
                 where: {id: previousActionId},
                 data: {
-                    nextActionId: nextActionId
+                    nextActionId: nextActionId ?? null
                 }
             });
-        }
-        else {
-            await prisma.action.update({
-                where: {id: previousActionId},
-                data: {
-                    nextActionId: null
-                }
-            });
-        }
     }
     else if (rootActionId){
-        if (nextActionId){
-            await prisma.workflowAttributes.update({
+        await prisma.workflowAttributes.update({
                 where: {id: rootActionId},
                 data: {
-                    rootAction: {connect: {id: nextActionId}}
+                    rootActionId: nextActionId ?? null
                 }
             });
-        }
-        else {
-            await prisma.workflowAttributes.update({
-                where: {id: rootActionId},
-                data: {
-                    rootActionId: null
-                }
-            });
-        }
     }
     });
     res.json({ message: "Deleted" });

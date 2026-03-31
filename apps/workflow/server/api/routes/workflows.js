@@ -174,9 +174,14 @@ router.post("/", async (req, res) => {
   });
 });
 
-// PUT /workflows/action/:id
+/** 
+ * An endpoint to update the root action of a workflow action
+ * In the workflow builder, we only keep track of the workflow attribute for top-level workflows
+ * Here, we use the workflow base action ID to add a root action instead of the workflow attribute ID
+ * PUT /workflows/action/:id
+ */
 router.put("/action/:id", async (req, res) => {
-  const { name, description, metadata, tags, rootActionId } = req.body;
+  const { rootActionId } = req.body;
   const { id } = req.params;
 
   const workflowData = {};
@@ -184,52 +189,11 @@ router.put("/action/:id", async (req, res) => {
     workflowData.rootAction = { connect: { id: rootActionId } };
   }
 
-  const baseActionData = {};
-  if (name) {
-    baseActionData.name = name;
-  }
-  if (description) {
-    baseActionData.description = description;
-  }
-  if (tags) {
-    workflowData.tags = {
-      // Clear existing connections
-      set: [],
-
-      // Add/re-add them
-      connectOrCreate: tags.map((name) => ({
-        where: { name },
-        create: { name },
-      })),
-    };
-  }
-
   await prisma.$transaction(async () => {
-    if (metadata) {
-      // Delete old metadata
-      const actionMd = (
-        await prisma.workflowAttributes.findUnique({
-          where: {baseActionId: id},
-          select: { baseAction: { select: { metadata: true } } },
-        })
-      ).baseAction.metadata;
-      await prisma.metadata.deleteMany({
-        where: { id: { in: actionMd.map((m) => m.id) } },
-      });
-
-      // Update with new metadata
-      baseActionData.metadata = { create: importMetadata(metadata) };
-    }
-
     const workflow = await prisma.workflowAttributes.update({
       where: {baseActionId: id},
       data: {
         ...workflowData,
-        baseAction: {
-          update: {
-            ...baseActionData,
-          },
-        },
       },
     });
 
