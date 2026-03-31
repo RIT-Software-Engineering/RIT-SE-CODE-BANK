@@ -585,8 +585,6 @@ export default function Journal() {
           </>
         )}
       </Dialog>
-
-      {/* TODO: Add footer? */}
     </>
   );
 }

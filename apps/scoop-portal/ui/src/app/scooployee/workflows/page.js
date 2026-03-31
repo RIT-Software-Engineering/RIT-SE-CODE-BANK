@@ -183,24 +183,6 @@ export default function WorkflowsList() {
           </Grid>
         )}
       </Container>
-
-      <Box
-        component="footer"
-        sx={{
-          height: '80px',
-          bgcolor: '#212121',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 2, md: 3 },
-          mt: 8,
-        }}
-      >
-        <Typography variant="body2" sx={{ fontWeight: 300 }}>
-          © {new Date().getFullYear()} RIT | Contact | Terms
-        </Typography>
-      </Box>
     </Box>
   );
 }

@@ -126,8 +126,7 @@ const LandingPage = () => {
           </Box>
         </Box>
       </Box>
-
-      <Footer/>
+    <Footer />
     </Box>
   );
 };

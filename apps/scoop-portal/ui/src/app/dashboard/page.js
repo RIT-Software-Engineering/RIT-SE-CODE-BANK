@@ -356,12 +356,6 @@ export default function WorkflowDashboard() {
           ))}
         </Grid>
       </Container>
-
-      <Box
-        component="footer"
-        >
-          <Footer />
-      </Box>
     </Box>
   );
 }
