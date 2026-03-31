@@ -557,8 +557,13 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
         }].sort((a, b) => a.name.localeCompare(b.name))); // Just sort them
         returnVal = "Good";
     }).catch(async error => {
-        const data = await error.response.json();
-        setError(data.error);
+        if (error.response){
+            const data = await error.response.json();
+            setError(data.error);
+        }
+        else {
+            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
+        }
         returnVal = "Bad";
     });
     // Finally does not return our value so we just return it after our request
@@ -621,9 +626,14 @@ async function workflowEditSubmit(name, description, tags, workflows, setWorkflo
         setWorkflows(workflowsCopy);
         returnVal = "Good";
     }).catch(async error => {
-        const data = await error.response.json();
-        setError(data.error);
-        returnVal = data.error;
+        if (error.response){
+            const data = await error.response.json();
+            setError(data.error);
+        }
+        else {
+            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
+        }
+        returnVal = "Bad";
     });
     // Finally does not return our value so we just return it after our request
     return returnVal;
@@ -902,8 +912,13 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
         }
         returnVal = "Good";
     }).catch(async error => {
-        const data = await error.response.json();
-        setError(data.error);
+        if (error.response){
+            const data = await error.response.json();
+            setError(data.error);
+        }
+        else {
+            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
+        }
         returnVal = "Bad";
     });
     return returnVal;
@@ -958,8 +973,13 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
             await refresh();
             returnVal = "Good";
     }).catch(async error => {
-        const data = await error.response.json();
-        setError(data.error);
+        if (error.response){
+            const data = await error.response.json();
+            setError(data.error);
+        }
+        else {
+            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
+        }
         returnVal = "Bad";
     });
 
