@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import Button from "./Button";
 
-export default function FileUploader ({setCode}){
+export default function FileUploader ({setCode, onUploadComplete}){
     const fileInputRef = useRef(null);
     const [file, setFile] = useState(null);
 
@@ -23,8 +23,11 @@ export default function FileUploader ({setCode}){
         const reader = new FileReader();
 
         reader.onload = (event) => {
-        const text = event.target.result;
-        setCode(text);
+            const text = event.target.result;
+            setCode(text);
+            if (onUploadComplete) {
+                onUploadComplete();
+            }
         };
 
         reader.readAsText(file);

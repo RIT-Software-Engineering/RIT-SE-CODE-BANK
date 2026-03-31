@@ -12,7 +12,7 @@ export default function Header({setCode}) {
             <div className="relative ">
                 <Button className="font-mono text-text-muted text-lg text-center px-2" onClick={() => setIsOpen(!isOpen)}>Add File! +</Button>
                 {isOpen && (
-                    <FileUploader setCode={setCode}></FileUploader>
+                    <FileUploader setCode={setCode} onUploadComplete={() => setIsOpen(false)} ></FileUploader>
                 )}
             </div>
             <Button className="font-mono text-text-muted text-lg"> External Resources</Button>
