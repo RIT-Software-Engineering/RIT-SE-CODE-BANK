@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Header from "@components/Header";
 import ProjectsLoading from "./loading";
 import {
@@ -16,12 +16,26 @@ import {
   TextField,
   FormControl,
   Autocomplete,
+  InputLabel,
   MenuItem,
+  Select,
   useTheme,
   Chip,
   Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  ToggleButton,
+  ToggleButtonGroup,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import SearchIcon from "@mui/icons-material/Search";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import TableRowsIcon from "@mui/icons-material/TableRows";
+import GridViewIcon from "@mui/icons-material/GridView";
 import StatusBadge from "@components/StatusBadge";
 
 /**
@@ -38,6 +52,11 @@ export default function Projects() {
   const [loading, setLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [view, setView] = useState("table");
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState("ALL");
+  const [filterSemesterGroup, setFilterSemesterGroup] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState({
     title: "",
     display_name: "",
@@ -84,6 +103,28 @@ export default function Projects() {
 
     fetchProjects();
   }, []);
+
+  const STATUS_OPTIONS = ["ALL", "ACTIVE", "IN PROGRESS", "COMPLETED", "INACTIVE"];
+
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      const status = (project.status || "").toUpperCase();
+      if (filterStatus !== "ALL" && status !== filterStatus) {
+        return false;
+      }
+      if (filterSemesterGroup !== "ALL" && String(project.semesterGroupId) !== String(filterSemesterGroup)) {
+        return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const haystack = `${project.title || ""} ${project.display_name || ""} ${project.description || ""}`.toLowerCase();
+        if (!haystack.includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [projects, filterStatus, filterSemesterGroup, searchQuery]);
 
   const openCreateModal = () => {
     setEditingProject(null);
@@ -153,18 +194,6 @@ export default function Projects() {
     }
   };
 
-  const projectCounts = {
-    total: projects.length,
-    active: projects.filter((project) => (project.status || "").toLowerCase() === "active").length,
-    inProgress: projects.filter((project) => (project.status || "").toLowerCase() === "in progress").length,
-    completed: projects.filter((project) => (project.status || "").toLowerCase() === "completed").length,
-    inactive: projects.filter((project) => (project.status || "").toLowerCase() === "inactive").length,
-    other: projects.filter(
-      (project) => !["active", "in progress", "completed", "inactive"].includes((project.status || "").toLowerCase())
-    ).length,
-  };
-
-
   if (loading) {
     return <ProjectsLoading />;
   }
@@ -172,7 +201,7 @@ export default function Projects() {
   return (
     <>
       <Header />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 4, width: "100%" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 2, mb: 3 }}>
           <Box>
             <Typography variant="h1">Projects</Typography>
@@ -180,40 +209,113 @@ export default function Projects() {
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateModal}>Create Project</Button>
         </Box>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 2, mb: 4 }}>
-          {[
-            { label: "Total Projects", value: projectCounts.total },
-            { label: "Active", value: projectCounts.active },
-            { label: "In Progress", value: projectCounts.inProgress },
-            { label: "Completed", value: projectCounts.completed },
-            { label: "Inactive", value: projectCounts.inactive },
-          ].map((stat) => (
-            <Paper
-              key={stat.label}
-              variant="outlined"
-              sx={{
-                p: 3,
-                borderRadius: 3,
-                bgcolor: theme.palette.mode === "light" ? theme.palette.grey[50] : theme.palette.background.paper,
-                borderColor: theme.palette.divider,
-                display: "flex",
-                flexDirection: "column",
-                gap: 0.5,
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+            <Button variant="outline-orange" startIcon={<FilterAltOutlinedIcon />} onClick={() => setFilterDialogOpen(true)}>
+              Filter
+            </Button>
+            {filterStatus !== "ALL" && (
+              <Chip
+                size="medium"
+                label={filterStatus.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                onDelete={() => setFilterStatus("ALL")}
+                sx={{ bgcolor: theme.palette.info.main, color: theme.ritColors.white }}
+              />
+            )}
+            {filterSemesterGroup !== "ALL" && (
+              <Chip
+                size="medium"
+                label={`Semester: ${semesterGroups[filterSemesterGroup] || "Unknown"}`}
+                onDelete={() => setFilterSemesterGroup("ALL")}
+                sx={{ bgcolor: theme.palette.info.main, color: theme.ritColors.white }}
+              />
+            )}
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+            <TextField
+              size="small"
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ width: 280 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
+                  </InputAdornment>
+                ),
               }}
+            />
+            <ToggleButtonGroup
+              value={view}
+              exclusive
+              onChange={(_, val) => val && setView(val)}
+              size="small"
             >
-              <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>{stat.value}</Typography>
-            </Paper>
-          ))}
+              <ToggleButton value="table" aria-label="table view">
+                <TableRowsIcon fontSize="small" />
+              </ToggleButton>
+              <ToggleButton value="grid" aria-label="grid view">
+                <GridViewIcon fontSize="small" />
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
         </Box>
 
         {projects.length === 0 ? (
           <Typography variant="body1" color="text.secondary">
             No projects found. Check back later or create a new project.
           </Typography>
+        ) : filteredProjects.length === 0 ? (
+          <Typography variant="body1" color="text.secondary">
+            No matching projects found for the current filters.
+          </Typography>
+        ) : view === "table" ? (
+          <Paper elevation={1} square sx={{ width: "100%", maxHeight: 520, overflow: "auto" }}>
+            <Table stickyHeader sx={{ width: "100%", minWidth: 900 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Project</TableCell>
+                  <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Semester</TableCell>
+                  <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Teams</TableCell>
+                  <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Status</TableCell>
+                  <TableCell align="right" sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>Options</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredProjects.map((project) => (
+                  <TableRow key={project.id} hover>
+                    <TableCell>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        {project.display_name || project.title || "Untitled Project"}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {project.description || "No description available."}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{semesterGroups[project.semesterGroupId] || "No semester"}</TableCell>
+                    <TableCell>
+                      {Array.isArray(project.teams) && project.teams.length > 0
+                        ? project.teams.map((team) => team?.name || allTeams[team?.id] || team).join(", ")
+                        : "No teams"}
+                    </TableCell>
+                    <TableCell>
+                      {project.status ? <StatusBadge value={project.status} type="project" size="small" /> : "—"}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button variant="outline-orange" onClick={() => openEditModal(project)}>
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
         ) : (
           <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 3 }}>
-            {projects.map((project) => (
+            {filteredProjects.map((project) => (
               <Card
                 square
                 key={project.id}
@@ -240,7 +342,7 @@ export default function Projects() {
                     <Chip size="small" label={semesterGroups[project.semesterGroupId] || "No semester"} variant="outlined" />
                     {project.teams && project.teams.length > 0 ? (
                       project.teams.map((team) => (
-                        <Chip key={team.id} size="small" label={team.name} variant="outlined" />
+                        <Chip key={team.id || team} size="small" label={team.name || allTeams[team] || team} variant="outlined" />
                       ))
                     ) : (
                       <Chip size="small" label="No teams" variant="outlined" />
@@ -260,6 +362,49 @@ export default function Projects() {
           </Box>
         )}
       </Container>
+
+      <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Filter Projects</DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filterStatus}
+                label="Status"
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                {STATUS_OPTIONS.map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status === "ALL" ? "All" : status.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>Semester</InputLabel>
+              <Select
+                value={filterSemesterGroup}
+                label="Semester"
+                onChange={(e) => setFilterSemesterGroup(e.target.value)}
+              >
+                <MenuItem value="ALL">All</MenuItem>
+                {Object.entries(semesterGroups).map(([id, name]) => (
+                  <MenuItem key={id} value={id}>{name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
+          <Button variant="outlined" color="inherit" onClick={() => { setFilterStatus("ALL"); setFilterSemesterGroup("ALL"); setSearchQuery(""); }}>
+            Reset
+          </Button>
+          <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={createModalOpen} onClose={closeModal} fullWidth maxWidth="sm">
         <form onSubmit={handleSubmit}>
