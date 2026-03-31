@@ -2,7 +2,7 @@ import Button from "./Button";
 import FileUploader from "./FileUploader";
 import { useState } from "react"
 
-//header, includes the add file and external resources buttons/links
+//header, includes the file and external resources buttons/links
 export default function Header({setCode}) {
     const [isOpen, setIsOpen] = useState(false)
 
@@ -10,11 +10,14 @@ export default function Header({setCode}) {
         <div>
         <div className="p-6 flex bg-main-primary min-h-20 justify-between">
             <div className="relative ">
-                <Button className="font-mono text-text-muted text-lg text-center px-2" onClick={() => setIsOpen(!isOpen)}>Add File! +</Button>
+                {/* file button on the top left of the page, opens a dropdown */}
+                <Button className="font-mono text-text-muted text-lg text-center px-2" onClick={() => setIsOpen(!isOpen)}>File</Button>
                 {isOpen && (
+                    // refer to FileUploader component
                     <FileUploader setCode={setCode} onUploadComplete={() => setIsOpen(false)} ></FileUploader>
                 )}
             </div>
+            {/* external resources button on the top right of the page, has no current functionality */}
             <Button className="font-mono text-text-muted text-lg"> External Resources</Button>
         </div>
         
