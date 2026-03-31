@@ -6,6 +6,55 @@ const { exportWorkflow } = require("../helpers/workflows.js");
 const prisma = new PrismaClient();
 const { permissionTypes } = require("../consts.js") || [];
 
+router.get("/action/:id", async (req, res) => {
+  const {id} = req.params;
+  const workflow = await prisma.workflowAttributes.findUnique({
+    where: {baseActionId: id},
+    include: {
+      tags: true,
+      baseAction: {
+        include: {
+          metadata: true,
+          permissions: true,
+        },
+      },
+      rootAction: {
+        include: {
+          metadata: true
+        }
+      },
+    },
+  });
+
+  res.json(exportWorkflow(workflow));
+})
+
+// GET /workflows/metadata
+// Used to get workflows by matching metadata
+router.get("/metadata", async (req, res) => {
+  const {key, value} = req.query;
+  const baseAction = await prisma.metadata.findMany({
+    where: {key: key, value: value},
+  });
+
+  if (!baseAction)
+    throw new Error("No base action found.")
+
+  const workflows = [];
+  for (let index = 0; index < baseAction.length; index++) {
+    const workflow = (await prisma.workflowAttributes.findUnique({
+      where: {baseActionId: baseAction[index].actionId}
+    }));
+
+    // Only add to workflows if it's not null/undefined
+    if (workflow)
+      workflows.push(workflow)
+  }
+  
+
+  res.json(workflows.map((w) => exportWorkflow(w)));
+})
+
 /**
  * Get a specific workflow by id
  */
@@ -125,6 +174,33 @@ router.post("/", async (req, res) => {
   });
 });
 
+/** 
+ * An endpoint to update the root action of a workflow action
+ * In the workflow builder, we only keep track of the workflow attribute for top-level workflows
+ * Here, we use the workflow base action ID to add a root action instead of the workflow attribute ID
+ * PUT /workflows/action/:id
+ */
+router.put("/action/:id", async (req, res) => {
+  const { rootActionId } = req.body;
+  const { id } = req.params;
+
+  const workflowData = {};
+  if (rootActionId) {
+    workflowData.rootAction = { connect: { id: rootActionId } };
+  }
+
+  await prisma.$transaction(async () => {
+    const workflow = await prisma.workflowAttributes.update({
+      where: {baseActionId: id},
+      data: {
+        ...workflowData,
+      },
+    });
+
+    return res.json(workflow);
+  });
+});
+
 // PUT /workflows/:id
 router.put("/:id", async (req, res) => {
   const { name, description, metadata, tags, rootActionId } = req.body;
@@ -143,7 +219,7 @@ router.put("/:id", async (req, res) => {
     baseActionData.description = description;
   }
   if (tags) {
-    baseActionData.tags = {
+    workflowData.tags = {
       // Clear existing connections
       set: [],
 

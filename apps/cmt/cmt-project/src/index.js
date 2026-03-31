@@ -13,6 +13,7 @@ import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { CourseOverview } from "./pages/course/CourseOverview.jsx";
 import { CourseDashboard } from "./pages/course/CourseDashboard.jsx";
+import { BuilderPage } from "./pages/WorkflowBuilderPage.jsx";
 
 /* ------------------------------------------------------------------
    Suppress noisy ResizeObserver errors in development
@@ -85,6 +86,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route 
             path="courses/:id" 
             element={<CourseDashboard />} 
+          />
+          <Route 
+            path="workflowbuilder" 
+            element={<BuilderPage />} 
           />
         </Route>
       </Routes>

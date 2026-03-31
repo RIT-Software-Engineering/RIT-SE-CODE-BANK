@@ -71,9 +71,17 @@ export default function SiteNav() {
         { to: "/courses", label: "Course Overview"},
         { to: "/createtemplate", label: "Create Template" },
         { to: "/coursewebsite", label: "Course Website" },
-        { to: "/teambuilder", label: "Team Builder" },
       ]
     },
+    {
+      id: "tools",
+      label: "Tools",
+      icon: <Wrench size={18} />,
+      items: [
+        { to: "/teambuilder", label: "Team Builder" },
+        { to: "/workflowbuilder", label: "Workflow Builder"},
+      ]
+    }
   ];
 
   return (
