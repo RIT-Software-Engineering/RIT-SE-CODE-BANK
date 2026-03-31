@@ -1,3 +1,4 @@
+//register component thst sets the styling for all registers
 export default function Register({name, value = "0000"}) {
     return (
         <div className="flex flex-row">

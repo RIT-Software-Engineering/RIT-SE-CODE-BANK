@@ -1,7 +1,7 @@
 import Button from "./Button";
 import { useState } from "react"
 
-//dropdown featurn for the side panel
+//dropdown feature for the side panel
 export default function Dropdown({name}) {
     const [isOpen, setIsOpen] = useState(false)
 

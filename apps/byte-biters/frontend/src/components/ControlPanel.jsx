@@ -2,6 +2,8 @@ import Button from "./Button";
 
 export default function ControlPanel({ onAssemble, onRun, onStepForward, onStepBackward, onRestart }) {
     return (
+        // all the buttons in the control panel, all have same styling
+        //functionality handled in App
         <div className="bg-s h-full bg-main-secondary flex flex-row items-center justify-center gap-4 py-4">
             <Button variant="primary" onClick={onAssemble}>Assemble</Button>
             <Button variant="primary" onClick={onRun}> Run </Button>
