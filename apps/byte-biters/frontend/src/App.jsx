@@ -36,7 +36,7 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen bg-main-primary text-text-muted font-mono flex flex-col">
-      <Header></Header>
+      <Header setCode={setCode}></Header>
 
       <Group>
         {/* left side */}
