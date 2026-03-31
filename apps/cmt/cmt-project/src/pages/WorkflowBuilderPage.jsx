@@ -423,7 +423,7 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 }
 
                 // If the placeholder fits within the validation constraints
-                if (placeholder && ((placeholder >= validation[0][0] && placeholder <= validation[1][0])))
+                if (placeholder && ((parseInt(placeholder) >= parseInt(validation[0][0]) && parseInt(placeholder) <= parseInt(validation[1][0]))))
                     output[0]['placeholder'] = placeholder;
                 else if (placeholder)
                     throw new Error("Placeholder must fall between validation options.")

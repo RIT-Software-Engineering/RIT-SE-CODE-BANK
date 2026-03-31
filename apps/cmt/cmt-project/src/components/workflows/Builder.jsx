@@ -164,11 +164,12 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
         loadFunction();
     }
 
-    async function createSimpleAction(e){
+
+    async function addStandardAction(e){
         e.preventDefault();
         setLoading(true);
         // TODO maybe make more generic so it's an almost empty function being passed?
-        const submission = await addAction(index, workflows, setWorkflows, name, description, "simple", parentId, extraData, setError, refresh);
+        const submission = await addAction(index, workflows, setWorkflows, name, description, actionType, parentId, extraData, setError, refresh);
         setLoading(false);
         if (submission === "Good"){
             clearForm();
@@ -176,31 +177,7 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
         }
     }
 
-    async function editSimpleAction(e){
-        e.preventDefault();
-        setLoading(true);
-        // TODO maybe make more generic so it's an almost empty function being passed?
-        const submission = await editAction(name, description, curAction, extraData, setError, refresh);
-        setLoading(false);
-        if (submission === "Good"){
-            clearForm();
-            setIsOpen(false);
-        }
-    }
-
-    async function createComplexAction(e) {
-        e.preventDefault();
-        setLoading(true);
-        // TODO maybe make more generic so it's an almost empty function being passed?
-        const submission = await addAction(index, workflows, setWorkflows, name, description, "complex", parentId, extraData, setError, refresh);
-        setLoading(false);
-        if (submission === "Good"){
-            clearForm();
-            setIsOpen(false);
-        }
-    }
-
-    async function editComplexAction(e){
+    async function editSimpleOrComplexAction(e){
         e.preventDefault();
         setLoading(true);
         // TODO maybe make more generic so it's an almost empty function being passed?
@@ -267,12 +244,12 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
                 <>
                 {children}
                 <div className="flex justify-end pt-2">
-                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editSimpleAction(e) : createSimpleAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
+                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editSimpleOrComplexAction(e) : addStandardAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
                 </div>
                 </> : 
                 actionType === "complex" ? // if complex action 
                 <div className="flex justify-end pt-2">
-                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editComplexAction(e) : createComplexAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
+                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editSimpleOrComplexAction(e) : addStandardAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
                 </div> : 
                 // if workflow action
                 <div className="flex justify-end pt-2">
