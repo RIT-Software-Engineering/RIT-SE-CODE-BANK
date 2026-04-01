@@ -28,10 +28,12 @@ import {
   FormControl,
   InputLabel,
   InputAdornment,
+  IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const TYPE_LABELS = {
   prospect: "Prospect",
@@ -375,6 +377,9 @@ export default function ViewScooployees() {
     <Box sx={{ backgroundColor: (theme) => theme.palette.grey[100], minHeight: "100vh" }}>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+        <IconButton onClick={() => router.back()} aria-label="back">
+          <ArrowBackIcon />
+        </IconButton>
         <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
           Manage Users
         </Typography>

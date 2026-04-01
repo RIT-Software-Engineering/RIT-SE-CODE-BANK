@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@mui/material/styles";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -26,7 +27,9 @@ import {
   Select,
   MenuItem,
   InputAdornment,
+  IconButton,
 } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
@@ -66,6 +69,7 @@ export default function TeamsPage() {
   const [newTeamSemesterGroupId, setNewTeamSemesterGroupId] = useState("");
 
   const theme = useTheme();
+  const router = useRouter();
 
   const fetchTeams = async () => {
     try {
@@ -272,6 +276,13 @@ export default function TeamsPage() {
       <Header />
 
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+        <IconButton onClick={() => router.back()} aria-label="back">
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h1" sx={{ mb: 3 }}>
+          Teams Overview
+        </Typography>
+
         <Box
           sx={{
             display: "flex",
@@ -282,7 +293,6 @@ export default function TeamsPage() {
             gap: 2,
           }}
         >
-          <Typography variant="h1">Teams Overview</Typography>
           <Button
             variant="contained"
             color="primary"

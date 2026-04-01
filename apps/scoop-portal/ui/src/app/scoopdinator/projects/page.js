@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@components/Header";
 import ProjectsLoading from "./loading";
 import {
@@ -30,12 +31,14 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   InputAdornment,
+  IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import GridViewIcon from "@mui/icons-material/GridView";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import StatusBadge from "@components/StatusBadge";
 
 /**
@@ -46,6 +49,7 @@ import StatusBadge from "@components/StatusBadge";
  */
 export default function Projects() {
   const theme = useTheme();
+  const router = useRouter();
   const [projects, setProjects] = useState([]);
   const [allTeams, setAllTeams] = useState([]);
   const [semesterGroups, setSemesterGroups] = useState([]);
@@ -202,10 +206,14 @@ export default function Projects() {
     <Box sx={{ backgroundColor: (theme) => theme.palette.grey[100], minHeight: "100vh" }}>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+        <IconButton onClick={() => router.back()} aria-label="back">
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h1" sx={{ mb: 3 }}>
+          Projects
+        </Typography>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 2, mb: 3 }}>
-          <Box>
-            <Typography variant="h1">Projects</Typography>
-          </Box>
+          <Box />
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateModal}>Create Project</Button>
         </Box>
 

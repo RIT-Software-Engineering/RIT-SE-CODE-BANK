@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@components/Header";
 import { useTheme } from "@mui/material/styles";
 import {
+  Container,
   Typography,
   Paper,
   Table,
@@ -21,12 +23,15 @@ import {
   Alert,
   TextField,
   InputAdornment,
+  IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function ManageSemesterGroups() {
   const theme = useTheme();
+  const router = useRouter();
 
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -240,6 +245,9 @@ export default function ManageSemesterGroups() {
     >
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
+        <IconButton onClick={() => router.back()} aria-label="back">
+          <ArrowBackIcon />
+        </IconButton>
         <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
           Manage Semester Groups
         </Typography>
