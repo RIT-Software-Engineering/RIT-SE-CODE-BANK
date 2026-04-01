@@ -40,7 +40,7 @@ export async function workflowsFetch(method, url, body, headers) {
  * @param {string} description 
  * @param {string} actionType 
  * @param {object} metadata 
- * @param {*} parentId 
+ * @param {*|null} parentId 
  * @returns response from /action
  */
 export async function createAction(userId, name, description, actionType, metadata, parentId) {
@@ -49,9 +49,23 @@ export async function createAction(userId, name, description, actionType, metada
     name: name || 'New Action',
     description: description || 'No description provided.',
     actionType: actionType || 'simple',
-    metadata: metadata || {},
+    metadata: makeMetadataSafeForWorkflows(metadata) || {},
     parentActionId: parentId
   })
+}
+
+/**
+ * Updates an action with relevant data.
+ * Either name and description should be filled in or nextActionId.
+ *
+ * @param {string|null} name 
+ * @param {string|null} description 
+ * @param {*|null} nextActionId 
+ * @param {*} actionId 
+ * @returns response from /action 
+ */
+export async function updateAction(name, description, nextActionId, actionId){
+  return await workflowsFetch("PUT", `actions/${actionId}`, {name, description, nextActionId});
 }
 
 /**
@@ -124,25 +138,26 @@ export async function createAction(userId, name, description, actionType, metada
  * @returns the response from the "/workflows" POST endpoint
  */
 export async function objectToNewWorkflow(workflow, ownerId) {
-  if (workflow.actions.length === 0) {
-    throw Error(`Cannot create workflow from object ${workflow}: actions array is empty. Workflows must have at least 1 action.`)
-  }
-  if (workflow.actions[0].parentActionId) {
-    throw Error(`Cannot create workflow from object ${workflow}: parentActionId is specified in the root action. It should not be!`)
-  }
-  if (workflow.userId || workflow.actions[0].userId) {
-    throw Error(`Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!`)
+  if (!workflow.childActions)
+    throw new Error(`There was a workflow action with no simple action attached. Please contact Kenn Martinez to have this addressed. Action name: ${workflow.name}`)
+  if (workflow.childActions.length !== 0) {
+    if (workflow.childActions[0].parentActionId) {
+      throw Error(`Cannot create workflow from object ${workflow}: parentActionId is specified in the root action. It should not be!`)
+    }
+    if (workflow.userId || workflow.childActions[0].userId) {
+      throw Error(`Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!`)
+    }
   }
   if (!ownerId) {
     throw Error(`Cannot create workflow from object ${workflow}: Missing ownerId argument: ${ownerId}! If you are specifying ownerId in the object, instead pass it as a second argument to this function.`)
   }
 
   // Create actions
-  let rootActionId
+  let rootActionId;
   let previousActionId
   // Start from the end of the list so we can associate each action with the one after it
-  for (let index = workflow.actions.length - 1; index >= 0; index--) {
-    const action = workflow.actions[index]
+  for (let index = workflow.childActions.length - 1; index >= 0; index--) {
+    const action = workflow.childActions[index]
 
     const createdAction = await objectToNewAction(action, ownerId, null)
 
@@ -161,9 +176,38 @@ export async function objectToNewWorkflow(workflow, ownerId) {
     description: workflow.description,
     metadata: workflow.metadata ? makeMetadataSafeForWorkflows(workflow.metadata) : {},
     rootActionId: rootActionId,
+    tags: workflow.tags
   })
 
-  return createdWorkflow
+  return createdWorkflow;
+}
+
+/**
+ * Basically the same as the function above but for the Workflow builder.
+ * The Workflow Builder never starts with any actions so all that code is cut out.
+ * Created so that we can create a workflow without actions unlike when creating a course.
+ *
+ * @export
+ * @async
+ * @param {Object} workflow The whole workflow, as shown above.
+ * @param {string} ownerId The userId that will be recorded as the workflow's and actions' creator.
+ * @returns the response from the "/workflows" POST endpoint
+ */
+export async function newBuilderWorkflow(workflow, ownerId){
+  if (!ownerId) {
+    throw Error(`Cannot create workflow from object ${workflow}: Missing ownerId argument: ${ownerId}! If you are specifying ownerId in the object, instead pass it as a second argument to this function.`)
+  }
+
+  const createdWorkflow = await workflowsFetch("POST", "workflows", {
+    userId: ownerId,
+    name: workflow.name,
+    description: workflow.description,
+    metadata: workflow.metadata ? makeMetadataSafeForWorkflows(workflow.metadata) : {},
+    rootActionId: null,
+    tags: workflow.tags
+  })
+
+  return createdWorkflow;
 }
 
 /**
@@ -175,15 +219,15 @@ export async function objectToNewWorkflow(workflow, ownerId) {
 export async function workflowToObject(workflow) {
   return {
     ...workflow,
-    baseActionId: undefined, // Remove these since baseAction/rootAction exists and also has an id field
-    rootActionId: undefined,
+    baseActionId: workflow.id, // Remove these since baseAction/rootAction exists and also has an id field
+    rootActionId: null,
   }
 }
 
 /**
  * The Workflows API calls .toString on every value of the metadata object passed in.
  * This function converts an arbitrary metadata object into an object where each value is a JSON object, so that .toString doesnt wreck it.
- * Convert back with {@link metadataArrayToObject}
+ * Convert back with {@link compressedMetadataToObject}
  * 
  * @param {Object} metadata 
  * @return Metadata object ready to be sent to the Workflows API
@@ -205,7 +249,7 @@ export function makeMetadataSafeForWorkflows(metadata) {
  * @param {string|null} parentActionId - The parent action ID (null for root actions)
  * @returns The created action (or nested workflow's baseAction for workflow actions)
  */
-async function objectToNewAction(action, ownerId, parentActionId) {
+export async function objectToNewAction(action, ownerId, parentActionId) {
 
   if (action.actionType === "workflow") {
     const nestedWorkflow = await objectToNewWorkflow(action, ownerId)
@@ -217,7 +261,7 @@ async function objectToNewAction(action, ownerId, parentActionId) {
     
     // Just as a complex action represents its children, the workflows base action represents its children too.
     // But in this case, getting the base action ID isnt as simple, so we format it more nicely
-    return { id: nestedWorkflow.baseActionId }
+    return { id: nestedWorkflow.baseActionId, workflow: nestedWorkflow }
   }
 
   // Create simple or complex action
@@ -229,12 +273,16 @@ async function objectToNewAction(action, ownerId, parentActionId) {
   })
 
   // Link complex action's children
-  // Updated version for the staging environment's node version
-  if (action.childActions) {
-  for (const childAction of [...action.childActions].reverse()) {
-    await objectToNewAction(childAction, ownerId, createdAction.id)
+  if (action.actionType === 'complex'){
+    if (action.childActions.length > 0) {
+      for (const childAction of [...action.childActions].reverse()) {
+        await objectToNewAction(childAction, ownerId, createdAction.id)
+      }
+    }
+    else {
+      throw new Error(`There was a complex action with no simple actions attached. Please contact Kenn Martinez to have this addressed. Action name: ${action.name}`)
+    }
   }
-}
 
   return createdAction
 }

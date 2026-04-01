@@ -71,7 +71,7 @@ async function getFullActionTree(rootActionId) {
           throw Error("Unexpected action type");
       }
 
-      actions.push(action);
+      actions.push(exportAction(action));
       currentActionId = null;
       if (action.nextActionId) currentActionId = action.nextActionId; // Move to the next action in the chain
     }
@@ -82,7 +82,7 @@ async function getFullActionTree(rootActionId) {
 
 const exportAction = (action) => ({
   ...action,
-  metadata: action.metadata.reduce(
+  metadata: action?.metadata.reduce(
     (acc, m) => ({ ...acc, [m.key]: m.value }),
     {}
   ),

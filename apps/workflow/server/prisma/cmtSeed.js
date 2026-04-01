@@ -36,8 +36,12 @@ async function createWorkflow(workflowData) {
     baseActionData.description = workflowData.description;
   if (workflowData.isFrozen) data.isFrozen = workflowData.isFrozen;
   if (workflowData.metadata) {
+    let safeMetadata = {}
+    Object.entries(workflowData.metadata).forEach(([key, value]) => {
+      safeMetadata[key] = JSON.stringify(value)
+    })
     baseActionData.metadata = {
-      create: importMetadata(workflowData.metadata),
+      create: importMetadata(safeMetadata),
     };
   }         
   if (workflowData.previousActionId) {
@@ -48,6 +52,16 @@ async function createWorkflow(workflowData) {
   if (workflowData.parentActionId) {
     baseActionData.parentAction = {
       connect: { id: workflowData.parentActionId },
+    };
+  }
+  let tags;
+  if (workflowData.tags) {
+    tags = {
+      // Add/re-add them
+      connectOrCreate: workflowData.tags.map((name) => ({
+        where: { name },
+        create: { name },
+      })),
     };
   }
 
@@ -71,6 +85,7 @@ async function createWorkflow(workflowData) {
             },
           },
         },
+        tags: tags
       },
     });
 
@@ -123,8 +138,12 @@ async function createAction(actionData) {
       if (actionData.actionType) data.actionType = actionData.actionType;
       if (actionData.isFrozen) data.isFrozen = actionData.isFrozen;
       if (actionData.metadata) {
+        let safeMetadata = {}
+        Object.entries(actionData.metadata).forEach(([key, value]) => {
+          safeMetadata[key] = JSON.stringify(value)
+        })
         data.metadata = {
-          create: importMetadata(actionData.metadata),
+          create: importMetadata(safeMetadata),
         };
       }
       // actions directly in complex/branching actions only
@@ -166,12 +185,10 @@ async function createAction(actionData) {
  * Main function
  */
 async function main() {
-  await deleteWorkflows();
+  
 
-  if (process.env.NODE_ENV === "production") {
-    throw Error(
-      "This action should only be used in development for populating the database with test data."
-    );
+  if (process.env.NODE_ENV !== "production") {
+    await deleteWorkflows();
   }
 
   ///////////
@@ -186,7 +203,7 @@ async function main() {
   // Workflows //
   ///////////////
 
-    const workflowData = [
+    const oldWorkflowData = [
     {
       name: "SEED Create course",
       description:
@@ -239,6 +256,140 @@ async function main() {
       ],
     },
   ];
+
+  const workflowData = [
+    {
+    name: 'Create Course',
+    description: 'Default course creation template',
+    tags: ["WorkflonyFirstTheRestNowhere_CMT_Template"],
+    userId: users[0].id,
+    metadata: {code: "Course Creation Workflow"},
+    actions: [
+        {
+            name: 'Course Details',
+            description: 'Enter your course details',
+            actionType: 'complex',
+            childActions: [
+                {
+                    name: 'Course Section',
+                    description: 'Enter your courses section',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_SECTION',
+                        outputs: [
+                            {
+                                name: 'Course Section',
+                                key: 'section',
+                                type: 'text',
+                                isRequired: true,
+                                placeholder: '1',
+                                validation: {
+                                    maxLength: 30,
+                                },
+                            },
+                        ],
+                    },
+                },
+                {
+                    name: 'Number of Students',
+                    description: 'Enter the number of students enrolled in your course',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'NUMBER_STUDENTS',
+                        outputs: [
+                            {
+                                name: 'Number of Students',
+                                key: 'students',
+                                type: 'number',
+                                isRequired: true,
+                                placeholder: 20,
+                                validation: {
+                                    max: 999,
+                                    min: 1,
+                                },
+                            },
+                        ],
+                    },
+                },
+                {
+                    name: 'Section Semester',
+                    description: 'Enter the semester the section will take place in',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_SEMESTER',
+                        outputs: [
+                            {
+                                name: 'Year',
+                                key: 'year',
+                                type: 'select',
+                                isRequired: true,
+                                validation: {
+                                    options: [0,1,2,3].map(i => {return new Date().getFullYear()+i}),
+                                },
+                            },
+                            {
+                                name: 'Season',
+                                key: 'season',
+                                type: 'select',
+                                isRequired: true,
+                                validation: {
+                                    options: ['Fall', 'Spring', 'Summer 1', 'Summer 2', 'Summer 3'],
+                                },
+                            },
+                        ],
+                    },
+                },
+            ],
+        },
+        {
+            name: 'Create Sessions',
+            description: 'Create sessions for your course',
+            actionType: 'workflow',
+            userId: users[0].id,
+            actions: Array.from({ length: 28 }, (_, index) => {
+                return {
+                    name: `Create session ${index+1}`,
+                    description:
+                        'Create a session. In the workflow editor, more specific details could be given for certain sessions, like if a session should have an exam.',
+                    actionType: 'simple',
+                    metadata: {
+                        code: `SESSION_${index}`,
+                        outputs: [{
+                          isRequired: true,
+                          validation: {
+                            sessionNum: index+1
+                          },
+                        }]
+                    },
+                }
+            }),
+        },
+        {
+            name: 'Publish Course Website',
+            description: 'Navigate to the course generation page and publish your website!',
+            actionType: 'workflow',
+            userId: users[0].id,
+            actions: [
+                {
+                    name: 'Set Column Visibilities',
+                    description: 'Hide columns that contain internal information',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'CHECKMARK',
+                    },
+                },
+                {
+                    name: 'Publish Course Website',
+                    description: "You're all ready to publish!",
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'CHECKMARK',
+                    },
+                }
+            ],
+        },
+    ]
+  }];
 
   // Create all workflows from workflowData
   await Promise.all(

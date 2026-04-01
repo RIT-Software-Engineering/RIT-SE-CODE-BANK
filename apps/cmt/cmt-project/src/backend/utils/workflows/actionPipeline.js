@@ -24,8 +24,8 @@
  * ### This mutates the given action!
  * 
  * @param {object} action an action as given by the workflows API 
- * @param {Map} flattenedWorkflowState flattened map of the workflow state
- * @param {number|string} courseId the CMT course ID for building callback URLs
+ * @param {Map|null} flattenedWorkflowState flattened map of the workflow state
+ * @param {number|string|null} courseId the CMT course ID for building callback URLs
  * @param {string} userId the user ID for building callback URLs
  * @returns action with context including callback for simple actions
  */
@@ -33,32 +33,43 @@ export function actionToActionWithContext(action, flattenedWorkflowState, course
 
   // Parse metadata from array to object (workflows API returns it as array)
   if (action.metadata) {
-    action.metadata = metadataArrayToObject(action.metadata)
+      action.metadata = compressedMetadataToObject(action.metadata)
   }
 
-  const actionState = flattenedWorkflowState.get(action.id)
+  let returnAction;
+  if (flattenedWorkflowState && courseId){
+    const actionState = flattenedWorkflowState.get(action.id)
 
-  // Base case
-  if (action.actionType === "simple") {
-    return {
-      action,
-      callback: determineCallback(action.metadata.code, actionState.id, courseId, userId),
-      actionState,
+    // Base case
+    if (action.actionType === "simple") {
+      return {
+        action,
+        callback: determineCallback(action.metadata.code, actionState.id, courseId, userId),
+        actionState,
+      }
     }
-  }
 
-  // Recursive case. Both complex and workflow actions behave the same here
-  const childActionsWithContext = action.childActions.map(child =>
-    actionToActionWithContext(child, flattenedWorkflowState, courseId, userId)
-  )
+    // Recursive case. Both complex and workflow actions behave the same here
+    const childActionsWithContext = action.childActions.map(child =>
+      actionToActionWithContext(child, flattenedWorkflowState, courseId, userId)
+    ) 
 
-  return {
+    returnAction = {
     action: {
       ...action,
       childActionsWithContext,
     },
     actionState,
+    };
   }
+
+  else { 
+    (action.childActions||[]).forEach(child =>
+      actionToActionWithContext(child, null, null, userId)
+    ) 
+    returnAction = {action: {...action}}
+  }
+  return returnAction
 }
 
 /**
@@ -82,19 +93,18 @@ export function determineCallback(code, asid, courseId, userId) {
 }
 
 /**
-* Workflows will take the object you give to it as the metadata and turn it into an array of key value pairs.
-* This makes it very hard to access by key, so this function will take that array and turn it back into an object.
+* Workflows will take the object you give to it as the metadata and turn it into an object with a key and a JSONified value.
+* This function goes through each key value pair and turns the value back into an Object instead of a string
 * It is meant for usage with {@link makeMetadataSafeForWorkflows} when uploading metadata 
 * 
-* @param {any} metadataArray array of metadata given by the workflows API (and our endpoints)
+* @param {any} compressedMetadata  metadata given by the workflows API (and our endpoints)
 */
-export function metadataArrayToObject(metadataArray) {
-  // If its not an array, such as the case of empty metadata, which is somehow an object, return a blank object.
-  if (!metadataArray.reduce) return {}
+export function compressedMetadataToObject(compressedMetadata) {
+  if (!compressedMetadata) return {}
 
-  return metadataArray.reduce((metadata, entry) => {
-    return { ...metadata, [entry.key]: JSON.parse(entry.value) }
-  }, {})
+  return Object.fromEntries(Object.entries(compressedMetadata).map(([key, value]) => {
+    return [key, JSON.parse(value)];
+  }));
 }
 
 /**

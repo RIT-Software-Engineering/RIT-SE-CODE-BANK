@@ -54,7 +54,7 @@ router.get("/", async (req, res) => {
         const intersectionIds = intersection.map(action => action.id);
         const toReturn = actionsByWorkflow.filter(action => intersectionIds.includes(action.id));
 
-        return res.json(toReturn.map((action) => exportAction(action)));
+        return res.json(toReturn.map((action) => {return action}));
     }
 
     const actions = await prisma.action.findMany({
@@ -179,10 +179,37 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
     const { id } = req.params;
 
+    await prisma.$transaction(async () => {
+    const actionInfo = await prisma.action.findUnique({
+        where: {id: id},
+        select: {previousAction: true, nextAction:true, rootActionOf: true}
+    })
+
+    const previousActionId = actionInfo.previousAction?.id;
+    const nextActionId = actionInfo.nextAction?.id;
+    const rootActionId = actionInfo.rootActionOf ? actionInfo.rootActionOf[0]?.id : null;
+
     await prisma.action.delete({
         where: { id: id },
     });
 
+    if (previousActionId){
+        await prisma.action.update({
+                where: {id: previousActionId},
+                data: {
+                    nextActionId: nextActionId ?? null
+                }
+            });
+    }
+    else if (rootActionId){
+        await prisma.workflowAttributes.update({
+                where: {id: rootActionId},
+                data: {
+                    rootActionId: nextActionId ?? null
+                }
+            });
+    }
+    });
     res.json({ message: "Deleted" });
 });
 

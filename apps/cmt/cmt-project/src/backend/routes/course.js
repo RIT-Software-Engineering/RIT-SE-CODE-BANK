@@ -75,130 +75,29 @@ router.post('/', async (req, res) => {
     try {
         const professorId = req.user.uid
 
-        // TODO: this should be obtained from a template or something, whether user-selected or default
-        const workflow = {
-            name: 'Create Course',
-            description: 'Default course creation template',
-            actions: [
-                {
-                    name: 'Course Details',
-                    description: 'Enter your course details',
-                    actionType: 'complex',
-                    childActions: [
-                        {
-                            name: 'Course Section',
-                            description: 'Enter your courses section',
-                            actionType: 'simple',
-                            metadata: {
-                                code: 'COURSE_SECTION',
-                                outputs: [
-                                    {
-                                        name: 'Course Section',
-                                        key: 'section',
-                                        type: 'text',
-                                        isRequired: true,
-                                        placeholder: '03',
-                                        validation: {
-                                            maxLength: 30,
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                        {
-                            name: 'Number of Students',
-                            description: 'Enter the number of students enrolled in your course',
-                            actionType: 'simple',
-                            metadata: {
-                                code: 'NUMBER_STUDENTS',
-                                outputs: [
-                                    {
-                                        name: 'Number of Students',
-                                        key: 'students',
-                                        type: 'number',
-                                        isRequired: true,
-                                        placeholder: 20,
-                                        validation: {
-                                            max: 999,
-                                            min: 1,
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                        {
-                            name: 'Section Semester',
-                            description: 'Enter the semester the section will take place in',
-                            actionType: 'simple',
-                            metadata: {
-                                code: 'COURSE_SEMESTER',
-                                outputs: [
-                                    {
-                                        name: 'Year',
-                                        key: 'year',
-                                        type: 'select',
-                                        isRequired: true,
-                                        validation: {
-                                            options: [2027, 2028, 2029, 2030],
-                                        },
-                                    },
-                                    {
-                                        name: 'Season',
-                                        key: 'season',
-                                        type: 'select',
-                                        isRequired: true,
-                                        validation: {
-                                            options: ['Fall', 'Spring', 'Summer 1', 'Summer 2'],
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    ],
-                },
-                {
-                    name: 'Create Sessions',
-                    description: 'Create sessions for your course',
-                    actionType: 'workflow',
-                    actions: Array.from({ length: 5 }, (_, index) => {
-                        return {
-                            name: `Create session ${index + 1}`,
-                            description:
-                                'Create a session. In the workflow editor, more specific details could be given for certain sessions, like if a session should have an exam.',
-                            actionType: 'simple',
-                            metadata: {
-                                code: `SESSION_${index}`,
-                            },
-                        }
-                    }),
-                },
-                {
-                    name: 'Publish Course Website',
-                    description: 'Navigate to the course generation page and publish your website!',
-                    actionType: 'workflow',
-                    actions: [
-                        {
-                            name: 'Set Column Visibilities',
-                            description: 'Hide columns that contain internal information',
-                            actionType: 'simple',
-                            metadata: {
-                                code: 'CHECKMARK',
-                            },
-                        },
-                        {
-                            name: 'Publish Course Website',
-                            description: "You're all ready to publish!",
-                            actionType: 'simple',
-                            metadata: {
-                                code: 'CHECKMARK',
-                            },
-                        },
-                    ],
-                },
-            ],
-        }
+        let metaCourseWorkflow;
+        await workflowsFetch("GET", `workflows/metadata?key=code&value=${JSON.stringify('Course Creation Workflow')}`,).then(async response => {
+            console.log(response)
+            const workflowBase = response.length > 0 ? response[0] : null;
+            if (!workflowBase)
+                throw new Error("Unable to find the standard course creation template. Please contact Kenn Martinez so that it can be set.")
+            let actions = [];
+            if (workflowBase.rootActionId){
+                const actionResponse = await workflowsFetch("GET", `/actions?workflowId=${workflowBase.id}`);
+                actions = actionResponse.map(action => actionToActionWithContext(action, null, null, req.user?.uid)?.action);
+            }
+            else
+                throw new Error("Course creation workflow must have at least one simple action. Please contact Kenn Martinez so that one can be added.")
+            const baseAction = workflowBase.baseAction;
+            metaCourseWorkflow = {
+                name: baseAction.name,
+                description: baseAction.description,
+                tags: workflowBase.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"),
+                childActions: actions
+            };
+        })
 
-        const createdWorkflow = await objectToNewWorkflow(workflow, professorId)
+        const createdWorkflow = await objectToNewWorkflow(metaCourseWorkflow, professorId)
 
         const createdState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdWorkflow.id }) // Create state
         console.log(`Created workflow action state with id ${createdState.id}`)
