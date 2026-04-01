@@ -234,7 +234,6 @@ export default function ProposalsPage() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "25%" }}>
                 <SortableTableHeader
                   id="title"
                   label="Title"
@@ -242,9 +241,7 @@ export default function ProposalsPage() {
                   sortDirection={sortOrder}
                   onSort={handleSort}
                 />
-              </TableCell>
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "35%" }}>Description</TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "15%" }}>
                 <SortableTableHeader
                   id="createdAt"
                   label="Submitted"
@@ -252,7 +249,6 @@ export default function ProposalsPage() {
                   sortDirection={sortOrder}
                   onSort={handleSort}
                 />
-              </TableCell>
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "12%" }}>Status</TableCell>
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white, width: "13%" }} align="right">Options</TableCell>
             </TableRow>
