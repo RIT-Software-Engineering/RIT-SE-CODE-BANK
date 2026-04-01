@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Accordion, Button, Form,} from "react-bootstrap";
-import { CMTJsonFetch } from "../utils/api";
-import { workflowsFetch } from "../backend/utils/workflows/api";
-import { ActionModal, DeleteModal, WorkflowComponent, WorkflowModal } from "../components/workflows/Builder";
+import { workflowsFetch } from "../backend/utils/workflows/api.js";
+import { CMTJsonFetch } from "../utils/api.js";
+import { ActionModal, DeleteModal, WorkflowComponent, WorkflowModal } from "../components/workflows/Builder.jsx";
 
 
 /**

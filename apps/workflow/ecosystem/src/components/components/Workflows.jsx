@@ -1,10 +1,11 @@
 /**
- * @import { CardActionRenderers } from './Actions'
- * @import { ActionWithContexts, OnNavigateFactory, IsCheckmark, WorkflowsWorkflow, PreviousValues, FetchToCallback } from '../types/workflowProps'
- * @import { Renderer, WorkflowContainerProps, ActionContainerProps, CheckmarkActionProps, NavigateButtonProps, ActionEditFormProps, CancellableEditActionFormProps, EditableActionViewProps, OutputViewProps, OutputContainerProps, NumberOutputProps, TextOutputProps, SelectOutputProps, CheckmarkOutputProps } from '../types/baseComponentProps'
+ * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, CheckmarkActionProps, CheckmarkOutputProps, EditableActionViewProps, FetchToCallback, IsCheckmark, NavigateButtonProps, NumberOutputProps, OnNavigateFactory, OutputContainerProps, OutputViewProps, PreviousValues, Renderer, SelectOutputProps, TextOutputProps, WorkflowContainerProps } from '../../types/components.js'
+ * @import { WorkflowsWorkflow } from '../../types/workflows.js'
+ * @import { ActionWithContexts } from '../../types/contexts.js'
+ * @import { CardActionRenderers } from './Actions.jsx'
  */
 
-import { CardAction } from './Actions'
+import { CardAction } from './Actions.jsx'
 
 /**
  * @typedef {{ 
@@ -34,7 +35,7 @@ export function Workflow(props) {
     return (
         <renderers.WorkflowContainer workflow={workflow} actionsWithContexts={actionsWithContexts}>
             {actionsWithContexts.map(
-                actionWithContexts => <CardAction key={actionWithContexts.action.id} {...props} renderers={renderers.CardActionRenderers} actionWithContexts={actionWithContexts} />
+                actionWithContexts => <CardAction key={actionWithContexts.processedAction.id} {...props} renderers={renderers.CardActionRenderers} actionWithContexts={actionWithContexts} />
             )}
         </renderers.WorkflowContainer>
     )

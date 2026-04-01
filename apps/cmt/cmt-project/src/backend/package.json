@@ -9,6 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@se-code-bank/workflows-ecosystem": "file:../../../../workflow/ecosystem/se-code-bank-workflows-ecosystem-1.0.0.tgz",
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

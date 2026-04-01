@@ -75,7 +75,7 @@ export async function updateAction(name, description, nextActionId, actionId){
  * 
  * After making a workflow, make sure you create a state for whoever will be completing it!
  * 
- * ## Supports simple, complex, and branching actions
+ * ## Supports simple, complex, and workflow actions
  * 
  * ### Warning
  * This is not intended for editing workflows, and will result in indeterminate behavior.
@@ -140,10 +140,7 @@ export async function updateAction(name, description, nextActionId, actionId){
 export async function objectToNewWorkflow(workflow, ownerId) {
   if (!workflow.childActions)
     throw new Error(`There was a workflow action with no simple action attached. Please contact Kenn Martinez to have this addressed. Action name: ${workflow.name}`)
-  if (workflow.childActions.length !== 0) {
-    if (workflow.childActions[0].parentActionId) {
-      throw Error(`Cannot create workflow from object ${workflow}: parentActionId is specified in the root action. It should not be!`)
-    }
+  if (workflow.childActions.length !== 0 && workflow.childActions[0]) {
     if (workflow.userId || workflow.childActions[0].userId) {
       throw Error(`Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!`)
     }

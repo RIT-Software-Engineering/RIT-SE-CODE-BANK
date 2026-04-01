@@ -1,7 +1,6 @@
-// @ts-ignore
-import React, { useEffect, useMemo, useState } from "react";
-import { API_BASE } from "../utils/api";
-import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor";
+import { useEffect, useMemo, useState } from "react";
+import { API_BASE } from "../utils/api.js";
+import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);

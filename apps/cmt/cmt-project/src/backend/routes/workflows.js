@@ -1,6 +1,8 @@
 import express from "express";
 import { createAction, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction, workflowsFetch } from "../utils/workflows/api.js";
-import { actionToActionWithContext, compressedMetadataToObject } from "../utils/workflows/actionPipeline.js";
+import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
+import { CMTActionToActionWithContexts } from "../utils/workflows/context.js";
+
 const router = express.Router();
 export default router
 
@@ -156,7 +158,7 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
         console.log("=".repeat(10))
         const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
         const actionWithContexts = actions.map(action => 
-            actionToActionWithContext(action, null, null, req.user?.uid)
+            CMTActionToActionWithContexts(action, null, null, req.user?.uid)
         );
         return res.status(200).json({actions: actionWithContexts, awc: actionWithContexts})
     } catch (error) {

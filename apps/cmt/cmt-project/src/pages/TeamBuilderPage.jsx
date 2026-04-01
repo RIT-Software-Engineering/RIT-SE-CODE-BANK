@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { API_BASE } from "../utils/api";
+import { useEffect, useState } from "react";
+import { API_BASE } from "../utils/api.js";
 
 export default function TeamBuilderPage() {
   const [loading, setLoading] = useState(false);

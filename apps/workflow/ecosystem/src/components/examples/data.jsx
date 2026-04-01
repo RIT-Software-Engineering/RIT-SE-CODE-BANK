@@ -29,7 +29,7 @@ function createActionState(id, actionId, stateType) {
  * }} config
  * @returns {ActionWithContexts}
  */
-function createSimpleActionWithContext({ id, name, description, code, actionState, outputs = [] }) {
+function createSimpleActionWithContexts({ id, name, description, code, actionState, outputs = [] }) {
 	return {
 		action: {
 			id,
@@ -82,8 +82,8 @@ export const placeholderActionWithContexts = [
 			name: 'Course Details',
 			description: 'Enter your course details',
 			actionType: 'complex',
-			childActionsWithContext: [
-				createSimpleActionWithContext({
+			childActionsWithContexts: [
+				createSimpleActionWithContexts({
 					id: 'action-course-section',
 					name: 'Course Section',
 					description: 'Enter your course section',
@@ -102,7 +102,7 @@ export const placeholderActionWithContexts = [
 						},
 					],
 				}),
-				createSimpleActionWithContext({
+				createSimpleActionWithContexts({
 					id: 'action-number-students',
 					name: 'Number of Students',
 					description: 'Enter the number of students enrolled in your course',
@@ -122,7 +122,7 @@ export const placeholderActionWithContexts = [
 						},
 					],
 				}),
-				createSimpleActionWithContext({
+				createSimpleActionWithContexts({
 					id: 'action-course-semester',
 					name: 'Section Semester',
 					description: 'Enter the semester the section will take place in',
@@ -159,8 +159,8 @@ export const placeholderActionWithContexts = [
 			name: 'Create Sessions',
 			description: 'Create sessions for your course',
 			actionType: 'workflow',
-			childActionsWithContext: Array.from({ length: 5 }, (_, index) =>
-				createSimpleActionWithContext({
+			childActionsWithContexts: Array.from({ length: 5 }, (_, index) =>
+				createSimpleActionWithContexts({
 					id: `action-session-${index + 1}`,
 					name: `Create session ${index + 1}`,
 					description: 'Create a session. In the workflow editor, more specific details could be given for certain sessions, like if a session should have an exam.',
@@ -181,15 +181,15 @@ export const placeholderActionWithContexts = [
 			name: 'Publish Course Website',
 			description: 'Navigate to the course generation page and publish your website!',
 			actionType: 'workflow',
-			childActionsWithContext: [
-				createSimpleActionWithContext({
+			childActionsWithContexts: [
+				createSimpleActionWithContexts({
 					id: 'action-set-column-visibilities',
 					name: 'Set Column Visibilities',
 					description: 'Hide columns that contain internal information',
 					code: 'CHECKMARK',
 					actionState: createActionState('asid-set-column-visibilities', 'action-set-column-visibilities', 'notStarted'),
 				}),
-				createSimpleActionWithContext({
+				createSimpleActionWithContexts({
 					id: 'action-publish-website',
 					name: 'Publish Course Website',
 					description: "You're all ready to publish!",

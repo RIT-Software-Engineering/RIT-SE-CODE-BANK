@@ -1,7 +1,7 @@
 import { Download, FileAudio, FileSpreadsheet, FileStack, FileText, FileVideo, Image } from 'lucide-react'
 import { Badge, Button, Card } from 'react-bootstrap'
-import { getResourceDownloadUrl } from './ResourceManager'
-import { EditResourceModal, DeleteResourceModal } from './modals'
+import { getResourceDownloadUrl } from './ResourceManager.jsx'
+import { EditResourceModal, DeleteResourceModal } from './modals.jsx'
 
 /**
  * Displays a resource as a card and allows a user to manage it

@@ -1,17 +1,18 @@
 import React, { useCallback, useRef, useState } from 'react'
-import { Output } from './Outputs'
-import { metadataObjectToState } from '../utils'
+import { Output } from './Outputs.jsx'
+import { metadataObjectToState } from '../utils.jsx'
 
 /**
- * @import { OutputRenderers } from './Outputs'
- * @import { ActionWithContexts, OnNavigateFactory, IsCheckmark, FetchToCallback, PreviousValues } from '../types/workflowProps'
- * @import { ActionContainerProps, CancellableEditActionFormProps, Renderer, NavigateButtonProps, EditableActionViewProps, OutputViewProps, ActionEditFormProps, CheckmarkActionProps, OutputValidatorRegistry } from '../types/baseComponentProps'
+ * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, CheckmarkActionProps, EditableActionViewProps, FetchToCallback, IsCheckmark, NavigateButtonProps, OnNavigateFactory, OutputValidatorRegistry, OutputViewProps, PreviousValues, Renderer } from '../../types/components.js'
+ * @import { ActionWithContexts } from '../../types/contexts.js'
+ * @import { CardActionRenderers } from './Actions.jsx'
  */
+
 
 /**
  * @template T
  * @typedef {{
- *  actionWithContexts: ActionWithContexts & { action: { metadata: T } },
+ *  actionWithContexts: ActionWithContexts & { processedAction: { metadata: T } },
  *  previousValues: PreviousValues & Record<keyof T, any>,
  *  refresh: () => void,
  *  fetchToCallback: FetchToCallback,
@@ -36,28 +37,28 @@ import { metadataObjectToState } from '../utils'
  */
 export function CardAction(props) {
     const { actionWithContexts, renderers, isCheckmark, previousValues, refresh, fetchToCallback, onNavigateFactory } = props
-    const { action, actionState } = actionWithContexts
+    const { processedAction, actionState } = actionWithContexts
     const actionProps = { actionWithContexts, previousValues, refresh, fetchToCallback, onNavigateFactory }
 
-    if (action.actionType === 'complex' || action.actionType === 'workflow') {
+    if (processedAction.actionType === 'complex' || processedAction.actionType === 'workflow') {
         return (
             <renderers.ComplexCardContainer actionWithContexts={actionWithContexts}>
-                {action.childActionsWithContext?.map(childAction => (
-                    <CardAction key={childAction.id} {...props} actionWithContexts={childAction} />
+                {processedAction.childActionsWithContexts?.map(childActionWithContexts => (
+                    <CardAction key={childActionWithContexts.processedAction.id} {...props} actionWithContexts={childActionWithContexts} />
                 ))}
             </renderers.ComplexCardContainer>
         )
     }
-    if (action.actionType === 'simple') {
+    if (processedAction.actionType === 'simple') {
         let form
 
-        if (action.metadata?.code && isCheckmark(action.metadata.code)) form = <CheckmarkAction {...actionProps} renderers={renderers.CheckmarkActionRenderers} />
+        if (processedAction.metadata?.code && isCheckmark(processedAction.metadata.code)) form = <CheckmarkAction {...actionProps} renderers={renderers.CheckmarkActionRenderers} />
         else if (actionState.stateType === 'completed') form = <ViewEditAction {...actionProps} renderers={renderers.ViewEditActionRenderers} />
         else form = <FormAction {...actionProps} renderers={renderers.FormActionRenderers} />
 
         return <renderers.SimpleCardContainer actionWithContexts={actionWithContexts}> {form} </renderers.SimpleCardContainer>
     } else {
-        throw Error(`Unknown action type: ${action.actionType}`)
+        throw Error(`Unknown action type: ${processedAction.actionType}`)
     }
 }
 
@@ -78,7 +79,7 @@ export function CardAction(props) {
 export function ViewEditAction(props) {
     const { renderers, actionWithContexts, previousValues, refresh, fetchToCallback, onNavigateFactory } = props
 
-    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContexts.action.metadata, previousValues))
+    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContexts.processedAction.parsedMetadata, previousValues))
 
     const validatorRegistry = useRef(/** @type {OutputValidatorRegistry} */ ({}))
     const [submitted, setSubmitted] = useState(false)
@@ -119,7 +120,7 @@ export function ViewEditAction(props) {
         </renderers.CancellableEditActionForm>
     ) : (
         <renderers.EditableActionView onEdit={() => setIsEditing(true)}>
-            {actionWithContexts.action.metadata.outputs.map(output => (
+            {actionWithContexts.processedAction.parsedMetadata.outputs.map(output => (
                 <renderers.OutputView key={output.key} output={output} previousValue={previousValues[output.key]} />
             ))}
         </renderers.EditableActionView>
@@ -141,7 +142,7 @@ export function ViewEditAction(props) {
 export function FormAction(props) {
     const { renderers, actionWithContexts, previousValues, refresh, fetchToCallback, onNavigateFactory } = props
 
-    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContexts.action.metadata, previousValues))
+    const [outputValues, setOutputValues] = useState(metadataObjectToState(actionWithContexts.processedAction.parsedMetadata, previousValues))
 
     const validatorRegistry = useRef(/** @type {OutputValidatorRegistry} */ ({}))
     const [submitted, setSubmitted] = useState(false)
@@ -194,9 +195,14 @@ export function FormAction(props) {
 export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchToCallback, renderers, refresh }) {
     const checked = actionWithContexts.actionState.stateType === 'completed'
 
-    const submit = useCallback(newChecked => void fetchToCallback(actionWithContexts.callback, { checked: newChecked }).then(refresh), [actionWithContexts.callback, fetchToCallback, refresh])
+    const [loading, setLoading] = useState(false)
 
-    const code = actionWithContexts.action?.metadata?.code
+    const submit = useCallback(newChecked => {
+        setLoading(true)
+        void fetchToCallback(actionWithContexts.callback, { checked: newChecked }).then(() => { setLoading(false); refresh() })
+    }, [actionWithContexts.callback, fetchToCallback, refresh])
+
+    const code = actionWithContexts.processedAction?.parsedMetadata?.code
     const onNavigate = code && onNavigateFactory && onNavigateFactory(code)
 
     return onNavigate ? (
@@ -208,6 +214,9 @@ export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchTo
                 submit(!checked)
             }}
             checked={checked}
+            loading={loading}
+            disabled={actionWithContexts.processedAction.isFrozen}
+            actionWithContexts={actionWithContexts}
         />
     )
 }
@@ -216,7 +225,7 @@ export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchTo
  * @typedef {{
  *      renderers: {
  *          NavigateButton: Renderer<NavigateButtonProps>
- *          OutputRenderers: OutputRenderers['renderers']
+ *          OutputRenderers: import('./Outputs.jsx').OutputRenderers['renderers']
  *      }}
  * } ActionContentRenderers
  */
@@ -231,12 +240,12 @@ export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchTo
  * } & ActionContentRenderers } props
  */
 export function ActionContent({ actionWithContexts, outputValues, setOutputValues, submitted, validatorRegistry, onNavigateFactory, renderers }) {
-    const onNavigate = onNavigateFactory && onNavigateFactory(actionWithContexts.action?.metadata?.code)
+    const onNavigate = onNavigateFactory && onNavigateFactory(actionWithContexts.processedAction?.parsedMetadata?.code)
     return onNavigate ? (
         <renderers.NavigateButton onClick={onNavigate}>Navigate</renderers.NavigateButton>
     ) : (
         <>
-            {actionWithContexts.action.metadata.outputs.map(output => (
+            {actionWithContexts.processedAction.parsedMetadata.outputs.map(output => (
                 <Output
                     key={output.key}
                     output={output}
@@ -245,6 +254,7 @@ export function ActionContent({ actionWithContexts, outputValues, setOutputValue
                     submitted={submitted}
                     validatorRegistry={validatorRegistry}
                     renderers={renderers.OutputRenderers}
+                    disabled={actionWithContexts.processedAction.isFrozen}
                 />
             ))}
         </>

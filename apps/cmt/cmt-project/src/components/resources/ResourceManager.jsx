@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Row, Col, Spinner, Button } from 'react-bootstrap'
-import { CMTJsonFetch } from '../../utils/api'
-import { ResourceCard } from './resourceRenderers'
-import { UploadResourceModal } from './modals'
 import { RefreshCcw } from 'lucide-react'
+import { UploadResourceModal } from './modals.jsx'
+import { ResourceCard } from './resourceRenderers.jsx'
+import { CMTJsonFetch } from '../../utils/api.js'
 
 /**
  * Generate the correct download URL for a resource based on the environment

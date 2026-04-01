@@ -1,8 +1,8 @@
 import { Eraser } from "lucide-react"
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "react-bootstrap"
-import { ColorWheel } from "../../pages/course/CourseOverview"
-import { ColorOption } from "../forms/ColorPicker"
+import { ColorWheel } from "../../pages/course/CourseOverview.jsx"
+import { ColorOption } from "../forms/ColorPicker.jsx"
 
 export function TextPicker({ editor }) {
   return <EditorPicker editor={editor} attributeName={"textStyle"} applyChange={color => editor.chain().focus().setColor(color).run()} />

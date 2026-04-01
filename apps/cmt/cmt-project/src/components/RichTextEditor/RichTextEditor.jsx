@@ -24,8 +24,8 @@ import { useCallback, useEffect, useState } from "react";
 import { TableKit } from '@tiptap/extension-table'
 import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
-import { ResourceLinkModal } from "./ResourceLinkModal";
-import { HighlightPicker, TextPicker } from "./Pickers";
+import { ResourceLinkModal } from "./ResourceLinkModal.jsx";
+import { HighlightPicker, TextPicker } from "./Pickers.jsx";
 
 
 export function ReadOnlyEditor({ value }) {

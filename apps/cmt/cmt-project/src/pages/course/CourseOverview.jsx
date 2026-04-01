@@ -1,11 +1,11 @@
 import { Check, Loader2, PlusIcon, Palette } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap'
-import { CMTJsonFetch } from '../../utils/api'
 import { useNavigate } from 'react-router-dom'
 import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
-import { ColorOption } from '../../components/forms/ColorPicker'
+import { CMTJsonFetch } from '../../utils/api.js';
+import { ColorOption } from '../../components/forms/ColorPicker.jsx';
 
 
 export function CourseOverview() {
@@ -94,6 +94,7 @@ export function ColorWheel({setColor}) {
     return (
         <>
         <div className='flex items-center mt-4'>
+            {/* @ts-ignore TODO: fix maybe the issue solves itself after all this typescript 6.0 stuff*/}
             <Wheel color={hsva} onChange={(color) => {
                 setHsva(color.hsva)
                 setColor(hsvaToHex(color.hsva))

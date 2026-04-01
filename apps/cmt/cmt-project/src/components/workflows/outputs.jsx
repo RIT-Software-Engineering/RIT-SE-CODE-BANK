@@ -1,7 +1,7 @@
 import { Form } from "react-bootstrap"
 
 /**
- * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, TextOutputProps } from "@se-code-bank/workflows-components"
+ * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, TextOutputProps } from "@se-code-bank/workflows-ecosystem"
  */
 
 /**

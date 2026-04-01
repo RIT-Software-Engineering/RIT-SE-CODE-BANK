@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Form, Button, Row, Col, Card } from "react-bootstrap";
-import Alert from "react-bootstrap/Alert";
-import { API_BASE } from "../utils/api";
+import { useState, useEffect } from "react";
+import { Form, Button, Row, Col, Card, Alert } from "react-bootstrap";
+import { API_BASE } from "../utils/api.js";
 
 function CreateTemplatePage() {
   const [showForm, setShowForm] = useState(false);

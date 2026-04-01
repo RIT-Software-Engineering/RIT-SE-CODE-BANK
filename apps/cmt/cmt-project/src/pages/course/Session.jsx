@@ -2,16 +2,18 @@ import { Edit } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { Accordion, Card, Button, Offcanvas, Form, Table } from "react-bootstrap";
 import { useParams } from "react-router-dom";
-import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
-import { CheckmarkAction as WorkflowCheckmarkAction } from "@se-code-bank/workflows-components";
-import { CMTJsonFetch } from "../../utils/api";
+import { CheckmarkAction as WorkflowCheckmarkAction } from "@se-code-bank/workflows-ecosystem/components";
+import { CMTJsonFetch } from "../../utils/api.js";
+import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor.jsx";
+
+/**
+ * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
+ */
 
 /**
  * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
  * The session component is an accordion that dynamically adds more items the higher the count. 
  * Displays a modal (when opened) and a table of uploaded resources. 
- *
- * @import { FetchToCallback } from "@se-code-bank/workflows-components"
  */
 
 /**

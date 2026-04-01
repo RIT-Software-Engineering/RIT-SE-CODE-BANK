@@ -1,22 +1,22 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { CMTJsonFetch } from '../../utils/api'
-import { Session } from './Session';
-import { flattenActionsWithContext } from '../../utils/workflows'
 import { ArrowLeft } from 'lucide-react'
-import { Button} from 'react-bootstrap'
-import { ResourceManager } from '../../components/resources/ResourceManager'
-import { CMTWorkflow } from '../../components/workflows/workflow';
+import { useCallback, useEffect, useState } from 'react'
+import { Button } from 'react-bootstrap'
+import { useNavigate, useParams } from 'react-router-dom'
+import { ResourceManager } from '../../components/resources/ResourceManager.jsx'
+import { CMTWorkflow } from '../../components/workflows/workflow.jsx'
+import { CMTJsonFetch } from '../../utils/api.js'
+import { flattenActionsWithContexts } from '../../utils/workflows.js'
+import { Session } from './Session.jsx'
 
 /**
- * @import { FetchToCallback } from "@se-code-bank/workflows-components"
+ * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
  */
 
 export function CourseDashboard() {
     const { id } = useParams()
 
     const [course, setCourse] = useState(null)
-    const [actionsWithContext, setActionsWithContext] = useState([])
+    const [actionsWithContexts, setActionsWithContexts] = useState([])
     const [workflow, setWorkflow] = useState(null)
     const [sessionCount, setSessionCount] = useState(0)
     const [sessions, setSessions] = useState([]);
@@ -25,7 +25,7 @@ export function CourseDashboard() {
         return CMTJsonFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
             setCourse(data.course)
-            setActionsWithContext(data.actionsWithContext)
+            setActionsWithContexts(data.actionsWithContexts ?? [])
             setWorkflow(data.workflow)
         })
     }, [id])
@@ -39,7 +39,7 @@ export function CourseDashboard() {
 
     if (course === null) return <p> Loading </p>
 
-    const sessionActions = flattenActionsWithContext(actionsWithContext).filter(
+    const sessionActions = flattenActionsWithContexts(actionsWithContexts).filter(
         awc => awc?.action?.metadata?.code?.includes("SESSION_")
     )
 
@@ -53,7 +53,7 @@ export function CourseDashboard() {
             <p className="text-3xl pb-2 border-b">Course Creation Workflow</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
-                    <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContext} course={course} workflow={workflow}/>
+                    <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
                 </div>
             </div>
             <p className="text-3xl pb-2 border-b mt-10">Sessions</p>

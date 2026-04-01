@@ -1,9 +1,9 @@
 import { FileSymlink } from "lucide-react"
 import { useState } from "react"
-import { Button, Modal, Form, Col, Row, Spinner, OverlayTrigger, Tooltip } from "react-bootstrap"
-import { getResourceDownloadUrl, useResources } from "../resources/ResourceManager"
-import { SelectableResourceCard } from "../resources/resourceRenderers"
-import { CMTFormFetch } from "../../utils/api"
+import { Button, Modal, Form, Spinner, OverlayTrigger, Tooltip } from "react-bootstrap"
+import { CMTFormFetch } from "../../utils/api.js"
+import { useResources, getResourceDownloadUrl } from "../resources/ResourceManager.jsx"
+import { SelectableResourceCard } from "../resources/resourceRenderers.jsx"
 
 export function ResourceLinkModal({ editor, courseId }) {
     const [show, setShow] = useState(false)

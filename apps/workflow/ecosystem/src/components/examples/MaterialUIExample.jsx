@@ -100,9 +100,9 @@ function ComplexCardContainer(props) {
 			<AccordionSummary sx={{ alignItems: 'center' }}>
 				<Stack direction='row' spacing={2} sx={{ width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
 					<Box>
-						<Typography variant='h6'>{props.actionWithContexts.action.name}</Typography>
+						<Typography variant='h6'>{props.actionWithContexts.processedAction.name}</Typography>
 						<Typography variant='body2' color='text.secondary'>
-							{props.actionWithContexts.action.description}
+							{props.actionWithContexts.processedAction.description}
 						</Typography>
 					</Box>
 					<ActionStateChip stateType={props.actionWithContexts.actionState.stateType} />
@@ -126,9 +126,9 @@ function SimpleCardContainer(props) {
 			<CardContent>
 				<Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ justifyContent: 'space-between' }}>
 					<Stack spacing={2} sx={{ flex: 1 }}>
-						<Typography variant='h6'>{props.actionWithContexts.action.name}</Typography>
+						<Typography variant='h6'>{props.actionWithContexts.processedAction.name}</Typography>
 						<Typography variant='body2' color='text.secondary'>
-							{props.actionWithContexts.action.description}
+							{props.actionWithContexts.processedAction.description}
 						</Typography>
 						{props.children}
 					</Stack>

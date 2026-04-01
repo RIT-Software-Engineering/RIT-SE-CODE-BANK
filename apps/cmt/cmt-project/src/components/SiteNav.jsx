@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { User, ChevronDown, Menu, X, GraduationCap, Wrench} from "lucide-react";
 import "../styles/NavBar.css";
-import { getUserFromCookie, logout } from "../utils/auth";
+import { getUserFromCookie, logout } from "../utils/auth.js";
 
 export default function SiteNav() {
   const [user, setUser] = useState(null);

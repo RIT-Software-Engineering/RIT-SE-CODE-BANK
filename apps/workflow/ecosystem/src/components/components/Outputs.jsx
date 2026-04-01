@@ -1,5 +1,5 @@
 /**
- * @import { Renderer, OutputDefinitionProps, OutputContainerProps, CheckmarkOutputProps, NumberOutputProps, SelectOutputProps, TextOutputProps, OutputValidatorRegistry } from '../types/baseComponentProps'
+ * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputDefinitionProps, OutputValidatorRegistry, Renderer, SelectOutputProps, TextOutputProps } from '../../types/components.js'
  */
 
 import { useState, useCallback, useEffect } from 'react'
@@ -9,7 +9,8 @@ import { useState, useCallback, useEffect } from 'react'
  *  value: any,
  *  setValue: React.Dispatch<React.SetStateAction<any>>,
  *  submitted: boolean,
- *  validatorRegistry: React.RefObject<OutputValidatorRegistry>
+ *  validatorRegistry: React.RefObject<OutputValidatorRegistry>,
+ *  disabled?: boolean
  * } & OutputDefinitionProps} OutputStateProps
  */
 
@@ -64,7 +65,7 @@ export function Output(props) {
 /**
  * @param {OutputStateProps & OutputRenderers} props
  */
-function NumberOutputController({ output, value, setValue, submitted, validatorRegistry, renderers }) {
+function NumberOutputController({ output, value, setValue, submitted, validatorRegistry, renderers, disabled }) {
     const [touched, setTouched] = useState(false)
 
     const getError = useCallback(nextValue => {
@@ -88,6 +89,7 @@ function NumberOutputController({ output, value, setValue, submitted, validatorR
 
     return (
         <renderers.NumberOutputRenderers.NumberOutput
+            disabled={disabled}
             output={output}
             submitted={submitted}
             required={output.isRequired ?? false}
@@ -111,7 +113,7 @@ function NumberOutputController({ output, value, setValue, submitted, validatorR
 /**
  * @param {OutputStateProps & OutputRenderers} props
  */
-function TextOutputController({ output, value, setValue, submitted, validatorRegistry, renderers }) {
+function TextOutputController({ output, value, setValue, submitted, validatorRegistry, renderers, disabled }) {
     const [touched, setTouched] = useState(false)
 
     const getError = useCallback(nextValue => {
@@ -136,6 +138,7 @@ function TextOutputController({ output, value, setValue, submitted, validatorReg
 
     return (
         <renderers.TextOutputRenderers.TextOutput
+            disabled={disabled}
             output={output}
             submitted={submitted}
             required={output.isRequired ?? false}
@@ -159,7 +162,7 @@ function TextOutputController({ output, value, setValue, submitted, validatorReg
 /**
  * @param {OutputStateProps & OutputRenderers} props
  */
-function SelectOutputController({ output, value, setValue, submitted, validatorRegistry, renderers }) {
+function SelectOutputController({ output, value, setValue, submitted, validatorRegistry, renderers, disabled }) {
     const [touched, setTouched] = useState(false)
 
     const getError = useCallback(nextValue => {
@@ -178,6 +181,7 @@ function SelectOutputController({ output, value, setValue, submitted, validatorR
 
     return (
         <renderers.SelectOutputRenderers.SelectOutput
+            disabled={disabled}
             output={output}
             submitted={submitted}
             required={output.isRequired ?? false}
@@ -200,9 +204,10 @@ function SelectOutputController({ output, value, setValue, submitted, validatorR
 /**
  * @param {OutputStateProps & OutputRenderers} props
  */
-function CheckmarkOutputController({ output, value, setValue, renderers }) {
+function CheckmarkOutputController({ output, value, setValue, renderers, disabled }) {
     return (
         <renderers.CheckmarkOutputRenderers.CheckmarkOutput
+            disabled={disabled}
             output={output}
             required={output.isRequired ?? false}
             value={value}

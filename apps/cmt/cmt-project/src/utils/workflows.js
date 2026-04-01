@@ -19,29 +19,29 @@ export function metadataObjectToState(metadata, data) {
 }
 
 /**
- * Transforms the nested representation of ActionsWithContext into a 
- * flat array of all of the ActionsWithContext contained in the given ActionsWithContext
+ * Transforms the nested representation of ActionsWithContexts into a 
+ * flat array of all of the ActionsWithContexts contained in the given ActionsWithContext
  * 
  * Takes an array because the backend gives them in an array. The backend gives them in an array because the workflows API does too.
  * 
- * @param {array} actionsWithContext 
- * @returns Array containing all of the actionsWithContext that were nested inside of the given array.
+ * @param {array} actionsWithContexts 
+ * @returns Array containing all of the actionsWithContexts that were nested inside of the given array.
  */
-export function flattenActionsWithContext(actionsWithContext) {
-    const flattenedActionsWithContext = []
+export function flattenActionsWithContexts(actionsWithContexts) {
+    const flattenedActionsWithContexts = []
 
     function traverse(awc) {
-        flattenedActionsWithContext.push(awc)
-        if (awc.action.childActionsWithContext)
-            for (const childAwc of awc.action.childActionsWithContext)
+        flattenedActionsWithContexts.push(awc)
+        if (awc.processedAction.childActionsWithContexts)
+            for (const childAwc of awc.processedAction.childActionsWithContexts)
                 traverse(childAwc)
     }
 
-    for (const awc of actionsWithContext)
+    for (const awc of actionsWithContexts)
         traverse(awc)
 
-    console.log(flattenedActionsWithContext)
-    return flattenedActionsWithContext
+    console.log(flattenedActionsWithContexts)
+    return flattenedActionsWithContexts
 }
 
 /**
@@ -52,12 +52,12 @@ export function flattenActionsWithContext(actionsWithContext) {
  */
 export function UseCMTOnNavigateFactory(code) {
     const navigate = useNavigate()
-    let getEl;
+    let getElement;
 
-    if (code.includes("SESSION_")) getEl = () => document.getElementById(`WORKFLOW_JUMPPOINT_${code}`) 
+    if (code.includes("SESSION_")) getElement = () => document.getElementById(`WORKFLOW_JUMPPOINT_${code}`) 
     if (code === "CHECKMARK_PUBLISH_SITE" || code === "CHECKMARK_COLUMN_VISIBILITIES") return () => navigate("/coursewebsite")
 
-    if (getEl) return () => getEl()?.scrollIntoView({ behavior: "smooth" })
+    if (getElement) return () => getElement()?.scrollIntoView({ behavior: "smooth" })
 
     return null
 }

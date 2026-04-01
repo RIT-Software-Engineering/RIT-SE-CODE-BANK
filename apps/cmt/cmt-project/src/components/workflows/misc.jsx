@@ -2,7 +2,7 @@ import { Check, CheckCircle2, MinusCircle, Pencil, X, XCircle } from "lucide-rea
 import { Button, Card } from "react-bootstrap"
 
 /**
- * @import { CheckmarkActionProps, NavigateButtonProps } from '@se-code-bank/workflows-components'
+ * @import { CheckmarkActionProps, NavigateButtonProps } from "@se-code-bank/workflows-ecosystem"
  */
 
 export function StatusIcon({ stateType }) {
@@ -39,6 +39,7 @@ export function CheckmarkAction(props) {
 	return <Button
 		variant={props.checked ? 'outline-secondary' : 'primary'}
 		onClick={props.onClick}
+		disabled={props.disabled}
 	>
 		{props.checked ? 'Mark as Incomplete' : 'Mark as Complete'}
 	</Button>

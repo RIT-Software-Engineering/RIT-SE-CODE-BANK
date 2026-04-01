@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { getUserFromCookie } from "../utils/auth";
+import { getUserFromCookie } from "../utils/auth.js";
 
 export default function RequireAuth({ children }) {
   const [checked, setChecked] = useState(false);

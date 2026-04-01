@@ -1,7 +1,7 @@
 import { PlusIcon, Pencil, Trash } from 'lucide-react'
 import { useState } from 'react'
 import { Button, Form, Modal, Spinner } from 'react-bootstrap'
-import { CMTFormFetch, CMTJsonFetch } from '../../utils/api'
+import { CMTFormFetch, CMTJsonFetch } from '../../utils/api.js'
 
 export function UploadResourceModal({ courseId, refresh }) {
     const [showModal, setShowModal] = useState(false)

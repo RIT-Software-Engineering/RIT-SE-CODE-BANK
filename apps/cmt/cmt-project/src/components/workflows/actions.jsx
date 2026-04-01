@@ -1,8 +1,8 @@
 import { Accordion, Button, Card, Form } from "react-bootstrap"
-import { StatusCard, StatusIcon } from "./misc"
+import { StatusCard, StatusIcon } from "./misc.jsx"
 
 /**
- * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, EditableActionViewProps } from '@se-code-bank/workflows-components'
+ * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, EditableActionViewProps } from '@se-code-bank/workflows-ecosystem'
  */
 
 /**
@@ -10,12 +10,12 @@ import { StatusCard, StatusIcon } from "./misc"
  */
 export function ComplexCardContainer(props) {
 	return (
-		<Accordion.Item eventKey={props.actionWithContexts.action.id}>
+		<Accordion.Item eventKey={props.actionWithContexts.processedAction.id}>
 			<Accordion.Header>
 				<div className='flex items-center mr-8 justify-between w-full'>
 					<div>
-						<p className='text-2xl mb-0'>{props.actionWithContexts.action.name}</p>
-						<p className='text-gray-600 mb-0'>{props.actionWithContexts.action.description}</p>
+						<p className='text-2xl mb-0'>{props.actionWithContexts.processedAction.name}</p>
+						<p className='text-gray-600 mb-0'>{props.actionWithContexts.processedAction.description}</p>
 					</div>
 					<StatusIcon stateType={props.actionWithContexts.actionState.stateType} />
 				</div>
@@ -38,8 +38,8 @@ export function SimpleCardContainer(props) {
 			<Card.Body>
 				<div className='flex justify-between'>
 					<div className='grow'>
-						<p className='text-2xl mb-0'>{props.actionWithContexts.action.name}</p>
-						<p className='text-gray-600 mb-2'>{props.actionWithContexts.action.description}</p>
+						<p className='text-2xl mb-0'>{props.actionWithContexts.processedAction.name}</p>
+						<p className='text-gray-600 mb-2'>{props.actionWithContexts.processedAction.description}</p>
 						<div className='pr-10'>
 							{props.children}
 						</div>

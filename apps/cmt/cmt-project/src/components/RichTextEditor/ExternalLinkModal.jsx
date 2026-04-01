@@ -1,9 +1,9 @@
 import { FileSymlink } from "lucide-react"
 import { useState, useCallback, useEffect } from "react"
 import { Button, Modal, Spinner, Row, Col, Form } from "react-bootstrap"
-import { CMTJsonFetch } from "../../utils/api"
-import { getResourceDownloadUrl } from "../resources/ResourceManager"
-import { SelectableResourceCard } from "../resources/resourceRenderers"
+import { CMTJsonFetch } from "../../utils/api.js"
+import { getResourceDownloadUrl } from "../resources/ResourceManager.jsx"
+import { SelectableResourceCard } from "../resources/resourceRenderers.jsx"
 
 export function ExternalLinkModal({ editor, courseId }) {
     const [show, setShow] = useState(false)

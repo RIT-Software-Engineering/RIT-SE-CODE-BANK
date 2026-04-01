@@ -1,6 +1,11 @@
 import express from 'express'
 import { objectToNewWorkflow, workflowsFetch } from '../utils/workflows/api.js'
-import { actionToActionWithContext, flattenActionStates as flattenWorkflowState } from '../utils/workflows/actionPipeline.js'
+import { CMTActionToActionWithContexts } from '../utils/workflows/context.js'
+import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
+
+/**
+ * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
+ */
 
 const router = express.Router()
 export default router
@@ -46,15 +51,13 @@ router.get('/:id', async (req, res) => {
         })
 
         const workflow = await workflowsFetch('GET', `workflows/${course.workflowId}`)
+        /** @type {WorkflowsAction[]} */
         const actions = await workflowsFetch('GET', `actions?workflowId=${course.workflowId}`)
         const workflowState = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
         
-        const flattenedWorkflowState = flattenWorkflowState(workflowState)
-        const actionsWithContext = actions.map(action => 
-            actionToActionWithContext(action, flattenedWorkflowState, course.id, req.user?.uid)
-        )
+        const actionsWithContexts = actions.map(action => CMTActionToActionWithContexts(action, workflowState, course.id, req.user.uid)) 
 
-        res.json({ course, workflow, actionsWithContext, actionStates: workflowState })
+        res.json({ course, workflow, actionsWithContexts, actionStates: workflowState })
     } catch (err) {
         console.error('course creation failed: ', err)
         res.status(500).json({ error: err.message })
@@ -77,18 +80,23 @@ router.post('/', async (req, res) => {
 
         let metaCourseWorkflow;
         await workflowsFetch("GET", `workflows/metadata?key=code&value=${JSON.stringify('Course Creation Workflow')}`,).then(async response => {
-            console.log(response)
             const workflowBase = response.length > 0 ? response[0] : null;
             if (!workflowBase)
                 throw new Error("Unable to find the standard course creation template. Please contact Kenn Martinez so that it can be set.")
-            let actions = [];
+            let actions;
             if (workflowBase.rootActionId){
                 const actionResponse = await workflowsFetch("GET", `/actions?workflowId=${workflowBase.id}`);
-                actions = actionResponse.map(action => actionToActionWithContext(action, null, null, req.user?.uid)?.action);
+                function parseMetadata(action) {
+                    action.metadata = compressedMetadataToObject(action.metadata)
+                    if (action.childActions) for (action of action.childActions) parseMetadata(action)
+                }
+                actionResponse.forEach(action => parseMetadata(action))
+                actions = actionResponse 
             }
             else
                 throw new Error("Course creation workflow must have at least one simple action. Please contact Kenn Martinez so that one can be added.")
             const baseAction = workflowBase.baseAction;
+            // TODO: baseAction is an empty object 
             metaCourseWorkflow = {
                 name: baseAction.name,
                 description: baseAction.description,

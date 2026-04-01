@@ -1,12 +1,16 @@
-export {}
-
 /**
- * @import { ActionWithContexts, ParsedMetadata, WorkflowsWorkflow } from "./workflowProps"
+ * @import { ActionWithContexts, ParsedMetadata } from "./contexts.js"
+ * @import { WorkflowsWorkflow } from "./workflows.js"
  */
 
 // Base
 
-/** @typedef {{ children: React.ReactNode }} ChildrenProps */
+/**
+ * @typedef {(callback: string, outputValues: any) => Promise<Response>} FetchToCallback
+ * @typedef {(code: string) => boolean} IsCheckmark
+ * @typedef {any} PreviousValues
+ * @typedef {(code: string) => (() => void) | null} OnNavigateFactory
+ *//** @typedef {{ children: React.ReactNode }} ChildrenProps */
 /** @typedef {{ actionWithContexts: ActionWithContexts }} ActionWithContextsProps */
 /** @typedef {{ workflow: WorkflowsWorkflow }} WorkflowProps */
 /** @typedef {{ output: ParsedMetadata["outputs"][number] }} OutputDefinitionProps */
@@ -23,7 +27,8 @@ export {}
  *  required?: boolean,
  *  placeholder?: string,
  *  isInvalid?: boolean,
- *  error?: string
+ *  error?: string,
+ *  disabled?: boolean
  * } & OutputDefinitionProps
  * } OutputFieldProps
  */
@@ -49,11 +54,12 @@ export {}
  *  value: any,
  *  onChange: (e: any) => void,
  *  required?: boolean
+ *  disabled?: boolean
  * }} CheckmarkOutputProps
  */
 
 /** @typedef {ChildrenProps & { onClick: (e: React.MouseEvent) => void }} NavigateButtonProps */
-/** @typedef {{ onClick: () => void, checked: boolean }} CheckmarkActionProps */
+/** @typedef {{ actionWithContexts: ActionWithContexts, onClick: () => void, checked: boolean, loading: boolean, disabled: boolean }} CheckmarkActionProps */
 
 
 // Util

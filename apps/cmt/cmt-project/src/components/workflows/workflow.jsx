@@ -1,13 +1,13 @@
 import { useCallback } from 'react'
 import { Accordion } from 'react-bootstrap'
-import { createWorkflowRenderers, Workflow } from '@se-code-bank/workflows-components'
-import { ActionEditForm, CancellableEditActionForm, ComplexCardContainer, EditableActionView, SimpleCardContainer } from './actions'
-import { CheckmarkAction, NavigateButton } from './misc'
-import { UseCMTOnNavigateFactory } from '../../utils/workflows'
-import { OutputView, OutputContainer, NumberOutput, TextOutput, SelectOutput, CheckmarkOutput } from './outputs'
+import { createWorkflowRenderers, Workflow } from '@se-code-bank/workflows-ecosystem/components'
+import { ActionEditForm, CancellableEditActionForm, ComplexCardContainer, EditableActionView, SimpleCardContainer } from './actions.jsx'
+import { CheckmarkAction, NavigateButton } from './misc.jsx'
+import { UseCMTOnNavigateFactory } from '../../utils/workflows.js'
+import { OutputView, OutputContainer, NumberOutput, TextOutput, SelectOutput, CheckmarkOutput } from './outputs.jsx'
 
 /**
- * @import { WorkflowContainerProps, IsCheckmark } from '@se-code-bank/workflows-components'
+ * @import { WorkflowContainerProps, IsCheckmark } from '@se-code-bank/workflows-ecosystem'
  */
 
 export function CMTWorkflow({ refresh, fetchToCallback, workflow, actionsWithContexts, course }) {
