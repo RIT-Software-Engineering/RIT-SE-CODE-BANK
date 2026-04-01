@@ -376,13 +376,14 @@ export default function WorkflowsList() {
                       cursor: 'pointer',
                       bgcolor: 'background.paper',
                       border: (theme) => `1px solid ${theme.palette.divider}`,
-                      '&:hover': {
-                        boxShadow: 6,
-                        bgcolor: '#fff3e0',
-                      },
+                      transition: 'all 0.2s ease',
                       display: 'flex',
-                      flexDirection: 'column',
+                      flexDirection: 'column', 
                       gap: 2,
+                      '&:hover': {
+                        border: '2px solid #F76902',
+                        bgcolor: 'background.paper',
+                      },
                     }}
                   >
                     <Typography

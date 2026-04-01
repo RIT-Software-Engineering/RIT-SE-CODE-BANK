@@ -293,7 +293,7 @@ export default function WorkflowSubmissionsPage() {
                       >
                         {monthLabel(month)}
                       </Typography>
-                      <Typography sx={{ color: '#ccc' }}>
+                      <Typography sx={{ color: '#fff' }}>
                         {groupedSubmissions[month].length} submission
                         {groupedSubmissions[month].length !== 1 ? 's' : ''}
                       </Typography>
