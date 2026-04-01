@@ -1,9 +1,12 @@
 import express from 'express'
 import { objectToNewWorkflow, workflowsFetch } from '../utils/workflows/api.js'
-import { actionToActionWithContext, flattenActionStates as flattenWorkflowState } from '../utils/workflows/actionPipeline.js'
+import { actionToActionWithContext, findActionsByCode, flattenActionStates as flattenWorkflowState } from '../utils/workflows/actionPipeline.js'
+import { PrismaClient } from "@prisma/client";
 
 const router = express.Router()
 export default router
+
+const prisma = new PrismaClient();
 
 /**
  * GET /api/cmt/course
@@ -12,9 +15,14 @@ export default router
  */
 router.get('/', async (req, res) => {
     try {
-        const prisma = req.prisma
+        const profId = req.user.uid;
+        const {isTemplate} = req.query;
         const courses = await prisma.course.findMany({
             include: { professors: true },
+            where: {
+                professorId: profId, 
+                isTemplate: Boolean(isTemplate)
+            }
         })
         res.json(courses)
     } catch (err) {
@@ -40,7 +48,6 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         // TODO: check perms/if prof owns course
-        const prisma = req.prisma
         const course = await prisma.course.findUnique({
             where: { id: parseInt(req.params.id) },
         })
@@ -73,9 +80,12 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', async (req, res) => {
     try {
-        const professorId = req.user.uid
+        const professorId = req.user.uid;
+
+        const {courseCode, courseName, color, season} = req.body;
 
         let metaCourseWorkflow;
+        let sessionActions;
         await workflowsFetch("GET", `workflows/metadata?key=code&value=${JSON.stringify('Course Creation Workflow')}`,).then(async response => {
             console.log(response)
             const workflowBase = response.length > 0 ? response[0] : null;
@@ -95,26 +105,52 @@ router.post('/', async (req, res) => {
                 tags: workflowBase.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"),
                 childActions: actions
             };
+            if (season){ // basically if we're working with templates
+                metaCourseWorkflow.childActions.push({
+                    name: 'Publish Your Template',
+                    description: "Once you're done, press the button to publish your template for public use!",
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'CHECKMARK',
+                    },
+                })
+            }
+
+            sessionActions = findActionsByCode(metaCourseWorkflow.childActions, "SESSION", new RegExp(`^SESSION_.*`))
         })
 
-        const createdWorkflow = await objectToNewWorkflow(metaCourseWorkflow, professorId)
+        await prisma.$transaction(async () => {
+            const createdWorkflow = await objectToNewWorkflow(metaCourseWorkflow, professorId)
 
-        const createdState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdWorkflow.id }) // Create state
-        console.log(`Created workflow action state with id ${createdState.id}`)
+            const createdState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdWorkflow.id }) // Create state
+            console.log(`Created workflow action state with id ${createdState.id}`)
 
-        const newCourse = await req.prisma.course.create({
-            data: {
-                classId: req.body.courseCode,
-                name: req.body.courseName,
-                color: req.body.color,
-                professors: { connect: { id: professorId } },
-                workflowId: createdWorkflow.id,
-                workflowStateId: createdState.id,
-            },
-        })
+            const newCourse = await prisma.course.create({
+                data: {
+                    classId: courseCode,
+                    name: courseName,
+                    color: color,
+                    season: season ?? null,
+                    professors: { connect: { id: professorId } },
+                    workflowId: createdWorkflow.id,
+                    workflowStateId: createdState.id,
+                    isTemplate: Boolean(season),
+                },
+            });
 
-        // For simplicity of the frontend, return minimal information, since the GET for courses will contain all the info needed, and will be called much more often.
-        res.json({ course: newCourse })
+            sessionActions?.forEach(async action => {
+               await prisma.session.create({
+                    data: {
+                        sessionNum: action.metadata.outputs[0].validation.sessionNum,
+                        course: {connect: {id: Number(newCourse.id)}}
+                    }
+               });
+            });
+
+            // For simplicity of the frontend, return minimal information, since the GET for courses will contain all the info needed, and will be called much more often.
+            res.json({ course: newCourse })
+        });
+
     } catch (error) {
         console.error('Error creating meta course workflow/empty course :', error)
         res.status(500).json({
@@ -131,7 +167,6 @@ router.post('/', async (req, res) => {
  */
 router.put('/:id', async (req, res) => {
     try {
-        const prisma = req.prisma
         const { id } = req.params
         const updateData = req.body
 
@@ -192,7 +227,6 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
     try {
-        const prisma = req.prisma
         const { id } = req.params
 
         // Had to cast id to a Number so an int is passed instead of a string
@@ -242,7 +276,6 @@ router.delete('/:id', async (req, res) => {
 router.post('/create-with-workflow', async (req, res) => {
     try {
         const { course, templateId, calendarEvents } = req.body
-        const prisma = req.prisma
 
         // Validate course data
         /* TODO: verify if these need to exist or can be deleted with workflow's own validation
