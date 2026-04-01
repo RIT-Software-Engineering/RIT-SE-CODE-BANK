@@ -299,7 +299,6 @@ export default function WorkflowSubmissionsPage() {
                       </Typography>
                     </Box>
                     <Chip
-                      icon={<InsertDriveFileIcon />}
                       label={`${groupedSubmissions[month].filter((s) => s.fileData).length
                         } with files`}
                       variant="outlined"
@@ -309,13 +308,21 @@ export default function WorkflowSubmissionsPage() {
                   <Divider />
                   <Table>
                     <TableHead>
-                    <TableRow sx={{ backgroundColor: (theme) => theme.palette.primary.main }}>
-                      <TableCell sx={{ color: (theme) => theme.palette.primary.contrastText }}>Submitted On</TableCell>
-                      <TableCell sx={{ color: (theme) => theme.palette.primary.contrastText }}>Submitted By</TableCell>
-                      <TableCell sx={{ color: (theme) => theme.palette.primary.contrastText }}>Workflow</TableCell>
-                      <TableCell sx={{ color: (theme) => theme.palette.primary.contrastText }}>Action</TableCell>
-                      <TableCell sx={{ color: (theme) => theme.palette.primary.contrastText }}>Status</TableCell>
-                      <TableCell align="right" sx={{ color: (theme) => theme.palette.primary.contrastText }}>
+                    <TableRow
+                      hover={false}
+                      sx={{
+                        backgroundColor: (theme) => theme.palette.primary.main,
+                        '&:hover': {
+                          backgroundColor: (theme) => theme.palette.primary.main,
+                        },
+                      }}
+                    >
+                      <TableCell sx={{ color: '#fff' }}>Submitted On</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Submitted By</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Workflow</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Action</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Status</TableCell>
+                      <TableCell align="right" sx={{ color: '#fff' }}>
                           Files
                         </TableCell>
                       </TableRow>
