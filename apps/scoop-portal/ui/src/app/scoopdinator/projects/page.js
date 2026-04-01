@@ -246,7 +246,7 @@ export default function Projects() {
               placeholder="Search projects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ width: 280 }}
+              sx={{ width: 280, mt: 1.75}}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

@@ -286,7 +286,7 @@ export default function TeamsPage() {
         <Box
           sx={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: "flex-end",
             alignItems: "center",
             mb: 2,
             flexWrap: "wrap",
@@ -367,7 +367,7 @@ export default function TeamsPage() {
               placeholder="Search teams..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{ width: 280 }}
+              sx={{ width: 280, mt: 1.75}}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
