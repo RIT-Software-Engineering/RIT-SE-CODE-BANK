@@ -482,9 +482,15 @@ export default function Journal() {
   }
 
   return (
-    <>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
       <Header />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
         <JournalHeader
           setFilterDialogOpen={setFilterDialogOpen}
           setNewEntryOpen={setNewEntryOpen}
@@ -664,6 +670,6 @@ export default function Journal() {
         )}
       </Dialog>
 
-    </>
+    </Box>
   );
 }

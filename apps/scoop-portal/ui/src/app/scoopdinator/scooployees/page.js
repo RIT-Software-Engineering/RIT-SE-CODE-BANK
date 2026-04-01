@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogContent,
   Box,
+  Container,
   DialogActions,
   Select,
   MenuItem,
@@ -371,11 +372,12 @@ export default function ViewScooployees() {
   };
 
   return (
-    <>
+    <Box sx={{ backgroundColor: (theme) => theme.palette.grey[100], minHeight: "100vh" }}>
       <Header />
-      <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
-        Manage Users
-      </Typography>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+        <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
+          Manage Users
+        </Typography>
 
       {/* Toolbar */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 2 }}>
@@ -754,6 +756,7 @@ export default function ViewScooployees() {
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
         </DialogActions>
       </Dialog>
-    </>
+      </Container>
+    </Box>
   );
 }

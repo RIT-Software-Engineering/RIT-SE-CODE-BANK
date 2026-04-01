@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Chip,
+  Container,
   FormControl,
   InputAdornment,
   InputLabel,
@@ -123,9 +124,16 @@ export default function ReviewProposalsPage() {
   ];
 
   return (
-    <Box>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
       <Header />
-      <IconButton onClick={() => router.back()} aria-label="back">
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
+        <IconButton onClick={() => router.back()} aria-label="back">
         <ArrowBackIcon />
       </IconButton>
       <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
@@ -270,6 +278,7 @@ export default function ReviewProposalsPage() {
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
         </DialogActions>
       </Dialog>
+      </Container>
     </Box>
   );
 }

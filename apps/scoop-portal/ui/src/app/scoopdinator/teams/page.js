@@ -265,11 +265,13 @@ export default function TeamsPage() {
     <Box
       sx={{
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: "100vh",
       }}
     >
       <Header />
 
-      <Container maxWidth="xl" sx={{ py: 4, width: "100%" }}>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
         <Box
           sx={{
             display: "flex",

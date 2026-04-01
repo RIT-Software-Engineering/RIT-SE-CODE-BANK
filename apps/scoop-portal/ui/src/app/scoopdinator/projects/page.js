@@ -199,9 +199,9 @@ export default function Projects() {
   }
 
   return (
-    <>
+    <Box sx={{ backgroundColor: (theme) => theme.palette.grey[100], minHeight: "100vh" }}>
       <Header />
-      <Container maxWidth="xl" sx={{ py: 4, width: "100%" }}>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 2, mb: 3 }}>
           <Box>
             <Typography variant="h1">Projects</Typography>
@@ -520,6 +520,6 @@ export default function Projects() {
           </DialogActions>
         </form>
       </Dialog>
-    </>
+    </Box>
   );
 }

@@ -231,11 +231,18 @@ export default function ManageSemesterGroups() {
   const sortLabelSx = { color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } };
 
   return (
-    <>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
       <Header />
-      <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
-        Manage Semester Groups
-      </Typography>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
+        <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
+          Manage Semester Groups
+        </Typography>
 
       {/* Toolbar */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 2 }}>
@@ -461,6 +468,7 @@ export default function ManageSemesterGroups() {
           {snackbarMsg}
         </Alert>
       </Snackbar>
-    </>
+      </Container>
+    </Box>
   );
 }

@@ -115,7 +115,14 @@ export default function WorkflowsList() {
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
 
   return (
-    <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        color: (theme) => theme.palette.text.primary,
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
         <Typography variant="h1" sx={{ mb: 5 }}>
@@ -137,6 +144,8 @@ export default function WorkflowsList() {
                     sx={{
                       p: 3,
                       cursor: 'pointer',
+                      bgcolor: 'background.paper',
+                      border: (theme) => `1px solid ${theme.palette.divider}`,
                       '&:hover': {
                         boxShadow: 6,
                         bgcolor: '#fff3e0',

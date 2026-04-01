@@ -6,7 +6,7 @@ import SortableTableHeader from "@components/SortableTableHeader";
 import { useTheme } from "@mui/material/styles";
 import {
   Typography, Paper, Table, TableHead, TableCell, TableRow, TableBody,
-  Box, Select, MenuItem, TextField, FormControl,
+  Box, Container, Select, MenuItem, TextField, FormControl,
   InputLabel, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, Button,
   TableSortLabel,
   Chip,
@@ -121,9 +121,10 @@ export default function ViewScooployees() {
   };
 
   return (
-    <>
+    <Box sx={{ backgroundColor: (theme) => theme.palette.grey[100], minHeight: "100vh" }}>
       <Header />
-      <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>View Scooployees</Typography>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+        <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>View Scooployees</Typography>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 2 }}>
         <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
@@ -242,6 +243,7 @@ export default function ViewScooployees() {
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
         </DialogActions>
       </Dialog>
-    </>
+      </Container>
+    </Box>
   );
 }

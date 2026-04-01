@@ -70,6 +70,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-stack);
@@ -106,4 +108,3 @@ p, body, .body {
   line-height: 20px;
   font-weight: 300;
 }
-
