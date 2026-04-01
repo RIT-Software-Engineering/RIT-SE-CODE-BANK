@@ -55,13 +55,13 @@ function readWordFromBytes(mem, addr) {
 
 const program = `
 MOV #5, R0
-VALUE:
-MOV #VALUE, R0
+LABEL: .WORD 5
 `;
 
 backend.loadAssembly(program);
 const result = backend.run();
 console.log(result.registers);
+console.log(readWordFromBytes(result.memory, 128))
 
 // backend.step();
 // backend.step();

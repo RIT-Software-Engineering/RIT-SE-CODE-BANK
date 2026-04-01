@@ -12,8 +12,20 @@ export function encodeLine(parsedData, symbols) {
     }
 }
 
-function encodeDirective(parsedData) {
-
+function encodeDirective(parsedData, symbols) {
+    const wordArray = [];
+    switch(parsedData.directive) {
+        case '.WORD':
+            for(const arg of parsedData.args) {
+                if(isLabel(arg)) {
+                    wordArray.push(symbols[arg]);
+                } else {
+                    wordArray.push(Number(arg));
+                }
+            }
+    }
+    console.log(wordArray);
+    return wordArray;
 }
 
 function encodeInstruction(parsedData, symbols) {
@@ -21,19 +33,26 @@ function encodeInstruction(parsedData, symbols) {
     
     const UpperMnemonic = mnemonic.toUpperCase();
     const opcodeInfo = OPCODES[UpperMnemonic];
-    if(src.offset != null && isLabel(src.offset)) {
-        src.offset = symbols[src.offset];
-    }
-    if(dst.offset != null && isLabel(dst.offset)) {
-        dst.offset = symbols[dst.offset];
-    }
+    const resolvedSrc = src ? {
+        ...src,
+        offset: (src.offset != null && isLabel(src.offset))
+            ? symbols[src.offset]
+            : src.offset
+    } : null;
+
+    const resolvedDst = dst ? {
+        ...dst,
+        offset: (dst.offset != null && isLabel(dst.offset))
+            ? symbols[dst.offset]
+            : dst.offset
+    } : null;
     if(opcodeInfo !== undefined) {
         switch(opcodeInfo.type) {
             case 'two':
-                console.log(src);
-                return twoEncoder(opcodeInfo, src, dst);
+                console.log(resolvedSrc);
+                return twoEncoder(opcodeInfo, resolvedSrc, resolvedDst);
             case 'one':
-                return oneEncoder(opcodeInfo, dst);
+                return oneEncoder(opcodeInfo, resolvedDst);
             case 'zero':
                 return zeroEncoder(opcodeInfo);
             //create case for br

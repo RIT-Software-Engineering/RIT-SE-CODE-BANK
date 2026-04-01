@@ -13,8 +13,8 @@ const data = "   MOV R1     , R2      ; move R1 into R2\n" +
                 ";CLR 100(R2);"
 
 const data2 = `
-VALUE:
-MOV @#VALUE, R0
+MOV LABEL, R0
+LABEL: .WORD 5
 `;
 
 assemble(data2);
