@@ -44,7 +44,6 @@ INSERT INTO forms (faculty_information_id, time_submitted, pdf_data, type) VALUE
 (1, '2024-01-15 10:00:00', NULL, 'Highlights'),
 (2, '2024-01-20 11:00:00', NULL, 'Highlights'),
 (3, '2024-02-10 09:30:00', NULL, 'Highlights'),
-(4, '2024-02-15 10:00:00', NULL, 'Highlights'),
 (5, '2024-02-20 10:00:00', NULL, 'Highlights'),
 (6, '2024-03-01 10:00:00', NULL, 'Highlights'),
 (7, '2024-03-05 10:00:00', NULL, 'Highlights'),
@@ -55,7 +54,6 @@ INSERT INTO teaching_evals (form_id, course_name, professor_name, semester, year
 (1, 'SWEN-101 Software Development', 'Instructor A', 'Fall', '2023'),
 (2, 'CSCI-250 Data Structures', 'Instructor B', 'Fall', '2023'),
 (3, 'ISTE-340 Web Development', 'Instructor C', 'Spring', '2024'),
-(4, 'HCC-200 Interaction Design', 'Instructor D', 'Fall', '2023'),
 (5, 'DSCI-310 Machine Learning', 'Instructor E', 'Fall', '2023'),
 (6, 'CSEC-101 Security Fundamentals', 'Instructor F', 'Spring', '2024'),
 (7, 'SWEN-261 Intro to Software Engineering', 'Instructor G', 'Spring', '2024'),
@@ -75,10 +73,6 @@ INSERT INTO teaching_eval_questions (teaching_eval_id, question_number, question
 (3, '2', 'The instructor was well prepared for class', 28, '22', '4', '2', '0', '0', '4.5', '4.6', '4.7', '4.71', '93'),
 (3, '3', 'The instructor explained concepts clearly', 28, '20', '6', '2', '0', '0', '4.3', '4.4', '4.5', '4.64', '93'),
 (3, '4', 'The instructor was available for help', 28, '24', '3', '1', '0', '0', '4.6', '4.7', '4.8', '4.82', '96'),
--- Instructor D: low scores (~3.50 avg)
-(4, '2', 'The instructor was well prepared for class', 22, '8', '6', '5', '2', '1', '4.5', '4.6', '4.7', '3.45', '64'),
-(4, '3', 'The instructor explained concepts clearly', 22, '7', '5', '6', '3', '1', '4.3', '4.4', '4.5', '3.36', '55'),
-(4, '4', 'The instructor was available for help', 22, '9', '6', '4', '2', '1', '4.6', '4.7', '4.8', '3.68', '68'),
 -- Instructor E: low scores (~3.30 avg)
 (5, '2', 'The instructor was well prepared for class', 20, '5', '6', '5', '3', '1', '4.5', '4.6', '4.7', '3.25', '55'),
 (5, '3', 'The instructor explained concepts clearly', 20, '4', '5', '7', '3', '1', '4.3', '4.4', '4.5', '3.15', '45'),
