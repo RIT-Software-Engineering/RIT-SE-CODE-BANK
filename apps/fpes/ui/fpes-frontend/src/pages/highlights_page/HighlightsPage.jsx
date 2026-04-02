@@ -102,7 +102,7 @@ export default function HighlightsPage({facultyId, isAdmin = false}){
 
     return (
         <div>
-        <h1>Highlights</h1>
+        <h1>Highlights & Teaching Evaluations</h1>
         {percentile && (
             <Card sx={{ position: 'absolute', top: 80, right: 20, minWidth: 150, bgcolor: '#f5f5f5', boxShadow: 1 }}>
                 <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>

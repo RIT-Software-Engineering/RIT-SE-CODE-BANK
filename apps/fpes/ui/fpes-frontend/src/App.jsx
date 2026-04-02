@@ -54,7 +54,7 @@ function App() {
       roles_with_access : new Set(["Faculty", "Supervisor", "Admin"])
     },
     {
-      name : "Highlights",
+      name : "Highlights & Teaching Evaluations",
       route : "/highlights",
       roles_with_access : new Set(["Faculty", "Supervisor"])
     },
