@@ -7,9 +7,10 @@ router.get('/submitted_by/:facultyId', async (req, res) => {
   try {
     const conn = await pool.getConnection();
     const rows = await conn.query(
-      `SELECT te.id, f.time_submitted, te.course_name, te.professor_name, te.semester, te.year, f.id as form_id
+      `SELECT te.id, f.time_submitted, te.course_name, COALESCE(fi.name, te.professor_name) as professor_name, te.semester, te.year, f.id as form_id
        FROM teaching_evals te
        JOIN forms f ON te.form_id = f.id
+       LEFT JOIN faculty_information fi ON f.faculty_information_id = fi.faculty_id
        WHERE f.faculty_information_id = ?`,
       [req.params.facultyId]
     );
@@ -82,9 +83,11 @@ router.get('/all', async (req, res) => {
   try {
     const conn = await pool.getConnection();
     const rows = await conn.query(
-      `SELECT te.*, f.time_submitted
+      `SELECT te.id, te.form_id, te.course_name, te.semester, te.year,
+              COALESCE(fi.name, te.professor_name) as professor_name, f.time_submitted
        FROM teaching_evals te
        JOIN forms f ON te.form_id = f.id
+       LEFT JOIN faculty_information fi ON f.faculty_information_id = fi.faculty_id
        ORDER BY f.time_submitted DESC`
     );
     conn.release();

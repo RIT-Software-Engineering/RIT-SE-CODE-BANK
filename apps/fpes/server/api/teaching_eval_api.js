@@ -54,9 +54,16 @@ async function saveParsedTeachingEval(data) {
             ? `${data.course_code} ${data.course_name}` 
             : data.course_name || data.course_code || null;
         
+        // Use the faculty's actual name from faculty_information, not the PDF name
+        const facultyRows = await conn.query(
+            'SELECT name FROM faculty_information WHERE faculty_id = ?',
+            [data.faculty_id]
+        );
+        const professorName = facultyRows[0]?.name || data.professor_name;
+
         const evalResult = await conn.query(
             'INSERT INTO teaching_evals (form_id, course_name, professor_name, semester, year) VALUES (?, ?, ?, ?, ?)',
-            [formId, courseName, data.professor_name, data.semester, data.year]
+            [formId, courseName, professorName, data.semester, data.year]
         );
         const evalId = Number(evalResult.insertId);
         
@@ -97,13 +104,15 @@ async function getFacultyTeachingEvalPercentiles() {
         const result = await conn.query(`
             WITH faculty_avg_scores AS (
                 SELECT 
-                    te.professor_name,
+                    fi.name as professor_name,
                     AVG(CAST(teq.avg AS DECIMAL(5,2))) as overall_avg,
                     COUNT(DISTINCT te.id) as eval_count
                 FROM teaching_evals te
+                JOIN forms f ON te.form_id = f.id
+                JOIN faculty_information fi ON f.faculty_information_id = fi.faculty_id
                 JOIN teaching_eval_questions teq ON te.id = teq.teaching_eval_id
                 WHERE teq.avg IS NOT NULL AND teq.avg != ''
-                GROUP BY te.professor_name
+                GROUP BY fi.faculty_id, fi.name
             )
             SELECT 
                 professor_name,
@@ -234,19 +243,7 @@ async function summarizeTeachingEval(formId) {
             `- ${q.question}: avg=${q.avg}, dept_avg=${q.swen_avg}, top_two=${q.top_two}%`
         ).join('\n');
 
-        const prompt = `You are summarizing a teaching evaluation for a faculty review system.
-
-Professor: ${professor_name}
-Course: ${course_name} (${semester} ${year})
-
-Question scores (avg out of 5, dept avg, % top-two responses):
-${questionLines}
-
-Write a concise 2-3 sentence summary covering:
-1. Overall teaching performance (above/average/below average vs department)
-2. Specific strengths based on high scores
-3. Any areas of concern based on low scores or low top-two percentages
-Be factual and professional.`;
+        const prompt = `You are summarizing a teaching evaluation for a faculty review system.\n\nProfessor: ${professor_name}\nCourse: ${course_name} (${semester} ${year})\n\nQuestion scores (avg out of 5, dept avg, % top-two responses):\n${questionLines}\n\nWrite a concise 2-3 sentence summary covering:\n1. Overall teaching performance (above/average/below average vs department)\n2. Specific strengths based on high scores\n3. Any areas of concern based on low scores or low top-two percentages\nBe factual and professional.`;
 
         const result = await getModel().generateContent(prompt);
         return result.response.text();
@@ -264,5 +261,5 @@ module.exports = {
     getFacultyTeachingEvalPercentiles,
     getFacultyPercentileByName,
     getFacultyPercentileById,
-    summarizeTeachingEval
+    summarizeTeachingEval,
 }
