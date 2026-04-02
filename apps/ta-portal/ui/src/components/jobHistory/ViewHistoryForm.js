@@ -1,4 +1,4 @@
-// src/components/comments/ViewableCommentForm.js
+// src/components/comments/ViewHistoryForm.js
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,7 +21,7 @@ import {
 import { Close as CloseIcon } from '@mui/icons-material';
 
 /**
- * ViewableCommentForm component for displaying a history of comments related to an item.
+ * ViewHistoryForm component for displaying a history of stat changes related to an item.
  *
  * Fetches and renders comments from the database for a given foreign key and table.
  * Shows comment details such as status, author (for admin/employer roles), timestamp,
@@ -37,7 +37,7 @@ import { Close as CloseIcon } from '@mui/icons-material';
  * @param {Function} props.onClose - Callback to close the dialog
  */
 
-export default function ViewableCommentForm({ 
+export default function ViewHistoryForm({ 
   foreignKey, 
   foreignTableName,
   itemTitle,

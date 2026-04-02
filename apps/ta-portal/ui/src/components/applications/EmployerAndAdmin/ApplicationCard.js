@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { getStatusChipColor } from "@/utils/applicationUtils";
 import ViewableApplicationForm from "../ViewableApplicationForm";
-import ViewableNoteForm from "../../notes/ViewableNoteForm";
-import EditableNoteForm from "@/components/notes/EditableNoteForm";
+import StateUpdateForm from "@/components/jobHistory/StateUpdateForm";
 import {
   updateCandidateApplicationStatus,
   getCandidateHiredStatus,
@@ -38,6 +37,8 @@ import {
   MoreVert as EllipsisVerticalIcon,
   Article as DocumentIcon
 } from '@mui/icons-material';
+import ApplicationNoteForm from "@/components/jobHistory/ApplicationNoteForm";
+import ViewHistoryForm from "../../jobHistory/ViewHistoryForm";
 
 /**
  * ApplicationCard component for displaying and managing a candidate's job application for the employer/admin.
@@ -65,7 +66,7 @@ export default function ApplicationCard({
 }) {
   const { showNotification } = useNotification();
   const [isViewingApplication, setIsViewingApplication] = useState(false);
-  const [isViewingNotes, setIsViewingNotes] = useState(false);
+  const [isViewingHistory, setisViewingHistory] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
 
   const [modalState, setModalState] = useState({
@@ -85,6 +86,8 @@ export default function ApplicationCard({
 
   const statusColor = getStatusChipColor(jobApplicationStatus);
 
+  const [isEditingNote, setIsEditingNote] = useState(false);
+
   const handleMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -92,6 +95,15 @@ export default function ApplicationCard({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
+  const handleOpenNoteEdit = () => {
+    setIsEditingNote(true);
+    handleMenuClose();
+  }
+
+  const handleCloseNoteEdit = () => {
+    setIsEditingNote(false);
+  }
 
   const handleOpenUpdateModal = (status, title) => {
     setModalState({ isOpen: true, status, title });
@@ -272,8 +284,8 @@ export default function ApplicationCard({
             </IconButton>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
               <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
-              <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
-
+              <MenuItem onClick={() => { setisViewingHistory(true); handleMenuClose(); }}>View Application History</MenuItem>
+              <MenuItem onClick={() => { handleOpenNoteEdit(); handleMenuClose(); }}>View Application Notes</MenuItem>
               {showActionMenuItems && <Divider />}
 
               {showHireOption && (
@@ -373,7 +385,7 @@ export default function ApplicationCard({
               <Grid item xs={12} sm={6}>
                 <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</Button>
               </Grid>
-              <Button variant="outlined" onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</Button>
+              <Button variant="outlined" onClick={() => { setisViewingHistory(true); handleMenuClose(); }}>View Notes</Button>
               {showInterviewOption && (
                 <Grid item xs={12} sm={6}>
                   <Button variant="outlined" onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>Select for Interview</Button>
@@ -406,24 +418,32 @@ export default function ApplicationCard({
         />
       )}
 
-      {isViewingNotes && (
-        <ViewableNoteForm
+      {isViewingHistory && (
+        <ViewHistoryForm
           foreignKey={application.id}
           foreignTableName="JobPositionApplicationHistory"
-          itemTitle="Application Note History"
+          itemTitle="Application History"
           itemSubtitle={jobPosition.course.name}
           statusEnumMap={applicationStatusEnumToString}
           userRole={currentUser.role}
-          onClose={() => setIsViewingNotes(false)}
+          onClose={() => setisViewingHistory(false)}
         />
       )}
 
-      <EditableNoteForm
+      <StateUpdateForm
         isOpen={modalState.isOpen}
         onClose={handleCloseUpdateModal}
         onConfirm={handleConfirmUpdate}
         title={modalState.title}
         isProcessing={isProcessingUpdate}
+        applicationId={application.id}
+      />
+
+      <ApplicationNoteForm
+        isOpen={isEditingNote}
+        onClose={handleCloseNoteEdit}
+        isProcessing={isProcessingUpdate}
+        applicationId={application.id}
       />
 
       <ConfirmationModal

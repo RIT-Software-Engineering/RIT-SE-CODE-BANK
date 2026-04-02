@@ -498,6 +498,49 @@ async function updateJobPositionStatus(jobId, status, commentData) {
   }
 }
 
+// --- Application Notes ---
+/**
+ * Updates the note for a given application or creates one if it does not exist.
+ * @param {Number} applicationId 
+ * @param {String} note 
+ * @returns {Promise<object>} A promise that resolves to the new application note
+ */
+async function updateApplicationNote(applicationId, note) {
+  try {
+    return prisma.applicationNote.upsert({
+      where: { applicationId: applicationId },
+      update: { note: note },
+      create: {
+        note: note,
+        applicationId: applicationId
+      }
+    });
+  }catch (error) {
+    console.error(`Failed to upsert application note:`, error);
+    throw new Error(`Could not upsert application note.`)
+  }
+}
+
+/**
+ * Gets the note from the matching application.
+ * @param {Number} applicationId 
+ * @returns {Promise<object>} A promise that resolves to the application note
+ */
+async function getApplicationNote(applicationId) {
+  try {
+    const note = await prisma.applicationNote.findUnique({
+      where: { applicationId: applicationId },
+    });
+    if (note){
+      return note.note; // Succesfully Contains the correct text
+    }
+    return "";
+  }catch (error) {
+    console.error(`Failed to get application note:`, error);
+    throw new Error(`Could not get application note.`)
+  }
+}
+
 // --- JOB APPLICATIONS ---
 /**
  * Creates a new job application record for a candidate.
@@ -2873,6 +2916,8 @@ module.exports = {
   getApplicationDetailsForNotify,
   getUserNotificationPreferences,
   upsertUserNotificationPreferences,
+  updateApplicationNote,
+  getApplicationNote
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.
