@@ -5,6 +5,7 @@ import {
     Paper, Typography, Button, CircularProgress, Collapse, Box
 } from '@mui/material';
 import HighlightsViewModal from './HighlightsViewModal';
+import WeightedScorePanel from './WeightedScorePanel';
 
 export default function AdminHighlightsPage() {
     const [highlights, setHighlights] = useState([]);
@@ -104,6 +105,12 @@ export default function AdminHighlightsPage() {
                                                     <SummarySection label="Service" data={summaries[row.form_id].service} />
                                                     <SummarySection label="Administrative" data={summaries[row.form_id].administrative} />
                                                     <SummarySection label="Overall" data={summaries[row.form_id].overall} />
+                                                    <WeightedScorePanel
+                                                        summary={summaries[row.form_id]}
+                                                        facultyId={row.faculty_id}
+                                                        teachingText={row.teaching_section || ''}
+                                                        formId={row.form_id}
+                                                    />
                                                 </>
                                             ) : (
                                                 <Typography variant="body2">{summaries[row.form_id]}</Typography>
