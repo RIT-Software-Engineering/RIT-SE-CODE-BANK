@@ -4,16 +4,13 @@ const pool = require('../db');
 const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highlights_api');
 const { saveParsedHighlights, updateParsedHighlights } = require('../api/parsed_highlights_api');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// New approach
 const { GoogleGenAI } = require('@google/genai'); 
 const key = process.env.GEMINI_KEY
 const modelName = 'gemma-3-1b-it';
-
 const client = new GoogleGenAI({apiKey: key});
-
-// const model = new GoogleGenerativeAI(process.env.GEMINI_KEY)
-//   .getGenerativeModel({ model: 'gemini-2.0-flash' });
-
-
+// 
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
 const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
@@ -104,43 +101,47 @@ router.post('/:formId/summarize', async (req, res) => {
     const mentoringText = studentMentoring || h.teaching_section || 'None listed';
 
     const prompt = `Evaluate this faculty highlights form. Return ONLY valid JSON, no markdown.
-Structure: {"teaching":{"rating":1-5,"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":1-5,"comments":""}}
-For each section write 3-4 sentences referencing specific contributions. Refer to faculty by name.
+              Structure: {"teaching":{"rating":1-5,"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":1-5,"comments":""}}
+              For each section write 5-7 sentences referencing specific contributions. Refer to faculty by name.
 
-Faculty: ${h.name}, ${h.rank || 'Faculty'}
-Teaching: ${h.teaching_section || h.curriculum_development || 'None'}
-Mentoring: ${mentoringText}
-Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
-Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
-Significant outcomes: ${h.significant_outcomes || 'None'}
-Service: ${h.service_section || 'None'} | Hours: ${totalServiceHours ?? 'N/A'}
-Administrative: ${h.administrative_responsibilities || 'None'}
-Professional Development: ${h.professional_development || 'None'}`;
+              Faculty: ${h.name}, ${h.rank || 'Faculty'}
+              Teaching: ${h.teaching_section || h.curriculum_development || 'None'}
+              Mentoring: ${mentoringText}
+              Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
+              Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
+              Significant outcomes: ${h.significant_outcomes || 'None'}
+              Service: ${h.service_section || 'None'} | Hours: ${totalServiceHours ?? 'N/A'}
+              Administrative: ${h.administrative_responsibilities || 'None'}
+              Professional Development: ${h.professional_development || 'None'}`;
 
     const cached = summaryCache.get(formId);
     if (cached && cached.expiresAt > Date.now() && req.query.refresh !== 'true') return res.json({ summary: cached.summary, cached: true });
 
     const isRateLimit = e => e.status === 429 || e.statusCode === 429 || e?.errorDetails?.some?.(d => d.reason === 'RATE_LIMIT_EXCEEDED') || String(e?.message).includes('429');
     const isDailyQuota = e => String(e?.message).includes('PerDay') || String(e?.message).includes('GenerateRequestsPerDay');
-    let result;
     let lastErr;
-    for (const modelName of MODELS) {
-      const model = genAI.getGenerativeModel({ model: modelName });
-      for (let attempt = 0, delay = 2000; attempt < 4; attempt++, delay *= 2) {
-        try {
-          result = await model.generateContent(prompt);
-          break;
-        } catch (e) {
-          console.error(`[summarize] ${modelName} attempt ${attempt + 1} failed:`, e.status, e.statusCode, e.message);
-          lastErr = e;
-          if (!isRateLimit(e) || isDailyQuota(e) || attempt === 3) break;
-          await new Promise(r => setTimeout(r, delay));
-        }
-      }
-      if (result) break;
-    }
+    // for (const modelName of MODELS) {
+    //   const model = genAI.getGenerativeModel({ model: modelName });
+    //   for (let attempt = 0, delay = 2000; attempt < 4; attempt++, delay *= 2) {
+    //     try {
+    //       result = await model.generateContent(prompt);
+    //       break;
+    //     } catch (e) {
+    //       console.error(`[summarize] ${modelName} attempt ${attempt + 1} failed:`, e.status, e.statusCode, e.message);
+    //       lastErr = e;
+    //       if (!isRateLimit(e) || isDailyQuota(e) || attempt === 3) break;
+    //       await new Promise(r => setTimeout(r, delay));
+    //     }
+    //   }
+    //   if (result) break;
+    // }
+    const result = await client.models.generateContent({
+    model: modelName,
+    contents: prompt
+    });
     if (!result) throw lastErr;
-    const text = result.response.text().trim().replace(/^```json\s*|^```\s*|\s*```$/g, '');
+    const text = result.text.trim().replace(/^```json\s*|^```\s*|\s*```$/g, '');
+    console.log(text)
     let summary;
     try {
       summary = JSON.parse(text);
