@@ -8,7 +8,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 // New approach
 const { GoogleGenAI } = require('@google/genai'); 
 const key = process.env.GEMINI_KEY
-const modelName = 'gemma-3-1b-it';
+const modelName = 'gemma-3-27b-it';
 const client = new GoogleGenAI({apiKey: key});
 // 
 
