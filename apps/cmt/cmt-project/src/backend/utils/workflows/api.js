@@ -286,3 +286,44 @@ export async function objectToNewAction(action, ownerId, parentActionId) {
 
   return createdAction
 }
+
+export function findActionsByCode(actions, code, matcher) {
+  const actionsWithCode = [];
+  if (!matcher)
+    matcher = new RegExp(code);
+
+  for (let index = 0; index < actions.length; index++) {
+    const action = actions[index];
+    if (!action.metadata)
+      return null;
+    else {
+      if (matcher.test(action.metadata?.code)){
+        actionsWithCode.push(action);
+      }
+      if (action.childActions){
+        findActionsByCode(action.childActions, code, matcher)?.forEach(childAction => {
+          actionsWithCode.push(childAction);
+        });
+      }
+    }
+  }
+  return actionsWithCode;
+}
+
+// Recursive function to find the workflow from any given action within a workflow
+export async function findWorkflowFromAction(action){
+  if (action.parentActionId){
+    const parentAction = await workflowsFetch("GET", `/actions/${action.parentActionId}`);
+    return findWorkflowFromAction(parentAction); 
+  }
+  else if (action.previousAction){
+    console.log(action.previousAction)
+    const previousAction = await workflowsFetch("GET", `/actions/${action.previousAction.id}`);
+    return findWorkflowFromAction(previousAction);
+  }
+  else {
+    const rootAction = action.rootActionOf;
+    const workflow = rootAction ? await workflowsFetch("GET", `/workflows/${rootAction[0].id}`) : null
+    return workflow;
+  }
+}

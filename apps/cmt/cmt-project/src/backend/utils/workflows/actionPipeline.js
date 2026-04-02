@@ -88,6 +88,8 @@ export function determineCallback(code, asid, courseId, userId) {
     return `course/${courseId}?uid=${userId}&asid=${asid}`
   } if (code.includes('CHECKMARK') || code.includes("SESSION_")) {
     return `workflow/editCheckmarkAction?uid=${userId}&asid=${asid}`
+  } if (code === "PUBLISH_TEMPLATE") {
+    return `workflow/publishCourseTemplate?courseId=${courseId}&asid=${asid}`
   }
   throw Error('Unrecognized action metadata code ' + code)
 }
@@ -129,28 +131,4 @@ export function flattenActionStates(actionStates) {
 
   traverse(actionStates.baseActionState.children)
   return map
-}
-
-
-export function findActionsByCode(actions, code, matcher) {
-  const actionsWithCode = [];
-  if (!matcher)
-    matcher = new RegExp(code);
-
-  for (let index = 0; index < actions.length; index++) {
-    const action = actions[index];
-    if (!action.metadata)
-      return null;
-    else {
-      if (matcher.test(action.metadata?.code)){
-        actionsWithCode.push(action);
-      }
-      if (action.childActions){
-        findActionsByCode(action.childActions, code, matcher)?.forEach(childAction => {
-          actionsWithCode.push(childAction);
-        });
-      }
-    }
-  }
-  return actionsWithCode;
 }

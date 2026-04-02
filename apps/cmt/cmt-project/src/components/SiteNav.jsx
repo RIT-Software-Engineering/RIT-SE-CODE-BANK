@@ -80,6 +80,7 @@ export default function SiteNav() {
       items: [
         { to: "/teambuilder", label: "Team Builder" },
         { to: "/workflowbuilder", label: "Workflow Builder"},
+        { to: "/workflowbuilder-admin", label: "Workflow Builder Admin"},
       ]
     }
   ];

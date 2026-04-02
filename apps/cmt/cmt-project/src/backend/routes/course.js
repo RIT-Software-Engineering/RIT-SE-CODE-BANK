@@ -1,7 +1,8 @@
 import express from 'express'
 import { objectToNewWorkflow, workflowsFetch } from '../utils/workflows/api.js'
-import { actionToActionWithContext, findActionsByCode, flattenActionStates as flattenWorkflowState } from '../utils/workflows/actionPipeline.js'
+import { actionToActionWithContext, flattenActionStates as flattenWorkflowState } from '../utils/workflows/actionPipeline.js'
 import { PrismaClient } from "@prisma/client";
+import { findActionsByCode } from '../utils/workflows/api.js';
 
 const router = express.Router()
 export default router
@@ -82,7 +83,7 @@ router.post('/', async (req, res) => {
     try {
         const professorId = req.user.uid;
 
-        const {courseCode, courseName, color, season} = req.body;
+        const {courseCode, courseName, color, season, isTemplate} = req.body;
 
         let metaCourseWorkflow;
         let sessionActions;
@@ -105,18 +106,19 @@ router.post('/', async (req, res) => {
                 tags: workflowBase.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"),
                 childActions: actions
             };
-            if (season){ // basically if we're working with templates
+            if (isTemplate){ // basically if we're working with templates
                 metaCourseWorkflow.childActions.push({
                     name: 'Publish Your Template',
                     description: "Once you're done, press the button to publish your template for public use!",
                     actionType: 'simple',
                     metadata: {
-                        code: 'CHECKMARK',
+                        code: 'PUBLISH_TEMPLATE',
                     },
                 })
             }
 
-            sessionActions = findActionsByCode(metaCourseWorkflow.childActions, "SESSION", new RegExp(`^SESSION_.*`))
+            // The regex here is basically the same as an .includes
+            sessionActions = findActionsByCode(metaCourseWorkflow.childActions, "SESSION", new RegExp(`^SESSION_.*`));
         })
 
         await prisma.$transaction(async () => {
@@ -134,7 +136,7 @@ router.post('/', async (req, res) => {
                     professors: { connect: { id: professorId } },
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
-                    isTemplate: Boolean(season),
+                    isTemplate: isTemplate,
                 },
             });
 

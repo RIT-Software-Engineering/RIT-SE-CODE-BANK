@@ -12,7 +12,7 @@ import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { CourseOverview } from "./pages/course/CourseOverview.jsx";
 import { CourseDashboard } from "./pages/course/CourseDashboard.jsx";
-import { BuilderPage } from "./pages/WorkflowBuilderPage.jsx";
+import { BuilderPage, BuilderPageAdmin } from "./pages/WorkflowBuilderPage.jsx";
 import { TemplateOverview } from "./pages/template/TemplateOverview.jsx";
 import { TemplateDashboard } from "./pages/template/TemplateDashboard.jsx";
 
@@ -99,6 +99,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route 
             path="workflowbuilder" 
             element={<BuilderPage />} 
+          />
+          <Route 
+            path="workflowbuilder-admin" 
+            element={
+              <RequireAuth roles={['instructor', 'professor']}>
+                <BuilderPageAdmin/>
+              </RequireAuth>
+            } 
           />
         </Route>
       </Routes>
