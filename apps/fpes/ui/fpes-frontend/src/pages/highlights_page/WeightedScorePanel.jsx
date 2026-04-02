@@ -7,8 +7,6 @@ import {
 
 const BASE = 'http://localhost:3000';
 
-const TIER_COLORS = { 5: 'success', 4: 'primary', 3: 'info', 2: 'warning', 1: 'error' };
-
 function qualitativeFeedback(teachingScore, scholarshipScore, perClass) {
   const lines = [];
 
@@ -40,7 +38,6 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
   const [teachingScore, setTeachingScore] = useState(null);
   const [scholarshipScore, setScholarshipScore] = useState(null);
   const [perClass, setPerClass] = useState([]);
-  const [tier, setTier] = useState(null);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
@@ -72,13 +69,6 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
       .then(r => setResult(r.data))
       .catch(e => setError(e.response?.data?.error || 'Calculation failed'));
   }, [summary, weights, teachingScore, scholarshipScore]);
-
-  // Compute tier once we have a final score — use single score as allScores for now
-  useEffect(() => {
-    if (!result?.finalScore) return;
-    axios.post(`${BASE}/weighted_score/tier`, { finalScore: result.finalScore, allScores: [result.finalScore] })
-      .then(r => setTier(r.data)).catch(() => {});
-  }, [result]);
 
   const handleSaveWeights = async () => {
     setError(''); setSaved(false);
@@ -189,11 +179,11 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
         </Table>
       )}
 
-      {/* Final tier */}
-      {tier?.tier && (
+      {/* Final score display */}
+      {result?.finalScore != null && (
         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2">Performance Tier:</Typography>
-          <Chip label={`Tier ${tier.tier} — ${tier.label}`} color={TIER_COLORS[tier.tier] || 'default'} />
+          <Typography variant="body2">Final Score:</Typography>
+          <Chip label={result.finalScore.toFixed(2)} color="primary" />
         </Box>
       )}
 

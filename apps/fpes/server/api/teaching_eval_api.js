@@ -1,57 +1,58 @@
-/**
- * Teaching Evaluation Percentile API
- * 
- * Provides endpoints for calculating and retrieving faculty teaching evaluation percentiles.
- * Percentiles are calculated using SQL window functions to rank faculty performance relative
- * to their peers based on average teaching evaluation scores.
- */
-
 const pool = require('../db')
 const fs = require('fs')
-const { GoogleGenerativeAI } = require('@google/generative-ai')
-require('dotenv').config()
 
-function getModel() {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
-  return genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
-}
-
-
-async function resetTeachingEvalsTables(){
+/**
+ * Drops and rebuilds the teaching_evals and teaching_eval_questions tables
+ * by executing all SQL statements in sql/teaching_eval.sql.
+ * @returns {Array} Array of query results
+ */
+async function resetTeachingEvalsTables() {
     let connection;
     try {
-        const resetQuery = await fs.readFileSync("sql/teaching_eval.sql", 'utf-8');
-        let queries = resetQuery.split(';');
+        const resetQuery = fs.readFileSync("sql/teaching_eval.sql", 'utf-8');
+        const queries = resetQuery.split(';');
         queries.pop();
-
         connection = await pool.getConnection();
-        let results = [];
-        for (const query of queries){
+        const results = [];
+        for (const query of queries) {
             results.push(await connection.query(query));
         }
-
         return results;
     } finally {
         if (connection) connection.release();
-    } 
+    }
 }
 
+/**
+ * Saves a parsed teaching evaluation PDF to the database.
+ * Creates a form record, looks up the faculty's real name from faculty_information,
+ * inserts the teaching eval, and inserts all question rows.
+ * @param {Object} data - Parsed eval data from the PDF parser
+ * @param {number} data.faculty_id - Faculty member's ID
+ * @param {string} [data.course_code] - Course code (e.g. "SWEN-261")
+ * @param {string} [data.course_name] - Course name
+ * @param {string} [data.semester] - Semester (e.g. "Fall")
+ * @param {string} [data.year] - Year (e.g. "2024")
+ * @param {string} [data.pdf_data] - Base64-encoded PDF binary
+ * @param {Array}  [data.table] - Array of question objects
+ * @returns {{ success: boolean, evalId: number, formId: number }}
+ */
 async function saveParsedTeachingEval(data) {
     const conn = await pool.getConnection();
     try {
         const pdfBuffer = data.pdf_data ? Buffer.from(data.pdf_data, 'base64') : null;
-        
+
         const formResult = await conn.query(
             'INSERT INTO forms (faculty_information_id, time_submitted, pdf_data) VALUES (?, NOW(), ?)',
             [data.faculty_id, pdfBuffer]
         );
         const formId = Number(formResult.insertId);
-        
-        const courseName = data.course_code && data.course_name 
-            ? `${data.course_code} ${data.course_name}` 
+
+        const courseName = data.course_code && data.course_name
+            ? `${data.course_code} ${data.course_name}`
             : data.course_name || data.course_code || null;
-        
-        // Use the faculty's actual name from faculty_information, not the PDF name
+
+        // Use the faculty's actual name from faculty_information, not the PDF-parsed name
         const facultyRows = await conn.query(
             'SELECT name FROM faculty_information WHERE faculty_id = ?',
             [data.faculty_id]
@@ -63,14 +64,14 @@ async function saveParsedTeachingEval(data) {
             [formId, courseName, professorName, data.semester, data.year]
         );
         const evalId = Number(evalResult.insertId);
-        
+
         if (data.table && Array.isArray(data.table)) {
             for (const question of data.table) {
                 await conn.query(
-                    `INSERT INTO teaching_eval_questions 
-                    (teaching_eval_id, question_number, question, n, yes, no, 
-                     str_agree, agree, neutral, disagree, str_disagree, 
-                     uni_avg, col_avg, swen_avg, avg, top_two) 
+                    `INSERT INTO teaching_eval_questions
+                    (teaching_eval_id, question_number, question, n, yes, no,
+                     str_agree, agree, neutral, disagree, str_disagree,
+                     uni_avg, col_avg, swen_avg, avg, top_two)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [evalId, question.question_number, question.question, question.n,
                      question.yes || null, question.no || null,
@@ -80,19 +81,25 @@ async function saveParsedTeachingEval(data) {
                 );
             }
         }
-        
+
         return { success: true, evalId, formId };
     } finally {
         conn.release();
     }
 }
 
+/**
+ * Returns teaching eval percentile rankings for all faculty members.
+ * Uses PERCENT_RANK() window function over average eval scores.
+ * Faculty name is sourced from faculty_information, not the eval record.
+ * @returns {Array<{ professor_name: string, overall_avg: number, eval_count: number, percentile: number }>}
+ */
 async function getFacultyTeachingEvalPercentiles() {
     const conn = await pool.getConnection();
     try {
         const result = await conn.query(`
             WITH faculty_avg_scores AS (
-                SELECT 
+                SELECT
                     fi.name as professor_name,
                     AVG(CAST(teq.avg AS DECIMAL(5,2))) as overall_avg,
                     COUNT(DISTINCT te.id) as eval_count
@@ -103,7 +110,7 @@ async function getFacultyTeachingEvalPercentiles() {
                 WHERE teq.avg IS NOT NULL AND teq.avg != ''
                 GROUP BY fi.faculty_id, fi.name
             )
-            SELECT 
+            SELECT
                 professor_name,
                 CAST(overall_avg AS DECIMAL(5,2)) as overall_avg,
                 CAST(eval_count AS UNSIGNED) as eval_count,
@@ -122,46 +129,19 @@ async function getFacultyTeachingEvalPercentiles() {
     }
 }
 
-async function getFacultyPercentileByName(professorName) {
-    const conn = await pool.getConnection();
-    try {
-        const result = await conn.query(`
-            WITH faculty_avg_scores AS (
-                SELECT 
-                    te.professor_name,
-                    AVG(CAST(teq.avg AS DECIMAL(5,2))) as overall_avg,
-                    COUNT(DISTINCT te.id) as eval_count
-                FROM teaching_evals te
-                JOIN teaching_eval_questions teq ON te.id = teq.teaching_eval_id
-                WHERE teq.avg IS NOT NULL AND teq.avg != ''
-                GROUP BY te.professor_name
-            )
-            SELECT 
-                professor_name,
-                CAST(overall_avg AS DECIMAL(5,2)) as overall_avg,
-                CAST(eval_count AS UNSIGNED) as eval_count,
-                CAST(PERCENT_RANK() OVER (ORDER BY overall_avg) * 100 AS DECIMAL(5,2)) as percentile
-            FROM faculty_avg_scores
-            WHERE professor_name = ?
-        `, [professorName]);
-        if (!result[0]) return null;
-        return {
-            professor_name: result[0].professor_name,
-            overall_avg: parseFloat(result[0].overall_avg),
-            eval_count: parseInt(result[0].eval_count),
-            percentile: parseFloat(result[0].percentile)
-        };
-    } finally {
-        conn.release();
-    }
-}
-
+/**
+ * Returns the percentile ranking for a specific faculty member by their ID.
+ * Matches evals through the forms table using faculty_information_id,
+ * so results are accurate even if the PDF-parsed professor name differs.
+ * @param {number} facultyId - The faculty member's ID
+ * @returns {{ professor_name: string, overall_avg: number, eval_count: number, percentile: number } | null}
+ */
 async function getFacultyPercentileById(facultyId) {
     const conn = await pool.getConnection();
     try {
         const allResults = await conn.query(`
             WITH faculty_avg_scores AS (
-                SELECT 
+                SELECT
                     f.faculty_information_id,
                     fi.name as faculty_name,
                     AVG(CAST(teq.avg AS DECIMAL(5,2))) as overall_avg,
@@ -173,7 +153,7 @@ async function getFacultyPercentileById(facultyId) {
                 WHERE teq.avg IS NOT NULL AND teq.avg != ''
                 GROUP BY f.faculty_information_id, fi.name
             )
-            SELECT 
+            SELECT
                 faculty_information_id,
                 faculty_name,
                 CAST(overall_avg AS DECIMAL(5,2)) as overall_avg,
@@ -181,10 +161,10 @@ async function getFacultyPercentileById(facultyId) {
                 CAST(PERCENT_RANK() OVER (ORDER BY overall_avg) * 100 AS DECIMAL(5,2)) as percentile
             FROM faculty_avg_scores
         `);
-        
+
         const result = allResults.find(r => r.faculty_information_id == facultyId);
         if (!result) return null;
-        
+
         return {
             professor_name: result.faculty_name,
             overall_avg: parseFloat(result.overall_avg),
@@ -196,42 +176,10 @@ async function getFacultyPercentileById(facultyId) {
     }
 }
 
-async function summarizeTeachingEval(formId) {
-    const conn = await pool.getConnection();
-    try {
-        const evalData = await conn.query(
-            `SELECT te.professor_name, te.course_name, te.semester, te.year
-             FROM teaching_evals te JOIN forms f ON te.form_id = f.id WHERE f.id = ?`,
-            [formId]
-        );
-        if (!evalData[0]) throw new Error('Teaching eval not found');
-
-        const questions = await conn.query(
-            `SELECT question, avg, swen_avg, top_two
-             FROM teaching_eval_questions teq
-             JOIN teaching_evals te ON teq.teaching_eval_id = te.id
-             JOIN forms f ON te.form_id = f.id
-             WHERE f.id = ? ORDER BY CAST(question_number AS UNSIGNED)`,
-            [formId]
-        );
-
-        const { professor_name, course_name, semester, year } = evalData[0];
-        const questionLines = questions.map(q =>
-            `- ${q.question}: avg=${q.avg}, dept_avg=${q.swen_avg}, top_two=${q.top_two}%`
-        ).join('\n');
-
-        const prompt = `You are summarizing a teaching evaluation for a faculty review system.\n\nProfessor: ${professor_name}\nCourse: ${course_name} (${semester} ${year})\n\nQuestion scores (avg out of 5, dept avg, % top-two responses):\n${questionLines}\n\nWrite a concise 2-3 sentence summary covering:\n1. Overall teaching performance (above/average/below average vs department)\n2. Specific strengths based on high scores\n3. Any areas of concern based on low scores or low top-two percentages\nBe factual and professional.`;
-
-        const result = await getModel().generateContent(prompt);
-        return result.response.text();
-    } catch (err) {
-        if (err.status === 429) throw new Error('AI quota exceeded. Please try again later.');
-        throw err;
-    } finally {
-        conn.release();
-    }
-}
-
+/**
+ * Keywords indicating substantial course improvement in a faculty's teaching highlights text.
+ * Two or more matches trigger a score bump from 3 → 4.
+ */
 const IMPROVEMENT_KEYWORDS = [
     'new assignment', 'new assignments', 'redesigned', 'restructured', 'revised',
     'updated syllabus', 'new syllabus', 'added', 'introduced', 'overhauled',
@@ -240,9 +188,18 @@ const IMPROVEMENT_KEYWORDS = [
 ];
 
 /**
- * Calculates a teaching score (2-4) from percentile + course improvement.
- * Base: top 30% → 4, 30-70% → 3, bottom 30% → 2
- * Bump: average (3) → 4 if substantial course improvement detected
+ * Calculates a teaching score (2–4) based on percentile rank and course improvement keywords.
+ *
+ * Base score from percentile:
+ *   >= 70th → 4 (Above Average)
+ *   30–70th → 3 (Average)
+ *   < 30th  → 2 (Below Average)
+ *
+ * Bump rule: base score of 3 → 4 if 2+ improvement keywords found in teachingText.
+ *
+ * @param {number} facultyId - Faculty member's ID
+ * @param {string} [teachingText] - Teaching section text from the highlights form
+ * @returns {{ score: number|null, percentile: number|null, level: string, bumped: boolean, matchedKeywords: string[], overall_avg: number|null }}
  */
 async function calculateTeachingScore(facultyId, teachingText = '') {
     const percentileData = await getFacultyPercentileById(facultyId);
@@ -260,14 +217,8 @@ async function calculateTeachingScore(facultyId, teachingText = '') {
 
     const text = teachingText.toLowerCase();
     const matchedKeywords = IMPROVEMENT_KEYWORDS.filter(k => text.includes(k));
-    const hasSubstantialImprovement = matchedKeywords.length >= 2;
-
-    let finalScore = baseScore;
-    let bumped = false;
-    if (baseScore === 3 && hasSubstantialImprovement) {
-        finalScore = 4;
-        bumped = true;
-    }
+    const bumped = baseScore === 3 && matchedKeywords.length >= 2;
+    const finalScore = bumped ? 4 : baseScore;
 
     return {
         score: finalScore,
@@ -283,8 +234,6 @@ module.exports = {
     resetTeachingEvalsTables,
     saveParsedTeachingEval,
     getFacultyTeachingEvalPercentiles,
-    getFacultyPercentileByName,
     getFacultyPercentileById,
-    summarizeTeachingEval,
     calculateTeachingScore
 }

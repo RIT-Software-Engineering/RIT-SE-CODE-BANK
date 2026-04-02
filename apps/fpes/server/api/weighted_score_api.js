@@ -1,5 +1,12 @@
 const pool = require('../db');
 
+/**
+ * Calculates a weighted final score from per-category ratings and weights.
+ * Weights must sum to 10.
+ * @param {Object} ratings - { teaching, scholarship, service, administrative } each 1–5
+ * @param {Object} weights - { teaching, scholarship, service, administrative } summing to 10
+ * @returns {{ breakdown: Array, finalScore: number }}
+ */
 function calculateWeightedScore(ratings, weights) {
   const total = Object.values(weights).reduce((s, w) => s + Number(w), 0);
   if (Math.abs(total - 10) > 0.01) throw new Error(`Weights must sum to 10, got ${total}`);
@@ -16,11 +23,20 @@ function calculateWeightedScore(ratings, weights) {
   return { breakdown, finalScore: Math.round(finalScore * 100) / 100 };
 }
 
+/**
+ * Helper — acquires a DB connection, runs fn(conn), then releases.
+ * @param {Function} fn
+ */
 async function withConn(fn) {
   const conn = await pool.getConnection();
   try { return await fn(conn); } finally { conn.release(); }
 }
 
+/**
+ * Fetches the current category weights from the DB.
+ * Falls back to defaults (teaching=4, scholarship=3, service=2, administrative=1) if no row exists.
+ * @returns {{ teaching: number, scholarship: number, service: number, administrative: number }}
+ */
 async function getWeights() {
   const rows = await withConn(conn => conn.query('SELECT * FROM category_weights LIMIT 1'));
   if (rows.length === 0) return { teaching: 4, scholarship: 3, service: 2, administrative: 1 };
@@ -28,6 +44,11 @@ async function getWeights() {
   return { teaching: Number(teaching), scholarship: Number(scholarship), service: Number(service), administrative: Number(administrative) };
 }
 
+/**
+ * Updates the category weights in the DB. Weights must sum to 10.
+ * @param {{ teaching: number, scholarship: number, service: number, administrative: number }} weights
+ * @returns {{ teaching: number, scholarship: number, service: number, administrative: number }}
+ */
 async function updateWeights({ teaching, scholarship, service, administrative }) {
   const total = Number(teaching) + Number(scholarship) + Number(service) + Number(administrative);
   if (Math.abs(total - 10) > 0.01) throw new Error(`Weights must sum to 10, got ${total}`);
@@ -39,14 +60,24 @@ async function updateWeights({ teaching, scholarship, service, administrative })
 }
 
 /**
- * Calculates scholarship score (1-4) based on:
- * - Publication count percentile across all faculty
- * - New grant detection (bumps score by 1 if new/funded grants exist)
+ * Calculates a scholarship score (1–4) based on publication count percentile
+ * and grant activity on the given form.
+ *
+ * Base score from publication percentile:
+ *   >= 70th → 4 (Top 30%)
+ *   >= 50th → 3 (Top 50%)
+ *   >= 30th → 2 (Average)
+ *   < 30th  → 1 (Below Average)
+ *
+ * Bump rule: +1 (capped at 4) if a Funded or In Submission grant exists on the form.
+ *
+ * @param {number} facultyId - Faculty member's ID
+ * @param {number|null} formId - Form ID to check for grants (optional)
+ * @returns {{ score: number, pubCount: number, percentile: number, pubLevel: string, hasNewGrant: boolean, bumped: boolean }}
  */
 async function calculateScholarshipScore(facultyId, formId) {
   const conn = await pool.getConnection();
   try {
-    // Get publication counts for all faculty to compute percentile
     const allPubCounts = await conn.query(`
       SELECT f.faculty_information_id, COUNT(fp.publication_id) as pub_count
       FROM forms f
@@ -60,14 +91,12 @@ async function calculateScholarshipScore(facultyId, formId) {
     const rank = allPubCounts.filter(r => Number(r.pub_count) < pubCount).length;
     const percentile = total > 1 ? (rank / (total - 1)) * 100 : 100;
 
-    let baseScore;
-    let pubLevel;
+    let baseScore, pubLevel;
     if (percentile >= 70) { baseScore = 4; pubLevel = 'Top 30%'; }
     else if (percentile >= 50) { baseScore = 3; pubLevel = 'Top 50%'; }
     else if (percentile >= 30) { baseScore = 2; pubLevel = 'Average'; }
     else { baseScore = 1; pubLevel = 'Below Average'; }
 
-    // Check for new/funded grants on this form
     let hasNewGrant = false;
     if (formId) {
       const grants = await conn.query(
@@ -78,7 +107,6 @@ async function calculateScholarshipScore(facultyId, formId) {
     }
 
     const finalScore = Math.min(4, hasNewGrant ? baseScore + 1 : baseScore);
-
     return { score: finalScore, pubCount, percentile: Math.round(percentile * 10) / 10, pubLevel, hasNewGrant, bumped: hasNewGrant && baseScore < 4 };
   } finally {
     conn.release();
@@ -86,8 +114,10 @@ async function calculateScholarshipScore(facultyId, formId) {
 }
 
 /**
- * Gets per-class teaching eval averages for a faculty member
- * and compares each to the department average.
+ * Returns per-class teaching eval averages for a faculty member,
+ * each compared against the department average.
+ * @param {number} facultyId - Faculty member's ID
+ * @returns {Array<{ course_name: string, semester: string, year: string, class_avg: number, dept_avg: number, diff: number, alignment: string }>}
  */
 async function getPerClassTeachingBreakdown(facultyId) {
   const conn = await pool.getConnection();
@@ -107,42 +137,13 @@ async function getPerClassTeachingBreakdown(facultyId) {
     return rows.map(r => {
       const classAvg = parseFloat(r.class_avg);
       const deptAvg = parseFloat(r.dept_avg);
-      const diff = classAvg - deptAvg;
-      let alignment;
-      if (diff >= 0.2) alignment = 'Above Average';
-      else if (diff <= -0.2) alignment = 'Below Average';
-      else alignment = 'Average';
-      return { course_name: r.course_name, semester: r.semester, year: r.year, class_avg: classAvg, dept_avg: deptAvg, diff: Math.round(diff * 100) / 100, alignment };
+      const diff = Math.round((classAvg - deptAvg) * 100) / 100;
+      const alignment = diff >= 0.2 ? 'Above Average' : diff <= -0.2 ? 'Below Average' : 'Average';
+      return { course_name: r.course_name, semester: r.semester, year: r.year, class_avg: classAvg, dept_avg: deptAvg, diff, alignment };
     });
   } finally {
     conn.release();
   }
 }
 
-/**
- * Maps a final weighted score to a performance tier
- * based on percentile rank across all faculty final scores.
- * Top 30% → 5, top 40% → 4, top 60% → 3, top 80% → 2, else → 1
- */
-function calculateFinalTier(finalScore, allScores) {
-  if (!allScores || allScores.length === 0) return { tier: null, label: 'Not enough data' };
-  const sorted = [...allScores].sort((a, b) => a - b);
-  const rank = sorted.filter(s => s < finalScore).length;
-  const percentile = (rank / (sorted.length - 1 || 1)) * 100;
-
-  let tier, label;
-  if (percentile >= 70) { tier = 5; label = 'Top 30%'; }
-  else if (percentile >= 60) { tier = 4; label = 'Top 40%'; }
-  else if (percentile >= 40) { tier = 3; label = 'Top 60%'; }
-  else if (percentile >= 20) { tier = 2; label = 'Top 80%'; }
-  else { tier = 1; label = 'Bottom 20%'; }
-
-  return { tier, label, percentile: Math.round(percentile * 10) / 10 };
-}
-
-async function getWeightedScoreForForm(formId, ratings) {
-  const weights = await getWeights();
-  return calculateWeightedScore(ratings, weights);
-}
-
-module.exports = { calculateWeightedScore, getWeights, updateWeights, getWeightedScoreForForm, calculateScholarshipScore, getPerClassTeachingBreakdown, calculateFinalTier };
+module.exports = { calculateWeightedScore, getWeights, updateWeights, calculateScholarshipScore, getPerClassTeachingBreakdown };
