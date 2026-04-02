@@ -1,6 +1,6 @@
 // @ts-ignore
 import React, { useEffect, useMemo, useState } from "react";
-import { API_BASE } from "../utils/api";
+import { API_BASE, CMTFetch } from "../utils/api";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor";
 import JSZip from "jszip";
 
@@ -163,14 +163,35 @@ export default function CourseWebsitePage() {
 
     const zip = new JSZip();
 
-    // Generate HTML
+    const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
+
+    const response = await CMTFetch("GET", `/resources/${selectedCourseObj.id}`);
+    if (!response.ok) throw new Error("Failed to fetch resources");
+    const resources = await response.json();
+    console.log("Resources for course:", resources);
+
+    const resourcesFolder = zip.folder("resources");
+
+    await Promise.all(resources.map(async (resource) => {
+      try {
+        const resp = await CMTFetch("GET", `/resources/download/${resource.id}`);
+        if (!resp.ok) throw new Error(`Failed to fetch resource ${resource.id}`);
+
+        const blob = await resp.blob();
+        // const fileName = sanitize(resource.label || `resource-${resource.id}`);
+        const fileName = sanitize(resource.filename);
+        resourcesFolder.file(fileName, blob);
+
+      } catch (err) {
+        console.error("Failed resource:", resource, err);
+      }
+    }));
+
+    // Generate Index HTML
     const html = generateCourseHTML(selectedCourseObj, sessions);
 
-    // Add HTML file to zip
-    zip.file(
-      `${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`,
-      html
-    );
+    // Add HTML file to course folder
+    zip.file(`public/${selectedCourseObj.classId}/${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`, html);
 
     // Generate and download zip
     const content = await zip.generateAsync({ type: "blob" });
@@ -303,11 +324,21 @@ function generateSessionRowHTML(session, visibleColumns) {
 
       ${grouped.map(colItems => `
         <td>
-          ${colItems.map(item => 
-              item.body
-                ? `<a href="#" onclick="window.open('', '_blank').document.write('${item.body.replace(/'/g, "\\'")}'); return false;">${item.label}</a>`
-                : `<span>${item.label}</span>`
-            ).join("")}
+          ${colItems.map(item => {
+            if (item.body) {
+              const safeBody = item.body
+                .replace(/\\/g, "\\\\")
+                .replace(/'/g, "\\'")
+                .replace(/\n/g, "\\n");
+              
+              return `<a href="#"
+                         onclick="const w=window.open(); w.document.write('${safeBody}'); w.document.close(); return false;">
+                        ${item.label}
+                      </a>`;
+            } else {
+              return `<span>${item.label}</span>`;
+            }
+          }).join("")}
         </td>
       `).join("")}
     </tr>
