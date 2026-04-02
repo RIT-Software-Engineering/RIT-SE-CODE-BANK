@@ -5,10 +5,11 @@ const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highli
 const { saveParsedHighlights, updateParsedHighlights } = require('../api/parsed_highlights_api');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-function getModel() {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
-  return genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
-}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
+const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+
+const summaryCache = new Map(); // formId -> { summary, expiresAt }
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 async function withConn(fn) {
   const conn = await pool.getConnection();
@@ -19,7 +20,7 @@ async function withConn(fn) {
   }
 }
 
-// GET all highlights for admin (with faculty name and form info)
+// GET all highlights for admin
 router.get('/all', async (_req, res) => {
   try {
     const rows = await withConn(conn => conn.query(`
@@ -40,11 +41,12 @@ router.get('/all', async (_req, res) => {
 router.post('/:formId/summarize', async (req, res) => {
   try {
     const { formId } = req.params;
-    const [formRows, publications, grants] = await withConn(async conn => Promise.all([
+
+    const [formRows, publications, grants, serviceRows] = await withConn(conn => Promise.all([
       conn.query(
         `SELECT fi.name, fi.rank, h.teaching_section, h.service_section,
                 h.administrative_responsibilities, h.professional_development,
-                h.significant_outcomes, h.curriculum_development
+                h.significant_outcomes, h.curriculum_development, h.service_hours
          FROM forms f
          JOIN highlights h ON f.id = h.form_id
          JOIN faculty_information fi ON f.faculty_information_id = fi.faculty_id
@@ -61,34 +63,84 @@ router.post('/:formId/summarize', async (req, res) => {
          JOIN forms_grants fg ON g.grant_id = fg.grant_id WHERE fg.form_id = ?`,
         [formId]
       ),
+      conn.query(
+        `SELECT COALESCE(SUM(s.hours_worked), 0) as total
+         FROM services s
+         JOIN forms_services fs ON s.id = fs.service_id
+         WHERE fs.form_id = ?`,
+        [formId]
+      ),
     ]));
 
     if (!formRows[0]) return res.status(404).json({ error: 'Form not found' });
     const h = formRows[0];
 
-    const prompt = `You are summarizing a faculty highlights form for an academic review system.
+    const summedHours = Number(serviceRows[0]?.total ?? 0);
+    const hoursFromText = (() => {
+      const matches = [...(h.service_section || '').matchAll(/(\d+)\s*(?:hrs?\.?|hours?)/gi)];
+      return matches.reduce((sum, m) => sum + parseInt(m[1]), 0);
+    })();
+    const totalServiceHours = summedHours || Number(h.service_hours) || hoursFromText || null;
+
+    // Fetch student_mentoring separately — column may not exist on all environments
+    let studentMentoring = null;
+    try {
+      const smRows = await withConn(conn => conn.query(
+        'SELECT student_mentoring FROM highlights WHERE form_id = ?', [formId]
+      ));
+      studentMentoring = smRows[0]?.student_mentoring || null;
+    } catch (_) { /* fall back to teaching_section */ }
+
+    const mentoringText = studentMentoring || h.teaching_section || 'None listed';
+
+    const prompt = `Evaluate this faculty highlights form. Return ONLY valid JSON, no markdown.
+Structure: {"teaching":{"rating":1-5,"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":1-5,"comments":""}}
+For each section write 3-4 sentences referencing specific contributions. Refer to faculty by name.
 
 Faculty: ${h.name}, ${h.rank || 'Faculty'}
+Teaching: ${h.teaching_section || h.curriculum_development || 'None'}
+Mentoring: ${mentoringText}
+Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
+Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
+Significant outcomes: ${h.significant_outcomes || 'None'}
+Service: ${h.service_section || 'None'} | Hours: ${totalServiceHours ?? 'N/A'}
+Administrative: ${h.administrative_responsibilities || 'None'}
+Professional Development: ${h.professional_development || 'None'}`;
 
-Teaching: ${h.teaching_section || h.curriculum_development || 'None listed'}
+    const cached = summaryCache.get(formId);
+    if (cached && cached.expiresAt > Date.now() && req.query.refresh !== 'true') return res.json({ summary: cached.summary, cached: true });
 
-Scholarship:
-- Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
-- Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
-- Significant outcomes: ${h.significant_outcomes || 'None listed'}
-
-Service: ${h.service_section || 'None listed'}
-
-Administrative: ${h.administrative_responsibilities || 'None listed'}
-
-Professional Development: ${h.professional_development || 'None listed'}
-
-Write a concise 3-4 sentence summary covering teaching, scholarship, and service. Be factual and professional.`;
-
-    const result = await getModel().generateContent(prompt);
-    res.json({ summary: result.response.text() });
+    const isRateLimit = e => e.status === 429 || e.statusCode === 429 || e?.errorDetails?.some?.(d => d.reason === 'RATE_LIMIT_EXCEEDED') || String(e?.message).includes('429');
+    const isDailyQuota = e => String(e?.message).includes('PerDay') || String(e?.message).includes('GenerateRequestsPerDay');
+    let result;
+    let lastErr;
+    for (const modelName of MODELS) {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      for (let attempt = 0, delay = 2000; attempt < 4; attempt++, delay *= 2) {
+        try {
+          result = await model.generateContent(prompt);
+          break;
+        } catch (e) {
+          console.error(`[summarize] ${modelName} attempt ${attempt + 1} failed:`, e.status, e.statusCode, e.message);
+          lastErr = e;
+          if (!isRateLimit(e) || isDailyQuota(e) || attempt === 3) break;
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
+      if (result) break;
+    }
+    if (!result) throw lastErr;
+    const text = result.response.text().trim().replace(/^```json\s*|^```\s*|\s*```$/g, '');
+    let summary;
+    try {
+      summary = JSON.parse(text);
+    } catch {
+      summary = { overall: { rating: null, comments: text } };
+    }
+    summaryCache.set(formId, { summary, expiresAt: Date.now() + CACHE_TTL_MS });
+    res.json({ summary });
   } catch (err) {
-    if (err.status === 429) return res.status(429).json({ error: 'AI quota exceeded. Please try again later.' });
+    if (err.status === 429 || err.statusCode === 429 || String(err?.message).includes('429')) return res.status(429).json({ error: 'AI quota exceeded. Please try again later.' });
     console.error(err);
     res.status(500).json({ error: 'Failed to generate summary' });
   }
@@ -116,28 +168,6 @@ router.get('/submitted_by/:facultyID', async (req, res) => {
   }
 });
 
-router.post('/parsed', async (req, res) => {
-  try {
-    const { faculty_id } = req.body;
-    if (!faculty_id) return res.status(400).json({ error: 'faculty_id is required' });
-    const result = await saveParsedHighlights(req.body);
-    res.json({ success: true, id: result.id, formId: result.formId, replaced: result.replaced });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to save parsed data' });
-  }
-});
-
-router.put('/parsed/:formId', async (req, res) => {
-  try {
-    const result = await updateParsedHighlights(req.params.formId, req.body);
-    res.json({ success: true, formId: result.formId });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to update parsed data' });
-  }
-});
-
 // GET by id
 router.get('/:id', async (req, res) => {
   try {
@@ -150,58 +180,49 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// CREATE
-router.post('/', async (req, res) => {
-  const {
-    faculty_information_id,
-    supervisor_id = null,
-    student_support_id = null,
-    collaborations_section = null,
-    professional_development = null,
-    significant_outcomes = null
-  } = req.body;
-
-  if (!faculty_information_id) return res.status(400).json({ error: 'faculty_information_id is required' });
-
+// POST save parsed highlights
+router.post('/parsed', async (req, res) => {
   try {
-    const result = await withConn(conn => conn.query(
-      `INSERT INTO highlights
-       (faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development, significant_outcomes)
-       VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
-      [faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development, significant_outcomes]
-    ));
-    res.status(201).json(result);
+    const { faculty_id } = req.body;
+    if (!faculty_id) return res.status(400).json({ error: 'faculty_id is required' });
+    const result = await saveParsedHighlights(req.body);
+    res.json({ success: true, id: result.id, formId: result.formId, replaced: result.replaced });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to create highlight' });
+    res.status(500).json({ error: 'Failed to save parsed data' });
   }
 });
 
-// UPDATE
-router.put('/:id', async (req, res) => {
-  const {
-    faculty_information_id,
-    supervisor_id = null,
-    student_support_id = null,
-    collaborations_section = null,
-    professional_development = null
-  } = req.body;
-
-  if (!faculty_information_id) return res.status(400).json({ error: 'faculty_information_id is required' });
-
+// PUT update parsed highlights
+router.put('/parsed/:formId', async (req, res) => {
   try {
-    const result = await withConn(conn => conn.query(
-      `UPDATE highlights
-       SET faculty_information_id=?, supervisor_id=?, student_support_id=?,
-           collaborations_section=?, professional_development=?
-       WHERE id=?`,
-      [faculty_information_id, supervisor_id, student_support_id, collaborations_section, professional_development, req.params.id]
-    ));
-    if (result.affectedRows === 0) return res.status(404).json({ error: 'Not found' });
-    res.json({ ok: true });
+    const result = await updateParsedHighlights(req.params.formId, req.body);
+    res.json({ success: true, formId: result.formId });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to update highlight' });
+    res.status(500).json({ error: 'Failed to update parsed data' });
+  }
+});
+
+// POST full form submission
+router.post('/submit', async (req, res) => {
+  try {
+    const results = await submitHighlightsForm({ ...req.body, status: 'SUBMITTED' });
+    res.json(results);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to submit form' });
+  }
+});
+
+// POST save draft
+router.post('/draft', async (req, res) => {
+  try {
+    const result = await submitHighlightsForm({ ...req.body, status: 'DRAFT' });
+    res.json({ success: true, id: result.id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save draft' });
   }
 });
 
@@ -215,29 +236,6 @@ router.delete('/:id', async (req, res) => {
     console.error(err);
     if (err.code === 'ER_ROW_IS_REFERENCED_2') return res.status(409).json({ error: 'Cannot delete: referenced by other records' });
     res.status(500).json({ error: 'Failed to delete highlight' });
-  }
-});
-
-// FULL FORM SUBMISSION
-router.post('/submit', async (req, res) => {
-  try {
-    const data = { ...req.body, status: 'SUBMITTED' };
-    const results = await submitHighlightsForm(data);
-    res.json(results);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to submit form' });
-  }
-});
-
-router.post('/draft', async (req, res) => {
-  try {
-    const data = { ...req.body, status: 'DRAFT' };
-    const result = await submitHighlightsForm(data);
-    res.json({ success: true, id: result.id });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to save draft' });
   }
 });
 

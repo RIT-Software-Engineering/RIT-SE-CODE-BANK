@@ -276,7 +276,9 @@ async function parsePDF(filePath) {
         period: extractField(lines, 'Period'),
         scholarship: scholarshipData,
         publication: publicationData,
-        teaching: extractSection(text, 'Teaching', 'Service'),
+        teaching: extractSection(text, 'Teaching', 'Student Mentoring'),
+        student_mentoring: extractSection(text, 'Student Mentoring, Counts of Supported Students:', 'Service') ||
+                           extractSection(text, 'Student Mentoring', 'Service'),
         service: serviceSection,
         service_hours: serviceHours,
         administrative: extractSection(text, 'Administrative', null)
