@@ -170,7 +170,7 @@ export default function CourseWebsitePage() {
     const resources = await response.json();
     console.log("Resources for course:", resources);
 
-    const resourcesFolder = zip.folder("resources");
+    const resourcesFolder = zip.folder("public_html/resources");
 
     await Promise.all(resources.map(async (resource) => {
       try {
@@ -178,7 +178,6 @@ export default function CourseWebsitePage() {
         if (!resp.ok) throw new Error(`Failed to fetch resource ${resource.id}`);
 
         const blob = await resp.blob();
-        // const fileName = sanitize(resource.label || `resource-${resource.id}`);
         const fileName = sanitize(resource.filename);
         resourcesFolder.file(fileName, blob);
 
@@ -191,7 +190,8 @@ export default function CourseWebsitePage() {
     const html = generateCourseHTML(selectedCourseObj, sessions);
 
     // Add HTML file to course folder
-    zip.file(`public/${selectedCourseObj.classId}/${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`, html);
+    zip.file(`public_html/${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`, html);
+    zip.file(`README.txt`, `This ZIP contains the course website for ${selectedCourseObj.classId}-${selectedCourseObj.section} | ${selectedCourseObj.name}\n\nOpen the HTML file in the "public_html" folder to view the course website. All resources are located in the "resources" folder.`);
 
     // Generate and download zip
     const content = await zip.generateAsync({ type: "blob" });
