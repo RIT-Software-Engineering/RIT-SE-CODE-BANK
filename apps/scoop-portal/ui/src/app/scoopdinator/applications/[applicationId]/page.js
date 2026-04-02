@@ -377,7 +377,7 @@ export default function ApplicationDetailPage() {
         </Button>
         {application.status !== "REJECTED" && (
           <Button
-            variant="contained"
+            variant="contained-error"
             color="error"
             onClick={() => handleStatusUpdate(STATUSES[2])}
           >
@@ -386,7 +386,7 @@ export default function ApplicationDetailPage() {
         )}
         {application.status !== "ACCEPTED" && (
           <Button
-            variant="contained"
+            variant="contained-success"
             color="success"
             onClick={() => handleStatusUpdate(STATUSES[1])}
           >

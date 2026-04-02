@@ -188,6 +188,26 @@ const baseTheme = createTheme({
             },
           },
         },
+        {
+          props: { variant: "contained-success" },
+          style: {
+            backgroundColor: "#84BD00",
+            color: "#FFFFFF",
+            "&:hover": {
+              backgroundColor: "#000000",
+            },
+          },
+        },
+        {
+          props: { variant: "contained-error" },
+          style: {
+            backgroundColor: "#DA291C",
+            color: "#FFFFFF",
+            "&:hover": {
+              backgroundColor: "#000000",
+            },
+          },
+        },
       ],
       styleOverrides: {
         root: {
