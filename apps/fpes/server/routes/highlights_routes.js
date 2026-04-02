@@ -5,8 +5,11 @@ const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highli
 const { saveParsedHighlights, updateParsedHighlights } = require('../api/parsed_highlights_api');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const model = new GoogleGenerativeAI(process.env.GEMINI_KEY)
-  .getGenerativeModel({ model: 'gemini-2.0-flash' });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
+const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+
+const summaryCache = new Map(); // formId -> { summary, expiresAt }
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 async function withConn(fn) {
   const conn = await pool.getConnection();
@@ -90,31 +93,43 @@ router.post('/:formId/summarize', async (req, res) => {
 
     const mentoringText = studentMentoring || h.teaching_section || 'None listed';
 
-    const prompt = `You are evaluating a faculty highlights form for an academic review system.
+    const prompt = `Evaluate this faculty highlights form. Return ONLY valid JSON, no markdown.
+Structure: {"teaching":{"rating":1-5,"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":1-5,"comments":""}}
+For each section write 3-4 sentences referencing specific contributions. Refer to faculty by name.
 
 Faculty: ${h.name}, ${h.rank || 'Faculty'}
+Teaching: ${h.teaching_section || h.curriculum_development || 'None'}
+Mentoring: ${mentoringText}
+Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
+Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
+Significant outcomes: ${h.significant_outcomes || 'None'}
+Service: ${h.service_section || 'None'} | Hours: ${totalServiceHours ?? 'N/A'}
+Administrative: ${h.administrative_responsibilities || 'None'}
+Professional Development: ${h.professional_development || 'None'}`;
 
-Teaching: ${h.teaching_section || h.curriculum_development || 'None listed'}
-Student Mentoring:
-${mentoringText}
+    const cached = summaryCache.get(formId);
+    if (cached && cached.expiresAt > Date.now() && req.query.refresh !== 'true') return res.json({ summary: cached.summary, cached: true });
 
-Scholarship:
-- Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
-- Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
-- Significant outcomes: ${h.significant_outcomes || 'None listed'}
-
-Service: ${h.service_section || 'None listed'}
-Total service hours: ${totalServiceHours ?? 'Not recorded'}
-
-Administrative: ${h.administrative_responsibilities || 'None listed'}
-
-Professional Development: ${h.professional_development || 'None listed'}
-
-Return ONLY a valid JSON object (no markdown, no code fences) with this exact structure:
-{"teaching":{"rating":3,"comments":"..."},"scholarship":{"rating":3,"disseminated":"Y","comments":"..."},"service":{"rating":3,"comments":"..."},"administrative":{"rating":3,"comments":"..."},"overall":{"rating":3,"comments":"..."}}
-For each section write a detailed 6-8 sentence evaluation that references specific contributions by name (courses, grants, publications, service roles, committees), highlights notable achievements with context, draws comparisons where relevant, and notes any areas for growth. The overall section should be 8-10 sentences synthesizing performance across all areas with specific examples from each category. Always refer to the faculty by their actual name (${h.name}). Do not use vague or generic language — every sentence must reference something specific from the data provided. Be factual, thorough, and professional.`;
-
-    const result = await model.generateContent(prompt);
+    const isRateLimit = e => e.status === 429 || e.statusCode === 429 || e?.errorDetails?.some?.(d => d.reason === 'RATE_LIMIT_EXCEEDED') || String(e?.message).includes('429');
+    const isDailyQuota = e => String(e?.message).includes('PerDay') || String(e?.message).includes('GenerateRequestsPerDay');
+    let result;
+    let lastErr;
+    for (const modelName of MODELS) {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      for (let attempt = 0, delay = 2000; attempt < 4; attempt++, delay *= 2) {
+        try {
+          result = await model.generateContent(prompt);
+          break;
+        } catch (e) {
+          console.error(`[summarize] ${modelName} attempt ${attempt + 1} failed:`, e.status, e.statusCode, e.message);
+          lastErr = e;
+          if (!isRateLimit(e) || isDailyQuota(e) || attempt === 3) break;
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
+      if (result) break;
+    }
+    if (!result) throw lastErr;
     const text = result.response.text().trim().replace(/^```json\s*|^```\s*|\s*```$/g, '');
     let summary;
     try {
@@ -122,9 +137,10 @@ For each section write a detailed 6-8 sentence evaluation that references specif
     } catch {
       summary = { overall: { rating: null, comments: text } };
     }
+    summaryCache.set(formId, { summary, expiresAt: Date.now() + CACHE_TTL_MS });
     res.json({ summary });
   } catch (err) {
-    if (err.status === 429) return res.status(429).json({ error: 'AI quota exceeded. Please try again later.' });
+    if (err.status === 429 || err.statusCode === 429 || String(err?.message).includes('429')) return res.status(429).json({ error: 'AI quota exceeded. Please try again later.' });
     console.error(err);
     res.status(500).json({ error: 'Failed to generate summary' });
   }
