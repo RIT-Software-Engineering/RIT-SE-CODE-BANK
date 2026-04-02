@@ -4,6 +4,7 @@
     "supertest": "^7.1.4"
   },
   "dependencies": {
+    "@google/genai": "^1.48.0",
     "@google/generative-ai": "^0.24.1",
     "@mui/x-date-pickers": "^8.17.0",
     "dayjs": "^1.11.19",

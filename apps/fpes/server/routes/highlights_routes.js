@@ -4,6 +4,16 @@ const pool = require('../db');
 const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highlights_api');
 const { saveParsedHighlights, updateParsedHighlights } = require('../api/parsed_highlights_api');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai'); 
+const key = process.env.GEMINI_KEY
+const modelName = 'gemma-3-1b-it';
+
+const client = new GoogleGenAI({apiKey: key});
+
+// const model = new GoogleGenerativeAI(process.env.GEMINI_KEY)
+//   .getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
 const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
