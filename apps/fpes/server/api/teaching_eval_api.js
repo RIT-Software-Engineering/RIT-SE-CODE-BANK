@@ -20,11 +20,8 @@ function getModel() {
 async function resetTeachingEvalsTables(){
     let connection;
     try {
-        // Read sql file that rebuilds services table and inserts test data
         const resetQuery = await fs.readFileSync("sql/teaching_eval.sql", 'utf-8');
-        // Splits file into multiple queries
         let queries = resetQuery.split(';');
-        // Removes the empty query at the end
         queries.pop();
 
         connection = await pool.getConnection();
@@ -90,14 +87,6 @@ async function saveParsedTeachingEval(data) {
     }
 }
 
-/**
- * Calculates teaching evaluation percentiles for all faculty members.
- * 
- * Uses a SQL window function (PERCENT_RANK) to determine where each faculty member
- * ranks relative to others based on their average teaching evaluation scores.
- * 
- * @returns {Array} Array of faculty with percentile rankings, sorted highest to lowest
- */
 async function getFacultyTeachingEvalPercentiles() {
     const conn = await pool.getConnection();
     try {
@@ -167,20 +156,9 @@ async function getFacultyPercentileByName(professorName) {
     }
 }
 
-/**
- * Gets percentile ranking for a specific faculty member by their ID.
- * 
- * Matches teaching evals by the faculty_id who submitted them, not by professor name yetttt.
- * This allows faculty to see their percentile even if the professor name in the eval
- * doesn't exactly match their name in the faculty_information table.
- * 
- * @param {number} facultyId - The faculty member's ID
- * @returns {Object|null} Faculty percentile data or null if not found
- */
 async function getFacultyPercentileById(facultyId) {
     const conn = await pool.getConnection();
     try {
-        // Get all percentiles calculated by faculty_id instead of professor_name
         const allResults = await conn.query(`
             WITH faculty_avg_scores AS (
                 SELECT 
@@ -204,7 +182,6 @@ async function getFacultyPercentileById(facultyId) {
             FROM faculty_avg_scores
         `);
         
-        // Find the matching faculty member
         const result = allResults.find(r => r.faculty_information_id == facultyId);
         if (!result) return null;
         
@@ -255,6 +232,53 @@ async function summarizeTeachingEval(formId) {
     }
 }
 
+const IMPROVEMENT_KEYWORDS = [
+    'new assignment', 'new assignments', 'redesigned', 'restructured', 'revised',
+    'updated syllabus', 'new syllabus', 'added', 'introduced', 'overhauled',
+    'improved', 'modified course', 'changed', 'developed new', 'created new',
+    'new project', 'new lab', 'new module', 'new curriculum'
+];
+
+/**
+ * Calculates a teaching score (2-4) from percentile + course improvement.
+ * Base: top 30% → 4, 30-70% → 3, bottom 30% → 2
+ * Bump: average (3) → 4 if substantial course improvement detected
+ */
+async function calculateTeachingScore(facultyId, teachingText = '') {
+    const percentileData = await getFacultyPercentileById(facultyId);
+
+    let baseScore = null;
+    let percentile = null;
+    let level = 'No eval data';
+
+    if (percentileData) {
+        percentile = percentileData.percentile;
+        if (percentile >= 70) { baseScore = 4; level = 'Above Average'; }
+        else if (percentile >= 30) { baseScore = 3; level = 'Average'; }
+        else { baseScore = 2; level = 'Below Average'; }
+    }
+
+    const text = teachingText.toLowerCase();
+    const matchedKeywords = IMPROVEMENT_KEYWORDS.filter(k => text.includes(k));
+    const hasSubstantialImprovement = matchedKeywords.length >= 2;
+
+    let finalScore = baseScore;
+    let bumped = false;
+    if (baseScore === 3 && hasSubstantialImprovement) {
+        finalScore = 4;
+        bumped = true;
+    }
+
+    return {
+        score: finalScore,
+        percentile,
+        level,
+        bumped,
+        matchedKeywords,
+        overall_avg: percentileData?.overall_avg ?? null
+    };
+}
+
 module.exports = {
     resetTeachingEvalsTables,
     saveParsedTeachingEval,
@@ -262,4 +286,5 @@ module.exports = {
     getFacultyPercentileByName,
     getFacultyPercentileById,
     summarizeTeachingEval,
+    calculateTeachingScore
 }

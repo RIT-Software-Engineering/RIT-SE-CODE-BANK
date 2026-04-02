@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { saveParsedTeachingEval, getFacultyTeachingEvalPercentiles, getFacultyPercentileById } = require('../api/teaching_eval_api');
+const { saveParsedTeachingEval, getFacultyTeachingEvalPercentiles, getFacultyPercentileById, calculateTeachingScore } = require('../api/teaching_eval_api');
 
 router.get('/submitted_by/:facultyId', async (req, res) => {
   try {
@@ -105,6 +105,17 @@ router.get('/percentile/faculty/:facultyId', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch percentile' });
+  }
+});
+
+router.get('/score/:facultyId', async (req, res) => {
+  try {
+    const teachingText = req.query.teaching_text || '';
+    const result = await calculateTeachingScore(req.params.facultyId, teachingText);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to calculate teaching score' });
   }
 });
 
