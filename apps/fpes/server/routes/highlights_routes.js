@@ -24,7 +24,7 @@ async function withConn(fn) {
 router.get('/all', async (_req, res) => {
   try {
     const rows = await withConn(conn => conn.query(`
-      SELECT f.id as form_id, fi.name as faculty_name, f.time_submitted
+      SELECT f.id as form_id, fi.name as faculty_name, fi.faculty_id, h.teaching_section, f.time_submitted
       FROM forms f
       JOIN highlights h ON f.id = h.form_id
       JOIN faculty_information fi ON f.faculty_information_id = fi.faculty_id
