@@ -24,12 +24,11 @@ function encodeDirective(parsedData, symbols) {
                 }
             }
     }
-    console.log(wordArray);
     return wordArray;
 }
 
 function encodeInstruction(parsedData, symbols) {
-    const {type, label, mnemonic, src, dst} = parsedData;
+    const {mnemonic, src, dst} = parsedData;
     
     const UpperMnemonic = mnemonic.toUpperCase();
     const opcodeInfo = OPCODES[UpperMnemonic];
@@ -49,7 +48,6 @@ function encodeInstruction(parsedData, symbols) {
     if(opcodeInfo !== undefined) {
         switch(opcodeInfo.type) {
             case 'two':
-                console.log(resolvedSrc);
                 return twoEncoder(opcodeInfo, resolvedSrc, resolvedDst);
             case 'one':
                 return oneEncoder(opcodeInfo, resolvedDst);

@@ -25,6 +25,7 @@ export function parseLine(tokens) {
 
 function parseInstruction(tokens, label) {
     const {mnemonic, srcTokens, dstTokens} = instructionLevel(tokens);
+    //console.log(srcTokens);
 
     return {
         type: "instruction",

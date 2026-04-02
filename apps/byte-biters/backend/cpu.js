@@ -25,6 +25,7 @@ export class CPU {
     }
 
     loadProgram(words) {
+        console.log(words);
         let addr = 0o200;
         for(let word of words) {
             this.memory.writeWord(addr, word);
@@ -85,6 +86,7 @@ export class CPU {
 
             const instr = this.fetch();
             const oper = this.decoder.decode(instr);
+            console.log(oper)
 
             if(oper.src) {
                 oper.src = this.resolveSource(oper.src.mode, oper.src.REG);

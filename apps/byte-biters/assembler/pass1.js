@@ -13,7 +13,6 @@ export function firstPass(parsedData) {
             symbols[data.label] = data.address;
         }
     }
-    console.log(parsedData)
     return {symbols, annotatedAst: parsedData};
 }
 
@@ -33,11 +32,12 @@ function computeSize(data) {
 }
 
 function computeInstructionSize(data) {
+    console.log(data);
     let size = 2;
-    if(data.src.offset != null) {
+    if(data.src != null && data.src.offset != null) {
         size += 2;
     }
-    if(data.dst.offset != null) {
+    if(data.dst != null && data.dst.offset != null) {
         size += 2;
     }
     return size;
