@@ -123,14 +123,10 @@ model Application {
   firstName                      String?
   ritEmail                       String
   userID                         String?
-  academicAdvisor                String?
-  creditsRemaining               String?
-  cumulativeGPA                  String?
   coopsCompleted                 Int?
   startSemester                  String
   SEcoopReferral                 String?
   SEcoopReferralDetails          String?
-  coursesTaken                   String
   coopSearchStartDate            String?
   coopSearchPlatforms            String?
   pendingOffers                  Boolean
@@ -148,6 +144,21 @@ model Application {
   resumeFileType                 String?
   status                         String   @default("PENDING")
   createdAt                      DateTime @default(now())
+}
+
+model InterestForm {
+  id               Int      @id @default(autoincrement())
+  applicant_id     String?
+  firstName        String
+  lastName         String
+  ritEmail         String
+  userID           String?
+  academicAdvisor  String?
+  creditsRemaining String?
+  cumulativeGPA    String?
+  coursesTaken     String?
+  status           String   @default("PENDING")
+  createdAt        DateTime @default(now())
 }
 
 model Teams {
