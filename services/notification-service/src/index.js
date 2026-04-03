@@ -6,6 +6,7 @@ import dispatchRouter from "./routes/dispatch.js";
 dotenv.config();
 
 const app = express();
+
 app.use(express.json({ limit: "1mb" }));
 
 // New, simplified API surface
