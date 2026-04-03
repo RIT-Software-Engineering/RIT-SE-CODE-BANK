@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 const router = express.Router();
 export default router
 
+// workflow/editCheckmarkAction
 router.put("/editCheckmarkAction", async (req, res) => {
     try {
         const { uid: userId, asid: actionStateId } = req.query
@@ -18,10 +19,12 @@ router.put("/editCheckmarkAction", async (req, res) => {
     }
 });
 
+// workflow/publishCourseTemplate
+// Not to be confused with meta-templates, these are course-specific templates
 router.put("/publishCourseTemplate", async (req, res) => {
     try {
         const { asid: actionStateId, courseId} = req.query;
-        // await workflowsFetch("POST", `/states/handleSubmit`, { actionStateId, stateType: "completed" });
+        await workflowsFetch("POST", `/states/handleSubmit`, { actionStateId, stateType: "completed" });
 
         const course = await prisma.course.findUnique({
             where: { id: parseInt(courseId) },
@@ -51,6 +54,7 @@ router.put("/publishCourseTemplate", async (req, res) => {
     }
 })
 
+// workflow/workflowTemplate
 router.get("/workflowTemplate", async(req, res) => {
     try {
         const {tags} = req.query;
@@ -64,6 +68,7 @@ router.get("/workflowTemplate", async(req, res) => {
     }
 })
 
+// workflow/workflowTemplate
 router.post("/workflowTemplate", async(req, res) => {
     try {
         const {workflow} = req.body; 
@@ -81,6 +86,7 @@ router.post("/workflowTemplate", async(req, res) => {
     }
 })
 
+// workflow/workflowTemplate/:workflowId
 router.put("/workflowTemplate/:workflowId", async(req, res) => {
     try {
         const {name, description, tags, metadata} = req.body; 
@@ -101,6 +107,7 @@ router.put("/workflowTemplate/:workflowId", async(req, res) => {
     }
 });
 
+// workflow/workflowTemplate/:workflowId
 router.delete("/workflowTemplate/:workflowId", async(req, res) => {
     try {
         const {workflowId} = req.params;
@@ -111,6 +118,7 @@ router.delete("/workflowTemplate/:workflowId", async(req, res) => {
     }
 });
 
+// workflow/actionTemplate/action
 router.post("/actionTemplate/action", async (req, res) => {
     try {
         const professorId = req.user.uid;
@@ -122,6 +130,7 @@ router.post("/actionTemplate/action", async (req, res) => {
     }
 })
 
+// workflow/actionTemplate/workflow
 router.post("/actionTemplate/workflow", async (req, res) => {
     try {
         const {workflow, parentActionId} = req.body; 
@@ -133,6 +142,7 @@ router.post("/actionTemplate/workflow", async (req, res) => {
     }
 })
 
+// workflow/actionTemplate/action/:actionId
 router.put("/actionTemplate/action/:actionId", async (req, res) => {
     try {
         const {actionId} = req.params;
@@ -147,17 +157,19 @@ router.put("/actionTemplate/action/:actionId", async (req, res) => {
     }
 });
 
+// workflow/actionTemplate/workflow/:workflowId
 router.put("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
         const {name, description} = req.body;
-        // const workflow = workflowsFetch("PUT", `/actions/${workflowId}`, {name:name, description: description});
-        return res.status(200).json({action: "yes"});
+        const workflow = workflowsFetch("PUT", `/actions/${workflowId}`, {name:name, description: description});
+        return res.status(200).json({action: workflow});
     } catch (error) { 
         return res.status(500).json({error: error.message});
     }
 });
 
+// workflow/actionTemplate/action/:actionId
 router.delete("/actionTemplate/action/:actionId", async (req, res) => {
     try {
         const {actionId} = req.params;
@@ -168,6 +180,7 @@ router.delete("/actionTemplate/action/:actionId", async (req, res) => {
     }
 });
 
+// workflow/actionTemplate/workflow/:workflowId
 router.delete("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
@@ -178,6 +191,7 @@ router.delete("/actionTemplate/workflow/:workflowId", async (req, res) => {
     }
 })
 
+// workflow/actionTemplate/nextAction/:actionId
 router.put("/actionTemplate/nextAction/:actionId", async (req, res) => {
     try {
         const {actionId} = req.params;
@@ -189,6 +203,7 @@ router.put("/actionTemplate/nextAction/:actionId", async (req, res) => {
     }
 })
 
+// workflow/actionTemplate/workflow/:workflowId
 router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;

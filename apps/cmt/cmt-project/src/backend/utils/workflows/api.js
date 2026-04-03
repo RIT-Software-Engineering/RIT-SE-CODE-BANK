@@ -287,6 +287,17 @@ export async function objectToNewAction(action, ownerId, parentActionId) {
   return createdAction
 }
 
+
+/**
+ * A recursive function to find all actions with either the matching code or with the matcher
+ * Starts from top-level actions and goes through all actions in the tree
+ * 
+ * @export
+ * @param {Array} actions - list of the current actions we're looking at
+ * @param {string} code - The code we're trying to find. If matcher is provided, we ignore.
+ * @param {RegExp|null} matcher - A specific matcher for what we want. If null, we just use code.
+ * @returns {Array} array of all actions whose codes match the code/matched text 
+ */
 export function findActionsByCode(actions, code, matcher) {
   const actionsWithCode = [];
   if (!matcher)
@@ -310,8 +321,19 @@ export function findActionsByCode(actions, code, matcher) {
   return actionsWithCode;
 }
 
-// Recursive function to find the workflow from any given action within a workflow
+/**
+ * Recursive function to find the workflow from any given action within a workflow
+ * We start from the action then work our way back up
+ * Currently unused, but maybe will be nice if you need to get the workflow from an action
+ *
+ * @export
+ * @async
+ * @param {*} action - the current action we're looking at
+ * @returns {Object} - The workflow that contains the original action 
+ */
 export async function findWorkflowFromAction(action){
+  // Actions have one of the following: a parentAction, a previousAction, or are a rootAction.
+  // They do not share these properties, so we can go through each case and recurse up.
   if (action.parentActionId){
     const parentAction = await workflowsFetch("GET", `/actions/${action.parentActionId}`);
     return findWorkflowFromAction(parentAction); 

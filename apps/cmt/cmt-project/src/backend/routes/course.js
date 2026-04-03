@@ -106,7 +106,7 @@ router.post('/', async (req, res) => {
                 tags: workflowBase.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"),
                 childActions: actions
             };
-            if (isTemplate){ // basically if we're working with templates
+            if (isTemplate){ // basically if we're working with templates we append this to the end of our workflow
                 metaCourseWorkflow.childActions.push({
                     name: 'Publish Your Template',
                     description: "Once you're done, press the button to publish your template for public use!",
@@ -121,6 +121,7 @@ router.post('/', async (req, res) => {
             sessionActions = findActionsByCode(metaCourseWorkflow.childActions, "SESSION", new RegExp(`^SESSION_.*`));
         })
 
+        // Do everything in a transaction so if one thing fails it reverts the DB
         await prisma.$transaction(async () => {
             const createdWorkflow = await objectToNewWorkflow(metaCourseWorkflow, professorId)
 
@@ -140,10 +141,11 @@ router.post('/', async (req, res) => {
                 },
             });
 
+            // If we have sessions in our meta-workflow, we autopopulate them in the new course
             sessionActions?.forEach(async action => {
                await prisma.session.create({
                     data: {
-                        sessionNum: action.metadata.outputs[0].validation.sessionNum,
+                        sessionNum: parseInt(action.metadata.outputs[0].validation.sessionNum),
                         course: {connect: {id: Number(newCourse.id)}}
                     }
                });
