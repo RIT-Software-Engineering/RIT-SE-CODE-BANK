@@ -2,7 +2,7 @@ import {useState, useEffect} from "react";
 import axios from 'axios';
 import { DataGrid } from "@mui/x-data-grid";
 import { Button, Paper, Box, Card, CardContent, Typography } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import HighlightsViewModal from "./HighlightsViewModal";
 import AddFileModal from "./AddFilePage";
 import DataPreviewModal from "./DataPreviewPage";
@@ -15,6 +15,13 @@ export default function HighlightsPage({facultyId, isAdmin = false}){
     const [viewModalType, setViewModalType] = useState('highlights');
     const [addFileModalOpen, setAddFileModalOpen] = useState(false);
     const [percentile, setPercentile] = useState(null);
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        if (searchParams.get("upload") === "true") {
+            setAddFileModalOpen(true);
+        }
+    }, []);
 
     function loadHighlights() {
         axios.get("http://localhost:3000/highlights/submitted_by/" + facultyId)
