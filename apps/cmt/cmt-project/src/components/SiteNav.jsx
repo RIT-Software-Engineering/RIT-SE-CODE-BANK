@@ -3,18 +3,15 @@ import { NavLink } from "react-router-dom";
 import {
   User,
   ChevronDown,
-  Menu,
-  X,
   GraduationCap,
   Wrench,
 } from "lucide-react";
 import "../styles/NavBar.css";
 import { getUserFromCookie, logout } from "../utils/auth";
-import { Container, Nav, Navbar, NavDropdown } from "react-bootstrap";
+import { Container, Dropdown, Nav, Navbar, NavDropdown, Button } from "react-bootstrap";
 
 export default function SiteNav() {
   const [user, setUser] = useState(null);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const profileRef = useRef(null);
@@ -24,10 +21,6 @@ export default function SiteNav() {
     setUser(getUserFromCookie());
     setActiveDropdown(window.location.pathname);
   }, []);
-
-  const toggleDropdown = (name) => {
-    setActiveDropdown(activeDropdown === name ? null : name);
-  };
 
   const menuGroups = [
     {
@@ -52,10 +45,10 @@ export default function SiteNav() {
   ];
 
   return (
-    <Navbar sticky="top" className="bg-[#f97316]" expand="md">
-      <Container className="flex justify-between">
+    <Navbar sticky="top" className="bg-[#f97316] px-4" expand="lg">
+      <Container className="flex items-center justify-between gap-2">
         {/* Brand */}
-        <Navbar.Brand className="gap-1 min-w-16" onClick={() => setActiveDropdown(null)}>
+        <Navbar.Brand className="flex-1 min-w-16" onClick={() => setActiveDropdown(null)}>
           <NavLink to="/" className="no-underline">
             <p className="font-extrabold text-white m-0 text-2xl">CMT</p>
             <p className="text-white text text-xs text-opacity-90">
@@ -75,7 +68,7 @@ export default function SiteNav() {
               >
                 <NavDropdown
                   title={
-                    <span className="group flex items-center gap-3 text-white">
+                    <span className="flex items-center gap-3 text-white">
                       <div className="flex items-center gap-2 text-sm font-semibold">{group.icon} {group.label}</div>
                       <div className='transition-transform duration-300 chevron'>
                         <ChevronDown size={16}/>
@@ -109,48 +102,49 @@ export default function SiteNav() {
           </Nav>
         </Navbar.Collapse>
 
+        <Navbar.Collapse className="justify-end">
         {/* Profile */}
-        {user && (
-          <div className="relative ml-auto" ref={profileRef}>
-            <button
-              className="site-nav__profile-button"
-              onClick={() => setProfileOpen(!profileOpen)}
-              aria-haspopup="menu"
-              aria-expanded={profileOpen}
-            >
-              <User size={20} />
-              <span className="site-nav__profile-name">
-                {user.name?.split(" ")[0] || "User"}
-              </span>
-              <ChevronDown
-                size={16}
-                className={`site-nav__chevron ${profileOpen ? "is-rotated" : ""}`}
-              />
-            </button>
-
-            {profileOpen && (
-              <div className="site-nav__profile-dropdown" role="menu">
-                <div className="site-nav__profile-info">
-                  <strong>{user.name || "User"}</strong>
-                  <div className="site-nav__profile-email">{user.email}</div>
-                  {user.roles && (
-                    <div className="site-nav__profile-role">
-                      {user.roles.join(", ")}
-                    </div>
-                  )}
+        <Nav ref={profileRef} className="gap-2">
+        <div 
+          className="gap-1 px-2 py-1 flex items-center border-1 border-solid rounded-lg bg-white bg-opacity-10 text-white"
+          style={{ border: "1px solid rgba(255, 255, 255, 0.2)" }}
+        >
+          <NavDropdown
+          title={<span className="flex gap-3 items-center text-white">
+                <User size={16} /> {user?.name?.split(" ")[0] || "User"} 
+                <div className='transition-transform duration-300 chevron'>
+                  <ChevronDown size={16}/>
                 </div>
+              </span>}
+            className="[&>.dropdown-toggle]:after:hidden min-w-full h-full
+            [&>.dropdown-toggle.show_.chevron]:rotate-180 focus-within:[&>.dropdown-toggle_.chevron]:rotate-180"
+          >
+            <Dropdown.Item as="span" className="bg-transparent text-black">
+              <div className="w-full pl-3 pr-16 py-2">
+                  <div className="text-base font-bold mb-1">{user?.name}</div>
+                  <div className="text-sm mb-1 text-[#666]">{user?.email}</div>
+                  { user?.roles.map(role => {
+                    return <div className="inline-block text-xs mr-2 px-2 py-2 bg-[#f97216] text-white rounded-full font-semibold mt-1">
+                      {role.toUpperCase()}
+                    </div>
+                  })}
+                </div>
+            </Dropdown.Item>
 
-                <button
-                  type="button"
-                  className="site-nav__logout-button"
-                  onClick={logout}
-                >
-                  Log out
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+            <Dropdown.Divider />
+            <Dropdown.Item className="bg-transparent" as="div">
+              <Button
+                variant="danger"
+                className="w-full py-2 border-none rounded-lg text-white text-sm font-semibold"
+                onClick={logout}>
+                Log out
+              </Button>
+            </Dropdown.Item>
+          </NavDropdown>
+
+        </div>
+        </Nav>
+        </Navbar.Collapse>
       </Container>
     </Navbar>
   );
