@@ -8,6 +8,7 @@ import {
   Divider,
   Paper,
   Snackbar,
+  TextField,
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -15,6 +16,7 @@ import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Header from "@components/Header";
 import StatusBadge from "@components/StatusBadge";
+import { useUser } from "../../utils/user-context/page";
 
 /**
  * A single question/answer row used throughout the detail page.
@@ -65,8 +67,10 @@ export default function InterestFormDetailPage() {
   const router = useRouter();
   const theme = useTheme();
 
+  const { user } = useUser();
   const [interestForm, setInterestForm] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reviewComment, setReviewComment] = useState("");
   const [notification, setNotification] = useState({
     open: false,
     message: "",
@@ -96,12 +100,17 @@ export default function InterestFormDetailPage() {
    * Updates the status of the interest form in the database.
    */
   async function putInterestFormStatus(newStatus) {
+    const reviewer = user?.email || user?.name || user?.id || null;
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/interestform/${interestFormId}`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: newStatus,
+          reviewComments: reviewComment || null,
+          reviewedBy: reviewer,
+        }),
       }
     );
     const result = await res.json();
@@ -220,6 +229,29 @@ export default function InterestFormDetailPage() {
         })}
       </Typography>
 
+      {(interestForm.reviewedAt || interestForm.reviewedBy || interestForm.reviewComments) && (
+        <Paper elevation={0} square sx={{ p: 2, mb: 2, backgroundColor: "rgba(0, 0, 0, 0.02)" }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            Review details
+          </Typography>
+          {interestForm.reviewedBy && (
+            <Typography variant="body2">Reviewed by: {interestForm.reviewedBy}</Typography>
+          )}
+          {interestForm.reviewedAt && (
+            <Typography variant="body2">
+              Reviewed on: {new Date(interestForm.reviewedAt).toLocaleDateString(undefined, {
+                year: "numeric", month: "long", day: "numeric",
+              })}
+            </Typography>
+          )}
+          {interestForm.reviewComments && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              Comments: {interestForm.reviewComments}
+            </Typography>
+          )}
+        </Paper>
+      )}
+
       {/* Content */}
       <Paper elevation={1} square sx={{ p: 3 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
@@ -243,6 +275,19 @@ export default function InterestFormDetailPage() {
 
         </Box>
       </Paper>
+
+      {interestForm.status === "PENDING" && (
+        <Box sx={{ mt: 3 }}>
+          <TextField
+            label="Review comments"
+            multiline
+            minRows={3}
+            value={reviewComment}
+            onChange={(e) => setReviewComment(e.target.value)}
+            fullWidth
+          />
+        </Box>
+      )}
 
       {/* Actions */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>

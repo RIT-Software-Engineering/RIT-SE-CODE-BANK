@@ -81,7 +81,7 @@ export default function InterestFormsPage() {
    * Handles the logic for opening a selected interest form.
    */
   const handleOpen = (form) => {
-    router.push(`/scoopdinator/interest-forms/${form.id}`);
+    router.push(`/interest-forms/${form.id}`);
   };
 
   const handleBack = () => router.back();
@@ -141,6 +141,8 @@ export default function InterestFormsPage() {
     { id: "lastName", label: "Last Name" },
     { id: "ritEmail", label: "Email" },
     { id: "createdAt", label: "Submitted" },
+    { id: "reviewedBy", label: "Reviewed By" },
+    { id: "reviewedAt", label: "Reviewed On" },
     { id: "status", label: "Status" },
   ];
 
@@ -214,6 +216,16 @@ export default function InterestFormsPage() {
                   {new Date(form.createdAt).toLocaleDateString(undefined, {
                     year: "numeric", month: "long", day: "numeric",
                   })}
+                </TableCell>
+                <TableCell>{form.reviewedBy || "—"}</TableCell>
+                <TableCell>
+                  {form.reviewedAt
+                    ? new Date(form.reviewedAt).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "—"}
                 </TableCell>
                 <TableCell>
                   <StatusBadge value={form.status} type="interestform" />

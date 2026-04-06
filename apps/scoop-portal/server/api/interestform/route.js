@@ -51,17 +51,24 @@ router.get("/:id", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, reviewComments, reviewedBy } = req.body;
 
     const validStatuses = ["PENDING", "ACCEPTED", "REJECTED"];
     if (!validStatuses.includes(status)) {
         return res.status(400).json({ error: "Invalid status. Must be one of: " + validStatuses.join(", ") });
     }
 
+    const data = { status };
+    if (status === "ACCEPTED" || status === "REJECTED") {
+        data.reviewedAt = new Date();
+        data.reviewedBy = reviewedBy || null;
+        data.reviewComments = reviewComments || null;
+    }
+
     try {
         const updated = await prisma.interestForm.update({
             where: { id: Number(id) },
-            data: { status },
+            data,
         });
         res.json(updated);
     } catch (error) {
