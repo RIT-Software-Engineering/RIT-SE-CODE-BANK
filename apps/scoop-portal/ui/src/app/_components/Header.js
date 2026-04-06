@@ -108,7 +108,6 @@ export default function Header() {
   const { user, setUser } = useUser();
   const [teams, setTeams] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [profileImage, setProfileImage] = useState("");
   const fileInputRef = useRef(null);
   
   const [notificationPrefs, setNotificationPrefs] = useState({
@@ -119,6 +118,7 @@ export default function Header() {
   });
   
   const [tempPrefs, setTempPrefs] = useState({ ...notificationPrefs });
+  const [tempProfileImage, setTempProfileImage] = useState("");
   const [statusMsg, setStatusMsg] = useState({ open: false, msg: "", severity: "info" });
 
   // --- Handlers ---
@@ -135,6 +135,7 @@ export default function Header() {
     if (user && user.id) {
       fetchUserInfo();
       fetchNotificationPreferences();
+      setTempProfileImage(user.profilePicture || "");
     }
     setProfileOpen(true);
   };
@@ -221,15 +222,80 @@ export default function Header() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (!user || !user.id) return;
+    
+    try {
+      // Save profile picture and user info
+      const baseUrl = getBaseUrl(process.env.NEXT_PUBLIC_API_URL);
+      if (!baseUrl) {
+        setStatusMsg({ open: true, msg: "API URL not configured", severity: "error" });
+        return;
+      }
+
+      const userRes = await fetch(`${baseUrl}/api/users/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          profilePicture: tempProfileImage,
+        }),
+      });
+
+      if (!userRes.ok) {
+        setStatusMsg({ open: true, msg: `Error saving profile: ${userRes.status}`, severity: "error" });
+        return;
+      }
+
+      const updatedUser = await userRes.json();
+      
+      // Update user context with new profile picture
+      if (setUser) {
+        setUser({ ...user, profilePicture: tempProfileImage });
+      }
+
+      // Save notification preferences
+      let formattedSlack = tempPrefs.slackUsername.trim();
+      if (formattedSlack.length > 0 && !formattedSlack.startsWith("@")) {
+        formattedSlack = "@" + formattedSlack;
+      }
+
+      const notifPayload = { ...tempPrefs, slackUsername: formattedSlack };
+      const notifBaseUrl = getBaseUrl(process.env.NEXT_PUBLIC_NOTIFICATION);
+      const notifUrl = `${notifBaseUrl}/preferences/scoop/${user.id}`;
+      
+      const notifRes = await fetch(notifUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(notifPayload),
+      });
+
+      if (notifRes.ok) {
+        setNotificationPrefs({ ...notifPayload });
+        setTempPrefs(notifPayload);
+        setStatusMsg({ open: true, msg: "Profile saved successfully", severity: "success" });
+      } else {
+        setStatusMsg({ open: true, msg: "Profile picture saved, but notification preferences failed to update", severity: "warning" });
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      setStatusMsg({ open: true, msg: "Network error saving profile", severity: "error" });
+    }
+  };
+
+  const handleResetProfile = () => {
+    setTempProfileImage(user?.profilePicture || "");
+    setTempPrefs({ ...notificationPrefs });
+  };
+
   const handlePrefChange = (field, value) => {
     setTempPrefs((prev) => ({ ...prev, [field]: value }));
   };
 
   useEffect(() => {
     if (user?.profilePicture) {
-      setProfileImage(user.profilePicture);
+      setTempProfileImage(user.profilePicture);
     } else {
-      setProfileImage("");
+      setTempProfileImage("");
     }
   }, [user]);
 
@@ -245,10 +311,7 @@ export default function Header() {
     reader.onload = () => {
       const dataUrl = reader.result;
       if (typeof dataUrl === "string") {
-        setProfileImage(dataUrl);
-        if (user && setUser) {
-          setUser({ ...user, profilePicture: dataUrl });
-        }
+        setTempProfileImage(dataUrl);
       }
     };
     reader.readAsDataURL(file);
@@ -510,11 +573,11 @@ export default function Header() {
                             onClick={handleProfilePictureClick}
                         >
                             <Avatar
-                                src={profileImage || undefined}
+                                src={tempProfileImage || undefined}
                                 sx={{
                                     width: 100,
                                     height: 100,
-                                    bgcolor: profileImage ? theme.ritColors.gray_1 : "background.paper",
+                                    bgcolor: tempProfileImage ? theme.ritColors.gray_1 : "background.paper",
                                     color: theme.ritColors.orange,
                                     border: "4px solid",
                                     borderColor: "background.paper",
@@ -681,7 +744,7 @@ export default function Header() {
                                         fullWidth
                                         variant="contained" 
                                         startIcon={<SaveIcon />}
-                                        onClick={handleSavePreferences}
+                                        onClick={handleSaveProfile}
                                         sx={{
                                             bgcolor: theme.ritColors.orange,
                                             color: theme.ritColors.white,
@@ -691,13 +754,13 @@ export default function Header() {
                                             },
                                         }}
                                     >
-                                        Save
+                                        Save Profile
                                     </Button>
                                     <Button 
                                         fullWidth
                                         variant="outlined" 
                                         startIcon={<CancelIcon />}
-                                        onClick={() => setTempPrefs({ ...notificationPrefs })}
+                                        onClick={handleResetProfile}
                                         color="inherit"
                                     >
                                         Reset
