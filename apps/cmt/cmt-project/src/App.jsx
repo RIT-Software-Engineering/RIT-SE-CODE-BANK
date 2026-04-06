@@ -4,10 +4,10 @@ import React from "react";
 
 export default function App() {
   return (
-    <div style={{ minHeight: "100vh" }}>
+    <div className="min-h-full">
       <SiteNav />
-      <main style={{ padding: "24px" }}>
-        <Outlet />
+      <main>
+          <Outlet />
       </main>
     </div>
   );
