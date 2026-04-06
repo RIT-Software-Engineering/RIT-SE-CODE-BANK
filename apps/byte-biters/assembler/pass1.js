@@ -32,7 +32,6 @@ function computeSize(data) {
 }
 
 function computeInstructionSize(data) {
-    console.log(data);
     let size = 2;
     if(data.src != null && data.src.offset != null) {
         size += 2;

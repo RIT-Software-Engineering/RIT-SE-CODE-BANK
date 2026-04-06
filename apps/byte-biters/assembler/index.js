@@ -20,9 +20,11 @@ export function assemble(text) {
 
     //Works as pass two instead of creating a new file
     const words = [];
+    let lc2 = 0;
     for(let data of annotatedAst) {
-        const encoded = encodeLine(data, symbols);
+        const encoded = encodeLine(data, symbols, lc2);
         words.push(...encoded);
+        lc2 += data.size;
     }
 
     return words;

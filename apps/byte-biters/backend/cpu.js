@@ -86,7 +86,6 @@ export class CPU {
 
             const instr = this.fetch();
             const oper = this.decoder.decode(instr);
-            console.log(oper)
 
             if(oper.src) {
                 oper.src = this.resolveSource(oper.src.mode, oper.src.REG);

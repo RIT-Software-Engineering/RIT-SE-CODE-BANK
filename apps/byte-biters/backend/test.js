@@ -54,15 +54,12 @@ function readWordFromBytes(mem, addr) {
 
 
 const program = `
-MOV LABEL, R0
-;add LABEL1, R0
+MOV LABEL1, R0
 HALT
+LABELer: .WORD 10
 LABEL: .WORD 5
-;LABEL1: .WORD 27
-;LABEL2: .WORD 59
-LABEL3: .WORD 57
-;MOV #6, R1
-;CLR R1
+LABEL1: .WORD 50
+
 `;
 
 backend.loadAssembly(program);
@@ -76,7 +73,7 @@ backend.loadAssembly(program);
 // console.log(s4.registers);
 const result = backend.run();
 console.log(result.registers);
-console.log(readWordFromBytes(result.memory, 132))
+//console.log(readWordFromBytes(result.memory, 138))
 
 // backend.step();
 // backend.step();

@@ -1,9 +1,9 @@
 import {encodeOperand} from "./encoder.js";
 import { OPCODES } from "./opcodes.js";
 
-export function encodeLine(parsedData, symbols) {
+export function encodeLine(parsedData, symbols, lc) {
     if(parsedData.type === "instruction") {
-        return encodeInstruction(parsedData, symbols);
+        return encodeInstruction(parsedData, symbols, lc);
     }
     else if(parsedData.type === "directive") {
         return encodeDirective(parsedData, symbols);
@@ -27,24 +27,14 @@ function encodeDirective(parsedData, symbols) {
     return wordArray;
 }
 
-function encodeInstruction(parsedData, symbols) {
+function encodeInstruction(parsedData, symbols, lc) {
     const {mnemonic, src, dst} = parsedData;
     
     const UpperMnemonic = mnemonic.toUpperCase();
     const opcodeInfo = OPCODES[UpperMnemonic];
-    const resolvedSrc = src ? {
-        ...src,
-        offset: (src.offset != null && isLabel(src.offset))
-            ? symbols[src.offset]
-            : src.offset
-    } : null;
+    const resolvedSrc = src ? resolveOperand(src, symbols, lc) : null;
+    const resolvedDst = dst ? resolveOperand(dst, symbols, lc) : null;
 
-    const resolvedDst = dst ? {
-        ...dst,
-        offset: (dst.offset != null && isLabel(dst.offset))
-            ? symbols[dst.offset]
-            : dst.offset
-    } : null;
     if(opcodeInfo !== undefined) {
         switch(opcodeInfo.type) {
             case 'two':
@@ -57,6 +47,23 @@ function encodeInstruction(parsedData, symbols) {
             //create case for rts and jsr
         }
     }
+}
+
+function resolveOperand(location, symbols, pc) {
+    let offset = location.offset;
+
+    if(offset != null && isLabel(offset)) {
+        offset = symbols[offset];
+    }
+
+    if(location.mode == "indexed" && location.reg == 7) {
+        console.log(pc)
+        console.log(offset)
+        offset = (offset - (pc + 2));
+        console.log(offset)
+    }
+
+    return{...location, offset};
 }
 
 function twoEncoder(opcodeInfo, src, dst) {
