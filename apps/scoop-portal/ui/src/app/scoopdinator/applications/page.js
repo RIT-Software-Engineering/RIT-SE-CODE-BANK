@@ -279,7 +279,7 @@ export default function SupervisorApplicationsPage() {
 
   const KanbanView = () => {
     const kanbanColumns = [
-      { label: "Pending", key: "PENDING", color: theme.palette.grey[500], defaultOrder: "desc" },
+      { label: "Pending", key: "PENDING", color: theme.palette.warning.main, defaultOrder: "desc" },
       { label: "Accepted", key: "ACCEPTED", color: theme.palette.success.main, defaultOrder: "desc" },
       { label: "Rejected", key: "REJECTED", color: theme.palette.error.main, defaultOrder: "desc" },
     ];
