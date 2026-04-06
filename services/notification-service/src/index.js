@@ -7,14 +7,14 @@ import cors from "cors";
 dotenv.config();
 
 const app = express();
-
-app.use(express.json({ limit: "1mb" }));
 app.use(
   cors({
     origin: process.env.BASE_URL || "http://localhost:3000",
     credentials: true,
   }),
 );
+app.use(express.json({ limit: "1mb" }));
+
 // New, simplified API surface
 // - Preferences: GET/PUT /api/notifications/preferences/:appId/:userId
 // - Dispatch:    POST    /api/notifications/dispatch/:appId
