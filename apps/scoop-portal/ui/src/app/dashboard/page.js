@@ -1,10 +1,12 @@
 'use client';
 import React, {useState, useEffect } from 'react';
 import {
-  Box, Typography, Container, Button, Grid, Paper,
+  Box, Typography, Container, Button, Grid, Paper, Dialog, DialogActions, DialogContent, 
+  DialogTitle, TextField, CircularProgress, Alert, Snackbar, Divider
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useUser } from "../utils/user-context/page";
+import { sendScoopEmail } from 'utils/ScoopEmailSend';
 
 import Header from '@components/Header';
 
@@ -80,6 +82,18 @@ const workflows = [
         description: "Manage current and upcoming semester groups.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/semestergroups",
       },
+    ],
+  },
+  {
+    title: "Email",
+    steps: [
+      {
+        title:"Send Email",
+        roles:["scoopdinator"],
+        description: "Send email to users",
+        link: null,
+        emailModal: true
+      }
     ],
   },
   {
@@ -213,6 +227,51 @@ export default function WorkflowDashboard() {
     const [filteredWorkflows, setfilteredWorkflows] = useState([]);
     const { user } = useUser();
 
+    //For the Email sending
+    const [modalOpen, setModalOpen] = useState(false);
+    const [recipient, setRecipient] = useState("");
+    const [subject, setSubject] = useState("");
+    const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
+    const [snackbar, setSnackbar] = useState({open: false, message: "", success: false});
+
+    //email modal
+    const handleOpen = () => {
+        setResult(null); 
+        setModalOpen(true);
+    };
+    const handleClose = () => {
+        setModalOpen(false);
+        setRecipient("");
+        setSubject("");
+        setMessage("");
+        setResult(null);
+    };
+
+    //email message to close automatically
+    useEffect(() => {
+        if (result) {
+            const timer = setTimeout(() => setResult(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [result]);
+
+    //handles sending the message
+    const handleSend = async () => {
+        setLoading(true);
+        setResult(null);
+        const res = await sendScoopEmail(recipient, subject, message);
+        setLoading(false);
+
+        if(res.success){
+            handleClose(); //auto closes the modal
+            setSnackbar({open: true, message: res.message, success: true});
+        }else{
+            setResult(res); //keeps the error inside the modal
+        }
+    };
+
   useEffect(() => {
     async function fetchTeammates() {
       if (user == null || user.fname == null){
@@ -330,12 +389,13 @@ export default function WorkflowDashboard() {
                       </Box>
 
                       <Button
-                        href={step.link}
+                        href={step.emailModal ? undefined : step.link}
+                        onClick={step.emailModal ? handleOpen : undefined}
                         variant="solid-orange"
                         sx={{
-                          textTransform: "none",
-                          ml: 2,
-                          flexShrink: 0,
+                            textTransform: "none",
+                            ml: 2,
+                            flexShrink: 0,
                         }}
                         endIcon={<ArrowForwardIosIcon fontSize="small" />}
                       >
@@ -367,6 +427,75 @@ export default function WorkflowDashboard() {
           © {new Date().getFullYear()} RIT | Contact | Terms
         </Typography>
       </Box>
+      <Dialog open={modalOpen} onClose={handleClose} fullWidth maxWidth="sm" disableRestoreFocus>
+        <DialogTitle>Send Email</DialogTitle>
+        <DialogContent sx={{display: "flex", flexDirection: "column", gap: 2, mt: 1}}>
+            {result && (
+                <Alert severity={result.success ? "success" : "error"}>
+                    {result.message}
+                </Alert>
+            )}
+            <Divider sx={{opacity: 0}}/>
+            <TextField
+                label="Recipient Email"
+                type="email"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                fullWidth
+                placeholder="student@rit.edu"
+            />
+            <TextField
+                label="Subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                fullWidth
+                placeholder="Test Notification"
+            />
+            <TextField
+                label="Message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                fullWidth
+                multiline
+                rows={4}
+                sx={{
+                    '& .MuiInputBase-inputMultiline': {
+                        resize: 'vertical',  //for resizing purposes
+                        overflow: 'auto'
+                    }
+                }}
+                placeholder="Enter your message here..."
+            />
+        </DialogContent>
+        <DialogActions sx={{padding: "16px"}}>
+            <Button onClick={handleClose} disabled={loading}>Cancel</Button>
+            <Button
+                variant="contained"
+                onClick={handleSend}
+                disabled={loading}
+                sx={{
+                    backgroundColor: "#F76902",
+                    "&:hover": {backgroundColor: "#d95e00"},
+                }}
+            >
+                {loading ? <CircularProgress size={20} color="inherit" /> : "Send"}
+            </Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({...snackbar, open: false})}
+        anchorOrigin={{vertical: "top", horizontal: "center"}}
+      >
+        <Alert
+            onClose={() => setSnackbar({...snackbar, open: false})}
+            severity={snackbar.success ? "success" : "error"}
+            sx={{width: "100%"}}
+        >
+            {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

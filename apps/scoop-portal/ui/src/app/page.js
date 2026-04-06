@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, {useState, useEffect} from "react";
 import Link from "next/link";
 // import Header from "@components/Header";
 import LandingHeader from "@components/LandingHeader";
@@ -23,7 +23,7 @@ const NavButton = ({ href, children }) => {
     transition: "background-color 0.3s ease",
   };
 
-  const [hover, setHover] = React.useState(false);
+  const [hover, setHover] = useState(false);
 
   return (
     <Link
