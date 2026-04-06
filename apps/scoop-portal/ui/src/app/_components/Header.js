@@ -739,7 +739,10 @@ export default function Header() {
                                         startAdornment: <InputAdornment position="start"><TagIcon fontSize="small"/></InputAdornment>,
                                     }}
                                 />
-                                <Box sx={{ display: 'flex', gap: 1, pt: 1, flexWrap: 'wrap' }}>
+                            </Stack>
+                        </CardContent>
+                    </Card>
+                    <Box sx={{ display: 'flex', gap: 1, pt: 1, flexWrap: 'wrap' }}>
                                     <Button 
                                         fullWidth
                                         variant="contained" 
@@ -766,9 +769,6 @@ export default function Header() {
                                         Reset
                                     </Button>
                                 </Box>
-                            </Stack>
-                        </CardContent>
-                    </Card>
                 </Box>
               </>
             ) : (
