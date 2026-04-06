@@ -21,28 +21,6 @@ export default function makeCourseWebsiteRouter(prisma) {
     }
   });
 
-  // Fetch all events (assignments, lectures, exams, etc) for a course
-  // IMPORTANT: This must come BEFORE /:courseId to avoid route collision
-  router.get("/:courseId/events", async (req, res) => {
-    const { courseId: courseIdString } = req.params;
-    const courseId = parseInt(courseIdString);
-    try {
-      const events = await prisma.Event.findMany({
-        where: { courseId },
-        orderBy: [{ date: "asc" }, { time: "asc" }],
-        include: { course: true },
-      });
-      res.json({ success: true, data: events });
-    } catch (e) {
-      res
-        .status(500)
-        .json({
-          error: "Failed to fetch events",
-          detail: String(e.message || e),
-        });
-    }
-  });
-
   // Get details for a single course
   // IMPORTANT: This must come AFTER more specific routes like /:courseId/events
   router.get("/:courseId", async (req, res) => {

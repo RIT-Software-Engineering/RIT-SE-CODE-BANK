@@ -44,13 +44,6 @@ async function main() {
   await prisma.tBEnrollment.deleteMany({});
   await prisma.tBTeamSet.deleteMany({});
 
-  // course-related
-  await prisma.event.deleteMany({});
-
-  // templates
-  await prisma.templateItem.deleteMany({});
-  await prisma.courseTemplate.deleteMany({});
-
   // delete resources
   await prisma.resource.deleteMany({});
 

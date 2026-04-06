@@ -237,13 +237,6 @@ router.delete('/:id', async (req, res) => {
 
         console.log('DELETE /api/cmt/course/:id called with:', Number(id))
 
-        // First, delete all events associated with this course
-        await prisma.event.deleteMany({
-            where: { courseId: Number(id) },
-        })
-
-        console.log(`✅ Deleted all events for course: ${id}`)
-
         // Then delete the course
         await prisma.course.delete({
             where: { id: Number(id) },
@@ -417,11 +410,6 @@ router.post('/create-with-workflow', async (req, res) => {
                         location: '',
                         importance: 'Medium',
                     }
-                })
-
-                // Create events in database
-                await prisma.event.createMany({
-                    data: eventsToCreate,
                 })
 
                 console.log(`✅ Created ${eventsToCreate.length} calendar events`)
