@@ -1,0 +1,22 @@
+name: ta-portal
+
+services:
+  # The container for the React JS frontend of the TA-Portal.
+  frontend:
+    build:
+      context: ../../..
+      dockerfile: apps/ta-portal/ui/Dockerfile
+      args:
+        NEXT_PUBLIC_API_EXTENSION: ${NEXT_PUBLIC_API_EXTENSION}
+        NEXT_PUBLIC_DATABASE_API_EXTENSION: ${NEXT_PUBLIC_DATABASE_API_EXTENSION}
+        NEXT_PUBLIC_SLACK_API_EXTENSION: ${NEXT_PUBLIC_SLACK_API_EXTENSION}
+        NEXT_PUBLIC_NODE_ENV: "PROD"
+        NEXT_PUBLIC_BACKEND_URL: ""
+    image: ta-portal-frontend:${TAG}
+
+  # The container for the Express JS backend of the TA-Portal
+  backend:
+    build:
+      context: ../../..
+      dockerfile: apps/ta-portal/server/Dockerfile
+    image: ta-portal-backend:${TAG}
