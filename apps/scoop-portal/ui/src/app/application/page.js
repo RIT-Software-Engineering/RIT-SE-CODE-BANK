@@ -365,7 +365,7 @@ function ApplicationPage() {
                         </FormControl>
 
                         <FormControl fullWidth margin="normal">
-                            <FormLabel>Is there anything else you'd like to share about your search or summer availability?</FormLabel>
+                            <FormLabel>Is there anything else you&apos;d like to share about your search or summer availability?</FormLabel>
                             <TextField fullWidth margin="normal" name="additionalComments" multiline rows={4}
                                 value={formValues.additionalComments || ""} onChange={handleChange} />
                         </FormControl>

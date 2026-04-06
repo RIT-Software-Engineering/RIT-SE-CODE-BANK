@@ -89,23 +89,6 @@ function InterestFormPage() {
             : formValues.firstName.toLowerCase() + formValues.lastName.toLowerCase();
 
         try {
-            const userCheckResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/users/${user_id}`
-            );
-            if (userCheckResponse.status === 404) {
-                setErrors({ _form: "You are not registered in our system. Please contact the SE Department." });
-                return;
-            }
-            if (!userCheckResponse.ok) {
-                setErrors({ _form: "Unable to verify your account. Please try again later." });
-                return;
-            }
-            const userCheckData = await userCheckResponse.json();
-            if (userCheckData?.type !== "prospect") {
-                setErrors({ _form: "You are not eligible to submit an interest form. Please contact the SE Department." });
-                return;
-            }
-
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interestform`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

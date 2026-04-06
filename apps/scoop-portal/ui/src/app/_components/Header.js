@@ -74,6 +74,7 @@ const searchablePages = [
     { label: "Workflows", path: "/scoopdinator/workflows" },
     { label: "Dashboard", path: "/scoopdinator/dashboard" },
     { label: "Review Applications", path: "/scoopdinator/applications" },
+    { label: "Interest Forms", path: "/scoopdinator/interest-forms" },
     { label: "View Scooployees", path: "/scoopdinator/scooployees/view" },
     { label: "Assign Scooployees to Teams", path: "/scoopdinator/scooployees/assign" },
     { label: "Manage Projects", path: "/projects" },

@@ -93,6 +93,12 @@ const workflows = [
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/applications",
       },
       {
+        title: "Review Interest Forms",
+        roles: ["scoopdinator", "advisor"],
+        description: "View interest form submissions.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/interest-forms",
+      },
+      {
         title: "View All Scooployees",
         roles: ["scoopervisor"],
         description: "Review current scooployee details and statuses.",
