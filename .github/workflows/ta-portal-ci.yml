@@ -76,7 +76,7 @@ jobs:
   deploy:
     # Placeholder for deployment. Reliant on deployment scripts that don't yet exist.
     name: Deploy Affected Apps
-    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev')
+    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev'
     needs: build
     runs-on: ubuntu-latest
 
