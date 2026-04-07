@@ -6,7 +6,6 @@ on:
       - main
       - dev
       - '*-dev'
-      - '*-production-changes'
   pull_request:
     branches:
       - main
@@ -77,7 +76,7 @@ jobs:
   deploy:
     # Placeholder for deployment. Reliant on deployment scripts that don't yet exist.
     name: Deploy Affected Apps
-    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev' || endswith(github.ref,'-production-changes')
+    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev')
     needs: build
     runs-on: ubuntu-latest
 
