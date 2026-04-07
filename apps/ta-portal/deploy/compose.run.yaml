@@ -16,7 +16,7 @@ services:
     # This connects a docker volume to the container directory that stores the SQL information. 
     # If this container is closed the database will be stored inside the persistant docker volume.
     volumes:
-      - ta_portal_mariadb_data:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
     # A simple healthcheck that runs mariadb's default healthcheck script. Allows docker to tell if the container is healthy and functioning or not.
     healthcheck:
       test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
@@ -60,7 +60,7 @@ services:
     depends_on:
       - mariadb
     volumes:
-      - ta_portal_uploads:/app/apps/ta-portal/server/resources
+      - uploads:/app/apps/ta-portal/server/resources
     # A basic healthcheck so Docker can tell the health of the container. Sends a get request to the health route (server/server/routing/index.js), which simply returns status 200.
     healthcheck:
       test: [ "CMD", "node", "-e", "require('http').get('http://localhost:${BACK_CONTAINER_PORT}${NEXT_PUBLIC_API_EXTENSION}/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))" ]
