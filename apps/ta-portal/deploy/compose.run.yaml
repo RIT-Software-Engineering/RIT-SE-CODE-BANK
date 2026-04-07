@@ -71,5 +71,5 @@ services:
 
 # Persistant volume that stores database information even if the mariadb container stops.
 volumes:
-  ta_portal_mariadb_data: {}
-  ta_portal_uploads: {}
+  mariadb_data: {}
+  uploads: {}
