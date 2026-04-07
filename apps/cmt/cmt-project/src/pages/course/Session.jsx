@@ -59,7 +59,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId}/>
         {
             Array.from({ length: sessionCount }, (_, i) => {
-                const sessionAction = sessionActions?.find(sessionAction => sessionAction.action.metadata.code === `SESSION_${i}`)
+                const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
                 
                 return (
                     <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>

@@ -27,12 +27,12 @@ export function metadataObjectToState(metadata, data) {
  * @param {array} actionsWithContexts 
  * @returns Array containing all of the actionsWithContexts that were nested inside of the given array.
  */
-export function flattenActionsWithContexts(actionsWithContexts) {
+export function  flattenActionsWithContexts(actionsWithContexts) {
     const flattenedActionsWithContexts = []
 
     function traverse(awc) {
         flattenedActionsWithContexts.push(awc)
-        if (awc.processedAction.childActionsWithContexts)
+        if (!(awc.actionType === "simple"))
             for (const childAwc of awc.processedAction.childActionsWithContexts)
                 traverse(childAwc)
     }
@@ -40,7 +40,6 @@ export function flattenActionsWithContexts(actionsWithContexts) {
     for (const awc of actionsWithContexts)
         traverse(awc)
 
-    console.log(flattenedActionsWithContexts)
     return flattenedActionsWithContexts
 }
 

@@ -52,7 +52,7 @@ export function CardAction(props) {
     if (processedAction.actionType === 'simple') {
         let form
 
-        if (processedAction.metadata?.code && isCheckmark(processedAction.metadata.code)) form = <CheckmarkAction {...actionProps} renderers={renderers.CheckmarkActionRenderers} />
+        if (processedAction.parsedMetadata?.code && isCheckmark(processedAction.parsedMetadata.code)) form = <CheckmarkAction {...actionProps} renderers={renderers.CheckmarkActionRenderers} />
         else if (actionState.stateType === 'completed') form = <ViewEditAction {...actionProps} renderers={renderers.ViewEditActionRenderers} />
         else form = <FormAction {...actionProps} renderers={renderers.FormActionRenderers} />
 
@@ -240,7 +240,11 @@ export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchTo
  * } & ActionContentRenderers } props
  */
 export function ActionContent({ actionWithContexts, outputValues, setOutputValues, submitted, validatorRegistry, onNavigateFactory, renderers }) {
-    const onNavigate = onNavigateFactory && onNavigateFactory(actionWithContexts.processedAction?.parsedMetadata?.code)
+    if (!actionWithContexts.processedAction.parsedMetadata.outputs) {
+        throw Error(`This ActionContent component is rendering without any outputs! This will break it. The actionWithContexts that has been fed into this component does not have any outputs. Did you mean to include this actions code in your isCheckmark function? ActionWithContexts: ${JSON.stringify(actionWithContexts)}`)
+    }
+    
+    const onNavigate = onNavigateFactory && onNavigateFactory(actionWithContexts.processedAction.parsedMetadata.code)
     return onNavigate ? (
         <renderers.NavigateButton onClick={onNavigate}>Navigate</renderers.NavigateButton>
     ) : (

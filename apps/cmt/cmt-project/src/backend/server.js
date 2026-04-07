@@ -7,7 +7,6 @@ import jwt from "jsonwebtoken";
 
 import authMiddleware from "./authMiddleware.js";
 
-import eventRoutes from "./routes/events.js";
 import courseRoutes from "./routes/course.js";
 import templateRoutes from "./routes/template.js";
 import makeTeamBuilderRouter from "./routes/teamBuilder.js";
@@ -178,7 +177,6 @@ app.get("/", (req, res) => {
 });
 
 // API Routes
-app.use("/api/cmt/events", eventRoutes);
 app.use("/api/cmt/course", courseRoutes);
 app.use("/api/cmt/template", templateRoutes);
 app.use("/api/cmt/team-builder", teamBuilderRoutes);

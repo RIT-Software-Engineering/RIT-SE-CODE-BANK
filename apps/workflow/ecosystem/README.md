@@ -12,7 +12,7 @@ For information on the technical details of the component system, see [this guid
 
 # Using this package
 
-To install the package, check the package documentation in the se-code-bank overview. When importing things from this package, keep this distinction in mind:
+To install the package, check the package documentation in the se-code-bank Google Drive. When importing things from this package, keep this distinction in mind:
 - The root path ("@se-code-bank/ecosystem") is for mostly backend-focused things
 - The "components" path ("@se-code-bank/ecosystem/components") is foor mostly frontend-focused things
 

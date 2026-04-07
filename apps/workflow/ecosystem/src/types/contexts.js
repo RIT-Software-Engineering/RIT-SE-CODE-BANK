@@ -8,16 +8,16 @@
  * @typedef {(
  *   | {
  *      actionType: "simple",
- *      processedAction: SimpleWorkflowsAction & {
+ *      processedAction: Omit<SimpleWorkflowsAction & {
  *          parsedMetadata: ParsedMetadata
- *       }
+ *       }, "action">
  *   }
  *   | {
  *       actionType: "complex" | "workflow",
- *       processedAction: ParentWorkflowsAction & {
+ *       processedAction: Omit<ParentWorkflowsAction & {
  *         parsedMetadata: ParsedMetadata,
  *         childActionsWithContexts: ActionWithContexts[]
- *       }
+ *       }, "action">
  *     }
  * ) & {
  *   actionState: WorkflowsActionState,

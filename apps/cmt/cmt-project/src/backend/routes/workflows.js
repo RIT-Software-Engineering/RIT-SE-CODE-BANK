@@ -2,10 +2,13 @@ import express from "express";
 import { createAction, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction, workflowsFetch } from "../utils/workflows/api.js";
 import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { CMTActionToActionWithContexts } from "../utils/workflows/context.js";
+import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
 const router = express.Router();
 export default router
 
+// workflow/editCheckmarkAction
 router.put("/editCheckmarkAction", async (req, res) => {
     try {
         const { uid: userId, asid: actionStateId } = req.query
@@ -15,11 +18,48 @@ router.put("/editCheckmarkAction", async (req, res) => {
     } catch(e) {
         return res.status(500).json({ error: e })
     }
+});
+
+// workflow/publishCourseTemplate
+// Not to be confused with meta-templates, these are course-specific templates
+router.put("/publishCourseTemplate", async (req, res) => {
+    try {
+        const { asid: actionStateId, courseId} = req.query;
+        await workflowsFetch("POST", `/states/handleSubmit`, { actionStateId, stateType: "completed" });
+
+        const course = await prisma.course.findUnique({
+            where: { id: parseInt(courseId) },
+            include: {professors: true}
+        })
+        const workflow = await workflowsFetch("GET", `/workflows/${course.workflowId}`);
+        const tags = Array.from(workflow.tags.filter(item => !Date.parse(item)));
+        const profName = `${course.professors.fname} ${course.professors.lname}`;
+        // TODO modify this so we don't have a TOCTOU vuln.
+        const date = new Date(); // set up here so we don't have a mismatch later
+        [course.name, course.classId, course.season, profName, date, "TangledUpInLiesImAWorkflony"].forEach((elem) => {
+            if (!workflow.tags.includes(elem))
+                tags.push(elem);
+        });
+        const metadata = JSON.parse(JSON.stringify(workflow.baseAction.metadata)); // Make a clone of the metadata so we don't modify it directly
+        metadata['CMTemplate'] = [course.name, course.classId, course.season, profName, date, "TangledUpInLiesImAWorkflony"];
+        metadata['code'] = `CMTemplate_${courseId}`;
+
+        const action = await workflowsFetch("GET", `/states/action/${actionStateId}`);
+
+        await workflowsFetch("PUT", `/actions/${action.action.id}`, {isFrozen: true}); // Make it so the user can't unpublish a site
+        await workflowsFetch("PUT", `/workflows/${workflow.id}`, {tags, metadata: makeMetadataSafeForWorkflows(metadata)}); // Update tags so it's searchable
+
+        return res.status(200).json();
+    } catch (error) {
+        return res.status(500).json({error: error.message})
+    }
 })
 
-router.get("/workflowTemplate", async(_, res) => {
+// workflow/workflowTemplate
+router.get("/workflowTemplate", async(req, res) => {
     try {
-        const workflows = await workflowsFetch("GET", "workflows/?tags=WorkflonyFirstTheRestNowhere_CMT_Template");
+        const {tags} = req.query;
+        const workflows = await workflowsFetch("GET", `workflows/?tags=${tags}`);
         workflows.forEach(workflow => {
             workflow.baseAction.metadata = compressedMetadataToObject(workflow.baseAction.metadata);
         });
@@ -29,6 +69,7 @@ router.get("/workflowTemplate", async(_, res) => {
     }
 })
 
+// workflow/workflowTemplate
 router.post("/workflowTemplate", async(req, res) => {
     try {
         const {workflow} = req.body; 
@@ -46,6 +87,7 @@ router.post("/workflowTemplate", async(req, res) => {
     }
 })
 
+// workflow/workflowTemplate/:workflowId
 router.put("/workflowTemplate/:workflowId", async(req, res) => {
     try {
         const {name, description, tags, metadata} = req.body; 
@@ -56,9 +98,9 @@ router.put("/workflowTemplate/:workflowId", async(req, res) => {
             if (prevMetaCode !== "None" && prevMetaCode === metadata?.code && workflowId !== prevWorkflows.id)
                 throw new Error("A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again.")
         });
-        let safeMetadata;
-        if (metadata)
-            safeMetadata = makeMetadataSafeForWorkflows(metadata);
+        let safeMetadata = metadata ? makeMetadataSafeForWorkflows(metadata): null;
+        if (safeMetadata && Object.keys(safeMetadata).length === 0)
+            safeMetadata = null;
         const updatedWorkflow = await workflowsFetch("PUT", `workflows/${workflowId}`, {name:name, description:description, tags: tags, metadata: safeMetadata});
         return res.status(200).json({workflow: updatedWorkflow});
     } catch (error) {
@@ -66,6 +108,7 @@ router.put("/workflowTemplate/:workflowId", async(req, res) => {
     }
 });
 
+// workflow/workflowTemplate/:workflowId
 router.delete("/workflowTemplate/:workflowId", async(req, res) => {
     try {
         const {workflowId} = req.params;
@@ -76,6 +119,7 @@ router.delete("/workflowTemplate/:workflowId", async(req, res) => {
     }
 });
 
+// workflow/actionTemplate/action
 router.post("/actionTemplate/action", async (req, res) => {
     try {
         const professorId = req.user.uid;
@@ -87,6 +131,7 @@ router.post("/actionTemplate/action", async (req, res) => {
     }
 })
 
+// workflow/actionTemplate/workflow
 router.post("/actionTemplate/workflow", async (req, res) => {
     try {
         const {workflow, parentActionId} = req.body; 
@@ -98,11 +143,14 @@ router.post("/actionTemplate/workflow", async (req, res) => {
     }
 })
 
+// workflow/actionTemplate/action/:actionId
 router.put("/actionTemplate/action/:actionId", async (req, res) => {
     try {
         const {actionId} = req.params;
         const {name, description, metadata} = req.body;
-        const safeMetadata = metadata ? makeMetadataSafeForWorkflows(metadata) : makeMetadataSafeForWorkflows({});
+        let safeMetadata = metadata ? makeMetadataSafeForWorkflows(metadata) : {} ;
+        if (safeMetadata && Object.keys(safeMetadata).length === 0)
+            safeMetadata = null;
         const action = workflowsFetch("PUT", `/actions/${actionId}`, {name:name, description: description, metadata: safeMetadata});
         return res.status(200).json({action: action})
     } catch (error) {
@@ -110,6 +158,7 @@ router.put("/actionTemplate/action/:actionId", async (req, res) => {
     }
 });
 
+// workflow/actionTemplate/workflow/:workflowId
 router.put("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
@@ -121,6 +170,7 @@ router.put("/actionTemplate/workflow/:workflowId", async (req, res) => {
     }
 });
 
+// workflow/actionTemplate/action/:actionId
 router.delete("/actionTemplate/action/:actionId", async (req, res) => {
     try {
         const {actionId} = req.params;
@@ -131,6 +181,7 @@ router.delete("/actionTemplate/action/:actionId", async (req, res) => {
     }
 });
 
+// workflow/actionTemplate/workflow/:workflowId
 router.delete("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
@@ -141,6 +192,7 @@ router.delete("/actionTemplate/workflow/:workflowId", async (req, res) => {
     }
 })
 
+// workflow/actionTemplate/nextAction/:actionId
 router.put("/actionTemplate/nextAction/:actionId", async (req, res) => {
     try {
         const {actionId} = req.params;
@@ -152,6 +204,7 @@ router.put("/actionTemplate/nextAction/:actionId", async (req, res) => {
     }
 })
 
+// workflow/actionTemplate/workflow/:workflowId
 router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;

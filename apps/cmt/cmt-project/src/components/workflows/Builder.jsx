@@ -3,6 +3,10 @@ import React, { useState } from "react";
 import { Accordion, Button, Card, Form, Modal } from "react-bootstrap";
 
 /**
+ * @import { ActionWithContexts } from "@se-code-bank/workflows-ecosystem" 
+ */
+
+/**
  * Component for top-level workflows
  * This component has a modal that can act as both a creation modal and editing modal
  * Since different projects have different needs, extra data can be passed in 
@@ -359,7 +363,13 @@ export function WorkflowComponent({index, workflows, setIsOpen, loading,
                 Tags: {workflows[index].tags?.length > 0 ? workflows[index].tags.join(", ") : 'None'}
             </div>
             {(workflows[index].actions || []).map(actione => {
-                let action = actione.action;
+                
+                let action;
+                if (actione.action)
+                    action = actione.action
+                if (actione.processedAction)
+                    action = actione.processedAction;
+                
                 let value;
                 if (!action.parentActionId)
                 switch (action.actionType) {
@@ -416,7 +426,7 @@ export function WorkflowComponent({index, workflows, setIsOpen, loading,
                                 <ComplexRenderer 
                                 workflows={workflows}
                                 index={index}
-                                actions={action.childActions}
+                                actions={action.childActionsWithContexts}
                                 setIsOpen={setIsOpen} 
                                 setParentId={setParentId}
                                 depthLevel={depthLevel+1}
@@ -470,6 +480,7 @@ function ComplexRenderer({workflows, index, actions, setIsOpen,
     setCurAction, setIsEdit, setDeleteOpen, simpleExtraDataRenderer}){
     return (<>
         {(actions||[]).map((action) => {
+            console.log("IM ACTION", action)
         let value;
         switch (action.actionType) {
             case "simple":
@@ -492,7 +503,7 @@ function ComplexRenderer({workflows, index, actions, setIsOpen,
                     </Card.Header>
                     <Card.Body>
                         <div><p>Description: {action.description}</p></div>
-                        {simpleExtraDataRenderer(action)}
+                        {simpleExtraDataRenderer(action.processedAction)}
                     </Card.Body>
                 </Card>
                 break;

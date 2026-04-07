@@ -49,7 +49,7 @@ router.get("/metadata", async (req, res) => {
           metadata: true,
           permissions: true,
         },
-      }, }
+      },}
     }));
 
     console.log(workflow)

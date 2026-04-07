@@ -16,6 +16,7 @@ router.get("/:id", async (req, res) => {
             metadata: true,
             previousAction: true,
             childActions: true,
+            rootActionOf: true,
         },
     });
 
@@ -122,6 +123,7 @@ router.put("/:id", async (req, res) => {
         metadata,
         nextActionId,
         parentActionId,
+        isFrozen,
     } = req.body;
     const { id } = req.params;
 
@@ -143,6 +145,9 @@ router.put("/:id", async (req, res) => {
     }
     if (parentActionId) {
         data.parentAction = { connect: { id: parentActionId } };
+    }
+    if (isFrozen) {
+        data.isFrozen = isFrozen;
     }
 
     // If the update to this action would create a loop, don't accept the update and return an error message.

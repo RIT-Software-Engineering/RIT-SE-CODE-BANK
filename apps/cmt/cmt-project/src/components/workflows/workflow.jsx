@@ -14,7 +14,7 @@ export function CMTWorkflow({ refresh, fetchToCallback, workflow, actionsWithCon
 
 	/** @type IsCheckmark */
 	const isCheckmark = useCallback(
-		code => code.includes("CHECKMARK") || code.includes("SESSION_"),
+		code => code.includes("CHECKMARK") || code.includes("SESSION_") || code === "PUBLISH_TEMPLATE",
 		[]
 	)
 
