@@ -27,12 +27,6 @@ ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
 
     docker compose --env-file ".env.staging" -f compose.build.yaml -f compose.run.yaml up -d --build
     
-    echo "Waiting for services to be healthy..."
-    sleep 10
-    
-    echo "Checking service status..."
-    docker compose ps
-    
     echo "Deployment complete!"
 ENDSSH
 
