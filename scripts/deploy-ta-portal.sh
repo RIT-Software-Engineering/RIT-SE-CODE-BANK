@@ -11,8 +11,6 @@ DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
 # SSH and deploy
 
 ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
-    DB_ROOT_PASSWORD="$DB_ROOT_PASSWORD" \
-    DB_USER_PASSWORD="$DB_USER_PASSWORD" \
     'bash -s' << ENDSSH
 
     set -e
@@ -26,7 +24,16 @@ ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
 
     echo "Rebuilding and restarting Docker containers..."
     cd ./apps/ta-portal/deploy
-    docker compose -f compose.staging.yaml up -d --build
+
+    if [ -f .env ]; then
+        ENV_FILE=".env"
+        echo "Using .env"
+    else
+        ENV_FILE=".env.staging"
+        echo ".env not found - using .env.staging"
+    fi 
+
+    docker compose --env-file "$ENV_FILE" -f compose.build.yaml -f compose.run.yaml up -d --build
     
     echo "Waiting for services to be healthy..."
     sleep 10

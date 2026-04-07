@@ -6,48 +6,53 @@ The TA-Portal is composed of 3 docker containers in a docker compose.
 2. The JavaScript backend that uses Express for routing and uses Prisma to structure and manipulate the database.
 3. The React frontend that uses the next.js framework.
 
-Docker composes can be created out of multiple yaml files, allowing us to have a single shared [compose.yaml](compose.yaml) and distinct overrides for a local [compose.dev.yaml](compose.dev.yaml) and a staging [compose.prod.yaml](compose.prod.yaml). 
-
 [.env](.env) contains variables that may need to change in the future if host ports need to be changed.
 
-## Local
+## rationale
 
-### Prerequisites
-1.  **Node.js**
-    * Download from: [https://nodejs.org/en/download](https://nodejs.org/en/download)
-2.  **Docker**
-    * Download from: [https://docs.docker.com/desktop/](https://docs.docker.com/desktop/)
-* **Note 1:** Ensure you add the installation PATH to your local machine's environment variables and possibly within vscode for these technologies
+In order to make staging and produciton more consistent and the process of moving an update from stanging to production more streamlined, the compose file has been split into 2 parts.
 
-* **Note 2:** Libraries like express and prisma were installed in our code base under our package.json file
+1. [`compose.build.yaml`](compose.build.yaml)
+    * Is used soley to create the images of the application. Takes the arguments needed for the building process and creates frontend and backend images that should function in both staging or production. 
+    * Note that it uses the LOGIN_MODE .env variable as an argument and so switching between login methods currenlty requires rebuilding the frontend image after changing the .env file.
 
-### Setup Steps
-1. Launch Docker.
+2. [`compose.run.yaml`](compose.staging.yaml)
+    * Is used to run the application on both the staging and production server. Takes the images built by [`compose.build.yaml`](compose.build.yaml) and sets them up according to the .env file.
 
-2. Start up a docker compose with local parameters by running the following command within the [`/apps/ta-portal/deploy`](.) directory:
-
-    ```bash
-    docker compose -f compose.yaml -f compose.dev.yaml up --build
-    ```
-
-    `-d` can be added to the command to detatch the compose from the command line, allowing you to use the cli. You can also press `d` after the container starts.
-
-3. \(Optional\) Populate the database with test data by running the seed command within the backend container. Run the following command within the [`/apps/ta-portal/deploy`](.) directory after the containers are running:
-
-    ```bash
-    docker compose exec backend npm run prisma:seed
-    ```
-
-Once running, the site can be accessed at [http://localhost:3000/ta-portal](http://localhost:3000/ta-portal)
+[`.env.example`](.env.example) provides the variables needed during building and runtime. Unless ports need to be changed, the only major changes to the .env include:
+* `DB_ROOT_PASSWORD` and `DB_USER_PASSWORD`, which should be set to secure passwords.
+* `ORIGIN_URL`, which should be set depending on the url of the staging or prod server.
+* `LOGIN_MODE`, which should be set to `"PROD"` or `"DEV"` depending on which login method is needed.
 
 ## Staging
 
 Setting up the application on the staging server is done automatically on a pull request or commit to a branch ending in -dev or -cicd-testing.
 
-The CI/CD process defined in [`/.github/workflows`](/.github/workflows/ta-portal-ci.yml) runs the deployment script [`/scripts/deploy-ta-portal.sh`](/scripts/deploy-ta-portal.sh) when the workflow is successful. This script enters the staging server with ssh and runs to following command:
+The CI/CD process defined in [`/.github/workflows`](/.github/workflows/ta-portal-ci.yml) runs the deployment script [`/scripts/deploy-ta-portal.sh`](/scripts/deploy-ta-portal.sh) when the workflow is successful. 
 
-    ```bash
-    docker compose -f compose.yaml -f compose.prod.yaml up -d --build
-    ```
+This script uses ssh to access the staging server and then runs a git fetch and reset to bring the up to date repository onto the server. 
 
+
+
+## Production
+
+TAG=v0.1.0 docker compose -f compose.build.yaml build
+
+docker images | grep ta-portal
+
+docker save -o ta-portal-images.tar \
+  ta-portal-frontend:${TAG} \
+  ta-portal-backend:${TAG}
+
+scp ta-portal-images.tar user@production-server:/home/user/ta-portal/
+scp compose.run.yaml user@production-server:/home/user/ta-portal/
+scp .env user@production-server:/home/user/ta-portal/
+
+ssh production
+
+docker load -i ta-portal-images.tar
+
+docker images | grep ta-portal
+
+TAG=v0.1.0 docker compose -f compose.run.yaml up -d
 

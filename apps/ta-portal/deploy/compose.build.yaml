@@ -1,0 +1,31 @@
+name: ta-portal
+
+services:
+  # The container for the React JS frontend of the TA-Portal.
+  frontend:
+    build:
+      # Since the project is using npm workspaces, the package-lock.json contains the install information needed for setup.
+      # This means that this docker container must have access to the repo root in order to copy the package-lock.
+      context: ../../..
+      dockerfile: apps/ta-portal/ui/Dockerfile
+      # These arguments are passed to the dockerfile to be used during the build process. Since these are NEXT_PUBLIC variables they may be used during the next build process, 
+      # which is why they cannot be passed as container environmental variables here. The dockerfiles turn them into env variables for the container afterwards.
+      args:
+        NEXT_PUBLIC_API_EXTENSION: ${NEXT_PUBLIC_API_EXTENSION}
+        NEXT_PUBLIC_DATABASE_API_EXTENSION: ${NEXT_PUBLIC_DATABASE_API_EXTENSION}
+        NEXT_PUBLIC_SLACK_API_EXTENSION: ${NEXT_PUBLIC_SLACK_API_EXTENSION}
+         # If NODE_ENV is DEV, uses testing login, otherwise uses prod login
+        NEXT_PUBLIC_NODE_ENV: ${LOGIN_MODE}
+        # No url being prepended to paths means that fetch requests are made relativly:
+        # fetch(/ta-portal-api/db/Users) connects to current-domain.com/ta-portal-api/db/Users
+        NEXT_PUBLIC_BACKEND_URL: ""
+    image: ta-portal-frontend:${TAG:-latest}
+
+  # The container for the Express JS backend of the TA-Portal
+  backend:
+    build:
+      # Since the project is using npm workspaces, the package-lock.json contains the install information needed for setup.
+      # This means that this docker container must have access to the repo root in order to copy the package-lock.
+      context: ../../..
+      dockerfile: apps/ta-portal/server/Dockerfile
+    image: ta-portal-backend:${TAG:-latest}
