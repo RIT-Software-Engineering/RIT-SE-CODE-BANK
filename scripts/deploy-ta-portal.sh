@@ -25,15 +25,7 @@ ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
     echo "Rebuilding and restarting Docker containers..."
     cd ./apps/ta-portal/deploy
 
-    if [ -f .env ]; then
-        ENV_FILE=".env"
-        echo "Using .env"
-    else
-        ENV_FILE=".env.staging"
-        echo ".env not found - using .env.staging"
-    fi 
-
-    docker compose --env-file "$ENV_FILE" -f compose.build.yaml -f compose.run.yaml up -d --build
+    docker compose --env-file ".env.staging" -f compose.build.yaml -f compose.run.yaml up -d --build
     
     echo "Waiting for services to be healthy..."
     sleep 10
