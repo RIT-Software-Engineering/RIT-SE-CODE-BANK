@@ -1,6 +1,7 @@
 import { Edit, Trash2 } from "lucide-react";
 import React, { useState } from "react";
-import { Accordion, Button, Card, Form, Modal } from "react-bootstrap";
+import { Accordion, Button, Card } from "react-bootstrap";
+import { WorkflowModalRenderer, ErrorRenderer, ActionModalRenderer, DeleteModalRenderer } from "./BuilderRenderers";
 
 /**
  * Component for top-level workflows
@@ -73,37 +74,32 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
     }
 
     return (<>
-    <Modal size="lg" show={isOpen} onShow={()=>{if (isEdit){loadForm()}}} centered onHide={()=>{setIsOpen(false); clearForm()}} onExit={()=>{setIsOpen(false);clearForm()}}>
-        <Modal.Header closeButton>{isEdit ? 'Edit': 'New'} Workflow</Modal.Header>
-        <Modal.Body>
-            {error ? 
-            <div className="alert alert-danger">
-                {error}
-            </div>
-            : <></>}
-            <Form>
-                <div>
-                    <Form.Label>Workflow Name</Form.Label>
-                    <Form.Control required onChange={e=>setName(e.target.value)} defaultValue={isEdit ? curWorkflow.name : ""}/>
-                    <Form.Label>Workflow Description</Form.Label>
-                    <Form.Control required onChange={e=>setDescription(e.target.value)} defaultValue={isEdit ? curWorkflow.description : ""}/>
-                    <Form.Label>Workflow Tags (Seperate by commas)</Form.Label>
-                    <Form.Control required onChange={e=>setTags(e.target.value)} defaultValue={isEdit ? curWorkflow.tags : ""}/>
-                    {children}
-                </div>
-                
-                <div className="flex pt-2 justify-end">
-                    <Button type="submit" onClick={(e) => {
-                        e.preventDefault();
-                        if (isEdit)
-                            editWorkflow();
-                        else
-                            submitWorkflow();
-                    }}>{isEdit ? "Submit" : "Add Workflow"}</Button>
-                </div>
-            </Form>
-        </Modal.Body>
-    </Modal>
+    <WorkflowModalRenderer
+        isOpen={isOpen}
+        isEdit={isEdit}
+        onShow={() => { if (isEdit) loadForm() }}
+        onHide={() => { setIsOpen(false); clearForm() }}
+        onExit={() => { setIsOpen(false); clearForm() }}
+
+        onSubmit={(e) => {
+            e.preventDefault();
+            if (isEdit) editWorkflow()
+            else submitWorkflow()
+        }}
+
+        onNameChange={(e) => setName(e.target.value) }
+        nameDefaultValue={isEdit ? curWorkflow.name : ""}
+
+        onDescriptionChange={(e) => setDescription(e.target.value)}
+        descriptionDefaultValue={isEdit ? curWorkflow.description : ""}
+
+        onTagsChange={(e) => setTags(e.target.value)}
+        tagsDefaultValue={isEdit ? curWorkflow.tags : ""}
+    >
+        {error ? 
+        <ErrorRenderer error={error}/>
+        : <></>}
+    </WorkflowModalRenderer>
     </>)
 }
 
@@ -127,9 +123,7 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
  * @param {Object} props.curAction - the current action. Used for editing purposes, will be null if not editing.
  * @param {() => void} props.refresh - a function to refresh the page. Can be used to avoid tricky logic and rely on the API
  * @param {Function} props.addAction - function to submit a simple or complex action
- * @param {Function} props.addWorkflowAction - function to submit a workflow action
  * @param {Function} props.editAction - function to edit a simple or complex action
- * @param {Function} props.editWorkflowActionFunction - function to edit a workflow action
  * @param {() => void} props.loadFunction - function to load any extra data when loading the modal while editing
  * @param {() => void} props.clearFunction - function to clear any extra data when exiting the modal
  * @param {Object} props.extraData - any extra data that may need to be passed in when submitting
@@ -137,8 +131,7 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
  */
 export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, parentId, 
     depthLevel, setDepthLevel, isEdit, setIsEdit, curAction, refresh,
-    addAction, addWorkflowAction, editAction, editWorkflowActionFunction,
-    loadFunction, clearFunction, extraData, children}){
+    addAction, editAction, loadFunction, clearFunction, extraData, children}){
 
     const [actionType, setActionType] = useState("simple");
     const [name, setName] = useState('');
@@ -177,7 +170,7 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
         }
     }
 
-    async function editSimpleOrComplexAction(e){
+    async function editStandardAction(e){
         e.preventDefault();
         setLoading(true);
         // TODO maybe make more generic so it's an almost empty function being passed?
@@ -189,76 +182,34 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
         }
     }
 
-    async function createWorkflowAction(e){
-        e.preventDefault();
-        setLoading(true);
-        // TODO maybe make more generic so it's an almost empty function being passed?
-        await addWorkflowAction(index, name, description, workflows, setWorkflows, parentId, refresh).then(()=>{
-            clearForm();
-            setIsOpen(false);
-            setLoading(false);
-        })
-    }
-
-    async function editWorkflowAction(e){
-        e.preventDefault();
-        setLoading(true);
-        // TODO maybe make more generic so it's an almost empty function being passed?
-        await editWorkflowActionFunction(name, description, curAction, refresh).then(() => {
-            clearForm();
-            setIsOpen(false);
-            setLoading(false);
-        })
-    }
-
     return (<>
-    <Modal size="lg" centered show={isOpen} onShow={()=> {if (isEdit) {loadForm();}}} 
-    onHide={()=>{setIsOpen(false); clearForm(); setIsEdit(false);}} onExit={()=>{setIsOpen(false); clearForm(); setIsEdit(false);}}>
-        <Modal.Header closeButton>{isEdit ? 'Edit' : 'New'} Action</Modal.Header>
-        <Modal.Body>
-            {error ? 
-            <div className="alert alert-danger">
-                {error}
-            </div>
-            : <></>}
+    <ActionModalRenderer 
+        isOpen={isOpen}
+        isEdit={isEdit}
+        disabled={depthLevel >= 6}
+        loading={loading}
+        actionType={actionType}
 
-            <Form>
-                <Form.Label>Action Name</Form.Label>
-                <Form.Control required onChange={e=>setName(e.target.value)} defaultValue={isEdit ? curAction.name : ''}/>
+        onShow={() => { if (isEdit) loadForm() }}
+        onHide={() => { setIsOpen(false); clearForm(); setIsEdit(false) }}
+        onExit={() => { setIsOpen(false); clearForm(); setIsEdit(false) }}
 
-                <Form.Label>Action Description</Form.Label>
-                <Form.Control required onChange={e=>setDescription(e.target.value)} defaultValue={isEdit ? curAction.description : ''}/>
+        onSubmit={(e) => isEdit ? editStandardAction(e) : addStandardAction(e) }
 
-                
-                {!isEdit ? // I refuse to let the user edit the action type. That would cause so many problems (e.g. complex => simple).
-                <><Form.Label>Action Type</Form.Label>
-                <Form.Select onChange={e=>setActionType(e.target.value)} defaultValue={isEdit ? curAction.actionType : ''}>
-                    <option key="simple" value="simple">Simple</option>
-                    {/* it's tested you can make up to 7 children before the workflows API fails to return. Though it says 6 in reality it is indeed 7 layers */}
-                    <option key="complex" value="complex" disabled={depthLevel>=6}>Complex</option>
-                    <option key="workflow" value="workflow" disabled={depthLevel>=6}>Workflow</option>
-                </Form.Select>
-                </>
-                : <></>}   
-                {actionType === "simple" ? // if simple action
-                <>
-                {children}
-                <div className="flex justify-end pt-2">
-                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editSimpleOrComplexAction(e) : addStandardAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
-                </div>
-                </> : 
-                actionType === "complex" ? // if complex action 
-                <div className="flex justify-end pt-2">
-                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editSimpleOrComplexAction(e) : addStandardAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
-                </div> : 
-                // if workflow action
-                <div className="flex justify-end pt-2">
-                    <Button disabled={loading} type="submit" onClick={(e) => isEdit ? editWorkflowAction(e) : createWorkflowAction(e)}>{isEdit ? 'Edit' : 'Add'} action</Button>
-                </div>
-                }
-            </Form>
-        </Modal.Body>
-    </Modal>
+        onNameChange={(e) => setName(e.target.value) }
+        nameDefaultValue={isEdit ? curAction.name : ""}
+
+        onDescriptionChange={(e) => setDescription(e.target.value)}
+        descriptionDefaultValue={isEdit ? curAction.description : ""}
+
+        onActionTypeChange={(e) => setActionType(e.target.value)}
+
+        extendedSimpleRender={children}
+    >
+        {error ? 
+        <ErrorRenderer error={error}/>
+        : <></>}
+    </ActionModalRenderer>
     </>)
 }
 
@@ -290,19 +241,17 @@ export function DeleteModal({isOpen, setIsOpen, action, workflows, setWorkflows,
         }
     }
 
-    return (<Modal centered show={isOpen} onHide={()=>setIsOpen(false)} onExit={()=>setIsOpen(false)}>
-        <Modal.Header>Delete Action</Modal.Header>
-        <Modal.Body>
-            <div className="alert alert-danger">
-                <p>You are about to permanently delete a{action?.attributeId ? ' workflow' : 'n action'}!</p> 
-                <p>Are you sure you'd like to delete "{action?.name}"? This cannot be undone!</p>
-            </div>
-            <div className="flex justify-between pt-4">
-                <Button onClick={() => setIsOpen(false)}>Cancel</Button>
-                <Button variant="danger" className="justify-end" onClick={() => deleteAction()}>Confirm</Button>
-            </div>
-        </Modal.Body>
-    </Modal>)
+    return (
+    <DeleteModalRenderer 
+        isOpen={isOpen}
+        action={action}
+        onHide={()=>setIsOpen(false)}
+        onExit={()=>setIsOpen(false)}
+
+        onCancel={() => setIsOpen(false)}
+        onSubmit={() => deleteAction()}
+    />
+    )
 }
 
 /**

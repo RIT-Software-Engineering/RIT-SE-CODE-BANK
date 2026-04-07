@@ -175,7 +175,7 @@ export function BuilderPageAdmin(){
         <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} workflows={workflows} setWorkflows={setWorkflows} 
         parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
         isEdit={isEdit} setIsEdit={setIsEdit} curAction={curAction} refresh={update}
-        addAction={addStandardAction} addWorkflowAction={addWorkflowAction} editAction={editStandardAction} editWorkflowActionFunction={editWorkflowAction}
+        addAction={addStandardAction} editAction={editStandardAction}
         loadFunction={loadActionForm} clearFunction={clearActionForm} extraData={extraData}>
 
             <Form.Label>Code</Form.Label>
@@ -309,7 +309,7 @@ export function BuilderPage(){
         <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} workflows={workflows} setWorkflows={setWorkflows} 
         parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
         isEdit={isEdit} setIsEdit={setIsEdit} curAction={curAction} refresh={update}
-        addAction={addStandardAction} addWorkflowAction={addWorkflowAction} editAction={editStandardAction} editWorkflowActionFunction={editWorkflowAction}
+        addAction={addStandardAction} editAction={editStandardAction}
         loadFunction={loadActionForm} clearFunction={clearActionForm} extraData={{}}>
         </ActionModal>
         
@@ -1010,8 +1010,25 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
         return "Bad";
     }
 
+    let postObject;
+    let postEndpoint;
+    if (actionType !== "workflow") {
+        postEndpoint = "/workflow/actionTemplate/action";
+        postObject = {name, description, actionType, metadata, parentActionId: !isWorkflowChild ? parentActionId : null};
+    } else {
+        const workflow = {
+        name: name,
+        description: description,
+        actionType: "workflow",
+        childActions: []
+        };
+        postEndpoint = "workflow/actionTemplate/workflow";
+        postObject = {workflow, parentActionId:!isWorkflowChild ? parentActionId : null};
+    }
+        
+
     let returnVal;
-    await CMTJsonFetch("POST", "/workflow/actionTemplate/action", {name, description, actionType, metadata, parentActionId: !isWorkflowChild ? parentActionId : null}).then(async response => {
+    await CMTJsonFetch("POST", postEndpoint, postObject).then(async response => {
         const data = await response.json();
 
         let workflowsCopy = [];
@@ -1157,9 +1174,15 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
         }
         metadata.outputs = outputs;
     }
+    let postEndpoint;
+    if (actionToUpdate.actionType !== "workflow") {
+        postEndpoint = `/workflow/actionTemplate/action/${actionToUpdate.id}`;
+    } else {
+        postEndpoint = `/workflow/actionTemplate/workflow/${actionToUpdate.id}`;
+    }
 
     let returnVal;
-    await CMTJsonFetch("PUT", `/workflow/actionTemplate/action/${actionToUpdate.id}`, {name, description, metadata}).then(async _ => {
+    await CMTJsonFetch("PUT", postEndpoint, {name, description, metadata}).then(async _ => {
             await refresh();
             returnVal = "Good";
     }).catch(async error => {
@@ -1188,160 +1211,6 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
 async function deleteStandardAction(actionToDelete, refresh){
     // TODO works with simple and complex actions, but for complex actions does not delete child actions. We may want that so we don't have stranded child actions in the DB as cleanup.
     await CMTJsonFetch("DELETE", `workflow/actionTemplate/action/${actionToDelete.id}`).then(async _ => await refresh());
-}
-
-/**
- * A helper function to submit workflow actions
- * Because we have our CMT-specific endpoints, we pass this into the {@link ActionModal}
- * Makes a POST request to add the workflow template and updates our workflows if successful
- *
- * @async
- * @param {Number} index - The index of the current workflow template. Used to make things go faster when setting the workflows
- * @param {string} name - the name of the action
- * @param {string} description - the name of the description
- * @param {Array} workflows - the array of our workflows templates
- * @param {(workflows: Array) => void} setWorkflows - the state setter for our workflows
- * @param {string} parentActionId - the parentActionId if it exists. We leave it at that for complex parents, but if it's a "workflow parent", we do some work on it
- * @param {() => void} refresh - function that would avoid tricky logic, but we don't use it here since the logic has already been completed. Used mainly to maintain abstraction. 
-*/
-async function addWorkflowAction(index, name, description, workflows, setWorkflows, parentActionId, refresh){
-    const workflow = {
-        name: name,
-        description: description,
-        actionType: "workflow",
-        childActions: []
-    };
-
-    // Ok here's the other stuff we do if the parentAction is NOT a complex action
-    // So workflows don't have child actions, but it's a lot easier to lie and say that they do for rendering sake
-    // We need to check if the action is a direct descendant of a workflow or not
-    // We also set the parent to be the workflow template we're working in
-    // Also despite its name, isWorkflowsChild is FALSE if the action is a direct descendant of our template workflow
-    let isWorkflowChild = false;
-    let workflowParent = workflows[index];
-    if (parentActionId){
-         // If we do have a parent action, we do a very basic search of the top level actions in our parent
-        workflowParent = workflows[index].actions.find(action => action.action.id === parentActionId)?.action;
-
-        // If we our parent isn't one of those top level actions, we then iterate through the child actions of those top level actions in an attempt to find the parent
-        if (!workflowParent){
-            for (let j = 0; j < workflows[index].actions.length; j++) {
-                const actions = workflows[index].actions[j];
-                if (!workflowParent)
-                    workflowParent = findParent(actions.action?.childActions, parentActionId)
-            }
-        }
-        
-        // Once we found our parent, we set whether or not it's a direct descendant of a workflow or not (it would be a complex parent otherwise)
-        isWorkflowChild = workflowParent?.actionType === "workflow";
-    }
-    await CMTJsonFetch("POST", "workflow/actionTemplate/workflow", {workflow, parentActionId:!isWorkflowChild ? parentActionId : null}).then(async response => {
-        const data = await response.json();
-        let workflowsCopy = [];
-        for (let j = 0; j < workflows.length; j++) {
-        if (j !== index)
-            // We don't do anything special the workflow isn't the template workflow we're working in
-            workflowsCopy.push(workflows[j])
-        else {
-            let workflowActions = [];
-            // If our new action is a direct descendant of the template workflow, we get the previous actions and just set prevAction here instead of the function
-            if (workflowParent.id === workflows[index].id){
-                // We take all the previous actions except the last one so we can set the next action for our previous action. Once that's done we add it back to our actions
-                const actions = workflows[index].actions.slice(0,-1);
-                if (workflows[index].actions.length > 0){
-                    let prevAction = workflows[index].actions[workflows[index].actions.length - 1];
-                    prevAction.action.nextActionId = data.action.id;
-                    await CMTJsonFetch("PUT", `workflow/actionTemplate/nextAction/${prevAction.action.id}`, {name: null, description: null, nextActionId: data.action.id});
-                    actions.push({...prevAction});
-                }
-                // Now that all our actions are put back together we add our newly created action
-                workflowActions = actions
-                workflowActions.push({action: {
-                        id: data.action.id,
-                        name: name,
-                        description: description,
-                        actionType: 'workflow',
-                        nextActionId: null,
-                        parentActionId: null,
-                    }})
-            }
-            else {
-                // Check if our parent has any other child actions/descendants
-                // If so, we go through our top level actions and recursively build our actions back up
-                if (workflowParent.childActions?.length > 0){
-                    for (let j = 0; j < workflows[index].actions.length; j++) {
-                        const actions = workflows[index].actions[j];
-                        actions.action.childActions = await setNextActionInfo(
-                            actions.action, [], workflowParent.id, data.action.id,
-                            name, description, "workflow", parentActionId, null
-                        )
-                        workflowActions.push(actions)
-                    }
-                } 
-                else {
-                    // If our parent doesn't have any childActions or descendants, we just add them directly
-                    workflowActions = workflows[index].actions
-                    workflowParent.childActions = [];
-                    workflowParent.childActions.push({
-                            id: data.action.id,
-                            name: name,
-                            description: description,
-                            actionType: "workflow",
-                            nextActionId: null,
-                            parentActionId: parentActionId
-                    });
-                }
-            }
-            // Once we've done all our work, we add our template workflow back in with the associated actions
-            workflowsCopy.push({
-                    id: workflows[j].id,
-                    attributeId: workflows[j].attributeId,
-                    name: workflows[j].name,
-                    description: workflows[j].description,
-                    parentActionId: parentActionId,
-                    actions: workflowActions,
-                    tags: workflows[j].tags,
-                    metadata: workflows[j].metadata
-                });
-        }}
-
-        if (!isWorkflowChild){
-            // If this is the first action then we set the root action
-            if (workflowsCopy[index].actions.length === 1)
-                await workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
-                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
-            else 
-                setWorkflows(workflowsCopy);
-        }
-        else {
-            // Check if we have more childActions than the one we just created. If not, we set the root action ID of our parent workflow to be the newly created action's id.
-            if (workflowParent.childActions.length > 1)
-                setWorkflows(workflowsCopy);
-            else 
-                await workflowsFetch("PUT", `workflows/action/${workflowParent.id}`, {
-                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
-        }
-    })
-}
-
-/**
- * A helper function to edit workflow actions
- * Because we have our CMT-specific endpoints, we pass this into the {@link ActionModal}
- * Makes a PUT request to add the workflow template and updates our workflows if successful
- *
- * @async
- * @param {string} name - the name of the action
- * @param {string} description - the description of the action
- * @param {Object} workflowToUpdate - the workflow action we are updating
- * @param {() => void} refresh - Function to refresh the page upon completion. Used so we don't have to do complicated logic and let the API handle stuff
- */
-async function editWorkflowAction(name, description, workflowToUpdate, refresh){
-    if (!name)
-        name = 'New Action';
-    if (!description)
-        description = 'No description provided.';
-
-    await CMTJsonFetch("PUT", `/workflow/actionTemplate/workflow/${workflowToUpdate.id}`, {name, description}).then(async _ => await refresh());
 }
 
 /**
