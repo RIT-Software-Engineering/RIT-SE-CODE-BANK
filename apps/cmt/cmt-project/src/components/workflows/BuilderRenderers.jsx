@@ -38,7 +38,8 @@ export function WorkflowModalRenderer(props) {
               onChange={props.onTagsChange}
               defaultValue={props.tagsDefaultValue}
             />
-            {props.children}
+
+            {props.extraRendering}
           </div>
 
           <div className="flex pt-2 justify-end">
@@ -111,117 +112,142 @@ export function DeleteModalRenderer(props){
     )
 }
 
-// export function WorkflowComponentRenderer(props){
-//     return (
-//         <>
-//         <Accordion.Item eventKey={props.workflowId}>
-//             <Accordion.Header className="w-full">
-//                 <div className="flex w-full justify-between">
-//                     <span className="text-4xl">{props.workflowName} 
-//                         {props.workflows[props.index]?.metadata?.code === "None" ? "(Inactive)" 
-//                         : (props.workflows[props.index]?.metadata?.code ? `(${props.workflows[props.index]?.metadata?.code})` : '')}</span>
-//                     <div className="mr-4">
-//                         <Button className="justify-end" variant="outline-dark" 
-//                         onClick={props.onWorkflowEdit}><Edit /></Button>
-//                         <Button variant="outline-danger" className="ml-2" onClick={props.onWorkflowDelete}><Trash2 /></Button>
-//                     </div>            
-//                 </div>
-//             </Accordion.Header>
-//             <Accordion.Body>
-//                 <div className="text-3xl">
-//                     <p>Description: {props.workflowDescription}</p>
-//                 </div>
-//                 <div className="text-2xl">
-//                     Tags: {props.workflowTags}
-//                 </div>
-//                 {(props.actions || []).map(action => {
-//                     action = action?.action;
-//                     let value;
-//                     if (!action.parentActionId)
-//                     switch (action.actionType) {
-//                         case "simple":
-//                             value = <Card className="border-2 mt-2">
-//                                 <Card.Header className="text-xl">
-//                                     <div className="flex justify-between">
-//                                     <span>{action.name} (Simple Action)</span>
-//                                     <div>
-//                                         <Button variant="outline-secondary" onClick={() => {
-//                                             setCurAction(action);
-//                                             setIsOpen(true);
-//                                             setIsEdit(true);
-//                                         }}><Edit /></Button>
-//                                         <Button variant="outline-danger" className="ml-2" onClick={()=> {
-//                                             setCurAction(action);
-//                                             setDeleteOpen(true);
-//                                         }}><Trash2 /></Button>
-//                                     </div>
-//                                     </div>
-//                                     </Card.Header>
-//                                 <Card.Body>
-//                                     <div><p>Description: {action.description}</p></div>
-//                                     {simpleExtraDataRenderer(action)}
-//                                 </Card.Body>
-//                             </Card>
-//                             break;
-//                         case "workflow": // basically the same as a complex action
-//                         case "complex":
-//                             value = 
-//                             <Accordion className="mt-2">
-//                                 <Accordion.Item eventKey={action.id}>
-//                                 <Accordion.Header className="w-full">
-//                                     <div className="flex w-full justify-between">
-//                                     <span className="text-3xl">{action.name} {action.actionType === 'complex' ? '(Complex Action)' : '(Workflow)'}</span>
-//                                     <div className="mr-4">
-//                                     <Button className="justify-end" variant="outline-dark" 
-//                                     onClick={(e) => {
-//                                         e.stopPropagation();
-//                                         setIsEdit(true);
-//                                         setCurAction(action);
-//                                         setIsOpen(true);
-//                                     }}><Edit /></Button>
-//                                     <Button variant="outline-danger" className="ml-2" onClick={(e) => {
-//                                         e.stopPropagation();
-//                                         setCurAction(action);
-//                                         setDeleteOpen(true);
-//                                     }}><Trash2 /></Button>
-//                                     </div>
-//                                     </div>
-//                                 </Accordion.Header>
-//                                 <Accordion.Body>
-//                                     <div className="text-2xl"><p>Description: {action.description}</p></div>
-//                                     <ComplexRenderer 
-//                                     workflows={workflows}
-//                                     index={index}
-//                                     actions={action.childActions}
-//                                     setIsOpen={setIsOpen} 
-//                                     setParentId={setParentId}
-//                                     depthLevel={depthLevel+1}
-//                                     setDepthLevel={setDepthLevel}
-//                                     setCurAction={setCurAction}
-//                                     setIsEdit={setIsEdit}
-//                                     setDeleteOpen={setDeleteOpen}
-//                                     simpleExtraDataRenderer={simpleExtraDataRenderer}/>
-//                                     <div className="flex justify-end pt-3">
-//                                         <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
-//                                     </div>
-//                                 </Accordion.Body>
-//                             </Accordion.Item>
-//                             </Accordion>
-//                             break;
-//                         default:
-//                             value = <p>Unknown Type {action.actionType}</p>
-//                             break;
-//                     }
-//                     return value;
-//                 })}
-//                 <div className="flex justify-end pt-3">
-//                     <Button onClick={props.onAddAction}>Add New Action</Button>
-//                 </div>
-//             </Accordion.Body>
-//         </Accordion.Item>
-//         </>
-//     )
-// }
+export function WorkflowComponentRenderer(props) {
+    return (
+        <>
+        <Accordion.Item eventKey={props.workflow.id}>
+            <Accordion.Header className="w-full">
+                <div className="flex w-full justify-between">
+                    <span className="text-4xl">{props.workflow.name} 
+                        {props.workflow.metadata?.code === "None" ? "(Inactive)" 
+                        : (props.workflow.metadata?.code ? `(${props.workflow.metadata?.code})` : '')}</span>
+                    <div className="mr-4">
+                        <Button className="justify-end" variant="outline-dark" 
+                        onClick={props.onWorkflowEdit}><Edit /></Button>
+                        <Button variant="outline-danger" className="ml-2" onClick={props.onWorkflowDelete}><Trash2 /></Button>
+                    </div>            
+                </div>
+            </Accordion.Header>
+            <Accordion.Body>
+                <div className="text-3xl">
+                    <p>Description: {props.workflow.description}</p>
+                </div>
+                <div className="text-2xl">
+                    Tags: {props.workflow.tags}
+                </div>
+
+                {props.children}
+                
+                <div className="flex justify-end pt-3">
+                    <Button onClick={props.onAddActionRoot}>Add New Action</Button>
+                </div>
+            </Accordion.Body>
+        </Accordion.Item>
+        </>
+    )
+}
+
+export function SimpleActionRenderer(props) {
+  return (
+  <Card className="border-2 mt-2">
+      <Card.Header className="text-xl">
+        <div className="flex justify-between">
+          <span>{props.name} (Simple Action)</span>
+          <div>
+              <Button variant="outline-secondary" onClick={props.onActionEdit}><Edit /></Button>
+              <Button variant="outline-danger" className="ml-2" onClick={props.onActionDelete}><Trash2 /></Button>
+          </div>
+        </div>
+      </Card.Header>
+      <Card.Body>
+          <div><p>Description: {props.description}</p></div>
+          <div>
+            <p>Code: {props.action.metadata.code}</p>
+            {(props.action.metadata.outputs||[]).map(output => {
+                return (<>
+                    <p>Required? {output.isRequired ? 'Yes' : 'No'}</p>
+                    {output.key? <p>Key: {output.key}</p> : <></>}
+                    {output.name? <p>Name: {output.name}</p> : <></>}
+                    {output.type? <p>Type: {output.type}</p> : <></>}
+                    {output.placeholder ? <p>Placeholder: {output.placeholder}</p> : <></>}
+                    {output.validation && Object.keys(output.validation).map(key => {
+                        const value = output.validation;
+                        const displayValue = (output.validation.options) ? value.options.join(', ') : value[key];
+                        return <p key={key}>{key}: {displayValue}</p>;
+                    })}
+                </>)
+            })}
+        </div>
+      </Card.Body>
+  </Card>
+  )
+}
+
+export function ComplexActionRenderer(props) {
+  return (
+    <Accordion className="mt-2">
+      <Accordion.Item eventKey={props.action.id}>
+      <Accordion.Header className="w-full">
+          <div className="flex w-full justify-between">
+          <span className="text-3xl">{props.name} {props.action.actionType === 'complex' ? '(Complex Action)' : '(Workflow)'}</span>
+          <div className="mr-4">
+          <Button className="justify-end" variant="outline-dark" 
+          onClick={(e) => {
+              e.stopPropagation();
+              props.onActionEdit();
+          }}><Edit /></Button>
+          <Button variant="outline-danger" className="ml-2" onClick={(e) => {
+              e.stopPropagation();
+              props.onActionDelete();
+          }}><Trash2 /></Button>
+          </div>
+          </div>
+      </Accordion.Header>
+      <Accordion.Body>
+          <div className="text-2xl"><p>Description: {props.description}</p></div>
+          {(props.workflow.childActions || []).map(action => {
+            let value;
+            switch (action.actionType) {
+                case "simple":
+                    value = 
+                    <SimpleActionRenderer 
+                        name={action.name}
+                        description={action.description}
+                        action={action.metadata}
+
+                        onActionEdit={props.onActionEdit}
+                        onActionDelete={props.onActionDelete}
+                    />
+                    break;
+                case "workflow": // basically the same as a complex action
+                case "complex":
+                    value = 
+                    <ComplexActionRenderer 
+                        action={action}
+                        name={action.name}
+                        description={action.description}
+
+                        onActionEdit={props.onActionEdit}
+                        onActionDelete={props.onActionDelete}
+
+                        onAddActionChild={props.onAddActionChild}
+                    >
+                    </ComplexActionRenderer>
+                    break;
+                default:
+                    value = <p>Unknown Type {action.actionType}</p>
+                    break;
+            }
+            return value;
+        })}
+          <div className="flex justify-end pt-3">
+              <Button onClick={props.onAddActionChild}>Add New Child Action</Button>
+          </div>
+    </Accordion.Body>
+    </Accordion.Item>
+  </Accordion>
+  )
+}
 
 export function ErrorRenderer(error){
     return (

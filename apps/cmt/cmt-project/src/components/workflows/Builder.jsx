@@ -1,7 +1,12 @@
-import { Edit, Trash2 } from "lucide-react";
-import React, { useState } from "react";
-import { Accordion, Button, Card } from "react-bootstrap";
-import { WorkflowModalRenderer, ErrorRenderer, ActionModalRenderer, DeleteModalRenderer } from "./BuilderRenderers";
+import { useState } from "react";
+import { 
+    WorkflowModalRenderer, 
+    ErrorRenderer, 
+    ActionModalRenderer, 
+    DeleteModalRenderer, 
+    WorkflowComponentRenderer,
+    SimpleActionRenderer,
+    ComplexActionRenderer } from "./BuilderRenderers";
 
 /**
  * Component for top-level workflows
@@ -95,6 +100,8 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
 
         onTagsChange={(e) => setTags(e.target.value)}
         tagsDefaultValue={isEdit ? curWorkflow.tags : ""}
+
+        extraRendering={children}
     >
         {error ? 
         <ErrorRenderer error={error}/>
@@ -270,231 +277,93 @@ export function DeleteModal({isOpen, setIsOpen, action, workflows, setWorkflows,
  * @param {(curAction: Object) => void} props.setCurAction - state setter to set the current action. Used mainly for edits
  * @param {() => void} props.setWorkflowModalEdit - function to open the workflow modal as an edit. We do this since it's one less thing to pass in
  * @param {(deleteOpen: Boolean) => void} props.setDeleteOpen - state setter for whether the deletion modal is open or not
- * @param {(action: Object) => React.ReactElement} props.simpleExtraDataRenderer - We have basic rendering for simple actions, but this is used for any extra data that not all projects may use.
  */
 export function WorkflowComponent({index, workflows, setIsOpen, loading, 
     setParentId, depthLevel, setDepthLevel, setIsEdit, 
-    setCurAction, setWorkflowModalEdit, setDeleteOpen, simpleExtraDataRenderer}){
+    setCurAction, setWorkflowModalEdit, setDeleteOpen}){
 
     if (loading)
         return <><h1>Loading...</h1></> // Here so a lot of stuff just doesn't break while it loads everything
 
     else
     return (<>
-    <Accordion.Item eventKey={workflows[index].id}>
-        <Accordion.Header className="w-full">
-            <div className="flex w-full justify-between">
-            <span className="text-4xl">{workflows[index].name} {workflows[index]?.metadata?.code === "None" ? "(Inactive)" : (workflows[index]?.metadata?.code ? `(${workflows[index]?.metadata?.code})` : '')}</span>
-            <div className="mr-4">
-            <Button className="justify-end" variant="outline-dark" 
-            onClick={(e) => {
-                e.stopPropagation();
-                setCurAction(workflows[index]);
-                setWorkflowModalEdit();
-            }}><Edit /></Button>
-            <Button variant="outline-danger" className="ml-2" onClick={(e) => {
-                e.stopPropagation();
-                setCurAction(workflows[index]);
-                setDeleteOpen(true);
-            }}><Trash2 /></Button>
-            </div>            
-            </div>
-        </Accordion.Header>
-        <Accordion.Body>
-            <div className="text-3xl">
-                <p>Description: {workflows[index].description}</p>
-            </div>
-            <div className="text-2xl">
-                Tags: {workflows[index].tags?.length > 0 ? workflows[index].tags.join(", ") : 'None'}
-            </div>
-            {(workflows[index].actions || []).map(actione => {
-                let action = actione.action;
-                let value;
-                if (!action.parentActionId)
-                switch (action.actionType) {
-                    case "simple":
-                        value = <Card className="border-2 mt-2">
-                            <Card.Header className="text-xl">
-                                <div className="flex justify-between">
-                                <span>{action.name} (Simple Action)</span>
-                                <div>
-                                    <Button variant="outline-secondary" onClick={() => {
-                                        setCurAction(action);
-                                        setIsOpen(true);
-                                        setIsEdit(true);
-                                    }}><Edit /></Button>
-                                    <Button variant="outline-danger" className="ml-2" onClick={()=> {
-                                        setCurAction(action);
-                                        setDeleteOpen(true);
-                                    }}><Trash2 /></Button>
-                                </div>
-                                </div>
-                                </Card.Header>
-                            <Card.Body>
-                                <div><p>Description: {action.description}</p></div>
-                                {simpleExtraDataRenderer(action)}
-                            </Card.Body>
-                        </Card>
-                        break;
-                    case "workflow": // basically the same as a complex action
-                    case "complex":
-                        value = 
-                        <Accordion className="mt-2">
-                            <Accordion.Item eventKey={action.id}>
-                            <Accordion.Header className="w-full">
-                                <div className="flex w-full justify-between">
-                                <span className="text-3xl">{action.name} {action.actionType === 'complex' ? '(Complex Action)' : '(Workflow)'}</span>
-                                <div className="mr-4">
-                                <Button className="justify-end" variant="outline-dark" 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsEdit(true);
-                                    setCurAction(action);
-                                    setIsOpen(true);
-                                }}><Edit /></Button>
-                                <Button variant="outline-danger" className="ml-2" onClick={(e) => {
-                                    e.stopPropagation();
-                                    setCurAction(action);
-                                    setDeleteOpen(true);
-                                }}><Trash2 /></Button>
-                                </div>
-                                </div>
-                            </Accordion.Header>
-                            <Accordion.Body>
-                                <div className="text-2xl"><p>Description: {action.description}</p></div>
-                                <ComplexRenderer 
-                                workflows={workflows}
-                                index={index}
-                                actions={action.childActions}
-                                setIsOpen={setIsOpen} 
-                                setParentId={setParentId}
-                                depthLevel={depthLevel+1}
-                                setDepthLevel={setDepthLevel}
-                                setCurAction={setCurAction}
-                                setIsEdit={setIsEdit}
-                                setDeleteOpen={setDeleteOpen}
-                                simpleExtraDataRenderer={simpleExtraDataRenderer}/>
-                                <div className="flex justify-end pt-3">
-                                    <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);}}>Add New Child Action</Button>
-                                </div>
-                            </Accordion.Body>
-                        </Accordion.Item>
-                        </Accordion>
-                        break;
-                    default:
-                        value = <p>Unknown Type {action.actionType}</p>
-                        break;
-                }
-                return value;
-            })}
-            <div className="flex justify-end pt-3">
-                <Button onClick={()=>{setIsOpen(true);setParentId(null);setDepthLevel(depthLevel+1);setCurAction(null);}}>Add New Action</Button>
-            </div>
-        </Accordion.Body>
-    </Accordion.Item>
-    </>);
-}
+    <WorkflowComponentRenderer 
+        workflow={workflows[index]}
+        
+        onWorkflowEdit={ (e) => {
+            e.stopPropagation();
+            setCurAction(workflows[index]);
+            setWorkflowModalEdit();
+        }}
+        onWorkflowDelete={(e) => {
+            e.stopPropagation();
+            setCurAction(workflows[index]);
+            setDeleteOpen(true);
+        }}
 
-/**
- * Component that renders actions! 
- * Used in {@link WorkflowComponent} for the complex and workflow actions.
- * Also recursively calls itself for complex and workflow actions inside. 
- * We have this as its own function since what we deal with here is slightly different than the workflows at the top-level.
- *
- * @param {Object} props 
- * @param {Array} props.workflows - an array of the top-level workflows
- * @param {Number} props.index - the index of the top-level workflow in the giant top-level workflows array
- * @param {Array} props.actions - The next subset of actions we're working with. When called, the current iteration of the action's childActions are passed in 
- * @param {(isOpen: Boolean) => void} props.setIsOpen - state setter for the action modal for creating/editing actions being open
- * @param {(parentId: string) => void} props.setParentId - sets the parent ID. We do this for workflows too, even though they aren't actually parents. There should be logic in the action adders to address this
- * @param {Number} props.depthLevel - the depth level of the selected action. Needed to prevent too many layers and going too deep into a workflow
- * @param {(depthLevel: Number) => void} props.setDepthLevel - state setter for the depth level
- * @param {(curAction: Object) => void} props.setCurAction - state setter to set the current action. Used mainly for edits
- * @param {(isEdit: Boolean) => void} props.setIsEdit - state setter for whether or not things are edits
- * @param {(deleteOpen: Boolean) => void} props.setDeleteOpen - state setter for whether the deletion modal is open or not
- * @param {(action: Object) => React.ReactElement} props.simpleExtraDataRenderer - We have basic rendering for simple actions, but this is used for any extra data that not all projects may use.
- */
-function ComplexRenderer({workflows, index, actions, setIsOpen, 
-    setParentId, depthLevel, setDepthLevel, 
-    setCurAction, setIsEdit, setDeleteOpen, simpleExtraDataRenderer}){
-    return (<>
-        {(actions||[]).map((action) => {
-        let value;
-        switch (action.actionType) {
-            case "simple":
-                value = <Card className="border-2 mt-2">
-                    <Card.Header className="text-xl">
-                    <div className="flex justify-between">
-                    <span>{action.name} (Simple Action)</span>
-                    <div>
-                        <Button variant="outline-secondary" onClick={() => {
+        onAddActionRoot={()=>{
+            setIsOpen(true);
+            setParentId(null);
+            setDepthLevel(depthLevel+1);
+            setCurAction(null);
+        }}
+    >
+        {(workflows[index].actions || []).map(action => {
+            action = action?.action;
+            let value;
+            if (!action.parentActionId)
+            switch (action.actionType) {
+                case "simple":
+                    value = 
+                    <SimpleActionRenderer 
+                        name={action.name}
+                        description={action.description}
+                        action={action.metadata}
+
+                        onActionEdit={() => {
                             setCurAction(action);
                             setIsOpen(true);
                             setIsEdit(true);
-                        }}><Edit /></Button>
-                        <Button variant="outline-danger" className="ml-2" onClick={async ()=> {
+                        }}
+                        onActionDelete={()=> {
                             setCurAction(action);
                             setDeleteOpen(true);
-                        }}><Trash2 /></Button>
-                    </div>
-                    </div>
-                    </Card.Header>
-                    <Card.Body>
-                        <div><p>Description: {action.description}</p></div>
-                        {simpleExtraDataRenderer(action)}
-                    </Card.Body>
-                </Card>
-                break;
-            case "workflow": // basically the same as a complex action
-            case "complex":
-                value = 
-                <Accordion className="mt-2">
-                    <Accordion.Item eventKey={action.id} className={action.id}>
-                    <Accordion.Header className="w-full">
-                        <div className="flex w-full justify-between">
-                        <span className="text-3xl">{action.name} {action.actionType === 'complex' ? '(Complex Action)' : '(Workflow)'}</span>
-                        <div className="mr-4">
-                        <Button className="justify-end" variant="outline-dark" 
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setIsEdit(true);
+                        }}
+                    />
+                    break;
+                case "workflow": // basically the same as a complex action
+                case "complex":
+                    value = 
+                    <ComplexActionRenderer 
+                        action={action}
+                        name={action.name}
+                        description={action.description}
+
+                        onActionEdit={() => {
                             setCurAction(action);
                             setIsOpen(true);
-                        }}><Edit /></Button>
-                         <Button variant="outline-danger" className="ml-2" onClick={(e) => {
-                            e.stopPropagation();
+                            setIsEdit(true);
+                        }}
+                        onActionDelete={() => {
                             setCurAction(action);
                             setDeleteOpen(true);
-                        }}><Trash2 /></Button>
-                        </div>
-                        </div>
-                    </Accordion.Header>
-                    <Accordion.Body>
-                        <div className="text-2xl"><p>Description: {action.description}</p></div>
-                        <ComplexRenderer 
-                            workflows={workflows}
-                            index={index}
-                            actions={action.childActions}
-                            setIsOpen={setIsOpen} 
-                            setParentId={setParentId}
-                            depthLevel={depthLevel+1}
-                            setDepthLevel={setDepthLevel}
-                            setCurAction={setCurAction}
-                            setIsEdit={setIsEdit}
-                            setDeleteOpen={setDeleteOpen}
-                            simpleExtraDataRenderer={simpleExtraDataRenderer}/>
-                        <div className="flex justify-end pt-3">
-                            <Button onClick={()=>{setIsOpen(true);setParentId(action.id);setDepthLevel(depthLevel+1);setCurAction(null);}}>Add New Child Action</Button>
-                        </div>
-                    </Accordion.Body>
-                </Accordion.Item>
-                </Accordion>
-                break;
-            default:
-                value = <p>Unknown Type {action.actionType}</p>
-                break;
-        }
-        return value;
+                        }}
+
+                        onAddActionChild={() => {
+                            setIsOpen(true);
+                            setParentId(action.id);
+                            setDepthLevel(depthLevel+1);
+                            setCurAction(null);
+                        }}
+                    >
+                    </ComplexActionRenderer>
+                    break;
+                default:
+                    value = <p>Unknown Type {action.actionType}</p>
+                    break;
+            }
+            return value;
         })}
-    </>)
+    </WorkflowComponentRenderer>
+    </>);
 }
