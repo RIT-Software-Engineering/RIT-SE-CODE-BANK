@@ -78,8 +78,6 @@ export async function authenticateUser(username, password) {
     },
     body: JSON.stringify({ username, password }),
   });
-
-  print(response)
   return handleApiResponse(response);
 }
 

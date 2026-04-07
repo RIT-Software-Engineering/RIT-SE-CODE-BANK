@@ -32,7 +32,10 @@ The CI/CD process defined in [`/.github/workflows`](/.github/workflows/ta-portal
 
 This script uses ssh to access the staging server and then runs a git fetch and reset to bring the up to date repository onto the server. 
 
-
+```bash
+docker exec ta-portal-backend-1 npm run prisma:seed
+```
+can be used to seed the server if the volume was not populated.
 
 ## Production
 
