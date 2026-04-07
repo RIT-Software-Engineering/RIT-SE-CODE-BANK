@@ -59,6 +59,8 @@ services:
     restart: unless-stopped
     depends_on:
       - mariadb
+    volumes:
+      - ta_portal_uploads:/app/apps/ta-portal/server/resources
     # A basic healthcheck so Docker can tell the health of the container. Sends a get request to the health route (server/server/routing/index.js), which simply returns status 200.
     healthcheck:
       test: [ "CMD", "node", "-e", "require('http').get('http://localhost:${BACK_CONTAINER_PORT}${NEXT_PUBLIC_API_EXTENSION}/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))" ]
@@ -70,3 +72,4 @@ services:
 # Persistant volume that stores database information even if the mariadb container stops.
 volumes:
   ta_portal_mariadb_data: {}
+  ta_portal_uploads: {}
