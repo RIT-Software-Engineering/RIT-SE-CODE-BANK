@@ -394,7 +394,8 @@ export default function WorkflowDashboard() {
                       </Box>
 
                       <Button
-                        href={step.link}
+                        href={step.emailModal ? undefined : step.link}
+                        onClick={step.emailModal ? handleOpen : undefined}
                         variant="contained"
                         color="primary"
                         sx={{
