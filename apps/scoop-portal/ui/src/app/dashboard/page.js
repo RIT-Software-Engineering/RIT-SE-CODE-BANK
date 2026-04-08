@@ -1,10 +1,12 @@
 'use client';
 import React, {useState, useEffect } from 'react';
 import {
-  Box, Typography, Container, Button, Grid, Paper,
+  Box, Typography, Container, Button, Grid, Paper, Dialog, DialogActions, DialogContent, 
+  DialogTitle, TextField, CircularProgress, Alert, Snackbar, Divider
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { useUser } from "../utils/user-context/page";
+import { sendScoopEmail } from 'utils/ScoopEmailSend';
 
 import Header from '@components/Header';
 import Footer from '@components/Footer';
@@ -81,6 +83,18 @@ const workflows = [
         description: "Manage current and upcoming semester groups.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/semestergroups",
       },
+    ],
+  },
+  {
+    title: "Email",
+    steps: [
+      {
+        title:"Send Email",
+        roles:["scoopdinator"],
+        description: "Send email to users",
+        link: null,
+        emailModal: true
+      }
     ],
   },
   {
@@ -214,6 +228,51 @@ export default function WorkflowDashboard() {
     const [filteredWorkflows, setfilteredWorkflows] = useState([]);
     const { user } = useUser();
 
+    //For the Email sending
+    const [modalOpen, setModalOpen] = useState(false);
+    const [recipient, setRecipient] = useState("");
+    const [subject, setSubject] = useState("");
+    const [message, setMessage] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
+    const [snackbar, setSnackbar] = useState({open: false, message: "", success: false});
+
+    //email modal
+    const handleOpen = () => {
+        setResult(null); 
+        setModalOpen(true);
+    };
+    const handleClose = () => {
+        setModalOpen(false);
+        setRecipient("");
+        setSubject("");
+        setMessage("");
+        setResult(null);
+    };
+
+    //email message to close automatically
+    useEffect(() => {
+        if (result) {
+            const timer = setTimeout(() => setResult(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [result]);
+
+    //handles sending the message
+    const handleSend = async () => {
+        setLoading(true);
+        setResult(null);
+        const res = await sendScoopEmail(recipient, subject, message);
+        setLoading(false);
+
+        if(res.success){
+            handleClose(); //auto closes the modal
+            setSnackbar({open: true, message: res.message, success: true});
+        }else{
+            setResult(res); //keeps the error inside the modal
+        }
+    };
+
   useEffect(() => {
     async function fetchTeammates() {
       if (user == null || user.fname == null) {
@@ -340,9 +399,9 @@ export default function WorkflowDashboard() {
                         variant="contained"
                         color="primary"
                         sx={{
-                          textTransform: "none",
-                          ml: 2,
-                          flexShrink: 0,
+                            textTransform: "none",
+                            ml: 2,
+                            flexShrink: 0,
                         }}
                         endIcon={<ArrowForwardIosIcon fontSize="small" />}
                       >
