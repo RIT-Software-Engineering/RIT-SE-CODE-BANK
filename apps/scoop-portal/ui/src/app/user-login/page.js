@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
 import { Box, TextField, Button, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { useRouter } from "next/navigation";
 import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Snackbar, Alert,CircularProgress } from "@mui/material";
+import { Snackbar, Alert, CircularProgress } from "@mui/material";
 import {useUser} from "../utils/user-context/page";
 
 
@@ -20,7 +21,34 @@ export default function AuthPage() {
   const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // "success" or "error"
   const [loading, setLoading] = useState(false);
 
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [formError, setFormError] = useState("");
+
+  const theme = useTheme();
+
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
   const handleSubmit = async () => {
+    setEmailError("");
+    setPasswordError("");
+    setFormError("");
+
+    if (!email.trim()) {
+      setEmailError("Email is required.");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!password.trim()) {
+      setPasswordError("Password is required.");
+      return;
+    }
+
     try {
       const endpoint = isSignup
         ? `${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`
@@ -49,16 +77,10 @@ export default function AuthPage() {
           router.push("/dashboard");
         }, 1500);
       } else {
-        setSnackbarMessage(
-          data.error || "Incorrect credentials. Please try again."
-        );
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
+        setFormError(data.error || "Incorrect credentials. Please try again.");
       }
     } catch (error) {
-      setSnackbarMessage("Server error. Please try again later.");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
+      setFormError("Server error. Please try again later.");
     }
   };
 
@@ -90,7 +112,7 @@ export default function AuthPage() {
         <IconButton
             onClick={handleBack}
             aria-label="back"
-            sx={{position: "absolute", top: "20px", left: "20px", color: "white"}}
+            sx={{position: "absolute", top: "20px", left: "20px", color: theme.ritColors.white}}
         >
             <ArrowBackIcon />
         </IconButton>
@@ -114,27 +136,74 @@ export default function AuthPage() {
                 flexDirection="column"
                 alignItems="center"
                 sx={{
-                    border: "1px solid #F76902",
-                    borderRadius: "16px",
+                    border: `1px solid ${theme.palette.primary.main}`,
+                    borderRadius: 0,
                     padding: "40px 36px",
-                    backgroundColor:"#000000BF"
+                    backgroundColor: "rgba(0, 0, 0, 0.88)",
+                    color: theme.palette.common.white,
                 }}
             >
-                <Typography variant="h4" mb={2}>
+                <Typography variant="h4" mb={2} sx={{ color: theme.palette.common.white }}>
                     {isSignup ? "Create an Account" : "Login"}
                 </Typography>
                 <TextField
                     label="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    sx={{ mb: 2, width: "300px" }}
+                    error={Boolean(emailError)}
+                    helperText={emailError}
+                    sx={{
+                        mb: 2,
+                        width: "300px",
+                        "& .MuiInputLabel-root": {
+                            color: theme.palette.grey[300],
+                        },
+                        "& .MuiInputLabel-root.Mui-focused": {
+                            color: theme.palette.common.white,
+                        },
+                        "& .MuiOutlinedInput-root": {
+                            color: theme.palette.common.white,
+                            "& fieldset": {
+                                borderColor: theme.palette.primary.light,
+                            },
+                            "&:hover fieldset": {
+                                borderColor: theme.palette.primary.main,
+                            },
+                            "&.Mui-focused fieldset": {
+                                borderColor: theme.palette.secondary.main,
+                            },
+                        },
+                    }}
                 />
                 <TextField
                     label="Password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    sx={{ mb: 2, width: "300px" }}
+                    error={Boolean(passwordError)}
+                    helperText={passwordError}
+                    sx={{
+                        mb: 2,
+                        width: "300px",
+                        "& .MuiInputLabel-root": {
+                            color: theme.palette.grey[300],
+                        },
+                        "& .MuiInputLabel-root.Mui-focused": {
+                            color: theme.palette.common.white,
+                        },
+                        "& .MuiOutlinedInput-root": {
+                            color: theme.palette.common.white,
+                            "& fieldset": {
+                                borderColor: theme.palette.primary.light,
+                            },
+                            "&:hover fieldset": {
+                                borderColor: theme.palette.primary.main,
+                            },
+                            "&.Mui-focused fieldset": {
+                                borderColor: theme.palette.secondary.main,
+                            },
+                        },
+                    }}
                 />
                 <Button
                     variant="contained"
@@ -142,12 +211,19 @@ export default function AuthPage() {
                     sx={{
                         width: "300px",
                         mb: 1,
-                        backgroundColor: "#F76902",
-                        color: "#fff",
+                        backgroundColor: theme.palette.primary.main,
+                        color: theme.palette.primary.contrastText,
                     }}
                 >
                     {isSignup ? "Create" : "Login"}
                 </Button>
+
+                {formError && (
+                  <Typography color="error" sx={{ mt: 1, fontWeight: 600 }}>
+                    {formError}
+                  </Typography>
+                )}
+
                 {/** This is incase we want to give anyone who visits the site, the ability to create an account */}
                 {/* <Button variant="text" onClick={() => setIsSignup(!isSignup)}>
                 {isSignup

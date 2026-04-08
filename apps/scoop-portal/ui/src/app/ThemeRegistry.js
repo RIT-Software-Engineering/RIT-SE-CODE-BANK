@@ -1,9 +1,9 @@
 "use client";
 
-import React, { createContext, useState, useMemo, useEffect } from "react";
-import { CssBaseline, useMediaQuery } from "@mui/material";
+import React, { createContext, useMemo, useEffect } from "react";
+import { CssBaseline } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
-import { lightTheme, darkTheme } from "@styles/theme";
+import { lightTheme } from "@styles/theme";
 
 export const ThemeContext = createContext({ toggleTheme: () => {} });
 
@@ -15,21 +15,41 @@ export const ThemeContext = createContext({ toggleTheme: () => {} });
  * @returns {JSX.Element} The ThemeRegistry component that provides the theme context and applies the theme.
  */
 export default function ThemeRegistry({ children }) {
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const [mode, setMode] = useState("light");
-
-  useEffect(() => {
-    setMode(prefersDarkMode ? "dark" : "light");
-  }, [prefersDarkMode]);
+  const mode = "light";
 
   const toggleTheme = () => {
-    setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
+    /* forced light theme: no-op */
   };
 
-  const theme = useMemo(
-    () => (mode === "light" ? lightTheme : darkTheme),
-    [mode]
-  );
+  const theme = useMemo(() => lightTheme, []);
+
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const ritVars = {
+      '--rit-orange': '#F76902',
+      '--rit-white': '#FFFFFF',
+      '--rit-black': '#000000',
+      '--rit-gray-1': '#D0D3D4',
+      '--rit-gray-2': '#A2AAAD',
+      '--rit-gray-3': '#7C878E',
+      '--rit-gray-4': '#D7D2CB',
+      '--rit-gray-5': '#ACA39A',
+      '--rit-green': '#84BD00',
+      '--rit-lime': '#C4D600',
+      '--rit-blue': '#009CBD',
+      '--rit-purple': '#7D55C7',
+      '--rit-red': '#DA291C',
+      '--rit-yellow': '#F6BE00',
+      '--background': '#FFFFFF',
+      '--foreground': '#212121',
+      '--page-margin-desktop': '24px',
+      '--page-margin-mobile': '16px',
+    };
+    Object.entries(ritVars).forEach(([name, value]) => {
+      root.style.setProperty(name, value);
+    });
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ toggleTheme }}>

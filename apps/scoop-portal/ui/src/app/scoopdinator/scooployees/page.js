@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@components/Header";
+import StatusBadge from "@components/StatusBadge";
+import SortableTableHeader from "@components/SortableTableHeader";
 import { useTheme } from "@mui/material/styles";
+import { notify } from "utils/notify";
 import {
   Typography,
   Paper,
@@ -12,25 +15,25 @@ import {
   TableRow,
   TableBody,
   Button,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   Box,
+  Container,
   DialogActions,
   Select,
   MenuItem,
-  TableSortLabel,
-  Snackbar,
-  Alert,
   TextField,
-  Chip,
   FormControl,
   InputLabel,
   InputAdornment,
+  IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const TYPE_LABELS = {
   prospect: "Prospect",
@@ -50,30 +53,6 @@ const getActiveState = (user) => {
   return "inactive";
 };
 
-const StatusBadge = ({ activeState }) => {
-  const theme = useTheme();
-  const config = {
-    active:   { label: "Active",   color: theme.palette.success.main },
-    inactive: { label: "Inactive", color: theme.palette.error.main },
-    pending:  { label: "Pending",  color: theme.palette.grey[500] },
-  };
-  const { label, color } = config[activeState] ?? config.inactive;
-  return (
-    <Chip
-      label={label}
-      size="medium"
-      sx={{
-        fontWeight: 400,
-        fontSize: "0.85rem",
-        px: 1,
-        bgcolor: color,
-        color: theme.ritColors.white,
-        border: "none",
-      }}
-    />
-  );
-};
-
 export default function ViewScooployees() {
   const router = useRouter();
   const theme = useTheme();
@@ -89,10 +68,6 @@ export default function ViewScooployees() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [filterSemesterGroup, setFilterSemesterGroup] = useState("all");
-
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMsg, setSnackbarMsg] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -271,7 +246,9 @@ export default function ViewScooployees() {
           }),
         }
       );
-      if (!res.ok) throw new Error("Failed to update user");
+      if (!res.ok) {
+        throw new Error(await notify.getErrorMessageFromResponse(res));
+      }
 
       const resolvedGroupName = editFields.semesterGroupId
         ? (semesterGroups.find((sg) => String(sg.id) === String(editFields.semesterGroupId))?.name ?? "null")
@@ -282,12 +259,10 @@ export default function ViewScooployees() {
       );
       setSelectedUser(updatedUser);
       setConfirmEditOpen(false);
-      setSnackbarSeverity("success");
-      setSnackbarMsg("User updated successfully!");
-      setSnackbarOpen(true);
+      notify.success("User updated.");
     } catch (err) {
       console.error(err);
-      alert("Failed to update user. Please try again.");
+      notify.error(err);
     } finally {
       setSavingEdit(false);
     }
@@ -301,21 +276,15 @@ export default function ViewScooployees() {
         { method: "DELETE" }
       );
       if (!res.ok) {
-        const errorData = await res.json().catch(() => null);
-        const serverMsg = errorData?.error || errorData?.message || `HTTP ${res.status}`;
-        throw new Error(serverMsg);
+        throw new Error(await notify.getErrorMessageFromResponse(res));
       }
       setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
       setConfirmDeleteOpen(false);
       handleClose();
-      setSnackbarSeverity("success");
-      setSnackbarMsg("User deleted successfully.");
-      setSnackbarOpen(true);
+      notify.success("User deleted.");
     } catch (err) {
       console.error("Delete error:", err);
-      setSnackbarSeverity("error");
-      setSnackbarMsg(err.message || "Failed to delete user. Please try again.");
-      setSnackbarOpen(true);
+      notify.error(err);
     } finally {
       setDeletingUser(false);
     }
@@ -347,9 +316,7 @@ export default function ViewScooployees() {
       (u) => u.email.trim().toLowerCase() === email.trim().toLowerCase()
     );
     if (isDuplicate) {
-      setSnackbarSeverity("error");
-      setSnackbarMsg("A user with this email already exists.");
-      setSnackbarOpen(true);
+      notify.error("A user with this email already exists.");
       return;
     }
 
@@ -373,20 +340,18 @@ export default function ViewScooployees() {
           prev_login: "",
         }),
       });
-      if (!res.ok) throw new Error("Failed to add user");
+      if (!res.ok) {
+        throw new Error(await notify.getErrorMessageFromResponse(res));
+      }
 
       await fetchAllUsers();
-      setSnackbarSeverity("success");
-      setSnackbarMsg("User added successfully!");
-      setSnackbarOpen(true);
+      notify.success("User added.");
       setNewUser({ fname: "", lname: "", email: "", type: "prospect", semesterGroupId: "", active: "pending" });
       setAddErrors({});
       setAddOpen(false);
     } catch (err) {
       console.error(err);
-      setSnackbarSeverity("error");
-      setSnackbarMsg(err.message || "Failed to add user. Please try again.");
-      setSnackbarOpen(true);
+      notify.error(err);
     } finally {
       setAddingUser(false);
     }
@@ -409,11 +374,15 @@ export default function ViewScooployees() {
   };
 
   return (
-    <>
+    <Box sx={{ backgroundColor: (theme) => theme.palette.grey[100], minHeight: "100vh" }}>
       <Header />
-      <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
-        Manage Users
-      </Typography>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+        <IconButton onClick={() => router.back()} aria-label="back">
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
+          Manage Users
+        </Typography>
 
       {/* Toolbar */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 2 }}>
@@ -463,53 +432,48 @@ export default function ViewScooployees() {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              {["fname", "lname", "email"].map((field) => (
-                <TableCell key={field} sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                  <TableSortLabel
-                    active={sortField === field}
-                    direction={sortField === field ? sortOrder : "asc"}
-                    onClick={() => handleSort(field)}
-                    sx={{
-                      color: theme.ritColors.white,
-                      "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` },
-                    }}
-                  >
-                    {field === "fname" && "First Name"}
-                    {field === "lname" && "Last Name"}
-                    {field === "email" && "Email"}
-                  </TableSortLabel>
-                </TableCell>
-              ))}
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                <TableSortLabel
-                  active={sortField === "type"}
-                  direction={sortField === "type" ? sortOrder : "asc"}
-                  onClick={() => handleSort("type")}
-                  sx={{ color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } }}
-                >
-                  Type
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                <TableSortLabel
-                  active={sortField === "semester_group"}
-                  direction={sortField === "semester_group" ? sortOrder : "asc"}
-                  onClick={() => handleSort("semester_group")}
-                  sx={{ color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } }}
-                >
-                  Semester Group
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                <TableSortLabel
-                  active={sortField === "active"}
-                  direction={sortField === "active" ? sortOrder : "asc"}
-                  onClick={() => handleSort("active")}
-                  sx={{ color: theme.ritColors.white, "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` } }}
-                >
-                  Status
-                </TableSortLabel>
-              </TableCell>
+              <SortableTableHeader
+                id="fname"
+                label="First Name"
+                isActive={sortField === "fname"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="lname"
+                label="Last Name"
+                isActive={sortField === "lname"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="email"
+                label="Email"
+                isActive={sortField === "email"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="type"
+                label="Type"
+                isActive={sortField === "type"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="semester_group"
+                label="Semester Group"
+                isActive={sortField === "semester_group"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                id="active"
+                label="Status"
+                isActive={sortField === "active"}
+                sortDirection={sortOrder}
+                onSort={handleSort}
+              />
               <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
             </TableRow>
           </TableHead>
@@ -525,7 +489,7 @@ export default function ViewScooployees() {
                     <span style={{ color: theme.ritColors.gray_2, fontStyle: "italic" }}>No Group</span>
                   )}
                 </TableCell>
-                <TableCell><StatusBadge activeState={getActiveState(user)} /></TableCell>
+                <TableCell><StatusBadge value={getActiveState(user)} type="active" /></TableCell>
                 <TableCell align="right">
                   <Button variant="outline-orange" onClick={() => handleOpen(user)}>Edit</Button>
                 </TableCell>
@@ -797,12 +761,7 @@ export default function ViewScooployees() {
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
         </DialogActions>
       </Dialog>
-
-      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)}>
-        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: "100%" }}>
-          {snackbarMsg}
-        </Alert>
-      </Snackbar>
-    </>
+      </Container>
+    </Box>
   );
 }

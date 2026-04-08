@@ -1,11 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Header from "@components/Header";
+import StatusBadge from "@components/StatusBadge";
+import SortableTableHeader from "@components/SortableTableHeader";
 import { useTheme } from "@mui/material/styles";
 import {
   Typography, Paper, Table, TableHead, TableCell, TableRow, TableBody,
-  Box, Select, MenuItem, TableSortLabel, TextField, Chip, FormControl,
+  Box, Container, Select, MenuItem, TextField, FormControl,
   InputLabel, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, Button,
+  TableSortLabel,
+  Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
@@ -16,21 +20,6 @@ const isActive = (user) => {
   }
   if (user.project === "null") return false;
   return true;
-};
-
-const StatusBadge = ({ active }) => {
-  const theme = useTheme();
-  return (
-    <Chip
-      label={active ? "Active" : "Inactive"}
-      size="medium"
-      sx={{
-        fontWeight: 400, fontSize: "0.85rem", px: 1,
-        bgcolor: active ? theme.palette.success.main : theme.palette.error.main,
-        color: theme.ritColors.white, border: "none",
-      }}
-    />
-  );
 };
 
 export default function ViewScooployees() {
@@ -132,9 +121,10 @@ export default function ViewScooployees() {
   };
 
   return (
-    <>
+    <Box sx={{ backgroundColor: (theme) => theme.palette.grey[100], minHeight: "100vh" }}>
       <Header />
-      <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>View Scooployees</Typography>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+        <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>View Scooployees</Typography>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 2 }}>
         <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
@@ -213,7 +203,7 @@ export default function ViewScooployees() {
                 <TableCell>
                   {resolveGroupName(user) ?? <span style={{ color: theme.ritColors.gray_2, fontStyle: "italic" }}>No Group</span>}
                 </TableCell>
-                <TableCell><StatusBadge active={isActive(user)} /></TableCell>
+                <TableCell><StatusBadge value={isActive(user) ? "active" : "inactive"} type="active" /></TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -253,6 +243,7 @@ export default function ViewScooployees() {
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
         </DialogActions>
       </Dialog>
-    </>
+      </Container>
+    </Box>
   );
 }

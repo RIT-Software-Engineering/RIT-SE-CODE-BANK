@@ -5,13 +5,15 @@ const prisma = new PrismaClient();
 
 // POST a new team
 router.post("/", async (req, res) => {
-    const { name, projectId, memberIds, scoopervisorId } = req.body;
+    const { name, projectId, semesterGroupId, status, memberIds, scoopervisorId } = req.body;
 
     try {
         const team = await prisma.teams.create({
             data: {
                 name,
+                ...(status ? { status } : {}),
                 ...(projectId ? { projectId: Number(projectId) } : {}),
+                ...(semesterGroupId ? { semesterGroupId: Number(semesterGroupId) } : {}),
                 ...(memberIds!=undefined&&memberIds.length > 0
                   ? { members: { connect: memberIds.map(id => ({ id })) } }
                   : {}),
@@ -21,6 +23,7 @@ router.post("/", async (req, res) => {
                 members: true,
                 project: true,
                 scoopervisor: true,
+                SemesterGroup: true,
             },
         });
 
@@ -79,6 +82,7 @@ router.get("/", async (req, res) => {
                 members: true,
                 project: true,
                 scoopervisor: true,
+                SemesterGroup: true,
             },
         });
 
@@ -103,6 +107,7 @@ router.get("/:memberid", async (req, res) => {
           members: true,
           project: true,
           scoopervisor: true,
+          SemesterGroup: true,
         } 
         });
         res.status(200).json(teams);
@@ -113,25 +118,45 @@ router.get("/:memberid", async (req, res) => {
     }
 }); 
 
-// PUT a project on a team
+// PUT updates on a team
 router.put("/", async(req,res) => {
-  const {teamId, projectId} = req.body;
+  const {teamId, projectId, semesterGroupId, scoopervisorId, name, status} = req.body;
   try {
+    const updateData = {};
+
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    if (status !== undefined) {
+      updateData.status = status;
+    }
+    if (projectId !== undefined) {
+      updateData.projectId = projectId === null || projectId === "" ? null : parseInt(projectId);
+    }
+    if (semesterGroupId !== undefined) {
+      updateData.semesterGroupId = semesterGroupId === null || semesterGroupId === "" ? null : parseInt(semesterGroupId);
+    }
+    if (scoopervisorId !== undefined) {
+      updateData.scoopervisorId = scoopervisorId === null || scoopervisorId === "" ? null : parseInt(scoopervisorId);
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "No team fields provided for update" });
+    }
+
     const team = await prisma.teams.update({
       where: {id: parseInt(teamId)},
-      data: {
-        projectId: parseInt(projectId)
-      },
+      data: updateData,
       include: {
         members: true,
         project: true,
         scoopervisor: true,
       }
-    })
-    res.status(200).json({ message: "Team project updated", team });
+    });
+    res.status(200).json({ message: "Team updated", team });
   } catch (error) {
-    console.error("Error updating team project:", error);
-    res.status(500).json({ message: "Failed to update team project", error: error.message });
+    console.error("Error updating team:", error);
+    res.status(500).json({ message: "Failed to update team", error: error.message });
   }
 })
 
