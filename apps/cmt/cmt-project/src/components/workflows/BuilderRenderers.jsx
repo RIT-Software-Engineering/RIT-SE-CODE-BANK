@@ -9,7 +9,6 @@ export function WorkflowModalRenderer(props) {
       onShow={props.onShow}
       centered
       onHide={props.onHide}
-      onExit={props.onExit}
     >
       <Modal.Header closeButton>
         {props.isEdit ? "Edit" : "New"} Workflow
@@ -59,7 +58,7 @@ export function WorkflowModalRenderer(props) {
 export function ActionModalRenderer(props) {
     return (
     <Modal size="lg" centered show={props.isOpen} onShow={props.onShow} 
-    onHide={props.onHide} onExit={props.onExit}>
+    onHide={props.onHide}>
         <Modal.Header closeButton>{props.isEdit ? 'Edit' : 'New'} Action</Modal.Header>
         <Modal.Body>
             {props.children}
@@ -76,7 +75,6 @@ export function ActionModalRenderer(props) {
                 <><Form.Label>Action Type</Form.Label>
                 <Form.Select onChange={props.onActionTypeChange}>
                     <option key="simple" value="simple">Simple</option>
-                    {/* it's tested you can make up to 7 children before the workflows API fails to return. Though it says 6 in reality it is indeed 7 layers */}
                     <option key="complex" value="complex" disabled={props.disabled}>Complex</option>
                     <option key="workflow" value="workflow" disabled={props.disabled}>Workflow</option>
                 </Form.Select>
@@ -100,8 +98,8 @@ export function DeleteModalRenderer(props){
         <Modal.Header>Delete Action</Modal.Header>
         <Modal.Body>
             <div className="alert alert-danger">
-                <p>You are about to permanently delete a{props.action?.attributeId ? ' workflow' : 'n action'}!</p> 
-                <p>Are you sure you'd like to delete "{props.action?.name}"? This cannot be undone!</p>
+                <p>You are about to permanently delete a{props.action.attributeId ? ' workflow' : 'n action'}!</p> 
+                <p>Are you sure you'd like to delete "{props.action.name}"? This cannot be undone!</p>
             </div>
             <div className="flex justify-between pt-4">
                 <Button onClick={props.onCancel}>Cancel</Button>
@@ -119,8 +117,8 @@ export function WorkflowComponentRenderer(props) {
             <Accordion.Header className="w-full">
                 <div className="flex w-full justify-between">
                     <span className="text-4xl">{props.workflow.name} 
-                        {props.workflow.metadata?.code === "None" ? "(Inactive)" 
-                        : (props.workflow.metadata?.code ? `(${props.workflow.metadata?.code})` : '')}</span>
+                        {props.workflow.metadata?.code === "None" ? " (Inactive)" 
+                        : (props.workflow.metadata?.code ? ` (${props.workflow.metadata?.code})` : '')}</span>
                     <div className="mr-4">
                         <Button className="justify-end" variant="outline-dark" 
                         onClick={props.onWorkflowEdit}><Edit /></Button>
@@ -133,7 +131,7 @@ export function WorkflowComponentRenderer(props) {
                     <p>Description: {props.workflow.description}</p>
                 </div>
                 <div className="text-2xl">
-                    Tags: {props.workflow.tags}
+                    Tags: {props.workflow.tags.length > 0 ? props.workflow.tags.join(', '): "None"}
                 </div>
 
                 {props.children}
@@ -154,8 +152,14 @@ export function SimpleActionRenderer(props) {
         <div className="flex justify-between">
           <span>{props.name} (Simple Action)</span>
           <div>
-              <Button variant="outline-secondary" onClick={props.onActionEdit}><Edit /></Button>
-              <Button variant="outline-danger" className="ml-2" onClick={props.onActionDelete}><Trash2 /></Button>
+              <Button variant="outline-secondary" onClick={() => {
+                props.setCurAction(props.action);
+                props.onActionEdit();
+                }}><Edit /></Button>
+              <Button variant="outline-danger" className="ml-2" onClick={() => {
+                props.setCurAction(props.action);
+                props.onActionDelete();
+              }}><Trash2 /></Button>
           </div>
         </div>
       </Card.Header>
@@ -194,10 +198,12 @@ export function ComplexActionRenderer(props) {
           <Button className="justify-end" variant="outline-dark" 
           onClick={(e) => {
               e.stopPropagation();
+              props.setCurAction(props.action);
               props.onActionEdit();
           }}><Edit /></Button>
           <Button variant="outline-danger" className="ml-2" onClick={(e) => {
               e.stopPropagation();
+              props.setCurAction(props.action);
               props.onActionDelete();
           }}><Trash2 /></Button>
           </div>
@@ -205,7 +211,7 @@ export function ComplexActionRenderer(props) {
       </Accordion.Header>
       <Accordion.Body>
           <div className="text-2xl"><p>Description: {props.description}</p></div>
-          {(props.workflow.childActions || []).map(action => {
+          {(props.action.childActions || []).map(action => {
             let value;
             switch (action.actionType) {
                 case "simple":
@@ -213,8 +219,9 @@ export function ComplexActionRenderer(props) {
                     <SimpleActionRenderer 
                         name={action.name}
                         description={action.description}
-                        action={action.metadata}
+                        action={action}
 
+                        setCurAction={props.setCurAction}
                         onActionEdit={props.onActionEdit}
                         onActionDelete={props.onActionDelete}
                     />
@@ -226,6 +233,11 @@ export function ComplexActionRenderer(props) {
                         action={action}
                         name={action.name}
                         description={action.description}
+                        depthLevel={props.depthLevel+1}
+
+                        setCurAction={props.setCurAction}
+                        setDepthLevel={props.setDepthLevel}
+                        setParentId={props.setParentId}
 
                         onActionEdit={props.onActionEdit}
                         onActionDelete={props.onActionDelete}
@@ -241,7 +253,11 @@ export function ComplexActionRenderer(props) {
             return value;
         })}
           <div className="flex justify-end pt-3">
-              <Button onClick={props.onAddActionChild}>Add New Child Action</Button>
+              <Button onClick={() => {
+                props.setParentId(props.action.id);
+                props.setDepthLevel(props.depthLevel+1)
+                props.onAddActionChild();
+              }}>Add New Child Action</Button>
           </div>
     </Accordion.Body>
     </Accordion.Item>

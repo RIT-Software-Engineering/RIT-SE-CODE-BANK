@@ -192,8 +192,8 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
     return (<>
     <ActionModalRenderer 
         isOpen={isOpen}
-        isEdit={isEdit}
-        disabled={depthLevel >= 6}
+        isEdit={isEdit} 
+        disabled={depthLevel > 6} // it's tested you can make up to 7 children before the workflows API fails to return.
         loading={loading}
         actionType={actionType}
 
@@ -318,8 +318,9 @@ export function WorkflowComponent({index, workflows, setIsOpen, loading,
                     <SimpleActionRenderer 
                         name={action.name}
                         description={action.description}
-                        action={action.metadata}
+                        action={action}
 
+                        setCurAction={setCurAction}
                         onActionEdit={() => {
                             setCurAction(action);
                             setIsOpen(true);
@@ -338,21 +339,22 @@ export function WorkflowComponent({index, workflows, setIsOpen, loading,
                         action={action}
                         name={action.name}
                         description={action.description}
+                        depthLevel={depthLevel+1}
+
+                        setCurAction={setCurAction}
+                        setDepthLevel={setDepthLevel}
+                        setParentId={setParentId}
 
                         onActionEdit={() => {
-                            setCurAction(action);
                             setIsOpen(true);
                             setIsEdit(true);
                         }}
                         onActionDelete={() => {
-                            setCurAction(action);
                             setDeleteOpen(true);
                         }}
 
                         onAddActionChild={() => {
                             setIsOpen(true);
-                            setParentId(action.id);
-                            setDepthLevel(depthLevel+1);
                             setCurAction(null);
                         }}
                     >
