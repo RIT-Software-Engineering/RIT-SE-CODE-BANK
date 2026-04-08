@@ -6,7 +6,8 @@ services:
       - "3005:80"
       - "2525:25"
   notify:
-    build: ./notification-service
+  # Previously was "./notification-service" but when running it would try to run "notification-service/notification-service"
+    build: .
     environment:
       - SMTP_HOST=smtp4dev
       - SMTP_PORT=25
