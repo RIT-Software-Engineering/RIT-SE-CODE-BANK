@@ -337,7 +337,14 @@ export default function WorkflowsList() {
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
 
   return (
-    <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        color: (theme) => theme.palette.text.primary,
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
         <Typography variant="h1" sx={{ mb: 5 }}>
@@ -367,13 +374,16 @@ export default function WorkflowsList() {
                     sx={{
                       p: 3,
                       cursor: 'pointer',
-                      '&:hover': {
-                        boxShadow: 6,
-                        bgcolor: '#fff3e0',
-                      },
+                      bgcolor: 'background.paper',
+                      border: (theme) => `1px solid ${theme.palette.divider}`,
+                      transition: 'all 0.2s ease',
                       display: 'flex',
-                      flexDirection: 'column',
+                      flexDirection: 'column', 
                       gap: 2,
+                      '&:hover': {
+                        border: '2px solid #F76902',
+                        bgcolor: 'background.paper',
+                      },
                     }}
                   >
                     <Typography
@@ -484,24 +494,6 @@ export default function WorkflowsList() {
           </Box>
         </Box>
       </Modal>
-
-      <Box
-        component="footer"
-        sx={{
-          height: '80px',
-          bgcolor: '#212121',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 2, md: 3 },
-          mt: 8,
-        }}
-      >
-        <Typography variant="body2" sx={{ fontWeight: 300 }}>
-          © {new Date().getFullYear()} RIT | Contact | Terms
-        </Typography>
-      </Box>
     </Box>
   );
 }

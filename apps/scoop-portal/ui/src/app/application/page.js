@@ -153,17 +153,75 @@ function ApplicationPage() {
         e.preventDefault();
         if (modalOpen) return;
 
-        const selectedCourses = courseData
+        setErrors({});
+
+    const selectedCourses = courseData
             .filter((course) => formValues[course.name])
             .map((course) => course.name)
             .join(", ");
 
-        let user_id = ""
-        if (!formValues.ritEmail.includes('@')) {
-            user_id = formValues.firstName.toLowerCase() + formValues.lastName.toLowerCase()
+        const validationErrors = {};
+        if (!selectedCourses || selectedCourses.length === 0) {
+            validationErrors.courses = "Please select at least one course you have taken or are about to complete.";
         }
-        else{
-            user_id = formValues.ritEmail.split('@')[0];
+        if (!formValues.lastName?.trim()) {
+            validationErrors.lastName = "Last name is required.";
+        }
+        if (!formValues.firstName?.trim()) {
+            validationErrors.firstName = "First name is required.";
+        }
+        if (!formValues.ritEmail?.trim()) {
+            validationErrors.ritEmail = "RIT email is required.";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.ritEmail.trim())) {
+            validationErrors.ritEmail = "Please enter a valid email address.";
+        }
+        if (!formValues.userID?.trim()) {
+            validationErrors.userID = "UID is required.";
+        }
+        if (!formValues.academicAdvisor) {
+            validationErrors.academicAdvisor = "Academic advisor selection is required.";
+        }
+        if (!formValues.creditsRemaining) {
+            validationErrors.creditsRemaining = "Credits remaining selection is required.";
+        }
+        if (!formValues.cumulativeGPA?.trim()) {
+            validationErrors.cumulativeGPA = "Cumulative GPA is required.";
+        }
+        if (!formValues.coopSearchStartDate?.trim()) {
+            validationErrors.coopSearchStartDate = "Co-op search start date is required.";
+        }
+        if (!formValues.coopSearchPlatforms?.trim()) {
+            validationErrors.coopSearchPlatforms = "Co-op search platforms are required.";
+        }
+        if (formValues.pendingOffers === "" || formValues.pendingOffers === undefined || formValues.pendingOffers === null) {
+            validationErrors.pendingOffers = "Pending offers response is required.";
+        }
+        if (formValues.rejectionLetters === "" || formValues.rejectionLetters === undefined || formValues.rejectionLetters === null) {
+            validationErrors.rejectionLetters = "Rejection letters response is required.";
+        }
+        if (!formValues.coopsCompleted) {
+            validationErrors.coopsCompleted = "Number of co-op blocks completed is required.";
+        }
+        if (!formValues.startSemester) {
+            validationErrors.startSemester = "Start semester is required.";
+        }
+        if (!formValues.SEcoopReferral) {
+            validationErrors.SEcoopReferral = "How you heard about SCOOP is required.";
+        }
+        if (formValues.jobSearchAcknowledgment !== true) {
+            validationErrors.jobSearchAcknowledgment = "You must agree to continue your job search.";
+        }
+
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors({ ...validationErrors, _form: "Please fill out all required fields." });
+            return;
+        }
+
+        let user_id = "";
+        if (!formValues.ritEmail.includes("@")) {
+            user_id = formValues.firstName.toLowerCase() + formValues.lastName.toLowerCase();
+        } else {
+            user_id = formValues.ritEmail.split("@")[0];
         }
 
         const completeFormData = {
@@ -316,25 +374,25 @@ function ApplicationPage() {
                 </DialogActions>
             </Dialog>
 
-            <Paper
-                component={Grid}
-                sx={{ maxWidth: 600, mx: "auto", mt: 4, px: 5, py: 3 }}
-            >
-                <Typography variant="h4" gutterBottom align="center">
-                    Application for Unpaid SE Co-op Alternative
-                </Typography>
-                <Typography variant="body2" gutterBottom>
-                    This form is meant for use by invitation only and is for SE
-                    students who have been in contact with the SE Department
-                    regarding potential delayed graduation due to unfulfilled
-                    Co-op requirements. We want to learn more about you and your
-                    specific situation to see if we can help. That said, it is
-                    imperative that you keep looking for paid co-op employment.
+            <Box sx={{ maxWidth: 600, mx: "auto", mt: 4, bgcolor: "background.default", borderRadius: 2, boxShadow: 3, overflow: "hidden" }}>
+                <Box sx={{ bgcolor: "primary.main", color: "primary.contrastText", px: 3, py: 2, textAlign: "center" }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                        Application for Unpaid SE Co-op Alternative
+                    </Typography>
+                </Box>
 
-                </Typography>
+                <Paper sx={{ p: 4, backgroundColor: "common.white", borderRadius: 0 }}>
+                    <Typography variant="body1" gutterBottom>
+                        This form is meant for use by invitation only and is for SE
+                        students who have been in contact with the SE Department
+                        regarding potential delayed graduation due to unfulfilled
+                        Co-op requirements. We want to learn more about you and your
+                        specific situation to see if we can help. That said, it is
+                        imperative that you keep looking for paid co-op employment.
+                    </Typography>
 
-                <Box component="form" onSubmit={handleSubmit} noValidate>
-                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 1.5 }} color="text.secondary">
+                    <Box component="form" onSubmit={handleSubmit} noValidate>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 1.5 }} color="text.primary">
                         Section 1
                     </Typography>
 
@@ -371,6 +429,7 @@ function ApplicationPage() {
                         value={formValues.ritEmail || ""}
                         onChange={handleChange}
                         error={!!errors.ritEmail}
+                        helperText={errors.ritEmail}
                     />
 
                     <TextField
@@ -382,13 +441,13 @@ function ApplicationPage() {
                         value={formValues.userID || ""}
                         onChange={handleChange}
                         error={!!errors.userID}
+                        helperText={errors.userID}
                     />
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required >Who is your Academic Advisor?</FormLabel>
+                        <FormLabel required error={!!errors.academicAdvisor}>Who is your Academic Advisor?</FormLabel>
                         <Select
                             required
-                            // margin="normal"
                             label="academicAdvisor"
                             name="academicAdvisor"
                             value={formValues.academicAdvisor ?? ""}
@@ -405,15 +464,15 @@ function ApplicationPage() {
                             <MenuItem value="Sarah Mittiga">Sarah Mittiga</MenuItem>
                             <MenuItem value="Joe Rozak">Joe Rozak</MenuItem>
                         </Select>
+                        {errors.academicAdvisor && <FormHelperText error>{errors.academicAdvisor}</FormHelperText>}
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required >How many credits are remaining in your degree?</FormLabel>
+                        <FormLabel required error={!!errors.creditsRemaining}>How many credits are remaining in your degree?</FormLabel>
                         <FormHelperText>Can be seen in SIS -&gt; Academic requirements</FormHelperText>
 
                         <Select
                             required
-                            // margin="normal"
                             label="creditsRemaining"
                             name="creditsRemaining"
                             value={formValues.creditsRemaining ?? ""}
@@ -430,19 +489,22 @@ function ApplicationPage() {
                             <MenuItem value="31-40 credits">31-40 credits</MenuItem>
                             <MenuItem value="40+ credits">40+ credits</MenuItem>
                         </Select>
+                        {errors.creditsRemaining && <FormHelperText error>{errors.creditsRemaining}</FormHelperText>}
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required id="cumulativeGPA-label">
+                        <FormLabel required id="cumulativeGPA-label" error={!!errors.cumulativeGPA}>
                             What is your cumulative GPA?
                         </FormLabel>
                         <TextField
+                            required
                             fullWidth
                             label=""
                             name="cumulativeGPA"
                             value={formValues.cumulativeGPA || ""}
                             onChange={handleChange}
                             error={!!errors.cumulativeGPA}
+                            helperText={errors.cumulativeGPA}
                         />
                     </FormControl>
 
@@ -451,7 +513,7 @@ function ApplicationPage() {
                         component="fieldset"
                         variant="standard"
                     >
-                        <FormLabel component="legend">
+                        <FormLabel component="legend" error={!!errors.courses}>
                             Which courses have you already taken or are about to
                             complete this term?
                         </FormLabel>
@@ -473,6 +535,7 @@ function ApplicationPage() {
                                 />
                             ))}
                         </FormGroup>
+                        {errors.courses && <FormHelperText error>{errors.courses}</FormHelperText>}
                     </FormControl>
 
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 1.5 }} color="text.secondary">
@@ -480,7 +543,7 @@ function ApplicationPage() {
                     </Typography>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required id="coopSearchStartDate-label">
+                        <FormLabel required id="coopSearchStartDate-label" error={!!errors.coopSearchStartDate}>
                             When did you start searching for co-ops?
                         </FormLabel>
                         <TextField
@@ -490,11 +553,12 @@ function ApplicationPage() {
                             value={formValues.coopSearchStartDate || ""}
                             onChange={handleChange}
                             error={!!errors.coopSearchStartDate}
+                            helperText={errors.coopSearchStartDate}
                         />
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required id="coopSearchPlatforms-label">
+                        <FormLabel required id="coopSearchPlatforms-label" error={!!errors.coopSearchPlatforms}>
                             {" "}
                             What methods/platforms have you used in order to try
                             and get this co-op? Name as many as you can recall
@@ -502,17 +566,19 @@ function ApplicationPage() {
                             (e.g. email/RIT Career Connect/Indeed etc.){" "}
                         </FormLabel>
                         <TextField
+                            required
                             fullWidth
                             label=""
                             name="coopSearchPlatforms"
                             value={formValues.coopSearchPlatforms || ""}
                             onChange={handleChange}
                             error={!!errors.coopSearchPlatforms}
+                            helperText={errors.coopSearchPlatforms}
                         />
                     </FormControl>
 
-                    <FormControl>
-                        <FormLabel required id="pending-offers-label">
+                    <FormControl error={!!errors.pendingOffers}>
+                        <FormLabel required id="pending-offers-label" error={!!errors.pendingOffers}>
                             Do you have any pending/open employer replies that
                             you are waiting to hear back from at this time?
                         </FormLabel>
@@ -533,6 +599,9 @@ function ApplicationPage() {
                                 label="No"
                             />
                         </RadioGroup>
+                        {errors.pendingOffers && (
+                          <FormHelperText>{errors.pendingOffers}</FormHelperText>
+                        )}
 
                         {formValues.pendingOffers === true && (
                             <FormControl fullWidth>
@@ -558,8 +627,8 @@ function ApplicationPage() {
                         )}
                     </FormControl>
 
-                    <FormControl>
-                        <FormLabel required id="rejection-letters-label">
+                    <FormControl error={!!errors.rejectionLetters}>
+                        <FormLabel required id="rejection-letters-label" error={!!errors.rejectionLetters}>
                             Have you received formal rejection
                             letters/responses?
                         </FormLabel>
@@ -580,6 +649,8 @@ function ApplicationPage() {
                                 label="No"
                             />
                         </RadioGroup>
+
+                        {errors.rejectionLetters && <FormHelperText>{errors.rejectionLetters}</FormHelperText>}
 
                         {formValues.rejectionLetters === true && (
                             <FormControl fullWidth  >
@@ -605,7 +676,7 @@ function ApplicationPage() {
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required >Number of Co-op blocks completed?</FormLabel>
+                        <FormLabel required error={!!errors.coopsCompleted}>Number of Co-op blocks completed?</FormLabel>
                         <Select
                             required
                             // margin="normal"
@@ -618,7 +689,7 @@ function ApplicationPage() {
                                     e.target.value
                                 )
                             }
-                            error={!!errors.description}
+                            error={!!errors.coopsCompleted}
                             // helperText={errors.description}
                         >
                             <MenuItem value={0}>None</MenuItem>
@@ -626,10 +697,11 @@ function ApplicationPage() {
                             <MenuItem value={2}>2</MenuItem>
                             <MenuItem value={3}>3+</MenuItem>
                         </Select>
+                        {errors.coopsCompleted && <FormHelperText error>{errors.coopsCompleted}</FormHelperText>}
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required id="semester-label">
+                        <FormLabel required id="semester-label" error={!!errors.startSemester}>
                             Which semester did you start at RIT?
                         </FormLabel>
                         <Select
@@ -655,10 +727,11 @@ function ApplicationPage() {
                                 </MenuItem>
                             ))}
                         </Select>
+                        {errors.startSemester && <FormHelperText error>{errors.startSemester}</FormHelperText>}
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required id="SEcoopReferral-label">
+                        <FormLabel required id="SEcoopReferral-label" error={!!errors.SEcoopReferral}>
                             How did you hear about the SCOOP program?
                         </FormLabel>
 
@@ -683,6 +756,8 @@ function ApplicationPage() {
                             <MenuItem value="Co-op & Career Services">Co-op & Career Services</MenuItem>
                             <MenuItem value="Other">Other</MenuItem>
                         </Select>
+
+                        {errors.SEcoopReferral && <FormHelperText error>{errors.SEcoopReferral}</FormHelperText>}
 
                         {formValues.SEcoopReferral === "Other" && (
                             <TextField
@@ -747,8 +822,8 @@ function ApplicationPage() {
                     {/*    </RadioGroup>*/}
                     {/*</FormControl>*/}
 
-                    <FormControl>
-                        <FormLabel required id="jobSearchAcknowledgment-label">
+                    <FormControl error={!!errors.jobSearchAcknowledgment}>
+                        <FormLabel required id="jobSearchAcknowledgment-label" error={!!errors.jobSearchAcknowledgment}>
                             It is imperative that you continue your search between now and the beginning of your SCOOP term.
                             Students often find jobs at the very last minute before a term starts,
                             so there is no such thing as too late to do your search. Please acknowledge this below:
@@ -770,6 +845,8 @@ function ApplicationPage() {
                                 label="Other"
                             />
                         </RadioGroup>
+
+                        {errors.jobSearchAcknowledgment && <FormHelperText>{errors.jobSearchAcknowledgment}</FormHelperText>}
 
                         {formValues.jobSearchAcknowledgment === false && (
                             <TextField
@@ -823,13 +900,12 @@ function ApplicationPage() {
                 </FormControl> */}
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required>
+                        <FormLabel>
                             Is there anything else you&apos;d like to share with us
                             about your search efforts or about your summer
                             availability?
                         </FormLabel>
                         <TextField
-                            required
                             fullWidth
                             margin="normal"
                             // label="skills"
@@ -838,8 +914,6 @@ function ApplicationPage() {
                             multiline
                             rows={4}
                             onChange={handleChange}
-                            error={!!errors.additionalComments}
-                            // helperText={errors.description}
                         />
                     </FormControl>
 
@@ -877,6 +951,7 @@ function ApplicationPage() {
                     </Box>
                 </Box>
             </Paper>
+        </Box>
         </>
     );
 }

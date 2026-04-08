@@ -25,6 +25,7 @@ model SemesterGroup {
 
   projects        Project[]
   journal_entries JournalEntry[]
+  Teams           Teams[]
 }
 
 model Project {
@@ -32,6 +33,7 @@ model Project {
   title        String
   display_name String
   description  String @db.VarChar(255)
+  status       String @default("active") @db.VarChar(50)
 
   teams           Teams[]
   SemesterGroup   SemesterGroup? @relation(fields: [semesterGroupId], references: [id])
@@ -39,21 +41,22 @@ model Project {
 
   proposal ProjectProposal?
 }
+
 model ProjectProposal {
-  id            Int      @id @default(autoincrement())
-  title         String
-  description   String   @db.Text
-  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  reviewNotes   String?  @db.Text
-  createdAt     DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @db.Text
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewNotes String?  @db.Text
+  createdAt   DateTime @default(now())
 
   submittedById String
-  submittedBy   users    @relation("SubmittedProposals", fields: [submittedById], references: [id])
+  submittedBy   users  @relation("SubmittedProposals", fields: [submittedById], references: [id])
 
-  reviewedById  String?
-  reviewedBy    users?   @relation("ReviewedProposals", fields: [reviewedById], references: [id])
+  reviewedById String?
+  reviewedBy   users?  @relation("ReviewedProposals", fields: [reviewedById], references: [id])
 
-  projectId Int?   @unique
+  projectId Int?     @unique
   project   Project? @relation(fields: [projectId], references: [id])
 }
 
@@ -62,6 +65,7 @@ model users {
   fname          String
   lname          String
   email          String  @unique
+  profilePicture String? @db.Text
   type           String
   semester_group String?
   project        String?
@@ -148,13 +152,16 @@ model Application {
 }
 
 model Teams {
-  id             Int      @id @default(autoincrement())
-  name           String
-  scoopervisorId String?
-  projectId      Int?
-  project        Project? @relation(fields: [projectId], references: [id])
-  members        users[]  @relation("TeamMembers")
-  scoopervisor   users?   @relation(fields: [scoopervisorId], references: [id])
+  id              Int            @id @default(autoincrement())
+  name            String
+  status          String         @default("active") @db.VarChar(50)
+  scoopervisorId  String?
+  projectId       Int?
+  project         Project?       @relation(fields: [projectId], references: [id])
+  semesterGroupId Int?
+  SemesterGroup   SemesterGroup? @relation(fields: [semesterGroupId], references: [id])
+  members         users[]        @relation("TeamMembers")
+  scoopervisor    users?         @relation(fields: [scoopervisorId], references: [id])
 }
 
 model Login {

@@ -253,8 +253,8 @@ export default function WorkflowSubmissionsPage() {
                 sx={{
                   p: 4,
                   textAlign: 'center',
-                  border: '1px dashed #F76902',
-                  backgroundColor: '#000',
+                  border: (theme) => `1px dashed ${theme.palette.primary.main}`,
+                  backgroundColor: 'background.paper',
                 }}
               >
                 <Typography variant="h6" gutterBottom>
@@ -270,8 +270,8 @@ export default function WorkflowSubmissionsPage() {
                   key={month}
                   sx={{
                     mb: 3,
-                    border: '1px solid #F76902',
-                    backgroundColor: '#000',
+                    border: (theme) => `1px solid ${theme.palette.primary.main}`,
+                    backgroundColor: 'background.paper',
                   }}
                   elevation={0}
                 >
@@ -282,8 +282,8 @@ export default function WorkflowSubmissionsPage() {
                       justifyContent: 'space-between',
                       px: 3,
                       py: 2,
-                      backgroundColor: '#000',
-                      borderBottom: '1px solid #F76902',
+                      backgroundColor: (theme) => theme.palette.primary.main,
+                      borderBottom: (theme) => `1px solid ${theme.palette.primary.main}`,
                     }}
                   >
                     <Box>
@@ -293,13 +293,12 @@ export default function WorkflowSubmissionsPage() {
                       >
                         {monthLabel(month)}
                       </Typography>
-                      <Typography sx={{ color: '#ccc' }}>
+                      <Typography sx={{ color: '#fff' }}>
                         {groupedSubmissions[month].length} submission
                         {groupedSubmissions[month].length !== 1 ? 's' : ''}
                       </Typography>
                     </Box>
                     <Chip
-                      icon={<InsertDriveFileIcon />}
                       label={`${groupedSubmissions[month].filter((s) => s.fileData).length
                         } with files`}
                       variant="outlined"
@@ -309,13 +308,21 @@ export default function WorkflowSubmissionsPage() {
                   <Divider />
                   <Table>
                     <TableHead>
-                      <TableRow sx={{ backgroundColor: '#000' }}>
-                        <TableCell sx={{ color: '#fff' }}>Submitted On</TableCell>
-                        <TableCell sx={{ color: '#fff' }}>Submitted By</TableCell>
-                        <TableCell sx={{ color: '#fff' }}>Workflow</TableCell>
-                        <TableCell sx={{ color: '#fff' }}>Action</TableCell>
-                        <TableCell sx={{ color: '#fff' }}>Status</TableCell>
-                        <TableCell align="right" sx={{ color: '#fff' }}>
+                    <TableRow
+                      hover={false}
+                      sx={{
+                        backgroundColor: (theme) => theme.palette.primary.main,
+                        '&:hover': {
+                          backgroundColor: (theme) => theme.palette.primary.main,
+                        },
+                      }}
+                    >
+                      <TableCell sx={{ color: '#fff' }}>Submitted On</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Submitted By</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Workflow</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Action</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Status</TableCell>
+                      <TableCell align="right" sx={{ color: '#fff' }}>
                           Files
                         </TableCell>
                       </TableRow>
@@ -361,7 +368,6 @@ export default function WorkflowSubmissionsPage() {
                                   spacing={1}
                                   justifyContent="flex-end"
                                   sx={{
-                                    backgroundColor: '#000',
                                     p: 1,
                                     borderRadius: 1,
                                   }}
@@ -373,14 +379,6 @@ export default function WorkflowSubmissionsPage() {
                                     href={submission.fileData}
                                     download={submission.fileName || 'submission'}
                                     startIcon={<DownloadIcon />}
-                                    sx={{
-                                      color: '#fff',
-                                      borderColor: '#fff',
-                                      '&:hover': {
-                                        borderColor: '#fff',
-                                        backgroundColor: '#111',
-                                      },
-                                    }}
                                   >
                                     Download
                                   </Button>
@@ -392,9 +390,6 @@ export default function WorkflowSubmissionsPage() {
                                     target="_blank"
                                     rel="noreferrer"
                                     startIcon={<VisibilityIcon />}
-                                    sx={{
-                                      color: '#fff',
-                                    }}
                                   >
                                     View
                                   </Button>

@@ -732,9 +732,16 @@ export default function Bubbled(){
   const hasPersonalWorkflows = personalStates.length > 0;
 
   return (
-    <>
-        <Header />
-        <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        color: (theme) => theme.palette.text.primary,
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
+      <Header />
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: "1280px" }}>
           {isLoading ? (
             <Typography variant="body1">Loading workflow actions...</Typography>
           ) : (
@@ -749,7 +756,15 @@ export default function Bubbled(){
                     const teamName = team?.name || `Team ${teamId}`;
                     const memberNames = team?.members?.map((member) => formatUserName(member.id)).join(", ");
                     return (
-                      <Paper key={teamId} sx={{ p: 3, mb: 3 }}>
+                      <Paper
+            key={teamId}
+            sx={{
+              p: 3,
+              mb: 3,
+              backgroundColor: 'background.paper',
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+            }}
+            >
                         <Typography variant="h5" sx={{ mb: 1 }}>
                           {teamName}
                         </Typography>
@@ -780,7 +795,15 @@ export default function Bubbled(){
                     My Workflows
                   </Typography>
                   {personalStates.map((state) => (
-                    <Paper key={state.id} sx={{ p: 3, mb: 3 }}>
+                    <Paper
+                    key={state.id}
+                    sx={{
+                      p: 3,
+                      mb: 3,
+                      backgroundColor: 'background.paper',
+                      border: (theme) => `1px solid ${theme.palette.divider}`,
+                    }}
+                    >
                       <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
                         Participants: {getParticipantNames(state) || "You"}
                       </Typography>
@@ -793,7 +816,13 @@ export default function Bubbled(){
               )}
 
               {!hasTeamWorkflows && !hasPersonalWorkflows && (
-                <Paper sx={{ p: 3 }}>
+                <Paper
+                sx={{
+                  p: 3,
+                  backgroundColor: 'background.paper',
+                  border: (theme) => `1px solid ${theme.palette.divider}`,
+                }}
+                >
                   <Typography variant="body1">
                     No workflow actions assigned yet. Once actions are assigned, they will show up here.
                   </Typography>
@@ -925,5 +954,5 @@ export default function Bubbled(){
             </Box>
           </Modal>
         </Container>
-    </>);
+    </Box>);
 }

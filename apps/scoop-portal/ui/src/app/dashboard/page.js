@@ -210,7 +210,7 @@ const workflows = [
       },
       {
         title: "Open Communications Journal",
-        roles: ["scoopdinator","scoopervisor","scooployee","advisor"],
+        roles: ["scoopdinator","scoopervisor", "advisor"],
         description:
           "View your past communications with others and leave notes.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/journal",
@@ -274,21 +274,22 @@ export default function WorkflowDashboard() {
 
   useEffect(() => {
     async function fetchTeammates() {
-      if (user == null || user.fname == null){
+      if (user == null || user.fname == null) {
         return;
       }
-      const filteredWorkflows = workflows.map((workflow) => {
-      const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
-      if (filteredSteps.length > 0) {
-      return {
-        ...workflow,
-        steps: filteredSteps
-      };
-    }
-    return null;
-  }).filter(Boolean);
+      const filteredWorkflows = workflows
+        .map((workflow) => {
+          const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
+          if (filteredSteps.length > 0) {
+            return {
+              ...workflow,
+              steps: filteredSteps,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
       setfilteredWorkflows(filteredWorkflows);
-
     }
     fetchTeammates();
   }, [user]);
@@ -297,6 +298,8 @@ export default function WorkflowDashboard() {
     <Box
       sx={{
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
       }}
     >
       <Header /> 
@@ -304,7 +307,8 @@ export default function WorkflowDashboard() {
         <Typography
           variant="h1"
           sx={{
-            mb: 5,
+            mb: 3,
+            color: (theme) => theme.palette.text.primary,
           }}
         >
           Dashboard
@@ -313,13 +317,13 @@ export default function WorkflowDashboard() {
         <Grid container spacing={4} direction="column">
           {filteredWorkflows.map((workflow) => (
             <Grid item xs={12} key={workflow.title}>
-              <Paper elevation={1} sx={{ p: 3 }}>
+              <Paper elevation={1} sx={{ p: 3, borderRadius: 0, border: (theme) => `1px solid ${theme.palette.divider}`, backgroundColor: (theme) => theme.palette.background.paper }}>
                 <Typography
                   variant="h2"
                   sx={{
                     fontWeight: 700,
                     mb: 3,
-                    borderBottom: "2px solid #F76902",
+                    borderBottom: (theme) => `2px solid ${theme.palette.primary.main}`,
                     pb: 1,
                     maxWidth: "max-content",
                   }}
@@ -344,8 +348,8 @@ export default function WorkflowDashboard() {
                           minWidth: 32,
                           minHeight: 32,
                           borderRadius: "50%",
-                          bgcolor: "#F76902",
-                          color: "#fff",
+                          bgcolor: (theme) => theme.palette.primary.main,
+                          color: (theme) => theme.palette.common.white,
                           fontWeight: 700,
                           display: "flex",
                           alignItems: "center",
@@ -369,6 +373,7 @@ export default function WorkflowDashboard() {
                           variant="h3"
                           sx={{
                             mb: 0.5,
+                            fontWeight: 700,
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -380,7 +385,7 @@ export default function WorkflowDashboard() {
                         <Typography
                           variant="body1"
                           sx={{
-                            color: "#555",
+                            color: (theme) => theme.palette.text.secondary,
                             whiteSpace: "normal",
                           }}
                         >
@@ -391,7 +396,8 @@ export default function WorkflowDashboard() {
                       <Button
                         href={step.emailModal ? undefined : step.link}
                         onClick={step.emailModal ? handleOpen : undefined}
-                        variant="solid-orange"
+                        variant="contained"
+                        color="primary"
                         sx={{
                             textTransform: "none",
                             ml: 2,
@@ -409,24 +415,6 @@ export default function WorkflowDashboard() {
           ))}
         </Grid>
       </Container>
-
-      <Box
-        component="footer"
-        sx={{
-          height: "80px",
-          bgcolor: "#212121",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          px: { xs: 2, md: 3 },
-          mt: 8,
-        }}
-      >
-        <Typography variant="body2" sx={{ fontWeight: 300 }}>
-          © {new Date().getFullYear()} RIT | Contact | Terms
-        </Typography>
-      </Box>
       <Dialog open={modalOpen} onClose={handleClose} fullWidth maxWidth="sm" disableRestoreFocus>
         <DialogTitle>Send Email</DialogTitle>
         <DialogContent sx={{display: "flex", flexDirection: "column", gap: 2, mt: 1}}>
