@@ -993,7 +993,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                     )
                 }
                 // We call the function a bunch of times but don't want to create a duplicate once completed
-                return;
+                return "Good";
             }
             // If we do NOT have a toSessionNum (or we're already in the iterative loop), then we just set the code and outputs manually
             else{

@@ -46,7 +46,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint \"src/**/*.{js,jsx}\"",
-    "forceResetAllData": "npx prisma migrate reset --force --skip-seed && npx prisma db push && node prisma/minimalSeed.js && cd ../../workflow/server && npx prisma migrate reset --force --skip-seed"
+    "forceResetAllData": "npx prisma migrate reset --force --skip-seed && npx prisma db push && node prisma/minimalSeed.js && cd ../../workflow/server && npx prisma migrate reset --force --skip-seed && npx prisma db push"
   },
   "eslintConfig": {
     "extends": [
