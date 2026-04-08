@@ -9,7 +9,6 @@ import { useUser } from "../utils/user-context/page";
 import { sendScoopEmail } from 'utils/ScoopEmailSend';
 
 import Header from '@components/Header';
-import Footer from '@components/Footer';
 
 const workflows = [
     {
@@ -415,6 +414,92 @@ export default function WorkflowDashboard() {
           ))}
         </Grid>
       </Container>
+       <Box
+        component="footer"
+        sx={{
+          height: "80px",
+          bgcolor: "#212121",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          px: { xs: 2, md: 3 },
+          mt: 8,
+        }}
+      >
+        <Typography variant="body2" sx={{ fontWeight: 300 }}>
+          © {new Date().getFullYear()} RIT | Contact | Terms
+        </Typography>
+      </Box>
+      <Dialog open={modalOpen} onClose={handleClose} fullWidth maxWidth="sm" disableRestoreFocus>
+        <DialogTitle>Send Email</DialogTitle>
+        <DialogContent sx={{display: "flex", flexDirection: "column", gap: 2, mt: 1}}>
+            {result && (
+                <Alert severity={result.success ? "success" : "error"}>
+                    {result.message}
+                </Alert>
+            )}
+            <Divider sx={{opacity: 0}}/>
+            <TextField
+                label="Recipient Email"
+                type="email"
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                fullWidth
+                placeholder="student@rit.edu"
+            />
+            <TextField
+                label="Subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                fullWidth
+                placeholder="Test Notification"
+            />
+            <TextField
+                label="Message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                fullWidth
+                multiline
+                rows={4}
+                sx={{
+                    '& .MuiInputBase-inputMultiline': {
+                        resize: 'vertical',  //for resizing purposes
+                        overflow: 'auto'
+                    }
+                }}
+                placeholder="Enter your message here..."
+            />
+        </DialogContent>
+        <DialogActions sx={{padding: "16px"}}>
+            <Button onClick={handleClose} disabled={loading}>Cancel</Button>
+            <Button
+                variant="contained"
+                onClick={handleSend}
+                disabled={loading}
+                sx={{
+                    backgroundColor: "#F76902",
+                    "&:hover": {backgroundColor: "#d95e00"},
+                }}
+            >
+                {loading ? <CircularProgress size={20} color="inherit" /> : "Send"}
+            </Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({...snackbar, open: false})}
+        anchorOrigin={{vertical: "top", horizontal: "center"}}
+      >
+        <Alert
+            onClose={() => setSnackbar({...snackbar, open: false})}
+            severity={snackbar.success ? "success" : "error"}
+            sx={{width: "100%"}}
+        >
+            {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
