@@ -1,5 +1,5 @@
 import express from "express";
-import { createAction, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction, workflowsFetch } from "../utils/workflows/api.js";
+import { createAction, findActionsByCode, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction, workflowsFetch } from "../utils/workflows/api.js";
 import { actionToActionWithContext, compressedMetadataToObject } from "../utils/workflows/actionPipeline.js";
 import { PrismaClient } from "@prisma/client";
 
@@ -209,10 +209,20 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
         const {workflowId} = req.params;
         console.log("=".repeat(10))
         const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
-        const actionWithContexts = actions.map(action => 
+        const actionsObject = actions.map(action => 
             actionToActionWithContext(action, null, null, req.user?.uid)
         );
-        return res.status(200).json({actions: actionWithContexts, awc: actionWithContexts})
+
+        const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER"].map(code => {
+            if (findActionsByCode(actionsObject[0].action.childActions, code).length > 0){
+                return code;
+            }
+            return null;
+        });
+
+        console.log(usedCodes)
+
+        return res.status(200).json({actions: actionsObject, codes: usedCodes})
     } catch (error) {
         return res.status(500).json({error: error.message});
     }

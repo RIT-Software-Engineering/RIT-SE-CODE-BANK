@@ -98,13 +98,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           />
           <Route 
             path="workflowbuilder" 
-            element={<BuilderPage />} 
+            element={<BuilderPageAdmin isAdmin={false}/>} 
           />
           <Route 
             path="workflowbuilder-admin" 
             element={
               <RequireAuth roles={['instructor', 'professor']}>
-                <BuilderPageAdmin/>
+                <BuilderPageAdmin isAdmin={true}/>
               </RequireAuth>
             } 
           />

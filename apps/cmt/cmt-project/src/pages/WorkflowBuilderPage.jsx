@@ -15,16 +15,17 @@ import { ActionModal, DeleteModal, WorkflowComponent, WorkflowModal } from "../c
  *
  * @export
  */
-export function BuilderPageAdmin(){
+export function BuilderPageAdmin({isAdmin}){
     const [workflows, setWorkflows] = useState([]); // An array of objects. Each object may have child arrays of objects (which are actions)
     const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
     const [actionModalOpen, setActionModalOpen] = useState(false);
     const [index, setIndex] = useState(-1);
-    const availCodes = [["COURSE_SECTION", "Course Section"], 
-    ["NUMBER_STUDENTS", "Number of Students"], 
-    ["COURSE_SEMESTER", "Course Semester"],
+    const availCodes = [
     ["CHECKMARK", "Checkmark"],
-    ["SESSION", "Sessions"]];
+    ["SESSION", "Sessions"],
+    ["COURSE_SECTION", "Course Section"], 
+    ["NUMBER_STUDENTS", "Number of Students"], 
+    ["COURSE_SEMESTER", "Course Semester"],];
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
     const [depthLevel, setDepthLevel] = useState(0);
@@ -34,11 +35,13 @@ export function BuilderPageAdmin(){
     const [metaWorkflow, setMetaWorkflow] = useState('None');
 
     // Action modal info
-    const [code, setCode] = useState(availCodes ? availCodes[0][0] : '');
+    const [code, setCode] = useState(availCodes[0][0]);
     const [required, setRequired] = useState(false);
     const [placeholder, setPlaceholder] = useState('');
     const [validation, setValidation] = useState([]);
     const extraData = {code, required, placeholder, validation};
+
+    const updateQuery = isAdmin ? "WorkflonyFirstTheRestNowhere_CMT_Template" : "TangledUpInLiesImAWorkflony"
 
     /**
      * Function that's called on load to get all the workflows for our template
@@ -47,33 +50,44 @@ export function BuilderPageAdmin(){
      * Once all that is done, sets the workflows in alphabetical order.
      */
     const update = useCallback(async () => {
-        return CMTJsonFetch("GET", "/workflow/workflowTemplate?tags=WorkflonyFirstTheRestNowhere_CMT_Template").then(async response => {
+        return CMTJsonFetch("GET", `/workflow/workflowTemplate?tags=${updateQuery}`).then(async response => {
             const data = await response.json();
             const workflowPromises = data.workflows.map(async workflow => {
                 const info = workflow.baseAction;
                 let actions = [];
+                let usedCodes = [];
                 if (workflow.rootActionId){
                     const actionResponse = await CMTJsonFetch("GET", `workflow/actionTemplate/workflow/${workflow.id}`)
                     const returnedActions = await actionResponse.json();
                     actions = returnedActions.actions;
-                }
+                    if (!isAdmin)
+                        actions = actions.filter(action => action.action?.metadata?.code !== "PUBLISH_TEMPLATE");
+
+                   usedCodes = Array.from(new Set(returnedActions.codes))
+                } 
                 return {
                     id: info.id,
                     attributeId: workflow.id,
                     name: info.name,
                     description: info.description,
-                    actions: actions || [],
+                    actions: actions,
                     metadata: info.metadata,
-                    tags: workflow.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template").sort(), // Remove the special tag so it's not modifiable in any way
+                    tags: workflow.tags?.filter(tag => 
+                        isAdmin ? 
+                        tag !== "WorkflonyFirstTheRestNowhere_CMT_Template" :
+                        tag !== "TangledUpInLiesImAWorkflony" && !info.metadata?.CMTemplate.includes(tag)
+                    ).sort(), // Remove the special tag so it's not modifiable in any way
+                    usedCodes
                 }
             });
             const resolvedWorkflows = await Promise.all(workflowPromises);
-            setWorkflows(resolvedWorkflows.sort((a, b) => a.name.localeCompare(b.name)));
+            const sortedWorkflows = resolvedWorkflows.sort((a, b) => a.name.localeCompare(b.name));
+            setWorkflows(sortedWorkflows);
             setLoading(false);
         });
-    }, [])
+    }, [isAdmin, updateQuery])
     useEffect(() => void update(), [update])
-    
+
     // Helper function so we can pass in less information
     function setWorkflowModalAsOpen(){
         setWorkflowModalOpen(true);
@@ -142,7 +156,8 @@ export function BuilderPageAdmin(){
      * Passed into the {@link WorkflowModal} component.
      */
     function loadWorkflowForm(){
-        setMetaWorkflow(curAction.metadata?.code);
+        if (isAdmin)
+            setMetaWorkflow(curAction.metadata?.code);
     }
 
     /** 
@@ -151,7 +166,8 @@ export function BuilderPageAdmin(){
      * Passed into the {@link WorkflowModal} component.
      */
     function clearWorkflowForm(){
-        setMetaWorkflow('None');
+        if (isAdmin)
+            setMetaWorkflow('None');
     }
 
     return (
@@ -164,11 +180,14 @@ export function BuilderPageAdmin(){
         setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmitAdmin} extraData={{metaWorkflow}}
         loadFunction={loadWorkflowForm} clearFunction={clearWorkflowForm}>
 
+            {isAdmin ? 
+            <>
             <Form.Label>What Meta-workflow should this be used for?</Form.Label>
             <Form.Select onChange={e=>setMetaWorkflow(e.target.value)} value={metaWorkflow}>
                 <option>None</option>
                 <option>Course Creation Workflow</option>
             </Form.Select>
+            </> : <></>}
 
         </WorkflowModal>
 
@@ -181,7 +200,7 @@ export function BuilderPageAdmin(){
             <Form.Label>Code</Form.Label>
             <Form.Select onChange={(e)=>setCode(e.target.value)} value={code}>
                 {availCodes.map(codeInfo => {
-                    return <option key={codeInfo[0]} value={codeInfo[0]}>{codeInfo[1]}</option>
+                    return <option disabled={workflows[index]?.usedCodes?.includes(codeInfo[0])} key={codeInfo[0]} value={codeInfo[0]}>{codeInfo[1]}</option>
                 })}
             </Form.Select>
             <div className="flex pt-2">
@@ -1058,7 +1077,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                         nextActionId: null,
                         parentActionId: null,
                         metadata: metadata
-                }})
+                }});
             }
             else {
                 // Check if our parent has any other child actions/descendants
@@ -1096,8 +1115,12 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                     description: workflows[j].description,
                     actions: workflowActions,
                     tags: workflows[j].tags,
-                    metadata: workflows[j].metadata
+                    metadata: workflows[j].metadata,
+                    usedCodes: workflows[j].usedCodes
                 });
+
+            if (code)
+                workflowsCopy[j].usedCodes.push(code);
         }}
 
         if (!isWorkflowChild){
@@ -1119,6 +1142,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
         }
         returnVal = "Good";
     }).catch(async error => {
+        console.error(error)
         if (error.response){
             const data = await error.response.json();
             setError(data.error);
