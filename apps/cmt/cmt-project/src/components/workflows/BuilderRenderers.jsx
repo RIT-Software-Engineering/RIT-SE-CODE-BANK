@@ -98,8 +98,8 @@ export function DeleteModalRenderer(props){
         <Modal.Header>Delete Action</Modal.Header>
         <Modal.Body>
             <div className="alert alert-danger">
-                <p>You are about to permanently delete a{props.action.attributeId ? ' workflow' : 'n action'}!</p> 
-                <p>Are you sure you'd like to delete "{props.action.name}"? This cannot be undone!</p>
+                <p>You are about to permanently delete a{props.action?.attributeId ? ' workflow' : 'n action'}!</p> 
+                <p>Are you sure you'd like to delete "{props.action?.name}"? This cannot be undone!</p>
             </div>
             <div className="flex justify-between pt-4">
                 <Button onClick={props.onCancel}>Cancel</Button>
@@ -267,6 +267,6 @@ export function ComplexActionRenderer(props) {
 
 export function ErrorRenderer(error){
     return (
-        <div className="alert alert-danger"> {error} </div>
+        <div className="alert alert-danger"> {error.error} </div>
     )
 }
