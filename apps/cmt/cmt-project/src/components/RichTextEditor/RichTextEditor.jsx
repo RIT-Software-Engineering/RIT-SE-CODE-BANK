@@ -231,7 +231,10 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
               <OverlayTrigger delay={200} overlay={<Tooltip>Unlink selection</Tooltip>}>
                 <Button
                     variant='outline-secondary'
-                    onClick={() => editor.chain().focus().unsetLink().run()}
+                    onClick={() => {
+                        editor.chain().focus().unsetLink().run();
+                        editor.chain().focus().unsetColor().run();
+                    }}
                 >
                     <Link2Off />
                 </Button>
