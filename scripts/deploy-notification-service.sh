@@ -27,7 +27,7 @@ ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
 
     echo "Rebuilding and restarting Docker containers..."
     cd ./services/notification-service
-    docker compose -f compose.yaml -f compose.staging.yaml up -d --build
+    docker compose -f compose.build.yaml -f compose.run.yaml -f compose.dev.yaml up -d --build
     
     echo "Waiting for services to be healthy..."
     sleep 10

@@ -21,10 +21,9 @@ services:
     restart: unless-stopped
   
   notify:
-    build: 
-      context: ../..
-      dockerfile: services/notification-service/Dockerfile
+    image: notification-service:${TAG:-latest}
     environment:
+      SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_FROM: ${SMTP_FROM}
       PORT: ${NOTIF_HOST_PORT}

@@ -1,0 +1,8 @@
+name: notification-service
+
+services:
+  notify:
+    build: 
+      context: ../..
+      dockerfile: services/notification-service/Dockerfile
+    image: notification-service:${TAG:-latest}
