@@ -3,7 +3,8 @@ node_modules
 .env
 /generated/prisma
 .pem
-/resources
+/resources/cover-letters
+/resources/resumes
 #/server/database/prisma/migrations
 /generated/prisma
 

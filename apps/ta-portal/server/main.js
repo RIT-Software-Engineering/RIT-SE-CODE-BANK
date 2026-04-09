@@ -123,19 +123,25 @@ async function initializeApp() {
   // Start the server. In local dev we prefer HTTPS when certs are available,
   // but don't crash if the PEM files are missing — fall back to HTTP to make
   // local development easier (avoids requiring users to create certs).
-  try {
-    const key = fs.readFileSync(path.resolve(__dirname, './localhost+2-key.pem'));
-    const cert = fs.readFileSync(path.resolve(__dirname, './localhost+2.pem'));
-    https.createServer({ key, cert }, app).listen(port, () => {
-      console.log(`HTTPS server listening on ${process.env.BACKEND_URL || `https://localhost:${port}`}`);
-      console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
-  } catch (err) {
-    console.warn('HTTPS certs not available or unreadable, falling back to HTTP for development:', err && err.message);
+  if (process.env.NODE_ENV === 'production'){
     app.listen(port, () => {
       console.log(`HTTP server listening on http://localhost:${port}`);
-      console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
+    })
+  } else{
+    try {
+      const key = fs.readFileSync(path.resolve(__dirname, './localhost+2-key.pem'));
+      const cert = fs.readFileSync(path.resolve(__dirname, './localhost+2.pem'));
+      https.createServer({ key, cert }, app).listen(port, () => {
+        console.log(`HTTPS server listening on ${process.env.BACKEND_URL || `https://localhost:${port}`}`);
+        console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
+      });
+    } catch (err) {
+      console.warn('HTTPS certs not available or unreadable, falling back to HTTP for development:', err && err.message);
+      app.listen(port, () => {
+        console.log(`HTTP server listening on http://localhost:${port}`);
+        console.log(`Current Environment: ${process.env.NODE_ENV || 'development'}`);
+      });
+    }
   }
 }
 

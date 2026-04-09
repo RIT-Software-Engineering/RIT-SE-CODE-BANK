@@ -16,7 +16,7 @@ services:
     # This connects a docker volume to the container directory that stores the SQL information. 
     # If this container is closed the database will be stored inside the persistant docker volume.
     volumes:
-      - ta_portal_mariadb_data:/var/lib/mysql
+      - mariadb_data:/var/lib/mysql
     # A simple healthcheck that runs mariadb's default healthcheck script. Allows docker to tell if the container is healthy and functioning or not.
     healthcheck:
       test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
@@ -29,19 +29,7 @@ services:
 
   # The container for the React JS frontend of the TA-Portal.
   frontend:
-    build:
-      # Since the project is using npm workspaces, the package-lock.json contains the install information needed for setup.
-      # This means that this docker container must have access to the repo root in order to copy the package-lock.
-      context: ../../..
-      # Different dockerfiles are used depending on whether this is meant to be ran locally or on staging.
-      # It does not matter that this dockerfile does not exist, as it is replaced in both .dev and .prod
-      dockerfile: apps/ta-portal/ui/Dockerfile
-      # These arguments are passed to the dockerfile to be used during the build process. Since these are NEXT_PUBLIC variables they may be used during the next bui8ld process, 
-      # which is why they cannot be passed as container environmental variables here. The dockerfiles turn them into env variables for the container afterwards.
-      args:
-        NEXT_PUBLIC_API_EXTENSION: ${NEXT_PUBLIC_API_EXTENSION}
-        NEXT_PUBLIC_DATABASE_API_EXTENSION: ${NEXT_PUBLIC_DATABASE_API_EXTENSION}
-        NEXT_PUBLIC_SLACK_API_EXTENSION: ${NEXT_PUBLIC_SLACK_API_EXTENSION}
+    image: ta-portal-frontend:${TAG:-latest}
     ports:
       - ${FRONT_HOST_PORT}:${FRONT_CONTAINER_PORT}
     depends_on:
@@ -49,13 +37,10 @@ services:
 
   # The container for the Express JS backend of the TA-Portal
   backend:
-    build:
-      # Since the project is using npm workspaces, the package-lock.json contains the install information needed for setup.
-      # This means that this docker container must have access to the repo root in order to copy the package-lock.
-      context: ../../..
-      dockerfile: apps/ta-portal/server/Dockerfile
-
+    image: ta-portal-backend:${TAG:-latest}
     environment:
+      # domain url of the frontend. Used in main.js to defined allowed orgins of requests.
+      FRONTEND_URL: ${ORIGIN_URL}
       # This DATABASE_URL overrides the placeholder url defined in the dockerfile.
       DATABASE_URL: "mysql://${DB_APP_USER}:${DB_USER_PASSWORD:-user_password}@mariadb:3306/${DB_NAME}"
       # The variable is used in main.js so that the application knows what port to listen to. This is needed since the app has no context of the host port from inside the container
@@ -64,12 +49,18 @@ services:
       NOTIFICATION_API_EXTENSION: ${NOTIFICATION_API_EXTENSION}
       # name by which the notification service recognises this app
       NOTIFICATION_CLIENT_APP_ID: ${NOTIFICATION_CLIENT_APP_ID}
+      # Is used mainly in errorHandlerTest.js and featureFlags.js.
+      NODE_ENV: "production"
+      # URL used to access the notification service
+      NOTIFICATION_SERVICE_URL: ${ORIGIN_URL}
     ports:
       - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
     # Unless the service is stopped or removed, restart the database in the event of a crash.
     restart: unless-stopped
     depends_on:
       - mariadb
+    volumes:
+      - uploads:/app/apps/ta-portal/server/resources
     # A basic healthcheck so Docker can tell the health of the container. Sends a get request to the health route (server/server/routing/index.js), which simply returns status 200.
     healthcheck:
       test: [ "CMD", "node", "-e", "require('http').get('http://localhost:${BACK_CONTAINER_PORT}${NEXT_PUBLIC_API_EXTENSION}/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))" ]
@@ -80,4 +71,5 @@ services:
 
 # Persistant volume that stores database information even if the mariadb container stops.
 volumes:
-  ta_portal_mariadb_data: {}
+  mariadb_data: {}
+  uploads: {}
