@@ -58,9 +58,9 @@ export function ReadOnlyEditor({ value }) {
 }
 
 /**
- * @param {{ value: any, onChange: function, courseId: number, showTables: boolean, onEditor?: function, disabled?: boolean }} props 
+ * @param {{ value: any, onChange: function, courseId: number, isBody: boolean, onEditor?: function, disabled?: boolean }} props 
  */
-export function RichTextEditor({ value, onChange, courseId, showTables, onEditor, disabled = false }) {
+export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, disabled = false }) {
 
   const Extras = {
     Table: "Table",
@@ -148,6 +148,8 @@ export function RichTextEditor({ value, onChange, courseId, showTables, onEditor
                 </Button>
               </OverlayTrigger>
 
+            {isBody ? 
+            <>
               <OverlayTrigger delay={200} overlay={<Tooltip>Dot list</Tooltip>}>
                 <Button variant='outline-secondary' active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
                     <List />
@@ -159,6 +161,8 @@ export function RichTextEditor({ value, onChange, courseId, showTables, onEditor
                     <ListOrdered />
                 </Button>
               </OverlayTrigger>
+            </>
+            : <></>}
               
               <OverlayTrigger delay={200} overlay={<Tooltip>Code Block</Tooltip>}>
                 <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
@@ -234,7 +238,7 @@ export function RichTextEditor({ value, onChange, courseId, showTables, onEditor
               </OverlayTrigger>
 
               
-              {showTables && 
+              {isBody && 
                 <OverlayTrigger delay={200} overlay={<Tooltip>Table</Tooltip>}>
                     <Button variant="outline-secondary" onClick={() => setExtraToShow(current => current === Extras.Table ? Extras.None : Extras.Table)}>
                         <Table />
@@ -279,7 +283,9 @@ export function RichTextEditor({ value, onChange, courseId, showTables, onEditor
           : <></>
           }
           
-          <div className='border-x border-b p-3 prose prose-strong:text-inherit max-w-none'>
+          <div 
+          className='border-x border-b p-3 prose prose-strong:text-inherit max-w-none overflow-y-scroll'
+          style={{maxHeight: "35vh"}}>
               <EditorContent className="*:p-3" editor={editor} />
           </div>
         </div>

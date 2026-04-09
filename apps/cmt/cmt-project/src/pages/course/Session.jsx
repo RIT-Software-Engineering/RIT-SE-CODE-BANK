@@ -178,7 +178,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                                     value={itemLabel} 
                                     onChange={setItemLabel} 
                                     courseId={courseId} 
-                                    showTables={false} 
+                                    isBody={false} 
                                     onEditor={setTitleEditor}
                                 />
                             </div>
@@ -189,7 +189,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                                     value={itemBody} 
                                     onChange={setItemBody} 
                                     courseId={courseId} 
-                                    showTables={true}
+                                    isBody={true}
                                     disabled={hasLinksInTitle}
                                 />
                                 {hasLinksInTitle && <Alert variant="warning" className="my-2">Content editor is disabled because the title contains links. If a title contains a link, material content will be ignored.</Alert>}
@@ -241,8 +241,9 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
 
+    // we need use effect for the body otherwise it may load the incorrect body
+    // it works fine without the label though
     useEffect(() => {
-        setItemLabel(curMaterial?.label ?? "")
         setItemBody(curMaterial?.body ?? "")
     }, [curMaterial, materialId])
 
@@ -263,6 +264,10 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
 
     return (
         <Offcanvas
+            onShow={() => {
+                setItemLabel(curMaterial?.label ?? "")
+                setItemBody(curMaterial?.body ?? "")
+            }}
             show={isEditOpen}
             onHide={() => { setIsEditOpen(false); resetForm(); }}
             placement="end"
@@ -284,7 +289,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                                         value={itemLabel} 
                                         onChange={setItemLabel} 
                                         courseId={courseId} 
-                                        showTables={false}
+                                        isBody={false}
                                         onEditor={setTitleEditor}
                                     />
                                 </div>
@@ -294,7 +299,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                                         value={itemBody} 
                                         onChange={setItemBody} 
                                         courseId={courseId} 
-                                        showTables={true}
+                                        isBody={true}
                                         disabled={hasLinksInTitle}
                                     />
                                     {hasLinksInTitle && <Alert variant="warning" className="my-2">Content editor is disabled because the title contains links. If a title contains a link, material content will be ignored.</Alert>}
@@ -304,7 +309,8 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                         <div className='flex justify-end pt-3'>
                             <Button type="submit" onClick={(e) => {
                             e.preventDefault();
-                            if (itemLabel){
+                            // basically if we match any actual text
+                            if (!itemLabel.replace(/<p>.+<\/p>/, "")){
                                 updateMaterial();
                                 setIsEditOpen(false);
                                 resetForm();
@@ -329,7 +335,6 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
  */
 function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
-    const tdClass = "hover:underline hover:text-blue-500 cursor-pointer";
     const allCols = ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"];
     // TODO: maybe... change how this works, currently updates all columns for every session but that may be ok.
     // It'll look a bit more clumped, but it is closer to realistic for what a prof. may want.
