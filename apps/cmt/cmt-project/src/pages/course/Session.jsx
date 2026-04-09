@@ -378,7 +378,9 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
 
     function openEditModal(text, col){
         // Not a foolproof way to find ID but it should match closely. It'd take a bunch of refactoring to be exact...
-        const id = sessionData.find(session => session.sessionNum === sessionNum && session.label === text && session.type === allCols[col]).id
+        const id = sessionData.find(session => session.sessionNum === sessionNum && session.label === text && session.type === allCols[col])?.id;
+        if (!id)
+            return;
         setIsEditOpen(true);
         setSessionId(id);
     }
@@ -402,7 +404,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                     <tr> 
                         {cols[0] ? (
                             <td 
-                                className="cursor-pointer hover:bg-gray-100"
+                                className={`${getLabelContent(0, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
                                 onClick={() => openEditModal(getLabelContent(0, i), 0)}
                                 title="Click to edit material"
                             >
@@ -413,7 +415,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                         ) : <></>}
                         {cols[1] ? (
                             <td 
-                                className="cursor-pointer hover:bg-gray-100"
+                                className={`${getLabelContent(1, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
                                 onClick={() => openEditModal(getLabelContent(1, i), 1)}
                                 title="Click to edit material"
                             >
@@ -424,7 +426,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                         ) : <></>}
                         {cols[2] ? (
                             <td 
-                                className="cursor-pointer hover:bg-gray-100"
+                                className={`${getLabelContent(2, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
                                 onClick={() => openEditModal(getLabelContent(2, i), 2)}
                                 title="Click to edit material"
                             >
@@ -435,7 +437,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                         ) : <></>}
                         {cols[3] ? (
                             <td 
-                                className="cursor-pointer hover:bg-gray-100"
+                                className={`${getLabelContent(3, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
                                 onClick={() => openEditModal(getLabelContent(3, i), 3)}
                                 title="Click to edit material"
                             >
@@ -446,7 +448,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                         ) : <></>}
                         {cols[4] ? (
                             <td 
-                                className="cursor-pointer hover:bg-gray-100"
+                                className={`${getLabelContent(4, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
                                 onClick={() => openEditModal(getLabelContent(4, i), 4)}
                                 title="Click to edit material"
                             >
@@ -457,7 +459,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                         ) : <></>}
                         {cols[5] ? (
                             <td 
-                                className="cursor-pointer hover:bg-gray-100"
+                                className={`${getLabelContent(5, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
                                 onClick={() => openEditModal(getLabelContent(5, i), 5)}
                                 title="Click to edit material"
                             >

@@ -110,7 +110,7 @@ model Session {
 model SessionMaterial {
   id          Int        @id @default(autoincrement())
   type        String
-  label       String
+  label       String    @db.Text
   body        String?   @db.Text
   active      Boolean   @default(true)
   sessionId   Int

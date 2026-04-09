@@ -28,6 +28,7 @@ import { ResourceLinkModal } from "./ResourceLinkModal";
 import { HighlightPicker, TextPicker } from "./Pickers";
 
 
+
 export function ReadOnlyEditor({ value }) {
     const editor = new Editor({
         editable: false,
@@ -226,16 +227,7 @@ export function RichTextEditor({ value, onChange, courseId, showTables, onEditor
               <OverlayTrigger delay={200} overlay={<Tooltip>Unlink selection</Tooltip>}>
                 <Button
                     variant='outline-secondary'
-                    onClick={() => {
-                        editor.chain().focus().unsetLink().run()
-                        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' })) {
-                            editor.chain().focus().setColor('black').run()
-                        } else if (editor.isActive('textStyle', { color: '#0484c9' })) {
-                            editor.chain().focus().setColor('#0484c9').run()
-                        } else if (editor.isActive('textStyle', { backgroundColor: '#0484c9' })) {
-                            editor.chain().focus().setColor('white').run()
-                        }
-                    }}
+                    onClick={() => editor.chain().focus().unsetLink().run()}
                 >
                     <Link2Off />
                 </Button>
