@@ -13,6 +13,7 @@
 
 - **CMT Frontend**: In `apps/cmt/cmt-project`, run `npm install`
 - **CMT Backend**: In `apps/cmt/cmt-project/src/backend`, run `npm install`
+- **Workflows Ecoystem**
 - **Workflow API**: In `apps/workflow/server`, run `npm install`
 
 > Common Issues:
