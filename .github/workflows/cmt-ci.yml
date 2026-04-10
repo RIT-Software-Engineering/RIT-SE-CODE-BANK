@@ -65,10 +65,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-        working-directory: /
-      - run: npx nx affected:lint
-        working-directory: /
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Affected Lint
+        run: npx nx affected:lint
   
   build:
     name: Build Affected Projects
