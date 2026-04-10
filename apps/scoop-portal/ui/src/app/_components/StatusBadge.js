@@ -23,6 +23,12 @@ export default function StatusBadge({ value, type = "application", size = "mediu
       PENDING: theme.palette.warning.main,
       default: theme.palette.grey[500],
     },
+    interestform: {
+      PENDING: theme.palette.warning.main,
+      ACCEPTED: theme.palette.success.main,
+      REJECTED: theme.palette.error.main,
+      default: theme.palette.grey[500],
+    },
     proposal: {
       APPROVED: theme.palette.success.main,
       REJECTED: theme.palette.error.main,
@@ -57,6 +63,11 @@ export default function StatusBadge({ value, type = "application", size = "mediu
       ACCEPTED: "Accepted",
       REJECTED: "Rejected",
       PENDING: "Pending",
+    },
+    interestform: {
+      PENDING: "Pending",
+      ACCEPTED: "Accepted",
+      REJECTED: "Rejected",
     },
     proposal: {
       APPROVED: "Approved",
