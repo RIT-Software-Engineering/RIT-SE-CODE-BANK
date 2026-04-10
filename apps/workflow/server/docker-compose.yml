@@ -1,0 +1,41 @@
+services:
+  workflows-mariadb:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: workflows_root_pass
+      MYSQL_DATABASE: workflows
+      MYSQL_USER: workflows_user
+      MYSQL_PASSWORD: workflows_pass
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - workflows_data:/var/lib/mysql
+
+  workflows-backend:
+    build:
+      context: ../../../apps/workflow/server
+      dockerfile: Dockerfile
+    ports:
+      - "5011:5011"
+    environment:
+      NODE_ENV: production
+      PORT: 5011
+      DB_HOST: workflows-mariadb
+      DB_PORT: 3306
+      DB_ROOT_PASSWORD: workflows_root_pass
+      DB_NAME_WORKFLOWS: workflows
+      DB_APP_USER: workflows_user
+      DB_APP_PASSWORD: workflows_pass
+      DATABASE_URL: mysql://workflows_user:workflows_pass@workflows-mariadb:3306/workflows
+    depends_on:
+      workflows-mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mariadb_data:
+  workflows_data:

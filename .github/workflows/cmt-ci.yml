@@ -66,9 +66,9 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-        working-directory: apps/cmt/cmt-project
-      - run: npm run lint
-        working-directory: apps/cmt/cmt-project
+        working-directory: /
+      - run: npx nx affected:lint
+        working-directory: /
   
   build:
     name: Build Affected Projects
@@ -82,8 +82,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-        working-directory: apps/cmt/cmt-project
       - run: npm ci
         working-directory: ./
       - run: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
@@ -105,20 +103,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract App Name from Branch
-        id: parse
-        run: |
-          BRANCH=${GITHUB_REF##*/}
-          if [[ "$BRANCH" == *-dev ]]; then
-            APP_NAME="${BRANCH%-dev}"
-          elif [[ "$BRANCH" == "dev" || "$BRANCH" == "main" ]]; then
-            APP_NAME="all"  # fallback or global deploy logic
-          else
-            APP_NAME="cmt"
-          fi
-          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
-          echo "::notice ::Branch '$BRANCH' targets app '$APP_NAME'"
-
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
@@ -130,16 +114,7 @@ jobs:
         run: |
           ssh-keyscan -H apps-staging.se.rit.edu >> ~/.ssh/known_hosts
 
-      - name: Deploy script
-        run: |
-          if [ "$APP_NAME" = "all" ]; then
-            echo "Deploying all apps"
-            chmod +x ./scripts/deploy-all.sh
-            ./scripts/deploy-all.sh
-          elif [ -f "./scripts/deploy-$APP_NAME.sh" ]; then
-            echo "Deploying $APP_NAME"
-            chmod +x "./scripts/deploy-$APP_NAME.sh"
-            ./scripts/deploy-$APP_NAME.sh
-          else
-            echo "No deployment script found for $APP_NAME, skipping."
-          fi
+      - name: Install dependencies
+        run: npm ci
+      - name: deploy
+        run: nx affected -t deploy

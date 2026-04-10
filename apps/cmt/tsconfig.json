@@ -4,9 +4,9 @@
     "checkJs": true, // This is what makes Typescript get angry at you. If turning this on makes your project explode with errors, you can turn it off.
 
     // These things may need to be messed around with, depending on which type of Javascript your project is using. The two options I think are CommonJS and ES Modules, but StackOverflow has all the answers.
-    "target": "ES2020",
+    "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "bundler", // bundler might be super important
+    "moduleResolution": "bundler",
 
     // Preference
     "noUnusedParameters": true,
@@ -25,11 +25,5 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "src/backend/node_modules",
-    "src/components/examples/**/*",
-    "test/**/*"
-  ]
+  "exclude": ["node_modules"]
 }

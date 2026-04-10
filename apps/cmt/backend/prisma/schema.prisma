@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "./generated/client" // Prevent prisma from placing client at root level
+} 
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Professor {
+  id              String              @id @default(uuid()) // String for compatibility with Workflows API
+  fname           String
+  lname           String
+  email           String
+  courses         Course[]
+  tbteamset       TBTeamSet[]
+
+  @@map("professors")
+}
+
+model Course {
+  id              Int            @id @default(autoincrement())
+  name            String
+  season          String?
+  year            Int?
+  classId         String
+  color           String
+  students        Int?
+  section         Int?
+  professorId     String
+  professors      Professor      @relation(fields: [professorId], references: [id])
+  sessions        Session[]
+  tbenrollment    TBEnrollment[]
+  tbteamset       TBTeamSet[]
+  workflowId      String
+  workflowStateId String
+  Resource        Resource[]
+  isTemplate      Boolean       @default(false)
+}
+
+model Session {
+  id          Int        @id @default(autoincrement())
+  sessionNum  Int
+  courseId    Int
+  course      Course  @relation(fields: [courseId], references: [id])
+  material    SessionMaterial[]
+}
+
+model SessionMaterial {
+  id          Int        @id @default(autoincrement())
+  type        String
+  label       String
+  body        String?   @db.Text
+  active      Boolean   @default(true)
+  sessionId   Int
+  sessionNum  Int
+  session     Session @relation(fields: [sessionId], references: [id])
+}
+
+model TBEnrollment {
+  id        Int        @id @default(autoincrement())
+  courseId  Int
+  studentId String?
+  email     String?
+  firstName String?
+  lastName  String?
+  createdAt DateTime   @default(now())
+  course    Course     @relation(fields: [courseId], references: [id])
+  members   TBMember[]
+
+  @@unique([courseId, email])
+  @@unique([courseId, studentId])
+  @@index([courseId])
+}
+
+model TBMember {
+  id           Int          @id @default(autoincrement())
+  teamId       Int
+  enrollmentId Int
+  role         String?
+  createdAt    DateTime     @default(now())
+  enrollment   TBEnrollment @relation(fields: [enrollmentId], references: [id])
+  tbteam       TBTeam       @relation(fields: [teamId], references: [id])
+
+  @@unique([teamId, enrollmentId])
+  @@index([enrollmentId])
+}
+
+model TBTeam {
+  id        Int       @id @default(autoincrement())
+  teamSetId Int
+  name      String
+  maxSize   Int?
+  createdAt DateTime  @default(now())
+  members   TBMember[]
+  teamSet   TBTeamSet @relation(fields: [teamSetId], references: [id])
+
+  @@unique([teamSetId, name])
+}
+
+model TBTeamSet {
+  id                   Int              @id @default(autoincrement())
+  courseId             Int
+  name                 String
+  status               tbteamset_status @default(DRAFT)
+  teamSize             Int?
+  constraints          String?          @db.LongText
+  publishedAt          DateTime?
+  createdByProfessorId String
+  createdAt            DateTime         @default(now())
+  teams                TBTeam[]
+  course               Course           @relation(fields: [courseId], references: [id])
+  professors           Professor        @relation(fields: [createdByProfessorId], references: [id])
+
+  @@unique([courseId, name])
+  @@index([courseId, status])
+  @@index([createdByProfessorId])
+}
+
+model Resource {
+  id        Int      @id @default(autoincrement())
+  name      String
+  filename  String
+  mimeType  String
+  filePath  String
+  courseId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  course    Course   @relation(fields: [courseId], references: [id])
+
+  @@index([courseId])
+  @@map("resources")
+}
+
+enum tbteamset_status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}

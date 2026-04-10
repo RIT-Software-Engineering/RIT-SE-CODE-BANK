@@ -1,0 +1,17 @@
+{
+    "targets": {
+        "deploy": {
+            "dependsOn": "build",
+            "executor": "nx:run-command",
+            "options": {
+                "command": "./scripts"
+            }
+        },
+        "deploy-test": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "echo would deploy workflows here"
+            }
+        }
+    }
+}

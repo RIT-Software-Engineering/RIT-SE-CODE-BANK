@@ -8,11 +8,11 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "default": "./dist/index.js"
     },
     "./components": {
       "types": "./dist/react.d.ts",
-      "import": "./dist/react.js"
+      "default": "./dist/react.js"
     }
   },
   "files": [
@@ -24,15 +24,13 @@
     "build": "npm run build:js && npm run build:types",
     "watch:js": "esbuild src/index.js src/react.js --bundle --format=esm --outdir=dist --external:react --external:react/jsx-runtime --watch",
     "watch:types": "tsc -p tsconfig.build.json --watch",
-    "watch": "concurrently \"npm:watch:js\" \"npm:watch:types\"",
-    "prepare": "npm run build",
-    "test": "node --test"
+    "watch": "concurrently \"npm:watch:js\" \"npm:watch:types\""
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
     "esbuild": "^0.25.0",
     "typescript": "^6.0.2"
   },
-  "author": "Scott Happy and Ayden Dazo",
+  "author": "Scott Happy (Contexts, Components) and Ayden Dazo (Builder)",
   "license": "ISC"
 }
