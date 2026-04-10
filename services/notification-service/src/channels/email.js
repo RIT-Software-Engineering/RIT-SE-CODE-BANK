@@ -5,9 +5,21 @@ import * as nodemailer from "nodemailer";
 let transporter = null;
 function getTransport() {
   if (transporter) return transporter;
-  const host = process.env.SMTP_HOST || "localhost";
-  const port = Number(process.env.SMTP_PORT || 2525);
-  transporter = nodemailer.createTransport({ host, port, secure: false });
+  if (process.env.USE_SEND_MAIL === "true"){
+    transporter = nodemailer.createTransport({
+      sendmail: true,
+      newline: 'unix',
+      path: '/usr/sbin/sendmail'
+    });
+  } else{
+    const host = process.env.SMTP_HOST || "localhost";
+    const port = Number(process.env.SMTP_PORT || 2525);
+    transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: false
+    });
+  }
   return transporter;
 }
 
