@@ -122,4 +122,4 @@ jobs:
         with:
           node-version: 20
       - name: deploy
-        run: nx affected -t deploy --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+        run: npx nx affected -t deploy --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
