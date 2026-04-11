@@ -1,5 +1,6 @@
 import {encodeOperand} from "./encoder.js";
 import { OPCODES } from "./opcodes.js";
+import { isStringLiteral, isLabel, isNumber } from "./utils.js";
 
 export function encodeLine(parsedData, symbols, lc) {
     if(parsedData.type === "instruction") {
@@ -14,7 +15,8 @@ export function encodeLine(parsedData, symbols, lc) {
 
 function encodeDirective(parsedData, symbols) {
     const wordArray = [];
-    switch(parsedData.directive) {
+    const directiveType = parsedData.directive.toUpperCase();
+    switch(directiveType) {
         case '.WORD':
             for(const arg of parsedData.args) {
                 if(isLabel(arg)) {
@@ -23,7 +25,58 @@ function encodeDirective(parsedData, symbols) {
                     wordArray.push(Number(arg));
                 }
             }
+            break;
+        case '.BYTE':
+            for(const arg of parsedData.args) {
+                let value;
+                if(isLabel(arg)) {
+                    value = symbols[arg] & 0xFF;
+                } else {
+                    value = Number(arg) & 0xFF;
+                }
+                wordArray.push(value);
+            }
+            break;
+        case '.ASCII':
+            const string = parsedData.args[0];
+            if(isStringLiteral(string)) {
+                const withoutQuotes = string.slice(1, -1);
+                for(const char of withoutQuotes) {
+                    wordArray.push(char.charCodeAt(0));
+                }
+            } else {
+                throw new Error(".ASCII requires a quoted string literal")
+            }
+            break;
+        case '.ASCIZ':
+            const stringz = parsedData.args[0];
+            if(isStringLiteral(stringz)) {
+                const withoutQuotes = stringz.slice(1, -1);
+                for(const char of withoutQuotes) {
+                    wordArray.push(char.charCodeAt(0));
+                }
+                wordArray.push(0);
+            } else {
+                throw new Error(".ASCIZ requires a quoted string literal");
+            }
+            break;
+        case '.BLKW':
+        case '.BLKB':
+            if(parsedData.args[1] == null && isNumber(parsedData.args[0])) {
+                for(let i=0; i<Number(parsedData.args[0]); i++) {
+                    if(directiveType == '.BLKB') {
+                        wordArray.push(0);
+                    } else {
+                        wordArray.push(0);
+                        wordArray.push(0);
+                    }
+                }   
+            } else {
+                throw new Error(".BLKB must be given only a single number");
+            }
+            break;
     }
+    console.log(wordArray);
     return wordArray;
 }
 
@@ -57,10 +110,7 @@ function resolveOperand(location, symbols, pc) {
     }
 
     if(location.mode == "indexed" && location.reg == 7) {
-        console.log(pc)
-        console.log(offset)
         offset = (offset - (pc + 2));
-        console.log(offset)
     }
 
     return{...location, offset};
@@ -100,8 +150,4 @@ function oneEncoder(opcodeInfo, dst) {
 
 function zeroEncoder(opcodeInfo) {
     return [opcodeInfo.code];
-}
-
-function isLabel(token) {
-    return /^[a-zA-Z._][a-zA-Z0-9._]*$/.test(token);
 }

@@ -1,3 +1,5 @@
+import {isRegister, isNumber, isLabel, getRegisterNumber} from "./utils.js";
+
 export function parseLine(tokens) {
     let label = null;
     if(tokens[1] === ":") {
@@ -12,11 +14,12 @@ export function parseLine(tokens) {
     }
     
     if(tokens[0][0] === "."){
+        const newArgs = tokens.slice(1).filter(token => token != ",");
         return {
             type: "directive",
             label: label,
             directive: tokens[0],
-            args: tokens.slice(1)
+            args: newArgs
         };
     } else {
         return parseInstruction(tokens, label);
@@ -170,25 +173,4 @@ export function parseOperand(tokens) {
         throw new Error("Invalid operand: " + tokens.join(" "));
     }
 
-}
-
-
-//Notes
-    //Think about how a variable would work in this
-    //How are errors handled
-
-function isRegister(token) {
-    return /^R[0-7]$/.test(token);
-}
-
-function isNumber(token) {
-    return /(^-?\d+$)|(^0x[0-9A-Fa-f]+$)/.test(token);
-}
-
-function isLabel(token) {
-    return /^[a-zA-Z._][a-zA-Z0-9._]*$/.test(token);
-}
-
-function getRegisterNumber(token) {
-    return Number(token[1]);
 }

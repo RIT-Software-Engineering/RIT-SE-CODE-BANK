@@ -1,10 +1,4 @@
-// //Turns an indexed line into tokens to be processed in the parser
-// export function lexer(indexedLine) {
-//     const tokenizedLine = indexedLine.split(/(?=["[^"]*"])|(?=[ (),:#@+])|(?<=[ (),:#@+])|(?=-[^0-9])|(?<=-[^0-9])/)
-//         .filter(token => token.trim() !== "");
-//     console.log(tokenizedLine);
-//     return tokenizedLine;
-// }
+import { isSymbol, isWhitespace } from "./utils.js";
 
 //Turns an indexed line into tokens to be processed in the parser
 export function lexer(indexedLine) {
@@ -58,12 +52,4 @@ export function lexer(indexedLine) {
 
     console.log(tokens);
     return tokens;
-}
-
-function isWhitespace(char) {
-    return (/\s/).test(char)
-}
-
-function isSymbol(char) {
-    return (/[ (),:#@+]/).test(char);
 }

@@ -54,12 +54,9 @@ function readWordFromBytes(mem, addr) {
 
 
 const program = `
-MOV LABEL1, R0
 HALT
-LABELer: .WORD 10
-LABEL: .WORD 5
-LABEL1: .WORD 50
-
+.BLKW 1
+.BLKB 1
 `;
 
 backend.loadAssembly(program);
