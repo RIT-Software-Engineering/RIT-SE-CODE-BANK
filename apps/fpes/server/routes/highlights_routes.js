@@ -98,9 +98,9 @@ router.post('/:formId/summarize', async (req, res) => {
 
     const prompt = `Evaluate this faculty highlights form. Return ONLY valid JSON, no markdown.
               Structure: {"teaching":{"rating":1-5,"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":1-5,"comments":""}}
-              For each section write 5-7 sentences referencing specific contributions. Refer to faculty by name.
+              For each section write 5-7 sentences referencing specific contributions. Do not refer to the faculty member by name.
 
-              Faculty: ${h.name}, ${h.rank || 'Faculty'}
+              Faculty rank: ${h.rank || 'Faculty'}
               Teaching: ${h.teaching_section || h.curriculum_development || 'None'}
               Mentoring: ${mentoringText}
               Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
