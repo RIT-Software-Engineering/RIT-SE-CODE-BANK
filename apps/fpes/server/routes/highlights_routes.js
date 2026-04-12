@@ -3,13 +3,11 @@ const router = express.Router();
 const pool = require('../db');
 const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highlights_api');
 const { saveParsedHighlights, updateParsedHighlights } = require('../api/parsed_highlights_api');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { calculateTeachingScore } = require('../api/teaching_eval_api');
 const { GoogleGenAI } = require('@google/genai');
-const key = process.env.GEMINI_KEY
+const key = process.env.GEMINI_KEY;
 const modelName = 'gemma-3-27b-it';
 const client = new GoogleGenAI({apiKey: key});
-const genAI = new GoogleGenerativeAI(key);
-const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
 const summaryCache = new Map(); // formId -> { summary, expiresAt }
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -78,6 +76,11 @@ router.post('/:formId/summarize', async (req, res) => {
     if (!formRows[0]) return res.status(404).json({ error: 'Form not found' });
     const h = formRows[0];
 
+    const facultyId = formRows[0] ? await withConn(conn => conn.query(
+      'SELECT faculty_information_id FROM forms WHERE id = ?', [formId]
+    )).then(r => r[0]?.faculty_information_id) : null;
+    const teachingScore = facultyId ? await calculateTeachingScore(facultyId, h.teaching_section || '') : null;
+
     // Build regex patterns to strip name from AI input and output
     const nameParts = h.name ? h.name.trim().split(/\s+/).filter(p => p.length > 1) : [];
     const lastName = nameParts.length >= 2 ? nameParts[nameParts.length - 1] : null;
@@ -112,11 +115,16 @@ router.post('/:formId/summarize', async (req, res) => {
 
     const mentoringText = studentMentoring || h.teaching_section || 'None listed';
 
+    const teachingNote = teachingScore
+      ? `Teaching eval percentile: ${teachingScore.percentile?.toFixed(1) ?? 'N/A'}% (avg score: ${teachingScore.overall_avg ?? 'N/A'}), course improvement activities found: ${teachingScore.matchedKeywords.length}. The teaching rating must be ${teachingScore.score ?? 'N/A'}.`
+      : 'No teaching eval data available.';
+
     const prompt = `Evaluate this faculty highlights form. Return ONLY valid JSON, no markdown.
               Structure: {"teaching":{"rating":1-5,"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":1-5,"comments":""}}
               For each section write 5-7 sentences referencing specific contributions. IMPORTANT: Do NOT use any person's name anywhere in your response. Refer to the faculty member only as "the faculty member" or "they".
 
               Faculty rank: ${h.rank || 'Faculty'}
+              ${teachingNote}
               Teaching: ${scrub(h.teaching_section || h.curriculum_development || 'None')}
               Mentoring: ${scrub(mentoringText)}
               Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
@@ -172,6 +180,10 @@ router.post('/:formId/summarize', async (req, res) => {
       return obj;
     };
     summary = scrubObj(summary);
+    // Always override teaching rating with the calculated score
+    if (teachingScore?.score != null && summary.teaching) {
+      summary.teaching.rating = teachingScore.score;
+    }
     summaryCache.set(formId, { summary, expiresAt: Date.now() + CACHE_TTL_MS });
     res.json({ summary });
   } catch (err) {

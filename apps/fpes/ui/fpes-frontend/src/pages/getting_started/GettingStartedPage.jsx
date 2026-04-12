@@ -55,14 +55,22 @@ export default function GettingStartedPage({ roles }) {
     localStorage.removeItem(`fpes_checklist_${activeRole}`);
   };
 
+  const openTask = (task) => {
+    if (!checked.includes(task.id)) toggle(task.id);
+    navigate(task.route);
+  };
+
   const progress = tasks.length ? Math.round((checked.length / tasks.length) * 100) : 0;
   const allDone = progress === 100;
 
   return (
     <Box sx={{ maxWidth: 700, mx: "auto", mt: 4, px: 2 }}>
       <Typography variant="h5" sx={{ mb: 0.5 }}>Getting Started</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
         A quick checklist to help you get familiar with the system as a <strong>{activeRole}</strong>.
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        All steps are part of this portal. Complete them in any order — steps are numbered for reference only.
       </Typography>
 
       <Box sx={{ mb: 1, display: "flex", justifyContent: "space-between" }}>
@@ -92,8 +100,8 @@ export default function GettingStartedPage({ roles }) {
                 <ListItem
                   alignItems="flex-start"
                   secondaryAction={
-                    <Button size="small" variant="outlined" onClick={() => navigate(task.route)} sx={{ whiteSpace: "nowrap" }}>
-                      Go
+                    <Button size="small" variant="outlined" onClick={() => openTask(task)} sx={{ whiteSpace: "nowrap" }}>
+                      Open
                     </Button>
                   }
                   sx={{ pr: 10 }}
@@ -113,7 +121,7 @@ export default function GettingStartedPage({ roles }) {
                         variant="subtitle2"
                         sx={{ textDecoration: done ? "line-through" : "none", color: done ? "text.disabled" : "text.primary" }}
                       >
-                        {task.label}
+                        {i + 1}. {task.label}
                       </Typography>
                     }
                     secondary={task.desc}
