@@ -42,8 +42,8 @@ export default function FileUploader ({setCode, onUploadComplete}){
     return (
         <div>
             {/* dropdown button named open file */}
-            <Button onClick={handleButtonClick} className="absolute top-full bg-main-secondary py-3 px-2 border-b-2 border-border-primary rounded shadow-lg z-10 w-40">
-                Open File</Button>
+            <Button onClick={handleButtonClick} className=" top-full bg-main-secondary py-3 px-2 border-b-2 border-border-primary rounded shadow-lg z-10 w-40">
+                Import File</Button>
 
             {/* actual functionality */}
             <input type="file" accept=".txt" ref={fileInputRef}  onChange={handleFileChange} className="hidden"/>

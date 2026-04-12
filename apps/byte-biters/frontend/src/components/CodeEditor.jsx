@@ -93,7 +93,8 @@ export default function CodeEditor({ code, setCode }) {
           fontFamily: "monospace",
           fontSize: 14,
           minimap: { enabled: false },
-          scrollBeyondLastLine: false
+          scrollBeyondLastLine: false,
+          colorDecorators: false
         }}
       />
     </div>

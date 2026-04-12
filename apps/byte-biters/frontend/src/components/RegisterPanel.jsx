@@ -22,7 +22,7 @@ function RegisterPanel ({ registers, flags }) {
                     {/* deals with the different flags for the status register */}
                     <div className="flex gap-2 flex-row bg-main-secondary border-border-secondary rounded-sm border-2 p-1 px-3 font-mono">
                         {/* N for negative, Z for zero, V for overload, C for carry */}
-                        {["N ", "Z ", "V ", "C "].map((flag) => (
+                        {["N", "Z", "V", "C"].map((flag) => (
                         <div key={flag} className="flex flex-row items-center">
                             <span className="text-xs text-gray-400">{flag} </span>
                                 <span className={

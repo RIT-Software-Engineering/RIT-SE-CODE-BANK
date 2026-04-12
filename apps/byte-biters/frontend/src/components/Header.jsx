@@ -1,4 +1,5 @@
 import Button from "./Button";
+import FileExporter from "./FileExporter";
 import FileUploader from "./FileUploader";
 import { useState } from "react"
 
@@ -14,7 +15,10 @@ export default function Header({setCode}) {
                 <Button className="font-mono text-text-muted text-lg text-center px-2" onClick={() => setIsOpen(!isOpen)}>File</Button>
                 {isOpen && (
                     // refer to FileUploader component
+                    <div className="flex flex-col">
                     <FileUploader setCode={setCode} onUploadComplete={() => setIsOpen(false)} ></FileUploader>
+                    <FileExporter setCode={setCode} onUploadComplete={() => setIsOpen(false)}></FileExporter>
+                    </div>
                 )}
             </div>
             {/* external resources button on the top right of the page, has no current functionality */}
