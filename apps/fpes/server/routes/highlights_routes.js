@@ -4,15 +4,11 @@ const pool = require('../db');
 const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highlights_api');
 const { saveParsedHighlights, updateParsedHighlights } = require('../api/parsed_highlights_api');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-
-// New approach
-const { GoogleGenAI } = require('@google/genai'); 
+const { GoogleGenAI } = require('@google/genai');
 const key = process.env.GEMINI_KEY
 const modelName = 'gemma-3-27b-it';
 const client = new GoogleGenAI({apiKey: key});
-// 
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
+const genAI = new GoogleGenerativeAI(key);
 const MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
 const summaryCache = new Map(); // formId -> { summary, expiresAt }
@@ -136,8 +132,8 @@ router.post('/:formId/summarize', async (req, res) => {
     //   if (result) break;
     // }
     const result = await client.models.generateContent({
-    model: modelName,
-    contents: prompt
+      model: modelName,
+      contents: prompt
     });
     if (!result) throw lastErr;
     const text = result.text.trim().replace(/^```json\s*|^```\s*|\s*```$/g, '');
