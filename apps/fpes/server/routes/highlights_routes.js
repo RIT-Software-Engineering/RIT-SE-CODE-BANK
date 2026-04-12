@@ -78,6 +78,22 @@ router.post('/:formId/summarize', async (req, res) => {
     if (!formRows[0]) return res.status(404).json({ error: 'Form not found' });
     const h = formRows[0];
 
+    // Build regex patterns to strip name from AI input and output
+    const nameParts = h.name ? h.name.trim().split(/\s+/).filter(p => p.length > 1) : [];
+    const lastName = nameParts.length >= 2 ? nameParts[nameParts.length - 1] : null;
+    const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const nameRegexes = [
+      h.name ? new RegExp(escape(h.name), 'gi') : null,
+      ...nameParts.map(p => new RegExp(escape(p), 'gi')),
+      lastName ? new RegExp(`(?:Prof\.?|Professor)\\s+${escape(lastName)}`, 'gi') : null,
+    ].filter(Boolean);
+    const scrub = (text) => {
+      if (!text) return text;
+      let result = String(text);
+      for (const re of nameRegexes) result = result.replace(re, 'the faculty member');
+      return result;
+    };
+
     const summedHours = Number(serviceRows[0]?.total ?? 0);
     const hoursFromText = (() => {
       const matches = [...(h.service_section || '').matchAll(/(\d+)\s*(?:hrs?\.?|hours?)/gi)];
@@ -98,17 +114,20 @@ router.post('/:formId/summarize', async (req, res) => {
 
     const prompt = `Evaluate this faculty highlights form. Return ONLY valid JSON, no markdown.
               Structure: {"teaching":{"rating":1-5,"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":1-5,"comments":""}}
-              For each section write 5-7 sentences referencing specific contributions. Do not refer to the faculty member by name.
+              For each section write 5-7 sentences referencing specific contributions. IMPORTANT: Do NOT use any person's name anywhere in your response. Refer to the faculty member only as "the faculty member" or "they".
 
               Faculty rank: ${h.rank || 'Faculty'}
-              Teaching: ${h.teaching_section || h.curriculum_development || 'None'}
-              Mentoring: ${mentoringText}
+              Teaching: ${scrub(h.teaching_section || h.curriculum_development || 'None')}
+              Mentoring: ${scrub(mentoringText)}
               Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
               Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
-              Significant outcomes: ${h.significant_outcomes || 'None'}
-              Service: ${h.service_section || 'None'} | Hours: ${totalServiceHours ?? 'N/A'}
-              Administrative: ${h.administrative_responsibilities || 'None'}
-              Professional Development: ${h.professional_development || 'None'}`;
+              Significant outcomes: ${scrub(h.significant_outcomes || 'None')}
+              Service: ${scrub(h.service_section || 'None')} | Hours: ${totalServiceHours ?? 'N/A'}
+              Administrative: ${scrub(h.administrative_responsibilities || 'None')}
+              Professional Development: ${scrub(h.professional_development || 'None')}`;
+
+    console.log('[scrub test]', scrub('David Kim'), scrub(h.name));
+    console.log('[prompt preview]', prompt.substring(0, 500));
 
     const cached = summaryCache.get(formId);
     if (cached && cached.expiresAt > Date.now() && req.query.refresh !== 'true') return res.json({ summary: cached.summary, cached: true });
@@ -136,14 +155,23 @@ router.post('/:formId/summarize', async (req, res) => {
       contents: prompt
     });
     if (!result) throw lastErr;
-    const text = result.text.trim().replace(/^```json\s*|^```\s*|\s*```$/g, '');
-    console.log(text)
+    // Scrub raw text output before parsing to catch any names the model generated
+    const rawText = scrub(result.text.trim().replace(/^```json\s*|^```\s*|\s*```$/g, ''));
+    console.log(rawText)
     let summary;
     try {
-      summary = JSON.parse(text);
+      summary = JSON.parse(rawText);
     } catch {
-      summary = { overall: { rating: null, comments: text } };
+      summary = { overall: { rating: null, comments: rawText } };
     }
+    // Also walk the parsed object to catch any remaining name strings
+    const scrubObj = (obj) => {
+      if (typeof obj === 'string') return scrub(obj);
+      if (typeof obj === 'object' && obj !== null)
+        return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, scrubObj(v)]));
+      return obj;
+    };
+    summary = scrubObj(summary);
     summaryCache.set(formId, { summary, expiresAt: Date.now() + CACHE_TTL_MS });
     res.json({ summary });
   } catch (err) {

@@ -31,22 +31,24 @@ export default function AdminHighlightsPage() {
             });
     };
 
-    const handleSummarize = async (formId) => {
-        if (summaries[formId]) {
-            setSummaries(prev => ({ ...prev, [formId]: null }));
-            return;
-        }
+    const [visible, setVisible] = useState({});
+
+    const handleSummarize = async (formId, force = false) => {
         setLoading(prev => ({ ...prev, [formId]: true }));
         try {
-            const res = await axios.post(`http://localhost:3000/highlights/${formId}/summarize`);
+            const res = await axios.post(`http://localhost:3000/highlights/${formId}/summarize${force ? '?refresh=true' : ''}`);
             setSummaries(prev => ({ ...prev, [formId]: res.data.summary || res.data.error }));
+            setVisible(prev => ({ ...prev, [formId]: true }));
         } catch (err) {
             const msg = err.response?.data?.error || 'Failed to generate summary';
             setSummaries(prev => ({ ...prev, [formId]: msg }));
+            setVisible(prev => ({ ...prev, [formId]: true }));
         } finally {
             setLoading(prev => ({ ...prev, [formId]: false }));
         }
     };
+
+    const handleToggleVisible = (formId) => setVisible(prev => ({ ...prev, [formId]: !prev[formId] }));
 
     const SummarySection = ({ label, data, showDisseminated }) => (
         <Box sx={{ mb: 1.5 }}>
@@ -85,18 +87,30 @@ export default function AdminHighlightsPage() {
                                         <Button
                                             size="small"
                                             variant="outlined"
-                                            onClick={() => handleSummarize(row.form_id)}
+                                            onClick={() => summaries[row.form_id] ? handleToggleVisible(row.form_id) : handleSummarize(row.form_id)}
                                             disabled={loading[row.form_id]}
                                         >
                                             {loading[row.form_id]
                                                 ? <CircularProgress size={16} />
-                                                : summaries[row.form_id] ? 'Hide' : 'Summarize'}
+                                                : summaries[row.form_id]
+                                                    ? (visible[row.form_id] ? 'Hide' : 'Show')
+                                                    : 'Summarize'}
                                         </Button>
+                                        {summaries[row.form_id] && (
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                onClick={() => handleSummarize(row.form_id, true)}
+                                                disabled={loading[row.form_id]}
+                                            >
+                                                Regenerate
+                                            </Button>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             <TableRow>
                                 <TableCell colSpan={4} sx={{ py: 0 }}>
-                                    <Collapse in={!!summaries[row.form_id]}>
+                                    <Collapse in={!!summaries[row.form_id] && !!visible[row.form_id]}>
                                         <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, my: 1 }}>
                                             {typeof summaries[row.form_id] === 'object' ? (
                                                 <>
