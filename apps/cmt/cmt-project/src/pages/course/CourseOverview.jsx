@@ -9,16 +9,7 @@ import { ColorOption } from '../../components/forms/ColorPicker'
 
 
 export function CourseOverview() {
-    const [courseOverview, setCourseOverview] = useState([{
-    id: 0,
-    classId: "",
-    name: "",
-    season: "",
-    year: 0,
-    color: "",
-    students: "",
-    section: ""
-    }])
+    const [courseOverview, setCourseOverview] = useState([]);
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false);
     const [edit, setEdit] = useState(false);
@@ -29,13 +20,9 @@ export function CourseOverview() {
     }, []);
 
     const fetchCourses = async () => {
-        CMTJsonFetch("GET", `events/courses`).then(async response => {
+        CMTJsonFetch("GET", `course`).then(async response => {
             const result = await response.json();
-            if (result.data) {
-            setCourseOverview(result.data);
-          } else {
-            setCourseOverview([]);
-          }
+            setCourseOverview(result ?? []);
         });
       };
 
@@ -160,7 +147,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
         setColor("");
         setWarning('');
         setSubmitting(false);
-        setShowWheel(true);
+        setShowWheel(false);
     }
 
 

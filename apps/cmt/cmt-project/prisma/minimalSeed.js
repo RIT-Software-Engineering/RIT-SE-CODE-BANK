@@ -13,13 +13,10 @@ async function main() {
 
   // Clear existing data (in reverse order of dependencies)
   console.log('🗑️  Clearing existing data...');
-  await prisma.event.deleteMany({});
   await prisma.tBMember.deleteMany({});
   await prisma.tBTeam.deleteMany({});
   await prisma.tBTeamSet.deleteMany({});
   await prisma.tBEnrollment.deleteMany({});
-  await prisma.templateItem.deleteMany({});
-  await prisma.courseTemplate.deleteMany({});
   await prisma.resource.deleteMany({});
   await prisma.sessionMaterial.deleteMany({});
   await prisma.session.deleteMany({});

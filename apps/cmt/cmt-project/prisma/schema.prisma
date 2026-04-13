@@ -7,30 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Event {
-  id          Int        @id @default(autoincrement())
-  title       String
-  courseId    Int?
-  type        EventType
-  time        String
-  date        DateTime
-  location    String
-  description String?    @db.LongText
-  importance  Importance
-  url         String?
-  course      Course?    @relation(fields: [courseId], references: [id])
-
-  // User ownership fields
-  ownerUid    String?    // RIT username / uid from JWT (req.user.uid)
-  ownerEmail  String?    // email from JWT (req.user.email)
-  professorId String?       // Link to professor for scoping
-  professor   Professor? @relation(fields: [professorId], references: [id])
-
-  @@index([courseId])
-  @@index([professorId])
-  @@map("events")
-}
-
 model Professor {
   id              String              @id @default(uuid()) // String for compatibility with Workflows API
   fname           String
@@ -38,65 +14,28 @@ model Professor {
   email           String
   courses         Course[]
   tbteamset       TBTeamSet[]
-  courseTemplates CourseTemplate[]
-  events          Event[]
 
   @@map("professors")
 }
 
-model CourseTemplate {
-  id            Int            @id @default(autoincrement())
-  name          String
-  season        String
-  year          Int
-  weeks         Int
-  assignments   Int
-  exams         Int
-  labs          Int
-  projects      Int
-  professorId   String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  professor     Professor      @relation(fields: [professorId], references: [id])
-  templateItems TemplateItem[]
-
-  @@index([professorId])
-  @@map("course_templates")
-}
-
-model TemplateItem {
-  id          Int            @id @default(autoincrement())
-  templateId  Int
-  type        String
-  name        String
-  dueDate     DateTime?
-  description String?
-  template    CourseTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  @@index([templateId])
-  @@map("template_items")
-}
-
 model Course {
-  id           Int            @id @default(autoincrement())
-  name         String
-  season       String?
-  year         Int?
-  classId      String
-  color        String
-  students     Int?
-  section      Int?
-  professorId  String
-  professors   Professor      @relation(fields: [professorId], references: [id])
-  sessions     Session[]
-  events       Event[]
-  tbenrollment TBEnrollment[]
-  tbteamset    TBTeamSet[]
-  workflowId   String
+  id              Int            @id @default(autoincrement())
+  name            String
+  season          String?
+  year            Int?
+  classId         String
+  color           String
+  students        Int?
+  section         Int?
+  professorId     String
+  professors      Professor      @relation(fields: [professorId], references: [id])
+  sessions        Session[]
+  tbenrollment    TBEnrollment[]
+  tbteamset       TBTeamSet[]
+  workflowId      String
   workflowStateId String
-  Resource     Resource[]
+  Resource        Resource[]
+  isTemplate      Boolean       @default(false)
 }
 
 model Session {
@@ -191,28 +130,6 @@ model Resource {
 
   @@index([courseId])
   @@map("resources")
-}
-
-enum EventType {
-  exam
-  quiz
-  assignment
-  lecture
-  project
-  class_activity
-  lab
-  office_hours
-  meeting
-
-  @@map("event_types")
-}
-
-enum Importance {
-  Low
-  Medium
-  High
-
-  @@map("importance_levels")
 }
 
 enum tbteamset_status {

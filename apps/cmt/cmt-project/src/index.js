@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App.jsx";
 import HomePage from "./pages/Homepage.jsx";
 import TeamBuilderPage from "./pages/TeamBuilderPage.jsx";
-import CreateTemplatePage from "./pages/CreateTemplatePage.jsx";
 import DevLoginPage from "./pages/DevLoginPage.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
 import CourseWebsitePage from "./pages/CourseWebsitePage.jsx";
@@ -13,7 +12,9 @@ import "./styles/index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { CourseOverview } from "./pages/course/CourseOverview.jsx";
 import { CourseDashboard } from "./pages/course/CourseDashboard.jsx";
-import { BuilderPage } from "./pages/WorkflowBuilderPage.jsx";
+import { BuilderPage, BuilderPageAdmin } from "./pages/WorkflowBuilderPage.jsx";
+import { TemplateOverview } from "./pages/template/TemplateOverview.jsx";
+import { TemplateDashboard } from "./pages/template/TemplateDashboard.jsx";
 
 /* ------------------------------------------------------------------
    Suppress noisy ResizeObserver errors in development
@@ -64,10 +65,18 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             } 
           />
           <Route 
-            path="createtemplate" 
+            path="templates" 
             element={
               <RequireAuth roles={['instructor', 'professor']}>
-                <CreateTemplatePage />
+                <TemplateOverview />
+              </RequireAuth>
+            } 
+          />
+          <Route 
+            path="templates/:id" 
+            element={
+              <RequireAuth roles={['instructor', 'professor']}>
+                <TemplateDashboard />
               </RequireAuth>
             } 
           />
@@ -90,6 +99,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route 
             path="workflowbuilder" 
             element={<BuilderPage />} 
+          />
+          <Route 
+            path="workflowbuilder-admin" 
+            element={
+              <RequireAuth roles={['instructor', 'professor']}>
+                <BuilderPageAdmin/>
+              </RequireAuth>
+            } 
           />
         </Route>
       </Routes>

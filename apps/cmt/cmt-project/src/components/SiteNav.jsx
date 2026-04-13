@@ -69,7 +69,7 @@ export default function SiteNav() {
       icon: <GraduationCap size={18} />,
       items: [
         { to: "/courses", label: "Course Overview"},
-        { to: "/createtemplate", label: "Create Template" },
+        { to: "/templates", label: "Create Template" },
         { to: "/coursewebsite", label: "Course Website" },
       ]
     },
@@ -80,6 +80,7 @@ export default function SiteNav() {
       items: [
         { to: "/teambuilder", label: "Team Builder" },
         { to: "/workflowbuilder", label: "Workflow Builder"},
+        { to: "/workflowbuilder-admin", label: "Workflow Builder Admin"},
       ]
     }
   ];
