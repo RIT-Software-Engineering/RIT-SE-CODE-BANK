@@ -22,10 +22,10 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     git reset --hard origin/${DEPLOY_BRANCH}
     
     echo "Rebuilding and restarting Docker containers..."
-    cwd
+    pwd
     cd ./apps/cmt
     echo "TEMP - composing down"
-    cwd
+    pwd
     docker compose down
     echo "TEMP - giving perms"
     chmod +x ./scripts/compose-cmt.sh

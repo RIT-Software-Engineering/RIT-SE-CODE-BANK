@@ -15,7 +15,6 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     set -e
     
     echo "Navigating to deployment directory..."
-    mkdir ${DEPLOY_PATH}
     cd ${DEPLOY_PATH}
     
     echo "Pulling latest changes from ${DEPLOY_BRANCH}..."
