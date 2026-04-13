@@ -46,7 +46,7 @@ services:
   cmt-frontend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: frontend/Dockerfile
       args:
         REACT_APP_BACKEND_URL: /api/cmt
         REACT_APP_AUTH_BASE: ""

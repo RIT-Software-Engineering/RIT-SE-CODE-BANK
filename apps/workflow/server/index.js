@@ -11,9 +11,13 @@ const permissionRoutes = require('./api/routes/permissions');
 
 const port = process.env.PORT || 5001;
 
+const allowedOrigins = []
+if (process.env.CMT_BASE_URL) allowedOrigins.push(process.env.CMT_BASE_URL)
+if (process.env.CMT_BASE_URL_STAGING) allowedOrigins.push(process.env.CMT_BASE_URL_STAGING)
+
 app.use(
   cors({
-    origin: process.env.BASE_URL || "http://localhost:3000",
+    origin: allowedOrigins || "http://localhost:3000",
     credentials: true,
   }),
 );
