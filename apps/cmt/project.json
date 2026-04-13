@@ -4,20 +4,23 @@
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./scripts/deploy/deploy-cmt.sh"
+        "commands": [
+          "chmod +x ./scripts/deploy/deploy-cmt.sh",
+          "./scripts/deploy/deploy-cmt.sh"
+        ]
       },
       "dependsOn": [
         "cmt-frontend:build"
       ]
     },
     "deploy-test": {
-        "executor": "nx:run-commands",
-        "options": {
-            "command": "echo would deploy cmt here"
-        },
-        "dependsOn": [
-            "cmt-frontend:build"
-        ]
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo would deploy cmt here"
+      },
+      "dependsOn": [
+        "cmt-frontend:build"
+      ]
     }
   },
   "implicitDependencies": ["cmt-frontend", "cmt-backend"]
