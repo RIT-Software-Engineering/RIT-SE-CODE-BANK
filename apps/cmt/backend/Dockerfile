@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 RUN apk add --no-cache openssl
 
@@ -6,8 +6,9 @@ RUN apk add --no-cache openssl
 COPY package*.json ./
 
 # Install root deps (if needed) and backend deps
-RUN npm ci  
 RUN pwd
+RUN ls
+RUN npm ci  
 
 COPY . .
 
