@@ -10,7 +10,8 @@ function getTransport() {
   transporter = nodemailer.createTransport({
     host,
     port,
-    secure: false
+    secure: false,
+    tls: {rejectUnauthorized: false}
   });
   return transporter;
 }
