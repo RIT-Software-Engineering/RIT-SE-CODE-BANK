@@ -5,7 +5,8 @@ RUN apk add --no-cache openssl
 COPY . .
 
 # Install root deps (if needed) and backend deps
-RUN npm ci --legacy-peer-deps
+RUN npm ci  
+RUN pwd
 
 # Set DB URL for Prisma
 ARG DATABASE_URL
