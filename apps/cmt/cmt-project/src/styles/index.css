@@ -33,6 +33,20 @@ button.accordion-button:focus{
     @apply !bg-[#E7F0FD]
 }
 
+.tiptap code {
+    font-weight: normal;
+    margin: 0;
+}
+
+/* Prose likes to add ` before and after code blocks so remove that */
+.tiptap code::before {
+    content: none;
+}
+.tiptap code::after {
+    content: none;
+}
+
+
 .tableWrapper {
     @apply overflow-x-auto
 }

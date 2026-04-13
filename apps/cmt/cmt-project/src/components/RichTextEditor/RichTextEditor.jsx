@@ -54,7 +54,14 @@ export function ReadOnlyEditor({ value }) {
             }),
         ],
     })
-    return <EditorContent className="*:pl-2 pt-2" editor={editor} /> 
+
+    useEffect(() => {
+        if (editor && value !== editor.getHTML() && value) {
+            editor.commands.setContent(value)
+        }
+    }, [value, editor])
+
+    return <EditorContent className="*:pl-2 pt-2 prose" editor={editor} /> 
 }
 
 /**
@@ -165,8 +172,8 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
             : <></>}
               
               <OverlayTrigger delay={200} overlay={<Tooltip>Code Block</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
-                    <Code /> {/* TODO: make sure this darn thing renders properly in both the editor and in read only editors */}
+                <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCode().run()}>
+                    <Code />
                 </Button>
               </OverlayTrigger>
 
@@ -304,16 +311,12 @@ export function ExternalLinkModal({ editor }) {
     const handleInsert = () => {
         if (!linkURL) return
 
-        const { selection } = editor.state
-        const selectedText = editor.state.doc.textBetween(selection.from, selection.to)
+        const text = linkText?.trim() || linkURL
+        const hasHttps = linkURL.startsWith("https");
 
-        const text = linkText?.trim() || selectedText || linkURL
+        editor.chain().focus().setLink({ href: hasHttps ? linkURL : `https://www.${linkURL}`, target: '_blank' }).setColor('#3b82f6').insertContent(text).run()
 
-        !selection.empty && !linkText
-            ? editor.chain().focus().setLink({ href: linkURL, target: '_blank' }).setColor('#3b82f6').run()
-            : editor.chain().focus().insertContent(text).setLink({ href: linkURL, target: '_blank' }).setColor('#3b82f6').run()
-
-        handleReset()
+        handleReset();
     }
 
     const handleReset = () => {
@@ -321,6 +324,12 @@ export function ExternalLinkModal({ editor }) {
         setLinkText('')
         setLinkURL('')
     }
+
+    const handleShow = () => {
+        setLinkURL(editor.getAttributes('link').href);
+        setLinkText(editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' '));
+    }
+
     return (<>          
         <OverlayTrigger delay={200} overlay={<Tooltip>External Link</Tooltip>}>
             <Button
@@ -331,7 +340,7 @@ export function ExternalLinkModal({ editor }) {
             </Button>
         </OverlayTrigger>
 
-        <Modal show={show} onHide={handleReset} size='lg'>
+        <Modal show={show} onShow={handleShow} onHide={handleReset} size='lg'>
             <Modal.Header closeButton>
                 <Modal.Title>Insert Resource Link</Modal.Title>
             </Modal.Header>
@@ -342,7 +351,7 @@ export function ExternalLinkModal({ editor }) {
                         <Form.Control
                             type='text'
                             placeholder={`https://www.google.com`}
-                            value={linkURL}
+                            defaultValue={linkURL}
                             onChange={e => setLinkURL(e.target.value)}
                         />
                     </Form.Group>
@@ -351,7 +360,7 @@ export function ExternalLinkModal({ editor }) {
                         <Form.Control
                             type='text'
                             placeholder={`This text will be what the link appears as.`}
-                            value={linkText}
+                            defaultValue={linkText}
                             onChange={e => setLinkText(e.target.value)}
                         />
                     </Form.Group>

@@ -77,7 +77,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                     <Card.Title>
                                         <div className='flex justify-between'>
                                             <div><ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} /></div>
-                                            <div className='justify-end size-12 opacity-0 group-hover:!opacity-100'><Button variant='outline-dark' onClick={(e) => {
+                                            <div className='justify-end size-12 opacity-0 group-hover:!opacity-100 group-hover:text-white'><Button variant='outline-dark' onClick={(e) => {
                                                 setCurSessionId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
                                                 setIsEditOpen(true);
                                                 e.currentTarget.style.opacity = "100";
@@ -85,7 +85,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                         </div>
                                     </Card.Title>
                                     <Card.Text>
-                                        <span className="prose prose-strong:text-inherit" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
+                                        <ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body} />
+                                    </Card.Text>
                                 </Card.Body>
                             </Card> : <></>
                             }
@@ -310,7 +311,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
                             <Button type="submit" onClick={(e) => {
                             e.preventDefault();
                             // basically if we match any actual text
-                            if (!itemLabel.replace(/<p>.+<\/p>/, "")){
+                            if (!itemLabel.startsWith("<p>") || !itemLabel.replace(/<p>.+<\/p>/, "")){
                                 updateMaterial();
                                 setIsEditOpen(false);
                                 resetForm();
