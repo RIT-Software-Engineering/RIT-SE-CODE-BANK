@@ -62,7 +62,6 @@ services:
       PUBLIC_URL: /cmt
     depends_on:
       - cmt-backend
-      - workflows-backend
     restart: unless-stopped
 
 volumes:

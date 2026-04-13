@@ -24,8 +24,8 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     echo "Rebuilding and restarting Docker containers..."
     cd ./apps/cmt
     docker compose down
-    chmod +x ./scripts/deploy/run-cmt-dev.sh
-    ./scripts/deploy/run-cmt-dev.sh
+    chmod +x ./scripts/compose-cmt.sh
+    ./scripts/compose-cmt.sh
     
     echo "Waiting for services to be healthy..."
     sleep 10
