@@ -1,4 +1,4 @@
-import { Editor, EditorContent, useEditor, } from "@tiptap/react";
+import { EditorContent, useEditor, } from "@tiptap/react";
 import Highlight from '@tiptap/extension-highlight'
 import {StarterKit} from "@tiptap/starter-kit";
 import { ButtonGroup, Button, Tooltip, OverlayTrigger, Dropdown, Modal, Form } from "react-bootstrap";
@@ -30,7 +30,7 @@ import { HighlightPicker, TextPicker } from "./Pickers";
 
 
 export function ReadOnlyEditor({ value }) {
-    const editor = new Editor({
+    const editor = useEditor({
         editable: false,
         content: value,
         editorProps: {

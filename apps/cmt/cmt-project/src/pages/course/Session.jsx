@@ -50,7 +50,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     useEffect(() => void update(), [id, update])
 
     return (
-        <Accordion alwaysOpen>
+        <Accordion>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} courseId={courseId}/>
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId}/>
         {
@@ -408,8 +408,9 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                     {Array.from({ length: determineRows() }, (_, i) => (
                     <tr> 
                         {cols[0] ? (
+                            getLabelContent(0, i) ? (
                             <td 
-                                className={`${getLabelContent(0, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
+                                className="cursor-pointer hover:bg-gray-100"
                                 onClick={() => openEditModal(getLabelContent(0, i), 0)}
                                 title="Click to edit material"
                             >
@@ -417,10 +418,12 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                                     <ReadOnlyEditor value={getLabelContent(0, i)} />
                                 </div>
                             </td>
+                            ) : <td></td>
                         ) : <></>}
                         {cols[1] ? (
+                         getLabelContent(1, i) ? (
                             <td 
-                                className={`${getLabelContent(1, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
+                                className="cursor-pointer hover:bg-gray-100"
                                 onClick={() => openEditModal(getLabelContent(1, i), 1)}
                                 title="Click to edit material"
                             >
@@ -428,10 +431,12 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                                     <ReadOnlyEditor value={getLabelContent(1, i)} />
                                 </div>
                             </td>
+                        ) : <td></td>
                         ) : <></>}
                         {cols[2] ? (
+                            getLabelContent(2, i) ? (
                             <td 
-                                className={`${getLabelContent(2, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
+                                className="cursor-pointer hover:bg-gray-100"
                                 onClick={() => openEditModal(getLabelContent(2, i), 2)}
                                 title="Click to edit material"
                             >
@@ -439,10 +444,12 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                                     <ReadOnlyEditor value={getLabelContent(2, i)} />
                                 </div>
                             </td>
+                            ) : <td></td>
                         ) : <></>}
                         {cols[3] ? (
+                            getLabelContent(3, i) ? (
                             <td 
-                                className={`${getLabelContent(3, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
+                                className="cursor-pointer hover:bg-gray-100"
                                 onClick={() => openEditModal(getLabelContent(3, i), 3)}
                                 title="Click to edit material"
                             >
@@ -450,10 +457,12 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                                     <ReadOnlyEditor value={getLabelContent(3, i)} />
                                 </div>
                             </td>
+                            ) : <td></td>
                         ) : <></>}
                         {cols[4] ? (
+                            getLabelContent(4, i) ? (
                             <td 
-                                className={`${getLabelContent(4, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
+                                className="cursor-pointer hover:bg-gray-100"
                                 onClick={() => openEditModal(getLabelContent(4, i), 4)}
                                 title="Click to edit material"
                             >
@@ -461,10 +470,12 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                                     <ReadOnlyEditor value={getLabelContent(4, i)} />
                                 </div>
                             </td>
+                            ) : <td></td>
                         ) : <></>}
                         {cols[5] ? (
+                            getLabelContent(5, i) ? (
                             <td 
-                                className={`${getLabelContent(5, i) ? "cursor-pointer hover:bg-gray-100" : ""}`}
+                                className={"cursor-pointer hover:bg-gray-100"}
                                 onClick={() => openEditModal(getLabelContent(5, i), 5)}
                                 title="Click to edit material"
                             >
@@ -472,6 +483,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                                     <ReadOnlyEditor value={getLabelContent(5, i)} />
                                 </div>
                             </td>
+                            ) : <td></td>
                         ) : <></>}
                     </tr>
                     ))}
