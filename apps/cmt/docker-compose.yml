@@ -18,7 +18,7 @@ services:
 
   cmt-backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: backend/Dockerfile
     ports:
       - "5010:5010"
@@ -45,7 +45,7 @@ services:
 
   cmt-frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: frontend/Dockerfile
       args:
         REACT_APP_BACKEND_URL: /api/cmt
