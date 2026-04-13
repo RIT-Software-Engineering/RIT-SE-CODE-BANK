@@ -253,10 +253,11 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
     }
 
     function updateMaterial(){
-        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody}).then(() => {
+        const realItemBody = hasLinksInTitle ? '' : itemBody;
+        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody: realItemBody}).then(() => {
             const sessionDataCopy = sessionData.map(material => {
                 if (material.id === materialId) 
-                    return {...material, label: itemLabel, body: itemBody}
+                    return {...material, label: itemLabel, body: realItemBody}
                 return material
             });
             setSessionData(sessionDataCopy);
@@ -280,7 +281,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
 
             <Offcanvas.Body className="overflow-auto">
         
-                    <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Material needs to have a title!</div>
+                    <Alert variant="danger" className={`${warningVisible ? 'block' : 'hidden'}`}>Material needs to have a title!</Alert>
                     <Form onSubmit={updateMaterial}>
                         <div className='flex'>
                             <div className='w-full'>

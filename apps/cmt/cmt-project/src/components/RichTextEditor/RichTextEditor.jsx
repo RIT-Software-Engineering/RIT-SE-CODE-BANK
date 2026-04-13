@@ -100,7 +100,6 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
         onUpdate: ({ editor }) => {
             onChange && onChange(editor.getHTML())
         },
-        editable: !disabled,
     })
 
     // Used purely just to update button state correctly when pressed or keyboard shortcut
