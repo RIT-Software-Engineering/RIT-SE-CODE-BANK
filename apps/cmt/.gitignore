@@ -12,6 +12,7 @@
 /build
 /frontend/build
 /backend/build
+/frontend/uploads
 
 # development
 .dev-pids.json
