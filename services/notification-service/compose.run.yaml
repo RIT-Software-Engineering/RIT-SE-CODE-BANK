@@ -23,7 +23,6 @@ services:
   notify:
     image: notification-service:${TAG:-latest}
     environment:
-      USE_SEND_MAIL: ${USE_SEND_MAIL}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_FROM: ${SMTP_FROM}
@@ -35,7 +34,16 @@ services:
     restart: unless-stopped
     depends_on:
       - mariadb
+  
+  postfix:
+    image: notification-postfix:${TAG:-latest}
+    volumes:
+      - postfix_spool:/var/spool/postfix
+    expose:
+      - "25"
+    restart: unless-stopped
 
 volumes:
   notification_data: {}
+  postfix_spool: {}
 

@@ -6,3 +6,9 @@ services:
       context: ../..
       dockerfile: services/notification-service/Dockerfile
     image: notification-service:${TAG:-latest}
+
+  postfix:
+    build:
+      context: .
+      dockerfile: Postfix.Dockerfile
+    image: notification-postfix:${TAG:-latest}

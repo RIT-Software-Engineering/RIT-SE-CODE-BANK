@@ -5,21 +5,13 @@ import * as nodemailer from "nodemailer";
 let transporter = null;
 function getTransport() {
   if (transporter) return transporter;
-  if (process.env.USE_SEND_MAIL === "true"){
-    transporter = nodemailer.createTransport({
-      sendmail: true,
-      newline: 'unix',
-      path: '/usr/sbin/sendmail'
-    });
-  } else{
-    const host = process.env.SMTP_HOST || "localhost";
-    const port = Number(process.env.SMTP_PORT || 2525);
-    transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: false
-    });
-  }
+  const host = process.env.SMTP_HOST || "localhost";
+  const port = Number(process.env.SMTP_PORT || 2525);
+  transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: false
+  });
   return transporter;
 }
 
@@ -30,6 +22,8 @@ function getTransport() {
  */
 export async function sendEmail({ to, subject, text, html, attachCidLogo = false }) {
   if (!to) throw new Error("Email 'to' required");
+
+  console.log("Sending Email: ",subject);
 
   const attachments = [];
   // If configured, attach a logo image as a CID so templates can reference cid:rit_logo_cid
