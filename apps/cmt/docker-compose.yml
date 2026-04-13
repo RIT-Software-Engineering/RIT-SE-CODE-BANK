@@ -19,7 +19,7 @@ services:
   cmt-backend:
     build:
       context: .
-      dockerfile: src/backend/Dockerfile
+      dockerfile: backend/Dockerfile
     ports:
       - "5010:5010"
     env_file:
