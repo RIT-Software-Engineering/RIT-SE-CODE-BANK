@@ -425,13 +425,13 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             {hasValidation ? <>
             <div className="flex ">
                 <div className="w-2/5">
-                <Form.Label>Year Options (seperate each by a comma)</Form.Label>
+                <Form.Label>Year Options (Separate each by a Comma)</Form.Label>
                 <Form.Control placeholder={`e.g. ${[0,1,2,3].map(i => {return new Date().getFullYear()+i}).join(', ')}`} onChange={e => {
                     setValidation(prev => [e.target.value, prev[1]])
                 }} defaultValue={isEdit ? validation[0] : ''}/>
                 </div>
                 <div className="pl-10 w-3/5">
-                <Form.Label>Season Options (seperate each by a comma)</Form.Label>
+                <Form.Label>Season Options</Form.Label>
                 {['Fall', 'Spring', 'Summer 1', 'Summer 2', 'Summer 3'].map(option =>
                 (
                     <Form.Check  
@@ -575,7 +575,11 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
 
             if (validation[0].length > 0 && validation[1].length > 0){
                 // Since the years are user-given, if there's any spaces we get rid of them
-                output[0]['validation'] = {options: validation[0].split(/, ?/).map(year => parseInt(year))};
+                if (!Array.isArray(validation[0]))
+                    output[0]['validation'] = {options: validation[0].split(/, ?/).map(year => parseInt(year))};
+                else
+                    output[0]['validation'] = {options: validation[0]}
+                
                 output[1]['validation'] = {options: validation[1]};
             }
             break;
