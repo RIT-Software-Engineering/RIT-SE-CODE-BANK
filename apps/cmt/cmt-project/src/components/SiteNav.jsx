@@ -1,66 +1,26 @@
 import React, { useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { User, ChevronDown, Menu, X, GraduationCap, Wrench} from "lucide-react";
+import {
+  User,
+  ChevronDown,
+  GraduationCap,
+  Wrench,
+} from "lucide-react";
 import "../styles/NavBar.css";
 import { getUserFromCookie, logout } from "../utils/auth";
+import { Container, Dropdown, Nav, Navbar, NavDropdown, Button } from "react-bootstrap";
 
 export default function SiteNav() {
   const [user, setUser] = useState(null);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  
+
   const profileRef = useRef(null);
-  const dropdownRefs = useRef({});
 
   // Load user on mount
   useEffect(() => {
     setUser(getUserFromCookie());
+    setActiveDropdown(window.location.pathname);
   }, []);
-
-  // Close dropdowns on outside click / Escape
-  useEffect(() => {
-    const onMouseDown = (e) => {
-      // Close profile dropdown
-      if (profileOpen && profileRef.current && !profileRef.current.contains(e.target)) {
-        setProfileOpen(false);
-      }
-      
-      // Close nav dropdowns
-      if (activeDropdown) {
-        const dropdownEl = dropdownRefs.current[activeDropdown];
-        if (dropdownEl && !dropdownEl.contains(e.target)) {
-          setActiveDropdown(null);
-        }
-      }
-    };
-
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") {
-        setProfileOpen(false);
-        setActiveDropdown(null);
-        setMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", onMouseDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [profileOpen, activeDropdown]);
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-    setActiveDropdown(null);
-  }, [window.location.pathname]);
-
-  const toggleDropdown = (name) => {
-    setActiveDropdown(activeDropdown === name ? null : name);
-  };
 
   const menuGroups = [
     {
@@ -71,7 +31,7 @@ export default function SiteNav() {
         { to: "/courses", label: "Course Overview"},
         { to: "/templates", label: "Create Template" },
         { to: "/coursewebsite", label: "Course Website" },
-      ]
+      ],
     },
     {
       id: "tools",
@@ -86,120 +46,107 @@ export default function SiteNav() {
   ];
 
   return (
-    <header className="site-nav">
-      <div className="site-nav__inner">
+    <Navbar sticky="top" className="bg-[#f97316] px-4" expand="lg">
+      <Container className="flex items-center justify-between gap-2">
         {/* Brand */}
-        <div className="site-nav__brand">
-          <h1 className="site-nav__title">CMT</h1>
-          <p className="site-nav__subtitle">Course Management Tool</p>
-        </div>
-
-        {/* Mobile Menu Toggle */}
-        <button
-          className="site-nav__mobile-toggle"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <Navbar.Brand className="flex-1 min-w-16" onClick={() => setActiveDropdown(null)}>
+          <NavLink to="/" className="no-underline">
+            <p className="font-extrabold text-white m-0 text-2xl">CMT</p>
+            <p className="text-white text text-xs text-opacity-90">
+              COURSE MANAGEMENT TOOL
+            </p>
+          </NavLink>
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
 
         {/* Navigation */}
-        <nav
-          className={`site-nav__nav ${mobileMenuOpen ? "is-open" : ""}`}
-          aria-label="Primary"
-        >
-          <ul className="site-nav__menu" role="list">
+        <Navbar.Collapse className="justify-center" aria-label="Primary">
+          <Nav className="gap-2">
             {menuGroups.map((group) => (
-              <li
-                key={group.id}
-                className="site-nav__menu-item has-dropdown"
-                ref={(el) => (dropdownRefs.current[group.id] = el)}
+              <div
+                className="gap-1 px-2 py-1 flex items-center border-1 border-solid rounded-lg bg-white bg-opacity-10 text-white"
+                style={{ border: "1px solid rgba(255, 255, 255, 0.2)" }}
               >
-                <button
-                  className={`site-nav__menu-button ${
-                    activeDropdown === group.id ? "is-active" : ""
-                  }`}
-                  onClick={() => toggleDropdown(group.id)}
-                  aria-haspopup="true"
-                  aria-expanded={activeDropdown === group.id}
-                >
-                  {group.icon}
-                  <span>{group.label}</span>
-                  <ChevronDown
-                    size={16}
-                    className={`site-nav__chevron ${
-                      activeDropdown === group.id ? "is-rotated" : ""
-                    }`}
-                  />
-                </button>
-
-                {/* Dropdown Menu */}
-                <ul
-                  className={`site-nav__dropdown ${
-                    activeDropdown === group.id ? "is-visible" : ""
-                  }`}
-                  role="menu"
-                >
-                  {group.items.map((item) => (
-                    <li key={item.to}>
-                      <NavLink
-                        to={item.to}
-                        className={({ isActive }) =>
-                          `site-nav__dropdown-link ${isActive ? "is-active" : ""}`
-                        }
-                        onClick={() => setActiveDropdown(null)}
-                      >
-                        {item.label}
-                      </NavLink>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* Profile */}
-        {user && (
-          <div className="site-nav__profile" ref={profileRef}>
-            <button
-              className="site-nav__profile-button"
-              onClick={() => setProfileOpen(!profileOpen)}
-              aria-haspopup="menu"
-              aria-expanded={profileOpen}
-            >
-              <User size={20} />
-              <span className="site-nav__profile-name">{user.name?.split(" ")[0] || "User"}</span>
-              <ChevronDown
-                size={16}
-                className={`site-nav__chevron ${profileOpen ? "is-rotated" : ""}`}
-              />
-            </button>
-
-            {profileOpen && (
-              <div className="site-nav__profile-dropdown" role="menu">
-                <div className="site-nav__profile-info">
-                  <strong>{user.name || "User"}</strong>
-                  <div className="site-nav__profile-email">{user.email}</div>
-                  {user.roles && (
-                    <div className="site-nav__profile-role">
-                      {user.roles.join(", ")}
+                <NavDropdown
+                  title={
+                    <span className="flex items-center gap-3 text-white">
+                      <div className="flex items-center gap-2 text-sm font-semibold">{group.icon} {group.label}</div>
+                      <div className='transition-transform duration-300 chevron'>
+                        <ChevronDown size={16}/>
                     </div>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  className="site-nav__logout-button"
-                  onClick={logout}
+                    </span>
+                  }
+                  className="[&>.dropdown-toggle]:after:hidden min-w-full h-full
+                  [&>.dropdown-toggle.show_.chevron]:rotate-180 focus-within:[&>.dropdown-toggle_.chevron]:rotate-180"
                 >
-                  Log out
-                </button>
+                  
+                  {/* Dropdown Menu */}
+                  {group.items.map((item) => (
+                    <NavDropdown.Item
+                      title={group.label}
+                      eventKey={item.label}
+                      as={NavLink}
+                      to={item.to}
+                      onClick={() => setActiveDropdown(item.label)}
+                      className={`text-sm font-semibold min-w-full min-h-full no-underline text-black bg-transparent px-2 py-0`}
+                      active={(activeDropdown === item.label || activeDropdown?.replace("/cmt", "") === item.to)}
+                    >
+                      <div to={item.to} className={`no-underline text-black pl-3 pr-16 py-2.5 rounded-lg transition-all duration-150 ease-in-out hover:ml-1 w-full h-full 
+                      ${(activeDropdown === item.label || activeDropdown?.replace("/cmt", "") === item.to) ? 'bg-[#f97316] text-white font-semibold' : 'hover:!text-[#f97316] hover:bg-gray-100'}`} >
+                        {item.label}
+                      </div>
+                    </NavDropdown.Item>
+                  ))}
+                </NavDropdown>
               </div>
-            )}
-          </div>
-        )}
-      </div>
-    </header>
+            ))}
+          </Nav>
+        </Navbar.Collapse>
+
+        <Navbar.Collapse className="justify-end">
+        {/* Profile */}
+        <Nav ref={profileRef} className="gap-2">
+        <div 
+          className="gap-1 px-2 py-1 flex items-center border-1 border-solid rounded-lg bg-white bg-opacity-10 text-white"
+          style={{ border: "1px solid rgba(255, 255, 255, 0.2)" }}
+        >
+          <NavDropdown
+          title={<span className="flex gap-3 items-center text-white">
+                <User size={16} /> {user?.name?.split(" ")[0] || "User"} 
+                <div className='transition-transform duration-300 chevron'>
+                  <ChevronDown size={16}/>
+                </div>
+              </span>}
+            className="[&>.dropdown-toggle]:after:hidden min-w-full h-full
+            [&>.dropdown-toggle.show_.chevron]:rotate-180 focus-within:[&>.dropdown-toggle_.chevron]:rotate-180"
+          >
+            <Dropdown.Item as="span" className="bg-transparent text-black">
+              <div className="w-full pl-3 pr-16 py-2">
+                  <div className="text-base font-bold mb-1">{user?.name}</div>
+                  <div className="text-sm mb-1 text-[#666]">{user?.email}</div>
+                  { user?.roles.map(role => {
+                    return <div className="inline-block text-xs mr-2 px-2 py-2 bg-[#f97216] text-white rounded-full font-semibold mt-1">
+                      {role.toUpperCase()}
+                    </div>
+                  })}
+                </div>
+            </Dropdown.Item>
+
+            <Dropdown.Divider />
+            <Dropdown.Item className="bg-transparent" as="div">
+              <Button
+                variant="danger"
+                className="w-full py-2 border-none rounded-lg text-white text-sm font-semibold"
+                onClick={logout}>
+                Log out
+              </Button>
+            </Dropdown.Item>
+          </NavDropdown>
+
+        </div>
+        </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
   );
 }
