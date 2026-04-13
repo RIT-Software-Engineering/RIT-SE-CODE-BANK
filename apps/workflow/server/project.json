@@ -4,7 +4,7 @@
             "dependsOn": ["build"],
             "executor": "nx:run-commands",
             "options": {
-                "command": "./deploy-workflows.sh"
+                "command": "./deploy/deploy-workflows.sh"
             }
         },
         "deploy-test": {
