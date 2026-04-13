@@ -2,11 +2,14 @@ FROM node:18-alpine
 WORKDIR /app
 RUN apk add --no-cache openssl
 
-COPY . .
+# Copy package files. im not sure why "COPY . ." doesn't cover this
+COPY package*.json ./
 
 # Install root deps (if needed) and backend deps
 RUN npm ci  
 RUN pwd
+
+COPY . .
 
 # Set DB URL for Prisma
 ARG DATABASE_URL
