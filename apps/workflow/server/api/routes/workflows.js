@@ -43,7 +43,13 @@ router.get("/metadata", async (req, res) => {
   const workflows = [];
   for (let index = 0; index < baseAction.length; index++) {
     const workflow = (await prisma.workflowAttributes.findUnique({
-      where: {baseActionId: baseAction[index].actionId}
+      where: {baseActionId: baseAction[index].actionId},
+      include: { baseAction: {
+        include: {
+          metadata: true,
+          permissions: true,
+        },
+      },}
     }));
 
     // Only add to workflows if it's not null/undefined

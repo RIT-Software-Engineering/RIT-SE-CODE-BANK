@@ -2,9 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { WorkflowRenderer } from '../../components/workflows/WorkflowRenderer'
 import { CMTJsonFetch } from '../../utils/api'
-import { Session } from './Session';
-import { InlineActionRenderer } from '../../components/workflows/ActionRenderers/InlineActionRenderer'
-import { InlineFormHoverable } from '../../components/forms/InlineForms'
+import { Session } from '../course/Session'
 import { UseCMTOnNavigateFactory, flattenActionsWithContext } from '../../utils/workflows'
 import { ArrowLeft } from 'lucide-react'
 import { Button} from 'react-bootstrap'
@@ -24,7 +22,7 @@ import { ResourceManager } from '../../components/resources/ResourceManager'
  * can often be implied. If you pass in the wrong type to a Workflows Component, it will give you an error in the component's attributes,
  * assuming your environment is set up correctly.
  */
-export function CourseDashboard() {
+export function TemplateDashboard() {
     const { id } = useParams()
 
     const [course, setCourse] = useState(null)
@@ -37,8 +35,9 @@ export function CourseDashboard() {
 
     const update = useCallback(async () => {
         return CMTJsonFetch('GET', `course/${id}`).then(async response => {
-            const data = await response.json()
-            console.log(data)
+            const data = await response.json();
+            // Manually override it in the display since we never actually set a color.
+            data.course.color = '#0484c9';
             setCourse(data.course)
             setActionsWithContext(data.actionsWithContext)
             setWorkflow(data.workflow)
@@ -54,7 +53,7 @@ export function CourseDashboard() {
 
     /** @type IsCheckmark */
     const isCheckmark = useCallback(
-        code => code.includes("CHECKMARK") || code.includes("SESSION_"),
+        code => code.includes("CHECKMARK") || code.includes("SESSION_") || code === "PUBLISH_TEMPLATE",
         []
     )
 
@@ -72,7 +71,7 @@ export function CourseDashboard() {
     return (
         <>
             
-            <CourseInfo course={course} actionsWithContext={courseInfoActions} refresh={update} fetchToCallback={fetchToCallback}/>
+            <CourseInfo course={course}/>
             <div className="h-10"></div>
             <ResourceManager courseId={course.id} />
             <div className="h-10"></div>
@@ -119,25 +118,13 @@ export function CourseDashboard() {
     )
 }
 
-function CourseInfo({ course, actionsWithContext, refresh, fetchToCallback }) {
+function CourseInfo({ course}) {
     const navigate = useNavigate();
-
-    const [newCourseName, setNewCourseName] = useState(course.name)
-    const [newCourseCode, setNewCourseCode] = useState(course.classId)
-
-    function updateCourseName(e) {
-        e.preventDefault()
-        return CMTJsonFetch('PUT', `course/${course.id}`, { courseName: newCourseName }).then(async () => await refresh())
-    }
-    function updateCourseCode(e) {
-        e.preventDefault()
-        return CMTJsonFetch('PUT', `course/${course.id}`, { courseCode: newCourseCode }).then(async () => await refresh())
-    }
 
     return (
         <>
             <div className='flex items-center mb-4'>
-                <Button onClick={() => navigate('/courses')}><div className='flex items-center'><ArrowLeft/>Back</div></Button>
+                <Button onClick={() => navigate('/templates')}><div className='flex items-center'><ArrowLeft/>Back</div></Button>
             </div>
             <div className="flex items-end gap-14 mt-2 w-100 p-6 pb-4 rounded-t-lg text-xl" style={{ borderBottomWidth: "6px", borderBottomColor: course.color, backgroundColor: `color-mix(in oklab, #fff 85%, ${course.color})` }}>
                 <div>
@@ -147,9 +134,7 @@ function CourseInfo({ course, actionsWithContext, refresh, fetchToCallback }) {
                     </div>
                 </div>
                 <div className="flex gap-10">
-                    <p className="mb-0">Section: {course.section ?? "TBD"} </p>
                     <p className="mb-0">Semester: {course.season ?? "TBD"} {course.year}</p>
-                    <p className="mb-0">Number of Students: {course.students ?? "TBD"}</p>
                 </div>
             </div>
         </>

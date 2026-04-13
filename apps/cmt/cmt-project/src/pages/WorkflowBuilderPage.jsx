@@ -6,13 +6,16 @@ import { ActionModal, DeleteModal, WorkflowComponent, WorkflowModal } from "../c
 
 
 /**
- * A component that acts as the main page for the Workflow Builder.
+ * A component that acts as the main page for the Workflow Builder Admin Page.
+ * This version of the page is used only for admins and not normal users.
+ * They have much more control of what they can do and we mainly let them do what they want.
+ * We display meta-workflows and they can create new meta-workflows as well.
  * On load, gets our template actions and the nested actions within those actions
  * Then displays the generic components from Builder with our metadata loaded
  *
  * @export
  */
-export function BuilderPage(){
+export function BuilderPageAdmin(){
     const [workflows, setWorkflows] = useState([]); // An array of objects. Each object may have child arrays of objects (which are actions)
     const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
     const [actionModalOpen, setActionModalOpen] = useState(false);
@@ -44,7 +47,7 @@ export function BuilderPage(){
      * Once all that is done, sets the workflows in alphabetical order.
      */
     const update = useCallback(async () => {
-        return CMTJsonFetch("GET", "/workflow/workflowTemplate").then(async response => {
+        return CMTJsonFetch("GET", "/workflow/workflowTemplate?tags=WorkflonyFirstTheRestNowhere_CMT_Template").then(async response => {
             const data = await response.json();
             const workflowPromises = data.workflows.map(async workflow => {
                 const info = workflow.baseAction;
@@ -61,7 +64,7 @@ export function BuilderPage(){
                     description: info.description,
                     actions: actions || [],
                     metadata: info.metadata,
-                    tags: workflow.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"), // Remove the special tag so it's not modifiable in any way
+                    tags: workflow.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template").sort(), // Remove the special tag so it's not modifiable in any way
                 }
             });
             const resolvedWorkflows = await Promise.all(workflowPromises);
@@ -158,7 +161,7 @@ export function BuilderPage(){
 
         <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} 
         setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit} isEdit={isEdit} curWorkflow={curAction}
-        setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmit} extraData={{metaWorkflow}}
+        setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmitAdmin} extraData={{metaWorkflow}}
         loadFunction={loadWorkflowForm} clearFunction={clearWorkflowForm}>
 
             <Form.Label>What Meta-workflow should this be used for?</Form.Label>
@@ -204,6 +207,128 @@ export function BuilderPage(){
                 setDeleteOpen={setDeleteOpen} simpleExtraDataRenderer={simpleActionRenderer}/>
                 </div>)
         }) : <></>}
+        </Accordion>
+    </>);
+}
+
+/**
+ * A component that acts as the main page for the Workflow Builder.
+ * This page is for everyday faculty who can access their template workflows.
+ * On load, gets our template actions and the nested actions within those actions
+ * Then displays the generic components from Builder with our metadata loaded
+ *
+ * @export
+ */
+export function BuilderPage(){
+    const [workflows, setWorkflows] = useState([]); // An array of objects. Each object may have child arrays of objects (which are actions)
+    const [workflowModalOpen, setWorkflowModalOpen] = useState(false);
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+    const [index, setIndex] = useState(-1);
+    const [loading, setLoading] = useState(true);
+    const [parentId, setParentId] = useState("");
+    const [depthLevel, setDepthLevel] = useState(0);
+    const [curAction, setCurAction] = useState({metadata: null}); // We only set this to avoid unnecessary warnings
+    const [isEdit, setIsEdit] = useState(false);
+    const [deleteOpen, setDeleteOpen] = useState(false);
+
+    /**
+     * Function that's called on load to get all the workflows for our template
+     * Our template workflows have special codes that allow them to be easily grabbed from the DB
+     * Once the template workflow is received, gets the actions within each template and sets them 
+     * Once all that is done, sets the workflows in alphabetical order.
+     */
+    const update = useCallback(async () => {
+        return CMTJsonFetch("GET", "/workflow/workflowTemplate?tags=TangledUpInLiesImAWorkflony").then(async response => {
+            const data = await response.json();
+            const workflowPromises = data.workflows.map(async workflow => {
+                const info = workflow.baseAction;
+                let actions = [];
+                if (workflow.rootActionId){
+                    const actionResponse = await CMTJsonFetch("GET", `workflow/actionTemplate/workflow/${workflow.id}`)
+                    const returnedActions = await actionResponse.json();
+                    actions = returnedActions.actions.filter(action => action.action?.metadata?.code !== "PUBLISH_TEMPLATE");
+                }
+                return {
+                    id: info.id,
+                    attributeId: workflow.id,
+                    name: info.name,
+                    description: info.description,
+                    actions: actions || [],
+                    metadata: info.metadata,
+                    // Remove the special tag and the normal searchable tags so they're not modifiable in any way
+                    tags: workflow.tags?.filter(tag => tag !== "TangledUpInLiesImAWorkflony" && !info.metadata?.CMTemplate.includes(tag)).sort(), 
+                }
+            });
+            const resolvedWorkflows = await Promise.all(workflowPromises);
+            setWorkflows(resolvedWorkflows.sort((a, b) => a.name.localeCompare(b.name)));
+            setLoading(false);
+        });
+    }, [])
+    useEffect(() => void update(), [update])
+    
+    // Helper function so we can pass in less information
+    function setWorkflowModalAsOpen(){
+        setWorkflowModalOpen(true);
+        setIsEdit(true);
+    }
+
+    /** 
+     * Helper function that loads our relevant data in the {@link ActionModal}.
+     * Passed into the {@link ActionModal} component.
+     */
+    const loadActionForm = () => {};
+
+    /** 
+     * Helper function that clears our relevant data in the {@link ActionModal}.
+     * Passed into the {@link ActionModal} component.
+     */
+    const clearActionForm = () => {};
+
+    /** 
+     * Helper function that loads our relevant data in the {@link WorkflowModal}.
+     * Passed into the {@link WorkflowModal} component.
+     */
+    const loadWorkflowForm = () => {};
+
+    /** 
+     * Helper function that clears our relevant data in the {@link WorkflowModal}.
+     * Passed into the {@link WorkflowModal} component.
+     */
+    const clearWorkflowForm = () => {};
+
+    return (
+    loading ? <><h1>Loading...</h1></> :
+    <>
+        <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} 
+        setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit} isEdit={isEdit} curWorkflow={curAction}
+        setIsEdit={setIsEdit} workflowEditSubmit={workflowEditSubmit} extraData={{}}
+        loadFunction={loadWorkflowForm} clearFunction={clearWorkflowForm}>
+        </WorkflowModal>
+
+        {/* TODO on the Builder page in the generic update, but remove the ability for users to add actions/add actions with states. it breaks things. */}
+        <ActionModal isOpen={actionModalOpen} setIsOpen={setActionModalOpen} index={index} workflows={workflows} setWorkflows={setWorkflows} 
+        parentId={parentId} depthLevel={depthLevel} setDepthLevel={setDepthLevel}
+        isEdit={isEdit} setIsEdit={setIsEdit} curAction={curAction} refresh={update}
+        addAction={addStandardAction} addWorkflowAction={addWorkflowAction} editAction={editStandardAction} editWorkflowActionFunction={editWorkflowAction}
+        loadFunction={loadActionForm} clearFunction={clearActionForm} extraData={{}}>
+        </ActionModal>
+        
+        {/* TODO this will be in the generic update, but remove ability to delete actions and workflows */}
+        <DeleteModal isOpen={deleteOpen} setIsOpen={setDeleteOpen} action={curAction} 
+        workflows={workflows} setWorkflows={setWorkflows}
+        actionDelete={deleteStandardAction} workflowDelete={deleteWorkflow} refresh={update}/>
+
+        <Accordion>
+        {workflows ? Array.from({length: workflows.length}, (_, i) => {
+            /* For each workflow we create a workflow component, which is our workflow template */
+            return (<div key={i} className="pt-2" onClick={()=>setIndex(i)}>
+                <WorkflowComponent loading={loading} index={i} workflows={workflows} 
+                setIsOpen={setActionModalOpen} setParentId={setParentId} depthLevel={0} 
+                setDepthLevel={setDepthLevel} setIsEdit={setIsEdit} 
+                setCurAction={setCurAction} setWorkflowModalEdit={setWorkflowModalAsOpen} 
+                setDeleteOpen={setDeleteOpen} simpleExtraDataRenderer={simpleActionRenderer}/>
+                </div>)
+        }) : <>Nothing here!</>}
         </Accordion>
     </>);
 }
@@ -300,13 +425,13 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             {hasValidation ? <>
             <div className="flex ">
                 <div className="w-2/5">
-                <Form.Label>Year Options (seperate each by a comma)</Form.Label>
+                <Form.Label>Year Options (Separate each by a Comma)</Form.Label>
                 <Form.Control placeholder={`e.g. ${[0,1,2,3].map(i => {return new Date().getFullYear()+i}).join(', ')}`} onChange={e => {
                     setValidation(prev => [e.target.value, prev[1]])
                 }} defaultValue={isEdit ? validation[0] : ''}/>
                 </div>
                 <div className="pl-10 w-3/5">
-                <Form.Label>Season Options (seperate each by a comma)</Form.Label>
+                <Form.Label>Season Options</Form.Label>
                 {['Fall', 'Spring', 'Summer 1', 'Summer 2', 'Summer 3'].map(option =>
                 (
                     <Form.Check  
@@ -450,7 +575,11 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
 
             if (validation[0].length > 0 && validation[1].length > 0){
                 // Since the years are user-given, if there's any spaces we get rid of them
-                output[0]['validation'] = {options: validation[0].split(/, ?/).map(year => parseInt(year))};
+                if (!Array.isArray(validation[0]))
+                    output[0]['validation'] = {options: validation[0].split(/, ?/).map(year => parseInt(year))};
+                else
+                    output[0]['validation'] = {options: validation[0]}
+                
                 output[1]['validation'] = {options: validation[1]};
             }
             break;
@@ -550,7 +679,7 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
             name: name,
             description: description,
             actions: [],
-            tags: tags, // We do original tags here to not include the special tag
+            tags: tags.sort(), // We do original tags here to not include the special tag
             metadata: {
                 code: metaWorkflow
             }
@@ -585,7 +714,7 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
  * @param {(error:string) => void} setError - Sets a display error in the {@link WorkflowModal} if it fails to add the workflow for any reason
  * @param {Object} workflowToUpdate - Our workflow that is being edited/updated. We mainly use its data since the PUT doesn't return useful stuff for us
  */
-async function workflowEditSubmit(name, description, tags, workflows, setWorkflows, extraData, setError, workflowToUpdate){
+async function workflowEditSubmitAdmin(name, description, tags, workflows, setWorkflows, extraData, setError, workflowToUpdate){
     // Add our special tag if we have any tags
     if (tags)
         tags.push("WorkflonyFirstTheRestNowhere_CMT_Template");
@@ -620,6 +749,71 @@ async function workflowEditSubmit(name, description, tags, workflows, setWorkflo
                     tags: tags,
                      metadata: {
                         code: extraData.metaWorkflow,
+                    },
+                    }
+        })
+        setWorkflows(workflowsCopy);
+        returnVal = "Good";
+    }).catch(async error => {
+        if (error.response){
+            const data = await error.response.json();
+            setError(data.error);
+        }
+        else {
+            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
+        }
+        returnVal = "Bad";
+    });
+    // Finally does not return our value so we just return it after our request
+    return returnVal;
+}
+
+/**
+ * A helper function to edit template workflows
+ * Because we have our CMT-specific special tag and our own endpoint, we pass this into the {@link WorkflowModal}.
+ * Makes a PUT request to add the workflow template and updates our workflows if successful.
+ *
+ * @async
+ * @param {string} name - The name of the workflow
+ * @param {string} description - The description of the workflow
+ * @param {Array} tags - An array of strings of the tags of the workflow
+ * @param {Array} workflows - An array containing all of the workflows
+ * @param {(workflows: Array) => void} setWorkflows - The state setter to set all our workflows
+ * @param {Object} extraData - Any extra data, which is metadata/the meta workflow in our case
+ * @param {(error:string) => void} setError - Sets a display error in the {@link WorkflowModal} if it fails to add the workflow for any reason
+ * @param {Object} workflowToUpdate - Our workflow that is being edited/updated. We mainly use its data since the PUT doesn't return useful stuff for us
+ */
+async function workflowEditSubmit(name, description, tags, workflows, setWorkflows, extraData, setError, workflowToUpdate){
+    // Add our special tag and the others if we have any tags
+
+    if (tags)
+        workflowToUpdate?.metadata?.CMTemplate.forEach(item => tags.push(item));
+
+    if (!name)
+        name = 'New Workflow';
+    if (!description)
+        description = 'No description provided.'
+
+    // We have a return value in case our request fails for some reason. It's mainly so the WorkflowModal knows to clear and close everything or not.
+    let returnVal;
+    await CMTJsonFetch("PUT", `/workflow/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags}).then(async response => {
+        const data = await response.json();
+        // If we have tags then we remove our special tag so the user can't mess with it
+        if (tags)
+            tags = tags.slice(0, workflowToUpdate?.metadata?.CMTemplate.length * -1);
+        const workflowsCopy = workflows.map(workflow => {
+            if (workflow.id !== data.workflow.baseActionId)
+                return workflow
+            else
+                return {
+                    id: data.workflow.baseActionId,
+                    attributeId: data.workflow.id,
+                    name: name,
+                    description: description,
+                    actions: workflowToUpdate.actions,
+                    tags: tags.sort(),
+                     metadata: {
+                        code: workflowToUpdate.metadata.code,
                     },
                     }
         })
@@ -743,7 +937,7 @@ async function setNextActionInfo(action, actions, workflowId, id, name, descript
 async function addStandardAction(index, workflows, setWorkflows, name, description, actionType, parentActionId, extraData, setError, refresh) {
     let code, outputs;
     // Since complex actions don't have any codes or outputs, we only set it for simple actions
-    if (actionType === 'simple'){
+    if (actionType === 'simple' && Object.keys(extraData).length > 0){
         code = extraData.code;
         try {
             outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)
@@ -940,7 +1134,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
 async function editStandardAction(name, description, actionToUpdate, extraData, setError, refresh){
     let code, outputs;
     // Since complex actions don't have any codes or outputs, we only set it for simple actions
-    if (actionToUpdate.actionType === 'simple'){
+    if (actionToUpdate.actionType === 'simple' && Object.keys(extraData).length > 0){
         code = extraData.code;
         try {
             outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)

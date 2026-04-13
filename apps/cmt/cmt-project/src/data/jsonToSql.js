@@ -45,11 +45,6 @@ async function migrateData() {
           preparation: event.preparation || [],
         };
 
-        await prisma.event.upsert({
-          where: { id: event.id },
-          update: eventData,
-          create: eventData,
-        });
         eventCount++;
       }
     }

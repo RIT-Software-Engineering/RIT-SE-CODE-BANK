@@ -28,8 +28,8 @@ export default function SiteNav() {
       label: "Course Management",
       icon: <GraduationCap size={18} />,
       items: [
-        { to: "/courses", label: "Course Overview" },
-        { to: "/createtemplate", label: "Create Template" },
+        { to: "/courses", label: "Course Overview"},
+        { to: "/templates", label: "Create Template" },
         { to: "/coursewebsite", label: "Course Website" },
       ],
     },
@@ -39,9 +39,10 @@ export default function SiteNav() {
       icon: <Wrench size={18} />,
       items: [
         { to: "/teambuilder", label: "Team Builder" },
-        { to: "/workflowbuilder", label: "Workflow Builder" },
-      ],
-    },
+        { to: "/workflowbuilder", label: "Workflow Builder"},
+        { to: "/workflowbuilder-admin", label: "Workflow Builder Admin"},
+      ]
+    }
   ];
 
   return (
