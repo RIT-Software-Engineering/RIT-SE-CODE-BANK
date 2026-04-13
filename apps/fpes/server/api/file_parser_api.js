@@ -7,6 +7,8 @@ const key = process.env.GEMINI_KEY
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(key);
 const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview"});
+// const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash"});
+
 
 async function parseGrantAI(scholarship_section) {
     // console.log(scholarship_section)
@@ -17,12 +19,13 @@ async function parseGrantAI(scholarship_section) {
     - title (project name)
     - funder (agency that is funding the grant)
     - amount (number only)
-    - period (date range)
-    - role 
-    - share (%)
+    - start_date (YYYY-MM-DD format, or null if not found)
+    - end_date (YYYY-MM-DD format, or null if not found)
+    - faculty_role (the person's role in the grant)
+    - faculty_share (percentage of funding)
     - url
-    - progress (funded, submitted, declined, in development)
-    - additional comments 
+    - grant_status (funded, submitted, declined, in development)
+    - comments 
     
     Input Text:
     "${scholarship_section}"
@@ -38,12 +41,13 @@ async function parseGrantAI(scholarship_section) {
         //     title: '',
         //     funder: '',
         //     amount: '',
-        //     period: '',
-        //     role: '',
-        //     share: '',
+        //     start_date: '',
+        //     end_date: '',
+        //     faculty_role: '',
+        //     faculty_share: '',
         //     url: '',
-        //     progress: '',
-        //     additional_comments: ''
+        //     grant_status: '',
+        //     comments: ''
         // }
 
 
@@ -149,27 +153,7 @@ function cleanAIResponse(response) {
 //     question_number: '12'
 //   }
 
-// table + text response
-function parseTeachingEvalFull(text) {
-    /* 
-    possible structure
-    {
-        semester:
-        year:
-        class: (keep full name with code(swen ###) and section # or separate)
-        instructor_name:
-        table = [ {} ] **question 1 has a different structure than the rest
-    }
-    */ 
-    const possible_n = extractSection(text, "There were:", "possible respondents.");
-    console.log(possible_n);
 
-    // partial table without question 1
-    let table = parseTeachEvalTable(text);  
-
-    return table;
-
-}
 
 // gets the whole table
 function parseTeachEvalTable(text){
@@ -322,18 +306,78 @@ function extractSection(text, startMarker, endMarker) {
     return extracted;
 }
 
+function parseTextResponses(text, lastName) {
+    if (!lastName) return [];
+
+    const questionRegex = /Question:\s*(.+)/g;
+    const positions = [];
+    let match;
+
+    while ((match = questionRegex.exec(text)) !== null) {
+        positions.push({
+            question: match[1].trim(),
+            index: match.index,
+            end: match.index + match[0].length
+        });
+    }
+
+    if (positions.length === 0) return [];
+
+    const extractResponses = (chunk) => {
+        const cleaned = chunk
+            .replace(/Text\s*Responses\s*Instructor\s*\n?/g, '')
+            .replace(/Page\s+\d+\/\d+\s*\n?/g, '')
+            .replace(/Note:[\s\S]*$/, '')
+            .trim();
+
+        // Only split on lastName when followed by a newline or end-of-string,
+        // so occurrences mid-sentence (e.g. "professor Meneely,") are not treated as delimiters
+        const entryRegex = new RegExp(`([\\s\\S]+?)${lastName}(?=\\s*\\n|\\s*$)`, 'g');
+        const responses = [];
+        let entryMatch;
+        while ((entryMatch = entryRegex.exec(cleaned)) !== null) {
+            const response = entryMatch[1].trim();
+            // Skip table data that leaked through (contains % chains, header keywords)
+            const isTableData = /\d+%\d+%/.test(response)
+                || /possible respondents/i.test(response)
+                || /Instructor:/.test(response)
+                || /NQuestion/.test(response);
+            if (response && response.length > 5 && !isTableData) responses.push(response);
+        }
+        return responses;
+    };
+
+    // In the raw PDF extraction, each question's responses appear BEFORE its label.
+    // For question[i], collect text between the previous label's end and this label's start.
+    const sections = [];
+    for (let i = 0; i < positions.length; i++) {
+        const start = i === 0 ? 0 : positions[i - 1].end;
+        const end = positions[i].index;
+        const responses = extractResponses(text.substring(start, end));
+        sections.push({ question: positions[i].question, responses });
+    }
+
+    // Responses after the last label are a continuation of the first question (page 2)
+    const remaining = extractResponses(text.substring(positions[positions.length - 1].end));
+    if (remaining.length > 0) {
+        sections[0].responses.push(...remaining);
+    }
+
+    return sections;
+}
+
 async function parseTeachingEvalPDF(filePath) {
     const dataBuffer = fs.readFileSync(filePath);
     const data = await pdfParse(dataBuffer);
     const text = data.text;
-    
+
     const lines = text.split('\n').map(line => line.trim()).filter(line => line);
-    
+
     // Simple regex extraction
     const firstLine = lines[0] || '';
     const semesterMatch = firstLine.match(/(Fall|Spring|Summer)\s+(\d{4})/);
     const courseMatch = firstLine.match(/([A-Z]+\s+\d+)\s+(.+?)\s+Section/);
-    
+
     let professor_name = null;
     for (const line of lines) {
         if (line.includes('Instructor:')) {
@@ -342,16 +386,26 @@ async function parseTeachingEvalPDF(filePath) {
             break;
         }
     }
-    
+
     const table = parseTeachEvalTable(text);
-    
+
+    // Last name is before the comma in "LastName, FirstName (Role)"
+    const lastName = professor_name ? professor_name.split(',')[0].trim() : null;
+
+    // Only pass the text after the table — use regex to handle spacing/encoding variations in "NQuestion Text"
+    const tableEndMatch = /N\s*Question\s+Text/.exec(text);
+    const textAfterTable = tableEndMatch ? text.substring(tableEndMatch.index + tableEndMatch[0].length) : text;
+    const text_responses = parseTextResponses(textAfterTable, lastName);
+    console.log(text_responses);
+
     return {
         semester: semesterMatch ? semesterMatch[1] : null,
         year: semesterMatch ? semesterMatch[2] : null,
         course_code: courseMatch ? courseMatch[1] : null,
         course_name: courseMatch ? courseMatch[2].trim() : null,
         professor_name,
-        table
+        table,
+        text_responses
     };
 }
 

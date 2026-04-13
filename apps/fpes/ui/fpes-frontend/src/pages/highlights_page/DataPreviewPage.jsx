@@ -1,4 +1,4 @@
-import { Modal, Box, Button, TextField, Typography, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { Modal, Box, Button, TextField, Typography, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Divider, Card, CardContent, Chip, Stack } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -112,7 +112,7 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                                             <TableCell>{q.question}</TableCell>
                                             <TableCell>{q.n}</TableCell>
                                             <TableCell>
-                                                {q.yes ? `Yes: ${q.yes}, No: ${q.no}` : 
+                                                {q.yes ? `Yes: ${q.yes}, No: ${q.no}` :
                                                  `SA: ${q.str_agree}, A: ${q.agree}, N: ${q.neutral}, D: ${q.disagree}, SD: ${q.str_disagree}`}
                                             </TableCell>
                                             <TableCell>{q.avg}</TableCell>
@@ -122,6 +122,45 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                                 </TableBody>
                             </Table>
                         </TableContainer>
+
+                        {formData.text_responses?.length > 0 && (
+                            <>
+                                <h3 style={{ marginTop: '24px', marginBottom: '16px' }}>Written Responses</h3>
+                                {formData.text_responses.map((section, sIdx) => (
+                                    <Card key={sIdx} sx={{ mb: 2, borderLeft: '4px solid #1976d2' }}>
+                                        <CardContent>
+                                            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2} sx={{ mb: 2 }}>
+                                                <Typography variant="subtitle2" fontWeight="bold" sx={{ flex: 1, color: '#1976d2' }}>
+                                                    {section.question}
+                                                </Typography>
+                                                <Chip 
+                                                    label={`${section.responses.length} response${section.responses.length !== 1 ? 's' : ''}`} 
+                                                    size="small" 
+                                                    variant="outlined"
+                                                />
+                                            </Stack>
+                                            <Stack spacing={1.5}>
+                                                {section.responses.map((r, rIdx) => (
+                                                    <Box 
+                                                        key={rIdx}
+                                                        sx={{ 
+                                                            p: 1.5,
+                                                            bgcolor: '#f5f5f5',
+                                                            borderRadius: 1,
+                                                            borderLeft: '3px solid #e0e0e0'
+                                                        }}
+                                                    >
+                                                        <Typography variant="body2" sx={{ lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                                            {r}
+                                                        </Typography>
+                                                    </Box>
+                                                ))}
+                                            </Stack>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </>
+                        )}
                     </>
                 ) : (
                     <>
@@ -152,8 +191,8 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                             disabled={readOnly} />
                         
                         <h3>Scholarship</h3>
-                        <FundingTable rows={formData.scholarship ?? []} />
-                        <PublicationTable rows={formData.publication ?? []}/>
+                        <FundingTable rows={formData.scholarship ?? []} onRowsChange={(updatedRows) => handleChange('scholarship', updatedRows)} />
+                        <PublicationTable rows={formData.publication ?? []} onRowsChange={(updatedRows) => handleChange('publication', updatedRows)}/>
                         <h3>Teaching</h3>
                         <TextField fullWidth multiline rows={6} 
                             value={formData.teaching || ''} 

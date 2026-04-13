@@ -2,6 +2,26 @@ const pool = require('../db')
 const mariadb = require('mariadb');
 const fs = require('fs')
 
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    const trimmed = dateStr.trim();
+    
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    
+    const slashMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/) ;
+    if (slashMatch) {
+        const [, month, day, year] = slashMatch;
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    
+    const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+        return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+    }
+    
+    return null;
+}
+
 async function getAllGrants(){ //Read
   let connection
   try {
@@ -35,7 +55,7 @@ async function addGrant(grantData){ //Create
     const result = await conn.query(
       `INSERT INTO grants (title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING grant_id`,
-      [title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status]
+      [title, funder, amount, parseDate(start_date), parseDate(end_date), faculty_role, faculty_share, comments, grant_status]
     );
     return result;
   } finally {
@@ -51,9 +71,9 @@ async function updateGrant(id, grantData) {
     const { title, funder, amount, start_date,  end_date, faculty_role, faculty_share, comments, grant_status } = grantData;
     const result = await conn.query(
       `UPDATE grants 
-       SET title = ?, funder = ?, amount = ?, start_date = ?, end_date, faculty_role = ?, faculty_share = ?, comments = ?, grant_status = ?
+       SET title = ?, funder = ?, amount = ?, start_date = ?, end_date = ?, faculty_role = ?, faculty_share = ?, comments = ?, grant_status = ?
        WHERE grant_id = ?`,
-      [title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status, id]
+      [title, funder, amount, parseDate(start_date), parseDate(end_date), faculty_role, faculty_share, comments, grant_status, id]
     );
     return result.affectedRows > 0;
   } finally {

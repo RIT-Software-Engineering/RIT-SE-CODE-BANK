@@ -15,8 +15,15 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 function Row(props) {
-  const { row } = props;
+  const { row, index, onRowChange } = props;
   const [open, setOpen] = React.useState(false);
+  const [editedRow, setEditedRow] = React.useState(row);
+
+  const handleChange = (field, value) => {
+    const updated = { ...editedRow, [field]: value };
+    setEditedRow(updated);
+    onRowChange(index, updated);
+  };
 
   return (
     <React.Fragment>
@@ -32,7 +39,7 @@ function Row(props) {
         </TableCell>
         <TableCell component="th" scope="row">
           <Typography variant="subtitle1" fontWeight="bold">
-            {row.title}
+            {editedRow.title}
           </Typography>
         </TableCell>
       </TableRow>
@@ -58,10 +65,8 @@ function Row(props) {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell contentEditable="true">
-                      {row.authors?.join(", ")}
-                    </TableCell>{" "}
-                    <TableCell contentEditable="true"> {row.type}</TableCell>
+                    <TableCell><input type="text" value={editedRow.authors?.join(", ") || ''} onChange={(e) => handleChange('authors', e.target.value.split(", "))} style={{width: "100%", border: "none", padding: "4px"}}/></TableCell>
+                    <TableCell><input type="text" value={editedRow.type || ''} onChange={(e) => handleChange('type', e.target.value)} style={{width: "100%", border: "none", padding: "4px"}}/></TableCell>
                   </TableRow>
                 </TableHead>
               </Table>
@@ -86,7 +91,13 @@ Row.propTypes = {
   }).isRequired,
 };
 
-export default function PublicationTable({ rows = [] }) {
+export default function PublicationTable({ rows = [], onRowsChange = () => {} }) {
+  const handleRowChange = (index, updatedRow) => {
+    const newRows = [...rows];
+    newRows[index] = updatedRow;
+    onRowsChange(newRows);
+  };
+
   return (
     <TableContainer component={Paper}>
       <Table aria-label="collapsible table">
@@ -98,7 +109,7 @@ export default function PublicationTable({ rows = [] }) {
         </TableHead>
         <TableBody>
           {rows.map((row, index) => (
-            <Row key={row.title || index} row={row} />
+            <Row key={row.title || index} row={row} index={index} onRowChange={handleRowChange} />
           ))}
         </TableBody>
       </Table>

@@ -16,6 +16,10 @@ function getModel() {
   return genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
 }
 
+function escapeRegExp(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 
 async function resetTeachingEvalsTables(){
     let connection;
@@ -63,10 +67,10 @@ async function saveParsedTeachingEval(data) {
         if (data.table && Array.isArray(data.table)) {
             for (const question of data.table) {
                 await conn.query(
-                    `INSERT INTO teaching_eval_questions 
-                    (teaching_eval_id, question_number, question, n, yes, no, 
-                     str_agree, agree, neutral, disagree, str_disagree, 
-                     uni_avg, col_avg, swen_avg, avg, top_two) 
+                    `INSERT INTO teaching_eval_questions
+                    (teaching_eval_id, question_number, question, n, yes, no,
+                     str_agree, agree, neutral, disagree, str_disagree,
+                     uni_avg, col_avg, swen_avg, avg, top_two)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [evalId, question.question_number, question.question, question.n,
                      question.yes || null, question.no || null,
@@ -76,7 +80,28 @@ async function saveParsedTeachingEval(data) {
                 );
             }
         }
-        
+
+        if (data.text_responses && Array.isArray(data.text_responses)) {
+            for (const section of data.text_responses) {
+                // Upsert the question text and get its id
+                await conn.query(
+                    'INSERT INTO teaching_eval_text_questions (question) VALUES (?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)',
+                    [section.question]
+                );
+                const [{ id: questionId }] = await conn.query(
+                    'SELECT id FROM teaching_eval_text_questions WHERE question = ?',
+                    [section.question]
+                );
+
+                for (const response of section.responses) {
+                    await conn.query(
+                        'INSERT INTO teaching_eval_text_responses (teaching_eval_id, question_id, response) VALUES (?, ?, ?)',
+                        [evalId, questionId, response]
+                    );
+                }
+            }
+        }
+
         return { success: true, evalId, formId };
     } finally {
         conn.release();
@@ -229,27 +254,99 @@ async function summarizeTeachingEval(formId) {
             [formId]
         );
 
-        const { professor_name, course_name, semester, year } = evalData[0];
+        // Fetch text responses
+        const textResponses = await conn.query(
+            `SELECT q.question, r.response
+             FROM teaching_eval_text_questions q
+             LEFT JOIN teaching_eval_text_responses r ON q.id = r.question_id
+             WHERE r.teaching_eval_id = (SELECT id FROM teaching_evals WHERE form_id = ?)
+             ORDER BY q.id`,
+            [formId]
+        );
+
+        // removed before entering gemini
+        const { professor_name, course_name } = evalData[0];
+
         const questionLines = questions.map(q =>
             `- ${q.question}: avg=${q.avg}, dept_avg=${q.swen_avg}, top_two=${q.top_two}%`
         ).join('\n');
 
+        // Group text responses by question
+        const textResponsesGrouped = {};
+        for (const row of textResponses) {
+            if (!textResponsesGrouped[row.question]) {
+                textResponsesGrouped[row.question] = [];
+            }
+            if (row.response) {
+                textResponsesGrouped[row.question].push(row.response);
+            }
+        }
+
+        // Filter PII from text responses
+        const filterPII = (text) => {
+            if (!text) return text;
+            let filtered = text;
+            
+            // Replace professor name (case-insensitive)
+            if (professor_name) {
+                const nameRegex = new RegExp(escapeRegExp(professor_name), 'gi');
+                filtered = filtered.replace(nameRegex, '[PROFESSOR]');
+            }
+
+            // Replace title + name patterns that might be generated (e.g., "Professor Meneely")
+            filtered = filtered.replace(/\b(professor|prof\.?|dr\.?|instructor)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g, '$1 [PROFESSOR]');
+
+            // Replace standalone full-name patterns (conservative two-token names)
+            filtered = filtered.replace(/\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, '[NAME]');
+            
+            // Replace course name/code (case-insensitive)
+            if (course_name) {
+                const escapedCourse = escapeRegExp(course_name).replace(/\s+/g, '\\s+');
+                const courseRegex = new RegExp(escapedCourse, 'gi');
+                filtered = filtered.replace(courseRegex, '[COURSE]');
+            }
+
+            // Replace common course code patterns (e.g., SWEN-261, CSCI 250, ISTE340)
+            filtered = filtered.replace(/\b[A-Z]{2,5}[\s-]?\d{2,4}[A-Z]?\b/g, '[COURSE]');
+
+            // Replace quoted course-like titles after "course" label
+            filtered = filtered.replace(/\bcourse\s+['\"]?[^'\"\n]{2,80}['\"]?/gi, 'course [COURSE]');
+            
+            // Remove email addresses
+            filtered = filtered.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
+            
+            // Remove common student identifiers (e.g., RIT ID patterns)
+            filtered = filtered.replace(/\b\d{9}\b/g, '[ID]');
+            
+            return filtered;
+        };
+
+        // Apply PII filtering to all responses
+        const textResponsesFiltered = {};
+        for (const [question, responses] of Object.entries(textResponsesGrouped)) {
+            textResponsesFiltered[question] = responses.map(r => filterPII(r));
+        }
+
+        const textResponsesLines = Object.entries(textResponsesFiltered).map(([question, responses]) =>
+            `- ${question}:\n${responses.map(r => `  "${r}"`).join('\n')}`
+        ).join('\n\n');
+
         const prompt = `You are summarizing a teaching evaluation for a faculty review system.
 
-Professor: ${professor_name}
-Course: ${course_name} (${semester} ${year})
+        Question scores (avg out of 5, dept avg, % top-two responses):
+        ${questionLines}
 
-Question scores (avg out of 5, dept avg, % top-two responses):
-${questionLines}
+        ${textResponsesLines ? `Written feedback from students:\n${textResponsesLines}` : ''}
 
-Write a concise 2-3 sentence summary covering:
-1. Overall teaching performance (above/average/below average vs department)
-2. Specific strengths based on high scores
-3. Any areas of concern based on low scores or low top-two percentages
-Be factual and professional.`;
+        Write a concise 2-3 sentence summary covering:
+        1. Overall teaching performance (above/average/below average vs department)
+        2. Specific strengths based on high scores and written feedback
+        3. Any areas of concern based on low scores, low top-two percentages, or written feedback
+        Be factual and professional.`;
 
         const result = await getModel().generateContent(prompt);
-        return result.response.text();
+        const summaryText = result.response.text();
+        return filterPII(summaryText);
     } catch (err) {
         if (err.status === 429) throw new Error('AI quota exceeded. Please try again later.');
         throw err;

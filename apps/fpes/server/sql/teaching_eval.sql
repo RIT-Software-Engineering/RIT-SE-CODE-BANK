@@ -38,6 +38,22 @@ CREATE TABLE IF NOT EXISTS teaching_eval_questions (
     FOREIGN KEY (teaching_eval_id) REFERENCES teaching_evals(id)
 );
 
+-- Lookup table: one row per unique open-ended question prompt
+CREATE TABLE IF NOT EXISTS teaching_eval_text_questions (
+    id INT UNIQUE AUTO_INCREMENT PRIMARY KEY,
+    question TEXT NOT NULL UNIQUE
+);
+
+-- Child table: one row per student response to an open-ended question
+CREATE TABLE IF NOT EXISTS teaching_eval_text_responses (
+    id INT UNIQUE AUTO_INCREMENT PRIMARY KEY,
+    teaching_eval_id INT NOT NULL,
+    question_id INT NOT NULL,
+    response TEXT NOT NULL,
+    FOREIGN KEY (teaching_eval_id) REFERENCES teaching_evals(id),
+    FOREIGN KEY (question_id) REFERENCES teaching_eval_text_questions(id)
+);
+
 -- Mock data for testing teaching eval percentile calculations and averages
 INSERT INTO forms (faculty_information_id, time_submitted, pdf_data, type) VALUES 
 (1, '2024-01-15 10:00:00', NULL, 'Highlights'),
