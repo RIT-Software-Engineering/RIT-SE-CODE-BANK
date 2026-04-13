@@ -10,6 +10,8 @@
 
 # production
 /build
+/frontend/build
+/backend/build
 
 # development
 .dev-pids.json
