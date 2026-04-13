@@ -41,18 +41,18 @@ import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import { getComparator } from "@utils/sortingUtils";
 
 /**
- * The statuses to filter applications by.
+ * The statuses to filter interest forms by.
  */
-const STATUSES = ["ALL", "ACCEPTED", "REJECTED", "PENDING"];
+const STATUSES = ["ALL", "PENDING", "ACCEPTED", "REJECTED"];
 
-export default function SupervisorApplicationsPage() {
+export default function InterestFormsPage() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
   /**
-   * The list of applications to be displayed on the page.
+   * The list of interest forms to be displayed on the page.
    */
-  const [applications, setApplications] = useState([]);
+  const [interestForms, setInterestForms] = useState([]);
   const [filter, setFilter] = useState("ALL");
   const [view, setView] = useState("table"); // "table" | "kanban"
   const [order, setOrder] = useState("desc");
@@ -65,104 +65,23 @@ export default function SupervisorApplicationsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchApps = async () => {
+    const fetchForms = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/application`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interestform`);
         const data = await res.json();
-        setApplications(data);
+        setInterestForms(data);
       } catch (err) {
-        console.error("Failed to fetch applications:", err);
+        console.error("Failed to fetch interest forms:", err);
       }
     };
-    fetchApps();
+    fetchForms();
   }, []);
 
   /**
-   * Handles the logic for opening a selected application.
-   *
-   * This function marks the application as read locally and navigates
-   * to the application detail page.
-   *
-   * @param {*} app - The application that's been selected to be opened.
-   * @returns {void}
+   * Handles the logic for opening a selected interest form.
    */
-  const handleOpen = (app) => {
-    setApplications((prev) =>
-      prev.map((a) => (a.id === app.id ? { ...a, hasBeenRead: true } : a))
-    );
-    router.push(`/scoopdinator/applications/${app.id}`);
-  };
-
-  /**
-   *
-   * @param {*} data
-   * @returns {Response}
-   */
-  async function postNewUsers(data) {
-    try {
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/users",
-        {
-          method: "POST",
-          body: JSON.stringify(data),
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      console.log("Submitting users with data:", data);
-      return response;
-    } catch (error) {
-      console.error("Error submitting user:", error);
-    }
-  }
-
-  /**
-   * Temporary data for user creation
-   */
-  const tempData = {
-    semester_group: "default",
-    project: "default",
-    active: "default",
-    last_login: "default",
-    prev_login: "default",
-  };
-
-  /**
-   * Creates a new user object from the application data.
-   *
-   * This function formats the application data into a user object that can be
-   * used to create a new user in the database. It extracts relevant fields
-   * from the application and sets default values for fields that are not
-   * provided.
-   *
-   * @param {*} app - The application providing information on the new user to create.
-   * @returns {User} The new user created from the application.
-   */
-  const createUserFromApp = (app) => {
-    return {
-      fname: app.firstName,
-      lname: app.lastName,
-      email: app.ritEmail,
-      type: "scooployee",
-      semester_group: tempData.semester_group,
-      project: tempData.project,
-      active: tempData.active,
-      last_login: tempData.last_login,
-      prev_login: tempData.prev_login,
-    };
-  };
-
-  /**
-   * Handles the logic to submit accepted applicants as new users into the database.
-   *
-   * @returns {void}
-   */
-  const handleSubmit = () => {
-    const acceptedApps = applications.filter((app) => app.status === "ACCEPTED");
-    for (let app of acceptedApps) {
-      let newUser = createUserFromApp(app);
-      console.log("Submitting user:", newUser);
-      postNewUsers(newUser);
-    }
+  const handleOpen = (form) => {
+    router.push(`/interest-forms/${form.id}`);
   };
 
   const handleBack = () => router.back();
@@ -176,23 +95,23 @@ export default function SupervisorApplicationsPage() {
     }
   };
 
-  const filteredApps = useMemo(() => {
-    const filtered = applications.filter((app) => {
-      if (filter !== "ALL" && app.status !== filter) return false;
-      if (dateFrom && new Date(app.createdAt) < new Date(dateFrom)) return false;
-      if (dateTo && new Date(app.createdAt) > new Date(dateTo + "T23:59:59")) return false;
+  const filteredForms = useMemo(() => {
+    const filtered = interestForms.filter((form) => {
+      if (filter !== "ALL" && form.status !== filter) return false;
+      if (dateFrom && new Date(form.createdAt) < new Date(dateFrom)) return false;
+      if (dateTo && new Date(form.createdAt) > new Date(dateTo + "T23:59:59")) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         const matched =
-          app.firstName?.toLowerCase().includes(q) ||
-          app.lastName?.toLowerCase().includes(q) ||
-          app.ritEmail?.toLowerCase().includes(q);
+          form.firstName?.toLowerCase().includes(q) ||
+          form.lastName?.toLowerCase().includes(q) ||
+          form.ritEmail?.toLowerCase().includes(q);
         if (!matched) return false;
       }
       return true;
     });
     return [...filtered].sort(getComparator(order, orderBy));
-  }, [applications, filter, dateFrom, dateTo, searchQuery, order, orderBy]);
+  }, [interestForms, filter, dateFrom, dateTo, searchQuery, order, orderBy]);
 
   // Theme-aware toggle button styles — visible in both light and dark
   const toggleSx = {
@@ -222,60 +141,107 @@ export default function SupervisorApplicationsPage() {
     { id: "lastName", label: "Last Name" },
     { id: "ritEmail", label: "Email" },
     { id: "createdAt", label: "Submitted" },
+    { id: "reviewedBy", label: "Reviewed By" },
+    { id: "reviewedAt", label: "Reviewed On" },
     { id: "status", label: "Status" },
   ];
 
   // ── View Components ──────────────────────────────────────────
 
-  const TableView = () => (
-    <Paper elevation={1} square sx={{ maxHeight: 500, overflow: "auto" }}>
-      <Table stickyHeader>
-        <TableHead>
-          <TableRow>
-            {columns.map((col) => (
-              <SortableTableHeader
-                key={col.id}
-                id={col.id}
-                label={col.label}
-                isActive={orderBy === col.id}
-                sortDirection={order}
-                onSort={handleSort}
-              />
-            ))}
-            <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {filteredApps.map((app) => (
-            <TableRow
-              key={app.id}
-              sx={{
-                opacity: app.hasBeenRead ? 0.6 : 1,
-                transition: "opacity 0.3s",
-              }}
-            >
-              <TableCell>{app.firstName}</TableCell>
-              <TableCell>{app.lastName}</TableCell>
-              <TableCell>{app.ritEmail}</TableCell>
-              <TableCell>
-                {new Date(app.createdAt).toLocaleDateString(undefined, {
-                  year: "numeric", month: "long", day: "numeric",
-                })}
-              </TableCell>
-              <TableCell>
-                <StatusBadge value={app.status} type="application" />
-              </TableCell>
-              <TableCell align="right">
-                <Button variant="outline-orange" onClick={() => handleOpen(app)}>
-                  View
-                </Button>
-              </TableCell>
+  const TableView = () => {
+    if (filteredForms.length === 0) {
+      return (
+        <Paper elevation={1} square sx={{ maxHeight: 500, overflow: "auto" }}>
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                {columns.map((col) => (
+                  <SortableTableHeader
+                    key={col.id}
+                    id={col.id}
+                    label={col.label}
+                    isActive={orderBy === col.id}
+                    sortDirection={order}
+                    onSort={handleSort}
+                  />
+                ))}
+                <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 4 }}>
+                  <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                    No interest forms found
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Paper>
+      );
+    }
+
+    return (
+      <Paper elevation={1} square sx={{ maxHeight: 500, overflow: "auto" }}>
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              {columns.map((col) => (
+                <SortableTableHeader
+                  key={col.id}
+                  id={col.id}
+                  label={col.label}
+                  isActive={orderBy === col.id}
+                  sortDirection={order}
+                  onSort={handleSort}
+                />
+              ))}
+              <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Paper>
-  );
+          </TableHead>
+          <TableBody>
+            {filteredForms.map((form) => (
+              <TableRow
+                key={form.id}
+                sx={{
+                  opacity: 1,
+                  transition: "opacity 0.3s",
+                }}
+              >
+                <TableCell>{form.firstName}</TableCell>
+                <TableCell>{form.lastName}</TableCell>
+                <TableCell>{form.ritEmail}</TableCell>
+                <TableCell>
+                  {new Date(form.createdAt).toLocaleDateString(undefined, {
+                    year: "numeric", month: "long", day: "numeric",
+                  })}
+                </TableCell>
+                <TableCell>{form.reviewedBy || "—"}</TableCell>
+                <TableCell>
+                  {form.reviewedAt
+                    ? new Date(form.reviewedAt).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
+                    : "—"}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge value={form.status} type="interestform" />
+                </TableCell>
+                <TableCell align="right">
+                  <Button variant="outline-orange" onClick={() => handleOpen(form)}>
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Paper>
+    );
+  };
 
   const KanbanView = () => {
     const kanbanColumns = [
@@ -284,7 +250,6 @@ export default function SupervisorApplicationsPage() {
       { label: "Rejected", key: "REJECTED", color: theme.palette.error.main, defaultOrder: "desc" },
     ];
 
-    // Per-column sort state: { [columnKey]: { field: "createdAt"|"firstName", order: "asc"|"desc" } }
     const [colSort, setColSort] = useState(() =>
       Object.fromEntries(
         kanbanColumns.map(({ key, defaultOrder }) => [
@@ -305,12 +270,12 @@ export default function SupervisorApplicationsPage() {
       });
     };
 
-    const columnApps = (key) => {
-      const apps = filteredApps.filter((a) =>
-        key === "PENDING" ? !a.status || a.status === "PENDING" : a.status === key
+    const columnForms = (key) => {
+      const forms = filteredForms.filter((f) =>
+        key === "PENDING" ? !f.status || f.status === "PENDING" : f.status === key
       );
       const { field, order } = colSort[key];
-      return [...apps].sort((a, b) => {
+      return [...forms].sort((a, b) => {
         const aVal = field === "createdAt" ? new Date(a[field]) : (a[field] ?? "");
         const bVal = field === "createdAt" ? new Date(b[field]) : (b[field] ?? "");
         if (aVal < bVal) return order === "asc" ? -1 : 1;
@@ -341,7 +306,7 @@ export default function SupervisorApplicationsPage() {
     return (
       <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", overflowX: "auto", pb: 1 }}>
         {kanbanColumns.map(({ label, key, color }) => {
-          const apps = columnApps(key);
+          const forms = columnForms(key);
           return (
             <Box key={key} sx={{ flex: 1, minWidth: 260 }}>
               {/* Column header */}
@@ -375,7 +340,7 @@ export default function SupervisorApplicationsPage() {
                     }}
                   >
                     <Typography variant="caption" sx={{ color: theme.ritColors.white, fontWeight: 700, lineHeight: 1 }}>
-                      {apps.length}
+                      {forms.length}
                     </Typography>
                   </Box>
                 </Box>
@@ -387,20 +352,20 @@ export default function SupervisorApplicationsPage() {
               </Paper>
 
               <Paper elevation={1} square sx={{ height: 452, overflow: "auto" }}>
-                {apps.length === 0 ? (
+                {forms.length === 0 ? (
                   <Box sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Typography variant="body2" color="text.secondary" fontStyle="italic">
-                      No applications
+                      No forms
                     </Typography>
                   </Box>
                 ) : (
-                  apps.map((app, i) => (
+                  forms.map((form, i) => (
                     <Box
-                      key={app.id}
+                      key={form.id}
                       sx={{
                         px: 2,
                         py: 1.5,
-                        opacity: app.hasBeenRead ? 0.6 : 1,
+                        opacity: 1,
                         transition: "opacity 0.3s",
                         borderTop: i === 0 ? "none" : `1px solid ${theme.palette.divider}`,
                         display: "flex",
@@ -411,16 +376,16 @@ export default function SupervisorApplicationsPage() {
                     >
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
-                          {app.firstName} {app.lastName}
+                          {form.firstName} {form.lastName}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {app.ritEmail}
+                          {form.ritEmail}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {new Date(app.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                          {new Date(form.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                         </Typography>
                       </Box>
-                      <Button size="small" variant="outline-orange" onClick={() => handleOpen(app)}>
+                      <Button size="small" variant="outline-orange" onClick={() => handleOpen(form)}>
                         View
                       </Button>
                     </Box>
@@ -460,88 +425,88 @@ export default function SupervisorApplicationsPage() {
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
         <IconButton onClick={handleBack} aria-label="back">
           <ArrowBackIcon />
-      </IconButton>
-      <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
-        Review Applications
-      </Typography>
+        </IconButton>
+        <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
+          Interest Form Submissions
+        </Typography>
 
-      {/* Toolbar */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 2 }}>
-        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
-          <Button variant="outline-orange" startIcon={<FilterAltOutlinedIcon />} onClick={() => setFilterDialogOpen(true)}>
-            Filter
-          </Button>
-          {filter !== "ALL" && (
-            <Chip
-              size="medium"
-              label={`Status: ${filter.charAt(0).toUpperCase() + filter.slice(1).toLowerCase()}`}
-              onDelete={() => setFilter("ALL")}
-              sx={filterChipSx}
+        {/* Toolbar */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, gap: 2 }}>
+          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+            <Button variant="outline-orange" startIcon={<FilterAltOutlinedIcon />} onClick={() => setFilterDialogOpen(true)}>
+              Filter
+            </Button>
+            {filter !== "ALL" && (
+              <Chip
+                size="medium"
+                label={`Status: ${filter.charAt(0).toUpperCase() + filter.slice(1).toLowerCase()}`}
+                onDelete={() => setFilter("ALL")}
+                sx={filterChipSx}
+              />
+            )}
+            {(dateFrom || dateTo) && (
+              <Chip
+                size="medium"
+                label={`Submitted: ${dateFrom || "…"} → ${dateTo || "…"}`}
+                onDelete={() => { setDateFrom(""); setDateTo(""); }}
+                sx={filterChipSx}
+              />
+            )}
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
+            <TextField
+              size="small"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ width: 220, mt: 1.75 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
+                  </InputAdornment>
+                ),
+              }}
             />
-          )}
-          {(dateFrom || dateTo) && (
-            <Chip
-              size="medium"
-              label={`Submitted: ${dateFrom || "…"} → ${dateTo || "…"}`}
-              onDelete={() => { setDateFrom(""); setDateTo(""); }}
-              sx={filterChipSx}
-            />
-          )}
+            <ToggleButtonGroup
+              value={view}
+              exclusive
+              onChange={(_, val) => val && setView(val)}
+              size="small"
+            >
+              <ToggleButton value="table" aria-label="table view" sx={toggleSx}>
+                <TableRowsIcon fontSize="small" />
+              </ToggleButton>
+              <ToggleButton value="kanban" aria-label="kanban view" sx={toggleSx}>
+                <ViewKanbanIcon fontSize="small" />
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
         </Box>
 
-        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-          <TextField
-            size="small"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ width: 220, mt: 1.75 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <ToggleButtonGroup
-            value={view}
-            exclusive
-            onChange={(_, val) => val && setView(val)}
-            size="small"
-          >
-            <ToggleButton value="table" aria-label="table view" sx={toggleSx}>
-              <TableRowsIcon fontSize="small" />
-            </ToggleButton>
-            <ToggleButton value="kanban" aria-label="kanban view" sx={toggleSx}>
-              <ViewKanbanIcon fontSize="small" />
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-      </Box>
+        {view === "table" && <TableView />}
+        {view === "kanban" && <KanbanView />}
 
-      {view === "table" && <TableView />}
-      {view === "kanban" && <KanbanView />}
-
-      {/* Filter Dialog */}
-      <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600 }}>
-          Filter Applications
-        </DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={filter}
-                label="Status"
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                {STATUSES.map((s) => (
-                  <MenuItem key={s} value={s}>
-                    {s === "ALL" ? "All" : s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()}
-                  </MenuItem>
-                ))}
+        {/* Filter Dialog */}
+        <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ bgcolor: theme.palette.primary.main, color: theme.ritColors.white, fontWeight: 600 }}>
+            Filter Interest Forms
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={filter}
+                  label="Status"
+                  onChange={(e) => setFilter(e.target.value)}
+                >
+                  {STATUSES.map((s) => (
+                    <MenuItem key={s} value={s}>
+                      {s === "ALL" ? "All" : s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
             <TextField
