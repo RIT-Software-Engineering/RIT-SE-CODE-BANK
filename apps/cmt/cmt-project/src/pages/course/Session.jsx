@@ -1,4 +1,4 @@
-import { Edit } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal } from "react-bootstrap";
 import { useParams } from "react-router-dom";
@@ -60,7 +60,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         <Accordion>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} courseId={courseId}/>
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId} 
-        isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId}/>
+        isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
+        setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions}/>
         <DeleteModal deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
         materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={id} sessionNum={sessionNum}/>
         {
@@ -87,11 +88,18 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                     <Card.Title>
                                         <div className='flex justify-between'>
                                             <div><ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} /></div>
-                                            <div className='justify-end size-12 opacity-0 group-hover:!opacity-100 group-hover:text-white'><Button variant='outline-dark' onClick={(e) => {
+                                            <div className='flex justify-end size-10 opacity-0 group-hover:!opacity-100 group-hover:text-white'>
+                                                <Button variant='outline-dark' onClick={(e) => {
                                                 setCurMaterialId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
                                                 setIsEditOpen(true);
                                                 e.currentTarget.style.opacity = "100";
-                                            }}><Edit /></Button></div>
+                                                }}><Edit /></Button>
+                                                <Button className="ml-3" variant="outline-danger" onClick={(e) => {
+                                                setCurMaterialId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
+                                                setIsDeleteOpen(true);
+                                                e.currentTarget.style.opacity = "100";
+                                                }}><Trash2 /></Button>
+                                            </div>
                                         </div>
                                     </Card.Title>
                                     <Card.Text>
@@ -210,10 +218,10 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
  * @returns {React.ReactElement} the modal as HTML
  */
 export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions, courseId }) {
-    const [itemLabel, setItemLabel] = useState('')
-    const [itemBody, setItemBody] = useState('')
-    const [itemType, setItemType] = useState('Topic/Lecture')
-    const [error, setError] = useState('')
+    const [itemLabel, setItemLabel] = useState('');
+    const [itemBody, setItemBody] = useState('');
+    const [itemType, setItemType] = useState('Topic/Lecture');
+    const [error, setError] = useState('');
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
 
@@ -221,22 +229,22 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
         const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
         CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody: hasLinksInTitle ? undefined : itemBody, sessionNum })
             .then(async response => {
-                const data = await response.json()
-                setSessionData(sessionData => [...sessionData, data.material])
+                const data = await response.json();
+                setSessionData(sessionData => [...sessionData, data.material]);
             })
             .catch(error => LogError("Error uploading material", error, setError))
     }, [hasLinksInTitle, itemBody, itemLabel, itemType, sessionNum, sessions, setSessionData])
 
     function resetForm() {
-        setItemType('Topic/Lecture')
-        setItemLabel('')
-        setItemBody('')
-        setError('')
+        setItemType('Topic/Lecture');
+        setItemLabel('');
+        setItemBody('');
+        setError('');
     }
 
     function handleClose() {
-        setIsOpen(false)
-        resetForm()
+        setIsOpen(false);
+        resetForm();
     }
 
     return (
@@ -328,14 +336,19 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
  * @param {Number} props.courseId - the course ID for resource linking
  * @param {(deleteOpen: Boolean) => void} props.setDeleteOpen - sets the delete modal to be either opened or closed
  * @param {(materialId: Number) => void} props.setMaterialId - sets the material id we're working with. We turn it to 0 upon closing.
+ * @param {Number} props.sessionCount 
+ * @param {Array} props.sessions
  * @returns {React.ReactElement} the modal as HTML
  */
 function SessionEditModal({ sessionData, setSessionData, materialId, 
-    isEditOpen, setIsEditOpen, courseId, setDeleteOpen, setMaterialId }){
+    isEditOpen, setIsEditOpen, courseId, 
+    setDeleteOpen, setMaterialId, sessionCount, sessions }){
     const curMaterial = sessionData.find(material => material.id === materialId);
     
     const [itemLabel, setItemLabel] = useState(curMaterial?.label ?? "");
     const [itemBody, setItemBody] = useState(curMaterial?.body ?? "");
+    const [itemType, setItemType] = useState(curMaterial?.type ?? "Topic/Lecture");
+    const [sessionNum, setSessionNum] = useState(`Session ${curMaterial?.sessionNum+1 ?? 1}`);
     const [warningVisible, setWarningVisible] = useState(false);
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
@@ -353,10 +366,12 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
 
     function updateMaterial(){
         const realItemBody = hasLinksInTitle ? '' : itemBody;
-        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody: realItemBody}).then(() => {
+        const realSessionNum = parseInt(sessionNum.replace("Session ", ""))-1;
+        const sessionId = sessions.find(session => session.sessionNum === parseInt(realSessionNum))?.id;
+        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody: realItemBody, itemType, sessionNum: realSessionNum, sessionId}).then(() => {
             const sessionDataCopy = sessionData.map(material => {
                 if (material.id === materialId) 
-                    return {...material, label: itemLabel, body: realItemBody}
+                    return {...material, label: itemLabel, body: realItemBody, type: itemType, sessionNum: realSessionNum, sessionId}
                 return material
             });
             setSessionData(sessionDataCopy);
@@ -366,8 +381,11 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
     return (
         <Offcanvas
             onShow={() => {
-                setItemLabel(curMaterial?.label ?? "")
-                setItemBody(curMaterial?.body ?? "")
+                setItemLabel(curMaterial?.label ?? "");
+                setItemBody(curMaterial?.body ?? "");
+                setItemType(curMaterial?.type ?? "Topic/Lecture");
+                setSessionNum(`Session ${curMaterial?.sessionNum+1 ?? 1}`);
+                console.log(`Session ${curMaterial?.sessionNum+1 ?? 1}`)
             }}
             show={isEditOpen}
             onHide={() => { setIsEditOpen(false); resetForm(); }}
@@ -384,7 +402,30 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                     <Form onSubmit={updateMaterial}>
                         <div className='flex'>
                             <div className='w-full'>
-                                <div>
+                                <div className={`${sessionData.find(material => material.id === materialId && material.type === "Personal Notes") ? 'hidden' : ''}`}>
+                                    <div>
+                                        <Form.Label>Material Type</Form.Label>
+                                        <Form.Select onChange={e => setItemType(e.target.value)} value={itemType}>
+                                            <option>Topic/Lecture</option>
+                                            <option>Class Activity</option>
+                                            <option>Reading/Resources</option>
+                                            <option>Projects & Practica</option>
+                                            <option>Group Assignment</option>
+                                            <option>Individual Assignment</option>
+                                        </Form.Select>
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <Form.Label>Session</Form.Label>
+                                        <Form.Select onChange={e => setSessionNum(e.target.value)} value={sessionNum}>
+                                            {Array.from({ length: sessionCount }, (_, i) => {
+                                                return <option>Session {i+1}</option>
+                                            })}
+                                        </Form.Select>
+                                    </div>
+                                </div>
+
+                                <div className="mb-3">
                                     <Form.Label>Title</Form.Label>
                                     <RichTextEditor 
                                         value={itemLabel} 
@@ -394,7 +435,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                         onEditor={setTitleEditor}
                                     />
                                 </div>
-                                <div>
+                                <div className="mb-3">
                                     <Form.Label>Content</Form.Label>
                                     <RichTextEditor 
                                         value={itemBody} 
@@ -430,7 +471,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                         </div>
                     </Form>
                     </Offcanvas.Body>
-                </Offcanvas>
+        </Offcanvas>
     );
 }
 
@@ -448,8 +489,6 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
 function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
     const allCols = useMemo(() => ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"], []);
-    // TODO: maybe... change how this works, currently updates all columns for every session but that may be ok.
-    // It'll look a bit more clumped, but it is closer to realistic for what a prof. may want.
     
     /** Checks if there's any data in any of the columns and show them.
      * There's a bunch of columns so it's mainly just to reduce how much is shown
