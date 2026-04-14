@@ -2,15 +2,16 @@ FROM node:20-alpine
 WORKDIR /app
 RUN apk add --no-cache openssl
 
-# Copy package files. im not sure why "COPY . ." doesn't cover this
+# Copy top level npm workspace stuff (package.json) and also relevant project
 COPY package*.json ./
+COPY apps/cmt/backend ./apps/cmt/backend
 
-# Install root deps (if needed) and backend deps
+RUN npm ci --workspace cmt-frontend
+
 RUN pwd
 RUN ls
 
-
-COPY . .
+RUN cd apps/cmt/backend
 
 RUN pwd
 RUN ls

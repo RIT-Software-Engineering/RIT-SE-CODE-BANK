@@ -1,16 +1,14 @@
 FROM node:20-alpine
 WORKDIR /app
 
-# Copy package files
+# Copy top level npm workspace stuff (package.json) and also relevant project
 COPY package*.json ./
+COPY apps/cmt/frontend ./apps/cmt/frontend
 
-# Install dependencies
-RUN npm ci --legacy-peer-deps
-
-# Copy application files
-COPY . .
+RUN npm ci --workspace cmt-frontend
 
 # Build the React app
+RUN cd apps/cmt/frontend
 RUN npm run build
 
 EXPOSE 3010
