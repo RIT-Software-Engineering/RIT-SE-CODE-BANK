@@ -8,6 +8,7 @@ function getTransport() {
   const host = process.env.SMTP_HOST || "localhost";
   const port = Number(process.env.SMTP_PORT || 2525);
   transporter = nodemailer.createTransport({
+    name: "notification-service",
     host,
     port,
     secure: false,
