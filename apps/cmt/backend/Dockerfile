@@ -18,8 +18,6 @@ RUN ls
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
-RUN npx prisma generate
-
 EXPOSE 5010
 
-CMD ["sh", "-c", "npx prisma migrate reset --force --skip-seed && npx prisma db push --accept-data-loss && node prisma/seed.js && node server.js"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate reset --force --skip-seed && npx prisma db push --accept-data-loss && node prisma/seed.js && node server.js"]
