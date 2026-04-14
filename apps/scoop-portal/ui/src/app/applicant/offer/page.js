@@ -22,7 +22,7 @@ import { useUser } from "../../utils/user-context/page";
 export default function OfferPage() {
   const router = useRouter();
   const theme = useTheme();
-  const { user } = useUser();
+  const { user, setUser } = useUser();
 
   const [offer, setOffer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -91,9 +91,24 @@ export default function OfferPage() {
         severity: "success",
       });
 
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 2000);
+    setTimeout(async () => {
+        try {
+            const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/users/${user.id}`
+            );
+
+            if (!res.ok) throw new Error("Failed to refresh user");
+
+            const updatedUser = await res.json();
+
+            setUser(updatedUser);
+
+            router.push("/dashboard");
+        } catch (err) {
+            console.error("Failed to refresh user:", err);
+            router.push("/dashboard");
+        }
+    }, 2000);
     } catch (err) {
       setNotification({
         open: true,
