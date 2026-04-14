@@ -122,4 +122,4 @@ jobs:
         with:
           node-version: 20
       - name: deploy
-        run: CI=false npx nx affected -t deploy -v --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+        run: CI=false npx nx affected -t deploy -v --base=origin/cmt-dev-nx-cicd-testing --head=${{ needs.setup.outputs.nx-head }}
