@@ -5,7 +5,13 @@ WORKDIR /app
 COPY package*.json ./
 COPY apps/cmt/frontend ./apps/cmt/frontend
 
+RUN pwd
+RUN ls
+
 RUN npm ci --workspace cmt-frontend
+
+RUN pwd
+RUN ls
 
 # Build the React app
 RUN cd apps/cmt/frontend
