@@ -43,7 +43,7 @@ import { getComparator } from "@utils/sortingUtils";
 /**
  * The statuses to filter applications by.
  */
-const STATUSES = ["ALL", "ACCEPTED", "REJECTED", "PENDING"];
+const STATUSES = ["ALL", "APPROVED", "REJECTED", "PENDING"];
 
 export default function SupervisorApplicationsPage() {
   const theme = useTheme();
@@ -149,20 +149,6 @@ export default function SupervisorApplicationsPage() {
       last_login: tempData.last_login,
       prev_login: tempData.prev_login,
     };
-  };
-
-  /**
-   * Handles the logic to submit accepted applicants as new users into the database.
-   *
-   * @returns {void}
-   */
-  const handleSubmit = () => {
-    const acceptedApps = applications.filter((app) => app.status === "ACCEPTED");
-    for (let app of acceptedApps) {
-      let newUser = createUserFromApp(app);
-      console.log("Submitting user:", newUser);
-      postNewUsers(newUser);
-    }
   };
 
   const handleBack = () => router.back();
@@ -280,7 +266,7 @@ export default function SupervisorApplicationsPage() {
   const KanbanView = () => {
     const kanbanColumns = [
       { label: "Pending", key: "PENDING", color: theme.palette.warning.main, defaultOrder: "desc" },
-      { label: "Accepted", key: "ACCEPTED", color: theme.palette.success.main, defaultOrder: "desc" },
+      { label: "Approved", key: "APPROVED", color: theme.palette.success.main, defaultOrder: "desc" },
       { label: "Rejected", key: "REJECTED", color: theme.palette.error.main, defaultOrder: "desc" },
     ];
 

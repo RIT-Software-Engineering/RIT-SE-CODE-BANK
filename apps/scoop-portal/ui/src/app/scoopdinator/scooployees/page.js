@@ -40,9 +40,10 @@ const TYPE_LABELS = {
   scooployee: "Scooployee",
   scoopervisor: "Scoopervisor",
   advisor: "Advisor",
+  applicant: "Applicant",
 };
 
-const USER_TYPES = ["scooployee", "scoopervisor", "prospect", "advisor"];
+const USER_TYPES = ["scooployee", "scoopervisor", "prospect", "advisor", "applicant"];
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 

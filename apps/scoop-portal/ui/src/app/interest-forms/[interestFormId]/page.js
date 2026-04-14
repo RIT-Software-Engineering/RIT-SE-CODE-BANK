@@ -122,11 +122,13 @@ export default function InterestFormDetailPage() {
    */
   async function createProspectUser(form) {
     try {
+      const user_id = form.ritEmail.split("@")[0];
       const response = await fetch(
         process.env.NEXT_PUBLIC_API_URL + "/api/users",
         {
           method: "POST",
           body: JSON.stringify({
+            id: user_id,
             fname: form.firstName,
             lname: form.lastName,
             email: form.ritEmail,
