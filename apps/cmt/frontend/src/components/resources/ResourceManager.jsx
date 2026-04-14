@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Row, Col, Spinner, Button } from 'react-bootstrap'
 import { RefreshCcw } from 'lucide-react'
-import { UploadResourceModal } from './modals.jsx'
-import { ResourceCard } from './resourceRenderers.jsx'
-import { CMTJsonFetch } from '../../utils/api.js'
+import { CMTDangerAlert, LogError } from '../../utils/error'
 
 /**
  * Generate the correct download URL for a resource based on the environment
@@ -21,7 +19,7 @@ export function getResourceDownloadUrl(resourceId) {
  */
 export function ResourceManager({ courseId }) {
     
-    const [resources, loading, loadResources] = useResources(courseId)
+    const [resources, loading, loadResources, error] = useResources(courseId)
 
     return (
         <div>
@@ -37,6 +35,8 @@ export function ResourceManager({ courseId }) {
                     <Spinner animation='border' />
                     <p className='mt-2'>Loading resources...</p>
                 </div>
+            ) : error ? (
+                <CMTDangerAlert error={error} />
             ) : resources.length === 0 ? (
                 <div className='text-center text-muted'>
                     <p>No resources uploaded yet.</p>
@@ -58,20 +58,22 @@ export function ResourceManager({ courseId }) {
 /**
  * Hook to simplify calling resources across a couple of components
  * @param {Number} courseId 
- * @returns {[any[], boolean, () => Promise<void>]} [list of resources, whether its loading, function to refresh resources]
+ * @returns {[any[], boolean, () => Promise<void>, string | undefined]} [list of resources, whether its loading, function to refresh resources, error message if any]
  */
 export function useResources(courseId) {
     const [resources, setResources] = useState([])
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
 
     const loadResources = useCallback(async () => {
         if (!courseId) return
 
+        setError(null)
         setLoading(true)
 
         CMTJsonFetch('GET', `resources/${courseId}`)
             .then(async response => setResources((await response.json()) || []))
-            .catch(error => { console.error('Failed to load resources', error) }) //TODO: central error notif system
+            .catch(error => LogError("Failed to load resources.", error, setError))
             .finally(() => setLoading(false))
     }, [courseId])
 
@@ -79,5 +81,5 @@ export function useResources(courseId) {
         if (courseId) loadResources()
     }, [courseId, loadResources])
 
-    return [resources, loading, loadResources]
+    return [resources, loading, loadResources, error]
 }

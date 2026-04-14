@@ -1,13 +1,15 @@
 import { PlusIcon, Pencil, Trash } from 'lucide-react'
 import { useState } from 'react'
 import { Button, Form, Modal, Spinner } from 'react-bootstrap'
-import { CMTFormFetch, CMTJsonFetch } from '../../utils/api.js'
+import { CMTFormFetch, CMTJsonFetch } from '../../utils/api'
+import { CMTDangerAlert, LogError } from '../../utils/error'
 
 export function UploadResourceModal({ courseId, refresh }) {
     const [showModal, setShowModal] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [file, setFile] = useState(null)
     const [resourceName, setResourceName] = useState('')
+    const [error, setError] = useState(null)
 
     const handleFileUpload = async e => {
         e.preventDefault()
@@ -16,6 +18,7 @@ export function UploadResourceModal({ courseId, refresh }) {
         }
 
         setUploading(true)
+        setError(null)
 
         const formData = new FormData()
         formData.append('file', file)
@@ -31,8 +34,11 @@ export function UploadResourceModal({ courseId, refresh }) {
                 setResourceName('')
             })
             .catch(error => {
-                console.error('Error uploading', error)
-            }) //TODO: central error notif
+                let message;
+                if (error.message && error.message.includes('Invalid file type'))
+                    message = 'Invalid file type. Please upload a supported file (PDF, DOC, TXT, images, etc.).'
+                LogError("Error uploading file.", error, setError, message)
+            })
             .finally(() => setUploading(false))
     }
 
@@ -64,9 +70,15 @@ export function UploadResourceModal({ courseId, refresh }) {
                             <Form.Label>File</Form.Label>
                             <Form.Control
                                 type='file'
-                                onChange={e => setFile(e.target.files?.[0] || null)}
+                                onChange={(e) => {
+                                    const target = e.target;
+                                    if ('files' in target) {
+                                        setFile(target.files?.[0] || null);
+                                    }
+                                }}
                                 required
                             />
+                            <CMTDangerAlert error={error} />
                         </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
@@ -93,6 +105,7 @@ export function UploadResourceModal({ courseId, refresh }) {
 export function EditResourceModal({ resource, refresh }) {
     const [showEditModal, setShowEditModal] = useState(false)
     const [editedResource, setEditedResource] = useState(resource)
+    const [error, setError] = useState(null)
 
     const handleEditResource = async e => {
         e.preventDefault()
@@ -104,9 +117,7 @@ export function EditResourceModal({ resource, refresh }) {
                 setShowEditModal(false)
                 setEditedResource(null)
             })
-            .catch(error => {
-                console.error('Error editing resource', error)
-            }) // TODO: use central notif system
+            .catch(error => LogError('Error editing resource.', error, setError))
     }
 
     return (
@@ -117,6 +128,7 @@ export function EditResourceModal({ resource, refresh }) {
                 onClick={e => {
                     e.stopPropagation()
                     setEditedResource(resource)
+                    setError(null)
                     setShowEditModal(true)
                 }}
             >
@@ -137,6 +149,7 @@ export function EditResourceModal({ resource, refresh }) {
                                 required
                             />
                         </Form.Group>
+                        <CMTDangerAlert error={error} />
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant='secondary' onClick={() => setShowEditModal(false)}>
@@ -154,13 +167,12 @@ export function EditResourceModal({ resource, refresh }) {
 
 export function DeleteResourceModal({ refresh, resource }) {
     const [showModal, setShowModal] = useState(false)
-
+    const [error, setError] = useState(null)
+ 
     const handleDeleteResource = async resourceId => {
         CMTJsonFetch('DELETE', `resources/${resourceId}`)
             .then(refresh)
-            .catch(error => {
-                console.error('Error deleting', error)
-            }) //TODO: central error notif system
+            .catch(error => LogError("Error deleting resource.", error, setError))
     }
 
     return (
@@ -168,7 +180,7 @@ export function DeleteResourceModal({ refresh, resource }) {
             <Button
                 variant='outline-danger'
                 size='sm'
-                onClick={_ => { setShowModal(true) }}
+                onClick={_ => { setError(null); setShowModal(true) }}
             >
                 <Trash size={16} />
             </Button>
@@ -177,6 +189,7 @@ export function DeleteResourceModal({ refresh, resource }) {
                     <p className='text-2xl mb-0'>Confirm Resource Deletion</p>
                 </Modal.Header>
                 <Modal.Body>
+                    <CMTDangerAlert error={error} />
                     <Button variant='danger' onClick={() => handleDeleteResource(resource.id)}>
                         Delete Resource Permanently
                     </Button>
