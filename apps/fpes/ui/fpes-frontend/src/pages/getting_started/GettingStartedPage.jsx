@@ -13,7 +13,6 @@ const ROLE_TASKS = {
     { id: "highlights_form", label: "Submit your highlights form", desc: "Fill out services, grants, publications, student support, and course sections.", route: "/highlights_form" },
     { id: "teaching_eval", label: "Upload your teaching evaluation", desc: "Upload your teaching evaluation as a PDF or CSV.", route: "/highlights?upload=true" },
     { id: "highlights", label: "View your highlights & teaching evals", desc: "See all your submitted highlights forms and uploaded teaching evaluations in one place.", route: "/highlights" },
-    { id: "annual_eval", label: "View your Annual Evaluation", desc: "See your AI-generated annual evaluation summarizing your highlights and teaching evals.", route: "/annual-eval" },
   ],
   Supervisor: [
     { id: "profile", label: "Set up your profile", desc: "Fill in your name, rank, unit, and affiliations.", route: "/profile" },

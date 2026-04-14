@@ -53,7 +53,24 @@ router.get('/:formId/view', async (req, res) => {
       [evalData[0].id]
     );
     
-    // Group text responses by question
+    // Build PII filter using professor name and course name
+    const { professor_name: profName, course_name: courseName } = evalData[0];
+    const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const filterPII = (text) => {
+      if (!text) return text;
+      let f = String(text);
+      if (profName) f = f.replace(new RegExp(escRe(profName), 'gi'), '[PROFESSOR]');
+      f = f.replace(/\b(professor|prof\.?|dr\.?|instructor)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g, '$1 [PROFESSOR]');
+      // First name only (e.g. "Andy") — only when preceded by a title or at start of sentence
+      f = f.replace(/\b(professor|prof\.?|dr\.?)\s+([A-Z][a-z]+)\b/g, '$1 [PROFESSOR]');
+      f = f.replace(/\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, '[NAME]');
+      if (courseName) f = f.replace(new RegExp(escRe(courseName).replace(/\s+/g, '\\s+'), 'gi'), '[COURSE]');
+      f = f.replace(/\b[A-Z]{2,5}[\s-]?\d{2,4}[A-Z]?\b/g, '[COURSE]');
+      f = f.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
+      return f;
+    };
+
+    // Group text responses by question and filter PII from each response
     const text_responses = [];
     const questionMap = {};
     
@@ -66,7 +83,7 @@ router.get('/:formId/view', async (req, res) => {
         text_responses.push(questionMap[row.id]);
       }
       if (row.response) {
-        questionMap[row.id].responses.push(row.response);
+        questionMap[row.id].responses.push(filterPII(row.response));
       }
     }
     
