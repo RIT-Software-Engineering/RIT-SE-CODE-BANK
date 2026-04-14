@@ -313,6 +313,7 @@ export default function ApplicationDetailPage() {
               question="Which courses have you already taken or are about to complete this term?"
               answer={application.coursesTaken}
             />
+            <Field question="What is your cumulative GPA?" answer={application.cumulativeGPA} />
           </Section>
 
           <Divider />

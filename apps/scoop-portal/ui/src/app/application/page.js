@@ -379,9 +379,9 @@ function ApplicationPage() {
                         margin="normal"
                         label="UID"
                         name="userID"
-                        value={formValues["userID"] || ""}
+                        value={formValues.userID || ""}
                         onChange={handleChange}
-                        error={!!errors["userID"]}
+                        error={!!errors.userID}
                     />
 
                     <FormControl fullWidth margin="normal">
@@ -391,19 +391,19 @@ function ApplicationPage() {
                             // margin="normal"
                             label="academicAdvisor"
                             name="academicAdvisor"
-                            value={formValues["academicAdvisor"] ?? ""}
+                            value={formValues.academicAdvisor ?? ""}
                             onChange={(e) =>
                                 handleDropdownChange(
                                     "academicAdvisor",
                                     e.target.value
                                 )
                             }
-                            error={!!errors["academicAdvisor"]}
+                            error={!!errors.academicAdvisor}
                             // helperText={errors.description}
                         >
-                            <MenuItem value={0}>Carrie Koneski</MenuItem>
-                            <MenuItem value={1}>Sarah Mittiga</MenuItem>
-                            <MenuItem value={2}>Joe Rozak</MenuItem>
+                            <MenuItem value="Carrie Koneski">Carrie Koneski</MenuItem>
+                            <MenuItem value="Sarah Mittiga">Sarah Mittiga</MenuItem>
+                            <MenuItem value="Joe Rozak">Joe Rozak</MenuItem>
                         </Select>
                     </FormControl>
 
@@ -416,14 +416,14 @@ function ApplicationPage() {
                             // margin="normal"
                             label="creditsRemaining"
                             name="creditsRemaining"
-                            value={formValues["creditsRemaining"] ?? ""}
+                            value={formValues.creditsRemaining ?? ""}
                             onChange={(e) =>
                                 handleDropdownChange(
                                     "creditsRemaining",
                                     e.target.value
                                 )
                             }
-                            error={!!errors["creditsRemaining"]}
+                            error={!!errors.creditsRemaining}
                             // helperText={errors.description}
                         >
                             <MenuItem value={0}>13-30 credits</MenuItem>
@@ -440,9 +440,9 @@ function ApplicationPage() {
                             fullWidth
                             label=""
                             name="cumulativeGPA"
-                            value={formValues["cumulativeGPA"] || ""}
+                            value={formValues.cumulativeGPA || ""}
                             onChange={handleChange}
-                            error={!!errors["cumulativeGPA"]}
+                            error={!!errors.cumulativeGPA}
                         />
                     </FormControl>
 
@@ -471,41 +471,70 @@ function ApplicationPage() {
                     </FormControl>
 
                     <FormControl fullWidth margin="normal">
-                        <FormLabel required id="referral-label">
+                        <FormLabel required id="semester-label">
+                            Which semester did you start at RIT?
+                        </FormLabel>
+                        <Select
+                            required
+                            label="startSemester"
+                            name="startSemester"
+                            value={formValues.startSemester || ""}
+                            onChange={(e) =>
+                                handleDropdownChange(
+                                    "startSemester",
+                                    e.target.value
+                                )
+                            }
+                            error={!!errors.startSemester}
+                            // helperText={errors.semester}
+                        >
+                            {semesterData.map((startSemester) => (
+                                <MenuItem
+                                    key={startSemester.id}
+                                    value={startSemester.name}
+                                >
+                                    {startSemester.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal">
+                        <FormLabel required id="SEcoopReferral-label">
                             How did you hear about the SCOOP program?
                         </FormLabel>
 
                         <Select
                             required
                             // margin="normal"
-                            label="referral"
-                            name="referral"
-                            value={formValues["referral"] ?? ""}
+                            label="SEcoopReferral"
+                            name="SEcoopReferral"
+                            value={formValues.SEcoopReferral ?? ""}
                             onChange={(e) =>
                                 handleDropdownChange(
-                                    "referral",
+                                    "SEcoopReferral",
                                     e.target.value
                                 )
                             }
-                            error={!!errors["referral"]}
+                            error={!!errors.SEcoopReferral}
                             // helperText={errors.description}
                         >
-                            <MenuItem value={0}>Academic Advisor</MenuItem>
-                            <MenuItem value={1}>Faculty</MenuItem>
-                            <MenuItem value={2}>Friend</MenuItem>
-                            <MenuItem value={3}>Co-op & Career Services</MenuItem>
-                            <MenuItem value={4}>Other</MenuItem>
+                            <MenuItem value="Academic Advisor">Academic Advisor</MenuItem>
+                            <MenuItem value="Faculty">Faculty</MenuItem>
+                            <MenuItem value="Friend">Friend</MenuItem>
+                            <MenuItem value="Co-op & Career Services">Co-op & Career Services</MenuItem>
+                            <MenuItem value="Other">Other</MenuItem>
                         </Select>
 
-                        {formValues["referral"] === 4 && (
+                        {formValues.SEcoopReferral === "Other" && (
                             <TextField
                                 fullWidth
                                 margin="normal"
                                 label="Please specify:"
-                                name="referralOther"
-                                value={formValues["referralOther"] || ""}
+                                name="SEcoopReferralDetails"
+                                value={formValues.SEcoopReferralDetails ?? ""}
                                 onChange={handleChange}
-                                error={!!errors["referralOther"]}
+                                error={!!errors.SEcoopReferralDetails}
                             />
                         )}
                     </FormControl>
@@ -657,161 +686,11 @@ function ApplicationPage() {
                             <TextField
                                 fullWidth
                                 margin="normal"
-                                multiline
                                 label="Please specify:"
                                 name="jobSearchAcknowledgmentDetails"
                                 value={formValues.jobSearchAcknowledgmentDetails ?? ""}
                                 onChange={handleChange}
                                 error={!!errors.jobSearchAcknowledgmentDetails}
-                            />
-                        )}
-                    </FormControl>
-
-                    <FormControl fullWidth margin="normal">
-                        <FormLabel required id="pending-offers-list-label">
-                            {" "}
-                            If Yes, and these as a result of an interview, name
-                            each employer and your last date of contact for
-                            each. If possible provide Company/position and
-                            location. (e.g. 1.- Microsoft/Intern Seattle, WA
-                            April 2nd 2025, 2.- Paychex/SE co-op Webster,
-                            NY){" "}
-                        </FormLabel>
-                        <TextField
-                            fullWidth
-                            label=""
-                            name="pendingOffersDetails"
-                            value={formValues.pendingOffersDetails || ""}
-                            onChange={handleChange}
-                            error={!!errors.pendingOffersDetails}
-                        />
-                    </FormControl>
-
-                    <FormControl>
-                        <FormLabel required id="rejection-letters-label">
-                            Have you received formal rejection
-                            letters/responses?
-                        </FormLabel>
-                        <RadioGroup
-                            aria-labelledby="rejection-letters-buttons-group-label"
-                            name="rejectionLetters"
-                            onChange={handleChange}
-                        >
-                            <FormControlLabel
-                                value="true"
-                                control={<Radio />}
-                                label="Yes"
-                            />
-                            <FormControlLabel
-                                value="false"
-                                control={<Radio />}
-                                label="No"
-                            />
-                        </RadioGroup>
-                    </FormControl>
-
-                    <FormControl fullWidth margin="normal">
-                        <FormLabel required id="rejection-letters-details-label">
-                            {" "}
-                            If Yes, approximately how many? Name as many as you
-                            can recall that you would be able to provide
-                            evidence if needed. Companies/Employers and
-                            approximate date. (e.g. 1.- Google, January 16th
-                            2025, 2.- Meta, February 18th 2025){" "}
-                        </FormLabel>
-                        <TextField
-                            fullWidth
-                            label=""
-                            name="rejectionLettersDetails"
-                            value={formValues.rejectionLettersDetails || ""}
-                            onChange={handleChange}
-                            error={!!errors.rejectionLettersDetails}
-                        />
-                    </FormControl>
-
-                    <FormControl margin="normal">
-                        <FormLabel required id="SE-coop-interest-label">
-                            SE does not currently have a co-op option for this
-                            summer. However, IF an approved unpaid opportunity
-                            became available, would you be interested in
-                            pursuing it?
-                        </FormLabel>
-                        <RadioGroup
-                            aria-labelledby="SE-coop-interest-buttons-group-label"
-                            name="SEcoopInterest"
-                            onChange={handleChange}
-                        >
-                            <FormControlLabel
-                                value="true"
-                                control={<Radio />}
-                                label="Yes"
-                            />
-                            <FormControlLabel
-                                value="false"
-                                control={<Radio />}
-                                label="No"
-                            />
-                        </RadioGroup>
-                    </FormControl>
-
-                    <FormControl margin="normal">
-                        <FormLabel required id="SEcoopAvailability-label">
-                            If an option were to become available, would you be
-                            able to participate in-person at RIT or are your
-                            circumstances such that you would be unable to for
-                            the duration of the co-op?
-                        </FormLabel>
-                        <RadioGroup
-                            aria-labelledby="SEcoopAvailability-buttons-group-label"
-                            name="SEcoopAvailability"
-                            onChange={handleChange}
-                        >
-                            <FormControlLabel
-                                value="true"
-                                control={<Radio />}
-                                label="Yes"
-                            />
-                            <FormControlLabel
-                                value="false"
-                                control={<Radio />}
-                                label="No"
-                            />
-                        </RadioGroup>
-                    </FormControl>
-
-                    <FormControl>
-                        <FormLabel required id="jobSearchAcknowledgment-label">
-                            It is imperative that you continue your search between now and the beginning of your SCOOP term.
-                            Students often find jobs at the very last minute before a term starts,
-                            so there is no such thing as too late to do your search. Please acknowledge this below:
-                        </FormLabel>
-                        <RadioGroup
-                            aria-labelledby="jobSearchAcknowledgment-buttons-group-label"
-                            name="jobSearchAcknowledgment"
-                            value={formValues["jobSearchAcknowledgment"] ?? ""}
-                            onChange={handleChange}
-                        >
-                            <FormControlLabel
-                                value={true}
-                                control={<Radio />}
-                                label="I agree that I will continue my job search until the beginning of my SCOOP term."
-                            />
-                            <FormControlLabel
-                                value={false}
-                                control={<Radio />}
-                                label="Other"
-                            />
-                        </RadioGroup>
-
-                        {formValues["jobSearchAcknowledgment"] === false && (
-                            <TextField
-                                fullWidth
-                                margin="normal"
-                                label="Please specify:"
-                                name="jobSearchAcknowledgmentOther"
-                                value={formValues["jobSearchAcknowledgmentOther"] || ""}
-                                onChange={handleChange}
-                                error={!!errors["jobSearchAcknowledgmentOther"]}
                             />
                         )}
                     </FormControl>
