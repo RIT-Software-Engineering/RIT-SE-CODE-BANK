@@ -9,10 +9,10 @@ services:
         REACT_APP_BACKEND_URL: /api/cmt
         REACT_APP_AUTH_BASE: ""
         PUBLIC_URL: /cmt
-    image: cmt-frontend:${TAG:-latest}2
+    image: cmt-frontend:${TAG:-latest}
 
   backend:
     build:
       context: ../..
       dockerfile: apps/cmt/backend/Dockerfile
-    image: cmt-backend:${TAG:-latest}2
+    image: cmt-backend:${TAG:-latest}

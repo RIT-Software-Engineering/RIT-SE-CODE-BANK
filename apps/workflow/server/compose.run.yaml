@@ -1,3 +1,5 @@
+name: workflows
+
 services:
   workflows-mariadb:
     image: mariadb:latest

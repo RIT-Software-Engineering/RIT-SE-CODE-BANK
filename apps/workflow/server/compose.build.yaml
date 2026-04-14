@@ -5,4 +5,4 @@ services:
     build:
       context: ../../workflow/server
       dockerfile: Dockerfile
-    image: workflows-backend:${TAG:-latest}2
+    image: workflows-backend:${TAG:-latest}
