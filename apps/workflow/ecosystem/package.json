@@ -13,6 +13,7 @@
     "dist"
   ],
   "scripts": {
+    "prepare": "npm run build",
     "build:js": "esbuild src/index.js src/react.js --bundle --format=esm --outdir=dist --external:react --external:react/jsx-runtime",
     "build:types": "tsc -p tsconfig.build.json",
     "build": "npm run build:js && npm run build:types",
