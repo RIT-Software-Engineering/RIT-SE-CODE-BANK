@@ -8,6 +8,7 @@ RUN ls
 
 RUN npm ci
 
+RUN npm run --workspace=apps/workflow/ecosystem build
 RUN npm run --workspace=apps/cmt/frontend build
 
 # run only that workspace

@@ -9,6 +9,8 @@ RUN ls
 
 RUN npm ci
 
+RUN npm run --workspace=apps/workflow/ecosystem build
+
 WORKDIR /app/apps/cmt/backend
 
 RUN pwd
