@@ -42,12 +42,12 @@ export default function App() {
     // the main layout/format of the entire webpage
     <div className="h-screen w-screen bg-main-primary text-text-muted font-mono flex flex-col">
       {/* refer to Header Component */}
-      <Header setCode={setCode}></Header>
+      <Header code={code} setCode={setCode}></Header>
 
       {/* uses react resizeable panels, so the html tags are Group and Panel */}
       <Group>
         {/* left side */}
-        <Panel className="flex flex-col h-full" collapsible minSize={100}>
+        <Panel className="flex flex-col h-full" collapsible defaultSize={70} minSize={100}>
           <Group orientation="vertical">
 
             <Panel>
@@ -75,7 +75,7 @@ export default function App() {
         </Panel>
 
         {/* right side */}
-        <Panel className="flex flex-row flex-1 h-full" collapsible minSize={100}>
+        <Panel className="flex flex-row flex-1 h-full" collapsible defaultSize={30} minSize={100}>
           <div className="bg-border-primary min-w-2"></div>
           {/* refer to SidePanel component */}
           <SidePanel></SidePanel>
