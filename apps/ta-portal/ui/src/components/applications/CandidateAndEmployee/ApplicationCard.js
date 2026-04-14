@@ -11,8 +11,7 @@ import {
   getStatusChipColor,
 } from "@/utils/applicationUtils";
 import { useNotification } from "@/contexts/NotificationContext";
-import ViewableNoteForm from "../../notes/ViewableNoteForm";
-import EditableNoteForm from "@/components/notes/EditableNoteForm";
+import StateUpdateForm from "@/components/jobHistory/StateUpdateForm";
 import { applicationStatusEnumToString } from '@/constants/applicationStatusConstants';
 import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
@@ -37,6 +36,7 @@ import {
   LocationOn as LocationIcon,
   Person,
 } from '@mui/icons-material';
+import ViewHistoryForm from '../../jobHistory/ViewHistoryForm';
 
 /**
  * Component for displaying and managing a candidate's job application. Provides options to view the job position's details,
@@ -62,7 +62,7 @@ export default function CandidateApplicationCard({
   const [isViewingApplication, setIsViewingApplication] = useState(false);
   const [isConfirmingDeletion, setIsConfirmingDeletion] = useState(false);
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
-  const [isViewingNotes, setIsViewingNotes] = useState(false);
+  const [IsViewingHistory, setIsViewingHistory] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [clearConfirm, setShowClearConfirm] = useState(false);
 
@@ -226,7 +226,7 @@ export default function CandidateApplicationCard({
               onClose={handleMenuClose}
             >
               <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
-              <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
+              <MenuItem onClick={() => { setIsViewingHistory(true); handleMenuClose(); }}>View Application History</MenuItem>
               {(jobApplicationStatus.toLowerCase() === "applied" || jobApplicationStatus.toLowerCase() === "interview") && (
                 <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>Delete Application</MenuItem>
               )}
@@ -289,7 +289,7 @@ export default function CandidateApplicationCard({
               <Grid item xs={12} sm={6}>
                 <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</Button>
               </Grid>
-              <Button variant="outlined" onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</Button>
+              <Button variant="outlined" onClick={() => { setIsViewingHistory(true); handleMenuClose(); }}>View Notes</Button>
 
 
               {jobApplicationStatus.toLowerCase() === "pending_offer" && (
@@ -353,24 +353,25 @@ export default function CandidateApplicationCard({
         </ConfirmationModal>
       )}
       */}
-      {isViewingNotes && (
-        <ViewableNoteForm
+      {IsViewingHistory && (
+        <ViewHistoryForm
           foreignKey={application.id}
           foreignTableName="JobPositionApplicationHistory"
-          itemTitle="Application Note History"
+          itemTitle="Application History"
           itemSubtitle={application.jobPosition.course.name}
           statusEnumMap={applicationStatusEnumToString}
           userRole={currentUser.role}
-          onClose={() => setIsViewingNotes(false)}
+          onClose={() => setIsViewingHistory(false)}
         />
       )}
 
-      <EditableNoteForm
+      <StateUpdateForm
         isOpen={modalState.isOpen}
         onClose={handleCloseUpdateModal}
         onConfirm={handleConfirmUpdate}
         title={modalState.title}
         isProcessing={isProcessingUpdate}
+        applicationId={application.id}
       />
     </>
   );

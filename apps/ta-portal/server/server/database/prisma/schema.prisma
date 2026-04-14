@@ -44,6 +44,13 @@ model Comment {
   timestamp        DateTime
 }
 
+model ApplicationNote {
+  id                            Int                           @id @default(autoincrement())
+  note                          String                        @db.Text
+  jobPositionApplicationHistory JobPositionApplicationHistory @relation(fields: [applicationId], references: [id])
+  applicationId                 Int                           @unique
+}
+
 model Resume {
   id                              Int                             @id @default(autoincrement())
   name                            String                          @db.Text
@@ -116,6 +123,7 @@ model JobPositionApplicationHistory {
   wasPriorEmployeeForOtherCourses Boolean
   priorEmploymentHistory          String?              @db.Text
   coverLetterId                   Int?
+  applicationNote                 ApplicationNote?
   jobPosition                     JobPosition          @relation(fields: [jobPositionId], references: [id])
   resume                          Resume               @relation(fields: [resumeId], references: [id])
   coverLetter                     CoverLetter?         @relation(fields: [coverLetterId], references: [id])

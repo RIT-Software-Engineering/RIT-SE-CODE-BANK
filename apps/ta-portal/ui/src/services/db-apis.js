@@ -713,6 +713,43 @@ export async function deleteApplication(candidateUsername, jobPositionId) {
 }
 
 // ====================================================================================
+// Application Notes
+// ====================================================================================
+
+/**
+ * Sets the note of an application.
+ * @param {Number} applicationId - ID of the target application
+ * @param {String} newNote - Note that will replace the old one
+ * @returns {Promise<object>} A promise that resolves to the updated application note.
+ */
+export async function setApplicationNote(applicationId,newNote) {
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/notes/${applicationId}`;
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      newNote
+    }),
+  });
+  return handleApiResponse(response);
+}
+
+/**
+ * Gets the note connected to the given application.
+ * @param {Number} applicationId - ID of the relevant Application
+ * @returns {Promise<object>} A promise that resolves to the updated application note.
+ */
+export async function getApplicationNote(applicationId){
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/applications/notes/${applicationId}`;
+  const response = await fetch(url, {
+    method: "GET",
+  });
+  return handleApiResponse(response);
+}
+
+// ====================================================================================
 // Hiring & Employee Management
 // ====================================================================================
 

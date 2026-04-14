@@ -14,7 +14,6 @@ import {
 } from '@/constants/gradeConstants';
 import PositionTracker from './EmployerAndAdmin/PositionTracker';
 import ViewablePositionForm from './EmployerAndAdmin/ViewablePositionForm';
-import ViewableNoteForm from '../notes/ViewableNoteForm';
 import { positionStatusEnumToString } from '@/constants/positionStatusConstants';
 
 import {
@@ -28,8 +27,6 @@ import {
   Paper,
   Tooltip,
   Typography,
-  Grid,
-  GridItem,
   List,
   ListItem,
   ListItemIcon,
@@ -44,6 +41,7 @@ import {
   LocationOn as LocationIcon,
   Person,
 } from '@mui/icons-material';
+import ViewHistoryForm from '../jobHistory/ViewHistoryForm';
 
 /**
  * A Requirement component to show a single requirement.
@@ -205,7 +203,7 @@ export default function PositionsCard({
         </IconButton>
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
-          <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
+          <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Position History</MenuItem>
           {(onReactivate || onOnHold||onInactive)&& <Divider />}
           {(onOnHold && status !== 'ONHOLD') && (<MenuItem onClick={() => { onOnHold(position.id); handleMenuClose(); }}>Put Position on Hold </MenuItem>)}
           {(onInactive && status !== 'INACTIVE') && (<MenuItem onClick={() => { onInactive(position.id); handleMenuClose(); }}> Mark Position Inactive</MenuItem>)}
@@ -299,10 +297,10 @@ export default function PositionsCard({
         <ViewablePositionForm position={position} onClose={() => setIsViewingDetails(false)} />
       )}
       {isViewingNotes && (
-        <ViewableNoteForm
+        <ViewHistoryForm
           foreignKey={position.id}
           foreignTableName="JobPosition"
-          itemTitle="Position Note History"
+          itemTitle="Position History"
           itemSubtitle={position.course.name}
           statusEnumMap={positionStatusEnumToString}
           userRole={currentUser.role}

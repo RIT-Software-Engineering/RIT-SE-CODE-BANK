@@ -10,8 +10,6 @@ import React, {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
-  getOpenJobPositions,
-  getPositionsByOwner,
   getAllPositions,
   updatePositionStatus,
   getSemesterCodesForOpenPositions,
@@ -26,7 +24,7 @@ import { Filter } from "@/components/common/searchAndFilter/Filter";
 import SearchBar from "@/components/common/searchAndFilter/SearchBar";
 import { generatePositionsFilterConfig } from "./filter.config";
 import EditPositionModal from "@/components/positions/EmployerAndAdmin/EditPositionModal";
-import EditableNoteForm from "@/components/notes/EditableNoteForm";
+import StateUpdateForm from "@/components/jobHistory/StateUpdateForm";
 import ConfirmationModal from "@/components/common/models/ConfirmationModal";
 
 import { useNotification } from '@/contexts/NotificationContext';
@@ -591,7 +589,7 @@ export default function AdminPositions() {
       }
 
 
-      <EditableNoteForm
+      <StateUpdateForm
         isOpen={noteModalState.isOpen}
         onClose={handleCloseNoteModal}
         onConfirm={handleConfirmNote}

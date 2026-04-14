@@ -61,6 +61,8 @@ const {
   getCoverLetterById,
   deleteCoverLetter,
   checkResumeDeleteStatus,
+  getApplicationNote,
+  updateApplicationNote,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -466,6 +468,38 @@ router.delete('/applications/:username', async (req, res) => {
       .json({ message: 'An error occurred while deleting the application.' });
   }
 });
+
+/**
+ * @route   GET /applications/notes/:applicationId
+ * @desc    Retrieves the stored application note. Returns an empty string if the entry does not exist.
+ */
+router.get('/applications/notes/:applicationId', async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const note = await getApplicationNote(parseInt(applicationId, 10));
+    res.status(200).json(note);
+  } catch (error){
+    console.error("Error in getting application note.", error);
+    res.status(500).json({ error: 'An error occurred while getting application notes.'});
+  }
+});
+
+/**
+ * @route   PUT /applications/notes/:applicationId
+ * @desc    Sets the application note for the application. Creates a new entry if one does not exist.
+ */
+router.put('/applications/notes/:applicationId', async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { newNote } = req.body;
+    const note = await updateApplicationNote(parseInt(applicationId, 10),newNote)
+    res.status(200).json(note)
+  } catch (error){
+    console.error("Error in updating application note.", error);
+    res.status(500).json({ error: 'An error occurred while updating application notes.'});
+  }
+});
+
 
 /**
  * @route   GET /ta-portal-api/db/candidate/:username/hired-status
