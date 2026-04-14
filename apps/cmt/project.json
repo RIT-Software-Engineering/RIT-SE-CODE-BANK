@@ -1,12 +1,12 @@
 {
-  "name": "cmt-deploy",
+  "name": "cmt",
   "targets": {
     "deploy": {
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "chmod +x ./scripts/deploy/deploy-cmt.sh",
-          "./scripts/deploy/deploy-cmt.sh"
+          "chmod +x ../../scripts/deploy/deploy-cmt.sh",
+          "../../scripts/deploy/deploy-cmt.sh"
         ]
       },
       "dependsOn": [

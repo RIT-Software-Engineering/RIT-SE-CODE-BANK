@@ -13,7 +13,7 @@ DEPLOY_BRANCH="${GITHUB_REF_NAME:-dev}"
 
 ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     set -e
-    
+    chmod +x ../ssh/cmt.sh
     echo "Navigating to deployment directory..."
     cd ${DEPLOY_PATH}
     

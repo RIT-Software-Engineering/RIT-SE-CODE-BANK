@@ -18,7 +18,7 @@ services:
 
   cmt-backend:
     build:
-      context: ./backend
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "5010:5010"

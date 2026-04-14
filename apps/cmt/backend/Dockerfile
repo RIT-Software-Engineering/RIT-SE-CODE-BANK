@@ -8,9 +8,12 @@ COPY package*.json ./
 # Install root deps (if needed) and backend deps
 RUN pwd
 RUN ls
-RUN npm ci  
+
 
 COPY . .
+
+RUN pwd
+RUN ls
 
 # Set DB URL for Prisma
 ARG DATABASE_URL
