@@ -5,6 +5,7 @@ import {
   DialogTitle, TextField, CircularProgress, Alert, Snackbar, Divider
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import { useUser } from "../utils/user-context/page";
 import { sendScoopEmail } from 'utils/ScoopEmailSend';
 
@@ -128,10 +129,6 @@ const workflows = [
   {
     title: "Teams",
     steps: [
-      /** 
-       * SCOOPdinators should only have the ability to view and modify existing scoop teams in the future.
-       * But for now, they will have the ability to fully manage them because they act as SCOOPversior too.
-       */
       {
         title: "Manage Teams",
         roles: ["scoopdinator"],
@@ -225,15 +222,11 @@ const workflows = [
   },
 ];
 
-/**
- * Renders the content for the Scoopdinator's Dashboard
- * @returns {JSX.Element}
- */
 export default function WorkflowDashboard() {
     const [filteredWorkflows, setfilteredWorkflows] = useState([]);
+    const [hasPendingOffer, setHasPendingOffer] = useState(false);
     const { user } = useUser();
 
-    //For the Email sending
     const [modalOpen, setModalOpen] = useState(false);
     const [recipient, setRecipient] = useState("");
     const [subject, setSubject] = useState("");
@@ -242,7 +235,6 @@ export default function WorkflowDashboard() {
     const [result, setResult] = useState(null);
     const [snackbar, setSnackbar] = useState({open: false, message: "", success: false});
 
-    //email modal
     const handleOpen = () => {
         setResult(null); 
         setModalOpen(true);
@@ -255,7 +247,6 @@ export default function WorkflowDashboard() {
         setResult(null);
     };
 
-    //email message to close automatically
     useEffect(() => {
         if (result) {
             const timer = setTimeout(() => setResult(null), 3000);
@@ -263,7 +254,6 @@ export default function WorkflowDashboard() {
         }
     }, [result]);
 
-    //handles sending the message
     const handleSend = async () => {
         setLoading(true);
         setResult(null);
@@ -271,18 +261,19 @@ export default function WorkflowDashboard() {
         setLoading(false);
 
         if(res.success){
-            handleClose(); //auto closes the modal
+            handleClose();
             setSnackbar({open: true, message: res.message, success: true});
         }else{
-            setResult(res); //keeps the error inside the modal
+            setResult(res);
         }
     };
 
   useEffect(() => {
-    async function fetchTeammates() {
+    async function fetchData() {
       if (user == null || user.fname == null) {
         return;
       }
+
       const filteredWorkflows = workflows
         .map((workflow) => {
           const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
@@ -296,8 +287,21 @@ export default function WorkflowDashboard() {
         })
         .filter(Boolean);
       setfilteredWorkflows(filteredWorkflows);
+
+      if (user.type === "applicant") {
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/offer/user/${user.id}/pending`
+          );
+          if (res.ok) {
+            setHasPendingOffer(true);
+          }
+        } catch (err) {
+          console.error("Error checking for pending offer:", err);
+        }
+      }
     }
-    fetchTeammates();
+    fetchData();
   }, [user]);
 
   return (
@@ -319,6 +323,27 @@ export default function WorkflowDashboard() {
         >
           Dashboard
         </Typography>
+
+        {hasPendingOffer && (
+          <Alert
+            severity="success"
+            icon={<NotificationsActiveIcon />}
+            sx={{ mb: 3 }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                href={process.env.NEXT_PUBLIC_URL_BASE_PATH + "/applicant/offer"}
+              >
+                View Offer
+              </Button>
+            }
+          >
+            <Typography variant="body1" fontWeight="bold">
+              Congratulations! You have a pending SCOOP offer awaiting your response.
+            </Typography>
+          </Alert>
+        )}
 
         <Grid container spacing={4} direction="column">
           {filteredWorkflows.map((workflow) => (
@@ -454,7 +479,7 @@ export default function WorkflowDashboard() {
                 rows={4}
                 sx={{
                     '& .MuiInputBase-inputMultiline': {
-                        resize: 'vertical',  //for resizing purposes
+                        resize: 'vertical',
                         overflow: 'auto'
                     }
                 }}
