@@ -1,9 +1,7 @@
 FROM node:20-alpine
 WORKDIR /app
 
-# Copy top level npm workspace stuff (package.json) and also relevant project
-COPY package*.json ./
-COPY apps/cmt/frontend ./apps/cmt/frontend
+COPY . .
 
 RUN pwd
 RUN ls
@@ -14,10 +12,10 @@ RUN pwd
 RUN ls
 
 # Build the React app
-RUN cd apps/cmt/frontend
-RUN npm run build
+RUN npm run --workspace=cmt-frontend build
 
 EXPOSE 3010
 
 # Start the app on port 3010
+WORKDIR /app/apps/cmt/frontend
 CMD ["sh", "-c", "PORT=3010 npm start"]
