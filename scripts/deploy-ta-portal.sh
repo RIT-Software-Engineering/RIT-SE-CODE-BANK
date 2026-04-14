@@ -25,7 +25,11 @@ ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
     echo "Rebuilding and restarting Docker containers..."
     cd ./apps/ta-portal/deploy
 
-    docker compose --env-file ".env.staging" -f compose.build.yaml -f compose.run.yaml up -d --build
+    TAG="staging" docker compose -f compose.build.yaml build
+    TAG="staging" docker compose -f compose.run.yaml up -d
+
+    docker image prune -f
+    docker builder prune -f
     
     echo "Deployment complete!"
 ENDSSH
