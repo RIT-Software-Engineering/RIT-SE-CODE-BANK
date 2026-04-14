@@ -28,10 +28,10 @@ router.get('/:id', async (req, res) => {
 
 router.put("/:id", async (req,res) => {
     try {
-        const results = await api.updateGrant(req.params.id, req.body);
+        const results = await grantsApi.updateGrant(req.params.id, req.body);
         console.log({affectedRows : results.affectedRows});
         res.json({affectedRows : results.affectedRows});
-    } catch {
+    } catch (err) {
         console.log(err);
         res.status(500).send(err);
     }

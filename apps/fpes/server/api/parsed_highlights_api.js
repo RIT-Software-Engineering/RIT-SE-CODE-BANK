@@ -110,18 +110,19 @@ async function saveParsedHighlights(data) {
                     title: grant.title || '',
                     funder: grant.funder || '',
                     amount: grant.amount || null,
-                    start_date: grant.period ? parseDate(grant.period.split('-')[0]) : null,
-                    end_date: grant.period ? parseDate(grant.period.split('-')[1]) : null,
-                    faculty_role: grant.role || null,
-                    faculty_share: grant.share ? parseFloat(grant.share.toString().replace('%', '')) : null,
-                    grant_status: mapGrantStatus(grant.progress),
-                    comments: grant.additional_comments || ''
+                    start_date: parseDate(grant.start_date),
+                    end_date: parseDate(grant.end_date),
+                    faculty_role: grant.faculty_role || grant.role || null,
+                    faculty_share: grant.faculty_share || grant.share ? parseFloat((grant.faculty_share || grant.share).toString().replace('%', '')) : null,
+                    grant_status: grant.grant_status || mapGrantStatus(grant.progress),
+                    comments: grant.comments || grant.additional_comments || '',
+                    url: grant.url || null
                 };
                 
                 const grantResult = await conn.query(
-                    'INSERT INTO grants (title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING grant_id',
+                    'INSERT INTO grants (title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status, url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING grant_id',
                     [grantData.title, grantData.funder, grantData.amount, grantData.start_date, grantData.end_date, 
-                     grantData.faculty_role, grantData.faculty_share, grantData.comments, grantData.grant_status]
+                     grantData.faculty_role, grantData.faculty_share, grantData.comments, grantData.grant_status, grantData.url || null]
                 );
                 
                 await conn.query(
@@ -158,6 +159,66 @@ async function updateParsedHighlights(formId, data) {
             'UPDATE highlights SET administrative_responsibilities = ?, professional_development = ?, teaching_section = ?, service_section = ?, service_hours = ?, student_mentoring = ?, last_saved = NOW() WHERE form_id = ?',
             [data.administrative, data.professional_development, data.teaching, data.service, data.service_hours, data.student_mentoring || null, formId]
         );
+        
+        // Handle scholarship/grants updates
+        if (data.scholarship && Array.isArray(data.scholarship)) {
+            // Delete existing grants for this form
+            await conn.query('DELETE FROM forms_grants WHERE form_id = ?', [formId]);
+            
+            // Insert updated grants
+            for (const grant of data.scholarship) {
+                if (grant.grant_id) {
+                    // Update existing grant
+                    await conn.query(
+                        'UPDATE grants SET title = ?, funder = ?, amount = ?, start_date = ?, end_date = ?, faculty_role = ?, faculty_share = ?, grant_status = ?, comments = ?, url = ? WHERE grant_id = ?',
+                        [grant.title || '', grant.funder || '', grant.amount || null, 
+                         parseDate(grant.start_date),
+                         parseDate(grant.end_date),
+                         grant.faculty_role || null, grant.faculty_share ? parseFloat(grant.faculty_share.toString().replace('%', '')) : null, 
+                         grant.grant_status || mapGrantStatus(grant.progress) || 'Pending', grant.comments || '', grant.url || null, grant.grant_id]
+                    );
+                    // Re-link to form
+                    await conn.query('INSERT INTO forms_grants (form_id, grant_id) VALUES (?, ?)', [formId, grant.grant_id]);
+                } else {
+                    // Create new grant
+                    const grantResult = await conn.query(
+                        'INSERT INTO grants (title, funder, amount, start_date, end_date, faculty_role, faculty_share, comments, grant_status, url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING grant_id',
+                        [grant.title || '', grant.funder || '', grant.amount || null,
+                         parseDate(grant.start_date),
+                         parseDate(grant.end_date),
+                         grant.faculty_role || null, grant.faculty_share ? parseFloat(grant.faculty_share.toString().replace('%', '')) : null,
+                         grant.comments || '', grant.grant_status || mapGrantStatus(grant.progress) || 'Pending', grant.url || null]
+                    );
+                    await conn.query('INSERT INTO forms_grants (form_id, grant_id) VALUES (?, ?)', [formId, Number(grantResult[0].grant_id)]);
+                }
+            }
+        }
+        
+        // Handle publications updates
+        if (data.publication && Array.isArray(data.publication)) {
+            // Delete existing publications for this form
+            await conn.query('DELETE FROM forms_publications WHERE form_id = ?', [formId]);
+            
+            // Insert updated publications
+            for (const pub of data.publication) {
+                if (pub.id) {
+                    // Update existing publication
+                    await conn.query(
+                        'UPDATE publications SET title = ?, type = ?, authors = ? WHERE id = ?',
+                        [pub.title || '', pub.type || '', JSON.stringify(pub.authors ?? []), pub.id]
+                    );
+                    // Re-link to form
+                    await conn.query('INSERT INTO forms_publications (form_id, publication_id) VALUES (?, ?)', [formId, pub.id]);
+                } else {
+                    // Create new publication
+                    const pubResult = await conn.query(
+                        'INSERT INTO publications (title, type, authors) VALUES (?, ?, ?) RETURNING id',
+                        [pub.title || '', pub.type || '', JSON.stringify(pub.authors ?? [])]
+                    );
+                    await conn.query('INSERT INTO forms_publications (form_id, publication_id) VALUES (?, ?)', [formId, Number(pubResult[0].id)]);
+                }
+            }
+        }
         
         return { success: true, formId };
     } finally {

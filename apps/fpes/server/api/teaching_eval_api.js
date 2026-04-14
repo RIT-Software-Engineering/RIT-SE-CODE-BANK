@@ -1,11 +1,17 @@
 const pool = require('../db')
 const fs = require('fs')
 
-/**
- * Drops and rebuilds the teaching_evals and teaching_eval_questions tables
- * by executing all SQL statements in sql/teaching_eval.sql.
- * @returns {Array} Array of query results
- */
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+function getModel() {
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
+  return genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 async function resetTeachingEvalsTables() {
     let connection;
     try {
@@ -79,6 +85,25 @@ async function saveParsedTeachingEval(data) {
                      question.disagree || null, question.str_disagree || null,
                      question.uni_avg, question.col_avg, question.swen_avg, question.avg, question.top_two]
                 );
+            }
+        }
+
+        if (data.text_responses && Array.isArray(data.text_responses)) {
+            for (const section of data.text_responses) {
+                await conn.query(
+                    'INSERT INTO teaching_eval_text_questions (question) VALUES (?) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)',
+                    [section.question]
+                );
+                const [{ id: questionId }] = await conn.query(
+                    'SELECT id FROM teaching_eval_text_questions WHERE question = ?',
+                    [section.question]
+                );
+                for (const response of section.responses) {
+                    await conn.query(
+                        'INSERT INTO teaching_eval_text_responses (teaching_eval_id, question_id, response) VALUES (?, ?, ?)',
+                        [evalId, questionId, response]
+                    );
+                }
             }
         }
 
@@ -230,10 +255,86 @@ async function calculateTeachingScore(facultyId, teachingText = '') {
     };
 }
 
+async function summarizeTeachingEval(formId) {
+    const conn = await pool.getConnection();
+    try {
+        const evalData = await conn.query(
+            `SELECT te.*, f.faculty_information_id
+             FROM teaching_evals te JOIN forms f ON te.form_id = f.id WHERE f.id = ?`,
+            [formId]
+        );
+        if (!evalData[0]) throw new Error('Teaching eval not found');
+
+        const questions = await conn.query(
+            'SELECT * FROM teaching_eval_questions WHERE teaching_eval_id = ? ORDER BY CAST(question_number AS UNSIGNED)',
+            [evalData[0].id]
+        );
+
+        const textResponses = await conn.query(
+            `SELECT q.question, r.response
+             FROM teaching_eval_text_questions q
+             LEFT JOIN teaching_eval_text_responses r ON q.id = r.question_id
+             WHERE r.teaching_eval_id = ?
+             ORDER BY q.id`,
+            [evalData[0].id]
+        );
+
+        const { professor_name, course_name } = evalData[0];
+
+        const filterPII = (text) => {
+            if (!text) return text;
+            let f = text;
+            if (professor_name) f = f.replace(new RegExp(escapeRegExp(professor_name), 'gi'), '[PROFESSOR]');
+            f = f.replace(/\b(professor|prof\.?|dr\.?|instructor)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g, '$1 [PROFESSOR]');
+            f = f.replace(/\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, '[NAME]');
+            if (course_name) f = f.replace(new RegExp(escapeRegExp(course_name).replace(/\s+/g, '\\s+'), 'gi'), '[COURSE]');
+            f = f.replace(/\b[A-Z]{2,5}[\s-]?\d{2,4}[A-Z]?\b/g, '[COURSE]');
+            f = f.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
+            f = f.replace(/\b\d{9}\b/g, '[ID]');
+            return f;
+        };
+
+        const questionLines = questions.map(q =>
+            `- ${q.question}: avg=${q.avg}, dept_avg=${q.swen_avg}, top_two=${q.top_two}%`
+        ).join('\n');
+
+        const textGrouped = {};
+        for (const row of textResponses) {
+            if (!textGrouped[row.question]) textGrouped[row.question] = [];
+            if (row.response) textGrouped[row.question].push(filterPII(row.response));
+        }
+        const textLines = Object.entries(textGrouped).map(([q, rs]) =>
+            `- ${q}:\n${rs.map(r => `  "${r}"`).join('\n')}`
+        ).join('\n\n');
+
+        const prompt = `You are summarizing a teaching evaluation for a faculty review system.
+
+Question scores (avg out of 5, dept avg, % top-two responses):
+${questionLines}
+
+${textLines ? `Written feedback from students:\n${textLines}` : ''}
+
+Write a concise 2-3 sentence summary covering:
+1. Overall teaching performance (above/average/below average vs department)
+2. Specific strengths based on high scores and written feedback
+3. Any areas of concern based on low scores or written feedback
+Be factual and professional. Do not use any names.`;
+
+        const result = await getModel().generateContent(prompt);
+        return filterPII(result.response.text());
+    } catch (err) {
+        if (err.status === 429) throw new Error('AI quota exceeded. Please try again later.');
+        throw err;
+    } finally {
+        conn.release();
+    }
+}
+
 module.exports = {
     resetTeachingEvalsTables,
     saveParsedTeachingEval,
     getFacultyTeachingEvalPercentiles,
     getFacultyPercentileById,
-    calculateTeachingScore
+    calculateTeachingScore,
+    summarizeTeachingEval
 }

@@ -5,7 +5,7 @@ async function getAllPublications() {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("SELECT * FROM publications");
+        const results = await connection.query("SELECT * FROM publications");
         return results;
     } finally {
         if (connection) connection.release();
@@ -16,7 +16,7 @@ async function getPublicationByTitle(title) {
     let connection;
     try {
         connection = await pool.getConnection();
-        const results = connection.query("SELECT * FROM publications WHERE title = ?", [title]);
+        const results = await connection.query("SELECT * FROM publications WHERE title = ?", [title]);
         return results;
     } finally {
         if (connection) connection.release();
@@ -28,7 +28,7 @@ async function createPublication(body) {
     try {
         connection = await pool.getConnection();
         const {title, type, authors} = body;
-        const results = connection.query(
+        const results = await connection.query(
             `INSERT INTO publications (title, type, authors)
              VALUES (?,?,?) RETURNING id`, [title, type, authors]);
         return results;

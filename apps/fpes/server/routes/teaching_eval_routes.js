@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { saveParsedTeachingEval, getFacultyTeachingEvalPercentiles, getFacultyPercentileById, calculateTeachingScore } = require('../api/teaching_eval_api');
+const { saveParsedTeachingEval, getFacultyTeachingEvalPercentiles, getFacultyPercentileById, calculateTeachingScore, summarizeTeachingEval } = require('../api/teaching_eval_api');
 
 router.get('/submitted_by/:facultyId', async (req, res) => {
   try {
@@ -43,8 +43,35 @@ router.get('/:formId/view', async (req, res) => {
       [evalData[0].id]
     );
     
+    // Fetch text responses grouped by question
+    const textResponses = await conn.query(
+      `SELECT q.id, q.question, r.response
+       FROM teaching_eval_text_questions q
+       LEFT JOIN teaching_eval_text_responses r ON q.id = r.question_id
+       WHERE r.teaching_eval_id = ?
+       ORDER BY q.id`,
+      [evalData[0].id]
+    );
+    
+    // Group text responses by question
+    const text_responses = [];
+    const questionMap = {};
+    
+    for (const row of textResponses) {
+      if (!questionMap[row.id]) {
+        questionMap[row.id] = {
+          question: row.question,
+          responses: []
+        };
+        text_responses.push(questionMap[row.id]);
+      }
+      if (row.response) {
+        questionMap[row.id].responses.push(row.response);
+      }
+    }
+    
     conn.release();
-    res.json({ ...evalData[0], questions });
+    res.json({ ...evalData[0], questions, text_responses });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch teaching eval' });
@@ -116,6 +143,17 @@ router.get('/score/:facultyId', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to calculate teaching score' });
+  }
+});
+
+router.post('/:formId/summarize', async (req, res) => {
+  try {
+    const summary = await summarizeTeachingEval(req.params.formId);
+    res.json({ summary });
+  } catch (err) {
+    console.error(err);
+    const message = err.message || 'Failed to generate summary';
+    res.status(500).json({ error: message });
   }
 });
 

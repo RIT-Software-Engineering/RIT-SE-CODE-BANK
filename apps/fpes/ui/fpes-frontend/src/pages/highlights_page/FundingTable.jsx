@@ -15,8 +15,33 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 function Row(props) {
-  const { row } = props;
+  const { row, index, onRowChange } = props;
   const [open, setOpen] = React.useState(false);
+  // Normalize field names from parsed data to database schema
+  // Format dates to YYYY-MM-DD if they have time component
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    if (typeof dateStr === 'string') {
+      return dateStr.split('T')[0].split(' ')[0]; // Remove time if present
+    }
+    return dateStr;
+  };
+
+  const normalizedRow = {
+    ...row,
+    faculty_role: row.faculty_role || row.role,
+    faculty_share: row.faculty_share || row.share,
+    comments: row.comments || row.additional_comments,
+    start_date: formatDate(row.start_date),
+    end_date: formatDate(row.end_date)
+  };
+  const [editedRow, setEditedRow] = React.useState(normalizedRow);
+
+  const handleChange = (field, value) => {
+    const updated = { ...editedRow, [field]: value };
+    setEditedRow(updated);
+    onRowChange(index, updated);
+  };
 
   return (
     <React.Fragment>
@@ -31,7 +56,7 @@ function Row(props) {
         </TableCell>
         <TableCell component="th" scope="row">
           <Typography variant="subtitle1" fontWeight="bold">
-            {row.title}
+            {editedRow.title}
           </Typography>
         </TableCell>
       </TableRow>
@@ -41,36 +66,39 @@ function Row(props) {
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
-              <Typography variant="h6" gutterBottom component="div">
-                Status: {row.progress}
-              </Typography>
+              <Box style={{ paddingBottom: "10px" }}>
+                <Typography variant="subtitle2"><b>Status: </b></Typography>
+                <input type="text" value={editedRow.grant_status || editedRow.progress || ''} onChange={(e) => handleChange('grant_status', e.target.value)} style={{width: "100%", border: "1px solid #ccc", padding: "4px", background:"white", color:"black"}}/>
+              </Box>
               <Table size="small" aria-label="purchases">
                 <TableHead>
                   <TableRow style={{ backgroundColor: "orange"}}>
                     <TableCell> <b>Funder: </b> </TableCell>  
                     <TableCell> <b>Amount: </b> </TableCell>
-                    <TableCell> <b>Period: </b> </TableCell>
+                    <TableCell> <b>Start Date: </b> </TableCell>
+                    <TableCell> <b>End Date: </b> </TableCell>
                     <TableCell> <b>Role: </b></TableCell>
                     <TableCell> <b>Share: </b></TableCell>
                     <TableCell> <b>Comments: </b> </TableCell>
 
                   </TableRow>
-                  <TableRow>
-                    <TableCell contentEditable="true"> {row.funder}</TableCell>  
-                    <TableCell contentEditable="true"> {row.amount}</TableCell>
-                    <TableCell contentEditable="true"> {row.period}</TableCell>
-                    <TableCell contentEditable="true"> {row.role}</TableCell>
-                    <TableCell contentEditable="true"> {row.share}</TableCell>
-                    <TableCell contentEditable="true"> {row.additional_comments}</TableCell>
-                  </TableRow>
                 </TableHead>
-                
+                <TableBody>
+                  <TableRow>
+                    <TableCell><input type="text" value={editedRow.funder || ''} onChange={(e) => handleChange('funder', e.target.value)} style={{width: "100%", border: "none", padding: "4px", background:"white", color:"black"}}/></TableCell>  
+                    <TableCell><input type="text" value={editedRow.amount || ''} onChange={(e) => handleChange('amount', e.target.value)} style={{width: "100%", border: "none", padding: "4px", background:"white", color:"black"}}/></TableCell>
+                    <TableCell><input type="date" value={editedRow.start_date || ''} onChange={(e) => handleChange('start_date', e.target.value)} style={{width: "100%", border: "none", padding: "4px", background:"white", color:"black"}}/></TableCell>
+                    <TableCell><input type="date" value={editedRow.end_date || ''} onChange={(e) => handleChange('end_date', e.target.value)} style={{width: "100%", border: "none", padding: "4px", background:"white", color:"black"}}/></TableCell>
+                    <TableCell><input type="text" value={editedRow.faculty_role || ''} onChange={(e) => handleChange('faculty_role', e.target.value)} style={{width: "100%", border: "none", padding: "4px", background:"white", color:"black"}}/></TableCell>
+                    <TableCell><input type="text" value={editedRow.faculty_share || ''} onChange={(e) => handleChange('faculty_share', e.target.value)} style={{width: "100%", border: "none", padding: "4px", background:"white", color:"black"}}/></TableCell>
+                    <TableCell><input type="text" value={editedRow.comments || ''} onChange={(e) => handleChange('comments', e.target.value)} style={{width: "100%", border: "none", padding: "4px", background:"white", color:"black"}}/></TableCell>
+                  </TableRow>
+                </TableBody>
               </Table>
-              <TableRow style={{ width: "fit-content"}}>
-                  <TableCell style={{ backgroundColor: "orange"}}><b>URL: </b></TableCell>
-                  <TableCell contentEditable="true"> {row.url} </TableCell>
-                </TableRow>
-                {/* <button>Confirm</button> */}
+              <Box style={{ paddingTop: "10px" }}>
+                <Typography variant="subtitle2"><b>URL: </b></Typography>
+                <input type="text" value={editedRow.url || ''} onChange={(e) => handleChange('url', e.target.value)} style={{width: "100%", border: "1px solid #ccc", padding: "4px", background:"white", color:"black"}}/>
+              </Box>
             </Box>
 
           </Collapse>
@@ -87,7 +115,8 @@ Row.propTypes = {
       PropTypes.shape({
         funder: PropTypes.string,
         amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        period: PropTypes.string,
+        start_date: PropTypes.string,
+        end_date: PropTypes.string,
         role: PropTypes.string,
         share: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         comments: PropTypes.string,
@@ -96,8 +125,12 @@ Row.propTypes = {
   }).isRequired,
 };
 
-export default function FundingTable({ rows = [] }) {
-  // console.log("FundingTable received rows:", rows);
+export default function FundingTable({ rows = [], onRowsChange = () => {} }) {
+  const handleRowChange = (index, updatedRow) => {
+    const newRows = [...rows];
+    newRows[index] = updatedRow;
+    onRowsChange(newRows);
+  };
 
   return (
     <TableContainer component={Paper}>
@@ -110,7 +143,7 @@ export default function FundingTable({ rows = [] }) {
         </TableHead>
         <TableBody>
           {rows.map((row, index) => (
-            <Row key={row.title || index} row={row} />
+            <Row key={row.title || index} row={row} index={index} onRowChange={handleRowChange} />
           ))}
         </TableBody>
       </Table>

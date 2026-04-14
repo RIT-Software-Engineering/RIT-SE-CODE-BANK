@@ -62,7 +62,7 @@ export default function AdminHighlightsPage() {
 
     return (
         <div style={{ padding: '20px', paddingTop: '80px' }}>
-            <Typography variant="h4" gutterBottom>All Faculty Highlights</Typography>
+            <Typography variant="h4" gutterBottom>Annual Evaluation</Typography>
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
@@ -114,11 +114,13 @@ export default function AdminHighlightsPage() {
                                         <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, my: 1 }}>
                                             {typeof summaries[row.form_id] === 'object' ? (
                                                 <>
+                                                    
                                                     <SummarySection label="Teaching" data={summaries[row.form_id].teaching} />
                                                     <SummarySection label="Scholarship" data={summaries[row.form_id].scholarship} showDisseminated />
                                                     <SummarySection label="Service" data={summaries[row.form_id].service} />
                                                     <SummarySection label="Administrative" data={summaries[row.form_id].administrative} />
                                                     <SummarySection label="Overall" data={summaries[row.form_id].overall} />
+                                         
                                                     <WeightedScorePanel
                                                         summary={summaries[row.form_id]}
                                                         facultyId={row.faculty_id}
