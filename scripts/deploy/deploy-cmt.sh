@@ -22,15 +22,9 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     git reset --hard origin/${DEPLOY_BRANCH}
     
     echo "Rebuilding and restarting Docker containers..."
-    pwd
     cd ./apps/cmt
-    echo "TEMP - composing down"
-    pwd
-    docker compose down
-    echo "TEMP - giving perms"
-    chmod +x ./scripts/compose-cmt.sh
-    echo "TEMP - composing up"
-    ./scripts/compose-cmt.sh
+    
+    docker compose --env-file ".env.staging" -f compose.build.yaml -f compose.run.yaml up -d --build
     
     echo "Waiting for services to be healthy..."
     sleep 10
