@@ -4,7 +4,7 @@ RUN apk add --no-cache openssl
 
 COPY . .
 
-RUN npm ci --workspace cmt-frontend
+RUN npm ci
 
 RUN pwd
 RUN ls
