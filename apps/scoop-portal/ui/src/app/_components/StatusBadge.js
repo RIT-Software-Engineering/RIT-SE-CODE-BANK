@@ -18,7 +18,7 @@ export default function StatusBadge({ value, type = "application", size = "mediu
   // Color mappings by type
   const colorSchemes = {
     application: {
-      ACCEPTED: theme.palette.success.main,
+      APPROVED: theme.palette.success.main,
       REJECTED: theme.palette.error.main,
       PENDING: theme.palette.warning.main,
       default: theme.palette.grey[500],
@@ -60,7 +60,7 @@ export default function StatusBadge({ value, type = "application", size = "mediu
   // Label mappings
   const labelMaps = {
     application: {
-      ACCEPTED: "Accepted",
+      APPROVED: "Approved",
       REJECTED: "Rejected",
       PENDING: "Pending",
     },

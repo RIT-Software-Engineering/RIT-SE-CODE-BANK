@@ -143,6 +143,10 @@ model Application {
   resumeFileName                 String?
   resumeFileType                 String?
   status                         String   @default("PENDING")
+  offerSentAt                    DateTime?
+  offerStatus                    String?   // null, PENDING, ACCEPTED, DECLINED
+  offerExpiresAt                 DateTime?
+  offerRespondedAt               DateTime?
   createdAt                      DateTime @default(now())
 }
 

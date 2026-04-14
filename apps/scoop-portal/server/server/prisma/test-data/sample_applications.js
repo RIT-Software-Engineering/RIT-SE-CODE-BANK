@@ -38,7 +38,7 @@ export const sampleApplications = [
     // remoteAbility: "No",
     additionalComments: "",
     resumeFile: null,
-    status: "ACCEPTED",
+    status: "APPROVED",
     createdAt: new Date("2023-04-01T09:15:00Z")
   },
   {
@@ -80,7 +80,7 @@ export const sampleApplications = [
     // remoteAbility: "No",
     additionalComments: "Looking for frontend roles",
     resumeFile: null,
-    status: "ACCEPTED",
+    status: "APPROVED",
     createdAt: new Date("2023-01-15T11:45:00Z")
   },
   {
@@ -122,7 +122,7 @@ export const sampleApplications = [
     // remoteAbility: "No",
     additionalComments: "",
     resumeFile: null,
-    status: "ACCEPTED",
+    status: "APPROVED",
     createdAt: new Date("2023-01-30T14:00:00Z")
   },
   {
@@ -164,7 +164,7 @@ export const sampleApplications = [
     // remoteAbility: "No",
     additionalComments: "Open to hybrid work",
     resumeFile: null,
-    status: "ACCEPTED",
+    status: "APPROVED",
     createdAt: new Date("2023-05-15T09:45:00Z")
   },
   {
@@ -206,7 +206,7 @@ export const sampleApplications = [
     // remoteAbility: "No",
     additionalComments: "Looking for UX roles",
     resumeFile: null,
-    status: "ACCEPTED",
+    status: "APPROVED",
     createdAt: new Date("2023-06-30T08:00:00Z")
   },
   {
