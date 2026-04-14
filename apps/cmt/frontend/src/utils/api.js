@@ -1,4 +1,4 @@
-import { LogError } from "./error";
+import { LogError } from "./error.jsx";
 
 export const API_BASE = process.env.REACT_APP_BACKEND_URL || "http://localhost:5010/api/cmt";
 export const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || "http://localhost:5010";
@@ -49,10 +49,11 @@ class CMTFetchError extends Error {
  * @param {string} url 
  * @param {Object} [body]
  * @param {Object} [headers] 
- * @param {number[]} [allowedErrorCodes] 
+ * @param {number[]} [allowedErrorCodes]
+ * @param {string} baseUrl 
  * @returns Response of fetch in the form of a promise. If the promise is rejected, an error will be returned in the format { message: string, response: Response }. The response contains the full response of the fetch.
  */
-export async function CMTFetch(method, url, body, headers, allowedErrorCodes = [], baseUrl) {
+export async function CMTFetch(method, url, body, headers, allowedErrorCodes, baseUrl) {
     
     const fullURL = `${baseUrl}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
     const headersJSON = JSON.stringify(headers)

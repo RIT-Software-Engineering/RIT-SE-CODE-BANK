@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CMTJsonFetch } from '../../utils/api.js'
 import { Session } from '../course/Session.jsx'
-import { UseCMTOnNavigateFactory, flattenActionsWithContexts } from '../../utils/workflows.js'
+import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { ArrowLeft } from 'lucide-react'
 import { Button} from 'react-bootstrap'
 import { ResourceManager } from '../../components/resources/ResourceManager.jsx'
 import { CMTWorkflow } from '../../components/workflows/workflow.jsx'
 
 /**
- * @import { IsCheckmark, FetchToCallback, WorkflowsWorkflow, ActionWithContexts } from "@se-code-bank/workflows-ecosystem"
+ * @import { FetchToCallback, WorkflowsWorkflow, ActionWithContexts } from "@se-code-bank/workflows-ecosystem"
  */
 
 /**
@@ -55,11 +55,6 @@ export function TemplateDashboard() {
 
     const sessionActions = flattenActionsWithContexts(actionsWithContexts).filter(
         awc => awc?.processedAction?.parsedMetadata?.code?.includes("SESSION_")
-    )
-
-    const courseInfoKeys = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER"]
-    const courseInfoActions = flattenActionsWithContexts(actionsWithContexts).filter(
-        awc => courseInfoKeys.includes(awc.processedAction.parsedMetadata.code)
     )
 
     return (
