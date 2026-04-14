@@ -24,6 +24,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    networks:
+      - mailnet
     restart: unless-stopped
   
   notify:
@@ -41,7 +43,9 @@ services:
       - mailnet
     restart: unless-stopped
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
+
   
   postfix:
     image: notification-postfix:${TAG:-latest}
