@@ -42,5 +42,38 @@
   "uid": "pao1235",
   "affiliations": ["employee", "faculty"],
   "roles": ["instructor"]
-}
+  },
+  {
+  "id": "5",
+  "email": "prof3@rit.edu",
+  "password": "test123",
+  "name": "Professor Three",
+  "givenName": "Professor",
+  "sn": "Three",
+  "uid": "pao1236",
+  "affiliations": ["employee", "faculty"],
+  "roles": ["instructor"]
+  },
+  {
+  "id": "6",
+  "email": "prof4@rit.edu",
+  "password": "test123",
+  "name": "Professor Four",
+  "givenName": "Professor",
+  "sn": "Four",
+  "uid": "pao1237",
+  "affiliations": ["employee", "faculty"],
+  "roles": ["instructor"]
+  },
+  {
+  "id": "7",
+  "email": "prof5@rit.edu",
+  "password": "test123",
+  "name": "Professor Five",
+  "givenName": "Professor",
+  "sn": "Five",
+  "uid": "pao1238",
+  "affiliations": ["employee", "faculty"],
+  "roles": ["instructor"]
+  }
 ]

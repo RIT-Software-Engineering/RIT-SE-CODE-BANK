@@ -179,7 +179,7 @@ model TBTeamSet {
 }
 
 model Resource {
-  id        Int      @id @default(autoincrement())
+  id        String      @id @default(uuid()) @db.Char(36)
   name      String
   filename  String
   mimeType  String
