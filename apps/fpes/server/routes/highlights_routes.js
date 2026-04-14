@@ -4,10 +4,13 @@ const pool = require('../db');
 const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highlights_api');
 const { saveParsedHighlights, updateParsedHighlights } = require('../api/parsed_highlights_api');
 const { calculateTeachingScore, summarizeTeachingEval } = require('../api/teaching_eval_api');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const key = process.env.GEMINI_KEY;
-const modelName = 'gemma-3-27b-it';
-const client = new GoogleGenAI({apiKey: key});
+if (!key) console.error('[highlights_routes] WARNING: GEMINI_KEY is not set');
+const modelName = 'gemini-2.5-flash-lite';
+function getGenAIModel() {
+  return new GoogleGenerativeAI(key).getGenerativeModel({ model: modelName });
+}
 
 const summaryCache = new Map(); // formId -> { summary, expiresAt }
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -35,6 +38,142 @@ router.get('/all', async (_req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch all highlights' });
+  }
+});
+
+// POST generate annual evaluation for a faculty member across all their submissions
+router.post('/annual-eval/:facultyId', async (req, res) => {
+  try {
+    const { facultyId } = req.params;
+    const yearFilter = '';
+
+    // Aggregate all highlights data for this faculty
+    const [highlights, publications, grants, serviceRows, facultyInfo] = await withConn(conn => Promise.all([
+      conn.query(
+        `SELECT h.teaching_section, h.service_section, h.administrative_responsibilities,
+                h.professional_development, h.significant_outcomes, h.curriculum_development,
+                h.service_hours, h.student_mentoring, f.time_submitted
+         FROM highlights h JOIN forms f ON h.form_id = f.id
+         WHERE f.faculty_information_id = ? ${yearFilter}
+         ORDER BY f.time_submitted DESC`,
+        [facultyId]
+      ),
+      conn.query(
+        `SELECT DISTINCT p.title FROM publications p
+         JOIN forms_publications fp ON p.id = fp.publication_id
+         JOIN forms f ON fp.form_id = f.id
+         WHERE f.faculty_information_id = ? ${yearFilter}`,
+        [facultyId]
+      ),
+      conn.query(
+        `SELECT DISTINCT g.title FROM grants g
+         JOIN forms_grants fg ON g.grant_id = fg.grant_id
+         JOIN forms f ON fg.form_id = f.id
+         WHERE f.faculty_information_id = ? ${yearFilter}`,
+        [facultyId]
+      ),
+      conn.query(
+        `SELECT COALESCE(SUM(s.hours_worked), 0) as total
+         FROM services s
+         JOIN forms_services fs ON s.id = fs.service_id
+         JOIN forms f ON fs.form_id = f.id
+         WHERE f.faculty_information_id = ? ${yearFilter}`,
+        [facultyId]
+      ),
+      conn.query(
+        'SELECT name, rank FROM faculty_information WHERE faculty_id = ?',
+        [facultyId]
+      ),
+    ]));
+
+    if (!facultyInfo[0]) return res.status(404).json({ error: 'Faculty not found' });
+    if (!highlights.length) return res.status(404).json({ error: 'No submissions found for this faculty.' });
+
+    const { name, rank } = facultyInfo[0];
+
+    // Build scrub function
+    const nameParts = name ? name.trim().split(/\s+/).filter(p => p.length > 1) : [];
+    const lastName = nameParts.length >= 2 ? nameParts[nameParts.length - 1] : null;
+    const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const nameRegexes = [
+      name ? new RegExp(escape(name), 'gi') : null,
+      ...nameParts.map(p => new RegExp(escape(p), 'gi')),
+      lastName ? new RegExp(`(?:Prof\.?|Professor)\\s+${escape(lastName)}`, 'gi') : null,
+    ].filter(Boolean);
+    const scrub = (text) => {
+      if (!text) return text;
+      let result = String(text);
+      for (const re of nameRegexes) result = result.replace(re, 'the faculty member');
+      return result;
+    };
+
+    // Aggregate text fields across all forms
+    const combine = (field) => highlights.map(h => h[field]).filter(Boolean).join('\n');
+    const totalServiceHours = Number(serviceRows[0]?.total ?? 0);
+
+    // Fetch teaching eval summaries for all evals
+    let teachingEvalText = 'No teaching evaluations available.';
+    try {
+      const evalForms = await withConn(conn => conn.query(
+        `SELECT f.id FROM forms f JOIN teaching_evals te ON te.form_id = f.id
+         WHERE f.faculty_information_id = ? ${yearFilter}
+         ORDER BY f.time_submitted DESC`,
+        [facultyId]
+      ));
+      if (evalForms.length) {
+        const evalSummaries = await Promise.all(evalForms.map(ef => summarizeTeachingEval(ef.id).catch(() => null)));
+        teachingEvalText = evalSummaries.filter(Boolean).join('\n\n');
+      }
+    } catch (_) {}
+
+    const teachingScore = await calculateTeachingScore(facultyId, combine('teaching_section'));
+    const evalScore = teachingScore?.score ?? 3;
+    const improvementScore = (teachingScore?.matchedKeywords?.length ?? 0) >= 2 ? 1 : 0;
+    const finalTeachingRating = Math.min(5, evalScore + improvementScore);
+
+    const prompt = `You are writing an annual faculty evaluation. Return ONLY valid JSON, no markdown.
+      Structure: {"teaching":{"rating":${finalTeachingRating},"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":3-5,"comments":""}}
+      IMPORTANT: Do NOT use any person's name. Refer to the faculty member only as "the faculty member" or "they".
+      Write 2 paragraphs for teaching: paragraph 1 from the teaching eval data, paragraph 2 from the highlights teaching section.
+      Write 3-5 sentences for all other sections. Overall rating must be 3, 4, or 5.
+      This covers ALL submissions by this faculty member.
+
+      Faculty rank: ${rank || 'Faculty'}
+      Teaching eval summary (paragraph 1): ${teachingEvalText}
+      Highlights teaching section (paragraph 2): ${scrub(combine('teaching_section') || combine('curriculum_development') || 'None')}
+      Mentoring: ${scrub(combine('student_mentoring') || combine('teaching_section') || 'None')}
+      Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
+      Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
+      Significant outcomes: ${scrub(combine('significant_outcomes') || 'None')}
+      Service: ${scrub(combine('service_section') || 'None')} | Total hours: ${totalServiceHours || 'N/A'}
+      Administrative: ${scrub(combine('administrative_responsibilities') || 'None')}
+      Professional Development: ${scrub(combine('professional_development') || 'None')}`;
+
+    const result = await getGenAIModel().generateContent(prompt);
+    const rawText = scrub(result.response.text().trim().replace(/^```json\s*|^```\s*|\s*```$/g, ''));
+    let summary;
+    try { summary = JSON.parse(rawText); }
+    catch { summary = { overall: { rating: null, comments: rawText } }; }
+
+    const scrubObj = (obj) => {
+      if (typeof obj === 'string') return scrub(obj);
+      if (typeof obj === 'object' && obj !== null)
+        return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, scrubObj(v)]));
+      return obj;
+    };
+    summary = scrubObj(summary);
+    if (summary.teaching) {
+      summary.teaching.rating = finalTeachingRating;
+      const p1 = teachingEvalText !== 'No teaching evaluations available.' ? teachingEvalText : 'No teaching evaluation data available.';
+      summary.teaching.comments = `${p1}\n\n${summary.teaching.comments || ''}`.trim();
+    }
+    if (summary.overall?.rating != null) summary.overall.rating = Math.max(3, summary.overall.rating);
+
+    res.json({ summary, meta: { forms: highlights.length, publications: publications.length, grants: grants.length } });
+  } catch (err) {
+    if (err.status === 429 || String(err?.message).includes('429')) return res.status(429).json({ error: 'AI quota exceeded. Please try again later.' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to generate annual evaluation' });
   }
 });
 
@@ -156,9 +295,9 @@ router.post('/:formId/summarize', async (req, res) => {
     const cached = summaryCache.get(formId);
     if (cached && cached.expiresAt > Date.now() && req.query.refresh !== 'true') return res.json({ summary: cached.summary, cached: true });
 
-    const result = await client.models.generateContent({ model: modelName, contents: prompt });
+    const result = await getGenAIModel().generateContent(prompt);
     if (!result) throw new Error('No result from model');
-    const rawText = scrub(result.text.trim().replace(/^```json\s*|^```\s*|\s*```$/g, ''));
+    const rawText = scrub(result.response.text().trim().replace(/^```json\s*|^```\s*|\s*```$/g, ''));
     let summary;
     try {
       summary = JSON.parse(rawText);

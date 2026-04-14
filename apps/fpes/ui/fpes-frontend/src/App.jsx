@@ -22,6 +22,7 @@ import SupervisedFacultyTable from './pages/supervisor/SupervisedFacultyTable.js
 import SupervisingPage from './pages/supervisor/SupervisingPage.jsx';
 import TeachingEvalPage from './pages/highlights_page/TeachingEvalPage.jsx';
 import AdminHighlightsPage from './pages/highlights_page/AdminHighlightsPage.jsx';
+import AnnualEvalPage from './pages/highlights_page/AnnualEvalPage.jsx';
 import GettingStartedPage from './pages/getting_started/GettingStartedPage.jsx';
 
 function App() {
@@ -73,6 +74,11 @@ function App() {
       name: "Profile",
       route: "/profile",
       roles_with_access : new Set(["Admin", "Faculty", "Supervisor"])
+    },
+    {
+      name : "Annual Evaluation",
+      route : "/annual-eval",
+      roles_with_access : new Set(["Faculty", "Admin"])
     },
     {
       name : "Getting Started",
@@ -127,6 +133,7 @@ return (
           <Route path="/supervising" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <SupervisingPage facultyId={facultyId} roles={roles}/> </ProtectedRoute>} />
           <Route path="/admin-highlights" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <AdminHighlightsPage /> </ProtectedRoute>} />
           <Route path="/teaching-evals" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <TeachingEvalPage/> </ProtectedRoute>} />
+          <Route path="/annual-eval" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <AnnualEvalPage facultyId={facultyId} roles={roles} /> </ProtectedRoute>} />
           <Route path="/getting-started" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <GettingStartedPage roles={roles}/> </ProtectedRoute>} />
           {/* <Route path="/users" element={<ProtectedRoute isAuthenticated={isAuthenticated}> <UsersPage/> </ProtectedRoute> } /> */}
         </Routes>

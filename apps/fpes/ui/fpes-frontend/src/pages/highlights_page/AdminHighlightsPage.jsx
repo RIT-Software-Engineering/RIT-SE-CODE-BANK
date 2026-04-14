@@ -62,7 +62,7 @@ export default function AdminHighlightsPage() {
 
     return (
         <div style={{ padding: '20px', paddingTop: '80px' }}>
-            <Typography variant="h4" gutterBottom>Annual Evaluation</Typography>
+            <Typography variant="h4" gutterBottom>highlights eval</Typography>
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
