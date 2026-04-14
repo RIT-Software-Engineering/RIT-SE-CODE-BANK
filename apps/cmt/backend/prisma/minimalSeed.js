@@ -7,10 +7,10 @@ const __dirname = path.dirname(__filename);
 
 // load env from project root
 dotenv.config({
-  path: path.join(__dirname, '..', '.env'),
+  path: path.join(__dirname, '..', '..', '.env'),
 });
 
-import { PrismaClient } from './prisma/generated/client/index.js';
+import { PrismaClient } from './generated/client/index.js';
 
 const prisma = new PrismaClient();
 
