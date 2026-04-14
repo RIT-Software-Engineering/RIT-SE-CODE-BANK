@@ -2,18 +2,15 @@ import { Edit } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 import { Accordion, Card, Button, Offcanvas, Form, Table, Alert } from "react-bootstrap";
 import { useParams } from "react-router-dom";
-import { CheckmarkAction as WorkflowCheckmarkAction } from "@se-code-bank/workflows-ecosystem/components";
-import { CMTJsonFetch } from "../../utils/api.js";
-import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor.jsx";
+import { CheckmarkAction} from "@se-code-bank/workflows-ecosystem/components";
+import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
+import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
+import { CMTJsonFetch } from "../../utils/api";
+import { CMTDangerAlert, LogError } from "../../utils/error";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
  */
-import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
-import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
-import { CheckmarkActionRenderer } from "../../components/workflows/ActionRenderers/GenericActionRenderer";
-import { CMTJsonFetch } from "../../utils/api";
-import { CMTDangerAlert, LogError } from "../../utils/error";
 
 /**
  * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
@@ -72,7 +69,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                             <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
                                 {/* TODO: completion should be tracked in the DB in case a professor wants to create more sessions than required */}
                                 {sessionAction && (
-                                    <WorkflowCheckmarkAction
+                                    <CheckmarkAction
                                         actionWithContexts={sessionAction}
                                         refresh={updateWorkflow}
                                         fetchToCallback={fetchToCallback}
