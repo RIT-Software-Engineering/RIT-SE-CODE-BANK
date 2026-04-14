@@ -4,15 +4,10 @@ RUN apk add --no-cache openssl
 
 COPY . .
 
+RUN pwd
+RUN ls
+
 RUN npm ci
-
-RUN pwd
-RUN ls
-
-WORKDIR /app/apps/cmt/backend
-
-RUN pwd
-RUN ls
 
 # Set DB URL for Prisma
 ARG DATABASE_URL

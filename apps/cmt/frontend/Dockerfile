@@ -5,8 +5,5 @@ COPY . .
 
 RUN npm ci
 
-RUN npm run --workspace=cmt-frontend build
-
-WORKDIR /app/apps/cmt/frontend
-
+RUN npm run build 
 CMD ["npm", "start"]
