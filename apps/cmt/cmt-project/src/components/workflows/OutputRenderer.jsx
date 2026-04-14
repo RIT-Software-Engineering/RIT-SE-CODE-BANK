@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Form } from 'react-bootstrap'
 
 /**
- * @import { onNavigateFactory, ParsedMetadata } from "./typedefs"
+ * @import { ParsedMetadata } from "./typedefs"
  * @import { AbstractActionRenderer } from "./ActionRenderers/GenericActionRenderer"
  */
 

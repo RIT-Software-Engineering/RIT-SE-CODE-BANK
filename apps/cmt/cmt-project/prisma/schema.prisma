@@ -49,7 +49,7 @@ model Session {
 model SessionMaterial {
   id          Int        @id @default(autoincrement())
   type        String
-  label       String
+  label       String    @db.Text
   body        String?   @db.Text
   active      Boolean   @default(true)
   sessionId   Int
@@ -118,7 +118,7 @@ model TBTeamSet {
 }
 
 model Resource {
-  id        Int      @id @default(autoincrement())
+  id        String      @id @default(uuid()) @db.Char(36)
   name      String
   filename  String
   mimeType  String

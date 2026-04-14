@@ -1,4 +1,4 @@
-import { Editor, EditorContent, useEditor, } from "@tiptap/react";
+import { EditorContent, useEditor, } from "@tiptap/react";
 import Highlight from '@tiptap/extension-highlight'
 import {StarterKit} from "@tiptap/starter-kit";
 import { ButtonGroup, Button, Tooltip, OverlayTrigger, Dropdown, Modal, Form } from "react-bootstrap";
@@ -20,7 +20,7 @@ import {
   TextAlignCenter,
   Underline,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { TableKit } from '@tiptap/extension-table'
 import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
@@ -28,8 +28,9 @@ import { ResourceLinkModal } from "./ResourceLinkModal";
 import { HighlightPicker, TextPicker } from "./Pickers";
 
 
+
 export function ReadOnlyEditor({ value }) {
-    const editor = new Editor({
+    const editor = useEditor({
         editable: false,
         content: value,
         editorProps: {
@@ -53,13 +54,20 @@ export function ReadOnlyEditor({ value }) {
             }),
         ],
     })
-    return <EditorContent className="*:pl-2 pt-2" editor={editor} /> 
+
+    useEffect(() => {
+        if (editor && value !== editor.getHTML() && value) {
+            editor.commands.setContent(value)
+        }
+    }, [value, editor])
+
+    return <EditorContent className="*:pl-2 pt-2 prose" editor={editor} /> 
 }
 
 /**
- * @param {{ value: any, onChange: function, courseId: number, showTables: boolean }} props 
+ * @param {{ value: any, onChange: function, courseId: number, isBody: boolean, onEditor?: function, disabled?: boolean }} props 
  */
-export function RichTextEditor({ value, onChange, courseId, showTables }) {
+export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, disabled = false }) {
 
   const Extras = {
     Table: "Table",
@@ -82,7 +90,7 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
             }),
             TextStyle,
             Highlight.configure({ multicolor: true }),
-            Color, // The current colors are very limited to basically the defaults. Maybe this could be changed in the future?
+            Color,
             BackgroundColor,
             TextAlign.configure({
                 alignments: ['left', 'center'],
@@ -118,8 +126,14 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
         }
     }, [value, editor])
 
+    useEffect(() => {
+        if (editor && onEditor) {
+            onEditor(editor)
+        }
+    }, [editor, onEditor])
+
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col" style={{ opacity: disabled ? 0.5 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
                   
           <ButtonGroup className='*:!rounded-none *:!flex *:!justify-center'>
               <OverlayTrigger delay={200} overlay={<Tooltip>Bold</Tooltip>}>
@@ -140,6 +154,8 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
                 </Button>
               </OverlayTrigger>
 
+            {isBody ? 
+            <>
               <OverlayTrigger delay={200} overlay={<Tooltip>Dot list</Tooltip>}>
                 <Button variant='outline-secondary' active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
                     <List />
@@ -151,10 +167,12 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
                     <ListOrdered />
                 </Button>
               </OverlayTrigger>
+            </>
+            : <></>}
               
               <OverlayTrigger delay={200} overlay={<Tooltip>Code Block</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
-                    <Code /> {/* TODO: make sure this darn thing renders properly in both the editor and in read only editors */}
+                <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCode().run()}>
+                    <Code />
                 </Button>
               </OverlayTrigger>
 
@@ -220,10 +238,8 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
                 <Button
                     variant='outline-secondary'
                     onClick={() => {
-                        editor.chain().focus().unsetLink().run()
-                        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' })) editor.chain().focus().setColor('black').run()
-                        else if (editor.isActive('textStyle', { color: '#0484c9' })) editor.chain().focus().setColor('#0484c9').run()
-                        else if (editor.isActive('textStyle', { backgroundColor: '#0484c9' })) editor.chain().focus().setColor('white').run()
+                        editor.chain().focus().unsetLink().run();
+                        editor.chain().focus().unsetColor().run();
                     }}
                 >
                     <Link2Off />
@@ -231,7 +247,7 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
               </OverlayTrigger>
 
               
-              {showTables && 
+              {isBody && 
                 <OverlayTrigger delay={200} overlay={<Tooltip>Table</Tooltip>}>
                     <Button variant="outline-secondary" onClick={() => setExtraToShow(current => current === Extras.Table ? Extras.None : Extras.Table)}>
                         <Table />
@@ -276,7 +292,9 @@ export function RichTextEditor({ value, onChange, courseId, showTables }) {
           : <></>
           }
           
-          <div className='border-x border-b p-3 prose max-w-none'>
+          <div 
+          className='border-x border-b p-3 prose prose-strong:text-inherit max-w-none overflow-y-scroll'
+          style={{maxHeight: "35vh"}}>
               <EditorContent className="*:p-3" editor={editor} />
           </div>
         </div>
@@ -290,27 +308,25 @@ export function ExternalLinkModal({ editor }) {
     const [linkURL, setLinkURL] = useState('')
 
     const handleInsert = () => {
+        if (!linkURL) return
 
-        const displayText = linkText.trim() || linkURL
+        const text = linkText?.trim() || linkURL
+        const hasHttps = linkURL.startsWith("https");
 
-        editor.chain().focus().extendMarkRange('link').setLink({ href: linkURL, target: '_blank' }).run()
+        editor.chain().focus().setLink({ href: hasHttps ? linkURL : `https://www.${linkURL}`, target: '_blank' }).setColor('#3b82f6').insertContent(text).run()
 
-        // Replace the selected text with the display text
-        if (displayText && displayText !== editor.getHTML()) {
-            editor.chain().focus().insertContent(displayText).run()
-        }
-
-        // Set color
-        if (!editor.isActive('textStyle', { color: '#0484c9' }) && !editor.isActive('textStyle', { backgroundColor: '#0484c9' }))
-            editor.chain().focus().setColor('#0000FF').run()
-
-        handleReset()
+        handleReset();
     }
 
     const handleReset = () => {
         setShow(false)
         setLinkText('')
         setLinkURL('')
+    }
+
+    const handleShow = () => {
+        setLinkURL(editor.getAttributes('link').href);
+        setLinkText(editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' '));
     }
 
     return (<>          
@@ -323,7 +339,7 @@ export function ExternalLinkModal({ editor }) {
             </Button>
         </OverlayTrigger>
 
-        <Modal show={show} onHide={handleReset} size='lg'>
+        <Modal show={show} onShow={handleShow} onHide={handleReset} size='lg'>
             <Modal.Header closeButton>
                 <Modal.Title>Insert Resource Link</Modal.Title>
             </Modal.Header>
@@ -334,7 +350,7 @@ export function ExternalLinkModal({ editor }) {
                         <Form.Control
                             type='text'
                             placeholder={`https://www.google.com`}
-                            value={linkURL}
+                            defaultValue={linkURL}
                             onChange={e => setLinkURL(e.target.value)}
                         />
                     </Form.Group>
@@ -343,7 +359,7 @@ export function ExternalLinkModal({ editor }) {
                         <Form.Control
                             type='text'
                             placeholder={`This text will be what the link appears as.`}
-                            value={linkText}
+                            defaultValue={linkText}
                             onChange={e => setLinkText(e.target.value)}
                         />
                     </Form.Group>

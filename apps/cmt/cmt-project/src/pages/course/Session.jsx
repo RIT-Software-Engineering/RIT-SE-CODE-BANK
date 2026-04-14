@@ -1,10 +1,12 @@
 import { Edit } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
-import { Accordion, Card, Button, Offcanvas, Form, Table } from "react-bootstrap";
+import { Accordion, Card, Button, Offcanvas, Form, Table, Alert } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
+import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
 import { CheckmarkActionRenderer } from "../../components/workflows/ActionRenderers/GenericActionRenderer";
 import { CMTJsonFetch } from "../../utils/api";
+import { CMTDangerAlert, LogError } from "../../utils/error";
 
 /**
  * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
@@ -48,7 +50,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     useEffect(() => void update(), [id, update])
 
     return (
-        <Accordion alwaysOpen>
+        <Accordion>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} courseId={courseId}/>
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curSessionId} isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId}/>
         {
@@ -75,7 +77,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                     <Card.Title>
                                         <div className='flex justify-between'>
                                             <div><ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} /></div>
-                                            <div className='justify-end size-12 opacity-0 group-hover:!opacity-100'><Button variant='outline-dark' onClick={(e) => {
+                                            <div className='justify-end size-12 opacity-0 group-hover:!opacity-100 group-hover:text-white'><Button variant='outline-dark' onClick={(e) => {
                                                 setCurSessionId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
                                                 setIsEditOpen(true);
                                                 e.currentTarget.style.opacity = "100";
@@ -83,7 +85,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                         </div>
                                     </Card.Title>
                                     <Card.Text>
-                                        <span className="prose" dangerouslySetInnerHTML={{__html: sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body}}></span></Card.Text>
+                                        <ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body} />
+                                    </Card.Text>
                                 </Card.Body>
                             </Card> : <></>
                             }
@@ -116,21 +119,25 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
     const [itemLabel, setItemLabel] = useState('')
     const [itemBody, setItemBody] = useState('')
     const [itemType, setItemType] = useState('Topic/Lecture')
-    const [warningVisible, setWarningVisible] = useState(false)
+    const [error, setError] = useState('')
+    const [titleEditor, setTitleEditor] = useState(null);
+    const hasLinksInTitle = useLinkDetection(titleEditor);
 
-    function uploadSessionMaterial() {
+    const uploadSessionMaterial = useCallback(() => {
         const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
-        CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody, sessionNum }).then(async response => {
-            const data = await response.json()
-            setSessionData(sessionData => [...sessionData, data.material])
-        })
-    }
+        CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody: hasLinksInTitle ? undefined : itemBody, sessionNum })
+            .then(async response => {
+                const data = await response.json()
+                setSessionData(sessionData => [...sessionData, data.material])
+            })
+            .catch(error => LogError("Error uploading material", error, setError))
+    }, [hasLinksInTitle, itemBody, itemLabel, itemType, sessionNum, sessions, setSessionData])
 
     function resetForm() {
         setItemType('Topic/Lecture')
         setItemLabel('')
         setItemBody('')
-        setWarningVisible(false)
+        setError('')
     }
 
     function handleClose() {
@@ -150,10 +157,6 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
             </Offcanvas.Header>
 
             <Offcanvas.Body className="overflow-auto">
-                <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>
-                    Please create a title for the material!
-                </div>
-
                 <Form onSubmit={uploadSessionMaterial}>
                     <div className='flex'>
                         <div className='w-full'>
@@ -172,16 +175,30 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
 
                             <div className="mb-3">
                                 <Form.Label>Title (Required)</Form.Label>
-                                <RichTextEditor value={itemLabel} onChange={setItemLabel} courseId={courseId} showTables={false} />
+                                <RichTextEditor 
+                                    value={itemLabel} 
+                                    onChange={setItemLabel} 
+                                    courseId={courseId} 
+                                    isBody={false} 
+                                    onEditor={setTitleEditor}
+                                />
                             </div>
 
                             <div className="mb-3">
                                 <Form.Label>Content</Form.Label>
-                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId} showTables={true}/>
+                                <RichTextEditor 
+                                    value={itemBody} 
+                                    onChange={setItemBody} 
+                                    courseId={courseId} 
+                                    isBody={true}
+                                    disabled={hasLinksInTitle}
+                                />
+                                {hasLinksInTitle && <Alert variant="warning" className="my-2">Content editor is disabled because the title contains links. If a title contains a link, material content will be ignored.</Alert>}
                             </div>
                         </div>
                     </div>
-
+                    
+                    <CMTDangerAlert error={error} />
                     <div className='flex justify-end pt-3'>
                         <Button
                             type='submit'
@@ -191,7 +208,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                                     uploadSessionMaterial()
                                     setIsOpen(false)
                                     resetForm()
-                                } else setWarningVisible(true)
+                                } else setError("Please create a title for the material!")
                             }}
                         >
                             Submit
@@ -222,9 +239,12 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
     const [itemLabel, setItemLabel] = useState(curMaterial?.label ?? "");
     const [itemBody, setItemBody] = useState(curMaterial?.body ?? "");
     const [warningVisible, setWarningVisible] = useState(false);
+    const [titleEditor, setTitleEditor] = useState(null);
+    const hasLinksInTitle = useLinkDetection(titleEditor);
 
+    // we need use effect for the body otherwise it may load the incorrect body
+    // it works fine without the label though
     useEffect(() => {
-        setItemLabel(curMaterial?.label ?? "")
         setItemBody(curMaterial?.body ?? "")
     }, [curMaterial, materialId])
 
@@ -233,10 +253,11 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
     }
 
     function updateMaterial(){
-        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody}).then(() => {
+        const realItemBody = hasLinksInTitle ? '' : itemBody;
+        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody: realItemBody}).then(() => {
             const sessionDataCopy = sessionData.map(material => {
                 if (material.id === materialId) 
-                    return {...material, label: itemLabel, body: itemBody}
+                    return {...material, label: itemLabel, body: realItemBody}
                 return material
             });
             setSessionData(sessionDataCopy);
@@ -245,6 +266,10 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
 
     return (
         <Offcanvas
+            onShow={() => {
+                setItemLabel(curMaterial?.label ?? "")
+                setItemBody(curMaterial?.body ?? "")
+            }}
             show={isEditOpen}
             onHide={() => { setIsEditOpen(false); resetForm(); }}
             placement="end"
@@ -256,24 +281,38 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
 
             <Offcanvas.Body className="overflow-auto">
         
-                    <div className={`alert alert-danger ${warningVisible ? 'block' : 'hidden'}`}>Material needs to have a title!</div>
+                    <Alert variant="danger" className={`${warningVisible ? 'block' : 'hidden'}`}>Material needs to have a title!</Alert>
                     <Form onSubmit={updateMaterial}>
                         <div className='flex'>
                             <div className='w-full'>
                                 <div>
-                                <Form.Label>Title</Form.Label>
-                                <RichTextEditor value={itemLabel} onChange={setItemLabel} courseId={courseId} showTables={false}/>
+                                    <Form.Label>Title</Form.Label>
+                                    <RichTextEditor 
+                                        value={itemLabel} 
+                                        onChange={setItemLabel} 
+                                        courseId={courseId} 
+                                        isBody={false}
+                                        onEditor={setTitleEditor}
+                                    />
                                 </div>
                                 <div>
-                                <Form.Label>Content</Form.Label>
-                                <RichTextEditor value={itemBody} onChange={setItemBody} courseId={courseId} showTables={true}/>
+                                    <Form.Label>Content</Form.Label>
+                                    <RichTextEditor 
+                                        value={itemBody} 
+                                        onChange={setItemBody} 
+                                        courseId={courseId} 
+                                        isBody={true}
+                                        disabled={hasLinksInTitle}
+                                    />
+                                    {hasLinksInTitle && <Alert variant="warning" className="my-2">Content editor is disabled because the title contains links. If a title contains a link, material content will be ignored.</Alert>}
                                 </div>
                             </div>
                         </div>
                         <div className='flex justify-end pt-3'>
                             <Button type="submit" onClick={(e) => {
                             e.preventDefault();
-                            if (itemLabel){
+                            // basically if we match any actual text
+                            if (!itemLabel.startsWith("<p>") || !itemLabel.replace(/<p>.+<\/p>/, "")){
                                 updateMaterial();
                                 setIsEditOpen(false);
                                 resetForm();
@@ -298,7 +337,6 @@ function SessionEditModal({ sessionData, setSessionData, materialId, isEditOpen,
  */
 function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
-    const tdClass = "hover:underline hover:text-blue-500 cursor-pointer";
     const allCols = ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"];
     // TODO: maybe... change how this works, currently updates all columns for every session but that may be ok.
     // It'll look a bit more clumped, but it is closer to realistic for what a prof. may want.
@@ -347,7 +385,9 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
 
     function openEditModal(text, col){
         // Not a foolproof way to find ID but it should match closely. It'd take a bunch of refactoring to be exact...
-        const id = sessionData.find(session => session.sessionNum === sessionNum && session.label === text && session.type === allCols[col]).id
+        const id = sessionData.find(session => session.sessionNum === sessionNum && session.label === text && session.type === allCols[col])?.id;
+        if (!id)
+            return;
         setIsEditOpen(true);
         setSessionId(id);
     }
@@ -369,12 +409,84 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setSessionId} ) 
                 <tbody>
                     {Array.from({ length: determineRows() }, (_, i) => (
                     <tr> 
-                        {cols[0] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(0, i), 0)}><ReadOnlyEditor value={getLabelContent(0, i)} /></span></td> : <></>}
-                        {cols[1] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(1, i), 1)}><ReadOnlyEditor value={getLabelContent(1, i)} /></span></td> : <></>}
-                        {cols[2] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(2, i), 2)}><ReadOnlyEditor value={getLabelContent(2, i)} /></span></td> : <></>}
-                        {cols[3] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(3, i), 3)}><ReadOnlyEditor value={getLabelContent(3, i)} /></span></td> : <></>}
-                        {cols[4] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(4, i), 4)}><ReadOnlyEditor value={getLabelContent(4, i)} /></span></td> : <></>}
-                        {cols[5] ? <td><span className={`${tdClass}`} onClick={() => openEditModal(getLabelContent(5, i), 5)}><ReadOnlyEditor value={getLabelContent(5, i)} /></span></td> : <></>}
+                        {cols[0] ? (
+                            getLabelContent(0, i) ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(0, i), 0)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(0, i)} />
+                                </div>
+                            </td>
+                            ) : <td></td>
+                        ) : <></>}
+                        {cols[1] ? (
+                         getLabelContent(1, i) ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(1, i), 1)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(1, i)} />
+                                </div>
+                            </td>
+                        ) : <td></td>
+                        ) : <></>}
+                        {cols[2] ? (
+                            getLabelContent(2, i) ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(2, i), 2)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(2, i)} />
+                                </div>
+                            </td>
+                            ) : <td></td>
+                        ) : <></>}
+                        {cols[3] ? (
+                            getLabelContent(3, i) ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(3, i), 3)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(3, i)} />
+                                </div>
+                            </td>
+                            ) : <td></td>
+                        ) : <></>}
+                        {cols[4] ? (
+                            getLabelContent(4, i) ? (
+                            <td 
+                                className="cursor-pointer hover:bg-gray-100"
+                                onClick={() => openEditModal(getLabelContent(4, i), 4)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(4, i)} />
+                                </div>
+                            </td>
+                            ) : <td></td>
+                        ) : <></>}
+                        {cols[5] ? (
+                            getLabelContent(5, i) ? (
+                            <td 
+                                className={"cursor-pointer hover:bg-gray-100"}
+                                onClick={() => openEditModal(getLabelContent(5, i), 5)}
+                                title="Click to edit material"
+                            >
+                                <div className="p-2">
+                                    <ReadOnlyEditor value={getLabelContent(5, i)} />
+                                </div>
+                            </td>
+                            ) : <td></td>
+                        ) : <></>}
                     </tr>
                     ))}
                 </tbody>

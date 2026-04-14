@@ -24,6 +24,29 @@ button.accordion-button:focus{
     background-color: hsla(0, 0%, 0%, 0.05)
 }   
 
+
 .tiptap th, .tiptap tbody, .tiptap tr, .tiptap td {
-    @apply !border
+    @apply !border border-black
+}
+
+.tiptap th.selectedCell, .tiptap tbody.selectedCell, .tiptap tr.selectedCell, .tiptap td.selectedCell {
+    @apply !bg-[#E7F0FD]
+}
+
+.tiptap code {
+    font-weight: normal;
+    margin: 0;
+}
+
+/* Prose likes to add ` before and after code blocks so remove that */
+.tiptap code::before {
+    content: none;
+}
+.tiptap code::after {
+    content: none;
+}
+
+
+.tableWrapper {
+    @apply overflow-x-auto
 }
