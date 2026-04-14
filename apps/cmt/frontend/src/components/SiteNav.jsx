@@ -6,7 +6,6 @@ import {
   GraduationCap,
   Wrench,
 } from "lucide-react";
-import "../styles/NavBar.css";
 import { getUserFromCookie, logout } from "../utils/auth";
 import { Container, Dropdown, Nav, Navbar, NavDropdown, Button } from "react-bootstrap";
 
