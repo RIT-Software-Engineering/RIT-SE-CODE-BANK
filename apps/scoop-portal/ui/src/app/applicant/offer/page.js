@@ -86,7 +86,7 @@ export default function OfferPage() {
       setNotification({
         open: true,
         message: response === "ACCEPTED"
-          ? "Congratulations! You've accepted your SCOOP offer."
+          ? "Congratulations! You have accepted your SCOOP offer."
           : "Your response has been recorded.",
         severity: "success",
       });
@@ -140,7 +140,7 @@ export default function OfferPage() {
               No Pending Offers
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-              You don't have any pending SCOOP offers at this time.
+              You do not have any pending SCOOP offers at this time.
             </Typography>
             <Button
               variant="contained"
@@ -177,7 +177,7 @@ export default function OfferPage() {
               Congratulations!
             </Typography>
             <Typography variant="h5" sx={{ mt: 1, opacity: 0.95 }}>
-              You've Been Approved for SCOOP
+              You have Been Approved for SCOOP
             </Typography>
           </Box>
 
@@ -201,7 +201,7 @@ export default function OfferPage() {
 
             <Typography variant="body1" paragraph>
               SCOOP is a unique opportunity for Software Engineering students who are actively
-              seeking co-op positions but haven't yet secured one. Through SCOOP, you'll:
+              seeking co-op positions but have not yet secured one. Through SCOOP, you will:
             </Typography>
 
             <Box component="ul" sx={{ pl: 4, mb: 2, listStyleType: 'disc' }}>
