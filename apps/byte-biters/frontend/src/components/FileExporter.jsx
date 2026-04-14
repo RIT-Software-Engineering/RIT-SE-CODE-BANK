@@ -12,7 +12,7 @@ export default function FileExporter ({code}){
             return;
         }
 
-        // optional: let user name file
+        //ask the user for a file name, pdp11program.txt by default
         const filename = prompt("Enter file name:", "pdp11program.txt");
         if (!filename) return;
 

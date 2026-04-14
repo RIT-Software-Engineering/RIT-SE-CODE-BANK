@@ -47,7 +47,7 @@ export default function App() {
       {/* uses react resizeable panels, so the html tags are Group and Panel */}
       <Group>
         {/* left side */}
-        <Panel className="flex flex-col h-full" collapsible minSize={100}>
+        <Panel className="flex flex-col h-full" collapsible defaultSize={70} minSize={100}>
           <Group orientation="vertical">
 
             <Panel>
@@ -75,7 +75,7 @@ export default function App() {
         </Panel>
 
         {/* right side */}
-        <Panel className="flex flex-row flex-1 h-full" collapsible minSize={100}>
+        <Panel className="flex flex-row flex-1 h-full" collapsible defaultSize={30} minSize={100}>
           <div className="bg-border-primary min-w-2"></div>
           {/* refer to SidePanel component */}
           <SidePanel></SidePanel>
