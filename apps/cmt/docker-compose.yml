@@ -18,8 +18,8 @@ services:
 
   cmt-backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/cmt/backend/Dockerfile
     ports:
       - "5010:5010"
     env_file:
@@ -45,8 +45,8 @@ services:
 
   cmt-frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/cmt/frontend/Dockerfile
       args:
         REACT_APP_BACKEND_URL: /api/cmt
         REACT_APP_AUTH_BASE: ""

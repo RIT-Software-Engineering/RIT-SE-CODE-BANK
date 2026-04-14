@@ -9,6 +9,12 @@ RUN ls
 
 RUN npm ci
 
+WORKDIR /app/apps/cmt/backend
+
+RUN pwd
+RUN ls
+
+
 # Set DB URL for Prisma
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
