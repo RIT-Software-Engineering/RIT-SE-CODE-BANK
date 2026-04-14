@@ -42,7 +42,7 @@ export default function App() {
     // the main layout/format of the entire webpage
     <div className="h-screen w-screen bg-main-primary text-text-muted font-mono flex flex-col">
       {/* refer to Header Component */}
-      <Header setCode={setCode}></Header>
+      <Header code={code} setCode={setCode}></Header>
 
       {/* uses react resizeable panels, so the html tags are Group and Panel */}
       <Group>
