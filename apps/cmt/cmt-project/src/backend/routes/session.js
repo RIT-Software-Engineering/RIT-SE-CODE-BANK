@@ -23,7 +23,7 @@ router.get("/:courseId", async(req, res) => {
     var sessionMaterials = await Promise.all(
         sessions.map(async (session) => {
         const material = await prisma.sessionMaterial.findMany({
-            where: {sessionId: Number(session.id)}
+            where: {sessionId: Number(session.id), active: true}
         });
        return {material}
     })
