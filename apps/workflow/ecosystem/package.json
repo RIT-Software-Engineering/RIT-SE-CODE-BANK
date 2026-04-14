@@ -6,16 +6,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "import": "./dist/index.js"
-    },
-    "./components": {
-      "types": "./dist/react.d.ts",
-      "require": "./dist/react.js",
-      "import": "./dist/react.js"
-    }
+    ".": "./dist/index.js",
+    "./components": "./dist/react.js"
   },
   "files": [
     "dist"
