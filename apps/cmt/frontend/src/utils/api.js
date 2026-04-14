@@ -47,9 +47,9 @@ class CMTFetchError extends Error {
  *
  * @param {string} method 
  * @param {string} url 
- * @param {Object} [body]
- * @param {Object} [headers] 
- * @param {number[]} [allowedErrorCodes]
+ * @param {Object} body
+ * @param {Object} headers 
+ * @param {number[]} allowedErrorCodes
  * @param {string} baseUrl 
  * @returns Response of fetch in the form of a promise. If the promise is rejected, an error will be returned in the format { message: string, response: Response }. The response contains the full response of the fetch.
  */
@@ -90,7 +90,11 @@ export async function CMTFetch(method, url, body, headers, allowedErrorCodes, ba
 /**
  * Uses {@link CMTFetch}
  * 
- * @param {Object} body 
+ * @param {string} method 
+ * @param {string} url 
+ * @param {Object} [body]
+ * @param {Object} [headers] 
+ * @param {number[]} [allowedErrorCodes]
  */
 export async function CMTJsonFetch(method, url, body, headers, allowedErrorCodes = []) {
     return CMTFetch(
@@ -106,7 +110,11 @@ export async function CMTJsonFetch(method, url, body, headers, allowedErrorCodes
 /**
  * Uses {@link CMTFetch}
  * 
- * @param {FormData} body
+ * @param {string} method 
+ * @param {string} url 
+ * @param {Object} [body]
+ * @param {Object} [headers] 
+ * @param {number[]} [allowedErrorCodes]
  */
 export async function CMTFormFetch(method, url, body, headers, allowedErrorCodes = []) {
     return CMTFetch(
@@ -122,7 +130,11 @@ export async function CMTFormFetch(method, url, body, headers, allowedErrorCodes
 /**
  * Uses {@link CMTFetch}
  * 
- * @param {Object} body
+ * @param {string} method 
+ * @param {string} url 
+ * @param {Object} [body]
+ * @param {Object} [headers] 
+ * @param {number[]} [allowedErrorCodes]
  */
 export async function workflowsFetch(method, url, body, headers, allowedErrorCodes = []) {
     return CMTFetch(

@@ -12,8 +12,8 @@ const permissionRoutes = require('./api/routes/permissions');
 const port = process.env.PORT || 5001;
 
 const allowedOrigins = []
-if (process.env.CMT_BASE_URL) allowedOrigins.push(process.env.CMT_BASE_URL)
-if (process.env.CMT_BASE_URL_STAGING) allowedOrigins.push(process.env.CMT_BASE_URL_STAGING)
+if (process.env.CMT_URL) allowedOrigins.push(process.env.CMT_URL)
+if (process.env.CMT_URL_STAGING) allowedOrigins.push(process.env.CMT_URL_STAGING)
 
 app.use(
   cors({

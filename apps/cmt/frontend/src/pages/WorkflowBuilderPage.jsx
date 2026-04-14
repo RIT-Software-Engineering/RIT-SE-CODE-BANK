@@ -12,6 +12,9 @@ import {
     ComplexActionRenderer } from "../components/workflows/BuilderRenderers.jsx";
 
 /**
+ * @import { SetStateAction } from "react"
+ */
+/**
  * A component that acts as the main page for the Workflow Builder Admin Page.
  * This version of the page is used only for admins and not normal users.
  * They have much more control of what they can do and we mainly let them do what they want.
@@ -224,7 +227,7 @@ export function BuilderPageAdmin({isAdmin}){
             </Form.Select>
             <div className="flex pt-2">
                 <Form.Label>Is Required?</Form.Label>
-                <Form.Check className="pl-2" onChange={(e)=>setRequired(e.target.checked)} defaultChecked={isEdit ? (curAction.parsedMetadata?.outputs?.length > 0 ? curAction.parsedMetadata.outputs[0].isRequired : false) : false}/>
+                <Form.Check className="pl-2" onChange={(e)=>setRequired(e.target.checked)} defaultChecked={isEdit ? (curAction?.parsedMetadata?.outputs?.length > 0 ? curAction?.parsedMetadata.outputs[0].isRequired : false) : false}/>
             </div>
             <BuilderOutputRenderer code={code} setPlaceholder={setPlaceholder} validation={validation} setValidation={setValidation} isEdit={isEdit} curAction={curAction}/>
         
@@ -586,7 +589,7 @@ function createActionWithContexts(action) {
  * @param {string} description - The description of the workflow
  * @param {Array} tags - An array of strings of the tags of the workflow
  * @param {Array} workflows - An array containing all of the workflows
- * @param {(workflows: Array) => void} setWorkflows - The state setter to set all our workflows
+ * @param {React.Dispatch<SetStateAction<Object[]>>} setWorkflows - The state setter to set all our workflows
  * @param {Object} extraData - Any extra data, which is metadata/the meta workflow in our case
  * @param {(error:string) => void} setError - Sets a display error in the {@link WorkflowModal} if it fails to add the workflow for any reason
  */
@@ -613,7 +616,7 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
     let returnVal;
     await CMTJsonFetch("POST", "/workflow/workflowTemplate", {workflow}).then(async response => {
         const data = await response.json();
-        setWorkflows([...workflows, {
+        setWorkflows(previousWorkflows => [...previousWorkflows, {
             id: data.workflow.baseActionId,
             attributeId: data.workflow.id, // The ID is for the WorkflowAttribute, not the actual workflow
             name: name,
@@ -622,7 +625,8 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
             tags: tags.sort(), // We do original tags here to not include the special tag
             metadata: {
                 code: metaWorkflow
-            }
+            },
+            usedCodes: [],
         }].sort((a, b) => a.name.localeCompare(b.name))); // Just sort them
         returnVal = "Good";
     }).catch(async error => {
@@ -650,7 +654,7 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
  * @param {string} description - The description of the workflow
  * @param {Array} tags - An array of strings of the tags of the workflow
  * @param {Array} workflows - An array containing all of the workflows
- * @param {(workflows: Array) => void} setWorkflows - The state setter to set all our workflows
+ * @param {React.Dispatch<SetStateAction<Object[]>>} setWorkflows - The state setter to set all our workflows
  * @param {Object} extraData - Any extra data, which is metadata/the meta workflow in our case
  * @param {(error:string) => void} setError - Sets a display error in the {@link WorkflowModal} if it fails to add the workflow for any reason
  * @param {Object} workflowToUpdate - Our workflow that is being edited/updated. We mainly use its data since the PUT doesn't return useful stuff for us
@@ -816,7 +820,7 @@ async function setNextActionInfo(actionWithContexts, actions, workflowId, id, na
  * @async
  * @param {Number} index - The index of the current workflow template. Used to make things go faster when setting the workflows
  * @param {Array} workflows - the array of our workflows templates
- * @param {(workflows: Array) => void} setWorkflows - the state setter for our workflows
+ * @param {React.Dispatch<SetStateAction<Object[]>>} setWorkflows - the state setter for our workflows
  * @param {string} name - the name of the action
  * @param {string} description - the description of the action
  * @param {string} actionType - the action type. We either pass in "simple" or "complex"
@@ -1125,7 +1129,7 @@ async function deleteStandardAction(actionToDelete, refresh){
  *
  * @async
  * @param {Array} workflows - the top-level workflows
- * @param {(workflows: Array) => void} setWorkflows - state setter for the top-level workflows
+ * @param {React.Dispatch<SetStateAction<Object[]>>} setWorkflows - state setter for the top-level workflows
  * @param {Object} workflowToDelete - the workflow we are deleting. Can be either a workflow action or a template workflow
  * @param {() => void} refresh - Function to refresh the page upon completion. Used so we don't have to do complicated logic and let the API handle stuff
  */

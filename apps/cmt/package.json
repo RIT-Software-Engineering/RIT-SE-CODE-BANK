@@ -1,0 +1,6 @@
+{
+    "name": "CMT",
+    "scripts": {
+        "forceResetAllData": "npx prisma migrate reset --schema backend/prisma/schema.prisma --force --skip-seed && npx prisma db push --schema backend/prisma/schema.prisma && node backend/prisma/minimalSeed.js && cd ../workflow/server && npx prisma migrate reset --force --skip-seed && npx prisma db push && node prisma/cmtSeed.js"
+    }
+}

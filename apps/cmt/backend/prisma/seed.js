@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { PrismaClient } from './generated/client/index.js';
+import testUsers from '../dev-users.json'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,23 +42,21 @@ async function main() {
 
   // 1. Create Professors with specific IDs
   console.log('👨‍🏫 Creating professors...');
-  await prisma.professor.create({
-    data: {
-      id: "pao1234",
-      fname: 'John',
-      lname: 'Smith',
-      email: 'prof1@rit.edu',
-    },
-  });
+  async function seedProfessors(prisma, users) {
+    for (const user of users) {
+      await prisma.professor.create({
+        data: {
+          id: user.uid,
+          fname: user.givenName,
+          lname: user.sn,
+          email: user.email,
+        },
+      });
+    }
+  }
 
-  await prisma.professor.create({
-    data: {
-      id: "pao1235",
-      fname: 'Sarah',
-      lname: 'Johnson',
-      email: 'prof2@rit.edu',
-    },
-  });
+  await seedProfessors(prisma, testUsers);
+
 
   console.log(`✅ Created 2 professors:`);
   console.log(`   • Professor 1 (id="pao1234"): John Smith - prof1@rit.edu`);
