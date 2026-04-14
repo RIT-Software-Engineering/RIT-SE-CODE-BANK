@@ -31,7 +31,7 @@ jobs:
 
       - name: Set base and head commits for Nx
         id: set-base
-        run: echo "base=origin/main" >> $GITHUB_OUTPUT
+        run: echo "base=origin/dev" >> $GITHUB_OUTPUT
 
       - name: Set head commit
         id: set-head
@@ -94,7 +94,7 @@ jobs:
 
   deploy:
     name: Deploy Affected Apps
-    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev' || endsWith(github.ref, '-cicd-testing')
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || endsWith(github.ref, '-cicd-testing')
     needs: [setup, build]
     runs-on: ubuntu-latest
 

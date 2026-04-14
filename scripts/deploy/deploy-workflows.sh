@@ -25,14 +25,7 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     cd ./apps/workflow/server
     
     docker compose --env-file ".env.staging" -f compose.build.yaml -f compose.run.yaml up -d --build
-    
-    echo "Waiting for services to be healthy..."
-    sleep 10
-    
-    echo "Checking service status..."
-    docker compose ps
-    
-    echo "Deployment complete!"
+    echo "Deployment complete"
 ENDSSH
 
 echo "✅ CMT deployed successfully!"
