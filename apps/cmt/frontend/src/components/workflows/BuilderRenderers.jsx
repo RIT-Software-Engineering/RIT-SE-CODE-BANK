@@ -22,6 +22,7 @@ export function WorkflowModalRenderer(props) {
       onShow={props.onShow}
       centered
       onHide={props.onHide}
+      onExit={props.onExit}
     >
       <Modal.Header closeButton>
         {props.isEdit ? "Edit" : "New"} Workflow
@@ -71,7 +72,7 @@ export function WorkflowModalRenderer(props) {
 export function ActionModalRenderer(props) {
     return (
     <Modal size="lg" centered show={props.isOpen} onShow={props.onShow} 
-    onHide={props.onHide}>
+    onHide={props.onHide} onExit={props.onExit}>
         <Modal.Header closeButton>{props.isEdit ? 'Edit' : 'New'} Action</Modal.Header>
         <Modal.Body>
             {props.children}
