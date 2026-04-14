@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 const { submitHighlightsForm, getHighlightByFacultyId } = require('../api/highlights_api');
 const { saveParsedHighlights, updateParsedHighlights } = require('../api/parsed_highlights_api');
-const { calculateTeachingScore } = require('../api/teaching_eval_api');
+const { calculateTeachingScore, summarizeTeachingEval } = require('../api/teaching_eval_api');
 const { GoogleGenAI } = require('@google/genai');
 const key = process.env.GEMINI_KEY;
 const modelName = 'gemma-3-27b-it';
@@ -81,6 +81,26 @@ router.post('/:formId/summarize', async (req, res) => {
     )).then(r => r[0]?.faculty_information_id) : null;
     const teachingScore = facultyId ? await calculateTeachingScore(facultyId, h.teaching_section || '') : null;
 
+    // Fetch the most recent teaching eval form for this faculty to generate paragraph 1
+    let teachingEvalSummary = null;
+    if (facultyId) {
+      try {
+        const evalForms = await withConn(conn => conn.query(
+          `SELECT f.id FROM forms f
+           JOIN teaching_evals te ON te.form_id = f.id
+           WHERE f.faculty_information_id = ?
+           ORDER BY f.time_submitted DESC LIMIT 1`,
+          [facultyId]
+        ));
+        if (evalForms[0]) teachingEvalSummary = await summarizeTeachingEval(evalForms[0].id);
+      } catch (_) { /* no eval available */ }
+    }
+
+    // Teaching rating = eval score (3 or 4) + highlights improvement score (0 or 1)
+    const evalScore = teachingScore?.score ?? 3; // 3 or 4 from percentile
+    const improvementScore = (teachingScore?.matchedKeywords?.length ?? 0) >= 2 ? 1 : 0; // 0 or 1
+    const finalTeachingRating = Math.min(5, evalScore + improvementScore);
+
     // Build regex patterns to strip name from AI input and output
     const nameParts = h.name ? h.name.trim().split(/\s+/).filter(p => p.length > 1) : [];
     const lastName = nameParts.length >= 2 ? nameParts[nameParts.length - 1] : null;
@@ -115,17 +135,16 @@ router.post('/:formId/summarize', async (req, res) => {
 
     const mentoringText = studentMentoring || h.teaching_section || 'None listed';
 
-    const teachingNote = teachingScore
-      ? `Teaching eval percentile: ${teachingScore.percentile?.toFixed(1) ?? 'N/A'}% (avg score: ${teachingScore.overall_avg ?? 'N/A'}), course improvement activities found: ${teachingScore.matchedKeywords.length}. The teaching rating must be ${teachingScore.score ?? 'N/A'}.`
-      : 'No teaching eval data available.';
+    const highlightsTeachingNote = `Highlights teaching section (write one paragraph summarizing course improvement activities from this): ${scrub(h.teaching_section || h.curriculum_development || 'None')}`;
 
     const prompt = `Evaluate this faculty highlights form. Return ONLY valid JSON, no markdown.
-              Structure: {"teaching":{"rating":1-5,"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":1-5,"comments":""}}
-              For each section write 5-7 sentences referencing specific contributions. IMPORTANT: Do NOT use any person's name anywhere in your response. Refer to the faculty member only as "the faculty member" or "they".
+              Structure: {"teaching":{"rating":${finalTeachingRating},"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":3-5,"comments":""}}
+              IMPORTANT: Do NOT use any person's name anywhere in your response. Refer to the faculty member only as "the faculty member" or "they".
+              For the teaching comments, write ONE paragraph summarizing course improvement activities from the highlights teaching section. The teaching rating is already set to ${finalTeachingRating}.
+              For all other sections write 3-5 sentences. The overall rating must be 3, 4, or 5.
 
               Faculty rank: ${h.rank || 'Faculty'}
-              ${teachingNote}
-              Teaching: ${scrub(h.teaching_section || h.curriculum_development || 'None')}
+              ${highlightsTeachingNote}
               Mentoring: ${scrub(mentoringText)}
               Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
               Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
@@ -134,38 +153,12 @@ router.post('/:formId/summarize', async (req, res) => {
               Administrative: ${scrub(h.administrative_responsibilities || 'None')}
               Professional Development: ${scrub(h.professional_development || 'None')}`;
 
-    console.log('[scrub test]', scrub('David Kim'), scrub(h.name));
-    console.log('[prompt preview]', prompt.substring(0, 500));
-
     const cached = summaryCache.get(formId);
     if (cached && cached.expiresAt > Date.now() && req.query.refresh !== 'true') return res.json({ summary: cached.summary, cached: true });
 
-    const isRateLimit = e => e.status === 429 || e.statusCode === 429 || e?.errorDetails?.some?.(d => d.reason === 'RATE_LIMIT_EXCEEDED') || String(e?.message).includes('429');
-    const isDailyQuota = e => String(e?.message).includes('PerDay') || String(e?.message).includes('GenerateRequestsPerDay');
-    let lastErr;
-    // for (const modelName of MODELS) {
-    //   const model = genAI.getGenerativeModel({ model: modelName });
-    //   for (let attempt = 0, delay = 2000; attempt < 4; attempt++, delay *= 2) {
-    //     try {
-    //       result = await model.generateContent(prompt);
-    //       break;
-    //     } catch (e) {
-    //       console.error(`[summarize] ${modelName} attempt ${attempt + 1} failed:`, e.status, e.statusCode, e.message);
-    //       lastErr = e;
-    //       if (!isRateLimit(e) || isDailyQuota(e) || attempt === 3) break;
-    //       await new Promise(r => setTimeout(r, delay));
-    //     }
-    //   }
-    //   if (result) break;
-    // }
-    const result = await client.models.generateContent({
-      model: modelName,
-      contents: prompt
-    });
-    if (!result) throw lastErr;
-    // Scrub raw text output before parsing to catch any names the model generated
+    const result = await client.models.generateContent({ model: modelName, contents: prompt });
+    if (!result) throw new Error('No result from model');
     const rawText = scrub(result.text.trim().replace(/^```json\s*|^```\s*|\s*```$/g, ''));
-    console.log(rawText)
     let summary;
     try {
       summary = JSON.parse(rawText);
@@ -180,10 +173,17 @@ router.post('/:formId/summarize', async (req, res) => {
       return obj;
     };
     summary = scrubObj(summary);
-    // Always override teaching rating with the calculated score
-    if (teachingScore?.score != null && summary.teaching) {
-      summary.teaching.rating = teachingScore.score;
+    // Override teaching rating and prepend eval summary as paragraph 1
+    if (summary.teaching) {
+      summary.teaching.rating = finalTeachingRating;
+      const p1 = teachingEvalSummary || 'No teaching evaluation data available.';
+      const p2 = summary.teaching.comments || '';
+      summary.teaching.comments = `${p1}
+
+${p2}`.trim();
     }
+    // Clamp overall to minimum 3
+    if (summary.overall?.rating != null) summary.overall.rating = Math.max(3, summary.overall.rating);
     summaryCache.set(formId, { summary, expiresAt: Date.now() + CACHE_TTL_MS });
     res.json({ summary });
   } catch (err) {

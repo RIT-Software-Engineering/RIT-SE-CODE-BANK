@@ -93,6 +93,11 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
       {teachingScore && (
         <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.100', borderRadius: 1 }}>
           <Typography variant="caption" color="text.secondary">Teaching (from eval data)</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1 }}>
+            Teaching score is based on the faculty member's percentile rank among all faculty with teaching evaluations.
+            A percentile ≥ 70% earns a base score of 4 (Above Average), 30–70% earns 3 (Average), and below 30% earns 2 (Below Average).
+            {teachingScore.bumped ? ' An additional +1 was applied because 2 or more course improvement activities were found in the highlights.' : ''}
+          </Typography>
           <Box sx={{ display: 'flex', gap: 3, mt: 0.5, flexWrap: 'wrap' }}>
             <Typography variant="body2">Score: <b>{teachingScore.score ?? 'N/A'}</b></Typography>
             <Typography variant="body2">Level: <b>{teachingScore.level}</b></Typography>
@@ -142,6 +147,11 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
       {scholarshipScore && (
         <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.100', borderRadius: 1 }}>
           <Typography variant="caption" color="text.secondary">Scholarship (from publication & grant data)</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1 }}>
+            Scholarship score is based on the number of publications submitted with this form.
+            5+ publications earns a score of 5 (Top 10%), 3–4 earns 4 (Top 30%), 1–2 earns 3 (Average), and 0 earns 2.
+            {scholarshipScore.hasNewGrant ? ' An additional +1 was applied because a new or funded grant was detected.' : ''}
+          </Typography>
           <Box sx={{ display: 'flex', gap: 3, mt: 0.5, flexWrap: 'wrap' }}>
             <Typography variant="body2">Score: <b>{scholarshipScore.score}</b></Typography>
             <Typography variant="body2">Publications: <b>{scholarshipScore.pubCount}</b></Typography>
@@ -153,7 +163,13 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
 
       {/* Weighted breakdown table */}
       {result && (
-        <Table size="small" sx={{ mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="caption" color="text.secondary">Weighted Score Breakdown</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1 }}>
+            Each category rating is multiplied by its assigned weight. The final score is the sum of all contributions.
+            Weights can be adjusted below and must total 10.
+          </Typography>
+          <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>Category</TableCell>
@@ -177,13 +193,20 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
             </TableRow>
           </TableBody>
         </Table>
+        </Box>
       )}
 
       {/* Final score display */}
       {result?.finalScore != null && (
-        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2">Final Score:</Typography>
-          <Chip label={result.finalScore.toFixed(2)} color="primary" />
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2">Final Score:</Typography>
+            <Chip label={result.finalScore.toFixed(2)} color="primary" />
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            The final score is calculated as: (Teaching × weight) + (Scholarship × weight) + (Service × weight) + (Administrative × weight).
+            A higher score reflects stronger overall performance across all weighted categories.
+          </Typography>
         </Box>
       )}
 
