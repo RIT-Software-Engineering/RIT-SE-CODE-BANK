@@ -18,7 +18,7 @@ services:
       - workflows_data:/var/lib/mysql
 
   workflows-backend:
-    image: workflows-backend:{$TAG:-latest}
+    image: workflows-backend:${TAG:-latest}
     ports:
       - "5011:5011"
     environment:
