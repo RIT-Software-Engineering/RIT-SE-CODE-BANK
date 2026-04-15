@@ -76,15 +76,14 @@ function encodeDirective(parsedData, symbols) {
             }
             break;
     }
-    console.log(wordArray);
     return wordArray;
 }
 
 function encodeInstruction(parsedData, symbols, lc) {
     const {mnemonic, src, dst} = parsedData;
+    console.log(parsedData)
     
-    const UpperMnemonic = mnemonic.toUpperCase();
-    const opcodeInfo = OPCODES[UpperMnemonic];
+    const opcodeInfo = OPCODES[mnemonic.toUpperCase()];
     const resolvedSrc = src ? resolveOperand(src, symbols, lc) : null;
     const resolvedDst = dst ? resolveOperand(dst, symbols, lc) : null;
 
@@ -96,7 +95,9 @@ function encodeInstruction(parsedData, symbols, lc) {
                 return oneEncoder(opcodeInfo, resolvedDst);
             case 'zero':
                 return zeroEncoder(opcodeInfo);
-            //create case for br
+            case 'branch':
+                const {branchLabel} = parsedData;
+                return branchEncoder(opcodeInfo, branchLabel, symbols, lc);
             //create case for rts and jsr
         }
     }
@@ -150,4 +151,15 @@ function oneEncoder(opcodeInfo, dst) {
 
 function zeroEncoder(opcodeInfo) {
     return [opcodeInfo.code];
+}
+
+function branchEncoder(opcodeInfo, label, symbols, pc) {
+    const target = symbols[label];
+    let offset = (target  - (pc + 2));
+
+    if(offset < -128 || offset > 127) {
+        throw new Error("Branch out of Range")
+    }
+
+    return [opcodeInfo.code | (offset & 0xFF)];
 }

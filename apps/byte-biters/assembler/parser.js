@@ -1,4 +1,5 @@
 import {isRegister, isNumber, isLabel, getRegisterNumber} from "./utils.js";
+import { OPCODES } from "./opcodes.js";
 
 export function parseLine(tokens) {
     let label = null;
@@ -27,8 +28,22 @@ export function parseLine(tokens) {
 }
 
 function parseInstruction(tokens, label) {
+    const branchMnemonic = tokens[0].toUpperCase();
+    const opcodeInfo = OPCODES[branchMnemonic];
+
+    // Special-case branch instructions
+    if (opcodeInfo && opcodeInfo.type === "branch") {
+        return {
+            type: "instruction",
+            label,
+            mnemonic: branchMnemonic,
+            src: null,
+            dst: null,
+            branchLabel: tokens[1] || null
+        };
+    }
+
     const {mnemonic, srcTokens, dstTokens} = instructionLevel(tokens);
-    //console.log(srcTokens);
 
     return {
         type: "instruction",
@@ -39,9 +54,9 @@ function parseInstruction(tokens, label) {
     };
 }
 
-function instructionLevel(tokenArray) { //Needs a better check in case if it is one value only, like clr
+function instructionLevel(tokenArray) {
     const mnemonic = tokenArray[0];
-    const rest = tokenArray.slice(1); //this needs to be updated to allow variables
+    const rest = tokenArray.slice(1);
     const srcTokens = [];
     const dstTokens = [];
     let srcCheck = true;

@@ -480,7 +480,8 @@ export class CPU {
     }
 
     //Used to create a branch
-    br(oper) {
+    br(oper) { //this is most likely where current issue lies here
+        //console.log(oper)
         const pc = this.registers[REG.PC];
         const displacement = oper.offset << 1;
 

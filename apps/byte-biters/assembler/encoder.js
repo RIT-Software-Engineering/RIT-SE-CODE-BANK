@@ -8,5 +8,3 @@ export function encodeOperand(tokens) {
     const encodedValue = (MODE_BITS[mode] << 3) | reg;
     return encodedValue;
 }
-
-//look into this, this should be changed to allow for the use of indexing

@@ -54,9 +54,11 @@ function readWordFromBytes(mem, addr) {
 
 
 const program = `
-HALT
-.BLKW 1
-.BLKB 1
+        BR SKIP
+        MOV #99, R0
+SKIP:   MOV #5, R1
+        HALT
+
 `;
 
 backend.loadAssembly(program);

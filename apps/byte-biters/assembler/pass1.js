@@ -1,4 +1,4 @@
-
+import { OPCODES } from "./opcodes.js";
 
 export function firstPass(parsedData) {
     let lc = 0;
@@ -33,6 +33,7 @@ function computeSize(data) {
 
 function computeInstructionSize(data) {
     let size = 2;
+
     if(data.src != null && data.src.offset != null) {
         size += 2;
     }
