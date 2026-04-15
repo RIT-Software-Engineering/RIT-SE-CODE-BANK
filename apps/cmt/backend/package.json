@@ -1,0 +1,40 @@
+{
+  "name": "cmt-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Course Management Calendar",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --watch server.js"
+  },
+  "dependencies": {
+    "@se-code-bank/workflows-ecosystem": "*",
+    "body-parser": "^1.20.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "fs": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "keywords": [
+    "course",
+    "calendar",
+    "api",
+    "backend"
+  ],
+  "nx": {
+    "targets": {
+      "start": {
+        "continuous": true
+      }
+    }
+  },
+  "author": "Your Name",
+  "license": "MIT",
+  "type": "module"
+}

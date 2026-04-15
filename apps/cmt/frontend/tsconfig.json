@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.json", // Use CMT top level config
+  "include": [
+    "src/**/*",
+  ]
+}

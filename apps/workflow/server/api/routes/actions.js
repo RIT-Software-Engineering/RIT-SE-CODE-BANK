@@ -16,6 +16,7 @@ router.get("/:id", async (req, res) => {
             metadata: true,
             previousAction: true,
             childActions: true,
+            rootActionOf: true,
         },
     });
 
@@ -24,9 +25,9 @@ router.get("/:id", async (req, res) => {
 
 // GET /actions
 router.get("/", async (req, res) => {
-    const { workflowId } = req.query;
+    const { workflowId } = req.query
 
-    const where = {};
+    const where = {}
     // Add other filters
 
     if (workflowId) {
@@ -54,7 +55,7 @@ router.get("/", async (req, res) => {
         const intersectionIds = intersection.map(action => action.id);
         const toReturn = actionsByWorkflow.filter(action => intersectionIds.includes(action.id));
 
-        return res.json(toReturn.map((action) => exportAction(action)));
+        return res.json(toReturn.map((action) => {return action}));
     }
 
     const actions = await prisma.action.findMany({
@@ -122,6 +123,7 @@ router.put("/:id", async (req, res) => {
         metadata,
         nextActionId,
         parentActionId,
+        isFrozen,
     } = req.body;
     const { id } = req.params;
 
@@ -143,6 +145,9 @@ router.put("/:id", async (req, res) => {
     }
     if (parentActionId) {
         data.parentAction = { connect: { id: parentActionId } };
+    }
+    if (isFrozen) {
+        data.isFrozen = isFrozen;
     }
 
     // If the update to this action would create a loop, don't accept the update and return an error message.
@@ -179,10 +184,37 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
     const { id } = req.params;
 
+    await prisma.$transaction(async () => {
+    const actionInfo = await prisma.action.findUnique({
+        where: {id: id},
+        select: {previousAction: true, nextAction:true, rootActionOf: true}
+    })
+
+    const previousActionId = actionInfo.previousAction?.id;
+    const nextActionId = actionInfo.nextAction?.id;
+    const rootActionId = actionInfo.rootActionOf ? actionInfo.rootActionOf[0]?.id : null;
+
     await prisma.action.delete({
         where: { id: id },
     });
 
+    if (previousActionId){
+        await prisma.action.update({
+                where: {id: previousActionId},
+                data: {
+                    nextActionId: nextActionId ?? null
+                }
+            });
+    }
+    else if (rootActionId){
+        await prisma.workflowAttributes.update({
+                where: {id: rootActionId},
+                data: {
+                    rootActionId: nextActionId ?? null
+                }
+            });
+    }
+    });
     res.json({ message: "Deleted" });
 });
 

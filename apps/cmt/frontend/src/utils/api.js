@@ -1,0 +1,148 @@
+import { LogError } from "./error.jsx";
+
+export const API_BASE = process.env.REACT_APP_BACKEND_URL || "http://localhost:5010/api/cmt";
+export const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || "http://localhost:5010";
+export const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:3001').replace(/\/$/, '')
+
+class CMTFetchError extends Error {
+    constructor(message, response) {
+        super(message);
+        this.status = response.status;
+        this.response = response;
+    }
+}
+
+/**
+ * Utility function for fetching.
+ * 
+ * A near-copy of this function exists in the backend utils too
+ * 
+ * ## Examples
+ * #### Simple usage
+ * ```
+ *  CMTFetch("POST", `/course`, course).then(() => {
+ *      showSuccessNotification("Course created!")
+ *      navigate('/courseView')
+ *  })
+ * ```
+ * #### Complex usage
+ * ```
+ *  const handleEditCourse = async (courseId, updates) => {
+ *      CMTFetch("PUT", `/course/${courseId}`, updates, {}, [409, 429]).then(response => {
+ *          showSuccessNotification("Course updated!") // Show notification with central notification system
+ *          setCourseData(await response.json()) // Update page with response
+ *      }).catch(error => {
+ *          // Check for specific error codes. 
+ *          // Since we gave [409, 429] as an argument for "allowedErrorCodes", CMTFetch does NOT display errors, giving us the freedom to handle them however we'd like 
+ *          if (error.response.status == 409) {
+ *              showErrorNotification("Unable to update course due to a server conflict. Refeshing the page...")
+ *              setTimeout(() => window.refresh(), 1000)
+ *          }
+ *          if (error.response.status == 429) {
+ *              showErrorNotification("Unable to create course due to rate limiting. Please slow down!")
+ *          }
+ *      })
+ *  }
+ * ```
+ *
+ * @param {string} method 
+ * @param {string} url 
+ * @param {Object} body
+ * @param {Object} headers 
+ * @param {number[]} allowedErrorCodes
+ * @param {string} baseUrl 
+ * @returns Response of fetch in the form of a promise. If the promise is rejected, an error will be returned in the format { message: string, response: Response }. The response contains the full response of the fetch.
+ */
+export async function CMTFetch(method, url, body, headers, allowedErrorCodes, baseUrl) {
+    
+    const fullURL = `${baseUrl}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
+    const headersJSON = JSON.stringify(headers)
+
+    console.log(`🐖 Fetching to url ${fullURL} with body ${body} and headers ${headersJSON} and method ${method}`)
+    
+    let response
+    try {
+        const options = { method, headers }
+        if (body !== undefined) options.body = body
+        response = await fetch(fullURL, { ...options, credentials: 'include'})
+    } catch (error) {
+        LogError(`🥕 Error when fetching to url ${fullURL} with body ${body} and headers ${headersJSON} and method ${method}`, error)
+        throw Error(`🐦‍🔥 Error when fetching to url ${fullURL}: ${error} with body ${body} and headers ${headersJSON} and method ${method}`)
+    }
+        
+    if (response.ok) {
+        return response
+    }
+
+    // Only notify the user if the error code is not allowed,
+    if(!allowedErrorCodes.includes(response.status)) {    
+        LogError("😨 New Error just dropped", response)
+    }
+    
+    // Create specially formatted error so consumer can access the codes easily
+    const clonedResponse = response.clone();
+    throw new CMTFetchError(
+        `🐘 Error status ${response.status}: ${JSON.stringify(await clonedResponse.json())} from url ${fullURL} with body ${body} and headers ${headersJSON} and method ${method}`, 
+        response
+    )
+}
+
+/**
+ * Uses {@link CMTFetch}
+ * 
+ * @param {string} method 
+ * @param {string} url 
+ * @param {Object} [body]
+ * @param {Object} [headers] 
+ * @param {number[]} [allowedErrorCodes]
+ */
+export async function CMTJsonFetch(method, url, body, headers, allowedErrorCodes = []) {
+    return CMTFetch(
+        method,
+        url,
+        body ? JSON.stringify(body) : undefined,
+        { ...headers, "Content-Type": "application/json" },
+        allowedErrorCodes,
+        API_BASE
+    )
+}
+
+/**
+ * Uses {@link CMTFetch}
+ * 
+ * @param {string} method 
+ * @param {string} url 
+ * @param {Object} [body]
+ * @param {Object} [headers] 
+ * @param {number[]} [allowedErrorCodes]
+ */
+export async function CMTFormFetch(method, url, body, headers, allowedErrorCodes = []) {
+    return CMTFetch(
+        method,
+        url,
+        body,
+        headers,
+        allowedErrorCodes,
+        API_BASE
+    )
+}
+
+/**
+ * Uses {@link CMTFetch}
+ * 
+ * @param {string} method 
+ * @param {string} url 
+ * @param {Object} [body]
+ * @param {Object} [headers] 
+ * @param {number[]} [allowedErrorCodes]
+ */
+export async function workflowsFetch(method, url, body, headers, allowedErrorCodes = []) {
+    return CMTFetch(
+        method,
+        url,
+        body ? JSON.stringify(body) : undefined,
+        { ...headers, "Content-Type": "application/json" },
+        allowedErrorCodes,
+        WORKFLOWS_API
+    )
+}

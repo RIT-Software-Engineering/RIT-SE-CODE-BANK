@@ -1,0 +1,54 @@
+name: cmt
+
+services:
+  mariadb:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: cmt_root_pass
+      MYSQL_DATABASE: cmt_db
+      MYSQL_USER: cmt_user
+      MYSQL_PASSWORD: cmt_pass
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    restart: unless-stopped
+
+  cmt-backend:
+    image: cmt-backend:${TAG:-latest}
+    ports:
+      - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
+    env_file:
+      - .env.staging
+    environment:
+      NODE_ENV: production
+      PORT: 5010
+      DATABASE_URL: mysql://cmt_user:cmt_pass@mariadb:3306/cmt_db
+    depends_on:
+      mariadb:
+        condition: service_healthy
+
+    restart: unless-stopped
+
+  cmt-frontend:
+    image: cmt-frontend:${TAG:-latest}
+    ports:
+      - ${FRONT_HOST_PORT}:${FRONT_CONTAINER_PORT}
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+      REACT_APP_BACKEND_URL: /api/cmt
+      REACT_APP_AUTH_BASE: ""
+      REACT_APP_BASE_URL: http://apps-staging.se.rit.edu
+      PUBLIC_URL: /cmt
+    depends_on:
+      - cmt-backend
+    restart: unless-stopped
+
+volumes:
+  mariadb_data:
+  workflows_data:
