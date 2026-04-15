@@ -1,0 +1,35 @@
+{
+  "name": "workflows-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10",
+    "prisma": "^6.10.1",
+    "mysql2": "^3.14.3"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "nx": {
+    "targets": {
+      "start": {
+        "continuous": true
+      }
+    }
+  },
+  "devDependencies": {
+    "mysql2": "^3.14.3"
+  }
+}

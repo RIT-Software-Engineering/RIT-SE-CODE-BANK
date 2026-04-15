@@ -1,0 +1,316 @@
+openapi: 3.0.3
+info:
+  title: States API
+  version: 1.0.0
+
+paths:
+  /states/workflow:
+    get:
+      summary: Get workflow states filtered by userId and/or workflowId
+      description: Returns workflow states that match the provided filters. When filtering by userId this includes workflow states directly assigned to the user as well as those the user participates in via a team assignment.
+      operationId: getWorkflowStates
+      tags:
+        - States
+        - Workflow
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: workflowId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Array of workflow states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "./schemas.yaml#/components/schemas/WorkflowState"
+                    - type: object
+                      properties:
+                        participants:
+                          type: array
+                          items:
+                            $ref: "./schemas.yaml#/components/schemas/WorkflowStateParticipant"
+                        actionStates:
+                          type: array
+                          items:
+                            $ref: "./schemas.yaml#/components/schemas/ActionState"
+
+    post:
+      summary: Create a new workflow state (individual or team)
+      description: Creates a workflow state based on the supplied data. Provide userId to create an individual assignment, or participantUserIds (and optionally teamId) to create a shared team assignment.
+      operationId: createWorkflowState
+      tags:
+        - States
+        - Workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: Primary user assigned to the workflow state. Optional when using participantUserIds.
+                workflowId:
+                  type: string
+                  description: Workflow this state tracks.
+                  minLength: 1
+                participantUserIds:
+                  type: array
+                  description: Additional users that share the workflow state (team participants).
+                  items:
+                    type: string
+                teamId:
+                  type: string
+                  description: Identifier of the team that shares this workflow state.
+              required:
+                - workflowId
+      responses:
+        "200":
+          description: Created workflow state
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas.yaml#/components/schemas/WorkflowState"
+
+  /states/workflow/{id}:
+    get:
+      summary: Get a workflow state by ID
+      description: Returns the workflow state specified by its ID
+      operationId: getWorkflowStateById
+      tags:
+        - States
+        - Workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Workflow state object
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "./schemas.yaml#/components/schemas/WorkflowState"
+                  - type: object
+                    properties:
+                      actionStates:
+                        type: array
+                        items:
+                          $ref: "./schemas.yaml#/components/schemas/ActionState"
+
+    put:
+      summary: Update a workflow state by ID (update actionStates)
+      description: Updates the workflow state specified by its ID with the data passed in the body. This tells the workflow state to make sure it's entries in actionStates match the actions in the workflow that it represents.
+      operationId: updateWorkflowState
+      tags:
+        - States
+        - Workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Update confirmation
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas.yaml#/components/schemas/WorkflowState"
+
+    delete:
+      summary: Delete a workflow state by ID
+      description: Deletes the workflow state specified by its ID
+      operationId: deleteWorkflowState
+      tags:
+        - States
+        - Workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Delete confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Deleted"
+
+  /states/action:
+    get:
+      summary: Get multiple action states filtered by query parameters
+      description: Returns all action states that pass the filters specified in the query parameters
+      operationId: getActionStates
+      tags:
+        - States
+        - Action
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: workflowStateId
+          in: query
+          schema:
+            type: string
+        - name: actionId
+          in: query
+          schema:
+            type: string
+        - name: stateType
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Array of action states
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/responses/ActionState"
+
+  /states/action/{id}:
+    get:
+      summary: Get an action state by ID
+      description: Returns the action state with the specified ID
+      operationId: getActionStateById
+      tags:
+        - States
+        - Action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Action state object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/ActionState"
+
+    put:
+      summary: Update an action state by ID (e.g. update stateType)
+      description: Updates the action state with the specified ID based on the data passed in the body
+      operationId: updateActionState
+      tags:
+        - States
+        - Action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Action state update payload
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stateType:
+                  type: string
+      responses:
+        "200":
+          description: Update confirmation
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas.yaml#/components/schemas/ActionState"
+
+  /states/workflow/{workflowStateId}/findStep:
+    get:
+      summary: Find next step (notStarted) action state for user in a workflow state
+      description: Finds the first action state in a workflow state for the specified user where the action state is notStarted allowing the user to pick up where they left off.
+      operationId: findStep
+      tags:
+        - States
+        - Workflow
+      parameters:
+        - name: workflowStateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Action state object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/ActionState"
+
+  /states/handleSubmit:
+    post:
+      summary: Handle submission of an action state (mark complete)
+      description: Handle sumission of an action for a specific user.
+      operationId: handleSubmit
+      tags:
+        - States
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actionStateId:
+                  type: string
+              required:
+                - actionStateId
+      responses:
+        "200":
+          description: Completion confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Completed"
+        "500":
+          description: Failure response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+components:
+  responses:
+    ActionState:
+      allOf:
+        - $ref: "./schemas.yaml#/components/schemas/ActionState"
+        - type: object
+          properties:
+            action:
+              $ref: "./schemas.yaml#/components/schemas/Action"

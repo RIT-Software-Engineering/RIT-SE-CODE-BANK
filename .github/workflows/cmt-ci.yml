@@ -1,0 +1,137 @@
+name: Monorepo CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - '*-dev'
+      - '*-cicd-testing'
+  pull_request:
+    branches:
+      - main
+      - dev
+      - '*-dev'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: Setup & Cache Dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      nx-base: ${{ steps.set-base.outputs.base }}
+      nx-head: ${{ steps.set-head.outputs.head }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: tree:0
+          fetch-depth: 0
+
+      - name: Set base and head commits for Nx
+        id: set-base
+        run: echo "base=origin/dev~1" >> $GITHUB_OUTPUT
+        # this does not exclude commits that failed to push. For a better set up, check this link https://nx.dev/docs/guides/nx-cloud/setup-ci#get-the-commit-of-the-last-successful-build and this one https://github.com/marketplace/actions/nx-set-shas
+
+      - name: Set head commit
+        id: set-head
+        run: echo "head=HEAD" >> $GITHUB_OUTPUT
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Nx output
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-cache-${{ github.sha }}
+
+          
+  lint:
+    name: Lint Affected Projects
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: tree:0
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Affected Lint
+        run: npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+  
+  build:
+    name: Build Affected Projects
+    needs: [setup, lint]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: tree:0
+          fetch-depth: 0
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+        working-directory: ./
+      - run: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist/
+
+  deploy:
+    name: Deploy Affected Apps
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || endsWith(github.ref, '-cicd-testing')
+    needs: [setup, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: tree:0
+          fetch-depth: 0
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CMT_DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "DEPLOY_KEY=$HOME/.ssh/deploy_key" >> $GITHUB_ENV
+
+      - name: Add staging server to known_hosts
+        run: |
+          ssh-keyscan -H apps-staging.se.rit.edu >> ~/.ssh/known_hosts
+
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: deploy
+        run: CI=false npx nx affected -t deploy -v --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
