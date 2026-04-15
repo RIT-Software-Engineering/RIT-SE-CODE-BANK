@@ -31,7 +31,7 @@ jobs:
 
       - name: Set base and head commits for Nx
         id: set-base
-        run: echo "base=origin/main" >> $GITHUB_OUTPUT
+        run: echo "base=origin/dev" >> $GITHUB_OUTPUT
 
       - name: Set head commit
         id: set-head
@@ -65,10 +65,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-        working-directory: apps/cmt/cmt-project
-      - run: npm run lint
-        working-directory: apps/cmt/cmt-project
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Affected Lint
+        run: npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
   
   build:
     name: Build Affected Projects
@@ -83,8 +84,6 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-        working-directory: apps/cmt/cmt-project
-      - run: npm ci
         working-directory: ./
       - run: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
       - name: Upload build artifacts
@@ -95,8 +94,8 @@ jobs:
 
   deploy:
     name: Deploy Affected Apps
-    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev' || endsWith(github.ref, '-cicd-testing')
-    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || endsWith(github.ref, '-cicd-testing')
+    needs: [setup, build]
     runs-on: ubuntu-latest
 
     steps:
@@ -104,20 +103,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Extract App Name from Branch
-        id: parse
-        run: |
-          BRANCH=${GITHUB_REF##*/}
-          if [[ "$BRANCH" == *-dev ]]; then
-            APP_NAME="${BRANCH%-dev}"
-          elif [[ "$BRANCH" == "dev" || "$BRANCH" == "main" ]]; then
-            APP_NAME="all"  # fallback or global deploy logic
-          else
-            APP_NAME="cmt"
-          fi
-          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
-          echo "::notice ::Branch '$BRANCH' targets app '$APP_NAME'"
 
       - name: Setup SSH key
         run: |
@@ -130,16 +115,11 @@ jobs:
         run: |
           ssh-keyscan -H apps-staging.se.rit.edu >> ~/.ssh/known_hosts
 
-      - name: Deploy script
-        run: |
-          if [ "$APP_NAME" = "all" ]; then
-            echo "Deploying all apps"
-            chmod +x ./scripts/deploy-all.sh
-            ./scripts/deploy-all.sh
-          elif [ -f "./scripts/deploy-$APP_NAME.sh" ]; then
-            echo "Deploying $APP_NAME"
-            chmod +x "./scripts/deploy-$APP_NAME.sh"
-            ./scripts/deploy-$APP_NAME.sh
-          else
-            echo "No deployment script found for $APP_NAME, skipping."
-          fi
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: deploy
+        run: CI=false npx nx affected -t deploy -v --base=origin/cmt-dev-nx-cicd-testing --head=${{ needs.setup.outputs.nx-head }}

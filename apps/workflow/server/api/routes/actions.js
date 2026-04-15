@@ -25,9 +25,9 @@ router.get("/:id", async (req, res) => {
 
 // GET /actions
 router.get("/", async (req, res) => {
-    const { workflowId } = req.query;
+    const { workflowId } = req.query
 
-    const where = {};
+    const where = {}
     // Add other filters
 
     if (workflowId) {

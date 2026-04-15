@@ -82,7 +82,7 @@ async function getFullActionTree(rootActionId) {
 
 const exportAction = (action) => ({
   ...action,
-  metadata: action?.metadata.reduce(
+  metadata: action?.metadata?.reduce(
     (acc, m) => ({ ...acc, [m.key]: m.value }),
     {}
   ),

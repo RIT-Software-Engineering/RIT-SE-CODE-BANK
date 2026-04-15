@@ -52,6 +52,8 @@ router.get("/metadata", async (req, res) => {
       },}
     }));
 
+    console.log(workflow)
+
     // Only add to workflows if it's not null/undefined
     if (workflow)
       workflows.push(workflow)
