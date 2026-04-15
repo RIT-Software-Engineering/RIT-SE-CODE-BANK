@@ -27,6 +27,13 @@
     "api",
     "backend"
   ],
+  "nx": {
+    "targets": {
+      "start": {
+        "continuous": true
+      }
+    }
+  },
   "author": "Your Name",
   "license": "MIT",
   "type": "module"

@@ -5,8 +5,13 @@
     "apps/cmt/frontend",
     "apps/cmt/backend"
   ],
+  "scripts": {
+    "start-cmt": "npx nx run-many -t start -p cmt-frontend cmt-backend workflows-server",
+    "stop-cmt": "npx kill-port 3000 3001 5010"
+  },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "kill-port": "^2.0.1",
     "nx": "^22.6.5"
   }
 }

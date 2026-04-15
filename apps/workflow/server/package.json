@@ -23,6 +23,13 @@
   "prisma": {
     "seed": "node prisma/seed.js"
   },
+  "nx": {
+    "targets": {
+      "start": {
+        "continuous": true
+      }
+    }
+  },
   "devDependencies": {
     "mysql2": "^3.14.3"
   }

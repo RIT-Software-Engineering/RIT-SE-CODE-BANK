@@ -67,6 +67,13 @@
       "last 1 safari version"
     ]
   },
+  "nx": {
+    "targets": {
+      "start": {
+        "continuous": true
+      }
+    }
+  },
   "devDependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
