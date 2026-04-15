@@ -150,18 +150,19 @@ router.post('/', async (req, res) => {
             });
 
             // If we have sessions in our meta-workflow, we autopopulate them in the new course
-            sessionActions?.forEach(async action => {
-               await prisma.session.create({
-                    data: {
-                        sessionNum: parseInt(action.metadata.outputs[0].validation.sessionNum),
-                        course: {connect: {id: Number(newCourse.id)}}
-                    }
-               });
-            });
+            const sessionData = sessionActions?.map(action => ({
+                sessionNum: parseInt(action.metadata.outputs[0].validation.sessionNum),
+                courseId: Number(newCourse.id)
+            }));
+
+            await prisma.session.createMany({
+                data: sessionData,
+                skipDuplicates: true,
+            })
 
             // For simplicity of the frontend, return minimal information, since the GET for courses will contain all the info needed, and will be called much more often.
             res.json({ course: newCourse })
-        });
+        }, {timeout: 15000});
 
     } catch (error) {
         console.error('Error creating meta course workflow/empty course :', error)

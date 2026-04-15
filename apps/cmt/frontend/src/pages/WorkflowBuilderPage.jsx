@@ -195,7 +195,7 @@ export function BuilderPageAdmin({isAdmin}){
     return (
     loading ? <><h1>Loading...</h1></> :
     <>
-        <Button onClick={()=>setWorkflowModalOpen(true)}>Add new Workflow</Button>
+        {isAdmin && <Button onClick={()=>setWorkflowModalOpen(true)}>Add new Workflow</Button>}
 
         <WorkflowModal isOpen={workflowModalOpen} setIsOpen={setWorkflowModalOpen} workflows={workflows} 
         setWorkflows={setWorkflows} WorkflowSubmit={workflowSubmit} isEdit={isEdit} curWorkflow={curAction}
@@ -237,7 +237,7 @@ export function BuilderPageAdmin({isAdmin}){
         workflows={workflows} setWorkflows={setWorkflows}
         actionDelete={deleteStandardAction} workflowDelete={deleteWorkflow} refresh={update} renderers={renderers}/>
 
-        <Accordion>
+        {workflows.length !== 0 ? <Accordion>
         {workflows ? Array.from({length: workflows.length}, (_, i) => {
             /* For each workflow we create a workflow component, which is our workflow template */
             return (<div key={i} className="pt-2" onClick={()=>setIndex(i)}>
@@ -245,10 +245,10 @@ export function BuilderPageAdmin({isAdmin}){
                 setIsOpen={setActionModalOpen} setParentId={setParentId} depthLevel={0} 
                 setDepthLevel={setDepthLevel} setIsEdit={setIsEdit} 
                 setCurAction={setCurAction} setWorkflowModalEdit={setWorkflowModalAsOpen} 
-                setDeleteOpen={setDeleteOpen} simpleExtraDataRenderer={simpleActionRenderer} renderers={renderers}/>
+                setDeleteOpen={setDeleteOpen} renderers={renderers}/>
                 </div>)
         }) : <></>}
-        </Accordion>
+        </Accordion> : <h1>No Workflows here!</h1> }
     </>);
 }
 
