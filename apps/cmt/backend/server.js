@@ -43,6 +43,7 @@ const allowedOrigins = [
   "http://localhost:3000",            // CRA default
   "http://apps-staging.se.rit.edu",   // staging
   "https://apps-staging.se.rit.edu",   // staging
+  "https://apps.se.rit.edu",   // prod
 ];
 if (process.env.REMOTE_DEV_SERVER_ORIGIN) allowedOrigins.push(process.env.REMOTE_DEV_SERVER_ORIGIN)
 

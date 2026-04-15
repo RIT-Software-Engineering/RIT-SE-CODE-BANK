@@ -6,6 +6,7 @@
     "apps/cmt/backend"
   ],
   "scripts": {
+    "prepare-cmt": "npm i && cd apps/cmt && npx prisma db push --schema backend/prisma/schema.prisma",
     "start-cmt": "npx nx run-many -t start -p cmt-frontend cmt-backend workflows-server",
     "stop-cmt": "npx kill-port 3000 3001 5010"
   },
