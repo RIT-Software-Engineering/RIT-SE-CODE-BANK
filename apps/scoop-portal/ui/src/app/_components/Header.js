@@ -168,7 +168,7 @@ export default function Header() {
     if (!user || !user.id) return;
     try {
       const baseUrl = getBaseUrl(process.env.NEXT_PUBLIC_NOTIFICATION);
-      const url = `${baseUrl}/preferences/scoop/${user.id}`;
+      const url = `${baseUrl}/preferences/scoop-portal/${user.id}`;
       const res = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json" }});
 
       if (!res.ok) {
@@ -195,7 +195,7 @@ export default function Header() {
     if (!user || !user.id) return;
     try {
       const baseUrl = getBaseUrl(process.env.NEXT_PUBLIC_NOTIFICATION);
-      const url = `${baseUrl}/preferences/scoop/${user.id}`;
+      const url = `${baseUrl}/preferences/scoop-portal/${user.id}`;
       
       let formattedSlack = tempPrefs.slackUsername.trim();
       if (formattedSlack.length > 0 && !formattedSlack.startsWith("@")) {
@@ -261,7 +261,7 @@ export default function Header() {
 
       const notifPayload = { ...tempPrefs, slackUsername: formattedSlack };
       const notifBaseUrl = getBaseUrl(process.env.NEXT_PUBLIC_NOTIFICATION);
-      const notifUrl = `${notifBaseUrl}/preferences/scoop/${user.id}`;
+      const notifUrl = `${notifBaseUrl}/preferences/scoop-portal/${user.id}`;
       
       const notifRes = await fetch(notifUrl, {
         method: "PUT",
