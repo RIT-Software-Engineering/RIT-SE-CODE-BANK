@@ -174,7 +174,6 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
     materialId, setEditModalOpen, 
     courseId, sessionNum}){
     const deleteSeveral = () => {
-        console.log('deleting multiple items!')
          CMTJsonFetch('DELETE', `session/${courseId}/${sessionNum+1}`).then(async response => {
             const data = await response.json();
             const ids = data.materials.map(item => item.id)
@@ -190,7 +189,6 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
     };
 
     const deleteSingle = () => {
-        console.log("deleting a single item")
          CMTJsonFetch("DELETE", `/session/material/${materialId}`).then(() => {
             const sessionDataCopy = sessionData.map(material => {
                 if (material.id === materialId) 
@@ -396,7 +394,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
     function updateMaterial(){
         const realItemBody = hasLinksInTitle ? '' : itemBody;
         const realSessionNum = parseInt(sessionNum.replace("Session ", ""))-1;
-        const sessionId = sessions.find(session => session.sessionNum === realSessionNum)?.id;
+        const sessionId = sessions.find(session => session.sessionNum === (realSessionNum+1))?.id;
         CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody: realItemBody, itemType, sessionNum: realSessionNum, sessionId}).then(() => {
             const sessionDataCopy = sessionData.map(material => {
                 if (material.id === materialId) 
