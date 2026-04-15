@@ -21,6 +21,8 @@ services:
     image: workflows-backend:${TAG:-latest}
     ports:
       - "5011:5011"
+    env_file:
+      - .env.staging
     environment:
       NODE_ENV: production
       PORT: 5011
