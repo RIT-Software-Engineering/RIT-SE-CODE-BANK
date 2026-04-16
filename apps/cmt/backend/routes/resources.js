@@ -148,7 +148,7 @@ router.delete('/:id', async (req, res) => {
         const { id } = req.params
 
         const resource = await req.prisma.resource.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id },
         })
         if (!resource) {
             console.error(`Resource with ID ${id} not found`)
@@ -158,7 +158,7 @@ router.delete('/:id', async (req, res) => {
         if (fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
 
         await req.prisma.resource.delete({
-            where: { id: parseInt(id) },
+            where: { id: id },
         })
 
         res.sendStatus(200)
@@ -177,7 +177,7 @@ router.get('/download/:id', async (req, res) => {
         // Find in DB
         const { id } = req.params
         const resource = await req.prisma.resource.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id },
         })
         if (!resource) {
             console.log(`File with ID ${id} not found in DB`)

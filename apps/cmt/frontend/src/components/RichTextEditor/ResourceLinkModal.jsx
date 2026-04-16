@@ -22,7 +22,6 @@ export function ResourceLinkModal({ editor, courseId }) {
 
     const chain = editor.chain().focus()
 
-    //TODO this is broken for some unexplainable reason
     chain.setLink({ href: linkUrl, target: '_blank' }).insertContent(displayText).run()
 
     handleReset()

@@ -27,6 +27,11 @@ export function CourseDashboard() {
             setCourse(data.course)
             setActionsWithContexts(data.actionsWithContexts ?? [])
             setWorkflow(data.workflow)
+        }).catch(async error => {
+        if (error.response){
+            const data = await error.response.json();
+            setCourse(data.error);
+            }
         })
     }, [id])
     useEffect(() => void update(), [id, update])
@@ -38,6 +43,7 @@ export function CourseDashboard() {
     )
 
     if (course === null) return <p> Loading </p>
+    else if (typeof(course) !== 'object') return <h1>{course}</h1>
 
     const sessionActions = flattenActionsWithContexts(actionsWithContexts).filter(
         awc => awc?.processedAction?.parsedMetadata?.code?.includes("SESSION_")
@@ -48,7 +54,7 @@ export function CourseDashboard() {
             
             <CourseInfo course={course} />
             <div className="h-10"></div>
-            <div className="text-3xl">Course Creation Steps</div>
+            <div className="text-3xl">Course Creation Steps</div> 
             <p className='text-xl pb-2 border-b'>Follow the steps to help create your course!</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
