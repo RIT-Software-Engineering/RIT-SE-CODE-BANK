@@ -88,9 +88,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - uses: raegen/nx@v0.3.6
-        with:
-          nx: CI=false npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - name: Run Affected Lint
+        run: CI=false npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
   
   build:
     name: Build Affected Projects
@@ -121,9 +120,8 @@ jobs:
       - run: npm ci
         working-directory: ./
 
-      - uses: raegen/nx@v0.3.6
-        with:
-          nx: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - name: Run Affected Build
+        run: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
 
   deploy:
     name: Deploy Affected Apps
@@ -153,6 +151,5 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - uses: raegen/nx@v0.3.6
-        with:
-          nx: CI=false npx nx affected -t deploy -v --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+      - name: Run Affected Deploy
+        run: CI=false npx nx affected -t deploy -v --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
