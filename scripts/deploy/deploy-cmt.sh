@@ -22,12 +22,13 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     git reset --hard origin/${DEPLOY_BRANCH}
     
     cd ./apps/cmt
+    cp ./.env.staging ./.env
     
     echo "Attempting to take down previous containers. Continuing if fails..."
-    docker compose --env-file ".env.staging" -f compose.build.yaml -f compose.run.yaml down || true
+    docker compose -f compose.build.yaml -f compose.run.yaml down || true
 
     echo "Composing new containers..."
-    docker compose --env-file ".env.staging" -f compose.build.yaml -f compose.run.yaml up -d --build
+    docker compose -f compose.build.yaml -f compose.run.yaml up -d --build
 
     echo "Deployment complete. Run `docker ps` for container status "
 ENDSSH

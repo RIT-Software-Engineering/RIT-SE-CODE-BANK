@@ -52,6 +52,8 @@ jobs:
   lint:
     name: Lint Affected Projects
     needs: setup
+    # Only run when not deploying (like when creating PRs)
+    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && !endsWith(github.ref, '-cicd-testing')
     runs-on: ubuntu-latest
 
     steps:
@@ -73,7 +75,9 @@ jobs:
   
   build:
     name: Build Affected Projects
-    needs: [setup, lint]
+    needs: setup
+    # Only run when not deploying (like when creating PRs)
+    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && !endsWith(github.ref, '-cicd-testing')
     runs-on: ubuntu-latest
 
     steps:
@@ -96,7 +100,7 @@ jobs:
   deploy:
     name: Deploy Affected Apps
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || endsWith(github.ref, '-cicd-testing')
-    needs: [setup, build]
+    needs: setup
     runs-on: ubuntu-latest
 
     steps:
