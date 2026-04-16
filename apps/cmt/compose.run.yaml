@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   cmt-backend:
-    image: cmt-backend:${TAG:-latest}
+    image: backend:${TAG:-latest}
     pull_policy: build
     ports:
       - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
 
   cmt-frontend:
-    image: cmt-frontend:${TAG:-latest}
+    image: frontend:${TAG:-latest}
     pull_policy: build
     ports:
       - ${FRONT_HOST_PORT}:${FRONT_CONTAINER_PORT}
