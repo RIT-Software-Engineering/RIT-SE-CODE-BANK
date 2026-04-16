@@ -1,0 +1,23 @@
+# build artifacts (only relevant when building locally, in GitHub Actions these won't be there since they're gitignored. The builds happen after the context is copied)
+**/node_modules
+**/dist
+**/build
+
+## envs
+**/.env
+
+## prisma
+**/client
+
+# git
+**/.git
+**/.gitignore
+
+# logs
+npm-debug.log
+*.log
+
+# internal IDE folders
+.DS_Store
+.vscode
+.idea

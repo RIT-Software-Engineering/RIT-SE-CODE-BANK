@@ -4,17 +4,11 @@ RUN apk add --no-cache openssl
 
 COPY . .
 
-RUN pwd
-RUN ls
-
-RUN npm ci
+RUN npm ci --workspace=apps/workflow/ecosystem --workspace=apps/cmt/backend
 
 RUN npm run --workspace=apps/workflow/ecosystem build
 
 WORKDIR /app/apps/cmt/backend
-
-RUN pwd
-RUN ls
 
 
 # Set DB URL for Prisma

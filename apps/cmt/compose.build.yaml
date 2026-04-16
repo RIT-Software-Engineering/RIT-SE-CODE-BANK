@@ -5,10 +5,6 @@ services:
     build:
       context: ../..
       dockerfile: apps/cmt/frontend/Dockerfile
-      args:
-        REACT_APP_BACKEND_URL: /api/cmt
-        REACT_APP_AUTH_BASE: ""
-        PUBLIC_URL: /cmt
     image: cmt-frontend:${TAG:-latest}
 
   backend:
