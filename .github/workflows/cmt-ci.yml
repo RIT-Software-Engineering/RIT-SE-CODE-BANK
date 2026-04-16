@@ -46,18 +46,8 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Upload (or use) Cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-cache-node-modules-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-cache-node-modules-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
           
   lint:
     name: Lint Affected Projects
@@ -74,19 +64,9 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-
-      - name: Upload (or use) Cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-cache-node-modules-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-cache-node-modules-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
       
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Run Affected Lint
         run: CI=false npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
@@ -106,19 +86,9 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-
-      - name: Upload (or use) Cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-cache-node-modules-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-cache-node-modules-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
       
-      - run: npm ci
-        working-directory: ./
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
 
       - name: Run Affected Build
         run: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
@@ -150,6 +120,9 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
 
       - name: Run Affected Deploy
         run: CI=false npx nx affected -t deploy -v --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
