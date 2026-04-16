@@ -80,7 +80,12 @@ export default function AdminUsersPage() {
         if (!acc[role]) acc[role] = [];
         acc[role].push(user);
         return acc;
-      }, {});
+      }, {
+        'ADMIN':[],
+        'EMPLOYER':[], 
+        'EMPLOYEE':[], 
+        'CANDIDATE':[]
+      });
       setGroupedUsers(groups);
     } catch (err) {
       console.error('Failed to retrieve users: ', err);
@@ -185,9 +190,9 @@ export default function AdminUsersPage() {
           return acc;
         }, {});
         const employeeGroups = [
-          { key: 'Active', title: 'Active', users: groupedByStatus['ACTIVE'] },
-          { key: 'Unknown', title: 'Unknown', users: groupedByStatus['UNKNOWN'] },
-          { key: 'Inactive', title: 'Inactive', users: groupedByStatus['INACTIVE'] },
+          { key: 'Active', title: 'Active', users: groupedByStatus['ACTIVE'] || [] },
+          { key: 'Unknown', title: 'Unknown', users: groupedByStatus['UNKNOWN'] || [] },
+          { key: 'Inactive', title: 'Inactive', users: groupedByStatus['INACTIVE'] || [] },
         ];
 
         return (
