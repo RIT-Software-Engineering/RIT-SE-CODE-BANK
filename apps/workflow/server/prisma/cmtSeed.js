@@ -260,19 +260,19 @@ async function main() {
   const workflowData = [
     {
     name: 'Create Course',
-    description: 'Default course creation template',
+    description: 'These steps will help guide you when creating your course!',
     tags: ["WorkflonyFirstTheRestNowhere_CMT_Template"],
     userId: users[0].id,
     metadata: {code: "Course Creation Workflow"},
     actions: [
         {
             name: 'Course Details',
-            description: 'Enter your course details',
+            description: 'Add details to Your course to help differentiate it!',
             actionType: 'complex',
             childActions: [
                 {
                     name: 'Course Section',
-                    description: 'Enter your courses section',
+                    description: 'Enter the section for your course!',
                     actionType: 'simple',
                     metadata: {
                         code: 'COURSE_SECTION',
@@ -285,27 +285,6 @@ async function main() {
                                 placeholder: '1',
                                 validation: {
                                     maxLength: 30,
-                                },
-                            },
-                        ],
-                    },
-                },
-                {
-                    name: 'Number of Students',
-                    description: 'Enter the number of students enrolled in your course',
-                    actionType: 'simple',
-                    metadata: {
-                        code: 'NUMBER_STUDENTS',
-                        outputs: [
-                            {
-                                name: 'Number of Students',
-                                key: 'students',
-                                type: 'number',
-                                isRequired: true,
-                                placeholder: 20,
-                                validation: {
-                                    max: 999,
-                                    min: 1,
                                 },
                             },
                         ],
@@ -342,15 +321,15 @@ async function main() {
             ],
         },
         {
-            name: 'Create Sessions',
-            description: 'Create sessions for your course',
+            name: 'Add Material to Your Sessions',
+            description: 'Create material for the sessions within your course!',
             actionType: 'workflow',
             userId: users[0].id,
             actions: Array.from({ length: 28 }, (_, index) => {
                 return {
-                    name: `Create session ${index+1}`,
+                    name: `Add material to Session ${index+1}`,
                     description:
-                        'Create a session. In the workflow editor, more specific details could be given for certain sessions, like if a session should have an exam.',
+                        'Add some material to your session! The material here will populate your course site when you generate it. The columns are dynamic depending on the type of course material you add!',
                     actionType: 'simple',
                     metadata: {
                         code: `SESSION_${index}`,
@@ -365,25 +344,25 @@ async function main() {
             }),
         },
         {
-            name: 'Publish Course Website',
-            description: 'Navigate to the course generation page and publish your website!',
+            name: 'Download Course Website',
+            description: 'Navigate to the course generation page and download your website!',
             actionType: 'workflow',
             userId: users[0].id,
             actions: [
                 {
                     name: 'Set Column Visibilities',
-                    description: 'Hide columns that contain internal information',
+                    description: 'Hide columns that you may not want students seeing yet',
                     actionType: 'simple',
                     metadata: {
-                        code: 'CHECKMARK',
+                        code: 'CHECKMARK_COLUMN_VISIBILITIES',
                     },
                 },
                 {
-                    name: 'Publish Course Website',
-                    description: "You're all ready to publish!",
+                    name: 'Download Course Website',
+                    description: "When it looks how you like it, download your site and upload it to the SE Servers!",
                     actionType: 'simple',
                     metadata: {
-                        code: 'CHECKMARK',
+                        code: 'CHECKMARK_PUBLISH_SITE',
                     },
                 }
             ],

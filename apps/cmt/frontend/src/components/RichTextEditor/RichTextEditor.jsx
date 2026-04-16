@@ -15,10 +15,10 @@ import {
   Link2Off,
   List,
   ListOrdered,
-  PaintBucket,
   Table,
   TextAlignCenter,
   Underline,
+  Highlighter,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TableKit } from '@tiptap/extension-table'
@@ -26,8 +26,6 @@ import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style'
 import TextAlign from '@tiptap/extension-text-align';
 import { ResourceLinkModal } from "./ResourceLinkModal.jsx";
 import { HighlightPicker, TextPicker } from "./Pickers.jsx";
-
-
 
 export function ReadOnlyEditor({ value }) {
     const editor = useEditor({
@@ -153,22 +151,6 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
                     <Underline />
                 </Button>
               </OverlayTrigger>
-
-            {isBody ? 
-            <>
-              <OverlayTrigger delay={200} overlay={<Tooltip>Dot list</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-                    <List />
-                </Button>
-              </OverlayTrigger>
-
-              <OverlayTrigger delay={200} overlay={<Tooltip>Ordered List</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-                    <ListOrdered />
-                </Button>
-              </OverlayTrigger>
-            </>
-            : <></>}
               
               <OverlayTrigger delay={200} overlay={<Tooltip>Code Block</Tooltip>}>
                 <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCode().run()}>
@@ -198,11 +180,27 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
                     className="group"
                 >
                 <div className="flex flex-col items-center">
-                    <PaintBucket />
+                    <Highlighter />
                     {extraToShow === Extras.HighlightPicker && <div className="w-full border-b-4 border-b-gray-300 -mb-2 group-hover:border-b-gray-100 duration-200" />}
                 </div>
                 </Button>
               </OverlayTrigger>
+
+              {isBody ? 
+            <>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Dot list</Tooltip>}>
+                <Button variant='outline-secondary' active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+                    <List />
+                </Button>
+              </OverlayTrigger>
+
+              <OverlayTrigger delay={200} overlay={<Tooltip>Ordered List</Tooltip>}>
+                <Button variant='outline-secondary' active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+                    <ListOrdered />
+                </Button>
+              </OverlayTrigger>
+            </>
+            : <></>}
 
               <OverlayTrigger delay={200} overlay={<Tooltip>Header</Tooltip>}>
                 <Dropdown as={ButtonGroup} className="grow">
@@ -257,7 +255,7 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
           </ButtonGroup>
           {extraToShow === Extras.Table 
             ? <ButtonGroup className='*:!rounded-none *:!border-t-0'>
-              <Button variant='light' onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
+              <Button variant='outline-dark' onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
                   Add Table
               </Button>
               <Button variant='outline-dark' onClick={() => editor.chain().focus().addRowBefore().run()}>
@@ -272,11 +270,11 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
               <Button variant='outline-dark' onClick={() => editor.chain().focus().addColumnAfter().run()}>
                   Insert Column After
               </Button>
-              <Button variant='outline-dark' onClick={() => editor.chain().focus().deleteRow().run()}>
-                  Delete Row
-              </Button>
               <Button variant='outline-dark' onClick={() => editor.chain().focus().mergeCells().run()}>
                   Merge Cells
+              </Button>
+              <Button variant='outline-dark' onClick={() => editor.chain().focus().deleteRow().run()}>
+                  Delete Row
               </Button>
               <Button variant='outline-dark' onClick={() => editor.chain().focus().deleteColumn().run()}>
                   Delete Column
@@ -313,7 +311,7 @@ export function ExternalLinkModal({ editor }) {
         const text = linkText?.trim() || linkURL
         const hasHttps = linkURL.startsWith("https");
 
-        editor.chain().focus().setLink({ href: hasHttps ? linkURL : `https://www.${linkURL}`, target: '_blank' }).setColor('#3b82f6').insertContent(text).run()
+        editor.chain().focus().setLink({ href: hasHttps ? linkURL : `https://www.${linkURL}`, target: '_blank' }).insertContent(text).run();
 
         handleReset();
     }
@@ -349,7 +347,7 @@ export function ExternalLinkModal({ editor }) {
                         <Form.Label>Link URL</Form.Label>
                         <Form.Control
                             type='text'
-                            placeholder={`https://www.google.com`}
+                            placeholder={`e.g. https://www.google.com`}
                             defaultValue={linkURL}
                             onChange={e => setLinkURL(e.target.value)}
                         />

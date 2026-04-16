@@ -1,6 +1,6 @@
 import { Eraser } from "lucide-react"
 import { useState, useMemo, useEffect } from "react"
-import { Button } from "react-bootstrap"
+import { Button, OverlayTrigger, Tooltip } from "react-bootstrap"
 import { ColorWheel } from "../../pages/course/CourseOverview.jsx"
 import { ColorOption } from "../forms/ColorPicker.jsx"
 
@@ -48,7 +48,9 @@ function EditorPicker({ editor, attributeName, applyChange }) {
     <div className="p-3 border-x border-b" onMouseDown={e => e.stopPropagation()} onMouseMove={e => e.stopPropagation()} onMouseUp={e => e.stopPropagation()}>
       <div className="flex gap-2 items-center">
         <Button variant="outline-secondary" onClick={() => handleColorChange("")}>
-          <Eraser />
+          <OverlayTrigger delay={200} overlay={<Tooltip>Clear</Tooltip>}>
+            <Eraser />
+          </OverlayTrigger>
         </Button>
         {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#0484c9", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(
           hex => (

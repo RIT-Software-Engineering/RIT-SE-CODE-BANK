@@ -30,7 +30,7 @@ export function CourseOverview() {
         <>
             <Container>
                 <div className='flex items-center mb-4 gap-4'>
-                    <h1>Course Overview</h1>
+                    <h1>My Courses</h1>
                         <Button onClick={() => {setModalOpen(true); setCourseId(0); setEdit(false)}} className='h-min' variant='outline-primary'>
                         <div className='flex gap-1 -ml-1'><PlusIcon />Create Course</div>
                         </Button>

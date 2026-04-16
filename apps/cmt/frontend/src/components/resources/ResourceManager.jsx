@@ -27,7 +27,7 @@ export function ResourceManager({ courseId }) {
     return (
         <div>
             <div className='flex gap-4 py-2 mb-4 border-b'>
-                <p className='text-3xl mb-0'>Resources</p>
+                <p className='text-3xl mb-0'>File Resources</p>
                 <UploadResourceModal courseId={courseId} refresh={loadResources} />
                 <Button onClick={loadResources} className="h-10" variant="outline-secondary">
                     {loading ? <Spinner animation='border'  /> : <RefreshCcw /> }

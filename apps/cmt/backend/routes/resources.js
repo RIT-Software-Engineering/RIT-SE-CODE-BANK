@@ -128,7 +128,7 @@ router.put('/:id', async (req, res) => {
         const { name } = req.body
 
         const resource = await req.prisma.resource.update({
-            where: { id: parseInt(id) },
+            where: { id: id },
             data: { name },
         })
 

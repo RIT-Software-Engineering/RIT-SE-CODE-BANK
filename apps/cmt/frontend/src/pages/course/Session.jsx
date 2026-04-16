@@ -290,7 +290,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                     <div className='flex'>
                         <div className='w-full'>
                             <div className="mb-3">
-                                <Form.Label>Material Type</Form.Label>
+                                <Form.Label>Material Column</Form.Label>
                                 <Form.Select onChange={e => setItemType(e.target.value)} value={itemType}>
                                     <option>Topic/Lecture</option>
                                     <option>Class Activity</option>
@@ -298,7 +298,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                                     <option>Projects & Practica</option>
                                     <option>Group Assignment</option>
                                     <option>Individual Assignment</option>
-                                    {!sessionData.find(data => data.sessionNum === sessionNum && data.type === 'Personal Notes') ? <option>Personal Notes</option> : <></>}
+                                    {!sessionData.find(data => data.sessionNum === sessionNum && data.type === 'Personal Notes') ? <option>Your Personal Notes (Hidden from students)</option> : <></>}
                                 </Form.Select>
                             </div>
 
@@ -431,7 +431,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                             <div className='w-full'>
                                 <div className={`${sessionData.find(material => material.id === materialId && material.type === "Personal Notes") ? 'hidden' : ''}`}>
                                     <div>
-                                        <Form.Label>Material Type</Form.Label>
+                                        <Form.Label>Material Column</Form.Label>
                                         <Form.Select onChange={e => setItemType(e.target.value)} value={itemType}>
                                             <option>Topic/Lecture</option>
                                             <option>Class Activity</option>
