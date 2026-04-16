@@ -15,9 +15,8 @@ services:
       - mariadb_data:/var/lib/mysql
     restart: unless-stopped
 
-  cmt-backend:
+  backend:
     image: backend:${TAG:-latest}
-    pull_policy: build
     ports:
       - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
     env_file:
@@ -27,15 +26,14 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  cmt-frontend:
+  frontend:
     image: frontend:${TAG:-latest}
-    pull_policy: build
     ports:
       - ${FRONT_HOST_PORT}:${FRONT_CONTAINER_PORT}
     env_file:
       - ./.env
     depends_on:
-      - cmt-backend
+      - backend
     restart: unless-stopped
 
 volumes:
