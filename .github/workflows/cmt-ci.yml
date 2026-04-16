@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   setup:
+    # Some parts taken from https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
     name: Setup & Cache Dependencies
     runs-on: ubuntu-latest
     outputs:
@@ -45,10 +46,18 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Upload (or use) Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-cache-node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-cache-node-modules-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
       - name: Install dependencies
         run: npm ci
-
-
           
   lint:
     name: Lint Affected Projects
@@ -66,10 +75,20 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Upload (or use) Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-cache-node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-cache-node-modules-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      
       - name: Install dependencies
         run: npm ci
 
-      - uses: raegen/nx
+      - uses: raegen/nx@v0.3.6
         with:
           nx: CI=false npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
   
@@ -89,10 +108,20 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Upload (or use) Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-cache-node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-cache-node-modules-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      
       - run: npm ci
         working-directory: ./
 
-      - uses: raegen/nx
+      - uses: raegen/nx@v0.3.6
         with:
           nx: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
 
@@ -119,14 +148,11 @@ jobs:
         run: |
           ssh-keyscan -H apps-staging.se.rit.edu >> ~/.ssh/known_hosts
 
-      - name: Install dependencies
-        run: npm ci
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - uses: raegen/nx
+      - uses: raegen/nx@v0.3.6
         with:
           nx: CI=false npx nx affected -t deploy -v --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
