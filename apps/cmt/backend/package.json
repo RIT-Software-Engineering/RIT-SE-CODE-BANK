@@ -7,6 +7,7 @@
     "start": "node --watch server.js"
   },
   "dependencies": {
+    "@prisma/client": "5.22.0",
     "@se-code-bank/workflows-ecosystem": "*",
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
@@ -17,10 +18,12 @@
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
-    "@prisma/client": "5.22.0",
-    "prisma": "5.22.0"
+    "prisma": "5.22.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@types/multer": "^2.1.0",
+    "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.10"
   },
   "keywords": [
