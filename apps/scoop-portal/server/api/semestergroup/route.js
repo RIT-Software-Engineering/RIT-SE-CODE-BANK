@@ -30,7 +30,7 @@ router.post("/", async (req, res) => {
   const { name, dept, start_date, end_date } = req.body;
   try {
     const newSemester = await prisma.semesterGroup.create({
-      data: { name, dept, start_date, end_date },
+      data: { name, dept, start_date: new Date(start_date), end_date: new Date(end_date) },
     });
     res.status(200).json({
       message: "New semester group created.",
