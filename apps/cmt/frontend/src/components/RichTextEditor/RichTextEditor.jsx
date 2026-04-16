@@ -82,7 +82,11 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
             },
         },
         extensions: [
-            StarterKit,
+            StarterKit.configure({
+                link: {
+                    openOnClick: false,
+                }
+            }),
             TableKit.configure({
                 table: { resizable: true },
             }),
@@ -311,7 +315,20 @@ export function ExternalLinkModal({ editor }) {
         const text = linkText?.trim() || linkURL
         const hasHttps = linkURL.startsWith("https");
 
-        editor.chain().focus().setLink({ href: hasHttps ? linkURL : `https://www.${linkURL}`, target: '_blank' }).insertContent(text).run();
+        // AI-generated code
+        editor.chain().focus().insertContent({
+            type: 'text', 
+            text,
+            marks: [
+                {
+                type: 'link',
+                attrs: { href: hasHttps ? linkURL : `https://www.${linkURL}`, target: '_blank' }
+                }
+            ]
+        }).command(({ tr }) => { // turns off link after inserting content
+            tr.removeStoredMark(editor.schema.marks.link)
+            return true
+        }).run()
 
         handleReset();
     }

@@ -22,7 +22,20 @@ export function ResourceLinkModal({ editor, courseId }) {
 
     const chain = editor.chain().focus()
 
-    chain.setLink({ href: linkUrl, target: '_blank' }).insertContent(displayText).run()
+    // AI-generated code
+    chain.insertContent({
+        type: 'text', 
+        text: displayText,
+        marks: [
+            {
+            type: 'link',
+            attrs: { href: linkUrl, target: '_blank' }
+            }
+        ]
+    }).command(({ tr }) => { // turns off link after inserting content
+        tr.removeStoredMark(editor.schema.marks.link)
+        return true
+    }).run()
 
     handleReset()
 }
