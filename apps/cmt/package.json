@@ -1,16 +1,9 @@
 {
   "name": "cmt",
   "scripts": {
-    "forceResetAllData": "npx prisma migrate reset --schema backend/prisma/schema.prisma --force --skip-seed && npx prisma db push --schema backend/prisma/schema.prisma && node backend/prisma/minimalSeed.js && cd ../workflow/server && npx prisma migrate reset --force --skip-seed && npx prisma db push && node prisma/cmtSeed.js",
-    "start": "npx dotenv -e .env -- npm start --prefix frontend"
+    "forceResetAllData": "npx prisma migrate reset --schema backend/prisma/schema.prisma --force --skip-seed && npx prisma db push --schema backend/prisma/schema.prisma && node backend/prisma/minimalSeed.js && cd ../workflow/server && npx prisma migrate reset --force --skip-seed && npx prisma db push && node prisma/cmtSeed.js"
   },
   "prisma": {
     "schema": "backend/prisma/schema.prisma"
-  },
-  "dependencies": {
-    "dotenv": "^17.4.2"
-  },
-  "devDependencies": {
-    "dotenv-cli": "^11.0.0"
   }
 }
