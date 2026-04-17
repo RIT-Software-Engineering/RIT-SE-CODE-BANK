@@ -54,9 +54,11 @@ function readWordFromBytes(mem, addr) {
 
 
 const program = `
-        BR SKIP
-        MOV #99, R0
-SKIP:   MOV #5, R1
+        MOV #5, R0
+        CMP #3, R0     ; 5 - 3 = positive → N=0, V=0
+        BGE HIT
+        MOV #1, R1
+HIT:    MOV #2, R1
         HALT
 
 `;
@@ -70,8 +72,12 @@ backend.loadAssembly(program);
 // console.log(s3.registers);
 // const s4 = backend.step();
 // console.log(s4.registers);
+// backend.step();
+// backend.step();
+// backend.step();
 const result = backend.run();
 console.log(result.registers);
+console.log(result.flags);
 //console.log(readWordFromBytes(result.memory, 138))
 
 // backend.step();

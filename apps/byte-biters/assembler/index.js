@@ -13,8 +13,6 @@ export function assemble(text) {
         const parsed = parseLine(tokens);
         ast.push(parsed);
     }
-
-    //console.log(ast);
     
     const {symbols, annotatedAst} = firstPass(ast);
 

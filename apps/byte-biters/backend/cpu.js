@@ -22,19 +22,26 @@ export class CPU {
         //Used to move backwards to previous states
         this.pastState = [];
         this.currentState = null;
+
+        //Used for reset to go back to assembled memory array
+        this.initialMemory = null;
     }
 
     loadProgram(words) {
-        console.log(words);
         let addr = 0o200;
         for(let word of words) {
             this.memory.writeWord(addr, word);
             addr += 2;
         }
+        this.initialMemory = new Uint8Array(this.memory.bytes);
+    }
+
+    getPastState() {
+        return this.pastState;
     }
 
     getRegisters() {
-        return [...this.registers];
+        return [...this.registers].map(r => r.toString(16).toUpperCase());
     }
 
     setRegisters(newRegisters) {
@@ -86,7 +93,6 @@ export class CPU {
 
             const instr = this.fetch();
             const oper = this.decoder.decode(instr);
-            console.log(oper)
 
             if(oper.src) {
                 oper.src = this.resolveSource(oper.src.mode, oper.src.REG);
@@ -132,9 +138,15 @@ export class CPU {
 
         //reset memory
         this.memory = new Memory();
+        if (this.initialMemory) {
+            this.memory.bytes.set(this.initialMemory);
+        }
 
         //reset halted
         this.halted = false;
+
+        //ensures back step cannot be used after a reset
+        this.pastState = [];
     }
 
     resolveSource(mode, reg){
@@ -363,12 +375,12 @@ export class CPU {
     cmp(src, dst) {
         const srcValue = src.value & 0xFFFF;
         const dstValue = dst.value & 0xFFFF;
-        const cmpValue = (srcValue - dstValue) & 0xFFFF;
+        const cmpValue = (dstValue - srcValue) & 0xFFFF;
 
         this.N = (cmpValue & 0x8000) !== 0;
         this.Z = cmpValue === 0;
-        this.V = ((srcValue ^ dstValue) & (srcValue ^ cmpValue) & 0x8000) !== 0;
-        this.C = srcValue < dstValue;
+        this.V = ((dstValue ^ srcValue) & (dstValue ^ cmpValue) & 0x8000) !== 0;
+        this.C = dstValue < srcValue;
     }
 
     bit(src, dst) {
@@ -481,7 +493,6 @@ export class CPU {
 
     //Used to create a branch
     br(oper) { //this is most likely where current issue lies here
-        //console.log(oper)
         const pc = this.registers[REG.PC];
         const displacement = oper.offset << 1;
 

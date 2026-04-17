@@ -81,7 +81,6 @@ function encodeDirective(parsedData, symbols) {
 
 function encodeInstruction(parsedData, symbols, lc) {
     const {mnemonic, src, dst} = parsedData;
-    console.log(parsedData)
     
     const opcodeInfo = OPCODES[mnemonic.toUpperCase()];
     const resolvedSrc = src ? resolveOperand(src, symbols, lc) : null;
@@ -161,5 +160,5 @@ function branchEncoder(opcodeInfo, label, symbols, pc) {
         throw new Error("Branch out of Range")
     }
 
-    return [opcodeInfo.code | (offset & 0xFF)];
+    return [opcodeInfo.code | ((offset >> 1) & 0xFF)];
 }
