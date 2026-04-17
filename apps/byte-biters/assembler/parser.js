@@ -1,14 +1,60 @@
-export function parseInstruction(tokens) {
+import {isRegister, isNumber, isLabel, getRegisterNumber} from "./utils.js";
+import { OPCODES } from "./opcodes.js";
+
+export function parseLine(tokens) {
+    let label = null;
+    if(tokens[1] === ":") {
+        label = tokens[0];
+        if(tokens.length == 2) {
+            return {
+                type: "label-only",
+                label: label
+            }
+        }
+        tokens = tokens.slice(2);
+    }
+    
+    if(tokens[0][0] === "."){
+        const newArgs = tokens.slice(1).filter(token => token != ",");
+        return {
+            type: "directive",
+            label: label,
+            directive: tokens[0],
+            args: newArgs
+        };
+    } else {
+        return parseInstruction(tokens, label);
+    }
+}
+
+function parseInstruction(tokens, label) {
+    const branchMnemonic = tokens[0].toUpperCase();
+    const opcodeInfo = OPCODES[branchMnemonic];
+
+    // Special-case branch instructions
+    if (opcodeInfo && opcodeInfo.type === "branch") {
+        return {
+            type: "instruction",
+            label,
+            mnemonic: branchMnemonic,
+            src: null,
+            dst: null,
+            branchLabel: tokens[1] || null
+        };
+    }
+
     const {mnemonic, srcTokens, dstTokens} = instructionLevel(tokens);
 
     return {
+        type: "instruction",
+        label: label,
         mnemonic: mnemonic,
         src: srcTokens ? parseOperand(srcTokens) : null,
         dst: dstTokens ? parseOperand(dstTokens) : null
     };
 }
 
-function instructionLevel(tokenArray) { //Needs a better check in case if it is one value only, like clr
+function instructionLevel(tokenArray) {
     const mnemonic = tokenArray[0];
     const rest = tokenArray.slice(1);
     const srcTokens = [];
@@ -98,7 +144,7 @@ export function parseOperand(tokens) {
     }
     //Both versions of index need to be edited to allow for the use of variables when those are implemented
     //Used to return the mode, register, and offset from index for an indexed mode
-    else if(tokens.length === 4 && isNumber(tokens[0]) && tokens[1] === "(" &&  isRegister(tokens[2]) && tokens[3] === ")") {
+    else if(tokens.length === 4 && (isNumber(tokens[0]) || isLabel(tokens[0])) && tokens[1] === "(" &&  isRegister(tokens[2]) && tokens[3] === ")") {
         return {
             mode: "indexed",
             reg: getRegisterNumber(tokens[2]),
@@ -106,7 +152,7 @@ export function parseOperand(tokens) {
         };
     }
     //Used to return the mode, register, and offset from index for an indexed deferred mode
-    else if(tokens.length === 5 && tokens[0] === "@" && isNumber(tokens[1]) && tokens[2] === "(" &&  isRegister(tokens[3]) && tokens[4] === ")") {
+    else if(tokens.length === 5 && tokens[0] === "@" && (isNumber(tokens[1]) || isLabel(tokens[1])) && tokens[2] === "(" &&  isRegister(tokens[3]) && tokens[4] === ")") {
         return {
             mode: "indexed_deferred",
             reg: getRegisterNumber(tokens[3]),
@@ -114,7 +160,7 @@ export function parseOperand(tokens) {
         };
     }
     //Used to return the mode and register value for an immediate mode
-    else if(tokens.length === 2 && tokens[0] === "#" && isNumber(tokens[1])) {
+    else if(tokens.length === 2 && tokens[0] === "#" && (isNumber(tokens[1]) || isLabel(tokens[1]))) {
         return {
             mode: "autoincrement",
             reg: 7,
@@ -122,7 +168,7 @@ export function parseOperand(tokens) {
         };
     }
     //Used to return the mode and register value for an absolute mode
-    else if(tokens.length === 3 && tokens[0] === "@" && tokens[1] === "#" && isNumber(tokens[2])) {
+    else if(tokens.length === 3 && tokens[0] === "@" && tokens[1] === "#" && (isNumber(tokens[2]) || isLabel(tokens[2]))) {
         return {
             mode: "autoincrement_deferred",
             reg: 7,
@@ -130,26 +176,17 @@ export function parseOperand(tokens) {
         };
     }
 
+    else if(tokens.length === 1 && isLabel(tokens[0])) {
+        return {
+            mode: "indexed",
+            reg: 7,
+            offset: tokens[0]
+        }
+    }
+
     //error in case if nothing matches
     else {
         throw new Error("Invalid operand: " + tokens.join(" "));
     }
 
-}
-
-
-//Notes
-    //Think about how a variable would work in this
-    //How are errors handled
-
-function isRegister(token) {
-    return /^R[0-7]$/.test(token);
-}
-
-function isNumber(token) {
-    return /(^-?\d+$)|(^0x[0-9A-Fa-f]+$)/.test(token);
-}
-
-function getRegisterNumber(token) {
-    return Number(token[1]);
 }

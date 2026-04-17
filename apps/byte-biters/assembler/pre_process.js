@@ -4,7 +4,7 @@ export function preProcess(input) {
     const updatedLines = [];
 
     for(let i = 0; i < lines.length; i++) {
-        const updatedLine = lines[i].replace(/\s+/g,' ').replace(/ *, */g, ", ").split(";")[0].trim();
+        const updatedLine = lines[i].replace(/\s+/g,' ').replace(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/g, ", ").split(";")[0].trim();
         if(updatedLine != ""){
             updatedLines.push(updatedLine);
         }

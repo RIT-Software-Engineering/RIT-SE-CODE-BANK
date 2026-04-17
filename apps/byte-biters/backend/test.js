@@ -52,28 +52,23 @@ function readWordFromBytes(mem, addr) {
 
 //these currently fail, look into
 
-
 const program = `
-MOV #5, R0
-HALT
+        MOV #5, R0
+        CMP #3, R0     ; 5 - 3 = positive → N=0, V=0
+        BGE HIT
+        MOV #1, R1
+HIT:    MOV #2, R1
+        HALT
+
 `;
 
 backend.loadAssembly(program);
-
-const result = backend.step();
+// backend.step();
+// backend.step();
+// backend.step();
+const result = backend.run();
 console.log(result.registers);
 console.log(result.flags);
 
-const result2 = backend.step();
-console.log(result2.registers);
-console.log(result2.flags);
-
-const resulttest = backend.step();
-console.log(resulttest.registers);
-console.log(resulttest.flags);
-
-const result3 = backend.backStep();
-console.log(result3.registers);
-console.log(result3.flags);
 
 
