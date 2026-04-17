@@ -25,7 +25,7 @@ import { scaffoldBaseContexts, addActionStateContext, addCallbackContext } from 
 export default function WorkflowPage() {
   const { id: workflowId } = useParams(); 
   const router = useRouter();
-  const userId = '1';
+  const userId = '1'; // still will be 1 since its only SUPER DUPER ADMIN who creates workflows
 
   const [workflowState, setWorkflowState] = useState(null);
 //   const [actionsMap, setActionsMap] = useState({});
