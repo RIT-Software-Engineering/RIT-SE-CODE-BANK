@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   setup:
+    # Some parts taken from https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
     name: Setup & Cache Dependencies
     runs-on: ubuntu-latest
     outputs:
@@ -46,18 +47,13 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Cache Nx output
-        uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: nx-cache-${{ github.sha }}
-
+        run: npm ci --prefer-offline --no-audit
           
   lint:
     name: Lint Affected Projects
     needs: setup
+    # Only run when not deploying (like when creating PRs)
+    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && !endsWith(github.ref, '-cicd-testing')
     runs-on: ubuntu-latest
 
     steps:
@@ -70,16 +66,18 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-
+      
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Run Affected Lint
-        run: npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
+        run: CI=false npx nx affected:lint --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
   
   build:
     name: Build Affected Projects
-    needs: [setup, lint]
+    needs: setup
+    # Only run when not deploying (like when creating PRs)
+    if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/dev' && !endsWith(github.ref, '-cicd-testing')
     runs-on: ubuntu-latest
 
     steps:
@@ -92,20 +90,17 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
 
-      - run: npm ci
-        working-directory: ./
-      - run: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: dist/
+      - name: Run Affected Build
+        run: CI=false npx nx affected:build --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
 
   deploy:
     name: Deploy Affected Apps
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || endsWith(github.ref, '-cicd-testing')
-    needs: [setup, build]
+    needs: setup
     runs-on: ubuntu-latest
 
     steps:
@@ -125,13 +120,13 @@ jobs:
         run: |
           ssh-keyscan -H apps-staging.se.rit.edu >> ~/.ssh/known_hosts
 
-      - name: Install dependencies
-        run: npm ci
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
 
-      - name: deploy
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run Affected Deploy
         run: CI=false npx nx affected -t deploy -v --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
