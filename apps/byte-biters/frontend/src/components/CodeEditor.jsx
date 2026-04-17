@@ -1,13 +1,17 @@
 import Editor from "@monaco-editor/react"
 
+//the code editor! uses monacco but with a custom language (monacco does not support pdp11)
 export default function CodeEditor({ code, setCode }) {
 
+  //setting up the custom language settings  
   function handleEditorWillMount(monaco) {
 
     monaco.languages.register({ id: "pdp11" })
 
     monaco.languages.setMonarchTokensProvider("pdp11", {
+      //allows for both upper and lower case instructions
       ignoreCase: true,
+      //uses regex to differeniate between different syntax
       tokenizer: {
         root: [
           // Comments
@@ -50,19 +54,20 @@ export default function CodeEditor({ code, setCode }) {
       }
     })
 
+    //color customization
     monaco.editor.defineTheme("editor-main", {
       base: "vs-dark",
       inherit: true,
       rules: [
-        { token: "keyword", foreground: "569CD6" },
-        { token: "keyword.directive", foreground: "4EC9B0" },
-        { token: "variable.predefined", foreground: "C586C0" },
-        { token: "number", foreground: "DCDCAA" },
-        { token: "number.octal", foreground: "B5CEA8" },
-        { token: "operator", foreground: "FFFFFF" },
-        { token: "comment", foreground: "6A9955" },
-        { token: "string", foreground: "CE9178" },
-        { token: "type.identifier", foreground: "4FC1FF" }
+        { token: "keyword", foreground: "569CD6" }, //blue
+        { token: "keyword.directive", foreground: "4EC9B0" }, //teal
+        { token: "variable.predefined", foreground: "C586C0" }, //purple
+        { token: "number", foreground: "DCDCAA" }, //yellow-ish
+        { token: "number.octal", foreground: "B5CEA8" }, //light green
+        { token: "operator", foreground: "FFFFFF" }, //white
+        { token: "comment", foreground: "6A9955" }, //dark green
+        { token: "string", foreground: "CE9178" }, //brown orange
+        { token: "type.identifier", foreground: "4FC1FF" } //bright blue
       ],
       colors: {
         "editor.background": "#14161A",
@@ -75,6 +80,7 @@ export default function CodeEditor({ code, setCode }) {
 
   return (
     <div className="flex flex-1 h-full">
+      {/* monacco editor w/ custom language */}
       <Editor
         height="100%"
         language="pdp11"
@@ -87,7 +93,8 @@ export default function CodeEditor({ code, setCode }) {
           fontFamily: "monospace",
           fontSize: 14,
           minimap: { enabled: false },
-          scrollBeyondLastLine: false
+          scrollBeyondLastLine: false,
+          colorDecorators: false
         }}
       />
     </div>

@@ -102,12 +102,13 @@ export function parseOperand(tokens) {
         };
     }
     //Used to return the mode and register value for a register deferred mode
-    else if(tokens.length === 2 && tokens[0] === "@" && isRegister(tokens[1])) {
-        return {
-            mode: "register_deferred",
-            reg: getRegisterNumber(tokens[1]),
-            offset: null
-        };
+    else if((tokens.length === 2 && tokens[0] === "@" && isRegister(tokens[1])) 
+        || (tokens.length === 3 && tokens[0] === "(" && isRegister(tokens[1]) && tokens[2] === ")")) {
+            return {
+                mode: "register_deferred",
+                reg: getRegisterNumber(tokens[1]),
+                offset: null
+            };
     }
     //Used to return the mode and register value for an autoincrement mode
     else if(tokens.length === 4 && tokens[0] === "(" && isRegister(tokens[1]) && tokens[2] === ")" && tokens[3] === "+") {

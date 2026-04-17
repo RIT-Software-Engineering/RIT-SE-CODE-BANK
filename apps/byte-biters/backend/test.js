@@ -52,7 +52,6 @@ function readWordFromBytes(mem, addr) {
 
 //these currently fail, look into
 
-
 const program = `
         MOV #5, R0
         CMP #3, R0     ; 5 - 3 = positive → N=0, V=0
@@ -64,34 +63,12 @@ HIT:    MOV #2, R1
 `;
 
 backend.loadAssembly(program);
-// const s1 = backend.step();
-// console.log(s1.registers);
-// const s2 = backend.step();
-// console.log(s2.registers);
-// const s3 = backend.step();
-// console.log(s3.registers);
-// const s4 = backend.step();
-// console.log(s4.registers);
 // backend.step();
 // backend.step();
 // backend.step();
 const result = backend.run();
 console.log(result.registers);
 console.log(result.flags);
-//console.log(readWordFromBytes(result.memory, 138))
-
-// backend.step();
-// backend.step();
-// backend.step();
-// backend.step();
-// let s1 = backend.step();
-// console.log("Step:", s1.registers, s1.flags);
-// console.log("Memory[0x4000] =", readWordFromBytes(s1.memory, 0x4000));
-
-// let b1 = backend.backStep();
-// console.log("Backstep:", b1.registers, b1.flags);
-// console.log("Memory[0x4000] =", readWordFromBytes(b1.memory, 0x4000));
-
 
 
 
