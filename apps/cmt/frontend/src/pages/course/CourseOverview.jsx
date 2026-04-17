@@ -35,7 +35,7 @@ export function CourseOverview() {
                         <div className='flex gap-1 -ml-1'><PlusIcon />Create Course</div>
                         </Button>
                 </div>
-                <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen} isEdit={edit} courseId={courseId}/>
+                <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen} isEdit={edit} courseId={courseId} refresh={fetchCourses}/>
                 <Row className='gy-4'>
                     {courseOverview.map(course => (
                         <Col md={4}>
@@ -92,8 +92,8 @@ export function ColorWheel({setColor}) {
     );
 }
 
-//TODO make this less messy; no isEdit stuff
-function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
+
+function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId, refresh}) {
 
     const [courseCode, setCourseCode] = useState('')
     const [courseName, setCourseName] = useState('')
@@ -137,8 +137,11 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId}) {
             return false;
         }
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Submitting...</>)
-        CMTJsonFetch('PUT', `course/${courseId}`, {color: color}).then(async()=>{
-            setTimeout(async() => window.location.reload(), 500)
+        CMTJsonFetch('PUT', `course/${courseId}`, {color: color}).then(() => {
+            setIsOpen(false);
+            setSubmitting(false);
+            setSubmitButtonElement(<><PlusIcon />Submit</>);
+            refresh();
         });
     }
 

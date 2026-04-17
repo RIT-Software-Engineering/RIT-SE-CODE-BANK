@@ -1,6 +1,6 @@
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Info, Trash2 } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal } from "react-bootstrap";
+import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, Popover, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { CheckmarkAction} from "@se-code-bank/workflows-ecosystem/components";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
@@ -72,7 +72,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
-                
+                let numMaterials = sessionData.filter(material => material.sessionNum === i).length;
+
                 return (
                     <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
                         <Accordion.Header>
@@ -84,9 +85,17 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                         refresh={updateWorkflow}
                                         fetchToCallback={fetchToCallback}
                                         renderers={sessionCheckmarkRenderers}
+                                        disabled={numMaterials===0}
                                     />
                                 )}
-                                <span className='text-2xl'>Session {i+1}</span>
+                                <span className='text-2xl'>
+                                    Session {i+1} {' '}
+                                    <span className="text-xl text-gray-400">
+                                        ({numMaterials > 0 ? 
+                                        (numMaterials > 1 ? `${numMaterials} materials` : `${numMaterials} material`) 
+                                        : "No materials"})
+                                    </span>
+                                </span>
                             </div>
                         </Accordion.Header>
                         <Accordion.Body>
@@ -145,10 +154,13 @@ const sessionCheckmarkRenderers = {
         return (
             <Button
                 size="sm"
-                variant={props.checked ? 'outline-secondary' : 'primary'}
+                variant={props.disabled ? 
+                    props.checked ? 'outline-secondary' : 'secondary' 
+                    : props.checked ? 'outline-primary' : 'primary'}
                 onClick={props.onClick}
+                disabled={props.disabled}
             >
-                {props.checked ? 'Done' : 'Mark Done'}
+                {props.checked ? 'Mark as In-Progress' : 'Mark as Completed'}
             </Button>
         )
     }
@@ -274,6 +286,18 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
         resetForm();
     }
 
+    const titleTip = (
+        <Tooltip>
+            On your course site, the title will be a link and lead to your content. If you add a resource or a link, it'll act as an external link that leads to a new page.
+        </Tooltip>
+    );
+
+    const contentTip = (
+        <Tooltip>
+            On your course site, a non-linked title will display as a link and when clicked, it'll open a page that contains the content as HTML.
+        </Tooltip>
+    );
+
     return (
         <Offcanvas
             show={isOpen}
@@ -303,7 +327,12 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                             </div>
 
                             <div className="mb-3">
-                                <Form.Label>Title (Required)</Form.Label>
+                                <Form.Label className="flex gap-1 items-center">
+                                    Title (Required) 
+                                    <OverlayTrigger trigger={'hover'} placement="bottom" overlay={titleTip}>
+                                        <Info size={18}/>
+                                    </OverlayTrigger>
+                                </Form.Label>
                                 <RichTextEditor 
                                     value={itemLabel} 
                                     onChange={setItemLabel} 
@@ -314,7 +343,12 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                             </div>
 
                             <div className="mb-3">
-                                <Form.Label>Content</Form.Label>
+                                <Form.Label className="flex gap-1 items-center">
+                                    Content 
+                                    <OverlayTrigger trigger={'hover'} placement="bottom" overlay={contentTip}>
+                                        <Info size={18}/>
+                                    </OverlayTrigger>
+                                </Form.Label>
                                 <RichTextEditor 
                                     value={itemBody} 
                                     onChange={setItemBody} 
@@ -405,6 +439,18 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
         });
     }
 
+    const titleTip = (
+        <Tooltip>
+            On your course site, the title will be a link and lead to your content. If you add a resource or a link, it'll act as an external link that leads to a new page.
+        </Tooltip>
+    );
+
+    const contentTip = (
+        <Tooltip>
+            On your course site, a non-linked title will display as a link and when clicked, it'll open a page that contains the content as HTML.
+        </Tooltip>
+    );
+
     return (
         <Offcanvas
             onShow={() => {
@@ -453,7 +499,12 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                 </div>
 
                                 <div className="mb-3">
-                                    <Form.Label>Title</Form.Label>
+                                    <Form.Label className="flex gap-1 items-center">
+                                        Title (Required) 
+                                        <OverlayTrigger trigger={'hover'} placement="bottom" overlay={titleTip}>
+                                            <Info size={18}/>
+                                        </OverlayTrigger>
+                                    </Form.Label>
                                     <RichTextEditor 
                                         value={itemLabel} 
                                         onChange={setItemLabel} 
@@ -463,7 +514,12 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                     />
                                 </div>
                                 <div className="mb-3">
-                                    <Form.Label>Content</Form.Label>
+                                    <Form.Label className="flex gap-1 items-center">
+                                        Content 
+                                        <OverlayTrigger trigger={'hover'} placement="bottom" overlay={contentTip}>
+                                            <Info size={18}/>
+                                        </OverlayTrigger>
+                                    </Form.Label>
                                     <RichTextEditor 
                                         value={itemBody} 
                                         onChange={setItemBody} 

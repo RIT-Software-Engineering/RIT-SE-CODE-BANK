@@ -345,7 +345,7 @@ export function ExternalLinkModal({ editor }) {
     }
 
     return (<>          
-        <OverlayTrigger delay={200} overlay={<Tooltip>External Link</Tooltip>}>
+        <OverlayTrigger delay={200} overlay={<Tooltip>Insert External Link</Tooltip>}>
             <Button
                 variant='outline-secondary'
                 onClick={() => setShow(true)}

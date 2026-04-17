@@ -271,7 +271,7 @@ async function main() {
         {
             name: 'Course Details',
             description: 'Add details to Your course to help differentiate it!',
-            actionType: 'complex',
+            actionType: 'workflow',
             childActions: [
                 {
                     name: 'Course Section',
@@ -285,7 +285,7 @@ async function main() {
                                 key: 'section',
                                 type: 'text',
                                 isRequired: true,
-                                placeholder: '1',
+                                placeholder: '01',
                                 validation: {
                                     maxLength: 30,
                                 },
@@ -330,7 +330,7 @@ async function main() {
             userId: users[0].id,
             actions: Array.from({ length: 28 }, (_, index) => {
                 return {
-                    name: `Add material to Session ${index+1}`,
+                    name: `Session ${index+1}`,
                     description:
                         'Add some material to your session! The material here will populate your course site when you generate it. The columns are dynamic depending on the type of course material you add!',
                     actionType: 'simple',
@@ -352,14 +352,14 @@ async function main() {
             actionType: 'workflow',
             userId: users[0].id,
             actions: [
-                {
-                    name: 'Set Column Visibilities',
-                    description: 'Hide columns that you may not want students seeing yet',
-                    actionType: 'simple',
-                    metadata: {
-                        code: 'CHECKMARK_COLUMN_VISIBILITIES',
-                    },
-                },
+                // {
+                //     name: 'Set Column Visibilities',
+                //     description: 'Hide columns that you may not want students seeing yet',
+                //     actionType: 'simple',
+                //     metadata: {
+                //         code: 'CHECKMARK_COLUMN_VISIBILITIES',
+                //     },
+                // },
                 {
                     name: 'Download Course Website',
                     description: "When it looks how you like it, download your site and upload it to the SE Servers!",

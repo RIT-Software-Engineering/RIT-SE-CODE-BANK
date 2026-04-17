@@ -54,8 +54,6 @@ export function CourseDashboard() {
             
             <CourseInfo course={course} />
             <div className="h-10"></div>
-            <div className="text-3xl">Course Creation Steps</div> 
-            <p className='text-xl pb-2 border-b'>Follow the steps to help create your course!</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
                     <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
@@ -63,7 +61,7 @@ export function CourseDashboard() {
             </div>
             <div className="h-10"></div>
             <ResourceManager courseId={course.id} />
-            <p className="text-3xl pb-2 border-b mt-10">Sessions</p>
+            <p className="text-3xl pb-2 border-b mt-10" id="sessions">Sessions</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
                     <Session
@@ -74,7 +72,7 @@ export function CourseDashboard() {
                         fetchToCallback={fetchToCallback}
                         courseId={course.id}
                     />
-                    <div className='flex justify-end pt-4'>
+                    <div className='flex justify-end pt-4 mb-4'>
                         <Button onClick={() => {
                             /** Makes a post request to add the session with no material.
                              * ID is the class ID to identify where it belongs in the future
@@ -84,7 +82,7 @@ export function CourseDashboard() {
                             setSessionCount(sessionCount+1);
                             setSessions([...sessions, data.session])
                         })
-                        }}>Add session</Button>
+                        }}>Add extra session</Button>
                     </div>
                 </div>
             </div>
@@ -110,7 +108,8 @@ function CourseInfo({ course }) {
                 <div className="flex gap-10">
                     <p className="mb-0">Section: {course.section ?? "TBD"} </p>
                     <p className="mb-0">Semester: {course.season ?? "TBD"} {course.year}</p>
-                    <p className="mb-0">Number of Students: {course.students ?? "TBD"}</p>
+                    {/* TODO maybe remove? Students are kinda silly to have and a pain to update
+                    <p className="mb-0">Number of Students: {course.students ?? "TBD"}</p> */}
                 </div>
             </div>
         </>

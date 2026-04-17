@@ -190,9 +190,10 @@ export function FormAction(props) {
  *  fetchToCallback: FetchToCallback
  *  onNavigateFactory?: OnNavigateFactory,
  *  refresh: () => void
+ *  disabled?: boolean
  * } & CheckmarkActionRenderers } props
  */
-export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchToCallback, renderers, refresh }) {
+export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchToCallback, renderers, refresh, disabled }) {
     const checked = actionWithContexts.actionState.stateType === 'completed'
 
     const [loading, setLoading] = useState(false)
@@ -206,7 +207,7 @@ export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchTo
     const onNavigate = code && onNavigateFactory && onNavigateFactory(code)
 
     return onNavigate ? (
-        <renderers.NavigateButton onClick={onNavigate}>Navigate</renderers.NavigateButton>
+        <renderers.NavigateButton actionWithContexts={actionWithContexts} onClick={onNavigate}></renderers.NavigateButton>
     ) : (
         <renderers.CheckmarkAction
             onClick={e => {
@@ -215,7 +216,7 @@ export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchTo
             }}
             checked={checked}
             loading={loading}
-            disabled={actionWithContexts.processedAction.isFrozen}
+            disabled={disabled || actionWithContexts.processedAction.isFrozen}
             actionWithContexts={actionWithContexts}
         />
     )
@@ -246,7 +247,7 @@ export function ActionContent({ actionWithContexts, outputValues, setOutputValue
     
     const onNavigate = onNavigateFactory && onNavigateFactory(actionWithContexts.processedAction.parsedMetadata.code)
     return onNavigate ? (
-        <renderers.NavigateButton onClick={onNavigate}>Navigate</renderers.NavigateButton>
+        <renderers.NavigateButton actionWithContexts={actionWithContexts} onClick={onNavigate}></renderers.NavigateButton>
     ) : (
         <>
             {actionWithContexts.processedAction.parsedMetadata.outputs.map(output => (

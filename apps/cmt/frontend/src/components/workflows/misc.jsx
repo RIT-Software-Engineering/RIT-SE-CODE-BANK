@@ -8,7 +8,7 @@ import { Button, Card } from "react-bootstrap"
 export function StatusIcon({ stateType }) {
 	if (stateType === 'completed') {
 		return (
-			<div className='flex items-center gap-2'>
+			<div className='flex items-center gap-2 text-wrap'>
 				<CheckCircle2 className='text-green-500' />
 				<p className='mb-0 text-green-500'>Completed!</p>
 			</div>
@@ -17,7 +17,7 @@ export function StatusIcon({ stateType }) {
 
 	if (stateType === 'inProgress') {
 		return (
-			<div className='flex items-center gap-2'>
+			<div className='flex items-center gap-2 text-wrap'>
 				<MinusCircle className='text-yellow-500' />
 				<p className='mb-0 text-yellow-500'>In Progress</p>
 			</div>
@@ -25,7 +25,7 @@ export function StatusIcon({ stateType }) {
 	}
 
 	return (
-		<div className='flex items-center gap-2'>
+		<div className='flex items-center gap-2 text-wrap'>
 			<XCircle className='text-red-500' />
 			<p className='mb-0 text-red-500'>Not Started</p>
 		</div>
@@ -36,12 +36,29 @@ export function StatusIcon({ stateType }) {
  * @param {CheckmarkActionProps} props
  */
 export function CheckmarkAction(props) {
+	let variantIncomplete;
+	let variantComplete; 
+	let labelComplete;
+	let labelIncomplete; 
+	switch (props.actionWithContexts.processedAction?.parsedMetadata?.code) {
+		case 'PUBLISH_TEMPLATE':
+			labelIncomplete = "Publish";
+			labelComplete = "Published";
+			break;
+	
+		default:
+			variantIncomplete = 'primary';
+			variantComplete = 'outline-seconary';
+			labelComplete = 'Mark as Incomplete';
+			labelIncomplete = "Mark as Completed"; 
+			break;
+	}
 	return <Button
-		variant={props.checked ? 'outline-secondary' : 'primary'}
+		variant={props.checked ? variantComplete : variantIncomplete}
 		onClick={props.onClick}
 		disabled={props.disabled}
 	>
-		{props.checked ? 'Mark as Incomplete' : 'Mark as Complete'}
+		{props.checked ? labelComplete : labelIncomplete}
 	</Button>
 }
 
@@ -49,10 +66,22 @@ export function CheckmarkAction(props) {
  * @param {NavigateButtonProps} props 
  */
 export function NavigateButton(props) {
+	let label = "Navigate";
+	switch (true){
+		case /SESSION_\d+/.test(props.actionWithContexts.processedAction?.parsedMetadata?.code):
+			label = "Jump";
+			break;
+		case /CHECKMARK_PUBLISH_SITE/.test(props.actionWithContexts.processedAction?.parsedMetadata?.code):
+			label = "Jump to Site Generation Page";
+			break;
+		default:
+			label = "Navigate";
+			break;
+	}
 	return <Button
 		onClick={props.onClick}
 	>
-		{props.children}
+		{label}
 	</Button>
 }
 
@@ -61,9 +90,9 @@ export function NavigateButton(props) {
 export function StatusCard({ stateType }) {
 	if (stateType === 'completed') {
 		return (
-			<Card>
+			<Card className="justify-end min-h-full">
 				<Card.Body className='bg-green-500 text-white flex items-center'>
-					<div className='flex flex-col items-center gap-2'>
+					<div className='flex flex-col items-center gap-2 w-full text-center'>
 						<Check size={20} />
 						<p className='my-0'>Completed!</p>
 					</div>
@@ -74,9 +103,9 @@ export function StatusCard({ stateType }) {
 
 	if (stateType === 'inProgress') {
 		return (
-			<Card>
+			<Card className="justify-end min-h-full">
 				<Card.Body className='bg-yellow-500 text-white flex items-center'>
-					<div className='flex flex-col items-center gap-2'>
+					<div className='flex flex-col items-center gap-2 w-full text-center'>
 						<Pencil size={20} />
 						<p className='my-0'>In Progress</p>
 					</div>
@@ -86,9 +115,9 @@ export function StatusCard({ stateType }) {
 	}
 
 	return (
-		<Card>
+		<Card className="justify-end min-h-full">
 			<Card.Body className='bg-red-500 text-white flex items-center'>
-				<div className='flex flex-col items-center gap-2'>
+				<div className='flex flex-col items-center gap-2 w-full text-center'>
 					<X size={20} />
 					<p className='my-0'>Not Started</p>
 				</div>
