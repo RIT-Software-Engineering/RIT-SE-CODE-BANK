@@ -165,11 +165,11 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId, refresh}) {
                         <div className={`flex gap-10 mb-4 ${isEdit ? 'hidden' : 'block'}`}>
                             <div>
                                 <Form.Label>Course Code</Form.Label>
-                                <Form.Control type='text' placeholder='SWEN-101' value={courseCode} onChange={e => setCourseCode(e.target.value)} required={!isEdit} />
+                                <Form.Control type='text' placeholder='e.g. SWEN-101' value={courseCode} onChange={e => setCourseCode(e.target.value)} required={!isEdit} />
                             </div>
                             <div>
                                 <Form.Label>Course Name</Form.Label>
-                                <Form.Control type='text' placeholder='Freshman Seminar' value={courseName} onChange={e => setCourseName(e.target.value)} required={!isEdit} />
+                                <Form.Control type='text' placeholder='e.g. Freshman Seminar' value={courseName} onChange={e => setCourseName(e.target.value)} required={!isEdit} />
                             </div>
                         </div>
                         <Form.Label>Course Color</Form.Label>

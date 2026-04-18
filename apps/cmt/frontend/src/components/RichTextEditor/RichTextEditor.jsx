@@ -1,4 +1,4 @@
-import { EditorContent, useEditor, } from "@tiptap/react";
+import { EditorContent, findParentNode, posToDOMRect, useEditor, } from "@tiptap/react";
 import Highlight from '@tiptap/extension-highlight'
 import {StarterKit} from "@tiptap/starter-kit";
 import { ButtonGroup, Button, Tooltip, OverlayTrigger, Dropdown, Modal, Form } from "react-bootstrap";
@@ -26,6 +26,8 @@ import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style'
 import TextAlign from '@tiptap/extension-text-align';
 import { ResourceLinkModal } from "./ResourceLinkModal.jsx";
 import { HighlightPicker, TextPicker } from "./Pickers.jsx";
+import { BubbleMenu } from '@tiptap/react/menus'
+import { Link } from "react-router-dom";
 
 export function ReadOnlyEditor({ value }) {
     const editor = useEditor({
@@ -240,7 +242,15 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
                 <Button
                     variant='outline-secondary'
                     onClick={() => {
-                        editor.chain().focus().unsetLink().run();
+                        if (editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' '))
+                            editor.chain().focus().unsetLink().run();
+                        else 
+                            // AI-generated code
+                            // Doesn't unlink whole line, just stops linking after clicking it
+                            editor.chain().focus().command(({ tr }) => {
+                                tr.removeStoredMark(editor.schema.marks.link)
+                                return true
+                            }).run();
                         editor.chain().focus().unsetColor().run();
                     }}
                 >
@@ -297,7 +307,29 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
           <div 
           className='border-x border-b p-3 prose prose-strong:text-inherit max-w-none overflow-y-scroll'
           style={{maxHeight: "35vh"}}>
-              <EditorContent className="*:p-3" editor={editor} />
+                <BubbleMenu
+                editor={editor}
+                shouldShow={() => editor.isActive('link')}
+                getReferencedVirtualElement={() => {
+                const parentNode = findParentNode(
+                    node => {return node.content.firstChild.marks.some(m => m.type.name === 'link')},
+                )(editor.state.selection)
+                if (parentNode) {
+                    const domRect = posToDOMRect(editor.view, 1, parentNode.start)
+                    return {
+                    getBoundingClientRect: () => domRect,
+                    getClientRects: () => [domRect],
+                    }
+                }
+                return null
+                }}
+                options={{ strategy: "fixed", placement: 'bottom-start'}}
+            >
+                <div className="bubble-menu">
+                    <Link to={editor.getAttributes('link').href}>{editor.getAttributes('link').href}</Link>
+                </div>
+            </BubbleMenu>
+                <EditorContent className="*:p-3" editor={editor} />
           </div>
         </div>
     )
@@ -349,6 +381,7 @@ export function ExternalLinkModal({ editor }) {
             <Button
                 variant='outline-secondary'
                 onClick={() => setShow(true)}
+                active={editor.isActive('link')}
                 >
                     <Link2/>
             </Button>

@@ -50,3 +50,11 @@ button.accordion-button:focus{
 .tableWrapper {
     @apply overflow-x-auto
 }
+
+.bubble-menu {
+    @apply border-2 shadow-lg rounded-xl px-3 py-2 text-blue-600 bg-white;
+
+    a {
+       @apply text-blue-600;
+    }
+}

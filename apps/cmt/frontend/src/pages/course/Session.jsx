@@ -92,7 +92,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                     Session {i+1} {' '}
                                     <span className="text-xl text-gray-400">
                                         ({numMaterials > 0 ? 
-                                        (numMaterials > 1 ? `${numMaterials} materials` : `${numMaterials} material`) 
+                                        (numMaterials > 1 ? `${numMaterials} items` : `${numMaterials} item`) 
                                         : "No materials"})
                                     </span>
                                 </span>
@@ -329,7 +329,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                             <div className="mb-3">
                                 <Form.Label className="flex gap-1 items-center">
                                     Title (Required) 
-                                    <OverlayTrigger trigger={'hover'} placement="bottom" overlay={titleTip}>
+                                    <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={titleTip}>
                                         <Info size={18}/>
                                     </OverlayTrigger>
                                 </Form.Label>
@@ -345,7 +345,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                             <div className="mb-3">
                                 <Form.Label className="flex gap-1 items-center">
                                     Content 
-                                    <OverlayTrigger trigger={'hover'} placement="bottom" overlay={contentTip}>
+                                    <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={contentTip}>
                                         <Info size={18}/>
                                     </OverlayTrigger>
                                 </Form.Label>
@@ -501,7 +501,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                 <div className="mb-3">
                                     <Form.Label className="flex gap-1 items-center">
                                         Title (Required) 
-                                        <OverlayTrigger trigger={'hover'} placement="bottom" overlay={titleTip}>
+                                        <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={titleTip}>
                                             <Info size={18}/>
                                         </OverlayTrigger>
                                     </Form.Label>
@@ -516,7 +516,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                 <div className="mb-3">
                                     <Form.Label className="flex gap-1 items-center">
                                         Content 
-                                        <OverlayTrigger trigger={'hover'} placement="bottom" overlay={contentTip}>
+                                        <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={contentTip}>
                                             <Info size={18}/>
                                         </OverlayTrigger>
                                     </Form.Label>
