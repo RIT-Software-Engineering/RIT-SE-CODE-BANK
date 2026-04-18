@@ -159,7 +159,7 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
               </OverlayTrigger>
               
               <OverlayTrigger delay={200} overlay={<Tooltip>Code Block</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCode().run()}>
+                <Button variant='outline-secondary' active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}>
                     <Code />
                 </Button>
               </OverlayTrigger>
@@ -238,7 +238,7 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
 
               <ExternalLinkModal editor={editor} />
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Unlink selection</Tooltip>}>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Remove Link/Resource</Tooltip>}>
                 <Button
                     variant='outline-secondary'
                     onClick={() => {

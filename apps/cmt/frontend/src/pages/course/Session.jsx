@@ -344,7 +344,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
 
                             <div className="mb-3">
                                 <Form.Label className="flex gap-1 items-center">
-                                    Content 
+                                    Page Content 
                                     <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={contentTip}>
                                         <Info size={18}/>
                                     </OverlayTrigger>
@@ -515,7 +515,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                 </div>
                                 <div className="mb-3">
                                     <Form.Label className="flex gap-1 items-center">
-                                        Content 
+                                        Page Content 
                                         <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={contentTip}>
                                             <Info size={18}/>
                                         </OverlayTrigger>

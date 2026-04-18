@@ -130,16 +130,6 @@ export function ResourceLinkModal({ editor, courseId }) {
                         {/* TODO: not copy paste this from resources/modals.jsx */}
                             <Form onSubmit={e => { handleFileUpload(e); e.stopPropagation(); }}>
                                 <Form.Group className='mb-3'>
-                                    <Form.Label>Resource Name</Form.Label>
-                                    <Form.Control
-                                        type='text'
-                                        placeholder='Enter resource name (optional)'
-                                        value={resourceName}
-                                        onChange={e => setResourceName(e.target.value)}
-                                    />
-                                    <Form.Text className='text-muted'>If not provided, the original filename will be used</Form.Text>
-                                </Form.Group>
-                                <Form.Group className='mb-3'>
                                     <Form.Label>File</Form.Label>
                                     <Form.Control
                                         type='file'
@@ -151,6 +141,16 @@ export function ResourceLinkModal({ editor, courseId }) {
                                         }}
                                         required
                                     />
+                                </Form.Group>
+                                <Form.Group className='mb-3'>
+                                    <Form.Label>Resource Name</Form.Label>
+                                    <Form.Control
+                                        type='text'
+                                        placeholder='Enter resource name (optional)'
+                                        value={resourceName}
+                                        onChange={e => setResourceName(e.target.value)}
+                                    />
+                                    <Form.Text className='text-muted'>If not provided, the original filename will be used</Form.Text>
                                 </Form.Group>
                                 <CMTDangerAlert error={uploadError} />
                                 <Button variant='primary' type='submit' disabled={uploading || !file}>
