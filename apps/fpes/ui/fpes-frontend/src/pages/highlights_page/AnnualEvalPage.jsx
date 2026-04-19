@@ -14,11 +14,11 @@ function SummarySection({ label, data, showDisseminated }) {
   if (!data) return null;
   return (
     <Box sx={{ mb: 1.5 }}>
-      <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
         {label}{data?.rating != null ? ` — Rating: ${data.rating}` : ''}
         {showDisseminated && data?.disseminated ? `  |  Disseminated? ${data.disseminated}` : ''}
       </Typography>
-      <Typography variant="body2">{data?.comments || ''}</Typography>
+      <Typography variant="body2" sx={{ color: 'text.primary' }}>{data?.comments || ''}</Typography>
     </Box>
   );
 }
@@ -63,7 +63,7 @@ export default function AnnualEvalPage({ facultyId, roles }) {
   };
 
   return (
-    <Box sx={{ maxWidth: 900, mx: 'auto', p: 3 }}>
+    <Box sx={{ maxWidth: 900, mx: 'auto', p: 3, pt: 10 }}>
       <Typography variant="h5" sx={{ mb: 0.5 }}>Annual Evaluation</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         AI-generated evaluation summarizing all highlights forms and teaching evaluations submitted by this faculty member.
@@ -101,7 +101,7 @@ export default function AnnualEvalPage({ facultyId, roles }) {
       )}
 
       {summary && (
-        <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, my: 1 }}>
+        <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1, my: 1, border: '1px solid', borderColor: 'divider' }}>
           <SummarySection label="Teaching" data={summary.teaching} />
           <SummarySection label="Scholarship" data={summary.scholarship} showDisseminated />
           <SummarySection label="Service" data={summary.service} />

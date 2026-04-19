@@ -91,7 +91,7 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
 
       {/* Teaching score breakdown */}
       {teachingScore && (
-        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.100', borderRadius: 1 }}>
+        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="caption" color="text.secondary">Teaching (from eval data)</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1 }}>
             Teaching score is based on the faculty member's percentile rank among all faculty with teaching evaluations.
@@ -99,9 +99,9 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
             {teachingScore.bumped ? ' An additional +1 was applied because 2 or more course improvement activities were found in the highlights.' : ''}
           </Typography>
           <Box sx={{ display: 'flex', gap: 3, mt: 0.5, flexWrap: 'wrap' }}>
-            <Typography variant="body2">Score: <b>{teachingScore.score ?? 'N/A'}</b></Typography>
-            <Typography variant="body2">Level: <b>{teachingScore.level}</b></Typography>
-            {teachingScore.percentile != null && <Typography variant="body2">Percentile: <b>{teachingScore.percentile?.toFixed(1)}%</b></Typography>}
+            <Typography variant="body2" color="text.primary">Score: <b>{teachingScore.score ?? 'N/A'}</b></Typography>
+            <Typography variant="body2" color="text.primary">Level: <b>{teachingScore.level}</b></Typography>
+            {teachingScore.percentile != null && <Typography variant="body2" color="text.primary">Percentile: <b>{teachingScore.percentile?.toFixed(1)}%</b></Typography>}
             {teachingScore.bumped && <Chip label="⬆ Bumped: course improvement" size="small" color="success" />}
           </Box>
         </Box>
@@ -145,7 +145,7 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
 
       {/* Scholarship score breakdown */}
       {scholarshipScore && (
-        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.100', borderRadius: 1 }}>
+        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="caption" color="text.secondary">Scholarship (from publication & grant data)</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1 }}>
             Scholarship score is based on the number of publications submitted with this form.
@@ -153,9 +153,9 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
             {scholarshipScore.hasNewGrant ? ' An additional +1 was applied because a new or funded grant was detected.' : ''}
           </Typography>
           <Box sx={{ display: 'flex', gap: 3, mt: 0.5, flexWrap: 'wrap' }}>
-            <Typography variant="body2">Score: <b>{scholarshipScore.score}</b></Typography>
-            <Typography variant="body2">Publications: <b>{scholarshipScore.pubCount}</b></Typography>
-            <Typography variant="body2">Level: <b>{scholarshipScore.pubLevel}</b></Typography>
+            <Typography variant="body2" color="text.primary">Score: <b>{scholarshipScore.score}</b></Typography>
+            <Typography variant="body2" color="text.primary">Publications: <b>{scholarshipScore.pubCount}</b></Typography>
+            <Typography variant="body2" color="text.primary">Level: <b>{scholarshipScore.pubLevel}</b></Typography>
             {scholarshipScore.bumped && <Chip label="⬆ Bumped: new grant" size="small" color="success" />}
           </Box>
         </Box>
@@ -212,10 +212,10 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
 
       {/* Qualitative feedback */}
       {feedback.length > 0 && (
-        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'info.50', borderRadius: 1, border: '1px solid', borderColor: 'info.200' }}>
+        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
           <Typography variant="caption" color="text.secondary">Qualitative Feedback</Typography>
           {feedback.map((line, i) => (
-            <Typography key={i} variant="body2" sx={{ mt: 0.5 }}>{line}</Typography>
+            <Typography key={i} variant="body2" color="text.primary" sx={{ mt: 0.5 }}>{line}</Typography>
           ))}
         </Box>
       )}
