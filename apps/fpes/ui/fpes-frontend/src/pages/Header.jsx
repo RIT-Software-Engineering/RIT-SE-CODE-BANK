@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 export default function Header({ pages, isAuthenticated, onLogout, roles }) {
     
     const profilePage = pages.find(page => page.name === "Profile");
+    const gettingStartedPage = pages.find(page => page.name === "Getting Started");
     const navigate = useNavigate()
     const handleLogout = () => {
             onLogout();
@@ -14,7 +15,7 @@ export default function Header({ pages, isAuthenticated, onLogout, roles }) {
             <Toolbar>
                 <Box sx={{flexGrow:1, display:"flex"}}>
                     {isAuthenticated && pages.map((page, index) => (
-                        page.name !== "Profile" && roles.intersection(page.roles_with_access).size > 0
+                        page.name !== "Profile" && page.name !== "Getting Started" && roles.intersection(page.roles_with_access).size > 0
                             ? (
                                 <Button 
                                     key={index} 
@@ -33,6 +34,12 @@ export default function Header({ pages, isAuthenticated, onLogout, roles }) {
                 {isAuthenticated && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         
+                        {gettingStartedPage && roles.intersection(gettingStartedPage.roles_with_access).size > 0 && (
+                            <Button component={Link} to={gettingStartedPage.route} color="inherit">
+                                {gettingStartedPage.name}
+                            </Button>
+                        )}
+
                         {profilePage && (
                             <Button component={Link} to={profilePage.route} color="inherit">
                                 {profilePage.name}

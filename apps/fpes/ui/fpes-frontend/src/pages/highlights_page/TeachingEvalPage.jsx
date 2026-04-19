@@ -81,7 +81,7 @@ export default function TeachingEvalPage() {
                                     sx={{ cursor: 'pointer', bgcolor: selectedFormId === row.form_id ? 'action.selected' : 'inherit' }}
                                 >
                                     <TableCell>{row.professor_name}</TableCell>
-                                    <TableCell>{row.course_name}</TableCell>
+                                    <TableCell>—</TableCell>
                                     <TableCell>{row.semester}</TableCell>
                                     <TableCell>{row.year}</TableCell>
                                     <TableCell>{row.time_submitted?.substring(0, 10)}</TableCell>

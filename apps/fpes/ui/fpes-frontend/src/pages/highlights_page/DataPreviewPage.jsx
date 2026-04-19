@@ -86,7 +86,7 @@ export default function DataPreviewModal({ isOpen, closeModal, parsedData, facul
                     <>
                         <h3>Course Information</h3>
                         <TextField fullWidth label="Course" value={`${formData.course_code || ''} ${formData.course_name || ''}`.trim()} 
-                            sx={{ mb: 2 }} disabled />
+                            sx={{ mb: 2, '& .MuiInputBase-input': { filter: 'blur(4px)', userSelect: 'none' } }} disabled />
                         <TextField fullWidth label="Professor" value={formData.professor_name || ''} 
                             sx={{ mb: 2 }} disabled />
                         <TextField fullWidth label="Semester" value={`${formData.semester || ''} ${formData.year || ''}`.trim()} 

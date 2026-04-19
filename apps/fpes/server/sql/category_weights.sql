@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS category_weights (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  teaching DECIMAL(4,2) NOT NULL DEFAULT 4.00,
+  scholarship DECIMAL(4,2) NOT NULL DEFAULT 3.00,
+  service DECIMAL(4,2) NOT NULL DEFAULT 2.00,
+  administrative DECIMAL(4,2) NOT NULL DEFAULT 1.00,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO category_weights (teaching, scholarship, service, administrative)
+SELECT 4.00, 3.00, 2.00, 1.00
+WHERE NOT EXISTS (SELECT 1 FROM category_weights);

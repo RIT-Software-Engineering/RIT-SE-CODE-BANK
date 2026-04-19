@@ -6,8 +6,7 @@ require('dotenv').config();
 const key = process.env.GEMINI_KEY
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const genAI = new GoogleGenerativeAI(key);
-const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview"});
-// const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash"});
+const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
 
 
 async function parseGrantAI(scholarship_section) {
@@ -232,9 +231,9 @@ async function parsePDF(filePath) {
     const data = await pdfParse(dataBuffer);
 
     const text = data.text;
-    // console.log('=== Start PDF TEXT ===');
-    // console.log(text);
-    // console.log('=== END PD TEXT ===');
+    console.log('=== Start PDF TEXT ===');
+    console.log(text);
+    console.log('=== END PDF TEXT ===');
     
     const lines = text.split('\n').map(line => line.trim()).filter(line => line);
     const scholarship = extractSection(text, 'Scholarship', 'Teaching');

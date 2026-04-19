@@ -1,15 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { saveParsedTeachingEval, getFacultyTeachingEvalPercentiles, getFacultyPercentileById, summarizeTeachingEval } = require('../api/teaching_eval_api');
+const { saveParsedTeachingEval, getFacultyTeachingEvalPercentiles, getFacultyPercentileById, calculateTeachingScore, summarizeTeachingEval } = require('../api/teaching_eval_api');
 
 router.get('/submitted_by/:facultyId', async (req, res) => {
   try {
     const conn = await pool.getConnection();
     const rows = await conn.query(
-      `SELECT te.id, f.time_submitted, te.course_name, te.professor_name, te.semester, te.year, f.id as form_id
+      `SELECT te.id, f.time_submitted, te.course_name, COALESCE(fi.name, te.professor_name) as professor_name, te.semester, te.year, f.id as form_id
        FROM teaching_evals te
        JOIN forms f ON te.form_id = f.id
+       LEFT JOIN faculty_information fi ON f.faculty_information_id = fi.faculty_id
        WHERE f.faculty_information_id = ?`,
       [req.params.facultyId]
     );
@@ -52,7 +53,24 @@ router.get('/:formId/view', async (req, res) => {
       [evalData[0].id]
     );
     
-    // Group text responses by question
+    // Build PII filter using professor name and course name
+    const { professor_name: profName, course_name: courseName } = evalData[0];
+    const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const filterPII = (text) => {
+      if (!text) return text;
+      let f = String(text);
+      if (profName) f = f.replace(new RegExp(escRe(profName), 'gi'), '[PROFESSOR]');
+      f = f.replace(/\b(professor|prof\.?|dr\.?|instructor)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g, '$1 [PROFESSOR]');
+      // First name only (e.g. "Andy") — only when preceded by a title or at start of sentence
+      f = f.replace(/\b(professor|prof\.?|dr\.?)\s+([A-Z][a-z]+)\b/g, '$1 [PROFESSOR]');
+      f = f.replace(/\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, '[NAME]');
+      if (courseName) f = f.replace(new RegExp(escRe(courseName).replace(/\s+/g, '\\s+'), 'gi'), '[COURSE]');
+      f = f.replace(/\b[A-Z]{2,5}[\s-]?\d{2,4}[A-Z]?\b/g, '[COURSE]');
+      f = f.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
+      return f;
+    };
+
+    // Group text responses by question and filter PII from each response
     const text_responses = [];
     const questionMap = {};
     
@@ -65,7 +83,7 @@ router.get('/:formId/view', async (req, res) => {
         text_responses.push(questionMap[row.id]);
       }
       if (row.response) {
-        questionMap[row.id].responses.push(row.response);
+        questionMap[row.id].responses.push(filterPII(row.response));
       }
     }
     
@@ -109,9 +127,11 @@ router.get('/all', async (req, res) => {
   try {
     const conn = await pool.getConnection();
     const rows = await conn.query(
-      `SELECT te.*, f.time_submitted
+      `SELECT te.id, te.form_id, te.course_name, te.semester, te.year,
+              COALESCE(fi.name, te.professor_name) as professor_name, f.time_submitted
        FROM teaching_evals te
        JOIN forms f ON te.form_id = f.id
+       LEFT JOIN faculty_information fi ON f.faculty_information_id = fi.faculty_id
        ORDER BY f.time_submitted DESC`
     );
     conn.release();
@@ -129,6 +149,17 @@ router.get('/percentile/faculty/:facultyId', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch percentile' });
+  }
+});
+
+router.get('/score/:facultyId', async (req, res) => {
+  try {
+    const teachingText = req.query.teaching_text || '';
+    const result = await calculateTeachingScore(req.params.facultyId, teachingText);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to calculate teaching score' });
   }
 });
 

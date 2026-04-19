@@ -44,6 +44,9 @@ app.use('/file', fileUploadRoutes);
 const teachingEvalRoutes = require('./routes/teaching_eval_routes.js');
 app.use('/teaching_evals', teachingEvalRoutes);
 
+const weightedScoreRoutes = require('./routes/weighted_score_routes.js');
+app.use('/weighted_score', weightedScoreRoutes);
+
 
 // Test route (just to confirm server is alive)
 app.get('/', (req, res) => {
