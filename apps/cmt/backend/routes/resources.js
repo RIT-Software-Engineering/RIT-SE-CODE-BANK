@@ -20,10 +20,10 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Multer config
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: function (_req, _file, cb) {
         cb(null, uploadsDir)
     },
-    filename: function (req, file, cb) {
+    filename: function (_req, file, cb) {
         const name = `${uuidv4()}-${file.originalname}`
         cb(null, name)
     },
@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    fileFilter: function (req, file, cb) {
+    fileFilter: function (_, file, cb) {
         // These correspond to mimetype headers and are neccesary for http
         const allowedTypes = [
             'application/pdf',
@@ -56,7 +56,7 @@ const upload = multer({
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true)
         } else {
-            cb(new Error(`Invalid file type ${file.mimeType}`), false)
+            cb(new Error(`Invalid file type ${file.mimetype}`))
         }
     },
 })

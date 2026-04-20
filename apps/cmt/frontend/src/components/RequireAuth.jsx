@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { getUserFromCookie } from "../utils/auth.js";
 
-export default function RequireAuth({ children }) {
+/**
+ * @param {Object} props
+ * @param {string[]} [props.roles]
+ * @param {import("react").ReactNode} props.children 
+ * @returns 
+ */
+export default function RequireAuth({ children, roles }) {
   const [checked, setChecked] = useState(false);
   const [user, setUser] = useState(null);
   const location = useLocation();

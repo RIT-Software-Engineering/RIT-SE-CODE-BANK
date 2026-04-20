@@ -3,7 +3,7 @@
 import { compressedMetadataToObject, recurseThroughActionWithContexts } from "./utils.js"
 
 /**
- * @import { ActionWithContexts, ActionWithContextsShell, ParsedActionWithContextsShell } from "../types/contexts.js"
+ * @import { ActionWithContexts, ActionWithContextsShell } from "../types/contexts.js"
  * @import { WorkflowsAction } from "../types/workflows.js"
  */
 

@@ -269,7 +269,7 @@ paths:
   /states/handleSubmit:
     post:
       summary: Handle submission of an action state (mark complete)
-      description: Handle sumission of an action for a specific user.
+      description: Updates the completion status for a single action state. For actions that require all participants to check in, every participant must call this endpoint before the action is marked completed.
       operationId: handleSubmit
       tags:
         - States
@@ -282,6 +282,14 @@ paths:
               properties:
                 actionStateId:
                   type: string
+                userId:
+                  type: string
+                  description: Required when the action requires per-participant confirmation. Optional for individual actions.
+                workflowStateId:
+                  type: string
+                  description: Optional hint that skips server-side lookup of the owning workflow state.
+                stateType:
+                  $ref: "./schemas.yaml#/components/schemas/StateType"
               required:
                 - actionStateId
       responses:
@@ -295,6 +303,17 @@ paths:
                   message:
                     type: string
                     example: "Completed"
+                  fullyCompleted:
+                    type: boolean
+                    description: Indicates whether the action is now complete for the whole team.
+                  requiresAllParticipants:
+                    type: boolean
+                  completedCount:
+                    type: integer
+                    description: The number of participants that have submitted for this action.
+                  requiredCount:
+                    type: integer
+                    description: The number of participants required before the action can be completed.
         "500":
           description: Failure response
           content:
@@ -304,6 +323,53 @@ paths:
                 properties:
                   message:
                     type: string
+
+  /states/workflow/{id}/participants:
+    put:
+      summary: Replace the list of participants for a workflow state
+      description: Synchronizes the workflow state's participant list with the provided set of user IDs. Useful when workflow states are linked to teams and membership changes over time.
+      operationId: updateWorkflowParticipants
+      tags:
+        - States
+        - Workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participantUserIds:
+                  type: array
+                  description: Distinct list of user IDs that share this workflow state.
+                  items:
+                    type: string
+              required:
+                - participantUserIds
+      responses:
+        "200":
+          description: Updated participants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      $ref: "./schemas.yaml#/components/schemas/WorkflowStateParticipant"
+        "400":
+          description: Missing participant list
+        "404":
+          description: Workflow state not found
+        "500":
+          description: Failure response
 
 components:
   responses:

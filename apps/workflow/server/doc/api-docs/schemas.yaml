@@ -16,6 +16,9 @@ components:
           nullable: true
         actionType:
           $ref: '#/components/schemas/ActionType'
+        requireAllParticipants:
+          type: boolean
+          description: When true, the action only completes after every participant submits.
         isFrozen:
           type: boolean
         nextActionId:
@@ -147,8 +150,35 @@ components:
           $ref: '#/components/schemas/StateType'
         index:
           type: integer
+        submissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionStateSubmission'
       required: [id, workflowStateId, actionId, stateType, index]
 
     StateType:
       type: string
       enum: [completed, inProgress, notStarted, hidden]
+
+    ActionStateSubmission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        actionStateId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        completed:
+          type: boolean
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [id, actionStateId, userId, createdAt, completed]
