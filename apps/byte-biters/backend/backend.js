@@ -38,7 +38,9 @@ export const backend = {
             registers: cpu.getRegisters(),
             flags: cpu.getFlags(),
             memory: cpu.getMemory(),
-            canBackStep: cpu.getPastState.length > 0
+            canBackStep: cpu.getPastState.length > 0,
+            isAssembled: cpu.getAssembledState(),
+            halted: cpu.getHaltedState()
         }
     }
 }

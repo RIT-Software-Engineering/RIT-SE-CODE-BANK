@@ -8,6 +8,7 @@ export class CPU {
         this.memory = new Memory();
         this.decoder = new Decode();
         this.halted = false;
+        this.isAssembled = false;
 
         //flag setup
         this.N = 0;
@@ -34,10 +35,19 @@ export class CPU {
             addr += 2;
         }
         this.initialMemory = new Uint8Array(this.memory.bytes);
+        this.isAssembled = true;
     }
 
     getPastState() {
         return this.pastState;
+    }
+
+    getAssembledState() {
+        return this.isAssembled;
+    }
+
+    getHaltedState() {
+        return this.halted;
     }
 
     getRegisters() {
