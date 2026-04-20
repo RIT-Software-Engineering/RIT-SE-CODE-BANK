@@ -280,8 +280,8 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
  * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen - open/close the modal
  * @param {Array} props.sessions - the sessions the user has created
  * @param {string} props.courseId - the course ID for resource linking
- * @param {string} props.defaultMaterialType - 
- * @param {React.Dispatch<SetStateAction<string>>} props.setDefaultMaterialType - 
+ * @param {string} props.defaultMaterialType - What the material type dropdown should start as. Default is Topic/Lecture
+ * @param {React.Dispatch<SetStateAction<string>>} props.setDefaultMaterialType - state setter for defaultMaterialType
  * @returns {React.ReactElement} the modal as HTML
  */
 export function SessionModal({ sessionNum, sessionData, setSessionData, 
@@ -595,10 +595,10 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
  * @param {Object} props 
  * @param {Array} props.sessionData - the data that contains the materials
  * @param {Number} props.sessionNum - the identifying session number to only get data from that specific session
- * @param {(isCreateOpen: Boolean) => void} props.setIsCreateOpen 
+ * @param {(isCreateOpen: Boolean) => void} props.setIsCreateOpen - opens/closes the creation modal. We only open here.
  * @param {(isEditOpen: Boolean) => void} props.setIsEditOpen - opens/closes the edit modal. We only open here.
  * @param {(materialId: Number) => void} props.setMaterialId - sets the id of the material we're working with.
- * @param {(defaultMaterialType: string) => void} props.setDefaultMaterialType - 
+ * @param {(defaultMaterialType: string) => void} props.setDefaultMaterialType - sets the default material type depending on where the user clicked. Used for the creation modal.
  * @returns {React.ReactElement} the table in HTML
  */
 function SessionTable( {sessionData, sessionNum, setIsCreateOpen, setIsEditOpen, setMaterialId, setDefaultMaterialType } ) {

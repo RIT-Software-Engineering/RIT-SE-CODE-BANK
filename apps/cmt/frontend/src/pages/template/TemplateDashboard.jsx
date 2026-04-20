@@ -62,9 +62,6 @@ export function TemplateDashboard() {
             
             <CourseInfo course={course}/>
             <div className="h-10"></div>
-            <ResourceManager courseId={course.id} />
-            <div className="h-10"></div>
-            <p className="text-3xl pb-2 border-b">Course Creation Workflow</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
                     <CMTWorkflow 
@@ -76,7 +73,12 @@ export function TemplateDashboard() {
                     />
                 </div>
             </div>
-            <p className="text-3xl pb-2 border-b mt-10">Sessions</p>
+            <div className="h-10"></div>
+            <ResourceManager courseId={course.id} />
+             <div className='mb-5 border-b mt-10'>
+                <span className="text-3xl" id="sessions">Sessions</span>
+                <p>Sessions are a single ocurrence of a class lecture. Each session appears as a row in the course site.</p>
+            </div>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
                     <Session
