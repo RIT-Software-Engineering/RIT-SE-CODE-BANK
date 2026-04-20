@@ -102,7 +102,7 @@ export function ResourceLinkModal({ editor, courseId }) {
                 <Modal.Title>Insert Resource File</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <div className="flex flex-col">
+                <div className="flex flex-col h-full">
                     <div className="flex gap-10 justify-between">
                         <div className="w-1/2 flex flex-col">
                             <p className="text-xl"> Select Existing Resource </p>
@@ -114,11 +114,13 @@ export function ResourceLinkModal({ editor, courseId }) {
                             : loadingError 
                                 ? <CMTDangerAlert error={loadingError} />
                             : resources.length > 0 
-                            ? resources.map(resource => (
+                            ? <div className="max-h-60 overflow-y-scroll">
+                                {resources.map(resource => (
                                     <div className="mb-3">
                                         <SelectableResourceCard resource={resource} refresh={loadResources} selected={selectedResource} setSelected={setSelectedResource}/>
                                     </div>
-                                )) : 
+                                ))}
+                                </div> : 
                                 <p>You have not added any resources yet.</p>
                             }
                         </div>

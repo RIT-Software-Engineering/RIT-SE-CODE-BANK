@@ -51,7 +51,7 @@ export function ResourceManager({ courseId }) {
                     <p>Upload files to make them available for linking in session materials.</p>
                 </div>
             ) : (
-                <Row>
+                <Row className='max-h-72 overflow-y-scroll'>
                     {resources.map(resource => (
                         <Col md={5} lg={3} key={resource.id} className='mb-3'>
                             <ResourceCard resource={resource} refresh={loadResources} />
