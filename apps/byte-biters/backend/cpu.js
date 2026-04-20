@@ -110,7 +110,13 @@ export class CPU {
     backStep(){
         const lastState = this.pastState.pop();
 
+        for (let i = 0; i < 8; i++) {
+            const value = parseInt(lastState.registers[i], 16);
+
+            lastState.registers[i] = value;
+        }
         this.setRegisters(lastState.registers);
+
         this.setFlags(
             lastState.flags.N,
             lastState.flags.Z,
