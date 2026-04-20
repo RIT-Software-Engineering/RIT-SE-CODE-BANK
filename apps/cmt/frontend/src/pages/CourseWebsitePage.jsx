@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { API_BASE } from "../utils/api.js";
+import { API_BASE, CMTFetch } from "../utils/api.js";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
+import JSZip from "jszip";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
