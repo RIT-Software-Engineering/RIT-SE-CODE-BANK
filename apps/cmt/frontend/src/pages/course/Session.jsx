@@ -81,8 +81,9 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                     <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
                         <Accordion.Header>
                             <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
-                                {/* TODO: completion should be tracked in the DB in case a professor wants to create more sessions than required */}
-                                {sessionAction && (
+                                {/* TODO: completion should be tracked for ALL actions in the DB in case a professor wants to create more sessions than required.
+                                Currently the one type that's tracked are the additional sessions. */}
+                                {sessionAction ? (
                                     <CheckmarkAction
                                         actionWithContexts={sessionAction}
                                         refresh={updateWorkflow}
@@ -90,7 +91,28 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                         renderers={sessionCheckmarkRenderers}
                                         disabled={numMaterials===0}
                                     />
-                                )}
+                                ) : <Button
+                                    size="sm"
+                                    variant={!sessionData.find(material => material.sessionNum === i) ? 
+                                        sessions.find(session => session.sessionNum === i)?.completed ? 'outline-secondary' : 'secondary' 
+                                        : sessions.find(session => session.sessionNum === i)?.completed ? 'outline-primary' : 'primary'}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        CMTJsonFetch("PUT", 
+                                            `session/${sessions.find(session => session.sessionNum === i)?.id}`, 
+                                            {completed: !sessions.find(session => session.sessionNum === i)?.completed}).then(() => {
+                                            setSessions(sessions.map(session => {
+                                                if (session.sessionNum === i){
+                                                    session.completed = !session.completed;
+                                                } 
+                                                return session;
+                                            }));
+                                            })
+                                    }}
+                                    disabled={!sessionData.find(material => material.sessionNum === i)}
+                                >
+                                    {sessions.find(session => session.sessionNum === i)?.completed ? 'Mark as In-Progress' : 'Mark as Completed'}
+                                </Button>}
                                 <span className='text-2xl'>
                                     Session {i+1} {' '}
                                     <span className="text-xl text-gray-400">
