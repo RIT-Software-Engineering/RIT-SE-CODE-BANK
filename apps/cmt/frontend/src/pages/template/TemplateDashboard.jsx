@@ -89,7 +89,7 @@ export function TemplateDashboard() {
                         fetchToCallback={fetchToCallback}
                         courseId={course.id}
                     />
-                    <div className='flex justify-end pt-4'>
+                    <div className='flex justify-end pt-4 mb-4'>
                         <Button onClick={() => {
                             /** Makes a post request to add the session with no material.
                              * ID is the class ID to identify where it belongs in the future
@@ -97,9 +97,9 @@ export function TemplateDashboard() {
                         CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async response=>{
                             const data = await response.json();
                             setSessionCount(sessionCount+1);
-                            setSessions([...sessions, data.session])
+                            setSessions(prevSessions => [...prevSessions, data.session])
                         })
-                        }}>Add session</Button>
+                        }}>Add extra session</Button>
                     </div>
                 </div>
             </div>

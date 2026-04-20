@@ -83,7 +83,7 @@ export function CourseDashboard() {
                         CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async response=>{
                             const data = await response.json();
                             setSessionCount(sessionCount+1);
-                            setSessions([...sessions, data.session])
+                            setSessions(prevSessions => [...prevSessions, data.session])
                         })
                         }}>Add extra session</Button>
                     </div>
