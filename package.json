@@ -1,18 +1,18 @@
 {
-  "dependencies": {
-    "babel-plugin-macros": "^3.1.0",
-    "csv-parse": "^6.1.0",
-    "express": "^5.1.0",
-    "multer": "^2.0.2",
-    "yaml": "^2.8.2"
+  "name": "SE-CODE-BANK",
+  "workspaces": [
+    "apps/workflow/ecosystem",
+    "apps/cmt/frontend",
+    "apps/cmt/backend"
+  ],
+  "scripts": {
+    "prepare-cmt": "npm i && cd apps/cmt && npx prisma db push --schema backend/prisma/schema.prisma && cd ../workflows/server && npx prisma db push",
+    "start-cmt": "npx nx run-many -t start -p cmt-frontend cmt-backend workflows-server",
+    "stop-cmt": "npx kill-port 3000 3001 5010"
   },
   "devDependencies": {
-    "@nrwl/jest": "^19.8.4",
-    "@nrwl/web": "^19.8.4",
-    "@nrwl/workspace": "^19.8.4",
-    "@types/react": "^19.2.13",
-    "@types/react-dom": "^19.2.3",
-    "nx": "^22.5.1",
-    "react-scripts": "^5.0.1"
+    "@types/node": "^25.6.0",
+    "kill-port": "^2.0.1",
+    "nx": "^22.6.5"
   }
 }

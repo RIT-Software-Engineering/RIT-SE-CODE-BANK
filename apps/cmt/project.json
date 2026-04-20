@@ -1,0 +1,27 @@
+{
+  "name": "cmt",
+  "targets": {
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "chmod +x ./scripts/deploy/deploy-cmt.sh",
+          "./scripts/deploy/deploy-cmt.sh"
+        ]
+      },
+      "dependsOn": [
+        "cmt-frontend:build"
+      ]
+    },
+    "deploy-test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo would deploy cmt here"
+      },
+      "dependsOn": [
+        "cmt-frontend:build"
+      ]
+    }
+  },
+  "implicitDependencies": ["cmt-frontend", "cmt-backend"]
+}

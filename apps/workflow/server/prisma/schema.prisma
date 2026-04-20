@@ -84,7 +84,7 @@ model WorkflowAttributes {
   rootActionId String? @db.Char(36) // The root action of the workflow, which is the base action
 
   baseAction     Action          @relation("baseAction", fields: [baseActionId], references: [id], onDelete: Cascade)
-  rootAction     Action?         @relation("rootAction", fields: [rootActionId], references: [id], onDelete: Cascade)
+  rootAction     Action?         @relation("rootAction", fields: [rootActionId], references: [id])
   tags           Tag[]
   workflowStates WorkflowState[]
 }
