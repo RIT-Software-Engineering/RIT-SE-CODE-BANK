@@ -264,12 +264,10 @@ export default function ApplicationCard({
                   {application.candidateFName} {application.candidateLName}
                   {currentUser.role === 'EMPLOYER' && ` (${application.candidatePronouns})`}
                   {' | '}
-                  <MuiLink component={Link} href={`/Messaging/${encodeURIComponent(application.candidateEmail)}`} underline="hover">
-                    {application.candidateEmail}
-                  </MuiLink>
+                  {application.candidateEmail}
                 </Typography>
                 <Typography color="text.secondary" fontWeight="medium">
-                  Professor: {jobPosition.employer?.user?.fname} {jobPosition.employer?.user?.lname}
+                  Position Professor: {jobPosition.employer?.user?.fname} {jobPosition.employer?.user?.lname}
                 </Typography>
                 <Typography color="text.secondary">
                   UID: {application.candidateUID}
@@ -279,28 +277,6 @@ export default function ApplicationCard({
                 </Typography>
               </Box>
             </Box>
-            <IconButton onClick={handleMenuClick} disabled={isCheckingHiredStatus}>
-              {isCheckingHiredStatus ? <CircularProgress size={24} /> : <EllipsisVerticalIcon />}
-            </IconButton>
-            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-              <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
-              <MenuItem onClick={() => { setisViewingHistory(true); handleMenuClose(); }}>View Application History</MenuItem>
-              <MenuItem onClick={() => { handleOpenNoteEdit(); handleMenuClose(); }}>View Application Notes</MenuItem>
-              {showActionMenuItems && <Divider />}
-
-              {showHireOption && (
-                <MenuItem onClick={() => { if (onHire) onHire(); handleMenuClose(); }} sx={{ color: 'success.main' }}>Hire Candidate</MenuItem>
-              )}
-              {showRejectOption && (
-                <MenuItem onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} sx={{ color: 'error.main' }}>Reject Application</MenuItem>
-              )}
-              {showInterviewOption && (
-                <MenuItem onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>Select for Interview</MenuItem>
-              )}
-              {showOfferOption && (
-                <MenuItem onClick={handleOfferPosition}>Offer Position</MenuItem>
-              )}
-            </Menu>
           </Box>
 
           <Divider sx={{ my: 2 }} />
@@ -383,26 +359,34 @@ export default function ApplicationCard({
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</Button>
+                <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>Application Details</Button>
               </Grid>
-              <Button variant="outlined" onClick={() => { setisViewingHistory(true); handleMenuClose(); }}>View Notes</Button>
+              <Grid item xs={12} sm={6}>
+                <Button variant="outlined" onClick={() => { setisViewingHistory(true); handleMenuClose(); }}>Application History</Button>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Button variant="outlined" onClick={() => { handleOpenNoteEdit(); handleMenuClose(); }}>Private Notes</Button>
+              </Grid>
               {showInterviewOption && (
                 <Grid item xs={12} sm={6}>
                   <Button variant="outlined" onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>Select for Interview</Button>
-                </Grid>)}
+                </Grid>
+              )}
               {showHireOption && (
                 <Grid item xs={12} sm={6}>
                   <Button variant="outlined" onClick={() => { if (onHire) onHire(); handleMenuClose(); }} >Hire Candidate</Button>
                 </Grid>
               )}
-              {showOfferOption && (<Grid item xs={12} sm={6}>
-                <Button variant="outlined" onClick={handleOfferPosition}>Offer Position</Button>
-              </Grid>)}
+              {showOfferOption && (
+                <Grid item xs={12} sm={6}>
+                  <Button variant="outlined" onClick={handleOfferPosition}>Offer Position</Button>
+                </Grid>
+              )}
               {showRejectOption && (
                 <Grid item xs={12} sm={6} >
-              <Button  sx = {{ height: 36,  whiteSpace: "nowrap" }} variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
-              </Grid>
-            )}
+                  <Button  sx = {{ height: 36,  whiteSpace: "nowrap" }} variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
+                </Grid>
+              )}
             </Grid>
           </Box>
         </Box>
