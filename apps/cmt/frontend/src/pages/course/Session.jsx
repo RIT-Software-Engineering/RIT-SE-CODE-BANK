@@ -1,6 +1,6 @@
 import { Edit, Info, Trash2 } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, Popover, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { CheckmarkAction} from "@se-code-bank/workflows-ecosystem/components";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
@@ -44,6 +44,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [curMaterialId, setCurMaterialId] = useState(0);
+    const [defaultMaterialType, setDefaultMaterialType] = useState('Topic/Lecture');
 
     /**
      * Initial GET request upon loading the page
@@ -63,7 +64,9 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
 
     return (
         <Accordion>
-        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} courseId={courseId}/>
+        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
+        isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} 
+        courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}/>
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId} 
         isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
         setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions}/>
@@ -100,7 +103,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                         </Accordion.Header>
                         <Accordion.Body>
                             { sessionData.find(data => data.sessionNum === i) ?
-                            <SessionTable sessionData={sessionData} sessionNum={i} setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId}/> :
+                            <SessionTable sessionData={sessionData} sessionNum={i} setIsCreateOpen={setIsOpen} 
+                            setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId} setDefaultMaterialType={setDefaultMaterialType}/> :
                             <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                             }
                             { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
@@ -251,15 +255,19 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
  * @param {Array} props.sessionData - the data of sessions in a course. Used to check if a user has created a personal note or not since we restrict to 1 note per session
  * @param {React.Dispatch<SetStateAction<Object[]>>} props.setSessionData - function to set the sessionData. Used upon upload to keep track of the session
  * @param {Boolean} props.isOpen - whether the modal is open
- * @param {(isOpen: Boolean) => void} props.setIsOpen - open/close the modal
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen - open/close the modal
  * @param {Array} props.sessions - the sessions the user has created
  * @param {string} props.courseId - the course ID for resource linking
+ * @param {string} props.defaultMaterialType - 
+ * @param {React.Dispatch<SetStateAction<string>>} props.setDefaultMaterialType - 
  * @returns {React.ReactElement} the modal as HTML
  */
-export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions, courseId }) {
+export function SessionModal({ sessionNum, sessionData, setSessionData, 
+    isOpen, setIsOpen, sessions, 
+    courseId, defaultMaterialType, setDefaultMaterialType }) {
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
-    const [itemType, setItemType] = useState('Topic/Lecture');
+    const [itemType, setItemType] = useState(defaultMaterialType);
     const [error, setError] = useState('');
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
@@ -275,7 +283,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
     }, [hasLinksInTitle, itemBody, itemLabel, itemType, sessionNum, sessions, setSessionData])
 
     function resetForm() {
-        setItemType('Topic/Lecture');
+        setDefaultMaterialType('Topic/Lecture');
         setItemLabel('');
         setItemBody('');
         setError('');
@@ -301,6 +309,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
     return (
         <Offcanvas
             show={isOpen}
+            onShow={() => setItemType(defaultMaterialType)}
             onHide={handleClose}
             placement="end"
             style={{ width: '100%', maxWidth: '1040px' }}
@@ -315,14 +324,14 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                         <div className='w-full'>
                             <div className="mb-3">
                                 <Form.Label>Material Column</Form.Label>
-                                <Form.Select onChange={e => setItemType(e.target.value)} value={itemType}>
+                                <Form.Select onChange={e => setItemType(e.target.value)} value={itemType} defaultValue={defaultMaterialType}>
                                     <option>Topic/Lecture</option>
                                     <option>Class Activity</option>
                                     <option>Reading/Resources</option>
                                     <option>Projects & Practica</option>
                                     <option>Group Assignment</option>
                                     <option>Individual Assignment</option>
-                                    {!sessionData.find(data => data.sessionNum === sessionNum && data.type === 'Personal Notes') ? <option>Your Personal Notes (Hidden from students)</option> : <></>}
+                                    {!sessionData.find(data => data.sessionNum === sessionNum && data.type === 'Personal Notes') ? <option value="Personal Notes">Your Personal Notes (Hidden from students)</option> : <></>}
                                 </Form.Select>
                             </div>
 
@@ -458,7 +467,6 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                 setItemBody(curMaterial?.body ?? "");
                 setItemType(curMaterial?.type ?? "Topic/Lecture");
                 setSessionNum(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`);
-                console.log(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`)
             }}
             show={isEditOpen}
             onHide={() => { setIsEditOpen(false); resetForm(); }}
@@ -565,14 +573,17 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
  * @param {Object} props 
  * @param {Array} props.sessionData - the data that contains the materials
  * @param {Number} props.sessionNum - the identifying session number to only get data from that specific session
+ * @param {(isCreateOpen: Boolean) => void} props.setIsCreateOpen 
  * @param {(isEditOpen: Boolean) => void} props.setIsEditOpen - opens/closes the edit modal. We only open here.
  * @param {(materialId: Number) => void} props.setMaterialId - sets the id of the material we're working with.
+ * @param {(defaultMaterialType: string) => void} props.setDefaultMaterialType - 
  * @returns {React.ReactElement} the table in HTML
  */
-function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} ) {
+function SessionTable( {sessionData, sessionNum, setIsCreateOpen, setIsEditOpen, setMaterialId, setDefaultMaterialType } ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
     const allCols = useMemo(() => ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"], []);
-    
+    const [isPreviewMode, setIsPreviewMode] = useState(false);
+
     /** Checks if there's any data in any of the columns and show them.
      * There's a bunch of columns so it's mainly just to reduce how much is shown
      */
@@ -597,7 +608,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} )
             if (result > maxRows)
                 maxRows = result;
         });
-        return maxRows;
+        return isPreviewMode ? 1 : maxRows;
     }
 
     /**
@@ -610,116 +621,118 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} )
     function getLabelContent(col, index) {
         const labels = sessionData.filter(data => data.type === allCols[col] && data.sessionNum === sessionNum);
 
+        if (index === -1)
+            return labels.map(label => label.label).join('\n');
+
         if (labels[index])
             return labels[index].label
         return ""
     }
 
-    function openEditModal(text, col){
+    function openSessionModal(text, col){
         // Not a foolproof way to find ID but it should match closely. It'd take a bunch of refactoring to be exact...
         const id = sessionData.find(session => session.sessionNum === sessionNum && session.label === text && session.type === allCols[col])?.id;
-        if (!id)
-            return;
-        setIsEditOpen(true);
-        setMaterialId(id);
+        if (!id){
+            setDefaultMaterialType(allCols[col]);
+            setIsCreateOpen(true);
+        }
+        else {
+            setIsEditOpen(true);
+            setMaterialId(id);
+        }
     }
 
     return (
-            <Table bordered>
-                <thead className='[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]'>
-                    <tr>
-                        {cols[0] ? <th>Topic/Lecture</th> : <></>}
-                        {cols[1] ? <th>Class Activity</th> : <></>}
-                        {cols[2] ? <th>Reading/Resources</th> : <></>}
-                        {cols[3] ? <th>Projects & Practica</th> : <></>}
-                        {cols[4] ? <th>Group Assignment</th> : <></>}
-                        {cols[5] ? <th>Individual Assignment</th> : <></>}
-                    </tr>
-                </thead>
-                <tbody>
-                    {Array.from({ length: determineRows() }, (_, i) => (
-                    <tr> 
-                        {cols[0] ? ( // Topic/Lecture
-                            getLabelContent(0, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(0, i), 0)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(0, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                        {cols[1] ? ( // Class Activity
-                         getLabelContent(1, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(1, i), 1)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(1, i)} />
-                                </div>
-                            </td>
-                        ) : <td></td>
-                        ) : <></>}
-                        {cols[2] ? ( // Reading/Resources
-                            getLabelContent(2, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(2, i), 2)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(2, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                        {cols[3] ? ( // Projects & Practica
-                            getLabelContent(3, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(3, i), 3)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(3, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                        {cols[4] ? ( // Group Assignment
-                            getLabelContent(4, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(4, i), 4)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(4, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                        {cols[5] ? ( // Individual Assignment
-                            getLabelContent(5, i) ? (
-                            <td 
-                                className={"cursor-pointer hover:bg-gray-100"}
-                                onClick={() => openEditModal(getLabelContent(5, i), 5)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(5, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                    </tr>
-                    ))}
-                </tbody>
-            </Table>
+        <>
+        <div className="flex justify-end mb-3">
+            <Button variant="info" onClick={() => setIsPreviewMode(prev => !prev)}>{isPreviewMode ? 'Edit View' : 'Preview View'}</Button>
+        </div>
+        <Table bordered>
+            <thead className={`${isPreviewMode ? '[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9] text-center' : ''}`}>
+                <tr>
+                    {isPreviewMode && <th>Session</th>}
+                    {(cols[0] || !isPreviewMode) && <th>Topic/Lecture</th> }
+                    {(cols[1] || !isPreviewMode) && <th>Class Activity</th> }
+                    {(cols[2] || !isPreviewMode) && <th>Reading/Resources</th> }
+                    {(cols[3] || !isPreviewMode) && <th>Projects & Practica</th>}
+                    {(cols[4] || !isPreviewMode) && <th>Group Assignment</th> }
+                    {(cols[5] || !isPreviewMode) && <th>Individual Assignment</th> }
+                </tr>
+            </thead>
+            <tbody>
+                {Array.from({ length: determineRows() }, (_, i) => (
+                <tr> 
+                    {isPreviewMode && <td className="font-bold text-center">{sessionNum+1}</td>}
+                    {(cols[0] || !isPreviewMode) ? ( // Topic/Lecture
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(0, i), 0)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(0, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[1] || !isPreviewMode) ? ( // Class Activity
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(1, i), 1)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(1, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[2] || !isPreviewMode) ? ( // Reading/Resources
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(2, i), 2)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(2, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[3] || !isPreviewMode) ? ( // Projects & Practica
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(3, i), 3)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(3, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[4] || !isPreviewMode) ? ( // Group Assignment
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(4, i), 4)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(4, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[5] || !isPreviewMode) ? ( // Individual Assignment
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(5, i), 5)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(5, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                </tr>
+                ))}
+            </tbody>
+        </Table>
+        </>
     )
 }

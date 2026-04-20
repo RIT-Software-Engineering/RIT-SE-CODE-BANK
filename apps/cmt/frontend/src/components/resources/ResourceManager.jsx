@@ -26,9 +26,14 @@ export function ResourceManager({ courseId }) {
 
     return (
         <div>
-            <div className='flex gap-4 py-2 mb-4 border-b'>
-                <p className='text-3xl mb-0'>File Resources</p>
-                <UploadResourceModal courseId={courseId} refresh={loadResources} />
+            <div className='flex gap-4 py-2 mb-4 border-b items-center'>
+                <div className='mb-0'>
+                    <span className='text-3xl'>File Resources</span>
+                    <p>Please do not upload files that contain sensitive or personal information.</p>
+                </div>
+                <div>
+                    <UploadResourceModal courseId={courseId} refresh={loadResources} />
+                </div>
                 <Button onClick={loadResources} className="h-10" variant="outline-secondary">
                     {loading ? <Spinner animation='border'  /> : <RefreshCcw /> }
                 </Button>

@@ -93,7 +93,7 @@ router.post('/:courseId', upload.single('file'), async (req, res) => {
 
         const resource = await req.prisma.resource.create({
             data: {
-                name: name || req.file.originalname,
+                name: name || req.file.originalname.replace(/\..+$/, ""),
                 filename: req.file.originalname,
                 mimeType: req.file.mimetype,
                 filePath: req.file.path,
