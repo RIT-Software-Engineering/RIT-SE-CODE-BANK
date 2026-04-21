@@ -23,7 +23,7 @@ router.get("/:courseId", async(req, res) => {
     var sessionMaterials = await Promise.all(
         sessions.map(async (session) => {
         const material = await prisma.sessionMaterial.findMany({
-            where: {sessionId: Number(session.id)}
+            where: {sessionId: Number(session.id), active: true}
         });
        return {material}
     })
@@ -104,15 +104,16 @@ router.post("/:sessionId", async (req, res) => {
 router.put("/material/:materialId", async (req, res) => {
     try {
         const {materialId} = req.params;
-        const updateData = req.body;
-        console.log(updateData)
+        const {itemLabel, itemBody, itemType, sessionNum, sessionId} = req.body;
         
-        // TODO maybe add a way to update the session the material is in?
         const material = await prisma.sessionMaterial.update({
             where: {id: Number(materialId)},
             data: {
-                label: updateData.itemLabel,
-                body: updateData.itemBody,
+                label: itemLabel,
+                body:  itemBody,
+                type: itemType,
+                sessionNum: parseInt(sessionNum),
+                sessionId: parseInt(sessionId),
             }
         })
 
