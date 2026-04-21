@@ -134,13 +134,12 @@ router.post('/annual-eval/:facultyId', async (req, res) => {
     const prompt = `You are writing an annual faculty evaluation. Return ONLY valid JSON, no markdown.
       Structure: {"teaching":{"rating":${finalTeachingRating},"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":3-5,"comments":""}}
       IMPORTANT: Do NOT use any person's name. Refer to the faculty member only as "the faculty member" or "they".
-      Write 2 paragraphs for teaching: paragraph 1 from the teaching eval data, paragraph 2 from the highlights teaching section.
+      For teaching comments, write ONLY one paragraph summarizing course improvement activities from the highlights teaching section. Do NOT repeat or rewrite the teaching eval summary — it will be prepended separately.
       Write 3-5 sentences for all other sections. Overall rating must be 3, 4, or 5.
       This covers ALL submissions by this faculty member.
 
       Faculty rank: ${rank || 'Faculty'}
-      Teaching eval summary (paragraph 1): ${teachingEvalText}
-      Highlights teaching section (paragraph 2): ${scrub(combine('teaching_section') || combine('curriculum_development') || 'None')}
+      Highlights teaching section (paragraph 2 only): ${scrub(combine('teaching_section') || combine('curriculum_development') || 'None')}
       Mentoring: ${scrub(combine('student_mentoring') || combine('teaching_section') || 'None')}
       Publications (${publications.length}): ${publications.map(p => p.title).join('; ') || 'None'}
       Grants (${grants.length}): ${grants.map(g => g.title).join('; ') || 'None'}
@@ -165,7 +164,8 @@ router.post('/annual-eval/:facultyId', async (req, res) => {
     if (summary.teaching) {
       summary.teaching.rating = finalTeachingRating;
       const p1 = teachingEvalText !== 'No teaching evaluations available.' ? teachingEvalText : 'No teaching evaluation data available.';
-      summary.teaching.comments = `${p1}\n\n${summary.teaching.comments || ''}`.trim();
+      const p2 = summary.teaching.comments || '';
+      summary.teaching.comments = p2 ? `${p1}\n\n${p2}` : p1;
     }
     if (summary.overall?.rating != null) summary.overall.rating = Math.max(3, summary.overall.rating);
 
@@ -274,12 +274,12 @@ router.post('/:formId/summarize', async (req, res) => {
 
     const mentoringText = studentMentoring || h.teaching_section || 'None listed';
 
-    const highlightsTeachingNote = `Highlights teaching section (write one paragraph summarizing course improvement activities from this): ${scrub(h.teaching_section || h.curriculum_development || 'None')}`;
+    const highlightsTeachingNote = `Highlights teaching section (write one paragraph summarizing course improvement activities only — do NOT summarize eval scores): ${scrub(h.teaching_section || h.curriculum_development || 'None')}`;
 
     const prompt = `Evaluate this faculty highlights form. Return ONLY valid JSON, no markdown.
               Structure: {"teaching":{"rating":${finalTeachingRating},"comments":""},"scholarship":{"rating":1-5,"disseminated":"Y/N","comments":""},"service":{"rating":1-5,"comments":""},"administrative":{"rating":1-5,"comments":""},"overall":{"rating":3-5,"comments":""}}
               IMPORTANT: Do NOT use any person's name anywhere in your response. Refer to the faculty member only as "the faculty member" or "they".
-              For the teaching comments, write ONE paragraph summarizing course improvement activities from the highlights teaching section. The teaching rating is already set to ${finalTeachingRating}.
+              For teaching comments, write ONLY one paragraph summarizing course improvement activities from the highlights teaching section. Do NOT repeat or rewrite the teaching eval summary — it will be prepended separately. The teaching rating is already set to ${finalTeachingRating}.
               For all other sections write 3-5 sentences. The overall rating must be 3, 4, or 5.
 
               Faculty rank: ${h.rank || 'Faculty'}
