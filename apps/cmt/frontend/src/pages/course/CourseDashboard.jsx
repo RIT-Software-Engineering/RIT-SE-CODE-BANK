@@ -27,6 +27,11 @@ export function CourseDashboard() {
             setCourse(data.course)
             setActionsWithContexts(data.actionsWithContexts ?? [])
             setWorkflow(data.workflow)
+        }).catch(async error => {
+        if (error.response){
+            const data = await error.response.json();
+            setCourse(data.error);
+            }
         })
     }, [id])
     useEffect(() => void update(), [id, update])
@@ -38,6 +43,7 @@ export function CourseDashboard() {
     )
 
     if (course === null) return <p> Loading </p>
+    else if (typeof(course) !== 'object') return <h1>{course}</h1>
 
     const sessionActions = flattenActionsWithContexts(actionsWithContexts).filter(
         awc => awc?.processedAction?.parsedMetadata?.code?.includes("SESSION_")
@@ -48,8 +54,6 @@ export function CourseDashboard() {
             
             <CourseInfo course={course} />
             <div className="h-10"></div>
-            <div className="text-3xl">Course Creation Steps</div>
-            <p className='text-xl pb-2 border-b'>Follow the steps to help create your course!</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
                     <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
@@ -57,7 +61,10 @@ export function CourseDashboard() {
             </div>
             <div className="h-10"></div>
             <ResourceManager courseId={course.id} />
-            <p className="text-3xl pb-2 border-b mt-10">Sessions</p>
+            <div className='mb-5 border-b mt-10'>
+                <span className="text-3xl" id="sessions">Sessions</span>
+                <p>Sessions are a single ocurrence of a class lecture. Each session appears as a row in the course site.</p>
+            </div>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
                     <Session
@@ -68,7 +75,7 @@ export function CourseDashboard() {
                         fetchToCallback={fetchToCallback}
                         courseId={course.id}
                     />
-                    <div className='flex justify-end pt-4'>
+                    <div className='flex justify-end pt-4 mb-4'>
                         <Button onClick={() => {
                             /** Makes a post request to add the session with no material.
                              * ID is the class ID to identify where it belongs in the future
@@ -76,9 +83,9 @@ export function CourseDashboard() {
                         CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async response=>{
                             const data = await response.json();
                             setSessionCount(sessionCount+1);
-                            setSessions([...sessions, data.session])
+                            setSessions(prevSessions => [...prevSessions, data.session])
                         })
-                        }}>Add session</Button>
+                        }}>Add extra session</Button>
                     </div>
                 </div>
             </div>
@@ -104,7 +111,8 @@ function CourseInfo({ course }) {
                 <div className="flex gap-10">
                     <p className="mb-0">Section: {course.section ?? "TBD"} </p>
                     <p className="mb-0">Semester: {course.season ?? "TBD"} {course.year}</p>
-                    <p className="mb-0">Number of Students: {course.students ?? "TBD"}</p>
+                    {/* TODO maybe remove? Students are kinda silly to have and a pain to update
+                    <p className="mb-0">Number of Students: {course.students ?? "TBD"}</p> */}
                 </div>
             </div>
         </>

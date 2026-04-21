@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { API_BASE, CMTFetch } from "../utils/api.js";
+import { CMTJsonFetch } from "../utils/api.js";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
 import JSZip from "jszip";
 
@@ -8,20 +8,16 @@ export default function CourseWebsitePage() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
-  // headers: schedule, syllabus, project, resources
 
   // Fetch courses
   useEffect(() => {
     (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/events/courses`, {
-          credentials: 'include',
-        });
-        const result = await res.json();
-        if (result.success) setCourses(result.data);
-      } catch (error) {
-        console.error("Error loading courses:", error);
-      }
+      await CMTJsonFetch("GET", `course`).then(async response => {
+          const result = await response.json();
+          setCourses(result);
+      }).catch(async error => {
+        console.error(error);
+      });
     })();
   }, []);
 
@@ -31,29 +27,17 @@ export default function CourseWebsitePage() {
 
     const fetchSessions = async () => {
       setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE}/session/${selectedCourse}`, {
-          credentials: 'include',
-        });
-        const result = await res.json();
-
-        if (result.success) {
-          // Combine sessions with their materials for easier use in UI
-          const combined = result.sessions.map((session, index) => ({
-            ...session,
-            materials: result.sessionMaterials[index]?.material || [],
-          }));
-          setSessions(combined);
-        } else {
-          setSessions([]);
-          console.error("Failed to fetch sessions:", result.error);
-        }
-      } catch (err) {
-        console.error("Error fetching sessions:", err);
+      await CMTJsonFetch("GET", `session/${selectedCourse}`).then(async response => {
+        const result = await response.json();
+        const combined = result.sessions.map((session, index) => ({
+          ...session,
+          materials: result.sessionMaterials[index]?.material || [],
+        }));
+        setSessions(combined);
+      }).catch(async error => {
+        console.error("Error fetching sessions:", error);
         setSessions([]);
-      } finally {
-        setLoading(false);
-      }
+      }).finally(() => setLoading(false));
     };
 
     fetchSessions();

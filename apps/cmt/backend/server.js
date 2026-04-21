@@ -14,16 +14,18 @@ import sessionRoutes from './routes/session.js';
 import resourceRoutes from './routes/resources.js';
 
 import path from "path";
-import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import makeCourseWebsiteRouter from "./routes/courseWebsite.js";
 import { readFileSync } from "fs";
+import dotenv from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const envPath = path.resolve(__dirname, '..', '.env');
+
 dotenv.config({
-  path: path.join(__dirname, "..", ".env"),
+  path: envPath,
 });
 
 const prisma = new PrismaClient();

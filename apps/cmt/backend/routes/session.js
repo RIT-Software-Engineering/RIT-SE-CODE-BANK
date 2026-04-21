@@ -130,6 +130,33 @@ router.put("/material/:materialId", async (req, res) => {
     }
 })
 
+/** PUT /api/cmt/session/:sessionId
+ * Updates session material. Upon success returns the session material.
+ * Will always update the label and body even if no changes are actually made to them upon submission.
+ */ 
+router.put("/:sessionId", async (req, res) => {
+    try {
+        const {sessionId} = req.params;
+        const {completed} = req.body;
+        
+        await prisma.session.update({
+            where: {id: Number(sessionId)},
+            data: {
+                completed: Boolean(completed)
+            }
+        })
+
+        res.json({
+            success: true,
+        })
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message,
+        })
+    }
+})
+
 /** DELETE /api/cmt/session/material/:materialId
  * Sets a specific session material to inactive. Upon success returns the session material to be updated
  * Not a true delete, but users cannot see inactive items so basically functions like one

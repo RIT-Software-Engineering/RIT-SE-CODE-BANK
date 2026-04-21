@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename)
 // TODO: this should integrate with SE hosting, for both homogeneity and not needing to download a new file every time you view it
 // i.e. these files should go on nitron or whatever, and not the CMT container (probably)
 // /cmt-project/uploads/resources
-const uploadsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'resources')
+const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'resources')
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true })
 }
@@ -94,7 +94,7 @@ router.post('/:courseId', upload.single('file'), async (req, res) => {
 
         const resource = await req.prisma.resource.create({
             data: {
-                name: name || req.file.originalname,
+                name: name || req.file.originalname.replace(/\..+$/, ""),
                 filename: req.file.originalname,
                 mimeType: req.file.mimetype,
                 filePath: req.file.path,
@@ -149,7 +149,7 @@ router.delete('/:id', async (req, res) => {
         const { id } = req.params
 
         const resource = await req.prisma.resource.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id },
         })
         if (!resource) {
             console.error(`Resource with ID ${id} not found`)
@@ -159,7 +159,7 @@ router.delete('/:id', async (req, res) => {
         if (fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
 
         await req.prisma.resource.delete({
-            where: { id: parseInt(id) },
+            where: { id: id },
         })
 
         res.sendStatus(200)
@@ -178,7 +178,7 @@ router.get('/download/:id', async (req, res) => {
         // Find in DB
         const { id } = req.params
         const resource = await req.prisma.resource.findUnique({
-            where: { id: parseInt(id) },
+            where: { id: id },
         })
         if (!resource) {
             console.log(`File with ID ${id} not found in DB`)

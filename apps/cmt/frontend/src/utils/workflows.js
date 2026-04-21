@@ -51,12 +51,12 @@ export function  flattenActionsWithContexts(actionsWithContexts) {
  */
 export function UseCMTOnNavigateFactory(code) {
     const navigate = useNavigate()
-    let getElement;
+    // let getElement;
 
-    if (code.includes("SESSION_")) getElement = () => document.getElementById(`WORKFLOW_JUMPPOINT_${code}`) 
+    // if (code.includes("SESSION_")) getElement = () => document.getElementById(`WORKFLOW_JUMPPOINT_${code}`) 
     if (code === "CHECKMARK_PUBLISH_SITE" || code === "CHECKMARK_COLUMN_VISIBILITIES") return () => navigate("/coursewebsite")
 
-    if (getElement) return () => getElement()?.scrollIntoView({ behavior: "smooth" })
+    // if (getElement) return () => getElement()?.scrollIntoView({ behavior: "smooth" })
 
     return null
 }

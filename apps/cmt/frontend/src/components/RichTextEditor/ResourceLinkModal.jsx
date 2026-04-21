@@ -22,8 +22,20 @@ export function ResourceLinkModal({ editor, courseId }) {
 
     const chain = editor.chain().focus()
 
-    //TODO this is broken for some unexplainable reason
-    chain.setLink({ href: linkUrl, target: '_blank' }).insertContent(displayText).run()
+    // AI-generated code
+    chain.insertContent({
+        type: 'text', 
+        text: displayText,
+        marks: [
+            {
+            type: 'link',
+            attrs: { href: linkUrl, target: '_blank' }
+            }
+        ]
+    }).command(({ tr }) => { // turns off link after inserting content
+        tr.removeStoredMark(editor.schema.marks.link)
+        return true
+    }).run()
 
     handleReset()
 }
@@ -90,7 +102,7 @@ export function ResourceLinkModal({ editor, courseId }) {
                 <Modal.Title>Insert Resource File</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <div className="flex flex-col">
+                <div className="flex flex-col h-full">
                     <div className="flex gap-10 justify-between">
                         <div className="w-1/2 flex flex-col">
                             <p className="text-xl"> Select Existing Resource </p>
@@ -102,11 +114,13 @@ export function ResourceLinkModal({ editor, courseId }) {
                             : loadingError 
                                 ? <CMTDangerAlert error={loadingError} />
                             : resources.length > 0 
-                            ? resources.map(resource => (
+                            ? <div className="max-h-60 overflow-y-scroll">
+                                {resources.map(resource => (
                                     <div className="mb-3">
                                         <SelectableResourceCard resource={resource} refresh={loadResources} selected={selectedResource} setSelected={setSelectedResource}/>
                                     </div>
-                                )) : 
+                                ))}
+                                </div> : 
                                 <p>You have not added any resources yet.</p>
                             }
                         </div>
@@ -117,16 +131,6 @@ export function ResourceLinkModal({ editor, courseId }) {
                             <p className="text-xl"> Upload New Resource </p>
                         {/* TODO: not copy paste this from resources/modals.jsx */}
                             <Form onSubmit={e => { handleFileUpload(e); e.stopPropagation(); }}>
-                                <Form.Group className='mb-3'>
-                                    <Form.Label>Resource Name</Form.Label>
-                                    <Form.Control
-                                        type='text'
-                                        placeholder='Enter resource name (optional)'
-                                        value={resourceName}
-                                        onChange={e => setResourceName(e.target.value)}
-                                    />
-                                    <Form.Text className='text-muted'>If not provided, the original filename will be used</Form.Text>
-                                </Form.Group>
                                 <Form.Group className='mb-3'>
                                     <Form.Label>File</Form.Label>
                                     <Form.Control
@@ -139,6 +143,16 @@ export function ResourceLinkModal({ editor, courseId }) {
                                         }}
                                         required
                                     />
+                                </Form.Group>
+                                <Form.Group className='mb-3'>
+                                    <Form.Label>Resource Name</Form.Label>
+                                    <Form.Control
+                                        type='text'
+                                        placeholder='Enter resource name (optional)'
+                                        value={resourceName}
+                                        onChange={e => setResourceName(e.target.value)}
+                                    />
+                                    <Form.Text className='text-muted'>If not provided, the original filename will be used</Form.Text>
                                 </Form.Group>
                                 <CMTDangerAlert error={uploadError} />
                                 <Button variant='primary' type='submit' disabled={uploading || !file}>

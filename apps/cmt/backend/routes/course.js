@@ -55,8 +55,11 @@ router.get('/:id', async (req, res) => {
     try {
         // TODO: check perms/if prof owns course
         const course = await prisma.course.findUnique({
-            where: { id: parseInt(req.params.id) },
+            where: { id: parseInt(req.params.id), professorId: req.user.uid },
         })
+
+        if (!course) 
+            throw new Error("Course not found. This course may not exist or you may not have access to it.");
 
         const workflow = await workflowsFetch('GET', `workflows/${course.workflowId}`)
         /** @type {WorkflowsAction[]} */
