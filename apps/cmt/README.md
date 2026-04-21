@@ -99,13 +99,12 @@ But, **when you make changes to the schema, those will not be automatically refl
 
 **Option 1: Script** 
 
-1. In `apps/cmt/cmt-project`, run `node stop_app.js` 
-2. In `apps/cmt/cmt-project`, run `node start_app.js`
-
+In the root of the repo, run `npm run setup-cmt` 
 
 **Option 2: Manual**
 
-1. In `apps/cmt/cmt-project`, run `npx prisma db push`
-2. Done! You shouldn't need to restart the app.
+In `apps/cmt/cmt-project`, run `npx prisma db push`
 
 You will likely be prompted with warnings about risky schema changes. In a lot of cases, data will have to be wiped. If you're okay with the warnings, say yes to the prompts.
+
+Important warning about data: Likely, you are being handed a version of the project that doesn't have any migrations. We've avoided migrations because we haven't ever needed to store user data across schema changes. In the near future, this may need to be done. Look at the documentation for Prisma migrations to find out more about keeping user data safe across schema changes.
