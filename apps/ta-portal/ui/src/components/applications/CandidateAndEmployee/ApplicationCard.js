@@ -65,11 +65,11 @@ export default function CandidateApplicationCard({
   const [anchorEl, setAnchorEl] = useState(null);
 
   const [acceptOfferConfirmation, setAcceptOfferConfirmation] = useState(false);
+  const [conflictAcceptOfferConfirmation, setConflictAcceptOfferConfirmation] = useState(false);
   const [declineOfferConfirmation, setDeclineOfferConfirmation] = useState(false);
 
   const [isProcessingUpdate, setIsProcessingUpdate] = useState(false);
 
-  const [isConfirmingAcceptance, setIsConfirmingAcceptance] = useState(false);
   const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
   const { jobPosition, jobApplicationStatus } = application;
@@ -101,7 +101,7 @@ export default function CandidateApplicationCard({
       );
 
       if (hiredStatus) {
-        setIsConfirmingAcceptance(true);
+        setConflictAcceptOfferConfirmation(true);
       } else {
         setAcceptOfferConfirmation(true)
       }
@@ -311,13 +311,13 @@ export default function CandidateApplicationCard({
       </ConfirmationModal>
 
       <ConfirmationModal
-        isOpen={isConfirmingAcceptance}
-        onClose={() => setIsConfirmingAcceptance(false)}
+        isOpen={conflictAcceptOfferConfirmation}
+        onClose={() => setConflictAcceptOfferConfirmation(false)}
         onConfirm={() => {
-          setIsConfirmingAcceptance(false);
-          setAcceptOfferConfirmation(true);
+          setConflictAcceptOfferConfirmation(false);
+          handleConfirmUpdate("ACCEPTED_OFFER");
         }}
-        title="Confirm Offer Acceptance"
+        title={"Accept Offer?"}
         isConfirming={isProcessingUpdate}
       >
         <Typography sx={{ mt: 2 }}>
