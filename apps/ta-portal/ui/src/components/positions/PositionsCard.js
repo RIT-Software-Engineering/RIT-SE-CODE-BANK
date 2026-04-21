@@ -301,7 +301,7 @@ export default function PositionsCard({
           foreignKey={position.id}
           foreignTableName="JobPosition"
           itemTitle="Position History"
-          itemSubtitle={position.course.name}
+          itemSubtitle="Position State Changes"
           statusEnumMap={positionStatusEnumToString}
           userRole={currentUser.role}
           onClose={() => setIsViewingNotes(false)}

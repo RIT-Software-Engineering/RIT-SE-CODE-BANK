@@ -405,7 +405,7 @@ export default function ApplicationCard({
           foreignKey={application.id}
           foreignTableName="JobPositionApplicationHistory"
           itemTitle="Application History"
-          itemSubtitle={jobPosition.course.name}
+          itemSubtitle="History of Status Changes to this Application"
           statusEnumMap={applicationStatusEnumToString}
           userRole={currentUser.role}
           onClose={() => setisViewingHistory(false)}

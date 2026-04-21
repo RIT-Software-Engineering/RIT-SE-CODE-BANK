@@ -107,7 +107,8 @@ export default function StateUpdateForm({
               background: theme.palette.mode === 'dark'
               ? "" : "#e0e0e0"
             })}>
-            <Typography component="span">Private Notes</Typography>
+            <Typography variant="h2" component="div">Private Notes:</Typography>
+            <Typography color="text.secondary">Notes visible only to Admin and the assigned faculty.</Typography>
           </AccordionSummary>
           <AccordionDetails sx={(theme) => ({
               background: theme.palette.mode === 'dark'
