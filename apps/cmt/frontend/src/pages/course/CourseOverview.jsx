@@ -121,6 +121,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId, refresh}) {
             const json = await response.json();
             setTimeout(async () => navigate(`/courses/${json.course.id}`), 500);
         }).catch(async error => {
+            console.log(error)
             const data = await error.response.json();
             setWarning(data.details);
             setSubmitButtonElement(<><PlusIcon />Submit</>)
