@@ -11,6 +11,7 @@ import {
     WorkflowComponentRendererAdmin,
     SimpleActionRenderer,
     ComplexActionRenderer } from "../components/workflows/BuilderRenderers.jsx";
+import { LogError } from "../utils/error.jsx";
 
 /**
  * @import { SetStateAction } from "react"
@@ -169,7 +170,7 @@ export function BuilderPageAdmin({isAdmin}){
      */
     function loadWorkflowForm(){
         if (isAdmin)
-            setMetaWorkflow(curAction?.metadata?.code);
+            setMetaWorkflow(curAction?.parsedMetadata?.code);
     }
 
     /** 
@@ -548,7 +549,7 @@ function createActionWithContexts(action) {
         }
     };
 }
-
+    
 /**
  * A helper function to submit template workflows
  * Because we have our CMT-specific special tag and our own endpoint, we pass this into the {@link WorkflowModal}.
@@ -561,7 +562,7 @@ function createActionWithContexts(action) {
  * @param {Array} workflows - An array containing all of the workflows
  * @param {React.Dispatch<SetStateAction<Object[]>>} setWorkflows - The state setter to set all our workflows
  * @param {Object} extraData - Any extra data, which is metadata/the meta workflow in our case
- * @param {(error:string) => void} setError - Sets a display error in the {@link WorkflowModal} if it fails to add the workflow for any reason
+ * @param {(error:string) => void} setError - Sets a display error in the {@link WorkflowModal} if it fails to add the workflow for any reason 
  */
 async function workflowSubmit(name, description, tags, workflows, setWorkflows, extraData, setError){
     // We define extraData to have a metaWorkflow attribute, but just in case it can be set to null.
@@ -599,17 +600,7 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
             usedCodes: [],
         }].sort((a, b) => a.name.localeCompare(b.name))); // Just sort them
         returnVal = "Good";
-    }).catch(async error => {
-        console.log(error)
-        if (error.response){
-            const data = await error.response.json();
-            setError(data.error);
-        }
-        else {
-            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
-        }
-        returnVal = "Bad";
-    });
+    }).catch(generateWorkflowErrorHandler(setError, value => returnVal = value));
     // Finally does not return our value so we just return it after our request
     return returnVal;
 }
@@ -635,7 +626,7 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
         if (extraData.metaWorkflow) 
             tags.push("WorkflonyFirstTheRestNowhere_CMT_Template");
         else 
-            workflowToUpdate?.metadata?.CMTemplate.forEach(item => tags.push(item));
+            workflowToUpdate?.metadata?.CMTemplate?.forEach(item => tags.push(item));
     }
 
     if (!name)
@@ -659,7 +650,6 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
             else 
                 tags = tags.slice(0, workflowToUpdate?.metadata?.CMTemplate.length * -1);
         }
-            
         const workflowsCopy = workflows.map(workflow => {
             if (workflow.id !== data.workflow.baseActionId)
                 return workflow
@@ -678,17 +668,7 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
         })
         setWorkflows(workflowsCopy);
         returnVal = "Good";
-    }).catch(async error => {
-        console.error(error)
-        if (error.response){
-            const data = await error.response.json();
-            setError(data.error);
-        }
-        else {
-            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
-        }
-        returnVal = "Bad";
-    });
+    }).catch(generateWorkflowErrorHandler(setError, value => returnVal = value));
     // Finally does not return our value so we just return it after our request
     return returnVal;
 }
@@ -995,17 +975,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
             }
         }
         returnVal = "Good";
-    }).catch(async error => {
-        console.error(error)
-        if (error.response){
-            const data = await error.response.json();
-            setError(data.error);
-        }
-        else {
-            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
-        }
-        returnVal = "Bad";
-    });
+    }).catch(generateWorkflowErrorHandler(setError, value => returnVal = value));
     return returnVal;
 }
 
@@ -1063,17 +1033,7 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
     await CMTJsonFetch("PUT", postEndpoint, {name, description, metadata}).then(async _ => {
             await refresh();
             returnVal = "Good";
-    }).catch(async error => {
-        console.error(error)
-        if (error.response){
-            const data = await error.response.json();
-            setError(data.error);
-        }
-        else {
-            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
-        }
-        returnVal = "Bad";
-    });
+    }).catch(generateWorkflowErrorHandler(setError, value => returnVal = value));
 
     return returnVal;
 }
@@ -1118,3 +1078,29 @@ async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh
         await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`).then(async _ => refresh());
 }
 
+function generateWorkflowErrorHandler(setError, setReturnVal) {
+    
+    const logGenericError = (error) => LogError(
+        "Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.",
+        error,
+        setError,
+    )
+
+    return async (error) => {
+        try {
+            if (error.response){
+                const data = await error.response.json();
+                LogError(
+                    "Error encountered while submitting workflow",
+                    data.error,
+                    setError,
+                )
+            }
+            logGenericError(error)
+        } catch {
+            logGenericError(error)
+        } finally {
+            setReturnVal("Bad");
+        }
+    }
+}

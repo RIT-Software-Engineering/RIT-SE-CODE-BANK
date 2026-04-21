@@ -20,20 +20,16 @@ const prisma = new PrismaClient();
  * TODO: CHANGE IT SO IT'S BASED ON THE PROFESSOR ID THAT'S CURRENTLY LOGGED IN
  */
 router.get('/', async (req, res) => {
-    try {
-        const profId = req.user.uid;
-        const {isTemplate} = req.query;
-        const courses = await prisma.course.findMany({
-            include: { professors: true },
-            where: {
-                professorId: profId, 
-                isTemplate: Boolean(isTemplate)
-            }
-        })
-        res.json(courses)
-    } catch (err) {
-        res.status(500).json({ error: err.message })
-    }
+    const profId = req.user.uid;
+    const {isTemplate} = req.query;
+    const courses = await prisma.course.findMany({
+        include: { professors: true },
+        where: {
+            professorId: profId, 
+            isTemplate: Boolean(isTemplate)
+        }
+    })
+    res.json(courses)
 })
 
 /**
@@ -52,27 +48,22 @@ router.get('/', async (req, res) => {
  * ```
  */
 router.get('/:id', async (req, res) => {
-    try {
-        // TODO: check perms/if prof owns course
-        const course = await prisma.course.findUnique({
-            where: { id: parseInt(req.params.id), professorId: req.user.uid },
-        })
+    // TODO: check perms/if prof owns course
+    const course = await prisma.course.findUnique({
+        where: { id: parseInt(req.params.id), professorId: req.user.uid },
+    })
 
-        if (!course) 
-            throw new Error("Course not found. This course may not exist or you may not have access to it.");
+    if (!course) 
+        throw new Error("Course not found. This course may not exist or you may not have access to it.");
 
-        const workflow = await workflowsFetch('GET', `workflows/${course.workflowId}`)
-        /** @type {WorkflowsAction[]} */
-        const actions = await workflowsFetch('GET', `actions?workflowId=${course.workflowId}`)
-        const workflowState = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
-        
-        const actionsWithContexts = actions.map(action => CMTActionToActionWithContexts(action, workflowState, course.id, req.user.uid)) 
+    const workflow = await workflowsFetch('GET', `workflows/${course.workflowId}`)
+    /** @type {WorkflowsAction[]} */
+    const actions = await workflowsFetch('GET', `actions?workflowId=${course.workflowId}`)
+    const workflowState = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
+    
+    const actionsWithContexts = actions.map(action => CMTActionToActionWithContexts(action, workflowState, course.id, req.user.uid)) 
 
-        res.json({ course, workflow, actionsWithContexts, actionStates: workflowState })
-    } catch (err) {
-        console.error('course creation failed: ', err)
-        res.status(500).json({ error: err.message })
-    }
+    res.json({ course, workflow, actionsWithContexts, actionStates: workflowState })
 })
 
 /**
@@ -181,58 +172,47 @@ router.post('/', async (req, res) => {
  * Update course - add workflowId or other fields
  */
 router.put('/:id', async (req, res) => {
-    try {
-        const { id } = req.params
-        const updateData = req.body
+    const { id } = req.params
+    const updateData = req.body
 
-        console.log('PUT /api/cmt/course/:id called with:', id, updateData)
+    console.log('PUT /api/cmt/course/:id called with:', id, updateData)
 
-        const mappedData = {
-            ...(updateData.courseCode !== undefined 
-                && { classId: updateData.courseCode }
-            ),
-            ...(updateData.courseName !== undefined 
-                && { name: updateData.courseName }
-            ),
-            ...(updateData.year !== undefined 
-                && { year: parseInt(updateData.year) }
-            ),
-            ...(updateData.season !== undefined 
-                && { season: updateData.season }
-            ),
-            ...(updateData.color !== undefined 
-                && { color: updateData.color }
-            ),
-            ...(updateData.students !== undefined 
-                && !isNaN(parseInt(updateData.students)) 
-                && { students: parseInt(updateData.students) }
-            ),
-            ...(updateData.section !== undefined 
-                && { section: updateData.section }
-            ),
-        }
-
-        const updatedCourse = await prisma.course.update({
-            where: { id: Number(id) },
-            data: mappedData
-        })
-
-        console.log('Course updated successfully:', updatedCourse)
-
-        const { uid: _userId, asid: actionStateId } = req.query
-        if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
-
-        res.json({
-            success: true,
-            data: updatedCourse,
-        })
-    } catch (error) {
-        console.error('Error updating course:', error)
-        res.status(500).json({
-            success: false,
-            error: error.message,
-        })
+    const mappedData = {
+        ...(updateData.courseCode !== undefined 
+            && { classId: updateData.courseCode }
+        ),
+        ...(updateData.courseName !== undefined 
+            && { name: updateData.courseName }
+        ),
+        ...(updateData.year !== undefined 
+            && { year: parseInt(updateData.year) }
+        ),
+        ...(updateData.season !== undefined 
+            && { season: updateData.season }
+        ),
+        ...(updateData.color !== undefined 
+            && { color: updateData.color }
+        ),
+        ...(updateData.students !== undefined 
+            && !isNaN(parseInt(updateData.students)) 
+            && { students: parseInt(updateData.students) }
+        ),
+        ...(updateData.section !== undefined 
+            && { section: updateData.section }
+        ),
     }
+
+    const updatedCourse = await prisma.course.update({
+        where: { id: Number(id) },
+        data: mappedData
+    })
+
+    console.log('Course updated successfully:', updatedCourse)
+
+    const { uid: _userId, asid: actionStateId } = req.query
+    if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
+
+    res.json({ course: updatedCourse })
 })
 
 /**
@@ -240,37 +220,13 @@ router.put('/:id', async (req, res) => {
  * Delete a course and all related data (events, enrollments, etc.)
  */
 router.delete('/:id', async (req, res) => {
-    try {
-        const { id } = req.params
+    const { id } = req.params
 
-        // Had to cast id to a Number so an int is passed instead of a string
+    // Had to cast id to a Number so an int is passed instead of a string
+    // Then delete the course
+    await prisma.course.delete({
+        where: { id: Number(id) },
+    })
 
-        console.log('DELETE /api/cmt/course/:id called with:', Number(id))
-
-        // Then delete the course
-        await prisma.course.delete({
-            where: { id: Number(id) },
-        })
-
-        console.log(`✅ Course deleted: ${id}`)
-
-        res.json({
-            success: true,
-            message: 'Course and all related events deleted successfully',
-        })
-    } catch (error) {
-        console.error('Error deleting course:', error)
-
-        if (error.code === 'P2025') {
-            return res.status(404).json({
-                success: false,
-                error: 'Course not found',
-            })
-        }
-
-        res.status(500).json({
-            success: false,
-            error: error.message,
-        })
-    }
+    res.sendStatus(200)
 })

@@ -53,12 +53,11 @@ class CMTFetchError extends Error {
  * @param {string} baseUrl 
  * @returns Response of fetch in the form of a promise. If the promise is rejected, an error will be returned in the format { message: string, response: Response }. The response contains the full response of the fetch.
  */
-export async function CMTFetch(method, url, body, headers, allowedErrorCodes, baseUrl) {
+async function CMTFetch(method, url, body, headers, allowedErrorCodes, baseUrl) {
     
     const fullURL = `${baseUrl}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
-    const headersJSON = JSON.stringify(headers)
 
-    console.log(`🐖 Fetching to url ${fullURL} with body ${body} and headers ${headersJSON} and method ${method}`)
+    console.log(`Fetching: ${method} ${fullURL}`)
     
     let response
     try {
@@ -66,25 +65,36 @@ export async function CMTFetch(method, url, body, headers, allowedErrorCodes, ba
         if (body !== undefined) options.body = body
         response = await fetch(fullURL, { ...options, credentials: 'include'})
     } catch (error) {
-        LogError(`🥕 Error when fetching to url ${fullURL} with body ${body} and headers ${headersJSON} and method ${method}`, error)
-        throw Error(`🐦‍🔥 Error when fetching to url ${fullURL}: ${error} with body ${body} and headers ${headersJSON} and method ${method}`)
+        const message = `
+            Error while trying to fetch: ${method} ${fullURL}
+            \nRequest Body: ${body}
+            \nError: ${error}
+            \nThis means the the request likely never reached the intended url, and is more likely a problem with CMT.
+        `
+        LogError(message)
+        throw Error(message)
     }
         
     if (response.ok) {
         return response
     }
 
-    // Only notify the user if the error code is not allowed,
-    if(!allowedErrorCodes.includes(response.status)) {    
-        LogError("😨 New Error just dropped", response)
-    }
-    
     // Create specially formatted error so consumer can access the codes easily
     const clonedResponse = response.clone();
-    throw new CMTFetchError(
-        `🐘 Error status ${response.status}: ${JSON.stringify(await clonedResponse.json())} from url ${fullURL} with body ${body} and headers ${headersJSON} and method ${method}`, 
-        response
-    )
+    const message = `
+      non-allowed non-OK status in response to: ${method} ${fullURL}
+      \nRequest Body: ${body}
+      \nResponse status: ${response.status}
+      \nResponse body: ${await clonedResponse.json()}
+      \nThis means that the status was properly received by the intended url, but that the server had an issue of some kind.
+    `
+
+    // Only notify the user if the error code is not allowed,
+    if(!allowedErrorCodes.includes(response.status)) {    
+        LogError(message, response)
+    }
+
+    throw new CMTFetchError(message, response)
 }
 
 /**

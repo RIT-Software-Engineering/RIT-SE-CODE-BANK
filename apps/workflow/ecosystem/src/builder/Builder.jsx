@@ -26,7 +26,6 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
     WorkflowSubmit, curWorkflow ,isEdit, setIsEdit, 
     workflowEditSubmit, extraData, loadFunction, clearFunction, children, renderers} ){
 
-        console.log("haha i shouldnt be here")
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [tags, setTags] = useState('');

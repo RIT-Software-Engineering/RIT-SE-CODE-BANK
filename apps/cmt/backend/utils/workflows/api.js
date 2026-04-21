@@ -1,3 +1,5 @@
+import { CMTError, CMTInfo } from "../logging.js"
+
 export const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:3001').replace(/\/$/, '')
 
 /**
@@ -16,23 +18,36 @@ export async function workflowsFetch(method, url, body, headers) {
   const fullURL = `${WORKFLOWS_API}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
   const bodyJSON = JSON.stringify(body)
   const fullHeaders = { ...headers, "Content-Type": "application/json", }
-  const headersJSON = JSON.stringify(fullHeaders)
 
-  console.log(`🎑 fetching to url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
+  CMTInfo(`Fetching: ${method} ${fullURL}`)
 
+  let response;
   try {
     const options = { method, headers: fullHeaders }
     if (bodyJSON !== undefined) options.body = bodyJSON
-    const response = await fetch(fullURL, { ...options, credentials: 'include' })
-    if (!response.ok) {
-      console.error(`🐘 Error status ${response.status} received: ${await response.json()} from url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
-      throw Error(`🐘 Error status ${response.status} received: ${await response.json()} from url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
-    }
-    return await response.json()
+    response = await fetch(fullURL, { ...options, credentials: 'include' })
   } catch (error) {
-    console.error(`🥕 Error when fetching to url ${fullURL}: ${error} ${error.message} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
-    throw Error(`🐦‍🔥 Error when fetching to url ${fullURL}: ${error} ${error.message} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
+    const message = `
+      Error while trying to fetch: ${method} ${fullURL}
+      \nRequest Body: ${body}
+      \nError: ${error}
+      \nThis means the the request likely never reached the intended url, and is more likely a problem with CMT.
+    `
+    CMTError(message)
+    throw Error(message)
   }
+  if (!response.ok) {
+    const message = `
+      non-OK status in response to: ${method} ${fullURL}
+      \nRequest Body: ${body}
+      \nResponse status: ${response.status}
+      \nResponse body: ${await response.json()}
+      \nThis means that the status was properly received by the intended url, but that the server had an issue of some kind.
+    `
+    CMTError(message)
+    throw Error(message)
+  }
+  return await response.json()
 }
 
 /**

@@ -18,12 +18,11 @@ import { fileURLToPath } from "url";
 import makeCourseWebsiteRouter from "./routes/courseWebsite.js";
 import { readFileSync } from "fs";
 import dotenv from "dotenv";
+import { getTimeString } from "./utils/logging.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const envPath = path.resolve(__dirname, '..', '.env');
-
 dotenv.config({
   path: envPath,
 });
@@ -62,14 +61,14 @@ app.use(
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS: " + origin + ", Allowed origins: " + allowedOrigins.join(", ")));
+      return callback(new Error("CMT Error: Not allowed by CORS: " + origin + ", Allowed origins: " + allowedOrigins.join(", ")));
     },
     credentials: true,
   })
 );
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Middleware to attach prisma to request for workflow routes
@@ -81,9 +80,9 @@ app.use((req, _res, next) => {
 // Attach req.user from the cmt_id cookie
 app.use(authMiddleware);
 
-// Simple logger
+// Logger
 app.use((req, _res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log(`${getTimeString()} - ${req.method} ${req.path}`);
   next();
 });
 
@@ -192,16 +191,33 @@ app.use("/api/cmt/resources", resourceRoutes);
    ------------------------------------------------------------------ */
 
 // Error handling middleware
-app.use((err, _req, res, _next) => {
-  console.error("Error:", err.stack);
-  res.status(500).json({
-    error: "Something went wrong!",
-    message: err.message,
-  });
+app.use((err, req, res, next) => {
+  console.error(`
+    \nError in: ${req.method} ${req.path}
+    \nFull request URL: ${req.url}
+    \nRequest body:
+    \n${req.body}
+    \nError: ${err}
+    \nStack trace: ${err.stack}
+  `)
+
+  // If error happens during streaming of response, allow express to handle
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  if (err.code === 'P2025') {
+    return res.sendStatus(404)
+  }
+
+  // Otherwise, start streaming the response manually.
+  res.status(err.status || err.statusCode || 500).json({
+    error: err.message || "Internal Server Error"
+  })
 });
 
 // 404 handler - MUST BE LAST!
-app.use("*", (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     error: "Route not found",
     path: req.originalUrl,

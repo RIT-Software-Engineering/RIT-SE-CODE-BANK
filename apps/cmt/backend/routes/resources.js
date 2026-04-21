@@ -66,24 +66,19 @@ const upload = multer({
  * Get all resources for a course
  */
 router.get('/:courseId', async (req, res) => {
-    try {
-        const { courseId } = req.params
-        const resources = await req.prisma.resource.findMany({
-            where: { courseId: parseInt(courseId) },
-            orderBy: { createdAt: 'desc' },
-        })
-        res.json(resources)
-    } catch (error) {
-        console.error('Error fetching resources:', error)
-        res.status(500).json({ error: `Error fetching resources: ${error}` })
-    }
+    const { courseId } = req.params
+    const resources = await req.prisma.resource.findMany({
+        where: { courseId: parseInt(courseId) },
+        orderBy: { createdAt: 'desc' },
+    })
+    res.json(resources)
 })
 
 /**
  * POST /api/cmt/resources/:courseId
  * Upload a new resource
  */
-router.post('/:courseId', upload.single('file'), async (req, res) => {
+router.post('/:courseId', upload.single('file'), async (req, res, next) => {
     try {
         const { courseId } = req.params
         const { name } = req.body
@@ -113,8 +108,7 @@ router.post('/:courseId', upload.single('file'), async (req, res) => {
                 console.error('Error cleaning up file:', unlinkError)
             }
         }
-
-        res.status(500).json({ error: `Error uploading resource: ${error}` })
+        next(error)
     }
 })
 
@@ -123,20 +117,15 @@ router.post('/:courseId', upload.single('file'), async (req, res) => {
  * Update resource name
  */
 router.put('/:id', async (req, res) => {
-    try {
-        const { id } = req.params
-        const { name } = req.body
+    const { id } = req.params
+    const { name } = req.body
 
-        const resource = await req.prisma.resource.update({
-            where: { id: id },
-            data: { name },
-        })
+    const resource = await req.prisma.resource.update({
+        where: { id: id },
+        data: { name },
+    })
 
-        res.json(resource)
-    } catch (error) {
-        console.error('Error updating resource:', error)
-        res.status(500).json({ error: `Error updating resource: ${error}` })
-    }
+    res.json(resource)
 })
 
 /**
@@ -144,28 +133,23 @@ router.put('/:id', async (req, res) => {
  * Delete resource and file
  */
 router.delete('/:id', async (req, res) => {
-    try {
-        const { id } = req.params
+    const { id } = req.params
 
-        const resource = await req.prisma.resource.findUnique({
-            where: { id: id },
-        })
-        if (!resource) {
-            console.error(`Resource with ID ${id} not found`)
-            return res.status(404).json({ error: `Resource with ID ${id} not found` })
-        }
-
-        if (fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
-
-        await req.prisma.resource.delete({
-            where: { id: id },
-        })
-
-        res.sendStatus(200)
-    } catch (error) {
-        console.error('Error deleting resource:', error)
-        res.status(500).json({ error: `Error deleting resource: ${error}` })
+    const resource = await req.prisma.resource.findUnique({
+        where: { id: id },
+    })
+    if (!resource) {
+        console.error(`Resource with ID ${id} not found`)
+        return res.status(404).json({ error: `Resource with ID ${id} not found` })
     }
+
+    if (fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
+
+    await req.prisma.resource.delete({
+        where: { id: id },
+    })
+
+    res.sendStatus(200)
 })
 
 /**
@@ -173,38 +157,33 @@ router.delete('/:id', async (req, res) => {
  * Download resource file
  */
 router.get('/download/:id', async (req, res) => {
-    try {
-        // Find in DB
-        const { id } = req.params
-        const resource = await req.prisma.resource.findUnique({
-            where: { id: id },
-        })
-        if (!resource) {
-            console.log(`File with ID ${id} not found in DB`)
-            return res.status(404).json({ error: `File with ID ${id} not found in DB` })
-        }
-
-        // Find in filesystem
-        if (!fs.existsSync(resource.filePath)) {
-            console.log(`File with ID ${id} not found in filesystem`)
-            return res.status(404).json({ error: `File with ID ${id} not found in filesystem` })
-        }
-
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(resource.filename)}"`)
-        res.setHeader('Content-Type', resource.mimeType || 'application/octet-stream')
-        res.setHeader('Content-Length', fs.statSync(resource.filePath).size)
-
-        // File stream
-        fs.createReadStream(resource.filePath)
-            .on('error', streamError => {
-                console.error(`Error reading file with ID ${id}: ${streamError}`)
-                return res.status(500).json({ error: `Error reading file with ID ${id}: ${streamError}` })
-            })
-            .pipe(res)
-    } catch (error) {
-        console.error('Error downloading file:', error)
-        res.status(500).json({ error: `Error downloading file: ${error}` })
+    // Find in DB
+    const { id } = req.params
+    const resource = await req.prisma.resource.findUnique({
+        where: { id: id },
+    })
+    if (!resource) {
+        console.log(`File with ID ${id} not found in DB`)
+        return res.status(404).json({ error: `File with ID ${id} not found in DB` })
     }
+
+    // Find in filesystem
+    if (!fs.existsSync(resource.filePath)) {
+        console.log(`File with ID ${id} not found in filesystem`)
+        return res.status(404).json({ error: `File with ID ${id} not found in filesystem` })
+    }
+
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(resource.filename)}"`)
+    res.setHeader('Content-Type', resource.mimeType || 'application/octet-stream')
+    res.setHeader('Content-Length', fs.statSync(resource.filePath).size)
+
+    // File stream
+    fs.createReadStream(resource.filePath)
+        .on('error', streamError => {
+            console.error(`Error reading file with ID ${id}: ${streamError}`)
+            return res.status(500).json({ error: `Error reading file with ID ${id}: ${streamError}` })
+        })
+        .pipe(res)
 })
 
 export default router

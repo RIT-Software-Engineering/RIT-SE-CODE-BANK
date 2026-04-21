@@ -9,9 +9,7 @@ import { Alert } from "react-bootstrap"
  * @param {string} [userFacingDescription] If you want to present the user with a simpler message, provide this field. 
  */
 export function LogError(description, error, setError, userFacingDescription) {
-    if (process.env.NODE_ENV === "DEV") 
-        console.error(description, error)
-
+    console.error(description, error)
     setError && setError(userFacingDescription ?? description)
 }
 

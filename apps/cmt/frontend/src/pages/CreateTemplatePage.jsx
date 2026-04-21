@@ -126,7 +126,6 @@ function CreateTemplatePage() {
       }
 
       const responseData = await templateResponse.json();
-      console.log("Template saved: ", responseData);
 
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 6000);

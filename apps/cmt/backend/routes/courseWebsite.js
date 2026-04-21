@@ -26,24 +26,15 @@ export default function makeCourseWebsiteRouter(prisma) {
   router.get("/:courseId", async (req, res) => {
     const { courseId: courseIdString } = req.params;
     const courseId = parseInt(courseIdString);
-    try {
-      const course = await prisma.Course.findUnique({
-        where: { id: courseId },
-        include: {
-          professors: { select: { fname: true, lname: true, email: true } },
-        },
-      });
+    const course = await prisma.Course.findUnique({
+      where: { id: courseId },
+      include: {
+        professors: { select: { fname: true, lname: true, email: true } },
+      },
+    });
 
-      if (!course) return res.status(404).json({ error: "Course not found" });
-      res.json(course);
-    } catch (e) {
-      res
-        .status(500)
-        .json({
-          error: "Failed to fetch course",
-          detail: String(e.message || e),
-        });
-    }
+    if (!course) return res.status(404).json({ error: "Course not found" });
+    res.json(course);
   });
 
   return router;

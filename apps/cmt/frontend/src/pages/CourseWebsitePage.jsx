@@ -44,8 +44,6 @@ export default function CourseWebsitePage() {
 
   // the full course object to get course name & course id
   const selectedCourseObj = useMemo(() => {
-    console.log("selectedCourse:", selectedCourse);
-    console.log("courses:", courses);
     return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
