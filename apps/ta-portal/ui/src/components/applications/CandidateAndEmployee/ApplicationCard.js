@@ -11,7 +11,6 @@ import {
   getStatusChipColor,
 } from "@/utils/applicationUtils";
 import { useNotification } from "@/contexts/NotificationContext";
-import StateUpdateForm from "@/components/jobHistory/StateUpdateForm";
 import { applicationStatusEnumToString } from '@/constants/applicationStatusConstants';
 import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
@@ -64,13 +63,10 @@ export default function CandidateApplicationCard({
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
   const [IsViewingHistory, setIsViewingHistory] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [clearConfirm, setShowClearConfirm] = useState(false);
 
-  const [modalState, setModalState] = useState({
-    isOpen: false,
-    status: null,
-    title: "",
-  });
+  const [acceptOfferConfirmation, setAcceptOfferConfirmation] = useState(false);
+  const [declineOfferConfirmation, setDeclineOfferConfirmation] = useState(false);
+
   const [isProcessingUpdate, setIsProcessingUpdate] = useState(false);
 
   const [isConfirmingAcceptance, setIsConfirmingAcceptance] = useState(false);
@@ -85,15 +81,6 @@ export default function CandidateApplicationCard({
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-  };
-
-  const handleOpenUpdateModal = (status, title) => {
-    setModalState({ isOpen: true, status, title });
-    handleMenuClose();
-  };
-
-  const handleCloseUpdateModal = () => {
-    setModalState({ isOpen: false, status: null, title: "" });
   };
 
   const handleAcceptOffer = async () => {
@@ -116,7 +103,7 @@ export default function CandidateApplicationCard({
       if (hiredStatus) {
         setIsConfirmingAcceptance(true);
       } else {
-        handleOpenUpdateModal("ACCEPTED_OFFER", "Accept Position Offer");
+        setAcceptOfferConfirmation(true)
       }
     } catch (error) {
       console.error("Failed to check hired status:", error);
@@ -149,18 +136,18 @@ export default function CandidateApplicationCard({
     }
   };
 
-  const handleConfirmUpdate = async (note) => {
+  const handleConfirmUpdate = async (status) => {
     setIsProcessingUpdate(true);
     try {
       let fullName = `${currentUser.fname} ${currentUser.lname}`;
       await updateCandidateApplicationStatus(
         fullName,
         id,
-        modalState.status,
-        note
+        status,
+        "Application Updated"
       );
       showNotification(
-        `Application status successfully updated to "${modalState.status?.replace(
+        `Application status successfully updated to "${status?.replace(
           "_",
           " "
         )}".`,
@@ -174,7 +161,8 @@ export default function CandidateApplicationCard({
       showNotification(`Error: ${error.message}`, "error");
     } finally {
       setIsProcessingUpdate(false);
-      handleCloseUpdateModal();
+      setAcceptOfferConfirmation(false)
+      setDeclineOfferConfirmation(false)
     }
   };
 
@@ -234,7 +222,7 @@ export default function CandidateApplicationCard({
                 <MenuItem onClick={handleAcceptOffer}>Accept Offer</MenuItem>
               )}
               {jobApplicationStatus.toLowerCase() === "pending_offer" && (
-                <MenuItem onClick={() => handleOpenUpdateModal("DECLINED_OFFER", "Decline Position Offer")} sx={{ color: 'error.main' }}>Decline Offer</MenuItem>
+                <MenuItem onClick={() => setDeclineOfferConfirmation(true)} sx={{ color: 'error.main' }}>Decline Offer</MenuItem>
               )}
             </Menu>
           </Box>
@@ -303,7 +291,7 @@ export default function CandidateApplicationCard({
               <Button variant="contained" color="error" onClick={handleDeleteClick} >Delete Application</Button>
             )}
             {jobApplicationStatus.toLowerCase() === "pending_offer" && (
-              <Button variant="contained"color="error" onClick={() => handleOpenUpdateModal("DECLINED_OFFER", "Decline Position Offer")}>Decline Offer</Button>
+              <Button variant="contained"color="error" onClick={() => setDeclineOfferConfirmation(true)}>Decline Offer</Button>
             )}
           </Box>
 
@@ -327,7 +315,7 @@ export default function CandidateApplicationCard({
         onClose={() => setIsConfirmingAcceptance(false)}
         onConfirm={() => {
           setIsConfirmingAcceptance(false);
-          handleOpenUpdateModal("ACCEPTED_OFFER", "Accept Position Offer");
+          setAcceptOfferConfirmation(true);
         }}
         title="Confirm Offer Acceptance"
         isConfirming={isProcessingUpdate}
@@ -347,12 +335,6 @@ export default function CandidateApplicationCard({
           onClose={() => setIsViewingApplication(false)}
         />
       )}
-      {/*{{(isViewingApplication &&showClearConfirm) &&(
-        <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={() => setIsViewingApplication(false)} title="Cancel Position Edits">
-          Are you sure you want to cancel your edits? This action cannot be undone.
-        </ConfirmationModal>
-      )}
-      */}
       {IsViewingHistory && (
         <ViewHistoryForm
           foreignKey={application.id}
@@ -365,13 +347,20 @@ export default function CandidateApplicationCard({
         />
       )}
 
-      <StateUpdateForm
-        isOpen={modalState.isOpen}
-        onClose={handleCloseUpdateModal}
-        onConfirm={handleConfirmUpdate}
-        title={modalState.title}
-        isProcessing={isProcessingUpdate}
-        applicationId={application.id}
+      <ConfirmationModal
+        isOpen={acceptOfferConfirmation}
+        onClose={() => setAcceptOfferConfirmation(false)}
+        onConfirm={()=> handleConfirmUpdate("ACCEPTED_OFFER")}
+        title={"Accept Offer?"}
+        isConfirming={isProcessingUpdate}
+      />
+
+      <ConfirmationModal
+        isOpen={declineOfferConfirmation}
+        onClose={() => setDeclineOfferConfirmation(false)}
+        onConfirm={()=> handleConfirmUpdate("DECLINED_OFFER")}
+        title={"Decline Offer?"}
+        isConfirming={isProcessingUpdate}
       />
     </>
   );
