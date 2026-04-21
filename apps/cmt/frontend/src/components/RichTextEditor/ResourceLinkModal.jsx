@@ -22,7 +22,8 @@ export function ResourceLinkModal({ editor, courseId }) {
 
     const chain = editor.chain().focus()
 
-    chain.setLink({ href: linkUrl, target: '_blank' }).setColor('#3b82f6').insertContent(displayText).run()
+    //TODO this is broken for some unexplainable reason
+    chain.setLink({ href: linkUrl, target: '_blank' }).insertContent(displayText).run()
 
     handleReset()
 }
@@ -75,7 +76,7 @@ export function ResourceLinkModal({ editor, courseId }) {
 
     return (
         <>
-        <OverlayTrigger delay={200} overlay={<Tooltip>Resource Link</Tooltip>}>
+        <OverlayTrigger delay={200} overlay={<Tooltip>Insert Resource</Tooltip>}>
             <Button
                 variant='outline-secondary'
                 onClick={() => setShow(true)}
@@ -86,7 +87,7 @@ export function ResourceLinkModal({ editor, courseId }) {
 
         <Modal show={show} onShow={handleShow} onHide={handleReset} size='xl'>
             <Modal.Header closeButton>
-                <Modal.Title>Insert Resource Link</Modal.Title>
+                <Modal.Title>Insert Resource File</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <div className="flex flex-col">
@@ -100,11 +101,13 @@ export function ResourceLinkModal({ editor, courseId }) {
                                 </div>
                             : loadingError 
                                 ? <CMTDangerAlert error={loadingError} />
-                            : resources.map(resource => (
+                            : resources.length > 0 
+                            ? resources.map(resource => (
                                     <div className="mb-3">
                                         <SelectableResourceCard resource={resource} refresh={loadResources} selected={selectedResource} setSelected={setSelectedResource}/>
                                     </div>
-                                ))
+                                )) : 
+                                <p>You have not added any resources yet.</p>
                             }
                         </div>
                         <div className="flex flex-col justify-center">
@@ -156,12 +159,12 @@ export function ResourceLinkModal({ editor, courseId }) {
                             <Form.Label>Link Display Text</Form.Label>
                             <Form.Control
                                 type='text'
-                                placeholder={`${selectedResource.name}`}
-                                value={linkText}
+                                placeholder={selectedResource.name}
+                                value={linkText || selectedResource.name}
                                 onChange={e => setLinkText(e.target.value)}
                             />
                             <Form.Text className='text-muted'>
-                                This is the text that will be displayed as the clickable link
+                                This is the text that will be displayed as a clickable link.
                             </Form.Text>
                         </Form.Group>
                     )}

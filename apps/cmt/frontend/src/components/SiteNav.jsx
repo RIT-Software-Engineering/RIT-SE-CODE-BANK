@@ -27,9 +27,9 @@ export default function SiteNav() {
       label: "Course Management",
       icon: <GraduationCap size={18} />,
       items: [
-        { to: "/courses", label: "Course Overview"},
-        { to: "/templates", label: "Create Template" },
-        { to: "/coursewebsite", label: "Course Website" },
+        { to: "/courses", label: "Courses"},
+        { to: "/templates", label: "Templates" },
+        { to: "/coursewebsite", label: "Site Generation" },
       ],
     },
     {

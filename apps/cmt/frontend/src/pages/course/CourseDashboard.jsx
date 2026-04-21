@@ -48,14 +48,15 @@ export function CourseDashboard() {
             
             <CourseInfo course={course} />
             <div className="h-10"></div>
-            <ResourceManager courseId={course.id} />
-            <div className="h-10"></div>
-            <p className="text-3xl pb-2 border-b">Course Creation Workflow</p>
+            <div className="text-3xl">Course Creation Steps</div>
+            <p className='text-xl pb-2 border-b'>Follow the steps to help create your course!</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
                     <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
                 </div>
             </div>
+            <div className="h-10"></div>
+            <ResourceManager courseId={course.id} />
             <p className="text-3xl pb-2 border-b mt-10">Sessions</p>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">

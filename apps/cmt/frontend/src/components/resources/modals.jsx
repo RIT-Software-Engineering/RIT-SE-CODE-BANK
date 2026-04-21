@@ -117,7 +117,7 @@ export function EditResourceModal({ resource, refresh }) {
                 setShowEditModal(false)
                 setEditedResource(null)
             })
-            .catch(error => LogError('Error editing resource.', error, setError))
+            .catch(error => LogError('An internal error ocurred when attempting to edit resource.', error, setError))
     }
 
     return (
