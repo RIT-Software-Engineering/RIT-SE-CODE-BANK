@@ -62,9 +62,7 @@ You can either use the start script, or run the servers manually. Either way, yo
 #### 2. (Option 1): Start Script
 - Navigate to the root of the repository
 - Run `npm run start-cmt`
-- Wait a while
-    - On Windows, this should create a bunch of output on the terminal you ran it in, as well as open up 3 terminal windows. These represent your Workflows backend & CMT frontend and backend
-    - On Linux, it aggregates all of those servers' output to the terminal you ran it in. This makes it hard to distinguish outputs. For this reason, you may consider running them manually.
+- You can navigate the resultant terminal with enter/esc and your arrow keys. If you dislike this display, then try the manual option.
 
 #### 2. (Option 2): Manual
 
