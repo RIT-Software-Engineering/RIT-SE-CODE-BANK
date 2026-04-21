@@ -23,9 +23,6 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     
     cd ./apps/cmt
     cp ./.env.staging ./.env
-    
-    echo "Attempting to take down previous containers. Continuing if fails..."
-    docker compose -f compose.build.yaml -f compose.run.yaml down || true
 
     echo "Composing new containers..."
     docker compose -f compose.build.yaml -f compose.run.yaml up -d --build

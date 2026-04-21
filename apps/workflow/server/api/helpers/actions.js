@@ -80,6 +80,18 @@ async function getFullActionTree(rootActionId) {
   return actions;
 }
 
+const parseMimeTypes = (mimeTypes) => {
+  if (!mimeTypes) return [];
+  if (Array.isArray(mimeTypes)) return mimeTypes;
+  if (typeof mimeTypes === "string") {
+    return mimeTypes
+      .split(",")
+      .map((type) => type.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
 const exportAction = (action) => ({
   ...action,
   metadata: action?.metadata?.reduce(
@@ -91,4 +103,5 @@ const exportAction = (action) => ({
 module.exports = {
   getFullActionTree,
   exportAction,
+  parseMimeTypes,
 };

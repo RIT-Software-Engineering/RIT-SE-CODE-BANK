@@ -159,7 +159,6 @@ router.post('/', async (req, res) => {
                 data: sessionData,
                 skipDuplicates: true,
             })
-
             // For simplicity of the frontend, return minimal information, since the GET for courses will contain all the info needed, and will be called much more often.
             res.json({ course: newCourse })
         }, {timeout: 15000});
@@ -217,7 +216,7 @@ router.put('/:id', async (req, res) => {
 
         console.log('Course updated successfully:', updatedCourse)
 
-        const { uid: userId, asid: actionStateId } = req.query
+        const { uid: _userId, asid: actionStateId } = req.query
         if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
 
         res.json({
@@ -269,188 +268,6 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message,
-        })
-    }
-})
-
-/**
- * POST /api/cmt/course/create-with-workflow
- * Create a course with template and calendar events in one transaction
- * This is the multi-step workflow endpoint
- */
-router.post('/create-with-workflow', async (req, res) => {
-    try {
-        const { course, templateId, calendarEvents } = req.body
-
-        // Validate course data
-        /* TODO: verify if these need to exist or can be deleted with workflow's own validation
-    var missingField = "";
-    if (!course.classId) {missingField += " Class ID ";}
-    if (!course.name) {missingField += " Class Name ";}
-    if (!course.semester) {missingField += "Semester ";}
-    if (!course.color) {missingField += " Color ";}
-
-    if (
-      !course ||
-      missingField
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: `Missing required course fields: ${missingField}`,
-      });
-    }*/
-
-        // Step 1: Get or create professor
-        let professorId = course.professorId
-
-        if (!professorId) {
-            // Try to get professorId from authenticated user
-            if (req.user && req.user.professorId) {
-                professorId = req.user.professorId
-                console.log(`✅ Using authenticated professorId: ${professorId}`)
-            } else {
-                // Fallback: Try to get the first professor, or create a default one
-                let professor = await prisma.professor.findFirst()
-
-                if (!professor) {
-                    console.log('⚠️ No professor found, creating default professor...')
-                    professor = await prisma.professor.create({
-                        data: {
-                            fname: 'Default',
-                            lname: 'Professor',
-                            email: 'professor@example.com',
-                        },
-                    })
-                }
-
-                professorId = professor.id
-                console.log(`✅ Using professorId: ${professorId}`)
-            }
-        }
-
-        // Step 2: Create the course
-        const newCourse = await prisma.course.create({
-            data: {
-                classId: course.classId,
-                name: course.name,
-                season: course.season,
-                year: parseInt(course.year),
-                color: course.color,
-                students: !course.students ? null : parseInt(course.students),
-                section: course.section,
-                professors: { connect: { id: course.professorId } },
-            },
-        })
-
-        console.log(`✅ Course created: ${newCourse.id}`)
-
-        // Step 3: Apply template if selected
-        let templateItems = []
-        if (templateId) {
-            try {
-                const template = await prisma.courseTemplate.findUnique({
-                    where: { id: parseInt(templateId) },
-                    include: { templateItems: true },
-                })
-
-                if (template) {
-                    templateItems = template.templateItems
-                    console.log(`✅ Template loaded: ${template.name} (${templateItems.length} items)`)
-                }
-            } catch (error) {
-                console.error('⚠️ Failed to load template:', error)
-                // Continue without template - don't fail the entire request
-            }
-        }
-
-        // Step 4: Create calendar events from template items + custom events
-        const allEvents = []
-
-        // Convert template items to events
-        templateItems.forEach(item => {
-            if (item.dueDate) {
-                allEvents.push({
-                    title: item.name,
-                    date: item.dueDate,
-                    description: item.description || '',
-                    type: item.type.toLowerCase(), // 'assignment', 'exam', 'lab', 'project'
-                })
-            }
-        })
-
-        // Add custom calendar events
-        if (calendarEvents && calendarEvents.length > 0) {
-            calendarEvents.forEach(event => {
-                allEvents.push({
-                    title: event.title,
-                    date: event.date,
-                    time: event.time || '00:00',
-                    description: event.description || '',
-                    type: 'lecture', // default type for custom events
-                })
-            })
-        }
-
-        // Filter valid events
-        const validEvents = allEvents.filter(event => event.title && event.date)
-
-        if (validEvents.length > 0) {
-            try {
-                // Transform events for database
-                const eventsToCreate = validEvents.map(event => {
-                    const dateTime =
-                        event.date instanceof Date ? event.date : new Date(event.date + (event.time ? `T${event.time}` : 'T00:00:00'))
-
-                    // Map type to EventType enum
-                    let eventType = 'lecture'
-                    if (['exam', 'assignment', 'lab', 'office_hours', 'meeting'].includes(event.type)) {
-                        eventType = event.type
-                    }
-
-                    return {
-                        title: event.title,
-                        date: dateTime,
-                        time: event.time || '00:00',
-                        description: event.description || '',
-                        courseId: newCourse.id,
-                        professorId: professorId, // ✅ FIXED: Added professorId to events
-                        type: eventType,
-                        location: '',
-                        importance: 'Medium',
-                    }
-                })
-
-                console.log(`✅ Created ${eventsToCreate.length} calendar events`)
-            } catch (error) {
-                console.error('⚠️ Failed to create calendar events:', error)
-                console.error('Error details:', error.message)
-                // Continue - don't fail the entire request
-            }
-        }
-
-        // Step 5: Return success
-        return res.status(201).json({
-            success: true,
-            data: {
-                course: newCourse,
-                eventsCreated: validEvents.length,
-                templateApplied: !!templateId,
-            },
-        })
-    } catch (error) {
-        console.error('❌ Error creating course with workflow:', error)
-
-        // If course creation failed, return error
-        if (error.code === 'P2002') {
-            return res.status(409).json({
-                success: false,
-                error: 'A course with this ID already exists',
-            })
-        }
-
-        return res.status(500).json({
-            success: false,
-            error: 'Failed to create course',
         })
     }
 })

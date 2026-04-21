@@ -12,15 +12,6 @@
       "dependsOn": [
         "cmt-frontend:build"
       ]
-    },
-    "deploy-test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "echo would deploy cmt here"
-      },
-      "dependsOn": [
-        "cmt-frontend:build"
-      ]
     }
   },
   "implicitDependencies": ["cmt-frontend", "cmt-backend"]
