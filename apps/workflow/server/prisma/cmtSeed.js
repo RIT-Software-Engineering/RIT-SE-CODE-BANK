@@ -272,6 +272,7 @@ async function main() {
             name: 'Course Details',
             description: 'Add details to Your course to help differentiate it!',
             actionType: 'workflow',
+            userId: users[0].id,
             childActions: [
                 {
                     name: 'Course Section',
