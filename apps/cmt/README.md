@@ -11,12 +11,8 @@
 
 ### 2. Install Project Dependencies
 
-- **CMT Frontend**: In `apps/cmt/cmt-project`, run `npm install`
-- **CMT Backend**: In `apps/cmt/cmt-project/src/backend`, run `npm install`
-- **Workflows Ecoystem**
-- **Workflow API**: In `apps/workflow/server`, run `npm install`
+- In the root of the repository, run `npm install`
 
-> Common Issues:
 > - While unlikely, you may need to run `npm i --legacy-peer-deps`. If this happens, consider attempting to downgrade conflicting packages.
 
 ### 3. Install MariaDB
@@ -31,14 +27,16 @@ Two options: native or containerized. If you have Docker Desktop already setup o
 ### 4. Setup Environment Variables
 #### CMT
 1. Navigate to `apps/cmt/cmt-project`
-2. Copy `.env.sample` and rename it `.env`
+2. Copy `.env.sample` (or `.env.staging`, if it exists, is probably better) and rename it `.env`
 3. Fill out values, especially your connection string
 #### Workflows
 1. Navigate to `apps/workflows/server` and repeat steps 2 & 3 above
 
 
 ### 5. Prisma Setup
-This whole step is optional, since the custom startup script can do this. Using the startup script is recommended, but these instructions remain in case of errors or preference. If you do this step, you will need your MariaDB server/container running.
+This whole step is optional, since the custom setup script can do this. Using the startup setup is recommended, but these instructions remain in case of errors or preference. If you do this step, you will need your MariaDB server/container running.
+
+To use the startup script, go to the root of the repository and run `npm run setup-cmt`
 
 We will both create a Prisma object for the code to use, and will also push that schema to the database. This means you will need your database running.
 
@@ -53,7 +51,7 @@ You can also run `node prisma/seed.js` from `apps/cmt/cmt-project`, which will s
 ---
 
 ## Running The Developer Environment
-You can either use the startup script, or run the servers manually. Either way, you will need to start the databse, if you haven't already.
+You can either use the start script, or run the servers manually. Either way, you will need to start the databse, if you haven't already.
 
 1. Start MariaDB server/container
 > Common issues:
@@ -61,18 +59,16 @@ You can either use the startup script, or run the servers manually. Either way, 
 > - If mariaDB won't start due to the port being in use, it may be due to a MySQL server running. Either way, find the process ID according to your OS and kill the process.
 > - **Make sure you set your connection string correctly!**
 
-#### 2. (Option 1): Startup Script
-- Navigate to apps/cmt/cmt-project
-- Run `node start_app.js`
+#### 2. (Option 1): Start Script
+- Navigate to the root of the repository
+- Run `npm run start-cmt`
 - Wait a while
     - On Windows, this should create a bunch of output on the terminal you ran it in, as well as open up 3 terminal windows. These represent your Workflows backend & CMT frontend and backend
     - On Linux, it aggregates all of those servers' output to the terminal you ran it in. This makes it hard to distinguish outputs. For this reason, you may consider running them manually.
 
 #### 2. (Option 2): Manual
 
-> **Disclaimer**: If running servers manually, you need to create a new .env file in the apps/cmt/cmt-project/src/backend directory. You may simply copy-paste the CMT frontend's .env file there.
->
-> Also, make sure you open a new terminal window for each of the below.
+Open 3 terminals and run this in each.
 
 - **CMT Frontend**: In `apps/cmt/cmt-project`, run `npm run start`
 - **CMT Backend**: In `apps/cmt/cmt-project/src/backend`, run `npm run dev`
