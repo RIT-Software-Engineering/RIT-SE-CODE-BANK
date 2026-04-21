@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const { getFullActionTree } = require("../helpers/actions.js");
+const { getFullActionTree, parseMimeTypes } = require("../helpers/actions.js");
+const { submissionAllowedMimeTypes } = require("../consts.js");
 
 // I'm sorry for the chaos that this file is. I tried to leave enough inline comments that you could follow my madness. I'm very short on time.
 
@@ -12,6 +13,215 @@ const { getFullActionTree } = require("../helpers/actions.js");
 // - Set this up to avoid too much recursion depth causing stack overflow errors (haven't run into one, but should have preventative measures)
 // - Optimize
 // - Improve readability and organization
+
+const REQUIRE_ALL_METADATA_KEYS = [
+  "requireallparticipants",
+  "requiresallparticipants",
+  "requireall",
+  "requiresall",
+  "requireeveryone",
+  "requiringeveryone",
+];
+
+const truthyStrings = new Set(["true", "1", "yes", "y", "on"]);
+const MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8MB
+
+function metadataEntries(metadata) {
+  if (!metadata) return [];
+  if (Array.isArray(metadata)) return metadata;
+  return Object.entries(metadata).map(([key, value]) => ({
+    key,
+    value: value?.toString?.() ?? String(value),
+  }));
+}
+
+function metadataValueIsTruthy(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    return truthyStrings.has(value.toLowerCase());
+  }
+  return false;
+}
+
+function actionRequiresAllParticipants(action) {
+  if (action?.requireAllParticipants === true) {
+    return true;
+  }
+  const metadata = metadataEntries(action?.metadata);
+  return metadata.some(
+    (entry) =>
+      REQUIRE_ALL_METADATA_KEYS.includes(entry.key?.toLowerCase?.()) &&
+      metadataValueIsTruthy(entry.value)
+  );
+}
+
+function actionRequiresSubmission(action) {
+  if (!action) return false;
+  if (action.requiresSubmission === true) return true;
+  return action.actionType === "complex";
+}
+
+function allowedMimeTypesForAction(action) {
+  const parsed = parseMimeTypes(action?.submissionMimeTypes);
+  if (parsed.length > 0) return parsed;
+  return submissionAllowedMimeTypes;
+}
+
+function parseIncomingFile(fileData, providedType = null) {
+  if (!fileData) return null;
+
+  let base64Payload = fileData;
+  let mimeType = providedType ?? null;
+
+  const dataUrlMatch = /^data:([^;]+);base64,(.*)$/i.exec(fileData);
+  if (dataUrlMatch) {
+    mimeType = mimeType ?? dataUrlMatch[1];
+    base64Payload = dataUrlMatch[2];
+  }
+
+  try {
+    const buffer = Buffer.from(base64Payload, "base64");
+    if (!mimeType && dataUrlMatch) {
+      mimeType = dataUrlMatch[1];
+    }
+    return { buffer, mimeType };
+  } catch (err) {
+    return null;
+  }
+}
+
+const toResponseSubmission = (submission) => {
+  if (!submission) return submission;
+  const buffer =
+    submission.fileData instanceof Buffer
+      ? submission.fileData
+      : submission.fileData
+        ? Buffer.from(submission.fileData)
+        : null;
+  const base64 = buffer ? buffer.toString("base64") : null;
+  const fileData =
+    base64 && (submission.fileType || "").length > 0
+      ? `data:${submission.fileType};base64,${base64}`
+      : base64
+        ? `data:application/octet-stream;base64,${base64}`
+        : undefined;
+
+  return {
+    ...submission,
+    fileData,
+  };
+};
+
+const toResponseAction = (action) => {
+  if (!action) return action;
+  return {
+    ...action,
+    requiresSubmission: actionRequiresSubmission(action),
+    submissionMimeTypes: parseMimeTypes(action.submissionMimeTypes),
+  };
+};
+
+const filterSubmissionsForWorkflowState = (submissions, workflowStateId) => {
+  if (!Array.isArray(submissions)) return [];
+  if (!workflowStateId) return submissions;
+  return submissions.filter(
+    (submission) =>
+      !submission?.workflowStateId || submission.workflowStateId === workflowStateId
+  );
+};
+
+const toResponseActionState = (state, workflowStateId = null) => {
+  if (!state) return state;
+  const children = Array.isArray(state.children)
+    ? state.children.map((child) => toResponseActionState(child, workflowStateId))
+    : undefined;
+
+  const transformed = {
+    ...state,
+    action: toResponseAction(state.action),
+    submissions: Array.isArray(state.submissions)
+      ? filterSubmissionsForWorkflowState(state.submissions, workflowStateId).map(
+          toResponseSubmission
+        )
+      : [],
+  };
+
+  if (children) {
+    transformed.children = children;
+  }
+
+  return transformed;
+};
+
+async function findRootActionStateId(actionStateId, initialParentId) {
+  let currentId = actionStateId;
+  let parentId = initialParentId;
+
+  if (parentId === undefined) {
+    const current = await prisma.actionState.findUnique({
+      where: { id: currentId },
+      select: { parentId: true },
+    });
+    parentId = current?.parentId ?? null;
+  }
+
+  while (parentId) {
+    currentId = parentId;
+    const current = await prisma.actionState.findUnique({
+      where: { id: currentId },
+      select: { parentId: true },
+    });
+    if (!current) {
+      return null;
+    }
+    parentId = current.parentId;
+  }
+
+  return currentId;
+}
+
+async function findWorkflowStateForActionState(actionStateId, initialParentId) {
+  const rootActionStateId = await findRootActionStateId(
+    actionStateId,
+    initialParentId
+  );
+  if (!rootActionStateId) return null;
+
+  return prisma.workflowState.findUnique({
+    where: { baseActionStateId: rootActionStateId },
+    include: {
+      participants: true,
+    },
+  });
+}
+
+function collectParticipantIds(workflowState, fallbackUserId = null) {
+  const ids = new Set();
+  if (workflowState?.userId) ids.add(workflowState.userId);
+  workflowState?.participants?.forEach((participant) => {
+    if (participant?.userId) {
+      ids.add(participant.userId);
+    }
+  });
+  if (fallbackUserId) ids.add(fallbackUserId);
+  return ids;
+}
+
+function sanitizeUserIds(possibleIds) {
+  if (!Array.isArray(possibleIds)) return [];
+
+  const ids = new Set();
+  possibleIds.forEach((value) => {
+    if (typeof value !== "string") return;
+    const trimmed = value.trim();
+    if (trimmed.length > 0) {
+      ids.add(trimmed);
+    }
+  });
+
+  return Array.from(ids);
+}
 
 /**
  * Recurisve function for collecting all action states branching from a a specific action.
@@ -64,10 +274,14 @@ router.get("/workflow/:id", async (req, res) => {
   // Add any actionStates stemming from the baseActionState as it's children
   const children = await getChildren(
     { parentId: state.baseActionStateId },
-    { action: true }
+    {
+      action: { include: { metadata: true } },
+      submissions: true,
+    }
   );
-  if (children?.length > 0) {
-    state.baseActionState.children = children;
+  const transformedChildren = (children || []).map(toResponseActionState);
+  if (transformedChildren.length > 0) {
+    state.baseActionState.children = transformedChildren;
   }
 
   res.json(state);
@@ -100,14 +314,62 @@ router.get("/workflow", async (req, res) => {
       baseActionState: true,
       actionStates: {
         include: {
-          action: true,
+          action: { include: { metadata: true } },
+          submissions: true,
         },
       },
       participants: true,
     },
   });
 
-  res.json(states);
+  const transformedStates = await Promise.all(
+    states.map(async (state) => {
+      let actionStates = state.actionStates || [];
+      const missingBase =
+        state.baseActionStateId &&
+        !actionStates.some((as) => as.id === state.baseActionStateId);
+
+      // If the relation is missing (or missing the base), fallback to walking the tree from baseActionState
+      if ((missingBase || !actionStates.length) && state.baseActionStateId) {
+        const baseActionState = await prisma.actionState.findUnique({
+          where: { id: state.baseActionStateId },
+          include: {
+            action: { include: { metadata: true } },
+            submissions: true,
+          },
+        });
+
+        const childStates = await flattenActionStates(
+          { parentId: state.baseActionStateId },
+          {
+            action: { include: { metadata: true } },
+            submissions: true,
+          }
+        );
+
+        actionStates = [baseActionState, ...(childStates || [])]
+          .filter(Boolean)
+          .map((as) => ({
+            ...as,
+            submissions: filterSubmissionsForWorkflowState(as.submissions, state.id),
+          }));
+      }
+
+      const scopedActionStates = (actionStates || []).map((as) => ({
+        ...as,
+        submissions: filterSubmissionsForWorkflowState(as.submissions, state.id),
+      }));
+
+      return {
+        ...state,
+        actionStates: scopedActionStates.map((as) =>
+          toResponseActionState(as, state.id)
+        ),
+      };
+    })
+  );
+
+  res.json(transformedStates);
 });
 
 /**
@@ -236,7 +498,8 @@ async function updateStateByChildren(actionStateId) {
 async function createActionStates(
   actions,
   parentActionStateId = null,
-  dataModifier = () => {}
+  dataModifier = () => {},
+  workflowStateId = null
 ) {
   for (let i = 0; i < actions.length; i++) {
     const action = actions[i];
@@ -245,6 +508,9 @@ async function createActionStates(
       stateType: "notStarted",
       action: { connect: { id: action.id } },
       index: i,
+      ...(workflowStateId
+        ? { workflowStates: { connect: { id: workflowStateId } } }
+        : {}),
     };
     if (parentActionStateId) {
       data.parent = { connect: { id: parentActionStateId } };
@@ -271,12 +537,7 @@ async function createActionStates(
 router.post("/workflow", async (req, res) => {
   const { userId, workflowId, teamId, participantUserIds } = req.body;
 
-  const participantIds = new Set();
-  if (Array.isArray(participantUserIds)) {
-    participantUserIds
-      .filter((id) => typeof id === "string" && id.trim().length > 0)
-      .forEach((id) => participantIds.add(id));
-  }
+  const participantIds = new Set(sanitizeUserIds(participantUserIds));
   if (typeof userId === "string" && userId.trim().length > 0) {
     participantIds.add(userId);
   }
@@ -335,7 +596,22 @@ router.post("/workflow", async (req, res) => {
 
     // Get all of the actions in the workflow and create ActionStates for them
     const actions = await getFullActionTree(workflow.rootActionId);
-    await createActionStates(actions, createdState.baseActionStateId);
+    await createActionStates(
+      actions,
+      createdState.baseActionStateId,
+      undefined,
+      createdState.id
+    );
+
+    // Ensure the base action state is linked to the workflowState's actionStates relation
+    await prisma.workflowState.update({
+      where: { id: createdState.id },
+      data: {
+        actionStates: {
+          connect: { id: createdState.baseActionStateId },
+        },
+      },
+    });
   });
 
   const state = await prisma.workflowState.findUnique({
@@ -480,8 +756,19 @@ router.put("/workflow/:id", async (req, res) => {
           data.id = actionState.id;
           data.stateType = actionState.stateType;
         }
-      }
+      },
+      workflowState.id
     );
+
+    // Ensure base action state is linked to the workflowState's actionStates relation
+    await prisma.workflowState.update({
+      where: { id },
+      data: {
+        actionStates: {
+          connect: { id: workflowState.baseActionStateId },
+        },
+      },
+    });
 
     // Return the updated workflowState
     const updated = await prisma.workflowState.findUnique({
@@ -496,7 +783,10 @@ router.put("/workflow/:id", async (req, res) => {
     // Add any actionStates stemming from the baseActionState as it's children
     const children = await getChildren(
       { parentId: updated.baseActionStateId },
-      { action: true }
+      {
+        action: { include: { metadata: true } },
+        submissions: true,
+      }
     );
     if (children?.length > 0) {
       updated.baseActionState.children = children;
@@ -521,6 +811,149 @@ router.delete("/workflow/:id", async (req, res) => {
   });
 
   res.json({ message: "Deleted" });
+});
+
+router.put("/workflow/:id/participants", async (req, res) => {
+  const { id } = req.params;
+  const participantIds = sanitizeUserIds(req.body?.participantUserIds);
+  const parentIdsToCascade = new Set();
+
+  if (participantIds.length === 0) {
+    return res.status(400).json({
+      message: "participantUserIds must include at least one user id.",
+    });
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const workflowState = await tx.workflowState.findUnique({
+        where: { id },
+        include: {
+          actionStates: {
+            select: { id: true },
+          },
+        },
+      });
+
+      if (!workflowState) {
+        throw new Error("Workflow state not found");
+      }
+
+      await tx.workflowStateParticipant.deleteMany({
+        where: {
+          workflowStateId: id,
+          userId: { notIn: participantIds },
+        },
+      });
+
+      const existing = await tx.workflowStateParticipant.findMany({
+        where: { workflowStateId: id },
+        select: { userId: true },
+      });
+
+      const existingSet = new Set(existing.map((p) => p.userId));
+      const toCreate = participantIds.filter((pid) => !existingSet.has(pid));
+
+      if (toCreate.length > 0) {
+        await tx.workflowStateParticipant.createMany({
+          data: toCreate.map((pid) => ({
+            workflowStateId: id,
+            userId: pid,
+          })),
+        });
+      }
+
+      const actionStateIds = workflowState.actionStates.map((as) => as.id);
+      if (actionStateIds.length > 0) {
+        const participantSet = new Set(participantIds);
+        await tx.actionStateSubmission.deleteMany({
+          where: {
+            actionStateId: { in: actionStateIds },
+            userId: { notIn: participantIds },
+          },
+        });
+
+        for (const actionStateId of actionStateIds) {
+          for (const userId of participantIds) {
+            await tx.actionStateSubmission.upsert({
+              where: {
+                actionStateId_userId_workflowStateId: {
+                  actionStateId,
+                  userId,
+                  workflowStateId: id,
+                },
+              },
+              update: {},
+              create: {
+                actionStateId,
+                workflowStateId: id,
+                userId,
+                completed: false,
+              },
+            });
+          }
+        }
+
+        const actionStatesForRecalc = await tx.actionState.findMany({
+          where: { id: { in: actionStateIds } },
+          include: {
+            action: { include: { metadata: true } },
+            submissions: {
+              select: {
+                userId: true,
+                completed: true,
+              },
+            },
+          },
+        });
+
+        for (const actionState of actionStatesForRecalc) {
+          if (actionState.stateType === "hidden") continue;
+
+          const requiresAll = actionRequiresAllParticipants(actionState.action);
+          if (!requiresAll) continue;
+
+          const completedCount = actionState.submissions.filter(
+            (submission) =>
+              submission.completed && participantSet.has(submission.userId)
+          ).length;
+          const requiredCount =
+            participantSet.size > 0 ? participantSet.size : 1;
+          const fullyCompleted = completedCount >= requiredCount;
+          const desiredStateType = fullyCompleted
+            ? "completed"
+            : completedCount > 0
+            ? "inProgress"
+            : "notStarted";
+
+          if (actionState.stateType !== desiredStateType) {
+            await tx.actionState.update({
+              where: { id: actionState.id },
+              data: { stateType: desiredStateType },
+            });
+            if (actionState.parentId) {
+              parentIdsToCascade.add(actionState.parentId);
+            }
+          }
+        }
+      }
+    });
+
+    for (const parentId of parentIdsToCascade) {
+      await cascadeSubmission(parentId);
+    }
+
+    const participants = await prisma.workflowStateParticipant.findMany({
+      where: { workflowStateId: id },
+    });
+
+    res.json({
+      participants,
+    });
+  } catch (error) {
+    console.error("Failed to update workflow participants:", error);
+    res.status(500).json({ message: "Failed to update participants." });
+  }
 });
 
 // May not need this
@@ -571,9 +1004,7 @@ router.get("/action", async (req, res) => {
   res.json(states);
 });
 
-
 // This may not be necessary
-// You probably want to use `handleSubmit` so that action completions are cascaded to parent complex/workflow actionss
 // PUT /states/action/:id
 router.put("/action/:id", async (req, res) => {
   const { id } = req.params;
@@ -588,6 +1019,12 @@ router.put("/action/:id", async (req, res) => {
     where: { id: id },
     data: data,
   });
+
+  if (data.stateType && data.stateType !== "completed") {
+    await prisma.actionStateSubmission.deleteMany({
+      where: { actionStateId: id },
+    });
+  }
 
   res.json(actionState);
 });
@@ -660,43 +1097,314 @@ async function cascadeSubmission(actionStateId) {
  * Update the state of actions to track progress.
  */
 router.post("/handleSubmit", async (req, res) => {
-  const { actionStateId } = req.body;
-  const stateType = req.body.stateType ?? "completed";
+  const {
+    actionStateId,
+    userId,
+    workflowStateId,
+    fileData,
+    fileName,
+    fileType,
+  } = req.body;
+  const requestedStateType = req.body.stateType ?? "completed";
 
-  // Find the type of the action, and determine whether or not it can be completed this way.
-  const actionState = await prisma.actionState.findUnique({
+  if (!actionStateId) {
+    return res.status(400).json({ message: "actionStateId is required." });
+  }
+
+  const existingActionState = await prisma.actionState.findUnique({
     where: { id: actionStateId },
-    select: {
+    include: {
       action: {
+        include: { metadata: true },
+      },
+      parent: {
+        select: { id: true },
+      },
+      submissions: {
         select: {
-          actionType: true,
+          userId: true,
         },
+      },
+      workflowStates: {
+        select: { id: true },
       },
     },
   });
-  if (actionState.action.actionType !== "simple") {
+
+  if (!existingActionState) {
+    return res.status(404).json({ message: "Action state not found." });
+  }
+
+  if (existingActionState.action.actionType !== "simple") {
     return res.status(400).json({
       message: "This action will only be completed by completing sub actions.",
     });
   }
 
-  // If the action can be completed, complete the action and cascade the status updates
-  await prisma.$transaction(async () => {
-    const actionState = await prisma.actionState.update({
-      where: { id: actionStateId },
-      data: {
-        stateType: stateType,
-      },
+  const requiresSubmission = actionRequiresSubmission(existingActionState.action);
+  const allowedMimeTypes = allowedMimeTypesForAction(existingActionState.action);
+  let parsedFile = null;
+  let resolvedFileType = fileType ?? null;
+
+  if (requiresSubmission) {
+    if (!userId) {
+      return res.status(400).json({
+        message: "userId is required when submitting this action.",
+      });
+    }
+
+    parsedFile = parseIncomingFile(fileData, resolvedFileType);
+    if (!parsedFile || !parsedFile.buffer || parsedFile.buffer.length === 0) {
+      return res.status(400).json({
+        message: "File submission is required for this action.",
+      });
+    }
+
+    resolvedFileType = resolvedFileType || parsedFile.mimeType;
+    if (!resolvedFileType || !allowedMimeTypes.includes(resolvedFileType)) {
+      return res.status(400).json({
+        message: `Unsupported file type. Allowed types: ${allowedMimeTypes.join(
+          ", "
+        )}.`,
+      });
+    }
+
+    if (parsedFile.buffer.length > MAX_SUBMISSION_FILE_SIZE) {
+      return res.status(413).json({
+        message: "File is too large. Please upload a file under 8MB.",
+      });
+    }
+  }
+
+  let workflowState = null;
+  if (workflowStateId) {
+    workflowState = await prisma.workflowState.findUnique({
+      where: { id: workflowStateId },
       include: {
-        action: true,
+        participants: true,
+        baseActionState: { select: { id: true } },
       },
     });
 
-    // Cascade status updates upward
-    if (actionState.parentId) await cascadeSubmission(actionState.parentId);
+    let actionStateBelongsToWorkflow =
+      existingActionState.workflowStates?.some(
+        (state) => state.id === workflowStateId
+      ) || false;
 
-    res.status(200).json({ message: "Completed" });
+    if (!actionStateBelongsToWorkflow) {
+      const rootForAction = await findRootActionStateId(
+        actionStateId,
+        existingActionState.parentId
+      );
+      actionStateBelongsToWorkflow =
+        rootForAction &&
+        workflowState?.baseActionState?.id &&
+        rootForAction === workflowState.baseActionState.id;
+    }
+
+    if (!actionStateBelongsToWorkflow) {
+      return res.status(403).json({
+        message:
+          "This action state does not belong to the provided workflow state.",
+      });
+    }
+  } else {
+    workflowState = await findWorkflowStateForActionState(
+      actionStateId,
+      existingActionState.parentId
+    );
+  }
+  if (!workflowState) {
+    return res
+      .status(404)
+      .json({ message: "Owning workflow state could not be located." });
+  }
+
+  const participantIds = collectParticipantIds(workflowState, userId);
+  const requiresAll =
+    actionRequiresAllParticipants(existingActionState.action) ||
+    participantIds.size > 1;
+  const requiredCount = requiresAll
+    ? Math.max(participantIds.size, 1)
+    : 1;
+
+  if (requiresAll && !userId) {
+    return res.status(400).json({
+      message: "userId is required when submitting this action.",
+    });
+  }
+
+  if (requiresAll && participantIds.size > 0 && !participantIds.has(userId)) {
+    return res.status(403).json({
+      message: "This user is not a participant in the workflow state.",
+    });
+  }
+
+  let responsePayload = null;
+  let cascadeParentId = null;
+  const submissionFilePayload =
+    requiresSubmission && parsedFile
+      ? {
+          fileName: fileName || "submission",
+          fileType: resolvedFileType,
+          fileSize: parsedFile.buffer.length,
+          fileData: parsedFile.buffer,
+          workflowStateId: workflowState.id,
+        }
+      : null;
+
+  await prisma.$transaction(async (tx) => {
+    const submissionTimestamp = new Date();
+    if (requiresAll) {
+      await tx.actionStateSubmission.upsert({
+        where: {
+          actionStateId_userId_workflowStateId: {
+            actionStateId,
+            userId,
+            workflowStateId: workflowState.id,
+          },
+        },
+        update: {
+          workflowStateId: workflowState.id,
+          completed: true,
+          completedAt: submissionTimestamp,
+          ...(submissionFilePayload || {}),
+        },
+        create: {
+          actionStateId,
+          workflowStateId: workflowState.id,
+          userId,
+          completed: true,
+          completedAt: submissionTimestamp,
+          ...(submissionFilePayload || {}),
+        },
+      });
+
+      const participantFilter =
+        participantIds.size > 0
+          ? Array.from(participantIds)
+          : [userId].filter(Boolean);
+
+      const completedCount = await tx.actionStateSubmission.count({
+        where: {
+          actionStateId,
+          completed: true,
+          ...(participantFilter.length > 0
+            ? { userId: { in: participantFilter } }
+            : {}),
+        },
+      });
+
+      const fullyCompleted = completedCount >= requiredCount;
+      const nextStateType = fullyCompleted ? requestedStateType : "inProgress";
+
+      const updatedState = await tx.actionState.update({
+        where: { id: actionStateId },
+        data: {
+          stateType: nextStateType,
+        },
+        select: {
+          parentId: true,
+        },
+      });
+
+      cascadeParentId = fullyCompleted ? updatedState.parentId : null;
+      responsePayload = {
+        message: fullyCompleted
+          ? "Completed"
+          : "Submission recorded. Awaiting teammates.",
+        fullyCompleted,
+        requiresAllParticipants: true,
+        completedCount,
+        requiredCount,
+      };
+    } else {
+      if (requiresSubmission && userId) {
+        await tx.actionStateSubmission.upsert({
+          where: {
+            actionStateId_userId_workflowStateId: {
+              actionStateId,
+              userId,
+              workflowStateId: workflowState.id,
+            },
+          },
+          update: {
+            workflowStateId: workflowState.id,
+            completed: true,
+            completedAt: submissionTimestamp,
+            ...(submissionFilePayload || {}),
+          },
+          create: {
+            actionStateId,
+            workflowStateId: workflowState.id,
+            userId,
+            completed: true,
+            completedAt: submissionTimestamp,
+            ...(submissionFilePayload || {}),
+          },
+        });
+      } else if (userId) {
+        await tx.actionStateSubmission.upsert({
+          where: {
+            actionStateId_userId_workflowStateId: {
+              actionStateId,
+              userId,
+              workflowStateId: workflowState.id,
+            },
+          },
+          update: {
+            workflowStateId: workflowState.id,
+            completed: true,
+            completedAt: submissionTimestamp,
+          },
+          create: {
+            actionStateId,
+            workflowStateId: workflowState.id,
+            userId,
+            completed: true,
+            completedAt: submissionTimestamp,
+          },
+        });
+      }
+
+      const updatedState = await tx.actionState.update({
+        where: { id: actionStateId },
+        data: {
+          stateType: requestedStateType,
+        },
+        select: {
+          parentId: true,
+        },
+      });
+
+      cascadeParentId = updatedState.parentId;
+      responsePayload = {
+        message: "Completed",
+        fullyCompleted: true,
+        requiresAllParticipants: false,
+        completedCount: 1,
+        requiredCount: 1,
+      };
+    }
   });
+
+  if (responsePayload) {
+    responsePayload.requiresSubmission = requiresSubmission;
+    if (submissionFilePayload) {
+      responsePayload.submission = {
+        fileName: submissionFilePayload.fileName,
+        fileType: submissionFilePayload.fileType,
+        fileSize: submissionFilePayload.fileSize,
+      };
+    }
+  }
+
+  // Cascade status updates upward if needed
+  if (cascadeParentId) {
+    await cascadeSubmission(cascadeParentId);
+  }
+
+  res.status(200).json(responsePayload);
 });
 
 module.exports = router;

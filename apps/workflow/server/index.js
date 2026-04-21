@@ -28,6 +28,10 @@ app.use('/workflows', workflowRoutes);
 app.use('/actions', actionRoutes);
 app.use('/states', stateRoutes);  
 app.use('/permissions', permissionRoutes);
+app.use('/scoop-portal/workflow-api/workflows', workflowRoutes);
+app.use('/scoop-portal/workflow-api/actions', actionRoutes);
+app.use('/scoop-portal/workflow-api/states', stateRoutes);  
+app.use('/scoop-portal/workflow-api/permissions', permissionRoutes);
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);

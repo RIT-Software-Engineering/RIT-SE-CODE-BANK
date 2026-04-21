@@ -32,6 +32,9 @@ model Action {
   description    String?    @db.Text
   form           String?    @db.Text
   actionType     ActionType @default(simple)
+  requireAllParticipants Boolean @default(false)
+  requiresSubmission Boolean @default(false)
+  submissionMimeTypes String? @db.VarChar(512)
   isFrozen       Boolean    @default(false) // Indicates if the action is frozen and cannot be modified (only the creator can change this)
   nextActionId   String?    @unique @db.Char(36)
   parentActionId String?    @db.Char(36)
@@ -82,6 +85,7 @@ model WorkflowAttributes {
   id           String  @id @default(uuid()) @db.Char(36)
   baseActionId String  @unique @db.Char(36) // The action that these attributes are added to
   rootActionId String? @db.Char(36) // The root action of the workflow, which is the base action
+  createdAt DateTime @default(now()) //This is to keep track of the workflows and when they were created
 
   baseAction     Action          @relation("baseAction", fields: [baseActionId], references: [id], onDelete: Cascade)
   rootAction     Action?         @relation("rootAction", fields: [rootActionId], references: [id])
@@ -122,6 +126,7 @@ model WorkflowState {
   actionStates      ActionState[] @relation("ActionStates")
   baseActionState ActionState        @relation("BaseActionState", fields: [baseActionStateId], references: [id], onDelete: Cascade)
   participants WorkflowStateParticipant[]
+  submissions ActionStateSubmission[]
 }
 
 model ActionState {
@@ -136,6 +141,7 @@ model ActionState {
   children      ActionState[]   @relation("ParentChild")
   workflowStates      WorkflowState[]  @relation("ActionStates")
   workflowState WorkflowState? @relation("BaseActionState")
+  submissions   ActionStateSubmission[]
 }
 
 model WorkflowStateParticipant {
@@ -153,4 +159,23 @@ enum StateType {
   inProgress
   notStarted
   hidden
+}
+
+model ActionStateSubmission {
+  id            String   @id @default(uuid()) @db.Char(36)
+  actionStateId String   @db.Char(36)
+  workflowStateId String @db.Char(36)
+  userId        String   @db.Char(36)
+  createdAt     DateTime @default(now())
+  completed     Boolean  @default(false)
+  completedAt   DateTime?
+  fileName      String?  @db.VarChar(255)
+  fileType      String?  @db.VarChar(255)
+  fileSize      Int?
+  fileData      Bytes?   @db.LongBlob
+
+  actionState ActionState @relation(fields: [actionStateId], references: [id], onDelete: Cascade)
+  workflowState WorkflowState @relation(fields: [workflowStateId], references: [id], onDelete: Cascade)
+
+  @@unique([actionStateId, userId, workflowStateId])
 }

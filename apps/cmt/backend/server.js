@@ -73,7 +73,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Middleware to attach prisma to request for workflow routes
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   req.prisma = prisma;
   next();
 });
@@ -82,7 +82,7 @@ app.use((req, res, next) => {
 app.use(authMiddleware);
 
 // Simple logger
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
@@ -154,18 +154,18 @@ app.post("/api/cmt/dev/login", async (req, res) => {
 });
 
 // Health check endpoint
-app.get("/api/health", (req, res) => {
+app.get("/api/health", (_req, res) => {
   res.json({
     status: "OK",
     timestamp: new Date().toISOString(),
-    message: "Course Calendar Backend is running",
+    message: "CMT Backend is running",
   });
 });
 
 // Root endpoint
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.json({
-    message: "Course Calendar Backend API",
+    message: "CMT API",
     version: "1.0.0",
     endpoints: {
       health: "/api/health",
@@ -187,86 +187,12 @@ app.use("/api/cmt/workflow", workflowRoutes)
 app.use("/api/cmt/session", sessionRoutes);
 app.use("/api/cmt/resources", resourceRoutes);
 
-// Legacy course routes (if not handled by courseRoutes)
-// get all courses from a professor
-// TODO: CHANGE IT SO IT'S BASED ON THE PROFESSOR ID THAT'S CURRENTLY LOGGED IN
-app.get("/api/course", async (req, res) => {
-  try {
-    const courses = await prisma.course.findMany({
-      include: { professor: true },
-    });
-    res.json(courses);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// create a course
-app.post("/api/course", async (req, res) => {
-  try {
-    let { id, name, year, season, color, students, professorId } = req.body;
-    students = parseInt(students, 10);
-    const course = await prisma.course.create({
-      data: { id, name, year, season, color, students, professorId },
-    });
-    res.json(course);
-  } catch (err) {
-    console.error("course creation failed: ", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// UPDATE course - add workflowId
-app.put("/api/course/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updateData = req.body;
-
-    console.log("PUT /api/course/:id called with:", id, updateData);
-
-    const updatedCourse = await prisma.course.update({
-      where: { id },
-      data: updateData,
-    });
-
-    console.log("Course updated successfully:", updatedCourse);
-
-    res.json({
-      success: true,
-      data: updatedCourse,
-    });
-  } catch (error) {
-    console.error("Error updating course:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-
-// DELETE course
-app.delete("/api/course/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    await prisma.course.delete({
-      where: { id },
-    });
-    res.json({ success: true, message: "Course deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting course:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-
 /* ------------------------------------------------------------------
    ERROR / 404 HANDLERS
    ------------------------------------------------------------------ */
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, _req, res, _next) => {
   console.error("Error:", err.stack);
   res.status(500).json({
     error: "Something went wrong!",
@@ -285,12 +211,6 @@ app.use("*", (req, res) => {
 /* ------------------------------------------------------------------
    START SERVER
    ------------------------------------------------------------------ */
-
-// app.listen(BACKEND_PORT, () => {
-//   console.log(`🚀 Server running on port ${BACKEND_PORT}`);
-//   console.log(`📚 Course Calendar Backend is ready!`);
-//   console.log(`🔗 API endpoints available at http://localhost:${BACKEND_PORT}/api`);
-// });
 
 // Start server
 app.listen(BACKEND_PORT, () => {
