@@ -158,12 +158,7 @@ router.post('/', async (req, res) => {
         }, {timeout: 15000});
 
     } catch (error) {
-        console.error('Error creating meta course workflow/empty course :', error)
-        res.status(500).json({
-            success: false,
-            error: 'Failed to create meta course workflow/empty course',
-            details: error.message,
-        })
+        throw new Error('Failed to create meta course workflow/empty course')
     }
 })
 
