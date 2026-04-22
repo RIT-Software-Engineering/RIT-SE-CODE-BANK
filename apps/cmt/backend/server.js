@@ -196,7 +196,7 @@ app.use((err, req, res, next) => {
     \nError in: ${req.method} ${req.path}
     \nFull request URL: ${req.url}
     \nRequest body:
-    \n${req.body}
+    \n${JSON.stringify(req.body)}
     \nError: ${err}
     \nStack trace: ${err.stack}
   `)
