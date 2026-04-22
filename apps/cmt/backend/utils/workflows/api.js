@@ -233,7 +233,7 @@ export async function workflowToObject(workflow) {
  */
 export function makeMetadataSafeForWorkflows(metadata) {
   let safeMetadata = {}
-  Object.entries(metadata).forEach(([key, value]) => {
+  Object.entries(metadata ?? {}).forEach(([key, value]) => {
     safeMetadata[key] = JSON.stringify(value)
   })
   return safeMetadata
@@ -328,7 +328,7 @@ export function findActionsByCode(actions, code, matcher) {
  * @export
  * @async
  * @param {*} action - the current action we're looking at
- * @returns {Object} - The workflow that contains the original action 
+ * @returns {Promise<Object>} - The workflow that contains the original action 
  */
 export async function findWorkflowFromAction(action){
   // Actions have one of the following: a parentAction, a previousAction, or are a rootAction.

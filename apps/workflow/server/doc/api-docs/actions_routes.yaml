@@ -65,6 +65,9 @@ paths:
                   type: string
                 actionType:
                   $ref: "./schemas.yaml#/components/schemas/ActionType"
+                requireAllParticipants:
+                  type: boolean
+                  description: Require every participant to submit before marking the action complete.
                 metadata:
                   type: array
                   items:
@@ -142,6 +145,8 @@ paths:
                   type: string
                 actionType:
                   $ref: "./schemas.yaml#/components/schemas/ActionType"
+                requireAllParticipants:
+                  type: boolean
                 metadata:
                   type: array
                   items:

@@ -237,6 +237,16 @@ router.put("/:id", async (req, res) => {
         create: { name },
       })),
     };
+    // baseActionData.tags = {
+    //   // Clear existing connections
+    //   set: [],
+
+    //   // Add/re-add them
+    //   connectOrCreate: tags.map((name) => ({
+    //     where: { name },
+    //     create: { name },
+    //   })),
+    // };
   }
 
   await prisma.$transaction(async () => {

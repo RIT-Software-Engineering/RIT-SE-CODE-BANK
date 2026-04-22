@@ -4,7 +4,20 @@ const { PrismaClient } = require("@prisma/client");
 const { getFullActionTree, exportAction } = require("../helpers/actions.js");
 const { importMetadata } = require("../helpers/metadata.js");
 const prisma = new PrismaClient();
-const { permissionTypes } = require("../consts.js") || [];
+const { permissionTypes, submissionAllowedMimeTypes } = require("../consts.js") || [];
+
+const serializeMimeTypes = (mimeTypes, fallback = null) => {
+    if (Array.isArray(mimeTypes)) {
+        return mimeTypes
+            .map((type) => type?.toString?.().trim())
+            .filter(Boolean)
+            .join(",");
+    }
+    if (typeof mimeTypes === "string") {
+        return mimeTypes;
+    }
+    return fallback;
+};
 
 // GET /actions/:id
 router.get("/:id", async (req, res) => {
@@ -25,9 +38,9 @@ router.get("/:id", async (req, res) => {
 
 // GET /actions
 router.get("/", async (req, res) => {
-    const { workflowId } = req.query
+    const { workflowId } = req.query;
 
-    const where = {}
+    const where = {};
     // Add other filters
 
     if (workflowId) {
@@ -71,8 +84,17 @@ router.get("/", async (req, res) => {
 
 // POST /actions
 router.post("/", async (req, res) => {
-    const { name, description, form, actionType, metadata, parentActionId } =
-        req.body;
+    const {
+        name,
+        description,
+        form,
+        actionType,
+        metadata,
+        parentActionId,
+        requireAllParticipants,
+        requiresSubmission,
+        submissionMimeTypes,
+    } = req.body;
     const { userId } = req.body; // TODO: make this work with req.user instead
 
     const data = {};
@@ -88,9 +110,27 @@ router.post("/", async (req, res) => {
     if (actionType) {
         data.actionType = actionType;
     }
+    if (typeof requireAllParticipants === "boolean") {
+        data.requireAllParticipants = requireAllParticipants;
+    }
+    const actionRequiresSubmission =
+        typeof requiresSubmission === "boolean"
+            ? requiresSubmission
+            : actionType === "complex";
+    data.requiresSubmission = actionRequiresSubmission === true;
+    const mimeString = serializeMimeTypes(
+        submissionMimeTypes,
+        submissionAllowedMimeTypes.join(",")
+    );
+    if (actionRequiresSubmission && mimeString) {
+        data.submissionMimeTypes = mimeString;
+    } else if (mimeString) {
+        data.submissionMimeTypes = mimeString;
+    }
     if (parentActionId) {
         data.parentAction = { connect: { id: parentActionId } };
     }
+    const metadataEntries = importMetadata(metadata);
 
     const action = await prisma.action.create({
         data: {
@@ -104,9 +144,12 @@ router.post("/", async (req, res) => {
                     })),
                 },
             },
-            metadata: {
-                create: importMetadata(metadata),
-            },
+            metadata:
+                metadataEntries.length > 0
+                    ? {
+                          create: metadataEntries,
+                      }
+                    : undefined,
         },
     });
 
@@ -124,6 +167,9 @@ router.put("/:id", async (req, res) => {
         nextActionId,
         parentActionId,
         isFrozen,
+        requireAllParticipants,
+        requiresSubmission,
+        submissionMimeTypes,
     } = req.body;
     const { id } = req.params;
 
@@ -139,6 +185,19 @@ router.put("/:id", async (req, res) => {
     }
     if (actionType) {
         data.actionType = actionType;
+    }
+    if (typeof requireAllParticipants === "boolean") {
+        data.requireAllParticipants = requireAllParticipants;
+    }
+    if (typeof requiresSubmission === "boolean") {
+        data.requiresSubmission = requiresSubmission;
+    }
+    if (submissionMimeTypes !== undefined) {
+        const mimeString = serializeMimeTypes(
+            submissionMimeTypes,
+            submissionAllowedMimeTypes.join(",")
+        );
+        data.submissionMimeTypes = mimeString;
     }
     if (nextActionId) {
         data.nextAction = { connect: { id: nextActionId } };

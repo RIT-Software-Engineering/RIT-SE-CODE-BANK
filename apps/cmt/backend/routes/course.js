@@ -162,7 +162,6 @@ router.post('/', async (req, res) => {
                 data: sessionData,
                 skipDuplicates: true,
             })
-
             // For simplicity of the frontend, return minimal information, since the GET for courses will contain all the info needed, and will be called much more often.
             res.json({ course: newCourse })
         }, {timeout: 15000});
@@ -340,7 +339,7 @@ router.put('/:id', async (req, res) => {
 
         console.log('Course updated successfully:', updatedCourse)
 
-        const { uid: userId, asid: actionStateId } = req.query
+        const { uid: _userId, asid: actionStateId } = req.query
         if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
 
         res.json({
