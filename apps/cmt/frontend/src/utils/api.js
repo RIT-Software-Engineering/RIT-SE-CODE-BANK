@@ -67,7 +67,7 @@ async function CMTFetch(method, url, body, headers, allowedErrorCodes, baseUrl) 
     } catch (error) {
         const message = `
             Error while trying to fetch: ${method} ${fullURL}
-            \nRequest Body: ${JSON.stringify(body)}
+            \nRequest Body: ${JSON.stringify(body ?? "")}
             \nError: ${error}
             \nThis means the the request likely never reached the intended url, and is more likely a problem with CMT.
         `
@@ -85,7 +85,7 @@ async function CMTFetch(method, url, body, headers, allowedErrorCodes, baseUrl) 
       non-allowed non-OK status in response to: ${method} ${fullURL}
       \nRequest Body: ${body}
       \nResponse status: ${response.status}
-      \nResponse body: ${JSON.stringify(await clonedResponse.json())}
+      \nResponse body: ${JSON.stringify(await clonedResponse.json() ?? "")}
       \nThis means that the status was properly received by the intended url, but that the server had an issue of some kind.
     `
 
