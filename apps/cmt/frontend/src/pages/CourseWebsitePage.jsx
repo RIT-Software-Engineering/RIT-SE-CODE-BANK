@@ -111,7 +111,7 @@ export default function CourseWebsitePage() {
         <tbody>
           ${sessions
             .sort((a, b) => a.sessionNum - b.sessionNum)
-            .map(session => generateSessionRowHTML(session, visibleColumns))
+            .map(session => generateSessionRowHTML(session, visibleColumns, { local: true }))
             .join("")}
         </tbody>
       </table>
@@ -149,8 +149,11 @@ export default function CourseWebsitePage() {
     const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
 
     const response = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`);
+
     if (!response.ok) throw new Error("Failed to fetch resources");
+
     const resources = await response.json();
+
     console.log("Resources for course:", resources);
 
     const resourcesFolder = zip.folder("public_html/resources");
@@ -294,12 +297,14 @@ const MATERIAL_COLUMNS = [
   "Individual Assignment"
 ];
 
-function generateSessionRowHTML(session, visibleColumns) {
+function generateSessionRowHTML(session, visibleColumns, options = {}) {
   const materials = session.materials || [];
 
   const grouped = visibleColumns.map(col =>
     materials.filter(m => m.type === col && m.active)
   );
+
+  const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
 
   return `
     <tr>
@@ -318,9 +323,17 @@ function generateSessionRowHTML(session, visibleColumns) {
                          onclick="const w=window.open(); w.document.write('${safeBody}'); w.document.close(); return false;">
                         ${item.label}
                       </a>`;
-            } else {
-              return `<span>${item.label}</span>`;
             }
+
+            if (item.filename) {
+              const href = options.local
+                ? `resources/${sanitize(item.filename)}`
+                : `/resources/download/${item.id}`;
+
+              return `<a href="${href}" target="_blank">${item.label}</a>`;
+            }
+
+            return `<span>${item.label}</span>`;
           }).join("")}
         </td>
       `).join("")}
