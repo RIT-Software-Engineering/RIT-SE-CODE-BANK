@@ -230,6 +230,8 @@ app.use((req, res) => {
 
 // Start server
 app.listen(BACKEND_PORT, () => {
-  console.log(`🚀 Server running on port ${BACKEND_PORT}`);
-  console.log(`🔗 API endpoints available at ${BASE_URL}/api`);
+  console.log(
+    `Server running on port ${BACKEND_PORT}
+    \nand URL: ${BASE_URL}/api`
+  );
 });
