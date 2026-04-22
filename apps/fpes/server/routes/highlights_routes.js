@@ -15,6 +15,43 @@ function getGenAIModel() {
 const summaryCache = new Map(); // formId -> { summary, expiresAt }
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
+/**
+ * Persists a generated summary to the form_summaries table.
+ * Uses ON DUPLICATE KEY UPDATE so regeneration overwrites the existing row.
+ * @param {object} conn - Active DB connection
+ * @param {{ formId?: number, facultyId?: string, type: 'form'|'annual', summary: object }} opts
+ */
+async function saveSummaryToDB(conn, { formId, facultyId, type, summary }) {
+  const json = JSON.stringify(summary);
+  if (type === 'form') {
+    await conn.query(
+      `INSERT INTO form_summaries (form_id, summary_type, summary_json) VALUES (?, 'form', ?)
+       ON DUPLICATE KEY UPDATE summary_json = VALUES(summary_json), updated_at = CURRENT_TIMESTAMP`,
+      [formId, json]
+    );
+  } else {
+    await conn.query(
+      `INSERT INTO form_summaries (faculty_id, summary_type, summary_json) VALUES (?, 'annual', ?)
+       ON DUPLICATE KEY UPDATE summary_json = VALUES(summary_json), updated_at = CURRENT_TIMESTAMP`,
+      [facultyId, json]
+    );
+  }
+}
+
+/**
+ * Loads a stored summary from the form_summaries table.
+ * @param {object} conn - Active DB connection
+ * @param {{ formId?: number, facultyId?: string, type: 'form'|'annual' }} opts
+ * @returns {object|null} Parsed summary JSON, or null if not found
+ */
+async function loadSummaryFromDB(conn, { formId, facultyId, type }) {
+  const rows = type === 'form'
+    ? await conn.query(`SELECT summary_json FROM form_summaries WHERE form_id = ? AND summary_type = 'form'`, [formId])
+    : await conn.query(`SELECT summary_json FROM form_summaries WHERE faculty_id = ? AND summary_type = 'annual'`, [facultyId]);
+  if (!rows[0]) return null;
+  try { return JSON.parse(rows[0].summary_json); } catch { return null; }
+}
+
 async function withConn(fn) {
   const conn = await pool.getConnection();
   try {
@@ -41,9 +78,39 @@ router.get('/all', async (_req, res) => {
   }
 });
 
-// POST generate annual evaluation for a faculty member across all their submissions
+// GET stored annual evaluation for a faculty member
+router.get('/annual-eval/:facultyId', async (req, res) => {
+  try {
+    const stored = await withConn(conn => loadSummaryFromDB(conn, { facultyId: req.params.facultyId, type: 'annual' }));
+    if (!stored) return res.status(404).json({ error: 'No stored annual evaluation found.' });
+    res.json({ summary: stored, cached: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch annual evaluation' });
+  }
+});
+
+// PUT save an edited annual evaluation (no AI call)
+router.put('/annual-eval/:facultyId', async (req, res) => {
+  try {
+    const { summary } = req.body;
+    if (!summary) return res.status(400).json({ error: 'summary is required' });
+    await withConn(conn => saveSummaryToDB(conn, { facultyId: req.params.facultyId, type: 'annual', summary }));
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save annual evaluation' });
+  }
+});
+
+// POST generate annual evaluation — skips AI if a stored summary already exists
 router.post('/annual-eval/:facultyId', async (req, res) => {
   try {
+    if (req.query.refresh !== 'true') {
+      const stored = await withConn(conn => loadSummaryFromDB(conn, { facultyId: req.params.facultyId, type: 'annual' }));
+      if (stored) return res.json({ summary: stored, cached: true });
+    }
+
     const { facultyId } = req.params;
     const yearFilter = '';
 
@@ -169,6 +236,7 @@ router.post('/annual-eval/:facultyId', async (req, res) => {
     }
     if (summary.overall?.rating != null) summary.overall.rating = Math.max(3, summary.overall.rating);
 
+    await withConn(conn => saveSummaryToDB(conn, { facultyId, type: 'annual', summary }));
     res.json({ summary, meta: { forms: highlights.length, publications: publications.length, grants: grants.length } });
   } catch (err) {
     if (err.status === 429 || String(err?.message).includes('429')) return res.status(429).json({ error: 'AI quota exceeded. Please try again later.' });
@@ -295,6 +363,14 @@ router.post('/:formId/summarize', async (req, res) => {
     const cached = summaryCache.get(formId);
     if (cached && cached.expiresAt > Date.now() && req.query.refresh !== 'true') return res.json({ summary: cached.summary, cached: true });
 
+    if (req.query.refresh !== 'true') {
+      const stored = await withConn(conn => loadSummaryFromDB(conn, { formId, type: 'form' }));
+      if (stored) {
+        summaryCache.set(formId, { summary: stored, expiresAt: Date.now() + CACHE_TTL_MS });
+        return res.json({ summary: stored, cached: true });
+      }
+    }
+
     const result = await getGenAIModel().generateContent(prompt);
     if (!result) throw new Error('No result from model');
     const rawText = scrub(result.response.text().trim().replace(/^```json\s*|^```\s*|\s*```$/g, ''));
@@ -324,6 +400,7 @@ ${p2}`.trim();
     // Clamp overall to minimum 3
     if (summary.overall?.rating != null) summary.overall.rating = Math.max(3, summary.overall.rating);
     summaryCache.set(formId, { summary, expiresAt: Date.now() + CACHE_TTL_MS });
+    await withConn(conn => saveSummaryToDB(conn, { formId, type: 'form', summary }));
     res.json({ summary });
   } catch (err) {
     if (err.status === 429 || err.statusCode === 429 || String(err?.message).includes('429')) return res.status(429).json({ error: 'AI quota exceeded. Please try again later.' });

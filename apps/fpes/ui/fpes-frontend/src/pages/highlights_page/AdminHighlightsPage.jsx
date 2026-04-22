@@ -1,68 +1,34 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    Paper, Typography, Button, CircularProgress, Collapse, Box
+    Paper, Typography, Button, Box
 } from '@mui/material';
 import HighlightsViewModal from './HighlightsViewModal';
-import WeightedScorePanel from './WeightedScorePanel';
 
 export default function AdminHighlightsPage() {
     const [highlights, setHighlights] = useState([]);
-    const [summaries, setSummaries] = useState({});
-    const [loading, setLoading] = useState({});
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [viewModalForm, setViewModalForm] = useState({});
 
     useEffect(() => {
         axios.get('http://localhost:3000/highlights/all')
-            .then(res => {
-                console.log('highlights/all response:', res.data);
-                setHighlights(res.data);
-            })
+            .then(res => setHighlights(res.data))
             .catch(err => console.error('Error fetching highlights:', err));
     }, []);
 
     const handleView = (formId) => {
         axios.get(`http://localhost:3000/forms/${formId}/view_format`)
-            .then(res => {
-                setViewModalForm(res.data);
-                setViewModalOpen(true);
-            });
+            .then(res => { setViewModalForm(res.data); setViewModalOpen(true); });
     };
 
-    const [visible, setVisible] = useState({});
-
-    const handleSummarize = async (formId, force = false) => {
-        setLoading(prev => ({ ...prev, [formId]: true }));
-        try {
-            const res = await axios.post(`http://localhost:3000/highlights/${formId}/summarize${force ? '?refresh=true' : ''}`);
-            setSummaries(prev => ({ ...prev, [formId]: res.data.summary || res.data.error }));
-            setVisible(prev => ({ ...prev, [formId]: true }));
-        } catch (err) {
-            const msg = err.response?.data?.error || 'Failed to generate summary';
-            setSummaries(prev => ({ ...prev, [formId]: msg }));
-            setVisible(prev => ({ ...prev, [formId]: true }));
-        } finally {
-            setLoading(prev => ({ ...prev, [formId]: false }));
-        }
-    };
-
-    const handleToggleVisible = (formId) => setVisible(prev => ({ ...prev, [formId]: !prev[formId] }));
-
-    const SummarySection = ({ label, data, showDisseminated }) => (
-        <Box sx={{ mb: 1.5 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                {label}{data?.rating != null ? ` — Rating: ${data.rating}` : ''}
-                {showDisseminated && data?.disseminated ? `  |  Disseminated? ${data.disseminated}` : ''}
-            </Typography>
-            <Typography variant="body2">{data?.comments || ''}</Typography>
-        </Box>
-    );
+    /* Summarize / Regenerate — moved to Annual Eval page, kept here for future use
+    const handleSummarize = async (formId, force = false) => { ... };
+    */
 
     return (
-        <div style={{ padding: '20px', paddingTop: '80px' }}>
-            <Typography variant="h4" gutterBottom>highlights eval</Typography>
+        <Box sx={{ p: '20px', pt: '80px' }}>
+            <Typography variant="h4" gutterBottom>Highlights</Typography>
             <TableContainer component={Paper}>
                 <Table>
                     <TableHead>
@@ -74,68 +40,17 @@ export default function AdminHighlightsPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {highlights.map((row) => (
-                        <Fragment key={row.form_id}>
-                            <TableRow>
+                        {highlights.map(row => (
+                            <TableRow key={row.form_id}>
                                 <TableCell>{row.form_id}</TableCell>
-                                    <TableCell>{row.faculty_name}</TableCell>
-                                    <TableCell>{row.time_submitted ? new Date(row.time_submitted).toISOString().substring(0, 10) : 'N/A'}</TableCell>
-                                    <TableCell sx={{ display: 'flex', gap: 1 }}>
-                                        <Button size="small" variant="contained" onClick={() => handleView(row.form_id)}>
-                                            View
-                                        </Button>
-                                        <Button
-                                            size="small"
-                                            variant="outlined"
-                                            onClick={() => summaries[row.form_id] ? handleToggleVisible(row.form_id) : handleSummarize(row.form_id)}
-                                            disabled={loading[row.form_id]}
-                                        >
-                                            {loading[row.form_id]
-                                                ? <CircularProgress size={16} />
-                                                : summaries[row.form_id]
-                                                    ? (visible[row.form_id] ? 'Hide' : 'Show')
-                                                    : 'Summarize'}
-                                        </Button>
-                                        {summaries[row.form_id] && (
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                onClick={() => handleSummarize(row.form_id, true)}
-                                                disabled={loading[row.form_id]}
-                                            >
-                                                Regenerate
-                                            </Button>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            <TableRow>
-                                <TableCell colSpan={4} sx={{ py: 0 }}>
-                                    <Collapse in={!!summaries[row.form_id] && !!visible[row.form_id]}>
-                                        <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, my: 1 }}>
-                                            {typeof summaries[row.form_id] === 'object' ? (
-                                                <>
-                                                    
-                                                    <SummarySection label="Teaching" data={summaries[row.form_id].teaching} />
-                                                    <SummarySection label="Scholarship" data={summaries[row.form_id].scholarship} showDisseminated />
-                                                    <SummarySection label="Service" data={summaries[row.form_id].service} />
-                                                    <SummarySection label="Administrative" data={summaries[row.form_id].administrative} />
-                                                    <SummarySection label="Overall" data={summaries[row.form_id].overall} />
-                                         
-                                                    <WeightedScorePanel
-                                                        summary={summaries[row.form_id]}
-                                                        facultyId={row.faculty_id}
-                                                        teachingText={row.teaching_section || ''}
-                                                        formId={row.form_id}
-                                                    />
-                                                </>
-                                            ) : (
-                                                <Typography variant="body2">{summaries[row.form_id]}</Typography>
-                                            )}
-                                        </Box>
-                                    </Collapse>
+                                <TableCell>{row.faculty_name}</TableCell>
+                                <TableCell>{row.time_submitted ? new Date(row.time_submitted).toISOString().substring(0, 10) : 'N/A'}</TableCell>
+                                <TableCell>
+                                    <Button size="small" variant="contained" onClick={() => handleView(row.form_id)}>
+                                        View
+                                    </Button>
                                 </TableCell>
                             </TableRow>
-                        </Fragment>
                         ))}
                     </TableBody>
                 </Table>
@@ -147,6 +62,6 @@ export default function AdminHighlightsPage() {
                 closeModal={() => setViewModalOpen(false)}
                 isAdmin={true}
             />
-        </div>
+        </Box>
     );
 }

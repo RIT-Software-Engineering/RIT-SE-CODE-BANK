@@ -107,41 +107,7 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
         </Box>
       )}
 
-      {/* Per-class breakdown */}
-      {perClass.length > 0 && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="caption" color="text.secondary">Per-Class Alignment</Typography>
-          <Table size="small" sx={{ mt: 0.5 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Course</TableCell>
-                <TableCell>Semester</TableCell>
-                <TableCell align="center">Avg</TableCell>
-                <TableCell align="center">Dept Avg</TableCell>
-                <TableCell align="center">Diff</TableCell>
-                <TableCell align="center">Alignment</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {perClass.map((c, i) => (
-                <TableRow key={i}>
-                  <TableCell>{c.course_name}</TableCell>
-                  <TableCell>{c.semester} {c.year}</TableCell>
-                  <TableCell align="center">{c.class_avg?.toFixed(2)}</TableCell>
-                  <TableCell align="center">{c.dept_avg?.toFixed(2)}</TableCell>
-                  <TableCell align="center" sx={{ color: c.diff >= 0 ? 'success.main' : 'error.main' }}>
-                    {c.diff >= 0 ? '+' : ''}{c.diff}
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip label={c.alignment} size="small"
-                      color={c.alignment === 'Above Average' ? 'success' : c.alignment === 'Below Average' ? 'error' : 'default'} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Box>
-      )}
+
 
       {/* Scholarship score breakdown */}
       {scholarshipScore && (
