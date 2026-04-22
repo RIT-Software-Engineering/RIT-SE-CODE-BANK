@@ -84,7 +84,7 @@ export function BuilderPageAdmin({isAdmin}){
                     name: info.name,
                     description: info.description,
                     actions: actions,
-                    metadata: info.metadata,
+                    parsedMetadata: info.metadata,
                     tags: workflow.tags?.filter(tag => 
                         isAdmin ? 
                         tag !== "WorkflonyFirstTheRestNowhere_CMT_Template" :
@@ -440,7 +440,7 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 if (placeholder && (placeholder.length <= parseInt(validation[0]))) 
                     output[0]['placeholder'] = placeholder
                 else if (placeholder)
-                    throw new Error("Length of placeholder string must be less than validation length.s")
+                    throw new Error("Length of placeholder string must be less than validation length.")
             } 
             else {
                 if (placeholder)
@@ -458,17 +458,21 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
 
             // Our validation is a 2d array containing one element each. The first one is min and second is max
             if (validation[0][0] && validation[1][0]) {
-                if (validation[0][0] > validation[1][0])
+                const min = parseInt(validation[0][0]);
+                const max = parseInt(validation[1][0]);
+                if (min > max)
                     // Just skip and don't set validation if the min is greater than the max
                     throw new Error("Max must be greater than min.")
+                else if (min < 0 || max < 0)
+                    throw new Error("Min and max must be greater than 0.")
 
                 output[0]['validation'] = {
-                max: validation[1][0],
-                min: validation[0][0]
+                max,
+                min
                 }
 
                 // If the placeholder fits within the validation constraints
-                if (placeholder && ((parseInt(placeholder) >= parseInt(validation[0][0]) && parseInt(placeholder) <= parseInt(validation[1][0]))))
+                if (placeholder && ((parseInt(placeholder) >= min && parseInt(placeholder) <= max)))
                     output[0]['placeholder'] = placeholder;
                 else if (placeholder)
                     throw new Error("Placeholder must fall between validation options.")
@@ -594,7 +598,7 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
             description: description,
             actions: [],
             tags: tags.sort(), // We do original tags here to not include the special tag
-            metadata: {
+            parsedMetadata: {
                 code: metaWorkflow
             },
             usedCodes: [],
@@ -626,7 +630,7 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
         if (extraData.metaWorkflow) 
             tags.push("WorkflonyFirstTheRestNowhere_CMT_Template");
         else 
-            workflowToUpdate?.metadata?.CMTemplate?.forEach(item => tags.push(item));
+            workflowToUpdate?.parsedMetadata?.CMTemplate?.forEach(item => tags.push(item));
     }
 
     if (!name)
@@ -648,7 +652,7 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
             if (extraData.metaWorkflow) 
                 tags = tags?.slice(0, -1);
             else 
-                tags = tags.slice(0, workflowToUpdate?.metadata?.CMTemplate.length * -1);
+                tags = tags.slice(0, workflowToUpdate?.parsedMetadata?.CMTemplate.length * -1);
         }
         const workflowsCopy = workflows.map(workflow => {
             if (workflow.id !== data.workflow.baseActionId)
@@ -661,9 +665,9 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
                     description: description,
                     actions: workflowToUpdate.actions,
                     tags: tags.sort(),
-                        metadata: {
-                            code: extraData.metaWorkflow ?? workflowToUpdate.metadata.code,
-                        },
+                    parsedMetadata: {
+                        code: extraData.metaWorkflow ?? workflowToUpdate.parsedMetadata.code,
+                    },
                     }
         })
         setWorkflows(workflowsCopy);
@@ -949,7 +953,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                     description: workflows[j].description,
                     actions: workflowActions,
                     tags: workflows[j].tags,
-                    metadata: workflows[j].metadata,
+                    parsedMetadata: workflows[j].parsedMetadata,
                     usedCodes: workflows[j].usedCodes
                 });
 
