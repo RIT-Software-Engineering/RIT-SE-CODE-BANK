@@ -148,7 +148,7 @@ export default function CourseWebsitePage() {
 
     const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
 
-    const response = await CMTFetch("GET", `/resources/${selectedCourseObj.id}`);
+    const response = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`);
     if (!response.ok) throw new Error("Failed to fetch resources");
     const resources = await response.json();
     console.log("Resources for course:", resources);
@@ -157,7 +157,7 @@ export default function CourseWebsitePage() {
 
     await Promise.all(resources.map(async (resource) => {
       try {
-        const resp = await CMTFetch("GET", `/resources/download/${resource.id}`);
+        const resp = await CMTJsonFetch("GET", `/resources/download/${resource.id}`);
         if (!resp.ok) throw new Error(`Failed to fetch resource ${resource.id}`);
 
         const blob = await resp.blob();
@@ -327,4 +327,3 @@ function generateSessionRowHTML(session, visibleColumns) {
     </tr>
   `;
 }
-
