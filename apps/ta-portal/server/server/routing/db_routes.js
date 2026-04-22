@@ -552,15 +552,12 @@ router.put('/applications/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid application id.' });
     }
 
-    // Comments can be optional, so we'll provide a default if not present.
-    const commentText = comments || 'The status has been updated for this application.';
-
     // 2. Call the backend function with the validated data.
     const updatedApplication = await changeCandidateApplicationStatus(
       author,
       numericApplicationId,
       status,
-      commentText
+      comments
     );
 
     // 3. Send a success response with the updated data.

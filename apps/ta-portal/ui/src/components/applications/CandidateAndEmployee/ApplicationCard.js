@@ -11,7 +11,6 @@ import {
   getStatusChipColor,
 } from "@/utils/applicationUtils";
 import { useNotification } from "@/contexts/NotificationContext";
-import StateUpdateForm from "@/components/jobHistory/StateUpdateForm";
 import { applicationStatusEnumToString } from '@/constants/applicationStatusConstants';
 import ApplicationProgressTracker from "@/components/applications/ApplicationProgressTracker";
 
@@ -64,16 +63,13 @@ export default function CandidateApplicationCard({
   const [isProcessingDeletion, setIsProcessingDeletion] = useState(false);
   const [IsViewingHistory, setIsViewingHistory] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
-  const [clearConfirm, setShowClearConfirm] = useState(false);
 
-  const [modalState, setModalState] = useState({
-    isOpen: false,
-    status: null,
-    title: "",
-  });
+  const [acceptOfferConfirmation, setAcceptOfferConfirmation] = useState(false);
+  const [conflictAcceptOfferConfirmation, setConflictAcceptOfferConfirmation] = useState(false);
+  const [declineOfferConfirmation, setDeclineOfferConfirmation] = useState(false);
+
   const [isProcessingUpdate, setIsProcessingUpdate] = useState(false);
 
-  const [isConfirmingAcceptance, setIsConfirmingAcceptance] = useState(false);
   const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
   const { jobPosition, jobApplicationStatus } = application;
@@ -85,15 +81,6 @@ export default function CandidateApplicationCard({
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-  };
-
-  const handleOpenUpdateModal = (status, title) => {
-    setModalState({ isOpen: true, status, title });
-    handleMenuClose();
-  };
-
-  const handleCloseUpdateModal = () => {
-    setModalState({ isOpen: false, status: null, title: "" });
   };
 
   const handleAcceptOffer = async () => {
@@ -114,9 +101,9 @@ export default function CandidateApplicationCard({
       );
 
       if (hiredStatus) {
-        setIsConfirmingAcceptance(true);
+        setConflictAcceptOfferConfirmation(true);
       } else {
-        handleOpenUpdateModal("ACCEPTED_OFFER", "Accept Position Offer");
+        setAcceptOfferConfirmation(true)
       }
     } catch (error) {
       console.error("Failed to check hired status:", error);
@@ -149,18 +136,18 @@ export default function CandidateApplicationCard({
     }
   };
 
-  const handleConfirmUpdate = async (note) => {
+  const handleConfirmUpdate = async (status) => {
     setIsProcessingUpdate(true);
     try {
       let fullName = `${currentUser.fname} ${currentUser.lname}`;
       await updateCandidateApplicationStatus(
         fullName,
         id,
-        modalState.status,
-        note
+        status,
+        "Application Updated"
       );
       showNotification(
-        `Application status successfully updated to "${modalState.status?.replace(
+        `Application status successfully updated to "${status?.replace(
           "_",
           " "
         )}".`,
@@ -174,7 +161,8 @@ export default function CandidateApplicationCard({
       showNotification(`Error: ${error.message}`, "error");
     } finally {
       setIsProcessingUpdate(false);
-      handleCloseUpdateModal();
+      setAcceptOfferConfirmation(false)
+      setDeclineOfferConfirmation(false)
     }
   };
 
@@ -217,26 +205,6 @@ export default function CandidateApplicationCard({
                 </Typography>
               </Box>
             </Box>
-            <IconButton onClick={handleMenuClick} disabled={isCheckingHiredStatus}>
-              {isCheckingHiredStatus ? <CircularProgress size={24} /> : <EllipsisVerticalIcon />}
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-            >
-              <MenuItem onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</MenuItem>
-              <MenuItem onClick={() => { setIsViewingHistory(true); handleMenuClose(); }}>View Application History</MenuItem>
-              {(jobApplicationStatus.toLowerCase() === "applied" || jobApplicationStatus.toLowerCase() === "interview") && (
-                <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>Delete Application</MenuItem>
-              )}
-              {jobApplicationStatus.toLowerCase() === "pending_offer" && (
-                <MenuItem onClick={handleAcceptOffer}>Accept Offer</MenuItem>
-              )}
-              {jobApplicationStatus.toLowerCase() === "pending_offer" && (
-                <MenuItem onClick={() => handleOpenUpdateModal("DECLINED_OFFER", "Decline Position Offer")} sx={{ color: 'error.main' }}>Decline Offer</MenuItem>
-              )}
-            </Menu>
           </Box>
 
           <Divider sx={{ my: 2 }} />
@@ -287,28 +255,38 @@ export default function CandidateApplicationCard({
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>View Application</Button>
+                <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>
+                  Application Details
+                </Button>
               </Grid>
-              <Button variant="outlined" onClick={() => { setIsViewingHistory(true); handleMenuClose(); }}>View Notes</Button>
-
-
+              <Grid item xs={12} sm={6}>
+                <Button variant="outlined" onClick={() => { setIsViewingHistory(true); handleMenuClose(); }}>
+                  Application History
+                </Button>
+              </Grid>
               {jobApplicationStatus.toLowerCase() === "pending_offer" && (
                 <Grid item xs={12} sm={6}>
-                  <Button variant="outlined" onClick={handleAcceptOffer}>Accept Offer</Button>
-                </Grid>)}
-
+                  <Button variant="outlined" onClick={handleAcceptOffer}>
+                    Accept Offer
+                  </Button>
+                </Grid>
+              )}
+              {(jobApplicationStatus.toLowerCase() === "applied" || jobApplicationStatus.toLowerCase() === "interview") && (
+                <Grid item xs={12} sm={6}>
+                  <Button variant="contained" color="error" onClick={handleDeleteClick} >
+                    Withdraw Application
+                  </Button>
+                </Grid>
+              )}
+              {jobApplicationStatus.toLowerCase() === "pending_offer" && (
+                <Grid item xs={12} sm={6}>
+                  <Button variant="contained"color="error" onClick={() => setDeclineOfferConfirmation(true)}>
+                    Decline Offer
+                  </Button>
+                </Grid>
+              )}
             </Grid>
-
-            {(jobApplicationStatus.toLowerCase() === "applied" || jobApplicationStatus.toLowerCase() === "interview") && (
-              <Button variant="contained" color="error" onClick={handleDeleteClick} >Delete Application</Button>
-            )}
-            {jobApplicationStatus.toLowerCase() === "pending_offer" && (
-              <Button variant="contained"color="error" onClick={() => handleOpenUpdateModal("DECLINED_OFFER", "Decline Position Offer")}>Decline Offer</Button>
-            )}
           </Box>
-
-
-
         </Box>
       </Paper>
 
@@ -323,13 +301,13 @@ export default function CandidateApplicationCard({
       </ConfirmationModal>
 
       <ConfirmationModal
-        isOpen={isConfirmingAcceptance}
-        onClose={() => setIsConfirmingAcceptance(false)}
+        isOpen={conflictAcceptOfferConfirmation}
+        onClose={() => setConflictAcceptOfferConfirmation(false)}
         onConfirm={() => {
-          setIsConfirmingAcceptance(false);
-          handleOpenUpdateModal("ACCEPTED_OFFER", "Accept Position Offer");
+          setConflictAcceptOfferConfirmation(false);
+          handleConfirmUpdate("ACCEPTED_OFFER");
         }}
-        title="Confirm Offer Acceptance"
+        title={"Accept Offer?"}
         isConfirming={isProcessingUpdate}
       >
         <Typography sx={{ mt: 2 }}>
@@ -347,32 +325,37 @@ export default function CandidateApplicationCard({
           onClose={() => setIsViewingApplication(false)}
         />
       )}
-      {/*{{(isViewingApplication &&showClearConfirm) &&(
-        <ConfirmationModal isOpen={showClearConfirm} onClose={() => setShowClearConfirm(false)} onConfirm={() => setIsViewingApplication(false)} title="Cancel Position Edits">
-          Are you sure you want to cancel your edits? This action cannot be undone.
-        </ConfirmationModal>
-      )}
-      */}
       {IsViewingHistory && (
         <ViewHistoryForm
           foreignKey={application.id}
           foreignTableName="JobPositionApplicationHistory"
           itemTitle="Application History"
-          itemSubtitle={application.jobPosition.course.name}
+          itemSubtitle="History of Status Changes to this Application"
           statusEnumMap={applicationStatusEnumToString}
           userRole={currentUser.role}
           onClose={() => setIsViewingHistory(false)}
         />
       )}
 
-      <StateUpdateForm
-        isOpen={modalState.isOpen}
-        onClose={handleCloseUpdateModal}
-        onConfirm={handleConfirmUpdate}
-        title={modalState.title}
-        isProcessing={isProcessingUpdate}
-        applicationId={application.id}
-      />
+      <ConfirmationModal
+        isOpen={acceptOfferConfirmation}
+        onClose={() => setAcceptOfferConfirmation(false)}
+        onConfirm={()=> handleConfirmUpdate("ACCEPTED_OFFER")}
+        title={"Accept Offer?"}
+        isConfirming={isProcessingUpdate}
+      >
+        Are you sure you want to accept this offer for <strong>{jobPosition.course.name}</strong>?
+      </ConfirmationModal>
+
+      <ConfirmationModal
+        isOpen={declineOfferConfirmation}
+        onClose={() => setDeclineOfferConfirmation(false)}
+        onConfirm={()=> handleConfirmUpdate("DECLINED_OFFER")}
+        title={"Decline Offer?"}
+        isConfirming={isProcessingUpdate}
+      >
+        Are you sure you want to decline this offer for <strong>{jobPosition.course.name}</strong>?
+      </ConfirmationModal>
     </>
   );
 }

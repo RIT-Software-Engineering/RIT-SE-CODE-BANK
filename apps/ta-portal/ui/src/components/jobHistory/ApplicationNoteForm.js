@@ -73,13 +73,11 @@ export default function ApplicationNoteForm({ isOpen, onClose, isProcessing, app
     <Dialog open={isOpen} onClose={handleCancel} fullWidth maxWidth="sm">
       <DialogTitle>
         <Typography variant="h2" component="div">
-          {"Edit Notes"}
+          {"Private Notes"}
         </Typography>
       </DialogTitle>
       <DialogContent dividers>
-        <DialogContentText sx={{ mb: 2 }}>
-          Private Notes:
-        </DialogContentText>
+        <Typography color="text.secondary">Notes are visible only to admins and the assigned faculty.</Typography>
         <TextField
           autoFocus
           margin="dense"

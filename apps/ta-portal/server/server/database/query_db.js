@@ -861,7 +861,7 @@ async function changeCandidateApplicationStatus(
           author,
           foreignKey: String(applicationId),
           status,
-          comment: comments || `Status changed to ${status}`,
+          comment: comments || `No message provided`,
           timestamp: new Date(),
         },
       });
@@ -920,7 +920,7 @@ try {
         recipient: { name: candidateName, email: candidateEmail },
         item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName, ownerEmail: details.instructorEmail },
         status: { new: status },
-        comment: comments,
+        comment: comments || "",
         flags: { hired: status === 'HIRED', acceptedOffer: status === 'ACCEPTED_OFFER' },
         cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
         appName: 'TA Portal',
@@ -950,7 +950,7 @@ try {
             candidateEmail: details.candidateEmail,
           },
           status: { new: status },
-          comment: comments,
+          comment: comments || "",
           flags: { hired: status === 'HIRED', acceptedOffer: status === 'ACCEPTED_OFFER' },
           cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
           appName: 'TA Portal',
@@ -979,7 +979,7 @@ try {
             recipient: { email: adminEmail },
             item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName },
             status: { new: status },
-            comment: comments,
+            comment: comments || "",
             flags: { acceptedOffer: true },
             cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
             appName: 'TA Portal',
@@ -1610,6 +1610,16 @@ async function getCandidateApplicationsAsEmployer(
           }
         },
       },
+      employer: {
+        select: { 
+          user: {
+            select: {
+              fname: true,
+              lname: true
+            }
+          } 
+        }
+      }
     },
   });
 
