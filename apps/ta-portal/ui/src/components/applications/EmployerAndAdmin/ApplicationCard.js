@@ -193,7 +193,7 @@ export default function ApplicationCard({
     }
   };
 
-  const handleConfirmUpdate = async (note) => {
+  const handleConfirmUpdate = async (message) => {
     setIsProcessingUpdate(true);
     try {
       let fullName = `${currentUser.fname} ${currentUser.lname}`;
@@ -201,7 +201,7 @@ export default function ApplicationCard({
         fullName,
         id,
         modalState.status,
-        note
+        message
       );
       showNotification(
         `Application status successfully updated to "${modalState.status?.replace(
@@ -359,32 +359,46 @@ export default function ApplicationCard({
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>Application Details</Button>
+                <Button variant="outlined" onClick={() => { setIsViewingApplication(true); handleMenuClose(); }}>
+                  Application Details
+                </Button>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Button variant="outlined" onClick={() => { setisViewingHistory(true); handleMenuClose(); }}>Application History</Button>
+                <Button variant="outlined" onClick={() => { setisViewingHistory(true); handleMenuClose(); }}>
+                  Application History
+                </Button>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Button variant="outlined" onClick={() => { handleOpenNoteEdit(); handleMenuClose(); }}>Private Notes</Button>
+                <Button variant="outlined" onClick={() => { handleOpenNoteEdit(); handleMenuClose(); }}>
+                  Private Notes
+                </Button>
               </Grid>
               {showInterviewOption && (
                 <Grid item xs={12} sm={6}>
-                  <Button variant="outlined" onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>Select for Interview</Button>
+                  <Button variant="outlined" onClick={() => handleOpenUpdateModal("INTERVIEW", "Select for Interview")}>
+                    Select for Interview
+                  </Button>
                 </Grid>
               )}
               {showHireOption && (
                 <Grid item xs={12} sm={6}>
-                  <Button variant="outlined" onClick={() => { if (onHire) onHire(); handleMenuClose(); }} >Hire Candidate</Button>
+                  <Button variant="outlined" onClick={() => { if (onHire) onHire(); handleMenuClose(); }} >
+                    Hire Candidate
+                  </Button>
                 </Grid>
               )}
               {showOfferOption && (
                 <Grid item xs={12} sm={6}>
-                  <Button variant="outlined" onClick={handleOfferPosition}>Offer Position</Button>
+                  <Button variant="outlined" onClick={handleOfferPosition}>
+                    Offer Position
+                  </Button>
                 </Grid>
               )}
               {showRejectOption && (
                 <Grid item xs={12} sm={6} >
-                  <Button  sx = {{ height: 36,  whiteSpace: "nowrap" }} variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
+                  <Button  sx = {{ height: 36,  whiteSpace: "nowrap" }} variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >
+                    Reject Application
+                  </Button>
                 </Grid>
               )}
             </Grid>
