@@ -1610,6 +1610,16 @@ async function getCandidateApplicationsAsEmployer(
           }
         },
       },
+      employer: {
+        select: { 
+          user: {
+            select: {
+              fname: true,
+              lname: true
+            }
+          } 
+        }
+      }
     },
   });
 
