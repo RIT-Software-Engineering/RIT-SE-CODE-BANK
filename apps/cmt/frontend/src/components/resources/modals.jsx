@@ -57,16 +57,6 @@ export function UploadResourceModal({ courseId, refresh }) {
                 <Form onSubmit={handleFileUpload}>
                     <Modal.Body>
                         <Form.Group className='mb-3'>
-                            <Form.Label>Resource Name</Form.Label>
-                            <Form.Control
-                                type='text'
-                                placeholder='Enter resource name (optional)'
-                                value={resourceName}
-                                onChange={e => setResourceName(e.target.value)}
-                            />
-                            <Form.Text className='text-muted'>If not provided, the original filename will be used</Form.Text>
-                        </Form.Group>
-                        <Form.Group className='mb-3'>
                             <Form.Label>File</Form.Label>
                             <Form.Control
                                 type='file'
@@ -79,6 +69,16 @@ export function UploadResourceModal({ courseId, refresh }) {
                                 required
                             />
                             <CMTDangerAlert error={error} />
+                        </Form.Group>
+                        <Form.Group className='mb-3'>
+                            <Form.Label>Resource Name</Form.Label>
+                            <Form.Control
+                                type='text'
+                                placeholder='Enter resource name (optional)'
+                                value={resourceName}
+                                onChange={e => setResourceName(e.target.value)}
+                            />
+                            <Form.Text className='text-muted'>If not provided, the original filename will be used</Form.Text>
                         </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
@@ -117,7 +117,7 @@ export function EditResourceModal({ resource, refresh }) {
                 setShowEditModal(false)
                 setEditedResource(null)
             })
-            .catch(error => LogError('Error editing resource.', error, setError))
+            .catch(error => LogError('An internal error ocurred when attempting to edit resource.', error, setError))
     }
 
     return (

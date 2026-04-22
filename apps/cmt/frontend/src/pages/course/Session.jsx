@@ -1,6 +1,6 @@
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Info, Trash2 } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal } from "react-bootstrap";
+import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 import { CheckmarkAction} from "@se-code-bank/workflows-ecosystem/components";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
@@ -44,6 +44,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [curMaterialId, setCurMaterialId] = useState(0);
+    const [defaultMaterialType, setDefaultMaterialType] = useState('Topic/Lecture');
 
     /**
      * Initial GET request upon loading the page
@@ -63,7 +64,9 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
 
     return (
         <Accordion>
-        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} courseId={courseId}/>
+        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
+        isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} 
+        courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}/>
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId} 
         isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
         setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions}/>
@@ -72,26 +75,58 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
-                
+                let numMaterials = sessionData.filter(material => material.sessionNum === i).length;
+
                 return (
                     <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
                         <Accordion.Header>
                             <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
-                                {/* TODO: completion should be tracked in the DB in case a professor wants to create more sessions than required */}
-                                {sessionAction && (
+                                {/* TODO: completion should be tracked for ALL actions in the DB in case a professor wants to create more sessions than required.
+                                Currently the one type that's tracked are the additional sessions. */}
+                                {sessionAction ? (
                                     <CheckmarkAction
                                         actionWithContexts={sessionAction}
                                         refresh={updateWorkflow}
                                         fetchToCallback={fetchToCallback}
                                         renderers={sessionCheckmarkRenderers}
+                                        disabled={numMaterials===0}
                                     />
-                                )}
-                                <span className='text-2xl'>Session {i+1}</span>
+                                ) : <Button
+                                    size="sm"
+                                    variant={!sessionData.find(material => material.sessionNum === i) ? 
+                                        sessions.find(session => session.sessionNum === i)?.completed ? 'outline-secondary' : 'secondary' 
+                                        : sessions.find(session => session.sessionNum === i)?.completed ? 'outline-primary' : 'primary'}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        CMTJsonFetch("PUT", 
+                                            `session/${sessions.find(session => session.sessionNum === i)?.id}`, 
+                                            {completed: !sessions.find(session => session.sessionNum === i)?.completed}).then(() => {
+                                            setSessions(sessions.map(session => {
+                                                if (session.sessionNum === i){
+                                                    session.completed = !session.completed;
+                                                } 
+                                                return session;
+                                            }));
+                                            })
+                                    }}
+                                    disabled={!sessionData.find(material => material.sessionNum === i)}
+                                >
+                                    {sessions.find(session => session.sessionNum === i)?.completed ? 'Mark as In-Progress' : 'Mark as Completed'}
+                                </Button>}
+                                <span className='text-2xl'>
+                                    Session {i+1} {' '}
+                                    <span className="text-xl text-gray-400">
+                                        ({numMaterials > 0 ? 
+                                        (numMaterials > 1 ? `${numMaterials} items` : `${numMaterials} item`) 
+                                        : "No materials"})
+                                    </span>
+                                </span>
                             </div>
                         </Accordion.Header>
                         <Accordion.Body>
                             { sessionData.find(data => data.sessionNum === i) ?
-                            <SessionTable sessionData={sessionData} sessionNum={i} setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId}/> :
+                            <SessionTable sessionData={sessionData} sessionNum={i} setIsCreateOpen={setIsOpen} 
+                            setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId} setDefaultMaterialType={setDefaultMaterialType}/> :
                             <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                             }
                             { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
@@ -145,10 +180,13 @@ const sessionCheckmarkRenderers = {
         return (
             <Button
                 size="sm"
-                variant={props.checked ? 'outline-secondary' : 'primary'}
+                variant={props.disabled ? 
+                    props.checked ? 'outline-secondary' : 'secondary' 
+                    : props.checked ? 'outline-primary' : 'primary'}
                 onClick={props.onClick}
+                disabled={props.disabled}
             >
-                {props.checked ? 'Done' : 'Mark Done'}
+                {props.checked ? 'Mark as In-Progress' : 'Mark as Completed'}
             </Button>
         )
     }
@@ -239,15 +277,19 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
  * @param {Array} props.sessionData - the data of sessions in a course. Used to check if a user has created a personal note or not since we restrict to 1 note per session
  * @param {React.Dispatch<SetStateAction<Object[]>>} props.setSessionData - function to set the sessionData. Used upon upload to keep track of the session
  * @param {Boolean} props.isOpen - whether the modal is open
- * @param {(isOpen: Boolean) => void} props.setIsOpen - open/close the modal
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen - open/close the modal
  * @param {Array} props.sessions - the sessions the user has created
  * @param {string} props.courseId - the course ID for resource linking
+ * @param {string} props.defaultMaterialType - What the material type dropdown should start as. Default is Topic/Lecture
+ * @param {React.Dispatch<SetStateAction<string>>} props.setDefaultMaterialType - state setter for defaultMaterialType
  * @returns {React.ReactElement} the modal as HTML
  */
-export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, setIsOpen, sessions, courseId }) {
+export function SessionModal({ sessionNum, sessionData, setSessionData, 
+    isOpen, setIsOpen, sessions, 
+    courseId, defaultMaterialType, setDefaultMaterialType }) {
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
-    const [itemType, setItemType] = useState('Topic/Lecture');
+    const [itemType, setItemType] = useState(defaultMaterialType);
     const [error, setError] = useState('');
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
@@ -263,7 +305,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
     }, [hasLinksInTitle, itemBody, itemLabel, itemType, sessionNum, sessions, setSessionData])
 
     function resetForm() {
-        setItemType('Topic/Lecture');
+        setDefaultMaterialType('Topic/Lecture');
         setItemLabel('');
         setItemBody('');
         setError('');
@@ -274,9 +316,22 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
         resetForm();
     }
 
+    const titleTip = (
+        <Tooltip>
+            On your course site, the title will be a link and lead to your content. If you add a resource or a link, it'll act as an external link that leads to a new page.
+        </Tooltip>
+    );
+
+    const contentTip = (
+        <Tooltip>
+            On your course site, a non-linked title will display as a link and when clicked, it'll open a page that contains the content as HTML.
+        </Tooltip>
+    );
+
     return (
         <Offcanvas
             show={isOpen}
+            onShow={() => setItemType(defaultMaterialType)}
             onHide={handleClose}
             placement="end"
             style={{ width: '100%', maxWidth: '1040px' }}
@@ -290,20 +345,25 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                     <div className='flex'>
                         <div className='w-full'>
                             <div className="mb-3">
-                                <Form.Label>Material Type</Form.Label>
-                                <Form.Select onChange={e => setItemType(e.target.value)} value={itemType}>
+                                <Form.Label>Material Column</Form.Label>
+                                <Form.Select onChange={e => setItemType(e.target.value)} value={itemType} defaultValue={defaultMaterialType}>
                                     <option>Topic/Lecture</option>
                                     <option>Class Activity</option>
                                     <option>Reading/Resources</option>
                                     <option>Projects & Practica</option>
                                     <option>Group Assignment</option>
                                     <option>Individual Assignment</option>
-                                    {!sessionData.find(data => data.sessionNum === sessionNum && data.type === 'Personal Notes') ? <option>Personal Notes</option> : <></>}
+                                    {!sessionData.find(data => data.sessionNum === sessionNum && data.type === 'Personal Notes') ? <option value="Personal Notes">Your Personal Notes (Hidden from students)</option> : <></>}
                                 </Form.Select>
                             </div>
 
                             <div className="mb-3">
-                                <Form.Label>Title (Required)</Form.Label>
+                                <Form.Label className="flex gap-1 items-center">
+                                    Title (Required) 
+                                    <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={titleTip}>
+                                        <Info size={18}/>
+                                    </OverlayTrigger>
+                                </Form.Label>
                                 <RichTextEditor 
                                     value={itemLabel} 
                                     onChange={setItemLabel} 
@@ -314,7 +374,12 @@ export function SessionModal({ sessionNum, sessionData, setSessionData, isOpen, 
                             </div>
 
                             <div className="mb-3">
-                                <Form.Label>Content</Form.Label>
+                                <Form.Label className="flex gap-1 items-center">
+                                    Page Content 
+                                    <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={contentTip}>
+                                        <Info size={18}/>
+                                    </OverlayTrigger>
+                                </Form.Label>
                                 <RichTextEditor 
                                     value={itemBody} 
                                     onChange={setItemBody} 
@@ -405,6 +470,18 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
         });
     }
 
+    const titleTip = (
+        <Tooltip>
+            On your course site, the title will be a link and lead to your content. If you add a resource or a link, it'll act as an external link that leads to a new page.
+        </Tooltip>
+    );
+
+    const contentTip = (
+        <Tooltip>
+            On your course site, a non-linked title will display as a link and when clicked, it'll open a page that contains the content as HTML.
+        </Tooltip>
+    );
+
     return (
         <Offcanvas
             onShow={() => {
@@ -412,7 +489,6 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                 setItemBody(curMaterial?.body ?? "");
                 setItemType(curMaterial?.type ?? "Topic/Lecture");
                 setSessionNum(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`);
-                console.log(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`)
             }}
             show={isEditOpen}
             onHide={() => { setIsEditOpen(false); resetForm(); }}
@@ -431,7 +507,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                             <div className='w-full'>
                                 <div className={`${sessionData.find(material => material.id === materialId && material.type === "Personal Notes") ? 'hidden' : ''}`}>
                                     <div>
-                                        <Form.Label>Material Type</Form.Label>
+                                        <Form.Label>Material Column</Form.Label>
                                         <Form.Select onChange={e => setItemType(e.target.value)} value={itemType}>
                                             <option>Topic/Lecture</option>
                                             <option>Class Activity</option>
@@ -453,7 +529,12 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                 </div>
 
                                 <div className="mb-3">
-                                    <Form.Label>Title</Form.Label>
+                                    <Form.Label className="flex gap-1 items-center">
+                                        Title (Required) 
+                                        <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={titleTip}>
+                                            <Info size={18}/>
+                                        </OverlayTrigger>
+                                    </Form.Label>
                                     <RichTextEditor 
                                         value={itemLabel} 
                                         onChange={setItemLabel} 
@@ -463,7 +544,12 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                     />
                                 </div>
                                 <div className="mb-3">
-                                    <Form.Label>Content</Form.Label>
+                                    <Form.Label className="flex gap-1 items-center">
+                                        Page Content 
+                                        <OverlayTrigger delay={100} trigger={'hover'} placement="bottom" overlay={contentTip}>
+                                            <Info size={18}/>
+                                        </OverlayTrigger>
+                                    </Form.Label>
                                     <RichTextEditor 
                                         value={itemBody} 
                                         onChange={setItemBody} 
@@ -509,14 +595,17 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
  * @param {Object} props 
  * @param {Array} props.sessionData - the data that contains the materials
  * @param {Number} props.sessionNum - the identifying session number to only get data from that specific session
+ * @param {(isCreateOpen: Boolean) => void} props.setIsCreateOpen - opens/closes the creation modal. We only open here.
  * @param {(isEditOpen: Boolean) => void} props.setIsEditOpen - opens/closes the edit modal. We only open here.
  * @param {(materialId: Number) => void} props.setMaterialId - sets the id of the material we're working with.
+ * @param {(defaultMaterialType: string) => void} props.setDefaultMaterialType - sets the default material type depending on where the user clicked. Used for the creation modal.
  * @returns {React.ReactElement} the table in HTML
  */
-function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} ) {
+function SessionTable( {sessionData, sessionNum, setIsCreateOpen, setIsEditOpen, setMaterialId, setDefaultMaterialType } ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
     const allCols = useMemo(() => ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"], []);
-    
+    const [isPreviewMode, setIsPreviewMode] = useState(false);
+
     /** Checks if there's any data in any of the columns and show them.
      * There's a bunch of columns so it's mainly just to reduce how much is shown
      */
@@ -541,7 +630,7 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} )
             if (result > maxRows)
                 maxRows = result;
         });
-        return maxRows;
+        return isPreviewMode ? 1 : maxRows;
     }
 
     /**
@@ -554,116 +643,118 @@ function SessionTable( {sessionData, sessionNum, setIsEditOpen, setMaterialId} )
     function getLabelContent(col, index) {
         const labels = sessionData.filter(data => data.type === allCols[col] && data.sessionNum === sessionNum);
 
+        if (index === -1)
+            return labels.map(label => label.label).join('\n');
+
         if (labels[index])
             return labels[index].label
         return ""
     }
 
-    function openEditModal(text, col){
+    function openSessionModal(text, col){
         // Not a foolproof way to find ID but it should match closely. It'd take a bunch of refactoring to be exact...
         const id = sessionData.find(session => session.sessionNum === sessionNum && session.label === text && session.type === allCols[col])?.id;
-        if (!id)
-            return;
-        setIsEditOpen(true);
-        setMaterialId(id);
+        if (!id){
+            setDefaultMaterialType(allCols[col]);
+            setIsCreateOpen(true);
+        }
+        else {
+            setIsEditOpen(true);
+            setMaterialId(id);
+        }
     }
 
     return (
-            <Table bordered>
-                <thead className='[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]'>
-                    <tr>
-                        {cols[0] ? <th>Topic/Lecture</th> : <></>}
-                        {cols[1] ? <th>Class Activity</th> : <></>}
-                        {cols[2] ? <th>Reading/Resources</th> : <></>}
-                        {cols[3] ? <th>Projects & Practica</th> : <></>}
-                        {cols[4] ? <th>Group Assignment</th> : <></>}
-                        {cols[5] ? <th>Individual Assignment</th> : <></>}
-                    </tr>
-                </thead>
-                <tbody>
-                    {Array.from({ length: determineRows() }, (_, i) => (
-                    <tr> 
-                        {cols[0] ? ( // Topic/Lecture
-                            getLabelContent(0, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(0, i), 0)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(0, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                        {cols[1] ? ( // Class Activity
-                         getLabelContent(1, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(1, i), 1)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(1, i)} />
-                                </div>
-                            </td>
-                        ) : <td></td>
-                        ) : <></>}
-                        {cols[2] ? ( // Reading/Resources
-                            getLabelContent(2, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(2, i), 2)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(2, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                        {cols[3] ? ( // Projects & Practica
-                            getLabelContent(3, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(3, i), 3)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(3, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                        {cols[4] ? ( // Group Assignment
-                            getLabelContent(4, i) ? (
-                            <td 
-                                className="cursor-pointer hover:bg-gray-100"
-                                onClick={() => openEditModal(getLabelContent(4, i), 4)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(4, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                        {cols[5] ? ( // Individual Assignment
-                            getLabelContent(5, i) ? (
-                            <td 
-                                className={"cursor-pointer hover:bg-gray-100"}
-                                onClick={() => openEditModal(getLabelContent(5, i), 5)}
-                                title="Click to edit material"
-                            >
-                                <div className="p-2">
-                                    <ReadOnlyEditor value={getLabelContent(5, i)} />
-                                </div>
-                            </td>
-                            ) : <td></td>
-                        ) : <></>}
-                    </tr>
-                    ))}
-                </tbody>
-            </Table>
+        <>
+        <div className="flex justify-end mb-3">
+            <Button variant="info" onClick={() => setIsPreviewMode(prev => !prev)}>{isPreviewMode ? 'Edit View' : 'Preview View'}</Button>
+        </div>
+        <Table bordered>
+            <thead className={`${isPreviewMode ? '[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9] text-center' : ''}`}>
+                <tr>
+                    {isPreviewMode && <th>Session</th>}
+                    {(cols[0] || !isPreviewMode) && <th>Topic/Lecture</th> }
+                    {(cols[1] || !isPreviewMode) && <th>Class Activity</th> }
+                    {(cols[2] || !isPreviewMode) && <th>Reading/Resources</th> }
+                    {(cols[3] || !isPreviewMode) && <th>Projects & Practica</th>}
+                    {(cols[4] || !isPreviewMode) && <th>Group Assignment</th> }
+                    {(cols[5] || !isPreviewMode) && <th>Individual Assignment</th> }
+                </tr>
+            </thead>
+            <tbody>
+                {Array.from({ length: determineRows() }, (_, i) => (
+                <tr> 
+                    {isPreviewMode && <td className="font-bold text-center">{sessionNum+1}</td>}
+                    {(cols[0] || !isPreviewMode) ? ( // Topic/Lecture
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(0, i), 0)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(0, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[1] || !isPreviewMode) ? ( // Class Activity
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(1, i), 1)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(1, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[2] || !isPreviewMode) ? ( // Reading/Resources
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(2, i), 2)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(2, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[3] || !isPreviewMode) ? ( // Projects & Practica
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(3, i), 3)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(3, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[4] || !isPreviewMode) ? ( // Group Assignment
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(4, i), 4)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(4, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                    {(cols[5] || !isPreviewMode) ? ( // Individual Assignment
+                        <td 
+                            className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                            onClick={() => {if (!isPreviewMode) openSessionModal(getLabelContent(5, i), 5)}}
+                            title="Click to edit material"
+                        >
+                            <div className="p-2">
+                                <ReadOnlyEditor value={getLabelContent(5, (isPreviewMode ? -1 : i))} />
+                            </div>
+                        </td>
+                    ) : <></>}
+                </tr>
+                ))}
+            </tbody>
+        </Table>
+        </>
     )
 }

@@ -8,6 +8,7 @@ import {
     ActionModalRenderer, 
     DeleteModalRenderer, 
     WorkflowComponentRenderer,
+    WorkflowComponentRendererAdmin,
     SimpleActionRenderer,
     ComplexActionRenderer } from "../components/workflows/BuilderRenderers.jsx";
 
@@ -168,7 +169,7 @@ export function BuilderPageAdmin({isAdmin}){
      */
     function loadWorkflowForm(){
         if (isAdmin)
-            setMetaWorkflow(curAction.parsedMetadata?.code);
+            setMetaWorkflow(curAction?.metadata?.code);
     }
 
     /** 
@@ -187,7 +188,7 @@ export function BuilderPageAdmin({isAdmin}){
         ErrorRenderer, 
         ActionModalRenderer, 
         DeleteModalRenderer, 
-        WorkflowComponentRenderer,
+        WorkflowComponentRenderer: (isAdmin ? WorkflowComponentRendererAdmin : WorkflowComponentRenderer),
         SimpleActionRenderer,
         ComplexActionRenderer
     }
@@ -523,37 +524,6 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
     }
 
     return output;
-}
-
-/**
- * A Helper function that renders metadata stuff
- * Not all projects use metadata, so we need to seperate that and pass it into the {@link WorkflowComponent} and {@link ComplexRenderer}.
- * In other projects, if there's data we don't use then they can render that for their simple actions.
- * 
- * For us, we display the code, and all the outputs if there are any. There's always a code so that should always display, but there isn't always every output.
- *
- * @param {Object} action - The simple action that needs metadata rendered
- * @returns {React.ReactElement} - The code to render the action's metadata code and outputs.
- */
-function simpleActionRenderer(action) {
-    console.log(action)
-    return <div>
-            <p>Code: {action.parsedMetadata.code}</p>
-            {(action.parsedMetadata.outputs||[]).map(output => {
-                return (<>
-                    <p>Required? {output.isRequired ? 'Yes' : 'No'}</p>
-                    {output.key? <p>Key: {output.key}</p> : <></>}
-                    {output.name? <p>Name: {output.name}</p> : <></>}
-                    {output.type? <p>Type: {output.type}</p> : <></>}
-                    {output.placeholder ? <p>Placeholder: {output.placeholder}</p> : <></>}
-                    {output.validation && Object.keys(output.validation).map(key => {
-                        const value = output.validation;
-                        const displayValue = (output.validation.options) ? value.options.join(', ') : value[key];
-                        return <p key={key}>{key}: {displayValue}</p>;
-                    })}
-                </>)
-            })}
-        </div>
 }
 
 function createActionWithContexts(action) {

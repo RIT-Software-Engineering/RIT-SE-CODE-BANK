@@ -124,7 +124,7 @@ export function DeleteModalRenderer(props){
     )
 }
 
-export function WorkflowComponentRenderer(props) {
+export function WorkflowComponentRendererAdmin(props) {
     return (
         <>
         <Accordion.Item eventKey={props.workflow.id}>
@@ -137,6 +137,40 @@ export function WorkflowComponentRenderer(props) {
                         <Button className="justify-end" variant="outline-dark" 
                         onClick={props.onWorkflowEdit}><Edit /></Button>
                         <Button variant="outline-danger" className="ml-2" onClick={props.onWorkflowDelete}><Trash2 /></Button>
+                    </div>            
+                </div>
+            </Accordion.Header>
+            <Accordion.Body>
+                <div className="text-3xl">
+                    <p>Description: {props.workflow.description}</p>
+                </div>
+                <div className="text-2xl">
+                    Tags: {props.workflow.tags.length > 0 ? props.workflow.tags.join(', '): "None"}
+                </div>
+
+                {props.children}
+                
+                <div className="flex justify-end pt-3">
+                    <Button onClick={props.onAddActionRoot}>Add New Action</Button>
+                </div>
+            </Accordion.Body>
+        </Accordion.Item>
+        </>
+    )
+}
+
+export function WorkflowComponentRenderer(props) {
+    return (
+        <>
+        <Accordion.Item eventKey={props.workflow.id}>
+            <Accordion.Header className="w-full">
+                <div className="flex w-full justify-between">
+                    <span className="text-4xl">{props.workflow.name} 
+                        {props.workflow.metadata?.code === "None" ? " (Inactive)" 
+                        : (props.workflow.metadata?.code ? ` (${props.workflow.metadata?.code})` : '')}</span>
+                    <div className="mr-4">
+                        <Button className="justify-end" variant="outline-dark" 
+                        onClick={props.onWorkflowEdit}><Edit /></Button>
                     </div>            
                 </div>
             </Accordion.Header>

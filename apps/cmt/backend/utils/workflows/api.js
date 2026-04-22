@@ -18,7 +18,7 @@ export async function workflowsFetch(method, url, body, headers) {
   const fullHeaders = { ...headers, "Content-Type": "application/json", }
   const headersJSON = JSON.stringify(fullHeaders)
 
-  console.log(`fetching to url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
+  console.log(`🎑 fetching to url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
 
   try {
     const options = { method, headers: fullHeaders }

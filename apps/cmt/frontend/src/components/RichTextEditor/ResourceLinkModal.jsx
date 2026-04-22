@@ -22,7 +22,20 @@ export function ResourceLinkModal({ editor, courseId }) {
 
     const chain = editor.chain().focus()
 
-    chain.setLink({ href: linkUrl, target: '_blank' }).setColor('#3b82f6').insertContent(displayText).run()
+    // AI-generated code
+    chain.insertContent({
+        type: 'text', 
+        text: displayText,
+        marks: [
+            {
+            type: 'link',
+            attrs: { href: linkUrl, target: '_blank' }
+            }
+        ]
+    }).command(({ tr }) => { // turns off link after inserting content
+        tr.removeStoredMark(editor.schema.marks.link)
+        return true
+    }).run()
 
     handleReset()
 }
@@ -75,7 +88,7 @@ export function ResourceLinkModal({ editor, courseId }) {
 
     return (
         <>
-        <OverlayTrigger delay={200} overlay={<Tooltip>Resource Link</Tooltip>}>
+        <OverlayTrigger delay={200} overlay={<Tooltip>Insert Resource</Tooltip>}>
             <Button
                 variant='outline-secondary'
                 onClick={() => setShow(true)}
@@ -86,10 +99,10 @@ export function ResourceLinkModal({ editor, courseId }) {
 
         <Modal show={show} onShow={handleShow} onHide={handleReset} size='xl'>
             <Modal.Header closeButton>
-                <Modal.Title>Insert Resource Link</Modal.Title>
+                <Modal.Title>Insert Resource File</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <div className="flex flex-col">
+                <div className="flex flex-col h-full">
                     <div className="flex gap-10 justify-between">
                         <div className="w-1/2 flex flex-col">
                             <p className="text-xl"> Select Existing Resource </p>
@@ -100,11 +113,15 @@ export function ResourceLinkModal({ editor, courseId }) {
                                 </div>
                             : loadingError 
                                 ? <CMTDangerAlert error={loadingError} />
-                            : resources.map(resource => (
+                            : resources.length > 0 
+                            ? <div className="max-h-60 overflow-y-scroll">
+                                {resources.map(resource => (
                                     <div className="mb-3">
                                         <SelectableResourceCard resource={resource} refresh={loadResources} selected={selectedResource} setSelected={setSelectedResource}/>
                                     </div>
-                                ))
+                                ))}
+                                </div> : 
+                                <p>You have not added any resources yet.</p>
                             }
                         </div>
                         <div className="flex flex-col justify-center">
@@ -114,16 +131,6 @@ export function ResourceLinkModal({ editor, courseId }) {
                             <p className="text-xl"> Upload New Resource </p>
                         {/* TODO: not copy paste this from resources/modals.jsx */}
                             <Form onSubmit={e => { handleFileUpload(e); e.stopPropagation(); }}>
-                                <Form.Group className='mb-3'>
-                                    <Form.Label>Resource Name</Form.Label>
-                                    <Form.Control
-                                        type='text'
-                                        placeholder='Enter resource name (optional)'
-                                        value={resourceName}
-                                        onChange={e => setResourceName(e.target.value)}
-                                    />
-                                    <Form.Text className='text-muted'>If not provided, the original filename will be used</Form.Text>
-                                </Form.Group>
                                 <Form.Group className='mb-3'>
                                     <Form.Label>File</Form.Label>
                                     <Form.Control
@@ -136,6 +143,16 @@ export function ResourceLinkModal({ editor, courseId }) {
                                         }}
                                         required
                                     />
+                                </Form.Group>
+                                <Form.Group className='mb-3'>
+                                    <Form.Label>Resource Name</Form.Label>
+                                    <Form.Control
+                                        type='text'
+                                        placeholder='Enter resource name (optional)'
+                                        value={resourceName}
+                                        onChange={e => setResourceName(e.target.value)}
+                                    />
+                                    <Form.Text className='text-muted'>If not provided, the original filename will be used</Form.Text>
                                 </Form.Group>
                                 <CMTDangerAlert error={uploadError} />
                                 <Button variant='primary' type='submit' disabled={uploading || !file}>
@@ -156,12 +173,12 @@ export function ResourceLinkModal({ editor, courseId }) {
                             <Form.Label>Link Display Text</Form.Label>
                             <Form.Control
                                 type='text'
-                                placeholder={`${selectedResource.name}`}
-                                value={linkText}
+                                placeholder={selectedResource.name}
+                                value={linkText || selectedResource.name}
                                 onChange={e => setLinkText(e.target.value)}
                             />
                             <Form.Text className='text-muted'>
-                                This is the text that will be displayed as the clickable link
+                                This is the text that will be displayed as a clickable link.
                             </Form.Text>
                         </Form.Group>
                     )}

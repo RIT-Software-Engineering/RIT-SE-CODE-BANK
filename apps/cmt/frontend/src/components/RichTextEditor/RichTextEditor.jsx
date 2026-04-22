@@ -1,4 +1,4 @@
-import { EditorContent, useEditor, } from "@tiptap/react";
+import { EditorContent, findParentNode, posToDOMRect, useEditor, } from "@tiptap/react";
 import Highlight from '@tiptap/extension-highlight'
 import {StarterKit} from "@tiptap/starter-kit";
 import { ButtonGroup, Button, Tooltip, OverlayTrigger, Dropdown, Modal, Form } from "react-bootstrap";
@@ -15,10 +15,10 @@ import {
   Link2Off,
   List,
   ListOrdered,
-  PaintBucket,
   Table,
   TextAlignCenter,
   Underline,
+  Highlighter,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { TableKit } from '@tiptap/extension-table'
@@ -26,8 +26,8 @@ import { BackgroundColor, Color, TextStyle } from '@tiptap/extension-text-style'
 import TextAlign from '@tiptap/extension-text-align';
 import { ResourceLinkModal } from "./ResourceLinkModal.jsx";
 import { HighlightPicker, TextPicker } from "./Pickers.jsx";
-
-
+import { BubbleMenu } from '@tiptap/react/menus'
+import { Link } from "react-router-dom";
 
 export function ReadOnlyEditor({ value }) {
     const editor = useEditor({
@@ -84,7 +84,11 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
             },
         },
         extensions: [
-            StarterKit,
+            StarterKit.configure({
+                link: {
+                    openOnClick: false,
+                }
+            }),
             TableKit.configure({
                 table: { resizable: true },
             }),
@@ -153,25 +157,9 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
                     <Underline />
                 </Button>
               </OverlayTrigger>
-
-            {isBody ? 
-            <>
-              <OverlayTrigger delay={200} overlay={<Tooltip>Dot list</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-                    <List />
-                </Button>
-              </OverlayTrigger>
-
-              <OverlayTrigger delay={200} overlay={<Tooltip>Ordered List</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-                    <ListOrdered />
-                </Button>
-              </OverlayTrigger>
-            </>
-            : <></>}
               
               <OverlayTrigger delay={200} overlay={<Tooltip>Code Block</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCode().run()}>
+                <Button variant='outline-secondary' active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}>
                     <Code />
                 </Button>
               </OverlayTrigger>
@@ -198,11 +186,27 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
                     className="group"
                 >
                 <div className="flex flex-col items-center">
-                    <PaintBucket />
+                    <Highlighter />
                     {extraToShow === Extras.HighlightPicker && <div className="w-full border-b-4 border-b-gray-300 -mb-2 group-hover:border-b-gray-100 duration-200" />}
                 </div>
                 </Button>
               </OverlayTrigger>
+
+              {isBody ? 
+            <>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Dot list</Tooltip>}>
+                <Button variant='outline-secondary' active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+                    <List />
+                </Button>
+              </OverlayTrigger>
+
+              <OverlayTrigger delay={200} overlay={<Tooltip>Ordered List</Tooltip>}>
+                <Button variant='outline-secondary' active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+                    <ListOrdered />
+                </Button>
+              </OverlayTrigger>
+            </>
+            : <></>}
 
               <OverlayTrigger delay={200} overlay={<Tooltip>Header</Tooltip>}>
                 <Dropdown as={ButtonGroup} className="grow">
@@ -234,11 +238,19 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
 
               <ExternalLinkModal editor={editor} />
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Unlink selection</Tooltip>}>
+              <OverlayTrigger delay={200} overlay={<Tooltip>Remove Link/Resource</Tooltip>}>
                 <Button
                     variant='outline-secondary'
                     onClick={() => {
-                        editor.chain().focus().unsetLink().run();
+                        if (editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, ' '))
+                            editor.chain().focus().unsetLink().run();
+                        else 
+                            // AI-generated code
+                            // Doesn't unlink whole line, just stops linking after clicking it
+                            editor.chain().focus().command(({ tr }) => {
+                                tr.removeStoredMark(editor.schema.marks.link)
+                                return true
+                            }).run();
                         editor.chain().focus().unsetColor().run();
                     }}
                 >
@@ -257,7 +269,7 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
           </ButtonGroup>
           {extraToShow === Extras.Table 
             ? <ButtonGroup className='*:!rounded-none *:!border-t-0'>
-              <Button variant='light' onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
+              <Button variant='outline-dark' onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
                   Add Table
               </Button>
               <Button variant='outline-dark' onClick={() => editor.chain().focus().addRowBefore().run()}>
@@ -272,11 +284,11 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
               <Button variant='outline-dark' onClick={() => editor.chain().focus().addColumnAfter().run()}>
                   Insert Column After
               </Button>
-              <Button variant='outline-dark' onClick={() => editor.chain().focus().deleteRow().run()}>
-                  Delete Row
-              </Button>
               <Button variant='outline-dark' onClick={() => editor.chain().focus().mergeCells().run()}>
                   Merge Cells
+              </Button>
+              <Button variant='outline-dark' onClick={() => editor.chain().focus().deleteRow().run()}>
+                  Delete Row
               </Button>
               <Button variant='outline-dark' onClick={() => editor.chain().focus().deleteColumn().run()}>
                   Delete Column
@@ -295,7 +307,29 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
           <div 
           className='border-x border-b p-3 prose prose-strong:text-inherit max-w-none overflow-y-scroll'
           style={{maxHeight: "35vh"}}>
-              <EditorContent className="*:p-3" editor={editor} />
+                <BubbleMenu
+                editor={editor}
+                shouldShow={() => editor.isActive('link')}
+                getReferencedVirtualElement={() => {
+                const parentNode = findParentNode(
+                    node => {return node.content.firstChild.marks.some(m => m.type.name === 'link')},
+                )(editor.state.selection)
+                if (parentNode) {
+                    const domRect = posToDOMRect(editor.view, 1, parentNode.start)
+                    return {
+                    getBoundingClientRect: () => domRect,
+                    getClientRects: () => [domRect],
+                    }
+                }
+                return null
+                }}
+                options={{ strategy: "fixed", placement: 'bottom-start'}}
+            >
+                <div className="bubble-menu">
+                    <Link to={editor.getAttributes('link').href}>{editor.getAttributes('link').href}</Link>
+                </div>
+            </BubbleMenu>
+                <EditorContent className="*:p-3" editor={editor} />
           </div>
         </div>
     )
@@ -313,7 +347,20 @@ export function ExternalLinkModal({ editor }) {
         const text = linkText?.trim() || linkURL
         const hasHttps = linkURL.startsWith("https");
 
-        editor.chain().focus().setLink({ href: hasHttps ? linkURL : `https://www.${linkURL}`, target: '_blank' }).setColor('#3b82f6').insertContent(text).run()
+        // AI-generated code
+        editor.chain().focus().insertContent({
+            type: 'text', 
+            text,
+            marks: [
+                {
+                type: 'link',
+                attrs: { href: hasHttps ? linkURL : `https://www.${linkURL}`, target: '_blank' }
+                }
+            ]
+        }).command(({ tr }) => { // turns off link after inserting content
+            tr.removeStoredMark(editor.schema.marks.link)
+            return true
+        }).run()
 
         handleReset();
     }
@@ -330,10 +377,11 @@ export function ExternalLinkModal({ editor }) {
     }
 
     return (<>          
-        <OverlayTrigger delay={200} overlay={<Tooltip>External Link</Tooltip>}>
+        <OverlayTrigger delay={200} overlay={<Tooltip>Insert External Link</Tooltip>}>
             <Button
                 variant='outline-secondary'
                 onClick={() => setShow(true)}
+                active={editor.isActive('link')}
                 >
                     <Link2/>
             </Button>
@@ -349,7 +397,7 @@ export function ExternalLinkModal({ editor }) {
                         <Form.Label>Link URL</Form.Label>
                         <Form.Control
                             type='text'
-                            placeholder={`https://www.google.com`}
+                            placeholder={`e.g. https://www.google.com`}
                             defaultValue={linkURL}
                             onChange={e => setLinkURL(e.target.value)}
                         />

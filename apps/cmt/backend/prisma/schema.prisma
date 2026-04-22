@@ -27,7 +27,7 @@ model Course {
   classId         String
   color           String
   students        Int?
-  section         Int?
+  section         String?
   professorId     String
   professors      Professor      @relation(fields: [professorId], references: [id])
   sessions        Session[]
@@ -43,6 +43,8 @@ model Session {
   id          Int        @id @default(autoincrement())
   sessionNum  Int
   courseId    Int
+  completed   Boolean    @default(false)  // TODO Needs to be added for workflow actions too
+  asid        String?                     // TODO add workflow actions here
   course      Course  @relation(fields: [courseId], references: [id])
   material    SessionMaterial[]
 }

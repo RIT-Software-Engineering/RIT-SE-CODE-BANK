@@ -57,12 +57,12 @@ export function WorkflowContainer(props) {
 
 	return (
 		<Accordion
-			defaultActiveKey={firstIncompleteAction?.action?.id}
+			defaultActiveKey={firstIncompleteAction?.processedAction?.id}
 			flush
 		>
 			<div className='flex flex-col'>
-				<p className='text-2xl mb-0'>{props.workflow.baseAction.name}</p>
-				<p className='text-gray-600 text-lg'>{props.workflow.baseAction.description}</p>
+				<p className='text-3xl mb-0'>{props.workflow.baseAction.name}</p>
+				<p className='text-gray-600 text-xl'>{props.workflow.baseAction.description}</p>
 				{props.children}
 			</div>
 		</Accordion>

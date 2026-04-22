@@ -27,9 +27,9 @@ export default function SiteNav() {
       label: "Course Management",
       icon: <GraduationCap size={18} />,
       items: [
-        { to: "/courses", label: "Course Overview"},
-        { to: "/templates", label: "Create Template" },
-        { to: "/coursewebsite", label: "Course Website" },
+        { to: "/courses", label: "Courses"},
+        { to: "/templates", label: "Templates" },
+        { to: "/coursewebsite", label: "Site Generation" },
       ],
     },
     {
@@ -37,7 +37,7 @@ export default function SiteNav() {
       label: "Tools",
       icon: <Wrench size={18} />,
       items: [
-        { to: "/teambuilder", label: "Team Builder" },
+        // { to: "/teambuilder", label: "Team Builder" },
         { to: "/workflowbuilder", label: "Workflow Builder"},
         { to: "/workflowbuilder-admin", label: "Workflow Builder Admin"},
       ]
@@ -90,7 +90,7 @@ export default function SiteNav() {
                       className={`text-sm font-semibold min-w-full min-h-full no-underline text-black bg-transparent px-2 py-0`}
                       active={(activeDropdown === item.label || activeDropdown?.replace("/cmt", "") === item.to)}
                     >
-                      <div to={item.to} className={`no-underline text-black pl-3 pr-16 py-2.5 rounded-lg transition-all duration-150 ease-in-out hover:ml-1 w-full h-full 
+                      <div className={`no-underline text-black pl-3 pr-16 py-2.5 rounded-lg transition-all duration-150 ease-in-out hover:ml-1 w-full h-full 
                       ${(activeDropdown === item.label || activeDropdown?.replace("/cmt", "") === item.to) ? 'bg-[#f97316] text-white font-semibold' : 'hover:!text-[#f97316] hover:bg-gray-100'}`} >
                         {item.label}
                       </div>

@@ -60,7 +60,7 @@ export {}
  * }} CheckmarkOutputProps
  */
 
-/** @typedef {ChildrenProps & { onClick: (e: React.MouseEvent) => void }} NavigateButtonProps */
+/** @typedef {{ actionWithContexts: ActionWithContexts, onClick: (e: React.MouseEvent) => void }} NavigateButtonProps */
 /** @typedef {{ actionWithContexts: ActionWithContexts, onClick: () => void, checked: boolean, loading: boolean, disabled: boolean }} CheckmarkActionProps */
 
 
