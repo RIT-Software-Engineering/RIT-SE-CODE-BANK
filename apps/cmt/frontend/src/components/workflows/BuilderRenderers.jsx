@@ -131,8 +131,8 @@ export function WorkflowComponentRendererAdmin(props) {
             <Accordion.Header className="w-full">
                 <div className="flex w-full justify-between">
                     <span className="text-4xl">{props.workflow.name} 
-                        {props.workflow.metadata?.code === "None" ? " (Inactive)" 
-                        : (props.workflow.metadata?.code ? ` (${props.workflow.metadata?.code})` : '')}</span>
+                        {props.workflow.parsedMetadata?.code === "None" ? " (Inactive)" 
+                        : (props.workflow.parsedMetadata?.code ? ` (${props.workflow.parsedMetadata?.code})` : '')}</span>
                     <div className="mr-4">
                         <Button className="justify-end" variant="outline-dark" 
                         onClick={props.onWorkflowEdit}><Edit /></Button>
@@ -166,8 +166,8 @@ export function WorkflowComponentRenderer(props) {
             <Accordion.Header className="w-full">
                 <div className="flex w-full justify-between">
                     <span className="text-4xl">{props.workflow.name} 
-                        {props.workflow.metadata?.code === "None" ? " (Inactive)" 
-                        : (props.workflow.metadata?.code ? ` (${props.workflow.metadata?.code})` : '')}</span>
+                        {props.workflow.parsedMetadata?.code === "None" ? " (Inactive)" 
+                        : (props.workflow.parsedMetadata?.code ? ` (${props.workflow.parsedMetadata?.code})` : '')}</span>
                     <div className="mr-4">
                         <Button className="justify-end" variant="outline-dark" 
                         onClick={props.onWorkflowEdit}><Edit /></Button>
