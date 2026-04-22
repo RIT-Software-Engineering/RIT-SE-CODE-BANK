@@ -2,12 +2,13 @@
   "name": "SE-CODE-BANK",
   "workspaces": [
     "apps/workflow/ecosystem",
+    "apps/workflow/server",
     "apps/cmt/frontend",
     "apps/cmt/backend"
   ],
   "scripts": {
     "prepare-cmt": "npm i && cd apps/cmt && npx prisma db push --schema backend/prisma/schema.prisma && cd ../workflows/server && npx prisma db push",
-    "start-cmt": "npm run stop-cmt && npx nx run-many -t start -p cmt-frontend cmt-backend workflows-server",
+    "start-cmt": "npm run stop-cmt && npm run prepare-cmt && npx nx run-many -t start -p cmt-frontend cmt-backend workflows-server",
     "stop-cmt": "npx kill-port 3000 3001 5010",
     "setupportal": "node ./scripts/setupportal.js",
     "startportal": "node ./scripts/startportal.js",

@@ -206,6 +206,7 @@ app.use((err, req, res, next) => {
     return next(err);
   }
 
+  // Prisma Record Not Found
   if (err.code === 'P2025') {
     return res.sendStatus(404)
   }

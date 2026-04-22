@@ -1,23 +1,20 @@
 # Workflows Server Dockerfile
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy repo (in the future, only package.jsons can be copied)
+COPY . .
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm ci --workspace=apps/workflow/server --omit=dev 
 
-# Copy prisma schema
-COPY prisma ./prisma/
+# Move to workflows folder
+WORKDIR /app/apps/workflow/server
 
 # Generate Prisma Client
 RUN npx prisma generate
-
-# Copy application code
-COPY . .
 
 # Expose port
 EXPOSE 5011

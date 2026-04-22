@@ -1091,12 +1091,13 @@ function generateWorkflowErrorHandler(setError, setReturnVal) {
             if (error.response){
                 const data = await error.response.json();
                 LogError(
-                    "Error encountered while submitting workflow",
+                    data.error,
                     data.error,
                     setError,
                 )
+            } else {
+                logGenericError(error)
             }
-            logGenericError(error)
         } catch {
             logGenericError(error)
         } finally {
