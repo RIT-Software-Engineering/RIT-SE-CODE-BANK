@@ -19,7 +19,7 @@ npm install
 ```bash
 docker run --name ta-portal-maria-db-instance -e MARIADB_ROOT_PASSWORD=root_password -e MYSQL_DATABASE=ta_portal_db -p 3306:3306 -d mariadb:11 
 ```
-> **Note:** In order to use https instead of http you will need to generate certificates within the `/ta-portal/server` directory. To do this, follow the instructions reguarding mkcert within [messaging_feature.md](messaging_feature.md). You do not need to set up a slack app.
+> **Note:** In order to use https instead of http you will need to generate certificates within the `/ta-portal/server` directory. To do this, follow the instructions regarding mkcert within [messaging_feature.md](messaging_feature.md). You do not need to set up a slack app.
 
 3.  Navigate to the server directory:
 ```bash
@@ -49,13 +49,13 @@ npm run dev
 ---
 ## Extra Documentation about backend
 ### Prisma Setup/Instructions Guide
-In case, anything goes wrong on a database prespective or you want to make a change to the database/datatables for the backend following these steps depending on the situation:
+In case, anything goes wrong on a database perspective or you want to make a change to the database/datatables for the backend following these steps depending on the situation:
 **For setting up a new Prisma instance (these steps aren't neccessary if there is an existing Prisma project within the `server/server/database` directory):**
 1.  Ensure that Prisma is installed as a **development dependency** in your `package.json` file. If not, run:
     ```bash
     npm install --save-dev prisma
     ```
-2.  Navigate to a directory of `server/server/database` as this will house the prsima project instance.
+2.  Navigate to a directory of `server/server/database` as this will house the prisma project instance.
 3.  Execute `npx prisma init` to create a new Prisma instance. During this, you will be prompted on what database provider to use. For us, we chose `mysql`. This will generate a `prisma` directory containing `schema.prisma` file.
 4. Follow the rest of the instructions below
 ---
@@ -64,7 +64,7 @@ In case, anything goes wrong on a database prespective or you want to make a cha
 2.  Delete the `migrations` folder if there's exists one within the prisma folder [here](../server/database/prisma/migrations)
 3.  Run `npx prisma migrate dev` within the prisma folder project to create and apply a new migration for the changes you've defined in `schema.prisma` file. An easier command to do this is `npm run prisma:migrate` when you in the main `/server` folder. You will be prompted to name the migration. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
 
-**NOTE** If there's any issues with running this commmand (i.e. it suggesting to resetting the database, but the reset command still doesn't work) re-run the config files to reset everything. Then start back up to step 2 here within this section.
+**NOTE** If there's any issues with running this command (i.e. it suggesting to resetting the database, but the reset command still doesn't work) re-run the config files to reset everything. Then start back up to step 2 here within this section.
 4. Follow the rest of the instructions below
 ---
 **For dropping, creating, and then (re)populating the data tables**

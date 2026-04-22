@@ -17,7 +17,7 @@ describe('Notification Preferences API', () => {
 
   test('GET returns defaults when no row', async () => {
     client.getPreferences.mockResolvedValue({ notifyEmail: true, notifySlack: false });
-    const res = await request(app).get('/api/db/notifications/preferences?username=bgg6007');
+    const res = await request(app).get('/api/db/notifications/preferences?username=bgg0000');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ notifyEmail: true, notifySlack: false });
   });
@@ -26,9 +26,9 @@ describe('Notification Preferences API', () => {
     client.setPreferences.mockResolvedValue({ ok: true });
     const res = await request(app)
       .put('/api/db/notifications/preferences')
-      .send({ username: 'bgg6007', notifyEmail: false, notifySlack: true });
+      .send({ username: 'bgg0000', notifyEmail: false, notifySlack: true });
     expect(res.status).toBe(204);
-    expect(client.setPreferences).toHaveBeenCalledWith('bgg6007', expect.objectContaining({ notifyEmail: false, notifySlack: true }));
+    expect(client.setPreferences).toHaveBeenCalledWith('bgg0000', expect.objectContaining({ notifyEmail: false, notifySlack: true }));
   });
 
   test('Auth required (if implemented)', async () => {
