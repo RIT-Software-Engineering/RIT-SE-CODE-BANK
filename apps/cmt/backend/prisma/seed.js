@@ -57,30 +57,7 @@ async function main() {
 
   await seedProfessors(prisma, testUsers);
 
-
-  console.log(`✅ Created 2 professors:`);
-  console.log(`   • Professor 1 (id="pao1234"): John Smith - prof1@rit.edu`);
-  console.log(`   • Professor 2 (id="pao1235"): Sarah Johnson - prof2@rit.edu`);
-
-  console.log(`✅ Created 3 course templates:`);
-  console.log(`   • Professor 1 templates: 2`);
-  console.log(`   • Professor 2 templates: 1`);
-
-  // Summary
-  console.log('\n' + '='.repeat(70));
   console.log('🎉 Database seeding completed successfully!');
-  console.log('='.repeat(70));
-  console.log(`📊 Summary:`);
-  console.log(`   • Professors:         2`);
-  console.log(`     - Professor 1 (id="pao1234"): John Smith (prof1@rit.edu)`);
-  console.log(`     - Professor 2 (id="pao1245"): Sarah Johnson (prof2@rit.edu)`);
-  console.log(`   • Course Templates:   3 (Prof 1: 2, Prof 2: 1)`);
-  console.log('='.repeat(70));
-  console.log('\n✨ You can now use the application with test data!');
-  console.log('\n💡 Login credentials:');
-  console.log('   • Professor 1: prof1@rit.edu / test123');
-  console.log('   • Professor 2: prof2@rit.edu / test123');
-  console.log('   • Student:     student1@rit.edu / test123');
 }
 
 main()
