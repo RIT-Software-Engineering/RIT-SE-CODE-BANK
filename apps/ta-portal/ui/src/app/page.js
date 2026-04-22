@@ -87,8 +87,7 @@ export default function Home() {
               },
             }}
           >
-            Find <span className="orange-text">opportunities</span> to be a teaching assistant for the Software Engineering Department and{" "}
-            <span className="orange-text">manage</span> your teaching assistant responsibilities
+            Students can <span className="orange-text">find opportunities</span> to be a teaching assistant for the Software Engineering Department. Faculty and admin can <span className="orange-text">manage</span> job postings and <span className="orange-text">hire</span> teaching assistants.
           </Box>
         </Box>
       </Container>
