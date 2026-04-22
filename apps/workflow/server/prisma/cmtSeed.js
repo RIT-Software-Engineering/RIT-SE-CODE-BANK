@@ -23,12 +23,9 @@ async function deleteWorkflows() {
 async function main() {
   
 
-  if (process.env.NODE_ENV === "production") {
-    throw Error(
-      "This action should only be used in development for populating the database with test data."
-    );
-  }
+  if (process.env.NODE_ENV !== "production") {
     await deleteWorkflows();
+  }
 
   ///////////
   // Users //
