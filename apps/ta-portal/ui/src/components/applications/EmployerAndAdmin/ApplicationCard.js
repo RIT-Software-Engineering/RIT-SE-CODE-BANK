@@ -267,7 +267,7 @@ export default function ApplicationCard({
                   {application.candidateEmail}
                 </Typography>
                 <Typography color="text.secondary" fontWeight="medium">
-                  Position Professor: {jobPosition.employer?.user?.fname} {jobPosition.employer?.user?.lname}
+                  Instructor: {jobPosition.employer?.user?.fname} {jobPosition.employer?.user?.lname}
                 </Typography>
                 <Typography color="text.secondary">
                   UID: {application.candidateUID}
