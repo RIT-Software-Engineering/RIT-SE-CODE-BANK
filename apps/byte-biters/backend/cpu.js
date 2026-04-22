@@ -28,6 +28,11 @@ export class CPU {
         this.initialMemory = null;
     }
 
+    /**
+     * Loads the assembled program into memory based on the initial pc value of 0o200
+     * Saves an initial copy of the assembled memory and marks the cpu as assembled
+     * @param {number[]} words The list of 16-bit words that make up the program. 
+     */
     loadProgram(words) {
         let addr = 0o200;
         for(let word of words) {
@@ -50,6 +55,10 @@ export class CPU {
         return this.halted;
     }
 
+    /**
+     * Retrieves a list of the registers converted to hexadecimal values
+     * @return {string[]} The list of registers in hex
+     */
     getRegisters() {
         return [...this.registers].map(r => r.toString(16).toUpperCase());
     }
@@ -62,6 +71,13 @@ export class CPU {
         return {N: this.N, Z: this.Z, V: this.V, C: this.C};
     }
 
+    /**
+     * Sets the NZVC flags with the given values
+     * @param {boolean} newN The new N value
+     * @param {boolean} newZ The new Z value
+     * @param {boolean} newV The new V value
+     * @param {boolean} newC The new C value
+     */
     setFlags(newN, newZ, newV, newC) {
         this.N = newN;
         this.Z = newZ;
@@ -69,14 +85,28 @@ export class CPU {
         this.C = newC;
     }
 
+    /**
+     * Retreives a copy of the current memory
+     * @return {Uint8Array} The Uint8Array copy of the memory
+     */
     getMemory() {
         return new Uint8Array(this.memory.bytes);
     }
 
+    /**
+     * Reads a 16-bit number from memory at the given address
+     * @param {number} addr The memory address to read from
+     * @return {number} The 16-bit word stored at the address
+     */
     readWord(addr) {
         return this.memory.readWord(addr);
     }
 
+    /*
+    *Writes a new word to memory. Any changes are saved to memoryChange to be used by backStep
+    *@param word {number} the word to be written to memory
+    *@param addr {number} the location the word will be written to
+    */
     writeWord(word, addr) {
         const oldWord = this.readWord(addr);
         if(this.currentState){
@@ -86,6 +116,10 @@ export class CPU {
         this.memory.writeWord(addr, word);
     }
 
+    /*
+    *Fetches the current instruction word then increments the pc by 2
+    *@return {number} the 16 bit instruction
+    */
     fetch() {
         const pc = this.registers[REG.PC];
         const instr = this.readWord(pc);
@@ -93,6 +127,7 @@ export class CPU {
         return instr;
     }
 
+    //Allows the program to go forward by one line
     step() {
         if(!this.halted){
             this.currentState = {
@@ -117,9 +152,11 @@ export class CPU {
         }
     }
 
+    //Changes the registers and changed memory to go backward through steps
     backStep(){
         const lastState = this.pastState.pop();
 
+        //Keeps the values as decimal in the backend
         for (let i = 0; i < 8; i++) {
             const value = parseInt(lastState.registers[i], 16);
 
@@ -133,11 +170,17 @@ export class CPU {
             lastState.flags.V,
             lastState.flags.C
         );
+
         for(const change of lastState.memoryChange){
             this.memory.writeWord(change.addr, change.oldValue); 
-        }        
+        }
+
+        //Allows going forward after backstepping from the end
+        this.halted = false;
     }
 
+    //Resets the registers, flags, halted state, and past state to their default values
+    //Memory is reset to initial assembled state with initialMemory
     reset() {
         //reset the pointers
         this.registers = new Uint16Array(8);
