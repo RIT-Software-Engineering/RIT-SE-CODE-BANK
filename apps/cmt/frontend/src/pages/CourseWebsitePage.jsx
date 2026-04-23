@@ -50,7 +50,7 @@ export default function CourseWebsitePage() {
     return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
-  const generateCourseHTML = (course, sessions) => {
+  const  generateCourseHTML = (course, sessions) => {
     return `
     <!DOCTYPE html>
     <html>
@@ -111,7 +111,7 @@ export default function CourseWebsitePage() {
         <tbody>
           ${sessions
             .sort((a, b) => a.sessionNum - b.sessionNum)
-            .map(session => generateSessionRowHTML(session, visibleColumns, { local: true }))
+            .map(session => generateSessionRowHTML(session, visibleColumns))
             .join("")}
         </tbody>
       </table>
@@ -297,14 +297,12 @@ const MATERIAL_COLUMNS = [
   "Individual Assignment"
 ];
 
-function generateSessionRowHTML(session, visibleColumns, options = {}) {
+function generateSessionRowHTML(session, visibleColumns) {
   const materials = session.materials || [];
 
   const grouped = visibleColumns.map(col =>
     materials.filter(m => m.type === col && m.active)
   );
-
-  const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
 
   return `
     <tr>
@@ -324,16 +322,10 @@ function generateSessionRowHTML(session, visibleColumns, options = {}) {
                         ${item.label}
                       </a>`;
             }
-
-            if (item.filename) {
-              const href = options.local
-                ? `resources/${sanitize(item.filename)}`
-                : `/resources/download/${item.id}`;
-
-              return `<a href="${href}" target="_blank">${item.label}</a>`;
+            if (/href=".*"/.test(item.label)) {
+              return item.label.replace(/href=".*"/, 'href="resources/8-course-website.html"');
             }
-
-            return `<span>${item.label}</span>`;
+            return `<span>${item.label} This is a label for not a file</span>`;
           }).join("")}
         </td>
       `).join("")}
