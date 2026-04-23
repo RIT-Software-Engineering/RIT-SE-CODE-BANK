@@ -12,30 +12,62 @@ export default function App() {
   const [cpuState, setCpuState] = useState(backend.getState())
   const [code, setCode] = useState(`Write your code here...`)
 
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  })
+
+  const showToast = (message, type = "info") => {
+    setToast({
+      show: true,
+      message,
+      type,
+    })
+
+    setTimeout(() => {
+      setToast((prev) => ({
+        ...prev,
+        show: false,
+      }))
+    }, 1500)
+  }
+
+  const canAssemble = code.trim().length > 0
+  const canRun = cpuState?.isAssembled && !cpuState?.halted
+  const canStepForward = cpuState?.isAssembled && !cpuState?.halted
+  const canStepBackward = cpuState?.canBackStep
+  const canRestart = cpuState?.isAssembled || cpuState?.canBackStep
+
   // connects frontend to backend assemble function
   const onAssemble = () => {
     const state = backend.loadAssembly(code)
     setCpuState(state)
+    showToast("Assembly successful", "success")
   }
   // connects frontend to backend run function
   const onRun = () => {
     const state = backend.run()
     setCpuState(state)
+    showToast("Running program...", "warning")
   }
   //connects frontend to backend forward step function
   const onStepForward = () => {
     const state = backend.step()
     setCpuState(state)
+    showToast("Stepped forward", "warning")
   }
   //connects frontend to backend backward step function
   const onStepBackward = () => {
     const state = backend.backStep()
     setCpuState(state)
+    showToast("Stepped backward", "warning")
   }
   //connects frontend to backend restart function
   const onRestart = () => {
     const state = backend.reset()
     setCpuState(state)
+    showToast("Cleared program", "warning")
   }
 
   return (
@@ -47,19 +79,45 @@ export default function App() {
       {/* uses react resizeable panels, so the html tags are Group and Panel */}
       <Group>
         {/* left side */}
-        <Panel className="flex flex-col h-full" collapsible defaultSize={70} minSize={100}>
+        <Panel className="flex flex-col h-full" defaultSize={70} minSize={200}>
           <Group orientation="vertical">
 
-            <Panel>
+            <Panel minSize={100} className="relative">
               {/* refer to CodeEditor Component */}
               <CodeEditor code={code} setCode={setCode} />
+              <div
+                className={`
+                  absolute bottom-3 left-1/2 -translate-x-1/2 z-20
+                  px-4 py-2 rounded-md shadow-md text-sm font-medium
+                  transition-all duration-300
+                  ${toast.show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"}
+                  ${
+                    toast.type === "success"
+                      ? "bg-green-600 text-white"
+                      : "bg-orange-500 text-white"
+                  }
+                `}
+              >
+                {toast.message}
+              </div>
             </Panel>
 
-            <Panel className="flex flex-col h-full min-h-0 w-full" collapsible minSize={100}>
+            <Panel className="flex flex-col h-full min-h-0 w-full" minSize={200}>
               
               <div className="bg-border-primary min-h-2 "></div>
               {/* refer to ControlPanel component */}
-              <ControlPanel onAssemble={onAssemble} onRun={onRun} onStepForward={onStepForward} onStepBackward={onStepBackward} onRestart={onRestart}></ControlPanel>
+              <ControlPanel 
+                onAssemble={onAssemble} 
+                onRun={onRun} 
+                onStepForward={onStepForward} 
+                onStepBackward={onStepBackward} 
+                onRestart={onRestart}
+                canAssemble={canAssemble}
+                canRun={canRun}
+                canStepForward={canStepForward}
+                canStepBackward={canStepBackward}
+                canRestart={canRestart}
+              ></ControlPanel>
 
               {/* refer to RegisterPanel component */}
               <RegisterPanel registers={cpuState.registers} flags={cpuState.flags}></RegisterPanel>
@@ -75,7 +133,7 @@ export default function App() {
         </Panel>
 
         {/* right side */}
-        <Panel className="flex flex-row flex-1 h-full" collapsible defaultSize={30} minSize={100}>
+        <Panel className="flex flex-row flex-1 h-full" defaultSize={30} minSize={200}>
           <div className="bg-border-primary min-w-2"></div>
           {/* refer to SidePanel component */}
           <SidePanel></SidePanel>
