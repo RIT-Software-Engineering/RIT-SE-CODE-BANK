@@ -102,11 +102,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
         CMTJsonFetch('POST', `/course${selectedTemplate ? `/${selectedTemplate.id}` : ''}`, 
             { 
-            courseCode, 
-            courseName, 
-            color,
-            workflowId: selectedTemplate?.workflowId,
-            workflowStateid: selectedTemplate?.workflowStateId
+            courseCode, courseName, color, workflowId: selectedTemplate?.workflowId,
             }).then(async response => {
             setSubmitButtonElement(<><Check />Created!</>)
             const json = await response.json();

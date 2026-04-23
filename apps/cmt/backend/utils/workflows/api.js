@@ -181,6 +181,41 @@ export async function objectToNewWorkflow(workflow, ownerId) {
   return createdWorkflow;
 }
 
+export async function cloneWorkflowState(originalWorkflow, newWorkflow,){
+  for (let index = 0; index < originalWorkflow.length; index++) {
+    const action = originalWorkflow[index];
+    const newAction = newWorkflow[index];
+    if (action.actionType === 'simple' && action.actionStates[0].stateType === 'completed'){
+      await workflowsFetch("POST", "/states/handleSubmit", {actionStateId: newAction.actionStates[0].id});
+    }
+    else {
+      if (action.childActions){
+        for (let j = 0; j < action.childActions.length; j++) {
+          const childAction = action.childActions[j];
+          const newChildAction = newAction.childActions[j];
+          await cloneStates(childAction, newChildAction);
+        }
+      }
+    }
+    
+  }
+}
+
+async function cloneStates(action, newAction){
+  if (action.actionType === 'simple' && action.actionStates[0].stateType === 'completed'){
+    await workflowsFetch("POST", "/states/handleSubmit", {actionStateId: newAction.actionStates[0].id});
+  }
+  else {
+    if (action.childActions){
+      for (let j = 0; j < action.childActions.length; j++) {
+        const childAction = action.childActions[j];
+        const newChildAction = newAction.children[j];
+        await cloneStates(childAction, newChildAction);
+      }
+    }
+  }
+}
+
 /**
  * Basically the same as the function above but for the Workflow builder.
  * The Workflow Builder never starts with any actions so all that code is cut out.

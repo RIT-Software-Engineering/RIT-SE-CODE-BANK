@@ -1,5 +1,5 @@
 import express from 'express'
-import { objectToNewWorkflow, workflowsFetch } from '../utils/workflows/api.js'
+import { cloneWorkflowState, objectToNewWorkflow, workflowsFetch } from '../utils/workflows/api.js'
 import { CMTActionToActionWithContexts } from '../utils/workflows/context.js'
 import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { PrismaClient } from '../prisma/generated/client/index.js'
@@ -190,20 +190,22 @@ router.post('/:templateId', async (req, res) => {
     try {
         const professorId = req.user.uid;
         const {templateId} = req.params;
-        const {color, workflowId, workflowStateId} = req.body;
+        const {color, workflowId} = req.body;
 
         let sessionActions;
         let workflow;
+        let actionResponse;
         await workflowsFetch("GET", `workflows/${workflowId}`).then(async response => {
             const workflowBase = response;
             let actions;
             if (workflowBase.rootActionId){
-                const actionResponse = await workflowsFetch("GET", `/actions?workflowId=${workflowBase.id}`);
+                actionResponse = await workflowsFetch("GET", `/actions?workflowId=${workflowBase.id}`);
                 function parseMetadata(action) {
                     action.metadata = compressedMetadataToObject(action.metadata)
                     if (action.childActions) for (action of action.childActions) parseMetadata(action)
                 }
                 actionResponse.forEach(action => parseMetadata(action))
+                actionResponse = actionResponse?.slice(0, -1); // Remove the publish template action
                 actions = actionResponse 
             }
             else
@@ -226,17 +228,21 @@ router.post('/:templateId', async (req, res) => {
                     include: {
                         material: true
                     }
-                }
+                },
+                Resource: true
             }
         });
 
         // Do everything in a transaction so if one thing fails it reverts the DB
         await prisma.$transaction(async () => {
             const createdWorkflow = await objectToNewWorkflow(workflow, professorId)
-
+            console.log(createdWorkflow)
+            
             const createdState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdWorkflow.id }) // Create state
             console.log(`Created workflow action state with id ${createdState.id}`)
-
+            const fullCreatedWorkflow = await workflowsFetch("GET", `/actions/?workflowId=${createdWorkflow.id}`);
+            await cloneWorkflowState(actionResponse, fullCreatedWorkflow);
+            
             const newCourse = await prisma.course.create({
                 data: {
                     classId: course.classId,
@@ -258,30 +264,57 @@ router.post('/:templateId', async (req, res) => {
                 courseId: Number(newCourse.id)
             }));
 
-            if (sessionData)
-            {
-                for (let i=0; i < Math.max(course.sessions.length, sessionData.length); i++){
-                    const session = await prisma.session.create({
-                        data: {
-                            sessionNum: i+1,
-                            courseId: Number(newCourse.id)
-                        },
-                    });
-                    if (course.sessions[i]?.material.length > 0){
-                        course.sessions[i]?.material.forEach(async material => {
-                            await prisma.sessionMaterial.create({
-                                data: {
-                                    sessionNum: i,
-                                    sessionId: session.id,
-                                    type: material.type,
-                                    body: material.body,
-                                    label: material.label
-                                }
-                            })
+            let resourcePairs = [];
+            course.Resource.forEach(async resource => {
+                const newResource = await req.prisma.resource.create({
+                    data: {
+                        name: resource.name.replace(/\..+$/, ""),
+                        filename: resource.filename,
+                        mimeType: resource.mimeType,
+                        filePath: resource.filePath,
+                        courseId: Number(newCourse.id),
+                    },
+                });
+                resourcePairs.push({old: resource.id, new: newResource.id})
+            })
+
+            for (let i=0; i < Math.max(course.sessions?.length, sessionData.length); i++){
+                const session = await prisma.session.create({
+                    data: {
+                        sessionNum: i+1,
+                        courseId: Number(newCourse.id)
+                    },
+                });
+                if (course.sessions[i]?.material.length > 0){
+                    course.sessions[i]?.material.forEach(async material => {
+                        let actualLabel = material.label;
+                        let actualBody = material.body;
+                        let labelResourceMatches = material.label.match(/\/api\/cmt\/resources\/download\/.{36}/g);
+                        let bodyResourceMatches = material.body.match(/\/api\/cmt\/resources\/download\/.{36}/g);
+
+                        labelResourceMatches?.forEach(match => {
+                            const newResourceId = resourcePairs.find(resource => match.match(resource.old))?.new;
+                            actualLabel = actualLabel.replace(match, `/api/cmt/resources/download/${newResourceId}`);
+                        });
+
+                        bodyResourceMatches?.forEach(match => {
+                            const newResourceId = resourcePairs.find(resource => match.match(resource.old))?.new;
+                            actualBody = actualBody.replace(match, `/api/cmt/resources/download/${newResourceId}`);
+                        });
+
+                        await prisma.sessionMaterial.create({
+                            data: {
+                                sessionNum: i,
+                                sessionId: session.id,
+                                type: material.type,
+                                body: actualBody,
+                                label: actualLabel 
+                            }
                         })
-                    }
+                    })
                 }
             }
+
 
             // For simplicity of the frontend, return minimal information, since the GET for courses will contain all the info needed, and will be called much more often.
             res.json({ course: newCourse })
