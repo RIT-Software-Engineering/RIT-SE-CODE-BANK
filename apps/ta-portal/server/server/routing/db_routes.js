@@ -735,32 +735,24 @@ router.get("/positions/:id/is-full", async (req, res) => {
  * @body    {string} candidateUsername - The username of the candidate to hire.
  * @body    {string} applicationId - The ID of the application record.
  * @body    {string} jobPositionId - The ID of the job position.
- * @body    {number} employeeId - The employee ID to assign.
- * @body    {Object} commentData - Comment data for the hiring action.
+ * @body    {Object} messageData - Comment data for the hiring action.
  * @returns {Object} The updated application record.
  */
 router.post("/hire", async (req, res) => {
   try {
-    const { candidateUsername, applicationId, jobPositionId, employeeId, commentData } = req.body;
+    const { candidateUsername, applicationId, jobPositionId, messageData } = req.body;
 
     // Validate required fields
-    if (!candidateUsername || !applicationId || !jobPositionId || !employeeId || !commentData) {
+    if (!candidateUsername || !applicationId || !jobPositionId || !messageData) {
       return res.status(400).json({ 
-        error: "Missing required fields: candidateUsername, applicationId, jobPositionId, employeeId, and commentData are all required." 
+        error: "Missing required fields: candidateUsername, applicationId, jobPositionId, and messageData are all required." 
       });
     }
 
-    // Validate commentData structure
-    if (!commentData.author || !commentData.comment) {
+    // Validate messageData structure
+    if (!messageData.author) {
       return res.status(400).json({ 
-        error: "commentData must contain 'author' and 'comment' fields." 
-      });
-    }
-
-    // Validate employeeId is a number
-    if (typeof employeeId !== 'number' || isNaN(employeeId)) {
-      return res.status(400).json({ 
-        error: "employeeId must be a valid number." 
+        error: "messageData must contain 'author' field." 
       });
     }
 
@@ -768,8 +760,7 @@ router.post("/hire", async (req, res) => {
       candidateUsername, 
       parseInt(applicationId), 
       jobPositionId, 
-      employeeId, 
-      commentData
+      messageData
     );
     
     res.status(200).json(updatedApplication);

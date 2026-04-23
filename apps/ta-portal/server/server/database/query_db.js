@@ -1020,10 +1020,9 @@ try {
  * @param {string} candidateUsername - The username of the candidate being hired.
  * @param {number} applicationId - The ID of the candidate's job application.
  * @param {string} jobPositionId - The ID of the job position being filled.
- * @param {number} employeeId - The unique ID for the employee record.
- * @param {Object} commentData - Metadata for the hiring comment.
- * @param {string} commentData.author - Who performed the hiring action.
- * @param {string} commentData.comment - Context about the hiring action.
+ * @param {Object} messageData - Metadata for the hiring comment.
+ * @param {string} messageData.author - Who performed the hiring action.
+ * @param {string} messageData.comment - Context about the hiring action.
  * @returns {Promise<Object>} - The updated job application record.
  *
  * @throws {Error} If any DB operation fails (e.g., application/position not found).
@@ -1032,8 +1031,7 @@ async function hireCandidateForJobPosition(
   candidateUsername,
   applicationId,
   jobPositionId,
-  employeeId,
-  commentData
+  messageData
 ) {
   try {
     // =====================================================
@@ -1051,10 +1049,10 @@ async function hireCandidateForJobPosition(
     await prisma.comment.create({
       data: {
         foreignTableName: "JobPositionApplicationHistory",
-        author: commentData.author,
+        author: messageData.author,
         foreignKey: String(applicationId),
         status: "HIRED",
-        comment: commentData.comment,
+        comment: messageData.comment || "No message provided",
         timestamp: new Date(),
       },
     });
@@ -1062,7 +1060,7 @@ async function hireCandidateForJobPosition(
     // =====================================================
     // 3) Promote candidate to EMPLOYEE role
     // =====================================================
-    await prisma.user.update({
+    const user = await prisma.user.update({
       where: { username: candidateUsername },
       data: { role: "EMPLOYEE" },
     });
@@ -1071,13 +1069,13 @@ async function hireCandidateForJobPosition(
     // 4) Ensure Employee record exists & is ACTIVE
     // =====================================================
     await prisma.employee.upsert({
-      where: { id: employeeId },
+      where: { id: user.uid },
       update: {
         employeeStatus: "ACTIVE",
         username: candidateUsername,
       },
       create: {
-        id: employeeId,
+        id: user.uid,
         username: candidateUsername,
         employeeStatus: "ACTIVE",
       },
@@ -1089,7 +1087,7 @@ async function hireCandidateForJobPosition(
     await prisma.jobPositionHistory.create({
       data: {
         jobPositionId,
-        employeeId,
+        employeeId: user.uid,
         jobPositionHistoryStatus: "ACTIVE",
       },
     });
@@ -1126,7 +1124,7 @@ async function hireCandidateForJobPosition(
       await prisma.comment.create({
         data: {
           foreignTableName: "JobPosition",
-          author: commentData.author,
+          author: messageData.author,
           foreignKey: String(jobPositionId),
           status: "ACTIVE",
           comment:
@@ -1158,7 +1156,7 @@ async function hireCandidateForJobPosition(
               recipient: { name: candidateName, email: candidateEmail },
               item: { id: jobPositionId, title: jobPosition.course?.name, ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}` },
               status: { new: 'HIRED' },
-              comment: commentData?.comment,
+              comment: messageData?.comment || "",
               flags: { hired: true },
               cta: { url: await buildAppLink({ jobPositionId, applicationId }) },
               appName: 'TA Portal',
@@ -1187,7 +1185,7 @@ async function hireCandidateForJobPosition(
                   candidateEmail: candidateEmail,
                 },
                 status: { new: 'HIRED' },
-                comment: commentData?.comment,
+                comment: messageData?.comment || "",
                 flags: { hired: true },
                 cta: { url: await buildAppLink({ jobPositionId, applicationId }) },
                 appName: 'TA Portal',
@@ -1215,7 +1213,7 @@ async function hireCandidateForJobPosition(
                 recipient: { email: adminEmail },
                 item: { id: jobPositionId, title: jobPosition.course?.name, ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}` },
                 status: { new: 'HIRED' },
-                comment: commentData?.comment,
+                comment: messageData?.comment,
                 flags: { hired: true },
                 cta: { url: await buildAppLink({ jobPositionId, applicationId }) },
                 appName: 'TA Portal',
