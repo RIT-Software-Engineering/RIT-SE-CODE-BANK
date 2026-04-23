@@ -50,7 +50,15 @@ export default function CourseWebsitePage() {
     return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
-  const  generateCourseHTML = (course, sessions) => {
+  const  generateCourseHTML = async (course, sessions) => {
+    const rows = await Promise.all(
+      sessions
+        .sort((a, b) => a.sessionNum - b.sessionNum)
+        .map(session =>
+          generateSessionRowHTML(session, visibleColumns)
+        )
+    );
+
     return `
     <!DOCTYPE html>
     <html>
@@ -109,10 +117,7 @@ export default function CourseWebsitePage() {
           </tr>
         </thead>
         <tbody>
-          ${sessions
-            .sort((a, b) => a.sessionNum - b.sessionNum)
-            .map(session => generateSessionRowHTML(session, visibleColumns))
-            .join("")}
+          ${rows.join("")}
         </tbody>
       </table>
 
@@ -121,10 +126,10 @@ export default function CourseWebsitePage() {
     `;
   };
 
-  const downloadHTML = () => {
+  const downloadHTML = async () => {
     if (!selectedCourseObj) return;
 
-    const html = generateCourseHTML(selectedCourseObj, sessions);
+    const html = await generateCourseHTML(selectedCourseObj, sessions);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
 
@@ -173,7 +178,7 @@ export default function CourseWebsitePage() {
     }));
 
     // Generate Index HTML
-    const html = generateCourseHTML(selectedCourseObj, sessions);
+    const html = await generateCourseHTML(selectedCourseObj, sessions);
 
     // Add HTML file to course folder
     zip.file(`public_html/${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`, html);
@@ -297,38 +302,70 @@ const MATERIAL_COLUMNS = [
   "Individual Assignment"
 ];
 
-function generateSessionRowHTML(session, visibleColumns) {
+async function generateSessionRowHTML(session, visibleColumns) {
   const materials = session.materials || [];
 
   const grouped = visibleColumns.map(col =>
     materials.filter(m => m.type === col && m.active)
   );
 
+  const columnsHTML = await Promise.all(
+    grouped.map(async colItems => {
+      const itemsHTML = await Promise.all(
+        colItems.map(async item => {
+          if (item.body) {
+            const safeBody = item.body
+              .replace(/\\/g, "\\\\")
+              .replace(/'/g, "\\'")
+              .replace(/\n/g, "\\n");
+
+            return `<a href="#"
+                      onclick="const w=window.open(); w.document.write('${safeBody}'); w.document.close(); return false;">
+                      ${item.label}
+                    </a>`;
+          }
+
+          if (/href=".*"/.test(item.label)) {
+            const match = item.label.match(/href="([^"]*)"/);
+            if (!match) return item.label;
+
+            const href = match[1];
+            const id = href.split('/').filter(Boolean).pop();
+
+            try {
+              const response = await CMTJsonFetch("GET", `/resources/id/${id}`);
+              const resource = await response.json();
+
+              if (!resource || !resource.filename) {
+                return item.label;
+              }
+              
+              const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
+              const filename = sanitize(resource.filename)
+
+              return item.label.replace(
+                /href="[^"]*"/,
+                `href="resources/${filename}"`
+              );
+
+            } catch (err) {
+              console.error("Failed to fetch resource:", err);
+              return item.label;
+            }
+          }
+
+          return `<span>${item.label}</span>`;
+        })
+      );
+
+      return `<td>${itemsHTML.join("")}</td>`;
+    })
+  );
+
   return `
     <tr>
       <td>${session.sessionNum}</td>
-
-      ${grouped.map(colItems => `
-        <td>
-          ${colItems.map(item => {
-            if (item.body) {
-              const safeBody = item.body
-                .replace(/\\/g, "\\\\")
-                .replace(/'/g, "\\'")
-                .replace(/\n/g, "\\n");
-              
-              return `<a href="#"
-                         onclick="const w=window.open(); w.document.write('${safeBody}'); w.document.close(); return false;">
-                        ${item.label}
-                      </a>`;
-            }
-            if (/href=".*"/.test(item.label)) {
-              return item.label.replace(/href=".*"/, 'href="resources/8-course-website.html"');
-            }
-            return `<span>${item.label} This is a label for not a file</span>`;
-          }).join("")}
-        </td>
-      `).join("")}
+      ${columnsHTML.join("")}
     </tr>
   `;
 }

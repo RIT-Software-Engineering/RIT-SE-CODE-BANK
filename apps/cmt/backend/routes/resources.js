@@ -141,6 +141,29 @@ router.put('/:id', async (req, res) => {
 })
 
 /**
+ * GET /api/cmt/resources/id/:id
+ * Get a single resource by ID
+ */
+router.get('/id/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const resource = await req.prisma.resource.findUnique({
+            where: { id },
+        });
+
+        if (!resource) {
+            return res.status(404).json({ error: `Resource with ID ${id} not found` });
+        }
+
+        res.json(resource);
+    } catch (error) {
+        console.error('Error fetching resource:', error);
+        res.status(500).json({ error: `Error fetching resource: ${error}` });
+    }
+});
+
+/**
  * DELETE /api/cmt/resources/:id
  * Delete resource and file
  */
