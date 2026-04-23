@@ -17,28 +17,17 @@ dotenv.config({
 const prisma = new PrismaClient();
 
 async function main() {
+  
+  // Since there is never(?) a reason to duplicate seed data, don't run this seed file if its already been ran.
+  // This is to allow start scripts to remain idempotent.
+  // If you are looking to delete existing data, use prisma commands like "npx prisma migrate reset"
+  const doesSeedDataExist = prisma.professor.findFirst({ where: { id: "1" } }) 
+  if (doesSeedDataExist) {
+    console.log("WARNING: Skipping seeding as professor with id '1' already exists");
+    return
+  }
+  
   console.log('🌱 Starting database seeding...');
-
-  console.log('🗑️  Clearing existing data...');
-
-  // deepest dependencies
-  await prisma.sessionMaterial.deleteMany({});
-  await prisma.tBMember.deleteMany({});
-
-  // next level
-  await prisma.session.deleteMany({});
-  await prisma.tBTeam.deleteMany({});
-
-  // next
-  await prisma.tBEnrollment.deleteMany({});
-  await prisma.tBTeamSet.deleteMany({});
-
-  // delete resources
-  await prisma.resource.deleteMany({});
-
-  // parent tables
-  await prisma.course.deleteMany({});
-  await prisma.professor.deleteMany({});
 
   // 1. Create Professors with specific IDs
   console.log('👨‍🏫 Creating professors...');

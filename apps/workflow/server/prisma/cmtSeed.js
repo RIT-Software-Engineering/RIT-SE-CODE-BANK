@@ -2,30 +2,16 @@ const { PrismaClient } = require("@prisma/client");
 const { createWorkflow } = require("./seedUtils");
 const prisma = new PrismaClient();
 
-/**
- * Delete all the data in the workflows database
- */
-
-async function deleteWorkflows() {
-    await prisma.action.deleteMany({});
-    await prisma.actionState.deleteMany({});
-    await prisma.workflowState.deleteMany({});
-    await prisma.metadata.deleteMany({});
-    await prisma.permission.deleteMany({});
-    await prisma.tag.deleteMany({});
-    await prisma.workflowStateParticipant.deleteMany({});
-    await prisma.workflowAttributes.deleteMany({});
-}
-
-/**
- * Main function
- */
 async function main() {
-  
 
-  if (process.env.NODE_ENV !== "production") {
-    await deleteWorkflows();
-  }
+    // Since there is never(?) a reason to duplicate seed data, don't run this seed file if its already been ran.
+    // This is to allow start scripts to remain idempotent.
+    // If you are looking to delete existing data, use prisma commands like "npx prisma migrate reset"
+    const doesSeedDataExist = prisma.action.findFirst({ where: { name: "Create Course" } }) 
+    if (doesSeedDataExist) {
+        console.log("WARNING: Skipping seeding as workflow with name 'create course' already exists.");
+        return
+    }
 
   ///////////
   // Users //

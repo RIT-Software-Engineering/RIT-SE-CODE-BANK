@@ -47,6 +47,8 @@
   },
   "scripts": {
     "start": "npx dotenv -e ./../.env -- react-scripts start",
+    "stop": "npx kill-port 3000 3010",
+    "start-cmt": "npm run stop && npm run start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -73,6 +75,9 @@
   "nx": {
     "targets": {
       "start": {
+        "continuous": true
+      },
+      "start-cmt": {
         "continuous": true
       }
     }

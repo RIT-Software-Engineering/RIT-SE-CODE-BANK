@@ -4,7 +4,9 @@
   "description": "Backend API for Course Management Calendar",
   "main": "server.js",
   "scripts": {
-    "start": "node --watch server.js"
+    "start": "npx dotenv -e ./../.env -- node --watch server.js",
+    "stop": "npx kill-port 5010",
+    "start-cmt": "npm run stop && npx dotenv -e ./../.env -- npx prisma migrate deploy && node prisma/seed.js && npm run start"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
@@ -35,6 +37,9 @@
   "nx": {
     "targets": {
       "start": {
+        "continuous": true
+      },
+      "start-cmt": {
         "continuous": true
       }
     }

@@ -7,9 +7,9 @@
     "apps/cmt/backend"
   ],
   "scripts": {
-    "prepare-cmt": "npm i && cd apps/cmt && npx prisma db push --schema backend/prisma/schema.prisma && cd ../workflows/server && npx prisma db push",
-    "start-cmt": "npm run stop-cmt && npm run prepare-cmt && npx nx run-many -t start -p cmt-frontend cmt-backend workflows-server",
-    "stop-cmt": "npx kill-port 3000 3001 5010",
+    "check-migrations-workflows": "cd apps/workflow/server && npx prisma migrate dev",
+    "start-cmt": "npm run check-migrations-workflows && npx nx run-many -t start-cmt -p cmt-frontend cmt-backend workflows-server",
+    "stop-cmt": "echo 'stopping in case nx run-many didn't stop automatically' && npx nx run-many -t stop -p cmt-frontend cmt-backend workflows-server",
     "setupportal": "node ./scripts/setupportal.js",
     "startportal": "node ./scripts/startportal.js",
     "stopportal": "node ./scripts/stopportal.js"

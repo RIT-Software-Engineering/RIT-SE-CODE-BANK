@@ -7,53 +7,61 @@
 - Confirm your version by running `node -v` in any directory.
 
 > Common issues:
-> - If installation was successful but your OS doesn't recognize the command, try to create a new terminal and try again. If the issue persists, manually check your OS environment variables. In Windows, the variable is likely `NODE_HOME`. Ensure it points to the installed version of Node.
+> 
+> If installation was successful but your OS doesn't recognize the command, try to create a new terminal and try again. If the issue persists, manually check your OS environment variables. In Windows, the variable is likely `NODE_HOME`. Ensure it points to the installed version of Node.
 
 ### 2. Install Project Dependencies
 
 - In the root of the repository, run `npm install`
 
-> - While unlikely, you may need to run `npm i --legacy-peer-deps`. If this happens, consider attempting to downgrade conflicting packages.
+> While unlikely, you may need to run `npm i --legacy-peer-deps`. If this happens, consider attempting to downgrade conflicting packages.
 
 ### 3. Install MariaDB
 
 Two options: native or containerized. If you have Docker Desktop already setup or are familiar with containers, I recommend containerized.
     
-- **Containerized**: Download [this image](https://www.docker.com/products/docker-desktop/) and run it
+- **Containerized**: Inside the Docker Desktop terminal (or your normal terminal), run this command:
+    
+    `docker run --name mariadb -p 3306:3306 -e MARIADB_ROOT_PASSWORD=root_password mariadb`
+
 - **Native**: Download and run [the installer](https://mariadb.org/download/?t=mariadb&p=mariadb&r=12.1.2&os=windows&cpu=x86_64&pkg=msi&mirror=acorn)
 
 > The latest version of MariaDB should work. If not, downgrade until a working version is found and then update these instructions. For reference, my version at the time of writing was 11.8.2
 
+> When using containers, note that the value for "--name" and "-e MARAIDB_ROOT_PASSWORD" is abritrary but must remain consistent with other parts of your setup.
+> The password is important for obvious reasons (it should be the same as in your .env)
+> The name only matters when sending requests from containers to other containers. In that case, youll want docker "networks".
+
 ### 4. Setup Environment Variables
 #### CMT
-1. Navigate to `apps/cmt/cmt-project`
+1. Navigate to `apps/cmt`
 2. Copy `.env.sample` (or `.env.staging`, if it exists, is probably better) and rename it `.env`
-3. Fill out values, especially your connection string
+3. Fill out values, especially your connection string. If copying the staging file, any "https://apps-staging.se.rit.edu" should turn into "http://localhost:(port_number)" where port_number is probably 3306 (but not always, use your own judgement).
 #### Workflows
 1. Navigate to `apps/workflows/server` and repeat steps 2 & 3 above
 
 
 ### 5. Prisma Setup
-This whole step is optional, since the custom setup script can do this. Using the startup setup is recommended, but these instructions remain in case of errors or preference. If you do this step, you will need your MariaDB server/container running.
-
-To use the startup script, go to the root of the repository and run `npm run setup-cmt`
+This whole step is optional, since the custom start script can do this. Using the start setup is recommended for easy use, but these instructions remain in case of errors or preference (By "start script", I mean running `npm start-cmt` at the root of the repository).
 
 We will both create a Prisma object for the code to use, and will also push that schema to the database. This means you will need your database running.
 
 1. Start MariaDB server/container
-2. **CMT**: Navigate to `apps/cmt/cmt-project` and run `npx prisma db push`
-3. **Workflows**: Navigate to `apps/workflows/server` and run `npx prisma db push`
+2. **CMT**: Navigate to `apps/cmt` and run `npx prisma db push --schema --skip-seed backend/prisma/schema.prisma` and `node prisma/seed.js`
+3. **Workflows**: Navigate to `apps/workflows/server` and run `npx prisma migrate dev --skip-seed` and `node prisma/cmtSeed.js`
+
+> The seed files need to be ran for some basic CMT functionality. I specify --skip-seed and then run the default seed file anyways for explicitness' sake.
+
+> Step 2 is subject to change once CMT has to start using migrations.
 
 #### Congratulations! Your environment should be set up.
-
-You can also run `node prisma/seed.js` from `apps/cmt/cmt-project`, which will seed your database with some convenient testing data.
 
 ---
 
 ## Running The Developer Environment
 You can either use the start script, or run the servers manually. Either way, you will need to start the databse, if you haven't already.
 
-1. Start MariaDB server/container
+**1. Start MariaDB server/container**
 > Common issues:
 > - If you are having port problems, make sure that your MariaDB instance and your connection strings have port 3306, the default mariaDB port. 
 > - If mariaDB won't start due to the port being in use, it may be due to a MySQL server running. Either way, find the process ID according to your OS and kill the process.
@@ -64,13 +72,18 @@ You can either use the start script, or run the servers manually. Either way, yo
 - Run `npm run start-cmt`
 - You can navigate the resultant terminal with enter/esc and your arrow keys. If you dislike this display, then try the manual option.
 
+> If you want to debug these scripts, here is a note on Nx:
+> - `nx run-many -t start-cmt -p [projects]` means that the "start-cmt" script is being called in each project. A project's name comes from the package.json in each directory referred to in the "workspaces" field in the root package.json. While projects and packages are technically distinct concepts, Nx automatically turns packages into projects.
+
 #### 2. (Option 2): Manual
 
 Open 3 terminals and run this in each.
 
-- **CMT Frontend**: In `apps/cmt/cmt-project`, run `npm run start`
-- **CMT Backend**: In `apps/cmt/cmt-project/src/backend`, run `npm run dev`
-- **Workflows**: In `apps/workflow/server`, run `npm run start`
+- **CMT Frontend**: In `apps/cmt/frontend`, run `npm run start-cmt`
+- **CMT Backend**: In `apps/cmt/backend`, run `npm run start-cmt`
+- **Workflows**: In `apps/workflow/server`, run `npm run start-cmt`
+
+> These scripts use extra commands to hopefully help your database stay in sync, stop the previously running server, etc. If you want minimal extra commands, use `npm run start`. There are some `dotenv -e` commands but those are generally neccesary
 
 ---
 ## Linting
@@ -82,14 +95,16 @@ The two sources of linting in this project are Typescript and ESLint. Even thoug
 > **Disclaimer**: ESLint will often have issues, given that this is a monorepo. To fix this, add the following to your settings.json:
 > ```
 > "eslint.workingDirectories": [
->         { "directory": "apps/cmt/cmt-project", "changeProcessCWD": true }
+>         { "directory": "apps/cmt", "changeProcessCWD": true }
 >     ]
 > ```
 > You can get to the settings.json by pressing `ctrl` + `,`, then searching "eslint working directory"
+>
+> I'm not sure of the best solution when it comes to other workspaces, but Typescript is the biggest source of help anyways.
 
 **Command Line Linting**: You can also lint CMT through the following commands:
-- **Typescript (tsc)**: In `apps/cmt/cmt-project`, run `tsc`
-- **ESLint**: In `apps/cmt/cmt-project/`, run `npm run lint`
+- **Typescript (tsc)**: In `apps/cmt`, run `tsc`
+- **ESLint**: In `apps/cmt`, run `npm run lint`
 
 ---
 ## Keeping Everything in Sync
@@ -99,12 +114,44 @@ But, **when you make changes to the schema, those will not be automatically refl
 
 **Option 1: Script** 
 
-In the root of the repo, run `npm run setup-cmt` 
+In the root of the repo, rerun `npm run start-cmt`. If it was running before, make sure you `ctrl-c` or `q+q` it
 
 **Option 2: Manual**
 
-In `apps/cmt/cmt-project`, run `npx prisma db push`
+See Step 5 of the Developer Environment Setup section.
 
-You will likely be prompted with warnings about risky schema changes. In a lot of cases, data will have to be wiped. If you're okay with the warnings, say yes to the prompts.
+> You will likely be prompted with warnings about risky schema changes. In a lot of cases, data will have to be wiped. If you're okay with the warnings, say yes to the prompts.
 
-Important warning about data: Likely, you are being handed a version of the project that doesn't have any migrations. We've avoided migrations because we haven't ever needed to store user data across schema changes. In the near future, this may need to be done. Look at the documentation for Prisma migrations to find out more about keeping user data safe across schema changes.
+> Important warning about data: Likely, you are being handed a version of the project that doesn't have any migrations. We've avoided migrations because we haven't ever needed to store user data across schema changes. In the near future, this may need to be done. Look at the documentation for Prisma migrations to find out more about keeping user data safe across schema changes.
+
+---
+
+# CMT's startup Scripts
+> This reading is optional and only if you are wondering why the start scripts are how they are.
+
+While there is more high level information on how this repository uses npm in [this document](https://docs.google.com/document/d/1zm7hI2R7Hz0tgCx5eHXF9r4FrxAF3QfVFQjCfUWRb9g/edit?tab=t.0#heading=h.rquxpzgjogju), there are some specifics about how CMT leverages npm scripts to replace what might typically be a .js file.
+
+In a repository, it is helpful to have a command that someone can run that will do all the work of making sure databases are in-sync and migrated, and then also run the servers.
+
+Typically, one master script would spawn windows and call commands, but it leads to an "all-or-nothing" approach that can be annoying. If I just want to restart my frontend to make sure my environment variables are refreshed, I don't really want to wait a full minute for all the startup scripts, BUT, I still would like the convenience of having some commands called for me.
+
+Also, the script was 300 lines of vibe coded slop, so I didn't particularly like it.
+
+That's why in the package.jsons of the cmt frontend-and-backend, workflows server, and root directories, there are "start-cmt" scripts alongside the normal "start" scripts (exlcuding the "start" script at the root directory). While the "start" script contains the bare minimum for function, the "start-cmt" scripts contain several helper functions that try to cover several bases.
+
+In general, the root level package.json's job is to simply call all the other "start-cmt" scripts. But "prisma migrate dev" is interactive and so can't run inside the terminal that "nx run-many" spawns. So, we just call it before doing "nx run-many".
+
+**If you want to avoid all the gobbledegook, I reccomend running the prisma commands yourself and cd'ing into the directories yourself to run "npm run start". That will give you the least trouble if you're experienced.**
+If you want to do it this way but are maybe less experienced, then you can use the existing commands to guide you.
+
+BUT, please try it out, since it took a lot of work to make (: You can also use intermediate solutions, like instead of running "npm run start" in every project, you run "start-cmt", which should give you the helpful extra commands while not being inside the annoying "nx run-many" terminal.
+
+## Debugging
+
+A few pieces of advice when working with package.jsons and Nx:
+
+- When configuring a project's targets, both the `project.json` and the `nx` field in the `package.json` are read.
+    - Nx will automatically determine lots of things from your `package.json`, like turning scripts into targets, and inheriting the name.
+- We use dotenv-cli and --schema because we want our CMT frontend and backend to share the same .env file, BUT prisma and create-react-app need some extra guidance to still find the right environment/schema files.
+- The "--" that appears in `dotenv -e file --` is not a builtin operator like "&&". Its just how dotenv works.
+- Prefer composability. A package's scripts should only be concered with that package, and if a script exists at a high level while only affecting one package, ask yourself if that script should instead exist inside the package.
