@@ -1,3 +1,7 @@
+/**
+ * An object that can be used to look up the code and type
+ * of an instruction quickly by using a mnemonic.
+ */
 export const OPCODES = {
     //Branch operand
     BEQ: {code: 0o001400, type: "branch"},

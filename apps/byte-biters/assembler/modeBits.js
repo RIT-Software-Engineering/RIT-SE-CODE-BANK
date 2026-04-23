@@ -1,3 +1,4 @@
+//Used to cleanly get the mode number with the mode name.
 export const MODE_BITS = {
     register: 0,
     register_deferred: 1,
