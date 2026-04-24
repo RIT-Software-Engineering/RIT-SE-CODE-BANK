@@ -126,26 +126,6 @@ export default function CourseWebsitePage() {
     `;
   };
 
-  const downloadHTML = async () => {
-    if (!selectedCourseObj) return;
-
-    const html = await generateCourseHTML(selectedCourseObj, sessions);
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`;
-
-    document.body.appendChild(a);
-
-    a.click();
-
-    document.body.removeChild(a);
-
-    URL.revokeObjectURL(url);
-  };
-
   const downloadCourseZIP = async () => {
     if (!selectedCourseObj) return;
 
@@ -181,7 +161,8 @@ export default function CourseWebsitePage() {
     const html = await generateCourseHTML(selectedCourseObj, sessions);
 
     // Add HTML file to course folder
-    zip.file(`public_html/${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`, html);
+    // Added to hard coded 00 folder for now. Change in future for specific course section.
+    zip.file(`public_html/00/${selectedCourseObj.classId}-${selectedCourseObj.section}-course-website.html`, html);
     zip.file(`README.txt`, `This ZIP contains the course website for ${selectedCourseObj.classId}-${selectedCourseObj.section} | ${selectedCourseObj.name}\n\nOpen the HTML file in the "public_html" folder to view the course website. All resources are located in the "resources" folder.`);
 
     // Generate and download zip
@@ -222,6 +203,27 @@ export default function CourseWebsitePage() {
           ))}
         </select>
       </div>
+
+      {selectedCourse && (
+        <div className="text-center">
+          <button
+            onClick={downloadCourseZIP}
+            className="group mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-all duration-150 cursor-pointer"
+          >
+            <svg
+              className="w-4 h-4 transition-transform duration-150 group-hover:translate-y-0.5"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2.5}
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Download Course Website (ZIP)
+          </button>
+        </div>
+      )}
 
       <hr></hr>
 
@@ -274,21 +276,6 @@ export default function CourseWebsitePage() {
           </tbody>
         </table>
       )}
-      <div className = "text-center">
-        <button 
-          onClick={downloadHTML}
-          className="mt-6 px-4 py-2 text-black rounded">
-          Download Course Website (HTML)
-        </button>
-      </div>
-      <div className = "text-center">
-        <button
-          onClick={downloadCourseZIP}
-          className="mt-6 px-4 py-2 text-black rounded">
-          Download Course Website (ZIP)
-        </button>
-      </div>
-
     </div>
   );
 }
@@ -302,6 +289,7 @@ const MATERIAL_COLUMNS = [
   "Individual Assignment"
 ];
 
+// Generates the sessions rows for the downloaded site
 async function generateSessionRowHTML(session, visibleColumns) {
   const materials = session.materials || [];
 
@@ -313,48 +301,32 @@ async function generateSessionRowHTML(session, visibleColumns) {
     grouped.map(async colItems => {
       const itemsHTML = await Promise.all(
         colItems.map(async item => {
+          // If an item has a body rewrite any resource links in the body and encoded it.
+          // Then whenever the title is clicked open a new page with the body content
           if (item.body) {
-            const safeBody = item.body
-              .replace(/\\/g, "\\\\")
-              .replace(/'/g, "\\'")
-              .replace(/\n/g, "\\n");
+            const rewrittenBody = await rewriteResourceLinks(item.body);
+            const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
+            const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
 
             return `<a href="#"
-                      onclick="const w=window.open(); w.document.write('${safeBody}'); w.document.close(); return false;">
-                      ${item.label}
-                    </a>`;
+                        onclick="
+                          const w = window.open();
+                          const html = decodeURIComponent(escape(atob('${encoded}')));
+                          w.document.write(html);
+                          w.document.close();
+                          return false;">
+                        ${item.label}
+                      </a>`;
           }
 
-          if (/href=".*"/.test(item.label)) {
-            const match = item.label.match(/href="([^"]*)"/);
-            if (!match) return item.label;
+          // Rewrite resource links in title
+          const rewrittenLabel = await rewriteResourceLinks(item.label);
 
-            const href = match[1];
-            const id = href.split('/').filter(Boolean).pop();
-
-            try {
-              const response = await CMTJsonFetch("GET", `/resources/id/${id}`);
-              const resource = await response.json();
-
-              if (!resource || !resource.filename) {
-                return item.label;
-              }
-              
-              const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
-              const filename = sanitize(resource.filename)
-
-              return item.label.replace(
-                /href="[^"]*"/,
-                `href="resources/${filename}"`
-              );
-
-            } catch (err) {
-              console.error("Failed to fetch resource:", err);
-              return item.label;
-            }
+          if (rewrittenLabel === item.label && ![...item.label.matchAll(/href="([^"]*)"/g)].length) {
+            return `<span>${item.label}</span>`;
           }
 
-          return `<span>${item.label}</span>`;
+          return `<span>${rewrittenLabel}</span>`;
         })
       );
 
@@ -368,4 +340,36 @@ async function generateSessionRowHTML(session, visibleColumns) {
       ${columnsHTML.join("")}
     </tr>
   `;
+}
+
+
+// Helper function to rewrite the resource links from api calls to relatives paths
+async function rewriteResourceLinks(html) {
+  const hrefRegex = /href="([^"]*)"/g;
+  const matches = [...html.matchAll(hrefRegex)];
+
+  if (matches.length === 0) return html;
+
+  let updated = html;
+
+  for (const match of matches) {
+    const href = match[1];
+    const id = href.split('/').filter(Boolean).pop();
+
+    try {
+      const response = await CMTJsonFetch("GET", `/resources/id/${id}`);
+      const resource = await response.json();
+
+      if (!resource || !resource.filename) continue;
+
+      const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
+      const filename = sanitize(resource.filename);
+
+      updated = updated.replace(`href="${href}"`, `href="../resources/${filename}"`);
+    } catch (err) {
+      console.error("Failed to fetch resource:", err);
+    }
+  }
+
+  return updated;
 }
