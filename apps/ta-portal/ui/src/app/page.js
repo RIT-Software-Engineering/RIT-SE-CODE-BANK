@@ -164,7 +164,7 @@ export default function Home() {
                     mb: 1,
                   }}
                 >
-                  Find Open Positions
+                  Login
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", color: "primary.main" }}>
                   <Typography
@@ -174,7 +174,7 @@ export default function Home() {
                       mr: 1,
                     }}
                   >
-                    Login to explore opportunities
+                    Login or sign up here
                   </Typography>
                   <ArrowForward sx={{ fontSize: "1.2rem" }} />
                 </Box>

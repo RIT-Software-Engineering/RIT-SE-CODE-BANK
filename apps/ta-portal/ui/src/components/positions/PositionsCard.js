@@ -297,9 +297,6 @@ export default function PositionsCard({
       {isFormOpen && (
         <EditableApplicationForm user={currentUser} position={position} onClose={() => setIsFormOpen(false)} onApplySuccess={refreshUserProfile} />
       )}
-      {isSendingJob && (
-        <SendPositionModal position={position} onClose={() => setIsSendingJob(false)} onSendSuccess={()=>console.log('test')} user={currentUser} />
-      )}
       {isViewingDetails && (
         <ViewablePositionForm position={position} onClose={() => setIsViewingDetails(false)} />
       )}

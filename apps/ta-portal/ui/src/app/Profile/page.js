@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import UserProfileModal from "@/components/profile/UserProfileModal";
 import { getUserProfile, getAllCourses } from "@/services/db-apis";
 
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ProfileInfoCard from "@/components/profile/ProfileInfoCard";
 import CoursesTakenCard from "@/components/profile/CandidateAndEmployee/CoursesTakenCard";
 import CoursesWorkedCard from "@/components/profile/CandidateAndEmployee/CoursesWorkedCard";
@@ -18,6 +19,7 @@ import {
   CircularProgress,
   Container,
   Paper,
+  Button,
 } from "@mui/material";
 
 /**
@@ -29,13 +31,21 @@ import {
 export default function ProfilePage() {
   // State to control which section of the profile is being edited in the modal.
   const [editingSection, setEditingSection] = useState(null);
-  const { currentUser, refreshUserProfile } = useAuth();
+  const { currentUser, refreshUserProfile, logout } = useAuth();
 
   // State for storing user profile data, course options for dropdowns, and UI states.
   const [profileData, setProfileData] = useState(null);
   const [courseOptions, setCourseOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
+  };
 
   /**
    * A callback function to manually refresh the profile data from the server.
@@ -180,51 +190,67 @@ export default function ProfilePage() {
   // Main component render method.
   return (
     <FeatureGate feature={FEATURES.PROFILES}>
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {/* The main profile information card, visible to all roles. */}
-        <ProfileInfoCard
-          profileData={profileData}
-          isEmployerOrAdmin={isEmployerOrAdmin}
-          isCandidateOrEmployee={isCandidateOrEmployee}
-          onEdit={() => handleEditRequest("info")}
-        />
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {/* The main profile information card, visible to all roles. */}
+          <ProfileInfoCard
+            profileData={profileData}
+            isEmployerOrAdmin={isEmployerOrAdmin}
+            isCandidateOrEmployee={isCandidateOrEmployee}
+            onEdit={() => handleEditRequest("info")}
+          />
 
-        {/* These cards are only visible to Candidates and Employees. */}
-        {isCandidateOrEmployee && (
-          <>
-            <CoursesTakenCard
-              coursesTaken={coursesTaken}
-              onEdit={() => handleEditRequest("coursesTaken")}
-            />
-            <CoursesWorkedCard
-              coursesTaken={coursesTaken}
-              onEdit={() => handleEditRequest("coursesWorked")}
-            />
-            <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
-              <ResumeManager
-                resumes={profileData.candidate?.resumes || []}
-                candidateUsername={profileData.username}
-                onProfileRefresh={handleProfileRefresh}
+          {/* These cards are only visible to Candidates and Employees. */}
+          {isCandidateOrEmployee && (
+            <>
+              <CoursesTakenCard
+                coursesTaken={coursesTaken}
+                onEdit={() => handleEditRequest("coursesTaken")}
               />
-            </Paper>
-          </>
-        )}
-      </Box>
+              <CoursesWorkedCard
+                coursesTaken={coursesTaken}
+                onEdit={() => handleEditRequest("coursesWorked")}
+              />
+              <Paper elevation={2} sx={{ p: { xs: 2, md: 3 } }}>
+                <ResumeManager
+                  resumes={profileData.candidate?.resumes || []}
+                  candidateUsername={profileData.username}
+                  onProfileRefresh={handleProfileRefresh}
+                />
+              </Paper>
+            </>
+          )}
+        </Box>
 
-      {/* The modal for editing profile sections, rendered conditionally. */}
-      {editingSection && (
-        <UserProfileModal
-          isOpen={!!editingSection}
-          onClose={() => setEditingSection(null)}
-          profileData={profileData}
-          mode="edit"
-          onUpdateSuccess={handleUpdateSuccess}
-          editingSection={editingSection}
-          courseOptions={courseOptions}
-        />
-      )}
-    </Container>
+          <Button
+            onClick={() => {
+              handleLogout();
+            }}
+            variant="contained"
+            color="error"
+            sx={{
+              my:5,
+              flexShrink: 0,
+              flexGrow: 0,
+              minWidth: "auto", 
+              width: "auto",
+            }}
+          > Log Out
+
+          </Button>
+        {/* The modal for editing profile sections, rendered conditionally. */}
+        {editingSection && (
+          <UserProfileModal
+            isOpen={!!editingSection}
+            onClose={() => setEditingSection(null)}
+            profileData={profileData}
+            mode="edit"
+            onUpdateSuccess={handleUpdateSuccess}
+            editingSection={editingSection}
+            courseOptions={courseOptions}
+          />
+        )}
+      </Container>
     </FeatureGate>
   );
 }
