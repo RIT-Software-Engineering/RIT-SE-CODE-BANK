@@ -3,6 +3,30 @@ const router = express.Router();
 const pool = require('../db');
 const { saveParsedTeachingEval, getFacultyTeachingEvalPercentiles, getFacultyPercentileById, calculateTeachingScore, summarizeTeachingEval } = require('../api/teaching_eval_api');
 
+async function getOrGenerateSummary(formId, refresh = false) {
+  if (!refresh) {
+    const conn = await pool.getConnection();
+    try {
+      const rows = await conn.query(
+        `SELECT summary_json FROM form_summaries WHERE form_id = ? AND summary_type = 'teaching_eval'`,
+        [formId]
+      );
+      if (rows[0]) return JSON.parse(rows[0].summary_json);
+    } catch (_) {}
+    finally { conn.release(); }
+  }
+  const text = await summarizeTeachingEval(formId);
+  const conn = await pool.getConnection();
+  try {
+    await conn.query(
+      `INSERT INTO form_summaries (form_id, summary_type, summary_json) VALUES (?, 'teaching_eval', ?)
+       ON DUPLICATE KEY UPDATE summary_json = VALUES(summary_json), updated_at = CURRENT_TIMESTAMP`,
+      [formId, JSON.stringify(text)]
+    );
+  } finally { conn.release(); }
+  return text;
+}
+
 router.get('/submitted_by/:facultyId', async (req, res) => {
   try {
     const conn = await pool.getConnection();
@@ -56,13 +80,15 @@ router.get('/:formId/view', async (req, res) => {
     // Build PII filter using professor name and course name
     const { professor_name: profName, course_name: courseName } = evalData[0];
     const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const namePartsView = profName
+      ? profName.split(/[,\s]+/).map(p => p.trim()).filter(p => p.length > 1)
+      : [];
     const filterPII = (text) => {
       if (!text) return text;
       let f = String(text);
       if (profName) f = f.replace(new RegExp(escRe(profName), 'gi'), '[PROFESSOR]');
+      for (const part of namePartsView) f = f.replace(new RegExp(`\\b${escRe(part)}\\b`, 'gi'), '[PROFESSOR]');
       f = f.replace(/\b(professor|prof\.?|dr\.?|instructor)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g, '$1 [PROFESSOR]');
-      // First name only (e.g. "Andy") — only when preceded by a title or at start of sentence
-      f = f.replace(/\b(professor|prof\.?|dr\.?)\s+([A-Z][a-z]+)\b/g, '$1 [PROFESSOR]');
       f = f.replace(/\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, '[NAME]');
       if (courseName) f = f.replace(new RegExp(escRe(courseName).replace(/\s+/g, '\\s+'), 'gi'), '[COURSE]');
       f = f.replace(/\b[A-Z]{2,5}[\s-]?\d{2,4}[A-Z]?\b/g, '[COURSE]');
@@ -165,12 +191,11 @@ router.get('/score/:facultyId', async (req, res) => {
 
 router.post('/:formId/summarize', async (req, res) => {
   try {
-    const summary = await summarizeTeachingEval(req.params.formId);
+    const summary = await getOrGenerateSummary(req.params.formId, req.query.refresh === 'true');
     res.json({ summary });
   } catch (err) {
     console.error(err);
-    const message = err.message || 'Failed to generate summary';
-    res.status(500).json({ error: message });
+    res.status(500).json({ error: err.message || 'Failed to generate summary' });
   }
 });
 

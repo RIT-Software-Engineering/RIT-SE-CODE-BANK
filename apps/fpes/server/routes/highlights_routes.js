@@ -29,6 +29,12 @@ async function saveSummaryToDB(conn, { formId, facultyId, type, summary }) {
        ON DUPLICATE KEY UPDATE summary_json = VALUES(summary_json), updated_at = CURRENT_TIMESTAMP`,
       [formId, json]
     );
+  } else if (type === 'teaching_eval') {
+    await conn.query(
+      `INSERT INTO form_summaries (form_id, summary_type, summary_json) VALUES (?, 'teaching_eval', ?)
+       ON DUPLICATE KEY UPDATE summary_json = VALUES(summary_json), updated_at = CURRENT_TIMESTAMP`,
+      [formId, json]
+    );
   } else {
     await conn.query(
       `INSERT INTO form_summaries (faculty_id, summary_type, summary_json) VALUES (?, 'annual', ?)
@@ -47,7 +53,9 @@ async function saveSummaryToDB(conn, { formId, facultyId, type, summary }) {
 async function loadSummaryFromDB(conn, { formId, facultyId, type }) {
   const rows = type === 'form'
     ? await conn.query(`SELECT summary_json FROM form_summaries WHERE form_id = ? AND summary_type = 'form'`, [formId])
-    : await conn.query(`SELECT summary_json FROM form_summaries WHERE faculty_id = ? AND summary_type = 'annual'`, [facultyId]);
+    : type === 'annual'
+    ? await conn.query(`SELECT summary_json FROM form_summaries WHERE faculty_id = ? AND summary_type = 'annual'`, [facultyId])
+    : await conn.query(`SELECT summary_json FROM form_summaries WHERE form_id = ? AND summary_type = 'teaching_eval'`, [formId]);
   if (!rows[0]) return null;
   try { return JSON.parse(rows[0].summary_json); } catch { return null; }
 }
@@ -59,6 +67,18 @@ async function withConn(fn) {
   } finally {
     conn.release();
   }
+}
+
+// Returns a cached teaching eval summary from DB, or generates+saves one if not stored.
+// Pass refresh=true to force regeneration.
+async function getTeachingEvalSummary(formId, refresh = false) {
+  if (!refresh) {
+    const stored = await withConn(conn => loadSummaryFromDB(conn, { formId, type: 'teaching_eval' }));
+    if (stored) return stored;
+  }
+  const text = await summarizeTeachingEval(formId);
+  await withConn(conn => saveSummaryToDB(conn, { formId, type: 'teaching_eval', summary: text }));
+  return text;
 }
 
 // GET all highlights for admin
@@ -188,7 +208,8 @@ router.post('/annual-eval/:facultyId', async (req, res) => {
         [facultyId]
       ));
       if (evalForms.length) {
-        const evalSummaries = await Promise.all(evalForms.map(ef => summarizeTeachingEval(ef.id).catch(() => null)));
+        const refresh = req.query.refresh === 'true';
+        const evalSummaries = await Promise.all(evalForms.map(ef => getTeachingEvalSummary(ef.id, refresh).catch(() => null)));
         teachingEvalText = evalSummaries.filter(Boolean).join('\n\n');
       }
     } catch (_) {}
@@ -299,7 +320,7 @@ router.post('/:formId/summarize', async (req, res) => {
            ORDER BY f.time_submitted DESC LIMIT 1`,
           [facultyId]
         ));
-        if (evalForms[0]) teachingEvalSummary = await summarizeTeachingEval(evalForms[0].id);
+        if (evalForms[0]) teachingEvalSummary = await getTeachingEvalSummary(evalForms[0].id, req.query.refresh === 'true');
       } catch (_) { /* no eval available */ }
     }
 

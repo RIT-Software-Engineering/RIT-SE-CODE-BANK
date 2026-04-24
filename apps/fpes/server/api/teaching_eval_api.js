@@ -281,14 +281,17 @@ async function summarizeTeachingEval(formId) {
 
         const { professor_name, course_name } = evalData[0];
 
-        const firstName = professor_name ? professor_name.trim().split(/\s+/)[0] : null;
+        // Build a list of all name parts to scrub (handles "Last, First" and "First Last" formats)
+        const nameParts = professor_name
+            ? professor_name.split(/[,\s]+/).map(p => p.trim()).filter(p => p.length > 1)
+            : [];
         const filterPII = (text) => {
             if (!text) return text;
             let f = text;
             if (professor_name) f = f.replace(new RegExp(escapeRegExp(professor_name), 'gi'), '[PROFESSOR]');
+            for (const part of nameParts) f = f.replace(new RegExp(`\\b${escapeRegExp(part)}\\b`, 'gi'), '[PROFESSOR]');
             f = f.replace(/\b(professor|prof\.?|dr\.?|instructor)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g, '$1 [PROFESSOR]');
             f = f.replace(/\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, '[NAME]');
-            if (firstName) f = f.replace(new RegExp(`\\b${escapeRegExp(firstName)}\\b`, 'gi'), '[PROFESSOR]');
             if (course_name) f = f.replace(new RegExp(escapeRegExp(course_name).replace(/\s+/g, '\\s+'), 'gi'), '[COURSE]');
             f = f.replace(/\b[A-Z]{2,5}[\s-]?\d{2,4}[A-Z]?\b/g, '[COURSE]');
             f = f.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');

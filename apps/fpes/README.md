@@ -80,10 +80,11 @@ curl -X POST http://localhost:3000/db/init
 # Response: "Tables successfully rebuilt!"
 ```
 
-To also create the summaries persistence table (run once):
+To also create the summaries persistence table (run once), and update the enum if upgrading an existing DB:
 
 ```bash
 mysql -u fpes_user -p fpes_db < sql/form_summaries.sql
+mysql -u fpes_user -p fpes_db -e "ALTER TABLE form_summaries MODIFY COLUMN summary_type ENUM('form','annual','teaching_eval') NOT NULL DEFAULT 'form';"
 ```
 
 ---
