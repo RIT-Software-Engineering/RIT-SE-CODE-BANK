@@ -4,17 +4,17 @@
  * @return {boolean} The boolean result of the regex test.
  */
 export function isRegister(token) {
-    return /^R[0-7]$/.test(token);
+    return /^(R[0-7]|SP|PC)$/.test(token);
 }
 
 /**
  * Determines if a given value is in the format of a number. Used to
- * allow negative number and hex formats.
+ * allow negative number, hex, binary, and octal formats.
  * @param {string} token The given string.
  * @return {boolean} The boolean result of the regex test.
  */
 export function isNumber(token) {
-    return /(^-?\d+$)|(^0x[0-9A-Fa-f]+$)/.test(token);
+    return /(^-?\d+$)|(^0x[0-9A-Fa-f]+$)|(^0b[01]+$)|(^0o[0-7]+$)/.test(token);
 }
 
 /**
@@ -33,6 +33,8 @@ export function isLabel(token) {
  * @return {number} The number value of the register.
  */
 export function getRegisterNumber(token) {
+    if (token === 'SP') return 6;
+    if (token === 'PC') return 7;
     return Number(token[1]);
 }
 

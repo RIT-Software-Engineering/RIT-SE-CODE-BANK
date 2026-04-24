@@ -134,6 +134,14 @@ export function parseOperand(tokens) {
             offset: null
         };
     }
+    //Used for pc specifically
+    else if (tokens.length === 3 && tokens[0] === "(" && tokens[1].toUpperCase() === "PC" && tokens[2] === ")") {
+        return {
+            mode: "autoincrement",
+            reg: 7,
+            offset: null
+        };
+    }
     //Used to return the mode and register value for a register deferred mode
     else if((tokens.length === 2 && tokens[0] === "@" && isRegister(tokens[1])) 
         || (tokens.length === 3 && tokens[0] === "(" && isRegister(tokens[1]) && tokens[2] === ")")) {

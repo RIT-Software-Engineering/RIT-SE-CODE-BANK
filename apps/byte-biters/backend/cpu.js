@@ -136,11 +136,6 @@ export class CPU {
      */
     step() {
         if(!this.halted){
-            this.currentState = {
-                registers: this.getRegisters(),
-                flags: this.getFlags(),
-                memoryChange: []
-            };
 
             const instr = this.fetch();
             const oper = this.decoder.decode(instr);
@@ -152,6 +147,12 @@ export class CPU {
                 oper.dst = this.resolveDestination(oper.dst.mode, oper.dst.REG);
             }      
             this.execute(oper);
+
+            this.currentState = {
+                registers: this.getRegisters(),
+                flags: this.getFlags(),
+                memoryChange: []
+            };
 
             this.pastState.push(this.currentState);
             this.currentState = null;
@@ -275,6 +276,7 @@ export class CPU {
                 const newBase = this.registers[reg] - 2;
                 const pointerDec = this.readWord(newBase);
                 const valueDec = this.readWord(pointerDec);
+                this.registers[reg] -= 2;
                 return {
                     value: valueDec,
                     address: pointerDec,
@@ -487,12 +489,12 @@ export class CPU {
     cmp(src, dst) {
         const srcValue = src.value & 0xFFFF;
         const dstValue = dst.value & 0xFFFF;
-        const cmpValue = (dstValue - srcValue) & 0xFFFF;
+        const cmpValue = (srcValue - dstValue) & 0xFFFF;
 
         this.N = (cmpValue & 0x8000) !== 0;
         this.Z = cmpValue === 0;
-        this.V = ((dstValue ^ srcValue) & (dstValue ^ cmpValue) & 0x8000) !== 0;
-        this.C = dstValue < srcValue;
+        this.V = ((srcValue ^ dstValue) & (srcValue ^ cmpValue) & 0x8000) !== 0;
+        this.C = srcValue < dstValue;
     }
 
     /**
