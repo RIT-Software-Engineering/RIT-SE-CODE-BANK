@@ -39,13 +39,10 @@ export default function ShibbLogin({
         const checkAuth = async () => {
             try {
                 // Check SAML auth session
-                const authRes = await fetch(`${process.env.NEXT_PUBLIC_AUTH_URL}/me`,
-                    {
-                        credentials: "include",
-                    }
-                );
+                const authRes = await fetch(`${process.env.NEXT_PUBLIC_AUTH_URL}/me`,{credentials: "include",});
+
                 if (!authRes.ok) {
-                    window.location.href = `$ {process.env.NEXT_PUBLIC_AUTH_URL}/login?returnTo=${encodeURIComponent("https://apps.se.rit.edu/ta-portal")}`;
+                    window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL}/login?returnTo=https://apps.se.rit.edu/ta-portal")}`;
                 }
                 const authData = await authRes.json();
                 const authId = authData.user?.id;
