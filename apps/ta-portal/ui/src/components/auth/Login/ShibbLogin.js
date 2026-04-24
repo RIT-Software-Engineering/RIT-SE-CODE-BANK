@@ -66,7 +66,8 @@ export default function ShibbLogin({
                 //     return;
                 // }
 
-                const dbUser = await dbRes.json();
+                const dbUser = await dbRes
+                console.log(dbRes)
 
                 // Set user + redirect
                 setUser(dbUser);
