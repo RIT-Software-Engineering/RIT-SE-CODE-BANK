@@ -4,7 +4,8 @@
     "apps/workflow/ecosystem",
     "apps/workflow/server",
     "apps/cmt/frontend",
-    "apps/cmt/backend"
+    "apps/cmt/backend",
+    "apps/cmt/shared-utilities"
   ],
   "scripts": {
     "check-migrations-workflows": "cd apps/workflow/server && npx prisma migrate dev",

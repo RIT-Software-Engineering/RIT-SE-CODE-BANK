@@ -1,5 +1,5 @@
 import { ArrowLeft } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from 'react-bootstrap'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ResourceManager } from '../../components/resources/ResourceManager.jsx'
@@ -7,6 +7,7 @@ import { CMTWorkflow } from '../../components/workflows/workflow.jsx'
 import { CMTJsonFetch } from '../../utils/api.js'
 import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { Session } from './Session.jsx'
+import { LogError } from '../../utils/error.jsx'
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -21,20 +22,19 @@ export function CourseDashboard() {
     const [sessionCount, setSessionCount] = useState(0)
     const [sessions, setSessions] = useState([]);
 
+
     const update = useCallback(async () => {
-        return CMTJsonFetch('GET', `course/${id}`).then(async response => {
-            const data = await response.json()
-            setCourse(data.course)
-            setActionsWithContexts(data.actionsWithContexts ?? [])
-            setWorkflow(data.workflow)
-        }).catch(async error => {
-        if (error.response){
-            const data = await error.response.json();
-            setCourse(data.error);
-            }
-        })
+
+        return CMTJsonFetch('GET', `course/${id}`).then(async json => {
+            setCourse(json.course)
+            startTransition(() => {
+                setActionsWithContexts(json.actionsWithContexts ?? [])
+                setWorkflow(json.workflow)
+            })
+        }).catch(LogError)
     }, [id])
     useEffect(() => void update(), [id, update])
+
 
     /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
     const fetchToCallback = useCallback(
@@ -42,12 +42,15 @@ export function CourseDashboard() {
         []
     )
 
+    const sessionActions = useMemo(
+        () => flattenActionsWithContexts(actionsWithContexts).filter(
+            awc => awc?.processedAction?.parsedMetadata?.code?.includes("SESSION_")
+        ),
+        [actionsWithContexts]
+    )
+
     if (course === null) return <p> Loading </p>
     else if (typeof(course) !== 'object') return <h1>{course}</h1>
-
-    const sessionActions = flattenActionsWithContexts(actionsWithContexts).filter(
-        awc => awc?.processedAction?.parsedMetadata?.code?.includes("SESSION_")
-    )
 
     return (
         <>
@@ -56,7 +59,9 @@ export function CourseDashboard() {
             <div className="h-10"></div>
             <div className="flex justify-center">
                 <div className="max-w-screen-xl w-full">
-                    <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
+                    {workflow && (
+                        <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
+                    )}
                 </div>
             </div>
             <div className="h-10"></div>
@@ -80,10 +85,9 @@ export function CourseDashboard() {
                             /** Makes a post request to add the session with no material.
                              * ID is the class ID to identify where it belongs in the future
                              */
-                        CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async response=>{
-                            const data = await response.json();
+                        CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async json => {
                             setSessionCount(sessionCount+1);
-                            setSessions(prevSessions => [...prevSessions, data.session])
+                            setSessions(prevSessions => [...prevSessions, json.session])
                         })
                         }}>Add extra session</Button>
                     </div>

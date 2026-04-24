@@ -1,9 +1,10 @@
 import express from 'express'
-import { objectToNewWorkflow, workflowsFetch } from '../utils/workflows/api.js'
+import { objectToNewWorkflow } from '../utils/workflows/api.js'
 import { CMTActionToActionWithContexts } from '../utils/workflows/context.js'
 import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { findActionsByCode } from '../utils/workflows/api.js';
+import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
 
 /**
  * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
@@ -84,44 +85,43 @@ router.post('/', async (req, res) => {
 
         let metaCourseWorkflow;
         let sessionActions;
-        await workflowsFetch("GET", `workflows/metadata?key=code&value=${JSON.stringify('Course Creation Workflow')}`,).then(async response => {
-            const workflowBase = response.length > 0 ? response[0] : null;
-            if (!workflowBase)
-                throw new Error("Unable to find the standard course creation template. Please contact Kenn Martinez so that it can be set.")
-            let actions;
-            if (workflowBase.rootActionId){
-                const actionResponse = await workflowsFetch("GET", `/actions?workflowId=${workflowBase.id}`);
-                function parseMetadata(action) {
-                    action.metadata = compressedMetadataToObject(action.metadata)
-                    if (action.childActions) for (action of action.childActions) parseMetadata(action)
-                }
-                actionResponse.forEach(action => parseMetadata(action))
-                actions = actionResponse 
+        const response = await workflowsFetch("GET", `workflows/metadata?key=code&value=${JSON.stringify('Course Creation Workflow')}`,)
+        const workflowBase = response.length > 0 ? response[0] : null;
+        if (!workflowBase)
+            throw new CMTError({ userFacingMessage: "Unable to find the standard course creation template. Please contact Kenn Martinez so that it can be set." })
+        let actions;
+        if (workflowBase.rootActionId){
+            const actionResponse = await workflowsFetch("GET", `/actions?workflowId=${workflowBase.id}`);
+            function parseMetadata(action) {
+                action.metadata = compressedMetadataToObject(action.metadata)
+                if (action.childActions) for (action of action.childActions) parseMetadata(action)
             }
-            else
-                throw new Error("Course creation workflow must have at least one simple action. Please contact Kenn Martinez so that one can be added.")
-            const baseAction = workflowBase.baseAction;
-            // TODO: baseAction is an empty object 
-            metaCourseWorkflow = {
-                name: baseAction.name,
-                description: baseAction.description,
-                tags: workflowBase.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"),
-                childActions: actions
-            };
-            if (isTemplate){ // basically if we're working with templates we append this to the end of our workflow
-                metaCourseWorkflow.childActions.push({
-                    name: 'Publish Your Template',
-                    description: "Once you're done, press the button to publish your template for public use!",
-                    actionType: 'simple',
-                    metadata: {
-                        code: 'PUBLISH_TEMPLATE',
-                    },
-                })
-            }
+            actionResponse.forEach(action => parseMetadata(action))
+            actions = actionResponse 
+        }
+        else
+            throw new CMTError({ userFacingMessage: "Course creation workflow must have at least one simple action. Please contact Kenn Martinez so that one can be added." })
+        const baseAction = workflowBase.baseAction;
+        // TODO: baseAction is an empty object 
+        metaCourseWorkflow = {
+            name: baseAction.name,
+            description: baseAction.description,
+            tags: workflowBase.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"),
+            childActions: actions
+        };
+        if (isTemplate){ // basically if we're working with templates we append this to the end of our workflow
+            metaCourseWorkflow.childActions.push({
+                name: 'Publish Your Template',
+                description: "Once you're done, press the button to publish your template for public use!",
+                actionType: 'simple',
+                metadata: {
+                    code: 'PUBLISH_TEMPLATE',
+                },
+            })
+        }
 
-            // The regex here is basically the same as an .includes
-            sessionActions = findActionsByCode(metaCourseWorkflow.childActions, "SESSION", new RegExp(`^SESSION_.*`));
-        })
+        // The regex here is basically the same as an .includes
+        sessionActions = findActionsByCode(metaCourseWorkflow.childActions, "SESSION", new RegExp(`^SESSION_.*`));
 
         // Do everything in a transaction so if one thing fails it reverts the DB
         await prisma.$transaction(async () => {
@@ -158,7 +158,7 @@ router.post('/', async (req, res) => {
         }, {timeout: 15000});
 
     } catch (error) {
-        throw new Error('Failed to create meta course workflow/empty course')
+        throw new CMTError({ userFacingMessage: 'Failed to create meta course workflow/empty course', cause: error })
     }
 })
 
@@ -169,8 +169,6 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const { id } = req.params
     const updateData = req.body
-
-    console.log('PUT /api/cmt/course/:id called with:', id, updateData)
 
     const mappedData = {
         ...(updateData.courseCode !== undefined 
@@ -201,8 +199,6 @@ router.put('/:id', async (req, res) => {
         where: { id: Number(id) },
         data: mappedData
     })
-
-    console.log('Course updated successfully:', updatedCourse)
 
     const { uid: _userId, asid: actionStateId } = req.query
     if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })

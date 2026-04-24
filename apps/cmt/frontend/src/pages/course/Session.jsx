@@ -7,6 +7,7 @@ import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/
 import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
 import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, LogError } from "../../utils/error";
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -52,11 +53,10 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
      * Also gets material if there is any and puts it in each session
      */
     const update = useCallback(() => {
-        return CMTJsonFetch('GET', `session/${id}`).then(async response => {
-            const data = await response.json()
-            setSessionCount(data.sessions.length)
-            setSessions(data.sessions);
-            const materialsArray = data.sessionMaterials.filter(m => m.material).map(m => m.material);
+        return CMTJsonFetch('GET', `session/${id}`).then(async json => {
+            setSessionCount(json.sessions.length)
+            setSessions(json.sessions);
+            const materialsArray = json.sessionMaterials.filter(m => m.material).map(m => m.material);
             setSessionData(materialsArray.flat());
         })
     }, [id, setSessions, setSessionCount])
@@ -297,11 +297,13 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
     const uploadSessionMaterial = useCallback(() => {
         const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
         CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody: hasLinksInTitle ? undefined : itemBody, sessionNum })
-            .then(async response => {
-                const data = await response.json();
-                setSessionData(sessionData => [...sessionData, data.material]);
+            .then(async json => {
+                setSessionData(sessionData => [...sessionData, json.material]);
             })
-            .catch(error => LogError("Error uploading material", error, setError))
+            .catch(error => LogError(
+                new CMTError({ userFacingMessage: "Error uploading material", cause: error }),
+                setError
+            ))
     }, [hasLinksInTitle, itemBody, itemLabel, itemType, sessionNum, sessions, setSessionData])
 
     function resetForm() {

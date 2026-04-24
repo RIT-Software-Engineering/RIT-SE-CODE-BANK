@@ -1,16 +1,22 @@
+import { CMTErrorToString, extractUserFacingError } from "@se-code-bank/cmt-shared-utilities"
 import { Alert } from "react-bootstrap"
 
 /**
  * Utility function for not filling the user's console with errors while also making error state management easier.
  * 
- * @param {string} description technical description of error. Or, generic description, if you only wish to provide one description
  * @param {Error | any} error Javascript Error, from something like a .catch. or just whatever
  * @param {React.Dispatch<import("react").SetStateAction<string>>} [setError] will set the error to either the userFacingDescription if given, or the description.
- * @param {string} [userFacingDescription] If you want to present the user with a simpler message, provide this field. 
  */
-export function LogError(description, error, setError, userFacingDescription) {
-    console.error(description, error)
-    setError && setError(userFacingDescription ?? description)
+export function LogError(error, setError) {
+    console.error("Error from LogError:", CMTErrorToString(error))
+    if (!setError) return
+
+    const textToDisplay = 
+        extractUserFacingError(error)
+        || error.message
+        || error
+
+    setError(typeof textToDisplay === "string" ? textToDisplay : JSON.stringify(textToDisplay)) // Prevent objects from messing things up
 }
 
 /**

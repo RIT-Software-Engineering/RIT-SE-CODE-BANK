@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { CMTJsonFetch } from "../utils/api.js";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
+import { CMTJsonFetch } from "../utils/api.js";
+import { LogError } from "../utils/error.jsx";
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
@@ -9,16 +11,14 @@ export default function CourseWebsitePage() {
   const [loading, setLoading] = useState(false);
 
   // Fetch courses
-  useEffect(() => {
-    (async () => {
-      await CMTJsonFetch("GET", `course`).then(async response => {
-          const result = await response.json();
-          setCourses(result);
-      }).catch(async error => {
-        console.error(error);
-      });
-    })();
-  }, []);
+  useEffect(() => 
+    void CMTJsonFetch("GET", `course`)
+      .then(setCourses)
+      .catch(error => LogError(
+        new CMTError({ userFacingMessage: "Failed to fetch courses.", cause: error })
+      )), 
+    []
+  )
 
   // Fetch sessions and materials for selected course
   useEffect(() => {
@@ -26,15 +26,14 @@ export default function CourseWebsitePage() {
 
     const fetchSessions = async () => {
       setLoading(true);
-      await CMTJsonFetch("GET", `session/${selectedCourse}`).then(async response => {
-        const result = await response.json();
-        const combined = result.sessions.map((session, index) => ({
+      await CMTJsonFetch("GET", `session/${selectedCourse}`).then(async json => {
+        const combined = json.sessions.map((session, index) => ({
           ...session,
-          materials: result.sessionMaterials[index]?.material || [],
+          materials: json.sessionMaterials[index]?.material || [],
         }));
         setSessions(combined);
-      }).catch(async error => {
-        console.error("Error fetching sessions:", error);
+      }).catch(error => {
+        LogError(new CMTError({ userFacingMessage: "Failed to fetch sessions for course.", cause: error }))
         setSessions([]);
       }).finally(() => setLoading(false));
     };

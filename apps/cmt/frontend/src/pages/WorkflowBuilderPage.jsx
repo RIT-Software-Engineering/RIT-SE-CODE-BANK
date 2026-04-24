@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Accordion, Button, Form,} from "react-bootstrap";
-import { CMTJsonFetch, workflowsFetch } from "../utils/api.js";
+import { CMTJsonFetch } from "../utils/api.js";
 import { ActionModal, DeleteModal, WorkflowComponent, WorkflowModal } from "@se-code-bank/workflows-ecosystem/components";
 import { 
     WorkflowModalRenderer, 
@@ -12,6 +12,7 @@ import {
     SimpleActionRenderer,
     ComplexActionRenderer } from "../components/workflows/BuilderRenderers.jsx";
 import { LogError } from "../utils/error.jsx";
+import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
 
 /**
  * @import { SetStateAction } from "react"
@@ -61,15 +62,13 @@ export function BuilderPageAdmin({isAdmin}){
      * Once all that is done, sets the workflows in alphabetical order.
      */
     const update = useCallback(async () => {
-        return CMTJsonFetch("GET", `/workflow/workflowTemplate?tags=${updateQuery}`).then(async response => {
-            const data = await response.json();
-            const workflowPromises = data.workflows.map(async workflow => {
+        return CMTJsonFetch("GET", `/workflow/workflowTemplate?tags=${updateQuery}`).then(async json => {
+            const workflowPromises = json.workflows.map(async workflow => {
                 const info = workflow.baseAction;
                 let actions = [];
                 let usedCodes = [];
                 if (workflow.rootActionId){
-                    const actionResponse = await CMTJsonFetch("GET", `workflow/actionTemplate/workflow/${workflow.id}`)
-                    const returnedActions = await actionResponse.json();
+                    const returnedActions = await CMTJsonFetch("GET", `workflow/actionTemplate/workflow/${workflow.id}`)
                     actions = returnedActions.actions;
                     if (!isAdmin)
                         actions = actions.filter(
@@ -589,11 +588,10 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
 
     // We have a return value in case our request fails for some reason. It's mainly so the WorkflowModal knows to clear and close everything or not.
     let returnVal;
-    await CMTJsonFetch("POST", "/workflow/workflowTemplate", {workflow}).then(async response => {
-        const data = await response.json();
+    await CMTJsonFetch("POST", "/workflow/workflowTemplate", {workflow}).then(async json => {
         setWorkflows(previousWorkflows => [...previousWorkflows, {
-            id: data.workflow.baseActionId,
-            attributeId: data.workflow.id, // The ID is for the WorkflowAttribute, not the actual workflow
+            id: json.workflow.baseActionId,
+            attributeId: json.workflow.id, // The ID is for the WorkflowAttribute, not the actual workflow
             name: name,
             description: description,
             actions: [],
@@ -645,8 +643,7 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
 
     // We have a return value in case our request fails for some reason. It's mainly so the WorkflowModal knows to clear and close everything or not.
     let returnVal;
-    await CMTJsonFetch("PUT", `/workflow/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags, metadata}).then(async response => {
-        const data = await response.json();
+    await CMTJsonFetch("PUT", `/workflow/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags, metadata}).then(async json => {
         // If we have tags then we remove our special tag so the user can't mess with it
         if (tags) {
             if (extraData.metaWorkflow) 
@@ -655,12 +652,12 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
                 tags = tags.slice(0, workflowToUpdate?.parsedMetadata?.CMTemplate.length * -1);
         }
         const workflowsCopy = workflows.map(workflow => {
-            if (workflow.id !== data.workflow.baseActionId)
+            if (workflow.id !== json.workflow.baseActionId)
                 return workflow
             else
                 return {
-                    id: data.workflow.baseActionId,
-                    attributeId: data.workflow.id,
+                    id: json.workflow.baseActionId,
+                    attributeId: json.workflow.id,
                     name: name,
                     description: description,
                     actions: workflowToUpdate.actions,
@@ -883,8 +880,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
         
 
     let returnVal;
-    await CMTJsonFetch("POST", postEndpoint, postObject).then(async response => {
-        const data = await response.json();
+    await CMTJsonFetch("POST", postEndpoint, postObject).then(async json => {
 
         let workflowsCopy = [];
         for (let j = 0; j < workflows.length; j++) {
@@ -899,14 +895,14 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                 const actions = workflows[index].actions.slice(0,-1);
                 if (workflows[index].actions.length > 0){
                     let prevAction = workflows[index].actions[workflows[index].actions.length - 1];
-                    prevAction.processedAction.nextActionId = data.action.id;
-                    await CMTJsonFetch("PUT", `/workflow/actionTemplate/nextAction/${prevAction.processedAction.id}`, {name: prevAction.processedAction.name, description: prevAction.processedAction.description, nextActionId: data.action.id});
+                    prevAction.processedAction.nextActionId = json.action.id;
+                    await CMTJsonFetch("PUT", `/workflow/actionTemplate/nextAction/${prevAction.processedAction.id}`, {name: prevAction.processedAction.name, description: prevAction.processedAction.description, nextActionId: json.action.id});
                     actions.push({...prevAction});
                 }
                 // Now that all our actions are put back together we add our newly created action
                 workflowActions = actions;
                 workflowActions.push(createActionWithContexts({
-                        id: data.action.id,
+                        id: json.action.id,
                         name: name,
                         description: description,
                         actionType: actionType,
@@ -923,7 +919,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                     for (let j = 0; j < workflows[index].actions.length; j++) {
                         const actions = workflows[index].actions[j];
                         actions.processedAction.childActionsWithContexts = await setNextActionInfo(
-                            actions, [], workflowParent.id, data.action.id,
+                            actions, [], workflowParent.id, json.action.id,
                             name, description, actionType, parentActionId, metadata
                         )
                         workflowActions.push(actions)
@@ -934,7 +930,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                     workflowActions = workflows[index].actions
                     workflowParent.childActionsWithContexts = [];
                     workflowParent.childActionsWithContexts.push(createActionWithContexts({
-                            id: data.action.id,
+                            id: json.action.id,
                             name: name,
                             description: description,
                             actionType: actionType,
@@ -965,7 +961,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
             // If this is the first action then we set the root action
             if (workflowsCopy[index].actions.length === 1 && workflowParent.id === workflowsCopy[index].id)
                 await workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
-                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
+                rootActionId: json.action.id}).then(()=>setWorkflows(workflowsCopy));
             else 
                 setWorkflows(workflowsCopy);
         }
@@ -975,7 +971,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                 setWorkflows(workflowsCopy);
             else {
                 await workflowsFetch("PUT", `workflows/action/${workflowParent.id}`, {
-                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
+                rootActionId: json.action.id}).then(()=>setWorkflows(workflowsCopy));
             }
         }
         returnVal = "Good";
@@ -1053,7 +1049,7 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
  */
 async function deleteStandardAction(actionToDelete, refresh){
     // TODO works with simple and complex actions, but for complex actions does not delete child actions. We may want that so we don't have stranded child actions in the DB as cleanup.
-    await CMTJsonFetch("DELETE", `workflow/actionTemplate/action/${actionToDelete.id}`).then(async _ => await refresh());
+    await CMTJsonFetch("DELETE", `workflow/actionTemplate/action/${actionToDelete.id}`).then(refresh);
 }
 
 /**
@@ -1079,7 +1075,7 @@ async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh
             setWorkflows(workflowsCopy);
         });
     else
-        await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`).then(async _ => refresh());
+        await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`).then(refresh);
 }
 
 function generateWorkflowErrorHandler(setError, setReturnVal) {

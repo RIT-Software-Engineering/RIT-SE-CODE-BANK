@@ -1,9 +1,7 @@
 {
   "name": "@se-code-bank/workflows-ecosystem",
-  "version": "1.0.0",
   "description": "Build, Contextualize, and Render your Workflows.",
   "type": "module",
-  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",

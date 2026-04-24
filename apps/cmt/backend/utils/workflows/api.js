@@ -1,54 +1,7 @@
-import { CMTError, CMTInfo } from "../logging.js"
+import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
 
 export const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:3001').replace(/\/$/, '')
 
-/**
- * Based off of CMTFetch, but is simplified for server usage.
- * Throws when a non-ok status is received.
- * 
- * If you wish to modify throw behavior, I reccomend adding an "allowed error codes" parameter. Example in CMTFetch
- * 
- * @param {string} method 
- * @param {string} url url of resource within workflows endpoint. the given url is appended to the workflows api base url.
- * @param {object} body 
- * @param {object} headers 
- * @returns 
- */
-export async function workflowsFetch(method, url, body, headers) {
-  const fullURL = `${WORKFLOWS_API}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
-  const bodyJSON = JSON.stringify(body)
-  const fullHeaders = { ...headers, "Content-Type": "application/json", }
-
-  CMTInfo(`Fetching: ${method} ${fullURL}`)
-
-  let response;
-  try {
-    const options = { method, headers: fullHeaders }
-    if (bodyJSON !== undefined) options.body = bodyJSON
-    response = await fetch(fullURL, { ...options, credentials: 'include' })
-  } catch (error) {
-    const message = `
-      Error while trying to fetch: ${method} ${fullURL}
-      \nRequest Body: ${body}
-      \nError: ${error}
-      \nThis means the the request likely never reached the intended url, and is more likely a problem with CMT.
-    `
-    CMTError(message)
-    throw Error(message)
-  }
-  if (!response.ok) {
-    const message = `
-      non-OK status in response to: ${method} ${fullURL}
-      \nRequest Body: ${body}
-      \nResponse status: ${response.status}
-      \nResponse body: ${await response.json()}
-      \nThis means that the status was properly received by the intended url, but that the server had an issue of some kind.
-    `
-    CMTError(message)
-    throw Error(message)
-  }
-  return await response.json()
-}
 
 /**
  * Helper to create action
@@ -294,7 +247,9 @@ export async function objectToNewAction(action, ownerId, parentActionId) {
       }
     }
     else {
-      throw new Error(`There was a complex action with no simple actions attached. Please contact Kenn Martinez to have this addressed. Action name: ${action.name}`)
+      throw new CMTError({ 
+        userFacingMessage: `There was a complex action with no simple actions attached. Please contact Kenn Martinez to have this addressed. Action name: ${action.name}`
+      })
     }
   }
 
@@ -353,7 +308,6 @@ export async function findWorkflowFromAction(action){
     return findWorkflowFromAction(parentAction); 
   }
   else if (action.previousAction){
-    console.log(action.previousAction)
     const previousAction = await workflowsFetch("GET", `/actions/${action.previousAction.id}`);
     return findWorkflowFromAction(previousAction);
   }

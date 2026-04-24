@@ -4,7 +4,8 @@ import { RefreshCcw } from 'lucide-react'
 import { CMTDangerAlert, LogError } from '../../utils/error'
 import { UploadResourceModal } from './modals'
 import { ResourceCard } from './resourceRenderers'
-import { CMTJsonFetch } from '../../utils/api'
+import { AUTH_BASE, CMTJsonFetch } from '../../utils/api'
+import { CMTError } from '@se-code-bank/cmt-shared-utilities'
 
 /**
  * Generate the correct download URL for a resource based on the environment
@@ -12,7 +13,7 @@ import { CMTJsonFetch } from '../../utils/api'
  * @returns {string}
  */
 export function getResourceDownloadUrl(resourceId) {
-    return `${process.env.REACT_APP_BASE_URL}/api/cmt/resources/download/${resourceId}`
+    return `${AUTH_BASE}/cmt/resources/download/${resourceId}`
 }
 
 /**
@@ -80,8 +81,8 @@ export function useResources(courseId) {
         setLoading(true)
 
         CMTJsonFetch('GET', `resources/${courseId}`)
-            .then(async response => setResources((await response.json()) || []))
-            .catch(error => LogError("Failed to load resources.", error, setError))
+            .then(async json => setResources(json || []))
+            .catch(error => LogError(new CMTError({ userFacingMessage: "Failed to load resources.", cause: error }), setError))
             .finally(() => setLoading(false))
     }, [courseId])
 

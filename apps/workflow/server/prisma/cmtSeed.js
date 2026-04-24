@@ -7,7 +7,7 @@ async function main() {
     // Since there is never(?) a reason to duplicate seed data, don't run this seed file if its already been ran.
     // This is to allow start scripts to remain idempotent.
     // If you are looking to delete existing data, use prisma commands like "npx prisma migrate reset"
-    const doesSeedDataExist = prisma.action.findFirst({ where: { name: "Create Course" } }) 
+    const doesSeedDataExist = await prisma.action.findFirst({ where: { name: "Create Course" } }) 
     if (doesSeedDataExist) {
         console.log("WARNING: Skipping seeding as workflow with name 'create course' already exists.");
         return

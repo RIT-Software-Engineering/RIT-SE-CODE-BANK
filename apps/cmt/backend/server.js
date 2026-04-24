@@ -18,7 +18,8 @@ import { fileURLToPath } from "url";
 import makeCourseWebsiteRouter from "./routes/courseWebsite.js";
 import { readFileSync } from "fs";
 import dotenv from "dotenv";
-import { getTimeString } from "./utils/logging.js";
+import { CMTErrorToString, serializeError } from "@se-code-bank/cmt-shared-utilities";
+import { getTimeString } from "../shared-utilities/cmtLogging.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +34,7 @@ const app = express();
 
 const BACKEND_PORT = Number(process.env.BACKEND_PORT) || 5010; // API server
 const FRONTEND_PORT = Number(process.env.PORT) || 3010;        // React dev server
-const BASE_URL = process.env.BASE_URL || `http://localhost:${FRONTEND_PORT}`;
+const BASE_URL = process.env.BASE_URL || `http://localhost:${BACKEND_PORT}`;
 
 /* ------------------------------------------------------------------
    MIDDLEWARE
@@ -67,6 +68,20 @@ app.use(
   })
 );
 
+// Logs requests on finish. May give confusing results if requests are long-running, but that really shouldn't happen. Additionally, knowing the resultant code and elapsed time can be helpful.
+app.use((req, res, next) => {
+  const startedAt = process.hrtime.bigint();;
+
+  res.on("finish", () => {
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1000000;
+    console.log(
+      `${getTimeString()} ${req.method} ${req.originalUrl} - ${res.statusCode} - ${durationMs.toFixed(1)}ms`
+    );
+  });
+
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -79,12 +94,6 @@ app.use((req, _res, next) => {
 
 // Attach req.user from the cmt_id cookie
 app.use(authMiddleware);
-
-// Logger
-app.use((req, _res, next) => {
-  console.log(`${getTimeString()} - ${req.method} ${req.path}`);
-  next();
-});
 
 /* ------------------------------------------------------------------
    ROUTES
@@ -193,12 +202,13 @@ app.use("/api/cmt/resources", resourceRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(`
-    \nError in: ${req.method} ${req.path}
-    \nFull request URL: ${req.url}
-    \nRequest body:
-    \n${JSON.stringify(req.body ?? "")}
-    \nError: ${err}
-    \nStack trace: ${err.stack}
+    Error in: ${req.method} ${req.path}
+    Full request URL: ${req.url}
+    
+    Request body:
+    ${JSON.stringify(req.body ?? "")}
+    
+    Error: ${CMTErrorToString(err)}
   `)
 
   // If error happens during streaming of response, allow express to handle
@@ -212,8 +222,9 @@ app.use((err, req, res, next) => {
   }
 
   // Otherwise, start streaming the response manually.
+  // Default error serialization is garbo, so specify things manually.
   res.status(err.status || err.statusCode || 500).json({
-    error: err.message || "Internal Server Error"
+    error: err ? serializeError(err): "Internal Server Error"
   })
 });
 
@@ -233,6 +244,6 @@ app.use((req, res) => {
 app.listen(BACKEND_PORT, () => {
   console.log(
     `Server running on port ${BACKEND_PORT}
-    \nand URL: ${BASE_URL}/api`
+and URL: ${BASE_URL}/api`
   );
 });

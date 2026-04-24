@@ -6,6 +6,8 @@ import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
 import { CMTJsonFetch } from '../../utils/api.js';
 import { ColorOption } from '../../components/forms/ColorPicker.jsx';
+import { LogError } from '../../utils/error.jsx';
+import { CMTError } from '@se-code-bank/cmt-shared-utilities';
 
 
 export function CourseOverview() {
@@ -20,9 +22,8 @@ export function CourseOverview() {
     }, []);
 
     const fetchCourses = async () => {
-        CMTJsonFetch("GET", `course`).then(async response => {
-            const result = await response.json();
-            setCourseOverview(result ?? []);
+        CMTJsonFetch("GET", `course`).then(async json => {
+            setCourseOverview(json ?? []);
         });
       };
 
@@ -110,20 +111,19 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId, refresh}) {
     function handleCourseCreation(e) {
         e.preventDefault()
         if (color === "rainbow" || !color){
-            console.log("Pick a color!")
             setWarning('Please select a color!');
             return false;
         }
         setSubmitting(true);
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
-        CMTJsonFetch('POST', '/course', { courseCode, courseName, color }).then(async response => {
+        CMTJsonFetch('POST', '/course', { courseCode, courseName, color }).then(async json => {
             setSubmitButtonElement(<><Check />Created!</>)
-            const json = await response.json();
             setTimeout(async () => navigate(`/courses/${json.course.id}`), 500);
         }).catch(async error => {
-            console.log(error)
-            const data = await error.response.json();
-            setWarning(data.details);
+            LogError(
+                new CMTError({ userFacingMessage: "Error creating course.", cause: error }),
+                setWarning
+            )
             setSubmitButtonElement(<><PlusIcon />Submit</>)
             setSubmitting(false);
         });
@@ -132,7 +132,6 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId, refresh}) {
     function handleColorEdit(e){
         e.preventDefault();
         if (color === "rainbow" || !color){
-            console.log("Pick a color!")
             e.preventDefault();
             setWarning('Please select a color!');
             return false;

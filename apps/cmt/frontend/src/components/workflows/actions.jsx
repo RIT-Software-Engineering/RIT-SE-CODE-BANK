@@ -6,10 +6,12 @@ import { StatusCard, StatusIcon } from "./misc.jsx"
  */
 
 /**
- * @param {ActionContainerProps} props 
+ * @param {ActionContainerProps & { actionWithContexts: { actionType: "complex" | "workflow" } }} props 
  */
 export function ComplexCardContainer(props) {
-	let possibleSessionAction = props.actionWithContexts.processedAction.childActions.find(awc => /SESSION_\d+/.test(awc?.metadata?.code));
+	
+	let possibleSessionAction = props.actionWithContexts.processedAction.childActionsWithContexts.find(awc => /SESSION_\d+/.test(awc?.parsedMetadata?.code));
+
 	return (
 		<Accordion.Item eventKey={props.actionWithContexts.processedAction.id}>
 			<Accordion.Header>

@@ -1,7 +1,7 @@
 {
     "name": "cmt",
     "scripts": {
-        "force-reset-data": "npx prisma migrate reset --schema backend/prisma.schema.prisma --force --skip-seed && node backend/prisma/seed.js && cd ../workflow/server && npm run force-reset-data-cmt"
+        "force-reset-data": "npx prisma migrate reset --schema backend/prisma/schema.prisma --force --skip-seed && node backend/prisma/seed.js && cd ../workflow/server && npm run force-reset-data-cmt"
     },
     "prisma": {
         "schema": "backend/prisma/schema.prisma"

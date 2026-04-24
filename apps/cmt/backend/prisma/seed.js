@@ -21,7 +21,7 @@ async function main() {
   // Since there is never(?) a reason to duplicate seed data, don't run this seed file if its already been ran.
   // This is to allow start scripts to remain idempotent.
   // If you are looking to delete existing data, use prisma commands like "npx prisma migrate reset"
-  const doesSeedDataExist = prisma.professor.findFirst({ where: { id: "1" } }) 
+  const doesSeedDataExist = await prisma.professor.findFirst({ where: { id: "pao1234" } }) 
   if (doesSeedDataExist) {
     console.log("WARNING: Skipping seeding as professor with id '1' already exists");
     return
