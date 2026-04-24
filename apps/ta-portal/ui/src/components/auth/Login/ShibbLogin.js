@@ -16,9 +16,6 @@ import { useRouter } from "next/navigation";
 import { useNotification } from '@/contexts/NotificationContext';
 import { getUser } from "../../../services/db-apis";
 
-
-
-
 /**
  * A component for Shibboleth Login
  * @param {object} props - The component props.
@@ -36,8 +33,7 @@ export default function ShibbLogin({
     const [selectedUsername, setSelectedUsername] = useState("");
     const router = useRouter();
     const [user, setUser] = useState(null);
-  const { showNotification } = useNotification();
-
+    const { showNotification } = useNotification();
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -49,11 +45,12 @@ export default function ShibbLogin({
                     }
                 );
                 if (!authRes.ok) {
-                    return;
+                    window.location.href = `$ {process.env.NEXT_PUBLIC_AUTH_URL}/login?returnTo=${encodeURIComponent(
+                        "https://apps.se.rit.edu/ta-portal"
+                    )}`;
                 }
                 const authData = await authRes.json();
                 const authId = authData.user?.id;
-
 
                 if (!authId) {
                     setError("No user ID received from authentication service");
@@ -67,16 +64,13 @@ export default function ShibbLogin({
                     return;
                 }
 
-
                 if (!dbRes.ok) {
                     setError("Unable to fetch user data from database");
                     showNotification('Internal server error', error);
                     return;
                 }
 
-
                 const dbUser = await dbRes.json();
-
 
                 // Set user + redirect
                 setUser(dbUser);
@@ -87,14 +81,9 @@ export default function ShibbLogin({
                 setError("An error occurred during authentication");
             }
         };
-
-
-
-
         checkAuth();
     },
         []);
-
 
     // Set a default user from the list when the component loads
     useEffect(() => {
@@ -102,7 +91,6 @@ export default function ShibbLogin({
             setSelectedUsername(allUsers[0].username);
         }
     }, [allUsers, selectedUsername]);
-
 
     return (
         <Container
@@ -137,7 +125,6 @@ export default function ShibbLogin({
                 <Typography variant="h3" textAlign="center" sx={{ mb: 4 }}>
                     Sign in with Shibboleth
                 </Typography>
-
 
                 {error && (
                     <Typography color="error" sx={{ mt: 2 }}>
