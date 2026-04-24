@@ -10,4 +10,6 @@ INSERT INTO `User` (`username`, `fname`, `lname`, `uid`, `password`, `email`, `p
 ('ee8901', 'Evan', 'Engineer', 303, 'password', 'student3@example.com', 'they/them', 'CANDIDATE'),
 ('tt7890', 'Tyler', 'Tester', 304, 'password', 'student4@example.com', 'he/him', 'EMPLOYEE'),
 ('ss9012', 'Sally', 'Student', 305, 'password', 'student5@example.com', 'they/them', 'CANDIDATE'),
+('kjk9042', 'Kinkade', 'Knox-Silvia', 1200, 'password', 'kjk9042@rit.edu', 'he/him', 'ADMIN'),
+('mml6127', 'Mason', 'Student', 3025, 'password', 'mml6127@rit.edu', 'they/them', 'CANDIDATE'),
 ('gg5672', 'Gary', 'Greenfield', 306, 'password', 'student6@example.com', 'he/him', 'CANDIDATE');

@@ -40,7 +40,7 @@ export default function ShibbLogin({
             try {
                 // Check SAML auth session
                 const authRes = await fetch(`${process.env.NEXT_PUBLIC_AUTH_URL}/me`,{credentials: "include",});
-
+                
                 if (!authRes.ok) {
                     window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL}/login?returnTo=https://apps.se.rit.edu/ta-portal")}`;
                 }
@@ -53,6 +53,7 @@ export default function ShibbLogin({
                 }
                 // Check if user exists in DB by ID
                 const dbRes = await getUser(authId);
+                console.log(dbRes)
                 if (dbRes.status === 404) {
                     showNotification('User not found in our database. Signing you up now', warning);
                     onSwitchToSignUp();
