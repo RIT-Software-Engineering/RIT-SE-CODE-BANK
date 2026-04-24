@@ -3,6 +3,7 @@
 
 import DevLogin from "./DevLogin";
 import ProdLogin from "./ProdLogin";
+import ShibbLogin from './ShibbLogin';
 
 /**
  * A wrapper component that conditionally renders the correct login system
@@ -15,5 +16,5 @@ export default function LoginWrapper(props) {
     return <DevLogin {...props} />;
   }
 
-  return <ProdLogin {...props} />;
+  return <ShibbLogin {...props} />;
 }
