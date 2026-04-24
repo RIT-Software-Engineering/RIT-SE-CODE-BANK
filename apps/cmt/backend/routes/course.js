@@ -322,8 +322,8 @@ router.post('/:templateId', async (req, res) => {
                         let actualBody = material.body;
                         
                         // We have to check if we have any resources in both our label and body
-                        let labelResourceMatches = material.label.match(/\/api\/cmt\/resources\/download\/.{36}/g);
-                        let bodyResourceMatches = material.body.match(/\/api\/cmt\/resources\/download\/.{36}/g);
+                        let labelResourceMatches = material.label?.match(/\/api\/cmt\/resources\/download\/.{36}/g);
+                        let bodyResourceMatches = material.body?.match(/\/api\/cmt\/resources\/download\/.{36}/g);
 
                         // if we have any resources in our label, we go through each one and update them to the new link
                         labelResourceMatches?.forEach(match => {
