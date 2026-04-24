@@ -1,5 +1,5 @@
 import { Check, Loader2, PlusIcon, Palette, Search } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Badge, Button, Card, Col, Container, Form, Modal, Offcanvas, Row, Spinner } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import Wheel from '@uiw/react-color-wheel';
@@ -8,6 +8,9 @@ import { CMTJsonFetch } from '../../utils/api.js';
 import { ColorOption } from '../../components/forms/ColorPicker.jsx';
 import { LogError } from '../../utils/error.jsx';
 
+/**
+ * @import { SetStateAction } from "react"
+ */
 
 export function CourseOverview() {
     const [courseOverview, setCourseOverview] = useState([]);
@@ -70,6 +73,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     const [courseName, setCourseName] = useState('');
     const [color, setColor] = useState('');
 
+    // templates stuff
     const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [originalTemplates, setOriginalTemplates] = useState([]);
     const [templates, setTemplates] = useState([]);
@@ -123,8 +127,10 @@ function CourseCreationModal({isOpen, setIsOpen}) {
         setWarning('');
         setShowWheel(false);
         setSelectedTemplate(null);
+        setTemplates(originalTemplates);
     }
 
+    // get ALL templates that the professor owns (including unpublished)
     const loadProfTemplates = async () => {
         setLoading(true);
         CMTJsonFetch('GET', `course/?isTemplate=true`)
@@ -157,7 +163,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                         {loading
                             ? <div className='text-center'>
                                 <Spinner animation='border' />
-                                <p className='mt-2'>Loading resources...</p>
+                                <p className='mt-2'>Loading templates...</p>
                             </div>
                         : templates.length > 0 
                         ? <div className="max-h-64 overflow-y-scroll mb-2">
@@ -167,7 +173,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                                 </div>
                             ))}
                             </div> : 
-                            <p>You have not created a template. You can also try searching for a template.</p>
+                            <p>You have not created a template. You can create one or try searching public templates.</p>
                         }
                         <Button variant='primary' onClick={() => setTemplateSearchOpen(true)}>
                             <div className='flex justify-between'>
@@ -289,7 +295,19 @@ export function ColorWheel({setColor}) {
     );
 }
 
+/**
+ * Modified component of resources
+ * Displays a card for templates containing name, code, professor and season
+ * TODO maybe add last created / last updated date?
+ *
+ * @param {Object} props 
+ * @param {Object} props.template - the template to be displayed
+ * @param {Object} props.selected - the selected template (if any)
+ * @param {React.Dispatch<SetStateAction<Object>>} props.setSelected - sets the selected template 
+ * @returns {React.ReactElement} 
+ */
 function SelectableTemplateCard({template, selected, setSelected}) {
+    // If not provided a template we don't want to display anything
     if (!template){
         return (<></>);
     }
@@ -297,7 +315,7 @@ function SelectableTemplateCard({template, selected, setSelected}) {
 
     return (
         <Card 
-            className={`cursor-pointer ${isSelected ? 'border-primary' : 'border-secondary'}`}
+            className={`cursor-pointer ${isSelected ? 'border-primary' : 'border-secondary'}  select-none`}
             onClick={() => setSelected(prevTemplate => (prevTemplate !== template) ? template: null)}
         >
             <Card.Body className={`${!isSelected ? 'pb-4' : 'pb-0'}`}>
@@ -318,10 +336,26 @@ function SelectableTemplateCard({template, selected, setSelected}) {
     )
 }
 
+/**
+ * Technically not a modal but same difference
+ * sidebar view that displays all public templates and allows for searching through them
+ * does NOT display a professor's unpublished templates
+ *
+ * @param {Object} props 
+ * @param {Boolean} props.isOpen - whether the modal is open or not
+ * @param {React.Dispatch<SetStateAction<Boolean>>} props.setIsOpen - used to close the modal
+ * @param {Object} props.selected - the selected template (if any) 
+ * @param {React.Dispatch<SetStateAction<Object>>} props.setSelected - set the selected template 
+ * @param {Array<Object>} props.templates - all of the professor's templates. used for checking later
+ * @param {React.Dispatch<SetStateAction<Object[]>>} props.setTemplates - sets the templates in the main view. used to add a possibly missing template.
+ * @param {Array<Object>} props.originalTemplates - the original set of unaltered templates
+ * @returns {React.ReactElement} 
+ */
 function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, templates, setTemplates, originalTemplates}) {
     const [allTemplates, setAllTemplates] = useState([]);
     const [shownTemplates, setShownTemplates] = useState([]);
 
+    // gets all the public templates and displays them
     const setPublishedTemplates = useCallback(async () => {
         await CMTJsonFetch("GET", "/course/templates").then(async response => {
             const data = await response.json();
@@ -333,21 +367,28 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
 
     useEffect(() => void setPublishedTemplates(), [setPublishedTemplates]);
 
+    // close the view and the choose a template view if a template outside of the prof's normal ones were selected.
     const closeModal = () => {
         const newTemplate = !templates.find(template => template.id === selected?.id)
         if (selected && newTemplate){
+            // If we already have added one of the published templates, remove it and add the new one
             if (templates.length > originalTemplates.length)
                 setTemplates(prev => [selected, ...prev.slice(1, prev.length)]);
+            // if not, we just add it directly
             else
                 setTemplates(prev => [selected, ...prev]);
         }
+        // if the template isn't new, we remove the other published template and don't duplicate things
         else if (!newTemplate){
             setTemplates(originalTemplates);
         }
         setIsOpen(false);
+        // Reset the shown templates view
         setShownTemplates(allTemplates);
     }
 
+    // filters the templates by their tags that contain relevant information
+    // makes an API request to get these
     const searchTags = async (searchValue) => {
         if (!searchValue) {
             setShownTemplates(allTemplates);
@@ -364,6 +405,7 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
         })
     };
 
+    // debounce function so we don't send an API request every time we type something
     const debounce = (fn, delay = 1000) => {
         let timerId = null;
         return (...args) => {
@@ -394,7 +436,8 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
                     onInput(e.target.value);
                 }}></Form.Control>
                 </div>
-                {/* AI-modified code */}
+                {/* AI-modified code
+                Display 2 items per row */}
                 <Container>
                 <Row>
                     {shownTemplates.map(template => (

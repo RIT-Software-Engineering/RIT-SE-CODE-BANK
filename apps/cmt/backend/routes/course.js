@@ -36,9 +36,13 @@ router.get('/', async (req, res) => {
     }
 })
 
-router.get('/templates', async (req, res) => {
+/**
+ * GET /course/templates
+ * Gets all the templates that have been published via the associated workflows with our special tag
+ */
+router.get('/templates', async (_, res) => {
     try {
-    const templateWorkflows = await workflowsFetch("GET", "/workflows?tags=TangledUpInLiesImAworkflony");
+    const templateWorkflows = await workflowsFetch("GET", "/workflows?tags=TangledUpInLiesImAWorkflony");
     const availTemplates = Promise.all(templateWorkflows.map(async workflow => ( 
         await prisma.course.findFirst({
             where: {workflowId: workflow.id},
@@ -212,6 +216,7 @@ router.post('/:templateId', async (req, res) => {
         let sessionActions;
         let workflow;
         let actionResponse;
+        // We use the specific workflow chosen from the template
         await workflowsFetch("GET", `workflows/${workflowId}`).then(async response => {
             const workflowBase = response;
             let actions;
@@ -238,6 +243,7 @@ router.post('/:templateId', async (req, res) => {
             sessionActions = findActionsByCode(workflow.childActions, "SESSION", new RegExp(`^SESSION_.*`));
         });
 
+        // templates are technically courses, so we get all the sessions, session material, and resources from it
         const course = await prisma.course.findUnique({
             where: {id: parseInt(templateId)},
             include: {
@@ -253,13 +259,15 @@ router.post('/:templateId', async (req, res) => {
         // Do everything in a transaction so if one thing fails it reverts the DB
         await prisma.$transaction(async () => {
             const createdWorkflow = await objectToNewWorkflow(workflow, professorId)
-            console.log(createdWorkflow)
             
             const createdState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdWorkflow.id }) // Create state
             console.log(`Created workflow action state with id ${createdState.id}`)
+            
+            // the created workflow doesn't return all the child actions so we have to get them here
             const fullCreatedWorkflow = await workflowsFetch("GET", `/actions/?workflowId=${createdWorkflow.id}`);
             await cloneWorkflowState(actionResponse, fullCreatedWorkflow);
             
+            // create the course using the same data as the template
             const newCourse = await prisma.course.create({
                 data: {
                     classId: course.classId,
@@ -282,6 +290,7 @@ router.post('/:templateId', async (req, res) => {
                 courseId: Number(newCourse.id)
             }));
 
+            // copy the resourcs to the course and add them to an object as pairs for later
             let resourcePairs = [];
             course.Resource.forEach(async resource => {
                 const newResource = await req.prisma.resource.create({
@@ -296,6 +305,7 @@ router.post('/:templateId', async (req, res) => {
                 resourcePairs.push({old: resource.id, new: newResource.id})
             })
 
+            // Upload the sessions and mark the extra ones as status complete
             for (let i=0; i < Math.max(course.sessions?.length, sessionData.length); i++){
                 const session = await prisma.session.create({
                     data: {
@@ -304,18 +314,24 @@ router.post('/:templateId', async (req, res) => {
                         courseId: Number(newCourse.id)
                     },
                 });
+            
+                // Go through all of the session materials now and upload them
                 if (course.sessions[i]?.material.length > 0){
                     course.sessions[i]?.material.forEach(async material => {
                         let actualLabel = material.label;
                         let actualBody = material.body;
+                        
+                        // We have to check if we have any resources in both our label and body
                         let labelResourceMatches = material.label.match(/\/api\/cmt\/resources\/download\/.{36}/g);
                         let bodyResourceMatches = material.body.match(/\/api\/cmt\/resources\/download\/.{36}/g);
 
+                        // if we have any resources in our label, we go through each one and update them to the new link
                         labelResourceMatches?.forEach(match => {
                             const newResourceId = resourcePairs.find(resource => match.match(resource.old))?.new;
                             actualLabel = actualLabel.replace(match, `/api/cmt/resources/download/${newResourceId}`);
                         });
 
+                        // if we have any resources in our body, we go through each one and update them to the new link
                         bodyResourceMatches?.forEach(match => {
                             const newResourceId = resourcePairs.find(resource => match.match(resource.old))?.new;
                             actualBody = actualBody.replace(match, `/api/cmt/resources/download/${newResourceId}`);

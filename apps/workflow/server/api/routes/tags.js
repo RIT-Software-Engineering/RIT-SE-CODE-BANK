@@ -3,6 +3,7 @@ const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+// GET /tags
 router.get("/", async (req, res) => {
     const {userId} = req.query;
     const where = {};
@@ -20,6 +21,7 @@ router.get("/", async (req, res) => {
     res.status(200).json(tags);
 })
 
+// GET /tags/partial
 router.get("/partial", async (req, res) => {
     const {value} = req.query;
     const tags = await prisma.tag.findMany({

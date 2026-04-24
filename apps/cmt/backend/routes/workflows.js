@@ -38,6 +38,10 @@ router.put("/editCheckmarkAction", async (req, res) => {
     }
 });
 
+/**
+ * GET /workflow/publishedTemplates
+ * Gets all the publishd templates that contain part of the search value from the query
+ */
 router.get("/publishedTemplates", async (req, res) => {
     try {
         const {searchValue} = req.query;
