@@ -8,10 +8,6 @@ const StackTraceErrorPage = () => {
   const [userFeedback, setUserFeedback] = useState("");
   const [showStack, setShowStack] = useState(false);
 
-  // Figure out environment
-  const env = process.env.NEXT_PUBLIC_NODE_ENV || process.env.NODE_ENV;
-  const isDev = env === "development" || env === "DEV";
-
   // Read from sessionStorage after mount
   useEffect(() => {
     try {
@@ -142,7 +138,7 @@ const StackTraceErrorPage = () => {
           🔙 Go Back
         </Button>
         <Button variant="outlined" onClick={handleCopyStackTrace}>
-            {isDev ? "📋 Copy Stack Trace" : "📋 Copy Stack Trace"}
+            {"📋 Copy Stack Trace"}
         </Button>
         <Button
           color="secondary"

@@ -8,7 +8,7 @@ import LoginWrapper from "@/components/auth/Login/LoginWrapper";
 import SignUpForm from "@/components/auth/SignUpForm";
 import { useAuth } from "@/contexts/AuthContext";
 import UserProfileModal from "@/components/profile/UserProfileModal";
-import { getAllUsers, getUserProfile } from "@/services/db-apis";
+import { getAllUsers, getLoginMode, getUserProfile } from "@/services/db-apis";
 import { useNotification } from "@/contexts/NotificationContext";
 
 /**
@@ -24,7 +24,7 @@ export default function LoginPage() {
   const { currentUser, setCurrentUser } = useAuth();
   const { showNotification } = useNotification();
 
-  const [users, setUsers] = useState([]);
+  const [loginMode, setLoginMode] = useState("prod")
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileDataForModal, setProfileDataForModal] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,17 +56,17 @@ export default function LoginPage() {
 
   // Fetch all users on component mount
   useEffect(() => {
-    async function fetchUsers() {
+    async function fetchLoginMode() {
       try {
-        const data = await getAllUsers();
-        setUsers(data);
+        const mode = await getLoginMode();
+        setLoginMode(mode.loginMode);
       } catch (err) {
-        console.error("Failed to fetch users:", err);
+        console.error("Failed to fetch login mode:", err);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchUsers();
+    fetchLoginMode();
   }, []);
 
   const handleLoginSuccess = async (user, action) => {
@@ -148,22 +148,20 @@ export default function LoginPage() {
           mode="create"
           profileData={profileDataForModal}
           onUpdateSuccess={handleProfileUpdateSuccess}
-          allUsers={users}
         />
       )}
 
       {authView === 'login' && (
         <LoginWrapper
           onLoginSuccess={handleLoginSuccess}
-          allUsers={users}
           onSwitchToSignUp={() => setAuthView('signup')}
+          loginMode={loginMode}
         />
       )}
       
       {authView === 'signup' && (
         <SignUpForm
           onSignUpSubmit={handleLoginSuccess}
-          allUsers={users}
           onSwitchToLogin={() => setAuthView('login')}
         />
       )}

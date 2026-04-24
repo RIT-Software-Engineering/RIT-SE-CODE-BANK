@@ -10,11 +10,11 @@ import ShibbLogin from './ShibbLogin';
  * based on the environment variable NEXT_PUBLIC_SERVER_ENV.
  */
 export default function LoginWrapper(props) {
-  const isDevEnvironment = process.env.NEXT_PUBLIC_NODE_ENV === "DEV";
-
-  if (isDevEnvironment) {
+  const {loginMode} = props
+  if (loginMode === "dev"){
     return <DevLogin {...props} />;
+  } else if (loginMode === "shibb"){
+    return <ShibbLogin {...props} />;
   }
-
-  return <ShibbLogin {...props} />;
+  return <ProdLogin {...props} />;
 }

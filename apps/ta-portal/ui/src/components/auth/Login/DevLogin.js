@@ -13,30 +13,39 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import { getUser } from "../../../services/db-apis";
+import { getDevUsers, getUser } from "../../../services/db-apis";
 
 /**
  * A component for the development login system using a dropdown.
  * @param {object} props - The component props.
  * @param {function} props.onLoginSuccess - Callback for a successful login.
  * @param {function} props.onSwitchToSignUp - Callback to switch to the sign-up view.
- * @param {object[]} props.allUsers - The list of all users.
  */
 export default function DevLogin({
   onLoginSuccess = () => {},
-  onSwitchToSignUp = () => {},
-  allUsers = [],
+  onSwitchToSignUp = () => {}
 }) {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState(null);
   const [selectedUsername, setSelectedUsername] = useState("");
+  const [users, setUsers] = useState([]);
 
   // Set a default user from the list when the component loads
   useEffect(() => {
-    if (allUsers && allUsers.length > 0 && !selectedUsername) {
-      setSelectedUsername(allUsers[0].username);
+    async function fetchUsers() {
+      try{
+        const data = await getDevUsers();
+        setUsers(data);
+      } catch(e){
+        console.error("Failed to fetch dev users: ", e);
+      }
     }
-  }, [allUsers, selectedUsername]);
+    fetchUsers();
+
+    if (users && users.length > 0 && !selectedUsername) {
+      setSelectedUsername(users[0].username);
+    }
+  }, [selectedUsername]);
 
   // Handle changes in the user selection dropdown
   const handleSelectChange = (e) => {
@@ -113,7 +122,7 @@ export default function DevLogin({
             onChange={handleSelectChange}
           >
             <MenuItem value="new-user">-- Create New User --</MenuItem>
-            {allUsers.map((user) => (
+            {users.map((user) => (
               <MenuItem key={user.username} value={user.username}>
                 {user.fname} {user.lname} ({user.role})
               </MenuItem>

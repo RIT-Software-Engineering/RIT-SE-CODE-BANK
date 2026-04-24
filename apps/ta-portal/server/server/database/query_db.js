@@ -1802,6 +1802,60 @@ async function getAllUsers() {
   }
 }
 
+async function checkUserAvailability(fields){
+  try{
+    const {username, email, uid} = fields;
+    const takenFields = [];
+
+    // Build dynamic checks
+    const checks = [];
+
+    if (username) {
+      checks.push(
+        prisma.user.findUnique({
+          where: { username: username }
+        }).then((user) => {
+          if (user) takenFields.push("username");
+        })
+      );
+    }
+
+    if (email) {
+      checks.push(
+        prisma.user.findFirst({
+          where: { email: email }
+        }).then((user) => {
+          if (user) takenFields.push("email");
+        })
+      );
+    }
+
+    if (uid) {
+      checks.push(
+        prisma.user.findFirst({
+          where: { uid: uid }
+        }).then((user) => {
+          if (user) takenFields.push("uid");
+        })
+      );
+    }
+
+    // Run all checks in parallel
+    await Promise.all(checks);
+
+    const available = takenFields.length === 0;
+
+    return {
+      available,
+      takenFields
+    }
+  } catch(e){
+    console.error(e);
+    throw e;
+  }
+}
+
+
 /**
  * Retrieves a user by their username.
  * @param {string} username - The unique identifier of the user.
@@ -2907,6 +2961,7 @@ module.exports = {
   deleteCoverLetter,
   checkResumeDeleteStatus,
   getAllUsers,
+  checkUserAvailability,
   getAllCourses,
   createJobPosition,
   updateJobPosition,

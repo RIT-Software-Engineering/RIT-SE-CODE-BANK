@@ -17,9 +17,6 @@ RUN npm ci --workspace=ta-portal-frontend
 COPY apps/ta-portal/ui ./apps/ta-portal/ui
 
 # Change build arguments into env variables
-ARG NEXT_PUBLIC_NODE_ENV
-ENV NEXT_PUBLIC_NODE_ENV=$NEXT_PUBLIC_NODE_ENV
-
 ARG NEXT_PUBLIC_BACKEND_URL
 ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
 

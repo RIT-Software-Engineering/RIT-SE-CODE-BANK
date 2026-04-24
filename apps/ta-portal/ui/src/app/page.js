@@ -1,12 +1,10 @@
 // src/app/page.js (root page)
 'use client';
 
-import { useState, useEffect } from "react";
-import { Box, CircularProgress, Container, Paper, Typography, useTheme } from "@mui/material";
+import { Box, Container, Paper, Typography, useTheme } from "@mui/material";
 import LandingDashboard from "@/components/dashboard/LandingDashboard";
 import HeroBanner from "@/components/HeroBanner";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAllUsers } from "@/services/db-apis";
 import Link from "next/link";
 import { ArrowForward } from "@mui/icons-material";
 
@@ -21,41 +19,6 @@ import { ArrowForward } from "@mui/icons-material";
 export default function Home() {
   const { currentUser } = useAuth();
   const theme = useTheme();
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  /**
-   * Fetch all users on component mount.
-   */
-  useEffect(() => {
-    async function fetchUsers() {
-      try {
-        const data = await getAllUsers();
-        setUsers(data);
-      } catch (err) {
-        console.error("Failed to fetch users:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchUsers();
-  }, []);
-
-  // Render a full-page loading spinner while initial data is being fetched
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
