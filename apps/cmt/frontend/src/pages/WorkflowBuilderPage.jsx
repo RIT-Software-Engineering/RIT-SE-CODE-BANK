@@ -679,7 +679,7 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
         setWorkflows(workflowsCopy);
         returnVal = "Good";
     }).catch(async error => {
-        console.log(error)
+        console.error(error)
         if (error.response){
             const data = await error.response.json();
             setError(data.error);
@@ -1064,7 +1064,7 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
             await refresh();
             returnVal = "Good";
     }).catch(async error => {
-        console.log(error)
+        console.error(error)
         if (error.response){
             const data = await error.response.json();
             setError(data.error);

@@ -1,4 +1,4 @@
 {
   "extends": "../tsconfig.json", // Use cmt top level config
-  // Nothing here so u could delete it
+  "exclude": ["./prisma/generated"]
 }

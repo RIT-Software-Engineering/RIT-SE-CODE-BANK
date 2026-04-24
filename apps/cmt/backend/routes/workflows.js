@@ -29,10 +29,10 @@ function findActionsWithContextsByCode(actionsWithContexts, code) {
 // workflow/editCheckmarkAction
 router.put("/editCheckmarkAction", async (req, res) => {
     try {
-        const { uid: userId, asid: actionStateId } = req.query
+        const { asid: actionStateId } = req.query
         const { checked } = req.body
         const workflowsResponse = await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: checked ? "completed" : "notStarted" })
-        return res.status(200).json()
+        return res.status(200).json(workflowsResponse)
     } catch(e) {
         return res.status(500).json({ error: e })
     }
@@ -44,6 +44,10 @@ router.put("/publishCourseTemplate", async (req, res) => {
     try {
         const { asid: actionStateId, courseId} = req.query;
         await workflowsFetch("POST", `/states/handleSubmit`, { actionStateId, stateType: "completed" });
+
+        if (typeof courseId !== "string") {
+            throw new Error("courseId was not a string")
+        }
 
         const course = await prisma.course.findUnique({
             where: { id: parseInt(courseId) },
@@ -227,6 +231,7 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     try {
         const {workflowId} = req.params;
         const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
+        
         const actionsWithContexts = actions.map(action => 
             CMTActionToActionWithContexts(action, null, null, req.user?.uid)
         );
@@ -237,6 +242,7 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
 
         return res.status(200).json({actions: actionsWithContexts, codes: usedCodes})
     } catch (error) {
+        console.log(error)
         return res.status(500).json({error: error.message});
     }
 })
