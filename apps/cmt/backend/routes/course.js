@@ -291,8 +291,7 @@ router.post('/:templateId', async (req, res) => {
             }));
 
             // copy the resourcs to the course and add them to an object as pairs for later
-            let resourcePairs = [];
-            course.Resource.forEach(async resource => {
+            const resourcePromise = course.Resource.map(async resource => {
                 const newResource = await req.prisma.resource.create({
                     data: {
                         name: resource.name.replace(/\..+$/, ""),
@@ -302,8 +301,10 @@ router.post('/:templateId', async (req, res) => {
                         courseId: Number(newCourse.id),
                     },
                 });
-                resourcePairs.push({old: resource.id, new: newResource.id})
-            })
+                return {old: resource.id, new: newResource.id}
+            });
+
+            const resourcePairs = await Promise.all(resourcePromise);
 
             // Upload the sessions and mark the extra ones as status complete
             for (let i=0; i < Math.max(course.sessions?.length, sessionData.length); i++){
