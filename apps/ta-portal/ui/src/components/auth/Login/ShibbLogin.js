@@ -45,9 +45,7 @@ export default function ShibbLogin({
                     }
                 );
                 if (!authRes.ok) {
-                    window.location.href = `$ {process.env.NEXT_PUBLIC_AUTH_URL}/login?returnTo=${encodeURIComponent(
-                        "https://apps.se.rit.edu/ta-portal"
-                    )}`;
+                    window.location.href = `$ {process.env.NEXT_PUBLIC_AUTH_URL}/login?returnTo=${encodeURIComponent("https://apps.se.rit.edu/ta-portal")}`;
                 }
                 const authData = await authRes.json();
                 const authId = authData.user?.id;
