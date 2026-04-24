@@ -175,7 +175,7 @@ export async function objectToNewWorkflow(workflow, ownerId) {
     description: workflow.description,
     metadata: workflow.metadata ? makeMetadataSafeForWorkflows(workflow.metadata) : {},
     rootActionId: rootActionId,
-    tags: workflow.tags
+    // tags: workflow.tags // I remove tags cuz I don't think we need them since there's only one meta-workflow at a time. Future people can change that though 
   })
 
   return createdWorkflow;

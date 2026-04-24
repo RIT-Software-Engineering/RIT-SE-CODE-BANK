@@ -1,5 +1,5 @@
 import { Check, Loader2, PlusIcon, Palette, Search } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Badge, Button, Card, Col, Container, Form, Modal, Offcanvas, Row, Spinner } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import Wheel from '@uiw/react-color-wheel';
@@ -71,6 +71,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     const [color, setColor] = useState('');
 
     const [selectedTemplate, setSelectedTemplate] = useState(null);
+    const [originalTemplates, setOriginalTemplates] = useState([]);
     const [templates, setTemplates] = useState([]);
     const [loading, setLoading] = useState(false);
     const [templateSearchOpen, setTemplateSearchOpen] = useState(false);
@@ -127,7 +128,11 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     const loadProfTemplates = async () => {
         setLoading(true);
         CMTJsonFetch('GET', `course/?isTemplate=true`)
-            .then(async response => setTemplates((await response.json()) || []))
+            .then(async response => {
+                const data = (await response.json()) || [];
+                setTemplates(data);
+                setOriginalTemplates(data);
+            })
             .catch(error => LogError("Failed to load templates.", error, setWarning))
             .finally(() => setLoading(false))
     };
@@ -138,7 +143,9 @@ function CourseCreationModal({isOpen, setIsOpen}) {
 
     return (
         <>
-            <TemplateSearchModal isOpen={templateSearchOpen} setIsOpen={setTemplateSearchOpen} selected={selectedTemplate} setSelected={setSelectedTemplate}/>
+            <TemplateSearchModal isOpen={templateSearchOpen} setIsOpen={setTemplateSearchOpen} 
+            selected={selectedTemplate} setSelected={setSelectedTemplate}
+            templates={templates} setTemplates={setTemplates} originalTemplates={originalTemplates}/>
             <Modal size="lg" show={isOpen} onExit={resetForm} onHide={() => !templateSearchOpen && setIsOpen(false)} centered>
                 <Modal.Header closeButton className='text-2xl'>Create Course</Modal.Header>
                 <Modal.Body>
@@ -153,7 +160,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                                 <p className='mt-2'>Loading resources...</p>
                             </div>
                         : templates.length > 0 
-                        ? <div className="max-h-72 overflow-y-scroll">
+                        ? <div className="max-h-64 overflow-y-scroll mb-2">
                             {templates.map(template => (
                                 <div className="mb-3">
                                     <SelectableTemplateCard template={template} selected={selectedTemplate} setSelected={setSelectedTemplate}/>
@@ -283,39 +290,121 @@ export function ColorWheel({setColor}) {
 }
 
 function SelectableTemplateCard({template, selected, setSelected}) {
-    const isSelected = template.id === selected?.id;
+    if (!template){
+        return (<>I would be a template if I wasn't aborted</>);
+    }
+    const isSelected = template?.id === selected?.id;
 
     return (
         <Card 
             className={`cursor-pointer ${isSelected ? 'border-primary' : 'border-secondary'}`}
             onClick={() => setSelected(prevTemplate => (prevTemplate !== template) ? template: null)}
         >
-            <Card.Body className='pb-0 flex flex-column'>
-                <div className='flex items-center w-max'>
+            <Card.Body className={`${!isSelected ? 'pb-4' : 'pb-0'}`}>
+                <div className='flex items-center'>
                     <div className='flex-grow-1'>
-                        <Card.Title className='mb-1'>
-                            {template.classId} - {template.name}
+                        <Card.Title className='mb-1 text-break'>
+                            {/* TEXT-wrap isn't working correctly. I'm not sure why but it looks bad on smaller devices */}
+                            {template?.classId} - {template?.name}
                         </Card.Title>
                         <Card.Text className='text-muted text-base'>
-                            <span>{template.season}</span>
-                            <p>Created by: {template.professors.fname} {template.professors.lname}</p>
+                            <span>{template?.season}</span>
+                            <p>Created by: {template?.professors.fname} {template?.professors.lname}</p>
                         </Card.Text>
                     </div>
-                    {isSelected && <Badge pill className="ml-4">Selected</Badge>}
                 </div>
+                {isSelected && <Badge pill className='-pt-2 mb-2'>Selected</Badge>}
             </Card.Body>
         </Card>
     )
 }
 
-function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected}) {
+function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, templates, setTemplates, originalTemplates}) {
+    const [allTemplates, setAllTemplates] = useState([]);
+    const [shownTemplates, setShownTemplates] = useState([]);
+
+    const setPublishedTemplates = useCallback(async () => {
+        await CMTJsonFetch("GET", "/course/templates").then(async response => {
+            const data = await response.json();
+            setAllTemplates(data);
+            setShownTemplates(data);
+        })
+    }, []);
+
+    useEffect(() => void setPublishedTemplates(), [setPublishedTemplates]);
+
+    const closeModal = () => {
+        const newTemplate = !templates.find(template => template.id === selected?.id)
+        if (selected && newTemplate){
+            if (templates.length > originalTemplates.length)
+                setTemplates(prev => [selected, ...prev.slice(1, prev.length)]);
+            else
+                setTemplates(prev => [selected, ...prev]);
+        }
+        else if (!newTemplate){
+            setTemplates(originalTemplates);
+        }
+        setIsOpen(false);
+        setShownTemplates(allTemplates);
+    }
+
+    const searchTags = (searchValue) => {
+        if (!searchValue) {
+            setShownTemplates(allTemplates);
+            return;
+        }
+
+        // TODO this should be an API request tbh
+        const newShownTemplates = allTemplates.filter(template => {
+            const test = template.tags.find(tag => tag.toLowerCase().includes(searchValue));
+            if (test)
+                return template
+        });
+
+        setShownTemplates(newShownTemplates);
+    };
+
+    const debounce = (fn, delay = 1000) => {
+        let timerId = null;
+        return (...args) => {
+            clearTimeout(timerId);
+            timerId = setTimeout(() => fn(...args), delay);
+        };
+    };
+
+    const onInput = debounce(searchTags, 500);
+
     return (
         <>
-        <div onClick={()=>setIsOpen(false)} className={`bg-black opacity-10 absolute w-svw h-svh top-0 left-0 ${isOpen ? 'block' : 'hidden'}`} style={{zIndex:1060}}></div>
-        <Offcanvas show={isOpen} onHide={() => setIsOpen(false)} onExit={()=>setIsOpen(false)}
+        <div onClick={()=>closeModal()} className={`bg-black opacity-10 absolute w-svw h-svh top-0 left-0 ${isOpen ? 'block' : 'hidden'}`} style={{zIndex:1060}}></div>
+        <Offcanvas show={isOpen}  onHide={()=>closeModal()} onExit={()=>closeModal()}
         placement="end" style={{ width: '100%', maxWidth: '1040px', zIndex: 1070}}>
             <Offcanvas.Header closeButton>Search Templates</Offcanvas.Header>
-            <Offcanvas.Body>TODO add the template search here!</Offcanvas.Body>
+            <Offcanvas.Body>
+                <div className='border-black border mx-2 mb-3 rounded-xl flex items-center'>
+                <Search className='ml-2'/>
+                <Form.Control className='ml-2' plaintext placeholder="Search"
+                onChange={(e) => {
+                    onInput(e.target.value);
+                }}></Form.Control>
+                </div>
+                {/* AI-modified code */}
+                <Container>
+                <Row>
+                    {shownTemplates.map((template, i) => (
+                    <Col xs={6} key={template?.id} className="mb-3">
+                        <div onClick={() => closeModal()}>
+                        <SelectableTemplateCard 
+                            template={template} 
+                            selected={selected} 
+                            setSelected={setSelected} 
+                        />
+                        </div>
+                    </Col>
+                    ))}
+                </Row>
+                </Container>
+            </Offcanvas.Body>
         </Offcanvas>
         </>
     )

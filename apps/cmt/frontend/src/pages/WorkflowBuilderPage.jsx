@@ -87,7 +87,7 @@ export function BuilderPageAdmin({isAdmin}){
                     tags: workflow.tags?.filter(tag => 
                         isAdmin ? 
                         tag !== "WorkflonyFirstTheRestNowhere_CMT_Template" :
-                        tag !== "TangledUpInLiesImAWorkflony" && !info.metadata?.CMTemplate.includes(tag)
+                        tag !== "TangledUpInLiesImAWorkflony" && !info.metadata?.CMTemplate?.includes(tag)
                     ).sort(), // Remove the special tag so it's not modifiable in any way
                     usedCodes
                 }

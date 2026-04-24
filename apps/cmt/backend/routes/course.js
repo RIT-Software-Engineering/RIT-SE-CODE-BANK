@@ -27,13 +27,35 @@ router.get('/', async (req, res) => {
             where: {
                 professorId: profId, 
                 isTemplate: Boolean(isTemplate)
-            }
+            },
+            orderBy: {id: "desc"}
         })
         res.json(courses)
     } catch (err) {
         res.status(500).json({ error: err.message })
     }
 })
+
+router.get('/templates', async (req, res) => {
+    try {
+    const templateWorkflows = await workflowsFetch("GET", "/workflows?tags=TangledUpInLiesImAworkflony");
+    const availTemplates = Promise.all(templateWorkflows.map(async template => ( 
+        await prisma.course.findFirst({
+            where: {workflowId: template.id},
+            include: {professors: true},
+        })
+    )));
+    const templatesWithTags = (await availTemplates).map(template => {
+        template.tags = templateWorkflows.find(templateWorkflow => template.workflowId === templateWorkflow.id).tags;
+        template.tags.filter(tag => tag !== "TangledUpInLiesImAWorkflony");
+        return template
+    })
+    res.status(200).json(templatesWithTags)
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message })
+    }
+});
 
 /**
  * GET /api/cmt/course/:id
@@ -249,6 +271,7 @@ router.post('/:templateId', async (req, res) => {
                     name: course.name,
                     color: color,
                     season: course.season,
+                    year: course.year,
                     students: course.students,
                     section: course.section,
                     professors: { connect: { id: professorId } },
@@ -282,6 +305,7 @@ router.post('/:templateId', async (req, res) => {
                 const session = await prisma.session.create({
                     data: {
                         sessionNum: i+1,
+                        completed: course?.sessions[i]?.completed,
                         courseId: Number(newCourse.id)
                     },
                 });
