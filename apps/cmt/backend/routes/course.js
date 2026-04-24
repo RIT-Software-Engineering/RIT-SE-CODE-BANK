@@ -39,18 +39,13 @@ router.get('/', async (req, res) => {
 router.get('/templates', async (req, res) => {
     try {
     const templateWorkflows = await workflowsFetch("GET", "/workflows?tags=TangledUpInLiesImAworkflony");
-    const availTemplates = Promise.all(templateWorkflows.map(async template => ( 
+    const availTemplates = Promise.all(templateWorkflows.map(async workflow => ( 
         await prisma.course.findFirst({
-            where: {workflowId: template.id},
+            where: {workflowId: workflow.id},
             include: {professors: true},
         })
     )));
-    const templatesWithTags = (await availTemplates).map(template => {
-        template.tags = templateWorkflows.find(templateWorkflow => template.workflowId === templateWorkflow.id).tags;
-        template.tags.filter(tag => tag !== "TangledUpInLiesImAWorkflony");
-        return template
-    })
-    res.status(200).json(templatesWithTags)
+    res.status(200).json(await availTemplates)
     }
     catch (error) {
         res.status(500).json({ error: error.message })

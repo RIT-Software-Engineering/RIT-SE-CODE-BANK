@@ -291,7 +291,7 @@ export function ColorWheel({setColor}) {
 
 function SelectableTemplateCard({template, selected, setSelected}) {
     if (!template){
-        return (<>I would be a template if I wasn't aborted</>);
+        return (<></>);
     }
     const isSelected = template?.id === selected?.id;
 
@@ -304,7 +304,6 @@ function SelectableTemplateCard({template, selected, setSelected}) {
                 <div className='flex items-center'>
                     <div className='flex-grow-1'>
                         <Card.Title className='mb-1 text-break'>
-                            {/* TEXT-wrap isn't working correctly. I'm not sure why but it looks bad on smaller devices */}
                             {template?.classId} - {template?.name}
                         </Card.Title>
                         <Card.Text className='text-muted text-base'>
@@ -326,6 +325,7 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
     const setPublishedTemplates = useCallback(async () => {
         await CMTJsonFetch("GET", "/course/templates").then(async response => {
             const data = await response.json();
+            data.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order when searching
             setAllTemplates(data);
             setShownTemplates(data);
         })
@@ -348,20 +348,20 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
         setShownTemplates(allTemplates);
     }
 
-    const searchTags = (searchValue) => {
+    const searchTags = async (searchValue) => {
         if (!searchValue) {
             setShownTemplates(allTemplates);
             return;
         }
 
-        // TODO this should be an API request tbh
-        const newShownTemplates = allTemplates.filter(template => {
-            const test = template.tags.find(tag => tag.toLowerCase().includes(searchValue));
-            if (test)
-                return template
-        });
-
-        setShownTemplates(newShownTemplates);
+        await CMTJsonFetch("GET", `/workflow/publishedTemplates?searchValue=${searchValue.toLowerCase()}`).then(async response => {
+            const data = await response.json();
+            
+            // Partiall AI-generated code
+            const newTemplates = data.flat().filter(val => val !== null).filter((value, index, self) => (index === self.findIndex((t) => (t?.id === value?.id))));
+            newTemplates.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order as before
+            setShownTemplates(newTemplates)
+        })
     };
 
     const debounce = (fn, delay = 1000) => {
@@ -371,8 +371,14 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
             timerId = setTimeout(() => fn(...args), delay);
         };
     };
-
-    const onInput = debounce(searchTags, 500);
+    
+    // AI-modified code
+    const onInput = useCallback(
+        debounce((searchValue) => {
+            searchTags(searchValue);
+        }, 500),
+        [allTemplates] // Add dependencies that searchTags relies on
+    );
 
     return (
         <>
@@ -391,7 +397,7 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
                 {/* AI-modified code */}
                 <Container>
                 <Row>
-                    {shownTemplates.map((template, i) => (
+                    {shownTemplates.map(template => (
                     <Col xs={6} key={template?.id} className="mb-3">
                         <div onClick={() => closeModal()}>
                         <SelectableTemplateCard 
