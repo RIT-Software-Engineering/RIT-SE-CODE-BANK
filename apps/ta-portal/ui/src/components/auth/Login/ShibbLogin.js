@@ -60,11 +60,11 @@ export default function ShibbLogin({
                     return;
                 }
 
-                if (!dbRes.ok) {
-                    setError("Unable to fetch user data from database");
-                    showNotification('Internal server error', error);
-                    return;
-                }
+                // if (!dbRes.ok) {
+                //     setError("Unable to fetch user data from database");
+                //     showNotification('Internal server error', error);
+                //     return;
+                // }
 
                 const dbUser = await dbRes.json();
 
