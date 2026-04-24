@@ -14,6 +14,7 @@ services:
         NEXT_PUBLIC_API_EXTENSION: ${NEXT_PUBLIC_API_EXTENSION}
         NEXT_PUBLIC_DATABASE_API_EXTENSION: ${NEXT_PUBLIC_DATABASE_API_EXTENSION}
         NEXT_PUBLIC_SLACK_API_EXTENSION: ${NEXT_PUBLIC_SLACK_API_EXTENSION}
+        NEXT_PUBLIC_AUTH_URL: ${NEXT_PUBLIC_AUTH_URL}
          # If NODE_ENV is DEV, uses testing login, otherwise uses prod login
         NEXT_PUBLIC_NODE_ENV: ${LOGIN_MODE}
         # No url being prepended to paths means that fetch requests are made relativly:
