@@ -438,6 +438,7 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
                 </div>
                 {/* AI-modified code
                 Display 2 items per row */}
+                {shownTemplates.length > 0 ? 
                 <Container>
                 <Row>
                     {shownTemplates.map(template => (
@@ -452,7 +453,7 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
                     </Col>
                     ))}
                 </Row>
-                </Container>
+                </Container> : <p>No templates found.</p>}
             </Offcanvas.Body>
         </Offcanvas>
         </>
