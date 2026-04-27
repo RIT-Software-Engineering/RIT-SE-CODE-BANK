@@ -4,6 +4,15 @@ import { parseLine } from "./parser.js";
 import { encodeLine } from "./encodeLine.js";
 import { firstPass } from "./pass1.js";
 
+/**
+ * Runs the full two‑pass assembly pipeline on raw source text. Preprocesses
+ * the input into cleaned lines, tokenizes and parses each line into an AST (Abstract Syntax Tree),
+ * performs pass one to assign addresses and build the symbol table, and then
+ * encodes all instructions and directives in pass two. Returns the final
+ * flat array of machine‑code words.
+ * @param {string} text The raw assembly source code.
+ * @return {number[]} The complete list of encoded machine‑code words.
+ */
 export function assemble(text) {
     const lines = preProcess(text);
     const ast = [];

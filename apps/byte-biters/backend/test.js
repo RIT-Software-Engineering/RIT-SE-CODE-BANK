@@ -53,12 +53,8 @@ function readWordFromBytes(mem, addr) {
 //these currently fail, look into
 
 const program = `
-        MOV #5, R0
-        CMP #3, R0     ; 5 - 3 = positive → N=0, V=0
-        BGE HIT
-        MOV #1, R1
-HIT:    MOV #2, R1
-        HALT
+        Mov #5, R0
+        clr R0
 
 `;
 

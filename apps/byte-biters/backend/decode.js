@@ -1,8 +1,13 @@
 export class Decode{
-    constructor() {
 
-    }
-
+    /**
+     * Decodes a double‑operand instruction and returns an object containing the
+     * instruction type along with the source and destination addressing fields.
+     * Extracts mode and register bits for both operands from the 16‑bit word.
+     * @param {number} instr The raw 16‑bit instruction word.
+     * @param {string} givenType The mnemonic or type assigned to this instruction.
+     * @return {object} The decoded operand structure for a double‑operand instruction.
+     */
     doubleOpReturn(instr, givenType) {
         return {
                 type: givenType,
@@ -11,6 +16,14 @@ export class Decode{
             };
     }
 
+    /**
+     * Decodes a single-operand instruction and returns an object containing the
+     * instruction type along with the destination addressing fields.
+     * Extracts mode and register bits for the operand from the 16‑bit word.
+     * @param {number} instr The raw 16‑bit instruction word.
+     * @param {string} givenType The mnemonic or type assigned to this instruction.
+     * @return {object} The decoded operand structure for a single‑operand instruction.
+     */
     singleOpReturn(instr, givenType) {
         return {
             type: givenType,
@@ -18,6 +31,15 @@ export class Decode{
         };
     }
 
+    /**
+     * Decodes a branch instruction and returns an object containing the instruction
+     * type along with the signed 8‑bit displacement. Extracts the low byte of the
+     * instruction word and sign‑extends it to produce the branch offset used by
+     * PC‑relative branching.
+     * @param {number} instr The raw 16‑bit instruction word.
+     * @param {string} givenType The mnemonic or type assigned to this instruction.
+     * @return {object} The decoded branch structure containing the signed offset.
+     */
     branchReturn(instr, givenType) {
         const offset8 = instr & 0xFF;
         const signed = (offset8 << 24) >> 24;
@@ -27,6 +49,15 @@ export class Decode{
         };
     }
 
+    /**
+     * Decodes a JSR (Jump to Subroutine) instruction and returns an object
+     * containing the instruction type, the link register, and the destination
+     * addressing fields. Extracts bits 8–6 for the link register and the mode
+     * and register bits for the destination operand from the 16‑bit word.
+     * @param {number} instr The raw 16‑bit instruction word.
+     * @param {string} givenType The mnemonic or type assigned to this instruction.
+     * @return {object} The decoded structure for a JSR instruction.
+     */
     subRoutineReturn(instr, givenType) {
         return {
             type: givenType,
@@ -35,6 +66,15 @@ export class Decode{
         };
     }
 
+    /**
+     * Decodes an RTS (Return from Subroutine) instruction and returns an object
+     * containing the instruction type and the register used to restore the
+     * program counter. Extracts the low three bits of the 16‑bit instruction
+     * word, which specify the return register.
+     * @param {number} instr The raw 16‑bit instruction word.
+     * @param {string} givenType The mnemonic or type assigned to this instruction.
+     * @return {object} The decoded structure for an RTS instruction.
+     */
     fromSubRoutineReturn(instr, givenType) {
         return {
             type: givenType,
@@ -42,6 +82,13 @@ export class Decode{
         };
     }
 
+    /**
+     * Decodes the given instruction to determine the return type by using logical AND
+     * with the opcode mask to determine the specific instruction. Returns the type HALT
+     * or RESET directly for their opcodes.
+     * @param {number} instr The raw 16-bit word.
+     * @return {object} The decoded instruction object for execution.
+     */
     decode(instr) {
         //Used for the Move instruction
         if((instr & 0o070000) === 0o010000) {

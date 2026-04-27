@@ -1,6 +1,13 @@
 import {isRegister, isNumber, isLabel, getRegisterNumber} from "./utils.js";
 import { OPCODES } from "./opcodes.js";
 
+/**
+ * Parses a single tokenized assembly line. Handles optional leading labels,
+ * distinguishes between directives and instructions, and returns a structured
+ * AST node. Label‑only lines are represented with type "label-only".
+ * @param {string[]} tokens The tokenized components of a single source line.
+ * @return {object} The parsed AST node for this line.
+ */
 export function parseLine(tokens) {
     let label = null;
     if(tokens[1] === ":") {
@@ -27,6 +34,16 @@ export function parseLine(tokens) {
     }
 }
 
+/**
+ * Parses an instruction line into its mnemonic and operand fields. Handles
+ * branch instructions as a special case, since they take a single label
+ * operand rather than standard addressing modes. For all other instructions,
+ * delegates operand splitting to instructionLevel() and operand parsing to
+ * parseOperand().
+ * @param {string[]} tokens The tokenized instruction line (mnemonic + operands).
+ * @param {string|null} label An optional label attached to this line.
+ * @return {object} The parsed instruction AST node.
+ */
 function parseInstruction(tokens, label) {
     const branchMnemonic = tokens[0].toUpperCase();
     const opcodeInfo = OPCODES[branchMnemonic];
@@ -54,6 +71,15 @@ function parseInstruction(tokens, label) {
     };
 }
 
+/**
+ * Splits an instruction’s operand tokens into source and destination groups.
+ * Handles both one‑operand and two‑operand instructions by detecting the
+ * presence of a comma. Returns the mnemonic along with token arrays for the
+ * source and destination operands, or null where operands are absent.
+ * @param {string[]} tokenArray The mnemonic followed by raw operand tokens.
+ * @return {{mnemonic: string, srcTokens: string[]|null, dstTokens: string[]|null}}
+ *         The separated operand token groups.
+ */
 function instructionLevel(tokenArray) {
     const mnemonic = tokenArray[0];
     const rest = tokenArray.slice(1);
@@ -91,13 +117,28 @@ function instructionLevel(tokenArray) {
     }
 }
 
-//Used to determine the type of mode given and to return the appropriate values for each
+/**
+ * Parses a token sequence representing a single operand and determines its
+ * addressing mode, register (if applicable), and offset value. Supports all 7
+ * PDP‑11 addressing modes. Throws an error if the operand does not match any valid mode pattern.
+ * @param {string[]} tokens The token sequence representing one operand.
+ * @return {{mode: string, reg: number|null, offset: string|null}}
+ *         The decoded operand structure.
+ */
 export function parseOperand(tokens) {
     //Used to return the mode and register value for a register mode
     if(tokens.length === 1 && isRegister(tokens[0])) {
         return {
             mode: "register",
             reg: getRegisterNumber(tokens[0]),
+            offset: null
+        };
+    }
+    //Used for pc specifically
+    else if (tokens.length === 3 && tokens[0] === "(" && tokens[1].toUpperCase() === "PC" && tokens[2] === ")") {
+        return {
+            mode: "autoincrement",
+            reg: 7,
             offset: null
         };
     }

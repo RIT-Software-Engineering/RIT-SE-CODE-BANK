@@ -1,3 +1,4 @@
+//Used to make indexing the registers clearer
 export const REG = {
     R0 : 0,
     R1 : 1,

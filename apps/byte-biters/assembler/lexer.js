@@ -1,6 +1,12 @@
 import { isSymbol, isWhitespace } from "./utils.js";
 
-//Turns an indexed line into tokens to be processed in the parser
+/**
+ * State machine used to create tokens from a line of text. Splits into a token
+ * if it matches a punctuation symbol, whitespace, or is the start
+ * of a quote. Has a mode to keep quotes together as well.
+ * @param {string} indexedLine The pre-processed line
+ * @return {string[]} A list of tokens
+ */
 export function lexer(indexedLine) {
     let state = "DEFAULT";
     let token = "";

@@ -127,14 +127,15 @@ export class CPU {
         return instr;
     }
 
-    //Allows the program to go forward by one line
+    /**
+     * Executes a single CPU instruction cycle if it is not halted.
+     * Sets the current state with the current register and flag values
+     * and gives memory and empty list. Fetches and decodes the next instruction,
+     * resolves the operands, executes the operation, and pushes the changes to pastState.
+     * Clears current state at the end.
+     */
     step() {
         if(!this.halted){
-            this.currentState = {
-                registers: this.getRegisters(),
-                flags: this.getFlags(),
-                memoryChange: []
-            };
 
             const instr = this.fetch();
             const oper = this.decoder.decode(instr);
@@ -147,12 +148,24 @@ export class CPU {
             }      
             this.execute(oper);
 
+            this.currentState = {
+                registers: this.getRegisters(),
+                flags: this.getFlags(),
+                memoryChange: []
+            };
+
             this.pastState.push(this.currentState);
             this.currentState = null;
         }
     }
 
-    //Changes the registers and changed memory to go backward through steps
+    /**
+     * Allows the program to back step instructions.
+     * Takes the last state from the list of past states and sets the values to decimal.
+     * Sets the registers and flags to their former states.
+     * Reverts the memory only where changes have been made. Sets halt to false so
+     * program can move forward in the future.
+     */
     backStep(){
         const lastState = this.pastState.pop();
 
@@ -208,8 +221,19 @@ export class CPU {
         this.pastState = [];
     }
 
+    /**
+     * Resolves the source operand for the given addressing mode and register.
+     * Returns the operand’s value, its effective address, and
+     * whether the operand refers to a register. Handles all PDP‑11 source
+     * addressing modes (0–7).
+     * @param {number} mode The addressing mode (0–7).
+     * @param {number} reg  The register number (0–7) used by the mode.
+     * @return {object} An object containing:
+     *                  - value {number}: the resolved operand value
+     *                  - address {number}: the effective address (if applicable)
+     *                  - isRegister {boolean}: true if the operand is a register
+     */
     resolveSource(mode, reg){
-        const base = this.registers[reg];
         switch(mode){
             case 0: //Normal Register
                 return {
@@ -232,7 +256,7 @@ export class CPU {
                     isRegister: false
                 };
             case 3: //Autoincrement Deferred
-                const pointer = this.readWord(base);
+                const pointer = this.readWord(this.registers[reg]);
                 const value = this.readWord(pointer)
                 this.registers[reg] += 2;
                 return {
@@ -251,6 +275,7 @@ export class CPU {
                 const newBase = this.registers[reg] - 2;
                 const pointerDec = this.readWord(newBase);
                 const valueDec = this.readWord(pointerDec);
+                this.registers[reg] -= 2;
                 return {
                     value: valueDec,
                     address: pointerDec,
@@ -259,13 +284,13 @@ export class CPU {
             case 6: //Indexed
                 const index = this.fetch();
                 return {
-                    value: this.readWord(base + index),
-                    address: base + index,
+                    value: this.readWord(this.registers[reg] + index),
+                    address: this.registers[reg] + index,
                     isRegister: false
                 };
             case 7: //Indexed Deferred
                 const index2 = this.fetch();
-                const pointerInd = this.readWord(base + index2);
+                const pointerInd = this.readWord(this.registers[reg] + index2);
                 const valueInd = this.readWord(pointerInd);
                 return {
                     value: valueInd,
@@ -275,8 +300,20 @@ export class CPU {
         }
     }
 
+    /**
+     * Resolves the destination operand for the given addressing mode and register.
+     * Returns the operand’s value, its effective address, whether it refers to a
+     * register, and a write function used to store results back to the correct
+     * location. Handles all PDP‑11 destination addressing modes (0–7).
+     * @param {number} mode The addressing mode (0–7).
+     * @param {number} reg  The register number (0–7) used by the mode.
+     * @return {object} An object containing:
+     *                  - value {number}: the resolved operand value
+     *                  - address {number}: the effective address (if memory-based)
+     *                  - isRegister {boolean}: true if the operand is a register
+     *                  - write {function}: writes a value back to the operand
+     */
     resolveDestination(mode, reg) {
-        const base = this.registers[reg];   
         switch(mode){
             case 0: //Normal Register
                 return {
@@ -287,10 +324,10 @@ export class CPU {
                 };
             case 1: //Register Deferred
                 return {
-                    value: this.readWord(base),
-                    address: base,
+                    value: this.readWord(this.registers[reg]),
+                    address: this.registers[reg],
                     isRegister: false,
-                    write: (val) => this.writeWord(val, base)
+                    write: (val) => this.writeWord(val, this.registers[reg])
                 };
             case 2: //Autoincrememnt
                 const oldBase = this.registers[reg];
@@ -303,7 +340,7 @@ export class CPU {
                     write: (val) => this.writeWord(val, oldBase)
                 };
             case 3: //Autoincrememnt deferred
-                const pointer2 = this.readWord(base);
+                const pointer2 = this.readWord(this.registers[reg]);
                 const value2 = this.readWord(pointer2);
                 this.registers[reg] += 2;
                 return {
@@ -335,14 +372,14 @@ export class CPU {
             case 6: //Indexed
                 const indexDst = this.fetch();
                 return {
-                    value: this.readWord(base + indexDst),
-                    address: base + indexDst,
+                    value: this.readWord(this.registers[reg] + indexDst),
+                    address: this.registers[reg] + indexDst,
                     isRegister: false,
-                    write: (val) => this.writeWord(val, (base + indexDst))
+                    write: (val) => this.writeWord(val, (this.registers[reg] + indexDst))
                 }
             case 7: //Indexed deferred
                 const index = this.fetch();
-                const pointerIndDst = this.readWord(base + index);
+                const pointerIndDst = this.readWord(this.registers[reg] + index);
                 const valueIndDst = this.readWord(pointerIndDst);
                 return {
                     value: valueIndDst,
@@ -353,6 +390,10 @@ export class CPU {
         }
     }
 
+    /**
+     * Using the operation type it switches to the decoded instruction
+     * @param {object} oper The decoded instruction object which contains the desired type
+     */
     execute(oper) {
         switch(oper.type){
             case 'MOV':
@@ -421,6 +462,12 @@ export class CPU {
         }
     }
 
+    /**
+     * Executes the MOV instruction. Copies the source value into the destination
+     * operand and updates the N, Z, and V flags accordingly. The C flag is not affected.
+     * @param {object} src The resolved source operand.
+     * @param {object} dst The resolved destination operand.
+     */
     mov(src, dst) {
         const result = src.value & 0xFFFF;
         dst.write(result);
@@ -431,17 +478,29 @@ export class CPU {
         //C is not affected by move
     }
 
+    /**
+     * Executes the CMP instruction. Subtracts the source value from the destination value.
+     * Updates the N, Z, V, and C flags accordingly
+     * @param {object} src The resolved source operand.
+     * @param {object} dst The resolved destination operand.
+     */
     cmp(src, dst) {
         const srcValue = src.value & 0xFFFF;
         const dstValue = dst.value & 0xFFFF;
-        const cmpValue = (dstValue - srcValue) & 0xFFFF;
+        const cmpValue = (srcValue - dstValue) & 0xFFFF;
 
         this.N = (cmpValue & 0x8000) !== 0;
         this.Z = cmpValue === 0;
-        this.V = ((dstValue ^ srcValue) & (dstValue ^ cmpValue) & 0x8000) !== 0;
-        this.C = dstValue < srcValue;
+        this.V = ((srcValue ^ dstValue) & (srcValue ^ cmpValue) & 0x8000) !== 0;
+        this.C = srcValue < dstValue;
     }
 
+    /**
+     * Executes the BIT instruction. Performs a logical AND between the source value and the destination value.
+     * Updates the N, Z, and V flags accordingly while C is not changed.
+     * @param {object} src The resolved source operand.
+     * @param {object} dst The resolved destination operand.
+     */
     bit(src, dst) {
         const srcValue = src.value & 0xFFFF;
         const dstValue = dst.value & 0xFFFF;
@@ -453,6 +512,14 @@ export class CPU {
         //C is not affected by bit test
     }
 
+    /**
+     * Executes the BIC instruction. Clears bits in the destination value where the
+     * corresponding bits in the source value are set, writes the
+     * result back to the destination, and updates the N, Z, and V flags. The C flag
+     * is not affected by BIC.
+     * @param {object} src The resolved source operand.
+     * @param {object} dst The resolved destination operand.
+     */
     bic(src, dst) {
         const srcValue = src.value & 0xFFFF;
         const dstValue = dst.value & 0xFFFF;
@@ -465,6 +532,14 @@ export class CPU {
         //C is not affected by bit clear
     }
 
+    /**
+     * Executes the BIS instruction. Sets bits in the destination value where the
+     * corresponding bits in the source value are set, writes the
+     * result back to the destination, and updates the N, Z, and V flags. The C flag
+     * is not affected by BIS.
+     * @param {object} src The resolved source operand.
+     * @param {object} dst The resolved destination operand.
+     */
     bis(src, dst) {
         const srcValue = src.value & 0xFFFF;
         const dstValue = dst.value & 0xFFFF;
@@ -477,6 +552,13 @@ export class CPU {
         //C is not affected by bit set
     }
 
+    /**
+     * Executes the SUB instruction. Subtracts the source value from the destination
+     * value, writes the result back to the destination, and updates all
+     * condition flags (N, Z, V, C) based on the computed result.
+     * @param {object} src The resolved source operand.
+     * @param {object} dst The resolved destination operand.
+     */
     sub(src, dst) {
         const srcValue = src.value & 0xFFFF;
         const dstValue = dst.value & 0xFFFF;
@@ -489,6 +571,14 @@ export class CPU {
         this.C = (dstValue < srcValue);
     }
 
+    /**
+     * Executes the ADD instruction. Adds the source value to the destination
+     * value, writes the result back to the destination, and updates
+     * all condition flags (N, Z, V, C) based on the computed result.
+     *
+     * @param {object} src The resolved source operand.
+     * @param {object} dst The resolved destination operand.
+     */
     add(src, dst) {
         const srcValue = src.value & 0xFFFF;
         const dstValue = dst.value & 0xFFFF;
@@ -502,6 +592,11 @@ export class CPU {
         this.C = fullBitValue > 0xFFFF;
     }
 
+    /**
+     * Executes the CLR instruction. Writes 0 to the destination.
+     * All condition flags are set to false appart from Z which is set to true.
+     * @param {object} dst The resolved destination operand.
+     */
     clr(dst) {
         dst.write(0);
 
@@ -511,6 +606,12 @@ export class CPU {
         this.C = false;
     }
 
+    /**
+     * Executes the INC instruction. Increments the destination value by one,
+     * writes the result back to the operand, and updates the N, Z, and V flags.
+     * The C flag is not affected by INC.
+     * @param {object} dst The resolved destination operand.
+     */
     inc(dst) {
         const oldValue = dst.value & 0xFFFF;
         const incValue = (oldValue + 1) & 0xFFFF;
@@ -522,6 +623,12 @@ export class CPU {
         //C is not affected by increment
     }
 
+    /**
+     * Executes the DEC instruction. Decrements the destination value by one,
+     * writes the result back to the operand, and updates the N, Z, and V flags.
+     * The C flag is not affected by DEC.
+     * @param {object} dst The resolved destination operand.
+     */
     dec(dst) {
         const oldValue = dst.value & 0xFFFF;
         const decValue = (oldValue - 1) & 0xFFFF;
@@ -533,7 +640,12 @@ export class CPU {
         //C is not affected by decrement
     }
 
-    //Used to test if a value is either negative or zero
+    /**
+     * Executes the TST instruction. Tests the destination value by updating the
+     * N and Z flags based on the operand, without modifying the value itself.
+     * The V and C flags are always cleared.
+     * @param {object} dst The resolved destination operand.
+     */
     tst(dst) {
         const tstValue = dst.value & 0xFFFF;
 
@@ -543,15 +655,25 @@ export class CPU {
         this.C = false; //Cannot require a carry
     }
 
-    //Used to jump the program counter to the new destination address
+    /**
+     * Executes the JMP instruction. Loads the destination effective address into
+     * the program counter, transferring control to the specified location. None of
+     * the condition flags (N, Z, V, C) are modified by JMP.
+     * @param {object} dst The resolved destination operand containing the effective address.
+     */
     jmp(dst) {
         this.registers[REG.PC] = dst.address & 0xFFFF;
 
         //NZVC all remain unaffected
     }
 
-    //Used to create a branch
-    br(oper) { //this is most likely where current issue lies here
+    /**
+     * Executes the BR instruction. Applies the signed branch displacement to the
+     * current program counter and transfers control to the computed
+     * address. None of the condition flags (N, Z, V, C) are modified by BR.
+     * @param {object} oper The decoded branch instruction containing the signed offset.
+     */
+    br(oper) {
         const pc = this.registers[REG.PC];
         const displacement = oper.offset << 1;
 
@@ -560,7 +682,11 @@ export class CPU {
         //NZVC all remain unaffected
     }
 
-    //Used to create a branch if the zero flag is not set
+    /**
+     * Executes the BNE instruction. Branches to the target address if the Z flag
+     * is clear. None of the condition flags (N, Z, V, C) are modified by BNE.
+     * @param {object} oper The decoded branch instruction containing the signed offset.
+     */
     bne(oper) {
         if(this.Z !== true) {
             this.br(oper);
@@ -568,7 +694,11 @@ export class CPU {
         //NZVC all remain unaffected
     }
 
-    //Used to create a branch if the zero flag is set
+    /**
+     * Executes the BEQ instruction. Branches to the target address if the Z flag
+     * is set. None of the condition flags (N, Z, V, C) are modified by BEQ.
+     * @param {object} oper The decoded branch instruction containing the signed offset.
+     */
     beq(oper) {
         if(this.Z === true) {
             this.br(oper);
@@ -576,7 +706,11 @@ export class CPU {
         //NZVC all remain unaffected
     }
 
-    //Creates a branch if the zero and overflow flags are the same value
+    /**
+     * Executes the BGE instruction. Branches to the target address if the Z flag and V flag are set the same.
+     * None of the condition flags (N, Z, V, C) are modified by BGE.
+     * @param {object} oper The decoded branch instruction containing the signed offset.
+     */
     bge(oper) {
         if(this.Z === this.V) {
             this.br(oper);
@@ -584,6 +718,11 @@ export class CPU {
         //NZVC all remain unaffected
     }
 
+    /**
+     * Executes the BGT instruction. Branches to the target address if the V flag and N flag are set the same
+     * and if the Z flag is set to false. None of the condition flags (N, Z, V, C) are modified by BGT.
+     * @param {object} oper The decoded branch instruction containing the signed offset.
+     */
     bgt(oper) {
         if(this.Z === false && (this.V === this.N)) {
             this.br(oper);
@@ -591,6 +730,11 @@ export class CPU {
         //NZVC all remain unaffected
     }
 
+    /**
+     * Executes the BLE instruction. Branches to the target address if the N flag and V flag are not set the same
+     * or if the Z flag is set to true. None of the condition flags (N, Z, V, C) are modified by BLE.
+     * @param {object} oper The decoded branch instruction containing the signed offset.
+     */
     ble(oper) {
         if(this.Z === true || (this.N !== this.V)) {
             this.br(oper);
@@ -598,6 +742,11 @@ export class CPU {
         //NZVC all remain unaffected
     }
 
+    /**
+     * Executes the BLT instruction. Branches to the target address if the V flag and N flag are set opposite.
+     * None of the condition flags (N, Z, V, C) are modified by BLT.
+     * @param {object} oper The decoded branch instruction containing the signed offset.
+     */
     blt(oper) {
         if(this.V ^ this.N) {
             this.br(oper);
