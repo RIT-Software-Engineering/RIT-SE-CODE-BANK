@@ -21,7 +21,7 @@ import ConfirmationModal from '@/components/common/models/ConfirmationModal';
 import InputField from '../../common/fields/InputField';
 import CloseIcon from '@mui/icons-material/Close';
 
-/**
+/** Modal for sending an offer to a student
  *
  * @param {Object} props.position - The position data to be edited
  * @param {Function} props.onClose - Callback to close the form dialog
@@ -29,7 +29,6 @@ import CloseIcon from '@mui/icons-material/Close';
  */
 export default function SendPositionModal({ position, user, onClose, onSendSuccess }) {
     const { showNotification } = useNotification();
-
     const {
         register,
         handleSubmit,
@@ -55,54 +54,48 @@ export default function SendPositionModal({ position, user, onClose, onSendSucce
 
     const onSubmit = async (data) => {
         try {
-                const username = String(data.candidateEmail).split('@', 1)[0].toLowerCase()
-                let candidateProfileData = null;
-                try {
-                    candidateProfileData = await getUserProfile(username);
-                } catch (err) {
-                    setError("candidateEmail", {
-                        type: "manual",
-                        message: "That email isn't in our system. Check your spelling or ask your student to create an account."
-                    });
-                    return;
-                }
+            const username = String(data.candidateEmail).split('@', 1)[0].toLowerCase()
+            let candidateProfileData = await getUserProfile(username);
 
-                if (!candidateProfileData) {
-                    setError("candidateEmail", {
-                        type: "manual",
-                        message: "That email isn't in our system. Check your spelling or ask the student to create an account."
-                    });
-                    return;
-                }
-                const candidateInfo = {
-                    uid: 0,
-                    fname: data.candidateFName,
-                    lname: data.candidateLName,
-                    pronouns: 'N/A',
-                    email: data.candidateEmail,
-                    major: 'N/A',
-                    year: 0,
-                    wasPriorEmployeeForThisCourse: false,
-                    wasPriorEmployeeForOtherCourses: false,
-                    priorEmploymentHistory: [],
-                };
+            const candidateInfo = {
+                uid: candidateProfileData?.uid || 0,
+                fname: candidateProfileData?.fname || data.candidateFName,
+                lname: candidateProfileData?.lname || data.candidateLName,
+                pronouns: candidateProfileData?.pronouns || 'N/A',
+                email: data.candidateEmail,
+                major: candidateProfileData?.candidate?.major || 'N/A',
+                year: candidateProfileData?.candidate?.year || 0,
+                wasPriorEmployeeForThisCourse:
+                    candidateProfileData?.candidate?.courseHistory?.find(
+                        ch => ch.courseCode === position.courseCode
+                    )?.wasPriorEmployee || false,
+                wasPriorEmployeeForOtherCourses:
+                    candidateProfileData?.candidate?.courseHistory?.some(
+                        ch => ch.courseCode !== position.courseCode && ch.wasPriorEmployee
+                    ) || false,
+                priorEmploymentHistory:
+                    candidateProfileData?.candidate?.courseHistory
+                        ?.filter(ch => ch.wasPriorEmployee)
+                        ?.map(ch => ({ courseCode: ch.courseCode })) || [],
+            };
+            console.log(candidateInfo);
 
-                const applicationDetails = {
-                    candidateUsername: data.candidateEmail.slice(0, 7),
-                    jobPositionId: position.id,
-                    employerFName: user.fname,
-                    employerLName: user.lname,
-                    jobPositionApplicationFormData: JSON.stringify(candidateInfo),
-                };
-                await sendOfferToCandidate(applicationDetails);
-                //send off here
-                if (onSendSuccess) onSendSuccess();
-                showNotification('Offer sent to student!', 'success');
-                if (onClose) onClose();
-            } catch (error) {
-                console.error('Failed to send offer:', error);
-                showNotification('Error: Could not send position to candidate.', 'error');
-            }
+            const applicationDetails = {
+                candidateUsername: data.candidateEmail.slice(0, data.candidateEmail.indexOf('@')),
+                jobPositionId: position.id,
+                employerFName: user.fname,
+                employerLName: user.lname,
+                jobPositionApplicationFormData: JSON.stringify(candidateInfo),
+            };
+            //await sendOfferToCandidate(applicationDetails);
+            //send off here
+            if (onSendSuccess) onSendSuccess();
+            showNotification('Offer sent to student!', 'success');
+            if (onClose) onClose();
+        } catch (error) {
+            console.error('Failed to send offer:', error);
+            showNotification('Error: Could not send position to candidate.', 'error');
+        }
     };
 
     return (
@@ -137,7 +130,7 @@ export default function SendPositionModal({ position, user, onClose, onSendSucce
                                                         ? ""
                                                         : "white"
                                             }
-                                        })}/>
+                                        })} />
                                     <InputField
                                         id="candidateLName"
                                         label="Student's Last Name"
@@ -152,7 +145,7 @@ export default function SendPositionModal({ position, user, onClose, onSendSucce
                                                         ? ""
                                                         : "white"
                                             }
-                                        })}/>
+                                        })} />
                                     <InputField
                                         id="candidateEmail"
                                         label="Candidate Email"
