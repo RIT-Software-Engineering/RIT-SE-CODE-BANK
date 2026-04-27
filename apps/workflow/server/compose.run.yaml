@@ -24,7 +24,6 @@ services:
     env_file:
       - .env.staging
     environment:
-      NODE_ENV: production
       PORT: 5011
       DB_HOST: workflows-mariadb
       DB_PORT: 3306
