@@ -234,7 +234,6 @@ export class CPU {
      *                  - isRegister {boolean}: true if the operand is a register
      */
     resolveSource(mode, reg){
-        const base = this.registers[reg];
         switch(mode){
             case 0: //Normal Register
                 return {
@@ -257,7 +256,7 @@ export class CPU {
                     isRegister: false
                 };
             case 3: //Autoincrement Deferred
-                const pointer = this.readWord(base);
+                const pointer = this.readWord(this.registers[reg]);
                 const value = this.readWord(pointer)
                 this.registers[reg] += 2;
                 return {
@@ -285,13 +284,13 @@ export class CPU {
             case 6: //Indexed
                 const index = this.fetch();
                 return {
-                    value: this.readWord(base + index),
-                    address: base + index,
+                    value: this.readWord(this.registers[reg] + index),
+                    address: this.registers[reg] + index,
                     isRegister: false
                 };
             case 7: //Indexed Deferred
                 const index2 = this.fetch();
-                const pointerInd = this.readWord(base + index2);
+                const pointerInd = this.readWord(this.registers[reg] + index2);
                 const valueInd = this.readWord(pointerInd);
                 return {
                     value: valueInd,
@@ -315,7 +314,6 @@ export class CPU {
      *                  - write {function}: writes a value back to the operand
      */
     resolveDestination(mode, reg) {
-        const base = this.registers[reg];   
         switch(mode){
             case 0: //Normal Register
                 return {
@@ -326,10 +324,10 @@ export class CPU {
                 };
             case 1: //Register Deferred
                 return {
-                    value: this.readWord(base),
-                    address: base,
+                    value: this.readWord(this.registers[reg]),
+                    address: this.registers[reg],
                     isRegister: false,
-                    write: (val) => this.writeWord(val, base)
+                    write: (val) => this.writeWord(val, this.registers[reg])
                 };
             case 2: //Autoincrememnt
                 const oldBase = this.registers[reg];
@@ -342,7 +340,7 @@ export class CPU {
                     write: (val) => this.writeWord(val, oldBase)
                 };
             case 3: //Autoincrememnt deferred
-                const pointer2 = this.readWord(base);
+                const pointer2 = this.readWord(this.registers[reg]);
                 const value2 = this.readWord(pointer2);
                 this.registers[reg] += 2;
                 return {
@@ -374,14 +372,14 @@ export class CPU {
             case 6: //Indexed
                 const indexDst = this.fetch();
                 return {
-                    value: this.readWord(base + indexDst),
-                    address: base + indexDst,
+                    value: this.readWord(this.registers[reg] + indexDst),
+                    address: this.registers[reg] + indexDst,
                     isRegister: false,
-                    write: (val) => this.writeWord(val, (base + indexDst))
+                    write: (val) => this.writeWord(val, (this.registers[reg] + indexDst))
                 }
             case 7: //Indexed deferred
                 const index = this.fetch();
-                const pointerIndDst = this.readWord(base + index);
+                const pointerIndDst = this.readWord(this.registers[reg] + index);
                 const valueIndDst = this.readWord(pointerIndDst);
                 return {
                     value: valueIndDst,

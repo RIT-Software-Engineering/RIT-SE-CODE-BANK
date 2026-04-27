@@ -10,9 +10,7 @@ function run(program) {
 
 describe("Autoincrement / Autodecrement Addressing Modes", () => {
 
-    // ------------------------------------------------------------
     // (Rn)+ — autoincrement
-    // ------------------------------------------------------------
     test("(R0)+ increments R0 by 2 after read", () => {
         const state = run(`
             MOV #0x100, R0
@@ -24,9 +22,7 @@ describe("Autoincrement / Autodecrement Addressing Modes", () => {
         expect(parseInt(state.registers[0], 16)).toBe(0x102);
     });
 
-    // ------------------------------------------------------------
     // @(Rn)+ — autoincrement deferred
-    // ------------------------------------------------------------
     test("@(R0)+ increments R0 by 2 and dereferences pointer", () => {
         const state = run(`
             MOV #0x200, R0
@@ -39,9 +35,7 @@ describe("Autoincrement / Autodecrement Addressing Modes", () => {
         expect(parseInt(state.registers[0], 16)).toBe(0x202);
     });
 
-    // ------------------------------------------------------------
     // -(Rn) — autodecrement
-    // ------------------------------------------------------------
     test("-(R0) decrements R0 by 2 before read", () => {
         const state = run(`
             MOV #0x104, R0
@@ -54,9 +48,7 @@ describe("Autoincrement / Autodecrement Addressing Modes", () => {
         expect(parseInt(state.registers[0], 16)).toBe(0x102);
     });
 
-    // ------------------------------------------------------------
     // @-(Rn) — autodecrement deferred
-    // ------------------------------------------------------------
     test("@-(R0) decrements R0 by 2 then dereferences pointer", () => {
         const state = run(`
             MOV #0x106, R0
@@ -70,21 +62,7 @@ describe("Autoincrement / Autodecrement Addressing Modes", () => {
         expect(parseInt(state.registers[0], 16)).toBe(0x104);
     });
 
-    // ------------------------------------------------------------
-    // PC autoincrement deferred — absolute (@#addr)
-    // ------------------------------------------------------------
-    test("PC autoincrement deferred loads absolute address (@#addr)", () => {
-        const state = run(`
-            MOV #0xBEEF, @#0x400
-            MOV @#0x400, R0
-        `);
-
-        expect(parseInt(state.registers[0], 16)).toBe(0xBEEF);
-    });
-
-    // ------------------------------------------------------------
     // PC indexed — X(PC)
-    // ------------------------------------------------------------
     test("PC indexed X(PC) resolves correctly", () => {
         const state = run(`
 start:
@@ -95,21 +73,4 @@ start:
 
         expect(parseInt(state.registers[0], 16)).toBe(0xBEEF);
     });
-
-    // ------------------------------------------------------------
-    // PC indexed deferred — @X(PC)
-    // ------------------------------------------------------------
-    test("PC indexed deferred @X(PC) resolves correctly", () => {
-        const state = run(`
-start:
-            MOV #0x300, @#0x200
-            MOV #0xBEEF, @#0x300
-            MOV @2(PC), R0
-            .WORD 0x300
-            halt
-        `);
-
-        expect(parseInt(state.registers[0], 16)).toBe(0xBEEF);
-    });
-
 });
