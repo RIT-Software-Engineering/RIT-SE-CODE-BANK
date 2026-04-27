@@ -53,6 +53,8 @@ services:
       NODE_ENV: "production"
       # URL used to access the notification service
       NOTIFICATION_SERVICE_URL: ${ORIGIN_URL}
+      # The login method provided to the frontend
+      LOGIN_MODE: ${LOGIN_MODE}
     ports:
       - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
     # Unless the service is stopped or removed, restart the database in the event of a crash.

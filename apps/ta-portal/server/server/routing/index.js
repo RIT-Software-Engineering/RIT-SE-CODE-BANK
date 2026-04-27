@@ -74,6 +74,16 @@ router.get("/health", async (req, res) => {
   }
 });
 
+router.get("/login-mode", async (req, res) => {
+  try{
+    res.status(200).json({ loginMode: process.env.LOGIN_MODE });
+  } catch (e){
+    res.status(500).json({
+      status: 'error'
+    });
+  }
+})
+
 // =============================================================================
 // EXPORTS
 // =============================================================================

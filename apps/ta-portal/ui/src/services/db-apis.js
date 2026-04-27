@@ -109,6 +109,50 @@ export async function resetPassword(username, newPassword) {
   return handleApiResponse(response);
 }
 
+export async function checkUserAvailability(fields){
+  try{
+    const response = await fetch("/user-availability", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(fields)
+    });
+
+    return handleApiResponse(response);
+  } catch(e){
+    console.error("Availability check failed:",e);
+    return {
+      available: false,
+      takenFields: ["unknown_error"]
+    }
+  }
+}
+
+export async function getLoginMode() {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
+    );
+  }
+  const url = `${BASE_API_URL}/login-mode`;
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
+export async function getDevUsers() {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components (NEXT_PUBLIC_BASE_API_URL, NEXT_PUBLIC_DATABASE_API_EXTENSION) are not defined. Check your .env.local file."
+    );
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/dev-users`;
+  console.log(`Fetching from ${url}`);
+
+  const response = await fetch(url);
+  return handleApiResponse(response);
+}
+
 /**
  * Fetches a list of all users from the database.
  * @returns {Promise<Array>} A promise that resolves to an array of user objects.
