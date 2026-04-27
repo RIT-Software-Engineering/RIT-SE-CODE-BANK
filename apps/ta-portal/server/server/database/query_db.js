@@ -682,6 +682,195 @@ async function applyForJobPosition(applicationDetails) {
   }
 }
 
+/**
+ * Creates a new job application record for a candidate.
+ * @param {object} applicationDetails - The application data.
+ * @param {string} applicationDetails.candidateUsername - The username of the candidate.
+ * @param {number} applicationDetails.candidateUID - The UID of the candidate.
+ * @param {string} applicationDetails.jobPositionId - The ID of the job position.
+ * @param {number} applicationDetails.resumeId - The ID of the resume being used for the application.
+ * @param {string} applicationDetails.jobPositionApplicationFormData - The JSON string of the form data.
+ * @returns {Promise<object>} A promise that resolves to the newly created application record.
+ */
+async function sendOfferToCandidate(applicationDetails) {
+  try {
+    const {
+      candidateUsername,
+      jobPositionId,
+      jobPositionApplicationFormData,
+      employerFName,
+      employerLName,
+    } = applicationDetails;
+
+    if (!candidateUsername || !jobPositionId || !jobPositionApplicationFormData) {
+      throw new Error(
+        "Missing required fields: candidate username, job position ID, or form data."
+      );
+    }
+
+    // Fetch candidate, job position, and resume (optional)
+    const [candidate, jobPosition, resume] = await Promise.all([
+      prisma.candidate.findUnique({ where: { username: candidateUsername } }),
+      prisma.jobPosition.findUnique({
+        where: { id: jobPositionId },
+        include: {
+          course: true,
+          employer: { include: { user: true } },
+        },
+      }),
+      prisma.resume.findFirst({ where: { username: candidateUsername } }),
+    ]);
+
+    if (!candidate) {
+      //throw new Error(`Candidate ${candidateUsername} not found.`);
+    }
+
+    if (!jobPosition) {
+      throw new Error(`Job Position ${jobPositionId} not found.`);
+    }
+
+    // Prevent duplicate applications
+    const existing = await prisma.jobPositionApplicationHistory.findFirst({
+      where: { username: candidateUsername, jobPositionId },
+    });
+
+    if (existing) {
+      //TODO: update user application status to pending offer
+      throw new Error(
+        "This candidate has already applied for this job position. Offer them a job instead."
+      );
+    }
+
+    // Parse form data safely
+    let formData;
+    try {
+      formData =
+        typeof jobPositionApplicationFormData === "string"
+          ? JSON.parse(jobPositionApplicationFormData)
+          : jobPositionApplicationFormData;
+    } catch {
+      throw new Error("Invalid jobPositionApplicationFormData: JSON parse failed");
+    }
+
+    // Required fields
+    if (!formData.fname || !formData.lname || !formData.email || formData.uid === undefined || formData.uid === null) {
+      throw new Error("Missing required form fields (fname, lname, email, uid)");
+    }
+
+    // Fix year mismatch: schema requires candidateYear (Int)
+    const candidateYear =
+      formData.candidateYear ??
+      (formData.year ? parseInt(formData.year, 10) : 0);
+
+    if (candidateYear === undefined || isNaN(candidateYear) || candidateYear < 0) {
+      throw new Error("Invalid or missing candidateYear");
+    }
+
+    // Create application
+    const newApp = await prisma.jobPositionApplicationHistory.create({
+      data: {
+        username: candidateUsername,
+        candidateUID: formData.uid,
+        jobPositionId,
+        resumeId: resume?.id ?? null,
+        jobApplicationStatus: "PENDING_OFFER",
+        candidateFName: formData.fname,
+        candidateLName: formData.lname,
+        candidatePronouns: formData.pronouns ?? "",
+        candidateEmail: formData.email,
+        candidateMajor: formData.major ?? "",
+        candidateYear,
+        candidateGrade: formData.grade ?? null,
+        wasPriorEmployeeForThisCourse: !!formData.wasPriorEmployeeForThisCourse,
+        wasPriorEmployeeForOtherCourses: !!formData.wasPriorEmployeeForOtherCourses,
+        priorEmploymentHistory:
+          formData.priorEmploymentHistory
+            ?.map((i) => i.courseCode)
+            .join(", ") ?? null,
+      },
+    });
+
+    // System comment
+    await prisma.comment.create({
+      data: {
+        foreignTableName: "JobPositionApplicationHistory",
+        foreignKey: String(newApp.id),
+        author: `${employerFName} ${employerLName}`,
+        status: "PENDING_OFFER",
+        comment: "Employer/admin sent and offered a position to a student.",
+        timestamp: new Date(),
+      },
+    });
+
+    // Notifications
+    // Notify stakeholders + candidate
+    if (1 == 0) {
+      try {
+        const { employerEmail } = await getCourseStakeholders(newApp.jobPositionId);
+        const candidateUserId = String(newApp.candidateEmail).split('@', 1)[0].toLowerCase();
+        await dispatchTemplated(candidateUserId, {
+          event: 'application_status_changed',
+          role: 'candidate',
+          userEmail: newApp.candidateEmail,
+          subject: 'TA Application Status Update',
+          context: {
+            recipient: { name: `${newApp.candidateFName} ${newApp.candidateLName}`, email: newApp.candidateEmail },
+            item: {
+              id: jobPositionId,
+              title: jobPosition.course.name,
+              ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+              ownerEmail: jobPosition.employer.user.email,
+            },
+            status: { new: 'PENDING_OFFER' },
+            flags: { applied: true },
+            cta: { url: await buildAppLink({ jobPositionId: jobPositionId, applicationId: newApp.id }) },
+            appName: 'TA Portal',
+          }
+        });
+
+        // Best-effort employer confirmation
+        if (employerEmail) {
+          const employerUserId = String(employerEmail).split('@', 1)[0].toLowerCase();
+          try {
+            await dispatchTemplated(employerUserId, {
+              event: 'application_status_changed',
+              role: 'employer',
+              userEmail: employerEmail,
+              subject: 'TA Application Status Update',
+              context: {
+                // generic structure
+                recipient: {
+                  name: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                  email: employerEmail,
+                },
+                item: {
+                  id: jobPositionId,
+                  title: jobPosition.course.name,
+                  ownerName: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`,
+                  ownerEmail: employerEmail,
+                  candidateName: `${newApp.candidateFName} ${newApp.candidateLName}`,
+                  candidateEmail: newApp.candidateEmail,
+                },
+                status: { new: 'PENDING_OFFER' },
+                flags: { applied: true },
+                cta: { url: await buildAppLink({ jobPositionId: jobPositionId, applicationId: newApp.id }) },
+                appName: 'TA Portal',
+              },
+            });
+          } catch (e) {
+            console.error('Employer notify (PENDING_OFFER) failed:', e && e.message);
+          }
+        }
+      } catch (e) {
+        console.error("Notify PENDING_OFFER failed:", e.message);
+      }
+    }
+    return newApp;
+  } catch (err) {
+    console.error("Error in send offer to candidate:", err);
+    throw err;
+  }
+}
 
 /**
  * Helper function to get the application (current used for deletion of application and cover letter file specifically)
@@ -2873,6 +3062,7 @@ module.exports = {
   getApplicationDetailsForNotify,
   getUserNotificationPreferences,
   upsertUserNotificationPreferences,
+  sendOfferToCandidate,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.

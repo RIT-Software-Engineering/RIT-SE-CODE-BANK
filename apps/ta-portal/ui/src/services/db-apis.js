@@ -501,6 +501,28 @@ export async function applyForJobPosition(jobPositionApplicationData) {
   return handleApiResponse(response);
 }
 
+/** sends an offer to a candidate
+ * @param {object} jobPositionApplicationData - The data for the job application.
+ * @returns {Promise<object>} A promise that resolves to the newly created application record.
+ */
+export async function sendOfferToCandidate(jobPositionApplicationData) {
+  if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
+    throw new Error(
+      "Backend API URL components are not defined. Check your .env.local file."
+    );
+  }
+  const url = `${BASE_API_URL}${DATABASE_API_EXTENSION}/send-position`;
+  console.log(`Send job and offer to student at: ${url}`);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(jobPositionApplicationData),
+  });
+  return handleApiResponse(response);
+}
+
 /**
  * Submits a job application along with new file uploads (e.g., resume, cover letter).
  * @param {FormData} jobPositionApplicationData - The form data containing application details and files.

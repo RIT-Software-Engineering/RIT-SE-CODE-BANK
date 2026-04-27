@@ -413,7 +413,23 @@ router.post(
     }
   }
 );
-  
+/**
+ * @route   POST /ta-portal-api/db/apply
+ * @desc    Creates a new job application record for a candidate using an existing resume.
+ * @access  Public
+ * @body    {object} jobPositionApplicationData - The application details.
+ */
+router.post('/send-position', async (req, res) => {
+  try {
+    const applicationDetails = req.body;
+    const application = await sendOfferToCandidate(applicationDetails);
+    res.status(201).json(application);
+  } catch (error) {
+    console.error('Error in /send-position route:', error);
+    res.status(500).json({ error: 'Failed to send and offer position.' });
+  }
+}); 
+
 /**
  * @route   DELETE /ta-portal-api/db/applications/:username
  * @desc    Deletes a job application record for a candidate.

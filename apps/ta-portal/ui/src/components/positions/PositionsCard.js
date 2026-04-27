@@ -16,6 +16,7 @@ import PositionTracker from './EmployerAndAdmin/PositionTracker';
 import ViewablePositionForm from './EmployerAndAdmin/ViewablePositionForm';
 import ViewableNoteForm from '../notes/ViewableNoteForm';
 import { positionStatusEnumToString } from '@/constants/positionStatusConstants';
+import SendPositionModal from './EmployerAndAdmin/SendPositionModal';
 
 import {
   Box,
@@ -83,7 +84,8 @@ export default function PositionsCard({
   showEditAction,
   showApproveRejectActions,
   showTracker,
-  onCopy
+  onCopy,
+  showSendOffer,
 }) {
   const { currentUser, refreshUserProfile } = useAuth();
   const { showNotification } = useNotification();
@@ -93,6 +95,7 @@ export default function PositionsCard({
   const [isViewingNotes, setIsViewingNotes] = useState(false);
   const [isConfirmingApplication, setIsConfirmingApplication] = useState(false);
   const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
+  const [isSendingJob, setIsSendingJob] = useState(false);
 
   const hasApplied =
     currentUser?.candidate?.jobPositionApplicationHistory?.some(
@@ -129,6 +132,10 @@ export default function PositionsCard({
     const unmetReasons = requirements.filter((req) => !req.met).map((req) => req.text);
     return { details: requirements, isOverallEligible, reason: unmetReasons.join(' and ') };
   }, [currentUser, position]);
+
+const sendJob = async () => {
+    console.log('yay')
+  }
 
   const handleApplyClick = async () => {
     if (!position?.semesterCode) {
@@ -206,7 +213,8 @@ export default function PositionsCard({
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
           <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Notes</MenuItem>
-          {(onReactivate || onOnHold||onInactive)&& <Divider />}
+          {(status=='OPEN' &&showSendOffer)&&<MenuItem onClick={() => { setIsSendingJob(true); handleMenuClose(); }} >Send Offer Directly To Student</MenuItem>}
+          {(onReactivate || onOnHold || onInactive) && <Divider />}
           {(onOnHold && status !== 'ONHOLD') && (<MenuItem onClick={() => { onOnHold(position.id); handleMenuClose(); }}>Put Position on Hold </MenuItem>)}
           {(onInactive && status !== 'INACTIVE') && (<MenuItem onClick={() => { onInactive(position.id); handleMenuClose(); }}> Mark Position Inactive</MenuItem>)}
           {onReactivate && (status === 'ONHOLD' || status === 'INACTIVE') && <MenuItem onClick={() => { onReactivate(position.id); handleMenuClose(); }}>Reactivate Position</MenuItem>}
@@ -308,6 +316,9 @@ export default function PositionsCard({
           userRole={currentUser.role}
           onClose={() => setIsViewingNotes(false)}
         />
+      )}
+      {isSendingJob && (
+        <SendPositionModal position={position} onClose={() => setIsSendingJob(false)} onSendSuccess={sendJob} user={currentUser} />
       )}
 
       <ConfirmationModal

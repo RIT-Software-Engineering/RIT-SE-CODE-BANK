@@ -462,6 +462,7 @@ export default function AdminPositions() {
         onOnHold={(jobId) => handleStatusUpdate(jobId, 'ONHOLD')}
         onInactive={(jobId) => handleStatusUpdate(jobId, 'INACTIVE')}
         onReactivate={(jobId) => handleStatusUpdate(jobId, 'PENDING_APPROVAL')}
+        showSendOffer={true}
         showEditAction={true}
         showApproveRejectActions={activeTab === 1} // Only show approve/reject on "Pending" tab.
         showTracker={true}

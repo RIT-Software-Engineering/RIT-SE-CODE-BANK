@@ -103,21 +103,21 @@ model JobPositionApplicationHistory {
   username                        String
   candidateUID                    Int
   jobPositionId                   String
-  resumeId                        Int
+  resumeId                        Int?
   jobApplicationStatus            JobApplicationStatus @default(APPLIED)
   candidateFName                  String               @db.Text
   candidateLName                  String               @db.Text
-  candidatePronouns               String               @db.Text
+  candidatePronouns               String?               @db.Text
   candidateEmail                  String               @db.Text
-  candidateMajor                  String               @db.Text
-  candidateYear                   Int
+  candidateMajor                  String?               @db.Text
+  candidateYear                   Int?
   candidateGrade                  Grade?
   wasPriorEmployeeForThisCourse   Boolean
   wasPriorEmployeeForOtherCourses Boolean
   priorEmploymentHistory          String?              @db.Text
   coverLetterId                   Int?
   jobPosition                     JobPosition          @relation(fields: [jobPositionId], references: [id])
-  resume                          Resume               @relation(fields: [resumeId], references: [id])
+  resume                          Resume?               @relation(fields: [resumeId], references: [id])
   coverLetter                     CoverLetter?         @relation(fields: [coverLetterId], references: [id])
   candidate                       Candidate            @relation(fields: [username], references: [username])
 
