@@ -85,12 +85,12 @@ export default function HireModal({ application, onClose, onConfirm, isProcessin
             margin="normal"
             id="note"
             name="note"
-            label="Hiring Note"
+            label="Hiring Note (optional)"
             multiline
             rows={4}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Provide details on why the candidate is being hired"
+            placeholder="Provide a message that will be sent to the candidate..."
             error={!!errors.note}
             helperText={errors.note}
             disabled={isProcessing}
