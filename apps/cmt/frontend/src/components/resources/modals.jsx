@@ -2,7 +2,7 @@ import { PlusIcon, Pencil, Trash } from 'lucide-react'
 import { useState } from 'react'
 import { Button, Form, Modal, Spinner } from 'react-bootstrap'
 import { CMTFormFetch, CMTJsonFetch } from '../../utils/api'
-import { CMTDangerAlert, LogError } from '../../utils/error'
+import { CMTDangerAlert, createErrorHandler, handleError } from '../../utils/error'
 import { CMTError } from '@se-code-bank/cmt-shared-utilities'
 
 export function UploadResourceModal({ courseId, refresh }) {
@@ -38,7 +38,7 @@ export function UploadResourceModal({ courseId, refresh }) {
                 let message;
                 if (error.message && error.message.includes('Invalid file type'))
                     message = 'Invalid file type. Please upload a supported file (PDF, DOC, TXT, images, etc.).'
-                LogError(new CMTError({ userFacingMessage: message, cause: error }), setError)
+                handleError(new CMTError({ userFacingMessage: message, cause: error }), setError)
             })
             .finally(() => setUploading(false))
     }
@@ -118,10 +118,7 @@ export function EditResourceModal({ resource, refresh }) {
                 setShowEditModal(false)
                 setEditedResource(null)
             })
-            .catch(error => LogError(
-                new CMTError({ userFacingMessage: 'An internal error ocurred when attempting to edit resource.', cause: error }),
-                setError
-            ))
+            .catch(createErrorHandler('Error editing resource.', setError))
     }
 
     return (
@@ -173,11 +170,10 @@ export function DeleteResourceModal({ refresh, resource }) {
     const [showModal, setShowModal] = useState(false)
     const [error, setError] = useState(null)
  
-    const handleDeleteResource = async resourceId => {
+    const handleDeleteResource = resourceId => 
         CMTJsonFetch('DELETE', `resources/${resourceId}`)
             .then(refresh)
-            .catch(error => LogError(new CMTError({ userFacingMessage: "Error deleting resource.", cause: error }), setError))
-    }
+            .catch(createErrorHandler("Error deleting resource.", setError))
 
     return (
         <>

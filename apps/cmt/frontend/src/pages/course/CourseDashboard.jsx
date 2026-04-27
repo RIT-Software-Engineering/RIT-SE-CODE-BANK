@@ -7,7 +7,7 @@ import { CMTWorkflow } from '../../components/workflows/workflow.jsx'
 import { CMTJsonFetch } from '../../utils/api.js'
 import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { Session } from './Session.jsx'
-import { LogError } from '../../utils/error.jsx'
+import { handleError } from '../../utils/error.jsx'
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -23,16 +23,16 @@ export function CourseDashboard() {
     const [sessions, setSessions] = useState([]);
 
 
-    const update = useCallback(async () => {
-
-        return CMTJsonFetch('GET', `course/${id}`).then(async json => {
+    const update = useCallback(async () => 
+        CMTJsonFetch('GET', `course/${id}`).then(async json => {
             setCourse(json.course)
             startTransition(() => {
                 setActionsWithContexts(json.actionsWithContexts ?? [])
                 setWorkflow(json.workflow)
             })
-        }).catch(LogError)
-    }, [id])
+        }).catch(handleError),
+        [id]
+    )
     useEffect(() => void update(), [id, update])
 
 

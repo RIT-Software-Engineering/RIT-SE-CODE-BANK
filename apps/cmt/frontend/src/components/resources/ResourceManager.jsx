@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Row, Col, Spinner, Button } from 'react-bootstrap'
 import { RefreshCcw } from 'lucide-react'
-import { CMTDangerAlert, LogError } from '../../utils/error'
+import { CMTDangerAlert, createErrorHandler } from '../../utils/error'
 import { UploadResourceModal } from './modals'
 import { ResourceCard } from './resourceRenderers'
 import { AUTH_BASE, CMTJsonFetch } from '../../utils/api'
-import { CMTError } from '@se-code-bank/cmt-shared-utilities'
 
 /**
  * Generate the correct download URL for a resource based on the environment
@@ -82,7 +81,7 @@ export function useResources(courseId) {
 
         CMTJsonFetch('GET', `resources/${courseId}`)
             .then(async json => setResources(json || []))
-            .catch(error => LogError(new CMTError({ userFacingMessage: "Failed to load resources.", cause: error }), setError))
+            .catch(createErrorHandler("Failed to load resources.", setError))
             .finally(() => setLoading(false))
     }, [courseId])
 

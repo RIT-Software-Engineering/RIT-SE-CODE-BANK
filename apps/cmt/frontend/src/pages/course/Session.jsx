@@ -6,8 +6,7 @@ import { CheckmarkAction} from "@se-code-bank/workflows-ecosystem/components";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
 import { CMTJsonFetch } from "../../utils/api";
-import { CMTDangerAlert, LogError } from "../../utils/error";
-import { CMTError } from "@se-code-bank/cmt-shared-utilities";
+import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -297,13 +296,8 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
     const uploadSessionMaterial = useCallback(() => {
         const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
         CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody: hasLinksInTitle ? undefined : itemBody, sessionNum })
-            .then(async json => {
-                setSessionData(sessionData => [...sessionData, json.material]);
-            })
-            .catch(error => LogError(
-                new CMTError({ userFacingMessage: "Error uploading material", cause: error }),
-                setError
-            ))
+            .then(async json => setSessionData(sessionData => [...sessionData, json.material]))
+            .catch(createErrorHandler("Error uploading material", setError))
     }, [hasLinksInTitle, itemBody, itemLabel, itemType, sessionNum, sessions, setSessionData])
 
     function resetForm() {

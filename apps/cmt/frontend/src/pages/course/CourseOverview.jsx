@@ -6,8 +6,8 @@ import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
 import { CMTJsonFetch } from '../../utils/api.js';
 import { ColorOption } from '../../components/forms/ColorPicker.jsx';
-import { LogError } from '../../utils/error.jsx';
 import { CMTError } from '@se-code-bank/cmt-shared-utilities';
+import { handleError } from '../../utils/error.jsx';
 
 
 export function CourseOverview() {
@@ -120,7 +120,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId, refresh}) {
             setSubmitButtonElement(<><Check />Created!</>)
             setTimeout(async () => navigate(`/courses/${json.course.id}`), 500);
         }).catch(async error => {
-            LogError(
+            handleError(
                 new CMTError({ userFacingMessage: "Error creating course.", cause: error }),
                 setWarning
             )

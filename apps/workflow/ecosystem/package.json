@@ -2,14 +2,17 @@
   "name": "@se-code-bank/workflows-ecosystem",
   "description": "Build, Contextualize, and Render your Workflows.",
   "type": "module",
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./components": "./dist/react.js"
+    ".": {
+      "default": "./src/index.js",
+      "types": "./src/index.d.ts"
+    },
+    "./components": {
+      "default": "./src/react.js",
+      "types": "./src/react.d.ts"
+    }
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "prepare": "npm run build",
     "build:js": "esbuild src/index.js src/react.js --bundle --format=esm --outdir=dist --external:react --external:react/jsx-runtime",

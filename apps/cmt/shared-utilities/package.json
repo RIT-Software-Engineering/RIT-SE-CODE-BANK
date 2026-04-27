@@ -1,6 +1,6 @@
 {
     "name": "@se-code-bank/cmt-shared-utilities",
-    "description": "A low-to-no dependency package that holds some functions used in both the frontend and backend.",
+    "description": "A low-to-no dependency package that holds some functions used in both the frontend and backend. Check the README for more info.",
     "type": "module",
     "exports": "./index.js",
     "types": "./index.d.ts"

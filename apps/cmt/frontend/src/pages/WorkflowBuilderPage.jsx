@@ -11,8 +11,8 @@ import {
     WorkflowComponentRendererAdmin,
     SimpleActionRenderer,
     ComplexActionRenderer } from "../components/workflows/BuilderRenderers.jsx";
-import { LogError } from "../utils/error.jsx";
-import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { handleError } from "../utils/error.jsx";
 
 /**
  * @import { SetStateAction } from "react"
@@ -236,7 +236,7 @@ export function BuilderPageAdmin({isAdmin}){
         
         <DeleteModal isOpen={deleteOpen} setIsOpen={setDeleteOpen} action={curAction} 
         workflows={workflows} setWorkflows={setWorkflows}
-        actionDelete={deleteStandardAction} workflowDelete={deleteWorkflow} refresh={update} renderers={renderers}/>
+        actionDelete={  deleteStandardAction} workflowDelete={deleteWorkflow} refresh={update} renderers={renderers}/>
 
         {workflows.length !== 0 ? <Accordion>
         {workflows ? Array.from({length: workflows.length}, (_, i) => {
@@ -602,7 +602,7 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
             usedCodes: [],
         }].sort((a, b) => a.name.localeCompare(b.name))); // Just sort them
         returnVal = "Good";
-    }).catch(generateWorkflowErrorHandler(setError, value => returnVal = value));
+    }).catch(createWorkflowErrorHandler(setError, value => returnVal = value));
     // Finally does not return our value so we just return it after our request
     return returnVal;
 }
@@ -669,7 +669,7 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
         })
         setWorkflows(workflowsCopy);
         returnVal = "Good";
-    }).catch(generateWorkflowErrorHandler(setError, value => returnVal = value));
+    }).catch(createWorkflowErrorHandler(setError, value => returnVal = value));
     // Finally does not return our value so we just return it after our request
     return returnVal;
 }
@@ -975,7 +975,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
             }
         }
         returnVal = "Good";
-    }).catch(generateWorkflowErrorHandler(setError, value => returnVal = value));
+    }).catch(createWorkflowErrorHandler(setError, value => returnVal = value));
     return returnVal;
 }
 
@@ -1033,7 +1033,7 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
     await CMTJsonFetch("PUT", postEndpoint, {name, description, metadata}).then(async _ => {
             await refresh();
             returnVal = "Good";
-    }).catch(generateWorkflowErrorHandler(setError, value => returnVal = value));
+    }).catch(createWorkflowErrorHandler(setError, value => returnVal = value));
 
     return returnVal;
 }
@@ -1078,23 +1078,18 @@ async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh
         await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`).then(refresh);
 }
 
-function generateWorkflowErrorHandler(setError, setReturnVal) {
+function createWorkflowErrorHandler(setError, setReturnVal) {
     
-    const logGenericError = (error) => LogError(
-        "Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.",
-        error,
-        setError,
+    const logGenericError = (error) => handleError(
+        new CMTError({ userFacingMessage: "Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.", cause: error }),
+        setError
     )
 
     return async (error) => {
         try {
             if (error.response){
                 const data = await error.response.json();
-                LogError(
-                    data.error,
-                    data.error,
-                    setError,
-                )
+                handleError(data.error, setError)
             } else {
                 logGenericError(error)
             }

@@ -1,4 +1,4 @@
 {
   "extends": "../tsconfig.json", // Use cmt top level config
-  "exclude": ["./prisma/generated"]
+  // Kinda empty here. frontends tsconfig has an extra include but these could possibly be removed.
 }

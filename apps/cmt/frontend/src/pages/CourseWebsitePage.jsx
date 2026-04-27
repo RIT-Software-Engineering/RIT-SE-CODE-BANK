@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
 import { CMTJsonFetch } from "../utils/api.js";
-import { LogError } from "../utils/error.jsx";
-import { CMTError } from "@se-code-bank/cmt-shared-utilities";
+import { createErrorHandler } from "../utils/error.jsx";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
@@ -14,9 +13,7 @@ export default function CourseWebsitePage() {
   useEffect(() => 
     void CMTJsonFetch("GET", `course`)
       .then(setCourses)
-      .catch(error => LogError(
-        new CMTError({ userFacingMessage: "Failed to fetch courses.", cause: error })
-      )), 
+      .catch(createErrorHandler("Failed to fetch courses.")),
     []
   )
 
@@ -32,10 +29,9 @@ export default function CourseWebsitePage() {
           materials: json.sessionMaterials[index]?.material || [],
         }));
         setSessions(combined);
-      }).catch(error => {
-        LogError(new CMTError({ userFacingMessage: "Failed to fetch sessions for course.", cause: error }))
-        setSessions([]);
-      }).finally(() => setLoading(false));
+      })
+        .catch(createErrorHandler("Failed to fetch sessions for course.", () => setSessions([])))
+        .finally(() => setLoading(false));
     };
 
     fetchSessions();

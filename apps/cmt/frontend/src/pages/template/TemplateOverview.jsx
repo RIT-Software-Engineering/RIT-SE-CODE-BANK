@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Button, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap'
 import { CMTJsonFetch } from '../../utils/api.js'
 import { useNavigate } from 'react-router-dom'
-import { LogError } from '../../utils/error.jsx'
+import { handleError } from '../../utils/error.jsx'
 
 
 export function TemplateOverview() {
@@ -75,7 +75,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
             const json = await response.json();
             setTimeout(async () => navigate(`/templates/${json.course.id}`), 500);
         }).catch(async error => {
-            LogError(error, setWarning)
+            handleError(error, setWarning)
             setSubmitButtonElement(<><PlusIcon />Submit</>)
             setSubmitting(false);
         });
