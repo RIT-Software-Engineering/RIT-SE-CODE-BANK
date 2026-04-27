@@ -1,11 +1,7 @@
-import { CMTError, CMTErrorToString } from "./cmtError.js";
+import { CMTError } from "./cmtError.js";
 import { getTimeString } from "./cmtLogging.js";
 
 export const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:3001').replace(/\/$/, '')
-
-function nowMs() {
-    return globalThis.performance?.now?.() ?? Date.now()
-}
 
 class CMTFetchError extends CMTError {
     /**

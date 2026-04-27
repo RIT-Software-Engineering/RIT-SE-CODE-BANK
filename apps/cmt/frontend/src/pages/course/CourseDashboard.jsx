@@ -7,7 +7,7 @@ import { CMTWorkflow } from '../../components/workflows/workflow.jsx'
 import { CMTJsonFetch } from '../../utils/api.js'
 import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { Session } from './Session.jsx'
-import { handleError } from '../../utils/error.jsx'
+import { createErrorHandler } from '../../utils/error.jsx'
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -30,7 +30,7 @@ export function CourseDashboard() {
                 setActionsWithContexts(json.actionsWithContexts ?? [])
                 setWorkflow(json.workflow)
             })
-        }).catch(handleError),
+        }).catch(createErrorHandler("Failed to fetch course.")),
         [id]
     )
     useEffect(() => void update(), [id, update])

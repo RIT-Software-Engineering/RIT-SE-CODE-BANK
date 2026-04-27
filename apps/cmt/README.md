@@ -42,7 +42,7 @@ Two options: native or containerized. If you have Docker Desktop already setup o
 
 
 ### 5. Prisma Setup
-This whole step is optional, since the custom start script can do this. Using the start setup is recommended for easy use, but these instructions remain in case of errors or preference (By "start script", I mean running `npm start-cmt` at the root of the repository).
+**This whole step is optional**, since the custom start script can do this. Using the start setup is recommended for easy use, but these instructions remain in case of errors or preference (By "start script", I mean running `npm start-cmt` at the root of the repository).
 
 We will both create a Prisma object for the code to use, and will also push that schema to the database. This means you will need your database running.
 
@@ -72,7 +72,7 @@ You can either use the start script, or run the servers manually. Either way, yo
 - Run `npm run start-cmt`
 - You can navigate the resultant terminal with enter/esc and your arrow keys. If you dislike this display, then try the manual option.
 
-> If you want to debug these scripts, here is a note on Nx:
+> If you want to debug these scripts, here is a note on Nx to get you started:
 > - `nx run-many -t start-cmt -p [projects]` means that the "start-cmt" script is being called in each project. A project's name comes from the package.json in each directory referred to in the "workspaces" field in the root package.json. While projects and packages are technically distinct concepts, Nx automatically turns packages into projects.
 
 #### 2. (Option 2): Manual

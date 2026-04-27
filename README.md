@@ -6,6 +6,8 @@ This monorepo hosts several projects and shared components. Most documentation c
 
 High level documentation can be found in the shared [se-code-bank drive](https://drive.google.com/drive/u/1/folders/1eDbtGrgsCikuy221MIa72kXh0j31CQ5K)
 
+It is reccomended that you read this [overview of how npm](https://docs.google.com/document/d/1zm7hI2R7Hz0tgCx5eHXF9r4FrxAF3QfVFQjCfUWRb9g/edit?tab=t.0#heading=h.rquxpzgjogju) is used in this monorepo, as it is notably different than single-project repos. 
+
 # Directory
 
 These links go to the README files for shared components and other projects. Even if it is not listed here, a README may still exist in the project folder.

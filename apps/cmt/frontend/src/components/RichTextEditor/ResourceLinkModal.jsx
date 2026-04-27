@@ -2,10 +2,9 @@ import { FileSymlink } from "lucide-react"
 import { useState } from "react"
 import { Button, Modal, Form, Spinner, OverlayTrigger, Tooltip } from "react-bootstrap"
 import { CMTFormFetch } from "../../utils/api.js"
-import { CMTDangerAlert, handleError } from "../../utils/error"
+import { CMTDangerAlert, createErrorHandler } from "../../utils/error"
 import { getResourceDownloadUrl, useResources } from "../resources/ResourceManager.jsx"
 import { SelectableResourceCard } from "../resources/resourceRenderers.jsx"
-import { CMTError } from "@se-code-bank/cmt-shared-utilities"
 
 export function ResourceLinkModal({ editor, courseId }) {
     const [show, setShow] = useState(false)
@@ -78,12 +77,7 @@ export function ResourceLinkModal({ editor, courseId }) {
                 setFile(null)
                 setResourceName('')
             })
-            .catch(error => {
-                let message;
-                if (error.message && error.message.includes('Invalid file type'))
-                    message = 'Invalid file type. Please upload a supported file (PDF, DOC, TXT, images, etc.).'
-                handleError(new CMTError({ userFacingMessage: message || "Error uploading file.", cause: error }), setUploadError)
-            })
+            .catch(createErrorHandler("Failed to upload resource", setUploadError))
             .finally(() => setUploading(false))
     }
 

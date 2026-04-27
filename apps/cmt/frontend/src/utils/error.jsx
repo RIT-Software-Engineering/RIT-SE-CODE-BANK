@@ -2,7 +2,9 @@ import { CMTError, CMTErrorToString, extractUserFacingError } from "@se-code-ban
 import { Alert } from "react-bootstrap"
 
 /**
- * ### Utility function to turn CMTFetch's catch block from this:
+ * Creates a function that takes an error, wraps it with a general user facing message, prints that error (which will include the "most specific" user facing message), and then passes in that user facing message to a callback function.
+ * 
+ * ### You can turn CMTFetch's catch block from this:
  * 
  * ```
  * CMTJsonFetch('DELETE', `resources/${resourceId}`)
@@ -11,7 +13,7 @@ import { Alert } from "react-bootstrap"
  *          const wrappedError = new CMTError({ userFacingMessage: "Error deleting resource", cause: error })
  *          console.log(CMTErrorToString(wrappedError))
  *          const textToDisplay = extractUserFacingError(wrappedError)
- *          setError(textToDisplay)
+ *          setResources([])
  *      })
  * ```
  * 
@@ -23,47 +25,38 @@ import { Alert } from "react-bootstrap"
  *      .catch(createErrorHandler("Error deleting resource", setError))
  * ```
  * 
- * If your catch function is more complicated, see {@link handleError}
+ * ### If your catch function is more complicated, you can leverage the callback function for other purposes this:
  * 
- * Keep in mind that even though it is advisable to give a userFacingMessage, that in an ideal scenario there will be a more specific message presented to the user. Check out the shared-utilities package for more information about the CMTError system.
+ * ```
+ * CMTJsonFetch('DELETE', `resources/${resourceId}`)
+ *      .then(refresh)
+ *      .catch(createErrorHandler("Error deleting resource", userFacingMessage => {
+ *          setError(userFacingMessage)
+ *          setResources([])
+ *          // Other error logic    
+ *      }))
+ * ```
  * 
+ * If you find yourself wanting to specify more complex user facing messages, instead of putting complex logic in the frontend function, instead just throw different errors inside of your endpoints.
  * 
  * @param {string} userFacingMessage 
- * @param {React.Dispatch<import("react").SetStateAction<string>> | ((error: string) => void)} [setError] 
+ * @param {(userFacingMessage: string) => void} [callback] 
  * @returns 
  */
-export function createErrorHandler(userFacingMessage, setError) {
+export function createErrorHandler(userFacingMessage, callback) {
     return error => {
         const wrappedError = new CMTError({ userFacingMessage , cause: error })
-        handleError(wrappedError, setError)
+        console.error("Error from createErrorHandler:\n", CMTErrorToString(wrappedError))
+        if (callback) callback(extractUserFacingError(wrappedError))
     }
 }
 
 /**
- * ### Utility function to support more complex error logic. Should be used if {@link createErrorHandler} is too specific
+ * Alternative to createErrorHandler for more complex logic. Best used when there is complex logic in the frontend function to determine the user facing message.
+ * Normally, when you want to have complex conditions for determining the user facing message, that should be the responsibility of the backend throwing errors, but some places in this codebase would be scary to refactor.
  * 
- * ```
- * CMTJsonFetch('DELETE', `resources/${resourceId}`)
- *      .then(refresh)
- *      .catch(error => {
- *          const wrappedError = new CMTError({ userFacingMessage: "Error deleting resource", cause: error })
- *          handleError(wrappedError, set)
- *          // whatever you want
- *          // setResource(null) or whatever
- *      })
- * ```
- * 
- * If you are lazy and don't have a setError function, you can even do this! But, this means that the user *might* see
- * developer-facing errors, since you aren't providing a guaranteed user facing message.
- * 
- * ```
- * CMTJsonFetch('DELETE', `resources/${resourceId}`)
- *      .then(refresh)
- *      .catch(handleError)
- * ```
- * 
- * @param {any} error 
- * @param {React.Dispatch<import("react").SetStateAction<string>> | ((error: string) => void)} [setError] 
+ * @param {Error} error 
+ * @param {(message: string) => void} setError 
  * @returns 
  */
 export function handleError(error, setError) {

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Button, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap'
 import { CMTJsonFetch } from '../../utils/api.js'
 import { useNavigate } from 'react-router-dom'
-import { handleError } from '../../utils/error.jsx'
+import { createErrorHandler } from '../../utils/error.jsx'
 
 
 export function TemplateOverview() {
@@ -74,11 +74,11 @@ function CourseCreationModal({isOpen, setIsOpen}) {
             setSubmitButtonElement(<><Check />Created!</>)
             const json = await response.json();
             setTimeout(async () => navigate(`/templates/${json.course.id}`), 500);
-        }).catch(async error => {
-            handleError(error, setWarning)
+        }).catch(createErrorHandler("Failed to create course.", userFacingMessage => {
+            setWarning(userFacingMessage)
             setSubmitButtonElement(<><PlusIcon />Submit</>)
             setSubmitting(false);
-        });
+        }))
     }
 
     function resetForm() {

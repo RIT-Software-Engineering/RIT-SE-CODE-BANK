@@ -2,8 +2,7 @@ import { PlusIcon, Pencil, Trash } from 'lucide-react'
 import { useState } from 'react'
 import { Button, Form, Modal, Spinner } from 'react-bootstrap'
 import { CMTFormFetch, CMTJsonFetch } from '../../utils/api'
-import { CMTDangerAlert, createErrorHandler, handleError } from '../../utils/error'
-import { CMTError } from '@se-code-bank/cmt-shared-utilities'
+import { CMTDangerAlert, createErrorHandler } from '../../utils/error'
 
 export function UploadResourceModal({ courseId, refresh }) {
     const [showModal, setShowModal] = useState(false)
@@ -34,12 +33,7 @@ export function UploadResourceModal({ courseId, refresh }) {
                 setFile(null)
                 setResourceName('')
             })
-            .catch(error => {
-                let message;
-                if (error.message && error.message.includes('Invalid file type'))
-                    message = 'Invalid file type. Please upload a supported file (PDF, DOC, TXT, images, etc.).'
-                handleError(new CMTError({ userFacingMessage: message, cause: error }), setError)
-            })
+            .catch(createErrorHandler("Failed to upload resource", setError))
             .finally(() => setUploading(false))
     }
 
