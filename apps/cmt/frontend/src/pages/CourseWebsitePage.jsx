@@ -121,6 +121,33 @@ export default function CourseWebsitePage() {
         </tbody>
       </table>
 
+    <script>
+      function openItem(encoded) {
+        const html = decodeURIComponent(escape(atob(encoded)));
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'item-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;border:none;';
+        
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = 'width:100%;height:100%;border:none;';
+        overlay.appendChild(iframe);
+        document.body.appendChild(overlay);
+        
+        iframe.contentDocument.open();
+        iframe.contentDocument.write(html);
+        iframe.contentDocument.close();
+
+        history.pushState({ isItem: true }, '', '#item');
+
+        window.addEventListener('popstate', function handler(e) {
+          const el = document.getElementById('item-overlay');
+          if (el) el.remove();
+          window.removeEventListener('popstate', handler);
+        });
+      }
+    </script>
+
     </body>
     </html>
     `;
@@ -308,15 +335,9 @@ async function generateSessionRowHTML(session, visibleColumns) {
             const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
             const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
 
-            return `<a href="#"
-                        onclick="
-                          const w = window.open();
-                          const html = decodeURIComponent(escape(atob('${encoded}')));
-                          w.document.write(html);
-                          w.document.close();
-                          return false;">
-                        ${item.label}
-                      </a>`;
+            return `<a href="#" onclick="openItem('${encoded}'); return false;">
+              ${item.label}
+            </a>`;
           }
 
           // Rewrite resource links in title
