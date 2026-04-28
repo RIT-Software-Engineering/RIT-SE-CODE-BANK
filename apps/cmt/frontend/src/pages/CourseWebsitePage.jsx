@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CMTJsonFetch } from "../utils/api.js";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
 import JSZip from "jszip";
+import logo from "../images/se_logo_new.png";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
@@ -173,6 +174,11 @@ export default function CourseWebsitePage() {
     console.log("Resources for course:", resources);
 
     const resourcesFolder = zip.folder("public_html/resources");
+
+    const resp = await fetch(logo);
+    const blob = await resp.blob();
+
+    resourcesFolder.file("se_logo_new.png", blob);
 
     await Promise.all(resources.map(async (resource) => {
       try {
