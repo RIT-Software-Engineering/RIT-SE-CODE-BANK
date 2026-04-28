@@ -31,7 +31,7 @@ import { getCoverLetterById, getResumeById } from "@/services/db-apis";
  */
 export default function ViewableApplicationForm({position, application, onClose }) {
 
-  const submittedResume = application.resume;
+  const submittedResume = application?.resume;
   const submittedCoverLetter = application?.coverLetter;
 
   const displayValues = {
@@ -130,10 +130,10 @@ export default function ViewableApplicationForm({position, application, onClose 
                     textDecoration: 'none',
                   }
                 }}
-                onClick={()=> handleResumeClick(submittedResume.id)}
+                onClick={()=> handleResumeClick(submittedResume?.id)}
               >
                 <DocumentIcon fontSize="small" />
-                {submittedResume.name || 'View Submitted Resume'}
+                {submittedResume?.name || 'View Submitted Resume'}
               </Typography>
             </Box>
           )}

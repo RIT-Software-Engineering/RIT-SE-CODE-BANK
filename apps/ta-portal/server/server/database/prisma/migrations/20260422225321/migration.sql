@@ -39,14 +39,36 @@ CREATE TABLE `Comment` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `ApplicationNote` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `note` TEXT NOT NULL,
+    `applicationId` INTEGER NOT NULL,
+
+    UNIQUE INDEX `ApplicationNote_applicationId_key`(`applicationId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Resume` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` TEXT NOT NULL,
     `username` VARCHAR(191) NOT NULL,
     `isPrimary` BOOLEAN NOT NULL,
+    `isSoftDeleted` BOOLEAN NOT NULL DEFAULT false,
     `resumeURL` VARCHAR(191) NOT NULL,
 
     INDEX `Resume_username_fkey`(`username`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `CoverLetter` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` TEXT NOT NULL,
+    `username` VARCHAR(191) NOT NULL,
+    `coverLetterURL` VARCHAR(191) NOT NULL,
+
+    INDEX `Cover_Letter_username_fkey`(`username`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -98,11 +120,11 @@ CREATE TABLE `JobPositionApplicationHistory` (
     `wasPriorEmployeeForThisCourse` BOOLEAN NOT NULL,
     `wasPriorEmployeeForOtherCourses` BOOLEAN NOT NULL,
     `priorEmploymentHistory` TEXT NULL,
-    `coverLetterName` TEXT NULL,
-    `coverLetterURL` VARCHAR(191) NULL,
+    `coverLetterId` INTEGER NULL,
 
     INDEX `JobPositionApplicationHistory_jobPositionId_fkey`(`jobPositionId`),
     INDEX `JobPositionApplicationHistory_resumeId_fkey`(`resumeId`),
+    INDEX `JobPositionApplicationHistory_coverLetterId_fkey`(`coverLetterId`),
     INDEX `JobPositionApplicationHistory_username_fkey`(`username`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -206,7 +228,13 @@ CREATE TABLE `FeatureFlag` (
 ALTER TABLE `Candidate` ADD CONSTRAINT `Candidate_username_fkey` FOREIGN KEY (`username`) REFERENCES `User`(`username`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `ApplicationNote` ADD CONSTRAINT `ApplicationNote_applicationId_fkey` FOREIGN KEY (`applicationId`) REFERENCES `JobPositionApplicationHistory`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Resume` ADD CONSTRAINT `Resume_username_fkey` FOREIGN KEY (`username`) REFERENCES `Candidate`(`username`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `CoverLetter` ADD CONSTRAINT `CoverLetter_username_fkey` FOREIGN KEY (`username`) REFERENCES `Candidate`(`username`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Employer` ADD CONSTRAINT `Employer_username_fkey` FOREIGN KEY (`username`) REFERENCES `User`(`username`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -225,6 +253,9 @@ ALTER TABLE `JobPositionApplicationHistory` ADD CONSTRAINT `JobPositionApplicati
 
 -- AddForeignKey
 ALTER TABLE `JobPositionApplicationHistory` ADD CONSTRAINT `JobPositionApplicationHistory_resumeId_fkey` FOREIGN KEY (`resumeId`) REFERENCES `Resume`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `JobPositionApplicationHistory` ADD CONSTRAINT `JobPositionApplicationHistory_coverLetterId_fkey` FOREIGN KEY (`coverLetterId`) REFERENCES `CoverLetter`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `JobPositionApplicationHistory` ADD CONSTRAINT `JobPositionApplicationHistory_username_fkey` FOREIGN KEY (`username`) REFERENCES `Candidate`(`username`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -42,8 +42,8 @@ import { Close as CloseIcon, UploadFile as UploadFileIcon } from '@mui/icons-mat
  */
 export default function EditableApplicationForm({ user, position, onClose, onApplySuccess }) {
     const { showNotification } = useNotification();
-    const existingResumes = user?.candidate?.resumes.filter(resume => !resume.isSoftDeleted) || [];
-    const primaryResume = existingResumes.find(r => r.isPrimary) || existingResumes[0];
+    const existingResumes = user?.candidate?.resumes?.filter(resume => !resume.isSoftDeleted) || [];
+    const primaryResume = existingResumes?.find(r => r.isPrimary) || existingResumes[0];
 
     const initialValues = {
         uid: user?.uid || 0,

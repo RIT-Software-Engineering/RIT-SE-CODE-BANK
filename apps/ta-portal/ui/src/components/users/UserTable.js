@@ -21,7 +21,7 @@ export function UserRow({ user, role, onEdit }) {
 
     const getOffersToMake = (positions) => {
         let offers = 0;
-        positions.forEach((position) => {
+        positions?.forEach((position) => {
             if (position.jobPositionStatus === "OPEN") {
                 offers = offers + position.maxTAs
                 if (position.jobPositionApplicationHistory.length > 0) {
@@ -37,7 +37,7 @@ export function UserRow({ user, role, onEdit }) {
     };
     const getMadeOffers = (positions) => {
         let offers = 0;
-        positions.forEach((position) => {
+        positions?.forEach((position) => {
             if (position.jobPositionApplicationHistory.length > 0) {
                 position.jobPositionApplicationHistory.map((application) => {
                     if (application.jobApplicationStatus === "HIRED" || application.jobApplicationStatus === "ACCEPTED_OFFER" || application.jobApplicationStatus === "PENDING_OFFER") {
@@ -177,19 +177,26 @@ export function UserRow({ user, role, onEdit }) {
                 <TableCell>{user.fname} {user.lname}</TableCell>
                 <TableCell>{user.uid}</TableCell>
                 <TableCell>{user.email}</TableCell>
-
+                {/**HERE */}
                 {/* employee info */}
                 {role === 'EMPLOYEE' && (<>
-                    <TableCell>{user.candidate.year}</TableCell>
-                    <TableCell>{user.candidate.major}</TableCell>
+                    <TableCell>
+                        <>
+                            {user.candidate.employee[0]?.jobPositionHistory.map((pos) => (
+                                <Typography key={pos.jobPositionId} variant="p" component="div">
+                                    {pos.jobPositionId}
+                                </Typography>
+                            ))}
+                        </>
+                    </TableCell>
+
                 </>
                 )}
                 {/* employer info */}
                 {role === 'EMPLOYER' && (
                     <>
-                        <TableCell>{user.employer.department}</TableCell>
-                        <TableCell><Button onClick={() => handleMadeOffersModal()}>{getMadeOffers(user.employer.jobPositions)} </Button></TableCell>
-                        <TableCell><Button onClick={() => handleOffersToMakeModalContent()}>{getOffersToMake(user.employer.jobPositions)} </Button></TableCell>
+                        <TableCell><Button onClick={() => handleMadeOffersModal()}>{getMadeOffers(user.employer?.jobPositions)} </Button></TableCell>
+                        <TableCell><Button onClick={() => handleOffersToMakeModalContent()}>{getOffersToMake(user.employer?.jobPositions)} </Button></TableCell>
                         <Modal
                             open={isMadeOffersModalOpen}
                             onClose={handleMadeOffersModal}
@@ -216,7 +223,7 @@ export function UserRow({ user, role, onEdit }) {
                                         {user.fname} {user.lname}&apos;s Made Offers
                                     </Typography>
                                     <Divider />
-                                    {renderMadeOffersModalContent(user.employer.jobPositions)}
+                                    {renderMadeOffersModalContent(user.employer?.jobPositions)}
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                     <Button onClick={() => handleMadeOffersModal()}
@@ -260,7 +267,7 @@ export function UserRow({ user, role, onEdit }) {
                                         {user.fname} {user.lname}&apos;s Open Positions
                                     </Typography>
                                     <Divider />
-                                    {renderOffersToMakeModalContent(user.employer.jobPositions)}
+                                    {renderOffersToMakeModalContent(user.employer?.jobPositions)}
                                 </Box>
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 3 }}>
@@ -321,7 +328,7 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
 
         } catch (err) {
             console.error('Failed to copy text: ', err);
-            
+
             showNotification("Failed to copy emails", "error");
         }
     };
@@ -361,13 +368,11 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
                                     <TableCell>Email</TableCell>
                                     {/* employer info */}
                                     {role === 'EMPLOYER' && (<>
-                                        <TableCell>Department</TableCell>
                                         <TableCell>Offers Made</TableCell>
                                         <TableCell>Open Positions</TableCell></>)}
                                     {/* employee info */}
                                     {role === 'EMPLOYEE' && (<>
-                                        <TableCell>Year</TableCell>
-                                        <TableCell>Major</TableCell>
+                                        <TableCell>Position</TableCell>
                                     </>
                                     )}
                                     <TableCell>Edit</TableCell>
@@ -392,7 +397,7 @@ export default function UserTable({ title, users, role, onEdit, isEmployeeGroup 
                             variant='outlined'
                         />
 
-                        <Box sx={{ display: "flex", flexDirection:"column", alignItems: "center" }}>
+                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                             <Button variant='outlined' sx={(theme) => ({
                                 backgroundColor:
                                     theme.palette.mode === "dark"
