@@ -9,12 +9,12 @@ datasource db {
 
 model User {
   username  String     @id @db.VarChar(7)
-  uid       Int        @unique
+  uid       Int?        @unique
   fname     String     @db.Text
   lname     String     @db.Text
-  password  String     @db.Text
+  password  String?     @db.Text
   email     String     @unique @db.VarChar(255)
-  pronouns  String     @db.Text
+  pronouns  String?     @db.Text
   role      Role       @default(GUEST)
   candidate Candidate?
   employer  Employer?
@@ -22,10 +22,10 @@ model User {
 
 model Candidate {
   username                      String                          @id
-  year                          Int
-  major                         String                          @db.Text
-  graduateStatus                GraduateStatus                  @default(UNDERGRADUATE)
-  wasPriorEmployee              Boolean
+  year                          Int?
+  major                         String?                          @db.Text
+  graduateStatus                GraduateStatus?                  @default(UNDERGRADUATE)
+  wasPriorEmployee              Boolean?
   user                          User                            @relation(fields: [username], references: [username])
   courseHistory                 CourseHistory[]
   employee                      Employee[]
@@ -77,7 +77,7 @@ model CoverLetter {
 
 model Employer {
   username     String        @id
-  department   String        @db.Text
+  department   String?        @db.Text
   user         User          @relation(fields: [username], references: [username])
   jobPositions JobPosition[]
 }
