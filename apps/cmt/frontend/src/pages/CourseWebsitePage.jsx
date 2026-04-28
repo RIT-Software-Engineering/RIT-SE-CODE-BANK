@@ -106,6 +106,10 @@ export default function CourseWebsitePage() {
       </style>
     </head>
     <body>
+      <header>
+        <a href="https://www.se.rit.edu">
+            <img alt="Software Engineering Department" src="../images/se_logo_new.png"> </a>
+        </header>
 
       <h1>${course.classId}-${course.section} | ${course.name}</h1>
 
