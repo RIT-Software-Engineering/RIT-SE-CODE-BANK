@@ -134,10 +134,10 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     const loadProfTemplates = async () => {
         setLoading(true);
         CMTJsonFetch('GET', `course/?isTemplate=true`)
-            .then(async response => {
-                const data = (await response.json()) || [];
-                setTemplates(data);
-                setOriginalTemplates(data);
+            .then(async json => {
+                json = json || [];
+                setTemplates(json);
+                setOriginalTemplates(json);
             })
             .catch(createErrorHandler("Failed to load templates.", setWarning))
             .finally(() => setLoading(false))
@@ -357,11 +357,10 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
 
     // gets all the public templates and displays them
     const setPublishedTemplates = useCallback(async () => {
-        await CMTJsonFetch("GET", "/course/templates").then(async response => {
-            const data = await response.json();
-            data.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order when searching
-            setAllTemplates(data);
-            setShownTemplates(data);
+        await CMTJsonFetch("GET", "/course/templates").then(async json => {
+            json.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order when searching
+            setAllTemplates(json);
+            setShownTemplates(json);
         })
     }, []);
 
@@ -395,11 +394,10 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
             return;
         }
 
-        await CMTJsonFetch("GET", `/workflow/publishedTemplates?searchValue=${searchValue.toLowerCase()}`).then(async response => {
-            const data = await response.json();
+        await CMTJsonFetch("GET", `/workflow/publishedTemplates?searchValue=${searchValue.toLowerCase()}`).then(async json => {
             
             // Partiall AI-generated code
-            const newTemplates = data.flat().filter(val => val !== null).filter((value, index, self) => (index === self.findIndex((t) => (t?.id === value?.id))));
+            const newTemplates = json.flat().filter(val => val !== null).filter((value, index, self) => (index === self.findIndex((t) => (t?.id === value?.id))));
             newTemplates.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order as before
             setShownTemplates(newTemplates)
         })

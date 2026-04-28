@@ -104,11 +104,10 @@ function isCheckmark() {
 ### refresh
 ```jsx
 function refresh() {
-	return CMTJsonFetch('GET', `course/${id}`).then(async response => {
-		const data = await response.json()
-		setCourse(data.course)
-		setActionsWithContexts(data.actionsWithContexts)
-		setWorkflow(data.workflow)
+	return CMTJsonFetch('GET', `course/${id}`).then(async json => {
+		setCourse(json.course)
+		setActionsWithContexts(json.actionsWithContexts)
+		setWorkflow(json.workflow)
 	})
 }
 ```
@@ -227,9 +226,8 @@ res.json({ course, ... })
 
 In the frontend, we receive it!
 ```jsx
-CMTJsonFetch('GET', `course/${id}`).then(async response => {
-	const data = await response.json()
-	setCourse(data.course)
+CMTJsonFetch('GET', `course/${id}`).then(async json => {
+	setCourse(data.json)
 	...
 })
 ```

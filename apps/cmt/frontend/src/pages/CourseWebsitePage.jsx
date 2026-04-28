@@ -372,8 +372,7 @@ async function rewriteResourceLinks(html) {
     const id = href.split('/').filter(Boolean).pop();
 
     try {
-      const response = await CMTJsonFetch("GET", `/resources/id/${id}`);
-      const resource = await response.json();
+      const resource = await CMTJsonFetch("GET", `/resources/id/${id}`);
 
       if (!resource || !resource.filename) continue;
 
