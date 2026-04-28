@@ -64,7 +64,7 @@ In case, anything goes wrong on a database prespective or you want to make a cha
 2.  Delete the `migrations` folder if there's exists one within the prisma folder [here](../server/database/prisma/migrations)
 3.  Run `npx prisma migrate dev` within the prisma folder project to create and apply a new migration for the changes you've defined in `schema.prisma` file. An easier command to do this is `npm run prisma:migrate` when you in the main `/server` folder. You will be prompted to name the migration. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
 
-**NOTE** If there's any issues with running this commmand (i.e. it suggesting to resetting the database, but the reset command still doesn't work) re-run the config files to reset everything. Then start back up to step 2 here within this section.
+**NOTE** If there's any issues with running this command (i.e. it suggesting to resetting the database, but the reset command still doesn't work) re-run the config files to reset everything. Then start back up to step 2 here within this section.
 4. Follow the rest of the instructions below
 ---
 **For dropping, creating, and then (re)populating the data tables**

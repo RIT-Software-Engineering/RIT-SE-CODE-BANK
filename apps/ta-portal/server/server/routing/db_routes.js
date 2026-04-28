@@ -61,6 +61,7 @@ const {
   getCoverLetterById,
   deleteCoverLetter,
   checkResumeDeleteStatus,
+  sendOfferToCandidate,
 } = require('../database/query_db');
 
 // =============================================================================

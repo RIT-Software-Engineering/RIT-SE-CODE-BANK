@@ -21,11 +21,11 @@ export function UserRow({ user, role, onEdit }) {
 
     const getOffersToMake = (positions) => {
         let offers = 0;
-        positions.forEach((position) => {
+        positions?.forEach((position) => {
             if (position.jobPositionStatus === "OPEN") {
                 offers = offers + position.maxTAs
                 if (position.jobPositionApplicationHistory.length > 0) {
-                    position.jobPositionApplicationHistory.map((application) => {
+                    position.jobPositionApplicationHistory?.map((application) => {
                         if (application.jobApplicationStatus === "HIRED" || application.jobApplicationStatus === "ACCEPTED_OFFER" || application.jobApplicationStatus === "PENDING_OFFER") {
                             offers = offers - 1;
                         }
@@ -37,7 +37,7 @@ export function UserRow({ user, role, onEdit }) {
     };
     const getMadeOffers = (positions) => {
         let offers = 0;
-        positions.forEach((position) => {
+        positions?.forEach((position) => {
             if (position.jobPositionApplicationHistory.length > 0) {
                 position.jobPositionApplicationHistory.map((application) => {
                     if (application.jobApplicationStatus === "HIRED" || application.jobApplicationStatus === "ACCEPTED_OFFER" || application.jobApplicationStatus === "PENDING_OFFER") {
@@ -76,7 +76,7 @@ export function UserRow({ user, role, onEdit }) {
                 </Box>
             )
         }
-        return positions.map((position) => {
+        return positions?.map((position) => {
             if (position.jobPositionStatus == "OPEN") {
                 let offers = 0;
                 let offers_made = 0;
@@ -147,7 +147,7 @@ export function UserRow({ user, role, onEdit }) {
     };
 
     const renderMadeOffersModalContent = (positions) => {
-        const matchingApplications = positions.flatMap((position) =>
+        const matchingApplications = positions?.flatMap((position) =>
             position.jobPositionApplicationHistory
                 ?.filter((application) =>
                     ["HIRED", "ACCEPTED_OFFER", "PENDING_OFFER"].includes(
@@ -164,7 +164,7 @@ export function UserRow({ user, role, onEdit }) {
                 )) ?? []
         );
 
-        if (matchingApplications.length === 0) {
+        if (matchingApplications?.length === 0) {
             return <Box>No offers made.</Box>;
         }
 
@@ -180,16 +180,16 @@ export function UserRow({ user, role, onEdit }) {
 
                 {/* employee info */}
                 {role === 'EMPLOYEE' && (<>
-                    <TableCell>{user.candidate.year}</TableCell>
-                    <TableCell>{user.candidate.major}</TableCell>
+                    <TableCell>{user.candidate?.year}</TableCell>
+                    <TableCell>{user.candidate?.major}</TableCell>
                 </>
                 )}
                 {/* employer info */}
                 {role === 'EMPLOYER' && (
                     <>
-                        <TableCell>{user.employer.department}</TableCell>
-                        <TableCell><Button onClick={() => handleMadeOffersModal()}>{getMadeOffers(user.employer.jobPositions)} </Button></TableCell>
-                        <TableCell><Button onClick={() => handleOffersToMakeModalContent()}>{getOffersToMake(user.employer.jobPositions)} </Button></TableCell>
+                        <TableCell>{user.employer?.department}</TableCell>
+                        <TableCell><Button onClick={() => handleMadeOffersModal()}>{getMadeOffers(user.employer?.jobPositions)} </Button></TableCell>
+                        <TableCell><Button onClick={() => handleOffersToMakeModalContent()}>{getOffersToMake(user.employer?.jobPositions)} </Button></TableCell>
                         <Modal
                             open={isMadeOffersModalOpen}
                             onClose={handleMadeOffersModal}
@@ -216,7 +216,7 @@ export function UserRow({ user, role, onEdit }) {
                                         {user.fname} {user.lname}&apos;s Made Offers
                                     </Typography>
                                     <Divider />
-                                    {renderMadeOffersModalContent(user.employer.jobPositions)}
+                                    {renderMadeOffersModalContent(user.employer?.jobPositions)}
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                     <Button onClick={() => handleMadeOffersModal()}
@@ -260,7 +260,7 @@ export function UserRow({ user, role, onEdit }) {
                                         {user.fname} {user.lname}&apos;s Open Positions
                                     </Typography>
                                     <Divider />
-                                    {renderOffersToMakeModalContent(user.employer.jobPositions)}
+                                    {renderOffersToMakeModalContent(user.employer?.jobPositions)}
                                 </Box>
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 3 }}>

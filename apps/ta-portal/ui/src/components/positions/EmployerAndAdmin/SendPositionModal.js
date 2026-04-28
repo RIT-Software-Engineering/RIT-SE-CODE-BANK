@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-    sendOfferToCandidate, getUserProfile
+    getUserProfile
 } from '@/services/db-apis';
+import { sendOfferToCandidate } from '@/services/db-apis';
 import { useNotification } from '@/contexts/NotificationContext';
 import {
     CircularProgress, Box,
@@ -56,42 +57,63 @@ export default function SendPositionModal({ position, user, onClose, onSendSucce
         try {
             const username = String(data.candidateEmail).split('@', 1)[0].toLowerCase()
             let candidateProfileData = await getUserProfile(username);
+            if (candidateProfileData===null){
+                setError("candidateEmail", {
+                    type: "manual",
+                    message: "That email isn't in our system. Check your spelling or ask your student to create an account."
+                });
+                return;
+            }
+                if (candidateProfileData?.fname.toLowerCase() !== data.candidateFName.toLowerCase()) {
+                    setError("candidateFName", {
+                        type: "manual",
+                        message: "That name doesn't match the one in our system. Check your spelling and ensure you are sending it to the right student."
+                    });
+                    return;
+                }
+                if (candidateProfileData?.lname.toLowerCase() !== data.candidateLName.toLowerCase()) {
+                    setError("candidateLName", {
+                        type: "manual",
+                        message: "That name doesn't match the one in our system. Check your spelling and ensure you are sending it to the right student."
+                    });
+                    return;
+                }
+                const candidateInfo = {
+                    uid: candidateProfileData?.uid || 0,
+                    fname: candidateProfileData?.fname || data.candidateFName,
+                    lname: candidateProfileData?.lname || data.candidateLName,
+                    pronouns: candidateProfileData?.pronouns || 'N/A',
+                    email: data.candidateEmail,
+                    major: candidateProfileData?.candidate?.major || 'N/A',
+                    year: candidateProfileData?.candidate?.year || 0,
+                    wasPriorEmployeeForThisCourse:
+                        candidateProfileData?.candidate?.courseHistory?.find(
+                            ch => ch.courseCode === position.courseCode
+                        )?.wasPriorEmployee || false,
+                    wasPriorEmployeeForOtherCourses:
+                        candidateProfileData?.candidate?.courseHistory?.some(
+                            ch => ch.courseCode !== position.courseCode && ch.wasPriorEmployee
+                        ) || false,
+                    priorEmploymentHistory:
+                        candidateProfileData?.candidate?.courseHistory
+                            ?.filter(ch => ch.wasPriorEmployee)
+                            ?.map(ch => ({ courseCode: ch.courseCode })) || [],
+                };
 
-            const candidateInfo = {
-                uid: candidateProfileData?.uid || 0,
-                fname: candidateProfileData?.fname || data.candidateFName,
-                lname: candidateProfileData?.lname || data.candidateLName,
-                pronouns: candidateProfileData?.pronouns || 'N/A',
-                email: data.candidateEmail,
-                major: candidateProfileData?.candidate?.major || 'N/A',
-                year: candidateProfileData?.candidate?.year || 0,
-                wasPriorEmployeeForThisCourse:
-                    candidateProfileData?.candidate?.courseHistory?.find(
-                        ch => ch.courseCode === position.courseCode
-                    )?.wasPriorEmployee || false,
-                wasPriorEmployeeForOtherCourses:
-                    candidateProfileData?.candidate?.courseHistory?.some(
-                        ch => ch.courseCode !== position.courseCode && ch.wasPriorEmployee
-                    ) || false,
-                priorEmploymentHistory:
-                    candidateProfileData?.candidate?.courseHistory
-                        ?.filter(ch => ch.wasPriorEmployee)
-                        ?.map(ch => ({ courseCode: ch.courseCode })) || [],
-            };
-            console.log(candidateInfo);
+                const applicationDetails = {
+                    candidateUsername: username,
+                    jobPositionId: position.id,
+                    employerFName: user.fname,
+                    employerLName: user.lname,
+                    jobPositionApplicationFormData: JSON.stringify(candidateInfo),
+                };
+                await sendOfferToCandidate(applicationDetails);
 
-            const applicationDetails = {
-                candidateUsername: data.candidateEmail.slice(0, data.candidateEmail.indexOf('@')),
-                jobPositionId: position.id,
-                employerFName: user.fname,
-                employerLName: user.lname,
-                jobPositionApplicationFormData: JSON.stringify(candidateInfo),
-            };
-            //await sendOfferToCandidate(applicationDetails);
-            //send off here
-            if (onSendSuccess) onSendSuccess();
-            showNotification('Offer sent to student!', 'success');
-            if (onClose) onClose();
+                //send off here
+                if (onSendSuccess) onSendSuccess();
+                showNotification('Offer sent to student!', 'success');
+                if (onClose) onClose();
+            
         } catch (error) {
             console.error('Failed to send offer:', error);
             showNotification('Error: Could not send position to candidate.', 'error');

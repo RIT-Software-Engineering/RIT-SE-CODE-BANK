@@ -182,9 +182,9 @@ async function getOpenJobPositions(
       include: {
         course: true,
         jobSchedules: true,
-        employer:{
-          include:{
-            user:true,
+        employer: {
+          include: {
+            user: true,
           }
         }
       },
@@ -206,7 +206,7 @@ async function getOpenJobPositions(
           !position.gradeRequirement ||
           (courseHistory?.grade &&
             gradetoNumericValue[courseHistory.grade] >=
-              gradetoNumericValue[position.gradeRequirement]);
+            gradetoNumericValue[position.gradeRequirement]);
         const isEligible = gradStatusMatch && courseTakenMatch && gradeMatch;
         return filters.eligibility === "Eligible" ? isEligible : !isEligible;
       });
@@ -244,9 +244,9 @@ async function getJobPositionsByOwner(
       include: {
         course: true,
         jobSchedules: true,
-        employer:{
-          include:{
-            user:true,
+        employer: {
+          include: {
+            user: true,
           }
         }
       },
@@ -278,9 +278,9 @@ async function getAllJobPositions(searchTerm = "", filters = {}) {
       include: {
         course: true,
         jobSchedules: true,
-        employer:{
-          include:{
-            user:true,
+        employer: {
+          include: {
+            user: true,
           }
         }
       },
@@ -614,7 +614,7 @@ async function applyForJobPosition(applicationDetails) {
       },
     });
 
-  // Notify stakeholders + candidate
+    // Notify stakeholders + candidate
     try {
       const { employerEmail } = await getCourseStakeholders(newApp.jobPositionId);
       const candidateUserId = String(newApp.candidateEmail).split('@', 1)[0].toLowerCase();
@@ -624,7 +624,7 @@ async function applyForJobPosition(applicationDetails) {
         userEmail: newApp.candidateEmail,
         subject: 'TA Application Status Update',
         context: {
-          recipient: { name: `${newApp.candidateFName} ${newApp.candidateLName}` , email: newApp.candidateEmail },
+          recipient: { name: `${newApp.candidateFName} ${newApp.candidateLName}`, email: newApp.candidateEmail },
           item: {
             id: jobPositionId,
             title: jobPosition.course.name,
@@ -722,7 +722,7 @@ async function sendOfferToCandidate(applicationDetails) {
     ]);
 
     if (!candidate) {
-      //throw new Error(`Candidate ${candidateUsername} not found.`);
+      throw new Error(`Candidate ${candidateUsername} not found.`);
     }
 
     if (!jobPosition) {
@@ -735,13 +735,14 @@ async function sendOfferToCandidate(applicationDetails) {
     });
 
     if (existing) {
-      //TODO: update user application status to pending offer
-      throw new Error(
-        "This candidate has already applied for this job position. Offer them a job instead."
-      );
+      if (existing.jobApplicationStatus !== "PENDING_OFFER") {
+        changeCandidateApplicationStatus(`${employerFName} ${employerLName}`, existing.id, "PENDING_OFFER", "Employer/admin sent and offered a position to a student.");
+      }
+      return;
     }
-
     // Parse form data safely
+    console.log("Incoming form data:", jobPositionApplicationFormData);
+
     let formData;
     try {
       formData =
@@ -772,7 +773,6 @@ async function sendOfferToCandidate(applicationDetails) {
         username: candidateUsername,
         candidateUID: formData.uid,
         jobPositionId,
-        resumeId: resume?.id ?? null,
         jobApplicationStatus: "PENDING_OFFER",
         candidateFName: formData.fname,
         candidateLName: formData.lname,
@@ -784,9 +784,7 @@ async function sendOfferToCandidate(applicationDetails) {
         wasPriorEmployeeForThisCourse: !!formData.wasPriorEmployeeForThisCourse,
         wasPriorEmployeeForOtherCourses: !!formData.wasPriorEmployeeForOtherCourses,
         priorEmploymentHistory:
-          formData.priorEmploymentHistory
-            ?.map((i) => i.courseCode)
-            .join(", ") ?? null,
+          formData.priorEmploymentHistory?.map(i => i.courseCode).join(", ") ?? null,
       },
     });
 
@@ -801,7 +799,6 @@ async function sendOfferToCandidate(applicationDetails) {
         timestamp: new Date(),
       },
     });
-
     // Notifications
     // Notify stakeholders + candidate
     if (1 == 0) {
@@ -1018,9 +1015,10 @@ async function changeCandidateApplicationStatus(
           where: { id: appUpdate.jobPositionId },
           include: {
             course: true,
-            employer: { include: { user: true } 
+            employer: {
+              include: { user: true }
+            }
           }
-        }
         });
         if (jobPos) {
           const acceptedCount = await tx.jobPositionApplicationHistory.count({
@@ -1046,99 +1044,99 @@ async function changeCandidateApplicationStatus(
   }
 
   // Notifications
-try {
-  const details = await getApplicationDetailsForNotify(applicationId);
-  if (!details) throw new Error("Application not found for notify");
-
-  const { candidateName, candidateEmail, jobPositionId } = details;
-
-  // All application status changes use the same event name
-  const eventType = "application_status_changed";
-
-  {
-    const candidateUserId = String(candidateEmail).split('@', 1)[0].toLowerCase();
-    await dispatchTemplated(candidateUserId, {
-      event: eventType,
-      role: 'candidate',
-      userEmail: candidateEmail,
-      subject: 'TA Application Status Update',
-      context: {
-        recipient: { name: candidateName, email: candidateEmail },
-        item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName, ownerEmail: details.instructorEmail },
-        status: { new: status },
-        comment: comments,
-        flags: { hired: status === 'HIRED', acceptedOffer: status === 'ACCEPTED_OFFER' },
-        cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
-        appName: 'TA Portal',
-      }
-    });
-  }
-
-  // Employer confirmation (status change)
   try {
-    const employerEmail = details.instructorEmail;
-    if (employerEmail) {
-      const employerUserId = String(employerEmail).split('@', 1)[0].toLowerCase();
-      await dispatchTemplated(employerUserId, {
+    const details = await getApplicationDetailsForNotify(applicationId);
+    if (!details) throw new Error("Application not found for notify");
+
+    const { candidateName, candidateEmail, jobPositionId } = details;
+
+    // All application status changes use the same event name
+    const eventType = "application_status_changed";
+
+    {
+      const candidateUserId = String(candidateEmail).split('@', 1)[0].toLowerCase();
+      await dispatchTemplated(candidateUserId, {
         event: eventType,
-        role: 'employer',
-        userEmail: employerEmail,
+        role: 'candidate',
+        userEmail: candidateEmail,
         subject: 'TA Application Status Update',
         context: {
-          // generic
-          recipient: { name: details.instructorName, email: employerEmail },
-          item: {
-            id: details.jobPositionId,
-            title: details.courseName,
-            ownerName: details.instructorName,
-            ownerEmail: employerEmail,
-            candidateName: details.candidateName,
-            candidateEmail: details.candidateEmail,
-          },
+          recipient: { name: candidateName, email: candidateEmail },
+          item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName, ownerEmail: details.instructorEmail },
           status: { new: status },
           comment: comments,
           flags: { hired: status === 'HIRED', acceptedOffer: status === 'ACCEPTED_OFFER' },
           cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
           appName: 'TA Portal',
-        },
+        }
       });
     }
-  } catch (e) {
-    console.error('Employer notify (status change) failed:', e && e.message);
-  }
 
-  // Admins should be notified when a candidate accepts an offer
-  if (status === 'ACCEPTED_OFFER') {
+    // Employer confirmation (status change)
     try {
-      const adminEmails = (await getAdminEmails()) || [];
-      // Do not send admin emails to the instructor/employer
-      const adminList = adminEmails.filter(e => e && e.toLowerCase() !== String(details.instructorEmail || '').toLowerCase());
-      for (const adminEmail of adminList) {
-        const adminUserId = String(adminEmail).split('@', 1)[0].toLowerCase();
-        await dispatchTemplated(adminUserId, {
-          event: 'admin_hire_notification',
-          role: 'admin',
-          userEmail: adminEmail,
+      const employerEmail = details.instructorEmail;
+      if (employerEmail) {
+        const employerUserId = String(employerEmail).split('@', 1)[0].toLowerCase();
+        await dispatchTemplated(employerUserId, {
+          event: eventType,
+          role: 'employer',
+          userEmail: employerEmail,
           subject: 'TA Application Status Update',
           context: {
             // generic
-            recipient: { email: adminEmail },
-            item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName },
+            recipient: { name: details.instructorName, email: employerEmail },
+            item: {
+              id: details.jobPositionId,
+              title: details.courseName,
+              ownerName: details.instructorName,
+              ownerEmail: employerEmail,
+              candidateName: details.candidateName,
+              candidateEmail: details.candidateEmail,
+            },
             status: { new: status },
             comment: comments,
-            flags: { acceptedOffer: true },
+            flags: { hired: status === 'HIRED', acceptedOffer: status === 'ACCEPTED_OFFER' },
             cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
             appName: 'TA Portal',
           },
         });
       }
     } catch (e) {
-      console.error('Admin notify (ACCEPTED_OFFER) failed:', e && e.message);
+      console.error('Employer notify (status change) failed:', e && e.message);
     }
+
+    // Admins should be notified when a candidate accepts an offer
+    if (status === 'ACCEPTED_OFFER') {
+      try {
+        const adminEmails = (await getAdminEmails()) || [];
+        // Do not send admin emails to the instructor/employer
+        const adminList = adminEmails.filter(e => e && e.toLowerCase() !== String(details.instructorEmail || '').toLowerCase());
+        for (const adminEmail of adminList) {
+          const adminUserId = String(adminEmail).split('@', 1)[0].toLowerCase();
+          await dispatchTemplated(adminUserId, {
+            event: 'admin_hire_notification',
+            role: 'admin',
+            userEmail: adminEmail,
+            subject: 'TA Application Status Update',
+            context: {
+              // generic
+              recipient: { email: adminEmail },
+              item: { id: details.jobPositionId, title: details.courseName, ownerName: details.instructorName },
+              status: { new: status },
+              comment: comments,
+              flags: { acceptedOffer: true },
+              cta: { url: await buildAppLink({ jobPositionId: details.jobPositionId, applicationId }) },
+              appName: 'TA Portal',
+            },
+          });
+        }
+      } catch (e) {
+        console.error('Admin notify (ACCEPTED_OFFER) failed:', e && e.message);
+      }
+    }
+  } catch (e) {
+    console.error("Slack notify (status change) failed:", e.message);
   }
-} catch (e) {
-  console.error("Slack notify (status change) failed:", e.message);
-}
 
   return updatedApp;
 }
@@ -1288,7 +1286,7 @@ async function hireCandidateForJobPosition(
     try {
       const details = await getApplicationDetailsForNotify(applicationId);
       if (details) {
-  const { candidateName, candidateEmail, jobPositionId } = details;
+        const { candidateName, candidateEmail, jobPositionId } = details;
         const { emails: stakeholderEmails } = await getCourseStakeholders(
           jobPositionId
         );
@@ -1324,7 +1322,7 @@ async function hireCandidateForJobPosition(
               subject: 'TA Application Status Update',
               context: {
                 // generic
-                recipient: { name: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}` , email: employerEmail },
+                recipient: { name: `${jobPosition.employer.user.fname} ${jobPosition.employer.user.lname}`, email: employerEmail },
                 item: {
                   id: jobPositionId,
                   title: jobPosition.course?.name,
@@ -1658,8 +1656,8 @@ async function getCandidateApplications(
           jobSchedules: {
             select: { dayOfWeek: true, startTime: true, endTime: true },
           },
-          employer:{
-            include:{
+          employer: {
+            include: {
               user: true
             },
           },
@@ -1810,18 +1808,18 @@ async function getCandidateApplicationsAsAdmin() {
  */
 async function getAllApplicationsForAdmin(search = '', searchType = 'course', filters = {}) {
   const whereClause = {};
-  
+
   // Validate and sanitize search input to prevent performance issues
   if (search && search.length > 100) {
     throw new Error('Search query too long (max 100 characters)');
   }
-  
+
   // Handle search by course code or name
   if (search && searchType === 'course') {
     whereClause.OR = [
-  { courseCode: { contains: search } },
-  { course: { is: { name: { contains: search } } } }
-];
+      { courseCode: { contains: search } },
+      { course: { is: { name: { contains: search } } } }
+    ];
   }
 
   // Filter by semester
@@ -2052,7 +2050,7 @@ async function getUserProfile(username) {
             include: {
               resumes: true,
               courseHistory: { include: { course: true } },
-              jobPositionApplicationHistory: { 
+              jobPositionApplicationHistory: {
                 include: { jobPosition: true }
               },
               employee: {
@@ -2075,16 +2073,16 @@ async function getUserProfile(username) {
         include: {
           employer: {
             include: {
-              jobPositions: { 
-                include: { 
-                  course: true, 
-                  jobSchedules: true, 
+              jobPositions: {
+                include: {
+                  course: true,
+                  jobSchedules: true,
                   jobPositionApplicationHistory: {
                     include: {
                       resume: true,
                     }
                   }
-                } 
+                }
               },
             },
           },
@@ -2501,14 +2499,14 @@ async function updatePrimaryResume(candidateUsername, resumeId) {
  * @param {number} resumeId 
  * @returns {Promise<object>} A promise that resolves to the resume with the matching id.
  */
-async function getResumeById(resumeId){
-  try{
+async function getResumeById(resumeId) {
+  try {
     return await prisma.resume.findUnique({
-      where:{
+      where: {
         id: resumeId,
       },
     });
-  } catch(error){
+  } catch (error) {
     console.error("Error getting resume:", error);
     throw error;
   }
@@ -2601,13 +2599,13 @@ async function deleteResume(resumeId) {
       if (associatedApplication) {
         const softDeletedResume = await tx.resume.update({
           where: { id: resumeId },
-          data: { 
+          data: {
             isSoftDeleted: true,
             isPrimary: false
           }
         })
         return softDeletedResume
-      } else{
+      } else {
         // Otherwise, delete the actual resume record.
         const deletedResume = await tx.resume.delete({
           where: { id: resumeId },
@@ -2628,22 +2626,22 @@ async function deleteResume(resumeId) {
  */
 async function checkResumeDeleteStatus(resumeId) {
   const resume = await prisma.resume.findUnique({
-    where:{
+    where: {
       id: resumeId
     }
   })
-  
-  if (resume.isSoftDeleted){
+
+  if (resume.isSoftDeleted) {
     const resumeCount = await prisma.jobPositionApplicationHistory.count({
       where: {
         resumeId: resume.id,
       }
     });
-    
+
     // If no other applications use it, fully delete it
     if (resumeCount === 0) {
       await prisma.resume.delete({
-        where:{
+        where: {
           id: resume.id
         }
       })
@@ -2684,14 +2682,14 @@ async function addNewCoverLetter(username, coverLetterURL, name) {
  * @param {number} coverLetterId 
  * @returns {Promise<object>} A promise that resolves to the cover letter with the matching id.
  */
-async function getCoverLetterById(coverLetterId){
-  try{
+async function getCoverLetterById(coverLetterId) {
+  try {
     return await prisma.CoverLetter.findUnique({
-      where:{
+      where: {
         id: coverLetterId,
       },
     });
-  } catch(error){
+  } catch (error) {
     console.error("Error getting cover letter:", error);
     throw error;
   }
@@ -2703,13 +2701,13 @@ async function getCoverLetterById(coverLetterId){
  * @returns {Promise<object>} A promise that resolves to the deleted cover letter entry.
  */
 async function deleteCoverLetter(coverLetterId) {
-  try{
+  try {
     return await prisma.CoverLetter.delete({
-      where:{
+      where: {
         id: coverLetterId
       },
     });
-  } catch(error){
+  } catch (error) {
     console.error("Error deleting cover letter:", error);
     throw error;
   }

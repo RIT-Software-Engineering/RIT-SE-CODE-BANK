@@ -103,7 +103,7 @@ export default function ApplicationCard({
   };
 
   const handleResumeClick = async (resumeId) => {
-    try{
+    try {
       const response = await getResumeById(resumeId);
 
       const blob = await response.blob();
@@ -114,13 +114,13 @@ export default function ApplicationCard({
       window.addEventListener('beforeunload', () => {
         URL.revokeObjectURL(url);
       });
-    }catch(error){
+    } catch (error) {
       showNotification(error.message || 'An error occurred. Failed to fetch resume.', 'error');
     }
   }
 
   const handleCoverLetterClick = async (coverLetterId) => {
-    try{
+    try {
       const response = await getCoverLetterById(coverLetterId);
 
       const blob = await response.blob();
@@ -131,7 +131,7 @@ export default function ApplicationCard({
       window.addEventListener('beforeunload', () => {
         URL.revokeObjectURL(url);
       });
-    }catch(error){
+    } catch (error) {
       showNotification(error.message || 'An error occurred. Failed to fetch cover letter.', 'error');
     }
   }
@@ -294,25 +294,27 @@ export default function ApplicationCard({
           <Divider sx={{ my: 2 }} />
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="body2" color="text.secondary">Resume</Typography>
-                <DocumentIcon fontSize="small" />
-              </Box>
-              <Typography
-                sx={{
-                  color: 'primary.main',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    textDecoration: 'none',
-                  }
-                }}
-                onClick={()=> handleResumeClick(resume.id)}
-              >
-                {resume.name}
-              </Typography>
-            </Grid>
+            {resume?.id && (
+              <Grid item xs={12} sm={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" color="text.secondary">Resume</Typography>
+                  <DocumentIcon fontSize="small" />
+                </Box>
+                <Typography
+                  sx={{
+                    color: 'primary.main',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      textDecoration: 'none',
+                    }
+                  }}
+                  onClick={() => handleResumeClick(resume.id)}
+                >
+                  {resume.name}
+                </Typography>
+              </Grid>
+            )}
             {coverLetter?.id && (
               <Grid item xs={12} sm={6}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -328,7 +330,7 @@ export default function ApplicationCard({
                       textDecoration: 'none',
                     }
                   }}
-                  onClick={()=> handleCoverLetterClick(coverLetter.id)}
+                  onClick={() => handleCoverLetterClick(coverLetter.id)}
                 >
                   {coverLetter.name || 'View Cover Letter'}
                 </Typography>
@@ -388,9 +390,9 @@ export default function ApplicationCard({
               </Grid>)}
               {showRejectOption && (
                 <Grid item xs={12} sm={6} >
-              <Button  sx = {{ height: 36,  whiteSpace: "nowrap" }} variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
-              </Grid>
-            )}
+                  <Button sx={{ height: 36, whiteSpace: "nowrap" }} variant="contained" color="error" onClick={() => handleOpenUpdateModal("REJECTED", "Reject Application")} >Reject Application</Button>
+                </Grid>
+              )}
             </Grid>
           </Box>
         </Box>
