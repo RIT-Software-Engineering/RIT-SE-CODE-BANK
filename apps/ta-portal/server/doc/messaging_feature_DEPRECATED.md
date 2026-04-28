@@ -1,5 +1,7 @@
 # TA-Portal Messaging Feature through Slack
 
+The Messaging feature of the TA-Portal has been depricated and so this is no longer needed. The instructions reguarding the Slack Bot are similar to the setup required for the shared notification service, however, and may be of use.
+
 ## Prerequisites 
 Same as the backend_setup.md file. However, for this feature, you will need to also install mkcert as well for local development.
 

@@ -10,7 +10,7 @@
 * **Note 2:** Libraries like express and prisma we're installed in our code base under our package.json file
 
 ## Setup Steps
-1.  Within the root of the repo(`RIT-SE-CODE-BANK\`), run the following command to install the node packages. If you had already done this as part of setting up the frontend you do not need to run the command again.
+1.  Within the root of the repo(`RIT-SE-CODE-BANK\`), run the following command to install the node packages. If you have already done this as part of setting up the frontend you do not need to run the command again.
 ```bash
 npm install
 ```
@@ -19,16 +19,16 @@ npm install
 ```bash
 docker run --name ta-portal-maria-db-instance -e MARIADB_ROOT_PASSWORD=root_password -e MYSQL_DATABASE=ta_portal_db -p 3306:3306 -d mariadb:11 
 ```
-> **Note:** In order to use https instead of http you will need to generate certificates within the `/ta-portal/server` directory. To do this, follow the instructions regarding mkcert within [messaging_feature.md](messaging_feature.md). You do not need to set up a slack app.
+> **Note:** In order to use https instead of http you will need to generate certificates within the `/ta-portal/server` directory. To do this, follow the instructions regarding mkcert within [local_https_setup.md](local_https_setup.md).
 
 3.  Navigate to the server directory:
 ```bash
 cd apps/ta-portal/server
 ```
 
-4. Run the following command to copy the `example.env` file:
+4. If you do not have a .env file with the proper values, run the following command to copy the `example.env` file:
 ```bash
-cp example.env .env
+cp .env.example .env
 ```
 
 5. Then, run this command to create a new migration of our current database schema. You may be prompted to name the migration if one is not present/out of date within the `/prisma/migrations` directory. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
@@ -61,8 +61,7 @@ In case, anything goes wrong on a database perspective or you want to make a cha
 ---
 **For adding new additional database tables and/or updating them:**
 1.  Define your new models (database tables) and relationships within the `prisma/schema.prisma` file.
-2.  Delete the `migrations` folder if there's exists one within the prisma folder [here](../server/database/prisma/migrations)
-3.  Run `npx prisma migrate dev` within the prisma folder project to create and apply a new migration for the changes you've defined in `schema.prisma` file. An easier command to do this is `npm run prisma:migrate` when you in the main `/server` folder. You will be prompted to name the migration. You will then see a `migration` folder within the Prisma project folder that will house a .sql files of all of the tables you've created in the `schema.prisma` file.
+2.  Run `npx prisma migrate dev` within the prisma folder project to create and apply a new migration for the changes you've defined in `schema.prisma` file. An easier command to do this is `npm run prisma:migrate` when you in the main `/server` folder. You will be prompted to name the migration. You will then see a `migration` folder within the Prisma project folder that will house the changes made to the `schema.prisma` file.
 
 **NOTE** If there's any issues with running this command (i.e. it suggesting to resetting the database, but the reset command still doesn't work) re-run the config files to reset everything. Then start back up to step 2 here within this section.
 4. Follow the rest of the instructions below
