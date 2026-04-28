@@ -72,8 +72,23 @@ export default function CourseWebsitePage() {
           padding: 20px;
         }
 
+        header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 0;
+        }
+
         h1 {
-          text-align: center;
+            color: #0484c9;
+            text-align: left;
+            font-size: 1.4em;
+        }
+
+        h2 a {
+            color: #0484c9;
+            text-align: left;
+            font-size: 1.2em;
         }
 
         table {
@@ -107,12 +122,17 @@ export default function CourseWebsitePage() {
       </style>
     </head>
     <body>
-      <header>
+      <header class="header">
         <a href="https://www.se.rit.edu">
-            <img alt="Software Engineering Department" src="../images/se_logo_new.png"> </a>
-        </header>
+          <img alt="Software Engineering Department" src="../resources/se_logo_new.png">
+        </a>
 
-      <h1>${course.classId}-${course.section} | ${course.name}</h1>
+        <h1>
+          ${course.classId}<br>${course.name}
+        </h1>
+      </header>
+
+      <h2> <a href="../syllabus.html">Syllabus</a> </h2>
 
       <table>
         <thead>
