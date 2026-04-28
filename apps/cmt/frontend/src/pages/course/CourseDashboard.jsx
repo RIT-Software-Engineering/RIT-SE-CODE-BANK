@@ -39,7 +39,7 @@ export function CourseDashboard() {
 
     /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
     const fetchToCallback = useCallback(
-        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues),
+        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues).catch(createErrorHandler("Failed to fetch to action callback.")),
         []
     )
 

@@ -39,19 +39,9 @@ class CMTFetchError extends CMTError {
  * #### Complex usage
  * ```
  *  const handleEditCourse = async (courseId, updates) => {
- *      CMTFetch("PUT", `/course/${courseId}`, updates, {}).then(response => {
- *          showSuccessNotification("Course updated!") // Show notification with central notification system
- *          setCourseData(await response.json()) // Update page with response
- *      }).catch(error => {
- *          // Check for specific error codes.  
- *          if (error.response.status == 409) {
- *              showErrorNotification("Unable to update course due to a server conflict. Refeshing the page...")
- *              setTimeout(() => window.refresh(), 1000)
- *          }
- *          if (error.response.status == 429) {
- *              showErrorNotification("Unable to create course due to rate limiting. Please slow down!")
- *          }
- *      })
+ *      CMTFetch("PUT", `/course/${courseId}`, updates, {})
+ *          .then(setCourseData)
+ *          .catch(createErrorHandler("Unable to update course.", setError))
  *  }
  * ```
  *
@@ -67,7 +57,7 @@ export async function CMTFetch(method, url, body, headers, baseUrl) {
     const fullURL = `${baseUrl}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
 
     console.log(`${getTimeString()} Fetching: ${method} ${fullURL}`)
-    
+
     let response
     try {
         const options = { method, headers }
@@ -85,8 +75,15 @@ export async function CMTFetch(method, url, body, headers, baseUrl) {
     }
         
     if (response.ok) {
-        const json = await response.json()
-        return json
+        try {
+            return await response.json()
+        } catch(error) {
+            const message = [
+                `Error while trying to fetch: ${method} ${fullURL}`,
+                `Error parsing JSON. This can happen when an endpoint does not call res.json or otherwise, and isn't neccesarily a problem. You should still probably fix it though.`
+            ].join("\n")
+            throw new CMTError({ message, userFacingMessage: "Something went wrong while fetching to an external API. Please try again.", cause: error })
+        }
     }
 
     // Create specially formatted error so consumer can access the codes easily

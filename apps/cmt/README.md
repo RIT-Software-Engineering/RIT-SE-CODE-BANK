@@ -10,12 +10,6 @@
 > 
 > If installation was successful but your OS doesn't recognize the command, try to create a new terminal and try again. If the issue persists, manually check your OS environment variables. In Windows, the variable is likely `NODE_HOME`. Ensure it points to the installed version of Node.
 
-### 2. Install Project Dependencies
-
-- In the root of the repository, run `npm install`
-
-> While unlikely, you may need to run `npm i --legacy-peer-deps`. If this happens, consider attempting to downgrade conflicting packages.
-
 ### 3. Install MariaDB
 
 Two options: native or containerized. If you have Docker Desktop already setup or are familiar with containers, I recommend containerized.
@@ -44,20 +38,6 @@ Two options: native or containerized. If you have Docker Desktop already setup o
 >
 > Both your cmt and workflows server environment file should have the same connection string, unless you want a MariaDB server for each of your services.
 
-
-### 5. Prisma Setup
-**This whole step is optional**, since the custom start script can do this. Using the start setup is recommended for easy use, but these instructions remain in case of errors or preference (By "start script", I mean running `npm run start-cmt` at the root of the repository).
-
-We will both create a Prisma object for the code to use, and will also push that schema to the database. This means you will need your database running.
-
-1. Start MariaDB server/container
-2. **CMT**: Navigate to `apps/cmt` and run `npx prisma db push --schema --skip-seed backend/prisma/schema.prisma` and `node prisma/seed.js`
-3. **Workflows**: Navigate to `apps/workflows/server` and run `npx prisma migrate dev --skip-seed` and `node prisma/cmtSeed.js`
-
-> The seed files need to be ran for some basic CMT functionality. I specify --skip-seed and then run the default seed file anyways for explicitness' sake.
-
-> Step 2 is subject to change once CMT has to start using migrations.
-
 #### Congratulations! Your environment should be set up.
 
 ---
@@ -72,37 +52,41 @@ You can either use the start script, or run the servers manually. Either way, yo
 > - **Make sure you set your connection string correctly!**
 
 #### 2. (Option 1): Start Script
-- Navigate to the root of the repository
-- Run `npm run start-cmt`
-- You can navigate the resultant terminal with enter/esc and your arrow keys. If you dislike this display, then try the manual option.
+CMT uses VSCode Tasks to coordinate the multiple services needed. If you press `ctrl`+`shift`+`p` to enter the command pallete (or open the top-bar and type ">") then search and select `Tasks: Run Task` you can see several tasks (configured in `.vscode/tasks.json`).
 
-> If you want to debug these scripts, here is a note on Nx to get you started:
-> - `nx run-many -t start-cmt -p [projects]` means that the "start-cmt" script is being called in each project. A project's name comes from the package.json in each directory referred to in the "workspaces" field in the root package.json. While projects and packages are technically distinct concepts, Nx automatically turns packages into projects.
+To automatically install dependencies, check/apply database migrations, and start CMT's services, select the `Start CMT` task. This should open multiple terminal windows in VSCode.
+
+Tips for usage:
+- If a service crashes and fails to start again, hover over the terminal name and press the restart button.
+- To exit a task, press the trash can button, or `ctrl`+`c`
+- If a task is getting stuck for no reason, exit and restart it. You can restart tasks by name by selecting them instead of `Start CMT`
 
 #### 2. (Option 2): Manual
 
-Open 3 terminals and run this in each.
+Run `npm i` in the root, then open 3 terminals and run this in each.
 
 - **CMT Frontend**: In `apps/cmt/frontend`, run `npm run start-cmt`
 - **CMT Backend**: In `apps/cmt/backend`, run `npm run start-cmt`
 - **Workflows**: In `apps/workflow/server`, run `npm run start-cmt`
 
-> These scripts use extra commands to hopefully help your database stay in sync, stop the previously running server, etc. If you want minimal extra commands, use `npm run start`. There are some `dotenv -e` commands but those are generally neccesary
+> These scripts use extra commands to hopefully help your database stay in sync, stop the previously running server, etc. If you want minimal extra commands, use `npm run start`. There are some `dotenv -e` commands but those are generally neccesary.
 
 ---
 ## Linting
 Linting can catch silly mistakes! You can either use extensions that exist in your IDE, or use the tools already in the project.
 
-The two sources of linting in this project are Typescript and ESLint. Even though this is a Javascript project, Typescript can catch some type errors that could otherwise cause runtime errors. This project's tsconfig is set to make Typescript very lenient. ESLint is standard for Javascript/Typescript, and uses the eslint config specified by create-react-app.
+The two sources of linting in this project are Typescript and ESLint. Even though this is a Javascript project, Typescript can catch some type errors that could otherwise cause runtime errors. This project's tsconfig is set to make Typescript very lenient. ESLint is standard for Javascript/Typescript, and uses the eslint config specified by create-react-app. In the future, it may be a good idea to specify more eslint configs in other folders.
 
 **IDE Extensions**: Typescript is installed by default on VSCode, and an ESLint extension is easily available.
-> **Disclaimer**: ESLint will often have issues, given that this is a monorepo. To fix this, add the following to your settings.json:
+> **Disclaimer**: ESLint will often have issues, given that this is a monorepo. To fix this, add the following (or similar) to your settings.json:
 > ```
 > "eslint.workingDirectories": [
 >         { "directory": "apps/cmt", "changeProcessCWD": true }
 >     ]
 > ```
 > You can get to the settings.json by pressing `ctrl` + `,`, then searching "eslint working directory"
+>
+> Of course, the documentation for eslint is the best place to go for this stuff.
 >
 > I'm not sure of the best solution when it comes to other workspaces, but Typescript is the biggest source of help anyways.
 
@@ -114,19 +98,13 @@ The two sources of linting in this project are Typescript and ESLint. Even thoug
 ## Keeping Everything in Sync
 As you make changes to the codebase, your development server should detect the changes and restart automatically.
 
-But, **when you make changes to the schema, those will not be automatically reflected**. To update the schema and database, you can use the automated scripts, or do it manually.
+But, **when you make changes to the schema, those will not be automatically reflected**. To update the schema and database, you can re-run the `Start CMT` task, or use prisma commands yourself.
 
-**Option 1: Script** 
-
-In the root of the repo, rerun `npm run start-cmt`. If it was running before, make sure you `ctrl-c` or `q+q` it
-
-**Option 2: Manual**
-
-See Step 5 of the Developer Environment Setup section.
+There is a reset-all-data command in the cmt package.json. Running this can be helpful if your database ever gets into a weird state and you're fine with data loss.
 
 > You will likely be prompted with warnings about risky schema changes. In a lot of cases, data will have to be wiped. If you're okay with the warnings, say yes to the prompts.
 
-> Important warning about data: Likely, you are being handed a version of the project that doesn't have any migrations. We've avoided migrations because we haven't ever needed to store user data across schema changes. In the near future, this may need to be done. Look at the documentation for Prisma migrations to find out more about keeping user data safe across schema changes.
+> **Important warning about data**: Likely, you are being handed a version of the project that doesn't have any migrations. We've avoided migrations because we haven't ever needed to store user data across schema changes. In the near future, this may need to be done. Look at the documentation for Prisma migrations to find out more about keeping user data safe across schema changes.
 
 ---
 
@@ -141,14 +119,7 @@ Typically, one master script would spawn windows and call commands, but it leads
 
 Also, the script was 300 lines of vibe coded slop, so I didn't particularly like it.
 
-That's why in the package.jsons of the cmt frontend-and-backend, workflows server, and root directories, there are "start-cmt" scripts alongside the normal "start" scripts (exlcuding the "start" script at the root directory). While the "start" script contains the bare minimum for function, the "start-cmt" scripts contain several helper functions that try to cover several bases.
-
-In general, the root level package.json's job is to simply call all the other "start-cmt" scripts. But "prisma migrate dev" is interactive and so can't run inside the terminal that "nx run-many" spawns. So, we just call it before doing "nx run-many".
-
-**If you want to avoid all the gobbledegook, I reccomend running the prisma commands yourself and cd'ing into the directories yourself to run "npm run start". That will give you the least trouble if you're experienced.**
-If you want to do it this way but are maybe less experienced, then you can use the existing commands to guide you.
-
-BUT, please try it out, since it took a lot of work to make (: You can also use intermediate solutions, like instead of running "npm run start" in every project, you run "start-cmt", which should give you the helpful extra commands while not being inside the annoying "nx run-many" terminal.
+That's why in the package.jsons of the cmt frontend-and-backend, workflows server, and root directories, there are "start-cmt" scripts alongside the normal "start" scripts (exlcuding the "start" script at the root directory). While the "start" script contains the bare minimum for function, the "start-cmt" scripts contain several helper functions that try to cover several bases like db migration.
 
 ## Debugging
 
@@ -157,9 +128,9 @@ A few pieces of advice when working with package.jsons and Nx:
 - When configuring a project's targets, both the `project.json` and the `nx` field in the `package.json` are read.
     - Nx will automatically determine lots of things from your `package.json`, like turning scripts into targets, and inheriting the name.
 - We use dotenv-cli and --schema because we want our CMT frontend and backend to share the same .env file, BUT prisma and create-react-app need some extra guidance to still find the right environment/schema files.
-- The "--" that appears in `dotenv -e file --` is not a builtin operator like "&&". Its just how dotenv works.
+- The "--" that appears in `dotenv -e file --` is not a builtin operator like "&&" and any commands after a "&&" will NOT have those environment variables. Its just how dotenv works.
 - Prefer composability. A package's scripts should only be concered with that package, and if a script exists at a high level while only affecting one package, ask yourself if that script should instead exist inside the package.
 
 ## Last Resort
 
-If there's anything truly confusing, feel free to contact Scott Happy at sdh8796@rit.edu on Slack, preferrably
+If there's anything truly confusing, feel free to contact Scott Happy at sdh8796@rit.edu on Slack, preferrably. But, since most of the features of the setup are fairly conventional, an agentic AI model (either GitHub Copilot or a model running in Claude Code, Cline, etc) should be able to help you out.

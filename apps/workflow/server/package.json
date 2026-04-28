@@ -5,7 +5,7 @@
   "scripts": {
     "start": "nodemon index.js",
     "start-cmt": "npx prisma migrate dev && node prisma/cmtSeed.js && npm run start",
-    "force-reset-data-cmt": "npx prisma migrate reset --force --skip-seed && node prisma/cmtSeed.js"
+    "force-reset-data-cmt": "npx prisma migrate reset --force --skip-seed && npx prisma migrate dev && node prisma/cmtSeed.js"
   },
   "keywords": [],
   "author": "",

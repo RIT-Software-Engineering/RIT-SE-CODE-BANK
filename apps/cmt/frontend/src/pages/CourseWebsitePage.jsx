@@ -23,7 +23,8 @@ export default function CourseWebsitePage() {
 
     const fetchSessions = async () => {
       setLoading(true);
-      await CMTJsonFetch("GET", `session/${selectedCourse}`).then(async json => {
+      await CMTJsonFetch("GET", `session/${selectedCourse}`)
+      .then(async json => {
         const combined = json.sessions.map((session, index) => ({
           ...session,
           materials: json.sessionMaterials[index]?.material || [],

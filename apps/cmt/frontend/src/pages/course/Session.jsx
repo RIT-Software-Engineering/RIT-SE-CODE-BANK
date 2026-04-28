@@ -216,9 +216,8 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
     materialId, setEditModalOpen, 
     courseId, sessionNum}){
     const deleteSeveral = () => {
-         CMTJsonFetch('DELETE', `session/${courseId}/${sessionNum+1}`).then(async response => {
-            const data = await response.json();
-            const ids = data.materials.map(item => item.id)
+         CMTJsonFetch('DELETE', `session/${courseId}/${sessionNum+1}`).then(async json => {
+            const ids = json.materials.map(item => item.id)
             const sessionDataCopy = sessionData.map(material => {
                 if (ids.includes(material.id)) 
                     return {};

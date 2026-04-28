@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Button} from 'react-bootstrap'
 import { ResourceManager } from '../../components/resources/ResourceManager.jsx'
 import { CMTWorkflow } from '../../components/workflows/workflow.jsx'
+import { createErrorHandler } from '../../utils/error.jsx'
 
 /**
  * @import { FetchToCallback, WorkflowsWorkflow, ActionWithContexts } from "@se-code-bank/workflows-ecosystem"
@@ -46,7 +47,7 @@ export function TemplateDashboard() {
 
     /** @type FetchToCallback */
     const fetchToCallback = useCallback(
-        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues),
+        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues).catch(createErrorHandler("Failed to fetch to action callback.")),
         []
     )
 
@@ -93,10 +94,9 @@ export function TemplateDashboard() {
                             /** Makes a post request to add the session with no material.
                              * ID is the class ID to identify where it belongs in the future
                              */
-                        CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async response=>{
-                            const data = await response.json();
+                        CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async json =>{
                             setSessionCount(sessionCount+1);
-                            setSessions(prevSessions => [...prevSessions, data.session])
+                            setSessions(prevSessions => [...prevSessions, json.session])
                         })
                         }}>Add extra session</Button>
                     </div>
