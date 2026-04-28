@@ -173,7 +173,7 @@ function CourseCreationModal({isOpen, setIsOpen, isEdit, courseId, refresh}) {
                         <div className="flex gap-2 mb-4">
                             {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
                             {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
-                                <ColorOption color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
+                                <ColorOption key={hex} color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
                             )}
                             
                         </div>
