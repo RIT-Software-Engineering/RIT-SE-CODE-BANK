@@ -30,7 +30,7 @@ export function addActionStateContext(partialActionWithContexts, actionStates) {
  */
 export function addCallbackContext(partialActionWithContexts, actionStates, determineCallback) {
   const flattenedActionStates = flattenActionStates(actionStates)
-  console.log("partial", partialActionWithContexts)
+  // console.log("partial", partialActionWithContexts)
   return recurseThroughActionWithContexts(partialActionWithContexts,
     currentNode => ({
       callback: (

@@ -8,6 +8,7 @@ const workflowRoutes = require('./api/routes/workflows');
 const actionRoutes = require('./api/routes/actions');
 const stateRoutes = require('./api/routes/states');
 const permissionRoutes = require('./api/routes/permissions');
+const tagRoutes = require('./api/routes/tags');
 
 const port = process.env.PORT || 5001;
 
@@ -27,6 +28,7 @@ app.use(express.json());
 app.use('/workflows', workflowRoutes);
 app.use('/actions', actionRoutes);
 app.use('/states', stateRoutes);  
+app.use('/tags', tagRoutes);
 app.use('/permissions', permissionRoutes);
 app.use('/scoop-portal/workflow-api/workflows', workflowRoutes);
 app.use('/scoop-portal/workflow-api/actions', actionRoutes);

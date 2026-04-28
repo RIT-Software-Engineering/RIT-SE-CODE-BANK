@@ -125,7 +125,7 @@ export function ResourceLinkModal({ editor, courseId }) {
                             }
                         </div>
                         <div className="flex flex-col justify-center">
-                            <p>or</p>
+                            <p>OR</p>
                         </div>
                         <div className="w-1/2 h-full flex flex-col">
                             <p className="text-xl"> Upload New Resource </p>
