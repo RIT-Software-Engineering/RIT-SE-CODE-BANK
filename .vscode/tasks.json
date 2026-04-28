@@ -3,7 +3,7 @@
   "tasks": [
     // Repository-level
     {
-        "label": "Insall Repository Dependencies",
+        "label": "Install Repository Dependencies",
         "command": "npm i",
         "type": "shell",
         "presentation": {

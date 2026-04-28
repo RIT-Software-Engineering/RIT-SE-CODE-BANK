@@ -8,7 +8,7 @@
     "apps/cmt/shared-utilities"
   ],
   "scripts": {
-    "start-cmt": "echo 'To run CMT, press ctrl+shift+p, type \"run task\", press enter, then select \"Start CMT\"'",
+    "start-cmt": "echo 'To run CMT, press ctrl+shift+p, type \"Task: Run Task\", press enter, then type/select \"Start CMT\", then hit enter twice'",
     "setupportal": "node ./scripts/setupportal.js",
     "startportal": "node ./scripts/startportal.js",
     "stopportal": "node ./scripts/stopportal.js"
