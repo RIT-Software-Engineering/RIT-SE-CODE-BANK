@@ -67,9 +67,8 @@ function CourseCreationModal({isOpen, setIsOpen}) {
         const isTemplate = true; // Used for the POST request
         setSubmitting(true);
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
-        CMTJsonFetch('POST', '/course', { courseCode, courseName, color, season, isTemplate }).then(async response => {
+        CMTJsonFetch('POST', '/course', { courseCode, courseName, color, season, isTemplate }).then(async json => {
             setSubmitButtonElement(<><Check />Created!</>)
-            const json = await response.json();
             setTimeout(async () => navigate(`/templates/${json.course.id}`), 500);
         }).catch(createErrorHandler("Failed to create course.", userFacingMessage => {
             setWarning(userFacingMessage)
