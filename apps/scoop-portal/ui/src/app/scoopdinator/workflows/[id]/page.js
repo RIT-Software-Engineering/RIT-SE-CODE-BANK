@@ -36,6 +36,7 @@ export default function WorkflowPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newActionName, setNewActionName] = useState('');
   const [newActionDescription, setNewActionDescription] = useState('');
+  const [newActionRequiresSubmission, setNewActionRequiresSubmission] = useState(false);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingActionId, setEditingActionId] = useState(null);
@@ -309,6 +310,7 @@ const handleRemoveAssignee = async (userId) => {
     setIsModalOpen(false);
     setNewActionName('');
     setNewActionDescription('');
+    setNewActionRequiresSubmission(false);
   };
 
   const handleOpenEditModal = (action) => {
@@ -368,6 +370,7 @@ const handleRemoveAssignee = async (userId) => {
                 name: newActionName.trim(),
                 description: newActionDescription.trim(),
                 userId,
+                requiresSubmission: newActionRequiresSubmission,
                 metadata: {title: JSON.stringify(newActionName.trim())}
             })
         });
@@ -646,6 +649,14 @@ const handleRemoveAssignee = async (userId) => {
             value={newActionDescription}
             onChange={(e) => setNewActionDescription(e.target.value)}
           />
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+            <Checkbox
+                checked={newActionRequiresSubmission}
+                onChange={(e) => setNewActionRequiresSubmission(e.target.checked)}
+                sx={{ color: '#F76902' }}
+            />
+            <Typography variant="body2">Requires file submission</Typography>
+        </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Cancel</Button>
