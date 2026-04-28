@@ -82,7 +82,6 @@ function CourseCreationModal({isOpen, setIsOpen}) {
         setCourseName("");
         setSeason("Fall");
         setWarning('');
-        setSubmitting(false);
     }
 
 
