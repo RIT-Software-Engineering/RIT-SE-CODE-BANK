@@ -16,10 +16,7 @@ export function TemplateOverview() {
     }, []);
 
     const fetchCourses = async () => {
-        CMTJsonFetch("GET", `/course?isTemplate=true`).then(async response => {
-            const result = await response.json();
-            setTemplates(result ?? [])
-        });
+        CMTJsonFetch("GET", `/course?isTemplate=true`).then(setTemplates);
       };
 
     return (
