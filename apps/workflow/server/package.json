@@ -4,8 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "stop": "npx kill-port 3001",
-    "start-cmt": "npm run stop && npx prisma migrate deploy && node prisma/cmtSeed.js && npm run start",
+    "start-cmt": "npx prisma migrate dev && node prisma/cmtSeed.js && npm run start",
     "force-reset-data-cmt": "npx prisma migrate reset --force --skip-seed && node prisma/cmtSeed.js"
   },
   "keywords": [],

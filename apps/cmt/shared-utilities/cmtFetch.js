@@ -79,7 +79,7 @@ export async function CMTFetch(method, url, body, headers, baseUrl) {
             `Error while trying to fetch: ${method} ${fullURL}`,
             `Request Body: ${JSON.stringify(body ?? "")}`,
             `Error: ${error}`,
-            `This means the the request likely never reached the intended url, and is more likely a problem with CMT.`
+            `This means the the request likely never reached the intended url.`
         ].join("\n")
         throw new CMTError({ message, userFacingMessage: "Something went wrong while fetching to an external API. Please try again.", cause: error })
     }
@@ -100,7 +100,7 @@ export async function CMTFetch(method, url, body, headers, baseUrl) {
             `Request Body: ${body}`,
             `Response status: ${response.status}`,
             `Unformatted Response Body: ${JSON.stringify(errorBody, null, 4)}`,
-            `\nThis means that the request was properly received by the intended url, but that the server had an issue of some kind. For a prettier display of the errors, use CMTLog at this CMTFetch's callsite.`
+            `\nThis means that the request was properly received by the intended url, but that the server had an issue of some kind.`
         ].join("\n")
         fancyError = new CMTFetchError({ message, cause: errorBody.error })
     } catch (error) {

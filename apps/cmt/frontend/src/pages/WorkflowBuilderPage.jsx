@@ -12,7 +12,7 @@ import {
     SimpleActionRenderer,
     ComplexActionRenderer } from "../components/workflows/BuilderRenderers.jsx";
 import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
-import { handleError } from "../utils/error.jsx";
+import { CMTDangerAlert, createErrorHandler, handleError } from "../utils/error.jsx";
 
 /**
  * @import { SetStateAction } from "react"
@@ -45,6 +45,7 @@ export function BuilderPageAdmin({isAdmin}){
     const [isEdit, setIsEdit] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [metaWorkflow, setMetaWorkflow] = useState('None');
+    const [error, setError] = useState(null)
 
     // Action modal info
     const [code, setCode] = useState(availCodes[0][0]);
@@ -96,7 +97,8 @@ export function BuilderPageAdmin({isAdmin}){
             const sortedWorkflows = resolvedWorkflows.sort((a, b) => a.name.localeCompare(b.name));
             setWorkflows(sortedWorkflows);
             setLoading(false);
-        });
+            return "Good"
+        }).catch(createErrorHandler("Failed to fetch workflows.", setError));
     }, [isAdmin, updateQuery])
     useEffect(() => void update(), [update])
 
@@ -193,6 +195,7 @@ export function BuilderPageAdmin({isAdmin}){
         ComplexActionRenderer
     }
 
+    if (error) return <CMTDangerAlert error={error} />
     return (
     loading ? <><h1>Loading...</h1></> :
     <>
@@ -1000,7 +1003,7 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
         try {
             outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)
         } catch (error) {
-            setError(error.message);
+            handleError(error, setError)
             return "Bad";
         }
         
@@ -1046,10 +1049,13 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
  * @async
  * @param {Object} actionToDelete - the action that will be deleted
  * @param {() => void} refresh - Function to refresh the page upon completion. Used so we don't have to do complicated logic and let the API handle stuff
+ * @param {(error: string) => void} setError - Will be called with any generated errors 
  */
-async function deleteStandardAction(actionToDelete, refresh){
+async function deleteStandardAction(actionToDelete, refresh, setError){
     // TODO works with simple and complex actions, but for complex actions does not delete child actions. We may want that so we don't have stranded child actions in the DB as cleanup.
-    await CMTJsonFetch("DELETE", `workflow/actionTemplate/action/${actionToDelete.id}`).then(refresh);
+    return await CMTJsonFetch("DELETE", `workflow/actionTemplate/action/${actionToDelete.id}`)
+        .then(() => { refresh(); return "Good" })
+        .catch(createErrorHandler("Failed to delete action.", setError))
 }
 
 /**
@@ -1062,8 +1068,9 @@ async function deleteStandardAction(actionToDelete, refresh){
  * @param {React.Dispatch<SetStateAction<Object[]>>} setWorkflows - state setter for the top-level workflows
  * @param {Object} workflowToDelete - the workflow we are deleting. Can be either a workflow action or a template workflow
  * @param {() => void} refresh - Function to refresh the page upon completion. Used so we don't have to do complicated logic and let the API handle stuff
+ * @param {(error: string) => void} setError - Will be called with any generated errors
  */
-async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh){
+async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh, setError, setIsOpen){
     // TODO deletes but does not cleanup any actions with the workflow
     if (workflowToDelete.attributeId)
         await CMTJsonFetch("DELETE", `workflow/workflowTemplate/${workflowToDelete.attributeId}`).then(async _ => {
@@ -1073,9 +1080,13 @@ async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh
                     workflowsCopy.push(workflows[index]);
             }
             setWorkflows(workflowsCopy);
-        });
+            return "Good"
+        })
+        .catch(createErrorHandler("Failed to delete workflow.", setError));
     else
-        await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`).then(refresh);
+        return await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`)
+        .then(() => { refresh(); return "Good" })
+        .catch(createErrorHandler("Failed to delete workflow.", setError));
 }
 
 function createWorkflowErrorHandler(setError, setReturnVal) {

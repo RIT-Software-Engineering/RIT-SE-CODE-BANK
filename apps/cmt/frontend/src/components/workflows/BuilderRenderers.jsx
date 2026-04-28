@@ -1,5 +1,6 @@
 import { Modal, Form, Button, Accordion, Card } from "react-bootstrap";
 import { Edit, Trash2 } from "lucide-react";
+import { CMTDangerAlert } from "../../utils/error";
 
 function getActionMetadata(action) {
     return action?.parsedMetadata ?? action?.metadata ?? {};
@@ -108,13 +109,14 @@ export function ActionModalRenderer(props) {
 
 export function DeleteModalRenderer(props){
     return (
-    <Modal centered show={props.isOpen} onHide={props.onHide} onExit={props.onExit}>
+    <Modal centered show={props.isOpen} onHide={props.onHide} onExit={props.onExit} onShow={props.onOpen}>
         <Modal.Header>Delete Action</Modal.Header>
         <Modal.Body>
             <div className="alert alert-danger">
                 <p>You are about to permanently delete a{props.action?.attributeId ? ' workflow' : 'n action'}!</p> 
                 <p>Are you sure you'd like to delete "{props.action?.name}"? This cannot be undone!</p>
             </div>
+            <CMTDangerAlert error={props.error} />
             <div className="flex justify-between pt-4">
                 <Button onClick={props.onCancel}>Cancel</Button>
                 <Button variant="danger" className="justify-end" onClick={props.onSubmit}>Confirm</Button>

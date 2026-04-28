@@ -3,7 +3,7 @@ import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { CMTActionToActionWithContexts } from "../utils/workflows/context.js";
 import { createAction, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction } from "../utils/workflows/api.js";
 import { PrismaClient } from '../prisma/generated/client/index.js'
-import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -23,20 +23,15 @@ function findActionsWithContextsByCode(actionsWithContexts, code) {
             )
         );
     }
-
     return matchingActions;
 }
 
 // workflow/editCheckmarkAction
 router.put("/editCheckmarkAction", async (req, res) => {
-    try {
-        const { asid: actionStateId } = req.query
-        const { checked } = req.body
-        const workflowsResponse = await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: checked ? "completed" : "notStarted" })
-        return res.status(200).json(workflowsResponse)
-    } catch(e) {
-        return res.status(500).json({ error: e })
-    }
+    const { asid: actionStateId } = req.query
+    const { checked } = req.body
+    const workflowsResponse = await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: checked ? "completed" : "notStarted" })
+    return res.status(200).json(workflowsResponse)
 });
 
 // workflow/publishCourseTemplate
@@ -46,7 +41,7 @@ router.put("/publishCourseTemplate", async (req, res) => {
     await workflowsFetch("POST", `/states/handleSubmit`, { actionStateId, stateType: "completed" });
 
     if (typeof courseId !== "string") {
-        throw new Error("courseId was not a string")
+        throw new CMTError({ userFacingMessage: "courseId was not a string" })
     }
 
     const course = await prisma.course.findUnique({
@@ -92,7 +87,7 @@ router.post("/workflowTemplate", async(req, res) => {
     workflows.forEach(prevWorkflows => {
         const prevMetaCode = JSON.parse(prevWorkflows.baseAction?.metadata?.code)
         if (prevMetaCode !== "None" && prevMetaCode === workflow.metadata?.code)
-            throw new Error("A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again.")
+            throw new CMTError({ userFacingMessage: "A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again." })
     });
     const newWorkflow = await newBuilderWorkflow(workflow, professorId);
     return res.status(200).json({ workflow: newWorkflow });
@@ -106,7 +101,7 @@ router.put("/workflowTemplate/:workflowId", async(req, res) => {
     workflows.forEach(prevWorkflows => {
         const prevMetaCode = JSON.parse(prevWorkflows.baseAction.metadata?.code)
         if (prevMetaCode !== "None" && prevMetaCode === metadata?.code && workflowId !== prevWorkflows.id)
-            throw new Error("A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again.")
+            throw new CMTError({ userFacingMessage: "A workflow with this meta-workflow already exists! Please remove the meta-workflow from that workflow and try again." })
     });
     let safeMetadata = metadata ? makeMetadataSafeForWorkflows(metadata): null;
     if (safeMetadata && Object.keys(safeMetadata).length === 0)
@@ -183,7 +178,6 @@ router.put("/actionTemplate/nextAction/:actionId", async (req, res) => {
 router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     const {workflowId} = req.params;
     const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
-    
     const actionsWithContexts = actions.map(action => 
         CMTActionToActionWithContexts(action, null, null, req.user?.uid)
     );

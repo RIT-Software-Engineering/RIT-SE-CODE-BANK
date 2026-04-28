@@ -4,6 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { v4 as uuidv4 } from 'uuid'
+import { CMTError } from '@se-code-bank/cmt-shared-utilities'
 
 const router = express.Router()
 
@@ -56,7 +57,7 @@ const upload = multer({
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true)
         } else {
-            cb(new Error(`Invalid file type ${file.mimetype}`))
+            cb(new CMTError({ userFacingMessage: `Invalid file type: ${file.mimetype}. Please upload a pdf, text file, slideshow, or similar.` }))
         }
     },
 })
@@ -82,7 +83,6 @@ router.post('/:courseId', upload.single('file'), async (req, res, next) => {
     try {
         const { courseId } = req.params
         const { name } = req.body
-
         if (!req.file)
             return res.status(400).json({ error: 'No file uploaded' })
 
@@ -99,7 +99,6 @@ router.post('/:courseId', upload.single('file'), async (req, res, next) => {
         res.json(resource)
     } catch (error) {
         console.error('Error uploading resource:', error)
-
         // Clean up file if database creation failed
         if (req.file && req.file.path) {
             try {
@@ -140,7 +139,7 @@ router.delete('/:id', async (req, res) => {
     })
     if (!resource) {
         console.error(`Resource with ID ${id} not found`)
-        return res.status(404).json({ error: `Resource with ID ${id} not found` })
+        return res.status(404).json({ error: new CMTError({ userFacingMessage: `Resource with ID ${id} not found` }) })
     }
 
     if (fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
@@ -164,13 +163,13 @@ router.get('/download/:id', async (req, res) => {
     })
     if (!resource) {
         console.log(`File with ID ${id} not found in DB`)
-        return res.status(404).json({ error: `File with ID ${id} not found in DB` })
+        return res.status(404).json({ error: new CMTError({ userFacingMessage: `File with ID ${id} not found in DB` }) })
     }
 
     // Find in filesystem
     if (!fs.existsSync(resource.filePath)) {
         console.log(`File with ID ${id} not found in filesystem`)
-        return res.status(404).json({ error: `File with ID ${id} not found in filesystem` })
+        return res.status(404).json({ error: new CMTError({ userFacingMessage: `File with ID ${id} not found in filesystem` }) })
     }
 
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(resource.filename)}"`)
@@ -181,7 +180,7 @@ router.get('/download/:id', async (req, res) => {
     fs.createReadStream(resource.filePath)
         .on('error', streamError => {
             console.error(`Error reading file with ID ${id}: ${streamError}`)
-            return res.status(500).json({ error: `Error reading file with ID ${id}: ${streamError}` })
+            return res.status(500).json({ error: new CMTError({ userFacingMessage: `Error reading file with ID ${id}: ${streamError}` }) })
         })
         .pipe(res)
 })

@@ -1,3 +1,4 @@
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 import express from "express";
 
 export default function makeCourseWebsiteRouter(prisma) {
@@ -12,12 +13,7 @@ export default function makeCourseWebsiteRouter(prisma) {
       });
       res.json(courses);
     } catch (e) {
-      res
-        .status(500)
-        .json({
-          error: "Failed to list courses",
-          detail: String(e.message || e),
-        });
+      throw new CMTError({ userFacingMessage: "Failed to list courses", cause: e})
     }
   });
 
@@ -32,8 +28,7 @@ export default function makeCourseWebsiteRouter(prisma) {
         professors: { select: { fname: true, lname: true, email: true } },
       },
     });
-
-    if (!course) return res.status(404).json({ error: "Course not found" });
+    if (!course) return res.status(404).json({ error: new CMTError({ userFacingMessage: "Course not found" })});
     res.json(course);
   });
 

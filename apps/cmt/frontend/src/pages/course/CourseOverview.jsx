@@ -6,7 +6,7 @@ import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
 import { CMTJsonFetch } from '../../utils/api.js';
 import { ColorOption } from '../../components/forms/ColorPicker.jsx';
-import { createErrorHandler } from '../../utils/error.jsx';
+import { CMTDangerAlert, createErrorHandler } from '../../utils/error.jsx';
 
 
 export function CourseOverview() {
@@ -15,16 +15,15 @@ export function CourseOverview() {
     const [modalOpen, setModalOpen] = useState(false);
     const [edit, setEdit] = useState(false);
     const [courseId, setCourseId] = useState(0);
+    const [error, setError] = useState(null)
     
     useEffect(() => {
         fetchCourses();
     }, []);
 
-    const fetchCourses = async () => {
-        CMTJsonFetch("GET", `course`).then(async json => {
-            setCourseOverview(json ?? []);
-        });
-      };
+    const fetchCourses = () => CMTJsonFetch("GET", `course`)
+        .then(setCourseOverview)
+        .catch(createErrorHandler("Failed to fetch courses", setError))
 
     return (
         <>
@@ -37,7 +36,9 @@ export function CourseOverview() {
                 </div>
                 <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen} isEdit={edit} courseId={courseId} refresh={fetchCourses}/>
                 <Row className='gy-4'>
-                    {courseOverview.map(course => (
+                    {error
+                    ? <CMTDangerAlert error={error} />
+                    : courseOverview.map(course => (
                         <Col md={4}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
                                 <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>

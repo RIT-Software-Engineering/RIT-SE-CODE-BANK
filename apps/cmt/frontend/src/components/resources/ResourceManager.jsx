@@ -73,7 +73,7 @@ export function useResources(courseId) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
-    const loadResources = useCallback(async () => {
+    const loadResources = useCallback(async courseId => {
         if (!courseId) return
 
         setError(null)
@@ -83,10 +83,10 @@ export function useResources(courseId) {
             .then(async json => setResources(json || []))
             .catch(createErrorHandler("Failed to load resources.", setError))
             .finally(() => setLoading(false))
-    }, [courseId])
+    }, [])
 
     useEffect(() => {
-        if (courseId) loadResources()
+        if (courseId) loadResources(courseId)
     }, [courseId, loadResources])
 
     return [resources, loading, loadResources, error]

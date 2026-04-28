@@ -55,7 +55,7 @@ router.get('/:id', async (req, res) => {
     })
 
     if (!course) 
-        throw new Error("Course not found. This course may not exist or you may not have access to it.");
+        throw new CMTError({ userFacingMessage: "Course not found. This course may not exist or you may not have access to it." });
 
     const workflow = await workflowsFetch('GET', `workflows/${course.workflowId}`)
     /** @type {WorkflowsAction[]} */
@@ -83,7 +83,7 @@ router.post('/', async (req, res) => {
 
         const {courseCode, courseName, color, season, isTemplate} = req.body;
 
-        let metaCourseWorkflow;
+        let metaCourseWorkflow
         let sessionActions;
         const response = await workflowsFetch("GET", `workflows/metadata?key=code&value=${JSON.stringify('Course Creation Workflow')}`,)
         const workflowBase = response.length > 0 ? response[0] : null;
@@ -158,7 +158,7 @@ router.post('/', async (req, res) => {
         }, {timeout: 15000});
 
     } catch (error) {
-        throw new CMTError({ userFacingMessage: 'Failed to create meta course workflow/empty course', cause: error })
+        throw new CMTError({ userFacingMessage: 'Failed to create course', cause: error })
     }
 })
 
@@ -169,7 +169,6 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const { id } = req.params
     const updateData = req.body
-
     const mappedData = {
         ...(updateData.courseCode !== undefined 
             && { classId: updateData.courseCode }
@@ -212,12 +211,8 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
     const { id } = req.params
-
-    // Had to cast id to a Number so an int is passed instead of a string
-    // Then delete the course
     await prisma.course.delete({
         where: { id: Number(id) },
     })
-
     res.sendStatus(200)
 })

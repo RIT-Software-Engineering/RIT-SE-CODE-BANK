@@ -15,7 +15,7 @@ function requireUser(req, res) {
 async function getProfessorForUser(prisma, req, res) {
   const user = requireUser(req, res);
   if (!user) return null;
-
+  
   const professor = await prisma.professor.findFirst({
     where: { email: user.email },
   });

@@ -40,9 +40,13 @@ Two options: native or containerized. If you have Docker Desktop already setup o
 #### Workflows
 1. Navigate to `apps/workflows/server` and repeat steps 2 & 3 above
 
+> Common issues
+>
+> Both your cmt and workflows server environment file should have the same connection string, unless you want a MariaDB server for each of your services.
+
 
 ### 5. Prisma Setup
-**This whole step is optional**, since the custom start script can do this. Using the start setup is recommended for easy use, but these instructions remain in case of errors or preference (By "start script", I mean running `npm start-cmt` at the root of the repository).
+**This whole step is optional**, since the custom start script can do this. Using the start setup is recommended for easy use, but these instructions remain in case of errors or preference (By "start script", I mean running `npm run start-cmt` at the root of the repository).
 
 We will both create a Prisma object for the code to use, and will also push that schema to the database. This means you will need your database running.
 
@@ -155,3 +159,7 @@ A few pieces of advice when working with package.jsons and Nx:
 - We use dotenv-cli and --schema because we want our CMT frontend and backend to share the same .env file, BUT prisma and create-react-app need some extra guidance to still find the right environment/schema files.
 - The "--" that appears in `dotenv -e file --` is not a builtin operator like "&&". Its just how dotenv works.
 - Prefer composability. A package's scripts should only be concered with that package, and if a script exists at a high level while only affecting one package, ask yourself if that script should instead exist inside the package.
+
+## Last Resort
+
+If there's anything truly confusing, feel free to contact Scott Happy at sdh8796@rit.edu on Slack, preferrably

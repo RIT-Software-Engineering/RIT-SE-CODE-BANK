@@ -1,5 +1,5 @@
 {
-  "name": "SE-CODE-BANK",
+  "name": "se-code-bank",
   "workspaces": [
     "apps/workflow/ecosystem",
     "apps/workflow/server",
@@ -8,9 +8,7 @@
     "apps/cmt/shared-utilities"
   ],
   "scripts": {
-    "check-migrations-workflows": "cd apps/workflow/server && npx prisma migrate dev",
-    "start-cmt": "npm run check-migrations-workflows && npx nx run-many -t start-cmt -p cmt-frontend cmt-backend workflows-server",
-    "stop-cmt": "echo 'stopping in case nx run-many didn't stop automatically' && npx nx run-many -t stop -p cmt-frontend cmt-backend workflows-server",
+    "start-cmt": "echo 'To run CMT, press ctrl+shift+p, type \"run task\", press enter, then select \"Start CMT\"'",
     "setupportal": "node ./scripts/setupportal.js",
     "startportal": "node ./scripts/startportal.js",
     "stopportal": "node ./scripts/stopportal.js"

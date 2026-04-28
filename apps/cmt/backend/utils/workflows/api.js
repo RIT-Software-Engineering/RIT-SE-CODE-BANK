@@ -109,14 +109,14 @@ export async function updateAction(name, description, nextActionId, actionId){
  */
 export async function objectToNewWorkflow(workflow, ownerId) {
   if (!workflow.childActions)
-    throw new Error(`There was a workflow action with no simple action attached. Please contact Kenn Martinez to have this addressed. Action name: ${workflow.name}`)
+    throw new CMTError({ userFacingMessage: `There was a workflow action with no simple action attached. Please contact Kenn Martinez to have this addressed. Action name: ${workflow.name}` })
   if (workflow.childActions.length !== 0 && workflow.childActions[0]) {
     if (workflow.userId || workflow.childActions[0].userId) {
-      throw Error(`Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!`)
+      throw new CMTError({ userFacingMessage: `Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!` })
     }
   }
   if (!ownerId) {
-    throw Error(`Cannot create workflow from object ${workflow}: Missing ownerId argument: ${ownerId}! If you are specifying ownerId in the object, instead pass it as a second argument to this function.`)
+    throw new CMTError({ userFacingMessage: `Cannot create workflow from object ${workflow}: Missing ownerId argument: ${ownerId}! If you are specifying ownerId in the object, instead pass it as a second argument to this function.` })
   }
 
   // Create actions

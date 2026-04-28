@@ -45,21 +45,26 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [curMaterialId, setCurMaterialId] = useState(0);
     const [defaultMaterialType, setDefaultMaterialType] = useState('Topic/Lecture');
+    const [error, setError] = useState(null)
 
     /**
      * Initial GET request upon loading the page
      * Sets the correct amount of sessions and the actual sessions themselves with useful data
      * Also gets material if there is any and puts it in each session
      */
-    const update = useCallback(() => {
-        return CMTJsonFetch('GET', `session/${id}`).then(async json => {
-            setSessionCount(json.sessions.length)
-            setSessions(json.sessions);
-            const materialsArray = json.sessionMaterials.filter(m => m.material).map(m => m.material);
-            setSessionData(materialsArray.flat());
-        })
-    }, [id, setSessions, setSessionCount])
+    const update = useCallback(() => 
+        CMTJsonFetch('GET', `session/${id}`)
+            .then(async json => {
+                setSessionCount(json.sessions.length)
+                setSessions(json.sessions);
+                const materialsArray = json.sessionMaterials.filter(m => m.material).map(m => m.material);
+                setSessionData(materialsArray.flat());
+            })
+            .catch(createErrorHandler("Failed to fetch session details", setError)),
+    [id, setSessions, setSessionCount])
     useEffect(() => void update(), [id, update])
+
+    if (error) return <CMTDangerAlert error={error} />
 
     return (
         <Accordion>
@@ -293,19 +298,23 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
 
-    const uploadSessionMaterial = useCallback(() => {
-        const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
-        CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody: hasLinksInTitle ? undefined : itemBody, sessionNum })
-            .then(async json => setSessionData(sessionData => [...sessionData, json.material]))
-            .catch(createErrorHandler("Error uploading material", setError))
-    }, [hasLinksInTitle, itemBody, itemLabel, itemType, sessionNum, sessions, setSessionData])
-
-    function resetForm() {
+    const resetForm = useCallback(() => {
         setDefaultMaterialType('Topic/Lecture');
         setItemLabel('');
         setItemBody('');
         setError('');
-    }
+    }, [setDefaultMaterialType])
+
+    const uploadSessionMaterial = useCallback(() => {
+        const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
+        return CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody: hasLinksInTitle ? undefined : itemBody, sessionNum })
+            .then(async json => {
+                setSessionData(sessionData => [...sessionData, json.material])
+                setIsOpen(false)
+                resetForm()
+            })
+            .catch(createErrorHandler("Error uploading material", setError))
+    }, [hasLinksInTitle, itemBody, itemLabel, itemType, resetForm, sessionNum, sessions, setIsOpen, setSessionData])
 
     function handleClose() {
         setIsOpen(false);
@@ -392,12 +401,10 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
                     <div className='flex justify-end pt-3'>
                         <Button
                             type='submit'
-                            onClick={e => {
+                            onClick={async e => {
                                 e.preventDefault()
                                 if (itemLabel) {
                                     uploadSessionMaterial()
-                                    setIsOpen(false)
-                                    resetForm()
                                 } else setError("Please create a title for the material!")
                             }}
                         >
@@ -438,6 +445,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
     const [itemType, setItemType] = useState(curMaterial?.type ?? "Topic/Lecture");
     const [sessionNum, setSessionNum] = useState(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`);
     const [warningVisible, setWarningVisible] = useState(false);
+    const [error, setError] = useState(null)
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
 
@@ -456,14 +464,18 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
         const realItemBody = hasLinksInTitle ? '' : itemBody;
         const realSessionNum = parseInt(sessionNum.replace("Session ", ""))-1;
         const sessionId = sessions.find(session => session.sessionNum === (realSessionNum+1))?.id;
-        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody: realItemBody, itemType, sessionNum: realSessionNum, sessionId}).then(() => {
-            const sessionDataCopy = sessionData.map(material => {
-                if (material.id === materialId) 
-                    return {...material, label: itemLabel, body: realItemBody, type: itemType, sessionNum: realSessionNum, sessionId}
-                return material
-            });
-            setSessionData(sessionDataCopy);
-        });
+        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody: realItemBody, itemType, sessionNum: realSessionNum, sessionId})
+            .then(() => {
+                const sessionDataCopy = sessionData.map(material => {
+                    if (material.id === materialId) 
+                        return {...material, label: itemLabel, body: realItemBody, type: itemType, sessionNum: realSessionNum, sessionId}
+                    return material
+                });
+                setSessionData(sessionDataCopy);
+                setIsEditOpen(false);
+                resetForm();
+            })
+            .catch(createErrorHandler("Error updating resource", setError))
     }
 
     const titleTip = (
@@ -498,6 +510,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
             <Offcanvas.Body className="overflow-auto">
         
                     <Alert variant="danger" className={`${warningVisible ? 'block' : 'hidden'}`}>Material needs to have a title!</Alert>
+                    <CMTDangerAlert error={error} />
                     <Form onSubmit={updateMaterial}>
                         <div className='flex'>
                             <div className='w-full'>
@@ -571,8 +584,6 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                 // basically if we match any actual text
                                 if (!itemLabel.startsWith("<p>") || !itemLabel.replace(/<p>.+<\/p>/, "")){
                                     updateMaterial();
-                                    setIsEditOpen(false);
-                                    resetForm();
                                 }
                                 else setWarningVisible(true);
                                 }}>Submit</Button>

@@ -63,7 +63,6 @@ router.post("/:sessionId", async (req, res) => {
             sessionNum: item.sessionNum,
         }
     });
-
     res.json({ material })
 })
 

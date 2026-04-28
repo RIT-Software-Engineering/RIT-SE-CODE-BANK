@@ -46,7 +46,7 @@ export function CMTErrorToString(error) {
 }
 
 /**
- * Default error serialization is complete garbo, so do it manually. This literally just exports fields it's so simple. Im sure these fields are obfuscated by default for security. This is less secure. Too bad our code is open source.
+ * Default error serialization is complete garbo (non-enumerable properties), so do it manually. This literally just exports fields it's so simple. Im sure these fields are obfuscated by default for security. This is less secure. Too bad our code is open source.
  * @param {any} error 
  */
 export function serializeError(error) {
