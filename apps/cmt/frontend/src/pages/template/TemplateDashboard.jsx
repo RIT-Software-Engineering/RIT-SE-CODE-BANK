@@ -34,13 +34,12 @@ export function TemplateDashboard() {
     const [sessions, setSessions] = useState([]);
 
     const update = useCallback(async () => {
-        return CMTJsonFetch('GET', `course/${id}`).then(async response => {
-            const data = await response.json();
+        return CMTJsonFetch('GET', `course/${id}`).then(async json => {
             // Manually override it in the display since we never actually set a color.
-            data.course.color = '#0484c9';
-            setCourse(data.course)
-            setActionsWithContexts(data.actionsWithContexts)
-            setWorkflow(data.workflow)
+            json.course.color = '#0484c9';
+            setCourse(json.course)
+            setActionsWithContexts(json.actionsWithContexts)
+            setWorkflow(json.workflow)
         })
     }, [id])
     useEffect(() => void update(), [id, update])
