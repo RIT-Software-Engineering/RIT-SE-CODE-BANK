@@ -137,6 +137,12 @@ export class CPU {
     step() {
         if(!this.halted){
 
+            this.currentState = {
+                registers: this.getRegisters(),
+                flags: this.getFlags(),
+                memoryChange: []
+            };
+
             const instr = this.fetch();
             const oper = this.decoder.decode(instr);
 
@@ -147,12 +153,6 @@ export class CPU {
                 oper.dst = this.resolveDestination(oper.dst.mode, oper.dst.REG);
             }      
             this.execute(oper);
-
-            this.currentState = {
-                registers: this.getRegisters(),
-                flags: this.getFlags(),
-                memoryChange: []
-            };
 
             this.pastState.push(this.currentState);
             this.currentState = null;
