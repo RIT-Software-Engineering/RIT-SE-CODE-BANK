@@ -5,8 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "npx dotenv -e ./../.env -- node --watch server.js",
-    "stop": "npx kill-port 5010",
-    "start-cmt": "npm run stop && npx dotenv -e ./../.env -- npx prisma db push && npx dotenv -e ./../.env -- node prisma/seed.js && npm run start"
+    "start-cmt": "npx dotenv -e ./../.env -- npx prisma db push && npx dotenv -e ./../.env -- node prisma/seed.js && npm run start"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",

@@ -13,15 +13,6 @@
       "types": "./src/react.d.ts"
     }
   },
-  "scripts": {
-    "prepare": "npm run build",
-    "build:js": "esbuild src/index.js src/react.js --bundle --format=esm --outdir=dist --external:react --external:react/jsx-runtime",
-    "build:types": "tsc -p tsconfig.build.json",
-    "build": "npm run build:js && npm run build:types",
-    "watch:js": "esbuild src/index.js src/react.js --bundle --format=esm --outdir=dist --external:react --external:react/jsx-runtime --watch",
-    "watch:types": "tsc -p tsconfig.build.json --watch",
-    "watch": "concurrently \"npm:watch:js\" \"npm:watch:types\""
-  },
   "devDependencies": {
     "concurrently": "^9.1.2",
     "esbuild": "^0.25.0",

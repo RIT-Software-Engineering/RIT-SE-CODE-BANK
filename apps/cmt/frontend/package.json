@@ -50,8 +50,6 @@
   },
   "scripts": {
     "start": "npx dotenv -e ./../.env -- craco start",
-    "stop": "npx kill-port 3000 3010",
-    "start-cmt": "npm run stop && npm run start",
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",

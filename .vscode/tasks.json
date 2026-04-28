@@ -13,7 +13,7 @@
     // CMT
     {
       "label": "Start CMT Frontend",
-      "command": "npm run start-cmt --workspace cmt-frontend",
+      "command": "npm run start --workspace cmt-frontend",
       "type": "shell",
       "presentation": {
         "panel": "dedicated"
