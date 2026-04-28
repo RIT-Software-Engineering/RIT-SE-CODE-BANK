@@ -21,12 +21,12 @@ export default function DisplayField({ label, value }) {
       disabled={true}
       sx={(theme) => ({
         "& .MuiFilledInput-root": {
-          backgroundColor: theme.palette.mode === "dark" ? "" : "#ededed",
+          backgroundColor: theme.palette.mode === "dark" ? "" : "#eeeeee",
           "&:hover": {
-            backgroundColor: theme.palette.mode === "dark" ? "" : "#ededed",
+            backgroundColor: theme.palette.mode === "dark" ? "" : "#eeeeee",
           },
           "&.Mui-focused": {
-            backgroundColor: theme.palette.mode === "dark" ? "" : "#ededed",
+            backgroundColor: theme.palette.mode === "dark" ? "" : "#eeeeee",
           },
         },
       })}

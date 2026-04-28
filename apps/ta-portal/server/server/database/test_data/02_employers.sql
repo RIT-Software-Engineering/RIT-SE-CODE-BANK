@@ -1,5 +1,5 @@
 INSERT INTO `Employer` (`username`, `department`) VALUES
-('aa1234', 'Software Engineering'),
-('jd2345', 'Software Engineering'),
-('jd3456', 'Computer Science'),
-('bd4567', 'Cybersecurity');
+('aaa1000', 'Software Engineering'),
+('jjd1000', 'Software Engineering'),
+('jdd1000', 'Computer Science'),
+('bdd1000', 'Cybersecurity');
