@@ -306,6 +306,7 @@ export default function ApplicationCard({
           <Divider sx={{ my: 2 }} />
 
           <Grid container spacing={2}>
+            {resume?.id && (
             <Grid item xs={12} sm={6}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography variant="body2" color="text.secondary">Resume</Typography>
@@ -320,11 +321,11 @@ export default function ApplicationCard({
                     textDecoration: 'none',
                   }
                 }}
-                onClick={()=> handleResumeClick(resume.id)}
+                onClick={()=> handleResumeClick(resume?.id)}
               >
-                {resume.name}
+                {resume?.name}
               </Typography>
-            </Grid>
+            </Grid>)}
             {coverLetter?.id && (
               <Grid item xs={12} sm={6}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
