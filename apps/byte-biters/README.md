@@ -17,6 +17,7 @@ npm install
 cd apps/byte-biters/backend
 npm install
 ```
+Make sure Node.js is installed: https://nodejs.org/en/download
     
 ## Run Locally
 
