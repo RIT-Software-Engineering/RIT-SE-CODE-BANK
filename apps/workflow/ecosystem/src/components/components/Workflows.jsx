@@ -57,6 +57,7 @@ export function Workflow(props) {
  *      TextOutput: Renderer<TextOutputProps>,
  *      SelectOutput: Renderer<SelectOutputProps>,
  *      CheckmarkOutput: Renderer<CheckmarkOutputProps>
+ *      SelectMultiOutput: Renderer<CheckmarkOutputProps>
  * }} WorkflowRendererMap
  */
 /**
@@ -80,6 +81,7 @@ export function createWorkflowRenderers(renderers) {
         TextOutput,
         SelectOutput,
         CheckmarkOutput,
+        SelectMultiOutput,
     } = renderers
 
     const outputRenderers = {
@@ -96,6 +98,9 @@ export function createWorkflowRenderers(renderers) {
         CheckmarkOutputRenderers: {
             CheckmarkOutput,
         },
+        SelectMultiOutputRenderers: {
+            SelectMultiOutput,
+        }
     }
 
     const actionContentRenderers = {

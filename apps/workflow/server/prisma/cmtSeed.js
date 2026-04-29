@@ -104,6 +104,25 @@ async function main() {
                         ],
                     },
                 },
+                {
+                    name: 'Course Days',
+                    description: 'Select on which days that your course will take place!',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_DAYS',
+                        outputs: [
+                            {
+                                name: 'Course Days',
+                                key: 'days',
+                                type: 'multiselect',
+                                isRequired: true,
+                                validation: {
+                                    options: ['Mo', 'Tu', 'We', 'Tr', 'Fr'],
+                                },
+                            },
+                        ],
+                    },
+                },
             ],
         },
         {

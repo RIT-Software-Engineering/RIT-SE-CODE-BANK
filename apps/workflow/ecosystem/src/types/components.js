@@ -38,6 +38,7 @@ export {}
 /** @typedef {OutputFieldProps} TextOutputProps */
 /** @typedef {OutputFieldProps} NumberOutputProps */
 /** @typedef {OutputFieldProps} SelectOutputProps */
+/** @typedef {OutputFieldProps} SelectMultiOutputProps */
 
 // Containers and views
 

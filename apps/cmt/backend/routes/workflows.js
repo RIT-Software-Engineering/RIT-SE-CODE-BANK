@@ -236,7 +236,7 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
             CMTActionToActionWithContexts(action, null, null, req.user?.uid)
         );
 
-        const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER"].filter(
+        const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER", "COURSE_DAYS"].filter(
             code => findActionsWithContextsByCode(actionsWithContexts, code).length > 0
         );
 

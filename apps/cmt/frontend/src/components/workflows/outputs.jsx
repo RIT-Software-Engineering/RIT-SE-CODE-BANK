@@ -1,7 +1,7 @@
 import { Form } from "react-bootstrap"
 
 /**
- * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, TextOutputProps } from "@se-code-bank/workflows-ecosystem"
+ * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, SelectMultiOutputProps, TextOutputProps } from "@se-code-bank/workflows-ecosystem"
  */
 
 /**
@@ -91,6 +91,30 @@ export const SelectOutput = ({ output, value, onChange, onBlur, required, isInva
                     </option>
                 ))}
             </Form.Select>
+            <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
+        </div>
+    )
+}
+
+/**
+ * @param {SelectMultiOutputProps} props
+ */
+export const SelectMultiOutput = ({ output, value, onChange, onBlur, isInvalid, error }) => {
+    return (
+        <div className='shrink'>
+            <Form className="flex gap-2" onChange={onChange} onBlur={onBlur}>
+            {output.validation?.options?.map(option => (
+                <Form.Check
+                key={option}
+                type="checkbox"
+                label={option}
+                id={`checkbox-${option}`}
+                value={option}
+                checked={value?.includes(option)}
+                isInvalid={isInvalid}
+                />
+            ))}
+            </Form>
             <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
         </div>
     )

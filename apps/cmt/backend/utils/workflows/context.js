@@ -25,6 +25,8 @@ function CMTDetermineCallbackFactory(courseId, userId) {
             return `workflow/editCheckmarkAction?uid=${userId}&asid=${asid}`
         } if (code === "PUBLISH_TEMPLATE") {
             return `workflow/publishCourseTemplate?courseId=${courseId}&asid=${asid}`
+        } if (code === 'COURSE_DAYS') {
+            return `course/${courseId}?uid=${userId}&asid=${asid}`
         }
         
         throw Error('Unrecognized action metadata code ' + code)
