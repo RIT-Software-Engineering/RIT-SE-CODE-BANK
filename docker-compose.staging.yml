@@ -98,10 +98,27 @@ services:
       - "3020:3020"
     environment:
       NODE_ENV: production
+      NEXT_PUBLIC_AUTH_URL: http://apps.se.rit.edu/auth
       PORT: 3020
       REACT_APP_BACKEND_URL: http://localhost:5020
     depends_on:
       - scoop-portal-backend
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: /opt/auth-service
+      dockerfile: Dockerfile
+    env_file: /opt/auth-service/.env
+    ports:
+      - "3102:3102"
+    environment:
+      NODE_ENV: production
+      PORT: 3102
+      AUTH_BASE_URL: https://apps.se.rit.edu/auth
+      CLIENT_DEFAULT_RETURN: https://apps.se.rit.edu/
+      SAML_ACS_PATH: /saml/acs
+      COOKIE_SECURE: true
     restart: unless-stopped
 
 volumes:

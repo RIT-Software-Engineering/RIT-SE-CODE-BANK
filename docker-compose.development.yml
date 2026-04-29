@@ -104,6 +104,22 @@ services:
       - scoop-portal-backend
     restart: unless-stopped
 
+  auth-service:
+    build:
+      context: /opt/auth-service
+      dockerfile: Dockerfile
+    env_file: /opt/auth-service/.env
+    ports:
+      - "3102:3102"
+    environment:
+      NODE_ENV: development
+      PORT: 3102
+      AUTH_BASE_URL: http://localhost:3102
+      CLIENT_DEFAULT_RETURN: http://localhost:3020/dashboard
+      SAML_ACS_PATH: /saml/acs
+      COOKIE_SECURE: false
+    restart: unless-stopped
+
 volumes:
   mariadb_scoop_portal_data:
   mariadb_workflows_data:

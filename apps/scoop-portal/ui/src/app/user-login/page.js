@@ -1,162 +1,153 @@
 "use client";
-import { useState } from "react";
-import { Box, TextField, Button, Typography } from "@mui/material";
+import { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Typography,
+  CircularProgress,
+  Card,
+  CardContent,
+  Alert,
+} from "@mui/material";
 import { useRouter } from "next/navigation";
-import IconButton from "@mui/material/IconButton";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Snackbar, Alert,CircularProgress } from "@mui/material";
-import {useUser} from "../utils/user-context/page";
-
+import { useUser } from "../utils/user-context/page";
 
 export default function AuthPage() {
-  const [isSignup, setIsSignup] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const {setUser} = useUser();
+  const { setUser } = useUser();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // "success" or "error"
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async () => {
-    try {
-      const endpoint = isSignup
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/auth/signup`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`;
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      console.log(data);
-
-      if (res.ok) {
-        setSnackbarMessage(
-          isSignup ? "Account created successfully!" : "Logging in!"
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Check SAML auth session
+        const authRes = await fetch(
+          `${process.env.NEXT_PUBLIC_AUTH_URL}/me`,
+          {
+            credentials: "include",
+          }
         );
-        setSnackbarSeverity("success");
-        setSnackbarOpen(true);
-        setLoading(true);
 
-        if(!isSignup){
-            setUser(data.user);
+        if (!authRes.ok) {
+          setLoading(false);
+          return;
         }
 
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 1500);
-      } else {
-        setSnackbarMessage(
-          data.error || "Incorrect credentials. Please try again."
+        const authData = await authRes.json();
+        const authId = authData.user?.id;
+
+        if (!authId) {
+          setError("No user ID received from authentication service");
+          setLoading(false);
+          return;
+        }
+
+        // Check if user exists in DB by ID
+        const dbRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/users/${encodeURIComponent(
+            authId
+          )}`
         );
-        setSnackbarSeverity("error");
-        setSnackbarOpen(true);
+
+        if (dbRes.status === 404) {
+          setError(
+            "Your account is authenticated, but you don't have access to this application. " +
+              "Please contact your administrator."
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (!dbRes.ok) {
+          setError("Unable to fetch user data from database");
+          setLoading(false);
+          return;
+        }
+
+        const dbUser = await dbRes.json();
+
+        // Set user + redirect
+        setUser(dbUser);
+        router.push("/dashboard");
+      } catch (err) {
+        console.error("Auth check error:", err);
+        setError("An error occurred during authentication");
+        setLoading(false);
       }
-    } catch (error) {
-      setSnackbarMessage("Server error. Please try again later.");
-      setSnackbarSeverity("error");
-      setSnackbarOpen(true);
-    }
+    };
+
+    checkAuth();
+  }, [setUser, router]);
+
+  const handleLogin = () => {
+    setLoginLoading(true);
+    window.location.href = `${
+      process.env.NEXT_PUBLIC_AUTH_URL
+    }/login?returnTo=${encodeURIComponent(
+      "https://apps.se.rit.edu/scoop-portal/dashboard"
+    )}`;
   };
 
-  const handleBack = () => {
-    router.back();
-  };
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+        sx={{ backgroundColor: "#f5f5f5" }}
+      >
+        <CircularProgress size={40} />
+        <Typography variant="body1" sx={{ mt: 2, color: "#000" }}>
+          Checking authentication...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
-    <Box>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-          icon={loading && snackbarSeverity === "success"
-                ? <CircularProgress size={20} sx={{color: "inherit"}} />
-                : undefined
-            }
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
-      <Box position="relative">
-        <IconButton
-            onClick={handleBack}
-            aria-label="back"
-            sx={{position: "absolute", top: "20px", left: "20px", color: "white"}}
-        >
-            <ArrowBackIcon />
-        </IconButton>
-        <img src="/scoop-portal/orange_black/RIT_rgb_hor_k1.png" alt="RIT logo" style={{ position: "absolute", top: "20px", right: "20px", width: "300px"}}/>
-         <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            height="100vh"
-            sx={{
-                backgroundImage: "url('/scoop-portal/aerial_drone_09-web.png')",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                minHeight: "100vh",
-            }}
-        >
-            <img src="/scoop-portal/Roaring Tiger/rgb/Roaring Tiger_rgb.png" alt="RIT logo" style={{width: "100px", marginBottom: "20px"}} />
-            <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                sx={{
-                    border: "1px solid #F76902",
-                    borderRadius: "16px",
-                    padding: "40px 36px",
-                    backgroundColor:"#000000BF"
-                }}
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="100vh"
+      sx={{ backgroundColor: "#f5f5f5", padding: 2 }}
+    >
+      <Card sx={{ maxWidth: 400, width: "100%" }}>
+        <CardContent sx={{ textAlign: "center", padding: 4 }}>
+          <Typography variant="h5" gutterBottom>
+            Scoop Portal Login
+          </Typography>
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Please sign in using your institutional credentials.
+          </Typography>
+
+          {error && (
+            <Alert severity="error" sx={{ mt: 2, textAlign: "left" }}>
+              {error}
+            </Alert>
+          )}
+
+          <Box sx={{ mt: 3 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleLogin}
+              disabled={loginLoading}
+              sx={{ minWidth: 150 }}
             >
-                <Typography variant="h4" mb={2}>
-                    {isSignup ? "Create an Account" : "Login"}
-                </Typography>
-                <TextField
-                    label="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    sx={{ mb: 2, width: "300px" }}
-                />
-                <TextField
-                    label="Password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    sx={{ mb: 2, width: "300px" }}
-                />
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit}
-                    sx={{
-                        width: "300px",
-                        mb: 1,
-                        backgroundColor: "#F76902",
-                        color: "#fff",
-                    }}
-                >
-                    {isSignup ? "Create" : "Login"}
-                </Button>
-                {/** This is incase we want to give anyone who visits the site, the ability to create an account */}
-                {/* <Button variant="text" onClick={() => setIsSignup(!isSignup)}>
-                {isSignup
-                    ? "Already have an account? Log in"
-                    : "Don't have an account? Sign up"}
-                </Button> */}
-            </Box>
-        </Box>
-      </Box>
+              {loginLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "Login"
+              )}
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
     </Box>
   );
 }

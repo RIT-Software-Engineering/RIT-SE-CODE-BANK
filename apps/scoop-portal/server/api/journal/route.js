@@ -407,7 +407,7 @@ router.get("/:id", async (req, res) => {
   }
 })
 
-const NOTIFY_BASE = process.env.NOTIFY_BASE || 'http://apps-staging.se.rit.edu/api/notifications'
+const NOTIFY_BASE = process.env.NOTIFY_BASE || 'https://apps.se.rit.edu/api/notifications'
 const APP_ID = process.env.APP_ID || 'scoop'
 export async function notifyStatus({ userId, context }) {
   console.log(`Sending notification to: ${NOTIFY_BASE}/dispatch/${APP_ID} as ${userId}`)
