@@ -483,6 +483,12 @@ Generates a structured JSON evaluation with sections: `teaching`, `scholarship`,
 - Overall rating is clamped to a minimum of 3.
 - All faculty names are scrubbed from AI input and output before storage.
 
+### Teaching Eval Summary (`POST /teaching_evals/:formId/summarize`)
+
+Generates a 2–3 sentence plain-text summary of a single teaching evaluation. All PII (professor name, course code, emails, student IDs) is scrubbed from both the Gemini prompt and the returned text. Throws a user-friendly message on Gemini 429 quota exceeded. The summary is **not** persisted — callers should store it if needed.
+
+---
+
 ### Annual Evaluation (`POST /highlights/annual-eval/:facultyId`)
 
 Aggregates all submissions by a faculty member and generates a single annual evaluation JSON. Same structure as per-form summary. Saved to `form_summaries` with `summary_type='annual'`.
@@ -496,7 +502,7 @@ Retrieve without regenerating: `GET /highlights/annual-eval/:facultyId`
 | `id` | INT | Auto-increment PK |
 | `form_id` | INT | Set for per-form summaries, NULL for annual |
 | `faculty_id` | VARCHAR(64) | Set for annual summaries, NULL for per-form |
-| `summary_type` | ENUM('form','annual') | Distinguishes the two summary types |
+| `summary_type` | ENUM('form','annual','teaching_eval') | Distinguishes per-form, annual, and teaching eval summaries |
 | `summary_json` | LONGTEXT | Full JSON summary object |
 | `created_at` | TIMESTAMP | When first generated |
 | `updated_at` | TIMESTAMP | When last regenerated |

@@ -255,6 +255,14 @@ async function calculateTeachingScore(facultyId, teachingText = '') {
     };
 }
 
+/**
+ * Generates an AI text summary of a teaching evaluation using Gemini.
+ * Scrubs all PII (professor name, course code, emails, student IDs) from
+ * both the prompt input and the returned summary before returning.
+ * Throws a user-friendly error on Gemini 429 quota exceeded.
+ * @param {number} formId - The form ID associated with the teaching eval
+ * @returns {string} PII-filtered plain-text summary (2–3 sentences)
+ */
 async function summarizeTeachingEval(formId) {
     const conn = await pool.getConnection();
     try {
