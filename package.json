@@ -5,7 +5,10 @@
     "apps/workflow/server",
     "apps/cmt/frontend",
     "apps/cmt/backend",
-    "apps/cmt/shared-utilities"
+    "apps/cmt/shared-utilities",
+    "apps/scoop-portal/server",
+    "apps/scoop-portal/ui",
+    "services/notification-service"
   ],
   "scripts": {
     "start-cmt": "echo 'To run CMT, press ctrl+shift+p, type \"Task: Run Task\", press enter, then type/select \"Start CMT\", then hit enter twice'",
