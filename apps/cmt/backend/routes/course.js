@@ -228,7 +228,7 @@ router.post('/:templateId', async (req, res) => {
                     if (action.childActions) for (action of action.childActions) parseMetadata(action)
                 }
                 actionResponse.forEach(action => parseMetadata(action))
-                actionResponse = actionResponse?.slice(0, -1); // Remove the publish template action
+                actionResponse = actionResponse?.filter(action => (action?.metadata?.code !== 'PUBLISH_TEMPLATE')); // Remove the publish template action
                 actions = actionResponse 
             }
             else
