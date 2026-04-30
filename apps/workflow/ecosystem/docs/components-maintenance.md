@@ -21,6 +21,8 @@ I reccomend looking at the "CardAction" component for more context. Ideally, the
 
 Other components are named after what they should represent. A form action expects its renderer to be like a form, and provides interactivity hooks in accordance. The ViewEditAction expects its renderer to be like an action that can be viewed or edited, and so on. While these names aren't hard requirements (You could use the ViewEditAction and then just hack the interactivity hooks to always have editing to be true so that it is basically a FormAction) they are helpful starting points for implementations.
 
+Still, I think that overall, the naming conventions are weak and subject to improvement.
+
 
 # Adding New High-level Components
 Currently, the only component available that can render multiple actions is the Workflow component. But, imagine a scenario where a consumer only wants to render one action of a workflow, let's say the first incomplete action. This is a simple change. Look at the current code for the Workflow component in `Workflows.jsx`:

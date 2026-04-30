@@ -13,10 +13,6 @@ High level documentation can be found in the shared [se-code-bank drive](https:/
 
 It is reccomended that you read this [overview of how npm](https://docs.google.com/document/d/1zm7hI2R7Hz0tgCx5eHXF9r4FrxAF3QfVFQjCfUWRb9g/edit?tab=t.0#heading=h.rquxpzgjogju) is used in this monorepo, as it is notably different than single-project repos. 
 
-### npm Warning
-
-All projects need to be on React 19 until `npm i --install-strategy=linked` is fixed. Migrating to pnpm may also fix this. If a critical situation arises, you can use `npm i --install-strategy=nested` which should work. Remember to run `npm i` at the repository root.
-
 # Directory
 
 These links go to the README files for shared components and other projects. Even if it is not listed here, a README may still exist in the project folder.
