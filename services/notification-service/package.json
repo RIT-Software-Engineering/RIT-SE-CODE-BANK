@@ -9,7 +9,6 @@
     "seed": "node scripts/seed.js",
     "prisma:generate": "prisma generate",
     "prisma:dbpush": "prisma db push",
-    "migrate:ta-portal": "node scripts/migrate-ta-portal-preferences.js --serviceUrl http://localhost:4000",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "prisma:deploy": "npx prisma migrate deploy --schema=./prisma/schema.prisma"
   },

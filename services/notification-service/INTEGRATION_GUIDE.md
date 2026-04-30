@@ -22,7 +22,7 @@ The Notification Service is a standalone microservice that **must be accessed th
 │             │         │                  │         │                    │
 │  Frontend   │────────▶│  Your Backend    │───────▶│  Notification      │
 │  (React,    │  HTTPS  │  (Express,       │  HTTP   │  Service           │
-│   Next.js)  │         │   Node.js)       │         │  (Port 4000)       │
+│   Next.js)  │         │   Node.js)       │         │  (Port 4001)       │
 │             │◀────────│                  │◀───────│                    │
 └─────────────┘         └──────────────────┘         └────────────────────┘
 ```

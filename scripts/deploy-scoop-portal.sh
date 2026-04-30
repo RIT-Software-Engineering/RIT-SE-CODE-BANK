@@ -72,7 +72,7 @@ ssh -i  "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
 #	'SMTP_HOST=smtp4dev
 #	SMTP_PORT=25
 #	SMTP_FROM=se_svc_apps@rit.edu
-#	PORT=4000
+#	PORT=4001
 #	NODE_ENV=development
 #	SLACK_BOT_TOKEN=
 #	DATABASE_URL="mysql://root:password@localhost:3309/notification_service"'

@@ -14,7 +14,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use("/notifications/preferences", preferencesRouter);
 app.use("/notifications/dispatch", dispatchRouter);
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4001;
 app.listen(PORT, () => {
   console.log(`Notification service listening on :${PORT}`);
 });

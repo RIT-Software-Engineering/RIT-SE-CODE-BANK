@@ -27,6 +27,6 @@ COPY services/notification-service/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-EXPOSE 4000
+EXPOSE 4001
 
 ENTRYPOINT sh /usr/local/bin/entrypoint.sh
