@@ -5,12 +5,13 @@ echo "Deploying TA Portal to apps-staging.se.rit.edu..."
 # Configuration
 VM_HOST="${DEPLOY_HOST:-apps-staging.se.rit.edu}"
 VM_USER="${TA_PORTAL_DEPLOY_USER:-kjk9042}"
+SSH_TARGET="${VM_USER}@${VM_HOST}"
 DEPLOY_PATH="/opt/ta-portal"
 # Get the branch name from GitHub Actions environment
-DEPLOY_BRANCH="${GITHUB_REF_NAME:-ta-portal-dev}"
+DEPLOY_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
 # SSH and deploy
 
-ssh -i "$DEPLOY_KEY" "kjk9042@apps-staging.se.rit.edu" \
+ssh -i "$DEPLOY_KEY" "$SSH_TARGET" \
     'bash -s' << ENDSSH
 
     set -e

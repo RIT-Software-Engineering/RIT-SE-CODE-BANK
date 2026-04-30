@@ -6,6 +6,7 @@ on:
       - main
       - dev
       - '*-dev'
+      - 'ta-portal-notification-quick-fix'
   pull_request:
     branches:
       - main
@@ -76,7 +77,7 @@ jobs:
   deploy:
     # Placeholder for deployment. Reliant on deployment scripts that don't yet exist.
     name: Deploy Affected Apps
-    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-dev') || github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/ta-portal-notification-quick-fix'
     needs: build
     runs-on: ubuntu-latest
 
@@ -84,30 +85,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
+          filter: tree:0
           fetch-depth: 0
-
-      - name: Extract App Name from Branch
-        id: parse
-        run: |
-          BRANCH="${GITHUB_REF_NAME}"
-          if [[ "$BRANCH" == *-dev ]]; then
-            # Extract base app name (e.g., ta-portal from ta-portal-*-dev)
-            APP_NAME="${BRANCH%%-dev*}"  # Get everything before first -dev
-            FIRST_PART="${APP_NAME%%-*}" # Get first part (ta-portal)
-            SECOND_PART="${APP_NAME#*-}"
-            SECOND_PART="${SECOND_PART%%-*}"
-            if [[ "$FIRST_PART" == "$SECOND_PART" ]]; then
-                APP_NAME="${FIRST_PART}"
-            else
-                APP_NAME="${FIRST_PART}-${SECOND_PART}"
-            fi      
-          elif [[ "$BRANCH" == "dev" || "$BRANCH" == "main" ]]; then
-            APP_NAME="all"
-          else
-            APP_NAME="ta-portal"
-          fi
-          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
-          echo "::notice ::Branch '$BRANCH' targets app '$APP_NAME'"
 
       - name: Setup SSH Key
         if: env.APP_NAME != ''
@@ -116,22 +95,18 @@ jobs:
           echo "${{ secrets.TA_PORTAL_DEPLOY_SSH_KEY }}" > ../github-actions-deploy
           chmod 600 ../github-actions-deploy
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
-      - name: Deploy script
-        if: env.APP_NAME != ''
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run Affected Deploy
         env:
           DEPLOY_USER: ${{ secrets.TA_PORTAL_DEPLOY_USER }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_KEY: ${{ github.workspace }}/../github-actions-deploy
-        run: |
-          if [ "$APP_NAME" = "all" ]; then
-            echo "Deploying all apps"
-            chmod +x ./scripts/deploy/deploy-all.sh
-            ./scripts/deploy-all.sh
-          elif [ -f "./scripts/deploy/deploy-$APP_NAME.sh" ]; then
-            echo "Deploying $APP_NAME"
-            chmod +x "./scripts/deploy/deploy-$APP_NAME.sh"
-            "./scripts/deploy/deploy-$APP_NAME.sh"
-          else
-            echo "No deployment script found for $APP_NAME, skipping."
-          fi
+        run: CI=false npx nx affected -t deploy -v --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
