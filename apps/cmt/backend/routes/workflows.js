@@ -38,6 +38,28 @@ router.put("/editCheckmarkAction", async (req, res) => {
     }
 });
 
+/**
+ * GET /workflow/publishedTemplates
+ * Gets all the publishd templates that contain part of the search value from the query
+ */
+router.get("/publishedTemplates", async (req, res) => {
+    try {
+        const {searchValue} = req.query;
+        const tags = await workflowsFetch('GET', `/tags/partial?value=${searchValue}`);
+        const publishedTemplates = await Promise.all(tags.flatMap(async tag => 
+            Promise.all(tag.workflowAttributes.flatMap(async workflowAttribute => {
+                return await prisma.course.findFirst({
+                    where: {workflowId: workflowAttribute.id},
+                    include: {professors: true},
+                })
+            }))
+        ))
+        return res.status(200).json(await publishedTemplates);
+    } catch (error) {
+        return res.status(500).json({error: error.message})
+    }
+})
+
 // workflow/publishCourseTemplate
 // Not to be confused with meta-templates, these are course-specific templates
 router.put("/publishCourseTemplate", async (req, res) => {

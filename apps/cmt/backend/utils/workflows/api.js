@@ -175,10 +175,65 @@ export async function objectToNewWorkflow(workflow, ownerId) {
     description: workflow.description,
     metadata: workflow.metadata ? makeMetadataSafeForWorkflows(workflow.metadata) : {},
     rootActionId: rootActionId,
-    tags: workflow.tags
+    // tags: workflow.tags // I remove tags cuz I don't think we need them since there's only one meta-workflow at a time. Future people can change that though 
   })
 
   return createdWorkflow;
+}
+
+
+/**
+ * Function to begin the recursion of a workflow and its' actions.
+ * Updates the states if any top-level children are simple actions.
+ * TODO this makes a bunch of API calls on our end, we should make an endpoint on workflows to reduce load.
+ *
+ * @export
+ * @async
+ * @param {Array<Object>} originalWorkflow - the original workflow that contains actionStates. We reference this to see if we need to update anything
+ * @param {Array<Object>} newWorkflow - the new workflow. Since it's identical to the original, we can update an action's state based on the original.
+ */
+export async function cloneWorkflowState(originalWorkflow, newWorkflow){
+  for (let index = 0; index < newWorkflow.length; index++) {
+    const action = originalWorkflow[index];
+    const newAction = newWorkflow[index];
+    if (action.actionType === 'simple' && action.actionStates[0].stateType === 'completed'){
+      await workflowsFetch("POST", "/states/handleSubmit", {actionStateId: newAction.actionStates[0].id});
+    }
+    else {
+      if (action.childActions){
+        for (let j = 0; j < action.childActions.length; j++) {
+          const childAction = action.childActions[j];
+          const newChildAction = newAction.childActions[j];
+          await cloneStates(childAction, newChildAction);
+        }
+      }
+    }
+    
+  }
+}
+
+/**
+ * Actual recursive part of the action state updater
+ * Updates the states if any simple actions are completed in the riginal workflow
+ * TODO this makes a bunch of API calls on our end, we should make an endpoint on workflows to reduce load.
+ *
+ * @async
+ * @param {Object} action - the original action that we check the status of.
+ * @param {Object} newAction - basically a clone of the other action we're checking. We set the state of this one if the original is completed. 
+ */
+async function cloneStates(action, newAction){
+  if (action.actionType === 'simple' && action.actionStates[0].stateType === 'completed'){
+    await workflowsFetch("POST", "/states/handleSubmit", {actionStateId: newAction.actionStates[0].id});
+  }
+  else {
+    if (action.childActions){
+      for (let j = 0; j < action.childActions.length; j++) {
+        const childAction = action.childActions[j];
+        const newChildAction = newAction.children[j];
+        await cloneStates(childAction, newChildAction);
+      }
+    }
+  }
 }
 
 /**

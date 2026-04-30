@@ -12,6 +12,7 @@ async function getFullActionTree(rootActionId) {
         where: { id: currentActionId },
         include: {
           metadata: true,
+          actionStates: true,
           previousAction: {
             select: {
               id: true,

@@ -238,6 +238,7 @@ const sessionCheckmarkRenderers = {
 function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, setMaterialId,
     materialId, setEditModalOpen, 
     courseId, sessionNum}){
+
     const deleteSeveral = () => {
          CMTJsonFetch('DELETE', `session/${courseId}/${sessionNum+1}`).then(async response => {
             const data = await response.json();
@@ -255,11 +256,9 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
 
     const deleteSingle = () => {
          CMTJsonFetch("DELETE", `/session/material/${materialId}`).then(() => {
-            const sessionDataCopy = sessionData.map(material => {
-                if (material.id === materialId) 
-                    return {};
-
-                return material;
+            const sessionDataCopy = sessionData.filter(material => {
+                if (material.id !== materialId) 
+                    return material;
             });
             setSessionData(sessionDataCopy);
         });
@@ -676,7 +675,7 @@ function SessionTable( {sessionData, sessionNum, sessionDate, setIsCreateOpen, s
 
         if (labels[index])
             return labels[index].label
-        return ""
+        return " "
     }
 
     function openSessionModal(text, col){

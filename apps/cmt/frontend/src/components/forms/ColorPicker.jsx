@@ -11,7 +11,7 @@ export function ColorOption({ color, setColor, hex, setShowWheel }) {
         border: color === hex ? `4px solid color-mix(in oklab, #eee, ${hex}` : '4px solid #eee',
       }}
       onClick={() => {
-        if (isRainbow) setShowWheel(true)
+        if (isRainbow) setShowWheel(showWheel => !showWheel)
         else setShowWheel(false)
         setColor(isRainbow ? "rainbow" : hex)
       }}
