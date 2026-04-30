@@ -803,25 +803,23 @@ export async function getApplicationNote(applicationId){
  * @param {number|string} applicationId - The ID of the application.
  * @param {string} jobPositionId - The ID of the job position.
  * @param {number} employeeId - The employee ID to assign to the new employee.
- * @param {object} commentData - An object with details for the hiring comment.
+ * @param {object} messageData - An object with details for the hiring comment.
  * @returns {Promise<object>} A promise that resolves to the updated application record.
  */
 export async function hireCandidate(
   candidateUsername,
   applicationId,
   jobPositionId,
-  employeeId,
-  commentData
+  messageData
 ) {
   if (
     !candidateUsername ||
     !applicationId ||
     !jobPositionId ||
-    !employeeId ||
-    !commentData
+    !messageData
   ) {
     throw new Error(
-      "Missing required fields: candidateUsername, applicationId, jobPositionId, employeeId, and commentData are all required."
+      "Missing required fields: candidateUsername, applicationId, jobPositionId, and messageData are all required."
     );
   }
   if (!BASE_API_URL || !DATABASE_API_EXTENSION) {
@@ -842,8 +840,7 @@ export async function hireCandidate(
       candidateUsername,
       applicationId,
       jobPositionId,
-      employeeId,
-      commentData,
+      messageData,
     }),
   });
 

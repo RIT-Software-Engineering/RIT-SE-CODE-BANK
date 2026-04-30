@@ -212,15 +212,14 @@ export default function AdminApplicationsPage() {
   /**
    * Handles the final confirmation of hiring a candidate from the modal.
    * Calls the hireCandidate API service and refreshes the hiring list on success.
-   * @param {string} employeeId - The new employee ID for the candidate.
    * @param {string} comment - An optional comment for the hiring record.
    */
-  const handleConfirmHire = async (employeeId, comment) => {
+  const handleConfirmHire = async (comment) => {
     if (!selectedApplication || !currentUser) return;
 
     setIsProcessing(true);
     try {
-      const commentData = {
+      const messageData = {
         author: `${currentUser.fname} ${currentUser.lname}`,
         comment: comment,
       };
@@ -229,8 +228,7 @@ export default function AdminApplicationsPage() {
         selectedApplication.username,
         selectedApplication.id,
         selectedApplication.jobPositionId,
-        employeeId,
-        commentData
+        messageData
       );
 
       showNotification('Candidate hired successfully!', 'success');
