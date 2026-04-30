@@ -164,19 +164,20 @@ router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, re
     try {
         const { courseId } = req.params
 
+        
         if (!req.file)
             return res.status(400).json({ error: 'No file uploaded' })
-
+        
         const course = await req.prisma.course.findUnique({
             where: {id: parseInt(courseId), professorId: req.user.uid}
         })
-
+        
         let resource;
-
+        
         const existingSyllabus = await req.prisma.resource.findMany({
-            where: {isSyllabus: true}
+            where: {isSyllabus: true, courseId: parseInt(courseId)}
         })
-
+        
         if (existingSyllabus.length > 0) {
             resource = await req.prisma.resource.updateMany({
                 where: {isSyllabus: true},

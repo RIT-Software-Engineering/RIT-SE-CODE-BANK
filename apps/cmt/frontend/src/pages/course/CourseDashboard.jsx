@@ -40,7 +40,6 @@ export function CourseDashboard() {
     /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
     const fetchToCallback = useCallback(
         (callback, outputValues) => {
-            console.log(callback, outputValues)
             if (outputValues.syllabusName)
                 return CMTFormFetch('POST', callback, outputValues.syllabusName)
             else

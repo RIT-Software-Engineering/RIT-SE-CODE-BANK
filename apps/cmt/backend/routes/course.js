@@ -282,6 +282,9 @@ router.post('/:templateId', async (req, res) => {
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
                     isTemplate: false,
+                    syllabusName: course.syllabusName,
+                    startDate: course.startDate,
+                    days: course.days,
                 },
             });
 
@@ -300,6 +303,7 @@ router.post('/:templateId', async (req, res) => {
                         mimeType: resource.mimeType,
                         filePath: resource.filePath,
                         courseId: Number(newCourse.id),
+                        isSyllabus: resource.isSyllabus,
                     },
                 });
                 return {old: resource.id, new: newResource.id}
