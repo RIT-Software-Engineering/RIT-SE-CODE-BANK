@@ -61,6 +61,8 @@ Tips for usage:
 - To exit a task, press the trash can button, or `ctrl`+`c`
 - If a task is getting stuck for no reason, exit and restart it. You can restart tasks by name by selecting them instead of `Start CMT`
 
+> If you don't use VSCode, this may not work. I suggest looking into if your IDE has a similar feature, otherwise, you can either vibe code a script to do it generically, or do the manual option.
+
 #### 2. (Option 2): Manual
 
 Run `npm i` in the root, then open 3 terminals and run this in each.
