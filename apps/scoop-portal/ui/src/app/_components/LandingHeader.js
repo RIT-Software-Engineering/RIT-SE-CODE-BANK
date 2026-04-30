@@ -1,21 +1,13 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   AppBar,
   Toolbar,
-  IconButton,
   Box,
   Button,
-  Menu,
-  MenuItem,
-  InputBase,
-  Paper,
-  ClickAwayListener,
+  useTheme,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import CloseIcon from "@mui/icons-material/Close";
 
 const navItems = [
   {
@@ -61,9 +53,20 @@ const searchablePages = [
 ];
 
 export default function LandingHeader() {
+  const theme = useTheme();
   const [anchorEls, setAnchorEls] = useState({});
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleMenuOpen = (event, label) => {
     setAnchorEls((prev) => ({ ...prev, [label]: event.currentTarget }));
@@ -79,15 +82,17 @@ export default function LandingHeader() {
       )
     : [];
 
+  // Banner with buttons when at top
   return (
     <>
       <AppBar
         position="fixed"
         sx={{
-          bgcolor: "#fff",
-          color: "#212121",
+          bgcolor: theme.ritColors.white,
+          color: theme.palette.mode === "light" ? theme.ritColors.white : theme.ritColors.black,
           height: "64px",
-          boxShadow: 2,
+          boxShadow: "none",
+          backdropFilter: "blur(10px)",
         }}
       >
         <Toolbar
@@ -127,7 +132,7 @@ export default function LandingHeader() {
             <Button variant="outline-orange">About</Button>
             <Button variant="outline-orange">Contact</Button>
             {/** This is where the home dashboard login takes us to */}
-            <Link href="/user-login" passHref>
+            <Link href="/user-roles" passHref>
               <Button variant="outline-orange">Log In</Button>
             </Link>
           </Box>

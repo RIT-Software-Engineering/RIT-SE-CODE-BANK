@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   Divider,
   Paper,
   Snackbar,
@@ -15,49 +14,10 @@ import { useTheme } from "@mui/material/styles";
 import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Header from "@components/Header";
+import StatusBadge from "@components/StatusBadge";
 
-/**
- * The statuses available for an application.
- */
-const STATUSES = ["ALL", "ACCEPTED", "REJECTED", "PENDING"];
+const STATUSES = ["ALL", "APPROVED", "REJECTED", "PENDING"];
 
-const STATUS_COLORS = {
-  ACCEPTED: "success",
-  REJECTED: "error",
-  PENDING: "warning",
-};
-
-const StatusBadge = ({ status }) => {
-  const theme = useTheme();
-  const label = status
-    ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    : "Pending";
-  const color = STATUS_COLORS[status] ?? "default";
-  const bgColor =
-    color === "success"
-      ? theme.palette.success.main
-      : color === "error"
-      ? theme.palette.error.main
-      : theme.palette.grey[500];
-  return (
-    <Chip
-      label={label}
-      size="medium"
-      sx={{
-        fontWeight: 400,
-        fontSize: "0.85rem",
-        px: 1,
-        bgcolor: bgColor,
-        color: theme.ritColors.white,
-        border: "none",
-      }}
-    />
-  );
-};
-
-/**
- * A single question/answer row used throughout the detail page.
- */
 const Field = ({ question, answer }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
@@ -85,9 +45,6 @@ const Field = ({ question, answer }) => {
   );
 };
 
-/**
- * A labelled section grouping related fields.
- */
 const Section = ({ title, children }) => (
   <Box>
     <Typography variant="h6" fontWeight="bold" sx={{ mb: 1.5 }} color="text.secondary">
@@ -166,95 +123,74 @@ export default function ApplicationDetailPage() {
     }
   };
 
-  /**
-   * Updates the status of the application in the database.
-   *
-   * @async
-   * @param {string} newStatus - The new status to set.
-   * @throws {Error} If the update fails.
-   * @returns {Promise<void>}
-   */
-  async function putApplicationStatus(newStatus) {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/application/${applicationId}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      }
-    );
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || "Failed to update");
-  }
-
-  /**
-   * Handles the logic for updating the status of the application.
-   *
-   * @param {string} newStatus - The new status to set the application to.
-   * @returns {void}
-   */
-  const handleStatusUpdate = async (newStatus) => {
+  const handleApprove = async () => {
     try {
-      await putApplicationStatus(newStatus);
-      await handleUserStatusUpdate(newStatus, application);
-      router.back();
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/offer/${applicationId}/send`,
+        { method: "PUT" }
+      );
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to approve application");
+      }
+
+      setNotification({
+        open: true,
+        message: "Application approved and offer sent to student",
+        severity: "success",
+      });
+
+      setTimeout(() => router.back(), 1500);
     } catch (err) {
       setNotification({
         open: true,
-        message: `Failed to update status: ${err.message}`,
+        message: `Failed to approve: ${err.message}`,
         severity: "error",
       });
     }
   };
 
-  // Users are guaranteed to exist in the DB as 'prospect' before they can apply,
-  // so we just update their role and active state directly without checking for existence first.
-  async function handleUserStatusUpdate(status, app) {
-    const new_role = status === "ACCEPTED" ? "scooployee" : "applicant";
-    const new_active = status === "ACCEPTED" ? "active" : "pending";
+  const handleReject = async () => {
     try {
-      await fetch(
-        process.env.NEXT_PUBLIC_API_URL + `/api/users/${app.applicant_id}`,
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/application/${applicationId}`,
         {
           method: "PUT",
-          body: JSON.stringify({ type: new_role, active: new_active }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "REJECTED" }),
+        }
+      );
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to reject application");
+      }
+
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/${application.applicant_id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ active: "rejected" }),
           headers: { "Content-Type": "application/json" },
         }
       );
-      handleJournalEntry(app, status);
-    } catch (error) {
-      console.error("Error updating user role:", error);
-    }
-  }
 
-  async function handleJournalEntry(app, status) {
-    console.log("Creating journal entry for", app.firstName, "with status", status);
-    let entry_string = "";
-    if (status === "ACCEPTED")
-      entry_string = `${app.firstName} ${app.lastName} has been accepted for SCOOP.`;
-    else if (status === "REJECTED")
-      entry_string = `${app.firstName} ${app.lastName} has been rejected for SCOOP.`;
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: new Date().toISOString(),
-          sender_id: app.applicant_id,
-          notes: entry_string,
-          recipient_ids: [],
-          topic_id: app.applicant_id,
-          semester_GroupId: null,
-          previous_entryid: null,
-          entry_type: "AUTOMATED",
-          visibility_level: 1,
-          privacy_level: "PUBLIC",
-        }),
+      setNotification({
+        open: true,
+        message: "Application rejected",
+        severity: "success",
       });
-    } catch (error) {
-      console.error("Error creating journal entry:", error);
+
+      setTimeout(() => router.back(), 1500);
+    } catch (err) {
+      setNotification({
+        open: true,
+        message: `Failed to reject: ${err.message}`,
+        severity: "error",
+      });
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -278,7 +214,6 @@ export default function ApplicationDetailPage() {
     <Box>
       <Header />
 
-      {/* Page header */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
         <IconButton onClick={() => router.back()} aria-label="back">
           <ArrowBackIcon />
@@ -286,7 +221,7 @@ export default function ApplicationDetailPage() {
         <Typography variant="h4" sx={{ fontWeight: 600 }}>
           {application.firstName} {application.lastName}
         </Typography>
-        <StatusBadge status={application.status} />
+        <StatusBadge value={application.status} type="application" />
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3, ml: 6 }}>
         Submitted on {new Date(application.createdAt).toLocaleDateString(undefined, {
@@ -294,7 +229,6 @@ export default function ApplicationDetailPage() {
         })}
       </Typography>
 
-      {/* Content */}
       <Paper elevation={1} square sx={{ p: 3 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
 
@@ -398,27 +332,26 @@ export default function ApplicationDetailPage() {
         </Box>
       </Paper>
 
-      {/* Actions */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 2 }}>
         <Button variant="outlined" color="inherit" onClick={() => router.back()}>
           Back
         </Button>
         {application.status !== "REJECTED" && (
           <Button
-            variant="contained"
+            variant="contained-error"
             color="error"
-            onClick={() => handleStatusUpdate(STATUSES[2])}
+            onClick={handleReject}
           >
             Reject
           </Button>
         )}
-        {application.status !== "ACCEPTED" && (
+        {application.status !== "APPROVED" && (
           <Button
-            variant="contained"
+            variant="contained-success"
             color="success"
-            onClick={() => handleStatusUpdate(STATUSES[1])}
+            onClick={handleApprove}
           >
-            Accept
+            Approve & Send Offer
           </Button>
         )}
       </Box>

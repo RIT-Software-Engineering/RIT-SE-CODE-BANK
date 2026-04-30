@@ -30,7 +30,6 @@ import {
   alpha 
 } from "@mui/material";
 
-// MUI Lab imports for Timeline
 import Timeline from "@mui/lab/Timeline";
 import TimelineItem from "@mui/lab/TimelineItem";
 import TimelineSeparator from "@mui/lab/TimelineSeparator";
@@ -39,16 +38,42 @@ import TimelineContent from "@mui/lab/TimelineContent";
 import TimelineDot from "@mui/lab/TimelineDot";
 import TimelineOppositeContent, { timelineOppositeContentClasses } from "@mui/lab/TimelineOppositeContent";
 
-import toast, { Toaster } from "react-hot-toast";
+import { notify } from "../utils/notify";
 
-/**
- * Renders the content for the Journal Page
- * @returns {JSX.Element}
- */
 export default function Journal() {
   const theme = useTheme();
+  const journalSelectMenuProps = {
+    PaperProps: {
+      sx: {
+        '& .MuiMenuItem-root:hover': {
+          bgcolor: theme.ritColors.orange,
+          color: theme.ritColors.white,
+        },
+        '& .MuiMenuItem-root.Mui-selected:hover': {
+          bgcolor: theme.ritColors.orange,
+          color: theme.ritColors.white,
+        },
+      },
+    },
+  };
+
+  const autocompleteListboxProps = {
+    sx: {
+      '& .MuiAutocomplete-option:hover': {
+        bgcolor: theme.ritColors.orange,
+        color: theme.ritColors.white,
+      },
+      '& .MuiAutocomplete-option[aria-selected="true"]': {
+        bgcolor: alpha(theme.ritColors.orange, 0.16),
+        color: theme.palette.mode === 'light' ? theme.ritColors.black : theme.ritColors.white,
+      },
+      '& .MuiAutocomplete-option[aria-selected="true"]:hover': {
+        bgcolor: theme.ritColors.orange,
+        color: theme.ritColors.white,
+      },
+    },
+  };
   
-  // -- State variables --
   const [journalEntries, setJournalEntries] = useState([]);
   const [filteredJournalEntries, setFilteredJournalEntries] = useState([]);
   const [users, setUsers] = useState({});
@@ -57,7 +82,6 @@ export default function Journal() {
   const [newEntryOpen, setNewEntryOpen] = useState(false);
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   
-  // Filter States
   const [filterSemesterValue, setFilterSemesterValue] = useState("");
   const [filterSenderValue, setFilterSenderValue] = useState("");
   const [filterRecipientValue, setFilterRecipientValue] = useState("");
@@ -65,7 +89,6 @@ export default function Journal() {
   const [filterEntryTypeValue, setFilterEntryTypeValue] = useState("");
   const [filterTimeValue, setFilterTimeValue] = useState("newest_first");
 
-  // New Entry States
   const [newEntrySemester, setNewEntrySemester] = useState("");
   const [newEntryRecipientIds, setNewEntryRecipientIds] = useState([]);
   const [newEntryTopicId, setNewEntryTopicId] = useState("");
@@ -73,7 +96,6 @@ export default function Journal() {
   const [newEntryVisibilityLevel, setNewEntryVisibilityLevel] = useState("");
   const [newEntryIsComment, setNewEntryIsComment] = useState(false);
   
-  // Edit States
   const [editingEntry, setEditingEntry] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [replyEntry, setReplyEntry] = useState(null);
@@ -118,8 +140,6 @@ export default function Journal() {
     fetchEntries();
   }, [user]);
 
-  //This is how the JSON download of all of the Journal entresi for a person will be done
-
   const handleJSONDownload = () =>{
     const JSONString = JSON.stringify(journalEntries,null,2);
     const blob = new Blob([JSONString],{type:"application/json"});
@@ -134,7 +154,6 @@ export default function Journal() {
     URL.revokeObjectURL(url);
   };
 
-  // -- Filters --
   const handleFilterSemesterChange = (e) => setFilterSemesterValue(e.target.value || "");
   const handleFilterRecipientChange = (e) => setFilterRecipientValue(e.target.value || "");
   const handleFilterSenderChange = (e) => setFilterSenderValue(e.target.value || "");
@@ -170,7 +189,6 @@ export default function Journal() {
     return options;
   };
 
-  // -- Edit Logic --
   const handleEditClick = (entry) => {
     setEditingEntry(entry);
     setEditValue(entry.notes);
@@ -198,11 +216,14 @@ export default function Journal() {
   };
 
   const handleSaveEdit = (entry) => {
-    toast.promise(saveEntryNotes(entry), { loading: "Saving...", success: "Notes saved!", error: "Failed to save notes."});
+    notify.promise(saveEntryNotes(entry), {
+      loading: "Saving…",
+      success: "Notes saved!",
+      error: "Failed to save notes.",
+    });
     setEditValue("");
   };
 
-  // -- New Entry Logic --
   const postNewEntry = async () => {
     let privacy_level = newEntryVisibilityLevel === "PERSONAL" ? "PERSONAL" : "PUBLIC";
     let visibility_level = newEntryVisibilityLevel !== "PERSONAL" ? parseInt(newEntryVisibilityLevel) : 1;
@@ -265,18 +286,21 @@ export default function Journal() {
   }
   const handleCreateNewEntry = () => {
     if (!newEntrySemester || !newEntryRecipientIds || !newEntryTopicId || !newEntryVisibilityLevel) {
-      toast.error("Please fill out all fields.");
+      notify.error("Please fill out all fields.");
       return;
     }
-    toast.promise(postNewEntry(), { loading: "Creating new journal entry...", success: "Journal entry created!", error: "Failed to create a new journal entry."});
+    notify.promise(postNewEntry(), {
+      loading: "Creating journal entry…",
+      success: "Journal entry created!",
+      error: "Failed to create a journal entry.",
+    });
   };
 
   const getInitials = (fname, lname) => {
     return `${fname ? fname[0] : ""}${lname ? lname[0] : ""}`.toUpperCase();
   };
 
-  //This function will set the filter states back to their base, effectivily clearing the filter
-const handleClearFilter = () =>{
+  const handleClearFilter = () =>{
     setFilterSemesterValue("");
     setFilterSenderValue("");
     setFilterRecipientValue("");
@@ -286,12 +310,8 @@ const handleClearFilter = () =>{
 
     const fullArray = Array.from(journalEntries).sort((a, b) => new Date(b.date) - new Date(a.date));
     setFilteredJournalEntries(fullArray);
-}
+  }
 
-  /**
-   * Component: EntriesList
-   * Renders the Timeline with dark-mode support and readable avatars
-   */
   function EntriesList({entries, commentView = false} ){
     const isDarkMode = theme.palette.mode === 'dark';
 
@@ -308,22 +328,20 @@ const handleClearFilter = () =>{
         position="right"
         sx={{
           [`& .${timelineOppositeContentClasses.root}`]: {
-            flex: 0.2,
+            flex: 0.15,
           },
+          px: 0,
         }}
       >
         {entries.map((entry) => {
           const isSender = entry.sender_id === user.id;
           const entryDate = new Date(entry.date);
           
-          // Determine color for the Avatar bubble
           const avatarBgColor = isSender ? theme.palette.primary.main : theme.palette.secondary.main;
-          // Determine text color based on contrast to background (fixes black-on-black)
           const avatarTextColor = theme.palette.getContrastText(avatarBgColor);
 
           return (
             <TimelineItem key={entry.id}>
-              {/* Left Side: Date */}
               <TimelineOppositeContent color="text.secondary">
                 <Typography variant="body2" sx={{ fontWeight: 'bold', color: isDarkMode ? 'text.primary' : 'inherit' }}>
                   {entryDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
@@ -336,7 +354,6 @@ const handleClearFilter = () =>{
                 </Typography>
               </TimelineOppositeContent>
 
-              {/* Center: Dot/Avatar */}
               <TimelineSeparator>
                 <TimelineDot 
                   color={entry.entry_type === "AUTOMATED" ? "grey" : "primary"}
@@ -348,9 +365,9 @@ const handleClearFilter = () =>{
                          width: 36, 
                          height: 36, 
                          fontSize: '0.9rem', 
-                         fontWeight: 'bold', // Make initials a bit thicker
+                         fontWeight: 'bold',
                          bgcolor: avatarBgColor,
-                         color: avatarTextColor // <--- FIX: Ensures text contrasts with background
+                         color: avatarTextColor
                        }}
                     >
                       {getInitials(entry.sender.fname, entry.sender.lname)}
@@ -360,8 +377,7 @@ const handleClearFilter = () =>{
                 <TimelineConnector sx={{ bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : undefined }} />
               </TimelineSeparator>
 
-              {/* Right Side: Content */}
-              <TimelineContent sx={{ py: '12px', px: 2 }}>
+              <TimelineContent sx={{ py: '12px', px: 2, flex: 3 }}>
                 <Paper 
                   elevation={isDarkMode ? 3 : 2} 
                   sx={{ 
@@ -369,11 +385,12 @@ const handleClearFilter = () =>{
                     borderRadius: 3, 
                     position: "relative",
                     borderTopLeftRadius: 0, 
-                    // Theme-Aware Background Logic
                     backgroundColor: isDarkMode 
                       ? (isSender ? alpha(theme.palette.primary.main, 0.15) : theme.palette.background.paper)
                       : (isSender ? "#f9fcfd" : "#fff"),
-                    border: isDarkMode ? `1px solid ${alpha(theme.palette.common.white, 0.1)}` : 'none'
+                    border: isDarkMode 
+                      ? `1px solid ${alpha(theme.palette.common.white, 0.1)}` 
+                      : `1px solid ${theme.palette.divider}`,
                   }}
                 >
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
@@ -388,13 +405,11 @@ const handleClearFilter = () =>{
                     
                     {isSender && (
                       <IconButton size="small" onClick={() => handleEditClick(entry)} sx={{ color: '#FF6A00' }}>
-                        {/* <EditNoteIcon fontSize="small" /> */}
                         Edit
                       </IconButton>
                     )}
                   </Box>
 
-                  {/* Metadata Chips */}
                   <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}>
                      <Chip 
                         label={`Topic: ${entry.topic.fname} ${entry.topic.lname}`} 
@@ -409,10 +424,8 @@ const handleClearFilter = () =>{
                       <Chip label={entry.entry_type} size="small" sx={{ opacity: 0.7 }} />
                   </Stack>
 
-                  {/* The Note Body */}
                   <Box
                     sx={{
-                      // Theme-Aware Note Background
                       backgroundColor: isDarkMode ? alpha(theme.palette.common.white, 0.05) : "rgba(0,0,0,0.03)",
                       padding: "1rem",
                       borderRadius: 1,
@@ -434,20 +447,18 @@ const handleClearFilter = () =>{
                     </Typography>
                   </Box>
 
-                  {/* Footer Actions */}
                   {commentView && (
                     <Box sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                       <Button
                         size="small"
-                        // disabled={!entry.next_entries || entry.next_entries.length === 0}
+                        variant="outline-orange"
                         onClick={() => setReplyEntry(entry)}
-                        sx={{ color: 'background' }}
                       >
                         {entry.next_entries.length || 0} Replies
                       </Button>
                       <Button
                         size="small"
-                        variant={isDarkMode ? "outlined" : "contained"}
+                        variant="solid-orange"
                         onClick={() => { 
                           setNewEntryPreviousId(entry.id); 
                           setNewEntryIsComment(true); 
@@ -470,11 +481,16 @@ const handleClearFilter = () =>{
     );
   }
 
-  // -- Main Render --
   return (
-    <>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
       <Header />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
         <JournalHeader
           setFilterDialogOpen={setFilterDialogOpen}
           setNewEntryOpen={setNewEntryOpen}
@@ -484,7 +500,6 @@ const handleClearFilter = () =>{
         <EntriesList entries={filteredJournalEntries.filter(entry => entry.previous_entryid == null)} commentView={true} />
       </Container>
 
-      {/* Add Entry Dialog */}
       <Dialog open={newEntryOpen} onClose={() => handleCancelNewEntry()} maxWidth="sm" fullWidth>
         <DialogTitle>{newEntryIsComment ? "Add Reply" : "Create New Journal Entry"}</DialogTitle>
         <DialogContent>
@@ -497,6 +512,7 @@ const handleClearFilter = () =>{
                 onChange={(e, v) => setNewEntrySemester(v ? v.value : "")}
                 renderInput={(params) => <TextField {...params} label="Semester" required />}
                 sx={{ mb: 2 }}
+                ListboxProps={autocompleteListboxProps}
               />
               )}
             </FormControl>
@@ -509,6 +525,7 @@ const handleClearFilter = () =>{
                 getOptionLabel={(option) => option.label}
                 onChange={(e, s) => setNewEntryRecipientIds(s.map(sn => sn.value))}
                 renderInput={(params) => <TextField {...params} label="Recipient" required />}
+                ListboxProps={autocompleteListboxProps}
               />
             </FormControl>
             )}
@@ -520,6 +537,7 @@ const handleClearFilter = () =>{
                 getOptionLabel={(option) => option.label}
                 onChange={(e, v) => setNewEntryTopicId(v ? v.value : "")}
                 renderInput={(params) => <TextField {...params} label="Topic" required />}
+                ListboxProps={autocompleteListboxProps}
               />
             </FormControl>
             )}
@@ -530,6 +548,7 @@ const handleClearFilter = () =>{
                 getOptionLabel={(option) => option.label}
                 onChange={(e, v) => setNewEntryVisibilityLevel(v ? v.value : "")}
                 renderInput={(params) => <TextField {...params} label="Visibility Level" required />}
+                ListboxProps={autocompleteListboxProps}
               />
             </FormControl>
 
@@ -545,52 +564,53 @@ const handleClearFilter = () =>{
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => handleCancelNewEntry()}>Cancel</Button>
+          <Button variant="outline-orange" onClick={() => handleCancelNewEntry()}>Cancel</Button>
           <Button variant="contained" onClick={handleCreateNewEntry}>Save</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Filter Dialog */}
       <FilterDialog
         open={filterDialogOpen}
         title="Filter Journal Entries"
         onCancel={() => setFilterDialogOpen(false)}
         onSubmit={() => handleApplyFilter()}
         actionLabel="Apply Filter"
-        secondaryAction={<Button variant="outlined" onClick={handleClearFilter}>Clear FIlter</Button>}
+        actionButtonProps={{ variant: "solid-orange", sx: { textTransform: 'none' } }}
+        actionsSx={{ justifyContent: 'flex-end', gap: 1 }}
+        secondaryAction={<Button variant="outline-orange" onClick={handleClearFilter}>Clear Filter</Button>}
       >
         <Stack spacing={2}>
            <Box>
             <Typography variant="caption" color="text.secondary">Semester</Typography>
-            <Select fullWidth size="small" value={filterSemesterValue} onChange={handleFilterSemesterChange} displayEmpty>
+            <Select fullWidth size="small" value={filterSemesterValue} onChange={handleFilterSemesterChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               {Object.entries(semesterGroups).map(([id, name]) => <MenuItem key={id} value={id}>{name}</MenuItem>)}
             </Select>
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Sender</Typography>
-            <Select fullWidth size="small" value={filterSenderValue} onChange={handleFilterSenderChange} displayEmpty>
+            <Select fullWidth size="small" value={filterSenderValue} onChange={handleFilterSenderChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               {Object.entries(users).map(([id, name]) => <MenuItem key={id} value={id}>{name}</MenuItem>)}
             </Select>
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Recipient</Typography>
-            <Select fullWidth size="small" value={filterRecipientValue} onChange={handleFilterRecipientChange} displayEmpty>
+            <Select fullWidth size="small" value={filterRecipientValue} onChange={handleFilterRecipientChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               {Object.entries(users).map(([id, name]) => <MenuItem key={id} value={id}>{name}</MenuItem>)}
             </Select>
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Topic</Typography>
-            <Select fullWidth size="small" value={filterTopicValue} onChange={handleFilterTopicChange} displayEmpty>
+            <Select fullWidth size="small" value={filterTopicValue} onChange={handleFilterTopicChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               {Object.entries(users).map(([id, name]) => <MenuItem key={id} value={id}>{name}</MenuItem>)}
             </Select>
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Entry Type</Typography>
-            <Select fullWidth size="small" value={filterEntryTypeValue} onChange={handleFilterEntryTypeChange} displayEmpty>
+            <Select fullWidth size="small" value={filterEntryTypeValue} onChange={handleFilterEntryTypeChange} displayEmpty MenuProps={journalSelectMenuProps}>
               <MenuItem value=""><em>None</em></MenuItem>
               <MenuItem value="AUTOMATED">AUTOMATED</MenuItem>
               <MenuItem value="MANUAL">MANUAL</MenuItem>
@@ -598,7 +618,7 @@ const handleClearFilter = () =>{
            </Box>
            <Box>
             <Typography variant="caption" color="text.secondary">Time</Typography>
-            <Select fullWidth size="small" value={filterTimeValue} onChange={handleFilterTimeChange} displayEmpty>
+            <Select fullWidth size="small" value={filterTimeValue} onChange={handleFilterTimeChange} displayEmpty MenuProps={journalSelectMenuProps}>
                <MenuItem value="newest_first">Newest First</MenuItem>
                <MenuItem value="oldest_first">Oldest First</MenuItem>
             </Select>
@@ -606,7 +626,6 @@ const handleClearFilter = () =>{
         </Stack>
       </FilterDialog>
 
-      {/* Edit Dialog */}
       <Dialog open={!!editingEntry} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
         {editingEntry && (
           <>
@@ -622,14 +641,13 @@ const handleClearFilter = () =>{
                 />
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleCancelEdit}>Cancel</Button>
+              <Button variant="outline-orange" onClick={handleCancelEdit}>Cancel</Button>
               <Button variant="contained" onClick={() => handleSaveEdit(editingEntry)}>Save</Button>
             </DialogActions>
           </>
         )}
       </Dialog>
 
-      {/* Reply Dialog */}
       <Dialog open={replyEntry != null} onClose={() => setReplyEntry(null)} maxWidth="md" fullWidth>
         {replyEntry && (
         <>
@@ -646,13 +664,12 @@ const handleClearFilter = () =>{
                 )}
             </DialogContent>
             <DialogActions>
-                <Button onClick={() => setReplyEntry(null)}>Close</Button>
+                <Button variant="solid-orange" onClick={() => setReplyEntry(null)}>Close</Button>
             </DialogActions>
         </>
         )}
       </Dialog>
 
-      <Toaster position="top-center" reverseOrder={false} />
-    </>
+    </Box>
   );
 }

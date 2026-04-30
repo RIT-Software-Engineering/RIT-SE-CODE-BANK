@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Chip,
+  Container,
   FormControl,
   InputAdornment,
   InputLabel,
@@ -34,60 +35,15 @@ import ViewKanbanIcon from "@mui/icons-material/ViewKanban";
 import SearchIcon from "@mui/icons-material/Search";
 
 import Header from "@components/Header";
+import StatusBadge from "@components/StatusBadge";
+import SortableTableHeader from "@components/SortableTableHeader";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import { getComparator } from "@utils/sortingUtils";
 
 /**
  * The statuses to filter applications by.
  */
-const STATUSES = ["ALL", "ACCEPTED", "REJECTED", "PENDING"];
-
-const STATUS_COLORS = {
-  ACCEPTED: "success",
-  REJECTED: "error",
-  PENDING: "warning",
-};
-
-const StatusBadge = ({ status }) => {
-  const theme = useTheme();
-  const label = status
-    ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-    : "Pending";
-  const color = STATUS_COLORS[status] ?? "default";
-  const bgColor =
-    color === "success"
-      ? theme.palette.success.main
-      : color === "error"
-      ? theme.palette.error.main
-      : theme.palette.grey[500];
-  return (
-    <Chip
-      label={label}
-      size="medium"
-      sx={{
-        fontWeight: 400,
-        fontSize: "0.85rem",
-        px: 1,
-        bgcolor: bgColor,
-        color: theme.ritColors.white,
-        border: "none",
-      }}
-    />
-  );
-};
-
-function descendingComparator(a, b, orderBy) {
-  const aVal = orderBy === "createdAt" ? new Date(a[orderBy]) : (a[orderBy] ?? "");
-  const bVal = orderBy === "createdAt" ? new Date(b[orderBy]) : (b[orderBy] ?? "");
-  if (bVal < aVal) return -1;
-  if (bVal > aVal) return 1;
-  return 0;
-}
-
-function getComparator(order, orderBy) {
-  return order === "desc"
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
+const STATUSES = ["ALL", "APPROVED", "REJECTED", "PENDING"];
 
 export default function SupervisorApplicationsPage() {
   const theme = useTheme();
@@ -195,20 +151,6 @@ export default function SupervisorApplicationsPage() {
     };
   };
 
-  /**
-   * Handles the logic to submit accepted applicants as new users into the database.
-   *
-   * @returns {void}
-   */
-  const handleSubmit = () => {
-    const acceptedApps = applications.filter((app) => app.status === "ACCEPTED");
-    for (let app of acceptedApps) {
-      let newUser = createUserFromApp(app);
-      console.log("Submitting user:", newUser);
-      postNewUsers(newUser);
-    }
-  };
-
   const handleBack = () => router.back();
 
   const handleSort = (column) => {
@@ -277,19 +219,14 @@ export default function SupervisorApplicationsPage() {
         <TableHead>
           <TableRow>
             {columns.map((col) => (
-              <TableCell key={col.id} sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }}>
-                <TableSortLabel
-                  active={orderBy === col.id}
-                  direction={orderBy === col.id ? order : "asc"}
-                  onClick={() => handleSort(col.id)}
-                  sx={{
-                    color: `${theme.ritColors.white} !important`,
-                    "& .MuiTableSortLabel-icon": { color: `${theme.ritColors.white} !important` },
-                  }}
-                >
-                  {col.label}
-                </TableSortLabel>
-              </TableCell>
+              <SortableTableHeader
+                key={col.id}
+                id={col.id}
+                label={col.label}
+                isActive={orderBy === col.id}
+                sortDirection={order}
+                onSort={handleSort}
+              />
             ))}
             <TableCell sx={{ backgroundColor: theme.palette.primary.main, color: theme.ritColors.white }} align="right">Options</TableCell>
           </TableRow>
@@ -312,7 +249,7 @@ export default function SupervisorApplicationsPage() {
                 })}
               </TableCell>
               <TableCell>
-                <StatusBadge status={app.status} />
+                <StatusBadge value={app.status} type="application" />
               </TableCell>
               <TableCell align="right">
                 <Button variant="outline-orange" onClick={() => handleOpen(app)}>
@@ -328,8 +265,8 @@ export default function SupervisorApplicationsPage() {
 
   const KanbanView = () => {
     const kanbanColumns = [
-      { label: "Pending", key: "PENDING", color: theme.palette.grey[500], defaultOrder: "desc" },
-      { label: "Accepted", key: "ACCEPTED", color: theme.palette.success.main, defaultOrder: "desc" },
+      { label: "Pending", key: "PENDING", color: theme.palette.warning.main, defaultOrder: "desc" },
+      { label: "Approved", key: "APPROVED", color: theme.palette.success.main, defaultOrder: "desc" },
       { label: "Rejected", key: "REJECTED", color: theme.palette.error.main, defaultOrder: "desc" },
     ];
 
@@ -498,10 +435,17 @@ export default function SupervisorApplicationsPage() {
   };
 
   return (
-    <Box>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
       <Header />
-      <IconButton onClick={handleBack} aria-label="back">
-        <ArrowBackIcon />
+      <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
+        <IconButton onClick={handleBack} aria-label="back">
+          <ArrowBackIcon />
       </IconButton>
       <Typography variant="h4" sx={{ fontWeight: 600, mb: 3 }}>
         Review Applications
@@ -613,6 +557,7 @@ export default function SupervisorApplicationsPage() {
           <Button variant="solid-orange" onClick={() => setFilterDialogOpen(false)}>Apply</Button>
         </DialogActions>
       </Dialog>
+      </Container>
     </Box>
   );
 }

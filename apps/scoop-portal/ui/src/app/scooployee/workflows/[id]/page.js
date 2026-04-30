@@ -336,16 +336,30 @@ export default function WorkflowDashboard() {
   const steps = workflowState.actionStates;
 
   return (
-    <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
+    <Box
+      sx={{
+        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        color: (theme) => theme.palette.text.primary,
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
+      }}
+    >
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
-        <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, mb: 5, color: '#fff' }}>
+        <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, mb: 5, color: 'text.primary' }}>
           Scooployee Workflow
         </Typography>
 
         <Grid container spacing={4} direction="column">
           <Grid item xs={12}>
-            <Paper elevation={1} sx={{ p: 3 }}>
+            <Paper
+              elevation={1}
+              sx={{
+                p: 3,
+                backgroundColor: (theme) => theme.palette.background.paper,
+                border: (theme) => `1px solid ${theme.palette.divider}`,
+              }}
+            >
               <Typography
                 variant="h2"
                 sx={{
@@ -503,24 +517,6 @@ export default function WorkflowDashboard() {
           </Grid>
         </Grid>
       </Container>
-
-      <Box
-        component="footer"
-        sx={{
-          height: '80px',
-          bgcolor: '#212121',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          px: { xs: 2, md: 3 },
-          mt: 8,
-        }}
-      >
-        <Typography variant="body2" sx={{ fontWeight: 300 }}>
-          © {new Date().getFullYear()} RIT | Powered by Scoop Software
-        </Typography>
-      </Box>
     </Box>
   );
 }

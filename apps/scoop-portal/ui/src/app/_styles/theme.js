@@ -24,12 +24,21 @@ const baseTheme = createTheme({
     purple: "#7D55C7",
     red: "#DA291C",
   },
+  shape: {
+    borderRadius: 0,
+  },
   palette: {
     primary: {
       main: "#F76902",
+      contrastText: "#FFFFFF",
     },
     secondary: {
       main: "#000000",
+      contrastText: "#FFFFFF",
+    },
+    text: {
+      primary: "#212121",
+      secondary: "#4F4F4F", // less grey for better readability
     },
     success: {
       main: "#84BD00",
@@ -92,16 +101,67 @@ const baseTheme = createTheme({
   },
   components: {
     MuiButton: {
+      styleOverrides: {
+        root: {
+          boxShadow: "none",
+          transition: "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), border-color 300ms cubic-bezier(0.4, 0, 0.2, 1), color 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+          "&:hover": {
+            boxShadow: "none",
+          },
+        },
+      },
       variants: [
+        {
+          props: { variant: "contained" },
+          style: {
+            backgroundColor: "#F76902",
+            color: "#FFFFFF",
+            border: "1px solid #F76902",
+            height: "40px",
+            fontWeight: 600,
+            boxShadow: "none",
+            "&:hover": {
+              backgroundColor: "#000000",
+              border: "1px solid #000000",
+              boxShadow: "none",
+            },
+          },
+        },
+        {
+          props: { variant: "outlined" },
+          style: {
+            border: "1px solid #F76902",
+            color: "#F76902",
+            backgroundColor: "transparent",
+            "&:hover": {
+              border: "1px solid #F76902",
+              backgroundColor: "#F76902",
+              color: "#FFFFFF",
+            },
+          },
+        },
+        {
+          props: { variant: "text" },
+          style: {
+            color: "#F76902",
+            "&:hover": {
+              textDecoration: "underline",
+              backgroundColor: "rgba(247,105,2,0.08)",
+            },
+          },
+        },
         {
           props: { variant: "solid-orange" },
           style: {
             border: "1px solid #F76902",
             backgroundColor: "#F76902",
             color: "#FFFFFF",
+            boxShadow: "none",
             "&:hover": {
-              border: "1px solid #C55400",
-              backgroundColor: "#C55400",
+              border: "1px solid #000000",
+              backgroundColor: "#000000",
+              color: "#FFFFFF",
+              boxShadow: "none",
             },
           },
         },
@@ -109,11 +169,11 @@ const baseTheme = createTheme({
           props: { variant: "solid-gray" },
           style: {
             border: "1px solid #D0D3D4",
-            backgroundColor: "#D0D3D4",
-            color: "#000000",
+            backgroundColor: "#FFFFFF",
+            color: "#212121",
             "&:hover": {
               border: "1px solid #A2AAAD",
-              backgroundColor: "#A2AAAD",
+              backgroundColor: "#F7F7F7",
             },
           },
         },
@@ -128,19 +188,65 @@ const baseTheme = createTheme({
             },
           },
         },
+        {
+          props: { variant: "contained-success" },
+          style: {
+            backgroundColor: "#84BD00",
+            color: "#FFFFFF",
+            "&:hover": {
+              backgroundColor: "#000000",
+            },
+          },
+        },
+        {
+          props: { variant: "contained-error" },
+          style: {
+            backgroundColor: "#DA291C",
+            color: "#FFFFFF",
+            "&:hover": {
+              backgroundColor: "#000000",
+            },
+          },
+        },
       ],
       styleOverrides: {
         root: {
           textTransform: "none",
-          borderRadius: "0px",
+          borderRadius: 0,
+          fontWeight: 500,
         },
       },
     },
     MuiSelect: {
       styleOverrides: {
         root: {
+          borderRadius: 0,
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: "#F76902",
+          },
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          borderLeft: "1px solid #D0D3D4",
+          borderRight: "1px solid #D0D3D4",
+          borderBottom: "1px solid #D0D3D4",
+          borderTop: "none",
+          borderRadius: 0,
+          margin: 0,
+          backgroundColor: "#FFFFFF",
+          "&:first-of-type": {
+            borderTop: "1px solid #D0D3D4",
+          },
+          "&.Mui-selected": {
+            backgroundColor: "#F76902",
+            color: "#FFFFFF",
+          },
+          "&:hover": {
+            backgroundColor: "#F76902",
+            color: "#FFFFFF",
           },
         },
       },
@@ -148,8 +254,25 @@ const baseTheme = createTheme({
     MuiAutocomplete: {
       styleOverrides: {
         inputRoot: {
+          borderRadius: 0,
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: "#F76902",
+          },
+        },
+        option: {
+          borderLeft: "1px solid #D0D3D4",
+          borderRight: "1px solid #D0D3D4",
+          borderBottom: "1px solid #D0D3D4",
+          borderTop: "none",
+          borderRadius: 0,
+          margin: 0,
+          padding: "0.75rem 1rem",
+          backgroundColor: "#FFFFFF",
+          "&:first-of-type": {
+            borderTop: "1px solid #D0D3D4",
+          },
+          "&.Mui-focused, &:hover": {
+            backgroundColor: "rgba(247,105,2,0.08)",
           },
         },
       },
@@ -157,6 +280,21 @@ const baseTheme = createTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: { "&.Mui-focused": { color: "#F76902" } },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+          boxShadow: "none",
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+        },
       },
     },
   },
@@ -173,9 +311,12 @@ export const lightTheme = createTheme({
     mode: "light",
     background: {
       default: "#FFFFFF",
-      paper: baseTheme.ritColors.warm_gray_1,
+      paper: "#FFFFFF", // remove warm gray paper background
     },
-    text: { primary: "#000000" },
+    text: {
+      primary: "#212121",
+      secondary: "#4F4F4F",
+    },
   },
   components: {
     ...baseTheme.components,
