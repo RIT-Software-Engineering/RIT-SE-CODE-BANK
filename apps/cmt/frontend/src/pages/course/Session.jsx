@@ -44,6 +44,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [curMaterialId, setCurMaterialId] = useState(0);
     const [defaultMaterialType, setDefaultMaterialType] = useState('Topic/Lecture');
 
+    // We only work with 1 session date at a time, and it gets reset regardless.
+    // Probably not the best system and could be improved
     const [sessionDate, setSessionDate] = useState('');
 
     /**

@@ -1,7 +1,7 @@
 import { Form } from "react-bootstrap"
 
 /**
- * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, SelectMultiOutputProps, TextOutputProps, FileOutputProps } from "@se-code-bank/workflows-ecosystem"
+ * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, SelectMultiOutputProps, TextOutputProps, FileOutputProps, DateOutputProps } from "@se-code-bank/workflows-ecosystem"
  */
 
 /**
@@ -52,7 +52,7 @@ export const TextOutput = ({ value, onChange, onBlur, required, placeholder, isI
 }
 
 /**
- * @param {TextOutputProps} props
+ * @param {DateOutputProps} props
  */
 export const DateOutput = ({ value, onChange, onBlur, required, isInvalid, error }) => {
     return (

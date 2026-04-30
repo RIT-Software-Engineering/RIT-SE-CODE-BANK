@@ -141,6 +141,7 @@ router.put('/:id', async (req, res) => {
     }
 })
 
+// We don't want professors uploading things like images for syllabi so we heavily limit options
 const syllabusUpload = multer({
     storage: storage,
     fileFilter: function (_, file, cb) {
@@ -160,6 +161,10 @@ const syllabusUpload = multer({
     },
 })
 
+/**
+ * POST /api/cmt/resources/syllabus/:courseId
+ * Creates a syllabus if one doesn't exist or updates the file if one does
+ */
 router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, res) => {
     try {
         const { courseId } = req.params

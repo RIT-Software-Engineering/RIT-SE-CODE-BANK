@@ -76,7 +76,6 @@ export function BuilderPageAdmin({isAdmin}){
                     actions = returnedActions.actions;
 
                     usedCodes = Array.from(new Set(returnedActions.codes))
-                    console.log(usedCodes)
                 } 
                 return {
                     id: info.id,
@@ -590,11 +589,7 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
             if (validation){
                 if (validation.length > 0){
                     const order = { "Mo": 1, "Tu": 2, "We": 3, "Tr": 4, "Fr": 5};
-                    // Since the days are user-given, if there's any spaces we get rid of them
-                    if (!Array.isArray(validation))
-                        output[0]['validation'] = {options: validation};
-                    else
-                        output[0]['validation'] = {options: validation.sort((a, b) => order[a] - order[b])}
+                    output[0]['validation'] = {options: validation.sort((a, b) => order[a] - order[b])};
                 }
             }
             break;
