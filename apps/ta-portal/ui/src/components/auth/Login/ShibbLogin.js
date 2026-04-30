@@ -1,9 +1,6 @@
 // src/components/auth/Login/ShibbLogin.js
 "use client";
 
-
-
-
 import React, { useState, useEffect } from "react";
 import {
     Button,
@@ -39,36 +36,32 @@ export default function ShibbLogin({
         const checkAuth = async () => {
             try {
                 // Check SAML auth session
-                const authRes = await fetch(`${process.env.NEXT_PUBLIC_AUTH_URL}/me`,{credentials: "include",});
-                
+                const authRes = await fetch(`${process.env.NEXT_PUBLIC_AUTH_URL}/me`, { credentials: "include", });
+
+                // if user isn't logged in then send them to shibboleth to log in
                 if (!authRes.ok) {
                     window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL}/login?returnTo=https://apps.se.rit.edu/ta-portal")}`;
                 }
+
+                // get user data
                 const authData = await authRes.json();
                 const authId = authData.user?.id;
 
+                // no user id = not working
                 if (!authId) {
                     setError("No user ID received from authentication service");
                     return;
                 }
+
                 // Check if user exists in DB by ID
-                const dbRes = await getUser(authId);
-                console.log(dbRes)
+                const dbRes = await getUser(authId)
+                const dbUser = await dbRes
+                
+                //if user isn't in our db
                 if (dbRes.status === 404) {
                     showNotification('User not found in our database. Signing you up now', warning);
-                    onSwitchToSignUp();
-                    return;
+                    // create a profile
                 }
-
-                // if (!dbRes.ok) {
-                //     setError("Unable to fetch user data from database");
-                //     showNotification('Internal server error', error);
-                //     return;
-                // }
-
-                const dbUser = await dbRes
-                console.log(dbRes)
-
                 // Set user + redirect
                 setUser(dbUser);
                 onLoginSuccess(dbUser, "login");
@@ -79,8 +72,7 @@ export default function ShibbLogin({
             }
         };
         checkAuth();
-    },
-        []);
+    },[]);
 
     // Set a default user from the list when the component loads
     useEffect(() => {

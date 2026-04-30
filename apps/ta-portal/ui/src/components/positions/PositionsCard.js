@@ -92,6 +92,8 @@ export default function PositionsCard({
   const [isConfirmingApplication, setIsConfirmingApplication] = useState(false);
   const [isCheckingHiredStatus, setIsCheckingHiredStatus] = useState(false);
 
+  const [isSendingJob, setIsSendingJob] = useState(false);
+
   const hasApplied =
     currentUser?.candidate?.jobPositionApplicationHistory?.some(
       (app) => app.jobPositionId === position.id
@@ -204,6 +206,7 @@ export default function PositionsCard({
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
           <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
           <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Position History</MenuItem>
+          {(onReactivate || onOnHold || onInactive) && <Divider />}
           {(onReactivate || onOnHold||onInactive)&& <Divider />}
           {(onOnHold && status !== 'ONHOLD') && (<MenuItem onClick={() => { onOnHold(position.id); handleMenuClose(); }}>Put Position on Hold </MenuItem>)}
           {(onInactive && status !== 'INACTIVE') && (<MenuItem onClick={() => { onInactive(position.id); handleMenuClose(); }}> Mark Position Inactive</MenuItem>)}
@@ -251,18 +254,19 @@ export default function PositionsCard({
           {position.course.description}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 4 } }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+          {position.location&&(<Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
             <LocationIcon sx={{ mr: 1 }} />
             <Typography variant="body2">{position.location}</Typography>
-          </Box>
+          </Box>)}
           <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
             <Person sx={{ mr: 1 }} />
             <Typography variant="body2">
               {position.employer.user.fname} {position.employer.user.lname} ({position.employer.user.email})
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
-            <ClockIcon sx={{ mr: 1 }} />
+          {position.jobSchedules.length!=0&&(
+            <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+              <ClockIcon sx={{ mr: 1 }} />
             <Box>
               {position.jobSchedules.map((slot, i) => (
                 <Typography key={i} variant="body2">
@@ -270,7 +274,7 @@ export default function PositionsCard({
                 </Typography>
               ))}
             </Box>
-          </Box>
+          </Box>)}
         </Box>
         {(currentUser?.role === 'CANDIDATE' || currentUser?.role === 'EMPLOYEE') && eligibilityDetails.details.length > 0 && (
           <Paper variant="outlined" sx={{ mt: 2, p: 2, bgcolor: 'action.hover' }}>

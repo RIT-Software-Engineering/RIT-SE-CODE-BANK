@@ -33,7 +33,7 @@ describe('dispatchNotification (proxy to notification-service)', () => {
   });
 
   test('posts to notification service with expected payload', async () => {
-    const res = await dispatchNotification('bgg6007', { subject: 'Hello', message: 'Test', userEmail: 'bgg6007@rit.edu' });
+    const res = await dispatchNotification('bgg0000', { subject: 'Hello', message: 'Test', userEmail: 'bgg0000@rit.edu' });
     expect(res).toEqual(expect.objectContaining({ ok: true }));
     expect(calls.length).toBe(1);
     const { url, opts } = calls[0];
@@ -42,10 +42,10 @@ describe('dispatchNotification (proxy to notification-service)', () => {
     expect(opts.headers['Content-Type']).toBe('application/json');
     const body = JSON.parse(opts.body);
     expect(body).toEqual(expect.objectContaining({
-      userId: 'bgg6007',
+      userId: 'bgg0000',
       subject: 'Hello',
       message: 'Test',
-      userEmail: 'bgg6007@rit.edu',
+      userEmail: 'bgg0000@rit.edu',
     }));
   });
 });
