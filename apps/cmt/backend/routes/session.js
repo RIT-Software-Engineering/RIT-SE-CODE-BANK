@@ -137,12 +137,13 @@ router.put("/material/:materialId", async (req, res) => {
 router.put("/:sessionId", async (req, res) => {
     try {
         const {sessionId} = req.params;
-        const {completed} = req.body;
+        const {completed, date} = req.body;
         
         await prisma.session.update({
             where: {id: Number(sessionId)},
             data: {
-                completed: Boolean(completed)
+                completed: Boolean(completed),
+                date
             }
         })
 
