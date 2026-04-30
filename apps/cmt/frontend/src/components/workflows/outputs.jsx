@@ -1,7 +1,7 @@
 import { Form } from "react-bootstrap"
 
 /**
- * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, SelectMultiOutputProps, TextOutputProps } from "@se-code-bank/workflows-ecosystem"
+ * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, SelectMultiOutputProps, TextOutputProps, FileOutputProps } from "@se-code-bank/workflows-ecosystem"
  */
 
 /**
@@ -108,13 +108,29 @@ export const SelectMultiOutput = ({ output, value, onChange, onBlur, isInvalid, 
                 key={option}
                 type="checkbox"
                 label={option}
-                id={`checkbox-${option}`}
+                id={option}
                 value={option}
                 checked={value?.includes(option)}
                 isInvalid={isInvalid}
                 />
             ))}
             </Form>
+            <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
+        </div>
+    )
+}
+
+/**
+ * @param {FileOutputProps} props
+ */
+export const FileOutput = ({ onChange, error }) => {
+    return (
+        <div className='shrink'>
+            <Form.Control
+                type='file'
+                onChange={onChange}
+                required
+            />
             <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
         </div>
     )

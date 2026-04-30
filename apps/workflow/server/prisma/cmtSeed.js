@@ -57,6 +57,22 @@ async function main() {
             userId: users[0].id,
             actions: [
                 {
+                    name: 'Upload syllabus',
+                    description: 'Upload your syllabus file!',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'SYLLABUS',
+                        outputs: [
+                            {
+                                name: 'Syllabus',
+                                key: 'syllabusName',
+                                type: 'file',
+                                isRequired: true,
+                            },
+                        ],
+                    },
+                },
+                {
                     name: 'Course Section',
                     description: 'Enter the section for your course!',
                     actionType: 'simple',
@@ -122,7 +138,7 @@ async function main() {
                             },
                         ],
                     },
-                },
+                },  
             ],
         },
         {

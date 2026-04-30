@@ -211,7 +211,9 @@ router.put('/:id', async (req, res) => {
                 && { section: updateData.section }
             ),
             ...(updateData.days !== undefined)
-                && {days: updateData.days.join(', ')}
+                && {days: typeof(updateData.days) !== 'string' ? 
+                    updateData.days.filter(day => day !== false).join(', ') :
+                    updateData.days}
         }
 
         const updatedCourse = await prisma.course.update({

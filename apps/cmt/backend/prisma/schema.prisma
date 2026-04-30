@@ -37,6 +37,7 @@ model Course {
   tbteamset       TBTeamSet[]
   workflowId      String
   workflowStateId String
+  syllabusName        String?       // The actual syllabus is found in resources
   Resource        Resource[]
   isTemplate      Boolean       @default(false)
 }

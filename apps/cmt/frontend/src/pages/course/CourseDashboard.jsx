@@ -4,7 +4,7 @@ import { Button } from 'react-bootstrap'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ResourceManager } from '../../components/resources/ResourceManager.jsx'
 import { CMTWorkflow } from '../../components/workflows/workflow.jsx'
-import { CMTJsonFetch } from '../../utils/api.js'
+import { CMTFormFetch, CMTJsonFetch } from '../../utils/api.js'
 import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { Session } from './Session.jsx'
 
@@ -38,7 +38,13 @@ export function CourseDashboard() {
 
     /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
     const fetchToCallback = useCallback(
-        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues),
+        (callback, outputValues) => {
+            console.log(callback, outputValues)
+            if (outputValues.syllabusName)
+                return CMTFormFetch('POST', callback, outputValues.syllabusName)
+            else
+                return CMTJsonFetch('PUT', callback, outputValues)
+        },
         []
     )
 

@@ -27,6 +27,8 @@ function CMTDetermineCallbackFactory(courseId, userId) {
             return `workflow/publishCourseTemplate?courseId=${courseId}&asid=${asid}`
         } if (code === 'COURSE_DAYS') {
             return `course/${courseId}?uid=${userId}&asid=${asid}`
+        }if (code === 'SYLLABUS') {
+            return `resources/syllabus/${courseId}?uid=${userId}&asid=${asid}`
         }
         
         throw Error('Unrecognized action metadata code ' + code)

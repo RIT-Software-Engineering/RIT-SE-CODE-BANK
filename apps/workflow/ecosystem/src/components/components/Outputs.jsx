@@ -1,5 +1,5 @@
 /**
- * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputDefinitionProps, OutputValidatorRegistry, Renderer, SelectOutputProps, SelectMultiOutputProps, TextOutputProps } from '../../types/components.js'
+ * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputDefinitionProps, OutputValidatorRegistry, Renderer, SelectOutputProps, SelectMultiOutputProps, TextOutputProps, FileOutputProps } from '../../types/components.js'
  */
 
 import { useState, useCallback, useEffect } from 'react'
@@ -21,7 +21,8 @@ import { useState, useCallback, useEffect } from 'react'
  *      TextOutputRenderers: TextOutputRenderers['renderers'],
  *      SelectOutputRenderers: SelectOutputRenderers['renderers'],
  *      SelectMultiOutputRenderers: SelectMultiOutputRenderers['renderers'],
- *      CheckmarkOutputRenderers: CheckmarkOutputRenderers['renderers']
+ *      CheckmarkOutputRenderers: CheckmarkOutputRenderers['renderers'],
+ *      FileOutputRenderers: FileOutputRenderers['renderers']
  * } }} OutputRenderers
  */
 /**
@@ -46,6 +47,9 @@ export function Output(props) {
             break
         case 'multiselect':
             inputElement = <SelectMultiOutputController {...props}/>
+            break
+        case 'file':
+            inputElement = <FileOutputController {...props}/>
             break
         default:
             inputElement = <TextOutputController {...props}/>
@@ -212,7 +216,9 @@ function SelectMultiOutputController({ output, value, setValue, submitted, valid
     const [touched, setTouched] = useState(false)
 
     const getError = useCallback(nextValue => {
-        if (output.isRequired && !nextValue) return 'This field is required'
+        if (output.isRequired && (!nextValue || 
+            (typeof(nextValue) !== 'string' && nextValue?.every(value => !value)))) 
+        return 'This field is required'
         return null
     }, [output.isRequired])
 
@@ -233,21 +239,74 @@ function SelectMultiOutputController({ output, value, setValue, submitted, valid
             required={output.isRequired ?? false}
             value={value}
             onChange={e => {
+                const index = output.validation.options.findIndex(option => option === e.target.id)
                 if (e.target.checked) {
-                    if (value && typeof(value) !== 'string')
-                        setValue([...value, e.target.value])
-                    else if (value)
-                        setValue([...value.split(', '), e.target.value])
-                    else
-                        setValue([e.target.value])
+                    if (typeof(value) === 'string'){
+                        const tokens = value.split(", ")
+                        const newVal = new Array(output.validation.options.length).fill(false)
+                        tokens.forEach(token => newVal[output.validation.options.findIndex(item => item === token)] = token)
+                        newVal[index] = e.target.value
+                        setValue(newVal)
+                    } else 
+                        setValue(value.map((item, i) => i === index ? e.target.value : item))
                 } else
                     if (typeof(value) !== 'string')
-                        setValue(value.filter(item => item !== e.target.value))
-                    else 
-                        setValue(value.split(', ').filter(item => item !== e.target.value))
+                        setValue(value.map((item, i) => i === index ? false : item))
+                    else {
+                        const tokens = value.split(", ")
+                        const newVal = new Array(output.validation.options.length).fill(false)
+                        tokens.forEach(token => newVal[output.validation.options.findIndex(item => item === token)] = token)
+                        newVal[index] = false
+                        setValue(newVal)
+                    }
             }}
             onBlur={() => setTouched(true)}
             isInvalid={showInvalid}
+            error={error}
+        />
+    )
+}
+
+/**
+ * @typedef {{
+ *      renderers: {
+ *          FileOutput: Renderer<FileOutputProps>
+ *      }
+ * }} FileOutputRenderers
+ */
+/**
+ * @param {OutputStateProps & OutputRenderers} props
+ */
+function FileOutputController({ output, value, setValue, validatorRegistry, renderers, disabled }) {
+
+    const getError = useCallback(nextValue => {
+        if (output.isRequired && !nextValue) return 'A file upload is required'
+        return null
+    }, [output.isRequired])
+
+    useEffect(() => {
+        const validators = validatorRegistry.current
+        validators[output.key] = getError
+        return () => void delete validators[output.key]
+    }, [getError, output, validatorRegistry])
+
+    const error = getError(value)
+
+    return (
+        <renderers.FileOutputRenderers.FileOutput
+            disabled={disabled}
+            output={output}
+            required={output.isRequired ?? false}
+
+            onChange={(e) => {
+                    const target = e.target;
+                    if ('files' in target) {
+                        console.log(target.files?.[0])
+                        const formData = new FormData()
+                        formData.append('file', target.files?.[0] || null)
+                        setValue(formData);
+                    }
+                }}
             error={error}
         />
     )
