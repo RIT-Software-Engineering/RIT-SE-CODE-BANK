@@ -46,9 +46,5 @@ replay_pid*
 node_modules/
 .vite
 
-# Commit notification env
-!services/notification-service/.env
-
-
 .nx/cache
 .nx/workspace-data
