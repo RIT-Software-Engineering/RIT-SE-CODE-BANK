@@ -4,7 +4,7 @@ export const sendScoopSlack = async (recipient, subject, message) => {
     }
 
     try{
-        const res = await fetch(`${process.env.NEXT_PUBLIC_NOTIFICATION_URL}/api/notifications/dispatch/scoop-portal`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_NOTIFICATION}/dispatch/scoop-portal`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
