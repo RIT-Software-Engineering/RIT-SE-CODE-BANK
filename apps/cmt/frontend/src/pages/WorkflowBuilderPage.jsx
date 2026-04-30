@@ -592,7 +592,7 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                     const order = { "Mo": 1, "Tu": 2, "We": 3, "Tr": 4, "Fr": 5};
                     // Since the days are user-given, if there's any spaces we get rid of them
                     if (!Array.isArray(validation))
-                        output[0]['validation'] = {options: validation.split(/, ?/).sort((a, b) => order[a] - order[b])};
+                        output[0]['validation'] = {options: validation};
                     else
                         output[0]['validation'] = {options: validation.sort((a, b) => order[a] - order[b])}
                 }
