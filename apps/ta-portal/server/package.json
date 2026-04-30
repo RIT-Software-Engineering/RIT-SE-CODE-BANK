@@ -8,8 +8,6 @@
   "scripts": {
     "start": "node main.js",
     "dev": "nodemon main.js",
-    "setup_db": "node ./server/database/setup_db.js",
-    "prisma:delete-migration": "cd ./server/database/prisma && rm -rf migrations",
     "prisma:generate": "cd ./server/database/prisma && npx prisma generate",
     "prisma:migrate": "cd ./server/database/prisma && npx prisma migrate dev --schema=./server/database/prisma/schema.prisma",
     "prisma:deploy": "npx prisma migrate deploy --schema=./server/database/prisma/schema.prisma",

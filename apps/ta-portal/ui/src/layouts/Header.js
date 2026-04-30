@@ -41,7 +41,6 @@ import {
   Logout as LogoutIcon,
   ExpandLess,
   ExpandMore,
-  Search as SearchIcon,
   Close as CloseIcon,
   Notifications,
 } from "@mui/icons-material";
@@ -57,6 +56,7 @@ const HEADER_LINKS = [
     href: "/",
     icon: <Home />,
     roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
+    drawer: true,
   },
   {
     text: "Messaging",
@@ -64,6 +64,7 @@ const HEADER_LINKS = [
     icon: <Message />,
     roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.ADMIN, ROLES.EMPLOYER],
     feature: FEATURES.MESSAGING,
+    drawer: true,
   },
   {
     text: "Timecard",
@@ -71,6 +72,7 @@ const HEADER_LINKS = [
     icon: <AccessTime />,
     roles: [ROLES.EMPLOYEE],
     feature: FEATURES.TIMECARD,
+    drawer: true,
   },
   {
     text: "Timecard",
@@ -78,6 +80,7 @@ const HEADER_LINKS = [
     icon: <AccessTime />,
     roles: [ROLES.ADMIN],
     feature: FEATURES.TIMECARD,
+    drawer: true,
   },
   {
     text: "Timecard",
@@ -85,6 +88,7 @@ const HEADER_LINKS = [
     icon: <AccessTime />,
     roles: [ROLES.EMPLOYER],
     feature: FEATURES.TIMECARD,
+    drawer: true,
   },
   {
     text: "Positions",
@@ -92,6 +96,7 @@ const HEADER_LINKS = [
     icon: <Work />,
     roles: [ROLES.CANDIDATE],
     feature: FEATURES.POSITIONS,
+    drawer: true,
   },
   {
     text: "Positions",
@@ -99,6 +104,7 @@ const HEADER_LINKS = [
     icon: <Work />,
     roles: [ROLES.EMPLOYER],
     feature: FEATURES.POSITIONS,
+    drawer: true,
   },
   {
     text: "Positions",
@@ -106,6 +112,7 @@ const HEADER_LINKS = [
     icon: <Work />,
     roles: [ROLES.EMPLOYEE],
     feature: FEATURES.POSITIONS,
+    drawer: true,
   },
   {
     text: "Positions",
@@ -113,6 +120,7 @@ const HEADER_LINKS = [
     icon: <Work />,
     roles: [ROLES.ADMIN],
     feature: FEATURES.POSITIONS,
+    drawer: true,
   },
   {
     text: "Applications",
@@ -120,6 +128,7 @@ const HEADER_LINKS = [
     icon: <Description />,
     roles: [ROLES.CANDIDATE],
     feature: FEATURES.APPLICATIONS,
+    drawer: true,
   },
   {
     text: "Applications",
@@ -127,6 +136,7 @@ const HEADER_LINKS = [
     icon: <Description />,
     roles: [ROLES.EMPLOYER],
     feature: FEATURES.APPLICATIONS,
+    drawer: true,
   },
   {
     text: "Applications",
@@ -134,6 +144,7 @@ const HEADER_LINKS = [
     icon: <Description />,
     roles: [ROLES.EMPLOYEE],
     feature: FEATURES.APPLICATIONS,
+    drawer: true,
   },
   {
     text: "Applications",
@@ -141,25 +152,50 @@ const HEADER_LINKS = [
     icon: <Description />,
     roles: [ROLES.ADMIN],
     feature: FEATURES.APPLICATIONS,
+    drawer: true,
   },
   {
     text: "Users",
     href: "/Users",
     icon: <People />,
     roles: [ROLES.ADMIN],
+    drawer: true,
   },
   {
     text: "Resources",
     href: "/Resources",
     icon: <InfoIcon />,
-    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN]
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER, ROLES.ADMIN],
+    drawer: true,
   },
   {
-    text: "Course List",
+    text: "Courses",
     href: "/courses",
     icon: <Description />,
-    roles: [ROLES.ADMIN]
-  }
+    roles: [ROLES.ADMIN],
+    drawer: true,
+  },
+  {
+    text: "Features",
+    href: "/Admin/Features",
+    icon: <Settings />,
+    roles: [ROLES.ADMIN],
+    drawer: false,
+  },
+  {
+    text: "Notifications",
+    href: "/Settings",
+    icon: <Notifications />,
+    roles: [ROLES.ADMIN],
+    drawer: false,
+  },
+  {
+    text: "Settings",
+    href: "/Settings",
+    icon: <Settings />,
+    roles: [ROLES.CANDIDATE, ROLES.EMPLOYEE, ROLES.EMPLOYER],
+    drawer: false,
+  },
 ];
 
 
@@ -184,12 +220,9 @@ export default function Header() {
   const isMobile = useMediaQuery("(max-width:1380px)");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
 
   const availableLinks = HEADER_LINKS.filter((link) =>
-    link.roles.includes(userRole) && 
+    link.roles.includes(userRole) &&
     (!link.feature || isFeatureEnabled(link.feature))
   );
 
@@ -206,31 +239,26 @@ export default function Header() {
     setSettingsOpen(!settingsOpen);
   };
 
-  // Search functionality
-  const allPages = availableLinks.map((link) => {
-    const finalHref =
-      link.href.includes("[username]") && currentUser
-        ? link.href.replace("[username]", currentUser.username)
-        : link.href;
-    return { text: link.text, href: finalHref, category: "Navigation" };
-  });
-
   // Add additional searchable pages and actions
   const additionalPages = [];
-  
+
   if (currentUser) {
     // Profile and settings
     additionalPages.push(
       { text: "My Profile", href: "/Profile", category: "Settings" },
       { text: "Notification Preferences", href: "/Settings", category: "Settings" },
-      { text: "Theme/Appearance", href: "#", category: "Settings", action: () => {
-        setDrawerOpen(true);
-        setSettingsOpen(true);
-      }},
-      { text: "Dark Mode", href: "#", category: "Settings", action: () => {
-        setDrawerOpen(true);
-        setSettingsOpen(true);
-      }}
+      {
+        text: "Theme/Appearance", href: "#", category: "Settings", action: () => {
+          setDrawerOpen(true);
+          setSettingsOpen(true);
+        }
+      },
+      {
+        text: "Dark Mode", href: "#", category: "Settings", action: () => {
+          setDrawerOpen(true);
+          setSettingsOpen(true);
+        }
+      }
     );
 
     // Admin-specific pages
@@ -269,62 +297,7 @@ export default function Header() {
     }
   }
 
-  const searchablePages = [...allPages, ...additionalPages];
 
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-    if (query.trim() === "") {
-      setSearchResults([]);
-      return;
-    }
-    const filtered = searchablePages.filter((page) =>
-      page.text.toLowerCase().includes(query.toLowerCase())
-    );
-    setSearchResults(filtered);
-  };
-
-  const handleSearchSelect = (href) => {
-    // Check if it's an action (dark mode toggle)
-    const selected = searchResults.find(r => r.href === href);
-    if (selected?.action) {
-      selected.action();
-    } else {
-      // Smart routing for Applications page when already on it
-      if (currentUser && pathname?.includes('/Applications/Admin/')) {
-        const currentTab = searchParams?.get('tab') || 'hiring'; // No tab param = hiring tab (default)
-        const isSearchingForHiring = selected?.text?.toLowerCase().includes('hir');
-        const isSearchingForApplications = selected?.text === 'Applications';
-        
-        // If on hiring and searching for Applications, go to all tab
-        if (currentTab === 'hiring' && isSearchingForApplications) {
-          const newUrl = `/Applications/Admin/${currentUser.username}?tab=all`;
-          router.push(newUrl);
-          // Force scroll to trigger re-render detection
-          window.scrollTo(0, 0);
-          setSearchOpen(false);
-          setSearchQuery("");
-          setSearchResults([]);
-          return;
-        }
-        // If on all tab and searching for hiring, go to hiring tab
-        else if (currentTab === 'all' && isSearchingForHiring) {
-          const newUrl = `/Applications/Admin/${currentUser.username}`;
-          router.push(newUrl);
-          // Force scroll to trigger re-render detection
-          window.scrollTo(0, 0);
-          setSearchOpen(false);
-          setSearchQuery("");
-          setSearchResults([]);
-          return;
-        }
-      }
-      // Default routing
-      router.push(href);
-    }
-    setSearchOpen(false);
-    setSearchQuery("");
-    setSearchResults([]);
-  };
 
   const drawer = (
     <Box
@@ -340,7 +313,7 @@ export default function Header() {
 
       {/* Navigation Links */}
       <List sx={{ px: 1, py: 2 }}>
-        {availableLinks.map((link) => {
+        {availableLinks.filter(item => item.drawer === true).map((link) => {
           const finalHref =
             link.href.includes("[username]") && currentUser
               ? link.href.replace("[username]", currentUser.username)
@@ -386,8 +359,7 @@ export default function Header() {
           );
         })}
       </List>
-
-      <Divider sx={{ my: 1 }} />
+       <Divider sx={{ my: 1 }} />
 
       {/* Settings Section */}
       <List sx={{ px: 1, py: 1 }}>
@@ -697,14 +669,16 @@ export default function Header() {
             {/* Desktop Navigation (hidden on mobile) */}
             {!isMobile && currentUser && (
               <Box
+
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   gap: 1,
                   mr: 2,
+                  overflow: "hidden",
                 }}
               >
-                {availableLinks.slice(0, 6).map((link) => {
+                {availableLinks.map((link) => {
                   const finalHref =
                     link.href.includes("[username]") && currentUser
                       ? link.href.replace("[username]", currentUser.username)
@@ -741,7 +715,7 @@ export default function Header() {
               }
             >
               <IconButton
-                sx={{ 
+                sx={{
                   ml: 1,
                   "&:hover": {
                     color: theme.palette.primary.main,
@@ -754,61 +728,9 @@ export default function Header() {
               </IconButton>
             </Tooltip>
 
-            {/* Search Bar - Desktop */}
-            {!isMobile && searchOpen && (
-              <Paper
-                sx={{
-                  p: "2px 4px",
-                  display: "flex",
-                  alignItems: "center",
-                  width: 250,
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  backdropFilter: "blur(10px)",
-                }}
-              >
-                <InputBase
-                  sx={{ ml: 1, flex: 1, color: "white" }}
-                  placeholder="Search pages..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  autoFocus
-                  inputProps={{
-                    style: { color: "white" },
-                  }}
-                />
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    setSearchOpen(false);
-                    setSearchQuery("");
-                    setSearchResults([]);
-                  }}
-                  sx={{ p: "10px", color: "white" }}
-                >
-                  <CloseIcon />
-                </IconButton>
-              </Paper>
-            )}
-
-            {/* Search Icon Button */}
-            {!isMobile && !searchOpen && (
-              <Tooltip title="Search pages">
-                <IconButton
-                  onClick={() => setSearchOpen(true)}
-                  sx={{
-                    color: "white",
-                    "&:hover": {
-                      color: theme.palette.primary.main,
-                    },
-                  }}
-                >
-                  <SearchIcon />
-                </IconButton>
-              </Tooltip>
-            )}
 
             {/* Login Button - Show when not logged in */}
-            {!currentUser && (
+            {!currentUser ? (
               <Button
                 component={Link}
                 href="/login"
@@ -824,10 +746,31 @@ export default function Header() {
               >
                 Login
               </Button>
-            )}
+            ) :
+              <Tooltip
+                title={
+                  "View your profile"
+                }
+              >
+                <IconButton
+                  component={Link}
+                  href="/Profile"
+                  aria-label="profile button"
+                  sx={{
+                    color: "white",
+                    fontSize: "0.9rem",
+                    textTransform: "none",
+                    "&:hover": {
+                      color: theme.palette.primary.main,
+                    },
+                  }}>
+                  <AccountCircle />
+                </IconButton>
+              </Tooltip>}
+
 
             {/* Hamburger Menu */}
-            {currentUser && (
+            {currentUser  && (
               <IconButton
                 color="inherit"
                 aria-label="open menu"
@@ -860,49 +803,6 @@ export default function Header() {
       >
         {drawer}
       </Drawer>
-
-      {/* Search Results Dropdown */}
-      {searchOpen && searchResults.length > 0 && !isMobile && (
-        <Paper
-          sx={{
-            position: "fixed",
-            top: 85,
-            right: { xs: 16, sm: 24, md: 32 },
-            width: 300,
-            maxHeight: 400,
-            overflowY: "auto",
-            zIndex: 1300,
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-          }}
-        >
-          <List sx={{ p: 0 }}>
-            {searchResults.map((result, index) => (
-              <ListItemButton
-                key={index}
-                onClick={() => handleSearchSelect(result.href)}
-                sx={{
-                  py: 1.5,
-                  px: 2,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                  "&:last-child": {
-                    borderBottom: "none",
-                  },
-                  "&:hover": {
-                    backgroundColor: theme.palette.action.hover,
-                  },
-                }}
-              >
-                <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                  <Typography variant="body2">{result.text}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {result.category}
-                  </Typography>
-                </Box>
-              </ListItemButton>
-            ))}
-          </List>
-        </Paper>
-      )}
     </>
   );
 }

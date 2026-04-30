@@ -338,7 +338,7 @@ export default function MessagingClient({ initialEmail = "" }) {
                   label="Recipient's Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="user@example.com"
+                  placeholder="user@rit.edu"
                   onKeyPress={(e) => e.key === "Enter" && handleLoadThread()}
                   fullWidth
                   autoFocus

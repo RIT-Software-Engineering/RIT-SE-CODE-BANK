@@ -50,8 +50,7 @@ export default function Home() {
               },
             }}
           >
-            Find <span className="orange-text">opportunities</span> to be a teaching assistant for the Software Engineering Department and{" "}
-            <span className="orange-text">manage</span> your teaching assistant responsibilities
+            Students can <span className="orange-text">find opportunities</span> to be a teaching assistant for the Software Engineering Department. Faculty and admin can <span className="orange-text">manage</span> job postings and <span className="orange-text">hire</span> teaching assistants.
           </Box>
         </Box>
       </Container>
@@ -128,7 +127,7 @@ export default function Home() {
                     mb: 1,
                   }}
                 >
-                  Find Open Positions
+                  Login
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", color: "primary.main" }}>
                   <Typography
@@ -138,7 +137,7 @@ export default function Home() {
                       mr: 1,
                     }}
                   >
-                    Login to explore opportunities
+                    Login or sign up here
                   </Typography>
                   <ArrowForward sx={{ fontSize: "1.2rem" }} />
                 </Box>
