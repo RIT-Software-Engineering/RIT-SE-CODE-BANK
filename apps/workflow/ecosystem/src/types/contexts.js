@@ -70,7 +70,7 @@ export {}
  *     isRequired: boolean
  *     placeholder: any
  *     initialValue: any
- *     type: "number" | "text" | "select" | "checkmark" | "file"
+ *     type: "number" | "text" | "select" | "checkmark" | "file" | "multiselect" | "date"
  *     validation: {[index: string]: any}
  *  }[]
  * } & {[index: string]: any}} ParsedMetadata

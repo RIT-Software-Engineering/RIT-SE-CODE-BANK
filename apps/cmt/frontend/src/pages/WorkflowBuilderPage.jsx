@@ -37,7 +37,11 @@ export function BuilderPageAdmin({isAdmin}){
     ["SESSION", "Sessions"],
     ["COURSE_SECTION", "Course Section"], 
     ["NUMBER_STUDENTS", "Number of Students"], 
-    ["COURSE_SEMESTER", "Course Semester"],];
+    ["COURSE_SEMESTER", "Course Semester"],
+    ["COURSE_SYLLABUS", "Syllabus"],
+    ["COURSE_DAYS", "Course Days"],
+    ["COURSE_START_DATE", "Start Date"],
+    ["CHECKMARK_PUBLISH_SITE", "Publish Site Checkmark"]];
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
     const [depthLevel, setDepthLevel] = useState(0);
@@ -71,12 +75,8 @@ export function BuilderPageAdmin({isAdmin}){
                 if (workflow.rootActionId){
                     const returnedActions = await CMTJsonFetch("GET", `workflow/actionTemplate/workflow/${workflow.id}`)
                     actions = returnedActions.actions;
-                    if (!isAdmin)
-                        actions = actions.filter(
-                            action => action.processedAction?.parsedMetadata?.code !== "PUBLISH_TEMPLATE"
-                        );
 
-                   usedCodes = Array.from(new Set(returnedActions.codes))
+                    usedCodes = Array.from(new Set(returnedActions.codes))
                 } 
                 return {
                     id: info.id,
@@ -143,6 +143,9 @@ export function BuilderPageAdmin({isAdmin}){
                             validationArray.push([Object.values(outputs[0].validation.options).join(", ")]);
                             validationArray.push(Object.values(outputs[1].validation.options));
                             setValidation(validationArray);
+                            break;
+                        case "COURSE_DAYS":
+                            setValidation(Object.values(validation)[0])
                             break;
                         default:
                             break;
@@ -404,6 +407,47 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             </>
             break;
 
+        case "COURSE_DAYS":
+            returnOutput = <>
+            <div className="flex pt-2">
+                <Form.Label>Validation?</Form.Label>
+                <Form.Check className="pl-2" checked={hasValidation} onChange={(e)=>{
+                    setHasValidation(e.target.checked);
+                }}/>
+            </div>
+            {hasValidation ? <>
+            <div className="flex ">
+                <div>
+                <Form.Label>Days Users can Choose From</Form.Label>
+                <div className="flex gap-3">
+                {['Mo', 'Tu', 'We', 'Tr', 'Fr'].map(option =>
+                (
+                    <Form.Check  
+                    key={option}
+                    type="checkbox"
+                    label={option}
+                    value={option}
+                    id={`checkbox-${option}`}
+                    checked={validation.includes(option)}
+                    onChange={(e) => {
+                        // AI-generated code
+                        const { value, checked } = e.target
+                        if (checked && !validation.includes(value)) {
+                            setValidation(prev => [...prev, value]);
+                        } else {
+                            setValidation(prev => prev.filter((option) => option !== value));
+                        }
+                    }}
+                    />
+                ))}
+                </div>
+                </div>
+            </div>
+            </>
+            : <></>}
+            </>
+            break;
+
         default:
             returnOutput = <></>
     }
@@ -515,6 +559,24 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
             output = [{isRequired: isRequired}];
             break;
 
+        case "COURSE_START_DATE":
+            output = [{
+                name: "Start Date",
+                key: "startDate",
+                type: "date",
+                isRequired: isRequired
+            }];
+            break;
+
+        case "COURSE_SYLLABUS":
+            output = [{
+                name: "Syllabus",
+                key: "syllabusName",
+                type: "file",
+                isRequired: isRequired
+            }];
+            break;
+
         case "SESSION":
             output = [{
                 isRequired: isRequired,
@@ -522,6 +584,21 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
             }];
             if (validation[1])
                 output[0]['toSessionNum'] = validation[1][0];
+            break;
+
+        case "COURSE_DAYS":
+            output = [{
+                name: "Course Days",
+                key: "days",
+                type: "multiselect",
+                isRequired: isRequired
+            }]
+            if (validation){
+                if (validation.length > 0){
+                    const order = { "Mo": 1, "Tu": 2, "We": 3, "Tr": 4, "Fr": 5};
+                    output[0]['validation'] = {options: validation.sort((a, b) => order[a] - order[b])};
+                }
+            }
             break;
 
         default:

@@ -1,5 +1,5 @@
 /**
- * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, CheckmarkActionProps, CheckmarkOutputProps, EditableActionViewProps, FetchToCallback, IsCheckmark, NavigateButtonProps, NumberOutputProps, OnNavigateFactory, OutputContainerProps, OutputViewProps, PreviousValues, Renderer, SelectOutputProps, TextOutputProps, WorkflowContainerProps } from '../../types/components.js'
+ * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, CheckmarkActionProps, CheckmarkOutputProps, EditableActionViewProps, FetchToCallback, IsCheckmark, NavigateButtonProps, NumberOutputProps, OnNavigateFactory, OutputContainerProps, OutputViewProps, PreviousValues, Renderer, SelectOutputProps, TextOutputProps, WorkflowContainerProps, FileOutputProps, DateOutputProps } from '../../types/components.js'
  * @import { WorkflowsWorkflow } from '../../types/workflows.js'
  * @import { ActionWithContexts } from '../../types/contexts.js'
  * @import { CardActionRenderers } from './Actions.jsx'
@@ -56,7 +56,10 @@ export function Workflow(props) {
  *      NumberOutput: Renderer<NumberOutputProps>,
  *      TextOutput: Renderer<TextOutputProps>,
  *      SelectOutput: Renderer<SelectOutputProps>,
- *      CheckmarkOutput: Renderer<CheckmarkOutputProps>
+ *      CheckmarkOutput: Renderer<CheckmarkOutputProps>,
+ *      SelectMultiOutput: Renderer<CheckmarkOutputProps>,
+ *      FileOutput: Renderer<FileOutputProps>,
+ *      DateOutput: Renderer<DateOutputProps>,
  * }} WorkflowRendererMap
  */
 /**
@@ -80,6 +83,9 @@ export function createWorkflowRenderers(renderers) {
         TextOutput,
         SelectOutput,
         CheckmarkOutput,
+        SelectMultiOutput,
+        FileOutput,
+        DateOutput,
     } = renderers
 
     const outputRenderers = {
@@ -96,6 +102,15 @@ export function createWorkflowRenderers(renderers) {
         CheckmarkOutputRenderers: {
             CheckmarkOutput,
         },
+        SelectMultiOutputRenderers: {
+            SelectMultiOutput,
+        },
+        FileOutputRenderers: {
+            FileOutput,
+        },
+        DateOutputRenderers: {
+            DateOutput,
+        }
     }
 
     const actionContentRenderers = {

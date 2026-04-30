@@ -1,7 +1,6 @@
 import { Edit, Info, Trash2 } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { useParams } from "react-router-dom";
 import { CheckmarkAction} from "@se-code-bank/workflows-ecosystem/components";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
@@ -40,29 +39,31 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [sessionData, setSessionData] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [sessionNum, setSessionNum] = useState(0);
-    const { id } = useParams();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [curMaterialId, setCurMaterialId] = useState(0);
     const [defaultMaterialType, setDefaultMaterialType] = useState('Topic/Lecture');
     const [error, setError] = useState(null)
 
+    // We only work with 1 session date at a time, and it gets reset regardless.
+    // Probably not the best system and could be improved
+    const [sessionDate, setSessionDate] = useState('');
+
     /**
      * Initial GET request upon loading the page
      * Sets the correct amount of sessions and the actual sessions themselves with useful data
      * Also gets material if there is any and puts it in each session
      */
-    const update = useCallback(() => 
-        CMTJsonFetch('GET', `session/${id}`)
+    const update = useCallback(() => {
+        return CMTJsonFetch('GET', `session/${courseId}`)
             .then(async json => {
                 setSessionCount(json.sessions.length)
-                setSessions(json.sessions);
                 const materialsArray = json.sessionMaterials.filter(m => m.material).map(m => m.material);
                 setSessionData(materialsArray.flat());
             })
-            .catch(createErrorHandler("Failed to fetch session details", setError)),
-    [id, setSessions, setSessionCount])
-    useEffect(() => void update(), [id, update])
+            .catch(createErrorHandler("Failed to fetch session details", setError))
+    }, [courseId, setSessionCount])
+    useEffect(() => void update(), [courseId, update])
 
     if (error) return <CMTDangerAlert error={error} />
 
@@ -75,7 +76,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
         setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions}/>
         <DeleteModal deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
-        materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={id} sessionNum={sessionNum}/>
+        materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={courseId} sessionNum={sessionNum}/>
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
@@ -129,7 +130,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                         </Accordion.Header>
                         <Accordion.Body>
                             { sessionData.find(data => data.sessionNum === i) ?
-                            <SessionTable sessionData={sessionData} sessionNum={i} setIsCreateOpen={setIsOpen} 
+                            <SessionTable sessionData={sessionData} sessionNum={i} sessionDate={sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} setIsCreateOpen={setIsOpen} 
                             setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId} setDefaultMaterialType={setDefaultMaterialType}/> :
                             <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                             }
@@ -158,6 +159,34 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                     </Card.Text>
                                 </Card.Body>
                             </Card> : <></>
+                            }
+
+                            {sessionDate ? 
+                            <Form className="flex max-w-[30%] gap-2 items-center"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                console.log(sessionDate)
+                                CMTJsonFetch("PUT", `/session/${sessions.find(session => session.sessionNum === i+1)?.id}`, {date: sessionDate}).then(() => {
+                                    const sessionsCopy = sessions.map(session => {
+                                        if (session.sessionNum === i+1) 
+                                            return {...session, date: sessionDate}
+                                        return session
+                                    });
+                                    setSessions(sessionsCopy);
+                                    setSessionDate('');
+                                })
+                            }}>
+                                <Form.Label>Date: </Form.Label>
+                                <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
+                                <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
+                                <Button type="submit" variant="success">Submit</Button>
+                            </Form> :
+                            <div className="flex gap-3 items-center">
+                                <p className="mb-0">Date: {sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} </p>
+                                <Button variant="outline-secondary" onClick={() => {
+                                    setSessionDate(sessions.find(session => session.sessionNum === i+1)?.date ?? new Date().toISOString().split('T')[0])
+                                    }} size="sm">Edit</Button>
+                            </div>
                             }
                             <div className='flex justify-between pt-3'>
                                 <div className={`justify-start ${sessionData.find(data => data.sessionNum === i) ? 'visible' : 'invisible'}`}>
@@ -600,13 +629,14 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
  * @param {Object} props 
  * @param {Array} props.sessionData - the data that contains the materials
  * @param {Number} props.sessionNum - the identifying session number to only get data from that specific session
+ * @param {String} props.sessionDate - the date of the session - used in preview mode
  * @param {(isCreateOpen: Boolean) => void} props.setIsCreateOpen - opens/closes the creation modal. We only open here.
  * @param {(isEditOpen: Boolean) => void} props.setIsEditOpen - opens/closes the edit modal. We only open here.
  * @param {(materialId: Number) => void} props.setMaterialId - sets the id of the material we're working with.
  * @param {(defaultMaterialType: string) => void} props.setDefaultMaterialType - sets the default material type depending on where the user clicked. Used for the creation modal.
  * @returns {React.ReactElement} the table in HTML
  */
-function SessionTable( {sessionData, sessionNum, setIsCreateOpen, setIsEditOpen, setMaterialId, setDefaultMaterialType } ) {
+function SessionTable( {sessionData, sessionNum, sessionDate, setIsCreateOpen, setIsEditOpen, setMaterialId, setDefaultMaterialType } ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
     const allCols = useMemo(() => ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"], []);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -689,7 +719,7 @@ function SessionTable( {sessionData, sessionNum, setIsCreateOpen, setIsEditOpen,
             <tbody>
                 {Array.from({ length: determineRows() }, (_, i) => (
                 <tr> 
-                    {isPreviewMode && <td className="font-bold text-center">{sessionNum+1}</td>}
+                    {isPreviewMode && <td className="text-center p-3"><p className="font-bold">{sessionNum+1}</p><p>{sessionDate}</p></td>}
                     {(cols[0] || !isPreviewMode) ? ( // Topic/Lecture
                         <td 
                             className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}

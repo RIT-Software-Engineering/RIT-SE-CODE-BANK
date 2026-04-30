@@ -36,8 +36,10 @@ export {}
  */
 
 /** @typedef {OutputFieldProps} TextOutputProps */
+/** @typedef {OutputFieldProps} DateOutputProps */
 /** @typedef {OutputFieldProps} NumberOutputProps */
 /** @typedef {OutputFieldProps} SelectOutputProps */
+/** @typedef {OutputFieldProps} SelectMultiOutputProps */
 
 // Containers and views
 
@@ -62,6 +64,18 @@ export {}
 
 /** @typedef {{ actionWithContexts: ActionWithContexts, onClick: (e: React.MouseEvent) => void }} NavigateButtonProps */
 /** @typedef {{ actionWithContexts: ActionWithContexts, onClick: () => void, checked: boolean, loading: boolean, disabled: boolean }} CheckmarkActionProps */
+
+/**
+ * Shared input behavior for text-like outputs.
+ * @typedef {{
+ *  onChange: (e: any) => void,
+ *  required?: boolean,
+ *  error?: string,
+ *  disabled?: boolean,
+ * } & OutputDefinitionProps
+ * } OutputFileProps
+ */
+/** @typedef {OutputFileProps} FileOutputProps */
 
 
 // Util

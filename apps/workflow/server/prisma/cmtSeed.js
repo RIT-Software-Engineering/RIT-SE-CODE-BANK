@@ -35,10 +35,26 @@ async function main() {
     actions: [
         {
             name: 'Course Details',
-            description: 'Add details to Your course to help differentiate it!',
+            description: 'Add relevant details to the course!',
             actionType: 'workflow',
             userId: users[0].id,
             actions: [
+                {
+                    name: 'Upload syllabus',
+                    description: 'Upload a syllabus file!',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_SYLLABUS',
+                        outputs: [
+                            {
+                                name: 'Syllabus',
+                                key: 'syllabusName',
+                                type: 'file',
+                                isRequired: true,
+                            },
+                        ],
+                    },
+                },
                 {
                     name: 'Course Section',
                     description: 'Enter the section for your course!',
@@ -87,6 +103,41 @@ async function main() {
                         ],
                     },
                 },
+                {
+                    name: 'Course Days',
+                    description: 'Select on which days that your course will take place!',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_DAYS',
+                        outputs: [
+                            {
+                                name: 'Course Days',
+                                key: 'days',
+                                type: 'multiselect',
+                                isRequired: true,
+                                validation: {
+                                    options: ['Mo', 'Tu', 'We', 'Tr', 'Fr'],
+                                },
+                            },
+                        ],
+                    },
+                },
+                {
+                    name: 'Start Date',
+                    description: 'Select the date for when the course starts! Session dates will be autopopulated using this and course days!',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_START_DATE',
+                        outputs: [
+                            {
+                                name: 'Start Date',
+                                key: 'startDate',
+                                type: 'date',
+                                isRequired: true,
+                            },
+                        ],
+                    },
+                },  
             ],
         },
         {

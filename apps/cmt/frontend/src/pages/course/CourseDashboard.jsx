@@ -4,7 +4,7 @@ import { Button } from 'react-bootstrap'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ResourceManager } from '../../components/resources/ResourceManager.jsx'
 import { CMTWorkflow } from '../../components/workflows/workflow.jsx'
-import { CMTJsonFetch } from '../../utils/api.js'
+import { CMTFormFetch, CMTJsonFetch } from '../../utils/api.js'
 import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { Session } from './Session.jsx'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error.jsx'
@@ -27,6 +27,7 @@ export function CourseDashboard() {
     const update = useCallback(async () => 
         CMTJsonFetch('GET', `course/${id}`).then(async json => {
             setCourse(json.course)
+            setSessions(json.course.sessions)
             startTransition(() => {
                 setActionsWithContexts(json.actionsWithContexts ?? [])
                 setWorkflow(json.workflow)
@@ -39,7 +40,12 @@ export function CourseDashboard() {
 
     /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
     const fetchToCallback = useCallback(
-        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues).catch(createErrorHandler("Failed to fetch to action callback.")),
+        (callback, outputValues) => {
+            if (outputValues.syllabusName)
+                return CMTFormFetch('POST', callback, outputValues.syllabusName)
+            else
+                return CMTJsonFetch('PUT', callback, outputValues)
+        },
         []
     )
 
@@ -117,6 +123,8 @@ function CourseInfo({ course }) {
                 <div className="flex gap-10">
                     <p className="mb-0">Section: {course.section ?? "TBD"} </p>
                     <p className="mb-0">Semester: {course.season ?? "TBD"} {course.year}</p>
+                    <p className="mb-0">Days: {course.days && course.days !== '' ? course.days : "TBD"}</p>
+                    <p className="mb-0">Start Date: {course.startDate ?? "TBD"} </p>
                     {/* TODO maybe remove? Students are kinda silly to have and a pain to update
                     <p className="mb-0">Number of Students: {course.students ?? "TBD"}</p> */}
                 </div>

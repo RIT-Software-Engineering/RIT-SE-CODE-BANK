@@ -4,7 +4,7 @@ import { createWorkflowRenderers, Workflow } from '@se-code-bank/workflows-ecosy
 import { ActionEditForm, CancellableEditActionForm, ComplexCardContainer, EditableActionView, SimpleCardContainer } from './actions.jsx'
 import { CheckmarkAction, NavigateButton } from './misc.jsx'
 import { UseCMTOnNavigateFactory } from '../../utils/workflows.js'
-import { OutputView, OutputContainer, NumberOutput, TextOutput, SelectOutput, CheckmarkOutput } from './outputs.jsx'
+import { OutputView, OutputContainer, NumberOutput, TextOutput, SelectOutput, CheckmarkOutput, SelectMultiOutput, FileOutput, DateOutput } from './outputs.jsx'
 
 /**
  * @import { WorkflowContainerProps, IsCheckmark } from '@se-code-bank/workflows-ecosystem'
@@ -33,6 +33,9 @@ export function CMTWorkflow({ refresh, fetchToCallback, workflow, actionsWithCon
 		TextOutput,
 		SelectOutput,
 		CheckmarkOutput,
+		SelectMultiOutput,
+		FileOutput,
+		DateOutput,
 	})
 
   	return (

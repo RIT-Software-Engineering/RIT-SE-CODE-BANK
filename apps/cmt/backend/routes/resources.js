@@ -4,7 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { v4 as uuidv4 } from 'uuid'
-import { CMTError } from '@se-code-bank/cmt-shared-utilities'
+import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
 
 const router = express.Router()
 
@@ -70,7 +70,7 @@ const upload = multer({
 router.get('/:courseId', async (req, res) => {
     const { courseId } = req.params
     const resources = await req.prisma.resource.findMany({
-        where: { courseId: parseInt(courseId) },
+        where: { courseId: parseInt(courseId), isSyllabus: false, },
         orderBy: { createdAt: 'desc' },
     })
     res.json(resources)
@@ -126,6 +126,87 @@ router.put('/:id', async (req, res) => {
     })
 
     res.json(resource)
+})
+
+// We don't want professors uploading things like images for syllabi so we heavily limit options
+const syllabusUpload = multer({
+    storage: storage,
+    fileFilter: function (_, file, cb) {
+        // These correspond to mimetype headers and are neccesary for http
+        const allowedTypes = [
+            'application/pdf',
+            'text/html',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ]
+
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true)
+        } else {
+            cb(new Error(`Invalid file type ${file.mimetype}`))
+        }
+    },
+})
+
+/**
+ * POST /api/cmt/resources/syllabus/:courseId
+ * Creates a syllabus if one doesn't exist or updates the file if one does
+ */
+router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, res) => {
+    try {
+        const { courseId } = req.params
+
+        
+        if (!req.file)
+            return res.status(400).json({ error: 'No file uploaded' })
+        
+        const course = await req.prisma.course.findUnique({
+            where: {id: parseInt(courseId), professorId: req.user.uid}
+        })
+        
+        let resource;
+        
+        const existingSyllabus = await req.prisma.resource.findMany({
+            where: {isSyllabus: true, courseId: parseInt(courseId)}
+        })
+        
+        if (existingSyllabus.length > 0) {
+            resource = await req.prisma.resource.updateMany({
+                where: {isSyllabus: true},
+                data: {
+                    filename: req.file.originalname,
+                    mimeType: req.file.mimetype,
+                    filePath: req.file.path,
+                },
+            });
+            await req.prisma.course.update({
+                where: {id: parseInt(courseId)},
+                data: {syllabusName: req.file.originalname}
+            });
+        } else {
+            resource = await req.prisma.resource.create({
+                data: {
+                    name: `${course.name}-Syllabus`,
+                    filename: req.file.originalname,
+                    mimeType: req.file.mimetype,
+                    filePath: req.file.path,
+                    courseId: parseInt(courseId),
+                    isSyllabus: true
+                },
+            });
+            await req.prisma.course.update({
+                where: {id: parseInt(courseId)},
+                data: {syllabusName: req.file.originalname}
+            });
+        }
+
+        const { uid: _userId, asid: actionStateId } = req.query
+        if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
+        
+        res.status(200).json(resource)
+    } catch (error) {
+        res.status(500).json({error})
+    }
 })
 
 /**
