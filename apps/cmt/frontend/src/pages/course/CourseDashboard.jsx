@@ -25,6 +25,7 @@ export function CourseDashboard() {
         return CMTJsonFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
             setCourse(data.course)
+            setSessions(data.course.sessions)
             setActionsWithContexts(data.actionsWithContexts ?? [])
             setWorkflow(data.workflow)
         }).catch(async error => {

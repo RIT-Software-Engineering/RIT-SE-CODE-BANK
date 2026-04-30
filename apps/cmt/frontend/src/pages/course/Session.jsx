@@ -53,11 +53,10 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         return CMTJsonFetch('GET', `session/${courseId}`).then(async response => {
             const data = await response.json()
             setSessionCount(data.sessions.length)
-            setSessions(data.sessions);
             const materialsArray = data.sessionMaterials.filter(m => m.material).map(m => m.material);
             setSessionData(materialsArray.flat());
         })
-    }, [courseId, setSessions, setSessionCount])
+    }, [courseId, setSessionCount])
     useEffect(() => void update(), [courseId, update])
 
     return (

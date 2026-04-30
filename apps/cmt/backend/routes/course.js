@@ -56,6 +56,7 @@ router.get('/:id', async (req, res) => {
         // TODO: check perms/if prof owns course
         const course = await prisma.course.findUnique({
             where: { id: parseInt(req.params.id), professorId: req.user.uid },
+            include: {sessions: true}
         })
 
         if (!course) 
@@ -237,7 +238,9 @@ router.put('/:id', async (req, res) => {
                 const allDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
                 // AI - generated code
-                let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + (allDays.findIndex(day => day === courseDays[0]) + 7 - courseStartDate.getDay() % 7)-1));
+                let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + ((allDays.indexOf(courseDays[0]) + 7 - courseStartDate.getDay()) % 7)-1));
+
+                console.log(sessionDate)
 
                 emptyDaySessions.forEach(async session => {
                     sessionDate.setDate(sessionDate.getDate() + 1);
