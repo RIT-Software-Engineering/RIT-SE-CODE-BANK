@@ -56,3 +56,26 @@ export async function sendEmail({ to, subject, text, html, attachCidLogo = false
   return info;
 }
 
+// This is a simple send to many function, where we will loop over the recipiants,
+// and send the same message to all of them
+// I have the limit set to 50 for now, but once I figure out the rate limit we can change this value
+export async function sendEmailToMany({ recipients, subject, text, html, attachCidLogo = false }){
+    const limit = 50;
+    if (!recipients || recipients.length === 0) throw new Error("No recipients provided");
+    if (recipients.length > limit) throw new Error(`The recipienats exceed the set limit of ${limit}`);
+
+    const results = [];
+
+    for(const recipient of recipients){
+        try{
+            const info = await sendEmail({ to: recipient, subject, text, html, attachCidLogo });
+            results.push({ recipient, success: true, info });
+        }catch (err){
+            results.push({recipient, success: false, error: err.message});
+        }
+
+        await new Promise(res => setTimeout(res, 500));
+    }
+
+    return results;
+}
