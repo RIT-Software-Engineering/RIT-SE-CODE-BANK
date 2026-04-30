@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
+  checkUserAvailability,
   createCandidateProfile,
   createEmployerProfile,
   updateCandidateProfile,
@@ -28,7 +29,6 @@ import Step1EmployerAndAdmin from './EmployerAndAdmin/form-steps/Step1';
  * @param {object[]} props.courseOptions - The list of available courses.
  * @param {function} props.onUpdateSuccess - Callback function when the form is successfully submitted.
  * @param {string} props.editingSection - The section being edited, only applicable for candidate/employee users.
- * @param {object[]} props.allUsers - A list of all users in the system.
  */
 export default function UserProfileForm({
   user,
@@ -36,8 +36,7 @@ export default function UserProfileForm({
   onClose,
   courseOptions,
   onUpdateSuccess,
-  editingSection,
-  allUsers = [],
+  editingSection
 }) {
   const { showNotification } = useNotification();
   const isEditMode = mode === 'edit';
@@ -155,22 +154,22 @@ export default function UserProfileForm({
 
     if (currentStep === 1 && mode === 'create') {
       const { uid, email } = getValues();
-      const uidExists = allUsers.some((u) => u.uid.toString() === uid.trim());
-      if (uidExists) {
+      const availabilityCheck = await checkUserAvailability({
+        email:email,
+        uid:uid
+      });
+      if(!availabilityCheck.available){
+        const messages = [];
+        if (availabilityCheck.takenFields.includes("uid")) {
+          messages.push("ID is already taken");
+        }
+        if (availabilityCheck.takenFields.includes("email")) {
+          messages.push("Email is already taken");
+        }
         showNotification(
-          'This User ID is already taken. Please choose another one.',
+          messages.join(". "),
           'error'
-        );
-        return;
-      }
-      const emailExists = allUsers.some(
-        (u) => u.email.toLowerCase() === email.trim().toLowerCase()
-      );
-      if (emailExists) {
-        showNotification(
-          'This email is already in use by another account.',
-          'error'
-        );
+        )
         return;
       }
     }

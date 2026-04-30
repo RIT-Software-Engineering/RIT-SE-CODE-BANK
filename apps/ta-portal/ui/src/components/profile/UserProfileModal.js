@@ -22,7 +22,6 @@ export default function UserProfileModal({
   onUpdateSuccess,
   profileData,
   editingSection,
-  allUsers = [],
 }) {
   const [courseOptions, setCourseOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,7 +99,6 @@ export default function UserProfileModal({
             courseOptions={courseOptions}
             onUpdateSuccess={onUpdateSuccess}
             editingSection={editingSection}
-            allUsers={allUsers}
           />
         )}
       </Paper>

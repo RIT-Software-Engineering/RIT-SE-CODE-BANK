@@ -10,4 +10,6 @@ INSERT INTO `User` (`username`, `fname`, `lname`, `uid`, `password`, `email`, `p
 ('eee0000', 'Evan', 'Engineer', 303303303, 'password', 'eee0000@rit.edu', 'they/them', 'CANDIDATE'),
 ('ttt0000', 'Tyler', 'Tester', 304304304, 'password', 'ttt0000@rit.edu', 'he/him', 'EMPLOYEE'),
 ('sss0000', 'Sally', 'Student', 305305305, 'password', 'sss0000@rit.edu', 'they/them', 'CANDIDATE'),
-('ggg0000', 'Gary', 'Greenfield', 306306306, 'password', 'ggg0000@rit.edu', 'he/him', 'CANDIDATE');
+('ggg0000', 'Gary', 'Greenfield', 306306306, 'password', 'ggg0000@rit.edu', 'he/him', 'CANDIDATE'),
+
+('kbmvse', 'Kenn', 'Martinez', 306, 'password', 'kbmvse@rit.edu', 'he/him', 'EMPLOYER');

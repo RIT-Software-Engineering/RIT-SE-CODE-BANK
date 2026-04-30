@@ -63,6 +63,7 @@ const {
   checkResumeDeleteStatus,
   getApplicationNote,
   updateApplicationNote,
+  checkUserAvailability,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -788,6 +789,35 @@ router.post("/hire", async (req, res) => {
 // =============================================================================
 // USER & PROFILE ROUTES
 // =============================================================================
+
+router.post('/user-availability', async (req, res) => {
+  try{
+    const fields = req.body;
+    const results = await checkUserAvailability(fields);
+
+    return res.json(results);
+  } catch{
+    console.error(error);
+    return res.status(500).json({
+      available: false,
+      takenFields: ["server_error"],
+    });
+  }
+})
+
+router.get('/dev-users', async (req, res) => {
+  try{
+    if (process.env.LOGIN_MODE.toLowerCase() === 'dev'){
+      const users = await getAllUsers();
+      res.status(200).json(users);
+    } else{
+      return res.status(403).json({error: "Dev login disabled"});
+    }
+  } catch (error) {
+    console.error('Error in /dev-users route:', error);
+    res.status(500).json({ error: 'Failed to retrieve dev users.' });
+  }
+})
 
 /**
  * @route   GET /ta-portal-api/db/users

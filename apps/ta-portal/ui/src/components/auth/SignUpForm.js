@@ -15,6 +15,7 @@ import {
   MenuItem,
   Link as MuiLink,
 } from "@mui/material";
+import { checkUserAvailability} from "@/services/db-apis";
 
 /**
  * A form for creating a new user account.
@@ -26,7 +27,6 @@ import {
 export default function SignUpForm({
   onSignUpSubmit = () => { },
   onSwitchToLogin = () => { },
-  allUsers = [],
 }) {
   const [error, setError] = useState(null);
   const [newUser, setNewUser] = useState({
@@ -36,7 +36,7 @@ export default function SignUpForm({
   });
 
   // Event handler for creating a new user
-  const handleCreateAndContinue = () => {
+  const handleCreateAndContinue = async () => {
     // Validate input
     const trimmedUsername = newUser.username.trim();
     if (!trimmedUsername || !newUser.password.trim() || !newUser.role) {
@@ -45,16 +45,20 @@ export default function SignUpForm({
     }
 
     // Check for username existence
-    const usernameExists = allUsers.some(
-      (user) => user.username.toLowerCase() === trimmedUsername.toLowerCase()
-    );
-    if (usernameExists) {
+    const usernameCheck = await checkUserAvailability({username:trimmedUsername});
+    if (!usernameCheck.available){
       setError("This username is already taken. Please choose another one.");
       return;
     }
 
+    const cleanedUser = {
+      ...newUser,
+      username: trimmedUsername,
+      password: newUser.password.trim(),
+    }
+
     setError(null);
-    onSignUpSubmit(newUser, "signup"); // Pass data and action to parent
+    onSignUpSubmit(cleanedUser, "signup"); // Pass data and action to parent
   };
 
   return (
