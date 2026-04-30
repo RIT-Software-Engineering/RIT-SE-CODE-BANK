@@ -1,6 +1,6 @@
-import {  Check, Loader2, PlusIcon } from 'lucide-react'
+import {  Check, Loader2, PlusIcon, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Button, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap'
+import { Alert, Button, Card, Col, Container, Form, Modal, Row, Tab, Tabs } from 'react-bootstrap'
 import { CMTJsonFetch } from '../../utils/api.js'
 import { useNavigate } from 'react-router-dom'
 
@@ -9,6 +9,9 @@ export function TemplateOverview() {
     const [templates, setTemplates] = useState([]);
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [courseId, setCourseId] = useState(1);
+    const [archiveOpen, setArchiveOpen] = useState(false);
     
     useEffect(() => {
         fetchCourses();
@@ -31,11 +34,22 @@ export function TemplateOverview() {
                         </Button>
                 </div>
                 <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen}/>
+                <CourseEditModal isOpen={editModalOpen} setIsOpen={setEditModalOpen} courseId={courseId} refresh={fetchCourses}/>
+                <UnarchiveModal isOpen={archiveOpen} setIsOpen={setArchiveOpen} courseId={courseId} refresh={fetchCourses}/>
+                <Tabs defaultActiveKey={"active"}  className='mb-3'>
+                <Tab eventKey={"active"} title="Active">
                 <Row className='gy-4'>
-                    {templates.map(course => (
+                    {templates.filter(template => template.active).map(course => (
                         <Col md={4}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/templates/${course.id}`)}>
-                                <Card.Header style={{background: "#0484c9"}} className='h-16'/>
+                                <Card.Header style={{background: "#0484c9"}} className='h-16 flex justify-end'>
+                                <Settings className={`hidden group-hover:block size-8 hover:size-10 text-gray-300 hover:text-white`} 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditModalOpen(true);
+                                    setCourseId(course.id);
+                                }} />
+                                </Card.Header>
                                 <Card.Body className='text-2xl group-hover:underline group-hover:text-blue-500'>
                                     <div><span className='font-semibold'>Code:</span> {course.classId}</div>
                                     <div><span className='font-semibold'>Name:</span> {course.name}</div>
@@ -45,6 +59,31 @@ export function TemplateOverview() {
                         </Col>
                     ))}
                 </Row>
+                </Tab>
+                <Tab eventKey={"archived"} title="Archived">
+                    <Row className='gy-4'>
+                    {templates.filter(template => !template.active).map(course => (
+                        <Col md={4}>
+                            <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/templates/${course.id}`)}>
+                                <Card.Header style={{background: "#0484c9"}} className='h-16 flex justify-end'>
+                                <Settings className={`hidden group-hover:block size-8 hover:size-10 text-gray-300 hover:text-white`} 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setArchiveOpen(true);
+                                    setCourseId(course.id);
+                                }} />
+                                </Card.Header>
+                                <Card.Body className='text-2xl group-hover:underline group-hover:text-blue-500'>
+                                    <div><span className='font-semibold'>Code:</span> {course.classId}</div>
+                                    <div><span className='font-semibold'>Name:</span> {course.name}</div>
+                                    <div><span className='font-semibold'>Season:</span> {course.season}</div>
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+                </Tab>
+                </Tabs>
             </Container>
         </>
     )
@@ -126,4 +165,69 @@ function CourseCreationModal({isOpen, setIsOpen}) {
             </Modal>
         </>
     )
+}
+
+function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
+    const [warning, setWarning] = useState('');
+
+    function resetForm() {
+        setIsOpen(false);
+        setWarning('');
+    }
+
+    return (
+        <Modal show={isOpen} onHide={resetForm} onExit={resetForm} centered>
+            <Modal.Header closeButton>Template Settings</Modal.Header>
+                <Modal.Body>
+                    <Alert variant='danger' className={`${warning ? 'block' : 'hidden'}`}>{warning}</Alert>
+                    <Tabs className='mb-3'>
+                    <Tab eventKey={"copy"} title="Copy Template">
+
+                    </Tab>
+                    <Tab eventKey={"delete"} title="Delete Template">
+                        <Alert variant="warning">
+                            <h2>Warning!</h2>
+                            <p>
+                                This template will be removed from your active templates list and will become archived.
+                                You can unarchive it later.
+                                Are you sure you want to proceed?
+                            </p>
+                        </Alert>
+                        <div className="flex justify-between">
+                            <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
+                            <Button className="justify-end" variant="danger"
+                            onClick={() => {
+                                CMTJsonFetch("DELETE", `/course/${courseId}`).then(refresh);
+                                setIsOpen(false);
+                            }}>Archive Template</Button>
+                        </div>
+                    </Tab>
+                    </Tabs>
+                </Modal.Body>
+        </Modal>
+    )
+}
+
+function UnarchiveModal({isOpen, setIsOpen, courseId, refresh}) {
+    return (<>
+    <Modal show={isOpen} onHide={() => setIsOpen(false)} onExit={() => setIsOpen(false)} centered>
+        <Modal.Header closeButton>Unarchive Course</Modal.Header>
+        <Modal.Body>
+            <Alert variant="warning">
+                <p>
+                    This course will be added back to your active templates list.
+                    Are you sure you want to proceed?
+                </p>
+            </Alert>
+            <div className="flex justify-between">
+                <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
+                <Button className="justify-end" variant="danger"
+                onClick={() => {
+                    CMTJsonFetch("PUT", `/course/${courseId}`, {active: true}).then(refresh);
+                    setIsOpen(false);
+                }}>Unarchive Course</Button>
+            </div>
+        </Modal.Body>
+    </Modal>
+    </>)
 }

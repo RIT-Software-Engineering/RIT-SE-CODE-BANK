@@ -1,6 +1,6 @@
-import { Check, Loader2, PlusIcon, Palette, Search } from 'lucide-react'
+import { Check, Loader2, PlusIcon, Search, Settings } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
-import { Badge, Button, Card, Col, Container, Form, Modal, Offcanvas, Row, Spinner } from 'react-bootstrap'
+import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Offcanvas, Row, Spinner, Tab, Tabs } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
@@ -17,6 +17,7 @@ export function CourseOverview() {
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
+    const [archiveOpen, setArchiveOpen] = useState(false);
     const [courseId, setCourseId] = useState(0);
     
     useEffect(() => {
@@ -41,12 +42,15 @@ export function CourseOverview() {
                 </div>
                 <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen}/>
                 <CourseEditModal isOpen={editModalOpen} setIsOpen={setEditModalOpen} courseId={courseId} refresh={fetchCourses}/>
+                <UnarchiveModal isOpen={archiveOpen} setIsOpen={setArchiveOpen} courseId={courseId} refresh={fetchCourses}/>
+                <Tabs className="mb-3">
+                <Tab eventKey={"active"} title="Active">
                 <Row className='gy-4'>
-                    {courseOverview.map(course => (
+                    {courseOverview.filter(course => course.active).map(course => (
                         <Col md={4}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
                                 <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>
-                                    <Palette className={`hidden group-hover:block size-10 hover:size-12
+                                    <Settings className={`hidden group-hover:block size-10 hover:size-12
                                     ${isDarkColor(course.color) ? 
                                         "text-gray-300 hover:text-white" : "text-gray-500 hover:text-black" }`
                                     }
@@ -62,6 +66,31 @@ export function CourseOverview() {
                         </Col>
                     ))}
                 </Row>
+                </Tab>
+                <Tab eventKey={"archived"} title="Archived">
+                    <Row className='gy-4'>
+                    {courseOverview.filter(course => !course.active).map(course => (
+                        <Col md={4}>
+                            <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
+                                <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>
+                                    <Settings className={`hidden group-hover:block size-10 hover:size-12
+                                    ${isDarkColor(course.color) ? 
+                                        "text-gray-300 hover:text-white" : "text-gray-500 hover:text-black" }`
+                                    }
+                                    onClick={(e) =>{
+                                        e.stopPropagation();
+                                        setArchiveOpen(true);
+                                        setCourseId(course.id);
+                                    }} />
+                                </Card.Header>
+                                <Card.Body className='h-28 text-2xl group-hover:underline group-hover:text-blue-500'>
+                                    {course.classId} - {course.name}</Card.Body>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+                </Tab>
+                </Tabs>
             </Container>
         </>
     )
@@ -136,8 +165,8 @@ function CourseCreationModal({isOpen, setIsOpen}) {
         CMTJsonFetch('GET', `course/?isTemplate=true`)
             .then(async response => {
                 const data = (await response.json()) || [];
-                setTemplates(data);
-                setOriginalTemplates(data);
+                setTemplates(data.filter(item => item.active));
+                setOriginalTemplates(data.filter(item => item.active));
             })
             .catch(error => LogError("Failed to load templates.", error, setWarning))
             .finally(() => setLoading(false))
@@ -173,7 +202,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                                 </div>
                             ))}
                             </div> : 
-                            <p>You have not created a template. You can create one or try searching public templates.</p>
+                            <p>You have not created templates or don't have any available. You can create one or try searching public templates.</p>
                         }
                         <Button variant='primary' onClick={() => setTemplateSearchOpen(true)}>
                             <div className='flex justify-between'>
@@ -253,26 +282,73 @@ function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
 
     return (
         <Modal show={isOpen} onHide={resetForm} onExit={resetForm} centered>
-            <Modal.Header closeButton>Edit Color</Modal.Header>
+            <Modal.Header closeButton>Course Settings</Modal.Header>
                 <Modal.Body>
-                    <div className={`${warning ? 'block' : 'hidden'} alert alert-danger`}>{warning}</div>
-                    <div className="flex gap-2 mb-4 min-w-full">
-                        {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
-                        {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
-                            <ColorOption color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
-                        )}
-                    </div>
-                    {showWheel && <div className='mb-3'>{<ColorWheel setColor={setColor}/>}</div>}
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button onClick={handleColorEdit}>
-                        <div className='flex gap-1 -ml-1 mr-1'>
-                            {submitButtonElement}
+                    <Tabs className='mb-3'>
+                    <Tab eventKey={"color"} title="Edit Color">
+                        <div className={`${warning ? 'block' : 'hidden'} alert alert-danger`}>{warning}</div>
+                        <div className="flex gap-2 mb-4 min-w-full">
+                            {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
+                            {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
+                                <ColorOption color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
+                            )}
                         </div>
-                    </Button>
-                </Modal.Footer>
+                        {showWheel && <div className='mb-3'>{<ColorWheel setColor={setColor}/>}</div>}
+                        <Button onClick={handleColorEdit}>
+                            <div className='flex gap-1 -ml-1 mr-1'>
+                                {submitButtonElement}
+                            </div>
+                        </Button>
+                    </Tab>
+                    <Tab eventKey={"copy"} title="Copy as Template">
+
+                    </Tab>
+                    <Tab eventKey={"archive"} title="Archive Course">
+                        <Alert variant="warning">
+                            <h2>Warning!</h2>
+                            <p>
+                                This template will be removed from your active courses list and will become archived.
+                                You can unarchive it later.
+                                Are you sure you want to proceed?
+                            </p>
+                        </Alert>
+                        <div className="flex justify-between">
+                            <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
+                            <Button className="justify-end" variant="danger"
+                            onClick={() => {
+                                CMTJsonFetch("DELETE", `/course/${courseId}`).then(refresh);
+                                setIsOpen(false);
+                            }}>Archive Course</Button>
+                        </div>
+                    </Tab>
+                    </Tabs>
+                </Modal.Body>
         </Modal>
     )
+}
+
+function UnarchiveModal({isOpen, setIsOpen, courseId, refresh}) {
+    return (<>
+    <Modal show={isOpen} onHide={() => setIsOpen(false)} onExit={() => setIsOpen(false)} centered>
+        <Modal.Header closeButton>Unarchive Course</Modal.Header>
+        <Modal.Body>
+            <Alert variant="warning">
+                <p>
+                    This course will be added back to your active templates list.
+                    Are you sure you want to proceed?
+                </p>
+            </Alert>
+            <div className="flex justify-between">
+                <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
+                <Button className="justify-end" variant="danger"
+                onClick={() => {
+                    CMTJsonFetch("PUT", `/course/${courseId}`, {active: true}).then(refresh);
+                    setIsOpen(false);
+                }}>Unarchive Course</Button>
+            </div>
+        </Modal.Body>
+    </Modal>
+    </>)
 }
 
 export function ColorWheel({setColor}) {

@@ -45,7 +45,7 @@ router.get('/templates', async (_, res) => {
     const templateWorkflows = await workflowsFetch("GET", "/workflows?tags=TangledUpInLiesImAWorkflony");
     const availTemplates = Promise.all(templateWorkflows.map(async workflow => ( 
         await prisma.course.findFirst({
-            where: {workflowId: workflow.id},
+            where: {workflowId: workflow.id, active: true},
             include: {professors: true},
         })
     )));
@@ -411,6 +411,9 @@ router.put('/:id', async (req, res) => {
             ),
             ...(updateData.startDate !== undefined 
                 && {startDate: updateData.startDate}
+            ),
+            ...(updateData.active !== undefined
+                && {active: updateData.active}
             )
         }
 
@@ -473,20 +476,17 @@ router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params
 
-        // Had to cast id to a Number so an int is passed instead of a string
-
         console.log('DELETE /api/cmt/course/:id called with:', Number(id))
 
         // Then delete the course
-        await prisma.course.delete({
-            where: { id: Number(id) },
+        await prisma.course.update({
+            where: { id: parseInt(id) },
+            data: {active: false}
         })
-
-        console.log(`✅ Course deleted: ${id}`)
 
         res.json({
             success: true,
-            message: 'Course and all related events deleted successfully',
+            message: 'Course archived.',
         })
     } catch (error) {
         console.error('Error deleting course:', error)
