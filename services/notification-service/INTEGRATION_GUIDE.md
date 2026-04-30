@@ -50,7 +50,8 @@ Create a utility file that wraps notification service API calls (e.g., `server/u
 
 ```javascript
 // server/utils/notifications.js
-const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4000';
+const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:4001';
+const NOTIFICATION_API_EXTENSION = process.env.NOTIFICATION_API_EXTENSION || '/notifications'
 const APP_ID = process.env.NOTIFICATION_CLIENT_APP_ID || 'your-app-name';
 
 // Use fetch or a library like axios
@@ -61,7 +62,7 @@ const fetchImpl = globalThis.fetch || require('node-fetch');
  */
 async function getPreferences(userId, appIdOverride) {
   const appId = appIdOverride || APP_ID;
-  const url = `${NOTIFICATION_SERVICE_URL}/api/notifications/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(userId)}`;
+  const url = `${NOTIFICATION_SERVICE_URL}${NOTIFICATION_API_EXTENSION}/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(userId)}`;
   
   const res = await fetchImpl(url);
   if (!res.ok) {
@@ -75,7 +76,7 @@ async function getPreferences(userId, appIdOverride) {
  */
 async function setPreferences(userId, body, appIdOverride) {
   const appId = appIdOverride || APP_ID;
-  const url = `${NOTIFICATION_SERVICE_URL}/api/notifications/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(userId)}`;
+  const url = `${NOTIFICATION_SERVICE_URL}${NOTIFICATION_API_EXTENSION}/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(userId)}`;
   
   const res = await fetchImpl(url, {
     method: 'PUT',
@@ -94,7 +95,7 @@ async function setPreferences(userId, body, appIdOverride) {
  */
 async function checkSlackStatus(email, appIdOverride, userId) {
   const appId = appIdOverride || APP_ID;
-  const url = `${NOTIFICATION_SERVICE_URL}/api/notifications/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(userId)}/slack-status?email=${encodeURIComponent(email)}`;
+  const url = `${NOTIFICATION_SERVICE_URL}${NOTIFICATION_API_EXTENSION}/preferences/${encodeURIComponent(appId)}/${encodeURIComponent(userId)}/slack-status?email=${encodeURIComponent(email)}`;
   
   const res = await fetchImpl(url);
   if (!res.ok) {
@@ -108,7 +109,7 @@ async function checkSlackStatus(email, appIdOverride, userId) {
  */
 async function dispatchNotification(userId, { subject, message, userEmail }, appIdOverride) {
   const appId = appIdOverride || APP_ID;
-  const url = `${NOTIFICATION_SERVICE_URL}/api/notifications/dispatch/${encodeURIComponent(appId)}`;
+  const url = `${NOTIFICATION_SERVICE_URL}${NOTIFICATION_API_EXTENSION}/dispatch/${encodeURIComponent(appId)}`;
   
   const res = await fetchImpl(url, {
     method: 'POST',
@@ -127,7 +128,7 @@ async function dispatchNotification(userId, { subject, message, userEmail }, app
  */
 async function dispatchTemplated(userId, { event, context = {}, role, subject, userEmail }, appIdOverride) {
   const appId = appIdOverride || APP_ID;
-  const url = `${NOTIFICATION_SERVICE_URL}/api/notifications/dispatch/${encodeURIComponent(appId)}`;
+  const url = `${NOTIFICATION_SERVICE_URL}${NOTIFICATION_API_EXTENSION}/dispatch/${encodeURIComponent(appId)}`;
   
   const payload = {
     userId,
@@ -287,7 +288,8 @@ Add to your backend `.env`:
 
 ```bash
 # Notification Service
-NOTIFICATION_SERVICE_URL=http://localhost:4000
+NOTIFICATION_SERVICE_URL=http://localhost:4001
+NOTIFICATION_API_EXTENSION=/notifications
 NOTIFICATION_CLIENT_APP_ID=your-app-name
 ```
 
@@ -300,7 +302,7 @@ Once your backend proxy is set up, your frontend can call these endpoints:
 ### GET User Preferences
 
 ```http
-GET /api/notifications/preferences/:appId/:userId
+GET notifications/preferences/:appId/:userId
 ```
 
 **Response:**
@@ -318,7 +320,7 @@ GET /api/notifications/preferences/:appId/:userId
 ### Update User Preferences
 
 ```http
-PUT /api/notifications/preferences/:appId/:userId
+PUT notifications/preferences/:appId/:userId
 Content-Type: application/json
 
 {
@@ -332,7 +334,7 @@ Content-Type: application/json
 ### Check Slack Workspace Membership
 
 ```http
-GET /api/notifications/preferences/:appId/:userId/slack-status?email=user@rit.edu
+GET notifications/preferences/:appId/:userId/slack-status?email=user@rit.edu
 ```
 
 **Response (in workspace):**
@@ -354,7 +356,7 @@ GET /api/notifications/preferences/:appId/:userId/slack-status?email=user@rit.ed
 ### Send Notification (Templated)
 
 ```http
-POST /api/notifications/dispatch/:appId
+POST notifications/dispatch/:appId
 Content-Type: application/json
 
 {
@@ -393,7 +395,7 @@ Content-Type: application/json
 ### Send Notification (Simple)
 
 ```http
-POST /api/notifications/dispatch/:appId
+POST notifications/dispatch/:appId
 Content-Type: application/json
 
 {

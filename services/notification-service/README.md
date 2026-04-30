@@ -13,43 +13,21 @@ Centralized microservice for managing per-user notification preferences and disp
 
 **Default ports:**
 - smtp4dev web UI: http://localhost:3005
-- notification service: http://localhost:4000
+- notification service: http://localhost:4001
 
 ## Quick Start (Development)
 
-1. **Copy environment file and set connection details**
+1. **Start dependencies and the service**
 
 ```powershell
-cd services/notification-service
-Copy-Item .env.example .env
-# Optional: set Slack bot token in .env (SLACK_BOT_TOKEN)
-```
-
-2. **Start dependencies and the service**
-
-```powershell
-docker compose up --build
-```
-
-3. **Apply Prisma schema (Required for the database to track user preferences)**
-
-The prisma schema must be set up inside the docker container:
-```powershell
-docker compose exec notify sh
-```
-Then:
-```powershell
-npm install
-npx prisma generate
-npx prisma db push
-# Optional seed the database with example entries: npm run seed
+docker compose -f compose.yaml -f compose.staging.yaml up --build
 ```
 
 ## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `PORT` | HTTP port | 4000 |
+| `PORT` | HTTP port | 4001 |
 | `DATABASE_URL` | Prisma connection string to MySQL/MariaDB | - |
 | `SMTP_HOST` | SMTP host (e.g., 127.0.0.1) | - |
 | `SMTP_PORT` | SMTP port (e.g., 2525) | - |
@@ -59,11 +37,9 @@ npx prisma db push
 | `SLACK_BOT_TOKEN` | Slack bot token for DMs (optional) | - |
 | `CID_LOGO_PATH` | Logo image for emails (optional)| - |
 
-See `.env.example` for a ready-to-copy template.
-
 ## API Reference
 
-Base path: `/api/notifications`
+Base path: `/notifications`
 
 ### GET `/preferences/:appId/:userId`
 Returns stored preferences or sensible defaults when missing.

@@ -22,11 +22,11 @@ Centralized notification service that handles email and Slack notifications acro
 **Quick Start**:
 ```powershell
 cd notification-service
-docker compose up --build
+docker compose -f compose.yaml -f compose.staging.yaml up --build
 ```
 
 **Ports**:
-- Notification Service: http://localhost:4000  
+- Notification Service: http://localhost:4001  
 - SMTP Dev UI: http://localhost:3005
 
 For detailed setup, API usage, and integration instructions, see the service-specific documentation linked above.

@@ -20,7 +20,8 @@
     "nodemailer": "^7.0.9"
   },
   "nx": {},
-  "workspaces":[
+  "workspaces": [
+    "services/notification-service",
     "apps/ta-portal/server",
     "apps/ta-portal/ui"
   ]
