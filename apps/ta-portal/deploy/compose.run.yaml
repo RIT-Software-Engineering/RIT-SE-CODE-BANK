@@ -1,0 +1,75 @@
+name: ta-portal
+
+services:
+  # Mariadb container used for the database. Environment includes root and user login information.
+  mariadb:
+    image: mariadb:11
+    # MYSQL_DATABASE defines the name of the database created on container start. USER and PASSWORD define the login information for the default user created. 
+    # The root and app passwords should be set during deployment by the github workflow script. Defaults are here for local running.
+    # TA_PORTAL_DB_ROOT_PASSWORD and TA_PORTAL_DB_USER_PASSWORD are github secrets that replace these in deployment. 
+    # If changing the secrets, keep in mind that the volume and image may retain the old ones and may need to be changed manually.
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_APP_USER}
+      MYSQL_PASSWORD: ${DB_USER_PASSWORD:-user_password}
+    # This connects a docker volume to the container directory that stores the SQL information. 
+    # If this container is closed the database will be stored inside the persistant docker volume.
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    # A simple healthcheck that runs mariadb's default healthcheck script. Allows docker to tell if the container is healthy and functioning or not.
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    # Unless the service is stopped or removed, restart the database in the event of a crash.
+    restart: unless-stopped
+
+  # The container for the React JS frontend of the TA-Portal.
+  frontend:
+    image: ta-portal-frontend:${TAG:-latest}
+    ports:
+      - ${FRONT_HOST_PORT}:${FRONT_CONTAINER_PORT}
+    depends_on:
+      - backend
+
+  # The container for the Express JS backend of the TA-Portal
+  backend:
+    image: ta-portal-backend:${TAG:-latest}
+    environment:
+      # domain url of the frontend. Used in main.js to defined allowed orgins of requests.
+      FRONTEND_URL: ${ORIGIN_URL}
+      # This DATABASE_URL overrides the placeholder url defined in the dockerfile.
+      DATABASE_URL: "mysql://${DB_APP_USER}:${DB_USER_PASSWORD:-user_password}@mariadb:3306/${DB_NAME}"
+      # The variable is used in main.js so that the application knows what port to listen to. This is needed since the app has no context of the host port from inside the container
+      PORT: ${BACK_HOST_PORT}
+      # extension used to access the notification service
+      NOTIFICATION_API_EXTENSION: ${NOTIFICATION_API_EXTENSION}
+      # name by which the notification service recognises this app
+      NOTIFICATION_CLIENT_APP_ID: ${NOTIFICATION_CLIENT_APP_ID}
+      # Is used mainly in errorHandlerTest.js and featureFlags.js.
+      NODE_ENV: "production"
+      # URL used to access the notification service
+      NOTIFICATION_SERVICE_URL: ${ORIGIN_URL}
+    ports:
+      - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
+    # Unless the service is stopped or removed, restart the database in the event of a crash.
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+    volumes:
+      - uploads:/app/apps/ta-portal/server/resources
+    # A basic healthcheck so Docker can tell the health of the container. Sends a get request to the health route (server/server/routing/index.js), which simply returns status 200.
+    healthcheck:
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:${BACK_CONTAINER_PORT}${NEXT_PUBLIC_API_EXTENSION}/health', r => process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+# Persistant volume that stores database information even if the mariadb container stops.
+volumes:
+  mariadb_data: {}
+  uploads: {}
